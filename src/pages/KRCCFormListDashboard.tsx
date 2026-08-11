@@ -474,7 +474,7 @@ export const KRCCFormListDashboard = () => {
       const status = detailJson?.status || '—';
       const createdAt = detailJson?.created_at || null;
       const updatedAt = detailJson?.updated_at || null;
-      // Removed formType display from PDF per latest request (previously: detailJson?.form_details?.form_type)
+  // Removed formType display from PDF per latest request (previously: detailJson?.form_details?.form_type)
       const formDetails = detailJson?.form_details || {};
       const categories = detailJson?.categories || {};
       const topLevelAtts: Array<{ id?: number; url?: string; doctype?: string | null }> = detailJson?.krcc_attachments || [];
@@ -614,7 +614,7 @@ export const KRCCFormListDashboard = () => {
       };
       // If keys array omitted, automatically include all primitive (non-object) keys except attachments
       // Added optional labelOverrides to customize specific field labels per category (e.g., electrical fit_to_work)
-      const buildCatKV = (cat: any, keys?: string[], labelOverrides?: Record<string, string>) => {
+      const buildCatKV = (cat: any, keys?: string[], labelOverrides?: Record<string,string>) => {
         if (!cat) return '';
         let useKeys = keys && keys.length ? keys : Object.keys(cat).filter(k => k !== 'attachments');
         // Sort according to predefined order then fallback alpha

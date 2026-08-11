@@ -558,10 +558,11 @@ export const UtilityWasteGenerationSetupDashboard = () => {
       case "status":
         return (
           <span
-            className={`px-3 py-1 text-xs font-medium rounded-full cursor-pointer ${item.active
+            className={`px-3 py-1 text-xs font-medium rounded-full cursor-pointer ${
+              item.active
                 ? "bg-green-100 text-green-800"
                 : "bg-red-100 text-red-800"
-              }`}
+            }`}
             onClick={() => handleStatusToggle(item.id)}
           >
             {item.active ? "Active" : "Inactive"}
@@ -617,10 +618,11 @@ export const UtilityWasteGenerationSetupDashboard = () => {
             <button
               key={tab}
               onClick={() => handleTabClick(tab)}
-              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab
+              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === tab
                   ? "border-brand text-brand bg-brand-selected"
                   : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
+              }`}
             >
               {tab}
             </button>

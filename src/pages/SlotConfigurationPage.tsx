@@ -241,9 +241,6 @@ export const SlotConfigurationPage = () => {
     );
   }
 
-  // Total number of leaf columns currently visible - used for the empty-state colSpan
-  const totalVisibleColumnsCount = Object.values(visibleColumns).filter(Boolean).length;
-
   return (
     <div className="p-6 min-h-screen">
       <EnhancedTable

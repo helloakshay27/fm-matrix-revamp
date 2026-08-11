@@ -208,10 +208,11 @@ export const VendorAuditConductedDashboard = () => {
       case "status":
         return (
           <span
-            className={`px-2 py-1 rounded text-xs font-medium ${item.status === "Completed"
+            className={`px-2 py-1 rounded text-xs font-medium ${
+              item.status === "Completed"
                 ? "bg-green-100 text-green-800"
                 : "bg-yellow-100 text-yellow-800"
-              }`}
+            }`}
           >
             {item.status}
           </span>

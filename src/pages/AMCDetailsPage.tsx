@@ -312,8 +312,6 @@ export const AMCDetailsPage = () => {
   const [visitTechniciansLoading, setVisitTechniciansLoading] = useState(false);
   const [visitUpdateLoading, setVisitUpdateLoading] = useState(false);
   const [activeVisitFreqTab, setActiveVisitFreqTab] = useState(0);
-  const [visitFreqPage, setVisitFreqPage] = useState(1);
-  const [visitFlatPage, setVisitFlatPage] = useState(1);
 
   const visitLogsByFrequency = (amcData as any)?.visit_logs_by_frequency as FrequencyVisitGroup[] | undefined;
 
@@ -563,7 +561,7 @@ export const AMCDetailsPage = () => {
         { method: "POST", body: formData }
       );
       if (!res.ok) throw new Error(`Update failed: ${res.status}`);
-
+      
       const statusLower = visitEditStatus.toLowerCase();
       if (statusLower === 'completed' || statusLower === 'done') {
         onAMCVisitCompleted({
@@ -1631,12 +1629,13 @@ export const AMCDetailsPage = () => {
                         case "status":
                           return item.status ? (
                             <span
-                              className={`px-2 py-1 text-xs rounded ${item.status.toLowerCase() === "open"
+                              className={`px-2 py-1 text-xs rounded ${
+                                item.status.toLowerCase() === "open"
                                   ? "bg-gray-200 text-gray-900"
                                   : item.status.toLowerCase() === "pending"
                                     ? "bg-brand text-white"
                                     : "bg-gray-100 text-gray-800"
-                                }`}
+                              }`}
                             >
                               {item.status}
                             </span>
@@ -1806,14 +1805,15 @@ export const AMCDetailsPage = () => {
                                 case "status":
                                   return item.status ? (
                                     <span
-                                      className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${item.status.toLowerCase() === "completed"
+                                      className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${
+                                        item.status.toLowerCase() === "completed"
                                           ? "bg-green-100 text-green-800"
                                           : item.status.toLowerCase() === "missed"
                                             ? "bg-red-100 text-red-800"
                                             : item.status.toLowerCase() === "pending"
                                               ? "bg-amber-100 text-amber-800"
                                               : "bg-gray-100 text-gray-700"
-                                        }`}
+                                      }`}
                                     >
                                       {item.status.toUpperCase()}
                                     </span>
@@ -1847,103 +1847,104 @@ export const AMCDetailsPage = () => {
                 ) : (
                   /* Fallback: flat visit table when no frequency groups */
                   (() => (
-                    <div className="w-full min-w-0 max-w-full">
-                      <EnhancedTable
-                        data={amcVisitData.map((visit: any) => ({
-                          ...visit,
-                          technician_name: visit.technician?.name || "",
-                        }))}
-                        columns={visitFlatColumns}
-                        renderCell={(item: any, columnKey: string) => {
-                          const isSelected = selectedVisitId === item.id;
-                          switch (columnKey) {
-                            case "select":
-                              return (
-                                <input
-                                  type="checkbox"
-                                  checked={isSelected}
-                                  onChange={() =>
-                                    setSelectedVisitId(isSelected ? null : item.id)
-                                  }
-                                  className="w-4 h-4 rounded border-gray-300 accent-brand cursor-pointer"
-                                />
-                              );
-                            case "visit_number":
-                              return (
-                                <span className="font-medium text-gray-900">
-                                  {item.visit_number ?? "—"}
-                                </span>
-                              );
-                            case "visit_date":
-                              return item.visit_date
-                                ? new Date(item.visit_date).toLocaleDateString("en-GB")
-                                : "—";
-                            case "actual_visit_date": {
-                              const raw = item.actual_visit_date as string | undefined;
-                              if (!raw) return "—";
-                              if (raw.includes("/")) return raw;
-                              const d = new Date(raw);
-                              return isNaN(d.getTime()) ? raw : d.toLocaleDateString("en-GB");
-                            }
-                            case "technician":
-                              return item.technician_name || "—";
-                            case "remarks":
-                              return (
-                                <span className="max-w-[200px] inline-block whitespace-normal break-words">
-                                  {item.remarks || "—"}
-                                </span>
-                              );
-                            case "status":
-                              return item.status ? (
-                                <span
-                                  className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${item.status.toLowerCase() === "completed"
-                                      ? "bg-green-100 text-green-800"
-                                      : item.status.toLowerCase() === "cancelled"
-                                        ? "bg-red-100 text-red-800"
-                                        : "bg-gray-100 text-gray-700"
+                      <div className="w-full min-w-0 max-w-full">
+                        <EnhancedTable
+                          data={amcVisitData.map((visit: any) => ({
+                            ...visit,
+                            technician_name: visit.technician?.name || "",
+                          }))}
+                          columns={visitFlatColumns}
+                          renderCell={(item: any, columnKey: string) => {
+                            const isSelected = selectedVisitId === item.id;
+                            switch (columnKey) {
+                              case "select":
+                                return (
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={() =>
+                                      setSelectedVisitId(isSelected ? null : item.id)
+                                    }
+                                    className="w-4 h-4 rounded border-gray-300 accent-brand cursor-pointer"
+                                  />
+                                );
+                              case "visit_number":
+                                return (
+                                  <span className="font-medium text-gray-900">
+                                    {item.visit_number ?? "—"}
+                                  </span>
+                                );
+                              case "visit_date":
+                                return item.visit_date
+                                  ? new Date(item.visit_date).toLocaleDateString("en-GB")
+                                  : "—";
+                              case "actual_visit_date": {
+                                const raw = item.actual_visit_date as string | undefined;
+                                if (!raw) return "—";
+                                if (raw.includes("/")) return raw;
+                                const d = new Date(raw);
+                                return isNaN(d.getTime()) ? raw : d.toLocaleDateString("en-GB");
+                              }
+                              case "technician":
+                                return item.technician_name || "—";
+                              case "remarks":
+                                return (
+                                  <span className="max-w-[200px] inline-block whitespace-normal break-words">
+                                    {item.remarks || "—"}
+                                  </span>
+                                );
+                              case "status":
+                                return item.status ? (
+                                  <span
+                                    className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${
+                                      item.status.toLowerCase() === "completed"
+                                        ? "bg-green-100 text-green-800"
+                                        : item.status.toLowerCase() === "cancelled"
+                                          ? "bg-red-100 text-red-800"
+                                          : "bg-gray-100 text-gray-700"
                                     }`}
-                                >
-                                  {String(item.status).toUpperCase()}
-                                </span>
-                              ) : (
-                                <span className="text-gray-400 text-sm">—</span>
-                              );
-                            case "assets_covered": {
-                              const ids: any[] =
-                                item.asset_ids || item.amc_asset_ids || [];
-                              const total = amcDetails?.amc_assets?.length ?? 0;
-                              const covered = ids.length;
-                              return covered > 0 ? (
-                                <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-light text-brand">
-                                  {covered}
-                                  {total > 0 ? ` / ${total}` : ""}
-                                </span>
-                              ) : (
-                                <span className="text-gray-400 text-sm">—</span>
-                              );
+                                  >
+                                    {String(item.status).toUpperCase()}
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-400 text-sm">—</span>
+                                );
+                              case "assets_covered": {
+                                const ids: any[] =
+                                  item.asset_ids || item.amc_asset_ids || [];
+                                const total = amcDetails?.amc_assets?.length ?? 0;
+                                const covered = ids.length;
+                                return covered > 0 ? (
+                                  <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-light text-brand">
+                                    {covered}
+                                    {total > 0 ? ` / ${total}` : ""}
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-400 text-sm">—</span>
+                                );
+                              }
+                              case "attachment":
+                                return renderVisitAttachments(item);
+                              default:
+                                return "—";
                             }
-                            case "attachment":
-                              return renderVisitAttachments(item);
-                            default:
-                              return "—";
+                          }}
+                          storageKey="amc-details-visits-flat"
+                          enableSearch
+                          searchTerm={visitsSearchTerm}
+                          onSearchChange={setVisitsSearchTerm}
+                          searchPlaceholder="Search visits..."
+                          hideTableExport
+                          emptyMessage="No visit history found."
+                          pagination
+                          pageSize={15}
+                          getItemId={(item) => String(item.id)}
+                          rowClassName={(item) =>
+                            selectedVisitId === item.id ? "bg-[#FFF8F8]" : ""
                           }
-                        }}
-                        storageKey="amc-details-visits-flat"
-                        enableSearch
-                        searchTerm={visitsSearchTerm}
-                        onSearchChange={setVisitsSearchTerm}
-                        searchPlaceholder="Search visits..."
-                        hideTableExport
-                        emptyMessage="No visit history found."
-                        pagination
-                        pageSize={15}
-                        getItemId={(item) => String(item.id)}
-                        rowClassName={(item) =>
-                          selectedVisitId === item.id ? "bg-[#FFF8F8]" : ""
-                        }
-                      />
-                    </div>
-                  ))()
+                        />
+                      </div>
+                    ))()
                 )}
               </CardContent>
             </Card>
@@ -2474,10 +2475,11 @@ export const AMCDetailsPage = () => {
                           case "status":
                             return (
                               <span
-                                className={`px-2 py-1 text-xs rounded ${item.status === "Active"
+                                className={`px-2 py-1 text-xs rounded ${
+                                  item.status === "Active"
                                     ? "bg-green-100 text-green-800"
                                     : "bg-gray-100 text-gray-800"
-                                  }`}
+                                }`}
                               >
                                 {item.status || "—"}
                               </span>
@@ -2542,10 +2544,11 @@ export const AMCDetailsPage = () => {
                           case "asset_status":
                             return (
                               <span
-                                className={`px-2 py-1 text-xs rounded ${item.asset_status === "active"
+                                className={`px-2 py-1 text-xs rounded ${
+                                  item.asset_status === "active"
                                     ? "bg-green-100 text-green-800"
                                     : "bg-gray-100 text-gray-800"
-                                  }`}
+                                }`}
                               >
                                 {item.asset_status?.replace("_", " ") || "—"}
                               </span>

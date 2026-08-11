@@ -143,10 +143,10 @@ const TrainingDashboard = () => {
     setLoading(true);
     setError(null);
     try {
-      const dialogFilterActive = filterEmail.trim() || filterTrainingName.trim();
-      const effectivePage = page;
-      // honor requested page; we already reset page elsewhere when search/filter changes
-      const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+  const dialogFilterActive = filterEmail.trim() || filterTrainingName.trim();
+  const effectivePage = page;
+   // honor requested page; we already reset page elsewhere when search/filter changes
+           const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
       let url = `${cleanBaseUrl}/trainings.json?approval=true&page=${effectivePage}`;
       // If dialog filter active, append each provided field separately (no combined OR param)
       if (dialogFilterActive) {
@@ -330,9 +330,9 @@ const TrainingDashboard = () => {
       const url = `https://${baseUrl}/trainings/${row.id}/user_trainings.json`;
       const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json: { data?: any[] } = await res.json();
-      let records: any[] = json.data || [];
-      let primary = records[0] || {};
+  const json: { data?: any[] } = await res.json();
+  let records: any[] = json.data || [];
+  let primary = records[0] || {};
 
       const pad = (n: number) => String(n).padStart(2, '0');
       const formatDateTime = (iso?: string | null) => {
@@ -456,7 +456,7 @@ const TrainingDashboard = () => {
       const grid3 = (items: string[]) => `
         <div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 32px;'>${items.join('')}</div>`;
 
-      // Personal Details (from primary)
+  // Personal Details (from primary)
       const createdBy = (primary?.created_by || {}) as any;
       const personalHtml = grid3([
         label('Name', createdBy?.name || '—'),
@@ -478,25 +478,25 @@ const TrainingDashboard = () => {
             ${label('Updated On', formatDateTime(rec?.updated_at))}
             ${label('Status', statusLabel(rec?.status))}
           </div>`;
-        // Attachments: render images as smaller thumbnails (2-column grid) for compact PDFs
+  // Attachments: render images as smaller thumbnails (2-column grid) for compact PDFs
         const atts = Array.isArray(rec?.__enhanced_attachments) ? rec.__enhanced_attachments : (Array.isArray(rec?.training_attachments) ? rec.training_attachments : []);
         const attList = atts.length
           ? atts
-            .map((a: any) =>
-              isImage(a?.url, a?.doctype)
-                ? `<div style='width:100%;margin:0;page-break-inside:avoid;padding:4px 0 4px 0;'>
+              .map((a: any) =>
+                isImage(a?.url, a?.doctype)
+  ? `<div style='width:100%;margin:0;page-break-inside:avoid;padding:4px 0 4px 0;'>
      <img src='${a?.dataUrl || a?.url || ''}' crossOrigin='anonymous' style='width:auto;max-width:160px;height:auto;max-height:110px;object-fit:contain;display:block;' />
       </div>`
-                : `<div style='font-size:12px;color:#1f2937;word-break:break-all;margin:4px 0;'>• ${a?.url || ''}</div>`
-            )
-            .join('')
+                  : `<div style='font-size:12px;color:#1f2937;word-break:break-all;margin:4px 0;'>• ${a?.url || ''}</div>`
+              )
+              .join('')
           : `<span style='color:#9ca3af;font-size:13px;'>No attachments</span>`;
         const attachments = `
           <div style='margin-top:24px;padding-top:12px;border-top:1px solid #e5e7eb;'>
             <div style='font-weight:600;margin-bottom:6px;'>Attachments</div>
       <div style='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;'>${attList}</div>
           </div>`;
-        return section('TRAINING DETAILS', body + attachments);
+  return section('TRAINING DETAILS', body + attachments);
       };
 
       container.innerHTML = `
@@ -588,7 +588,7 @@ const TrainingDashboard = () => {
           const a = document.createElement('a');
           a.href = urlObj; a.download = `training_${row.id}.pdf`; document.body.appendChild(a); a.click();
           setTimeout(() => { URL.revokeObjectURL(urlObj); document.body.removeChild(a); }, 1500);
-        } catch { }
+        } catch {}
       }
 
       document.body.removeChild(container);

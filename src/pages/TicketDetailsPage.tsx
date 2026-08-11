@@ -591,7 +591,7 @@ export const TicketDetailsPage = () => {
   const navigate = useNavigate();
   const { shouldShow } = useDynamicPermissions();
   const helpdeskEvents = useHelpdeskEvents();
-  const location = useLocation();
+   const location = useLocation();
   const [ticketData, setTicketData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -2816,7 +2816,7 @@ export const TicketDetailsPage = () => {
         const selectedStatusObj = complaintStatus.find(s => s.id.toString() === ticketMgmtFormData.selectedStatus);
         const selectedStatusName = selectedStatusObj?.name || '';
         const selectedFixedState = selectedStatusObj?.fixed_state || '';
-
+        
         if (selectedStatusName.toLowerCase().includes('hold') || selectedStatusName === 'On Hold') {
           if (!ticketMgmtFormData.release_date) {
             toast.error('Release Date is mandatory ');
@@ -2921,7 +2921,7 @@ export const TicketDetailsPage = () => {
       if (ticketMgmtFormData.additional_notes) {
         queryParams.append('additional_notes', ticketMgmtFormData.additional_notes);
       }
-
+      
       // Add hold-related fields for org_id 63
       if (orgId === 63 && ticketMgmtFormData.release_date) {
         queryParams.append('complaint_log[expected_date]', ticketMgmtFormData.release_date);
@@ -2929,7 +2929,7 @@ export const TicketDetailsPage = () => {
       if (orgId === 63 && ticketMgmtFormData.reason_for_hold) {
         queryParams.append('complaint_log[status_reason]', ticketMgmtFormData.reason_for_hold);
       }
-
+      
       // Add vendor and identification to payload
       if (ticketMgmtFormData.supplier_id) {
         queryParams.append('supplier_id', ticketMgmtFormData.supplier_id);
@@ -3194,7 +3194,7 @@ export const TicketDetailsPage = () => {
       if (orgId === 63) {
         const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status || s.id.toString() === ticketMgmtFormData?.selectedStatus);
         const isClosedStatus = currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
-
+        
         if (isClosedStatus) {
           // For org 63: validate text inputs (not selectors)
           if (!ticketClosureFormData.corrective_action_text?.trim()) {
@@ -5597,7 +5597,7 @@ export const TicketDetailsPage = () => {
                             <TableCell>{ticketData.parent_complaint.sub_category_type || '-'}</TableCell>
                             <TableCell>{ticketData.parent_complaint.created_by || '-'}</TableCell>
                             <TableCell>{ticketData.parent_complaint.assigned_to || '-'}</TableCell>
-
+                            
                           </TableRow>
                         </TableBody>
                       </Table>
@@ -5684,16 +5684,16 @@ export const TicketDetailsPage = () => {
                         </button>
                       )}
                       {shouldShow("Ticket", "update") && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
-                          onClick={handleTicketMgmtEdit}
-                          disabled={isEditingTicketMgmt || loadingComplaintStatus || loadingComplaintModes || loadingResponsiblePersons}
-                        >
-                          <Edit className="w-4 h-4 mr-1" />
-                          {(loadingComplaintStatus || loadingComplaintModes || loadingResponsiblePersons) ? 'Loading...' : 'Edit'}
-                        </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
+                        onClick={handleTicketMgmtEdit}
+                        disabled={isEditingTicketMgmt || loadingComplaintStatus || loadingComplaintModes || loadingResponsiblePersons}
+                      >
+                        <Edit className="w-4 h-4 mr-1" />
+                        {(loadingComplaintStatus || loadingComplaintModes || loadingResponsiblePersons) ? 'Loading...' : 'Edit'}
+                      </Button>
                       )}
                     </div>
                   </div>
@@ -5918,16 +5918,16 @@ export const TicketDetailsPage = () => {
                               const selectedStatusName = selectedStatusObj?.name || '';
                               return (selectedStatusName.toLowerCase().includes('hold') || selectedStatusName === 'On Hold');
                             })() && (
-                                <TextField
-                                  fullWidth
-                                  size="small"
-                                  type="date"
-                                  label={<span>Release Date<span style={{ color: 'red' }}>*</span></span>}
-                                  value={ticketMgmtFormData.release_date}
-                                  onChange={(e) => handleTicketMgmtInputChange('release_date', e.target.value)}
-                                  InputLabelProps={{ shrink: true }}
-                                />
-                              )}
+                              <TextField
+                                fullWidth
+                                size="small"
+                                type="date"
+                                label={<span>Release Date<span style={{ color: 'red' }}>*</span></span>}
+                                value={ticketMgmtFormData.release_date}
+                                onChange={(e) => handleTicketMgmtInputChange('release_date', e.target.value)}
+                                InputLabelProps={{ shrink: true }}
+                              />
+                            )}
 
                             {/* Reason for Hold - Show only for org_id 63 when status is "On Hold" */}
                             {orgId === 63 && (() => {
@@ -5935,18 +5935,18 @@ export const TicketDetailsPage = () => {
                               const selectedStatusName = selectedStatusObj?.name || '';
                               return (selectedStatusName.toLowerCase().includes('hold') || selectedStatusName === 'On Hold');
                             })() && (
-                                <TextField
-                                  fullWidth
-                                  size="small"
-                                  multiline
-                                  rows={3}
-                                  label={<span>Reason for Hold<span style={{ color: 'red' }}>*</span></span>}
-                                  placeholder="Enter reason for hold"
-                                  value={ticketMgmtFormData.reason_for_hold}
-                                  onChange={(e) => handleTicketMgmtInputChange('reason_for_hold', e.target.value)}
-                                  InputLabelProps={{ shrink: true }}
-                                />
-                              )}
+                              <TextField
+                                fullWidth
+                                size="small"
+                                multiline
+                                rows={3}
+                                label={<span>Reason for Hold<span style={{ color: 'red' }}>*</span></span>}
+                                placeholder="Enter reason for hold"
+                                value={ticketMgmtFormData.reason_for_hold}
+                                onChange={(e) => handleTicketMgmtInputChange('reason_for_hold', e.target.value)}
+                                InputLabelProps={{ shrink: true }}
+                              />
+                            )}
 
                             <FormControl fullWidth size="small">
                               <InputLabel>Severity</InputLabel>
@@ -6842,603 +6842,288 @@ export const TicketDetailsPage = () => {
 
                 {/* Ticket Closure (Figma-aligned) - Hidden for org 63 */}
                 {orgId !== 63 && (
-                  <Card className="w-full bg-white rounded-lg shadow-sm border">
-                    {/* Header */}
-                    <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                          <FileText className="w-6 h-6 text-brand" />
-                        </div>
-                        <h3 className="text-lg font-semibold uppercase text-black">
-                          Ticket Closure
-                        </h3>
-
+                <Card className="w-full bg-white rounded-lg shadow-sm border">
+                  {/* Header */}
+                  <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                        <FileText className="w-6 h-6 text-brand" />
                       </div>
-                      {shouldShow("Ticket", "update") && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
-                          onClick={handleTicketClosureEdit}
-                          disabled={isEditingTicketClosure || loadingResponsiblePersons}
-                        >
-                          <Edit className="w-4 h-4 mr-1" />
-                          {loadingResponsiblePersons ? 'Loading...' : 'Edit'}
-                        </Button>
-                      )}
+                      <h3 className="text-lg font-semibold uppercase text-black">
+                        Ticket Closure
+                      </h3>
+
                     </div>
+                    {shouldShow("Ticket", "update") && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
+                      onClick={handleTicketClosureEdit}
+                      disabled={isEditingTicketClosure || loadingResponsiblePersons}
+                    >
+                      <Edit className="w-4 h-4 mr-1" />
+                      {loadingResponsiblePersons ? 'Loading...' : 'Edit'}
+                    </Button>
+                    )}
+                  </div>
 
-                    {/* Body */}
-                    <div className="bg-[#FFFDFB] border border-t-0 border-[#D9D9D9] px-6 py-6">
-                      {!isEditingTicketClosure ? (
-                        // View Mode - Show current data as read-only
-                        <div className="space-y-6">
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            {/* Preventive Action - View Only */}
-                            <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                              <div className="flex text-[14px] leading-snug min-w-0">
-                                <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
-                                  Preventive Action -
-                                </div>
-                                <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
-                                  {ticketData?.preventive_action_template_ids && ticketData.preventive_action_template_ids.length > 0
-                                    ? (() => {
-                                      const uniqueIds = [...new Set(ticketData.preventive_action_template_ids)];
-                                      const matchedTemplates = communicationTemplates.filter(
-                                        template => uniqueIds.includes(template.id) &&
-                                          template.identifier === "Preventive Action"
-                                      );
-                                      return matchedTemplates.length > 0
-                                        ? matchedTemplates.map(t => t.identifier_action).join(', ')
-                                        : 'No preventive action selected';
-                                    })()
-                                    : 'No preventive action selected'
-                                  }
-                                </div>
+                  {/* Body */}
+                  <div className="bg-[#FFFDFB] border border-t-0 border-[#D9D9D9] px-6 py-6">
+                    {!isEditingTicketClosure ? (
+                      // View Mode - Show current data as read-only
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                          {/* Preventive Action - View Only */}
+                          <div className="bg-[#f2efea] border border-[#f2efea] p-4">
+                            <div className="flex text-[14px] leading-snug min-w-0">
+                              <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
+                                Preventive Action -
                               </div>
-                              {(ticketData?.preventive_action_template_ids && ticketData.preventive_action_template_ids.length > 0) && (
-                                <div
-                                  className="space-y-2 min-w-0 mt-4"
-                                  style={{ fontSize: "14px", fontWeight: "500" }}
-                                >
-                                  {(() => {
+                              <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
+                                {ticketData?.preventive_action_template_ids && ticketData.preventive_action_template_ids.length > 0
+                                  ? (() => {
                                     const uniqueIds = [...new Set(ticketData.preventive_action_template_ids)];
-                                    return uniqueIds.map((templateId, index) => {
-                                      const matchedTemplate = communicationTemplates.find(
-                                        template => template.id === templateId &&
-                                          template.identifier === "Preventive Action"
-                                      );
-
-                                      if (!matchedTemplate) return null;
-
-                                      return (
-                                        <div key={`preventive-action-display-${templateId}`}>
-                                          {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
-                                          {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
-                                          <div
-                                            className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
-                                            style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
-                                          >
-                                            {matchedTemplate.body || matchedTemplate.identifier_action}
-                                          </div>
-                                        </div>
-                                      );
-                                    });
-                                  })()}
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Short-term Impact - View Only */}
-                            <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                              <div className="flex text-[14px] leading-snug min-w-0">
-                                <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
-                                  Short-term Impact -
-                                </div>
-                                <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
-                                  {ticketData?.short_term_impact_template_ids && ticketData.short_term_impact_template_ids.length > 0
-                                    ? (() => {
-                                      const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
-                                      const matchedTemplates = communicationTemplates.filter(
-                                        template => uniqueIds.includes(template.id) &&
-                                          template.identifier === "Short-term Impact"
-                                      );
-                                      return matchedTemplates.length > 0
-                                        ? matchedTemplates.map(t => t.identifier_action).join(', ')
-                                        : 'No short-term impact selected';
-                                    })()
-                                    : 'No short-term impact selected'
-                                  }
-                                </div>
+                                    const matchedTemplates = communicationTemplates.filter(
+                                      template => uniqueIds.includes(template.id) &&
+                                        template.identifier === "Preventive Action"
+                                    );
+                                    return matchedTemplates.length > 0
+                                      ? matchedTemplates.map(t => t.identifier_action).join(', ')
+                                      : 'No preventive action selected';
+                                  })()
+                                  : 'No preventive action selected'
+                                }
                               </div>
-                              {(ticketData?.short_term_impact_template_ids && ticketData.short_term_impact_template_ids.length > 0) && (
-                                <div
-                                  className="space-y-2 min-w-0 mt-4"
-                                  style={{ fontSize: "14px", fontWeight: "500" }}
-                                >
-                                  {(() => {
-                                    const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
-                                    return uniqueIds.map((templateId, index) => {
-                                      const matchedTemplate = communicationTemplates.find(
-                                        template => template.id === templateId &&
-                                          template.identifier === "Short-term Impact"
-                                      );
-
-                                      if (!matchedTemplate) return null;
-
-                                      return (
-                                        <div key={`short-term-impact-display-${templateId}`}>
-                                          {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
-                                          {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
-                                          <div
-                                            className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
-                                            style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
-                                          >
-                                            {matchedTemplate.body || matchedTemplate.identifier_action}
-                                          </div>
-                                        </div>
-                                      );
-                                    });
-                                  })()}
-                                </div>
-                              )}
                             </div>
+                            {(ticketData?.preventive_action_template_ids && ticketData.preventive_action_template_ids.length > 0) && (
+                              <div
+                                className="space-y-2 min-w-0 mt-4"
+                                style={{ fontSize: "14px", fontWeight: "500" }}
+                              >
+                                {(() => {
+                                  const uniqueIds = [...new Set(ticketData.preventive_action_template_ids)];
+                                  return uniqueIds.map((templateId, index) => {
+                                    const matchedTemplate = communicationTemplates.find(
+                                      template => template.id === templateId &&
+                                        template.identifier === "Preventive Action"
+                                    );
 
-                            {/* Corrective Action - View Only */}
-                            <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                              <div className="flex text-[14px] leading-snug min-w-0">
-                                <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
-                                  Corrective Action -
-                                </div>
-                                <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
-                                  {ticketData?.corrective_action_template_ids && ticketData.corrective_action_template_ids.length > 0
-                                    ? (() => {
-                                      const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
-                                      const matchedTemplates = communicationTemplates.filter(
-                                        template => uniqueIds.includes(template.id) &&
-                                          template.identifier === "Corrective Action"
-                                      );
-                                      return matchedTemplates.length > 0
-                                        ? matchedTemplates.map(t => t.identifier_action).join(', ')
-                                        : 'No corrective action selected';
-                                    })()
-                                    : 'No corrective action selected'
-                                  }
-                                </div>
+                                    if (!matchedTemplate) return null;
+
+                                    return (
+                                      <div key={`preventive-action-display-${templateId}`}>
+                                        {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
+                                        {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                        <div
+                                          className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
+                                          style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+                                        >
+                                          {matchedTemplate.body || matchedTemplate.identifier_action}
+                                        </div>
+                                      </div>
+                                    );
+                                  });
+                                })()}
                               </div>
-                              {(ticketData?.corrective_action_template_ids && ticketData.corrective_action_template_ids.length > 0) && (
-                                <div
-                                  className="space-y-2 min-w-0 mt-4"
-                                  style={{ fontSize: "14px", fontWeight: "500" }}
-                                >
-                                  {(() => {
-                                    const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
-                                    return uniqueIds.map((templateId, index) => {
-                                      const matchedTemplate = communicationTemplates.find(
-                                        template => template.id === templateId &&
-                                          template.identifier === "Corrective Action"
-                                      );
-
-                                      if (!matchedTemplate) return null;
-
-                                      return (
-                                        <div key={`corrective-action-display-${templateId}`}>
-                                          {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
-                                          {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
-                                          <div
-                                            className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
-                                            style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
-                                          >
-                                            {matchedTemplate.body || matchedTemplate.identifier_action}
-                                          </div>
-                                        </div>
-                                      );
-                                    });
-                                  })()}
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Long-term Impact - View Only */}
-                            <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                              <div className="flex text-[14px] leading-snug min-w-0">
-                                <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
-                                  Long-term Impact -
-                                </div>
-                                <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
-                                  {ticketData?.long_term_impact_template_ids && ticketData.long_term_impact_template_ids.length > 0
-                                    ? (() => {
-                                      const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
-                                      const matchedTemplates = communicationTemplates.filter(
-                                        template => uniqueIds.includes(template.id) &&
-                                          template.identifier === "Long-term Impact"
-                                      );
-                                      return matchedTemplates.length > 0
-                                        ? matchedTemplates.map(t => t.identifier_action).join(', ')
-                                        : 'No long-term impact selected';
-                                    })()
-                                    : 'No long-term impact selected'
-                                  }
-                                </div>
-                              </div>
-                              {(ticketData?.long_term_impact_template_ids && ticketData.long_term_impact_template_ids.length > 0) && (
-                                <div
-                                  className="space-y-2 min-w-0 mt-4"
-                                  style={{ fontSize: "14px", fontWeight: "500" }}
-                                >
-                                  {(() => {
-                                    const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
-                                    return uniqueIds.map((templateId, index) => {
-                                      const matchedTemplate = communicationTemplates.find(
-                                        template => template.id === templateId &&
-                                          template.identifier === "Long-term Impact"
-                                      );
-
-                                      if (!matchedTemplate) return null;
-
-                                      return (
-                                        <div key={`long-term-impact-display-${templateId}`}>
-                                          {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
-                                          {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
-                                          <div
-                                            className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
-                                            style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
-                                          >
-                                            {matchedTemplate.body || matchedTemplate.identifier_action}
-                                          </div>
-                                        </div>
-                                      );
-                                    });
-                                  })()}
-                                </div>
-                              )}
-                            </div>
+                            )}
                           </div>
 
-                          {/* Bottom Row: Review Date & Responsible Person - View Only */}
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <div className="flex items-center text-[14px]">
-                              <span className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">Review Date</span>
-                              <span className="font-semibold text-[#1A1A1A]">
-                                {ticketData.review_tracking ? ticketData.review_tracking : '-'}
-                              </span>
+                          {/* Short-term Impact - View Only */}
+                          <div className="bg-[#f2efea] border border-[#f2efea] p-4">
+                            <div className="flex text-[14px] leading-snug min-w-0">
+                              <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
+                                Short-term Impact -
+                              </div>
+                              <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
+                                {ticketData?.short_term_impact_template_ids && ticketData.short_term_impact_template_ids.length > 0
+                                  ? (() => {
+                                    const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
+                                    const matchedTemplates = communicationTemplates.filter(
+                                      template => uniqueIds.includes(template.id) &&
+                                        template.identifier === "Short-term Impact"
+                                    );
+                                    return matchedTemplates.length > 0
+                                      ? matchedTemplates.map(t => t.identifier_action).join(', ')
+                                      : 'No short-term impact selected';
+                                  })()
+                                  : 'No short-term impact selected'
+                                }
+                              </div>
                             </div>
-                            <div className="flex items-center text-[14px]">
-                              <span className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">Responsible Person</span>
-                              <span className="font-semibold text-[#1A1A1A]">
-                                {ticketData.responsible_person ? ticketData.responsible_person : '-'}
-                              </span>
+                            {(ticketData?.short_term_impact_template_ids && ticketData.short_term_impact_template_ids.length > 0) && (
+                              <div
+                                className="space-y-2 min-w-0 mt-4"
+                                style={{ fontSize: "14px", fontWeight: "500" }}
+                              >
+                                {(() => {
+                                  const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
+                                  return uniqueIds.map((templateId, index) => {
+                                    const matchedTemplate = communicationTemplates.find(
+                                      template => template.id === templateId &&
+                                        template.identifier === "Short-term Impact"
+                                    );
+
+                                    if (!matchedTemplate) return null;
+
+                                    return (
+                                      <div key={`short-term-impact-display-${templateId}`}>
+                                        {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
+                                        {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                        <div
+                                          className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
+                                          style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+                                        >
+                                          {matchedTemplate.body || matchedTemplate.identifier_action}
+                                        </div>
+                                      </div>
+                                    );
+                                  });
+                                })()}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Corrective Action - View Only */}
+                          <div className="bg-[#f2efea] border border-[#f2efea] p-4">
+                            <div className="flex text-[14px] leading-snug min-w-0">
+                              <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
+                                Corrective Action -
+                              </div>
+                              <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
+                                {ticketData?.corrective_action_template_ids && ticketData.corrective_action_template_ids.length > 0
+                                  ? (() => {
+                                    const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
+                                    const matchedTemplates = communicationTemplates.filter(
+                                      template => uniqueIds.includes(template.id) &&
+                                        template.identifier === "Corrective Action"
+                                    );
+                                    return matchedTemplates.length > 0
+                                      ? matchedTemplates.map(t => t.identifier_action).join(', ')
+                                      : 'No corrective action selected';
+                                  })()
+                                  : 'No corrective action selected'
+                                }
+                              </div>
                             </div>
+                            {(ticketData?.corrective_action_template_ids && ticketData.corrective_action_template_ids.length > 0) && (
+                              <div
+                                className="space-y-2 min-w-0 mt-4"
+                                style={{ fontSize: "14px", fontWeight: "500" }}
+                              >
+                                {(() => {
+                                  const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
+                                  return uniqueIds.map((templateId, index) => {
+                                    const matchedTemplate = communicationTemplates.find(
+                                      template => template.id === templateId &&
+                                        template.identifier === "Corrective Action"
+                                    );
+
+                                    if (!matchedTemplate) return null;
+
+                                    return (
+                                      <div key={`corrective-action-display-${templateId}`}>
+                                        {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
+                                        {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                        <div
+                                          className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
+                                          style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+                                        >
+                                          {matchedTemplate.body || matchedTemplate.identifier_action}
+                                        </div>
+                                      </div>
+                                    );
+                                  });
+                                })()}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Long-term Impact - View Only */}
+                          <div className="bg-[#f2efea] border border-[#f2efea] p-4">
+                            <div className="flex text-[14px] leading-snug min-w-0">
+                              <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
+                                Long-term Impact -
+                              </div>
+                              <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
+                                {ticketData?.long_term_impact_template_ids && ticketData.long_term_impact_template_ids.length > 0
+                                  ? (() => {
+                                    const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
+                                    const matchedTemplates = communicationTemplates.filter(
+                                      template => uniqueIds.includes(template.id) &&
+                                        template.identifier === "Long-term Impact"
+                                    );
+                                    return matchedTemplates.length > 0
+                                      ? matchedTemplates.map(t => t.identifier_action).join(', ')
+                                      : 'No long-term impact selected';
+                                  })()
+                                  : 'No long-term impact selected'
+                                }
+                              </div>
+                            </div>
+                            {(ticketData?.long_term_impact_template_ids && ticketData.long_term_impact_template_ids.length > 0) && (
+                              <div
+                                className="space-y-2 min-w-0 mt-4"
+                                style={{ fontSize: "14px", fontWeight: "500" }}
+                              >
+                                {(() => {
+                                  const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
+                                  return uniqueIds.map((templateId, index) => {
+                                    const matchedTemplate = communicationTemplates.find(
+                                      template => template.id === templateId &&
+                                        template.identifier === "Long-term Impact"
+                                    );
+
+                                    if (!matchedTemplate) return null;
+
+                                    return (
+                                      <div key={`long-term-impact-display-${templateId}`}>
+                                        {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
+                                        {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                        <div
+                                          className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
+                                          style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+                                        >
+                                          {matchedTemplate.body || matchedTemplate.identifier_action}
+                                        </div>
+                                      </div>
+                                    );
+                                  });
+                                })()}
+                              </div>
+                            )}
                           </div>
                         </div>
-                      ) : (
-                        // Edit Mode - Show form
-                        <form
-                          onSubmit={(e) => {
-                            e.preventDefault();
-                            handleTicketClosureSubmit();
-                          }}
-                          className="space-y-6"
-                        >
-                          {/* Two row / two column panels */}
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            {/* Preventive Action */}
-                            <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                              <div className="relative w-full">
-                                {/* Floating label on border */}
-                                <label
-                                  style={{
-                                    position: "absolute",
-                                    top: "-10px",
-                                    left: "12px",
-                                    background: "#fff",
-                                    padding: "0 6px",
-                                    fontWeight: 500,
-                                    fontSize: "14px",
-                                    color: "#1A1A1A",
-                                    zIndex: 1,
-                                  }}
-                                >
-                                  Preventive Action{orgId === 63 && (() => {
-                                    const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                                    return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
-                                  })() && <span style={{ color: 'red' }}> *</span>}
-                                </label>
 
-                                {/* For org 63 + closed: show TEXT INPUT; for others: show Select */}
-                                {orgId === 63 && (() => {
-                                  const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                                  return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
-                                })() ? (
-                                  <textarea
-                                    value={ticketClosureFormData.preventive_action_text || ''}
-                                    onChange={(e) => handleTicketClosureInputChange('preventive_action_text', e.target.value)}
-                                    placeholder="Enter Preventive Action"
-                                    className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[100px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
-                                  />
-                                ) : (
-                                  <Select
-                                    value={isEditingTicketClosure ? getPreventiveActionFormValues() : getPreventiveActionValues()}
-                                    onChange={(selectedOptions) => {
-                                      handlePreventiveActionFormChange(selectedOptions as Array<{ value: number; label: string }>);
-                                    }}
-                                    options={communicationTemplates
-                                      .filter((t) => t.identifier === "Preventive Action" && t.active === true)
-                                      .map((t) => ({
-                                        value: t.id,
-                                        label: t.identifier_action,
-                                      }))}
-                                    placeholder="Select Preventive Action"
-                                    styles={customStyles}
-                                    components={{ MultiValue: CustomMultiValue }}
-                                    isMulti
-                                    closeMenuOnSelect={false}
-                                    isClearable
-                                  />
-                                )}
-                              </div>
-
-                              {/* Show template descriptions only for non-org-63 (selector mode) */}
-                              {!(orgId === 63 && (() => {
-                                const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                                return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
-                              })()) && (
-                                  <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
-                                    {(() => {
-                                      // Use form data if in edit mode, otherwise use ticket data
-                                      const templateIds = isEditingTicketClosure
-                                        ? (ticketClosureFormData?.preventive_action_template_ids || [])
-                                        : (ticketData?.preventive_action_template_ids || []);
-
-                                      if (!templateIds || templateIds.length === 0) {
-                                        return 'No preventive action description available';
-                                      }
-
-                                      const uniqueIds = [...new Set(templateIds)];
-                                      const matchedTemplates = communicationTemplates.filter(
-                                        template => uniqueIds.includes(template.id) &&
-                                          template.identifier === "Preventive Action"
-                                      );
-
-                                      if (matchedTemplates.length === 0) {
-                                        return 'No preventive action description available';
-                                      }
-
-                                      return matchedTemplates.map((template, index) => (
-                                        <div key={`preventive-${template.id}`}>
-                                          {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
-                                          <div>{template.body || template.identifier_action}</div>
-                                        </div>
-                                      ));
-                                    })()}
-                                  </div>
-                                )}
-                            </div>
-
-                            {/* Short-term Impact */}
-                            <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                              <div className="relative w-full">
-                                {/* Floating label on border */}
-                                <label
-                                  style={{
-                                    position: "absolute",
-                                    top: "-10px",
-                                    left: "12px",
-                                    background: "#fff",
-                                    padding: "0 6px",
-                                    fontWeight: 500,
-                                    fontSize: "14px",
-                                    color: "#1A1A1A",
-                                    zIndex: 1,
-                                  }}
-                                >
-                                  Short-term Impact
-                                </label>
-
-                                {/* React Select */}
-                                <Select
-                                  value={isEditingTicketClosure ? getShortTermImpactFormValues() : getShortTermImpactValues()}
-                                  onChange={(selectedOptions) => {
-                                    handleShortTermImpactFormChange(selectedOptions as Array<{ value: number; label: string }>);
-                                  }}
-                                  options={communicationTemplates
-                                    .filter((t) => t.identifier === "Short-term Impact" && t.active === true)
-                                    .map((t) => ({
-                                      value: t.id,
-                                      label: t.identifier_action,
-                                    }))}
-                                  placeholder="Select Short-term Impact"
-                                  styles={customStyles}
-                                  components={{ MultiValue: CustomMultiValue }}
-                                  isMulti
-                                  closeMenuOnSelect={false}
-                                  isClearable
-                                />
-                              </div>
-
-                              <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
-                                {(() => {
-                                  if (!ticketData?.short_term_impact_template_ids || ticketData.short_term_impact_template_ids.length === 0) {
-                                    return 'No short-term impact description available';
-                                  }
-
-                                  const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
-                                  const matchedTemplates = communicationTemplates.filter(
-                                    template => uniqueIds.includes(template.id) &&
-                                      template.identifier === "Short-term Impact"
-                                  );
-
-                                  if (matchedTemplates.length === 0) {
-                                    return 'No short-term impact description available';
-                                  }
-
-                                  return matchedTemplates.map((template, index) => (
-                                    <div key={`short-term-${template.id}`}>
-                                      {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
-                                      <div>{template.body || template.identifier_action}</div>
-                                    </div>
-                                  ));
-                                })()}
-                              </div>
-                            </div>
-
-                            {/* Corrective Action */}
-                            <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                              <div className="relative w-full">
-                                {/* Floating label on border */}
-                                <label
-                                  style={{
-                                    position: "absolute",
-                                    top: "-10px",
-                                    left: "12px",
-                                    background: "#fff",
-                                    padding: "0 6px",
-                                    fontWeight: 500,
-                                    fontSize: "14px",
-                                    color: "#1A1A1A",
-                                    zIndex: 1,
-                                  }}
-                                >
-                                  Corrective Action{orgId === 63 && (() => {
-                                    const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                                    return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
-                                  })() && <span style={{ color: 'red' }}> *</span>}
-                                </label>
-
-                                {/* React Select or Textarea */}
-                                {orgId === 63 && (() => {
-                                  const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                                  return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
-                                })() ? (
-                                  <textarea
-                                    className="w-full border border-gray-300 rounded-md p-2 text-sm min-h-[80px] resize-vertical"
-                                    placeholder="Enter Corrective Action"
-                                    value={ticketClosureFormData.corrective_action_text || ''}
-                                    onChange={(e) => handleTicketClosureInputChange('corrective_action_text', e.target.value)}
-                                  />
-                                ) : (
-                                  <Select
-                                    value={isEditingTicketClosure ? getCorrectiveActionFormValues() : getCorrectiveActionValues()}
-                                    onChange={(selectedOptions) => {
-                                      handleCorrectiveActionFormChange(selectedOptions as Array<{ value: number; label: string }>);
-                                    }}
-                                    options={communicationTemplates
-                                      .filter((t) => t.identifier === "Corrective Action" && t.active === true)
-                                      .map((t) => ({
-                                        value: t.id,
-                                        label: t.identifier_action,
-                                      }))}
-                                    placeholder="Select Corrective Action"
-                                    styles={customStyles}
-                                    components={{ MultiValue: CustomMultiValue }}
-                                    isMulti
-                                    closeMenuOnSelect={false}
-                                    isClearable
-                                  />
-                                )}
-                              </div>
-
-                              {!(orgId === 63 && (() => {
-                                const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                                return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
-                              })()) && (
-                                  <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
-                                    {(() => {
-                                      if (!ticketData?.corrective_action_template_ids || ticketData.corrective_action_template_ids.length === 0) {
-                                        return 'No corrective action description available';
-                                      }
-
-                                      const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
-                                      const matchedTemplates = communicationTemplates.filter(
-                                        template => uniqueIds.includes(template.id) &&
-                                          template.identifier === "Corrective Action"
-                                      );
-
-                                      if (matchedTemplates.length === 0) {
-                                        return 'No corrective action description available';
-                                      }
-
-                                      return matchedTemplates.map((template, index) => (
-                                        <div key={`corrective-${template.id}`}>
-                                          {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
-                                          <div>{template.body || template.identifier_action}</div>
-                                        </div>
-                                      ));
-                                    })()}
-                                  </div>
-                                )}
-                            </div>
-
-                            {/* Long-term Impact */}
-                            <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                              <div className="relative w-full">
-                                {/* Floating label on border */}
-                                <label
-                                  style={{
-                                    position: "absolute",
-                                    top: "-10px",
-                                    left: "12px",
-                                    background: "#fff",
-                                    padding: "0 6px",
-                                    fontWeight: 500,
-                                    fontSize: "14px",
-                                    color: "#1A1A1A",
-                                    zIndex: 1,
-                                  }}
-                                >
-                                  Long-term Impact
-                                </label>
-
-                                {/* React Select */}
-                                <Select
-                                  value={isEditingTicketClosure ? getLongTermImpactFormValues() : getLongTermImpactValues()}
-                                  onChange={(selectedOptions) => {
-                                    handleLongTermImpactFormChange(selectedOptions as Array<{ value: number; label: string }>);
-                                  }}
-                                  options={communicationTemplates
-                                    .filter((t) => t.identifier === "Long-term Impact" && t.active === true)
-                                    .map((t) => ({
-                                      value: t.id,
-                                      label: t.identifier_action,
-                                    }))}
-                                  placeholder="Select Long-term Impact"
-                                  styles={customStyles}
-                                  components={{ MultiValue: CustomMultiValue }}
-                                  isMulti
-                                  closeMenuOnSelect={false}
-                                  isClearable
-                                />
-                              </div>
-
-                              <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
-                                {(() => {
-                                  if (!ticketData?.long_term_impact_template_ids || ticketData.long_term_impact_template_ids.length === 0) {
-                                    return 'No long-term impact description available';
-                                  }
-
-                                  const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
-                                  const matchedTemplates = communicationTemplates.filter(
-                                    template => uniqueIds.includes(template.id) &&
-                                      template.identifier === "Long-term Impact"
-                                  );
-
-                                  if (matchedTemplates.length === 0) {
-                                    return 'No long-term impact description available';
-                                  }
-
-                                  return matchedTemplates.map((template, index) => (
-                                    <div key={`long-term-${template.id}`}>
-                                      {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
-                                      <div>{template.body || template.identifier_action}</div>
-                                    </div>
-                                  ));
-                                })()}
-                              </div>
-                            </div>
+                        {/* Bottom Row: Review Date & Responsible Person - View Only */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                          <div className="flex items-center text-[14px]">
+                            <span className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">Review Date</span>
+                            <span className="font-semibold text-[#1A1A1A]">
+                              {ticketData.review_tracking ? ticketData.review_tracking : '-'}
+                            </span>
                           </div>
-
-                          {/* Bottom Row: Review Date & Responsible Person */}
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+                          <div className="flex items-center text-[14px]">
+                            <span className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">Responsible Person</span>
+                            <span className="font-semibold text-[#1A1A1A]">
+                              {ticketData.responsible_person ? ticketData.responsible_person : '-'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      // Edit Mode - Show form
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleTicketClosureSubmit();
+                        }}
+                        className="space-y-6"
+                      >
+                        {/* Two row / two column panels */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                          {/* Preventive Action */}
+                          <div className="bg-[#f2efea] border border-[#f2efea] p-4">
                             <div className="relative w-full">
                               {/* Floating label on border */}
                               <label
@@ -7454,135 +7139,450 @@ export const TicketDetailsPage = () => {
                                   zIndex: 1,
                                 }}
                               >
-                                Review Date
+                                Preventive Action{orgId === 63 && (() => {
+                                  const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
+                                  return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                                })() && <span style={{ color: 'red' }}> *</span>}
                               </label>
 
-                              <div style={{ minWidth: '240px' }}>
-                                <TextField
-                                  fullWidth
-                                  size="small"
-                                  type="date"
-                                  placeholder="Select review date"
-                                  value={ticketClosureFormData.review_tracking || ''}
-                                  onChange={(e) => {
-                                    console.log('Review date changed:', e.target.value);
-                                    handleTicketClosureInputChange('review_tracking', e.target.value);
-                                  }}
-                                  InputLabelProps={{
-                                    shrink: true,
-                                    style: { display: 'none' } // Hide default label since we have floating label
-                                  }}
-                                  inputProps={{
-                                    style: { fontSize: '14px' }
-                                  }}
-                                  sx={{
-                                    '& .MuiInputBase-root': {
-                                      backgroundColor: '#F2F2F2',
-                                      borderRadius: '4px',
-                                      fontSize: '14px',
-                                      minHeight: '40px',
-                                    },
-                                    '& .MuiOutlinedInput-root': {
-                                      '& fieldset': {
-                                        borderColor: '#DAD7D0',
-                                        borderWidth: '1px',
-                                      },
-                                      '&:hover fieldset': {
-                                        borderColor: 'var(--color-primary)',
-                                      },
-                                      '&.Mui-focused fieldset': {
-                                        borderColor: 'var(--color-primary)',
-                                      },
-                                    },
-                                    '& .MuiInputBase-input': {
-                                      fontSize: '14px',
-                                      padding: '10px 12px',
-                                    },
-                                  }}
+                              {/* For org 63 + closed: show TEXT INPUT; for others: show Select */}
+                              {orgId === 63 && (() => {
+                                const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
+                                return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                              })() ? (
+                                <textarea
+                                  value={ticketClosureFormData.preventive_action_text || ''}
+                                  onChange={(e) => handleTicketClosureInputChange('preventive_action_text', e.target.value)}
+                                  placeholder="Enter Preventive Action"
+                                  className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[100px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
                                 />
-                              </div>
-                            </div>
-                            <div>
-                              <div className="relative w-full">
-                                {/* Floating label on border */}
-                                <label
-                                  style={{
-                                    position: "absolute",
-                                    top: "-10px",
-                                    left: "12px",
-                                    background: "#fff",
-                                    padding: "0 6px",
-                                    fontWeight: 500,
-                                    fontSize: "14px",
-                                    color: "#1A1A1A",
-                                    zIndex: 1,
-                                  }}
-                                >
-                                  Responsible Person
-                                </label>
-
-                                {/* React Select */}
+                              ) : (
                                 <Select
-                                  value={(() => {
-                                    const value = isEditingTicketClosure ? getResponsiblePersonFormValue() : getResponsiblePersonValue();
-                                    if (!value) return null;
-                                    const matchedPerson = responsiblePersons.find(
-                                      p => p.id.toString() === value
-                                    );
-                                    return matchedPerson ? {
-                                      value: matchedPerson.id,
-                                      label: `${matchedPerson.full_name}${matchedPerson.employee_type ? ` (${matchedPerson.employee_type})` : ''}`
-                                    } : null;
-                                  })()}
-                                  onChange={(selectedOption) => {
-                                    if (selectedOption && 'value' in selectedOption) {
-                                      handleResponsiblePersonFormChange(selectedOption.value.toString());
-                                    }
+                                  value={isEditingTicketClosure ? getPreventiveActionFormValues() : getPreventiveActionValues()}
+                                  onChange={(selectedOptions) => {
+                                    handlePreventiveActionFormChange(selectedOptions as Array<{ value: number; label: string }>);
                                   }}
-                                  options={responsiblePersons.map((person) => ({
-                                    value: person.id,
-                                    label: `${person.full_name}${person.employee_type ? ` (${person.employee_type})` : ''}`,
-                                  }))}
-                                  placeholder={loadingResponsiblePersons ? "Loading..." : "Select Responsible Person"}
-                                  styles={singleSelectStyles}
-                                  isDisabled={loadingResponsiblePersons}
+                                  options={communicationTemplates
+                                    .filter((t) => t.identifier === "Preventive Action" && t.active === true)
+                                    .map((t) => ({
+                                      value: t.id,
+                                      label: t.identifier_action,
+                                    }))}
+                                  placeholder="Select Preventive Action"
+                                  styles={customStyles}
+                                  components={{ MultiValue: CustomMultiValue }}
+                                  isMulti
+                                  closeMenuOnSelect={false}
                                   isClearable
                                 />
-                              </div>
+                              )}
+                            </div>
 
-                              {/* Show current value if it doesn't match any option */}
-                              {ticketData.responsible_person &&
-                                !responsiblePersons.find(p => p.full_name === ticketData.responsible_person) && (
-                                  <div className="mt-1 text-[11px] text-[#6B6B6B] italic">
-                                    Current: {ticketData.responsible_person}
+                            {/* Show template descriptions only for non-org-63 (selector mode) */}
+                            {!(orgId === 63 && (() => {
+                              const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
+                              return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                            })()) && (
+                            <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
+                              {(() => {
+                                // Use form data if in edit mode, otherwise use ticket data
+                                const templateIds = isEditingTicketClosure
+                                  ? (ticketClosureFormData?.preventive_action_template_ids || [])
+                                  : (ticketData?.preventive_action_template_ids || []);
+
+                                if (!templateIds || templateIds.length === 0) {
+                                  return 'No preventive action description available';
+                                }
+
+                                const uniqueIds = [...new Set(templateIds)];
+                                const matchedTemplates = communicationTemplates.filter(
+                                  template => uniqueIds.includes(template.id) &&
+                                    template.identifier === "Preventive Action"
+                                );
+
+                                if (matchedTemplates.length === 0) {
+                                  return 'No preventive action description available';
+                                }
+
+                                return matchedTemplates.map((template, index) => (
+                                  <div key={`preventive-${template.id}`}>
+                                    {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                    <div>{template.body || template.identifier_action}</div>
                                   </div>
-                                )}
+                                ));
+                              })()}
+                            </div>
+                            )}
+                          </div>
+
+                          {/* Short-term Impact */}
+                          <div className="bg-[#f2efea] border border-[#f2efea] p-4">
+                            <div className="relative w-full">
+                              {/* Floating label on border */}
+                              <label
+                                style={{
+                                  position: "absolute",
+                                  top: "-10px",
+                                  left: "12px",
+                                  background: "#fff",
+                                  padding: "0 6px",
+                                  fontWeight: 500,
+                                  fontSize: "14px",
+                                  color: "#1A1A1A",
+                                  zIndex: 1,
+                                }}
+                              >
+                                Short-term Impact
+                              </label>
+
+                              {/* React Select */}
+                              <Select
+                                value={isEditingTicketClosure ? getShortTermImpactFormValues() : getShortTermImpactValues()}
+                                onChange={(selectedOptions) => {
+                                  handleShortTermImpactFormChange(selectedOptions as Array<{ value: number; label: string }>);
+                                }}
+                                options={communicationTemplates
+                                  .filter((t) => t.identifier === "Short-term Impact" && t.active === true)
+                                  .map((t) => ({
+                                    value: t.id,
+                                    label: t.identifier_action,
+                                  }))}
+                                placeholder="Select Short-term Impact"
+                                styles={customStyles}
+                                components={{ MultiValue: CustomMultiValue }}
+                                isMulti
+                                closeMenuOnSelect={false}
+                                isClearable
+                              />
+                            </div>
+
+                            <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
+                              {(() => {
+                                if (!ticketData?.short_term_impact_template_ids || ticketData.short_term_impact_template_ids.length === 0) {
+                                  return 'No short-term impact description available';
+                                }
+
+                                const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
+                                const matchedTemplates = communicationTemplates.filter(
+                                  template => uniqueIds.includes(template.id) &&
+                                    template.identifier === "Short-term Impact"
+                                );
+
+                                if (matchedTemplates.length === 0) {
+                                  return 'No short-term impact description available';
+                                }
+
+                                return matchedTemplates.map((template, index) => (
+                                  <div key={`short-term-${template.id}`}>
+                                    {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                    <div>{template.body || template.identifier_action}</div>
+                                  </div>
+                                ));
+                              })()}
                             </div>
                           </div>
 
-                          {/* Action Buttons */}
-                          <div className="flex items-center gap-3 justify-end mt-6">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => setIsEditingTicketClosure(false)}
-                              disabled={submittingTicketClosure}
-                              className="border border-gray-300 text-gray-700 hover:bg-gray-50"
-                            >
-                              Cancel
-                            </Button>
-                            <Button
-                              type="submit"
-                              disabled={submittingTicketClosure}
-                              className="bg-brand hover:bg-brand-hover text-white px-8"
-                            >
-                              {submittingTicketClosure ? 'Saving...' : 'Submit'}
-                            </Button>
+                          {/* Corrective Action */}
+                          <div className="bg-[#f2efea] border border-[#f2efea] p-4">
+                            <div className="relative w-full">
+                              {/* Floating label on border */}
+                              <label
+                                style={{
+                                  position: "absolute",
+                                  top: "-10px",
+                                  left: "12px",
+                                  background: "#fff",
+                                  padding: "0 6px",
+                                  fontWeight: 500,
+                                  fontSize: "14px",
+                                  color: "#1A1A1A",
+                                  zIndex: 1,
+                                }}
+                              >
+                                Corrective Action{orgId === 63 && (() => {
+                                  const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
+                                  return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                                })() && <span style={{ color: 'red' }}> *</span>}
+                              </label>
+
+                              {/* React Select or Textarea */}
+                              {orgId === 63 && (() => {
+                                const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
+                                return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                              })() ? (
+                                <textarea
+                                  className="w-full border border-gray-300 rounded-md p-2 text-sm min-h-[80px] resize-vertical"
+                                  placeholder="Enter Corrective Action"
+                                  value={ticketClosureFormData.corrective_action_text || ''}
+                                  onChange={(e) => handleTicketClosureInputChange('corrective_action_text', e.target.value)}
+                                />
+                              ) : (
+                                <Select
+                                  value={isEditingTicketClosure ? getCorrectiveActionFormValues() : getCorrectiveActionValues()}
+                                  onChange={(selectedOptions) => {
+                                    handleCorrectiveActionFormChange(selectedOptions as Array<{ value: number; label: string }>);
+                                  }}
+                                  options={communicationTemplates
+                                    .filter((t) => t.identifier === "Corrective Action" && t.active === true)
+                                    .map((t) => ({
+                                      value: t.id,
+                                      label: t.identifier_action,
+                                    }))}
+                                  placeholder="Select Corrective Action"
+                                  styles={customStyles}
+                                  components={{ MultiValue: CustomMultiValue }}
+                                  isMulti
+                                  closeMenuOnSelect={false}
+                                  isClearable
+                                />
+                              )}
+                            </div>
+
+                            {!(orgId === 63 && (() => {
+                              const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
+                              return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                            })()) && (
+                            <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
+                              {(() => {
+                                if (!ticketData?.corrective_action_template_ids || ticketData.corrective_action_template_ids.length === 0) {
+                                  return 'No corrective action description available';
+                                }
+
+                                const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
+                                const matchedTemplates = communicationTemplates.filter(
+                                  template => uniqueIds.includes(template.id) &&
+                                    template.identifier === "Corrective Action"
+                                );
+
+                                if (matchedTemplates.length === 0) {
+                                  return 'No corrective action description available';
+                                }
+
+                                return matchedTemplates.map((template, index) => (
+                                  <div key={`corrective-${template.id}`}>
+                                    {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                    <div>{template.body || template.identifier_action}</div>
+                                  </div>
+                                ));
+                              })()}
+                            </div>
+                            )}
                           </div>
-                        </form>
-                      )}
-                    </div>
-                  </Card>
+
+                          {/* Long-term Impact */}
+                          <div className="bg-[#f2efea] border border-[#f2efea] p-4">
+                            <div className="relative w-full">
+                              {/* Floating label on border */}
+                              <label
+                                style={{
+                                  position: "absolute",
+                                  top: "-10px",
+                                  left: "12px",
+                                  background: "#fff",
+                                  padding: "0 6px",
+                                  fontWeight: 500,
+                                  fontSize: "14px",
+                                  color: "#1A1A1A",
+                                  zIndex: 1,
+                                }}
+                              >
+                                Long-term Impact
+                              </label>
+
+                              {/* React Select */}
+                              <Select
+                                value={isEditingTicketClosure ? getLongTermImpactFormValues() : getLongTermImpactValues()}
+                                onChange={(selectedOptions) => {
+                                  handleLongTermImpactFormChange(selectedOptions as Array<{ value: number; label: string }>);
+                                }}
+                                options={communicationTemplates
+                                  .filter((t) => t.identifier === "Long-term Impact" && t.active === true)
+                                  .map((t) => ({
+                                    value: t.id,
+                                    label: t.identifier_action,
+                                  }))}
+                                placeholder="Select Long-term Impact"
+                                styles={customStyles}
+                                components={{ MultiValue: CustomMultiValue }}
+                                isMulti
+                                closeMenuOnSelect={false}
+                                isClearable
+                              />
+                            </div>
+
+                            <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
+                              {(() => {
+                                if (!ticketData?.long_term_impact_template_ids || ticketData.long_term_impact_template_ids.length === 0) {
+                                  return 'No long-term impact description available';
+                                }
+
+                                const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
+                                const matchedTemplates = communicationTemplates.filter(
+                                  template => uniqueIds.includes(template.id) &&
+                                    template.identifier === "Long-term Impact"
+                                );
+
+                                if (matchedTemplates.length === 0) {
+                                  return 'No long-term impact description available';
+                                }
+
+                                return matchedTemplates.map((template, index) => (
+                                  <div key={`long-term-${template.id}`}>
+                                    {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                    <div>{template.body || template.identifier_action}</div>
+                                  </div>
+                                ));
+                              })()}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Bottom Row: Review Date & Responsible Person */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+                          <div className="relative w-full">
+                            {/* Floating label on border */}
+                            <label
+                              style={{
+                                position: "absolute",
+                                top: "-10px",
+                                left: "12px",
+                                background: "#fff",
+                                padding: "0 6px",
+                                fontWeight: 500,
+                                fontSize: "14px",
+                                color: "#1A1A1A",
+                                zIndex: 1,
+                              }}
+                            >
+                              Review Date
+                            </label>
+
+                            <div style={{ minWidth: '240px' }}>
+                              <TextField
+                                fullWidth
+                                size="small"
+                                type="date"
+                                placeholder="Select review date"
+                                value={ticketClosureFormData.review_tracking || ''}
+                                onChange={(e) => {
+                                  console.log('Review date changed:', e.target.value);
+                                  handleTicketClosureInputChange('review_tracking', e.target.value);
+                                }}
+                                InputLabelProps={{
+                                  shrink: true,
+                                  style: { display: 'none' } // Hide default label since we have floating label
+                                }}
+                                inputProps={{
+                                  style: { fontSize: '14px' }
+                                }}
+                                sx={{
+                                  '& .MuiInputBase-root': {
+                                    backgroundColor: '#F2F2F2',
+                                    borderRadius: '4px',
+                                    fontSize: '14px',
+                                    minHeight: '40px',
+                                  },
+                                  '& .MuiOutlinedInput-root': {
+                                    '& fieldset': {
+                                      borderColor: '#DAD7D0',
+                                      borderWidth: '1px',
+                                    },
+                                    '&:hover fieldset': {
+                                      borderColor: 'var(--color-primary)',
+                                    },
+                                    '&.Mui-focused fieldset': {
+                                      borderColor: 'var(--color-primary)',
+                                    },
+                                  },
+                                  '& .MuiInputBase-input': {
+                                    fontSize: '14px',
+                                    padding: '10px 12px',
+                                  },
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="relative w-full">
+                              {/* Floating label on border */}
+                              <label
+                                style={{
+                                  position: "absolute",
+                                  top: "-10px",
+                                  left: "12px",
+                                  background: "#fff",
+                                  padding: "0 6px",
+                                  fontWeight: 500,
+                                  fontSize: "14px",
+                                  color: "#1A1A1A",
+                                  zIndex: 1,
+                                }}
+                              >
+                                Responsible Person
+                              </label>
+
+                              {/* React Select */}
+                              <Select
+                                value={(() => {
+                                  const value = isEditingTicketClosure ? getResponsiblePersonFormValue() : getResponsiblePersonValue();
+                                  if (!value) return null;
+                                  const matchedPerson = responsiblePersons.find(
+                                    p => p.id.toString() === value
+                                  );
+                                  return matchedPerson ? {
+                                    value: matchedPerson.id,
+                                    label: `${matchedPerson.full_name}${matchedPerson.employee_type ? ` (${matchedPerson.employee_type})` : ''}`
+                                  } : null;
+                                })()}
+                                onChange={(selectedOption) => {
+                                  if (selectedOption && 'value' in selectedOption) {
+                                    handleResponsiblePersonFormChange(selectedOption.value.toString());
+                                  }
+                                }}
+                                options={responsiblePersons.map((person) => ({
+                                  value: person.id,
+                                  label: `${person.full_name}${person.employee_type ? ` (${person.employee_type})` : ''}`,
+                                }))}
+                                placeholder={loadingResponsiblePersons ? "Loading..." : "Select Responsible Person"}
+                                styles={singleSelectStyles}
+                                isDisabled={loadingResponsiblePersons}
+                                isClearable
+                              />
+                            </div>
+
+                            {/* Show current value if it doesn't match any option */}
+                            {ticketData.responsible_person &&
+                              !responsiblePersons.find(p => p.full_name === ticketData.responsible_person) && (
+                                <div className="mt-1 text-[11px] text-[#6B6B6B] italic">
+                                  Current: {ticketData.responsible_person}
+                                </div>
+                              )}
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-3 justify-end mt-6">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setIsEditingTicketClosure(false)}
+                            disabled={submittingTicketClosure}
+                            className="border border-gray-300 text-gray-700 hover:bg-gray-50"
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="submit"
+                            disabled={submittingTicketClosure}
+                            className="bg-brand hover:bg-brand-hover text-white px-8"
+                          >
+                            {submittingTicketClosure ? 'Saving...' : 'Submit'}
+                          </Button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+                </Card>
                 )}
 
                 <div className="w-full bg-white rounded-lg shadow-sm border">
@@ -7596,16 +7596,16 @@ export const TicketDetailsPage = () => {
                       </h3>
                     </div>
                     {shouldShow("Ticket", "update") && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
-                        onClick={handleLocationEdit}
-                        disabled={isEditingLocation}
-                      >
-                        <Edit className="w-4 h-4 mr-1" />
-                        Edit
-                      </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
+                      onClick={handleLocationEdit}
+                      disabled={isEditingLocation}
+                    >
+                      <Edit className="w-4 h-4 mr-1" />
+                      Edit
+                    </Button>
                     )}
                   </div>
 
@@ -9168,16 +9168,16 @@ export const TicketDetailsPage = () => {
                     </button>
                   )}
                   {shouldShow("Ticket", "update") && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
-                      onClick={handleTicketMgmtEdit}
-                      disabled={isEditingTicketMgmt || loadingComplaintStatus || loadingComplaintModes || loadingResponsiblePersons}
-                    >
-                      <Edit className="w-4 h-4 mr-1" />
-                      {(loadingComplaintStatus || loadingComplaintModes || loadingResponsiblePersons) ? 'Loading...' : 'Edit'}
-                    </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
+                    onClick={handleTicketMgmtEdit}
+                    disabled={isEditingTicketMgmt || loadingComplaintStatus || loadingComplaintModes || loadingResponsiblePersons}
+                  >
+                    <Edit className="w-4 h-4 mr-1" />
+                    {(loadingComplaintStatus || loadingComplaintModes || loadingResponsiblePersons) ? 'Loading...' : 'Edit'}
+                  </Button>
                   )}
                 </div>
               </div>
@@ -9402,16 +9402,16 @@ export const TicketDetailsPage = () => {
                           const selectedStatusName = selectedStatusObj?.name || '';
                           return (selectedStatusName.toLowerCase().includes('hold') || selectedStatusName === 'On Hold');
                         })() && (
-                            <TextField
-                              fullWidth
-                              size="small"
-                              type="date"
-                              label={<span>Release Date<span style={{ color: 'red' }}>*</span></span>}
-                              value={ticketMgmtFormData.release_date}
-                              onChange={(e) => handleTicketMgmtInputChange('release_date', e.target.value)}
-                              InputLabelProps={{ shrink: true }}
-                            />
-                          )}
+                          <TextField
+                            fullWidth
+                            size="small"
+                            type="date"
+                            label={<span>Release Date<span style={{ color: 'red' }}>*</span></span>}
+                            value={ticketMgmtFormData.release_date}
+                            onChange={(e) => handleTicketMgmtInputChange('release_date', e.target.value)}
+                            InputLabelProps={{ shrink: true }}
+                          />
+                        )}
 
                         {/* Reason for Hold - Show only for org_id 63 when status is "On Hold" */}
                         {orgId === 63 && (() => {
@@ -9419,18 +9419,18 @@ export const TicketDetailsPage = () => {
                           const selectedStatusName = selectedStatusObj?.name || '';
                           return (selectedStatusName.toLowerCase().includes('hold') || selectedStatusName === 'On Hold');
                         })() && (
-                            <TextField
-                              fullWidth
-                              size="small"
-                              multiline
-                              rows={3}
-                              label={<span>Reason for Hold<span style={{ color: 'red' }}>*</span></span>}
-                              placeholder="Enter reason for hold"
-                              value={ticketMgmtFormData.reason_for_hold}
-                              onChange={(e) => handleTicketMgmtInputChange('reason_for_hold', e.target.value)}
-                              InputLabelProps={{ shrink: true }}
-                            />
-                          )}
+                          <TextField
+                            fullWidth
+                            size="small"
+                            multiline
+                            rows={3}
+                            label={<span>Reason for Hold<span style={{ color: 'red' }}>*</span></span>}
+                            placeholder="Enter reason for hold"
+                            value={ticketMgmtFormData.reason_for_hold}
+                            onChange={(e) => handleTicketMgmtInputChange('reason_for_hold', e.target.value)}
+                            InputLabelProps={{ shrink: true }}
+                          />
+                        )}
 
                         <FormControl fullWidth size="small">
                           <InputLabel>Severity</InputLabel>
@@ -10319,602 +10319,288 @@ export const TicketDetailsPage = () => {
 
             {/* Ticket Closure (Figma-aligned) - Hidden for org 63 */}
             {orgId !== 63 && (
-              <Card className="w-full bg-white rounded-lg shadow-sm border">
-                {/* Header */}
-                <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <FileText className="w-6 h-6 text-brand" />
-                    </div>
-                    <h3 className="text-lg font-semibold uppercase text-black">
-                      Ticket Closure
-                    </h3>
-
+            <Card className="w-full bg-white rounded-lg shadow-sm border">
+              {/* Header */}
+              <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                    <FileText className="w-6 h-6 text-brand" />
                   </div>
-                  {shouldShow("Ticket", "update") && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
-                      onClick={handleTicketClosureEdit}
-                      disabled={isEditingTicketClosure || loadingResponsiblePersons}
-                    >
-                      <Edit className="w-4 h-4 mr-1" />
-                      {loadingResponsiblePersons ? 'Loading...' : 'Edit'}
-                    </Button>
-                  )}
+                  <h3 className="text-lg font-semibold uppercase text-black">
+                    Ticket Closure
+                  </h3>
+
                 </div>
+                {shouldShow("Ticket", "update") && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
+                  onClick={handleTicketClosureEdit}
+                  disabled={isEditingTicketClosure || loadingResponsiblePersons}
+                >
+                  <Edit className="w-4 h-4 mr-1" />
+                  {loadingResponsiblePersons ? 'Loading...' : 'Edit'}
+                </Button>
+                )}
+              </div>
 
-                {/* Body */}
-                <div className="bg-[#FFFDFB] border border-t-0 border-[#D9D9D9] px-6 py-6">
-                  {!isEditingTicketClosure ? (
-                    // View Mode - Show current data as read-only
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* Preventive Action - View Only */}
-                        <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                          <div className="flex text-[14px] leading-snug min-w-0">
-                            <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
-                              Preventive Action -
-                            </div>
-                            <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
-                              {ticketData?.preventive_action_template_ids && ticketData.preventive_action_template_ids.length > 0
-                                ? (() => {
-                                  const uniqueIds = [...new Set(ticketData.preventive_action_template_ids)];
-                                  const matchedTemplates = communicationTemplates.filter(
-                                    template => uniqueIds.includes(template.id) &&
-                                      template.identifier === "Preventive Action"
-                                  );
-                                  return matchedTemplates.length > 0
-                                    ? matchedTemplates.map(t => t.identifier_action).join(', ')
-                                    : 'No preventive action selected';
-                                })()
-                                : 'No preventive action selected'
-                              }
-                            </div>
+              {/* Body */}
+              <div className="bg-[#FFFDFB] border border-t-0 border-[#D9D9D9] px-6 py-6">
+                {!isEditingTicketClosure ? (
+                  // View Mode - Show current data as read-only
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      {/* Preventive Action - View Only */}
+                      <div className="bg-[#f2efea] border border-[#f2efea] p-4">
+                        <div className="flex text-[14px] leading-snug min-w-0">
+                          <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
+                            Preventive Action -
                           </div>
-                          {(ticketData?.preventive_action_template_ids && ticketData.preventive_action_template_ids.length > 0) && (
-                            <div
-                              className="space-y-2 min-w-0 mt-4"
-                              style={{ fontSize: "14px", fontWeight: "500" }}
-                            >
-                              {(() => {
+                          <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
+                            {ticketData?.preventive_action_template_ids && ticketData.preventive_action_template_ids.length > 0
+                              ? (() => {
                                 const uniqueIds = [...new Set(ticketData.preventive_action_template_ids)];
-                                return uniqueIds.map((templateId, index) => {
-                                  const matchedTemplate = communicationTemplates.find(
-                                    template => template.id === templateId &&
-                                      template.identifier === "Preventive Action"
-                                  );
-
-                                  if (!matchedTemplate) return null;
-
-                                  return (
-                                    <div key={`preventive-action-display-${templateId}`}>
-                                      {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
-                                      {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
-                                      <div
-                                        className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
-                                        style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
-                                      >
-                                        {matchedTemplate.body || matchedTemplate.identifier_action}
-                                      </div>
-                                    </div>
-                                  );
-                                });
-                              })()}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Short-term Impact - View Only */}
-                        <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                          <div className="flex text-[14px] leading-snug min-w-0">
-                            <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
-                              Short-term Impact -
-                            </div>
-                            <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
-                              {ticketData?.short_term_impact_template_ids && ticketData.short_term_impact_template_ids.length > 0
-                                ? (() => {
-                                  const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
-                                  const matchedTemplates = communicationTemplates.filter(
-                                    template => uniqueIds.includes(template.id) &&
-                                      template.identifier === "Short-term Impact"
-                                  );
-                                  return matchedTemplates.length > 0
-                                    ? matchedTemplates.map(t => t.identifier_action).join(', ')
-                                    : 'No short-term impact selected';
-                                })()
-                                : 'No short-term impact selected'
-                              }
-                            </div>
+                                const matchedTemplates = communicationTemplates.filter(
+                                  template => uniqueIds.includes(template.id) &&
+                                    template.identifier === "Preventive Action"
+                                );
+                                return matchedTemplates.length > 0
+                                  ? matchedTemplates.map(t => t.identifier_action).join(', ')
+                                  : 'No preventive action selected';
+                              })()
+                              : 'No preventive action selected'
+                            }
                           </div>
-                          {(ticketData?.short_term_impact_template_ids && ticketData.short_term_impact_template_ids.length > 0) && (
-                            <div
-                              className="space-y-2 min-w-0 mt-4"
-                              style={{ fontSize: "14px", fontWeight: "500" }}
-                            >
-                              {(() => {
-                                const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
-                                return uniqueIds.map((templateId, index) => {
-                                  const matchedTemplate = communicationTemplates.find(
-                                    template => template.id === templateId &&
-                                      template.identifier === "Short-term Impact"
-                                  );
-
-                                  if (!matchedTemplate) return null;
-
-                                  return (
-                                    <div key={`short-term-impact-display-${templateId}`}>
-                                      {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
-                                      {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
-                                      <div
-                                        className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
-                                        style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
-                                      >
-                                        {matchedTemplate.body || matchedTemplate.identifier_action}
-                                      </div>
-                                    </div>
-                                  );
-                                });
-                              })()}
-                            </div>
-                          )}
                         </div>
+                        {(ticketData?.preventive_action_template_ids && ticketData.preventive_action_template_ids.length > 0) && (
+                          <div
+                            className="space-y-2 min-w-0 mt-4"
+                            style={{ fontSize: "14px", fontWeight: "500" }}
+                          >
+                            {(() => {
+                              const uniqueIds = [...new Set(ticketData.preventive_action_template_ids)];
+                              return uniqueIds.map((templateId, index) => {
+                                const matchedTemplate = communicationTemplates.find(
+                                  template => template.id === templateId &&
+                                    template.identifier === "Preventive Action"
+                                );
 
-                        {/* Corrective Action - View Only */}
-                        <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                          <div className="flex text-[14px] leading-snug min-w-0">
-                            <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
-                              Corrective Action -
-                            </div>
-                            <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
-                              {ticketData?.corrective_action_template_ids && ticketData.corrective_action_template_ids.length > 0
-                                ? (() => {
-                                  const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
-                                  const matchedTemplates = communicationTemplates.filter(
-                                    template => uniqueIds.includes(template.id) &&
-                                      template.identifier === "Corrective Action"
-                                  );
-                                  return matchedTemplates.length > 0
-                                    ? matchedTemplates.map(t => t.identifier_action).join(', ')
-                                    : 'No corrective action selected';
-                                })()
-                                : 'No corrective action selected'
-                              }
-                            </div>
+                                if (!matchedTemplate) return null;
+
+                                return (
+                                  <div key={`preventive-action-display-${templateId}`}>
+                                    {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
+                                    {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                    <div
+                                      className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
+                                      style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+                                    >
+                                      {matchedTemplate.body || matchedTemplate.identifier_action}
+                                    </div>
+                                  </div>
+                                );
+                              });
+                            })()}
                           </div>
-                          {(ticketData?.corrective_action_template_ids && ticketData.corrective_action_template_ids.length > 0) && (
-                            <div
-                              className="space-y-2 min-w-0 mt-4"
-                              style={{ fontSize: "14px", fontWeight: "500" }}
-                            >
-                              {(() => {
-                                const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
-                                return uniqueIds.map((templateId, index) => {
-                                  const matchedTemplate = communicationTemplates.find(
-                                    template => template.id === templateId &&
-                                      template.identifier === "Corrective Action"
-                                  );
-
-                                  if (!matchedTemplate) return null;
-
-                                  return (
-                                    <div key={`corrective-action-display-${templateId}`}>
-                                      {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
-                                      {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
-                                      <div
-                                        className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
-                                        style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
-                                      >
-                                        {matchedTemplate.body || matchedTemplate.identifier_action}
-                                      </div>
-                                    </div>
-                                  );
-                                });
-                              })()}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Long-term Impact - View Only */}
-                        <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                          <div className="flex text-[14px] leading-snug min-w-0">
-                            <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
-                              Long-term Impact -
-                            </div>
-                            <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
-                              {ticketData?.long_term_impact_template_ids && ticketData.long_term_impact_template_ids.length > 0
-                                ? (() => {
-                                  const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
-                                  const matchedTemplates = communicationTemplates.filter(
-                                    template => uniqueIds.includes(template.id) &&
-                                      template.identifier === "Long-term Impact"
-                                  );
-                                  return matchedTemplates.length > 0
-                                    ? matchedTemplates.map(t => t.identifier_action).join(', ')
-                                    : 'No long-term impact selected';
-                                })()
-                                : 'No long-term impact selected'
-                              }
-                            </div>
-                          </div>
-                          {(ticketData?.long_term_impact_template_ids && ticketData.long_term_impact_template_ids.length > 0) && (
-                            <div
-                              className="space-y-2 min-w-0 mt-4"
-                              style={{ fontSize: "14px", fontWeight: "500" }}
-                            >
-                              {(() => {
-                                const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
-                                return uniqueIds.map((templateId, index) => {
-                                  const matchedTemplate = communicationTemplates.find(
-                                    template => template.id === templateId &&
-                                      template.identifier === "Long-term Impact"
-                                  );
-
-                                  if (!matchedTemplate) return null;
-
-                                  return (
-                                    <div key={`long-term-impact-display-${templateId}`}>
-                                      {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
-                                      {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
-                                      <div
-                                        className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
-                                        style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
-                                      >
-                                        {matchedTemplate.body || matchedTemplate.identifier_action}
-                                      </div>
-                                    </div>
-                                  );
-                                });
-                              })()}
-                            </div>
-                          )}
-                        </div>
+                        )}
                       </div>
 
-                      {/* Bottom Row: Review Date & Responsible Person - View Only */}
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div className="flex items-center text-[14px]">
-                          <span className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">Review Date</span>
-                          <span className="font-semibold text-[#1A1A1A]">
-                            {ticketData.review_tracking ? ticketData.review_tracking : '-'}
-                          </span>
+                      {/* Short-term Impact - View Only */}
+                      <div className="bg-[#f2efea] border border-[#f2efea] p-4">
+                        <div className="flex text-[14px] leading-snug min-w-0">
+                          <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
+                            Short-term Impact -
+                          </div>
+                          <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
+                            {ticketData?.short_term_impact_template_ids && ticketData.short_term_impact_template_ids.length > 0
+                              ? (() => {
+                                const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
+                                const matchedTemplates = communicationTemplates.filter(
+                                  template => uniqueIds.includes(template.id) &&
+                                    template.identifier === "Short-term Impact"
+                                );
+                                return matchedTemplates.length > 0
+                                  ? matchedTemplates.map(t => t.identifier_action).join(', ')
+                                  : 'No short-term impact selected';
+                              })()
+                              : 'No short-term impact selected'
+                            }
+                          </div>
                         </div>
-                        <div className="flex items-center text-[14px]">
-                          <span className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">Responsible Person</span>
-                          <span className="font-semibold text-[#1A1A1A]">
-                            {ticketData.responsible_person ? ticketData.responsible_person : '-'}
-                          </span>
+                        {(ticketData?.short_term_impact_template_ids && ticketData.short_term_impact_template_ids.length > 0) && (
+                          <div
+                            className="space-y-2 min-w-0 mt-4"
+                            style={{ fontSize: "14px", fontWeight: "500" }}
+                          >
+                            {(() => {
+                              const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
+                              return uniqueIds.map((templateId, index) => {
+                                const matchedTemplate = communicationTemplates.find(
+                                  template => template.id === templateId &&
+                                    template.identifier === "Short-term Impact"
+                                );
+
+                                if (!matchedTemplate) return null;
+
+                                return (
+                                  <div key={`short-term-impact-display-${templateId}`}>
+                                    {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
+                                    {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                    <div
+                                      className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
+                                      style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+                                    >
+                                      {matchedTemplate.body || matchedTemplate.identifier_action}
+                                    </div>
+                                  </div>
+                                );
+                              });
+                            })()}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Corrective Action - View Only */}
+                      <div className="bg-[#f2efea] border border-[#f2efea] p-4">
+                        <div className="flex text-[14px] leading-snug min-w-0">
+                          <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
+                            Corrective Action -
+                          </div>
+                          <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
+                            {ticketData?.corrective_action_template_ids && ticketData.corrective_action_template_ids.length > 0
+                              ? (() => {
+                                const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
+                                const matchedTemplates = communicationTemplates.filter(
+                                  template => uniqueIds.includes(template.id) &&
+                                    template.identifier === "Corrective Action"
+                                );
+                                return matchedTemplates.length > 0
+                                  ? matchedTemplates.map(t => t.identifier_action).join(', ')
+                                  : 'No corrective action selected';
+                              })()
+                              : 'No corrective action selected'
+                            }
+                          </div>
                         </div>
+                        {(ticketData?.corrective_action_template_ids && ticketData.corrective_action_template_ids.length > 0) && (
+                          <div
+                            className="space-y-2 min-w-0 mt-4"
+                            style={{ fontSize: "14px", fontWeight: "500" }}
+                          >
+                            {(() => {
+                              const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
+                              return uniqueIds.map((templateId, index) => {
+                                const matchedTemplate = communicationTemplates.find(
+                                  template => template.id === templateId &&
+                                    template.identifier === "Corrective Action"
+                                );
+
+                                if (!matchedTemplate) return null;
+
+                                return (
+                                  <div key={`corrective-action-display-${templateId}`}>
+                                    {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
+                                    {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                    <div
+                                      className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
+                                      style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+                                    >
+                                      {matchedTemplate.body || matchedTemplate.identifier_action}
+                                    </div>
+                                  </div>
+                                );
+                              });
+                            })()}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Long-term Impact - View Only */}
+                      <div className="bg-[#f2efea] border border-[#f2efea] p-4">
+                        <div className="flex text-[14px] leading-snug min-w-0">
+                          <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
+                            Long-term Impact -
+                          </div>
+                          <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
+                            {ticketData?.long_term_impact_template_ids && ticketData.long_term_impact_template_ids.length > 0
+                              ? (() => {
+                                const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
+                                const matchedTemplates = communicationTemplates.filter(
+                                  template => uniqueIds.includes(template.id) &&
+                                    template.identifier === "Long-term Impact"
+                                );
+                                return matchedTemplates.length > 0
+                                  ? matchedTemplates.map(t => t.identifier_action).join(', ')
+                                  : 'No long-term impact selected';
+                              })()
+                              : 'No long-term impact selected'
+                            }
+                          </div>
+                        </div>
+                        {(ticketData?.long_term_impact_template_ids && ticketData.long_term_impact_template_ids.length > 0) && (
+                          <div
+                            className="space-y-2 min-w-0 mt-4"
+                            style={{ fontSize: "14px", fontWeight: "500" }}
+                          >
+                            {(() => {
+                              const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
+                              return uniqueIds.map((templateId, index) => {
+                                const matchedTemplate = communicationTemplates.find(
+                                  template => template.id === templateId &&
+                                    template.identifier === "Long-term Impact"
+                                );
+
+                                if (!matchedTemplate) return null;
+
+                                return (
+                                  <div key={`long-term-impact-display-${templateId}`}>
+                                    {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
+                                    {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                    <div
+                                      className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
+                                      style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+                                    >
+                                      {matchedTemplate.body || matchedTemplate.identifier_action}
+                                    </div>
+                                  </div>
+                                );
+                              });
+                            })()}
+                          </div>
+                        )}
                       </div>
                     </div>
-                  ) : (
-                    // Edit Mode - Show form
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        handleTicketClosureSubmit();
-                      }}
-                      className="space-y-6"
-                    >
-                      {/* Two row / two column panels */}
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* Preventive Action */}
-                        <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                          <div className="relative w-full">
-                            {/* Floating label on border */}
-                            <label
-                              style={{
-                                position: "absolute",
-                                top: "-10px",
-                                left: "12px",
-                                background: "#fff",
-                                padding: "0 6px",
-                                fontWeight: 500,
-                                fontSize: "14px",
-                                color: "#1A1A1A",
-                                zIndex: 1,
-                              }}
-                            >
-                              Preventive Action{orgId === 63 && (() => {
-                                const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                                return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
-                              })() && <span style={{ color: 'red' }}> *</span>}
-                            </label>
 
-                            {/* React Select or Textarea */}
-                            {orgId === 63 && (() => {
-                              const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                              return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
-                            })() ? (
-                              <textarea
-                                className="w-full border border-gray-300 rounded-md p-2 text-sm min-h-[80px] resize-vertical"
-                                placeholder="Enter Preventive Action"
-                                value={ticketClosureFormData.preventive_action_text || ''}
-                                onChange={(e) => handleTicketClosureInputChange('preventive_action_text', e.target.value)}
-                              />
-                            ) : (
-                              <Select
-                                value={isEditingTicketClosure ? getPreventiveActionFormValues() : getPreventiveActionValues()}
-                                onChange={(selectedOptions) => {
-                                  handlePreventiveActionFormChange(selectedOptions as Array<{ value: number; label: string }>);
-                                }}
-                                options={communicationTemplates
-                                  .filter((t) => t.identifier === "Preventive Action" && t.active === true)
-                                  .map((t) => ({
-                                    value: t.id,
-                                    label: t.identifier_action,
-                                  }))}
-                                placeholder="Select Preventive Action"
-                                styles={customStyles}
-                                components={{ MultiValue: CustomMultiValue }}
-                                isMulti
-                                closeMenuOnSelect={false}
-                                isClearable
-                              />
-                            )}
-                          </div>
-
-                          {!(orgId === 63 && (() => {
-                            const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                            return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
-                          })()) && (
-                              <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
-                                {(() => {
-                                  // Use form data if in edit mode, otherwise use ticket data
-                                  const templateIds = isEditingTicketClosure
-                                    ? (ticketClosureFormData?.preventive_action_template_ids || [])
-                                    : (ticketData?.preventive_action_template_ids || []);
-
-                                  if (!templateIds || templateIds.length === 0) {
-                                    return 'No preventive action description available';
-                                  }
-
-                                  const uniqueIds = [...new Set(templateIds)];
-                                  const matchedTemplates = communicationTemplates.filter(
-                                    template => uniqueIds.includes(template.id) &&
-                                      template.identifier === "Preventive Action"
-                                  );
-
-                                  if (matchedTemplates.length === 0) {
-                                    return 'No preventive action description available';
-                                  }
-
-                                  return matchedTemplates.map((template, index) => (
-                                    <div key={`preventive-${template.id}`}>
-                                      {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
-                                      <div>{template.body || template.identifier_action}</div>
-                                    </div>
-                                  ));
-                                })()}
-                              </div>
-                            )}
-                        </div>
-
-                        {/* Short-term Impact */}
-                        <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                          <div className="relative w-full">
-                            {/* Floating label on border */}
-                            <label
-                              style={{
-                                position: "absolute",
-                                top: "-10px",
-                                left: "12px",
-                                background: "#fff",
-                                padding: "0 6px",
-                                fontWeight: 500,
-                                fontSize: "14px",
-                                color: "#1A1A1A",
-                                zIndex: 1,
-                              }}
-                            >
-                              Short-term Impact
-                            </label>
-
-                            {/* React Select */}
-                            <Select
-                              value={isEditingTicketClosure ? getShortTermImpactFormValues() : getShortTermImpactValues()}
-                              onChange={(selectedOptions) => {
-                                handleShortTermImpactFormChange(selectedOptions as Array<{ value: number; label: string }>);
-                              }}
-                              options={communicationTemplates
-                                .filter((t) => t.identifier === "Short-term Impact" && t.active === true)
-                                .map((t) => ({
-                                  value: t.id,
-                                  label: t.identifier_action,
-                                }))}
-                              placeholder="Select Short-term Impact"
-                              styles={customStyles}
-                              components={{ MultiValue: CustomMultiValue }}
-                              isMulti
-                              closeMenuOnSelect={false}
-                              isClearable
-                            />
-                          </div>
-
-                          <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
-                            {(() => {
-                              if (!ticketData?.short_term_impact_template_ids || ticketData.short_term_impact_template_ids.length === 0) {
-                                return 'No short-term impact description available';
-                              }
-
-                              const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
-                              const matchedTemplates = communicationTemplates.filter(
-                                template => uniqueIds.includes(template.id) &&
-                                  template.identifier === "Short-term Impact"
-                              );
-
-                              if (matchedTemplates.length === 0) {
-                                return 'No short-term impact description available';
-                              }
-
-                              return matchedTemplates.map((template, index) => (
-                                <div key={`short-term-${template.id}`}>
-                                  {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
-                                  <div>{template.body || template.identifier_action}</div>
-                                </div>
-                              ));
-                            })()}
-                          </div>
-                        </div>
-
-                        {/* Corrective Action */}
-                        <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                          <div className="relative w-full">
-                            {/* Floating label on border */}
-                            <label
-                              style={{
-                                position: "absolute",
-                                top: "-10px",
-                                left: "12px",
-                                background: "#fff",
-                                padding: "0 6px",
-                                fontWeight: 500,
-                                fontSize: "14px",
-                                color: "#1A1A1A",
-                                zIndex: 1,
-                              }}
-                            >
-                              Corrective Action{orgId === 63 && (() => {
-                                const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                                return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
-                              })() && <span style={{ color: 'red' }}> *</span>}
-                            </label>
-
-                            {/* React Select or Textarea */}
-                            {orgId === 63 && (() => {
-                              const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                              return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
-                            })() ? (
-                              <textarea
-                                className="w-full border border-gray-300 rounded-md p-2 text-sm min-h-[80px] resize-vertical"
-                                placeholder="Enter Corrective Action"
-                                value={ticketClosureFormData.corrective_action_text || ''}
-                                onChange={(e) => handleTicketClosureInputChange('corrective_action_text', e.target.value)}
-                              />
-                            ) : (
-                              <Select
-                                value={isEditingTicketClosure ? getCorrectiveActionFormValues() : getCorrectiveActionValues()}
-                                onChange={(selectedOptions) => {
-                                  handleCorrectiveActionFormChange(selectedOptions as Array<{ value: number; label: string }>);
-                                }}
-                                options={communicationTemplates
-                                  .filter((t) => t.identifier === "Corrective Action" && t.active === true)
-                                  .map((t) => ({
-                                    value: t.id,
-                                    label: t.identifier_action,
-                                  }))}
-                                placeholder="Select Corrective Action"
-                                styles={customStyles}
-                                components={{ MultiValue: CustomMultiValue }}
-                                isMulti
-                                closeMenuOnSelect={false}
-                                isClearable
-                              />
-                            )}
-                          </div>
-
-                          {!(orgId === 63 && (() => {
-                            const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                            return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
-                          })()) && (
-                              <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
-                                {(() => {
-                                  if (!ticketData?.corrective_action_template_ids || ticketData.corrective_action_template_ids.length === 0) {
-                                    return 'No corrective action description available';
-                                  }
-
-                                  const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
-                                  const matchedTemplates = communicationTemplates.filter(
-                                    template => uniqueIds.includes(template.id) &&
-                                      template.identifier === "Corrective Action"
-                                  );
-
-                                  if (matchedTemplates.length === 0) {
-                                    return 'No corrective action description available';
-                                  }
-
-                                  return matchedTemplates.map((template, index) => (
-                                    <div key={`corrective-${template.id}`}>
-                                      {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
-                                      <div>{template.body || template.identifier_action}</div>
-                                    </div>
-                                  ));
-                                })()}
-                              </div>
-                            )}
-                        </div>
-
-                        {/* Long-term Impact */}
-                        <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                          <div className="relative w-full">
-                            {/* Floating label on border */}
-                            <label
-                              style={{
-                                position: "absolute",
-                                top: "-10px",
-                                left: "12px",
-                                background: "#fff",
-                                padding: "0 6px",
-                                fontWeight: 500,
-                                fontSize: "14px",
-                                color: "#1A1A1A",
-                                zIndex: 1,
-                              }}
-                            >
-                              Long-term Impact
-                            </label>
-
-                            {/* React Select */}
-                            <Select
-                              value={isEditingTicketClosure ? getLongTermImpactFormValues() : getLongTermImpactValues()}
-                              onChange={(selectedOptions) => {
-                                handleLongTermImpactFormChange(selectedOptions as Array<{ value: number; label: string }>);
-                              }}
-                              options={communicationTemplates
-                                .filter((t) => t.identifier === "Long-term Impact" && t.active === true)
-                                .map((t) => ({
-                                  value: t.id,
-                                  label: t.identifier_action,
-                                }))}
-                              placeholder="Select Long-term Impact"
-                              styles={customStyles}
-                              components={{ MultiValue: CustomMultiValue }}
-                              isMulti
-                              closeMenuOnSelect={false}
-                              isClearable
-                            />
-                          </div>
-
-                          <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
-                            {(() => {
-                              if (!ticketData?.long_term_impact_template_ids || ticketData.long_term_impact_template_ids.length === 0) {
-                                return 'No long-term impact description available';
-                              }
-
-                              const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
-                              const matchedTemplates = communicationTemplates.filter(
-                                template => uniqueIds.includes(template.id) &&
-                                  template.identifier === "Long-term Impact"
-                              );
-
-                              if (matchedTemplates.length === 0) {
-                                return 'No long-term impact description available';
-                              }
-
-                              return matchedTemplates.map((template, index) => (
-                                <div key={`long-term-${template.id}`}>
-                                  {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
-                                  <div>{template.body || template.identifier_action}</div>
-                                </div>
-                              ));
-                            })()}
-                          </div>
-                        </div>
+                    {/* Bottom Row: Review Date & Responsible Person - View Only */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      <div className="flex items-center text-[14px]">
+                        <span className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">Review Date</span>
+                        <span className="font-semibold text-[#1A1A1A]">
+                          {ticketData.review_tracking ? ticketData.review_tracking : '-'}
+                        </span>
                       </div>
-
-                      {/* Bottom Row: Review Date & Responsible Person */}
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+                      <div className="flex items-center text-[14px]">
+                        <span className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">Responsible Person</span>
+                        <span className="font-semibold text-[#1A1A1A]">
+                          {ticketData.responsible_person ? ticketData.responsible_person : '-'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  // Edit Mode - Show form
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleTicketClosureSubmit();
+                    }}
+                    className="space-y-6"
+                  >
+                    {/* Two row / two column panels */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      {/* Preventive Action */}
+                      <div className="bg-[#f2efea] border border-[#f2efea] p-4">
                         <div className="relative w-full">
                           {/* Floating label on border */}
                           <label
@@ -10930,135 +10616,449 @@ export const TicketDetailsPage = () => {
                               zIndex: 1,
                             }}
                           >
-                            Review Date
+                            Preventive Action{orgId === 63 && (() => {
+                              const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
+                              return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                            })() && <span style={{ color: 'red' }}> *</span>}
                           </label>
 
-                          <div style={{ minWidth: '240px' }}>
-                            <TextField
-                              fullWidth
-                              size="small"
-                              type="date"
-                              placeholder="Select review date"
-                              value={ticketClosureFormData.review_tracking || ''}
-                              onChange={(e) => {
-                                console.log('Review date changed:', e.target.value);
-                                handleTicketClosureInputChange('review_tracking', e.target.value);
-                              }}
-                              InputLabelProps={{
-                                shrink: true,
-                                style: { display: 'none' } // Hide default label since we have floating label
-                              }}
-                              inputProps={{
-                                style: { fontSize: '14px' }
-                              }}
-                              sx={{
-                                '& .MuiInputBase-root': {
-                                  backgroundColor: '#F2F2F2',
-                                  borderRadius: '4px',
-                                  fontSize: '14px',
-                                  minHeight: '40px',
-                                },
-                                '& .MuiOutlinedInput-root': {
-                                  '& fieldset': {
-                                    borderColor: '#DAD7D0',
-                                    borderWidth: '1px',
-                                  },
-                                  '&:hover fieldset': {
-                                    borderColor: 'var(--color-primary)',
-                                  },
-                                  '&.Mui-focused fieldset': {
-                                    borderColor: 'var(--color-primary)',
-                                  },
-                                },
-                                '& .MuiInputBase-input': {
-                                  fontSize: '14px',
-                                  padding: '10px 12px',
-                                },
-                              }}
+                          {/* React Select or Textarea */}
+                          {orgId === 63 && (() => {
+                            const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
+                            return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                          })() ? (
+                            <textarea
+                              className="w-full border border-gray-300 rounded-md p-2 text-sm min-h-[80px] resize-vertical"
+                              placeholder="Enter Preventive Action"
+                              value={ticketClosureFormData.preventive_action_text || ''}
+                              onChange={(e) => handleTicketClosureInputChange('preventive_action_text', e.target.value)}
                             />
-                          </div>
-                        </div>
-                        <div>
-                          <div className="relative w-full">
-                            {/* Floating label on border */}
-                            <label
-                              style={{
-                                position: "absolute",
-                                top: "-10px",
-                                left: "12px",
-                                background: "#fff",
-                                padding: "0 6px",
-                                fontWeight: 500,
-                                fontSize: "14px",
-                                color: "#1A1A1A",
-                                zIndex: 1,
-                              }}
-                            >
-                              Responsible Person
-                            </label>
-
-                            {/* React Select */}
+                          ) : (
                             <Select
-                              value={(() => {
-                                const value = isEditingTicketClosure ? getResponsiblePersonFormValue() : getResponsiblePersonValue();
-                                if (!value) return null;
-                                const matchedPerson = responsiblePersons.find(
-                                  p => p.id.toString() === value
-                                );
-                                return matchedPerson ? {
-                                  value: matchedPerson.id,
-                                  label: `${matchedPerson.full_name}${matchedPerson.employee_type ? ` (${matchedPerson.employee_type})` : ''}`
-                                } : null;
-                              })()}
-                              onChange={(selectedOption) => {
-                                if (selectedOption && 'value' in selectedOption) {
-                                  handleResponsiblePersonFormChange(selectedOption.value.toString());
-                                }
+                              value={isEditingTicketClosure ? getPreventiveActionFormValues() : getPreventiveActionValues()}
+                              onChange={(selectedOptions) => {
+                                handlePreventiveActionFormChange(selectedOptions as Array<{ value: number; label: string }>);
                               }}
-                              options={responsiblePersons.map((person) => ({
-                                value: person.id,
-                                label: `${person.full_name}${person.employee_type ? ` (${person.employee_type})` : ''}`,
-                              }))}
-                              placeholder={loadingResponsiblePersons ? "Loading..." : "Select Responsible Person"}
-                              styles={singleSelectStyles}
-                              isDisabled={loadingResponsiblePersons}
+                              options={communicationTemplates
+                                .filter((t) => t.identifier === "Preventive Action" && t.active === true)
+                                .map((t) => ({
+                                  value: t.id,
+                                  label: t.identifier_action,
+                                }))}
+                              placeholder="Select Preventive Action"
+                              styles={customStyles}
+                              components={{ MultiValue: CustomMultiValue }}
+                              isMulti
+                              closeMenuOnSelect={false}
                               isClearable
                             />
-                          </div>
+                          )}
+                        </div>
 
-                          {/* Show current value if it doesn't match any option */}
-                          {ticketData.responsible_person &&
-                            !responsiblePersons.find(p => p.full_name === ticketData.responsible_person) && (
-                              <div className="mt-1 text-[11px] text-[#6B6B6B] italic">
-                                Current: {ticketData.responsible_person}
+                        {!(orgId === 63 && (() => {
+                          const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
+                          return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                        })()) && (
+                        <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
+                          {(() => {
+                            // Use form data if in edit mode, otherwise use ticket data
+                            const templateIds = isEditingTicketClosure
+                              ? (ticketClosureFormData?.preventive_action_template_ids || [])
+                              : (ticketData?.preventive_action_template_ids || []);
+
+                            if (!templateIds || templateIds.length === 0) {
+                              return 'No preventive action description available';
+                            }
+
+                            const uniqueIds = [...new Set(templateIds)];
+                            const matchedTemplates = communicationTemplates.filter(
+                              template => uniqueIds.includes(template.id) &&
+                                template.identifier === "Preventive Action"
+                            );
+
+                            if (matchedTemplates.length === 0) {
+                              return 'No preventive action description available';
+                            }
+
+                            return matchedTemplates.map((template, index) => (
+                              <div key={`preventive-${template.id}`}>
+                                {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                <div>{template.body || template.identifier_action}</div>
                               </div>
-                            )}
+                            ));
+                          })()}
+                        </div>
+                        )}
+                      </div>
+
+                      {/* Short-term Impact */}
+                      <div className="bg-[#f2efea] border border-[#f2efea] p-4">
+                        <div className="relative w-full">
+                          {/* Floating label on border */}
+                          <label
+                            style={{
+                              position: "absolute",
+                              top: "-10px",
+                              left: "12px",
+                              background: "#fff",
+                              padding: "0 6px",
+                              fontWeight: 500,
+                              fontSize: "14px",
+                              color: "#1A1A1A",
+                              zIndex: 1,
+                            }}
+                          >
+                            Short-term Impact
+                          </label>
+
+                          {/* React Select */}
+                          <Select
+                            value={isEditingTicketClosure ? getShortTermImpactFormValues() : getShortTermImpactValues()}
+                            onChange={(selectedOptions) => {
+                              handleShortTermImpactFormChange(selectedOptions as Array<{ value: number; label: string }>);
+                            }}
+                            options={communicationTemplates
+                              .filter((t) => t.identifier === "Short-term Impact" && t.active === true)
+                              .map((t) => ({
+                                value: t.id,
+                                label: t.identifier_action,
+                              }))}
+                            placeholder="Select Short-term Impact"
+                            styles={customStyles}
+                            components={{ MultiValue: CustomMultiValue }}
+                            isMulti
+                            closeMenuOnSelect={false}
+                            isClearable
+                          />
+                        </div>
+
+                        <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
+                          {(() => {
+                            if (!ticketData?.short_term_impact_template_ids || ticketData.short_term_impact_template_ids.length === 0) {
+                              return 'No short-term impact description available';
+                            }
+
+                            const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
+                            const matchedTemplates = communicationTemplates.filter(
+                              template => uniqueIds.includes(template.id) &&
+                                template.identifier === "Short-term Impact"
+                            );
+
+                            if (matchedTemplates.length === 0) {
+                              return 'No short-term impact description available';
+                            }
+
+                            return matchedTemplates.map((template, index) => (
+                              <div key={`short-term-${template.id}`}>
+                                {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                <div>{template.body || template.identifier_action}</div>
+                              </div>
+                            ));
+                          })()}
                         </div>
                       </div>
 
-                      {/* Action Buttons */}
-                      <div className="flex items-center gap-3 justify-end mt-6">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setIsEditingTicketClosure(false)}
-                          disabled={submittingTicketClosure}
-                          className="border border-gray-300 text-gray-700 hover:bg-gray-50"
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          type="submit"
-                          disabled={submittingTicketClosure}
-                          className="bg-brand hover:bg-brand-hover text-white px-8"
-                        >
-                          {submittingTicketClosure ? 'Saving...' : 'Submit'}
-                        </Button>
+                      {/* Corrective Action */}
+                      <div className="bg-[#f2efea] border border-[#f2efea] p-4">
+                        <div className="relative w-full">
+                          {/* Floating label on border */}
+                          <label
+                            style={{
+                              position: "absolute",
+                              top: "-10px",
+                              left: "12px",
+                              background: "#fff",
+                              padding: "0 6px",
+                              fontWeight: 500,
+                              fontSize: "14px",
+                              color: "#1A1A1A",
+                              zIndex: 1,
+                            }}
+                          >
+                            Corrective Action{orgId === 63 && (() => {
+                              const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
+                              return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                            })() && <span style={{ color: 'red' }}> *</span>}
+                          </label>
+
+                          {/* React Select or Textarea */}
+                          {orgId === 63 && (() => {
+                            const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
+                            return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                          })() ? (
+                            <textarea
+                              className="w-full border border-gray-300 rounded-md p-2 text-sm min-h-[80px] resize-vertical"
+                              placeholder="Enter Corrective Action"
+                              value={ticketClosureFormData.corrective_action_text || ''}
+                              onChange={(e) => handleTicketClosureInputChange('corrective_action_text', e.target.value)}
+                            />
+                          ) : (
+                            <Select
+                              value={isEditingTicketClosure ? getCorrectiveActionFormValues() : getCorrectiveActionValues()}
+                              onChange={(selectedOptions) => {
+                                handleCorrectiveActionFormChange(selectedOptions as Array<{ value: number; label: string }>);
+                              }}
+                              options={communicationTemplates
+                                .filter((t) => t.identifier === "Corrective Action" && t.active === true)
+                                .map((t) => ({
+                                  value: t.id,
+                                  label: t.identifier_action,
+                                }))}
+                              placeholder="Select Corrective Action"
+                              styles={customStyles}
+                              components={{ MultiValue: CustomMultiValue }}
+                              isMulti
+                              closeMenuOnSelect={false}
+                              isClearable
+                            />
+                          )}
+                        </div>
+
+                        {!(orgId === 63 && (() => {
+                          const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
+                          return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                        })()) && (
+                        <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
+                          {(() => {
+                            if (!ticketData?.corrective_action_template_ids || ticketData.corrective_action_template_ids.length === 0) {
+                              return 'No corrective action description available';
+                            }
+
+                            const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
+                            const matchedTemplates = communicationTemplates.filter(
+                              template => uniqueIds.includes(template.id) &&
+                                template.identifier === "Corrective Action"
+                            );
+
+                            if (matchedTemplates.length === 0) {
+                              return 'No corrective action description available';
+                            }
+
+                            return matchedTemplates.map((template, index) => (
+                              <div key={`corrective-${template.id}`}>
+                                {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                <div>{template.body || template.identifier_action}</div>
+                              </div>
+                            ));
+                          })()}
+                        </div>
+                        )}
                       </div>
-                    </form>
-                  )}
-                </div>
-              </Card>
+
+                      {/* Long-term Impact */}
+                      <div className="bg-[#f2efea] border border-[#f2efea] p-4">
+                        <div className="relative w-full">
+                          {/* Floating label on border */}
+                          <label
+                            style={{
+                              position: "absolute",
+                              top: "-10px",
+                              left: "12px",
+                              background: "#fff",
+                              padding: "0 6px",
+                              fontWeight: 500,
+                              fontSize: "14px",
+                              color: "#1A1A1A",
+                              zIndex: 1,
+                            }}
+                          >
+                            Long-term Impact
+                          </label>
+
+                          {/* React Select */}
+                          <Select
+                            value={isEditingTicketClosure ? getLongTermImpactFormValues() : getLongTermImpactValues()}
+                            onChange={(selectedOptions) => {
+                              handleLongTermImpactFormChange(selectedOptions as Array<{ value: number; label: string }>);
+                            }}
+                            options={communicationTemplates
+                              .filter((t) => t.identifier === "Long-term Impact" && t.active === true)
+                              .map((t) => ({
+                                value: t.id,
+                                label: t.identifier_action,
+                              }))}
+                            placeholder="Select Long-term Impact"
+                            styles={customStyles}
+                            components={{ MultiValue: CustomMultiValue }}
+                            isMulti
+                            closeMenuOnSelect={false}
+                            isClearable
+                          />
+                        </div>
+
+                        <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
+                          {(() => {
+                            if (!ticketData?.long_term_impact_template_ids || ticketData.long_term_impact_template_ids.length === 0) {
+                              return 'No long-term impact description available';
+                            }
+
+                            const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
+                            const matchedTemplates = communicationTemplates.filter(
+                              template => uniqueIds.includes(template.id) &&
+                                template.identifier === "Long-term Impact"
+                            );
+
+                            if (matchedTemplates.length === 0) {
+                              return 'No long-term impact description available';
+                            }
+
+                            return matchedTemplates.map((template, index) => (
+                              <div key={`long-term-${template.id}`}>
+                                {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                <div>{template.body || template.identifier_action}</div>
+                              </div>
+                            ));
+                          })()}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bottom Row: Review Date & Responsible Person */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+                      <div className="relative w-full">
+                        {/* Floating label on border */}
+                        <label
+                          style={{
+                            position: "absolute",
+                            top: "-10px",
+                            left: "12px",
+                            background: "#fff",
+                            padding: "0 6px",
+                            fontWeight: 500,
+                            fontSize: "14px",
+                            color: "#1A1A1A",
+                            zIndex: 1,
+                          }}
+                        >
+                          Review Date
+                        </label>
+
+                        <div style={{ minWidth: '240px' }}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            type="date"
+                            placeholder="Select review date"
+                            value={ticketClosureFormData.review_tracking || ''}
+                            onChange={(e) => {
+                              console.log('Review date changed:', e.target.value);
+                              handleTicketClosureInputChange('review_tracking', e.target.value);
+                            }}
+                            InputLabelProps={{
+                              shrink: true,
+                              style: { display: 'none' } // Hide default label since we have floating label
+                            }}
+                            inputProps={{
+                              style: { fontSize: '14px' }
+                            }}
+                            sx={{
+                              '& .MuiInputBase-root': {
+                                backgroundColor: '#F2F2F2',
+                                borderRadius: '4px',
+                                fontSize: '14px',
+                                minHeight: '40px',
+                              },
+                              '& .MuiOutlinedInput-root': {
+                                '& fieldset': {
+                                  borderColor: '#DAD7D0',
+                                  borderWidth: '1px',
+                                },
+                                '&:hover fieldset': {
+                                  borderColor: 'var(--color-primary)',
+                                },
+                                '&.Mui-focused fieldset': {
+                                  borderColor: 'var(--color-primary)',
+                                },
+                              },
+                              '& .MuiInputBase-input': {
+                                fontSize: '14px',
+                                padding: '10px 12px',
+                              },
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="relative w-full">
+                          {/* Floating label on border */}
+                          <label
+                            style={{
+                              position: "absolute",
+                              top: "-10px",
+                              left: "12px",
+                              background: "#fff",
+                              padding: "0 6px",
+                              fontWeight: 500,
+                              fontSize: "14px",
+                              color: "#1A1A1A",
+                              zIndex: 1,
+                            }}
+                          >
+                            Responsible Person
+                          </label>
+
+                          {/* React Select */}
+                          <Select
+                            value={(() => {
+                              const value = isEditingTicketClosure ? getResponsiblePersonFormValue() : getResponsiblePersonValue();
+                              if (!value) return null;
+                              const matchedPerson = responsiblePersons.find(
+                                p => p.id.toString() === value
+                              );
+                              return matchedPerson ? {
+                                value: matchedPerson.id,
+                                label: `${matchedPerson.full_name}${matchedPerson.employee_type ? ` (${matchedPerson.employee_type})` : ''}`
+                              } : null;
+                            })()}
+                            onChange={(selectedOption) => {
+                              if (selectedOption && 'value' in selectedOption) {
+                                handleResponsiblePersonFormChange(selectedOption.value.toString());
+                              }
+                            }}
+                            options={responsiblePersons.map((person) => ({
+                              value: person.id,
+                              label: `${person.full_name}${person.employee_type ? ` (${person.employee_type})` : ''}`,
+                            }))}
+                            placeholder={loadingResponsiblePersons ? "Loading..." : "Select Responsible Person"}
+                            styles={singleSelectStyles}
+                            isDisabled={loadingResponsiblePersons}
+                            isClearable
+                          />
+                        </div>
+
+                        {/* Show current value if it doesn't match any option */}
+                        {ticketData.responsible_person &&
+                          !responsiblePersons.find(p => p.full_name === ticketData.responsible_person) && (
+                            <div className="mt-1 text-[11px] text-[#6B6B6B] italic">
+                              Current: {ticketData.responsible_person}
+                            </div>
+                          )}
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-3 justify-end mt-6">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsEditingTicketClosure(false)}
+                        disabled={submittingTicketClosure}
+                        className="border border-gray-300 text-gray-700 hover:bg-gray-50"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={submittingTicketClosure}
+                        className="bg-brand hover:bg-brand-hover text-white px-8"
+                      >
+                        {submittingTicketClosure ? 'Saving...' : 'Submit'}
+                      </Button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </Card>
             )}
 
 
@@ -11074,16 +11074,16 @@ export const TicketDetailsPage = () => {
                   </h3>
                 </div>
                 {shouldShow("Ticket", "update") && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
-                    onClick={handleLocationEdit}
-                    disabled={isEditingLocation}
-                  >
-                    <Edit className="w-4 h-4 mr-1" />
-                    Edit
-                  </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
+                  onClick={handleLocationEdit}
+                  disabled={isEditingLocation}
+                >
+                  <Edit className="w-4 h-4 mr-1" />
+                  Edit
+                </Button>
                 )}
               </div>
 

@@ -230,10 +230,11 @@ export const TrainingConductedDashboard = () => {
       case "status":
         return (
           <span
-            className={`px-2 py-1 rounded text-xs font-medium ${item.status === "Completed"
+            className={`px-2 py-1 rounded text-xs font-medium ${
+              item.status === "Completed"
                 ? "bg-green-100 text-green-800"
                 : "bg-yellow-100 text-yellow-800"
-              }`}
+            }`}
           >
             {item.status}
           </span>
@@ -301,15 +302,15 @@ export const TrainingConductedDashboard = () => {
 
   const filteredData = searchTerm.trim()
     ? conductedData.filter((item) => {
-      const q = searchTerm.toLowerCase();
-      return (
-        item.form_name?.toLowerCase().includes(q) ||
-        item.conducted_by?.toLowerCase().includes(q) ||
-        item.status?.toLowerCase().includes(q) ||
-        item.site?.toLowerCase().includes(q) ||
-        String(item.id).includes(q)
-      );
-    })
+        const q = searchTerm.toLowerCase();
+        return (
+          item.form_name?.toLowerCase().includes(q) ||
+          item.conducted_by?.toLowerCase().includes(q) ||
+          item.status?.toLowerCase().includes(q) ||
+          item.site?.toLowerCase().includes(q) ||
+          String(item.id).includes(q)
+        );
+      })
     : conductedData;
 
   return (

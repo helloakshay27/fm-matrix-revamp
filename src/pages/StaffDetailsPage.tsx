@@ -17,7 +17,7 @@ export const StaffDetailsPage = () => {
   const [staff, setStaff] = useState<SocietyStaffDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  
   // Verify number modal state
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [otp, setOtp] = useState('');
@@ -89,14 +89,14 @@ export const StaffDetailsPage = () => {
           <div className="text-red-800 font-medium">Error loading staff details</div>
           <div className="text-red-600 text-sm mt-1">{error || 'Staff not found'}</div>
           <div className="flex gap-2 mt-3">
-            <Button
-              onClick={() => window.location.reload()}
+            <Button 
+              onClick={() => window.location.reload()} 
               className="bg-red-600 hover:bg-red-700 text-white"
               size="sm"
             >
               Retry
             </Button>
-            <Button
+            <Button 
               onClick={() => navigate(-1)}
               variant="outline"
               size="sm"
@@ -128,7 +128,7 @@ export const StaffDetailsPage = () => {
     try {
       // First send OTP
       await staffService.sendStaffOTP(staff.id);
-
+      
       // Then show the OTP input modal
       setShowVerifyModal(true);
     } catch (error) {
@@ -148,11 +148,11 @@ export const StaffDetailsPage = () => {
     setVerifying(true);
     try {
       await staffService.verifyStaffNumber(staff.id, otp.trim());
-
+      
       // Refresh staff data to get updated verification status
       const updatedStaff = await staffService.getStaffDetails(staff.id.toString());
       setStaff(updatedStaff);
-
+      
       setShowVerifyModal(false);
       setOtp('');
       toast.success('Number verified successfully!');
@@ -202,13 +202,13 @@ export const StaffDetailsPage = () => {
   };
 
   // Expandable Section Component (similar to ticket details)
-  const ExpandableSection = ({
-    title,
-    icon: Icon,
-    isExpanded,
-    onToggle,
+  const ExpandableSection = ({ 
+    title, 
+    icon: Icon, 
+    isExpanded, 
+    onToggle, 
     children,
-    hasData = true
+    hasData = true 
   }: {
     title: string;
     icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
@@ -218,8 +218,8 @@ export const StaffDetailsPage = () => {
     hasData?: boolean;
   }) => (
     <div className="border-2 rounded-lg mb-6">
-      <div
-        onClick={onToggle}
+      <div 
+        onClick={onToggle} 
         className="flex items-center justify-between cursor-pointer p-6"
         style={{ backgroundColor: 'rgb(246 244 238)' }}
       >
@@ -239,7 +239,7 @@ export const StaffDetailsPage = () => {
         </div>
       </div>
       {isExpanded && (
-        <div
+        <div 
           className="p-6"
           style={{ backgroundColor: 'rgb(246 247 247)' }}
         >
@@ -254,12 +254,12 @@ export const StaffDetailsPage = () => {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-1 hover:text-[#C72030] transition-colors">
+          <button  onClick={() => navigate(-1)} className="flex items-center gap-1 hover:text-[#C72030] transition-colors">
             <ArrowLeft className="w-4 h-4" />
             <span className="font-bold text-[#1a1a1a]">Back to Staff List</span>
           </button>
         </div>
-
+        
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">Staff Summary</h1>
           <div className="flex gap-3">
@@ -303,8 +303,8 @@ export const StaffDetailsPage = () => {
       >
         {/* Centered Image and Name */}
         <div className="flex flex-col items-center mb-8">
-          <img
-            src={staff.staff_image_url || '/placeholder.svg'}
+          <img 
+            src={staff.staff_image_url || '/placeholder.svg'} 
             alt="Staff profile"
             className="w-24 h-24 rounded-full object-cover border-2 border-gray-200 mb-4"
           />
@@ -322,7 +322,7 @@ export const StaffDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{staff.full_name}</span>
               </div>
             )}
-
+            
             {hasData(staff.email) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Email</span>
@@ -330,7 +330,7 @@ export const StaffDetailsPage = () => {
                 <span className="text-blue-600 font-semibold flex-1">{staff.email}</span>
               </div>
             )}
-
+            
             {hasData(staff.mobile) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Mobile</span>
@@ -338,7 +338,7 @@ export const StaffDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{staff.mobile}</span>
               </div>
             )}
-
+            
             {hasData(staff.vendor_name) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Vendor Name</span>
@@ -346,7 +346,7 @@ export const StaffDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{staff.vendor_name}</span>
               </div>
             )}
-
+            
             {hasData(staff.soc_staff_id) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Staff ID</span>
@@ -354,7 +354,7 @@ export const StaffDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{staff.soc_staff_id}</span>
               </div>
             )}
-
+            
             {hasData(staff.valid_from) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Valid From</span>
@@ -363,25 +363,26 @@ export const StaffDetailsPage = () => {
               </div>
             )}
 
-            {hasData(staff.status_text) && (
+             {hasData(staff.status_text) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Status</span>
                 <span className="text-gray-500 mx-3">:</span>
                 <div className="flex-1">
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${staff.status_text === 'Approved' ? 'bg-green-100 text-green-600' :
-                      staff.status_text === 'Pending' ? 'bg-yellow-100 text-yellow-600' :
-                        'bg-red-100 text-red-600'
-                    }`}>
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${
+                    staff.status_text === 'Approved' ? 'bg-green-100 text-green-600' :
+                    staff.status_text === 'Pending' ? 'bg-yellow-100 text-yellow-600' :
+                    'bg-red-100 text-red-600'
+                  }`}>
                     {staff.status_text}
                   </span>
                 </div>
               </div>
             )}
           </div>
-
+          
           <div className="space-y-4">
-
-
+           
+            
             {hasData(staff.department_name) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Department</span>
@@ -389,7 +390,7 @@ export const StaffDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{staff.department_name}</span>
               </div>
             )}
-
+            
             {hasData(staff.unit_name) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Unit</span>
@@ -397,7 +398,7 @@ export const StaffDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{staff.unit_name}</span>
               </div>
             )}
-
+            
             {hasData(staff.work_type_name) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Work Type</span>
@@ -405,7 +406,7 @@ export const StaffDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{staff.work_type_name}</span>
               </div>
             )}
-
+            
             {hasData(staff.created_at) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Created On</span>
@@ -413,13 +414,14 @@ export const StaffDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{formatDate(staff.created_at)}</span>
               </div>
             )}
-
+            
             <div className="flex items-start">
               <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Number Verified</span>
               <span className="text-gray-500 mx-3">:</span>
               <div className="flex-1">
-                <span className={`px-2 py-1 rounded text-xs font-medium ${staff.number_verified ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
-                  }`}>
+                <span className={`px-2 py-1 rounded text-xs font-medium ${
+                  staff.number_verified ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                }`}>
                   {staff.number_verified ? 'Verified' : 'Not Verified'}
                 </span>
               </div>
@@ -468,7 +470,7 @@ export const StaffDetailsPage = () => {
                     {operation.day}
                   </div>
                   <div className="text-center py-2 border-b border-gray-200 text-blue-600">
-                    {operation.start_hour && operation.end_hour
+                    {operation.start_hour && operation.end_hour 
                       ? `${formatTime(operation.start_hour, operation.start_min)} to ${formatTime(operation.end_hour, operation.end_min)}`
                       : '--:-- to --:--'
                     }
@@ -493,8 +495,8 @@ export const StaffDetailsPage = () => {
         <div className="text-center">
           <div className="bg-white border-2 border-gray-200 rounded-lg p-8 mb-4 inline-block">
             {staff.qr_code_present && staff.qr_code_url ? (
-              <img
-                src={staff.qr_code_url}
+              <img 
+                src={staff.qr_code_url} 
                 alt="QR Code"
                 className="w-48 h-48 mx-auto"
               />
