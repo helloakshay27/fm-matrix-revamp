@@ -28,8 +28,28 @@ const columns: ColumnConfig[] = [
   { key: "id", label: "Id", sortable: true, draggable: true },
   { key: "name", label: "Model Name", sortable: true, draggable: true },
   { key: "brand", label: "Brand", sortable: true, draggable: true },
+  { key: "seat", label: "Seats", sortable: true, draggable: true },
   { key: "status", label: "Status", sortable: false, draggable: false },
 ];
+
+const getApiErrorMessage = (error: unknown, fallback: string): string => {
+  const data = (error as { response?: { data?: unknown } })?.response?.data;
+  if (data && typeof data === "object") {
+    const source = (data as { errors?: unknown; message?: unknown; error?: unknown }).errors ?? data;
+    if (source && typeof source === "object" && !Array.isArray(source)) {
+      const messages = Object.entries(source as Record<string, unknown>).flatMap(([field, msgs]) => {
+        const list = Array.isArray(msgs) ? msgs : [msgs];
+        const label = field.charAt(0).toUpperCase() + field.slice(1).replace(/_/g, " ");
+        return list.map((msg) => `${label} ${msg}`);
+      });
+      if (messages.length) return messages.join(", ");
+    }
+    const flat = data as { message?: unknown; error?: unknown };
+    if (typeof flat.message === "string") return flat.message;
+    if (typeof flat.error === "string") return flat.error;
+  }
+  return fallback;
+};
 
 const fieldStyles = {
   "& .MuiOutlinedInput-root": {
@@ -51,6 +71,7 @@ export const VehicleModelsTab = () => {
   const [editingModel, setEditingModel] = useState<VehicleModel | null>(null);
   const [name, setName] = useState("");
   const [brandId, setBrandId] = useState<string>("");
+  const [seat, setSeat] = useState<string>("");
 
   const brandNameById = (id: number) =>
     brands.find((b) => b.id === id)?.name ?? "-";
@@ -80,6 +101,7 @@ export const VehicleModelsTab = () => {
     setEditingModel(null);
     setName("");
     setBrandId("");
+    setSeat("");
     setIsModalOpen(true);
   };
 
@@ -87,6 +109,7 @@ export const VehicleModelsTab = () => {
     setEditingModel(model);
     setName(model.name);
     setBrandId(String(model.vehicle_brand_id));
+    setSeat(model.seat !== undefined && model.seat !== null ? String(model.seat) : "");
     setIsModalOpen(true);
   };
 
@@ -99,24 +122,31 @@ export const VehicleModelsTab = () => {
       toast.error("Brand selection is required");
       return;
     }
+    if (!seat || Number(seat) < 1 || Number(seat) > 9) {
+      toast.error("Seats must be a number between 1 and 9");
+      return;
+    }
 
     setSubmitting(true);
     try {
       if (editingModel) {
-        await updateVehicleModel(editingModel.id, name.trim(), Number(brandId));
+        await updateVehicleModel(editingModel.id, name.trim(), Number(brandId), Number(seat));
         toast.success("Model updated successfully");
       } else {
-        await createVehicleModel(name.trim(), Number(brandId));
+        await createVehicleModel(name.trim(), Number(brandId), Number(seat));
         toast.success("Model added successfully");
       }
       setIsModalOpen(false);
       setName("");
       setBrandId("");
+      setSeat("");
       setEditingModel(null);
       await loadData();
     } catch (error) {
       console.error("Failed to save vehicle model", error);
-      toast.error(editingModel ? "Failed to update model" : "Failed to add model");
+      toast.error(
+        getApiErrorMessage(error, editingModel ? "Failed to update model" : "Failed to add model")
+      );
     } finally {
       setSubmitting(false);
     }
@@ -142,14 +172,12 @@ export const VehicleModelsTab = () => {
         <button
           type="button"
           onClick={() => handleToggleStatus(item)}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            item.active ? "bg-brand" : "bg-gray-300"
-          }`}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${item.active ? "bg-brand" : "bg-gray-300"
+            }`}
         >
           <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-              item.active ? "translate-x-6" : "translate-x-1"
-            }`}
+            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${item.active ? "translate-x-6" : "translate-x-1"
+              }`}
           />
         </button>
       );
@@ -230,6 +258,29 @@ export const VehicleModelsTab = () => {
               InputLabelProps={{ shrink: true }}
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSubmit();
+              }}
+              sx={fieldStyles}
+            />
+            <TextField
+              fullWidth
+              type="number"
+              label={
+                <span>
+                  Seats<span style={{ color: "var(--color-error)" }}> *</span>
+                </span>
+              }
+              placeholder="Enter number of seats"
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ min: 1, max: 9 }}
+              value={seat}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === "" || (Number(value) >= 1 && Number(value) <= 9)) {
+                  setSeat(value);
+                }
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleSubmit();
               }}

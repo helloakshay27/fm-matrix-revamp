@@ -24,6 +24,7 @@ export interface VehicleModel {
   id: number;
   name: string;
   vehicle_brand_id: number;
+  seat?: number;
   active: boolean;
   vehicle_brand?: { id: number; name: string };
   created_at?: string;
@@ -62,16 +63,18 @@ export const fetchVehicleModels = async (): Promise<VehicleModel[]> => {
   return res.data?.vehicle_models ?? (Array.isArray(res.data) ? res.data : []);
 };
 
-export const createVehicleModel = (name: string, vehicleBrandId: number) =>
+export const createVehicleModel = (name: string, vehicleBrandId: number, seat: number) =>
   vehicleConfigClient.post("/vehicle_models.json", {
-    vehicle_model: { name, vehicle_brand_id: vehicleBrandId },
+    vehicle_model: { name, vehicle_brand_id: vehicleBrandId, seat },
   });
 
-export const updateVehicleModel = (id: number, name: string, vehicleBrandId?: number) =>
+export const updateVehicleModel = (id: number, name: string, vehicleBrandId?: number, seat?: number) =>
   vehicleConfigClient.patch(`/vehicle_models/${id}.json`, {
-    vehicle_model: vehicleBrandId
-      ? { name, vehicle_brand_id: vehicleBrandId }
-      : { name },
+    vehicle_model: {
+      name,
+      ...(vehicleBrandId ? { vehicle_brand_id: vehicleBrandId } : {}),
+      ...(seat !== undefined ? { seat } : {}),
+    },
   });
 
 export const toggleVehicleModelActive = (id: number) =>
