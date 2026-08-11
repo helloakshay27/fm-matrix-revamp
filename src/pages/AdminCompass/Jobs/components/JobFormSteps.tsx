@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { toast } from "sonner";
 import { useJobs } from "../JobsContext";
 import { ico } from "../icons";
 import {
@@ -7,7 +8,6 @@ import {
 } from "../components/UI";
 import MemberSearchSelect from "../components/MemberSearchSelect";
 import { useDepartments } from "../hooks/useDepartments";
-import { useEscalateUsers } from "../hooks/useEscalateUsers";
 import {
   T, EMP_TYPES, EXP_LEVELS,
   KPI_UNITS, TARGET_FREQ, DATA_SOURCES, MODULES_BY_SOURCE,
@@ -335,19 +335,40 @@ export function StepDesc() {
 
 export function StepKra() {
   const {
-    kraAiDone, aiLoading, formKras,
+    kraAiDone, aiLoading, formKras, totalKraWeight,
     addFormKra, updFormKra, remFormKra, simulateAiKras,
   } = useJobs();
 
-  const { data: users, isLoading: usersLoading } = useEscalateUsers();
-  const userOptions = (users || []).map((u) => ({
-    id: u.id,
-    name: u.full_name || u.name || `User ${u.id}`,
-    email: u.email,
-  }));
+  // Baaki KRAs ne kitna weightage le liya hai — usi se is row ka max nikalta hai.
+  const usedByOthers = (kraId) =>
+    formKras
+      .filter((k) => k.id !== kraId)
+      .reduce((sum, k) => sum + (Number(k.weightage) || 0), 0);
+  const overLimit = totalKraWeight > 100;
 
   return (
     <div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 12,
+          padding: "10px 14px",
+          marginBottom: 14,
+          borderRadius: 10,
+          fontSize: 12.5,
+          fontWeight: 600,
+          background: overLimit ? "rgba(231,132,142,.15)" : T.orangeSoft,
+          color: overLimit ? T.danger : T.inkSoft,
+        }}
+      >
+        <span>Total KRA Weightage</span>
+        <span>
+          {totalKraWeight}% / 100%
+          {overLimit ? " — exceeds 100%, adjust before continuing" : ""}
+        </span>
+      </div>
       {!kraAiDone && !aiLoading && (
         <AiBar
           text="AI can suggest KRAs based on this role"
@@ -403,49 +424,40 @@ export function StepKra() {
                   </Fld>
                   <Fld
                     label="KRA Weightage (%)"
-                    hint="Distribute 100% across KRAs"
+                    hint={`${Math.max(0, 100 - usedByOthers(kra.id))}% left of 100%`}
                   >
                     <FI
                       type="number"
+                      min={0}
+                      max={Math.max(0, 100 - usedByOthers(kra.id))}
                       placeholder="e.g. 30"
                       value={kra.weightage}
-                      onChange={(e) =>
-                        updFormKra(kra.id, "weightage", e.target.value)
-                      }
-                    />
-                  </Fld>
-                  <Fld label="Assignee Person">
-                    <MemberSearchSelect
-                      value={
-                        kra.assigneeId ||
-                        userOptions.find(
-                          (u) =>
-                            String(u.name).trim() ===
-                            String(kra.assignee || "").trim()
-                        )?.id ||
-                        ""
-                      }
-                      options={userOptions}
-                      onChange={(value, selected) => {
-                        updFormKra(kra.id, "assigneeId", value);
-                        updFormKra(kra.id, "assignee", selected?.name || "");
+                      onChange={(e) => {
+                        const remaining = Math.max(
+                          0,
+                          100 - usedByOthers(kra.id)
+                        );
+                        const raw = e.target.value;
+                        if (raw === "") {
+                          updFormKra(kra.id, "weightage", "");
+                          return;
+                        }
+                        // 100% se upar type karne par value cap ho jaati hai.
+                        const capped = Math.min(Number(raw), remaining);
+                        if (Number(raw) > remaining) {
+                          toast.error(
+                            `KRA ${i + 1} (${kra.title || "Untitled"}) can take at most ${remaining}% — total KRA weightage cannot exceed 100%`
+                          );
+                        }
+                        updFormKra(kra.id, "weightage", String(capped));
                       }}
-                      placeholder="Select assignee"
-                      loading={usersLoading}
-                      loadingText="Loading users..."
-                      emptyText="No users found"
-                      disabled={usersLoading}
                     />
+                    {Number(kra.weightage) > 100 - usedByOthers(kra.id) && (
+                      <span style={{ fontSize: 11, color: T.danger }}>
+                        Total KRA weightage cannot exceed 100%
+                      </span>
+                    )}
                   </Fld>
-                </div>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr",
-                    gap: 16,
-                    marginBottom: 18,
-                  }}
-                >
                   <Fld label="Status">
                     <FS
                       value={kra.status}
@@ -507,7 +519,28 @@ export function StepKra() {
           </div>
         ))}
       </div>
-      <button style={{ ...dashedBtn, marginTop: 14 }} onClick={addFormKra}>
+      <button
+        style={{
+          ...dashedBtn,
+          marginTop: 14,
+          opacity: totalKraWeight >= 100 ? 0.5 : 1,
+          cursor: totalKraWeight >= 100 ? "not-allowed" : "pointer",
+        }}
+        onClick={() => {
+          if (totalKraWeight >= 100) {
+            toast.error(
+              "Total KRA weightage is already 100% — reduce an existing KRA before adding a new one"
+            );
+            return;
+          }
+          addFormKra();
+        }}
+        title={
+          totalKraWeight >= 100
+            ? "100% weightage already allocated across KRAs"
+            : undefined
+        }
+      >
         {ico.plus} Add KRA Manually
       </button>
     </div>
@@ -520,7 +553,6 @@ export function StepKpi() {
     addFormKpi, updFormKpi, remFormKpi, simulateAiKpis, customUnits,
   } = useJobs();
 
-  const { data: users, isLoading: usersLoading } = useEscalateUsers();
   const totalKraWeightage = formKras.reduce(
     (sum, kra) => sum + (Number(kra.weightage) || 0),
     0
@@ -733,41 +765,31 @@ export function StepKpi() {
                         max={Math.max(0, kraLimit - currentKpiUsed(kpi.id))}
                         placeholder="e.g. 15"
                         value={kpi.weightage}
-                        onChange={(e) =>
-                          updFormKpi(kpi.id, "weightage", e.target.value)
-                        }
+                        onChange={(e) => {
+                          const remaining = Math.max(
+                            0,
+                            kraLimit - currentKpiUsed(kpi.id)
+                          );
+                          const raw = e.target.value;
+                          if (raw === "") {
+                            updFormKpi(kpi.id, "weightage", "");
+                            return;
+                          }
+                          // KRA ki weightage se upar KPI total nahi ja sakta.
+                          const capped = Math.min(Number(raw), remaining);
+                          if (Number(raw) > remaining) {
+                            toast.error(
+                              `KPIs of KRA ${kraIdx + 1} (${kra.title || "Untitled"}) cannot exceed its ${kraLimit}% weightage — only ${remaining}% left`
+                            );
+                          }
+                          updFormKpi(kpi.id, "weightage", String(capped));
+                        }}
                       />
                       {Number(kpi.weightage) > Math.max(0, kraLimit - currentKpiUsed(kpi.id)) && (
                         <span style={{ fontSize: 11, color: T.danger }}>
                           Exceeds {kraLimit}% total for this KRA
                         </span>
                       )}
-                    </Fld>
-                  </div>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr",
-                      gap: 16,
-                      marginBottom: 18,
-                    }}
-                  >
-                    <Fld label="Assignee Person">
-                      <FS
-                        value={kpi.assignee || ""}
-                        onChange={(e) =>
-                          updFormKpi(kpi.id, "assignee", e.target.value)
-                        }
-                      >
-                        <option value="">
-                          {usersLoading ? "Loading users..." : "Select assignee"}
-                        </option>
-                        {(users || []).map((u) => (
-                          <option key={u.id} value={u.full_name}>
-                            {u.full_name}
-                          </option>
-                        ))}
-                      </FS>
                     </Fld>
                   </div>
                   <div
@@ -875,8 +897,29 @@ export function StepKpi() {
                 </div>
               ))}
               <button
-                style={{ ...smBtn, alignSelf: "flex-start" }}
-                onClick={() => addFormKpi(kraIdx)}
+                style={{
+                  ...smBtn,
+                  alignSelf: "flex-start",
+                  opacity: kraKpiTotal >= kraLimit && kraLimit > 0 ? 0.5 : 1,
+                  cursor:
+                    kraKpiTotal >= kraLimit && kraLimit > 0
+                      ? "not-allowed"
+                      : "pointer",
+                }}
+                onClick={() => {
+                  if (kraLimit > 0 && kraKpiTotal >= kraLimit) {
+                    toast.error(
+                      `KPIs of KRA ${kraIdx + 1} (${kra.title || "Untitled"}) already use its full ${kraLimit}% weightage`
+                    );
+                    return;
+                  }
+                  addFormKpi(kraIdx);
+                }}
+                title={
+                  kraKpiTotal >= kraLimit && kraLimit > 0
+                    ? `${kraLimit}% weightage already allocated to this KRA's KPIs`
+                    : undefined
+                }
               >
                 {ico.plus} Add KPI
               </button>
