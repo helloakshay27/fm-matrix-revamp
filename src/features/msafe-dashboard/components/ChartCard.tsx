@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { Download, FileText } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { FileSpreadsheet, Download } from 'lucide-react';
 import { InfoButton } from './InfoButton';
 import { useMsafeDashboard } from '../context/MsafeDashboardContext';
 
@@ -11,10 +12,20 @@ type Props = {
   chartSwitch?: ReactNode;
   showPdf?: boolean;
   pdfLabel?: string;
+  /** Row data to export as an .xlsx sheet when the download button is clicked. */
+  exportData?: Record<string, unknown>[];
   tag?: ReactNode;
   className?: string;
   style?: CSSProperties;
 };
+
+function downloadExcel(label: string, rows: Record<string, unknown>[]) {
+  const worksheet = XLSX.utils.json_to_sheet(rows);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, label.slice(0, 31) || 'Sheet1');
+  const filename = `${label.replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '') || 'export'}.xlsx`;
+  XLSX.writeFile(workbook, filename);
+}
 
 export function ChartCard({
   title,
@@ -24,11 +35,23 @@ export function ChartCard({
   chartSwitch,
   showPdf,
   pdfLabel,
+  exportData,
   tag,
   className,
   style,
 }: Props) {
   const { showToast } = useMsafeDashboard();
+
+  const handleExport = () => {
+    const label = pdfLabel || title;
+    if (exportData && exportData.length > 0) {
+      downloadExcel(label, exportData);
+      showToast(`Excel downloaded · ${label}`);
+    } else {
+      showToast(`No data to export yet · ${label}`);
+    }
+  };
+
   return (
     <div className={`card ${className || ''}`} style={style}>
       <div className="card-hd">
@@ -43,13 +66,8 @@ export function ChartCard({
           {chartSwitch}
           {tag}
           {showPdf ? (
-            <button
-              type="button"
-              className="chart-pdf-btn"
-              title="Download PDF"
-              onClick={() => showToast(`PDF export started · ${pdfLabel || title}`)}
-            >
-              <FileText size={14} />
+            <button type="button" className="chart-pdf-btn" title="Download Excel" onClick={handleExport}>
+              <FileSpreadsheet size={14} />
             </button>
           ) : null}
         </div>

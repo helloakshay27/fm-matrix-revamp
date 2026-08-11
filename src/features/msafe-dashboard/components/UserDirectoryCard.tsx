@@ -9,8 +9,6 @@ import { getAuthHeader } from '@/config/apiConfig';
 
 type Filter = 'all' | 'internal' | 'external' | 'pending' | 'cleared';
 
-const PAGE_SIZE = 10;
-
 function getMsafeBaseUrl(): string {
   const fromLS = localStorage.getItem('baseUrl') || '';
   const host = fromLS.replace(/^https?:\/\//, '').replace(/\/$/, '');
@@ -64,9 +62,12 @@ function mapStatus(raw: unknown): StatusCode {
   if (raw === null || raw === undefined) return 'na';
   const s = String(raw).trim().toLowerCase();
   if (!s) return 'na';
-  if (/pass|complete|cleared|approved|^ok$|done|active/.test(s)) return 'ok';
-  if (/pending|progress|initiated|open|wait/.test(s)) return 'pending';
+  // Order matters: "not completed" contains "completed", so negated forms must be checked first.
+  if (/not\s*applicable|^n\/?a$/.test(s)) return 'na';
+  if (/not\s*(completed|started|cleared|done|applicable)/.test(s)) return 'pending';
   if (/fail|reject|declined|^no$|overdue/.test(s)) return 'fail';
+  if (/pending|progress|initiated|open|wait/.test(s)) return 'pending';
+  if (/pass|complete|cleared|approved|^ok$|done|active/.test(s)) return 'ok';
   return 'na';
 }
 
@@ -79,7 +80,7 @@ const normalizeDirectory = (payload: unknown): DirectoryUser[] => {
 
   let list: unknown[] = Array.isArray(source) ? source : [];
   if (!Array.isArray(source)) {
-    for (const key of ['data', 'result', 'employees', 'users', 'records']) {
+    for (const key of ['employee_compliance_status', 'data', 'result', 'employees', 'users', 'records']) {
       const candidate = (source as Record<string, unknown>)?.[key];
       if (Array.isArray(candidate)) {
         list = candidate;
@@ -107,11 +108,33 @@ const normalizeDirectory = (payload: unknown): DirectoryUser[] => {
       const tr = mapStatus(record.training_status ?? record.tr_status ?? record.training ?? record.tr);
       const kr = mapStatus(record.krcc_status ?? record.kr_status ?? record.krcc ?? record.kr);
       const lm = mapStatus(record.lmc_status ?? record.lm_status ?? record.lmc ?? record.lm);
+      const overallLabel = getFirstString(record, ['overall_status']) ?? undefined;
 
-      return { name, emp, type, circle, role, tr, kr, lm };
+      return { name, emp, type, circle, role, tr, kr, lm, overallLabel };
     })
     .filter((item): item is DirectoryUser => Boolean(item));
 };
+
+type Pagination = { currentPage: number; perPage: number; totalEntries: number; totalPages: number };
+
+function extractPagination(payload: unknown): Pagination | null {
+  const root = payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
+  const p = root.pagination && typeof root.pagination === 'object' ? (root.pagination as Record<string, unknown>) : null;
+  if (!p) return null;
+  const currentPage = p.current_page;
+  const perPage = p.per_page;
+  const totalEntries = p.total_entries;
+  const totalPages = p.total_pages;
+  if (
+    typeof currentPage !== 'number' ||
+    typeof perPage !== 'number' ||
+    typeof totalEntries !== 'number' ||
+    typeof totalPages !== 'number'
+  ) {
+    return null;
+  }
+  return { currentPage, perPage, totalEntries, totalPages };
+}
 
 const CHIP_DEFS: { id: Filter; label: string; match: (u: DirectoryUser) => boolean }[] = [
   { id: 'all', label: 'All', match: () => true },
@@ -133,15 +156,25 @@ export function UserDirectoryCard({ style }: { style?: CSSProperties }) {
   const [directory, setDirectory] = useState<DirectoryUser[]>([]);
   const [directoryLoading, setDirectoryLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<Pagination | null>(null);
 
+  // The API paginates server-side (per_page ~20, total_entries in the hundred-thousands),
+  // so each page change re-fetches rather than slicing a locally-held full dataset.
   useEffect(() => {
     let isMounted = true;
+    setDirectoryLoading(true);
 
     const loadDirectory = async () => {
       try {
-        const payload = await fetchMsafeUserDashboardJson('employee_compliance_status.json');
+        const payload = await fetchMsafeUserDashboardJson('employee_compliance_status.json', {
+          page: String(page),
+          current_page: String(page),
+        });
         const normalized = normalizeDirectory(payload);
-        if (isMounted) setDirectory(normalized);
+        if (isMounted) {
+          setDirectory(normalized);
+          setPagination(extractPagination(payload));
+        }
         if (normalized.length === 0) {
           console.warn(
             'M-Safe employee-compliance-status API returned no usable rows — check the raw response shape below and update normalizeDirectory field candidates if needed.',
@@ -160,8 +193,10 @@ export function UserDirectoryCard({ style }: { style?: CSSProperties }) {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [page]);
 
+  // Search/filter narrow the currently-loaded page only — there's no confirmed
+  // server-side search/filter param, so they can't reach across all ~112k records.
   const data = useMemo(() => {
     let rows = directory;
     if (filter === 'internal') rows = rows.filter((u) => u.type === 'Internal');
@@ -175,16 +210,9 @@ export function UserDirectoryCard({ style }: { style?: CSSProperties }) {
     return rows;
   }, [directory, filter, search]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [directory, filter, search]);
-
-  const totalPages = Math.max(1, Math.ceil(data.length / PAGE_SIZE));
+  const totalPages = pagination?.totalPages ?? 1;
+  const totalEntries = pagination?.totalEntries ?? directory.length;
   const currentPage = Math.min(page, totalPages);
-  const pagedData = useMemo(
-    () => data.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
-    [data, currentPage],
-  );
 
   return (
     <ChartCard
@@ -210,6 +238,7 @@ export function UserDirectoryCard({ style }: { style?: CSSProperties }) {
             type="button"
             className={`mini-chip ${filter === c.id ? 'active' : ''}`}
             onClick={() => setFilter(c.id)}
+            title="Count reflects the current page only"
           >
             {c.label} ({directory.filter(c.match).length.toLocaleString()})
           </button>
@@ -238,14 +267,14 @@ export function UserDirectoryCard({ style }: { style?: CSSProperties }) {
                   Loading…
                 </td>
               </tr>
-            ) : pagedData.length === 0 ? (
+            ) : data.length === 0 ? (
               <tr>
                 <td colSpan={9} style={{ textAlign: 'center', color: 'var(--sage)', padding: '16px 0' }}>
                   No users available
                 </td>
               </tr>
             ) : (
-              pagedData.map((u) => {
+              data.map((u) => {
                 const st = overallStatus(u);
                 return (
                   <tr key={u.emp + u.name} onClick={() => openDrill('user-detail', u.name)}>
@@ -278,17 +307,16 @@ export function UserDirectoryCard({ style }: { style?: CSSProperties }) {
         </table>
       </div>
 
-      {data.length > 0 ? (
+      {!directoryLoading && directory.length > 0 ? (
         <div className="tbl-pagination">
           <span>
-            Showing {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, data.length)} of{' '}
-            {data.length} users
+            {data.length.toLocaleString()} on this page · {totalEntries.toLocaleString()} users total
           </span>
           <div className="pg-controls">
             <button
               type="button"
               className="pg-btn"
-              disabled={currentPage === 1}
+              disabled={currentPage === 1 || directoryLoading}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
             >
               Prev
@@ -299,7 +327,7 @@ export function UserDirectoryCard({ style }: { style?: CSSProperties }) {
             <button
               type="button"
               className="pg-btn"
-              disabled={currentPage === totalPages}
+              disabled={currentPage === totalPages || directoryLoading}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             >
               Next
