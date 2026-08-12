@@ -1,0 +1,265 @@
+/* ===========================================
+   FEATURE MODULE DESIGN SYSTEM
+   Bridges the short semantic tokens/utility classes used across
+   src/features/* and src/components/common/* (--coral, --text-muted,
+   .btn-primary, .card, .data-table, etc.) to the brand tokens already
+   defined in theme.css. Those short names were referenced throughout
+   this module but never defined anywhere, so this file — not new
+   ad-hoc colors — is the fix. Edit theme.css for brand color changes;
+   this file only aliases/derives from it.
+   =========================================== */
+
+:root {
+  /* Brand/status accents (solid = accessible text/icon color, -10/-20 = tint background) */
+  --coral: var(--color-primary);
+  --coral-10: var(--color-primary-light);
+  --forest: var(--color-success-solid);
+  --forest-10: var(--color-success-bg);
+  --forest-20: rgba(121, 140, 94, 0.3);
+  --amber: #92400e;
+  --amber-10: var(--color-warning-light);
+  --crimson: #b3261e;
+  --crimson-10: var(--color-error-bg);
+  --violet: #6d28d9;
+  --violet-10: var(--color-secondary-purple-bg);
+  --sky: #3d6e96;
+  --sky-10: rgba(107, 155, 204, 0.15);
+  --stone: #6e6d66;
+  --stone-10: rgba(110, 109, 102, 0.1);
+  --leaf: var(--color-growth-solid);
+
+  /* Text */
+  --text: var(--color-text);
+  --text-muted: var(--color-text-light);
+
+  /* Surfaces */
+  --bg: var(--color-bg);
+  --bg-card: var(--color-card-white);
+  --bg-white: #ffffff;
+
+  /* Borders */
+  --border: var(--color-border-subtle);
+  --border-md: rgba(44, 44, 44, 0.14);
+}
+
+/* ===========================================
+   TYPOGRAPHY
+   =========================================== */
+
+.font-body {
+  font-family: var(--font-family);
+}
+
+.font-display {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.01em;
+}
+
+.text-h1 {
+  font-size: var(--font-size-h1);
+  line-height: var(--line-height-tight);
+  font-weight: var(--font-weight-semibold);
+}
+
+.text-h2 {
+  font-size: var(--font-size-h2);
+  line-height: var(--line-height-tight);
+  font-weight: var(--font-weight-semibold);
+}
+
+.text-h3 {
+  font-size: 18px;
+  line-height: var(--line-height-tight);
+  font-weight: var(--font-weight-semibold);
+}
+
+.text-small {
+  font-size: 13px;
+  line-height: var(--line-height-normal);
+}
+
+.text-label {
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.05em;
+}
+
+/* ===========================================
+   BUTTONS
+   =========================================== */
+
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.btn {
+  background: var(--bg-card);
+  color: var(--text);
+  border-color: var(--border);
+}
+.btn:hover:not(:disabled) {
+  border-color: var(--coral);
+  color: var(--coral);
+}
+
+.btn-primary {
+  background: var(--coral);
+  color: #ffffff;
+  border-color: var(--coral);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.btn-secondary {
+  background: var(--bg-card);
+  color: var(--text);
+  border-color: var(--border);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: var(--stone-10);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border-color: transparent;
+}
+.btn-ghost:hover:not(:disabled) {
+  background: var(--stone-10);
+  color: var(--text);
+}
+
+.btn:disabled,
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-ghost:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ===========================================
+   SURFACES
+   =========================================== */
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+/* ===========================================
+   TABLE
+   =========================================== */
+
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.data-table thead th {
+  text-align: left;
+  padding: 10px 16px;
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+}
+.data-table tbody td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text);
+  vertical-align: middle;
+}
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.data-table tbody tr:hover {
+  background: var(--stone-10);
+}
+
+/* ===========================================
+   FORMS
+   =========================================== */
+
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.form-input,
+.form-select,
+.form-textarea,
+button.form-select {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text);
+  font-family: var(--font-family);
+  font-size: 13px;
+  transition: var(--transition-fast);
+}
+.form-textarea {
+  height: auto;
+  min-height: 88px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus,
+button.form-select:focus {
+  outline: none;
+  border-color: var(--coral);
+  box-shadow: 0 0 0 3px var(--coral-10);
+}
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* ===========================================
+   BADGE
+   =========================================== */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.6;
+  white-space: nowrap;
+}
