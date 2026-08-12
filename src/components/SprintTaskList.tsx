@@ -131,7 +131,11 @@ export default function SprintTaskList({
     setLoadingTasks(true);
     try {
       const params: Record<string, any> = { ...filters, page };
-      if (search.trim()) params["q[title_or_task_code_or_description_cont]"] = search.trim();
+      if (search.trim()) {
+        // task_code is stored without the "T-" prefix (e.g. "T-23432" -> "23432")
+        const normalizedSearchTerm = search.trim().replace(/^t-/i, "");
+        params["q[id_or_title_or_task_code_or_description_cont]"] = normalizedSearchTerm;
+      }
       const r = await axios.get(
         `https://${baseUrl}/sprints/${sprintId}/sprint_task_list.json`,
         { headers: { Authorization: `Bearer ${token}` }, params }
