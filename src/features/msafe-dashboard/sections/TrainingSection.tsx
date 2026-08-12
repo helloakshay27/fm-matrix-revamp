@@ -14,7 +14,8 @@ import { ChartSwitch } from '../components/ChartSwitch';
 import { ChartTable, DonutChart, SideLegendDonut, SliceBarChart } from '../components/DonutChart';
 import { C } from '../data/constants';
 import { TRAIN_INT_EXT_BARS, TRAIN_PF } from '../data/mockData';
-import { useMsafeDashboard } from '../context/MsafeDashboardContext';
+import { useMsafeDashboard, DEFAULT_FILTERS, type AppliedFilters } from '../context/MsafeDashboardContext';
+import type { Persona } from '../data/constants';
 
 type TrainSlice = { name: string; value: number; color: string };
 
@@ -24,11 +25,33 @@ function getMsafeBaseUrl(): string {
   return host ? `https://${host}` : 'https://live-api.gophygital.work';
 }
 
-async function fetchMsafeTrainingJson(endpoint: string, signal?: AbortSignal): Promise<unknown> {
+/** Circle Manager filter bar values, applied as query params once the user clicks Apply.
+ *  Only sent for the 'circle' persona — the admin (pan-India) view stays unfiltered. */
+function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
+  if (persona !== 'circle') return {};
+  const params: Record<string, string> = {};
+  if (f.circle && f.circle !== DEFAULT_FILTERS.circle) params.circle = f.circle;
+  if (f.functions.length > 0) params.function = f.functions.join(',');
+  if (f.zone && f.zone !== DEFAULT_FILTERS.zone) params.zone = f.zone;
+  if (f.empType !== DEFAULT_FILTERS.empType) {
+    const t = f.empType.toLowerCase();
+    if (t.includes('internal') && !t.includes('external')) params.employment_type = 'internal';
+    else if (t.includes('external') && !t.includes('internal')) params.employment_type = 'external';
+  }
+  if (f.startDate && f.startDate !== DEFAULT_FILTERS.startDate) params.from_date = f.startDate;
+  if (f.endDate && f.endDate !== DEFAULT_FILTERS.endDate) params.to_date = f.endDate;
+  return params;
+}
+
+async function fetchMsafeTrainingJson(
+  endpoint: string,
+  extraParams?: Record<string, string>,
+  signal?: AbortSignal,
+): Promise<unknown> {
   const token = localStorage.getItem('token') || '';
   const companyId =
     localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '';
-  const params = new URLSearchParams({ company_id: companyId });
+  const params = new URLSearchParams({ company_id: companyId, ...extraParams });
   if (token) {
     params.set('access_token', token);
     params.set('token', token);
@@ -236,7 +259,7 @@ function DataState({ loading, empty, label }: { loading: boolean; empty: boolean
 }
 
 export function TrainingSection() {
-  const { openDrill } = useMsafeDashboard();
+  const { openDrill, persona, appliedFilters } = useMsafeDashboard();
   const [pfMode, setPfMode] = useState('donut');
   const [catMode, setCatMode] = useState('donut');
   const [trainByNameData, setTrainByNameData] = useState<TrainSlice[]>([]);
@@ -252,7 +275,10 @@ export function TrainingSection() {
 
     const loadTrainingCounts = async () => {
       try {
-        const payload = await fetchMsafeTrainingJson('category_wise_training_count.json');
+        const payload = await fetchMsafeTrainingJson(
+          'category_wise_training_count.json',
+          buildFilterParams(persona, appliedFilters),
+        );
         const normalized = normalizeTrainingCounts(payload);
         if (isMounted) {
           setTrainByNameData(normalized);
@@ -270,14 +296,17 @@ export function TrainingSection() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [persona, appliedFilters]);
 
   useEffect(() => {
     let isMounted = true;
 
     const loadScoreDistribution = async () => {
       try {
-        const payload = await fetchMsafeTrainingJson('training_score_distribution.json');
+        const payload = await fetchMsafeTrainingJson(
+          'training_score_distribution.json',
+          buildFilterParams(persona, appliedFilters),
+        );
         const normalized = normalizeScoreDistribution(payload);
         if (isMounted) setScoreDistribution(normalized);
       } catch (error) {
@@ -292,14 +321,17 @@ export function TrainingSection() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [persona, appliedFilters]);
 
   useEffect(() => {
     let isMounted = true;
 
     const loadTrainingFailures = async () => {
       try {
-        const payload = await fetchMsafeTrainingJson('recent_training_failures.json');
+        const payload = await fetchMsafeTrainingJson(
+          'recent_training_failures.json',
+          buildFilterParams(persona, appliedFilters),
+        );
         const normalized = normalizeTrainingFailures(payload);
         if (isMounted) setTrainFailures(normalized);
       } catch (error) {
@@ -314,7 +346,7 @@ export function TrainingSection() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [persona, appliedFilters]);
 
   return (
     <AccordionShell

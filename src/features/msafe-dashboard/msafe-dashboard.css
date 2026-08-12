@@ -65,15 +65,23 @@
   flex-shrink: 0;
 }
 .msafe-dash .vi-shell-brand { display: flex; align-items: center; gap: 12px; }
-.msafe-dash .vi-shell-logo { width: 30px; height: 30px; flex-shrink: 0; }
-.msafe-dash .vi-shell-logo svg { width: 100%; height: 100%; }
-.msafe-dash .vi-shell-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: .2px;
+.msafe-dash .vi-shell-logo-chip {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 8px;
+  padding: 5px 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  flex-shrink: 0;
 }
-.msafe-dash .vi-shell-title span { font-weight: 400; opacity: .85; }
+.msafe-dash .vi-shell-logo-img { height: 22px; width: auto; display: block; }
+.msafe-dash .vi-shell-title { display: flex; flex-direction: column; line-height: 1.25; }
+.msafe-dash .vi-shell-sub {
+  font-size: 11px;
+  font-weight: 400;
+  color: #fff;
+  opacity: .85;
+}
 .msafe-dash .vi-shell-right { display: flex; align-items: center; gap: 22px; }
 .msafe-dash .vi-shell-welcome,
 .msafe-dash .vi-shell-date {

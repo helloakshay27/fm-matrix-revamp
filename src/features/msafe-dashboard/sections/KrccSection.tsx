@@ -14,7 +14,8 @@ import { ChartSwitch } from '../components/ChartSwitch';
 import { ChartTable, DonutChart, SideLegendDonut, SliceBarChart } from '../components/DonutChart';
 import { ProgressRows } from '../components/ProgressRows';
 import { C } from '../data/constants';
-import { useMsafeDashboard } from '../context/MsafeDashboardContext';
+import { useMsafeDashboard, DEFAULT_FILTERS, type AppliedFilters } from '../context/MsafeDashboardContext';
+import type { Persona } from '../data/constants';
 
 type Slice = { name: string; value: number; color: string };
 type CircleBar = { name: string; pct: number; color: string };
@@ -27,11 +28,33 @@ function getMsafeBaseUrl(): string {
   return host ? `https://${host}` : 'https://live-api.gophygital.work';
 }
 
-async function fetchMsafeKrccJson(endpoint: string, signal?: AbortSignal): Promise<unknown> {
+/** Circle Manager filter bar values, applied as query params once the user clicks Apply.
+ *  Only sent for the 'circle' persona — the admin (pan-India) view stays unfiltered. */
+function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
+  if (persona !== 'circle') return {};
+  const params: Record<string, string> = {};
+  if (f.circle && f.circle !== DEFAULT_FILTERS.circle) params.circle = f.circle;
+  if (f.functions.length > 0) params.function = f.functions.join(',');
+  if (f.zone && f.zone !== DEFAULT_FILTERS.zone) params.zone = f.zone;
+  if (f.empType !== DEFAULT_FILTERS.empType) {
+    const t = f.empType.toLowerCase();
+    if (t.includes('internal') && !t.includes('external')) params.employment_type = 'internal';
+    else if (t.includes('external') && !t.includes('internal')) params.employment_type = 'external';
+  }
+  if (f.startDate && f.startDate !== DEFAULT_FILTERS.startDate) params.from_date = f.startDate;
+  if (f.endDate && f.endDate !== DEFAULT_FILTERS.endDate) params.to_date = f.endDate;
+  return params;
+}
+
+async function fetchMsafeKrccJson(
+  endpoint: string,
+  extraParams?: Record<string, string>,
+  signal?: AbortSignal,
+): Promise<unknown> {
   const token = localStorage.getItem('token') || '';
   const companyId =
     localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '';
-  const params = new URLSearchParams({ company_id: companyId });
+  const params = new URLSearchParams({ company_id: companyId, ...extraParams });
   if (token) {
     params.set('access_token', token);
     params.set('token', token);
@@ -260,7 +283,7 @@ function DataState({ loading, empty, label }: { loading: boolean; empty: boolean
 }
 
 export function KrccSection() {
-  const { openDrill } = useMsafeDashboard();
+  const { openDrill, persona, appliedFilters } = useMsafeDashboard();
   const [statusMode, setStatusMode] = useState('donut');
   const [catMode, setCatMode] = useState('donut');
   const [tatMode, setTatMode] = useState('bar');
@@ -281,7 +304,11 @@ export function KrccSection() {
     const controller = new AbortController();
     (async () => {
       try {
-        const payload = await fetchMsafeKrccJson('krcc_clearance_status.json', controller.signal);
+        const payload = await fetchMsafeKrccJson(
+          'krcc_clearance_status.json',
+          buildFilterParams(persona, appliedFilters),
+          controller.signal,
+        );
         const normalized = normalizeStatus(payload);
         warnIfEmpty('krcc_clearance_status.json', normalized, payload);
         if (!controller.signal.aborted) {
@@ -295,13 +322,17 @@ export function KrccSection() {
       }
     })();
     return () => controller.abort();
-  }, []);
+  }, [persona, appliedFilters]);
 
   useEffect(() => {
     const controller = new AbortController();
     (async () => {
       try {
-        const payload = await fetchMsafeKrccJson('krcc_pending_aging.json', controller.signal);
+        const payload = await fetchMsafeKrccJson(
+          'krcc_pending_aging.json',
+          buildFilterParams(persona, appliedFilters),
+          controller.signal,
+        );
         const normalized = normalizeAging(payload);
         warnIfEmpty('krcc_pending_aging.json', normalized, payload);
         if (!controller.signal.aborted) setAgingData(normalized);
@@ -312,13 +343,17 @@ export function KrccSection() {
       }
     })();
     return () => controller.abort();
-  }, []);
+  }, [persona, appliedFilters]);
 
   useEffect(() => {
     const controller = new AbortController();
     (async () => {
       try {
-        const payload = await fetchMsafeKrccJson('krcc_cleared_by_category.json', controller.signal);
+        const payload = await fetchMsafeKrccJson(
+          'krcc_cleared_by_category.json',
+          buildFilterParams(persona, appliedFilters),
+          controller.signal,
+        );
         const normalized = normalizeCategory(payload);
         warnIfEmpty('krcc_cleared_by_category.json', normalized, payload);
         if (!controller.signal.aborted) setCategoryData(normalized);
@@ -329,13 +364,17 @@ export function KrccSection() {
       }
     })();
     return () => controller.abort();
-  }, []);
+  }, [persona, appliedFilters]);
 
   useEffect(() => {
     const controller = new AbortController();
     (async () => {
       try {
-        const payload = await fetchMsafeKrccJson('krcc_turnaround_time_by_circle.json', controller.signal);
+        const payload = await fetchMsafeKrccJson(
+          'krcc_turnaround_time_by_circle.json',
+          buildFilterParams(persona, appliedFilters),
+          controller.signal,
+        );
         const normalized = normalizeTurnaround(payload);
         warnIfEmpty('krcc_turnaround_time_by_circle.json', normalized, payload);
         if (!controller.signal.aborted) setTurnaroundData(normalized);
@@ -346,13 +385,17 @@ export function KrccSection() {
       }
     })();
     return () => controller.abort();
-  }, []);
+  }, [persona, appliedFilters]);
 
   useEffect(() => {
     const controller = new AbortController();
     (async () => {
       try {
-        const payload = await fetchMsafeKrccJson('krcc_cleared_user_percentage_by_circle.json', controller.signal);
+        const payload = await fetchMsafeKrccJson(
+          'krcc_cleared_user_percentage_by_circle.json',
+          buildFilterParams(persona, appliedFilters),
+          controller.signal,
+        );
         const normalized = normalizeClearanceByCircle(payload);
         warnIfEmpty('krcc_cleared_user_percentage_by_circle.json', normalized, payload);
         if (!controller.signal.aborted) setCirclePctData(normalized);
@@ -363,7 +406,7 @@ export function KrccSection() {
       }
     })();
     return () => controller.abort();
-  }, []);
+  }, [persona, appliedFilters]);
 
   const totalStatus = statusData.reduce((sum, s) => sum + s.value, 0);
   const clearedStatus = statusData.find((s) => /clear/i.test(s.name))?.value ?? 0;
