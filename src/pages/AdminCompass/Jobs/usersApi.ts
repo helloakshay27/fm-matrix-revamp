@@ -64,10 +64,12 @@ const sortByName = (users) => {
  * Source for the "Assignee Person" pickers in the KPI modals.
  */
 export const fetchEscalateToUsers = async () => {
-  const { baseUrl, token } = getApiContext();
+  const { baseUrl, token, orgId } = getApiContext();
   if (!baseUrl || !token) return null;
 
-  const res = await fetch(buildApiUrl("/pms/users/get_escalate_to_users.json"), {
+  const res = await fetch(buildApiUrl("/pms/users/get_escalate_to_users.json", {
+    organization_id: orgId,
+  }), {
     method: "GET",
     headers: apiHeaders(),
   });
