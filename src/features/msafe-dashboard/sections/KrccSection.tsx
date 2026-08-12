@@ -383,6 +383,7 @@ export function KrccSection() {
           infoKey="krcc-status"
           showPdf
           pdfLabel="KRCC Clearance Status"
+          exportData={statusData.map((s) => ({ Status: s.name, Users: s.value }))}
           chartSwitch={<ChartSwitch modes={['donut', 'bar']} value={statusMode} onChange={setStatusMode} />}
         >
           {statusLoading || statusData.length === 0 ? (
@@ -424,6 +425,7 @@ export function KrccSection() {
         infoKey="krcc-circle"
         showPdf
         pdfLabel="KRCC by Circle"
+        exportData={circlePctData.map((d) => ({ Circle: d.name, 'Cleared %': d.pct }))}
         style={{ marginTop: 16 }}
       >
         {circlePctLoading || circlePctData.length === 0 ? (
@@ -472,6 +474,7 @@ export function KrccSection() {
         infoKey="krcc-category"
         showPdf
         pdfLabel="KRCC by Category"
+        exportData={categoryData.map((d) => ({ Category: d.name, 'KRCCs Cleared': d.value }))}
         style={{ marginTop: 16 }}
         chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={catMode} onChange={setCatMode} />}
       >
@@ -492,6 +495,7 @@ export function KrccSection() {
         infoKey="krcc-turnaround"
         showPdf
         pdfLabel="KRCC Turnaround"
+        exportData={turnaroundData.map((d) => ({ Circle: d.name, 'Avg Days to Clear': d.days }))}
         style={{ marginTop: 16 }}
         chartSwitch={<ChartSwitch modes={['bar', 'table']} value={tatMode} onChange={setTatMode} />}
       >

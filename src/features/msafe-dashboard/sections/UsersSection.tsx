@@ -314,9 +314,9 @@ export function UsersSection() {
         const payload = await fetchUserStatistics('department');
         const normalized = normalizeStatSlices(
           payload,
-          ['data', 'result', 'departments', 'users'],
-          ['department_name', 'department', 'function_name', 'name', 'label', 'title'],
-          ['count', 'value', 'total', 'total_users', 'users', 'users_count', 'department_count'],
+          ['users_by_department', 'data', 'result', 'departments', 'users'],
+          ['department', 'department_name', 'function_name', 'name', 'label', 'title'],
+          ['user_count', 'count', 'value', 'total', 'total_users', 'users', 'users_count', 'department_count'],
         );
         if (isMounted) setFuncChartData(normalized);
       } catch (error) {
@@ -338,12 +338,12 @@ export function UsersSection() {
 
     const loadCompData = async () => {
       try {
-        const payload = await fetchUserStatistics('composition');
+        const payload = await fetchUserStatistics('department');
         const normalized = normalizeStatSlices(
           payload,
-          ['data', 'result', 'composition', 'employment_types', 'types', 'users'],
-          ['employment_type', 'type_name', 'category', 'name', 'label', 'title'],
-          ['count', 'value', 'total', 'total_users', 'users', 'users_count'],
+          ['users_by_department', 'data', 'result', 'departments', 'composition', 'employment_types', 'types', 'users'],
+          ['department', 'department_name', 'employment_type', 'type_name', 'category', 'name', 'label', 'title'],
+          ['user_count', 'count', 'value', 'total', 'total_users', 'users', 'users_count', 'department_count'],
         );
         if (isMounted) setCompChartData(normalized);
       } catch (error) {
@@ -373,6 +373,7 @@ export function UsersSection() {
           infoKey="user-comp"
           showPdf
           pdfLabel="User Composition"
+          exportData={compChartData.map((d) => ({ Department: d.name, Users: d.value }))}
           chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={compMode} onChange={setCompMode} />}
         >
           {compLoading || compChartData.length === 0 ? (
@@ -392,6 +393,7 @@ export function UsersSection() {
           infoKey="user-reg"
           showPdf
           pdfLabel="New Registrations"
+          exportData={regChartData.map((d) => ({ Month: d.m, 'New Joiners': d.n }))}
           chartSwitch={<ChartSwitch modes={['line', 'bar']} value={regMode} onChange={setRegMode} />}
         >
           {regLoading || regChartData.length === 0 ? (
@@ -435,6 +437,13 @@ export function UsersSection() {
           sub="Distribution across 22 VIL circles"
           infoKey="user-circle"
           showPdf
+          pdfLabel="Users per Circle"
+          exportData={circleChartData.map((d) => ({
+            Circle: d.name,
+            Internal: d.Internal,
+            External: d.External,
+            Total: d.Internal + d.External,
+          }))}
           chartSwitch={<ChartSwitch modes={['bar', 'table']} value={circleMode} onChange={setCircleMode} />}
         >
           {circleLoading || circleChartData.length === 0 ? (
@@ -491,6 +500,8 @@ export function UsersSection() {
           sub="Sales, S&D, Technology, HR, Marketing, Ops, etc."
           infoKey="user-func"
           showPdf
+          pdfLabel="Users by Department"
+          exportData={funcChartData.map((d) => ({ Department: d.name, Users: d.value }))}
           chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={funcMode} onChange={setFuncMode} />}
         >
           {funcLoading || funcChartData.length === 0 ? (

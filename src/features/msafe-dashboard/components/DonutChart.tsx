@@ -5,7 +5,6 @@ import {
   Pie,
   Cell,
   Tooltip,
-  Legend,
   Sector,
   BarChart,
   Bar,
@@ -45,66 +44,100 @@ function renderActiveShape(props: ActiveShapeProps) {
   );
 }
 
-/** Full-width donut matching HTML Chart.js: 65% cutout + legend on the right */
+/** Full-width donut matching HTML Chart.js: 65% cutout + legend on the right.
+ *  The legend is custom HTML (not recharts' built-in Legend) so it can wrap into a
+ *  fixed number of columns and scroll within the card instead of overflowing into
+ *  neighboring cards once the slice count gets large (e.g. 60+ departments). */
 export function DonutChart({
   data,
   height = 220,
   showLegend = true,
   bodyLabel,
+  legendColumns = 2,
 }: {
   data: Slice[];
   height?: number;
   showLegend?: boolean;
   bodyLabel?: string;
+  legendColumns?: number;
 }) {
   const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
   const outer = 78;
   const inner = Math.round(outer * 0.65);
+  const legendRows = Math.max(1, Math.ceil(data.length / legendColumns));
 
   return (
-    <div className="chart-wrap chart-wrap--pie" style={{ height }}>
-      <ResponsiveContainer width="100%" height={height}>
-        <PieChart margin={{ top: 8, right: showLegend ? 8 : 8, bottom: 8, left: 8 }}>
-          <Pie
-            data={data}
-            dataKey="value"
-            nameKey="name"
-            cx={showLegend ? '38%' : '50%'}
-            cy="50%"
-            innerRadius={inner}
-            outerRadius={outer}
-            paddingAngle={0}
-            stroke="none"
-            isAnimationActive={false}
-            activeIndex={activeIndex}
-            activeShape={renderActiveShape}
-            onMouseEnter={(_, index) => setActiveIndex(index)}
-            onMouseLeave={() => setActiveIndex(undefined)}
-          >
-            {data.map((d) => (
-              <Cell key={d.name} fill={d.color} style={{ cursor: 'pointer' }} />
-            ))}
-          </Pie>
-          {/* Tooltip MUST be a direct child of PieChart — Recharts findChildByType */}
-          <Tooltip
-            cursor={false}
-            allowEscapeViewBox={{ x: true, y: true }}
-            wrapperStyle={{ outline: 'none', zIndex: 40, pointerEvents: 'none' }}
-            content={(props) => <MsafeChartTooltip {...props} bodyLabel={bodyLabel} />}
-          />
-          {showLegend ? (
-            <Legend
-              layout="vertical"
-              align="right"
-              verticalAlign="middle"
-              iconType="square"
-              iconSize={10}
-              wrapperStyle={{ fontSize: 10.5, color: C.sage, paddingLeft: 8 }}
-              formatter={(value) => <span style={{ color: C.dark, fontWeight: 500 }}>{value}</span>}
+    <div className="chart-wrap chart-wrap--pie" style={{ height, display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ flex: showLegend ? '0 0 45%' : '1 1 100%', minWidth: 0, height: '100%' }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+            <Pie
+              data={data}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              innerRadius={inner}
+              outerRadius={outer}
+              paddingAngle={0}
+              stroke="none"
+              isAnimationActive={false}
+              activeIndex={activeIndex}
+              activeShape={renderActiveShape}
+              onMouseEnter={(_, index) => setActiveIndex(index)}
+              onMouseLeave={() => setActiveIndex(undefined)}
+            >
+              {data.map((d) => (
+                <Cell key={d.name} fill={d.color} style={{ cursor: 'pointer' }} />
+              ))}
+            </Pie>
+            {/* Tooltip MUST be a direct child of PieChart — Recharts findChildByType */}
+            <Tooltip
+              cursor={false}
+              allowEscapeViewBox={{ x: true, y: true }}
+              wrapperStyle={{ outline: 'none', zIndex: 40, pointerEvents: 'none' }}
+              content={(props) => <MsafeChartTooltip {...props} bodyLabel={bodyLabel} />}
             />
-          ) : null}
-        </PieChart>
-      </ResponsiveContainer>
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+
+      {showLegend ? (
+        <div
+          style={{
+            flex: '1 1 55%',
+            minWidth: 0,
+            maxHeight: height - 16,
+            overflowY: 'auto',
+            display: 'grid',
+            gridTemplateRows: `repeat(${legendRows}, auto)`,
+            gridAutoFlow: 'column',
+            columnGap: 16,
+            rowGap: 6,
+          }}
+        >
+          {data.map((d) => (
+            <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+              <span
+                style={{ width: 10, height: 10, borderRadius: 2, background: d.color, flexShrink: 0 }}
+              />
+              <span
+                style={{
+                  fontSize: 10.5,
+                  color: C.dark,
+                  fontWeight: 500,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+                title={d.name}
+              >
+                {d.name}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -328,6 +328,7 @@ export function TrainingSection() {
           sub="All training records"
           infoKey="train-pf"
           showPdf
+          exportData={TRAIN_PF.map((d) => ({ Status: d.name, Records: d.value }))}
           chartSwitch={<ChartSwitch modes={['donut', 'bar']} value={pfMode} onChange={setPfMode} />}
         >
           {pfMode === 'donut' ? (
@@ -396,6 +397,8 @@ export function TrainingSection() {
         sub="Training volume rolled up by category — Statutory Compliance, Technical Safety, Behavioral Safety, Emergency Response, Induction"
         infoKey="train-category"
         showPdf
+        pdfLabel="Category-wise Trainings"
+        exportData={trainCategoryData.map((d) => ({ Category: d.name, Records: d.value }))}
         style={{ marginTop: 16 }}
         chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={catMode} onChange={setCatMode} />}
       >

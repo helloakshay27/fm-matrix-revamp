@@ -703,7 +703,7 @@ const WeeklyReports = () => {
 
         const headers = { Authorization: `Bearer ${token}`, Accept: "application/json" };
         const urlFor = (source_type: string, source_id: any) => {
-            if (source_type === "task") return `${normalizedBaseUrl}/task_managements/${source_id}.json`;
+            if (source_type === "task") return `${normalizedBaseUrl}/business_compass/tasks/${source_id}.json`;
             if (source_type === "issue") return `${normalizedBaseUrl}/issues/${source_id}.json`;
             if (source_type === "todo") return `${normalizedBaseUrl}/todos/${source_id}.json`;
             return null;
