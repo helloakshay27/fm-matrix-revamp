@@ -252,7 +252,7 @@ useEffect(() => {
       flaggedAt: item.flagged_at ? new Date(item.flagged_at).toLocaleString() : '--',
       // Invoice fields
       invoiceNo: item.invoice_no || '--',
-      invoiceAmount: item.invoice_amount ? `$${item.invoice_amount}` : '--',
+      invoiceAmount: item.invoice_amount ? `₹${item.invoice_amount}` : '--',
       invoiceDate: item.invoice_date ? new Date(item.invoice_date).toLocaleDateString() : '--',
       // Add custom fields data
       ...customFieldsData,
