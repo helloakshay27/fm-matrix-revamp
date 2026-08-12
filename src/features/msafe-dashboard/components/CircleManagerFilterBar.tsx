@@ -120,12 +120,6 @@ const selectMenuProps = {
   disableEnforceFocus: true,
 };
 
-const EMP_TYPES = [
-  'Internal / External',
-  'Internal (FTE)',
-  'External (Non-FTE)',
-];
-
 export function CircleManagerFilterBar() {
   const {
     persona,
@@ -150,13 +144,14 @@ export function CircleManagerFilterBar() {
   const [circleOptions, setCircleOptions] = useState<string[]>([]);
   const [functionOptions, setFunctionOptions] = useState<string[]>([]);
   const [zoneOptions, setZoneOptions] = useState<string[]>(['All Zones']);
+  const [empTypeOptions, setEmpTypeOptions] = useState<string[]>(['Internal / External']);
   const [loadingFilters, setLoadingFilters] = useState(true);
 
   useEffect(() => {
     const controller = new AbortController();
 
     (async () => {
-      const [circles, funcs, zones] = await Promise.all([
+      const [circles, funcs, zones, empTypes] = await Promise.all([
         fetchFilterOptions('circle_level_filter.json', ['circles'], ['circle_name', 'name'], controller.signal).catch(
           (err) => {
             if ((err as Error).name !== 'AbortError') console.error('Failed to load circle filter:', err);
@@ -178,12 +173,22 @@ export function CircleManagerFilterBar() {
             return [] as string[];
           },
         ),
+        fetchFilterOptions(
+          'employee_type_filter.json',
+          ['employee_types', 'types', 'data', 'result'],
+          ['employee_type_name', 'employee_type', 'type_name', 'name'],
+          controller.signal,
+        ).catch((err) => {
+          if ((err as Error).name !== 'AbortError') console.error('Failed to load employee type filter:', err);
+          return [] as string[];
+        }),
       ]);
 
       if (controller.signal.aborted) return;
       setCircleOptions(circles);
       setFunctionOptions(funcs);
       setZoneOptions(['All Zones', ...zones]);
+      setEmpTypeOptions(['Internal / External', ...empTypes]);
       setLoadingFilters(false);
     })();
 
@@ -330,8 +335,9 @@ export function CircleManagerFilterBar() {
           onChange={(e) => setEmpType(String(e.target.value))}
           sx={fieldStyles}
           MenuProps={selectMenuProps}
+          disabled={loadingFilters}
         >
-          {EMP_TYPES.map((t) => (
+          {empTypeOptions.map((t) => (
             <MenuItem key={t} value={t}>
               {t}
             </MenuItem>

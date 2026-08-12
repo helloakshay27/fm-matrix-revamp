@@ -3,6 +3,23 @@ import type { AccordionKey, ModuleView, Persona } from '../data/constants';
 
 export type DrillState = { id: string; title: string; crumb: string } | null;
 export type ToastItem = { id: number; message: string };
+export type AppliedFilters = {
+  circle: string;
+  functions: string[];
+  zone: string;
+  empType: string;
+  startDate: string;
+  endDate: string;
+};
+
+export const DEFAULT_FILTERS: AppliedFilters = {
+  circle: 'Maharashtra & Goa',
+  functions: [],
+  zone: 'All Zones',
+  empType: 'Internal / External',
+  startDate: '2026-07-01',
+  endDate: '2026-07-31',
+};
 
 type Ctx = {
   persona: Persona;
@@ -35,6 +52,10 @@ type Ctx = {
   setEndDate: (d: string) => void;
   applyFilters: () => void;
   resetFilters: () => void;
+  /** Snapshot of circle/functions/zone/empType/startDate/endDate taken at the last "Apply" click.
+   *  API-fetching sections should key their fetches off this, not the live dropdown state, so
+   *  data only refreshes once the user explicitly applies filters. */
+  appliedFilters: AppliedFilters;
   drill: DrillState;
   openDrill: (id: string, title?: string) => void;
   closeDrill: () => void;
@@ -57,12 +78,13 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
   const [kpiUsers, setKpiUsers] = useState('27,438');
   const [kpiLmc, setKpiLmc] = useState('1,284');
   const [kpiSmt, setKpiSmt] = useState('438');
-  const [circle, setCircle] = useState('Maharashtra & Goa');
-  const [functions, setFunctions] = useState<string[]>([]);
-  const [zone, setZone] = useState('All Zones');
-  const [empType, setEmpType] = useState('Internal / External');
-  const [startDate, setStartDate] = useState('2026-07-01');
-  const [endDate, setEndDate] = useState('2026-07-31');
+  const [circle, setCircle] = useState(DEFAULT_FILTERS.circle);
+  const [functions, setFunctions] = useState<string[]>(DEFAULT_FILTERS.functions);
+  const [zone, setZone] = useState(DEFAULT_FILTERS.zone);
+  const [empType, setEmpType] = useState(DEFAULT_FILTERS.empType);
+  const [startDate, setStartDate] = useState(DEFAULT_FILTERS.startDate);
+  const [endDate, setEndDate] = useState(DEFAULT_FILTERS.endDate);
+  const [appliedFilters, setAppliedFilters] = useState<AppliedFilters>(DEFAULT_FILTERS);
   const [drill, setDrill] = useState<DrillState>(null);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [selectedAnalytics, setSelectedAnalytics] = useState<string[]>([]);
@@ -119,17 +141,19 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
   const closeDrill = useCallback(() => setDrill(null), []);
 
   const applyFilters = useCallback(() => {
+    setAppliedFilters({ circle, functions, zone, empType, startDate, endDate });
     setPageTitle(`M-Safe · ${circle} Circle`);
     showToast(`Filters applied · dashboard refreshed for ${circle}`);
-  }, [circle, showToast]);
+  }, [circle, functions, zone, empType, startDate, endDate, showToast]);
 
   const resetFilters = useCallback(() => {
-    setCircle('Maharashtra & Goa');
-    setFunctions([]);
-    setZone('All Zones');
-    setEmpType('Internal / External');
-    setStartDate('2026-07-01');
-    setEndDate('2026-07-31');
+    setCircle(DEFAULT_FILTERS.circle);
+    setFunctions(DEFAULT_FILTERS.functions);
+    setZone(DEFAULT_FILTERS.zone);
+    setEmpType(DEFAULT_FILTERS.empType);
+    setStartDate(DEFAULT_FILTERS.startDate);
+    setEndDate(DEFAULT_FILTERS.endDate);
+    setAppliedFilters(DEFAULT_FILTERS);
     setPageTitle('M-Safe · Maharashtra & Goa Circle');
     showToast('Filters reset');
   }, [showToast]);
@@ -166,6 +190,7 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       setEndDate,
       applyFilters,
       resetFilters,
+      appliedFilters,
       drill,
       openDrill,
       closeDrill,
@@ -194,6 +219,7 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       startDate,
       endDate,
       applyFilters,
+      appliedFilters,
       resetFilters,
       drill,
       openDrill,

@@ -16,6 +16,8 @@ import { ChartSwitch } from '../components/ChartSwitch';
 import { ChartTable, DonutChart, SliceBarChart } from '../components/DonutChart';
 import { UserDirectoryCard } from '../components/UserDirectoryCard';
 import { C } from '../data/constants';
+import type { Persona } from '../data/constants';
+import { useMsafeDashboard, DEFAULT_FILTERS, type AppliedFilters } from '../context/MsafeDashboardContext';
 import { getAuthHeader } from '@/config/apiConfig';
 
 type CircleChartRow = { name: string; Internal: number; External: number };
@@ -202,6 +204,24 @@ function getMsafeBaseUrl(): string {
   return host ? `https://${host}` : 'https://live-api.gophygital.work';
 }
 
+/** Circle Manager filter bar values, applied as query params once the user clicks Apply.
+ *  Only sent for the 'circle' persona — the admin (pan-India) view stays unfiltered. */
+function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
+  if (persona !== 'circle') return {};
+  const params: Record<string, string> = {};
+  if (f.circle && f.circle !== DEFAULT_FILTERS.circle) params.circle = f.circle;
+  if (f.functions.length > 0) params.function = f.functions.join(',');
+  if (f.zone && f.zone !== DEFAULT_FILTERS.zone) params.zone = f.zone;
+  if (f.empType !== DEFAULT_FILTERS.empType) {
+    const t = f.empType.toLowerCase();
+    if (t.includes('internal') && !t.includes('external')) params.employment_type = 'internal';
+    else if (t.includes('external') && !t.includes('internal')) params.employment_type = 'external';
+  }
+  if (f.startDate && f.startDate !== DEFAULT_FILTERS.startDate) params.from_date = f.startDate;
+  if (f.endDate && f.endDate !== DEFAULT_FILTERS.endDate) params.to_date = f.endDate;
+  return params;
+}
+
 async function fetchMsafeUserDashboardJson(
   endpoint: string,
   extraParams?: Record<string, string>,
@@ -231,8 +251,8 @@ async function fetchMsafeUserDashboardJson(
   return response.json();
 }
 
-async function fetchUserStatistics(type: string): Promise<unknown> {
-  return fetchMsafeUserDashboardJson('user_statistics.json', { type });
+async function fetchUserStatistics(type: string, extraParams?: Record<string, string>): Promise<unknown> {
+  return fetchMsafeUserDashboardJson('user_statistics.json', { type, ...extraParams });
 }
 
 function DataState({ loading, empty, label }: { loading: boolean; empty: boolean; label: string }) {
@@ -245,6 +265,7 @@ function DataState({ loading, empty, label }: { loading: boolean; empty: boolean
 }
 
 export function UsersSection() {
+  const { persona, appliedFilters } = useMsafeDashboard();
   const [compMode, setCompMode] = useState('donut');
   const [regMode, setRegMode] = useState('line');
   const [circleMode, setCircleMode] = useState('bar');
@@ -265,7 +286,10 @@ export function UsersSection() {
       setCircleLoading(true);
 
       try {
-        const payload = await fetchMsafeUserDashboardJson('users_by_circle.json');
+        const payload = await fetchMsafeUserDashboardJson(
+          'users_by_circle.json',
+          buildFilterParams(persona, appliedFilters),
+        );
         const normalized = normalizeCircleChartData(payload);
         if (isMounted) setCircleChartData(normalized);
       } catch (error) {
@@ -282,14 +306,17 @@ export function UsersSection() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [persona, appliedFilters]);
 
   useEffect(() => {
     let isMounted = true;
 
     const loadRegData = async () => {
       try {
-        const payload = await fetchMsafeUserDashboardJson('new_registrations.json');
+        const payload = await fetchMsafeUserDashboardJson(
+          'new_registrations.json',
+          buildFilterParams(persona, appliedFilters),
+        );
         const normalized = normalizeRegChartData(payload);
         if (isMounted) setRegChartData(normalized);
       } catch (error) {
@@ -304,14 +331,14 @@ export function UsersSection() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [persona, appliedFilters]);
 
   useEffect(() => {
     let isMounted = true;
 
     const loadFuncData = async () => {
       try {
-        const payload = await fetchUserStatistics('department');
+        const payload = await fetchUserStatistics('department', buildFilterParams(persona, appliedFilters));
         const normalized = normalizeStatSlices(
           payload,
           ['users_by_department', 'data', 'result', 'departments', 'users'],
@@ -331,14 +358,14 @@ export function UsersSection() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [persona, appliedFilters]);
 
   useEffect(() => {
     let isMounted = true;
 
     const loadCompData = async () => {
       try {
-        const payload = await fetchUserStatistics('department');
+        const payload = await fetchUserStatistics('department', buildFilterParams(persona, appliedFilters));
         const normalized = normalizeStatSlices(
           payload,
           ['users_by_department', 'data', 'result', 'departments', 'composition', 'employment_types', 'types', 'users'],
@@ -358,7 +385,7 @@ export function UsersSection() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [persona, appliedFilters]);
 
   return (
     <AccordionShell
