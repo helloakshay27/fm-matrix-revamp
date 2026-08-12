@@ -1,6 +1,6 @@
 export function Footer() {
   return (
-    <div className="phg-footer">
+    <div className="footer">
       <b>Data note.</b> Every number on this page comes from the FM Adoption Analytics API
       (<code>/fm/adoption/*</code>), computed from PostHog autocapture events for this tenant only —
       no cross-tenant data. Because only autocapture is instrumented, some metrics are documented

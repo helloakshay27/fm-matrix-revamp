@@ -4,12 +4,12 @@ export function AiButton({ chartKey }: { chartKey: string }) {
   const { openAiPanel } = useDashboard();
   return (
     <button
-      className="phg-ai-btn"
+      className="ai-btn"
       title="Generate insight with AI"
       aria-label="Generate insight with AI"
       onClick={(e) => { e.stopPropagation(); openAiPanel(chartKey); }}
     >
-      <span className="phg-sp">✦</span><span className="phg-lbl-ai">Insight</span>
+      <span className="sp">✦</span><span className="lbl-ai">Insight</span>
     </button>
   );
 }

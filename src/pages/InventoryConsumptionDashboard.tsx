@@ -3,10 +3,12 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
-import { Eye, X, ChevronDown, ChevronUp, RefreshCw, Download } from 'lucide-react';
+import { Eye, X, ChevronDown, ChevronUp, RefreshCw, Download, Plus } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import bio from '@/assets/bio.png';
+import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
+import { InventoryConsumptionBulkUploadModal } from '@/components/InventoryConsumptionBulkUploadModal';
 
 import { RootState, AppDispatch } from '@/store/store';
 import { fetchInventoryConsumptionHistory } from '@/store/slices/inventoryConsumptionSlice';
@@ -25,6 +27,8 @@ const InventoryConsumptionDashboard = () => {
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [categoryData, setCategoryData] = useState<Record<string, { loading: boolean; inventories: any[]; total_cost: number | null }>>({});
+  const [showActionPanel, setShowActionPanel] = useState(false);
+  const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
   // New state for monthly costs from API
   const [monthlyCosts, setMonthlyCosts] = useState<Record<string, number>>({});
 
@@ -453,6 +457,16 @@ const InventoryConsumptionDashboard = () => {
   };
 
 
+  const leftActions = (
+    <div className="flex flex-wrap gap-3">
+      {shouldShow("Inventory Consumption","create") && (
+        <Button onClick={() => setShowActionPanel(true)} className="fm-button-fix fm-button-brand !h-8 !min-h-8 !px-3 !py-1.5 text-sm">
+          <Plus className="w-4 h-4 mr-1" /> Action
+        </Button>
+      )}
+    </div>
+  );
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -607,6 +621,7 @@ const InventoryConsumptionDashboard = () => {
                               pagination={true}
                               selectable={false}
                               getItemId={(item) => item.id}
+                              leftActions={leftActions}
                             />
                           )}
                         </div>
@@ -619,6 +634,19 @@ const InventoryConsumptionDashboard = () => {
           </div>
         ))}
       </div>
+      {showActionPanel && (
+        <SelectionPanel
+          onImport={() => {
+            setShowBulkUploadModal(true);
+            setShowActionPanel(false);
+          }}
+          onClearSelection={() => setShowActionPanel(false)}
+        />
+      )}
+      <InventoryConsumptionBulkUploadModal
+        isOpen={showBulkUploadModal}
+        onClose={() => setShowBulkUploadModal(false)}
+      />
     </div>
   );
 };

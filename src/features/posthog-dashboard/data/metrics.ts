@@ -39,6 +39,9 @@ export interface DashboardState {
   prev: boolean;
   /** A1 needs a licensed-seat count — billing data the events don't carry. */
   licensedSeats: number | null;
+  activePage: 'pgOverview' | 'pgTraffic' | 'pgAdopt' | 'pgFlows';
+  theme: 'light' | 'dark';
+  navCollapsed: boolean;
 }
 
 export const DEFAULT_STATE: DashboardState = {
@@ -51,6 +54,9 @@ export const DEFAULT_STATE: DashboardState = {
   sessTab: 'sessions',
   prev: true,
   licensedSeats: null,
+  activePage: 'pgTraffic',
+  theme: 'light',
+  navCollapsed: false,
 };
 
 /** Keeps `scope` valid for the current tier whenever the site list or tier changes. */
@@ -201,9 +207,9 @@ export interface TrafficData {
 }
 
 const DEVICE_COLORS: Record<string, string> = {
-  Desktop: 'var(--phg-blue)',
-  Mobile: 'var(--phg-orange)',
-  Tablet: 'var(--phg-green)',
+  Desktop: 'var(--blue)',
+  Mobile: 'var(--mint)',
+  Tablet: 'var(--amber)',
 };
 
 function densifyDays(
@@ -318,7 +324,7 @@ export function buildTraffic(
   const deviceRows: [string, number, string][] = (usage?.device_split.devices ?? []).map((d) => [
     d.device,
     d.session_share / 100,
-    DEVICE_COLORS[d.device] ?? 'var(--phg-midgray)',
+    DEVICE_COLORS[d.device] ?? 'var(--faint)',
   ]);
 
   return {

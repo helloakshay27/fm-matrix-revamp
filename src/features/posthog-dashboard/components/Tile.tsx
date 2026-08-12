@@ -19,16 +19,18 @@ export function Tile({ id, label, disp, delta, goodUp, sub, raw, unit }: TileSpe
   };
 
   return (
-    <div className="phg-tile">
-      {id in INFO && <InfoButton infoKey={id} />}
-      <div className="phg-lbl">{label}</div>
-      <div className="phg-val">{disp}</div>
-      {delta != null && <DeltaArrow delta={delta} goodUp={goodUp} />}
-      {sub && <div className="phg-sub2">{sub}</div>}
-      <div className="phg-bm">
-        <span className="phg-bl">Target</span>
+    <div className="tile">
+      <div className="tile-top">
+        {id in INFO && <InfoButton infoKey={id} />}
+        <div className="val">{disp}</div>
+        {delta != null && <DeltaArrow delta={delta} goodUp={goodUp} />}
+      </div>
+      <div className="lbl">{label}</div>
+      {sub && <div className="sub2">{sub}</div>}
+      <div className="bm">
+        <span className="bl">Target</span>
         <input
-          className="phg-bmin"
+          className="bmin"
           type="text"
           inputMode="decimal"
           value={raw_}
@@ -38,8 +40,8 @@ export function Tile({ id, label, disp, delta, goodUp, sub, raw, unit }: TileSpe
           onBlur={commit}
           onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
         />
-        {unit && <span className="phg-bu">{unit}</span>}
-        <span className={`phg-bb ${!hasTarget ? 'unset' : met ? 'met' : 'miss'}`}>
+        {unit && <span className="bu">{unit}</span>}
+        <span className={`bb ${!hasTarget ? 'unset' : met ? 'met' : 'miss'}`}>
           {!hasTarget ? 'set a target' : met ? '✓ on target' : '✕ off target'}
         </span>
       </div>

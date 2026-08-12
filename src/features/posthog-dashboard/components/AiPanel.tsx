@@ -14,12 +14,12 @@ interface Message {
 function InsightBody({ insight }: { insight: Insight }) {
   return (
     <>
-      <p className="phg-ai-k">Analysis</p>
-      <p className="phg-ai-lead">{insight.head}</p>
+      <p className="ai-k">Analysis</p>
+      <p className="ai-lead">{insight.head}</p>
       {insight.pts.length > 0 && <ul>{insight.pts.map((p, i) => <li key={i}>{p}</li>)}</ul>}
-      {insight.why && <><p className="phg-ai-k">Why it matters</p><p>{insight.why}</p></>}
-      {insight.rec && <><p className="phg-ai-k">Recommendation</p><p>{insight.rec}</p></>}
-      {insight.sug && <p className="phg-ai-sug">Ask a follow-up, e.g. "{insight.sug}"</p>}
+      {insight.why && <><p className="ai-k">Why it matters</p><p>{insight.why}</p></>}
+      {insight.rec && <><p className="ai-k">Recommendation</p><p>{insight.rec}</p></>}
+      {insight.sug && <p className="ai-sug">Ask a follow-up, e.g. "{insight.sug}"</p>}
     </>
   );
 }
@@ -51,7 +51,7 @@ export function AiPanel() {
   }, [messages]);
 
   if (!aiPanel || !chartKey) {
-    return <div className="phg-ai-backdrop" />;
+    return <div className="ai-backdrop" />;
   }
 
   const send = (question: string) => {
@@ -77,42 +77,42 @@ export function AiPanel() {
 
   return (
     <>
-      <div className="phg-ai-backdrop open" onClick={closeAiPanel} />
-      <div className="phg-ai-panel open">
-        <div className="phg-ai-head">
+      <div className="ai-backdrop open" onClick={closeAiPanel} />
+      <div className="ai-panel open">
+        <div className="ai-head">
           <div>
-            <div className="phg-ai-h-t"><span className="phg-sp">✦</span><span>{info?.t ?? chartKey}</span></div>
-            <div className="phg-ai-h-s">{vm.scopeLabel} · last {vm.state.date} days</div>
+            <div className="ai-h-t"><span className="sp">✦</span><span>{info?.t ?? chartKey}</span></div>
+            <div className="ai-h-s">{vm.scopeLabel} · last {vm.state.date} days</div>
           </div>
-          <button className="phg-ai-x" aria-label="Close" onClick={closeAiPanel}>✕</button>
+          <button className="ai-x" aria-label="Close" onClick={closeAiPanel}>✕</button>
         </div>
-        <div className="phg-ai-sim">
+        <div className="ai-sim">
           <span>✦</span><span>Simulated insight (demo). Connect an AI endpoint to enable live answers — the wiring is already in place.</span>
         </div>
-        <div className="phg-ai-body" ref={bodyRef}>
+        <div className="ai-body" ref={bodyRef}>
           {messages.map((m, i) => (
-            <div key={i} className={`phg-ai-msg ${m.role}`}>
-              {m.kind === 'typing' && <span className="phg-ai-typing">{m.text}</span>}
+            <div key={i} className={`ai-msg ${m.role}`}>
+              {m.kind === 'typing' && <span className="ai-typing">{m.text}</span>}
               {m.kind === 'insight' && m.insight && <InsightBody insight={m.insight} />}
               {m.kind === 'text' && <p>{m.text}</p>}
             </div>
           ))}
         </div>
-        <div className="phg-ai-chips">
+        <div className="ai-chips">
           {suggestions.map((s) => (
-            <button key={s} className="phg-ai-chip" onClick={() => send(s)}>{s}</button>
+            <button key={s} className="ai-chip" onClick={() => send(s)}>{s}</button>
           ))}
         </div>
-        <div className="phg-ai-foot">
+        <div className="ai-foot">
           <textarea
-            className="phg-ai-input"
+            className="ai-input"
             rows={1}
             placeholder="Ask a question about this chart…"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input); } }}
           />
-          <button className="phg-ai-send" onClick={() => send(input)}>Ask</button>
+          <button className="ai-send" onClick={() => send(input)}>Ask</button>
         </div>
       </div>
     </>
