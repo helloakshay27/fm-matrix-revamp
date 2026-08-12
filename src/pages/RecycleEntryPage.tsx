@@ -349,19 +349,7 @@ const RecycleEntryPage: React.FC = () => {
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
             />
-            <TextField
-              label="Recycled Quantity (Litre)"
-              placeholder="e.g. 80"
-              type="number"
-              value={formData.recycledQuantityLtr}
-              onChange={(e) => handleChange('recycledQuantityLtr', e.target.value)}
-              fullWidth
-              variant="outlined"
-              inputProps={{ min: '0' }}
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-            />
-            <FormControl fullWidth>
+              <FormControl fullWidth>
               <InputLabel shrink id="recycling-method-kg-label" sx={{ backgroundColor: 'white', px: 1 }}>
                 Recycling Method (Kg)
               </InputLabel>
@@ -381,6 +369,19 @@ const RecycleEntryPage: React.FC = () => {
                 ))}
               </Select>
             </FormControl>
+            <TextField
+              label="Recycled Quantity (Litre)"
+              placeholder="e.g. 80"
+              type="number"
+              value={formData.recycledQuantityLtr}
+              onChange={(e) => handleChange('recycledQuantityLtr', e.target.value)}
+              fullWidth
+              variant="outlined"
+              inputProps={{ min: '0' }}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+            />
+          
             <FormControl fullWidth>
               <InputLabel shrink id="recycling-method-ltr-label" sx={{ backgroundColor: 'white', px: 1 }}>
                 Recycling Method (Litre)
