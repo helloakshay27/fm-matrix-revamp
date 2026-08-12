@@ -3,8 +3,8 @@ import { Search } from 'lucide-react';
 import { ChartCard } from './ChartCard';
 import { StatusDot } from './StatusDot';
 import { overallStatus, type DirectoryUser } from '../data/mockData';
-import type { StatusCode } from '../data/constants';
-import { useMsafeDashboard } from '../context/MsafeDashboardContext';
+import type { StatusCode, Persona } from '../data/constants';
+import { useMsafeDashboard, DEFAULT_FILTERS, type AppliedFilters } from '../context/MsafeDashboardContext';
 import { getAuthHeader } from '@/config/apiConfig';
 
 type Filter = 'all' | 'internal' | 'external' | 'pending' | 'cleared';
@@ -13,6 +13,24 @@ function getMsafeBaseUrl(): string {
   const fromLS = localStorage.getItem('baseUrl') || '';
   const host = fromLS.replace(/^https?:\/\//, '').replace(/\/$/, '');
   return host ? `https://${host}` : 'https://live-api.gophygital.work';
+}
+
+/** Circle Manager filter bar values, applied as query params once the user clicks Apply.
+ *  Only sent for the 'circle' persona — the admin (pan-India) view stays unfiltered. */
+function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
+  if (persona !== 'circle') return {};
+  const params: Record<string, string> = {};
+  if (f.circle && f.circle !== DEFAULT_FILTERS.circle) params.circle = f.circle;
+  if (f.functions.length > 0) params.function = f.functions.join(',');
+  if (f.zone && f.zone !== DEFAULT_FILTERS.zone) params.zone = f.zone;
+  if (f.empType !== DEFAULT_FILTERS.empType) {
+    const t = f.empType.toLowerCase();
+    if (t.includes('internal') && !t.includes('external')) params.employment_type = 'internal';
+    else if (t.includes('external') && !t.includes('internal')) params.employment_type = 'external';
+  }
+  if (f.startDate && f.startDate !== DEFAULT_FILTERS.startDate) params.from_date = f.startDate;
+  if (f.endDate && f.endDate !== DEFAULT_FILTERS.endDate) params.to_date = f.endDate;
+  return params;
 }
 
 async function fetchMsafeUserDashboardJson(
@@ -150,7 +168,7 @@ const CHIP_DEFS: { id: Filter; label: string; match: (u: DirectoryUser) => boole
 
 /** Full searchable/filterable user directory — matches vi_msafe_v6.html */
 export function UserDirectoryCard({ style }: { style?: CSSProperties }) {
-  const { openDrill } = useMsafeDashboard();
+  const { openDrill, persona, appliedFilters } = useMsafeDashboard();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
   const [directory, setDirectory] = useState<DirectoryUser[]>([]);
@@ -169,6 +187,7 @@ export function UserDirectoryCard({ style }: { style?: CSSProperties }) {
         const payload = await fetchMsafeUserDashboardJson('employee_compliance_status.json', {
           page: String(page),
           current_page: String(page),
+          ...buildFilterParams(persona, appliedFilters),
         });
         const normalized = normalizeDirectory(payload);
         if (isMounted) {
@@ -193,7 +212,13 @@ export function UserDirectoryCard({ style }: { style?: CSSProperties }) {
     return () => {
       isMounted = false;
     };
-  }, [page]);
+  }, [page, persona, appliedFilters]);
+
+  // Jump back to page 1 whenever the applied filters change — the old page number
+  // may no longer exist against the newly filtered result set.
+  useEffect(() => {
+    setPage(1);
+  }, [appliedFilters]);
 
   // Search/filter narrow the currently-loaded page only — there's no confirmed
   // server-side search/filter param, so they can't reach across all ~112k records.
