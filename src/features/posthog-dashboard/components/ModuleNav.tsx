@@ -18,10 +18,10 @@ export function ModuleNav() {
 
   return (
     <div
-      className="phg-mnav"
+      className="mnav"
       title="Module & sub-module are derived from real $pathname segments — this filter applies to the Workflow usage section only"
     >
-      <div className="phg-mnav-buckets">
+      <div className="mnav-buckets">
         {shown.map((m) => (
           <button
             key={m.name}
@@ -34,7 +34,7 @@ export function ModuleNav() {
         ))}
         {rest.length > 0 && (
           <select
-            className="phg-mmore"
+            className="mmore"
             value={selectedIsHidden ? state.module! : ''}
             onChange={(e) => e.target.value && setModule(e.target.value)}
           >
@@ -46,9 +46,9 @@ export function ModuleNav() {
         )}
       </div>
 
-      <div className="phg-mnav-mods">
+      <div className="mnav-mods">
         {subShown.length > 0 ? (
-          <div className="phg-segbar">
+          <div className="segbar">
             {subShown.map((m) => (
               <button
                 key={m.name}
@@ -61,7 +61,7 @@ export function ModuleNav() {
             ))}
             {subRest.length > 0 && (
               <select
-                className="phg-mmore"
+                className="mmore"
                 value={subSelectedIsHidden ? state.subModule! : ''}
                 onChange={(e) => e.target.value && setSubModule(e.target.value)}
               >
@@ -73,7 +73,7 @@ export function ModuleNav() {
             )}
           </div>
         ) : (
-          <span className="phg-sd">
+          <span className="sd">
             {state.module ? `No sub-paths recorded under /${state.module}` : 'Loading modules…'}
           </span>
         )}

@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { fmtC } from '../../data/format';
 
 interface LineChartProps {
@@ -17,33 +17,43 @@ interface Tooltip {
   label?: string;
 }
 
-/** Usage/adoption-trend line chart with hover tooltip. */
+/**
+ * Usage / adoption-trend line chart, drawn to the wireframe's house style:
+ * no frame, faint vertical dashed gridlines on the x-label positions only,
+ * three plain grey y-numbers at the left, one saturated data colour and one
+ * pale area fill. The hover tooltip is the only addition over the wireframe.
+ */
 export function LineChart({ cur, prev, showPrev = true, labels }: LineChartProps) {
-  const gid = `phg-lg${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const svgRef = useRef<SVGSVGElement>(null);
   const [tip, setTip] = useState<Tooltip | null>(null);
 
-  const W = 640, H = 240, pl = 44, pr = 14, pt = 14, pb = 26;
+  const W = 680, H = 250, pl = 44, pr = 14, pt = 16, pb = 30;
   if (cur.length < 2) return null;
 
-  const all = [...cur, ...(prev ?? [])];
-  const mx = Math.max(...all) * 1.12 || 1;
+  const usePrev = !!prev && prev.length > 1 && showPrev;
+  const all = [...cur, ...(usePrev ? prev! : [])];
+  const mx = Math.max(...all) * 1.14 || 1;
   const n = cur.length;
   const xw = (W - pl - pr) / (n - 1);
   const X = (i: number) => pl + i * xw;
   const Y = (v: number) => pt + (H - pt - pb) * (1 - v / mx);
+  const base = H - pb;
   const pathStr = (arr: number[]) =>
     arr.map((v, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join(' ');
 
-  const gridLines: { y: number; val: number }[] = [];
-  for (let g = 0; g <= 4; g++) {
-    const y = pt + ((H - pt - pb) * g) / 4;
-    gridLines.push({ y, val: Math.round(mx * (1 - g / 4)) });
+  // gridlines + x labels sit on the same positions, at most ~6 across the range
+  const step = Math.max(1, Math.ceil(n / 6));
+  const ticks: number[] = [];
+  for (let i = 0; i < n; i += step) ticks.push(i);
+
+  const yLabels: { y: number; val: number }[] = [];
+  for (let g = 0; g <= 2; g++) {
+    yLabels.push({ y: pt + ((H - pt - pb) * g) / 2, val: Math.round(mx * (1 - g / 2)) });
   }
 
   let areaD = '';
   for (let i = 0; i < n - 1; i++) areaD += `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(cur[i]).toFixed(1)} `;
-  areaD += `L${X(n - 2).toFixed(1)} ${H - pb} L${X(0).toFixed(1)} ${H - pb} Z`;
+  areaD += `L${X(n - 2).toFixed(1)} ${base} L${X(0).toFixed(1)} ${base} Z`;
 
   // Convert mouse position to SVG viewBox coordinates
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
@@ -52,7 +62,6 @@ export function LineChart({ cur, prev, showPrev = true, labels }: LineChartProps
     const rect = svg.getBoundingClientRect();
     const scaleX = W / rect.width;
     const mouseX = (e.clientX - rect.left) * scaleX;
-    // Find the closest data point index
     const idx = Math.min(n - 1, Math.max(0, Math.round((mouseX - pl) / xw)));
     setTip({
       x: X(idx),
@@ -64,90 +73,76 @@ export function LineChart({ cur, prev, showPrev = true, labels }: LineChartProps
     });
   };
 
-  const TIP_W = 130, TIP_H = prev && showPrev ? 66 : 48;
+  const TIP_W = 132, TIP_H = usePrev ? 66 : 48;
   const tipX = tip ? Math.min(tip.x + 10, W - TIP_W - 4) : 0;
   const tipY = tip ? Math.max(pt, tip.y - TIP_H / 2) : 0;
+
+  const axisFont = 'Inter,-apple-system,Segoe UI,sans-serif';
 
   return (
     <svg
       ref={svgRef}
-      className="phg-chart"
+      className="chart"
       viewBox={`0 0 ${W} ${H}`}
       preserveAspectRatio="xMidYMid meet"
       onMouseMove={handleMouseMove}
       onMouseLeave={() => setTip(null)}
       style={{ cursor: 'crosshair' }}
     >
-      <defs>
-        <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#d97757" stopOpacity={0.18} />
-          <stop offset="100%" stopColor="#d97757" stopOpacity={0.02} />
-        </linearGradient>
-      </defs>
-
-      {/* Grid lines */}
-      {gridLines.map((g, i) => (
+      {/* vertical dashed gridlines + x labels */}
+      {ticks.map((i) => (
         <g key={i}>
-          <line x1={pl} y1={g.y} x2={W - pr} y2={g.y} stroke="#efece2" strokeDasharray="3 4" />
-          <text x={pl - 8} y={g.y + 4} textAnchor="end" fontSize={10} fill="#9b998f">{fmtC(g.val)}</text>
+          <line x1={X(i).toFixed(1)} y1={pt} x2={X(i).toFixed(1)} y2={base} stroke="var(--chart-grid)" strokeDasharray="2 4" />
+          <text x={X(i).toFixed(1)} y={H - 9} textAnchor="middle" fontSize={11} fill="var(--faint)" fontFamily={axisFont}>
+            {labels?.[i] ?? i + 1}
+          </text>
         </g>
       ))}
 
-      {/* Previous period */}
-      {prev && prev.length > 1 && showPrev && (
-        <path d={pathStr(prev)} fill="none" stroke="#b0aea5" strokeWidth={2} strokeDasharray="5 4" opacity={0.8} />
-      )}
+      {/* y scale */}
+      {yLabels.map((g, i) => (
+        <text key={i} x={pl - 11} y={g.y + 4} textAnchor="end" fontSize={11} fill="var(--faint)" fontFamily={axisFont}>
+          {fmtC(g.val)}
+        </text>
+      ))}
 
-      {/* Area fill + current line */}
-      <path d={areaD} fill={`url(#${gid})`} />
-      <path d={pathStr(cur.slice(0, n - 1))} fill="none" stroke="var(--phg-orange)" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />
+      <line x1={pl} y1={base} x2={W - pr} y2={base} stroke="var(--chart-grid)" />
+
+      {/* area fill, previous period, current line */}
+      <path d={areaD} fill="var(--chart-fill)" />
+      {usePrev && (
+        <path d={pathStr(prev!)} fill="none" stroke="var(--chart-line)" strokeWidth={1.8} strokeDasharray="4 4" />
+      )}
+      <path d={pathStr(cur.slice(0, n - 1))} fill="none" stroke="var(--chart-blue)" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
       <path
         d={`M${X(n - 2).toFixed(1)} ${Y(cur[n - 2]).toFixed(1)} L${X(n - 1).toFixed(1)} ${Y(cur[n - 1]).toFixed(1)}`}
-        fill="none" stroke="#b0aea5" strokeWidth={2.6} strokeDasharray="5 4"
+        fill="none" stroke="var(--chart-line)" strokeWidth={2.2} strokeDasharray="4 4"
       />
-      <circle cx={X(n - 1)} cy={Y(cur[n - 1])} r={6.4} fill="var(--phg-orange)" opacity={0.16} />
-      <circle cx={X(n - 1)} cy={Y(cur[n - 1])} r={3.2} fill="var(--phg-orange)" />
+      <circle cx={X(n - 1).toFixed(1)} cy={Y(cur[n - 1]).toFixed(1)} r={3} fill="var(--chart-blue)" />
 
       {/* Hover crosshair + tooltip */}
       {tip && (
         <g>
-          {/* Vertical guide line */}
           <line
-            x1={tip.x} y1={pt} x2={tip.x} y2={H - pb}
-            stroke="#d97757" strokeWidth={1} strokeDasharray="3 3" opacity={0.6}
+            x1={tip.x} y1={pt} x2={tip.x} y2={base}
+            stroke="var(--chart-line)" strokeWidth={1} strokeDasharray="3 3"
           />
-          {/* Dot on current line */}
-          <circle cx={tip.x} cy={tip.y} r={5} fill="var(--phg-orange)" stroke="#fff" strokeWidth={2} />
-          {/* Dot on prev line */}
-          {tip.prevVal !== undefined && showPrev && (
-            <circle cx={tip.x} cy={Y(tip.prevVal)} r={4} fill="#b0aea5" stroke="#fff" strokeWidth={1.5} />
+          <circle cx={tip.x} cy={tip.y} r={4.5} fill="var(--chart-blue)" stroke="var(--surface)" strokeWidth={2} />
+          {tip.prevVal !== undefined && usePrev && (
+            <circle cx={tip.x} cy={Y(tip.prevVal)} r={3.5} fill="var(--chart-line)" stroke="var(--surface)" strokeWidth={1.5} />
           )}
 
-          {/* Tooltip box */}
-          <rect
-            x={tipX} y={tipY}
-            width={TIP_W} height={TIP_H}
-            rx={8} ry={8}
-            fill="#1c1a17" opacity={0.93}
-          />
-          {/* Label / date */}
-          <text x={tipX + 10} y={tipY + 16} fontSize={10} fill="#9b998f" fontWeight="600">
+          <rect x={tipX} y={tipY} width={TIP_W} height={TIP_H} rx={8} ry={8} fill="var(--ink)" />
+          <text x={tipX + 11} y={tipY + 17} fontSize={11} fill="var(--on-ink)" opacity={0.62} fontFamily={axisFont}>
             {tip.label ?? `Point ${tip.idx + 1}`}
           </text>
-          {/* Current value */}
-          <text x={tipX + 10} y={tipY + 32} fontSize={13} fill="#fff" fontWeight="700">
-            {fmtC(tip.curVal)}
+          <text x={tipX + 11} y={tipY + 34} fontSize={13} fontWeight={500} fill="var(--on-ink)" fontFamily={axisFont}>
+            {fmtC(tip.curVal)} current
           </text>
-          <text x={tipX + 10 + String(fmtC(tip.curVal)).length * 7.5} y={tipY + 32} fontSize={10} fill="#d97757" fontWeight="600">
-            {' '}current
-          </text>
-          {/* Prev value */}
-          {tip.prevVal !== undefined && showPrev && (
-            <>
-              <text x={tipX + 10} y={tipY + 52} fontSize={11} fill="#b0aea5" fontWeight="600">
-                {fmtC(tip.prevVal)} prev
-              </text>
-            </>
+          {tip.prevVal !== undefined && usePrev && (
+            <text x={tipX + 11} y={tipY + 53} fontSize={12} fill="var(--on-ink)" opacity={0.62} fontFamily={axisFont}>
+              {fmtC(tip.prevVal)} previous
+            </text>
           )}
         </g>
       )}

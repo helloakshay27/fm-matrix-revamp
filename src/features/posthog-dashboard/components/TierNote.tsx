@@ -11,7 +11,7 @@ export function TierNote() {
   const note = NOTES[vm.state.tier];
   const [lead, ...rest] = note.split('. ');
   return (
-    <div className="phg-scope-note">
+    <div className="scope-note">
       <span>▸</span>
       <span><b>{lead}.</b> {rest.join('. ')}</span>
     </div>
@@ -20,7 +20,7 @@ export function TierNote() {
 
 export function BenchmarkNote() {
   return (
-    <div className="phg-bmnote">
+    <div className="bmnote">
       <span>◎</span>
       <span>
         <b>Benchmarks are yours to set.</b> Every KPI tile has a <b>Target</b> field — type your own number and the tile shows <b>✓ on target</b> or <b>✕ off target</b> live. Rate KPIs start with a suggested target; count KPIs start blank for you to define. In production these targets are saved per customer (and can be set per site / region / tier).

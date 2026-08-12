@@ -1,6 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap");
 @import "./styles/enhanced-select.css";
 @import "./styles/datepicker.css";
 @import "./styles/grid-layout.css";
@@ -11,7 +12,7 @@
 /* Prevent stray horizontal page scroll on mobile across the whole app */
 html,
 body {
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100%;
 }
 
@@ -32,7 +33,7 @@ body.product-pages-scope table th {
    via inline style={{...}} (e.g. PostSalesEnhancementsTab.tsx), which
    normal stylesheet rules cannot override. */
 body.product-pages-scope table {
-  font-family: "Poppins", sans-serif !important;
+  font-family: "Inter", sans-serif !important;
   border-collapse: collapse !important;
 }
 
@@ -1629,12 +1630,12 @@ button.text-blue-600 {
 
 html {
   /* prevent horizontal scroll on all devices */
-  overflow-x: hidden;
+  overflow-x: clip;
   -webkit-text-size-adjust: 100%;
 }
 
 body {
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100%;
   /* safe area for iOS notch / home bar */
   padding-env: env(safe-area-inset-top) env(safe-area-inset-right)
@@ -1644,7 +1645,7 @@ body {
 /* Hard guard: nothing in the app may cause horizontal scroll/cut */
 #root {
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* 2. Page content wrapper — used inside <main> on every page */
