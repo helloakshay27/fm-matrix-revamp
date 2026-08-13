@@ -12,7 +12,7 @@ import {
   updateVehicleColour,
   toggleVehicleColourActive,
 } from "@/services/vehicleConfigApi";
-import { capturePulseEvent } from "@/utils/posthogHelpers";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 const columns: ColumnConfig[] = [
   { key: "id", label: "Id", sortable: true, draggable: true },
@@ -34,6 +34,7 @@ const fieldStyles = {
 };
 
 export const VehicleColoursTab = () => {
+  const pulseEvents = usePulseEvents();
   const [colours, setColours] = useState<VehicleColour[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -88,14 +89,11 @@ export const VehicleColoursTab = () => {
     try {
       if (editingColour) {
         await updateVehicleColour(editingColour.id, name.trim(), hexCode);
+        pulseEvents.onVehicleColourSaved("updated", name.trim(), hexCode);
         toast.success("Colour updated successfully");
       } else {
         await createVehicleColour(name.trim(), hexCode);
-        // Pulse Carpool Vehicle Colour Added
-        capturePulseEvent("Pulse Carpool Vehicle Colour Added", {
-          colour_name: name.trim(),
-          hex_code: hexCode,
-        });
+        pulseEvents.onVehicleColourSaved("added", name.trim(), hexCode);
         toast.success("Colour added successfully");
       }
       setIsModalOpen(false);

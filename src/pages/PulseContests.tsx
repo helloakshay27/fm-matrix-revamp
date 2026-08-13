@@ -23,7 +23,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TextField, InputAdornment, Switch } from "@mui/material";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useRef } from "react";
-import { capturePulseEvent } from "@/utils/posthogHelpers";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 interface ContestRecord {
     id: number;
@@ -58,6 +58,9 @@ const columns: ColumnConfig[] = [
 ];
 
 const PulseContests: React.FC = () => {
+    const pulseEvents = usePulseEvents();
+    /** Query awaiting its response, so the Searched event can report real counts. */
+    const pendingSearchRef = useRef<string | null>(null);
     const navigate = useNavigate();
 
     const [contests, setContests] = useState<ContestRecord[]>([]);
@@ -203,8 +206,8 @@ const PulseContests: React.FC = () => {
 
     // PA: Pulse Contest List Viewed — fires once on mount
     useEffect(() => {
-        capturePulseEvent("Pulse Contest List Viewed", { screen: "pulse_contest_list" });
-    }, []);
+        pulseEvents.onContestListViewed();
+    }, [pulseEvents]);
 
     /* ---------------- FILTER & SEARCH ---------------- */
 
@@ -221,14 +224,10 @@ const PulseContests: React.FC = () => {
         if (searchQuery !== trimmedQuery) {
             setSearchQuery(trimmedQuery);
             setCurrentPage(1);
-            if (trimmedQuery) {
-                capturePulseEvent("Pulse Contest List Searched", {
-                    screen: "pulse_contest_list",
-                    query_length: trimmedQuery.length,
-                    result_count: filteredContests.length,
-                    returned_zero: filteredContests.length === 0,
-                });
-            }
+            // The event is deferred to the effect below: firing here would
+            // report the *previous* query's result_count, since fetchContests
+            // has not run yet.
+            pendingSearchRef.current = trimmedQuery || null;
             // Trigger fetch after state update
             const timer = setTimeout(() => {
                 fetchContests();
@@ -247,6 +246,15 @@ const PulseContests: React.FC = () => {
         // No client-side filtering needed
         setFilteredContests(contests);
     }, [contests]);
+
+    // PA: Pulse Contest List Searched — fires once the response for the pending
+    // query has landed, so result_count/returned_zero describe *that* query.
+    useEffect(() => {
+        const query = pendingSearchRef.current;
+        if (!query || searchLoading) return;
+        pendingSearchRef.current = null;
+        pulseEvents.onContestListSearched(query.length, contests.length);
+    }, [contests, searchLoading, pulseEvents]);
 
     /* ---------------- HELPERS ---------------- */
 
@@ -285,11 +293,10 @@ const PulseContests: React.FC = () => {
             );
 
             // PA: Pulse Contest Status Changed — fires after the toggle API call succeeds
-            capturePulseEvent("Pulse Contest Status Changed", {
-                screen: "pulse_contest_list",
-                contest_id: contestId,
-                new_status: newActiveState ? "active" : "inactive",
-            });
+            pulseEvents.onContestStatusChanged(
+                contestId,
+                newActiveState ? "active" : "inactive"
+            );
 
             // Optimistic UI update
             const updatedContests = contests.map(contest => {
@@ -343,14 +350,9 @@ const PulseContests: React.FC = () => {
                                 const nextStatus =
                                     selectedStatus === card.status ? null : card.status;
                                 setSelectedStatus(nextStatus);
-                                if (nextStatus) {
-                                    capturePulseEvent("Pulse Contest Filter Applied", {
-                                        screen: "pulse_contest_list",
-                                        filters_used: ["status"],
-                                        filter_count: 1,
-                                        status: nextStatus,
-                                    });
-                                }
+                                // Fires on clear as well as on set, so filter
+                                // abandonment is measurable.
+                                pulseEvents.onContestFilterApplied(nextStatus);
                             }}
                             className="bg-[#F6F4EE] p-6 rounded-lg cursor-pointer shadow hover:shadow-md flex gap-4"
                         >

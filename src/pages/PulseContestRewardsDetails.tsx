@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import axios from 'axios'
 import { toast } from 'sonner'
-import { capturePulseEvent } from '@/utils/posthogHelpers'
+import { usePulseEvents } from '@/components/PostHogPulseEvents'
 import {
     Select,
     SelectContent,
@@ -81,6 +81,7 @@ interface ClaimDetail {
 }
 
 const PulseContestRewardsDetails = () => {
+    const pulseEvents = usePulseEvents()
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
     const [claim, setClaim] = useState<ClaimDetail | null>(null)
@@ -95,13 +96,9 @@ const PulseContestRewardsDetails = () => {
     // Fires once the claim detail has actually loaded, keyed on the loaded claim id
     useEffect(() => {
         if (claim) {
-            capturePulseEvent("Pulse Contest Reward Detail Opened", {
-                screen: "pulse_reward_detail",
-                claim_id: claim.id,
-                status: claim.status,
-            })
+            pulseEvents.onRewardDetailOpened(claim.id, claim.status)
         }
-    }, [claim?.id])
+    }, [claim?.id, pulseEvents])
 
     const fetchClaimDetails = async () => {
         setLoading(true)
@@ -142,8 +139,7 @@ const PulseContestRewardsDetails = () => {
                 }
             )
 
-            capturePulseEvent("Pulse Contest Reward Status Changed", {
-                screen: "pulse_reward_detail",
+            pulseEvents.onRewardStatusChanged({
                 claim_id: id ? Number(id) : undefined,
                 previous_status: claim?.status,
                 new_status: newStatus,

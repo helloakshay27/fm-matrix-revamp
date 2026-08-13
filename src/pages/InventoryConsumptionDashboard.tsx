@@ -8,7 +8,6 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import bio from '@/assets/bio.png';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
-import { InventoryConsumptionBulkUploadModal } from '@/components/InventoryConsumptionBulkUploadModal';
 
 import { RootState, AppDispatch } from '@/store/store';
 import { fetchInventoryConsumptionHistory } from '@/store/slices/inventoryConsumptionSlice';
@@ -28,7 +27,6 @@ const InventoryConsumptionDashboard = () => {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [categoryData, setCategoryData] = useState<Record<string, { loading: boolean; inventories: any[]; total_cost: number | null }>>({});
   const [showActionPanel, setShowActionPanel] = useState(false);
-  const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
   // New state for monthly costs from API
   const [monthlyCosts, setMonthlyCosts] = useState<Record<string, number>>({});
 
@@ -163,11 +161,9 @@ const InventoryConsumptionDashboard = () => {
     'December', 'November', 'October', 'September', 'August', 'July',
     'June', 'May', 'April', 'March', 'February', 'January'
   ];
-  const now = new Date();
-  const currentMonthIndex = now.getMonth(); // 0 = January, 11 = December
-  // Only show months up to and including the current month
+  // Only show months that have data returned from the API
   const monthlyData = allMonths
-    .slice(12 - (currentMonthIndex + 1))
+    .filter(month => monthlyCosts.hasOwnProperty(month))
     .map(month => ({ month, dateRange: getCurrentDateRange(month) }));
 
   // Helper to get start and end date for a month in YYYY-MM-DD (always use current year)
@@ -459,11 +455,6 @@ const InventoryConsumptionDashboard = () => {
 
   const leftActions = (
     <div className="flex flex-wrap gap-3">
-      {shouldShow("Inventory Consumption","create") && (
-        <Button onClick={() => setShowActionPanel(true)} className="fm-button-fix fm-button-brand !h-8 !min-h-8 !px-3 !py-1.5 text-sm">
-          <Plus className="w-4 h-4 mr-1" /> Action
-        </Button>
-      )}
     </div>
   );
 
@@ -643,10 +634,6 @@ const InventoryConsumptionDashboard = () => {
           onClearSelection={() => setShowActionPanel(false)}
         />
       )}
-      <InventoryConsumptionBulkUploadModal
-        isOpen={showBulkUploadModal}
-        onClose={() => setShowBulkUploadModal(false)}
-      />
     </div>
   );
 };

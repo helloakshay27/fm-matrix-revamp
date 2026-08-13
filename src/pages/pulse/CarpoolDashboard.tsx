@@ -85,7 +85,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
-import { capturePulseEvent } from "@/utils/posthogHelpers";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 interface RideRecord {
   id: string;
@@ -211,6 +211,7 @@ const getCarImageByColor = (colour: string) => {
 };
 
 export const CarpoolDashboard = () => {
+  const pulseEvents = usePulseEvents();
   const navigate = useNavigate();
   const [activeView, setActiveView] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -256,8 +257,8 @@ export const CarpoolDashboard = () => {
 
   // Pulse Carpool Ride List Viewed — fires once on mount
   useEffect(() => {
-    capturePulseEvent("Pulse Carpool Ride List Viewed");
-  }, []);
+    pulseEvents.onRideListViewed();
+  }, [pulseEvents]);
 
   // Helper function to get today's date range
   const getTodayDateRange = () => {
@@ -1276,11 +1277,10 @@ export const CarpoolDashboard = () => {
                   className="h-8 w-8 p-0"
                   onClick={(e) => {
                     e.stopPropagation();
-                    capturePulseEvent("Pulse Carpool Ride Detail Opened", {
-                      ride_id: ride.id,
-                      open_source: "list",
-                    });
-                    navigate(`/pulse/carpool/ride-detail?id=${ride.id}`);
+                    // The detail screen fires "Ride Detail Opened" once it
+                    // loads; the origin rides along in the URL so deep links
+                    // stay distinguishable and the event can't double-count.
+                    navigate(`/pulse/carpool/ride-detail?id=${ride.id}&from=list`);
                   }}
                 >
                   <Eye className="h-4 w-4" />
@@ -1481,11 +1481,10 @@ export const CarpoolDashboard = () => {
                   className="h-8 w-8 p-0"
                   onClick={(e) => {
                     e.stopPropagation();
-                    capturePulseEvent("Pulse Carpool Ride Detail Opened", {
-                      ride_id: ride.id,
-                      open_source: "list",
-                    });
-                    navigate(`/pulse/carpool/ride-detail?id=${ride.id}`);
+                    // The detail screen fires "Ride Detail Opened" once it
+                    // loads; the origin rides along in the URL so deep links
+                    // stay distinguishable and the event can't double-count.
+                    navigate(`/pulse/carpool/ride-detail?id=${ride.id}&from=list`);
                   }}
                 >
                   <Eye className="h-4 w-4" />
@@ -1630,11 +1629,7 @@ export const CarpoolDashboard = () => {
                     className="h-8 w-8 p-0"
                     onClick={(e) => {
                       e.stopPropagation();
-                      capturePulseEvent("Pulse Carpool Ride Detail Opened", {
-                        ride_id: report.id,
-                        open_source: "list",
-                      });
-                      navigate(`/pulse/carpool/ride-detail?id=${report.id}`);
+                      navigate(`/pulse/carpool/ride-detail?id=${report.id}&from=report_list`);
                     }}
                   >
                     <Eye className="h-4 w-4" />
@@ -1762,11 +1757,7 @@ export const CarpoolDashboard = () => {
                     className="h-8 w-8 p-0"
                     onClick={(e) => {
                       e.stopPropagation();
-                      capturePulseEvent("Pulse Carpool Ride Detail Opened", {
-                        ride_id: report.id,
-                        open_source: "list",
-                      });
-                      navigate(`/pulse/carpool/ride-detail?id=${report.id}`);
+                      navigate(`/pulse/carpool/ride-detail?id=${report.id}&from=report_list`);
                     }}
                   >
                     <Eye className="h-4 w-4" />
@@ -1894,11 +1885,7 @@ export const CarpoolDashboard = () => {
                     className="h-8 w-8 p-0"
                     onClick={(e) => {
                       e.stopPropagation();
-                      capturePulseEvent("Pulse Carpool Ride Detail Opened", {
-                        ride_id: report.id,
-                        open_source: "list",
-                      });
-                      navigate(`/pulse/carpool/ride-detail?id=${report.id}`);
+                      navigate(`/pulse/carpool/ride-detail?id=${report.id}&from=report_list`);
                     }}
                   >
                     <Eye className="h-4 w-4" />
@@ -2026,11 +2013,7 @@ export const CarpoolDashboard = () => {
                     className="h-8 w-8 p-0"
                     onClick={(e) => {
                       e.stopPropagation();
-                      capturePulseEvent("Pulse Carpool Ride Detail Opened", {
-                        ride_id: report.id,
-                        open_source: "list",
-                      });
-                      navigate(`/pulse/carpool/ride-detail?id=${report.id}`);
+                      navigate(`/pulse/carpool/ride-detail?id=${report.id}&from=report_list`);
                     }}
                   >
                     <Eye className="h-4 w-4" />

@@ -18,6 +18,7 @@ import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@/components/ui/select';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 const enhancedTableColumns: ColumnConfig[] = [
   { key: 'id', label: 'ID', sortable: true, draggable: true },
@@ -115,6 +116,16 @@ const BookingListDashboard = () => {
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
   const isPulsePath = window.location.pathname.startsWith('/pulse/amenity');
+  const pulseEvents = usePulseEvents();
+
+  useEffect(() => {
+    pulseEvents.onModuleViewed({
+      module: "Amenities",
+      package: "Pulse Privilege",
+      screen: "pulse_amenity_list",
+      guard: true,
+    });
+  }, [pulseEvents]);
 
   const { data: bookings, loading, error } = useAppSelector((state) => state.facilityBookings);
 

@@ -22,7 +22,7 @@ import {
   type PulseUsersResponse,
   type PulseFilters,
 } from "@/services/pulseDashboardApi";
-import { capturePulseEvent } from "@/utils/posthogHelpers";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 const C = {
   green: "#798C5E",
@@ -46,6 +46,7 @@ interface Props {
 }
 
 export function PulseUsers({ filters }: Props) {
+  const pulseEvents = usePulseEvents();
   const [kpi, setKpi] = useState<UsersKpi | null>(null);
   const [bySite, setBySite] = useState<UsersBySite | null>(null);
   const [users, setUsers] = useState<PulseUsersResponse | null>(null);
@@ -55,8 +56,8 @@ export function PulseUsers({ filters }: Props) {
 
   // Fires once when the Users tab is mounted (tab switch renders a fresh instance).
   useEffect(() => {
-    capturePulseEvent("Pulse User List Viewed", { screen: "pulse_users" });
-  }, []);
+    pulseEvents.onUserListViewed();
+  }, [pulseEvents]);
 
   useEffect(() => {
     setPage(1);
@@ -253,14 +254,9 @@ export function PulseUsers({ filters }: Props) {
                   className={`pd-sub-tab${tab === t.value ? " active" : ""}`}
                   onClick={() => {
                     setTab(t.value);
-                    if (t.value) {
-                      capturePulseEvent("Pulse User Filter Applied", {
-                        screen: "pulse_users",
-                        filters_used: ["user_type"],
-                        filter_count: 1,
-                        user_type: t.value,
-                      });
-                    }
+                    // Fires on clear as well as on set — `t.value` is
+                    // undefined for the "All" tab, which reads as cleared.
+                    pulseEvents.onUserFilterApplied(t.value ?? null);
                   }}
                 >
                   {t.label}
