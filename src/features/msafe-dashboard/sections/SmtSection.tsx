@@ -35,14 +35,10 @@ function getMsafeBaseUrl(): string {
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
   if (persona !== 'circle') return {};
   const params: Record<string, string> = {};
-  if (f.circle && f.circle !== DEFAULT_FILTERS.circle) params.circle = f.circle;
-  if (f.functions.length > 0) params.function = f.functions.join(',');
-  if (f.zone && f.zone !== DEFAULT_FILTERS.zone) params.zone = f.zone;
-  if (f.empType !== DEFAULT_FILTERS.empType) {
-    const t = f.empType.toLowerCase();
-    if (t.includes('internal') && !t.includes('external')) params.employment_type = 'internal';
-    else if (t.includes('external') && !t.includes('internal')) params.employment_type = 'external';
-  }
+  if (f.circleId) params.circle_id = f.circleId;
+  if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
+  if (f.zoneId) params.zone_id = f.zoneId;
+  if (f.empTypeId) params.employee_type_id = f.empTypeId;
   if (f.startDate && f.startDate !== DEFAULT_FILTERS.startDate) params.from_date = f.startDate;
   if (f.endDate && f.endDate !== DEFAULT_FILTERS.endDate) params.to_date = f.endDate;
   return params;
@@ -246,6 +242,7 @@ export function SmtSection() {
 
   useEffect(() => {
     const controller = new AbortController();
+    setCircleLoading(true);
     (async () => {
       try {
         const payload = await fetchMsafeSmtJson(
@@ -261,10 +258,11 @@ export function SmtSection() {
       }
     })();
     return () => controller.abort();
-  }, [persona, appliedFilters]);
+  }, [appliedFilters]);
 
   useEffect(() => {
     const controller = new AbortController();
+    setFuncLoading(true);
     (async () => {
       try {
         const payload = await fetchMsafeSmtJson(
@@ -280,10 +278,11 @@ export function SmtSection() {
       }
     })();
     return () => controller.abort();
-  }, [persona, appliedFilters]);
+  }, [appliedFilters]);
 
   useEffect(() => {
     const controller = new AbortController();
+    setRecentLoading(true);
     (async () => {
       try {
         const payload = await fetchMsafeSmtJson(
@@ -299,10 +298,11 @@ export function SmtSection() {
       }
     })();
     return () => controller.abort();
-  }, [persona, appliedFilters]);
+  }, [appliedFilters]);
 
   useEffect(() => {
     const controller = new AbortController();
+    setProgressLoading(true);
     (async () => {
       try {
         const payload = await fetchMsafeSmtJson(
@@ -318,10 +318,11 @@ export function SmtSection() {
       }
     })();
     return () => controller.abort();
-  }, [persona, appliedFilters]);
+  }, [appliedFilters]);
 
   useEffect(() => {
     const controller = new AbortController();
+    setFreqLoading(true);
     (async () => {
       try {
         const payload = await fetchMsafeSmtJson(
@@ -337,7 +338,7 @@ export function SmtSection() {
       }
     })();
     return () => controller.abort();
-  }, [persona, appliedFilters]);
+  }, [appliedFilters]);
 
   return (
     <AccordionShell

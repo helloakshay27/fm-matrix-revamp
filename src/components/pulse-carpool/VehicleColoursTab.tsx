@@ -12,6 +12,7 @@ import {
   updateVehicleColour,
   toggleVehicleColourActive,
 } from "@/services/vehicleConfigApi";
+import { capturePulseEvent } from "@/utils/posthogHelpers";
 
 const columns: ColumnConfig[] = [
   { key: "id", label: "Id", sortable: true, draggable: true },
@@ -90,6 +91,11 @@ export const VehicleColoursTab = () => {
         toast.success("Colour updated successfully");
       } else {
         await createVehicleColour(name.trim(), hexCode);
+        // Pulse Carpool Vehicle Colour Added
+        capturePulseEvent("Pulse Carpool Vehicle Colour Added", {
+          colour_name: name.trim(),
+          hex_code: hexCode,
+        });
         toast.success("Colour added successfully");
       }
       setIsModalOpen(false);

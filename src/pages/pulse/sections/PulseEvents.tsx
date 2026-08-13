@@ -24,6 +24,7 @@ import {
   type TopEvents,
   type PulseFilters,
 } from "@/services/pulseDashboardApi";
+import { capturePulseEvent } from "@/utils/posthogHelpers";
 
 const C = {
   green: "#798C5E",
@@ -61,6 +62,11 @@ export function PulseEvents({ filters }: Props) {
   const [byCategory, setByCategory] = useState<EventsByCategory | null>(null);
   const [topEvents, setTopEvents] = useState<TopEvents | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Fires once when the Events tab is mounted (tab switch renders a fresh instance).
+  useEffect(() => {
+    capturePulseEvent("Pulse Event List Viewed", { screen: "pulse_events" });
+  }, []);
 
   useEffect(() => {
     loadAll();

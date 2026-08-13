@@ -85,6 +85,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
+import { capturePulseEvent } from "@/utils/posthogHelpers";
 
 interface RideRecord {
   id: string;
@@ -252,6 +253,11 @@ export const CarpoolDashboard = () => {
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
+
+  // Pulse Carpool Ride List Viewed — fires once on mount
+  useEffect(() => {
+    capturePulseEvent("Pulse Carpool Ride List Viewed");
+  }, []);
 
   // Helper function to get today's date range
   const getTodayDateRange = () => {
@@ -1270,6 +1276,10 @@ export const CarpoolDashboard = () => {
                   className="h-8 w-8 p-0"
                   onClick={(e) => {
                     e.stopPropagation();
+                    capturePulseEvent("Pulse Carpool Ride Detail Opened", {
+                      ride_id: ride.id,
+                      open_source: "list",
+                    });
                     navigate(`/pulse/carpool/ride-detail?id=${ride.id}`);
                   }}
                 >
@@ -1471,6 +1481,10 @@ export const CarpoolDashboard = () => {
                   className="h-8 w-8 p-0"
                   onClick={(e) => {
                     e.stopPropagation();
+                    capturePulseEvent("Pulse Carpool Ride Detail Opened", {
+                      ride_id: ride.id,
+                      open_source: "list",
+                    });
                     navigate(`/pulse/carpool/ride-detail?id=${ride.id}`);
                   }}
                 >
@@ -1616,6 +1630,10 @@ export const CarpoolDashboard = () => {
                     className="h-8 w-8 p-0"
                     onClick={(e) => {
                       e.stopPropagation();
+                      capturePulseEvent("Pulse Carpool Ride Detail Opened", {
+                        ride_id: report.id,
+                        open_source: "list",
+                      });
                       navigate(`/pulse/carpool/ride-detail?id=${report.id}`);
                     }}
                   >
@@ -1744,6 +1762,10 @@ export const CarpoolDashboard = () => {
                     className="h-8 w-8 p-0"
                     onClick={(e) => {
                       e.stopPropagation();
+                      capturePulseEvent("Pulse Carpool Ride Detail Opened", {
+                        ride_id: report.id,
+                        open_source: "list",
+                      });
                       navigate(`/pulse/carpool/ride-detail?id=${report.id}`);
                     }}
                   >
@@ -1872,6 +1894,10 @@ export const CarpoolDashboard = () => {
                     className="h-8 w-8 p-0"
                     onClick={(e) => {
                       e.stopPropagation();
+                      capturePulseEvent("Pulse Carpool Ride Detail Opened", {
+                        ride_id: report.id,
+                        open_source: "list",
+                      });
                       navigate(`/pulse/carpool/ride-detail?id=${report.id}`);
                     }}
                   >
@@ -2000,6 +2026,10 @@ export const CarpoolDashboard = () => {
                     className="h-8 w-8 p-0"
                     onClick={(e) => {
                       e.stopPropagation();
+                      capturePulseEvent("Pulse Carpool Ride Detail Opened", {
+                        ride_id: report.id,
+                        open_source: "list",
+                      });
                       navigate(`/pulse/carpool/ride-detail?id=${report.id}`);
                     }}
                   >

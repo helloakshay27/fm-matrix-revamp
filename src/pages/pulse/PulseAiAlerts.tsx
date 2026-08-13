@@ -6,6 +6,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchPulseAiAlerts, type PulseAiAlert, type AlertSeverity } from "@/services/pulseAiAlertsApi";
 import type { PulseFilters } from "@/services/pulseDashboardApi";
+import { capturePulseEvent } from "@/utils/posthogHelpers";
 
 const SKELETON_BG = "bg-[var(--color-border-subtle)]";
 
@@ -33,6 +34,13 @@ export function PulseAiAlerts({ filters }: Props) {
   useEffect(() => {
     load(false);
   }, [load]);
+
+  // Pulse AI Alert List Viewed — fires once per screen visit
+  useEffect(() => {
+    capturePulseEvent("Pulse AI Alert List Viewed", {
+      screen: "pulse_ai_alerts",
+    });
+  }, []);
 
   if (loading) {
     return (

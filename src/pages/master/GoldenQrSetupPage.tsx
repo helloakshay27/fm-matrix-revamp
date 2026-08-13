@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, Loader2, Download, Upload, FileSpreadsheet, X, Pencil } from 'lucide-react';
+import { Plus, Loader2, Download, Upload, FileSpreadsheet, X, Pencil, QrCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -82,6 +82,7 @@ export function GoldenQrSetupPage() {
   const [tableData, setTableData] = useState<GoldenQrRecord[]>([]);
   const [qrModalUrl, setQrModalUrl] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [isSelectAllMode, setIsSelectAllMode] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -209,11 +210,13 @@ export function GoldenQrSetupPage() {
     try {
       const baseUrl = getBaseUrl();
       const token = getToken();
-      const params = Array.from(selectedIds)
-        .map((id) => `ids[]=${id}`)
-        .join('&');
+      // "Select all" means "every record", so the request goes out unfiltered —
+      // passing ids[] in that case would limit the PDF to just this page's rows.
+      const query = isSelectAllMode
+        ? ''
+        : `?${Array.from(selectedIds).map((id) => `ids[]=${id}`).join('&')}`;
       const response = await fetch(
-        `${baseUrl}/pms/account_setups/download_golden_qr_pdf?${params}`,
+        `${baseUrl}/pms/account_setups/download_golden_qr_pdf${query}`,
         {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
@@ -227,6 +230,7 @@ export function GoldenQrSetupPage() {
       a.download = 'golden_qr_codes.pdf';
       a.click();
       window.URL.revokeObjectURL(url);
+      toast.success('QR codes downloaded successfully');
     } catch {
       toast.error('Failed to download QR PDF');
     } finally {
@@ -234,10 +238,16 @@ export function GoldenQrSetupPage() {
     }
   };
 
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+    setIsSelectAllMode(false);
+  };
+
   const allCurrentSelected =
     tableData.length > 0 && tableData.every((r) => r.id != null && selectedIds.has(r.id));
 
   const toggleSelectAll = (checked: boolean) => {
+    setIsSelectAllMode(checked);
     if (checked) {
       setSelectedIds((prev) => {
         const next = new Set(prev);
@@ -254,6 +264,9 @@ export function GoldenQrSetupPage() {
   };
 
   const toggleRow = (id: number, checked: boolean) => {
+    // A manual, single-row toggle is no longer "select all" — fall back to
+    // sending explicit ids[] so the PDF only covers what's actually checked.
+    setIsSelectAllMode(false);
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (checked) next.add(id);
@@ -551,9 +564,6 @@ export function GoldenQrSetupPage() {
         onSelectItem={(id, checked) => toggleRow(Number(id), checked)}
         onSelectAll={(checked) => toggleSelectAll(checked)}
         getItemId={(item) => item.id?.toString() || ''}
-        enableExport={true}
-        exportFileName="golden_qr_setup"
-        handleExport={handleDownloadPdf}
         pagination={false}
         leftActions={
           <Button
@@ -575,22 +585,57 @@ export function GoldenQrSetupPage() {
             <Upload className="w-4 h-4" />
           </Button>
         }
-        // rightActions={
-        //   <Button
-        //     onClick={handleDownloadPdf}
-        //     disabled={selectedIds.size === 0 || isDownloading}
-        //     variant="outline"
-        //     className="bg-brand hover:bg-brand-hover text-white h-9 px-4 text-sm font-medium"
-        //   >
-        //     {isDownloading ? (
-        //       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-        //     ) : (
-        //       <Download className="w-4 h-4 mr-2" />
-        //     )}
-        //     Download QR PDF {selectedIds.size > 0 && `(${selectedIds.size})`}
-        //   </Button>
-        // }
       />
+
+      {/* Floating selection panel — appears once rows are checked */}
+      {selectedIds.size > 0 && (
+        <div className="selection-panel bg-white">
+          <div className="flex items-center justify-between w-full h-full pr-6">
+            <div className="flex items-center gap-2">
+              <div className="text-brand bg-[#C4B89D] rounded-lg w-[44px] h-[105px] flex items-center justify-center text-xs font-bold">
+                {selectedIds.size}
+              </div>
+              <div className="flex flex-col justify-center px-3 py-2 flex-1">
+                <span className="text-[16px] font-semibold text-[#1A1A1A] whitespace-nowrap leading-none">
+                  Selection
+                </span>
+                <span className="text-[12px] font-medium text-[#6B7280] break-words leading-tight">
+                  {selectedIds.size} record{selectedIds.size > 1 ? 's' : ''} selected
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center ml-10">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDownloadPdf}
+                disabled={isDownloading}
+                className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-2 h-auto mr-5 disabled:opacity-50"
+              >
+                {isDownloading ? (
+                  <Loader2 className="w-6 h-6 mt-4 mb-2 animate-spin" />
+                ) : (
+                  <QrCode className="w-6 h-6 mt-4 mb-2" />
+                )}
+                <span className="text-xs font-medium">Download QR</span>
+              </Button>
+
+              <div className="w-px h-8 bg-gray-300 mr-5"></div>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={clearSelection}
+                className="text-gray-600 hover:bg-gray-100"
+                style={{ width: '44px', height: '44px' }}
+              >
+                <X className="w-6 h-6" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Custom Pagination */}
       {totalPages > 1 && (

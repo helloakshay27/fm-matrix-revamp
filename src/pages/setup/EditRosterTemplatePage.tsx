@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { MaterialDatePicker } from "@/components/ui/material-date-picker";
 import { useNavigate, useParams } from 'react-router-dom';
+import { parse } from 'date-fns';
 
 interface RoasterData {
   id: number;
@@ -70,6 +72,8 @@ export const EditRosterTemplatePage = () => {
   const [selectedSeatType, setSelectedSeatType] = useState<string>(currentRoster.seatType);
   const [allocationType, setAllocationType] = useState<string>(currentRoster.roasterType);
   const [periodType, setPeriodType] = useState<string>("Weekdays");
+  const [periodFrom, setPeriodFrom] = useState<string>("");
+  const [periodTo, setPeriodTo] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Week checkboxes state
@@ -109,6 +113,8 @@ export const EditRosterTemplatePage = () => {
       selectedSeatType,
       allocationType,
       periodType,
+      periodFrom,
+      periodTo,
       selectedWeeks
     });
     navigate('/vas/space-management/setup/roster');
@@ -173,7 +179,7 @@ export const EditRosterTemplatePage = () => {
                     Department<span className="text-red-500">*</span>
                   </Label>
                   <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-10 bg-white border-gray-300 shadow-none focus:ring-0 focus:ring-offset-0 focus:!border-gray-300 focus:!shadow-none data-[state=open]:ring-0 data-[state=open]:!border-gray-300">
                       <SelectValue placeholder="Select Department" />
                     </SelectTrigger>
                     <SelectContent>
@@ -223,78 +229,31 @@ export const EditRosterTemplatePage = () => {
                 <Label className="text-sm font-medium text-gray-700 mb-2 block">
                   Select Period From
                 </Label>
-                <div className="flex gap-2">
-                  <Select defaultValue="18">
-                    <SelectTrigger className="w-20">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 31 }, (_, i) => (
-                        <SelectItem key={i + 1} value={String(i + 1)}>
-                          {i + 1}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select defaultValue="4">
-                    <SelectTrigger className="w-20">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 12 }, (_, i) => (
-                        <SelectItem key={i + 1} value={String(i + 1)}>
-                          {i + 1}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select defaultValue="2023">
-                    <SelectTrigger className="w-24">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="2022">2022</SelectItem>
-                      <SelectItem value="2023">2023</SelectItem>
-                      <SelectItem value="2024">2024</SelectItem>
-                      <SelectItem value="2025">2025</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <span className="self-center">To</span>
-                  <Select defaultValue="18">
-                    <SelectTrigger className="w-20">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 31 }, (_, i) => (
-                        <SelectItem key={i + 1} value={String(i + 1)}>
-                          {i + 1}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select defaultValue="5">
-                    <SelectTrigger className="w-20">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 12 }, (_, i) => (
-                        <SelectItem key={i + 1} value={String(i + 1)}>
-                          {i + 1}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select defaultValue="2024">
-                    <SelectTrigger className="w-24">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="2022">2022</SelectItem>
-                      <SelectItem value="2023">2023</SelectItem>
-                      <SelectItem value="2024">2024</SelectItem>
-                      <SelectItem value="2025">2025</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 items-end">
+                  <div>
+                    <Label className="text-xs font-medium text-gray-500 mb-1 block">From</Label>
+                    <MaterialDatePicker
+                      value={periodFrom}
+                      onChange={setPeriodFrom}
+                      placeholder="Select From Date"
+                      className="h-10 !shadow-none focus:!ring-0 focus:!border-gray-300"
+                    />
+                  </div>
+                  <span className="hidden sm:flex text-sm text-gray-600 pb-2.5 justify-center">To</span>
+                  <div>
+                    <Label className="text-xs font-medium text-gray-500 mb-1 block">To</Label>
+                    <MaterialDatePicker
+                      value={periodTo}
+                      onChange={setPeriodTo}
+                      placeholder="Select To Date"
+                      className="h-10 !shadow-none focus:!ring-0 focus:!border-gray-300"
+                      minDate={
+                        periodFrom
+                          ? parse(periodFrom, 'dd/MM/yyyy', new Date())
+                          : undefined
+                      }
+                    />
+                  </div>
                 </div>
               </div>
 

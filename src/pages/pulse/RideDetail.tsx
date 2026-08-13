@@ -16,6 +16,7 @@ import {
 import axios from "axios";
 import { toast } from "sonner";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
+import { capturePulseEvent } from "@/utils/posthogHelpers";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -232,6 +233,15 @@ export const RideDetail = () => {
       .finally(() => setDriverDetailLoading(false));
   }, [activeTab, apiRide?.driver?.id, baseUrl, token, driverDetailFetched]);
 
+  // Pulse Carpool Ride Detail Opened — fires once per ride load
+  useEffect(() => {
+    if (!apiRide) return;
+    capturePulseEvent("Pulse Carpool Ride Detail Opened", {
+      ride_id: apiRide.id,
+      open_source: "list",
+    });
+  }, [apiRide?.id]);
+
   // ── Helpers ───────────────────────────────────────────────────────────────────
   const fmt = (ds: string | null | undefined) => {
     if (!ds) return "N/A";
@@ -299,6 +309,7 @@ export const RideDetail = () => {
   // ── Update report status ──────────────────────────────────────────────────────
   const handleReportStatusChange = async (reportId: number, newStatus: string) => {
     if (!baseUrl || !token) return;
+    const previousStatus = reportStatuses[reportId] ?? currentReport?.status ?? "";
     setUpdatingReportId(reportId);
     // Optimistic
     setReportStatuses((prev) => ({ ...prev, [reportId]: newStatus }));
@@ -308,6 +319,13 @@ export const RideDetail = () => {
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      // Pulse Carpool Ride Report Status Updated
+      capturePulseEvent("Pulse Carpool Ride Report Status Updated", {
+        ride_id: rideId,
+        report_id: reportId,
+        from_status: previousStatus,
+        to_status: newStatus,
+      });
       toast.success("Status updated");
     } catch (err: unknown) {
       const msg = axios.isAxiosError(err)

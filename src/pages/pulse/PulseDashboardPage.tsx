@@ -16,6 +16,7 @@ import { DashboardHeader } from "@/components/DashboardHeader";
 import { UnifiedDateRangeFilter } from "@/components/dashboard/UnifiedDateRangeFilter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SlidersHorizontal, MapPin, X } from "lucide-react";
+import { capturePulseEvent } from "@/utils/posthogHelpers";
 
 type DateRange = {
   from?: Date;
@@ -75,11 +76,19 @@ export function PulseDashboardPage() {
   const handleDateRangeChange = (range: DateRange | undefined) => {
     setDateRange(range);
     if (range?.from && range?.to) {
+      const fromDate = range.from!.toISOString().split("T")[0];
+      const toDate = range.to!.toISOString().split("T")[0];
       setFilters((f) => ({
         ...f,
-        fromDate: range.from!.toISOString().split("T")[0],
-        toDate: range.to!.toISOString().split("T")[0],
+        fromDate,
+        toDate,
       }));
+      capturePulseEvent("Pulse Dashboard Filter Changed", {
+        screen: "pulse_dashboard",
+        filter: "date_range",
+        from_date: fromDate,
+        to_date: toDate,
+      });
     }
   };
 
@@ -90,11 +99,37 @@ export function PulseDashboardPage() {
     setFilters((f) => ({ ...f, siteIds }));
   }, [siteSelection, sites]);
 
+  useEffect(() => {
+    capturePulseEvent("Pulse Dashboard Viewed", { screen: "pulse_dashboard" });
+  }, []);
+
+  const handleSiteChange = (value: string) => {
+    setSiteSelection(value);
+    const siteName = value === "all" ? "All Sites" : sites.find((s) => String(s.id) === value)?.name;
+    capturePulseEvent("Pulse Dashboard Filter Changed", {
+      screen: "pulse_dashboard",
+      filter: "site",
+      site_id: value === "all" ? "all" : Number(value),
+      site_name: siteName,
+    });
+  };
+
+  const handleSectionChange = (section: Section) => {
+    if (section !== activeSection) {
+      capturePulseEvent("Pulse Dashboard Section Viewed", {
+        screen: "pulse_dashboard",
+        section,
+      });
+    }
+    setActiveSection(section);
+  };
+
   const handleResetFilters = () => {
     setSiteSelection("all");
     const { fromDate, toDate } = getDefaultDates();
     setDateRange({ from: new Date(fromDate), to: new Date(toDate) });
     setFilters((f) => ({ ...f, fromDate, toDate }));
+    capturePulseEvent("Pulse Dashboard Filters Reset", { screen: "pulse_dashboard" });
   };
 
   const todayLabel = new Date().toLocaleDateString("en-GB", {
@@ -141,7 +176,7 @@ export function PulseDashboardPage() {
             Filters
           </div>
 
-          <Select value={siteSelection} onValueChange={setSiteSelection}>
+          <Select value={siteSelection} onValueChange={handleSiteChange}>
             <SelectTrigger className="ps-fsel-trigger">
               <MapPin size={13} className="ps-fsel-icon" />
               <SelectValue placeholder="Select Site" />
@@ -179,7 +214,7 @@ export function PulseDashboardPage() {
             <button
               key={s.key}
               type="button"
-              onClick={() => setActiveSection(s.key)}
+              onClick={() => handleSectionChange(s.key)}
               className={`ps-tabbtn${activeSection === s.key ? " active" : ""}`}
             >
               {s.label}

@@ -446,6 +446,7 @@ export const ShiftDashboard = () => {
                   size="sm"
                   onClick={goToPrevious}
                   disabled={currentPage === 1}
+                  className="border-brand text-brand"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   Previous
@@ -503,6 +504,7 @@ export const ShiftDashboard = () => {
                   size="sm"
                   onClick={goToNext}
                   disabled={currentPage === totalPages}
+                  className="border-brand text-brand"
                 >
                   Next
                   <ChevronRight className="h-4 w-4" />

@@ -22,6 +22,7 @@ import {
   type PulseUsersResponse,
   type PulseFilters,
 } from "@/services/pulseDashboardApi";
+import { capturePulseEvent } from "@/utils/posthogHelpers";
 
 const C = {
   green: "#798C5E",
@@ -51,6 +52,11 @@ export function PulseUsers({ filters }: Props) {
   const [page, setPage] = useState(1);
   const [tab, setTab] = useState<TabValue>(undefined);
   const [loading, setLoading] = useState(true);
+
+  // Fires once when the Users tab is mounted (tab switch renders a fresh instance).
+  useEffect(() => {
+    capturePulseEvent("Pulse User List Viewed", { screen: "pulse_users" });
+  }, []);
 
   useEffect(() => {
     setPage(1);
@@ -245,7 +251,17 @@ export function PulseUsers({ filters }: Props) {
                   key={t.label}
                   type="button"
                   className={`pd-sub-tab${tab === t.value ? " active" : ""}`}
-                  onClick={() => setTab(t.value)}
+                  onClick={() => {
+                    setTab(t.value);
+                    if (t.value) {
+                      capturePulseEvent("Pulse User Filter Applied", {
+                        screen: "pulse_users",
+                        filters_used: ["user_type"],
+                        filter_count: 1,
+                        user_type: t.value,
+                      });
+                    }
+                  }}
                 >
                   {t.label}
                 </button>

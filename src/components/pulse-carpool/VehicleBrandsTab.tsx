@@ -12,6 +12,7 @@ import {
   updateVehicleBrand,
   toggleVehicleBrandActive,
 } from "@/services/vehicleConfigApi";
+import { capturePulseEvent } from "@/utils/posthogHelpers";
 
 const columns: ColumnConfig[] = [
   { key: "id", label: "Id", sortable: true, draggable: true },
@@ -80,6 +81,10 @@ export const VehicleBrandsTab = () => {
         toast.success("Brand updated successfully");
       } else {
         await createVehicleBrand(name.trim());
+        // Pulse Carpool Vehicle Brand Added
+        capturePulseEvent("Pulse Carpool Vehicle Brand Added", {
+          brand_name: name.trim(),
+        });
         toast.success("Brand added successfully");
       }
       setIsModalOpen(false);

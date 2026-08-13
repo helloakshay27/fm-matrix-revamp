@@ -7,6 +7,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import axios from "axios";
 import { toast } from "sonner";
+import { capturePulseEvent } from "@/utils/posthogHelpers";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -104,6 +105,13 @@ export const ActiveReports: React.FC = () => {
     fetchReports(activeTab);
   }, [activeTab, fetchReports]);
 
+  // Pulse Report List Viewed — fires once per screen visit
+  useEffect(() => {
+    capturePulseEvent("Pulse Report List Viewed", {
+      screen: "active_reports",
+    });
+  }, []);
+
   // ── Update status ────────────────────────────────────────────────────────────
   const handleStatusChange = async (reportId: number, newStatus: string) => {
     if (!baseUrl || !token) return;
@@ -115,6 +123,13 @@ export const ActiveReports: React.FC = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success("Status updated successfully");
+      // Pulse Report Status Updated — fires after a successful status-change API call
+      capturePulseEvent("Pulse Report Status Updated", {
+        screen: "active_reports",
+        report_id: reportId,
+        from_status: activeTab,
+        to_status: newStatus,
+      });
       // Refresh current tab
       fetchReports(activeTab);
     } catch (err: unknown) {
