@@ -47,10 +47,23 @@ export interface FacilityBookingDetails {
   pg_response_code?: string;
   deposit_amount?: number;
   can_cancel_bool?: boolean;
+  /** @deprecated superseded by cancellation_tiers / cancellation_type — ignore in new cancellation flow */
   can_cancel?: {
     amount: number;
     return_percentage: number;
   };
+  cancellation_tiers?: {
+    tier: string | number;
+    /** Minutes before the slot at/after which this tier's refund applies. */
+    min_before?: number;
+    return_percentage: number;
+    amount: number;
+  }[];
+  cancellation_type?: "free" | "paid";
+  return_percentage?: number;
+  returned_amount?: number;
+  free_cancellation_reason?: string;
+  cancelled_on?: string;
   booked_members?: any[];
   facility_booking_accessories?: {
     facility_booking_accessory: {
