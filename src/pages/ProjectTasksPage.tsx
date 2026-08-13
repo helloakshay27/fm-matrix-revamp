@@ -907,7 +907,7 @@ const ProjectTasksPage = () => {
     const fetchSprintsList = useCallback(async () => {
         try {
             const user_id = localStorage.getItem("userId")
-            const result = await dispatch(fetchSprints({ token, baseUrl, filters: { "q[owner_id_eq]": user_id } })).unwrap();
+            const result = await dispatch(fetchSprints({ token, baseUrl })).unwrap();
             const list =
                 result?.sprints ||
                 result?.data?.sprints ||
@@ -934,25 +934,48 @@ const ProjectTasksPage = () => {
                 })
             ).unwrap();
 
+            const createdTaskIds: number[] = result?.created_task_ids || [];
+            const createdIssueIds: number[] = result?.created_issue_ids || [];
             const existingTaskIds: number[] = result?.existing_task_ids || [];
             const existingIssueIds: number[] = result?.existing_issue_ids || [];
+            const notAddedTasks: Array<{
+                task_id: number;
+                project_management_title?: string;
+                message: string;
+            }> = result?.not_added_tasks || [];
+            const notAddedIssues: Array<{ issue_id: number; message: string }> =
+                result?.not_added_issues || [];
+
+            if (createdTaskIds.length > 0 || createdIssueIds.length > 0) {
+                const parts: string[] = [];
+                if (createdTaskIds.length > 0) parts.push(`${createdTaskIds.length} task(s)`);
+                if (createdIssueIds.length > 0) parts.push(`${createdIssueIds.length} issue(s)`);
+                toast.success(`${parts.join(" and ")} added to sprint successfully`);
+            }
 
             if (existingTaskIds.length > 0) {
-                toast.error(
-                    `Tasks with IDs ${existingTaskIds.join(", ")} are already added to this sprint`
+                toast.warning(
+                    `Task${existingTaskIds.length > 1 ? "s" : ""} T-${existingTaskIds.join(", T-")} already added to this sprint`
                 );
             }
             if (existingIssueIds.length > 0) {
-                toast.error(
-                    `Issues with IDs ${existingIssueIds.join(", ")} are already added to this sprint`
+                toast.warning(
+                    `Issue${existingIssueIds.length > 1 ? "s" : ""} ${existingIssueIds.join(", ")} already added to this sprint`
                 );
             }
-            if (existingTaskIds.length === 0 && existingIssueIds.length === 0) {
-                toast.success("Tasks added to sprint successfully");
-                setIsAddToSprintModalOpen(false);
-                setSelectedSprintId("");
-                setSelectedItems([]);
-            }
+
+            notAddedTasks.forEach((t) => {
+                toast.error(
+                    `T-${t.task_id}${t.project_management_title ? ` (${t.project_management_title})` : ""}: ${t.message}`
+                );
+            });
+            notAddedIssues.forEach((i) => {
+                toast.error(`Issue ${i.issue_id}: ${i.message}`);
+            });
+
+            setIsAddToSprintModalOpen(false);
+            setSelectedSprintId("");
+            setSelectedItems([]);
         } catch (error) {
             toast.error("Failed to add tasks to sprint");
         } finally {
