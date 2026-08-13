@@ -650,7 +650,6 @@ export const BookingDetailsPage = () => {
                 Go Back
               </Button>
               <Button
-                className="bg-red-600 hover:bg-red-700 text-white"
                 onClick={handleCancelBooking}
                 disabled={
                   isCancelling ||
