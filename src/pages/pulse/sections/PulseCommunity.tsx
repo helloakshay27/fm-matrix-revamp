@@ -23,7 +23,7 @@ import {
   type CommunityBreakdown,
   type PulseFilters,
 } from "@/services/pulseDashboardApi";
-import { capturePulseEvent } from "@/utils/posthogHelpers";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 const PALETTE = [
   "#DA7756",
@@ -48,10 +48,13 @@ export function PulseCommunity({ filters }: Props) {
   const [breakdown, setBreakdown] = useState<CommunityBreakdown | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const pulseEvents = usePulseEvents();
+
+
   // Fires once when the Community tab is mounted (tab switch renders a fresh instance).
   useEffect(() => {
-    capturePulseEvent("Pulse Community Viewed", { screen: "pulse_community" });
-  }, []);
+    pulseEvents.onCommunityViewed();
+  }, [pulseEvents]);
 
   useEffect(() => {
     loadAll();

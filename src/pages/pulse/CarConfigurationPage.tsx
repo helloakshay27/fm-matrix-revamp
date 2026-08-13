@@ -4,11 +4,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VehicleBrandsTab } from "@/components/pulse-carpool/VehicleBrandsTab";
 import { VehicleModelsTab } from "@/components/pulse-carpool/VehicleModelsTab";
 import { VehicleColoursTab } from "@/components/pulse-carpool/VehicleColoursTab";
-import { capturePulseEvent } from "@/utils/posthogHelpers";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 const TAB_VALUES = ["brands", "models", "colours"] as const;
 
 const CarConfigurationPage = () => {
+  const pulseEvents = usePulseEvents();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
   const activeTab = TAB_VALUES.includes(tabParam as typeof TAB_VALUES[number])
@@ -21,9 +22,7 @@ const CarConfigurationPage = () => {
 
   // Pulse Carpool Car Configuration Viewed — fires once on mount
   useEffect(() => {
-    capturePulseEvent("Pulse Carpool Car Configuration Viewed", {
-      initial_tab: activeTab,
-    });
+    pulseEvents.onCarConfigurationViewed(activeTab);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

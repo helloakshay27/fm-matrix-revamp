@@ -16,7 +16,7 @@ import { DashboardHeader } from "@/components/DashboardHeader";
 import { UnifiedDateRangeFilter } from "@/components/dashboard/UnifiedDateRangeFilter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SlidersHorizontal, MapPin, X } from "lucide-react";
-import { capturePulseEvent } from "@/utils/posthogHelpers";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 type DateRange = {
   from?: Date;
@@ -43,6 +43,7 @@ function getDefaultDates() {
 }
 
 export function PulseDashboardPage() {
+  const pulseEvents = usePulseEvents();
   const { sites } = useAppSelector((state) => state.site);
   const [activeSection, setActiveSection] = useState<Section>("customers");
 
@@ -83,12 +84,7 @@ export function PulseDashboardPage() {
         fromDate,
         toDate,
       }));
-      capturePulseEvent("Pulse Dashboard Filter Changed", {
-        screen: "pulse_dashboard",
-        filter: "date_range",
-        from_date: fromDate,
-        to_date: toDate,
-      });
+      pulseEvents.onDashboardDateFilterChanged(fromDate, toDate);
     }
   };
 
@@ -100,26 +96,21 @@ export function PulseDashboardPage() {
   }, [siteSelection, sites]);
 
   useEffect(() => {
-    capturePulseEvent("Pulse Dashboard Viewed", { screen: "pulse_dashboard" });
-  }, []);
+    pulseEvents.onDashboardViewed();
+  }, [pulseEvents]);
 
   const handleSiteChange = (value: string) => {
     setSiteSelection(value);
     const siteName = value === "all" ? "All Sites" : sites.find((s) => String(s.id) === value)?.name;
-    capturePulseEvent("Pulse Dashboard Filter Changed", {
-      screen: "pulse_dashboard",
-      filter: "site",
-      site_id: value === "all" ? "all" : Number(value),
-      site_name: siteName,
-    });
+    pulseEvents.onDashboardSiteFilterChanged(
+      value === "all" ? "all" : Number(value),
+      siteName
+    );
   };
 
   const handleSectionChange = (section: Section) => {
     if (section !== activeSection) {
-      capturePulseEvent("Pulse Dashboard Section Viewed", {
-        screen: "pulse_dashboard",
-        section,
-      });
+      pulseEvents.onDashboardSectionViewed(section);
     }
     setActiveSection(section);
   };
@@ -129,7 +120,7 @@ export function PulseDashboardPage() {
     const { fromDate, toDate } = getDefaultDates();
     setDateRange({ from: new Date(fromDate), to: new Date(toDate) });
     setFilters((f) => ({ ...f, fromDate, toDate }));
-    capturePulseEvent("Pulse Dashboard Filters Reset", { screen: "pulse_dashboard" });
+    pulseEvents.onDashboardFiltersReset();
   };
 
   const todayLabel = new Date().toLocaleDateString("en-GB", {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import { capturePulseEvent } from "@/utils/posthogHelpers";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import {
   Settings2,
   Save,
@@ -30,6 +30,7 @@ const unitIcons: Record<string, React.ElementType> = {
 };
 
 const RideSettingsPage = () => {
+  const pulseEvents = usePulseEvents();
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
 
@@ -63,8 +64,8 @@ const RideSettingsPage = () => {
 
   // Pulse Carpool Ride Settings Viewed — fires once on mount
   useEffect(() => {
-    capturePulseEvent("Pulse Carpool Ride Settings Viewed");
-  }, []);
+    pulseEvents.onRideSettingsViewed();
+  }, [pulseEvents]);
 
   const handleEdit = (setting: RideSetting) => {
     setEditingId(setting.id);
@@ -101,7 +102,7 @@ const RideSettingsPage = () => {
       );
 
       // Pulse Carpool Ride Settings Saved
-      capturePulseEvent("Pulse Carpool Ride Settings Saved", {
+      pulseEvents.onRideSettingsSaved({
         setting_name: setting.name,
         setting_label: setting.label,
         previous_value: setting.value,

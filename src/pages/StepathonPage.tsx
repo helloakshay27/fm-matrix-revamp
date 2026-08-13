@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import {
   BarChart,
   Bar,
@@ -112,6 +113,16 @@ const ScoreboardCard: React.FC<ScoreboardCardProps> = ({
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export const StepathonPage: React.FC = () => {
+  const pulseEvents = usePulseEvents();
+
+  useEffect(() => {
+    pulseEvents.onModuleViewed({
+      module: "Stepathon",
+      package: "Pulse Privilege",
+      screen: "pulse_stepathon",
+    });
+  }, [pulseEvents]);
+
   const today = new Date().toISOString().split("T")[0];
   const firstOfMonth = today.slice(0, 8) + "01";
 

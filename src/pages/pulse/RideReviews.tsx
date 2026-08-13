@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Star, Loader2, AlertCircle } from "lucide-react";
 import axios from "axios";
-import { capturePulseEvent } from "@/utils/posthogHelpers";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 interface ApiReview {
   id: number;
@@ -40,6 +40,7 @@ const StarRow: React.FC<{ rating: number; size?: string }> = ({
 );
 
 export const RideReviews: React.FC = () => {
+  const pulseEvents = usePulseEvents();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const rideId = searchParams.get("id");
@@ -55,11 +56,8 @@ export const RideReviews: React.FC = () => {
 
   // Pulse Carpool Ride Reviews Viewed — fires once on mount
   useEffect(() => {
-    capturePulseEvent("Pulse Carpool Ride Reviews Viewed", {
-      ride_id: rideId,
-      driver_user_id: userId,
-    });
-  }, []);
+    pulseEvents.onRideReviewsViewed(rideId, userId);
+  }, [pulseEvents, rideId, userId]);
 
   useEffect(() => {
     if (!userId || !baseUrl || !token) {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import {
   Plus,
   Eye,
@@ -86,6 +87,16 @@ const columns: ColumnConfig[] = [
 ];
 
 export const BroadcastDashboard = () => {
+  const pulseEvents = usePulseEvents();
+
+  useEffect(() => {
+    pulseEvents.onModuleViewed({
+      module: "Notices",
+      package: "Pulse Privilege",
+      screen: "pulse_notices",
+    });
+  }, [pulseEvents]);
+
   const { shouldShow } = useDynamicPermissions();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();

@@ -24,7 +24,7 @@ import {
   type EntityBreakdown,
   type PulseFilters,
 } from "@/services/pulseDashboardApi";
-import { capturePulseEvent } from "@/utils/posthogHelpers";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 const C = {
   green: "#798C5E",
@@ -45,10 +45,13 @@ export function PulseCustomers({ filters }: Props) {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
 
+  const pulseEvents = usePulseEvents();
+
+
   // Fires once when the Customers tab is mounted (tab switch renders a fresh instance).
   useEffect(() => {
-    capturePulseEvent("Pulse Customer List Viewed", { screen: "pulse_customers" });
-  }, []);
+    pulseEvents.onCustomerListViewed();
+  }, [pulseEvents]);
 
   useEffect(() => {
     setPage(1);

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import { useNavigate } from "react-router-dom";
 import { Plus, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,16 @@ const columns: ColumnConfig[] = [
 ];
 
 const SupportContactSetupPage = () => {
+  const pulseEvents = usePulseEvents();
+
+  useEffect(() => {
+    pulseEvents.onModuleViewed({
+      module: "Support Contact Setup",
+      package: "Settings",
+      screen: "pulse_support_contact_setup",
+    });
+  }, [pulseEvents]);
+
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [contacts, setContacts] = useState<SupportContact[]>([]);

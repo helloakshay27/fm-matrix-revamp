@@ -16,7 +16,7 @@ import {
 import axios from "axios";
 import { toast } from "sonner";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
-import { capturePulseEvent } from "@/utils/posthogHelpers";
+import { usePulseEvents, type RideOpenSource } from "@/components/PostHogPulseEvents";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -152,6 +152,7 @@ interface DriverDetailApiResponse {
 }
 
 export const RideDetail = () => {
+  const pulseEvents = usePulseEvents();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("Ride Details");
@@ -183,6 +184,8 @@ export const RideDetail = () => {
   const [previewImage, setPreviewImage] = useState<{ url: string; name: string } | null>(null);
 
   const rideId = searchParams.get("id");
+  /** Set by the list screens; absent on a deep link or refresh. */
+  const openSource = (searchParams.get("from") as RideOpenSource | null) ?? "direct";
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
 
@@ -233,14 +236,13 @@ export const RideDetail = () => {
       .finally(() => setDriverDetailLoading(false));
   }, [activeTab, apiRide?.driver?.id, baseUrl, token, driverDetailFetched]);
 
-  // Pulse Carpool Ride Detail Opened — fires once per ride load
+  // Pulse Carpool Ride Detail Opened — the single emit point for this event.
+  // The list screens navigate with ?from=… rather than firing their own copy,
+  // so an open counts exactly once and deep links are still attributed.
   useEffect(() => {
     if (!apiRide) return;
-    capturePulseEvent("Pulse Carpool Ride Detail Opened", {
-      ride_id: apiRide.id,
-      open_source: "list",
-    });
-  }, [apiRide?.id]);
+    pulseEvents.onRideDetailOpened(apiRide.id, openSource);
+  }, [apiRide?.id, openSource, pulseEvents]);
 
   // ── Helpers ───────────────────────────────────────────────────────────────────
   const fmt = (ds: string | null | undefined) => {
@@ -320,7 +322,7 @@ export const RideDetail = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       // Pulse Carpool Ride Report Status Updated
-      capturePulseEvent("Pulse Carpool Ride Report Status Updated", {
+      pulseEvents.onRideReportStatusUpdated({
         ride_id: rideId,
         report_id: reportId,
         from_status: previousStatus,

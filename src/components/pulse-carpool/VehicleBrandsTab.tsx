@@ -12,7 +12,7 @@ import {
   updateVehicleBrand,
   toggleVehicleBrandActive,
 } from "@/services/vehicleConfigApi";
-import { capturePulseEvent } from "@/utils/posthogHelpers";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 const columns: ColumnConfig[] = [
   { key: "id", label: "Id", sortable: true, draggable: true },
@@ -31,6 +31,7 @@ const fieldStyles = {
 };
 
 export const VehicleBrandsTab = () => {
+  const pulseEvents = usePulseEvents();
   const [brands, setBrands] = useState<VehicleBrand[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -78,13 +79,11 @@ export const VehicleBrandsTab = () => {
     try {
       if (editingBrand) {
         await updateVehicleBrand(editingBrand.id, name.trim());
+        pulseEvents.onVehicleBrandSaved("updated", name.trim());
         toast.success("Brand updated successfully");
       } else {
         await createVehicleBrand(name.trim());
-        // Pulse Carpool Vehicle Brand Added
-        capturePulseEvent("Pulse Carpool Vehicle Brand Added", {
-          brand_name: name.trim(),
-        });
+        pulseEvents.onVehicleBrandSaved("added", name.trim());
         toast.success("Brand added successfully");
       }
       setIsModalOpen(false);

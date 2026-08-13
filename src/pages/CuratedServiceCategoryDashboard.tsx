@@ -1,4 +1,5 @@
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -51,6 +52,16 @@ const columns: ColumnConfig[] = [
 ];
 
 const CuratedServiceCategoryDashboard = () => {
+  const pulseEvents = usePulseEvents();
+
+  useEffect(() => {
+    pulseEvents.onModuleViewed({
+      module: "Curated Service Category",
+      package: "Pulse Privilege",
+      screen: "pulse_curated_service_category",
+    });
+  }, [pulseEvents]);
+
   const navigate = useNavigate();
   const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>([]);
   const [updatingStatus, setUpdatingStatus] = useState<{ [key: string]: boolean }>({});
