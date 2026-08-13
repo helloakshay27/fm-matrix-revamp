@@ -1,9 +1,16 @@
 import posthog from "posthog-js";
+import { getUser } from "@/utils/auth";
 
 const RELEASE_VERSION = (import.meta.env.VITE_APP_VERSION as string) ?? "dev";
 
 /**
  * Fire a generic PostHog event with standard platform/release context.
+ *
+ * org -> company -> site -> email are read from localStorage, which is kept
+ * in sync by Header.tsx (FM shell) and PulseDynamicHeader.tsx (Pulse shell) —
+ * see those files' fetchAllowedCompanies/fetchAllowedSites effects. If a
+ * given page hasn't mounted either shell yet this session, the corresponding
+ * field is simply omitted rather than sent wrong.
  */
 export const capturePostHogEvent = (
   event: string,
@@ -23,13 +30,14 @@ export const capturePostHogEvent = (
     release_version: RELEASE_VERSION,
     project_id: "P-223",
     project_code: "FM-01",
-    site_id: siteIdNum,
-    site_name: localStorage.getItem("selectedSiteName") ?? undefined,
-    company_id: companyIdNum,
-    company_name: localStorage.getItem("selectedCompany") ?? undefined,
     organization_id: orgIdNum,
     organization_name: localStorage.getItem("selectedOrg") ?? undefined,
+    company_id: companyIdNum,
+    company_name: localStorage.getItem("selectedCompany") ?? undefined,
+    site_id: siteIdNum,
+    site_name: localStorage.getItem("selectedSiteName") ?? undefined,
     user_id: userIdNum,
+    email: getUser()?.email ?? undefined,
     ...props,
   });
 };
@@ -43,4 +51,16 @@ export const captureHelpdeskEvent = (
   props: Record<string, unknown> = {}
 ) => {
   capturePostHogEvent(event, props);
+};
+
+/**
+ * Fire a Pulse (Panchshil Pulse) product-analytics event with standard
+ * platform/release context. Use this for all custom events across the
+ * Pulse module (carpool, community, SOS, amenities, etc).
+ */
+export const capturePulseEvent = (
+  event: string,
+  props: Record<string, unknown> = {}
+) => {
+  capturePostHogEvent(event, { project_code: "PULSE-01", ...props });
 };

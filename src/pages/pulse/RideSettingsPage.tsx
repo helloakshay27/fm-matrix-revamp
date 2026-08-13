@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
+import { capturePulseEvent } from "@/utils/posthogHelpers";
 import {
   Settings2,
   Save,
@@ -60,6 +61,11 @@ const RideSettingsPage = () => {
     fetchSettings();
   }, []);
 
+  // Pulse Carpool Ride Settings Viewed — fires once on mount
+  useEffect(() => {
+    capturePulseEvent("Pulse Carpool Ride Settings Viewed");
+  }, []);
+
   const handleEdit = (setting: RideSetting) => {
     setEditingId(setting.id);
     setEditValue(setting.value);
@@ -94,6 +100,14 @@ const RideSettingsPage = () => {
         }
       );
 
+      // Pulse Carpool Ride Settings Saved
+      capturePulseEvent("Pulse Carpool Ride Settings Saved", {
+        setting_name: setting.name,
+        setting_label: setting.label,
+        previous_value: setting.value,
+        new_value: editValue.trim(),
+        unit: setting.unit,
+      });
       toast.success(`${setting.label} updated successfully`);
       setEditingId(null);
       setEditValue("");

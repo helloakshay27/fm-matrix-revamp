@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import axios from 'axios'
 import { toast } from 'sonner'
+import { capturePulseEvent } from '@/utils/posthogHelpers'
 import {
     Select,
     SelectContent,
@@ -91,6 +92,17 @@ const PulseContestRewardsDetails = () => {
         }
     }, [id])
 
+    // Fires once the claim detail has actually loaded, keyed on the loaded claim id
+    useEffect(() => {
+        if (claim) {
+            capturePulseEvent("Pulse Contest Reward Detail Opened", {
+                screen: "pulse_reward_detail",
+                claim_id: claim.id,
+                status: claim.status,
+            })
+        }
+    }, [claim?.id])
+
     const fetchClaimDetails = async () => {
         setLoading(true)
         try {
@@ -129,6 +141,13 @@ const PulseContestRewardsDetails = () => {
                     }
                 }
             )
+
+            capturePulseEvent("Pulse Contest Reward Status Changed", {
+                screen: "pulse_reward_detail",
+                claim_id: id ? Number(id) : undefined,
+                previous_status: claim?.status,
+                new_status: newStatus,
+            })
 
             toast.success("Status updated successfully")
             fetchClaimDetails() // Refresh data

@@ -24,6 +24,7 @@ import {
   type AmenityBreakdown,
   type PulseFilters,
 } from "@/services/pulseDashboardApi";
+import { capturePulseEvent } from "@/utils/posthogHelpers";
 
 const C = {
   green: "#798C5E",
@@ -46,6 +47,11 @@ export function PulseAmenities({ filters }: Props) {
   const [breakdown, setBreakdown] = useState<AmenityBreakdown | null>(null);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+
+  // Fires once when the Amenities tab is mounted (tab switch renders a fresh instance).
+  useEffect(() => {
+    capturePulseEvent("Pulse Amenity List Viewed", { screen: "pulse_amenities" });
+  }, []);
 
   useEffect(() => {
     setPage(1);

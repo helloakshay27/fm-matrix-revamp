@@ -22,6 +22,7 @@ import {
   type NoticeboardListResponse,
   type PulseFilters,
 } from "@/services/pulseDashboardApi";
+import { capturePulseEvent } from "@/utils/posthogHelpers";
 
 const C = {
   green: "#798C5E",
@@ -49,6 +50,11 @@ export function PulseNotices({ filters }: Props) {
   const [list, setList] = useState<NoticeboardListResponse | null>(null);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+
+  // Fires once when the Notices tab is mounted (tab switch renders a fresh instance).
+  useEffect(() => {
+    capturePulseEvent("Pulse Notice List Viewed", { screen: "pulse_notices" });
+  }, []);
 
   useEffect(() => {
     setPage(1);

@@ -5,6 +5,7 @@ import axios from "axios"
 import { Button } from "@/components/ui/button"
 import { Eye, Plus } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import { capturePulseEvent } from "@/utils/posthogHelpers"
 
 interface UserContestReward {
     id: number
@@ -162,6 +163,11 @@ const PulseContestRewards = () => {
 
     useEffect(() => {
         fetchClaims()
+    }, [])
+
+    // Fires once on mount for the reward-claims list screen
+    useEffect(() => {
+        capturePulseEvent("Pulse Reward List Viewed", { screen: "pulse_reward_list" })
     }, [])
 
     const renderCell = (row: any, columnKey: string) => {

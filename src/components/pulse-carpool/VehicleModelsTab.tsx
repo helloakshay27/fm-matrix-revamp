@@ -23,6 +23,7 @@ import {
   updateVehicleModel,
   toggleVehicleModelActive,
 } from "@/services/vehicleConfigApi";
+import { capturePulseEvent } from "@/utils/posthogHelpers";
 
 const columns: ColumnConfig[] = [
   { key: "id", label: "Id", sortable: true, draggable: true },
@@ -134,6 +135,12 @@ export const VehicleModelsTab = () => {
         toast.success("Model updated successfully");
       } else {
         await createVehicleModel(name.trim(), Number(brandId), Number(seat));
+        // Pulse Carpool Vehicle Model Added
+        capturePulseEvent("Pulse Carpool Vehicle Model Added", {
+          model_name: name.trim(),
+          brand_id: Number(brandId),
+          seats: Number(seat),
+        });
         toast.success("Model added successfully");
       }
       setIsModalOpen(false);

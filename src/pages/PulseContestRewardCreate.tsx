@@ -4,6 +4,7 @@ import axios from "axios";
 import { ArrowLeft, Gift, Trophy, Tag, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { capturePulseEvent } from "@/utils/posthogHelpers";
 import {
     TextField,
     FormControl,
@@ -220,6 +221,13 @@ const PulseContestRewardCreate = () => {
                 }
             );
             toast.success("Reward created successfully");
+            capturePulseEvent("Pulse Contest Reward Created", {
+                screen: "pulse_reward_create",
+                contest_id: Number(form.contest_id),
+                prize_id: Number(form.prize_id),
+                user_id: Number(form.user_id),
+                reward_type: form.reward_type,
+            });
             navigate("/pulse/rewards");
         } catch (error: any) {
             const msg =
