@@ -5,18 +5,26 @@ export type DrillState = { id: string; title: string; crumb: string } | null;
 export type ToastItem = { id: number; message: string };
 export type AppliedFilters = {
   circle: string;
+  circleId: string;
   functions: string[];
+  functionIds: string[];
   zone: string;
+  zoneId: string;
   empType: string;
+  empTypeId: string;
   startDate: string;
   endDate: string;
 };
 
 export const DEFAULT_FILTERS: AppliedFilters = {
   circle: 'Maharashtra & Goa',
+  circleId: '',
   functions: [],
+  functionIds: [],
   zone: 'All Zones',
+  zoneId: '',
   empType: 'Internal / External',
+  empTypeId: '',
   startDate: '2026-07-01',
   endDate: '2026-07-31',
 };
@@ -40,12 +48,20 @@ type Ctx = {
   setKpiSmt: (v: string) => void;
   circle: string;
   setCircle: (c: string) => void;
+  circleId: string;
+  setCircleId: (id: string) => void;
   functions: string[];
   setFunctions: (f: string[]) => void;
+  functionIds: string[];
+  setFunctionIds: (ids: string[]) => void;
   zone: string;
   setZone: (z: string) => void;
+  zoneId: string;
+  setZoneId: (id: string) => void;
   empType: string;
   setEmpType: (e: string) => void;
+  empTypeId: string;
+  setEmpTypeId: (id: string) => void;
   startDate: string;
   setStartDate: (d: string) => void;
   endDate: string;
@@ -79,9 +95,13 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
   const [kpiLmc, setKpiLmc] = useState('1,284');
   const [kpiSmt, setKpiSmt] = useState('438');
   const [circle, setCircle] = useState(DEFAULT_FILTERS.circle);
+  const [circleId, setCircleId] = useState(DEFAULT_FILTERS.circleId);
   const [functions, setFunctions] = useState<string[]>(DEFAULT_FILTERS.functions);
+  const [functionIds, setFunctionIds] = useState<string[]>(DEFAULT_FILTERS.functionIds);
   const [zone, setZone] = useState(DEFAULT_FILTERS.zone);
+  const [zoneId, setZoneId] = useState(DEFAULT_FILTERS.zoneId);
   const [empType, setEmpType] = useState(DEFAULT_FILTERS.empType);
+  const [empTypeId, setEmpTypeId] = useState(DEFAULT_FILTERS.empTypeId);
   const [startDate, setStartDate] = useState(DEFAULT_FILTERS.startDate);
   const [endDate, setEndDate] = useState(DEFAULT_FILTERS.endDate);
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters>(DEFAULT_FILTERS);
@@ -141,21 +161,25 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
   const closeDrill = useCallback(() => setDrill(null), []);
 
   const applyFilters = useCallback(() => {
-    setAppliedFilters({ circle, functions, zone, empType, startDate, endDate });
+    setAppliedFilters({ circle, circleId, functions, functionIds, zone, zoneId, empType, empTypeId, startDate, endDate });
     setPageTitle(`M-Safe · ${circle} Circle`);
-    showToast(`Filters applied · dashboard refreshed for ${circle}`);
-  }, [circle, functions, zone, empType, startDate, endDate, showToast]);
+    showToast('Filter applied');
+  }, [circle, circleId, functions, functionIds, zone, zoneId, empType, empTypeId, startDate, endDate, showToast]);
 
   const resetFilters = useCallback(() => {
     setCircle(DEFAULT_FILTERS.circle);
+    setCircleId(DEFAULT_FILTERS.circleId);
     setFunctions(DEFAULT_FILTERS.functions);
+    setFunctionIds(DEFAULT_FILTERS.functionIds);
     setZone(DEFAULT_FILTERS.zone);
+    setZoneId(DEFAULT_FILTERS.zoneId);
     setEmpType(DEFAULT_FILTERS.empType);
+    setEmpTypeId(DEFAULT_FILTERS.empTypeId);
     setStartDate(DEFAULT_FILTERS.startDate);
     setEndDate(DEFAULT_FILTERS.endDate);
-    setAppliedFilters(DEFAULT_FILTERS);
+    setAppliedFilters({ ...DEFAULT_FILTERS });
     setPageTitle('M-Safe · Maharashtra & Goa Circle');
-    showToast('Filters reset');
+    showToast('Filter reset');
   }, [showToast]);
 
   const value = useMemo(
@@ -178,12 +202,20 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       setKpiSmt,
       circle,
       setCircle,
+      circleId,
+      setCircleId,
       functions,
       setFunctions,
+      functionIds,
+      setFunctionIds,
       zone,
       setZone,
+      zoneId,
+      setZoneId,
       empType,
       setEmpType,
+      empTypeId,
+      setEmpTypeId,
       startDate,
       setStartDate,
       endDate,
@@ -213,9 +245,13 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       kpiLmc,
       kpiSmt,
       circle,
+      circleId,
       functions,
+      functionIds,
       zone,
+      zoneId,
       empType,
+      empTypeId,
       startDate,
       endDate,
       applyFilters,

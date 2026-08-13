@@ -209,14 +209,10 @@ function getMsafeBaseUrl(): string {
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
   if (persona !== 'circle') return {};
   const params: Record<string, string> = {};
-  if (f.circle && f.circle !== DEFAULT_FILTERS.circle) params.circle = f.circle;
-  if (f.functions.length > 0) params.function = f.functions.join(',');
-  if (f.zone && f.zone !== DEFAULT_FILTERS.zone) params.zone = f.zone;
-  if (f.empType !== DEFAULT_FILTERS.empType) {
-    const t = f.empType.toLowerCase();
-    if (t.includes('internal') && !t.includes('external')) params.employment_type = 'internal';
-    else if (t.includes('external') && !t.includes('internal')) params.employment_type = 'external';
-  }
+  if (f.circleId) params.circle_id = f.circleId;
+  if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
+  if (f.zoneId) params.zone_id = f.zoneId;
+  if (f.empTypeId) params.employee_type_id = f.empTypeId;
   if (f.startDate && f.startDate !== DEFAULT_FILTERS.startDate) params.from_date = f.startDate;
   if (f.endDate && f.endDate !== DEFAULT_FILTERS.endDate) params.to_date = f.endDate;
   return params;
@@ -306,12 +302,14 @@ export function UsersSection() {
     return () => {
       isMounted = false;
     };
-  }, [persona, appliedFilters]);
+  }, [appliedFilters]);
 
   useEffect(() => {
     let isMounted = true;
 
     const loadRegData = async () => {
+      setRegLoading(true);
+
       try {
         const payload = await fetchMsafeUserDashboardJson(
           'new_registrations.json',
@@ -331,12 +329,14 @@ export function UsersSection() {
     return () => {
       isMounted = false;
     };
-  }, [persona, appliedFilters]);
+  }, [appliedFilters]);
 
   useEffect(() => {
     let isMounted = true;
 
     const loadFuncData = async () => {
+      setFuncLoading(true);
+
       try {
         const payload = await fetchUserStatistics('department', buildFilterParams(persona, appliedFilters));
         const normalized = normalizeStatSlices(
@@ -358,18 +358,20 @@ export function UsersSection() {
     return () => {
       isMounted = false;
     };
-  }, [persona, appliedFilters]);
+  }, [appliedFilters]);
 
   useEffect(() => {
     let isMounted = true;
 
     const loadCompData = async () => {
+      setCompLoading(true);
+
       try {
-        const payload = await fetchUserStatistics('department', buildFilterParams(persona, appliedFilters));
+        const payload = await fetchUserStatistics('composition', buildFilterParams(persona, appliedFilters));
         const normalized = normalizeStatSlices(
           payload,
-          ['users_by_department', 'data', 'result', 'departments', 'composition', 'employment_types', 'types', 'users'],
-          ['department', 'department_name', 'employment_type', 'type_name', 'category', 'name', 'label', 'title'],
+          ['user_composition', 'data', 'result', 'composition', 'employment_types', 'types', 'users_by_department', 'departments', 'users'],
+          ['employee_type', 'employment_type', 'type_name', 'category', 'department', 'department_name', 'name', 'label', 'title'],
           ['user_count', 'count', 'value', 'total', 'total_users', 'users', 'users_count', 'department_count'],
         );
         if (isMounted) setCompChartData(normalized);
@@ -385,7 +387,7 @@ export function UsersSection() {
     return () => {
       isMounted = false;
     };
-  }, [persona, appliedFilters]);
+  }, [appliedFilters]);
 
   return (
     <AccordionShell
