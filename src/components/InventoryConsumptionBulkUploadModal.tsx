@@ -55,7 +55,7 @@ export const InventoryConsumptionBulkUploadModal = ({ isOpen, onClose }: Invento
 
     setIsLoading(true);
     try {
-      const response = await fetch(`https://${baseUrl}/pms/inventories/bulk_upload`, {
+      const response = await fetch(`https://${baseUrl}/pms/inventories/bulk_upload.json`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
