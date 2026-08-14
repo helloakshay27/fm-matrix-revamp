@@ -91,6 +91,7 @@ interface Invoice {
     plant_detail?: PlantDetail;
     wo_reference_number?: string;
     related_to?: string;
+    pr_type?: string;
     supplier_name?: string;
     invoice_amount?: number;
     total_taxes?: number;
@@ -629,6 +630,11 @@ export const InvoiceDetails = () => {
                         <span className="text-gray-900 font-medium">{invoice.related_to}</span>
                     </div>
                     <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">PR Type</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.pr_type}</span>
+                    </div>
+                    <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Adjustment Amount</span>
                         <span className="text-gray-500 mx-2">:</span>
                         <span className="text-gray-900 font-medium">{invoice.adjustment_amount}</span>
@@ -752,7 +758,7 @@ export const InvoiceDetails = () => {
                         <span className="font-medium text-gray-700">Amount In Words:</span>
                         <span className="font-medium">
                             {invoice.total_value
-                                ? numberToIndianCurrencyWords(invoice.total_value.toFixed(2))
+                                ? numberToIndianCurrencyWords(invoice.total_value)
                                 : "N/A"}
                         </span>
                     </div>
