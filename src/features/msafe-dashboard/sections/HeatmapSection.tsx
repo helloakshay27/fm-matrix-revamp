@@ -8,13 +8,14 @@ import { getAuthHeader } from '@/config/apiConfig';
 
 type HeatmapRow = { circle: string; values: number[] };
 
-const MODULE_LABELS = ['Training', 'KRCC', 'LMC', 'SMT Visits', 'External Approved'];
+// "SMT Visits" and "External Approved" columns are hidden from the Compliance by
+// Circle × Module table — kept out of both labels and field candidates so the
+// per-row `values` array lines up with the header without extra slicing.
+const MODULE_LABELS = ['Training', 'KRCC', 'LMC'];
 const MODULE_FIELD_CANDIDATES: string[][] = [
   ['training', 'training_percentage', 'training_compliance', 'training_pct'],
   ['krcc', 'krcc_percentage', 'krcc_compliance', 'krcc_pct'],
   ['lmc', 'lmc_percentage', 'lmc_compliance', 'lmc_pct'],
-  ['smt', 'smt_visits', 'smt_percentage', 'smt_compliance', 'smt_pct'],
-  ['external_approved', 'external_approved_percentage', 'external_approved_pct'],
 ];
 
 function getMsafeBaseUrl(): string {

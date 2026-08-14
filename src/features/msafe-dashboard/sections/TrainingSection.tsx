@@ -446,32 +446,33 @@ export function TrainingSection() {
     };
   }, [appliedFilters, persona]);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadScoreDistribution = async () => {
-      setScoreLoading(true);
-
-      try {
-        const payload = await fetchMsafeTrainingJson(
-          'training_score_distribution.json',
-          buildFilterParams(persona, appliedFilters),
-        );
-        const normalized = normalizeScoreDistribution(payload);
-        if (isMounted) setScoreDistribution(normalized);
-      } catch (error) {
-        console.warn('M-Safe training-score-distribution API failed.', error);
-      } finally {
-        if (isMounted) setScoreLoading(false);
-      }
-    };
-
-    loadScoreDistribution();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [appliedFilters, persona]);
+  // Score Distribution card is hidden (see JSX below) — API call commented out so it's not fetched.
+  // useEffect(() => {
+  //   let isMounted = true;
+  //
+  //   const loadScoreDistribution = async () => {
+  //     setScoreLoading(true);
+  //
+  //     try {
+  //       const payload = await fetchMsafeTrainingJson(
+  //         'training_score_distribution.json',
+  //         buildFilterParams(persona, appliedFilters),
+  //       );
+  //       const normalized = normalizeScoreDistribution(payload);
+  //       if (isMounted) setScoreDistribution(normalized);
+  //     } catch (error) {
+  //       console.warn('M-Safe training-score-distribution API failed.', error);
+  //     } finally {
+  //       if (isMounted) setScoreLoading(false);
+  //     }
+  //   };
+  //
+  //   loadScoreDistribution();
+  //
+  //   return () => {
+  //     isMounted = false;
+  //   };
+  // }, [appliedFilters, persona]);
 
   // Recent Training Failures table is hidden (see JSX below) — API call commented out so it's not fetched.
   // useEffect(() => {
@@ -606,7 +607,11 @@ export function TrainingSection() {
         )}
       </ChartCard>
 
-      <div className="g g-2-1" style={{ marginTop: 16 }}>
+      {/* Both cards in this row (Score Distribution, Recent Training Failures) are hidden below —
+          JSX comments can't nest, so this wrapper div is left in place (renders empty) rather
+          than being commented out itself. */}
+      <div className="g g-2-1" style={{ marginTop: 16, display: 'none' }}>
+        {/* Score Distribution hidden — kept for reference, API call above is also commented out.
         <ChartCard title="Score Distribution" sub="Histogram of actual scores where recorded (n=15,842)" infoKey="train-score">
           {scoreLoading || scoreDistribution.length === 0 ? (
             <DataState loading={scoreLoading} empty={scoreDistribution.length === 0} label="score data" />
@@ -628,6 +633,7 @@ export function TrainingSection() {
             </div>
           )}
         </ChartCard>
+        */}
 
         {/* Recent Training Failures table hidden — kept for reference, API call above is also commented out.
         <ChartCard
