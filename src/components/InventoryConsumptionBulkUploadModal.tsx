@@ -93,24 +93,46 @@ export const InventoryConsumptionBulkUploadModal = ({ isOpen, onClose }: Invento
     }
   };
 
-  const handleDownloadSample = () => {
-    const baseUrl = localStorage.getItem('baseUrl');
+  const handleDownloadSample = async () => {
+    const token = localStorage.getItem('token');
+    let baseUrl = localStorage.getItem('baseUrl');
 
-    if (!baseUrl) {
-      toast.error('Missing baseUrl');
+    if (!baseUrl || !token) {
+      toast.error('Missing token or baseUrl');
       return;
     }
 
+    baseUrl = baseUrl.replace(/^https?:\/\//, '');
     const href = `https://${baseUrl}/pms/inventories/upload_sample_data_bulk_template.xlsx`;
 
-    const link = document.createElement('a');
-    link.href = href;
-    link.setAttribute('download', 'upload_sample_data_bulk_template.xlsx');
-    link.setAttribute('target', '_blank');
-    link.setAttribute('rel', 'noopener noreferrer');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      setIsLoading(true);
+      const response = await fetch(href, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download sample format');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'upload_sample_data_bulk_template.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+    } catch (error: any) {
+      console.error('Download failed:', error);
+      toast.error(error.message || 'Failed to download sample format');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

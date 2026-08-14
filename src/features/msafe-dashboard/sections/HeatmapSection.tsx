@@ -3,18 +3,19 @@ import { ChartCard } from '../components/ChartCard';
 import { Leaderboard } from '../components/Leaderboard';
 import { heatmapClass } from '../data/mockData';
 import type { Persona } from '../data/constants';
-import { useMsafeDashboard, DEFAULT_FILTERS, type AppliedFilters } from '../context/MsafeDashboardContext';
+import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import { getAuthHeader } from '@/config/apiConfig';
 
 type HeatmapRow = { circle: string; values: number[] };
 
-const MODULE_LABELS = ['Training', 'KRCC', 'LMC', 'SMT Visits', 'External Approved'];
+// "SMT Visits" and "External Approved" columns are hidden from the Compliance by
+// Circle × Module table — kept out of both labels and field candidates so the
+// per-row `values` array lines up with the header without extra slicing.
+const MODULE_LABELS = ['Training', 'KRCC', 'LMC'];
 const MODULE_FIELD_CANDIDATES: string[][] = [
   ['training', 'training_percentage', 'training_compliance', 'training_pct'],
   ['krcc', 'krcc_percentage', 'krcc_compliance', 'krcc_pct'],
   ['lmc', 'lmc_percentage', 'lmc_compliance', 'lmc_pct'],
-  ['smt', 'smt_visits', 'smt_percentage', 'smt_compliance', 'smt_pct'],
-  ['external_approved', 'external_approved_percentage', 'external_approved_pct'],
 ];
 
 function getMsafeBaseUrl(): string {
@@ -34,8 +35,8 @@ function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, 
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type_id = f.empTypeId;
-  if (f.startDate && f.startDate !== DEFAULT_FILTERS.startDate) params.from_date = f.startDate;
-  if (f.endDate && f.endDate !== DEFAULT_FILTERS.endDate) params.to_date = f.endDate;
+  if (f.startDate) params.from_date = f.startDate;
+  if (f.endDate) params.to_date = f.endDate;
   return params;
 }
 
@@ -237,31 +238,33 @@ export function HeatmapSection() {
       }
     })();
     return () => controller.abort();
-  }, [appliedFilters, heatmapPage]);
+  }, [appliedFilters, persona, heatmapPage]);
 
   useEffect(() => {
     setHeatmapPage(1);
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    setGrowthLoading(true);
-    (async () => {
-      try {
-        const payload = await fetchMsafeUserDashboardJson(
-          'compliance_by_circle.json',
-          { type: 'growth', ...buildFilterParams(persona, appliedFilters) },
-          controller.signal,
-        );
-        if (!controller.signal.aborted) setGrowthData(normalizeGrowthCircles(payload));
-      } catch (err) {
-        if ((err as Error).name !== 'AbortError') console.warn('M-Safe compliance-by-circle (growth) API failed.', err);
-      } finally {
-        if (!controller.signal.aborted) setGrowthLoading(false);
-      }
-    })();
-    return () => controller.abort();
-  }, [appliedFilters]);
+  // "Circles That Need Growth in Performance" table is hidden (see JSX below) — API call
+  // (type=growth) commented out so it's not fetched.
+  // useEffect(() => {
+  //   const controller = new AbortController();
+  //   setGrowthLoading(true);
+  //   (async () => {
+  //     try {
+  //       const payload = await fetchMsafeUserDashboardJson(
+  //         'compliance_by_circle.json',
+  //         { type: 'growth', ...buildFilterParams(persona, appliedFilters) },
+  //         controller.signal,
+  //       );
+  //       if (!controller.signal.aborted) setGrowthData(normalizeGrowthCircles(payload));
+  //     } catch (err) {
+  //       if ((err as Error).name !== 'AbortError') console.warn('M-Safe compliance-by-circle (growth) API failed.', err);
+  //     } finally {
+  //       if (!controller.signal.aborted) setGrowthLoading(false);
+  //     }
+  //   })();
+  //   return () => controller.abort();
+  // }, [appliedFilters]);
 
   return (
     <div className="sec" id="sec-heatmap">
@@ -346,6 +349,7 @@ export function HeatmapSection() {
           ) : null}
         </ChartCard>
 
+        {/* "Circles That Need Growth in Performance" hidden — kept for reference, API call above is also commented out.
         <ChartCard
           title="Circles That Need Growth in Performance"
           sub="Weighted compliance score across all modules · ranked by opportunity to improve"
@@ -376,6 +380,7 @@ export function HeatmapSection() {
             />
           )}
         </ChartCard>
+        */}
       </div>
     </div>
   );
