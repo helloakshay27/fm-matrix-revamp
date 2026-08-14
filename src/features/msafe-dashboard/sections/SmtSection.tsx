@@ -15,7 +15,7 @@ import { MsafeChartTooltip } from '../components/MsafeChartTooltip';
 import { ProgressRows } from '../components/ProgressRows';
 import { C } from '../data/constants';
 import type { Persona } from '../data/constants';
-import { useMsafeDashboard, DEFAULT_FILTERS, type AppliedFilters } from '../context/MsafeDashboardContext';
+import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 
 type CircleRow = { name: string; n: number };
 type Slice = { name: string; value: number; color: string };
@@ -39,8 +39,8 @@ function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, 
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type_id = f.empTypeId;
-  if (f.startDate && f.startDate !== DEFAULT_FILTERS.startDate) params.from_date = f.startDate;
-  if (f.endDate && f.endDate !== DEFAULT_FILTERS.endDate) params.to_date = f.endDate;
+  if (f.startDate) params.from_date = f.startDate;
+  if (f.endDate) params.to_date = f.endDate;
   return params;
 }
 
@@ -143,7 +143,7 @@ function normalizeRecentVisits(payload: unknown): RecentVisit[] {
       const record = item as Record<string, unknown>;
       const name = getString(record, ['done_by', 'user_name', 'employee_name', 'name']);
       if (!name) return null;
-      const func = getString(record, ['function', 'func', 'department']) ?? '—';
+      const func = getString(record, ['function_name', 'function', 'func', 'department']) ?? '—';
       const circle = getString(record, ['circle_name', 'circle']) ?? '—';
       const area = getString(record, ['area_visited', 'area', 'location', 'site']) ?? '—';
       const date = getString(record, ['visit_date', 'date', 'created_at']) ?? '—';
@@ -258,7 +258,7 @@ export function SmtSection() {
       }
     })();
     return () => controller.abort();
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -278,7 +278,7 @@ export function SmtSection() {
       }
     })();
     return () => controller.abort();
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -287,7 +287,7 @@ export function SmtSection() {
       try {
         const payload = await fetchMsafeSmtJson(
           'recent_smt_visits.json',
-          buildFilterParams(persona, appliedFilters),
+          { ...buildFilterParams(persona, appliedFilters), type: 'department' },
           controller.signal,
         );
         if (!controller.signal.aborted) setRecentVisits(normalizeRecentVisits(payload));
@@ -298,7 +298,7 @@ export function SmtSection() {
       }
     })();
     return () => controller.abort();
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -318,7 +318,7 @@ export function SmtSection() {
       }
     })();
     return () => controller.abort();
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -338,7 +338,7 @@ export function SmtSection() {
       }
     })();
     return () => controller.abort();
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
   return (
     <AccordionShell

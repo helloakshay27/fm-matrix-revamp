@@ -340,12 +340,14 @@ export type KpiDef = {
   tint?: string;
   infoKey: string;
   download: string;
+  /** Hidden from the KPI Overview grid, but kept here in case it's needed again. */
+  hidden?: boolean;
 };
 
 export const ADMIN_KPIS: KpiDef[] = [
   {
     id: 'users',
-    label: 'Total Users',
+    label: 'Total Active Users',
     value: '27,438',
     group: 'users',
     color: C.terra,
@@ -375,6 +377,27 @@ export const ADMIN_KPIS: KpiDef[] = [
     download: 'KRCC',
   },
   {
+    id: 'krcc-pending',
+    label: 'KRCC Pending',
+    value: '2,891',
+    group: 'krcc',
+    color: C.warn,
+    tint: 'rgba(237,196,136,.22)',
+    infoKey: 'krcc-pending',
+    download: 'KRCC',
+  },
+  {
+    id: 'krcc-rejected',
+    label: 'KRCC Rejected',
+    value: '2,891',
+    sub: '(12.6%)',
+    group: 'krcc',
+    color: C.err,
+    tint: 'rgba(16,140,114,.14)',
+    infoKey: 'kpi-krcc',
+    download: 'KRCC',
+  },
+  {
     id: 'train-cat',
     label: 'Category-wise Training Completed',
     value: '84.6%',
@@ -383,6 +406,7 @@ export const ADMIN_KPIS: KpiDef[] = [
     tint: 'rgba(107,155,204,.16)',
     infoKey: 'train-category-kpi',
     download: 'Training',
+    hidden: true,
   },
   {
     id: 'train-user',
@@ -394,6 +418,7 @@ export const ADMIN_KPIS: KpiDef[] = [
     tint: 'rgba(158,200,186,.26)',
     infoKey: 'train-uservise-kpi',
     download: 'Training',
+    hidden: true,
   },
   {
     id: 'train-int',
@@ -404,6 +429,7 @@ export const ADMIN_KPIS: KpiDef[] = [
     tint: 'rgba(121,140,94,.16)',
     infoKey: 'train-pass-internal',
     download: 'Training',
+    hidden: true,
   },
   {
     id: 'train-ext',
@@ -414,6 +440,7 @@ export const ADMIN_KPIS: KpiDef[] = [
     tint: 'rgba(218,119,86,.14)',
     infoKey: 'train-pass-external',
     download: 'Training',
+    hidden: true,
   },
   {
     id: 'lmc',
@@ -424,6 +451,7 @@ export const ADMIN_KPIS: KpiDef[] = [
     tint: 'rgba(107,155,204,.16)',
     infoKey: 'kpi-lmc',
     download: 'LMC',
+    hidden: true,
   },
   {
     id: 'smt',
@@ -434,6 +462,7 @@ export const ADMIN_KPIS: KpiDef[] = [
     tint: 'rgba(206,203,246,.28)',
     infoKey: 'kpi-smt',
     download: 'SMT Visits',
+    hidden: true,
   },
 ];
 

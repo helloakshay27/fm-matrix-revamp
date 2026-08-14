@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   FormControl,
   InputLabel,
@@ -10,97 +10,6 @@ import {
   OutlinedInput,
 } from '@mui/material';
 import { useMsafeDashboard } from '../context/MsafeDashboardContext';
-
-function getMsafeBaseUrl(): string {
-  const fromLS = localStorage.getItem('baseUrl') || '';
-  const host = fromLS.replace(/^https?:\/\//, '').replace(/\/$/, '');
-  return host ? `https://${host}` : 'https://live-api.gophygital.work';
-}
-
-async function fetchMsafeTrainingJson(endpoint: string, signal?: AbortSignal): Promise<unknown> {
-  const token = localStorage.getItem('token') || '';
-  const companyId =
-    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '';
-  const params = new URLSearchParams({ company_id: companyId });
-  if (token) {
-    params.set('access_token', token);
-    params.set('token', token);
-  }
-  const url = `${getMsafeBaseUrl()}/msafe_tranning_dashboard/${endpoint}?${params.toString()}`;
-  const headers: Record<string, string> = {};
-  if (token) headers.Authorization = `Bearer ${token}`;
-
-  const res = await fetch(url, { signal, headers });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
-}
-
-export type FilterOption = { id: string; name: string };
-
-function extractFilterOptions(
-  data: unknown,
-  arrayKeys: string[],
-  nameKeys: string[],
-  idKeys: string[],
-): FilterOption[] {
-  const record = data as Record<string, unknown> | null;
-  let arr: unknown = undefined;
-  for (const key of arrayKeys) {
-    if (record && Array.isArray(record[key])) {
-      arr = record[key];
-      break;
-    }
-  }
-  if (arr === undefined) arr = Array.isArray(data) ? data : [];
-
-  const options = (arr as unknown[])
-    .map((item) => {
-      if (typeof item === 'string') return item.trim() ? { id: item.trim(), name: item.trim() } : null;
-      const obj = item as Record<string, unknown>;
-      let name: string | null = null;
-      for (const key of nameKeys) {
-        const v = obj?.[key];
-        if (typeof v === 'string' && v.trim()) {
-          name = v.trim();
-          break;
-        }
-      }
-      if (!name) return null;
-      let id: string | null = null;
-      for (const key of idKeys) {
-        const v = obj?.[key];
-        if (typeof v === 'number' && Number.isFinite(v)) {
-          id = String(v);
-          break;
-        }
-        if (typeof v === 'string' && v.trim()) {
-          id = v.trim();
-          break;
-        }
-      }
-      return { id: id ?? name, name };
-    })
-    .filter((v): v is FilterOption => Boolean(v));
-
-  const seen = new Set<string>();
-  const deduped = options.filter((o) => {
-    if (seen.has(o.name)) return false;
-    seen.add(o.name);
-    return true;
-  });
-  return deduped.sort((a, b) => a.name.localeCompare(b.name));
-}
-
-async function fetchFilterOptions(
-  endpoint: string,
-  arrayKeys: string[],
-  nameKeys: string[],
-  idKeys: string[],
-  signal: AbortSignal,
-): Promise<FilterOption[]> {
-  const data = await fetchMsafeTrainingJson(endpoint, signal);
-  return extractFilterOptions(data, arrayKeys, nameKeys, idKeys);
-}
 
 const VI_FOCUS = '#C72030';
 
@@ -160,9 +69,9 @@ export function CircleManagerFilterBar() {
     functions,
     setFunctions,
     setFunctionIds,
-    zone,
-    setZone,
-    setZoneId,
+    // zone,
+    // setZone,
+    // setZoneId,
     empType,
     setEmpType,
     setEmpTypeId,
@@ -173,74 +82,13 @@ export function CircleManagerFilterBar() {
     applyFilters,
     resetFilters,
     setPageTitle,
+    circleOptions,
+    functionOptions,
+    empTypeOptions,
+    loadingFilterOptions,
   } = useMsafeDashboard();
 
   const [funcOpen, setFuncOpen] = useState(false);
-  const [circleOptions, setCircleOptions] = useState<FilterOption[]>([]);
-  const [functionOptions, setFunctionOptions] = useState<FilterOption[]>([]);
-  const [zoneOptions, setZoneOptions] = useState<FilterOption[]>([{ id: '', name: 'All Zones' }]);
-  const [empTypeOptions, setEmpTypeOptions] = useState<FilterOption[]>([
-    { id: '', name: 'Internal / External' },
-  ]);
-  const [loadingFilters, setLoadingFilters] = useState(true);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    (async () => {
-      const [circles, funcs, zones, empTypes] = await Promise.all([
-        fetchFilterOptions(
-          'circle_level_filter.json',
-          ['circles'],
-          ['circle_name', 'name'],
-          ['circle_id', 'id'],
-          controller.signal,
-        ).catch((err) => {
-          if ((err as Error).name !== 'AbortError') console.error('Failed to load circle filter:', err);
-          return [] as FilterOption[];
-        }),
-        fetchFilterOptions(
-          'function_level_filter.json',
-          ['functions'],
-          ['function_name', 'name'],
-          ['function_id', 'id'],
-          controller.signal,
-        ).catch((err) => {
-          if ((err as Error).name !== 'AbortError') console.error('Failed to load function filter:', err);
-          return [] as FilterOption[];
-        }),
-        fetchFilterOptions(
-          'zone_level_filter.json',
-          ['zones'],
-          ['zone_name', 'name'],
-          ['zone_id', 'id'],
-          controller.signal,
-        ).catch((err) => {
-          if ((err as Error).name !== 'AbortError') console.error('Failed to load zone filter:', err);
-          return [] as FilterOption[];
-        }),
-        fetchFilterOptions(
-          'employee_type_filter.json',
-          ['employee_types', 'types', 'data', 'result'],
-          ['employee_type_name', 'employee_type', 'type_name', 'name'],
-          ['employee_type_id', 'id'],
-          controller.signal,
-        ).catch((err) => {
-          if ((err as Error).name !== 'AbortError') console.error('Failed to load employee type filter:', err);
-          return [] as FilterOption[];
-        }),
-      ]);
-
-      if (controller.signal.aborted) return;
-      setCircleOptions(circles);
-      setFunctionOptions(funcs);
-      setZoneOptions([{ id: '', name: 'All Zones' }, ...zones]);
-      setEmpTypeOptions([{ id: '', name: 'Internal / External' }, ...empTypes]);
-      setLoadingFilters(false);
-    })();
-
-    return () => controller.abort();
-  }, []);
 
   if (persona !== 'circle') return null;
 
@@ -274,7 +122,7 @@ export function CircleManagerFilterBar() {
           }}
           sx={fieldStyles}
           MenuProps={selectMenuProps}
-          disabled={loadingFilters}
+          disabled={loadingFilterOptions}
         >
           {circleOptions.map((c) => (
             <MenuItem key={c.id} value={c.name}>
@@ -319,7 +167,7 @@ export function CircleManagerFilterBar() {
           )}
           sx={fieldStyles}
           MenuProps={selectMenuProps}
-          disabled={loadingFilters}
+          disabled={loadingFilterOptions}
         >
           {functionOptions.map((fn) => (
             <MenuItem key={fn.id} value={fn.name} dense>
@@ -341,7 +189,7 @@ export function CircleManagerFilterBar() {
         </MuiSelect>
       </FormControl>
 
-      <FormControl
+      {/* <FormControl
         variant="outlined"
         size="small"
         sx={{ minWidth: 140, flex: '1 1 140px', maxWidth: 200 }}
@@ -364,7 +212,7 @@ export function CircleManagerFilterBar() {
           }}
           sx={fieldStyles}
           MenuProps={selectMenuProps}
-          disabled={loadingFilters}
+          disabled={loadingFilterOptions}
         >
           {zoneOptions.map((z) => (
             <MenuItem key={z.id || z.name} value={z.name}>
@@ -372,7 +220,7 @@ export function CircleManagerFilterBar() {
             </MenuItem>
           ))}
         </MuiSelect>
-      </FormControl>
+      </FormControl> */}
 
       <FormControl
         variant="outlined"
@@ -394,7 +242,7 @@ export function CircleManagerFilterBar() {
           }}
           sx={fieldStyles}
           MenuProps={selectMenuProps}
-          disabled={loadingFilters}
+          disabled={loadingFilterOptions}
         >
           {empTypeOptions.map((t) => (
             <MenuItem key={t.id || t.name} value={t.name}>
@@ -436,7 +284,7 @@ export function CircleManagerFilterBar() {
         sx={{ ...dateFieldStyles, minWidth: 140, flex: '0 1 150px' }}
       />
 
-      <button type="button" className="cm-apply-btn" onClick={applyFilters}>
+      <button type="button" className="cm-apply-btn" onClick={() => applyFilters()}>
         Apply
       </button>
       <button type="button" className="cm-reset-btn" onClick={resetFilters}>

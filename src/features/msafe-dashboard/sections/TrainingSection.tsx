@@ -14,7 +14,7 @@ import { ChartSwitch } from '../components/ChartSwitch';
 import { ChartTable, DonutChart, SideLegendDonut, SliceBarChart } from '../components/DonutChart';
 import { C } from '../data/constants';
 import { TRAIN_INT_EXT_BARS, TRAIN_PF } from '../data/mockData';
-import { useMsafeDashboard, DEFAULT_FILTERS, type AppliedFilters } from '../context/MsafeDashboardContext';
+import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import type { Persona } from '../data/constants';
 
 type TrainSlice = { name: string; value: number; color: string };
@@ -34,8 +34,8 @@ function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, 
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type_id = f.empTypeId;
-  if (f.startDate && f.startDate !== DEFAULT_FILTERS.startDate) params.from_date = f.startDate;
-  if (f.endDate && f.endDate !== DEFAULT_FILTERS.endDate) params.to_date = f.endDate;
+  if (f.startDate) params.from_date = f.startDate;
+  if (f.endDate) params.to_date = f.endDate;
   return params;
 }
 
@@ -294,7 +294,7 @@ export function TrainingSection() {
     return () => {
       isMounted = false;
     };
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     let isMounted = true;
@@ -321,34 +321,35 @@ export function TrainingSection() {
     return () => {
       isMounted = false;
     };
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadTrainingFailures = async () => {
-      setFailuresLoading(true);
-
-      try {
-        const payload = await fetchMsafeTrainingJson(
-          'recent_training_failures.json',
-          buildFilterParams(persona, appliedFilters),
-        );
-        const normalized = normalizeTrainingFailures(payload);
-        if (isMounted) setTrainFailures(normalized);
-      } catch (error) {
-        console.warn('M-Safe recent-training-failures API failed.', error);
-      } finally {
-        if (isMounted) setFailuresLoading(false);
-      }
-    };
-
-    loadTrainingFailures();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [appliedFilters]);
+  // Recent Training Failures table is hidden (see JSX below) — API call commented out so it's not fetched.
+  // useEffect(() => {
+  //   let isMounted = true;
+  //
+  //   const loadTrainingFailures = async () => {
+  //     setFailuresLoading(true);
+  //
+  //     try {
+  //       const payload = await fetchMsafeTrainingJson(
+  //         'recent_training_failures.json',
+  //         buildFilterParams(persona, appliedFilters),
+  //       );
+  //       const normalized = normalizeTrainingFailures(payload);
+  //       if (isMounted) setTrainFailures(normalized);
+  //     } catch (error) {
+  //       console.warn('M-Safe recent-training-failures API failed.', error);
+  //     } finally {
+  //       if (isMounted) setFailuresLoading(false);
+  //     }
+  //   };
+  //
+  //   loadTrainingFailures();
+  //
+  //   return () => {
+  //     isMounted = false;
+  //   };
+  // }, [appliedFilters]);
 
   return (
     <AccordionShell
@@ -472,6 +473,7 @@ export function TrainingSection() {
           )}
         </ChartCard>
 
+        {/* Recent Training Failures table hidden — kept for reference, API call above is also commented out.
         <ChartCard
           title="Recent Training Failures"
           sub="Latest sessions requiring re-attempt"
@@ -534,6 +536,7 @@ export function TrainingSection() {
             </table>
           </div>
         </ChartCard>
+        */}
       </div>
     </AccordionShell>
   );

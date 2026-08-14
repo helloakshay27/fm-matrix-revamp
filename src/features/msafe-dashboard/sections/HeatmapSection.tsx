@@ -3,7 +3,7 @@ import { ChartCard } from '../components/ChartCard';
 import { Leaderboard } from '../components/Leaderboard';
 import { heatmapClass } from '../data/mockData';
 import type { Persona } from '../data/constants';
-import { useMsafeDashboard, DEFAULT_FILTERS, type AppliedFilters } from '../context/MsafeDashboardContext';
+import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import { getAuthHeader } from '@/config/apiConfig';
 
 type HeatmapRow = { circle: string; values: number[] };
@@ -34,8 +34,8 @@ function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, 
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type_id = f.empTypeId;
-  if (f.startDate && f.startDate !== DEFAULT_FILTERS.startDate) params.from_date = f.startDate;
-  if (f.endDate && f.endDate !== DEFAULT_FILTERS.endDate) params.to_date = f.endDate;
+  if (f.startDate) params.from_date = f.startDate;
+  if (f.endDate) params.to_date = f.endDate;
   return params;
 }
 
@@ -237,31 +237,33 @@ export function HeatmapSection() {
       }
     })();
     return () => controller.abort();
-  }, [appliedFilters, heatmapPage]);
+  }, [appliedFilters, persona, heatmapPage]);
 
   useEffect(() => {
     setHeatmapPage(1);
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    setGrowthLoading(true);
-    (async () => {
-      try {
-        const payload = await fetchMsafeUserDashboardJson(
-          'compliance_by_circle.json',
-          { type: 'growth', ...buildFilterParams(persona, appliedFilters) },
-          controller.signal,
-        );
-        if (!controller.signal.aborted) setGrowthData(normalizeGrowthCircles(payload));
-      } catch (err) {
-        if ((err as Error).name !== 'AbortError') console.warn('M-Safe compliance-by-circle (growth) API failed.', err);
-      } finally {
-        if (!controller.signal.aborted) setGrowthLoading(false);
-      }
-    })();
-    return () => controller.abort();
-  }, [appliedFilters]);
+  // "Circles That Need Growth in Performance" table is hidden (see JSX below) — API call
+  // (type=growth) commented out so it's not fetched.
+  // useEffect(() => {
+  //   const controller = new AbortController();
+  //   setGrowthLoading(true);
+  //   (async () => {
+  //     try {
+  //       const payload = await fetchMsafeUserDashboardJson(
+  //         'compliance_by_circle.json',
+  //         { type: 'growth', ...buildFilterParams(persona, appliedFilters) },
+  //         controller.signal,
+  //       );
+  //       if (!controller.signal.aborted) setGrowthData(normalizeGrowthCircles(payload));
+  //     } catch (err) {
+  //       if ((err as Error).name !== 'AbortError') console.warn('M-Safe compliance-by-circle (growth) API failed.', err);
+  //     } finally {
+  //       if (!controller.signal.aborted) setGrowthLoading(false);
+  //     }
+  //   })();
+  //   return () => controller.abort();
+  // }, [appliedFilters]);
 
   return (
     <div className="sec" id="sec-heatmap">
@@ -346,6 +348,7 @@ export function HeatmapSection() {
           ) : null}
         </ChartCard>
 
+        {/* "Circles That Need Growth in Performance" hidden — kept for reference, API call above is also commented out.
         <ChartCard
           title="Circles That Need Growth in Performance"
           sub="Weighted compliance score across all modules · ranked by opportunity to improve"
@@ -376,6 +379,7 @@ export function HeatmapSection() {
             />
           )}
         </ChartCard>
+        */}
       </div>
     </div>
   );
