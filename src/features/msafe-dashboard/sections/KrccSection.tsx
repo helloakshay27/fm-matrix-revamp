@@ -365,27 +365,29 @@ export function KrccSection() {
     return () => controller.abort();
   }, [appliedFilters, persona]);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    setTurnaroundLoading(true);
-    (async () => {
-      try {
-        const payload = await fetchMsafeKrccJson(
-          'krcc_turnaround_time_by_circle.json',
-          buildFilterParams(persona, appliedFilters),
-          controller.signal,
-        );
-        const normalized = normalizeTurnaround(payload);
-        warnIfEmpty('krcc_turnaround_time_by_circle.json', normalized, payload);
-        if (!controller.signal.aborted) setTurnaroundData(normalized);
-      } catch (err) {
-        if ((err as Error).name !== 'AbortError') console.warn('M-Safe krcc-turnaround-time API failed.', err);
-      } finally {
-        if (!controller.signal.aborted) setTurnaroundLoading(false);
-      }
-    })();
-    return () => controller.abort();
-  }, [appliedFilters, persona]);
+  // KRCC Turnaround Time by Circle chart is hidden (see JSX below) — API call commented out
+  // so it's not fetched.
+  // useEffect(() => {
+  //   const controller = new AbortController();
+  //   setTurnaroundLoading(true);
+  //   (async () => {
+  //     try {
+  //       const payload = await fetchMsafeKrccJson(
+  //         'krcc_turnaround_time_by_circle.json',
+  //         buildFilterParams(persona, appliedFilters),
+  //         controller.signal,
+  //       );
+  //       const normalized = normalizeTurnaround(payload);
+  //       warnIfEmpty('krcc_turnaround_time_by_circle.json', normalized, payload);
+  //       if (!controller.signal.aborted) setTurnaroundData(normalized);
+  //     } catch (err) {
+  //       if ((err as Error).name !== 'AbortError') console.warn('M-Safe krcc-turnaround-time API failed.', err);
+  //     } finally {
+  //       if (!controller.signal.aborted) setTurnaroundLoading(false);
+  //     }
+  //   })();
+  //   return () => controller.abort();
+  // }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -533,6 +535,7 @@ export function KrccSection() {
         )}
       </ChartCard>
 
+      {/* KRCC Turnaround Time by Circle hidden — kept for reference, API call above is also commented out.
       <ChartCard
         title="KRCC Turnaround Time by Circle"
         sub="Avg calendar days from initiation to clearance"
@@ -601,6 +604,7 @@ export function KrccSection() {
           </div>
         )}
       </ChartCard>
+      */}
     </AccordionShell>
   );
 }
