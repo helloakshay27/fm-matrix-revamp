@@ -4,7 +4,7 @@ import { ChartCard } from './ChartCard';
 import { StatusDot } from './StatusDot';
 import { overallStatus, type DirectoryUser } from '../data/mockData';
 import type { StatusCode, Persona } from '../data/constants';
-import { useMsafeDashboard, DEFAULT_FILTERS, type AppliedFilters } from '../context/MsafeDashboardContext';
+import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import { getAuthHeader } from '@/config/apiConfig';
 
 type Filter = 'all' | 'internal' | 'external' | 'pending' | 'cleared';
@@ -24,8 +24,8 @@ function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, 
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type_id = f.empTypeId;
-  if (f.startDate && f.startDate !== DEFAULT_FILTERS.startDate) params.from_date = f.startDate;
-  if (f.endDate && f.endDate !== DEFAULT_FILTERS.endDate) params.to_date = f.endDate;
+  if (f.startDate) params.from_date = f.startDate;
+  if (f.endDate) params.to_date = f.endDate;
   return params;
 }
 
@@ -163,7 +163,13 @@ const CHIP_DEFS: { id: Filter; label: string; match: (u: DirectoryUser) => boole
 ];
 
 /** Full searchable/filterable user directory — matches vi_msafe_v6.html */
-export function UserDirectoryCard({ style }: { style?: CSSProperties }) {
+export function UserDirectoryCard({
+  style,
+  hideStatusColumn,
+}: {
+  style?: CSSProperties;
+  hideStatusColumn?: boolean;
+}) {
   const { openDrill, persona, appliedFilters } = useMsafeDashboard();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
@@ -208,13 +214,13 @@ export function UserDirectoryCard({ style }: { style?: CSSProperties }) {
     return () => {
       isMounted = false;
     };
-  }, [page, appliedFilters]);
+  }, [page, appliedFilters, persona]);
 
   // Jump back to page 1 whenever the applied filters change — the old page number
   // may no longer exist against the newly filtered result set.
   useEffect(() => {
     setPage(1);
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
   // Search/filter narrow the currently-loaded page only — there's no confirmed
   // server-side search/filter param, so they can't reach across all ~112k records.
@@ -253,7 +259,7 @@ export function UserDirectoryCard({ style }: { style?: CSSProperties }) {
       }
     >
       <div className="mini-filter">
-        {CHIP_DEFS.map((c) => (
+        {CHIP_DEFS.filter((c) => !hideStatusColumn || (c.id !== 'pending' && c.id !== 'cleared')).map((c) => (
           <button
             key={c.id}
             type="button"
@@ -278,19 +284,19 @@ export function UserDirectoryCard({ style }: { style?: CSSProperties }) {
               <th style={{ textAlign: 'center' }}>Training</th>
               <th style={{ textAlign: 'center' }}>KRCC</th>
               <th style={{ textAlign: 'center' }}>LMC</th>
-              <th>Status</th>
+              {hideStatusColumn ? null : <th>Status</th>}
             </tr>
           </thead>
           <tbody>
             {directoryLoading ? (
               <tr>
-                <td colSpan={9} style={{ textAlign: 'center', color: 'var(--sage)', padding: '16px 0' }}>
+                <td colSpan={hideStatusColumn ? 8 : 9} style={{ textAlign: 'center', color: 'var(--sage)', padding: '16px 0' }}>
                   Loading…
                 </td>
               </tr>
             ) : data.length === 0 ? (
               <tr>
-                <td colSpan={9} style={{ textAlign: 'center', color: 'var(--sage)', padding: '16px 0' }}>
+                <td colSpan={hideStatusColumn ? 8 : 9} style={{ textAlign: 'center', color: 'var(--sage)', padding: '16px 0' }}>
                   No users available
                 </td>
               </tr>
@@ -317,9 +323,11 @@ export function UserDirectoryCard({ style }: { style?: CSSProperties }) {
                     <td style={{ textAlign: 'center' }}>
                       <StatusDot value={u.lm} />
                     </td>
-                    <td>
-                      <span className={`badge ${st.c}`}>{st.t}</span>
-                    </td>
+                    {hideStatusColumn ? null : (
+                      <td>
+                        <span className={`badge ${st.c}`}>{st.t}</span>
+                      </td>
+                    )}
                   </tr>
                 );
               })

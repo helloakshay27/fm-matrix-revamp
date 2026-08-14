@@ -17,11 +17,11 @@ import { Leaderboard } from '../components/Leaderboard';
 import { ProgressRows } from '../components/ProgressRows';
 import { C } from '../data/constants';
 import type { Persona } from '../data/constants';
-import { useMsafeDashboard, DEFAULT_FILTERS, type AppliedFilters } from '../context/MsafeDashboardContext';
+import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 
 type DailyRow = { d: string; n: number };
 type WeekRow = { label: string; pct: number; val: string; color: string };
-type ManagerRow = { name: string; func: string; count: number };
+type ManagerRow = { name: string; department: string; circle: string; count: number };
 type Slice = { name: string; value: number; color: string };
 type TrendRow = { m: string; n: number };
 
@@ -42,8 +42,8 @@ function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, 
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type_id = f.empTypeId;
-  if (f.startDate && f.startDate !== DEFAULT_FILTERS.startDate) params.from_date = f.startDate;
-  if (f.endDate && f.endDate !== DEFAULT_FILTERS.endDate) params.to_date = f.endDate;
+  if (f.startDate) params.from_date = f.startDate;
+  if (f.endDate) params.to_date = f.endDate;
   return params;
 }
 
@@ -171,10 +171,11 @@ function normalizeManagers(payload: unknown): ManagerRow[] {
       const record = item as Record<string, unknown>;
       const name = getString(record, ['manager_name', 'name', 'employee_name']);
       if (!name) return null;
-      const func = getString(record, ['function', 'func', 'department', 'circle']) ?? '—';
+      const department = getString(record, ['department', 'function', 'func']) ?? '—';
+      const circle = getString(record, ['circle', 'circle_name']) ?? '—';
       const count = getNumber(record, ['total_lmc_signed', 'count', 'value', 'sign_offs', 'lmc_count', 'total']);
       if (count === null) return null;
-      return { name, func, count };
+      return { name, department, circle, count };
     })
     .filter((item): item is ManagerRow => Boolean(item));
 }
@@ -289,7 +290,7 @@ export function LmcSection() {
       }
     })();
     return () => controller.abort();
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -310,7 +311,7 @@ export function LmcSection() {
       }
     })();
     return () => controller.abort();
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -330,7 +331,7 @@ export function LmcSection() {
       }
     })();
     return () => controller.abort();
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -350,7 +351,7 @@ export function LmcSection() {
       }
     })();
     return () => controller.abort();
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -370,7 +371,7 @@ export function LmcSection() {
       }
     })();
     return () => controller.abort();
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -390,7 +391,7 @@ export function LmcSection() {
       }
     })();
     return () => controller.abort();
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
   return (
     <AccordionShell
@@ -464,7 +465,7 @@ export function LmcSection() {
             <Leaderboard
               items={managerData.map((m) => ({
                 name: m.name,
-                meta: m.func,
+                meta: `${m.department} · ${m.circle}`,
                 value: m.count,
                 onClick: () => openDrill('user-detail', m.name),
               }))}

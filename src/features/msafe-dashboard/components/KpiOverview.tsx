@@ -15,7 +15,7 @@ import {
 import type { AccordionKey, Persona } from '../data/constants';
 import { ADMIN_KPIS } from '../data/mockData';
 import { InfoButton } from './InfoButton';
-import { useMsafeDashboard, DEFAULT_FILTERS, type AppliedFilters } from '../context/MsafeDashboardContext';
+import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import { Skeleton } from '@/components/ui/skeleton';
 
 type KpiValueType = 'count' | 'percent';
@@ -35,8 +35,8 @@ function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, 
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type_id = f.empTypeId;
-  if (f.startDate && f.startDate !== DEFAULT_FILTERS.startDate) params.from_date = f.startDate;
-  if (f.endDate && f.endDate !== DEFAULT_FILTERS.endDate) params.to_date = f.endDate;
+  if (f.startDate) params.from_date = f.startDate;
+  if (f.endDate) params.to_date = f.endDate;
   return params;
 }
 
@@ -67,6 +67,12 @@ const KPI_FIELD_MAP: Record<string, { valueKeys: string[]; valueType: KpiValueTy
   users: { valueKeys: ['total_users', 'users', 'user_count'], valueType: 'count' },
   'krcc-filled': { valueKeys: ['krcc_filled', 'krcc_filled_count'], valueType: 'count' },
   'krcc-approved': {
+    valueKeys: ['krcc_approved', 'krcc_approved_count'],
+    valueType: 'count',
+    subKeys: ['krcc_approved_percentage', 'krcc_approved_percent'],
+  },
+  'krcc-pending': { valueKeys: ['krcc_pending', 'krcc_pending_count'], valueType: 'count' },
+  'krcc-approved-2': {
     valueKeys: ['krcc_approved', 'krcc_approved_count'],
     valueType: 'count',
     subKeys: ['krcc_approved_percentage', 'krcc_approved_percent'],
@@ -136,6 +142,8 @@ const ICONS: Record<string, ReactNode> = {
   users: <Users size={16} />,
   'krcc-filled': <FileText size={16} />,
   'krcc-approved': <CheckCircle2 size={16} />,
+  'krcc-pending': <FileText size={16} />,
+  'krcc-approved-2': <CheckCircle2 size={16} />,
   'train-cat': <GraduationCap size={16} />,
   'train-user': <UserCheck size={16} />,
   'train-int': <ShieldCheck size={16} />,
@@ -191,7 +199,7 @@ export function KpiOverview() {
       }
     })();
     return () => controller.abort();
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
   const valueFor = (id: string) => {
     const api = kpiApiData[id];
@@ -217,7 +225,7 @@ export function KpiOverview() {
       </div>
 
       <div className="kpi-grid flow-kpi-grid">
-        {ADMIN_KPIS.map((k) => {
+        {ADMIN_KPIS.filter((k) => !k.hidden).map((k) => {
           const active = openAcc === k.group;
           const style: CSSProperties = {};
           if (k.color) (style as Record<string, string>)['--kpi-c'] = k.color;

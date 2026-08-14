@@ -14,7 +14,7 @@ import { ChartSwitch } from '../components/ChartSwitch';
 import { ChartTable, DonutChart, SideLegendDonut, SliceBarChart } from '../components/DonutChart';
 import { ProgressRows } from '../components/ProgressRows';
 import { C } from '../data/constants';
-import { useMsafeDashboard, DEFAULT_FILTERS, type AppliedFilters } from '../context/MsafeDashboardContext';
+import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import type { Persona } from '../data/constants';
 
 type Slice = { name: string; value: number; color: string };
@@ -37,8 +37,8 @@ function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, 
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type_id = f.empTypeId;
-  if (f.startDate && f.startDate !== DEFAULT_FILTERS.startDate) params.from_date = f.startDate;
-  if (f.endDate && f.endDate !== DEFAULT_FILTERS.endDate) params.to_date = f.endDate;
+  if (f.startDate) params.from_date = f.startDate;
+  if (f.endDate) params.to_date = f.endDate;
   return params;
 }
 
@@ -319,7 +319,7 @@ export function KrccSection() {
       }
     })();
     return () => controller.abort();
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -341,7 +341,7 @@ export function KrccSection() {
       }
     })();
     return () => controller.abort();
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -363,7 +363,7 @@ export function KrccSection() {
       }
     })();
     return () => controller.abort();
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -385,7 +385,7 @@ export function KrccSection() {
       }
     })();
     return () => controller.abort();
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -407,7 +407,7 @@ export function KrccSection() {
       }
     })();
     return () => controller.abort();
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
   const totalStatus = statusData.reduce((sum, s) => sum + s.value, 0);
   const clearedStatus = statusData.find((s) => /clear/i.test(s.name))?.value ?? 0;

@@ -17,7 +17,7 @@ import { ChartTable, DonutChart, SliceBarChart } from '../components/DonutChart'
 import { UserDirectoryCard } from '../components/UserDirectoryCard';
 import { C } from '../data/constants';
 import type { Persona } from '../data/constants';
-import { useMsafeDashboard, DEFAULT_FILTERS, type AppliedFilters } from '../context/MsafeDashboardContext';
+import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import { getAuthHeader } from '@/config/apiConfig';
 
 type CircleChartRow = { name: string; Internal: number; External: number };
@@ -213,8 +213,8 @@ function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, 
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type_id = f.empTypeId;
-  if (f.startDate && f.startDate !== DEFAULT_FILTERS.startDate) params.from_date = f.startDate;
-  if (f.endDate && f.endDate !== DEFAULT_FILTERS.endDate) params.to_date = f.endDate;
+  if (f.startDate) params.from_date = f.startDate;
+  if (f.endDate) params.to_date = f.endDate;
   return params;
 }
 
@@ -302,7 +302,7 @@ export function UsersSection() {
     return () => {
       isMounted = false;
     };
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     let isMounted = true;
@@ -329,7 +329,7 @@ export function UsersSection() {
     return () => {
       isMounted = false;
     };
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     let isMounted = true;
@@ -358,7 +358,7 @@ export function UsersSection() {
     return () => {
       isMounted = false;
     };
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     let isMounted = true;
@@ -387,7 +387,7 @@ export function UsersSection() {
     return () => {
       isMounted = false;
     };
-  }, [appliedFilters]);
+  }, [appliedFilters, persona]);
 
   return (
     <AccordionShell
@@ -545,7 +545,7 @@ export function UsersSection() {
         </ChartCard>
       </div>
 
-      <UserDirectoryCard style={{ marginTop: 16 }} />
+      <UserDirectoryCard style={{ marginTop: 16 }} hideStatusColumn />
     </AccordionShell>
   );
 }
