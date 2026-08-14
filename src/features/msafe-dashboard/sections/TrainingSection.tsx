@@ -13,7 +13,6 @@ import { AccordionShell, ChartCard } from '../components/ChartCard';
 import { ChartSwitch } from '../components/ChartSwitch';
 import { ChartTable, DonutChart, SideLegendDonut, SliceBarChart } from '../components/DonutChart';
 import { C } from '../data/constants';
-import { TRAIN_INT_EXT_BARS, TRAIN_PF } from '../data/mockData';
 import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import type { Persona } from '../data/constants';
 
@@ -62,6 +61,99 @@ async function fetchMsafeTrainingJson(
 }
 
 const TRAIN_CHART_PALETTE = [C.terra, C.blue, C.vi, C.sage, C.lav, C.warn, C.err, C.ok, '#B4A38A'];
+
+function unwrapRecord(payload: unknown, keys: string[]): Record<string, unknown> {
+  const root = payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
+  for (const key of keys) {
+    const nested = root[key];
+    if (nested && typeof nested === 'object' && !Array.isArray(nested)) return nested as Record<string, unknown>;
+  }
+  return root;
+}
+
+function getNumberOrPercent(record: Record<string, unknown>, keys: string[]): number | null {
+  for (const key of keys) {
+    const raw = record[key];
+    if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
+    if (typeof raw === 'string' && raw.trim()) {
+      const parsed = Number(raw.replace('%', '').trim());
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return null;
+}
+
+function normalizeTrainPassFail(payload: unknown): { slices: TrainSlice[]; passRate: string | null } {
+  const record = unwrapRecord(payload, ['overall', 'data', 'result']);
+
+  const pass = getNumberOrPercent(record, ['pass', 'passed', 'total_pass', 'pass_count']);
+  const fail = getNumberOrPercent(record, ['fail', 'failed', 'total_fail', 'fail_count']);
+  const pending = getNumberOrPercent(record, ['pending', 'pending_count', 'total_pending']);
+
+  const slices: TrainSlice[] = [];
+  if (pass !== null) slices.push({ name: 'Pass', value: pass, color: C.ok });
+  if (fail !== null) slices.push({ name: 'Fail', value: fail, color: C.vi });
+  if (pending !== null) slices.push({ name: 'Pending', value: pending, color: C.warn });
+
+  const rawRate = getNumberOrPercent(record, ['pass_rate', 'pass_percentage', 'passing_percentage']);
+  const passRate =
+    rawRate !== null
+      ? `${rawRate}%`
+      : pass !== null && fail !== null && pass + fail > 0
+        ? `${((pass / (pass + fail)) * 100).toFixed(1)}%`
+        : null;
+
+  return { slices, passRate };
+}
+
+type PassFailGroup = { group: string; rows: { label: string; pct: number; val: string; color: string }[] };
+
+function pickNestedRecord(root: Record<string, unknown>, keys: string[]): Record<string, unknown> | null {
+  for (const key of keys) {
+    const nested = root[key];
+    if (nested && typeof nested === 'object' && !Array.isArray(nested)) return nested as Record<string, unknown>;
+  }
+  return null;
+}
+
+function extractPassFailGroup(record: Record<string, unknown>, groupLabel: string): PassFailGroup | null {
+  const pass = getNumberOrPercent(record, ['pass', 'passed', 'total_pass', 'pass_count']);
+  const fail = getNumberOrPercent(record, ['fail', 'failed', 'total_fail', 'fail_count']);
+  const pending = getNumberOrPercent(record, ['pending', 'pending_count', 'total_pending']);
+  if (pass === null && fail === null && pending === null) return null;
+
+  const total = getNumberOrPercent(record, ['total', 'total_count', 'total_users']);
+  const denom = pass !== null && fail !== null ? pass + fail + (pending ?? 0) : total;
+
+  const rawPassRate = getNumberOrPercent(record, ['pass_rate', 'pass_percentage', 'passing_percentage']);
+  const rawFailRate = getNumberOrPercent(record, ['fail_rate', 'fail_percentage', 'failing_percentage']);
+  const rawPendingRate = getNumberOrPercent(record, ['pending_rate', 'pending_percentage']);
+  const passPct = rawPassRate ?? (denom && pass !== null ? Math.round((pass / denom) * 1000) / 10 : 0);
+  const failPct = rawFailRate ?? (denom && fail !== null ? Math.round((fail / denom) * 1000) / 10 : 0);
+  const pendingPct = rawPendingRate ?? (denom && pending !== null ? Math.round((pending / denom) * 1000) / 10 : 0);
+
+  const label = total !== null ? `${groupLabel} (n=${total.toLocaleString('en-IN')})` : groupLabel;
+
+  const rows: { label: string; pct: number; val: string; color: string }[] = [];
+  if (pass !== null) rows.push({ label: 'Pass', pct: passPct, val: `${passPct}%`, color: C.ok });
+  if (fail !== null) rows.push({ label: 'Fail', pct: failPct, val: `${failPct}%`, color: C.vi });
+  if (pending !== null) rows.push({ label: 'Pending', pct: pendingPct, val: `${pendingPct}%`, color: C.warn });
+
+  return { group: label, rows };
+}
+
+function normalizeInternalExternalPassFail(payload: unknown): PassFailGroup[] {
+  const root = payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
+  const internalRecord = pickNestedRecord(root, ['internal', 'internal_fte', 'internal_users']);
+  const externalRecord = pickNestedRecord(root, ['external', 'external_non_fte', 'external_users']);
+
+  const groups: PassFailGroup[] = [];
+  const internalGroup = internalRecord && extractPassFailGroup(internalRecord, 'INTERNAL FTE');
+  if (internalGroup) groups.push(internalGroup);
+  const externalGroup = externalRecord && extractPassFailGroup(externalRecord, 'EXTERNAL NON-FTE');
+  if (externalGroup) groups.push(externalGroup);
+  return groups;
+}
 
 const normalizeTrainingCounts = (payload: unknown): TrainSlice[] => {
   const source = Array.isArray(payload)
@@ -258,6 +350,11 @@ export function TrainingSection() {
   const { openDrill, persona, appliedFilters } = useMsafeDashboard();
   const [pfMode, setPfMode] = useState('donut');
   const [catMode, setCatMode] = useState('donut');
+  const [pfData, setPfData] = useState<TrainSlice[]>([]);
+  const [pfRate, setPfRate] = useState<string | null>(null);
+  const [pfLoading, setPfLoading] = useState(true);
+  const [intExtData, setIntExtData] = useState<PassFailGroup[]>([]);
+  const [intExtLoading, setIntExtLoading] = useState(true);
   const [trainByNameData, setTrainByNameData] = useState<TrainSlice[]>([]);
   const [trainCategoryData, setTrainCategoryData] = useState<TrainSlice[]>([]);
   const [scoreDistribution, setScoreDistribution] = useState<ScoreBucket[]>([]);
@@ -265,6 +362,63 @@ export function TrainingSection() {
   const [trainCountsLoading, setTrainCountsLoading] = useState(true);
   const [scoreLoading, setScoreLoading] = useState(true);
   const [failuresLoading, setFailuresLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadPassFail = async () => {
+      setPfLoading(true);
+
+      try {
+        const payload = await fetchMsafeTrainingJson('training_pass_fail_stats.json', {
+          type: 'pass_vs_fail',
+          ...buildFilterParams(persona, appliedFilters),
+        });
+        const { slices, passRate } = normalizeTrainPassFail(payload);
+        if (isMounted) {
+          setPfData(slices);
+          setPfRate(passRate);
+        }
+      } catch (error) {
+        console.warn('M-Safe training-pass-fail-stats API failed.', error);
+      } finally {
+        if (isMounted) setPfLoading(false);
+      }
+    };
+
+    loadPassFail();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [appliedFilters, persona]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadIntExtPassFail = async () => {
+      setIntExtLoading(true);
+
+      try {
+        const payload = await fetchMsafeTrainingJson('training_pass_fail_stats.json', {
+          type: 'internal_external',
+          ...buildFilterParams(persona, appliedFilters),
+        });
+        const normalized = normalizeInternalExternalPassFail(payload);
+        if (isMounted) setIntExtData(normalized);
+      } catch (error) {
+        console.warn('M-Safe training-pass-fail-stats (internal_external) API failed.', error);
+      } finally {
+        if (isMounted) setIntExtLoading(false);
+      }
+    };
+
+    loadIntExtPassFail();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     let isMounted = true;
@@ -296,32 +450,33 @@ export function TrainingSection() {
     };
   }, [appliedFilters, persona]);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadScoreDistribution = async () => {
-      setScoreLoading(true);
-
-      try {
-        const payload = await fetchMsafeTrainingJson(
-          'training_score_distribution.json',
-          buildFilterParams(persona, appliedFilters),
-        );
-        const normalized = normalizeScoreDistribution(payload);
-        if (isMounted) setScoreDistribution(normalized);
-      } catch (error) {
-        console.warn('M-Safe training-score-distribution API failed.', error);
-      } finally {
-        if (isMounted) setScoreLoading(false);
-      }
-    };
-
-    loadScoreDistribution();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [appliedFilters, persona]);
+  // Score Distribution card is hidden (see JSX below) — API call commented out so it's not fetched.
+  // useEffect(() => {
+  //   let isMounted = true;
+  //
+  //   const loadScoreDistribution = async () => {
+  //     setScoreLoading(true);
+  //
+  //     try {
+  //       const payload = await fetchMsafeTrainingJson(
+  //         'training_score_distribution.json',
+  //         buildFilterParams(persona, appliedFilters),
+  //       );
+  //       const normalized = normalizeScoreDistribution(payload);
+  //       if (isMounted) setScoreDistribution(normalized);
+  //     } catch (error) {
+  //       console.warn('M-Safe training-score-distribution API failed.', error);
+  //     } finally {
+  //       if (isMounted) setScoreLoading(false);
+  //     }
+  //   };
+  //
+  //   loadScoreDistribution();
+  //
+  //   return () => {
+  //     isMounted = false;
+  //   };
+  // }, [appliedFilters, persona]);
 
   // Recent Training Failures table is hidden (see JSX below) — API call commented out so it's not fetched.
   // useEffect(() => {
@@ -363,49 +518,55 @@ export function TrainingSection() {
           sub="All training records"
           infoKey="train-pf"
           showPdf
-          exportData={TRAIN_PF.map((d) => ({ Status: d.name, Records: d.value }))}
+          exportData={pfData.map((d) => ({ Status: d.name, Records: d.value }))}
           chartSwitch={<ChartSwitch modes={['donut', 'bar']} value={pfMode} onChange={setPfMode} />}
         >
-          {pfMode === 'donut' ? (
+          {pfLoading || pfData.length === 0 ? (
+            <DataState loading={pfLoading} empty={pfData.length === 0} label="pass/fail data" />
+          ) : pfMode === 'donut' ? (
             <SideLegendDonut
-              data={TRAIN_PF}
-              centerValue="91.7%"
+              data={pfData}
+              centerValue={pfRate ?? '—'}
               centerLabel="Pass Rate"
               bodyLabel="Records"
               onRowClick={(name) => openDrill(name === 'Fail' ? 'train-fail' : 'train-pass', name)}
             />
           ) : (
-            <SliceBarChart data={TRAIN_PF} />
+            <SliceBarChart data={pfData} />
           )}
         </ChartCard>
 
         <ChartCard title="Internal vs External Pass Rate" sub="Compared side-by-side" infoKey="train-int-ext">
-          <div style={{ padding: '4px 0' }}>
-            {TRAIN_INT_EXT_BARS.map((g) => (
-              <div key={g.group}>
-                <div
-                  style={{
-                    fontSize: 10.5,
-                    color: 'var(--sage)',
-                    fontWeight: 600,
-                    marginTop: 6,
-                    marginBottom: 2,
-                  }}
-                >
-                  {g.group}
-                </div>
-                {g.rows.map((r) => (
-                  <div key={r.label} className="pb-row">
-                    <span className="pb-label">{r.label}</span>
-                    <div className="pb-wrap">
-                      <div className="pb-fill" style={{ width: `${r.pct}%`, background: r.color }} />
-                    </div>
-                    <span className="pb-val">{r.val}</span>
+          {intExtLoading || intExtData.length === 0 ? (
+            <DataState loading={intExtLoading} empty={intExtData.length === 0} label="internal/external pass rate data" />
+          ) : (
+            <div style={{ padding: '4px 0' }}>
+              {intExtData.map((g) => (
+                <div key={g.group}>
+                  <div
+                    style={{
+                      fontSize: 10.5,
+                      color: 'var(--sage)',
+                      fontWeight: 600,
+                      marginTop: 6,
+                      marginBottom: 2,
+                    }}
+                  >
+                    {g.group}
                   </div>
-                ))}
-              </div>
-            ))}
-          </div>
+                  {g.rows.map((r) => (
+                    <div key={r.label} className="pb-row">
+                      <span className="pb-label">{r.label}</span>
+                      <div className="pb-wrap">
+                        <div className="pb-fill" style={{ width: `${r.pct}%`, background: r.color }} />
+                      </div>
+                      <span className="pb-val">{r.val}</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
         </ChartCard>
 
         <ChartCard title="Training by Name" sub="Volume by training programme" infoKey="train-name">
@@ -450,7 +611,11 @@ export function TrainingSection() {
         )}
       </ChartCard>
 
-      <div className="g g-2-1" style={{ marginTop: 16 }}>
+      {/* Both cards in this row (Score Distribution, Recent Training Failures) are hidden below —
+          JSX comments can't nest, so this wrapper div is left in place (renders empty) rather
+          than being commented out itself. */}
+      <div className="g g-2-1" style={{ marginTop: 16, display: 'none' }}>
+        {/* Score Distribution hidden — kept for reference, API call above is also commented out.
         <ChartCard title="Score Distribution" sub="Histogram of actual scores where recorded (n=15,842)" infoKey="train-score">
           {scoreLoading || scoreDistribution.length === 0 ? (
             <DataState loading={scoreLoading} empty={scoreDistribution.length === 0} label="score data" />
@@ -472,6 +637,7 @@ export function TrainingSection() {
             </div>
           )}
         </ChartCard>
+        */}
 
         {/* Recent Training Failures table hidden — kept for reference, API call above is also commented out.
         <ChartCard

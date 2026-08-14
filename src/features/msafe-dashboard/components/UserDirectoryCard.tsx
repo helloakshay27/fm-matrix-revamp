@@ -6,6 +6,7 @@ import { overallStatus, type DirectoryUser } from '../data/mockData';
 import type { StatusCode, Persona } from '../data/constants';
 import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import { getAuthHeader } from '@/config/apiConfig';
+import { useDebounce } from '@/hooks/useDebounce';
 
 type Filter = 'all' | 'internal' | 'external' | 'pending' | 'cleared';
 
@@ -172,6 +173,7 @@ export function UserDirectoryCard({
 }) {
   const { openDrill, persona, appliedFilters } = useMsafeDashboard();
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search.trim(), 400);
   const [filter, setFilter] = useState<Filter>('all');
   const [directory, setDirectory] = useState<DirectoryUser[]>([]);
   const [directoryLoading, setDirectoryLoading] = useState(true);
@@ -179,7 +181,8 @@ export function UserDirectoryCard({
   const [pagination, setPagination] = useState<Pagination | null>(null);
 
   // The API paginates server-side (per_page ~20, total_entries in the hundred-thousands),
-  // so each page change re-fetches rather than slicing a locally-held full dataset.
+  // so each page change re-fetches rather than slicing a locally-held full dataset. Search
+  // is server-side too (?search=<name>) — debounced so it doesn't fire on every keystroke.
   useEffect(() => {
     let isMounted = true;
     setDirectoryLoading(true);
@@ -189,6 +192,7 @@ export function UserDirectoryCard({
         const payload = await fetchMsafeUserDashboardJson('employee_compliance_status.json', {
           page: String(page),
           current_page: String(page),
+          ...(debouncedSearch ? { search: debouncedSearch } : {}),
           ...buildFilterParams(persona, appliedFilters),
         });
         const normalized = normalizeDirectory(payload);
@@ -214,28 +218,24 @@ export function UserDirectoryCard({
     return () => {
       isMounted = false;
     };
-  }, [page, appliedFilters, persona]);
+  }, [page, appliedFilters, persona, debouncedSearch]);
 
-  // Jump back to page 1 whenever the applied filters change — the old page number
-  // may no longer exist against the newly filtered result set.
+  // Jump back to page 1 whenever the applied filters or search term change — the old page
+  // number may no longer exist against the newly filtered result set.
   useEffect(() => {
     setPage(1);
-  }, [appliedFilters, persona]);
+  }, [appliedFilters, persona, debouncedSearch]);
 
-  // Search/filter narrow the currently-loaded page only — there's no confirmed
-  // server-side search/filter param, so they can't reach across all ~112k records.
+  // The chip filters (Internal/External/Pending/Cleared) only narrow the currently-loaded
+  // page — search itself is now server-side (see fetch above), so it isn't re-applied here.
   const data = useMemo(() => {
     let rows = directory;
     if (filter === 'internal') rows = rows.filter((u) => u.type === 'Internal');
     if (filter === 'external') rows = rows.filter((u) => u.type === 'External');
     if (filter === 'pending') rows = rows.filter((u) => u.tr !== 'ok' || u.kr !== 'ok' || u.lm !== 'ok');
     if (filter === 'cleared') rows = rows.filter((u) => u.tr === 'ok' && u.kr === 'ok' && u.lm === 'ok');
-    if (search) {
-      const q = search.toLowerCase();
-      rows = rows.filter((u) => (u.name + u.emp + u.role).toLowerCase().includes(q));
-    }
     return rows;
-  }, [directory, filter, search]);
+  }, [directory, filter]);
 
   const totalPages = pagination?.totalPages ?? 1;
   const totalEntries = pagination?.totalEntries ?? directory.length;
@@ -251,7 +251,7 @@ export function UserDirectoryCard({
         <div className="usr-search">
           <Search size={14} />
           <input
-            placeholder="Search users…"
+            placeholder="Search by name or last name…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />

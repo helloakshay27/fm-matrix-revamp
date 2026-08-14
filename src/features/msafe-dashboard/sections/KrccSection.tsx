@@ -106,17 +106,17 @@ function colorForStatusName(name: string): string {
   return C.sage;
 }
 
-const STATUS_FLAT_FIELDS: [string, string][] = [
-  ['cleared', 'Cleared'],
-  ['pending', 'Pending'],
-  ['not_started', 'Not Started'],
+const STATUS_FLAT_FIELDS: [string[], string][] = [
+  [['completed', 'cleared'], 'Completed'],
+  [['pending'], 'Pending'],
+  [['not_started'], 'Not Started'],
 ];
 
 function normalizeStatus(payload: unknown): Slice[] {
   const record = payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
 
-  const flatSlices = STATUS_FLAT_FIELDS.map(([key, label]) => {
-    const value = getNumber(record, [key]);
+  const flatSlices = STATUS_FLAT_FIELDS.map(([keys, label]) => {
+    const value = getNumber(record, keys);
     if (value === null) return null;
     return { name: label, value, color: colorForStatusName(label) };
   }).filter((item): item is Slice => Boolean(item));
@@ -365,27 +365,29 @@ export function KrccSection() {
     return () => controller.abort();
   }, [appliedFilters, persona]);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    setTurnaroundLoading(true);
-    (async () => {
-      try {
-        const payload = await fetchMsafeKrccJson(
-          'krcc_turnaround_time_by_circle.json',
-          buildFilterParams(persona, appliedFilters),
-          controller.signal,
-        );
-        const normalized = normalizeTurnaround(payload);
-        warnIfEmpty('krcc_turnaround_time_by_circle.json', normalized, payload);
-        if (!controller.signal.aborted) setTurnaroundData(normalized);
-      } catch (err) {
-        if ((err as Error).name !== 'AbortError') console.warn('M-Safe krcc-turnaround-time API failed.', err);
-      } finally {
-        if (!controller.signal.aborted) setTurnaroundLoading(false);
-      }
-    })();
-    return () => controller.abort();
-  }, [appliedFilters, persona]);
+  // KRCC Turnaround Time by Circle chart is hidden (see JSX below) — API call commented out
+  // so it's not fetched.
+  // useEffect(() => {
+  //   const controller = new AbortController();
+  //   setTurnaroundLoading(true);
+  //   (async () => {
+  //     try {
+  //       const payload = await fetchMsafeKrccJson(
+  //         'krcc_turnaround_time_by_circle.json',
+  //         buildFilterParams(persona, appliedFilters),
+  //         controller.signal,
+  //       );
+  //       const normalized = normalizeTurnaround(payload);
+  //       warnIfEmpty('krcc_turnaround_time_by_circle.json', normalized, payload);
+  //       if (!controller.signal.aborted) setTurnaroundData(normalized);
+  //     } catch (err) {
+  //       if ((err as Error).name !== 'AbortError') console.warn('M-Safe krcc-turnaround-time API failed.', err);
+  //     } finally {
+  //       if (!controller.signal.aborted) setTurnaroundLoading(false);
+  //     }
+  //   })();
+  //   return () => controller.abort();
+  // }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -410,7 +412,7 @@ export function KrccSection() {
   }, [appliedFilters, persona]);
 
   const totalStatus = statusData.reduce((sum, s) => sum + s.value, 0);
-  const clearedStatus = statusData.find((s) => /clear/i.test(s.name))?.value ?? 0;
+  const clearedStatus = statusData.find((s) => /clear|complete/i.test(s.name))?.value ?? 0;
   const clearedPct =
     apiClearedPct ?? (totalStatus > 0 ? `${((clearedStatus / totalStatus) * 100).toFixed(1)}%` : '—');
 
@@ -423,7 +425,7 @@ export function KrccSection() {
       <div className="g g2">
         <ChartCard
           title="KRCC Clearance Status"
-          sub="Cleared vs Pending vs Not Started"
+          sub="Completed vs Pending vs Not Started"
           infoKey="krcc-status"
           showPdf
           pdfLabel="KRCC Clearance Status"
@@ -436,7 +438,7 @@ export function KrccSection() {
             <SideLegendDonut
               data={statusData}
               centerValue={clearedPct}
-              centerLabel="Cleared"
+              centerLabel="Completed"
               bodyLabel="Users"
               onRowClick={(name) => openDrill(`krcc-${name.toLowerCase().replace(/\s/g, '')}`, name)}
             />
@@ -533,6 +535,7 @@ export function KrccSection() {
         )}
       </ChartCard>
 
+      {/* KRCC Turnaround Time by Circle hidden — kept for reference, API call above is also commented out.
       <ChartCard
         title="KRCC Turnaround Time by Circle"
         sub="Avg calendar days from initiation to clearance"
@@ -601,6 +604,7 @@ export function KrccSection() {
           </div>
         )}
       </ChartCard>
+      */}
     </AccordionShell>
   );
 }
