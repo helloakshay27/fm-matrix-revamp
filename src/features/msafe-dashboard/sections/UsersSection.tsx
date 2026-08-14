@@ -22,7 +22,7 @@ import { getAuthHeader } from '@/config/apiConfig';
 
 type CircleChartRow = { name: string; Internal: number; External: number };
 type FuncChartRow = { name: string; value: number; color: string };
-type RegChartRow = { m: string; n: number };
+type RegChartRow = { m: string; n: number; internal: number; external: number };
 
 const FUNC_CHART_PALETTE = [C.terra, C.sage, C.blue, C.teal, C.lav, C.warn, C.err, C.ok, '#B4A38A'];
 
@@ -181,19 +181,15 @@ const normalizeRegChartData = (payload: unknown): RegChartRow[] => {
 
       if (!month) return null;
 
-      const count = getNumericValue(record, [
-        'count',
-        'value',
-        'n',
-        'total',
-        'users',
-        'users_count',
-        'new_users',
-        'registrations',
-      ]);
+      const internal = getNumericValue(record, ['internal_users', 'internal', 'internal_count']) ?? 0;
+      const external = getNumericValue(record, ['external_users', 'external', 'external_count']) ?? 0;
+
+      const count =
+        getNumericValue(record, ['count', 'value', 'n', 'total', 'users', 'users_count', 'new_users', 'registrations']) ??
+        (internal || external ? internal + external : null);
       if (count === null) return null;
 
-      return { m: month, n: count };
+      return { m: month, n: count, internal, external };
     })
     .filter((item): item is RegChartRow => Boolean(item));
 };
@@ -422,11 +418,39 @@ export function UsersSection() {
           infoKey="user-reg"
           showPdf
           pdfLabel="New Registrations"
-          exportData={regChartData.map((d) => ({ Month: d.m, 'New Joiners': d.n }))}
-          chartSwitch={<ChartSwitch modes={['line', 'bar']} value={regMode} onChange={setRegMode} />}
+          exportData={regChartData.map((d) => ({
+            Month: d.m,
+            'Internal Users': d.internal,
+            'External Users': d.external,
+            Total: d.n,
+          }))}
+          chartSwitch={<ChartSwitch modes={['line', 'bar', 'table']} value={regMode} onChange={setRegMode} />}
         >
           {regLoading || regChartData.length === 0 ? (
             <DataState loading={regLoading} empty={regChartData.length === 0} label="registration data" />
+          ) : regMode === 'table' ? (
+            <div className="tbl-scroll">
+              <table className="tbl">
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Internal Users</th>
+                    <th>External Users</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {regChartData.map((d) => (
+                    <tr key={d.m}>
+                      <td className="cell-strong">{d.m}</td>
+                      <td>{d.internal.toLocaleString('en-IN')}</td>
+                      <td>{d.external.toLocaleString('en-IN')}</td>
+                      <td>{d.n.toLocaleString('en-IN')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
             <div className="chart-wrap">
               <ResponsiveContainer width="100%" height={220}>
@@ -436,13 +460,22 @@ export function UsersSection() {
                     <XAxis dataKey="m" tick={{ fontSize: 10, fill: C.sage }} />
                     <YAxis tick={{ fontSize: 10, fill: C.sage }} />
                     <Tooltip />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
                     <Area
                       type="monotone"
-                      dataKey="n"
+                      dataKey="internal"
                       stroke={C.terra}
                       fill="rgba(218,119,86,.14)"
                       strokeWidth={2.5}
-                      name="New Joiners"
+                      name="Internal Users"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="external"
+                      stroke={C.blue}
+                      fill="rgba(107,155,204,.14)"
+                      strokeWidth={2.5}
+                      name="External Users"
                     />
                   </AreaChart>
                 ) : (
@@ -451,7 +484,9 @@ export function UsersSection() {
                     <XAxis dataKey="m" tick={{ fontSize: 10, fill: C.sage }} />
                     <YAxis tick={{ fontSize: 10, fill: C.sage }} />
                     <Tooltip />
-                    <Bar dataKey="n" fill={C.terra} radius={[5, 5, 0, 0]} name="New Joiners" />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    <Bar dataKey="internal" fill={C.terra} radius={[5, 5, 0, 0]} name="Internal Users" />
+                    <Bar dataKey="external" fill={C.blue} radius={[5, 5, 0, 0]} name="External Users" />
                   </BarChart>
                 )}
               </ResponsiveContainer>

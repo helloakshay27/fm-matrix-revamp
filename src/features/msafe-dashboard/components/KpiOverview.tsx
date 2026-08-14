@@ -5,6 +5,7 @@ import {
   Users,
   FileText,
   CheckCircle2,
+  XCircle,
   GraduationCap,
   UserCheck,
   ShieldCheck,
@@ -72,10 +73,10 @@ const KPI_FIELD_MAP: Record<string, { valueKeys: string[]; valueType: KpiValueTy
     subKeys: ['krcc_approved_percentage', 'krcc_approved_percent'],
   },
   'krcc-pending': { valueKeys: ['krcc_pending', 'krcc_pending_count'], valueType: 'count' },
-  'krcc-approved-2': {
-    valueKeys: ['krcc_approved', 'krcc_approved_count'],
+  'krcc-rejected': {
+    valueKeys: ['krcc_rejected', 'krcc_rejected_count'],
     valueType: 'count',
-    subKeys: ['krcc_approved_percentage', 'krcc_approved_percent'],
+    subKeys: ['krcc_rejected_percentage', 'krcc_rejected_percent'],
   },
   'train-cat': {
     valueKeys: ['average_training_completion_percentage', 'train_category_percentage', 'category_wise_completion'],
@@ -143,7 +144,7 @@ const ICONS: Record<string, ReactNode> = {
   'krcc-filled': <FileText size={16} />,
   'krcc-approved': <CheckCircle2 size={16} />,
   'krcc-pending': <FileText size={16} />,
-  'krcc-approved-2': <CheckCircle2 size={16} />,
+  'krcc-rejected': <XCircle size={16} />,
   'train-cat': <GraduationCap size={16} />,
   'train-user': <UserCheck size={16} />,
   'train-int': <ShieldCheck size={16} />,

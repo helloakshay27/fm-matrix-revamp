@@ -393,8 +393,8 @@ export const ADMIN_KPIS: KpiDef[] = [
     sub: '(12.6%)',
     group: 'krcc',
     color: C.err,
-    tint: 'rgba(16,140,114,.14)',
-    infoKey: 'kpi-krcc',
+    tint: 'rgba(231,132,142,.15)',
+    infoKey: 'krcc-rejected',
     download: 'KRCC',
   },
   {
