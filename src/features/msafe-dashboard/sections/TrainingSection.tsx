@@ -88,10 +88,12 @@ function normalizeTrainPassFail(payload: unknown): { slices: TrainSlice[]; passR
 
   const pass = getNumberOrPercent(record, ['pass', 'passed', 'total_pass', 'pass_count']);
   const fail = getNumberOrPercent(record, ['fail', 'failed', 'total_fail', 'fail_count']);
+  const pending = getNumberOrPercent(record, ['pending', 'pending_count', 'total_pending']);
 
   const slices: TrainSlice[] = [];
   if (pass !== null) slices.push({ name: 'Pass', value: pass, color: C.ok });
   if (fail !== null) slices.push({ name: 'Fail', value: fail, color: C.vi });
+  if (pending !== null) slices.push({ name: 'Pending', value: pending, color: C.warn });
 
   const rawRate = getNumberOrPercent(record, ['pass_rate', 'pass_percentage', 'passing_percentage']);
   const passRate =
@@ -117,25 +119,27 @@ function pickNestedRecord(root: Record<string, unknown>, keys: string[]): Record
 function extractPassFailGroup(record: Record<string, unknown>, groupLabel: string): PassFailGroup | null {
   const pass = getNumberOrPercent(record, ['pass', 'passed', 'total_pass', 'pass_count']);
   const fail = getNumberOrPercent(record, ['fail', 'failed', 'total_fail', 'fail_count']);
-  if (pass === null && fail === null) return null;
+  const pending = getNumberOrPercent(record, ['pending', 'pending_count', 'total_pending']);
+  if (pass === null && fail === null && pending === null) return null;
 
   const total = getNumberOrPercent(record, ['total', 'total_count', 'total_users']);
-  const denom = pass !== null && fail !== null ? pass + fail : total;
+  const denom = pass !== null && fail !== null ? pass + fail + (pending ?? 0) : total;
 
   const rawPassRate = getNumberOrPercent(record, ['pass_rate', 'pass_percentage', 'passing_percentage']);
   const rawFailRate = getNumberOrPercent(record, ['fail_rate', 'fail_percentage', 'failing_percentage']);
+  const rawPendingRate = getNumberOrPercent(record, ['pending_rate', 'pending_percentage']);
   const passPct = rawPassRate ?? (denom && pass !== null ? Math.round((pass / denom) * 1000) / 10 : 0);
   const failPct = rawFailRate ?? (denom && fail !== null ? Math.round((fail / denom) * 1000) / 10 : 0);
+  const pendingPct = rawPendingRate ?? (denom && pending !== null ? Math.round((pending / denom) * 1000) / 10 : 0);
 
   const label = total !== null ? `${groupLabel} (n=${total.toLocaleString('en-IN')})` : groupLabel;
 
-  return {
-    group: label,
-    rows: [
-      { label: 'Pass', pct: passPct, val: `${passPct}%`, color: C.ok },
-      { label: 'Fail', pct: failPct, val: `${failPct}%`, color: C.vi },
-    ],
-  };
+  const rows: { label: string; pct: number; val: string; color: string }[] = [];
+  if (pass !== null) rows.push({ label: 'Pass', pct: passPct, val: `${passPct}%`, color: C.ok });
+  if (fail !== null) rows.push({ label: 'Fail', pct: failPct, val: `${failPct}%`, color: C.vi });
+  if (pending !== null) rows.push({ label: 'Pending', pct: pendingPct, val: `${pendingPct}%`, color: C.warn });
+
+  return { group: label, rows };
 }
 
 function normalizeInternalExternalPassFail(payload: unknown): PassFailGroup[] {
