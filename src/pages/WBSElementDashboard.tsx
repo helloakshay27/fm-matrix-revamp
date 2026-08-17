@@ -57,11 +57,23 @@ export const WBSElementDashboard = () => {
   const [selectedWBS, setSelectedWBS] = useState<WBSElement | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // The API paginates server-side (see `pagination.total_pages` in the
+  // response) — a single unparameterized request only returns page 1, so
+  // every page is fetched and concatenated here to keep the existing
+  // client-side search/filter/pagination below working over the full list.
   const fetchWbsData = async () => {
     try {
       setLoading(true);
-      const response = await dispatch(fetchWBSList({ baseUrl, token })).unwrap();
-      setWbsData(response.wbs);
+      const firstPage = await dispatch(fetchWBSList({ baseUrl, token, page: 1 })).unwrap();
+      const allRows: WBSElement[] = Array.isArray(firstPage?.wbs) ? [...firstPage.wbs] : [];
+      const totalPages = firstPage?.pagination?.total_pages > 0 ? firstPage.pagination.total_pages : 1;
+
+      for (let page = 2; page <= totalPages; page++) {
+        const response = await dispatch(fetchWBSList({ baseUrl, token, page })).unwrap();
+        if (Array.isArray(response?.wbs)) allRows.push(...response.wbs);
+      }
+
+      setWbsData(allRows);
     } catch (error) {
       console.log(error);
     } finally {

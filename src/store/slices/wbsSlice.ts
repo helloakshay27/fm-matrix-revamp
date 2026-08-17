@@ -4,9 +4,10 @@ import createApiSlice from "../api/apiSlice";
 
 export const fetchWBSList = createAsyncThunk(
     "fetchWBSList",
-    async ({ baseUrl, token }: { baseUrl: string, token: string }, { rejectWithValue }) => {
+    async ({ baseUrl, token, page }: { baseUrl: string, token: string, page?: number }, { rejectWithValue }) => {
         try {
             const response = await axios.get(`https://${baseUrl}/wbs_costs.json`, {
+                params: page ? { page } : undefined,
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }

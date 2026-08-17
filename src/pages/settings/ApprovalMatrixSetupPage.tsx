@@ -67,13 +67,47 @@ const ApprovalMatrixSetupPage = () => {
   const [filters, setFilters] = useState<ApprovalMatrixFilters>(emptyFilters);
 
   useEffect(() => {
+    // The API paginates server-side (see `pagination.total_pages` in the
+    // response) — a single unparameterized request only returns page 1, so
+    // every page is fetched and concatenated here to keep the existing
+    // client-side search/filter/pagination below working over the full list.
+    const extractList = (data: unknown): ApprovalData[] => {
+      if (Array.isArray(data)) return data;
+      if (data && typeof data === "object") {
+        for (const key of ["invoice_approvals", "approvals", "data", "result"]) {
+          const candidate = (data as Record<string, unknown>)[key];
+          if (Array.isArray(candidate)) return candidate as ApprovalData[];
+        }
+      }
+      return [];
+    };
+
+    const extractTotalPages = (data: unknown): number => {
+      if (!data || typeof data !== "object") return 1;
+      const pagination = (data as Record<string, unknown>).pagination;
+      if (!pagination || typeof pagination !== "object") return 1;
+      const totalPages = (pagination as Record<string, unknown>).total_pages;
+      return typeof totalPages === "number" && totalPages > 0 ? totalPages : 1;
+    };
+
     const fetchApprovalData = async () => {
       try {
         setLoading(true);
-        const response = await apiClient.get(
-          "/pms/admin/invoice_approvals.json"
+
+        const firstPage = await apiClient.get(
+          "/pms/admin/invoice_approvals.json?page=1"
         );
-        setApprovalData(Array.isArray(response.data) ? response.data : []);
+        const allRows = extractList(firstPage.data);
+        const totalPages = extractTotalPages(firstPage.data);
+
+        for (let page = 2; page <= totalPages; page++) {
+          const response = await apiClient.get(
+            `/pms/admin/invoice_approvals.json?page=${page}`
+          );
+          allRows.push(...extractList(response.data));
+        }
+
+        setApprovalData(allRows);
       } catch (error) {
         console.error("Error fetching approval data:", error);
         setApprovalData([]);
