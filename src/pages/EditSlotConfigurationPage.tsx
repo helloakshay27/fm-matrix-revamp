@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -125,51 +125,41 @@ const ParkingSlotCategory: React.FC<ParkingSlotCategoryProps> = ({
     onSlotCountChange(categoryId, type, parsed);
   };
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollPosRef = useRef(0);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    scrollPosRef.current = e.currentTarget.scrollTop;
+  };
+
+  useLayoutEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollPosRef.current;
+    }
+  });
+
   return (
     <div>
       <h4 className="font-medium mb-4">{title}</h4>
-      <div className="bg-white rounded-lg p-4 mb-4 h-[200px] border-2 border-dashed border-gray-200 overflow-y-auto">
+      <div ref={scrollRef} onScroll={handleScroll} className="bg-white rounded-lg p-4 mb-4 h-[200px] border-2 border-dashed border-gray-200 overflow-y-auto">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {Array.from({ length: isStack ? count * 2 : count }, (_, index) => index)
-            .sort((a, b) => {
-              // Sort slots by their display names
-              const nameA = generateSlotName(a);
-              const nameB = generateSlotName(b);
-
-              // Extract numeric part for proper sorting
-              const matchA = nameA.match(/(\d+)([A-Z]?)/);
-              const matchB = nameB.match(/(\d+)([A-Z]?)/);
-
-              if (matchA && matchB) {
-                const numA = parseInt(matchA[1]);
-                const numB = parseInt(matchB[1]);
-
-                if (numA !== numB) return numA - numB;
-
-                // If numbers are same, sort by suffix (A before B)
-                const suffixA = matchA[2] || '';
-                const suffixB = matchB[2] || '';
-                return suffixA.localeCompare(suffixB);
-              }
-
-              return nameA.localeCompare(nameB);
-            })
-            .map((index) => (
-              <div key={index} className="relative">
-                <Input
-                  value={generateSlotName(index)}
-                  onChange={(e) => onSlotNameChange(categoryId, type, index, e.target.value)}
-                  className="w-full h-10 text-xs text-center bg-white border-gray-300 rounded-lg font-medium"
-                  placeholder="Slot name"
-                />
-                <button
-                  className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 text-xs border-2 border-white"
-                  onClick={() => onSlotCountChange(categoryId, type, count - 1)}
-                >
-                  &#x2715;
-                </button>
-              </div>
-            ))}
+            {Array.from({ length: isStack ? count * 2 : count }, (_, index) => index)
+              .map((index) => (
+                <div key={index} className="relative">
+                  <Input
+                    value={generateSlotName(index)}
+                    onChange={(e) => onSlotNameChange(categoryId, type, index, e.target.value)}
+                    className="w-full h-10 text-xs text-center bg-white border-gray-300 rounded-lg font-medium"
+                    placeholder="Slot name"
+                  />
+                  <button
+                    className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 text-xs border-2 border-white"
+                    onClick={() => onSlotCountChange(categoryId, type, count - 1)}
+                  >
+                    &#x2715;
+                  </button>
+                </div>
+              ))}
         </div>
       </div>
       <div className="flex items-center gap-2">
