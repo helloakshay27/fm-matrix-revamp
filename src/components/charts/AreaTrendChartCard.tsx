@@ -9,7 +9,7 @@ const INSIGHT_TONE_CLASSES: Record<ChartInsightTone, string> = {
   info: "text-[#2a5f8f]",
   warning: "bg-brand-warning-light text-[#8A5A00]",
   success: "bg-brand-success-bg text-brand-success",
-  error: "bg-brand-error-bg text-brand-error",
+  error: "bg-brand-light text-brand",
 };
 
 const INSIGHT_TONE_STYLE: Partial<Record<ChartInsightTone, React.CSSProperties>> = {

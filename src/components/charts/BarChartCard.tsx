@@ -162,7 +162,6 @@ export function BarChartCard({
   );
 
   return (
-    <>
     <Card className={cn("border-brand-border relative", className)}>
       {showInfoIcon && (
         <button
@@ -259,12 +258,11 @@ export function BarChartCard({
             </BarChart>
           </ResponsiveContainer>
         )}
+
+        {insight && insightVariant === "plain" && (
+          <p className="text-brand-body-5 text-brand-green leading-relaxed mt-3">{insight}</p>
+        )}
       </CardContent>
     </Card>
-
-    {insight && insightVariant === "plain" && (
-      <p className="text-brand-body-5 text-brand-green leading-relaxed mt-3">{insight}</p>
-    )}
-    </>
   );
 }

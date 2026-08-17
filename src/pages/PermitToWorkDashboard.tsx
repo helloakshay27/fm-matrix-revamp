@@ -970,12 +970,13 @@ export const PermitToWorkDashboard = () => {
       case 'reference_number':
         return permit.reference_number;
       case 'permit_type': {
-        const style = getPermitTypeStyle(permit.permit_type);
+        const bgColor = permit["color"] || '#E5E7EB';
+        const textColor = (bgColor.toLowerCase() === '#6c3483' || bgColor.toLowerCase() === '#008081') ? '#fff' : '#222';
 
         return (
           <span
             className="px-2.5 py-0.5 rounded text-xs font-medium inline-flex items-center"
-            style={style}
+            style={{ backgroundColor: bgColor, color: textColor }}
           >
             {permit.permit_type}
           </span>

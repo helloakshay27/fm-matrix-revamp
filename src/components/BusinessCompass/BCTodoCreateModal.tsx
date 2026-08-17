@@ -182,7 +182,7 @@ const BCTodoCreateModal = ({ isOpen, onClose, onSuccess, prefilledDate, prefille
                 },
             };
 
-            await axios.post(`${BC_API_BASE}/business_compass/todos`, payload, {
+            await axios.post(`${BC_API_BASE}/business_compass/todos.json`, payload, {
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`,

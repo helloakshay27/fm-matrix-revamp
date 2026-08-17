@@ -752,7 +752,7 @@ export function FloorPage() {
                   <Button
                     onClick={handleUpdateFloor}
                     disabled={!editFloorName.trim()}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    className="bg-brand hover:bg-brand-hover text-white"
                   >
                     Update Floor
                   </Button>

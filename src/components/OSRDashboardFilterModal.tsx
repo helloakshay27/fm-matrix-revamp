@@ -4,13 +4,104 @@ import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  FormControl as MuiFormControl,
+  Select as MuiSelect,
+  MenuItem,
+} from '@mui/material';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DateRange } from 'react-day-picker';
+
+// h-9 on the old triggers is 36px.
+const fieldStyles = {
+  height: '36px',
+  backgroundColor: '#fff',
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: '#d1d5db',
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'var(--color-primary)',
+  },
+  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'var(--color-primary)',
+  },
+  '& .MuiSelect-select': {
+    fontSize: '14px',
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+// Radix's modal Dialog sets `pointer-events: none` on <body>, which the portaled
+// menu inherits — without pointerEvents:'auto' the backdrop never receives the
+// click that closes the menu.
+const selectMenuProps = {
+  sx: { pointerEvents: 'auto' },
+  PaperProps: {
+    sx: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e5e7eb',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
+
+interface FilterSelectProps {
+  id: string;
+  label: string;
+  placeholder: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+  containerClassName: string;
+}
+
+const FilterSelect: React.FC<FilterSelectProps> = ({
+  id,
+  label,
+  placeholder,
+  value,
+  onChange,
+  options,
+  containerClassName,
+}) => (
+  <div className={containerClassName}>
+    <Label htmlFor={id} className="text-sm font-medium mb-1 block">{label}</Label>
+    <MuiFormControl fullWidth size="small">
+      <MuiSelect
+        id={id}
+        displayEmpty
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        renderValue={(selected) =>
+          selected ? (
+            options.find((option) => option.value === selected)?.label ?? selected
+          ) : (
+            <span className="text-gray-500">{placeholder}</span>
+          )
+        }
+        sx={fieldStyles}
+        MenuProps={selectMenuProps}
+      >
+        {options.map((option) => (
+          <MenuItem key={option.value} value={option.value}>
+            {option.label}
+          </MenuItem>
+        ))}
+      </MuiSelect>
+    </MuiFormControl>
+  </div>
+);
 
 interface OSRDashboardFilterModalProps {
   isOpen: boolean;
@@ -76,51 +167,51 @@ export const OSRDashboardFilterModal = ({ isOpen, onClose, onApply, onReset }: O
         
         <div className="space-y-4 p-4">
           <div className="flex items-end gap-4 flex-wrap">
-            <div className="min-w-[150px]">
-              <Label htmlFor="tower" className="text-sm font-medium mb-1 block">Select Tower</Label>
-              <Select onValueChange={(value) => handleFilterChange('tower', value)} value={filters.tower}>
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Select Tower" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tower-a">Tower A</SelectItem>
-                  <SelectItem value="tower-b">Tower B</SelectItem>
-                  <SelectItem value="tower-c">Tower C</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <FilterSelect
+              id="tower"
+              label="Select Tower"
+              placeholder="Select Tower"
+              value={filters.tower}
+              onChange={(value) => handleFilterChange('tower', value)}
+              containerClassName="min-w-[150px]"
+              options={[
+                { value: 'tower-a', label: 'Tower A' },
+                { value: 'tower-b', label: 'Tower B' },
+                { value: 'tower-c', label: 'Tower C' },
+              ]}
+            />
 
-            <div className="min-w-[150px]">
-              <Label htmlFor="flats" className="text-sm font-medium mb-1 block">Select Flats</Label>
-              <Select onValueChange={(value) => handleFilterChange('flats', value)} value={filters.flats}>
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Select Flats" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="a-101">A-101</SelectItem>
-                  <SelectItem value="a-102">A-102</SelectItem>
-                  <SelectItem value="a-103">A-103</SelectItem>
-                  <SelectItem value="a-104">A-104</SelectItem>
-                  <SelectItem value="fm-office">FM - Office</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <FilterSelect
+              id="flats"
+              label="Select Flats"
+              placeholder="Select Flats"
+              value={filters.flats}
+              onChange={(value) => handleFilterChange('flats', value)}
+              containerClassName="min-w-[150px]"
+              options={[
+                { value: 'a-101', label: 'A-101' },
+                { value: 'a-102', label: 'A-102' },
+                { value: 'a-103', label: 'A-103' },
+                { value: 'a-104', label: 'A-104' },
+                { value: 'fm-office', label: 'FM - Office' },
+              ]}
+            />
 
-            <div className="min-w-[200px]">
-              <Label htmlFor="category" className="text-sm font-medium mb-1 block">Select Category</Label>
-              <Select onValueChange={(value) => handleFilterChange('category', value)} value={filters.category}>
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Invisible Grill Starts from (per sq. ft.)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pest-control">Pest Control</SelectItem>
-                  <SelectItem value="deep-cleaning">Deep Cleaning</SelectItem>
-                  <SelectItem value="civil-mason">Civil & Mason Works</SelectItem>
-                  <SelectItem value="invisible-grill">Invisible Grill</SelectItem>
-                  <SelectItem value="mosquito-mesh">Mosquito Mesh Sta...</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <FilterSelect
+              id="category"
+              label="Select Category"
+              placeholder="Invisible Grill Starts from (per sq. ft.)"
+              value={filters.category}
+              onChange={(value) => handleFilterChange('category', value)}
+              containerClassName="min-w-[200px]"
+              options={[
+                { value: 'pest-control', label: 'Pest Control' },
+                { value: 'deep-cleaning', label: 'Deep Cleaning' },
+                { value: 'civil-mason', label: 'Civil & Mason Works' },
+                { value: 'invisible-grill', label: 'Invisible Grill' },
+                { value: 'mosquito-mesh', label: 'Mosquito Mesh Sta...' },
+              ]}
+            />
 
             <div className="min-w-[200px]">
               <Label className="text-sm font-medium mb-1 block">Created on</Label>
@@ -196,35 +287,35 @@ export const OSRDashboardFilterModal = ({ isOpen, onClose, onApply, onReset }: O
               </Popover>
             </div>
 
-            <div className="min-w-[150px]">
-              <Label htmlFor="status" className="text-sm font-medium mb-1 block">Select Status</Label>
-              <Select onValueChange={(value) => handleFilterChange('status', value)} value={filters.status}>
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Select Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="work-pending">Work Pending</SelectItem>
-                  <SelectItem value="payment-pending">Payment Pending</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <FilterSelect
+              id="status"
+              label="Select Status"
+              placeholder="Select Status"
+              value={filters.status}
+              onChange={(value) => handleFilterChange('status', value)}
+              containerClassName="min-w-[150px]"
+              options={[
+                { value: 'work-pending', label: 'Work Pending' },
+                { value: 'payment-pending', label: 'Payment Pending' },
+                { value: 'completed', label: 'Completed' },
+              ]}
+            />
 
-            <div className="min-w-[150px]">
-              <Label htmlFor="rating" className="text-sm font-medium mb-1 block">Select Rating</Label>
-              <Select onValueChange={(value) => handleFilterChange('rating', value)} value={filters.rating}>
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Select Rating" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1 Star</SelectItem>
-                  <SelectItem value="2">2 Stars</SelectItem>
-                  <SelectItem value="3">3 Stars</SelectItem>
-                  <SelectItem value="4">4 Stars</SelectItem>
-                  <SelectItem value="5">5 Stars</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <FilterSelect
+              id="rating"
+              label="Select Rating"
+              placeholder="Select Rating"
+              value={filters.rating}
+              onChange={(value) => handleFilterChange('rating', value)}
+              containerClassName="min-w-[150px]"
+              options={[
+                { value: '1', label: '1 Star' },
+                { value: '2', label: '2 Stars' },
+                { value: '3', label: '3 Stars' },
+                { value: '4', label: '4 Stars' },
+                { value: '5', label: '5 Stars' },
+              ]}
+            />
 
             <div className="flex gap-2 ml-auto">
               <Button

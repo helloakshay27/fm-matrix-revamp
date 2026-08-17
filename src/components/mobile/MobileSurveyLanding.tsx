@@ -166,8 +166,7 @@ export const MobileSurveyLanding: React.FC = () => {
       try {
         setIsLoading(true);
         const response = await baseClient.get(
-          `survey_mappings/${mappingId}/survey.json`,
-          { baseURL: "https://lockated-api.gophygital.work" }
+          `survey_mappings/${mappingId}/survey.json`
         );
         const data = response.data;
         console.log("Survey data fetched:", data);
@@ -797,20 +796,26 @@ export const MobileSurveyLanding: React.FC = () => {
 
       await surveyApi.submitSurveyResponse(payload);
 
-      navigate(`/mobile/survey/${mappingId}/thank-you${window.location.search}`, {
-        state: {
-          submittedFeedback: true,
-          rating: currentAnswer.rating || 5,
-        },
-      });
+      navigate(
+        `/mobile/survey/${mappingId}/thank-you${window.location.search}`,
+        {
+          state: {
+            submittedFeedback: true,
+            rating: currentAnswer.rating || 5,
+          },
+        }
+      );
     } catch (error) {
       console.error("Failed to submit survey:", error);
-      navigate(`/mobile/survey/${mappingId}/thank-you${window.location.search}`, {
-        state: {
-          submittedFeedback: false,
-          rating: 5,
-        },
-      });
+      navigate(
+        `/mobile/survey/${mappingId}/thank-you${window.location.search}`,
+        {
+          state: {
+            submittedFeedback: false,
+            rating: 5,
+          },
+        }
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -978,20 +983,26 @@ export const MobileSurveyLanding: React.FC = () => {
 
       await surveyApi.submitSurveyResponse(payload);
 
-      navigate(`/mobile/survey/${mappingId}/thank-you${window.location.search}`, {
-        state: {
-          submittedFeedback: true,
-          rating: answerData.rating || 1,
-        },
-      });
+      navigate(
+        `/mobile/survey/${mappingId}/thank-you${window.location.search}`,
+        {
+          state: {
+            submittedFeedback: true,
+            rating: answerData.rating || 1,
+          },
+        }
+      );
     } catch (error) {
       console.error("Failed to submit survey:", error);
-      navigate(`/mobile/survey/${mappingId}/thank-you${window.location.search}`, {
-        state: {
-          submittedFeedback: false,
-          rating: 1,
-        },
-      });
+      navigate(
+        `/mobile/survey/${mappingId}/thank-you${window.location.search}`,
+        {
+          state: {
+            submittedFeedback: false,
+            rating: 1,
+          },
+        }
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -1491,20 +1502,26 @@ export const MobileSurveyLanding: React.FC = () => {
         .filter((rating): rating is number => rating !== undefined);
       const minRating = allRatings.length > 0 ? Math.min(...allRatings) : 5;
 
-      navigate(`/mobile/survey/${mappingId}/thank-you${window.location.search}`, {
-        state: {
-          submittedFeedback: true,
-          rating: minRating,
-        },
-      });
+      navigate(
+        `/mobile/survey/${mappingId}/thank-you${window.location.search}`,
+        {
+          state: {
+            submittedFeedback: true,
+            rating: minRating,
+          },
+        }
+      );
     } catch (error) {
       console.error("Failed to submit survey:", error);
-      navigate(`/mobile/survey/${mappingId}/thank-you${window.location.search}`, {
-        state: {
-          submittedFeedback: false,
-          rating: 5,
-        },
-      });
+      navigate(
+        `/mobile/survey/${mappingId}/thank-you${window.location.search}`,
+        {
+          state: {
+            submittedFeedback: false,
+            rating: 5,
+          },
+        }
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -1973,20 +1990,26 @@ export const MobileSurveyLanding: React.FC = () => {
       const minFormRating =
         allFormRatings.length > 0 ? Math.min(...allFormRatings) : 5;
 
-      navigate(`/mobile/survey/${mappingId}/thank-you${window.location.search}`, {
-        state: {
-          submittedFeedback: true,
-          rating: minFormRating,
-        },
-      });
+      navigate(
+        `/mobile/survey/${mappingId}/thank-you${window.location.search}`,
+        {
+          state: {
+            submittedFeedback: true,
+            rating: minFormRating,
+          },
+        }
+      );
     } catch (error) {
       console.error("Failed to submit survey:", error);
-      navigate(`/mobile/survey/${mappingId}/thank-you${window.location.search}`, {
-        state: {
-          submittedFeedback: false,
-          rating: 5,
-        },
-      });
+      navigate(
+        `/mobile/survey/${mappingId}/thank-you${window.location.search}`,
+        {
+          state: {
+            submittedFeedback: false,
+            rating: 5,
+          },
+        }
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -2015,289 +2038,550 @@ export const MobileSurveyLanding: React.FC = () => {
   // console.log("Survey Mapping", surveyData?.snag_checklist?.survey_attachment?.url);
 
   return (
-    <div className="h-screen w-screen max-w-md mx-auto flex flex-col relative bg-gray-50 overflow-hidden">
-      {/* Background Image Layer with Filter */}
-      {surveyData?.snag_checklist?.survey_attachment?.url && (
-        <div
-          className="absolute inset-0 w-full h-full z-0"
-          style={{
-            backgroundImage: `url('${surveyData?.snag_checklist?.survey_attachment?.url}')`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
-            filter: "brightness(0.85)",
-          }}
-        />
-      )}
+    <>
+      <style>
+        {`
+          .text-white.survey-force-white {
+  color: #ffffff !important;
+}
+        `}
+      </style>
+      <div className="h-screen w-screen max-w-md mx-auto flex flex-col relative bg-gray-50 overflow-hidden">
+        {/* Background Image Layer with Filter */}
+        {surveyData?.snag_checklist?.survey_attachment?.url && (
+          <div
+            className="absolute inset-0 w-full h-full z-0"
+            style={{
+              backgroundImage: `url('${surveyData?.snag_checklist?.survey_attachment?.url}')`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+              filter: "brightness(0.85)",
+            }}
+          />
+        )}
 
-      {/* Header with Logo */}
-      <div className="bg-transparent pt-6 pb-3 px-4 relative z-10">
-        <div className="flex justify-between items-center">
-          <div className="flex justify-start items-center">
-            {!isFormView &&
-              ((currentQuestion && !isLastStep && currentQuestionIndex > 0) ||
-                showGenericTags ||
-                (isLastStep && isMultiQuestion)) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (showGenericTags) {
-                      // Going back from generic tags page
-                      setShowGenericTags(false);
-                      setSelectedTags([]);
-                      setCurrentNegativeComments("");
-                      setPendingNegativeType(null);
-                      setPendingNegativeAnswer(null);
-                    } else {
-                      moveToPreviousQuestion();
-                    }
-                  }}
-                  className="flex items-center bg-black/40 backdrop-blur-md px-2 py-1.5 rounded-lg text-white font-bold text-[10px] hover:bg-black/50 transition-all shadow-lg border-[1.5px] border-white/40"
-                >
-                  <svg
-                    className="w-4 h-4 mr-1"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+        {/* Header with Logo */}
+        <div className="bg-transparent pt-6 pb-3 px-4 relative z-10">
+          <div className="flex justify-between items-center">
+            <div className="flex justify-start items-center">
+              {!isFormView &&
+                ((currentQuestion && !isLastStep && currentQuestionIndex > 0) ||
+                  showGenericTags ||
+                  (isLastStep && isMultiQuestion)) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (showGenericTags) {
+                        // Going back from generic tags page
+                        setShowGenericTags(false);
+                        setSelectedTags([]);
+                        setCurrentNegativeComments("");
+                        setPendingNegativeType(null);
+                        setPendingNegativeAnswer(null);
+                      } else {
+                        moveToPreviousQuestion();
+                      }
+                    }}
+                    className="flex items-center bg-black/40 backdrop-blur-md px-2 py-1.5 rounded-lg text-white survey-force-white font-bold text-[10px] hover:bg-black/50 transition-all shadow-lg border-[1.5px] border-white/40"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="3"
-                      d="M15 19l-7-7 7-7"
-                    />
-                  </svg>
-                  Back
-                </button>
-              )}
-          </div>
-          {surveyData?.company_logo_url && (
-            <div className="flex justify-end">
-              <div className="w-40 h-16 sm:w-32 sm:h-20 flex items-center justify-center overflow-hidden">
-                <img
-                  src={surveyData.company_logo_url}
-                  alt="Company Logo"
-                  className="w-full h-full object-contain"
-                />
-              </div>
+                    <svg
+                      className="w-4 h-4 mr-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="3"
+                        d="M15 19l-7-7 7-7"
+                      />
+                    </svg>
+                    Back
+                  </button>
+                )}
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* Progress Bar for Multi-Question Surveys */}
-      {isMultiQuestion && !isFormView && (
-        <div className="px-4 py-2 relative z-10">
-          <div className="bg-white/20 rounded-full h-1.5 overflow-hidden">
-            <div
-              className="bg-white h-full transition-all duration-300"
-              style={{ width: `${getProgressPercentage()}%` }}
-            />
+            {surveyData?.company_logo_url && (
+              <div className="flex justify-end">
+                <div className="w-40 h-16 sm:w-32 sm:h-20 flex items-center justify-center overflow-hidden">
+                  <img
+                    src={surveyData.company_logo_url}
+                    alt="Company Logo"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      )}
 
-      {/* Main Content */}
-      {isFormView && (
-        <h1 className="text-2xl font-bold text-black/100 mb-4 text-center">
-          {surveyData.survey_title}
-        </h1>
-      )}
-
-      <div
-        className={`flex-1 overflow-hidden relative z-10 ${isFormView ? "overflow-y-auto" : ""}`}
-      >
-        <div
-          className={`h-full ${isFormView ? "overflow-y-scroll px-4 py-4" : "flex flex-col px-4 pb-6"}`}
-        >
-          {/* Title - Only for Form View */}
-
-          {/* Form View: All Questions at Once */}
-          {isFormView ? (
-            <div className="w-full">
-              <FormViewAllQuestions
-                questions={surveyData.snag_checklist?.snag_questions ?? []}
-                answers={answers}
-                onAnswerChange={handleAnswerChange}
-                onSubmit={handleFormViewSubmit}
-                isSubmitting={isSubmitting}
-                finalComment={finalDescription}
-                onFinalCommentChange={setFinalDescription}
+        {/* Progress Bar for Multi-Question Surveys */}
+        {isMultiQuestion && !isFormView && (
+          <div className="px-4 py-2 relative z-10">
+            <div className="bg-white/20 rounded-full h-1.5 overflow-hidden">
+              <div
+                className="bg-white h-full transition-all duration-300"
+                style={{ width: `${getProgressPercentage()}%` }}
               />
             </div>
-          ) : (
-            <>
-              {/* Normal View: Question by Question */}
-              <div className="flex-1 flex flex-col justify-center">
-                {/* Survey Title for Normal View */}
-                {currentQuestion &&
-                  currentQuestion.qtype !== "emoji" &&
-                  currentQuestion.qtype !== "smiley" && (
-                    <div className="text-center mb-6">
-                      <h1 className="text-xl font-bold text-black/100 mb-2">
-                        {surveyData.survey_title}
-                      </h1>
-                    </div>
-                  )}
+          </div>
+        )}
 
-                {/* Show Final Description Step */}
-                {isLastStep && isMultiQuestion && (
-                  <div className="w-full space-y-3 bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-                    <div className="text-center">
-                      <h3 className="text-base font-semibold text-gray-900 mb-1">
-                        Any additional comments?
-                      </h3>
-                      <p className="text-xs text-gray-600">
-                        Share any additional feedback or suggestions (optional)
-                      </p>
-                    </div>
-                    <div>
-                      <textarea
-                        value={finalDescription}
-                        onChange={(e) => setFinalDescription(e.target.value)}
-                        placeholder="Please share your thoughts..."
-                        className="w-full h-24 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white text-gray-900"
-                        disabled={isSubmitting}
-                      />
-                    </div>
+        {/* Main Content */}
+        {isFormView && (
+          <h1 className="text-2xl font-bold text-black/100 mb-4 text-center">
+            {surveyData.survey_title}
+          </h1>
+        )}
 
-                    <button
-                      type="button"
-                      onClick={handleSubmitSurvey}
-                      disabled={isSubmitting}
-                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
-                    >
-                      {isSubmitting ? (
-                        <div className="flex items-center justify-center">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Submitting...
-                        </div>
-                      ) : (
-                        "Submit Survey"
-                      )}
-                    </button>
-                  </div>
-                )}
+        <div
+          className={`flex-1 overflow-hidden relative z-10 ${isFormView ? "overflow-y-auto" : ""}`}
+        >
+          <div
+            className={`h-full ${isFormView ? "overflow-y-scroll px-4 py-4" : "flex flex-col px-4 pb-6"}`}
+          >
+            {/* Title - Only for Form View */}
 
-                {!(
-                  isLastStep &&
-                  currentQuestionIndex ===
-                    (surveyData?.snag_checklist?.questions_count ?? 0)
-                ) &&
-                  currentQuestion &&
-                  !showGenericTags &&
-                  currentQuestion.qtype !== "emoji" &&
-                  currentQuestion.qtype !== "smiley" && (
-                    <div className="text-center mb-4">
-                      <div className="bg-white/95 backdrop-blur-sm rounded-lg p-4 shadow-md border border-gray-200">
-                        <p className="text-lg text-gray-900 font-semibold">
-                          {currentQuestion.descr}
+            {/* Form View: All Questions at Once */}
+            {isFormView ? (
+              <div className="w-full">
+                <FormViewAllQuestions
+                  questions={surveyData.snag_checklist?.snag_questions ?? []}
+                  answers={answers}
+                  onAnswerChange={handleAnswerChange}
+                  onSubmit={handleFormViewSubmit}
+                  isSubmitting={isSubmitting}
+                  finalComment={finalDescription}
+                  onFinalCommentChange={setFinalDescription}
+                />
+              </div>
+            ) : (
+              <>
+                {/* Normal View: Question by Question */}
+                <div className="flex-1 flex flex-col justify-center">
+                  {/* Survey Title for Normal View */}
+                  {currentQuestion &&
+                    currentQuestion.qtype !== "emoji" &&
+                    currentQuestion.qtype !== "smiley" && (
+                      <div className="text-center mb-6">
+                        <h1 className="text-xl font-bold text-black/100 mb-2">
+                          {surveyData.survey_title}
+                        </h1>
+                      </div>
+                    )}
+
+                  {/* Show Final Description Step */}
+                  {isLastStep && isMultiQuestion && (
+                    <div className="w-full space-y-3 bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+                      <div className="text-center">
+                        <h3 className="text-base font-semibold text-gray-900 mb-1">
+                          Any additional comments?
+                        </h3>
+                        <p className="text-xs text-gray-600">
+                          Share any additional feedback or suggestions
+                          (optional)
                         </p>
                       </div>
+                      <div>
+                        <textarea
+                          value={finalDescription}
+                          onChange={(e) => setFinalDescription(e.target.value)}
+                          placeholder="Please share your thoughts..."
+                          className="w-full h-24 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white text-gray-900"
+                          disabled={isSubmitting}
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleSubmitSurvey}
+                        disabled={isSubmitting}
+                        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white survey-force-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
+                      >
+                        {isSubmitting ? (
+                          <div className="flex items-center justify-center">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Submitting...
+                          </div>
+                        ) : (
+                          "Submit Survey"
+                        )}
+                      </button>
                     </div>
                   )}
 
-                {/* Show Current Question */}
-                {currentQuestion && !isLastStep && (
-                  <div className="w-full space-y-3  mx-auto">
-                    <div className="space-y-3">
-                      {/* Multiple Choice Question */}
-                      {currentQuestion.qtype === "multiple" &&
-                        !showGenericTags && (
-                          <div className="space-y-3">
-                            {currentQuestion.snag_quest_options.map(
-                              (option) => (
-                                <button
-                                  type="button"
-                                  key={option.id}
-                                  onClick={() => handleOptionSelect(option)}
-                                  className={`w-full p-4 rounded-lg border-2 text-left transition-all shadow-md ${
-                                    selectedOptions.some(
-                                      (opt) => opt.id === option.id
-                                    )
-                                      ? "border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
-                                      : "border-gray-300 bg-white text-gray-900 hover:bg-gray-50 hover:border-blue-400"
-                                  }`}
-                                >
-                                  <div className="flex items-center justify-between">
-                                    <span className="font-semibold text-base">
-                                      {option.qname}
-                                    </span>
-                                    {selectedOptions.some(
-                                      (opt) => opt.id === option.id
-                                    ) && (
-                                      <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
-                                        <svg
-                                          className="w-4 h-4 text-blue-500"
-                                          fill="currentColor"
-                                          viewBox="0 0 20 20"
-                                        >
-                                          <path
-                                            fillRule="evenodd"
-                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                            clipRule="evenodd"
-                                          />
-                                        </svg>
-                                      </div>
-                                    )}
-                                  </div>
-                                </button>
-                              )
-                            )}
-                          </div>
-                        )}
+                  {!(
+                    isLastStep &&
+                    currentQuestionIndex ===
+                      (surveyData?.snag_checklist?.questions_count ?? 0)
+                  ) &&
+                    currentQuestion &&
+                    !showGenericTags &&
+                    currentQuestion.qtype !== "emoji" &&
+                    currentQuestion.qtype !== "smiley" && (
+                      <div className="text-center mb-4">
+                        <div className="bg-white/95 backdrop-blur-sm rounded-lg p-4 shadow-md border border-gray-200">
+                          <p className="text-lg text-gray-900 font-semibold">
+                            {currentQuestion.descr}
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
-                      {/* Checkbox Question (Multi-Select) */}
-                      {currentQuestion.qtype === "checkbox" &&
-                        !showGenericTags && (
-                          <div className="space-y-3">
-                            {currentQuestion.snag_quest_options.map(
-                              (option) => (
-                                <button
-                                  type="button"
-                                  key={option.id}
-                                  onClick={() => handleCheckboxSelect(option)}
-                                  className={`w-full p-4 rounded-lg border-2 text-left transition-all shadow-md ${
-                                    selectedOptions.some(
-                                      (opt) => opt.id === option.id
-                                    )
-                                      ? "border-blue-600 bg-blue-50 text-gray-900"
-                                      : "border-gray-300 bg-white text-gray-900 hover:bg-gray-50 hover:border-blue-400"
-                                  }`}
-                                >
-                                  <div className="flex items-center justify-between">
-                                    <span className="font-semibold text-base">
-                                      {option.qname}
-                                    </span>
-                                    <div
-                                      className={`w-6 h-6 rounded border-2 flex items-center justify-center ${
-                                        selectedOptions.some(
-                                          (opt) => opt.id === option.id
-                                        )
-                                          ? "bg-blue-600 border-blue-600"
-                                          : "border-gray-300"
-                                      }`}
-                                    >
+                  {/* Show Current Question */}
+                  {currentQuestion && !isLastStep && (
+                    <div className="w-full space-y-3  mx-auto">
+                      <div className="space-y-3">
+                        {/* Multiple Choice Question */}
+                        {currentQuestion.qtype === "multiple" &&
+                          !showGenericTags && (
+                            <div className="space-y-3">
+                              {currentQuestion.snag_quest_options.map(
+                                (option) => (
+                                  <button
+                                    type="button"
+                                    key={option.id}
+                                    onClick={() => handleOptionSelect(option)}
+                                    className={`w-full p-4 rounded-lg border-2 text-left transition-all shadow-md ${
+                                      selectedOptions.some(
+                                        (opt) => opt.id === option.id
+                                      )
+                                        ? "border-blue-600 bg-blue-600 text-white survey-force-white hover:bg-blue-700"
+                                        : "border-gray-300 bg-white text-gray-900 hover:bg-gray-50 hover:border-blue-400"
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <span className="font-semibold text-base">
+                                        {option.qname}
+                                      </span>
                                       {selectedOptions.some(
                                         (opt) => opt.id === option.id
                                       ) && (
+                                        <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
+                                          <svg
+                                            className="w-4 h-4 text-blue-500"
+                                            fill="currentColor"
+                                            viewBox="0 0 20 20"
+                                          >
+                                            <path
+                                              fillRule="evenodd"
+                                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                              clipRule="evenodd"
+                                            />
+                                          </svg>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </button>
+                                )
+                              )}
+                            </div>
+                          )}
+
+                        {/* Checkbox Question (Multi-Select) */}
+                        {currentQuestion.qtype === "checkbox" &&
+                          !showGenericTags && (
+                            <div className="space-y-3">
+                              {currentQuestion.snag_quest_options.map(
+                                (option) => (
+                                  <button
+                                    type="button"
+                                    key={option.id}
+                                    onClick={() => handleCheckboxSelect(option)}
+                                    className={`w-full p-4 rounded-lg border-2 text-left transition-all shadow-md ${
+                                      selectedOptions.some(
+                                        (opt) => opt.id === option.id
+                                      )
+                                        ? "border-blue-600 bg-blue-50 text-gray-900"
+                                        : "border-gray-300 bg-white text-gray-900 hover:bg-gray-50 hover:border-blue-400"
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <span className="font-semibold text-base">
+                                        {option.qname}
+                                      </span>
+                                      <div
+                                        className={`w-6 h-6 rounded border-2 flex items-center justify-center ${
+                                          selectedOptions.some(
+                                            (opt) => opt.id === option.id
+                                          )
+                                            ? "bg-blue-600 border-blue-600"
+                                            : "border-gray-300"
+                                        }`}
+                                      >
+                                        {selectedOptions.some(
+                                          (opt) => opt.id === option.id
+                                        ) && (
+                                          <svg
+                                            className="w-4 h-4 text-white survey-force-white"
+                                            fill="currentColor"
+                                            viewBox="0 0 20 20"
+                                          >
+                                            <path
+                                              fillRule="evenodd"
+                                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                              clipRule="evenodd"
+                                            />
+                                          </svg>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </button>
+                                )
+                              )}
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const isSingleQuestion =
+                                    (surveyData?.snag_checklist
+                                      ?.questions_count ?? 0) === 1;
+                                  const answerData = saveCurrentAnswer();
+                                  if (isSingleQuestion) {
+                                    handleSingleQuestionSubmit(answerData);
+                                  } else {
+                                    handleNextQuestion();
+                                  }
+                                }}
+                                disabled={!isCurrentAnswerValid()}
+                                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white survey-force-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
+                              >
+                                {(surveyData?.snag_checklist?.questions_count ??
+                                  0) === 1
+                                  ? "Submit Survey"
+                                  : "Continue"}
+                              </button>
+                            </div>
+                          )}
+
+                        {/* Input Question */}
+                        {currentQuestion.qtype === "input" && (
+                          <>
+                            <div className="mt-4">
+                              <input
+                                type="text"
+                                value={currentQuestionValue}
+                                onChange={(e) =>
+                                  setCurrentQuestionValue(e.target.value)
+                                }
+                                placeholder="Enter your answer..."
+                                className="w-full p-4 border-2 border-gray-300 bg-white text-gray-900 placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                              />
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const isSingleQuestion =
+                                  (surveyData?.snag_checklist
+                                    ?.questions_count ?? 0) === 1;
+
+                                // Save current answer first
+                                const answerData = saveCurrentAnswer();
+
+                                if (isSingleQuestion) {
+                                  // Submit immediately with answer data
+                                  handleSingleQuestionSubmit(answerData);
+                                } else {
+                                  handleNextQuestion();
+                                }
+                              }}
+                              disabled={!isCurrentAnswerValid()}
+                              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white survey-force-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
+                            >
+                              {(surveyData?.snag_checklist?.questions_count ??
+                                0) === 1
+                                ? "Submit Survey"
+                                : "Continue"}
+                            </button>
+                          </>
+                        )}
+
+                        {/* Text Question */}
+                        {currentQuestion.qtype === "text" && (
+                          <>
+                            <div className="mt-4">
+                              <textarea
+                                value={currentQuestionValue}
+                                onChange={(e) =>
+                                  setCurrentQuestionValue(e.target.value)
+                                }
+                                placeholder="Please enter your comments..."
+                                className="w-full h-24 p-4 border-2 border-gray-300 bg-white text-gray-900 placeholder-gray-500 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                              />
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const isSingleQuestion =
+                                  (surveyData?.snag_checklist
+                                    ?.questions_count ?? 0) === 1;
+
+                                // Save current answer first
+                                const answerData = saveCurrentAnswer();
+
+                                if (isSingleQuestion) {
+                                  // Submit immediately with answer data
+                                  handleSingleQuestionSubmit(answerData);
+                                } else {
+                                  handleNextQuestion();
+                                }
+                              }}
+                              disabled={!isCurrentAnswerValid()}
+                              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white survey-force-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
+                            >
+                              {(surveyData?.snag_checklist?.questions_count ??
+                                0) === 1
+                                ? "Submit Survey"
+                                : "Continue"}
+                            </button>
+                          </>
+                        )}
+
+                        {/* Description Question */}
+                        {currentQuestion.qtype === "description" && (
+                          <>
+                            <div className="mt-4">
+                              <textarea
+                                value={currentQuestionValue}
+                                onChange={(e) =>
+                                  setCurrentQuestionValue(e.target.value)
+                                }
+                                placeholder="Enter your description..."
+                                className="w-full h-24 p-4 border-2 border-gray-300 bg-white text-gray-900 placeholder-gray-500 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                              />
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const isSingleQuestion =
+                                  (surveyData?.snag_checklist
+                                    ?.questions_count ?? 0) === 1;
+
+                                // Save current answer first
+                                const answerData = saveCurrentAnswer();
+
+                                if (isSingleQuestion) {
+                                  // Submit immediately with answer data
+                                  handleSingleQuestionSubmit(answerData);
+                                } else {
+                                  handleNextQuestion();
+                                }
+                              }}
+                              disabled={!isCurrentAnswerValid()}
+                              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white survey-force-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
+                            >
+                              {(surveyData?.snag_checklist?.questions_count ??
+                                0) === 1
+                                ? "Submit Survey"
+                                : "Continue"}
+                            </button>
+                          </>
+                        )}
+
+                        {/* Input Box Question - New Type */}
+                        {currentQuestion.qtype === "input_box" && (
+                          <>
+                            <div className="mt-4">
+                              <input
+                                type="text"
+                                value={currentQuestionValue}
+                                onChange={(e) =>
+                                  setCurrentQuestionValue(e.target.value)
+                                }
+                                placeholder="Enter your answer..."
+                                className="w-full p-4 border-2 border-gray-300 bg-white text-gray-900 placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                              />
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const isSingleQuestion =
+                                  (surveyData?.snag_checklist
+                                    ?.questions_count ?? 0) === 1;
+
+                                // Save current answer first
+                                const answerData = saveCurrentAnswer();
+
+                                if (isSingleQuestion) {
+                                  // Submit immediately with answer data
+                                  handleSingleQuestionSubmit(answerData);
+                                } else {
+                                  handleNextQuestion();
+                                }
+                              }}
+                              disabled={!isCurrentAnswerValid()}
+                              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white survey-force-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
+                            >
+                              {(surveyData?.snag_checklist?.questions_count ??
+                                0) === 1
+                                ? "Submit Survey"
+                                : "Continue"}
+                            </button>
+                          </>
+                        )}
+
+                        {/* Rating Question */}
+                        {currentQuestion.qtype === "rating" &&
+                          !showGenericTags && (
+                            <>
+                              <div className="bg-white rounded-lg border-2 border-gray-200 shadow-md p-4">
+                                <div className="flex justify-center items-center space-x-2">
+                                  {getRatingOptions(currentQuestion).map(
+                                    (rating) => (
+                                      <button
+                                        type="button"
+                                        key={rating}
+                                        onClick={() =>
+                                          handleRatingSelect(rating)
+                                        }
+                                        className={`w-12 h-12 rounded-full transition-all ${
+                                          selectedRating !== null &&
+                                          rating <= selectedRating
+                                            ? "text-yellow-400"
+                                            : "text-gray-300 hover:text-yellow-300"
+                                        }`}
+                                      >
                                         <svg
-                                          className="w-4 h-4 text-white"
+                                          className="w-full h-full"
                                           fill="currentColor"
                                           viewBox="0 0 20 20"
                                         >
-                                          <path
-                                            fillRule="evenodd"
-                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                            clipRule="evenodd"
-                                          />
+                                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                         </svg>
-                                      )}
-                                    </div>
+                                      </button>
+                                    )
+                                  )}
+                                </div>
+                                {selectedRating && (
+                                  <div className="text-center mt-2">
+                                    <span className="text-base sm:text-lg font-medium text-gray-700">
+                                      {selectedRating} star
+                                      {selectedRating > 1 ? "s" : ""}
+                                    </span>
                                   </div>
-                                </button>
-                              )
-                            )}
+                                )}
+                              </div>
+                            </>
+                          )}
+
+                        {/* Date Question */}
+                        {currentQuestion.qtype === "date" && (
+                          <>
+                            <div className="mt-4">
+                              <input
+                                type="date"
+                                value={currentQuestionValue}
+                                onChange={(e) =>
+                                  setCurrentQuestionValue(e.target.value)
+                                }
+                                className="w-full p-4 border-2 border-gray-300 bg-white text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                              />
+                            </div>
+
                             <button
                               type="button"
                               onClick={async () => {
@@ -2312,611 +2596,365 @@ export const MobileSurveyLanding: React.FC = () => {
                                 }
                               }}
                               disabled={!isCurrentAnswerValid()}
-                              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
+                              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white survey-force-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
                             >
                               {(surveyData?.snag_checklist?.questions_count ??
                                 0) === 1
                                 ? "Submit Survey"
                                 : "Continue"}
                             </button>
-                          </div>
-                        )}
-
-                      {/* Input Question */}
-                      {currentQuestion.qtype === "input" && (
-                        <>
-                          <div className="mt-4">
-                            <input
-                              type="text"
-                              value={currentQuestionValue}
-                              onChange={(e) =>
-                                setCurrentQuestionValue(e.target.value)
-                              }
-                              placeholder="Enter your answer..."
-                              className="w-full p-4 border-2 border-gray-300 bg-white text-gray-900 placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-                            />
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              const isSingleQuestion =
-                                (surveyData?.snag_checklist?.questions_count ??
-                                  0) === 1;
-
-                              // Save current answer first
-                              const answerData = saveCurrentAnswer();
-
-                              if (isSingleQuestion) {
-                                // Submit immediately with answer data
-                                handleSingleQuestionSubmit(answerData);
-                              } else {
-                                handleNextQuestion();
-                              }
-                            }}
-                            disabled={!isCurrentAnswerValid()}
-                            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
-                          >
-                            {(surveyData?.snag_checklist?.questions_count ??
-                              0) === 1
-                              ? "Submit Survey"
-                              : "Continue"}
-                          </button>
-                        </>
-                      )}
-
-                      {/* Text Question */}
-                      {currentQuestion.qtype === "text" && (
-                        <>
-                          <div className="mt-4">
-                            <textarea
-                              value={currentQuestionValue}
-                              onChange={(e) =>
-                                setCurrentQuestionValue(e.target.value)
-                              }
-                              placeholder="Please enter your comments..."
-                              className="w-full h-24 p-4 border-2 border-gray-300 bg-white text-gray-900 placeholder-gray-500 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-                            />
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              const isSingleQuestion =
-                                (surveyData?.snag_checklist?.questions_count ??
-                                  0) === 1;
-
-                              // Save current answer first
-                              const answerData = saveCurrentAnswer();
-
-                              if (isSingleQuestion) {
-                                // Submit immediately with answer data
-                                handleSingleQuestionSubmit(answerData);
-                              } else {
-                                handleNextQuestion();
-                              }
-                            }}
-                            disabled={!isCurrentAnswerValid()}
-                            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
-                          >
-                            {(surveyData?.snag_checklist?.questions_count ??
-                              0) === 1
-                              ? "Submit Survey"
-                              : "Continue"}
-                          </button>
-                        </>
-                      )}
-
-                      {/* Description Question */}
-                      {currentQuestion.qtype === "description" && (
-                        <>
-                          <div className="mt-4">
-                            <textarea
-                              value={currentQuestionValue}
-                              onChange={(e) =>
-                                setCurrentQuestionValue(e.target.value)
-                              }
-                              placeholder="Enter your description..."
-                              className="w-full h-24 p-4 border-2 border-gray-300 bg-white text-gray-900 placeholder-gray-500 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-                            />
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              const isSingleQuestion =
-                                (surveyData?.snag_checklist?.questions_count ??
-                                  0) === 1;
-
-                              // Save current answer first
-                              const answerData = saveCurrentAnswer();
-
-                              if (isSingleQuestion) {
-                                // Submit immediately with answer data
-                                handleSingleQuestionSubmit(answerData);
-                              } else {
-                                handleNextQuestion();
-                              }
-                            }}
-                            disabled={!isCurrentAnswerValid()}
-                            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
-                          >
-                            {(surveyData?.snag_checklist?.questions_count ??
-                              0) === 1
-                              ? "Submit Survey"
-                              : "Continue"}
-                          </button>
-                        </>
-                      )}
-
-                      {/* Input Box Question - New Type */}
-                      {currentQuestion.qtype === "input_box" && (
-                        <>
-                          <div className="mt-4">
-                            <input
-                              type="text"
-                              value={currentQuestionValue}
-                              onChange={(e) =>
-                                setCurrentQuestionValue(e.target.value)
-                              }
-                              placeholder="Enter your answer..."
-                              className="w-full p-4 border-2 border-gray-300 bg-white text-gray-900 placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-                            />
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              const isSingleQuestion =
-                                (surveyData?.snag_checklist?.questions_count ??
-                                  0) === 1;
-
-                              // Save current answer first
-                              const answerData = saveCurrentAnswer();
-
-                              if (isSingleQuestion) {
-                                // Submit immediately with answer data
-                                handleSingleQuestionSubmit(answerData);
-                              } else {
-                                handleNextQuestion();
-                              }
-                            }}
-                            disabled={!isCurrentAnswerValid()}
-                            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
-                          >
-                            {(surveyData?.snag_checklist?.questions_count ??
-                              0) === 1
-                              ? "Submit Survey"
-                              : "Continue"}
-                          </button>
-                        </>
-                      )}
-
-                      {/* Rating Question */}
-                      {currentQuestion.qtype === "rating" &&
-                        !showGenericTags && (
-                          <>
-                            <div className="bg-white rounded-lg border-2 border-gray-200 shadow-md p-4">
-                              <div className="flex justify-center items-center space-x-2">
-                                {getRatingOptions(currentQuestion).map(
-                                  (rating) => (
-                                    <button
-                                      type="button"
-                                      key={rating}
-                                      onClick={() => handleRatingSelect(rating)}
-                                      className={`w-12 h-12 rounded-full transition-all ${
-                                        selectedRating !== null &&
-                                        rating <= selectedRating
-                                          ? "text-yellow-400"
-                                          : "text-gray-300 hover:text-yellow-300"
-                                      }`}
-                                    >
-                                      <svg
-                                        className="w-full h-full"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
-                                      >
-                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                      </svg>
-                                    </button>
-                                  )
-                                )}
-                              </div>
-                              {selectedRating && (
-                                <div className="text-center mt-2">
-                                  <span className="text-base sm:text-lg font-medium text-gray-700">
-                                    {selectedRating} star
-                                    {selectedRating > 1 ? "s" : ""}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
                           </>
                         )}
 
-                      {/* Date Question */}
-                      {currentQuestion.qtype === "date" && (
-                        <>
-                          <div className="mt-4">
-                            <input
-                              type="date"
-                              value={currentQuestionValue}
-                              onChange={(e) =>
-                                setCurrentQuestionValue(e.target.value)
-                              }
-                              className="w-full p-4 border-2 border-gray-300 bg-white text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-                            />
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              const isSingleQuestion =
-                                (surveyData?.snag_checklist?.questions_count ??
-                                  0) === 1;
-                              const answerData = saveCurrentAnswer();
-                              if (isSingleQuestion) {
-                                handleSingleQuestionSubmit(answerData);
-                              } else {
-                                handleNextQuestion();
-                              }
-                            }}
-                            disabled={!isCurrentAnswerValid()}
-                            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
-                          >
-                            {(surveyData?.snag_checklist?.questions_count ??
-                              0) === 1
-                              ? "Submit Survey"
-                              : "Continue"}
-                          </button>
-                        </>
-                      )}
-
-                      {/* Time Question */}
-                      {currentQuestion.qtype === "time" && (
-                        <>
-                          <div className="mt-4">
-                            <input
-                              type="time"
-                              value={currentQuestionValue}
-                              onChange={(e) =>
-                                setCurrentQuestionValue(e.target.value)
-                              }
-                              className="w-full p-4 border-2 border-gray-300 bg-white text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-                            />
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              const isSingleQuestion =
-                                (surveyData?.snag_checklist?.questions_count ??
-                                  0) === 1;
-                              const answerData = saveCurrentAnswer();
-                              if (isSingleQuestion) {
-                                handleSingleQuestionSubmit(answerData);
-                              } else {
-                                handleNextQuestion();
-                              }
-                            }}
-                            disabled={!isCurrentAnswerValid()}
-                            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
-                          >
-                            {(surveyData?.snag_checklist?.questions_count ??
-                              0) === 1
-                              ? "Submit Survey"
-                              : "Continue"}
-                          </button>
-                        </>
-                      )}
-
-                      {/* Emoji/Smiley Question */}
-                      {(currentQuestion.qtype === "emoji" ||
-                        currentQuestion.qtype === "smiley") &&
-                        !showGenericTags && (
-                          <div className="fixed bottom-0 left-0 right-0 w-full px-2 pb-4 z-50">
-                            {/* Title Container */}
-                            <div className="mb-3 max-w-md mx-auto bg-gray-900/80 backdrop-blur-sm rounded-xl shadow-2xl px-4 py-3">
-                              <h2 className=" font-semibold text-white text-center">
-                                {surveyData.survey_title}
-                              </h2>
+                        {/* Time Question */}
+                        {currentQuestion.qtype === "time" && (
+                          <>
+                            <div className="mt-4">
+                              <input
+                                type="time"
+                                value={currentQuestionValue}
+                                onChange={(e) =>
+                                  setCurrentQuestionValue(e.target.value)
+                                }
+                                className="w-full p-4 border-2 border-gray-300 bg-white text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                              />
                             </div>
-                            {/* Emoji Buttons Container */}
-                            <div className="bg-gray-900/80 backdrop-blur-sm rounded-xl shadow-2xl p-3 xs:p-4 sm:p-5 max-w-md mx-auto">
-                              {/* Emoji buttons */}
-                              <div className="flex justify-center items-stretch gap-1 xs:gap-1.5 sm:gap-3">
-                                {getEmojiOptions(currentQuestion).map(
-                                  (option) => (
-                                    <button
-                                      type="button"
-                                      key={option.rating}
-                                      onClick={() =>
-                                        handleEmojiSelect(
-                                          option.rating,
-                                          option.emoji,
-                                          option.label
-                                        )
-                                      }
-                                      className={`flex flex-col items-center justify-between rounded-lg p-1.5 xs:p-2 sm:p-3 transition-all duration-200 flex-1 min-w-[60px] xs:min-w-[68px] sm:min-w-[75px] max-w-[70px] xs:max-w-[85px] sm:max-w-[95px] h-[90px] xs:h-[100px] sm:h-[110px] ${
-                                        selectedRating === option.rating
-                                          ? "bg-gradient-to-b from-blue-500 to-blue-600 border-2 border-blue-400 shadow-xl scale-105"
-                                          : "bg-white/10 hover:bg-white/20 border-2 border-white/20 hover:border-white/40 hover:shadow-md hover:scale-[1.02]"
-                                      }`}
-                                    >
-                                      <div className="flex-1 flex items-center justify-center">
-                                        <span className="text-3xl xs:text-4xl sm:text-5xl">
-                                          {option.emoji}
-                                        </span>
-                                      </div>
-                                      <div className="flex items-center justify-center min-h-[28px] xs:min-h-[32px] sm:min-h-[36px]">
-                                        <span
-                                          className={`text-[9px] xs:text-[10px] sm:text-xs font-bold text-center leading-tight px-0.5 xs:px-1 text-white`}
-                                        >
-                                          {option.label}
-                                        </span>
-                                      </div>
-                                    </button>
-                                  )
-                                )}
-                              </div>
-                            </div>
-                          </div>
+
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const isSingleQuestion =
+                                  (surveyData?.snag_checklist
+                                    ?.questions_count ?? 0) === 1;
+                                const answerData = saveCurrentAnswer();
+                                if (isSingleQuestion) {
+                                  handleSingleQuestionSubmit(answerData);
+                                } else {
+                                  handleNextQuestion();
+                                }
+                              }}
+                              disabled={!isCurrentAnswerValid()}
+                              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white survey-force-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
+                            >
+                              {(surveyData?.snag_checklist?.questions_count ??
+                                0) === 1
+                                ? "Submit Survey"
+                                : "Continue"}
+                            </button>
+                          </>
                         )}
 
-                      {/* Generic Tags for Negative (Emoji, Smiley, Multiple, Rating) */}
-                      {showGenericTags && (
-                        <>
-                          <div className="bg-white rounded-lg border border-gray-200 p-1.5 xs:p-2 sm:p-3 shadow-md relative">
-                            {/* Grid Layout - 2x2 for first 4, then repeat */}
-                            <div className="overflow-x-scroll whitespace-nowrap scrollbar-visible pb-1.5 xs:pb-2 -mx-1 sm:-mx-0">
+                        {/* Emoji/Smiley Question */}
+                        {(currentQuestion.qtype === "emoji" ||
+                          currentQuestion.qtype === "smiley") &&
+                          !showGenericTags && (
+                            <div className="fixed bottom-0 left-0 right-0 w-full px-2 pb-4 z-50">
+                              {/* Title Container */}
+                              <div className="mb-3 max-w-md mx-auto bg-gray-900/80 backdrop-blur-sm rounded-xl shadow-2xl px-4 py-3">
+                                <h2 className=" font-semibold text-white survey-force-white text-center">
+                                  {surveyData.survey_title}
+                                </h2>
+                              </div>
+                              {/* Emoji Buttons Container */}
+                              <div className="bg-gray-900/80 backdrop-blur-sm rounded-xl shadow-2xl p-3 xs:p-4 sm:p-5 max-w-md mx-auto">
+                                {/* Emoji buttons */}
+                                <div className="flex justify-center items-stretch gap-1 xs:gap-1.5 sm:gap-3">
+                                  {getEmojiOptions(currentQuestion).map(
+                                    (option) => (
+                                      <button
+                                        type="button"
+                                        key={option.rating}
+                                        onClick={() =>
+                                          handleEmojiSelect(
+                                            option.rating,
+                                            option.emoji,
+                                            option.label
+                                          )
+                                        }
+                                        className={`flex flex-col items-center justify-between rounded-lg p-1.5 xs:p-2 sm:p-3 transition-all duration-200 flex-1 min-w-[60px] xs:min-w-[68px] sm:min-w-[75px] max-w-[70px] xs:max-w-[85px] sm:max-w-[95px] h-[90px] xs:h-[100px] sm:h-[110px] ${
+                                          selectedRating === option.rating
+                                            ? "bg-gradient-to-b from-blue-500 to-blue-600 border-2 border-blue-400 shadow-xl scale-105"
+                                            : "bg-white/10 hover:bg-white/20 border-2 border-white/20 hover:border-white/40 hover:shadow-md hover:scale-[1.02]"
+                                        }`}
+                                      >
+                                        <div className="flex-1 flex items-center justify-center">
+                                          <span className="text-3xl xs:text-4xl sm:text-5xl">
+                                            {option.emoji}
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center justify-center min-h-[28px] xs:min-h-[32px] sm:min-h-[36px]">
+                                          <span
+                                            className={`text-[9px] xs:text-[10px] sm:text-xs font-bold text-center leading-tight px-0.5 xs:px-1 text-white survey-force-white`}
+                                          >
+                                            {option.label}
+                                          </span>
+                                        </div>
+                                      </button>
+                                    )
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                        {/* Generic Tags for Negative (Emoji, Smiley, Multiple, Rating) */}
+                        {showGenericTags && (
+                          <>
+                            <div className="bg-white rounded-lg border border-gray-200 p-1.5 xs:p-2 sm:p-3 shadow-md relative">
+                              {/* Grid Layout - 2x2 for first 4, then repeat */}
+                              <div className="overflow-x-scroll whitespace-nowrap scrollbar-visible pb-1.5 xs:pb-2 -mx-1 sm:-mx-0">
+                                {(() => {
+                                  const tags =
+                                    getCurrentQuestion()?.generic_tags || [];
+                                  const itemsPerPage = 4;
+                                  // Split tags into pages of 4 items each
+                                  const pages = Array.from(
+                                    {
+                                      length: Math.ceil(
+                                        tags.length / itemsPerPage
+                                      ),
+                                    },
+                                    (_, pageIdx) =>
+                                      tags.slice(
+                                        pageIdx * itemsPerPage,
+                                        (pageIdx + 1) * itemsPerPage
+                                      )
+                                  );
+                                  return (
+                                    <div
+                                      className="flex flex-row gap-1.5 xs:gap-2 sm:gap-3 px-0.5 xs:px-1 sm:px-0"
+                                      style={{ minWidth: "calc(100% + 1px)" }}
+                                    >
+                                      {pages.map((pageTags, pageIdx) => (
+                                        <div
+                                          key={pageIdx}
+                                          className="flex flex-col gap-1.5 xs:gap-2 sm:gap-3 flex-shrink-0 w-full"
+                                        >
+                                          {/* 2x2 Grid for items 0,1,2,3 */}
+                                          <div className="grid grid-cols-2 gap-1.5 xs:gap-2 sm:gap-3 px-1">
+                                            {pageTags.map((tag) => (
+                                              <button
+                                                type="button"
+                                                key={tag.id}
+                                                onClick={() =>
+                                                  handleGenericTagClick(tag)
+                                                }
+                                                className={`flex flex-col items-center justify-center p-2 xs:p-2.5 rounded-lg text-center transition-all border-2 ${
+                                                  selectedTags.some(
+                                                    (selectedTag) =>
+                                                      selectedTag.id === tag.id
+                                                  )
+                                                    ? "border-blue-500 bg-blue-50"
+                                                    : "border-transparent bg-gray-50/50"
+                                                }`}
+                                              >
+                                                <div className="w-12 h-12 xs:w-16 xs:h-16 sm:w-20 sm:h-20 mb-1.5 xs:mb-2 flex items-center justify-center">
+                                                  {tag.icons &&
+                                                  tag.icons.length > 0 ? (
+                                                    <img
+                                                      src={tag.icons[0].url}
+                                                      alt={tag.category_name}
+                                                      className="max-w-full max-h-full object-contain"
+                                                    />
+                                                  ) : (
+                                                    <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
+                                                      <span className="text-xl xs:text-2xl">
+                                                        🏷️
+                                                      </span>
+                                                    </div>
+                                                  )}
+                                                </div>
+                                                <span className="text-[10px] xs:text-xs font-semibold text-gray-800 leading-tight whitespace-normal break-words w-full">
+                                                  {tag.category_name}
+                                                </span>
+                                              </button>
+                                            ))}
+
+                                            {/* Fill empty slots in grid to maintain layout */}
+                                            {pageTags.length < itemsPerPage &&
+                                              Array.from({
+                                                length:
+                                                  itemsPerPage -
+                                                  pageTags.length,
+                                              }).map((_, idx) => (
+                                                <div
+                                                  key={`empty-${idx}`}
+                                                  className="flex-1"
+                                                />
+                                              ))}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+
+                              {/* Scroll Indicator Dots */}
                               {(() => {
                                 const tags =
                                   getCurrentQuestion()?.generic_tags || [];
                                 const itemsPerPage = 4;
-                                // Split tags into pages of 4 items each
-                                const pages = Array.from(
-                                  {
-                                    length: Math.ceil(
-                                      tags.length / itemsPerPage
-                                    ),
-                                  },
-                                  (_, pageIdx) =>
-                                    tags.slice(
-                                      pageIdx * itemsPerPage,
-                                      (pageIdx + 1) * itemsPerPage
-                                    )
+                                const totalPages = Math.ceil(
+                                  tags.length / itemsPerPage
                                 );
-                                return (
-                                  <div
-                                    className="flex flex-row gap-1.5 xs:gap-2 sm:gap-3 px-0.5 xs:px-1 sm:px-0"
-                                    style={{ minWidth: "calc(100% + 1px)" }}
-                                  >
-                                    {pages.map((pageTags, pageIdx) => (
-                                      <div
-                                        key={pageIdx}
-                                        className="flex flex-col gap-1.5 xs:gap-2 sm:gap-3 flex-shrink-0 w-full"
-                                      >
-                                        {/* 2x2 Grid for items 0,1,2,3 */}
-                                        <div className="grid grid-cols-2 gap-1.5 xs:gap-2 sm:gap-3 px-1">
-                                          {pageTags.map((tag) => (
-                                            <button
-                                              type="button"
-                                              key={tag.id}
-                                              onClick={() =>
-                                                handleGenericTagClick(tag)
-                                              }
-                                              className={`flex flex-col items-center justify-center p-2 xs:p-2.5 rounded-lg text-center transition-all border-2 ${
-                                                selectedTags.some(
-                                                  (selectedTag) =>
-                                                    selectedTag.id === tag.id
-                                                )
-                                                  ? "border-blue-500 bg-blue-50"
-                                                  : "border-transparent bg-gray-50/50"
-                                              }`}
-                                            >
-                                              <div className="w-12 h-12 xs:w-16 xs:h-16 sm:w-20 sm:h-20 mb-1.5 xs:mb-2 flex items-center justify-center">
-                                                {tag.icons &&
-                                                tag.icons.length > 0 ? (
-                                                  <img
-                                                    src={tag.icons[0].url}
-                                                    alt={tag.category_name}
-                                                    className="max-w-full max-h-full object-contain"
-                                                  />
-                                                ) : (
-                                                  <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
-                                                    <span className="text-xl xs:text-2xl">
-                                                      🏷️
-                                                    </span>
-                                                  </div>
-                                                )}
-                                              </div>
-                                              <span className="text-[10px] xs:text-xs font-semibold text-gray-800 leading-tight whitespace-normal break-words w-full">
-                                                {tag.category_name}
-                                              </span>
-                                            </button>
-                                          ))}
 
-                                          {/* Fill empty slots in grid to maintain layout */}
-                                          {pageTags.length < itemsPerPage &&
-                                            Array.from({
-                                              length:
-                                                itemsPerPage - pageTags.length,
-                                            }).map((_, idx) => (
-                                              <div
-                                                key={`empty-${idx}`}
-                                                className="flex-1"
-                                              />
-                                            ))}
-                                        </div>
-                                      </div>
-                                    ))}
+                                if (totalPages <= 1) return null;
+
+                                return (
+                                  <div className="flex justify-center gap-1.5 mt-2 pb-1">
+                                    {Array.from({ length: totalPages }).map(
+                                      (_, idx) => (
+                                        <div
+                                          key={idx}
+                                          className="w-1.5 h-1.5 rounded-full bg-gray-400"
+                                        />
+                                      )
+                                    )}
                                   </div>
                                 );
                               })()}
                             </div>
 
-                            {/* Scroll Indicator Dots */}
-                            {(() => {
-                              const tags =
-                                getCurrentQuestion()?.generic_tags || [];
-                              const itemsPerPage = 4;
-                              const totalPages = Math.ceil(
-                                tags.length / itemsPerPage
-                              );
-
-                              if (totalPages <= 1) return null;
-
-                              return (
-                                <div className="flex justify-center gap-1.5 mt-2 pb-1">
-                                  {Array.from({ length: totalPages }).map(
-                                    (_, idx) => (
-                                      <div
-                                        key={idx}
-                                        className="w-1.5 h-1.5 rounded-full bg-gray-400"
-                                      />
-                                    )
-                                  )}
-                                </div>
-                              );
-                            })()}
-                          </div>
-
-                          {/* Description Field */}
-                          <div>
-                            <label className="block text-[9px] xs:text-[10px] sm:text-xs font-medium text-white/90 mb-1 xs:mb-1 sm:mb-2">
-                              Comments (Optional)
-                            </label>
-                            <textarea
-                              value={getCurrentNegativeComments()}
-                              onChange={(e) =>
-                                setCurrentNegativeComments(e.target.value)
-                              }
-                              placeholder="Please describe any specific issues or suggestions..."
-                              className="w-full h-12 xs:h-14 sm:h-16 p-1.5 xs:p-2 border border-blue-300 rounded-[0.20rem] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[9px] xs:text-[10px] sm:text-xs"
-                              disabled={isSubmitting}
-                            />
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              const isSingleQuestion =
-                                (surveyData?.snag_checklist?.questions_count ??
-                                  0) === 1;
-
-                              // Save answer with tags and description, then proceed
-                              let answerData: SurveyAnswers[number] | undefined;
-                              const currentComments =
-                                getCurrentNegativeComments();
-
-                              if (
-                                (pendingNegativeType === "emoji" ||
-                                  pendingNegativeType === "smiley") &&
-                                typeof pendingNegativeAnswer === "object" &&
-                                pendingNegativeAnswer !== null &&
-                                "rating" in pendingNegativeAnswer &&
-                                "emoji" in pendingNegativeAnswer
-                              ) {
-                                // Type guard for emoji/smiley objects
-                                const emojiAnswer = pendingNegativeAnswer as {
-                                  rating: number;
-                                  emoji: string;
-                                  label: string;
-                                };
-                                answerData = saveCurrentAnswer(
-                                  emojiAnswer.rating,
-                                  emojiAnswer.emoji,
-                                  emojiAnswer.label,
-                                  selectedTags,
-                                  currentComments
-                                );
-                              } else if (pendingNegativeType === "multiple") {
-                                answerData = saveCurrentAnswer(
-                                  undefined,
-                                  undefined,
-                                  undefined,
-                                  selectedTags,
-                                  currentComments
-                                );
-                              } else if (
-                                pendingNegativeType === "rating" &&
-                                pendingNegativeAnswer &&
-                                typeof pendingNegativeAnswer === "object" &&
-                                "rating" in pendingNegativeAnswer &&
-                                "option" in pendingNegativeAnswer
-                              ) {
-                                answerData = saveCurrentAnswer(
-                                  pendingNegativeAnswer.rating,
-                                  undefined,
-                                  undefined,
-                                  selectedTags,
-                                  currentComments
-                                );
-                                // Store the option_id for later use in submission
-                                if (answerData) {
-                                  answerData.optionId =
-                                    pendingNegativeAnswer.option.id;
+                            {/* Description Field */}
+                            <div>
+                              <label className="block text-[9px] xs:text-[10px] sm:text-xs font-medium text-white/90 survey-force-white-90 mb-1 xs:mb-1 sm:mb-2">
+                                Comments (Optional)
+                              </label>
+                              <textarea
+                                value={getCurrentNegativeComments()}
+                                onChange={(e) =>
+                                  setCurrentNegativeComments(e.target.value)
                                 }
-                              }
+                                placeholder="Please describe any specific issues or suggestions..."
+                                className="w-full h-12 xs:h-14 sm:h-16 p-1.5 xs:p-2 border border-blue-300 rounded-[0.20rem] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[9px] xs:text-[10px] sm:text-xs"
+                                disabled={isSubmitting}
+                              />
+                            </div>
 
-                              // For single question negative responses, submit with complete data
-                              if (isSingleQuestion && answerData) {
-                                // Keep this screen mounted while submitting so the
-                                // main question page doesn't flash before the
-                                // thank-you navigation; the button shows the
-                                // "Submitting..." spinner meanwhile.
-                                await handleSingleQuestionSubmitWithNegativeData(
-                                  answerData
-                                );
-                              } else {
-                                // Reset states before moving on
-                                setShowGenericTags(false);
-                                setSelectedTags([]);
-                                setCurrentNegativeComments(""); // Reset only current question's comments
-                                setPendingNegativeType(null);
-                                setPendingNegativeAnswer(null);
-                                // For multi-question surveys, proceed to next question
-                                // Use moveToNextQuestion to avoid re-saving the answer
-                                moveToNextQuestion();
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const isSingleQuestion =
+                                  (surveyData?.snag_checklist
+                                    ?.questions_count ?? 0) === 1;
+
+                                // Save answer with tags and description, then proceed
+                                let answerData:
+                                  | SurveyAnswers[number]
+                                  | undefined;
+                                const currentComments =
+                                  getCurrentNegativeComments();
+
+                                if (
+                                  (pendingNegativeType === "emoji" ||
+                                    pendingNegativeType === "smiley") &&
+                                  typeof pendingNegativeAnswer === "object" &&
+                                  pendingNegativeAnswer !== null &&
+                                  "rating" in pendingNegativeAnswer &&
+                                  "emoji" in pendingNegativeAnswer
+                                ) {
+                                  // Type guard for emoji/smiley objects
+                                  const emojiAnswer = pendingNegativeAnswer as {
+                                    rating: number;
+                                    emoji: string;
+                                    label: string;
+                                  };
+                                  answerData = saveCurrentAnswer(
+                                    emojiAnswer.rating,
+                                    emojiAnswer.emoji,
+                                    emojiAnswer.label,
+                                    selectedTags,
+                                    currentComments
+                                  );
+                                } else if (pendingNegativeType === "multiple") {
+                                  answerData = saveCurrentAnswer(
+                                    undefined,
+                                    undefined,
+                                    undefined,
+                                    selectedTags,
+                                    currentComments
+                                  );
+                                } else if (
+                                  pendingNegativeType === "rating" &&
+                                  pendingNegativeAnswer &&
+                                  typeof pendingNegativeAnswer === "object" &&
+                                  "rating" in pendingNegativeAnswer &&
+                                  "option" in pendingNegativeAnswer
+                                ) {
+                                  answerData = saveCurrentAnswer(
+                                    pendingNegativeAnswer.rating,
+                                    undefined,
+                                    undefined,
+                                    selectedTags,
+                                    currentComments
+                                  );
+                                  // Store the option_id for later use in submission
+                                  if (answerData) {
+                                    answerData.optionId =
+                                      pendingNegativeAnswer.option.id;
+                                  }
+                                }
+
+                                // For single question negative responses, submit with complete data
+                                if (isSingleQuestion && answerData) {
+                                  // Keep this screen mounted while submitting so the
+                                  // main question page doesn't flash before the
+                                  // thank-you navigation; the button shows the
+                                  // "Submitting..." spinner meanwhile.
+                                  await handleSingleQuestionSubmitWithNegativeData(
+                                    answerData
+                                  );
+                                } else {
+                                  // Reset states before moving on
+                                  setShowGenericTags(false);
+                                  setSelectedTags([]);
+                                  setCurrentNegativeComments(""); // Reset only current question's comments
+                                  setPendingNegativeType(null);
+                                  setPendingNegativeAnswer(null);
+                                  // For multi-question surveys, proceed to next question
+                                  // Use moveToNextQuestion to avoid re-saving the answer
+                                  moveToNextQuestion();
+                                }
+                              }}
+                              disabled={
+                                isSubmitting ||
+                                (selectedTags.length === 0 &&
+                                  !getCurrentNegativeComments().trim())
                               }
-                            }}
-                            disabled={
-                              isSubmitting ||
-                              (selectedTags.length === 0 &&
-                                !getCurrentNegativeComments().trim())
-                            }
-                            className="w-full bg-black/90 hover:bg-black/100 disabled:bg-black/50 text-white/100 py-2 xs:py-2.5 px-3 xs:px-4 rounded-lg text-xs xs:text-sm font-medium transition-colors disabled:cursor-not-allowed"
-                          >
-                            {isSubmitting ? (
-                              <div className="flex items-center justify-center">
-                                <div className="animate-spin rounded-full h-3.5 xs:h-4 w-3.5 xs:w-4 border-b-2 border-white mr-2"></div>
-                                <span className="text-xs xs:text-sm">
-                                  Submitting...
-                                </span>
-                              </div>
-                            ) : (surveyData?.snag_checklist?.questions_count ??
-                                0) === 1 ? (
-                              "Submit Survey"
-                            ) : currentQuestionIndex <
-                              (surveyData?.snag_checklist?.questions_count ??
-                                0) -
-                                1 ? (
-                              "Next Question"
-                            ) : (
-                              "Continue"
-                            )}
-                          </button>
-                        </>
-                      )}
+                              className="w-full bg-black/90 hover:bg-black/100 disabled:bg-black/50 text-white survey-force-white py-2 xs:py-2.5 px-3 xs:px-4 rounded-lg text-xs xs:text-sm font-medium transition-colors disabled:cursor-not-allowed"
+                            >
+                              {isSubmitting ? (
+                                <div className="flex items-center justify-center">
+                                  <div className="animate-spin rounded-full h-3.5 xs:h-4 w-3.5 xs:w-4 border-b-2 border-white mr-2"></div>
+                                  <span className="text-xs xs:text-sm">
+                                    Submitting...
+                                  </span>
+                                </div>
+                              ) : (surveyData?.snag_checklist
+                                  ?.questions_count ?? 0) === 1 ? (
+                                "Submit Survey"
+                              ) : currentQuestionIndex <
+                                (surveyData?.snag_checklist?.questions_count ??
+                                  0) -
+                                  1 ? (
+                                "Next Question"
+                              ) : (
+                                "Continue"
+                              )}
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

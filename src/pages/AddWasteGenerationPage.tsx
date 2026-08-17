@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import { TextField, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
-import { Recycle, ArrowLeft } from 'lucide-react';
+import { Recycle, ArrowLeft, Plus, Trash2, X } from 'lucide-react';
 import {
   fetchBuildings,
   fetchWings,
@@ -17,17 +17,66 @@ import {
   Area,
   Commodity,
   Category,
-  OperationalLandlord
+  OperationalLandlord,
+  WasteEntryInput
 } from '@/services/wasteGenerationAPI';
 import { SupplierSearchSelect } from '@/components/SupplierSearchSelect';
 import { FormSearchSelect } from '@/components/FormSearchSelect';
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { toast } from 'sonner';
+
+// One row in the "Waste Entries" section: a category + commodity with a bag
+// count and overall weight (which gets split evenly across that many bags
+// before being sent as the `values` array the create_waste API expects),
+// plus attachments.
+interface WasteEntryRow {
+  key: string;
+  category: string;
+  commodity: string;
+  uom: string;
+  bagCount: string;
+  overallWeight: string;
+  attachments: File[];
+}
+
+let wasteEntryRowSeq = 0;
+const createEmptyWasteEntryRow = (): WasteEntryRow => ({
+  key: `entry-${++wasteEntryRowSeq}`,
+  category: '',
+  commodity: '',
+  uom: 'Kg',
+  bagCount: '1',
+  overallWeight: '',
+  attachments: [],
+});
+
+// Splits `total` evenly across `count` bags (e.g. 50 over 5 bags -> [10,10,10,10,10]).
+// Rounds each share to 2 decimals and folds any rounding remainder into the
+// last bag so the values always sum back to exactly `total`.
+const distributeWeight = (total: number, count: number): number[] => {
+  if (count <= 0 || !(total >= 0)) return [];
+  const share = Math.floor((total / count) * 100) / 100;
+  const values = Array(count).fill(share);
+  const remainder = Math.round((total - share * count) * 100) / 100;
+  values[values.length - 1] = Math.round((values[values.length - 1] + remainder) * 100) / 100;
+  return values;
+};
 
 // Field styles for Material-UI components
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
   '& .MuiInputBase-input, & .MuiSelect-select': {
     padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+};
+
+// Compact variant of fieldStyles for inputs/selects placed inside the
+// Waste Entries table cells, where the column header already acts as the label
+const tableFieldStyles = {
+  height: 40,
+  backgroundColor: 'white',
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: '8px 10px',
   },
 };
 
@@ -59,15 +108,13 @@ const AddWasteGenerationPage = () => {
     area: '',
     date: '',
     vendor: '',
-    commodity: '',
-    category: '',
     operationalName: '',
     agencyName: '',
-    generatedUnit: '',
     recycledUnit: '0',
-    uom: 'KG',
-    typeOfWaste: ''
+    remark: '',
   });
+
+  const [wasteEntries, setWasteEntries] = useState<WasteEntryRow[]>([createEmptyWasteEntryRow()]);
 
   // API data state
   const [buildings, setBuildings] = useState<BuildingType[]>([]);
@@ -199,16 +246,9 @@ const AddWasteGenerationPage = () => {
   }, [formData.wing]);
 
   const handleInputChange = (field: string, value: string) => {
-
- if (
-    (field === "generatedUnit" || field === "recycledUnit") &&
-    Number(value) < 0
-  ) {
-    return;
-  }
-
-
-
+    if (field === "recycledUnit" && Number(value) < 0) {
+      return;
+    }
 
     setFormData(prev => ({
       ...prev,
@@ -216,14 +256,49 @@ const AddWasteGenerationPage = () => {
     }));
   };
 
-  // if (!formData.building || !formData.vendor || !formData.commodity || !formData.category || !formData.operationalName || !formData.generatedUnit || !formData.date) {
-  //   reactToast({
-  //     title: "Error",
-  //     description: "Please fill in all required fields",
-  //     variant: "destructive"
-  //   });
-  //   return;
-  // }
+  // Waste entry (category row) helpers
+  const addWasteEntry = () => {
+    setWasteEntries(prev => [...prev, createEmptyWasteEntryRow()]);
+  };
+
+  const removeWasteEntry = (key: string) => {
+    setWasteEntries(prev => (prev.length > 1 ? prev.filter(entry => entry.key !== key) : prev));
+  };
+
+  const updateWasteEntry = (
+    key: string,
+    field: 'category' | 'commodity' | 'uom' | 'bagCount' | 'overallWeight',
+    value: string
+  ) => {
+    if ((field === 'bagCount' || field === 'overallWeight') && Number(value) < 0) {
+      return;
+    }
+    setWasteEntries(prev =>
+      prev.map(entry => (entry.key === key ? { ...entry, [field]: value } : entry))
+    );
+  };
+
+  const addAttachments = (key: string, files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setWasteEntries(prev =>
+      prev.map(entry =>
+        entry.key === key ? { ...entry, attachments: [...entry.attachments, ...Array.from(files)] } : entry
+      )
+    );
+  };
+
+  const removeAttachment = (key: string, index: number) => {
+    setWasteEntries(prev =>
+      prev.map(entry =>
+        entry.key === key ? { ...entry, attachments: entry.attachments.filter((_, i) => i !== index) } : entry
+      )
+    );
+  };
+
+  const totalGeneratedUnit = useMemo(
+    () => wasteEntries.reduce((sum, entry) => sum + (parseFloat(entry.overallWeight) || 0), 0),
+    [wasteEntries]
+  );
 
   const handleSave = async () => {
     if (!formData.building) {
@@ -241,29 +316,37 @@ const AddWasteGenerationPage = () => {
       return;
     }
 
-    if (!formData.commodity) {
-      toast.error("Validation Error: Commodity is required.");
-      return;
-    }
-
-    if (!formData.category) {
-      toast.error("Validation Error: Category is required.");
-      return;
-    }
-
     if (!formData.operationalName) {
       toast.error("Validation Error: Operational Name of Landlord/Tenant is required.");
       return;
     }
 
-    if (!formData.generatedUnit) {
-      toast.error("Validation Error: Generated Unit is required.");
+    if (wasteEntries.length === 0) {
+      toast.error("Validation Error: At least one waste category entry is required.");
       return;
     }
 
-    if (parseFloat(formData.generatedUnit) <= 0) {
-      toast.error("Validation Error: Generated Unit must be greater than 0.");
-      return;
+    for (const entry of wasteEntries) {
+      if (!entry.category) {
+        toast.error("Validation Error: Category is required for every waste entry.");
+        return;
+      }
+      if (!entry.commodity) {
+        toast.error("Validation Error: Commodity is required for every waste entry.");
+        return;
+      }
+      if (!entry.uom.trim()) {
+        toast.error("Validation Error: UOM is required for every waste entry.");
+        return;
+      }
+      if (!entry.bagCount || parseInt(entry.bagCount, 10) <= 0) {
+        toast.error("Validation Error: Bag Count must be at least 1 for every waste entry.");
+        return;
+      }
+      if (!entry.overallWeight || parseFloat(entry.overallWeight) <= 0) {
+        toast.error("Validation Error: Overall Weight must be greater than 0 for every waste entry.");
+        return;
+      }
     }
 
     if (formData.recycledUnit && parseFloat(formData.recycledUnit) < 0) {
@@ -271,35 +354,33 @@ const AddWasteGenerationPage = () => {
       return;
     }
 
-    if (
-      parseFloat(formData.recycledUnit || "0") >
-      parseFloat(formData.generatedUnit)
-    ) {
-      toast.error("Validation Error: Recycled Unit cannot be greater than Generated Unit.");
+    if (parseFloat(formData.recycledUnit || "0") > totalGeneratedUnit) {
+      toast.error("Validation Error: Recycled Unit cannot be greater than total Generated Unit.");
       return;
     }
-    // continue with API call...
-
-
 
     setSubmitting(true);
     try {
       const payload = {
         pms_waste_generation: {
+          wg_date: formData.date,
+          vendor_id: formData.vendor ? parseInt(formData.vendor) : null,
+          operational_landlord_id: parseInt(formData.operationalName),
           building_id: parseInt(formData.building),
           wing_id: formData.wing ? parseInt(formData.wing) : null,
           area_id: formData.area ? parseInt(formData.area) : null,
-          vendor_id: formData.vendor ? parseInt(formData.vendor) : null,
-          commodity_id: parseInt(formData.commodity),
-          category_id: parseInt(formData.category),
-          operational_landlord_id: parseInt(formData.operationalName),
           agency_name: formData.agencyName || '',
-          waste_unit: parseFloat(formData.generatedUnit),
           recycled_unit: formData.recycledUnit ? parseFloat(formData.recycledUnit) : 0,
-          wg_date: formData.date,
-          uom: formData.uom || '',
-          type_of_waste: formData.typeOfWaste || ''
-        }
+          remark: formData.remark || '',
+        },
+        waste_entries: wasteEntries.map((entry): WasteEntryInput => ({
+          category_id: parseInt(entry.category),
+          commodity_id: parseInt(entry.commodity),
+          uom: entry.uom,
+          values: distributeWeight(parseFloat(entry.overallWeight), parseInt(entry.bagCount, 10)),
+          attachments: entry.attachments,
+          signature: null,
+        })),
       };
 
       console.log('Submitting waste generation data:', payload);
@@ -491,75 +572,190 @@ const AddWasteGenerationPage = () => {
                 size="schedule"
                 error={false}
               />
-
-              <FormControl fullWidth disabled={loadingCommodities}>
-                <InputLabel shrink id="commodity-label" sx={{ backgroundColor: 'white', px: 1 }}>
-                  Commodity <span className="text-red-500">*</span>
-                </InputLabel>
-                <Select
-                  labelId="commodity-label"
-                  value={formData.commodity}
-                  onChange={(e: SelectChangeEvent<string>) => handleInputChange('commodity', e.target.value)}
-                  displayEmpty
-                  sx={fieldStyles}
-                  MenuProps={selectMenuProps}
-                >
-                  <MenuItem value="">
-                    <em>{loadingCommodities ? 'Loading...' : 'Select Commodity'}</em>
-                  </MenuItem>
-                  {commodityOptions.map((opt) => (
-                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <FormControl fullWidth disabled={loadingCategories}>
-                <InputLabel shrink id="category-label" sx={{ backgroundColor: 'white', px: 1 }}>
-                  Category <span className="text-red-500">*</span>
-                </InputLabel>
-                <Select
-                  labelId="category-label"
-                  value={formData.category}
-                  onChange={(e: SelectChangeEvent<string>) => handleInputChange('category', e.target.value)}
-                  displayEmpty
-                  sx={fieldStyles}
-                  MenuProps={selectMenuProps}
-                >
-                  <MenuItem value="">
-                    <em>{loadingCategories ? 'Loading...' : 'Select Category'}</em>
-                  </MenuItem>
-                  {categoryOptions.map((opt) => (
-                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <TextField
-                fullWidth
-                label="UOM"
-                variant="outlined"
-                value={formData.uom}
-                onChange={(e) => handleInputChange('uom', e.target.value)}
-                placeholder="Enter UOM"
-                // sx={{ '& .MuiInputBase-root': fieldStyles }}
-                sx={fieldStyles}
-                InputLabelProps={{ shrink: true }}
-              />
             </div>
 
-            {/* Additional Waste Details */}
-            <div className="">
+            {/* Waste Entries — one table row per category, each with its own
+                commodity, UOM, a dynamic list of bag weights, and attachments */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base font-semibold text-gray-900">Waste Entries</h3>
+              </div>
 
+              <div className="border border-gray-200 rounded-md overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-gray-50">
+                    <TableRow className="border-b-gray-200 hover:bg-gray-50">
+                      <TableHead className="w-12 font-semibold text-gray-600">Sr. No.</TableHead>
+                      <TableHead className="min-w-[180px] font-semibold text-gray-600">
+                        Category <span className="text-red-500">*</span>
+                      </TableHead>
+                      <TableHead className="min-w-[180px] font-semibold text-gray-600">
+                        Commodity <span className="text-red-500">*</span>
+                      </TableHead>
+                      <TableHead className="min-w-[110px] font-semibold text-gray-600">
+                        UOM <span className="text-red-500">*</span>
+                      </TableHead>
+                      <TableHead className="min-w-[280px] font-semibold text-gray-600">
+                        Bags / Weights <span className="text-red-500">*</span>
+                      </TableHead>
+                      <TableHead className="min-w-[220px] font-semibold text-gray-600">Attachments</TableHead>
+                      <TableHead className="w-10"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {wasteEntries.map((entry, entryIndex) => (
+                      <TableRow key={entry.key} className="border-b-gray-200 hover:bg-transparent align-top">
+                        <TableCell className="pt-4 text-sm text-gray-600">{entryIndex + 1}</TableCell>
 
-              {/* <TextField
-                fullWidth
-                label="Type of Waste"
-                variant="outlined"
-                value={formData.typeOfWaste}
-                onChange={(e) => handleInputChange('typeOfWaste', e.target.value)}
-                placeholder="Enter type of waste"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
-                InputLabelProps={{ shrink: true }}
-              /> */}
+                        <TableCell className="p-2 align-top">
+                          <FormControl fullWidth size="small" disabled={loadingCategories}>
+                            <Select
+                              value={entry.category}
+                              onChange={(e: SelectChangeEvent<string>) => updateWasteEntry(entry.key, 'category', e.target.value)}
+                              displayEmpty
+                              sx={tableFieldStyles}
+                              MenuProps={selectMenuProps}
+                            >
+                              <MenuItem value="">
+                                <em>{loadingCategories ? 'Loading...' : 'Select Category'}</em>
+                              </MenuItem>
+                              {categoryOptions.map((opt) => (
+                                <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </TableCell>
+
+                        <TableCell className="p-2 align-top">
+                          <FormControl fullWidth size="small" disabled={loadingCommodities}>
+                            <Select
+                              value={entry.commodity}
+                              onChange={(e: SelectChangeEvent<string>) => updateWasteEntry(entry.key, 'commodity', e.target.value)}
+                              displayEmpty
+                              sx={tableFieldStyles}
+                              MenuProps={selectMenuProps}
+                            >
+                              <MenuItem value="">
+                                <em>{loadingCommodities ? 'Loading...' : 'Select Commodity'}</em>
+                              </MenuItem>
+                              {commodityOptions.map((opt) => (
+                                <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </TableCell>
+
+                        <TableCell className="p-2 align-top">
+                          <TextField
+                            fullWidth
+                            variant="outlined"
+                            value={entry.uom}
+                            onChange={(e) => updateWasteEntry(entry.key, 'uom', e.target.value)}
+                            placeholder="UOM"
+                            sx={tableFieldStyles}
+                          />
+                        </TableCell>
+
+                        <TableCell className="p-2 align-top">
+                          <div className="flex items-start gap-2">
+                            <TextField
+                              type="number"
+                              label="Bag Count"
+                              value={entry.bagCount}
+                              onChange={(e) => updateWasteEntry(entry.key, 'bagCount', e.target.value)}
+                              variant="outlined"
+                              inputProps={{ min: '1', step: '1' }}
+                              sx={{ width: 100, ...tableFieldStyles }}
+                              InputLabelProps={{ shrink: true }}
+                            />
+                            <TextField
+                              type="number"
+                              label="Overall Weight"
+                              value={entry.overallWeight}
+                              onChange={(e) => updateWasteEntry(entry.key, 'overallWeight', e.target.value)}
+                              variant="outlined"
+                              inputProps={{ min: '0' }}
+                              sx={{ width: 120, ...tableFieldStyles }}
+                              InputLabelProps={{ shrink: true }}
+                            />
+                          </div>
+                          {(() => {
+                            const count = parseInt(entry.bagCount, 10);
+                            const total = parseFloat(entry.overallWeight);
+                            if (!(count > 0) || !(total > 0)) return null;
+                            const perBag = distributeWeight(total, count);
+                            return (
+                              <p className="text-xs text-gray-500 mt-1.5">
+                                {count} bag{count > 1 ? 's' : ''}: {perBag.join(', ')} {entry.uom || ''}
+                              </p>
+                            );
+                          })()}
+                        </TableCell>
+
+                        <TableCell className="p-2 align-top">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="inline-flex items-center justify-center bg-gray-100 border border-gray-300 rounded px-3 py-1.5 text-xs text-gray-900 cursor-pointer hover:bg-gray-200 w-fit">
+                              Choose File(s)
+                              <input
+                                type="file"
+                                multiple
+                                className="hidden"
+                                onChange={(e) => {
+                                  addAttachments(entry.key, e.target.files);
+                                  e.target.value = '';
+                                }}
+                              />
+                            </label>
+                            {entry.attachments.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {entry.attachments.map((file, fileIndex) => (
+                                  <span
+                                    key={fileIndex}
+                                    className="inline-flex items-center gap-1 bg-white border border-gray-300 rounded px-1.5 py-0.5 text-xs text-gray-700 max-w-[160px]"
+                                  >
+                                    <span className="truncate">{file.name}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeAttachment(entry.key, fileIndex)}
+                                      className="text-gray-400 hover:text-red-600 shrink-0"
+                                      aria-label="Remove attachment"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+
+                        <TableCell className="p-2 pt-4 text-center">
+                          {wasteEntries.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeWasteEntry(entry.key)}
+                              className="text-gray-400 hover:text-red-600 transition-colors"
+                              aria-label="Remove category"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addWasteEntry}
+                className="mt-3 border-brand text-brand hover:bg-brand-selected hover:text-brand"
+              >
+                <Plus className="w-4 h-4 mr-1" /> Add Category
+              </Button>
             </div>
 
             {/* Organization Details Section */}
@@ -594,30 +790,21 @@ const AddWasteGenerationPage = () => {
                   },
                 }}
                 sx={fieldStyles}
-              // InputProps={{
-              //   sx: fieldStyles,
-              // }}
               />
 
               <TextField
-                // label="Generated Unit*"
-                label={<span>Generated Unit <span className="text-red-500">*</span></span>}
+                label="Total Generated Unit"
                 type="number"
-                placeholder="Enter Unit"
-                value={formData.generatedUnit}
-                onChange={(e) => handleInputChange('generatedUnit', e.target.value)}
+                value={totalGeneratedUnit}
                 fullWidth
                 variant="outlined"
-                inputProps={{ min: "0" }}
+                disabled
                 slotProps={{
                   inputLabel: {
                     shrink: true,
                   },
                 }}
                 sx={fieldStyles}
-              // InputProps={{
-              //   sx: fieldStyles,
-              // }}
               />
 
               <TextField
@@ -635,10 +822,25 @@ const AddWasteGenerationPage = () => {
                   },
                 }}
                 sx={fieldStyles}
-              // InputProps={{
-              //   sx: fieldStyles,
-              // }}
               />
+
+              <div className="md:col-span-2">
+                <TextField
+                  label="Remark"
+                  placeholder="Enter remark"
+                  value={formData.remark}
+                  onChange={(e) => handleInputChange('remark', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  multiline
+                  minRows={2}
+                  slotProps={{
+                    inputLabel: {
+                      shrink: true,
+                    },
+                  }}
+                />
+              </div>
             </div>
           </div>
 

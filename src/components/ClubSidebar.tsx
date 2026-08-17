@@ -120,11 +120,11 @@ const modulesByPackage = {
       icon: Users,
       href: "/pulse/community",
     },
-    // {
-    //   name: "Invoices",
-    //   icon: FileText,
-    //   href: "/accounting/invoices/list",
-    // },
+    {
+      name: "Invoice",
+      icon: FileText,
+      href: "/club-management/invoice",
+    },
     // {
     //     name: "Accounting",
     //     icon: Calculator,

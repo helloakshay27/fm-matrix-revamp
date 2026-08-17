@@ -13,7 +13,7 @@ import { buildJobPayload } from "./api/jobsApi";
 
 export default function JobsCreatePage() {
   const navigate = useNavigate();
-  const { step, setStep, canNext, jobForm, formKras, formKpis, resetCreate } = useJobs();
+  const { step, setStep, canNext, nextBlockReason, jobForm, formKras, formKpis, resetCreate } = useJobs();
   const createJob = useCreateJob({
     onSuccess: () => {
       toast.success("Job description created successfully");
@@ -88,7 +88,19 @@ export default function JobsCreatePage() {
         <div style={{ display: "flex", gap: 10 }}>
           <Btn onClick={handleCancel}>Cancel</Btn>
           {step < 4 ? (
-            <Btn primary disabled={!canNext()} onClick={() => setStep((s) => s + 1)}>
+            <Btn
+              primary
+              disabled={!canNext() && !nextBlockReason()}
+              onClick={() => {
+                const reason = nextBlockReason();
+                if (reason) {
+                  toast.error(reason);
+                  return;
+                }
+                if (!canNext()) return;
+                setStep((s) => s + 1);
+              }}
+            >
               Continue <I d="M9 18l6-6-6-6" size={14} stroke="#fff" />
             </Btn>
           ) : (

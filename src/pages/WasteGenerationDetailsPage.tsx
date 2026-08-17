@@ -11,6 +11,7 @@ import {
   ShoppingBag,
   History,
   FileCheck,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -82,21 +83,45 @@ export const WasteGenerationDetailsPage = () => {
 
         setWasteData(wasteGeneration);
 
-        const rows: BagRow[] = (wasteGeneration.waste_bag_details || []).map((bag: unknown, idx: number) => {
-          const bagObj = bag as Record<string, unknown>;
-          const category = extractBagField(bagObj, [/^category$/i, /category_name/i])
-            ?? wasteGeneration.category?.category_name
-            ?? "-";
-          const subCategory = extractBagField(bagObj, [/sub.?categ/i, /commodity/i])
-            ?? wasteGeneration.commodity?.category_name
-            ?? "-";
-          const weightVal = extractBagField(bagObj, [/value|weight/i]);
-          const weight =
-            weightVal !== null && !isNaN(Number(weightVal))
-              ? `${Number(weightVal)} kg`
-              : weightVal ?? "-";
-          return { id: `bag-${idx}`, category, subCategory, weight };
-        });
+        // Multi-category records (created via `waste_entries`) carry their bag
+        // breakdown per-entry in `categories`, each with its own category/commodity
+        // and unit of measure. Legacy single-category records instead carry one
+        // flat `waste_bag_details` list off the record itself.
+        let rows: BagRow[];
+        if (wasteGeneration.categories && wasteGeneration.categories.length > 0) {
+          rows = [];
+          let idx = 0;
+          for (const entry of wasteGeneration.categories) {
+            const category = entry.category?.category_name ?? "-";
+            const subCategory = entry.commodity?.category_name ?? "-";
+            const uom = entry.uom ?? "";
+            for (const bag of entry.waste_bag_details || []) {
+              const weightVal = bag.field_value;
+              const weight =
+                weightVal !== null && weightVal !== undefined && weightVal !== "" && !isNaN(Number(weightVal))
+                  ? `${Number(weightVal)} ${uom}`.trim()
+                  : weightVal || "-";
+              rows.push({ id: `bag-${idx}`, category, subCategory, weight });
+              idx += 1;
+            }
+          }
+        } else {
+          rows = (wasteGeneration.waste_bag_details || []).map((bag: unknown, idx: number) => {
+            const bagObj = bag as Record<string, unknown>;
+            const category = extractBagField(bagObj, [/^category$/i, /category_name/i])
+              ?? wasteGeneration.category?.category_name
+              ?? "-";
+            const subCategory = extractBagField(bagObj, [/sub.?categ/i, /commodity/i])
+              ?? wasteGeneration.commodity?.category_name
+              ?? "-";
+            const weightVal = extractBagField(bagObj, [/value|weight/i]);
+            const weight =
+              weightVal !== null && !isNaN(Number(weightVal))
+                ? `${Number(weightVal)} kg`
+                : weightVal ?? "-";
+            return { id: `bag-${idx}`, category, subCategory, weight };
+          });
+        }
         setBagRows(rows);
       } catch (err) {
         console.error("Error fetching waste generation details:", err);
@@ -474,9 +499,11 @@ export const WasteGenerationDetailsPage = () => {
                             <button
                               type="button"
                               onClick={() => handleDeleteBagRow(row.id)}
-                              className="text-red-600 hover:underline text-sm font-medium"
+                              className="text-red-600 hover:text-red-700"
+                              title="Delete"
+                              aria-label="Delete"
                             >
-                              Delete
+                              <Trash2 className="h-4 w-4" />
                             </button>
                           </TableCell>
                         </TableRow>

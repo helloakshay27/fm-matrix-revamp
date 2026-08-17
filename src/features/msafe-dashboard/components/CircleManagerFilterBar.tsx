@@ -9,7 +9,6 @@ import {
   TextField,
   OutlinedInput,
 } from '@mui/material';
-import { CIRCLES, FUNCTIONS, ZONES } from '../data/constants';
 import { useMsafeDashboard } from '../context/MsafeDashboardContext';
 
 const VI_FOCUS = '#C72030';
@@ -61,23 +60,21 @@ const selectMenuProps = {
   disableEnforceFocus: true,
 };
 
-const EMP_TYPES = [
-  'Internal / External',
-  'Internal (FTE)',
-  'External (Non-FTE)',
-];
-
 export function CircleManagerFilterBar() {
   const {
     persona,
     circle,
     setCircle,
+    setCircleId,
     functions,
     setFunctions,
-    zone,
-    setZone,
+    setFunctionIds,
+    // zone,
+    // setZone,
+    // setZoneId,
     empType,
     setEmpType,
+    setEmpTypeId,
     startDate,
     setStartDate,
     endDate,
@@ -85,6 +82,10 @@ export function CircleManagerFilterBar() {
     applyFilters,
     resetFilters,
     setPageTitle,
+    circleOptions,
+    functionOptions,
+    empTypeOptions,
+    loadingFilterOptions,
   } = useMsafeDashboard();
 
   const [funcOpen, setFuncOpen] = useState(false);
@@ -116,14 +117,16 @@ export function CircleManagerFilterBar() {
           onChange={(e) => {
             const v = String(e.target.value);
             setCircle(v);
+            setCircleId(circleOptions.find((o) => o.name === v)?.id ?? '');
             setPageTitle(`M-Safe · ${v} Circle`);
           }}
           sx={fieldStyles}
           MenuProps={selectMenuProps}
+          disabled={loadingFilterOptions}
         >
-          {CIRCLES.map((c) => (
-            <MenuItem key={c} value={c}>
-              {c}
+          {circleOptions.map((c) => (
+            <MenuItem key={c.id} value={c.name}>
+              {c.name}
             </MenuItem>
           ))}
         </MuiSelect>
@@ -148,7 +151,13 @@ export function CircleManagerFilterBar() {
           value={functions}
           onChange={(e) => {
             const v = e.target.value;
-            setFunctions(typeof v === 'string' ? v.split(',') : (v as string[]));
+            const names = typeof v === 'string' ? v.split(',') : (v as string[]);
+            setFunctions(names);
+            setFunctionIds(
+              names
+                .map((n) => functionOptions.find((o) => o.name === n)?.id)
+                .filter((id): id is string => Boolean(id)),
+            );
           }}
           input={<OutlinedInput notched label="Function *" />}
           renderValue={() => (
@@ -158,11 +167,12 @@ export function CircleManagerFilterBar() {
           )}
           sx={fieldStyles}
           MenuProps={selectMenuProps}
+          disabled={loadingFilterOptions}
         >
-          {FUNCTIONS.map((fn) => (
-            <MenuItem key={fn} value={fn} dense>
+          {functionOptions.map((fn) => (
+            <MenuItem key={fn.id} value={fn.name} dense>
               <Checkbox
-                checked={functions.includes(fn)}
+                checked={functions.includes(fn.name)}
                 size="small"
                 sx={{
                   color: '#C4B89D',
@@ -171,7 +181,7 @@ export function CircleManagerFilterBar() {
                 }}
               />
               <ListItemText
-                primary={fn}
+                primary={fn.name}
                 primaryTypographyProps={{ fontSize: 13, fontFamily: "'Poppins', sans-serif" }}
               />
             </MenuItem>
@@ -179,7 +189,7 @@ export function CircleManagerFilterBar() {
         </MuiSelect>
       </FormControl>
 
-      <FormControl
+      {/* <FormControl
         variant="outlined"
         size="small"
         sx={{ minWidth: 140, flex: '1 1 140px', maxWidth: 200 }}
@@ -193,6 +203,7 @@ export function CircleManagerFilterBar() {
           onChange={(e) => {
             const v = String(e.target.value);
             setZone(v);
+            setZoneId(zoneOptions.find((o) => o.name === v)?.id ?? '');
             setPageTitle(
               v === 'All Zones'
                 ? `M-Safe · ${circle} Circle`
@@ -201,14 +212,15 @@ export function CircleManagerFilterBar() {
           }}
           sx={fieldStyles}
           MenuProps={selectMenuProps}
+          disabled={loadingFilterOptions}
         >
-          {ZONES.map((z) => (
-            <MenuItem key={z} value={z}>
-              {z}
+          {zoneOptions.map((z) => (
+            <MenuItem key={z.id || z.name} value={z.name}>
+              {z.name}
             </MenuItem>
           ))}
         </MuiSelect>
-      </FormControl>
+      </FormControl> */}
 
       <FormControl
         variant="outlined"
@@ -223,13 +235,18 @@ export function CircleManagerFilterBar() {
           notched
           displayEmpty
           value={empType}
-          onChange={(e) => setEmpType(String(e.target.value))}
+          onChange={(e) => {
+            const v = String(e.target.value);
+            setEmpType(v);
+            setEmpTypeId(empTypeOptions.find((o) => o.name === v)?.id ?? '');
+          }}
           sx={fieldStyles}
           MenuProps={selectMenuProps}
+          disabled={loadingFilterOptions}
         >
-          {EMP_TYPES.map((t) => (
-            <MenuItem key={t} value={t}>
-              {t}
+          {empTypeOptions.map((t) => (
+            <MenuItem key={t.id || t.name} value={t.name}>
+              {t.name}
             </MenuItem>
           ))}
         </MuiSelect>
@@ -267,7 +284,7 @@ export function CircleManagerFilterBar() {
         sx={{ ...dateFieldStyles, minWidth: 140, flex: '0 1 150px' }}
       />
 
-      <button type="button" className="cm-apply-btn" onClick={applyFilters}>
+      <button type="button" className="cm-apply-btn" onClick={() => applyFilters()}>
         Apply
       </button>
       <button type="button" className="cm-reset-btn" onClick={resetFilters}>

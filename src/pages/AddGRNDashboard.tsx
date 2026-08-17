@@ -447,7 +447,7 @@ export const AddGRNDashboard = () => {
         return false;
       }
       if (
-        item.receivedQuantity > item.expectedQuantity
+        parseFloat(item.receivedQuantity) > parseFloat(item.expectedQuantity)
       ) {
         toast.error(`Received Quantity cannot be greater than Expected Quantity for item ${index + 1}`);
         return false;
@@ -533,7 +533,7 @@ export const AddGRNDashboard = () => {
     try {
       await dispatch(createGRN({ data: payload, baseUrl, token })).unwrap();
       toast.success("GRN submitted successfully!");
-      try { procurementEvents.onGrnSubmitted({ item_count: inventoryDetails.length, batch_count: inventoryDetails.reduce((acc, it) => acc + (it.batch?.length||0), 0), has_invoice: Boolean(grnDetails.invoiceNumber), partial_receipt: false }); } catch (err) {}
+      try { procurementEvents.onGrnSubmitted({ item_count: inventoryDetails.length, batch_count: inventoryDetails.reduce((acc, it) => acc + (it.batch?.length || 0), 0), has_invoice: Boolean(grnDetails.invoiceNumber), partial_receipt: false }); } catch (err) { }
       navigate("/finance/grn-srn");
     } catch (error: any) {
       toast.error(error.message || "Failed to submit GRN.");

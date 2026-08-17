@@ -1,11 +1,52 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useLayout } from "../contexts/LayoutContext";
+import { RootState, AppDispatch } from "@/store/store";
+import { fetchAllowedCompanies } from "@/store/slices/projectSlice";
+import { fetchAllowedSites } from "@/store/slices/siteSlice";
+import { getUser } from "@/utils/auth";
 
 // Pulse-specific packages - shown statically
 const packages = ["Pulse Privilege", "Master", "Settings"];
 
 export const PulseDynamicHeader = () => {
   const { currentSection, setCurrentSection, isSidebarCollapsed } = useLayout();
+  const dispatch = useDispatch<AppDispatch>();
+  const { selectedCompany } = useSelector((state: RootState) => state.project);
+  const { selectedSite } = useSelector((state: RootState) => state.site);
+  const userId = getUser()?.id;
+
+  // Pulse renders its own header instead of Header.tsx, so nothing else
+  // fetches org/company/site context on these routes — without this, every
+  // Pulse PostHog event would be missing company_id/company_name/site_id/
+  // site_name (see posthogHelpers.ts). Mirrors Header.tsx's equivalent effects.
+  useEffect(() => {
+    dispatch(fetchAllowedCompanies());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (selectedCompany && userId) {
+      dispatch(fetchAllowedSites(userId));
+    }
+  }, [selectedCompany, userId, dispatch]);
+
+  useEffect(() => {
+    if (selectedCompany) {
+      localStorage.setItem("selectedCompany", selectedCompany.name);
+      if (selectedCompany.id) {
+        localStorage.setItem("selectedCompanyId", selectedCompany.id.toString());
+      }
+    }
+  }, [selectedCompany]);
+
+  useEffect(() => {
+    if (selectedSite) {
+      localStorage.setItem("selectedSiteName", selectedSite.name);
+      if (selectedSite.id) {
+        localStorage.setItem("selectedSiteId", selectedSite.id.toString());
+      }
+    }
+  }, [selectedSite]);
 
   return (
     <div

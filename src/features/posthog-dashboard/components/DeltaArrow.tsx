@@ -8,7 +8,7 @@ export function DeltaArrow({ delta, goodUp = true }: DeltaArrowProps) {
   const good = delta > 0 === goodUp;
   const cls = good ? 'up' : 'dn';
   const arrow = delta > 0 ? '↗' : delta < 0 ? '↘' : '→';
-  return <span className={`phg-delta ${cls}`}>{arrow}{delta > 0 ? '+' : ''}{delta}%</span>;
+  return <span className={`delta ${cls}`}>{arrow}{delta > 0 ? '+' : ''}{delta}%</span>;
 }
 
 interface TrendArrowProps {
@@ -21,5 +21,5 @@ export function TrendArrow({ delta, goodUp = true }: TrendArrowProps) {
   const good = delta >= 0 === goodUp;
   const cls = delta === 0 ? 'flat' : good ? 'up' : 'dn';
   const arrow = delta > 0 ? '↗' : delta < 0 ? '↘' : '→';
-  return <span className={`phg-arrow ${cls}`}>{arrow}</span>;
+  return <span className={`arrow ${cls}`}>{arrow}</span>;
 }

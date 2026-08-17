@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-    useUpdateIssue,
     useImportIssues,
     useDownloadSampleIssueFile,
 } from "@/hooks/useIssues";
@@ -287,7 +286,7 @@ const ResponsiblePersonReasonModal = ({
                     <Button
                         onClick={handleSubmit}
                         disabled={isLoading}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                        className="px-4 py-2 disabled:opacity-50"
                     >
                         {isLoading ? "Submitting..." : "Change Responsible Person"}
                     </Button>
@@ -459,8 +458,7 @@ const BusinessCompassIssuesPage = () => {
             0,
     };
 
-    // Mutations (Issue is a shared resource, so the generic issue endpoints apply)
-    const updateMutation = useUpdateIssue();
+    // Mutations
     const importMutation = useImportIssues();
     const downloadMutation = useDownloadSampleIssueFile();
 
@@ -563,13 +561,13 @@ const BusinessCompassIssuesPage = () => {
 
     const handleIssueTypeChange = async (issueId: string, newType: string) => {
         try {
-            await updateMutation.mutateAsync({
-                id: issueId,
-                data: { issue_type: newType },
-                baseUrl,
-                token,
-            });
+            await axios.put(
+                `https://${baseUrl}/business_compass/issues/${issueId}.json`,
+                { issue: { issue_type: newType } },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
             toast.success("Issue type updated successfully");
+            refetchIssues();
         } catch (error) {
             console.log(error);
             toast.error("Failed to update issue type");
@@ -588,13 +586,13 @@ const BusinessCompassIssuesPage = () => {
             setIsResponsibleModalOpen(true);
         } else {
             try {
-                await updateMutation.mutateAsync({
-                    id: issueId,
-                    data: { responsible_person_id: assignedToId },
-                    baseUrl,
-                    token,
-                });
+                await axios.put(
+                    `https://${baseUrl}/business_compass/issues/${issueId}.json`,
+                    { issue: { responsible_person_id: assignedToId } },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
                 toast.success("Issue updated successfully");
+                refetchIssues();
             } catch (error) {
                 console.log(error);
                 toast.error("Failed to update issue");
@@ -609,16 +607,41 @@ const BusinessCompassIssuesPage = () => {
     ) => {
         setIsResponsibleLoading(true);
         try {
-            await updateMutation.mutateAsync({
-                id: issueId,
-                data: { responsible_person_id: newPersonId },
-                baseUrl,
-                token,
+            const currentIssue = displayIssues?.find(
+                (issue: any) => String(issue.id) === String(issueId)
+            );
+            const oldResponsibleUser = users.find(
+                (u: any) => u.id === currentIssue?.responsible_person_id
+            );
+            const oldResponsibleName = oldResponsibleUser?.full_name || "Unknown";
+            const newResponsibleUser = users.find((u: any) => u.id === newPersonId);
+            const newResponsibleName =
+                newResponsibleUser?.full_name || `User ${newPersonId}`;
+
+            await axios.put(
+                `https://${baseUrl}/business_compass/issues/${issueId}.json`,
+                { issue: { responsible_person_id: newPersonId } },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            const commentPayload = {
+                comment: {
+                    body: `Responsible person changed from ${oldResponsibleName} to ${newResponsibleName} with reason: ${reason}`,
+                    commentable_id: issueId,
+                    commentable_type: "BusinessCompassIssue",
+                    commentor_id: JSON.parse(localStorage.getItem("user"))?.id,
+                    active: true,
+                },
+            };
+            await axios.post(`https://${baseUrl}/comments.json`, commentPayload, {
+                headers: { Authorization: `Bearer ${token}` },
             });
+
             toast.success("Issue responsible person updated successfully");
             setIsResponsibleModalOpen(false);
             setResponsibleTaskId(null);
             setPendingResponsiblePersonId(null);
+            refetchIssues();
         } catch (error) {
             console.log(error);
             toast.error("Failed to update issue");
@@ -723,6 +746,20 @@ const BusinessCompassIssuesPage = () => {
                 { status: "stopped" },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
+
+            const commentPayload = {
+                comment: {
+                    body: `Paused with reason: ${reason}`,
+                    commentable_id: iid,
+                    commentable_type: "BusinessCompassIssue",
+                    commentor_id: JSON.parse(localStorage.getItem("user"))?.id,
+                    active: true,
+                },
+            };
+            await axios.post(`https://${baseUrl}/comments.json`, commentPayload, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
             toast.success("Issue paused successfully");
             setIsPauseModalOpen(false);
             setPauseIssueId(null);
@@ -743,6 +780,20 @@ const BusinessCompassIssuesPage = () => {
                 { status: "completed" },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
+
+            const commentPayload = {
+                comment: {
+                    body: `Ended with reason: ${reason}`,
+                    commentable_id: iid,
+                    commentable_type: "BusinessCompassIssue",
+                    commentor_id: JSON.parse(localStorage.getItem("user"))?.id,
+                    active: true,
+                },
+            };
+            await axios.post(`https://${baseUrl}/comments.json`, commentPayload, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
             toast.success("Issue ended successfully");
             setIsPauseModalOpen(false);
             setPauseIssueId(null);

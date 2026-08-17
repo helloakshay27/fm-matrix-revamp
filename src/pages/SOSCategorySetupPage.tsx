@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,16 @@ const columns: ColumnConfig[] = [
 ];
 
 const SOSCategorySetupPage = () => {
+  const pulseEvents = usePulseEvents();
+
+  useEffect(() => {
+    pulseEvents.onModuleViewed({
+      module: "SOS Category Setup",
+      package: "Settings",
+      screen: "pulse_sos_category_setup",
+    });
+  }, [pulseEvents]);
+
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
 

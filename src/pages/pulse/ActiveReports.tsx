@@ -7,6 +7,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import axios from "axios";
 import { toast } from "sonner";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -54,6 +55,7 @@ const STATUS_OPTIONS: TabValue[] = [
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export const ActiveReports: React.FC = () => {
+  const pulseEvents = usePulseEvents();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabValue>("Under Review");
 
@@ -104,6 +106,11 @@ export const ActiveReports: React.FC = () => {
     fetchReports(activeTab);
   }, [activeTab, fetchReports]);
 
+  // Pulse Report List Viewed — fires once per screen visit
+  useEffect(() => {
+    pulseEvents.onReportListViewed();
+  }, [pulseEvents]);
+
   // ── Update status ────────────────────────────────────────────────────────────
   const handleStatusChange = async (reportId: number, newStatus: string) => {
     if (!baseUrl || !token) return;
@@ -115,6 +122,12 @@ export const ActiveReports: React.FC = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success("Status updated successfully");
+      // Pulse Report Status Updated — fires after a successful status-change API call
+      pulseEvents.onReportStatusUpdated({
+        report_id: reportId,
+        from_status: activeTab,
+        to_status: newStatus,
+      });
       // Refresh current tab
       fetchReports(activeTab);
     } catch (err: unknown) {

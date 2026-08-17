@@ -214,7 +214,7 @@ export const RVehiclesInDashboard = () => {
                     </div>
                     <Button
                       onClick={() => handleInButtonClick(vehicle.vehicleNumber)}
-                      style={{ backgroundColor: '#10B981' }}
+                      style={{ backgroundColor: '#DA7756' }}
                       className="hover:opacity-90 text-white px-3 py-1 text-sm"
                     >
                       In

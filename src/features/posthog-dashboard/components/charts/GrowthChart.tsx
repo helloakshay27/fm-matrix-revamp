@@ -1,52 +1,51 @@
 import { useState } from 'react';
 import type { GrowthWeek } from '../../data/metrics';
 
+/**
+ * Growth accounting: new / returning / resurrected stacked above the zero line,
+ * dormant below it. Same geometry and palette as the wireframe; the hover
+ * tooltip is the only addition.
+ */
 export function GrowthChart({ weeks }: { weeks: GrowthWeek[] }) {
-  const W = 560, H = 240, pl = 34, pr = 10, pt = 14, pb = 26;
+  const W = 600, H = 250, pl = 36, pr = 12, pt = 18, pb = 28;
   const n = weeks.length;
   const [tipIdx, setTipIdx] = useState<number | null>(null);
   if (!n) return null;
 
   const maxUp = Math.max(0, ...weeks.map((w) => w.nw + w.ret + w.res));
   const maxDn = Math.max(0, ...weeks.map((w) => w.dorm));
-  const bw = ((W - pl - pr) / n) * 0.6;
   const gap = (W - pl - pr) / n;
+  const bw = gap * 0.5;
   const zero = pt + (H - pt - pb) * (maxUp / (maxUp + maxDn || 1));
   const scaleUp = (zero - pt) / (maxUp || 1);
   const scaleDn = (H - pb - zero) / (maxDn || 1);
 
-  const TIP_W = 148, TIP_H = 90;
+  const TIP_W = 150, TIP_H = 92;
+  const axisFont = 'Inter,-apple-system,Segoe UI,sans-serif';
 
   return (
-    <svg
-      className="phg-chart"
-      viewBox={`0 0 ${W} ${H}`}
-      onMouseLeave={() => setTipIdx(null)}
-    >
-      <line x1={pl} y1={zero} x2={W - pr} y2={zero} stroke="#c9c6ba" />
-
+    <svg className="chart" viewBox={`0 0 ${W} ${H}`} onMouseLeave={() => setTipIdx(null)}>
       {weeks.map((w, i) => {
-        const x = pl + i * gap + gap * 0.2;
+        const x = pl + i * gap + (gap - bw) / 2;
         let y = zero;
         const segs: { h: number; fill: string }[] = [
-          { h: w.nw * scaleUp, fill: 'var(--phg-blue)' },
-          { h: w.ret * scaleUp, fill: 'var(--phg-green)' },
-          { h: w.res * scaleUp, fill: 'var(--phg-orange)' },
+          { h: w.nw * scaleUp, fill: 'var(--chart-blue)' },
+          { h: w.ret * scaleUp, fill: 'var(--chart-mint)' },
+          { h: w.res * scaleUp, fill: 'var(--chart-amber)' },
         ];
         const rects = segs.map((seg, si) => {
           y -= seg.h;
-          return <rect key={si} x={x} y={y} width={bw} height={Math.max(0, seg.h)} rx={1.5} fill={seg.fill} />;
+          return <rect key={si} x={x.toFixed(1)} y={y.toFixed(1)} width={bw.toFixed(1)} height={Math.max(0, seg.h).toFixed(1)} fill={seg.fill} />;
         });
         const hd = w.dorm * scaleDn;
         const hitX = pl + i * gap;
 
-        // Tooltip positioning — flip to left if near right edge
-        const tipX = i > n - 3 ? hitX - TIP_W - 4 : hitX + gap * 0.2;
+        // flip the tooltip to the left near the right edge
+        const tipX = i > n - 3 ? hitX - TIP_W - 4 : hitX + (gap - bw) / 2;
         const tipY = Math.max(pt, zero - TIP_H - 8);
 
         return (
           <g key={w.label + i}>
-            {/* Invisible wider hit area for hover */}
             <rect
               x={hitX} y={pt} width={gap} height={H - pt - pb + 10}
               fill="transparent"
@@ -54,37 +53,32 @@ export function GrowthChart({ weeks }: { weeks: GrowthWeek[] }) {
               onMouseEnter={() => setTipIdx(i)}
             />
             {rects}
-            <rect x={x} y={zero} width={bw} height={Math.max(0, hd)} rx={1.5} fill="var(--phg-red)" opacity={0.92} />
-            <text x={x + bw / 2} y={H - 8} textAnchor="middle" fontSize={9.5} fill="#9b998f">{w.label}</text>
+            <rect x={x.toFixed(1)} y={zero.toFixed(1)} width={bw.toFixed(1)} height={Math.max(0, hd).toFixed(1)} fill="var(--chart-red)" />
+            <text x={x + bw / 2} y={H - 8} textAnchor="middle" fontSize={11} fill="var(--faint)" fontFamily={axisFont}>{w.label}</text>
 
-            {/* Tooltip */}
             {tipIdx === i && (
               <g>
-                {/* Highlight column */}
-                <rect x={hitX} y={pt} width={gap} height={H - pt - pb} fill="#d97757" opacity={0.06} rx={3} />
-                {/* Box */}
-                <rect x={tipX} y={tipY} width={TIP_W} height={TIP_H} rx={8} fill="#1c1a17" opacity={0.93} />
-                {/* Header */}
-                <text x={tipX + 10} y={tipY + 16} fontSize={10} fill="#9b998f" fontWeight="600">
+                <rect x={tipX} y={tipY} width={TIP_W} height={TIP_H} rx={8} fill="var(--ink)" />
+                <text x={tipX + 11} y={tipY + 17} fontSize={11} fill="var(--on-ink)" opacity={0.62} fontFamily={axisFont}>
                   Week of {w.label}
                 </text>
-                {/* Lines */}
-                <circle cx={tipX + 14} cy={tipY + 29} r={4} fill="var(--phg-blue)" />
-                <text x={tipX + 22} y={tipY + 33} fontSize={11} fill="#fff" fontWeight="600">New: {w.nw}</text>
+                <circle cx={tipX + 15} cy={tipY + 30} r={4} fill="var(--chart-blue)" />
+                <text x={tipX + 24} y={tipY + 34} fontSize={12} fill="var(--on-ink)" fontFamily={axisFont}>New: {w.nw}</text>
 
-                <circle cx={tipX + 14} cy={tipY + 45} r={4} fill="var(--phg-green)" />
-                <text x={tipX + 22} y={tipY + 49} fontSize={11} fill="#fff" fontWeight="600">Returning: {w.ret}</text>
+                <circle cx={tipX + 15} cy={tipY + 46} r={4} fill="var(--chart-mint)" />
+                <text x={tipX + 24} y={tipY + 50} fontSize={12} fill="var(--on-ink)" fontFamily={axisFont}>Returning: {w.ret}</text>
 
-                <circle cx={tipX + 14} cy={tipY + 61} r={4} fill="var(--phg-orange)" />
-                <text x={tipX + 22} y={tipY + 65} fontSize={11} fill="#fff" fontWeight="600">Resurrected: {w.res}</text>
+                <circle cx={tipX + 15} cy={tipY + 62} r={4} fill="var(--chart-amber)" />
+                <text x={tipX + 24} y={tipY + 66} fontSize={12} fill="var(--on-ink)" fontFamily={axisFont}>Resurrected: {w.res}</text>
 
-                <circle cx={tipX + 14} cy={tipY + 77} r={4} fill="var(--phg-red)" />
-                <text x={tipX + 22} y={tipY + 81} fontSize={11} fill="#fff" fontWeight="600">Dormant: {w.dorm}</text>
+                <circle cx={tipX + 15} cy={tipY + 78} r={4} fill="var(--chart-red)" />
+                <text x={tipX + 24} y={tipY + 82} fontSize={12} fill="var(--on-ink)" fontFamily={axisFont}>Dormant: {w.dorm}</text>
               </g>
             )}
           </g>
         );
       })}
+      <line x1={pl} y1={zero.toFixed(1)} x2={W - pr} y2={zero.toFixed(1)} stroke="var(--chart-line)" />
     </svg>
   );
 }

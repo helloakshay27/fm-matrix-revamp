@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, Plus, Download, X, Loader2, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +18,7 @@ import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@/components/ui/select';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 const enhancedTableColumns: ColumnConfig[] = [
   { key: 'id', label: 'ID', sortable: true, draggable: true },
@@ -109,11 +110,22 @@ const getStatusBadgeVariant = (status: string) => {
 
 const BookingListDashboard = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { shouldShow } = useDynamicPermissions();
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
   const isPulsePath = window.location.pathname.startsWith('/pulse/amenity');
+  const pulseEvents = usePulseEvents();
+
+  useEffect(() => {
+    pulseEvents.onModuleViewed({
+      module: "Amenities",
+      package: "Pulse Privilege",
+      screen: "pulse_amenity_list",
+      guard: true,
+    });
+  }, [pulseEvents]);
 
   const { data: bookings, loading, error } = useAppSelector((state) => state.facilityBookings);
 
@@ -139,7 +151,7 @@ const BookingListDashboard = () => {
   const [isFiltering, setIsFiltering] = useState(false);
   const [showExportConfirm, setShowExportConfirm] = useState(false);
   const [pagination, setPagination] = useState({
-    current_page: 1,
+    current_page: parseInt(searchParams.get('page') || '1', 10) || 1,
     total_count: 0,
     total_pages: 0,
   });
@@ -376,6 +388,11 @@ const BookingListDashboard = () => {
       ...prev,
       current_page: page,
     }));
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('page', String(page));
+      return next;
+    });
 
     try {
       // Check if any filters are applied
@@ -455,6 +472,15 @@ const BookingListDashboard = () => {
       setIsPageLoading(false);
     }
   };
+
+  // Keep the list in sync when the "page" URL param changes externally
+  // (browser back/forward, or a shared link) rather than via handlePageChange.
+  useEffect(() => {
+    const urlPage = parseInt(searchParams.get('page') || '1', 10) || 1;
+    if (urlPage !== pagination.current_page) {
+      handlePageChange(urlPage);
+    }
+  }, [searchParams]);
 
   const renderPaginationItems = () => {
     if (!pagination.total_pages || pagination.total_pages <= 0) {

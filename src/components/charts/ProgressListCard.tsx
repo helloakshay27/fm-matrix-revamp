@@ -25,11 +25,6 @@ export interface ProgressListCardProps {
   className?: string;
 }
 
-const BORDER_TONE_CLASSES: Record<NonNullable<ProgressListCardProps["borderTone"]>, string> = {
-  error: "border-l-4 border-l-brand-error",
-  warning: "border-l-4 border-l-brand-warning",
-};
-
 /**
  * Label + horizontal progress track + value rows, optionally grouped under
  * section headings — mirrors the repeated ".pb-row" pattern in
@@ -37,9 +32,9 @@ const BORDER_TONE_CLASSES: Record<NonNullable<ProgressListCardProps["borderTone"
  * Response by Category). No existing card combines a label with an inline
  * progress track.
  */
-export function ProgressListCard({ title, subtitle, sections, footnote, borderTone, className }: ProgressListCardProps) {
+export function ProgressListCard({ title, subtitle, sections, footnote, className }: ProgressListCardProps) {
   return (
-    <Card className={cn("border-brand-border h-full", borderTone && BORDER_TONE_CLASSES[borderTone], className)}>
+    <Card className={cn("border-brand-border h-full", className)}>
       <CardHeader className="pb-2">
         <CardTitle className="text-brand-body-3 font-semibold text-brand-text">{title}</CardTitle>
         {subtitle && <p className="text-brand-body-5 text-brand-text-light">{subtitle}</p>}

@@ -359,7 +359,7 @@ const ResponsiblePersonReasonModal = ({
                     <Button
                         onClick={handleSubmit}
                         disabled={isLoading}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                        className="px-4 py-2 disabled:opacity-50"
                     >
                         {isLoading ? "Submitting..." : "Change Responsible Person"}
                     </Button>
@@ -1068,7 +1068,7 @@ const BusinessCompassTasksPage = () => {
                 comment: {
                     body: `Responsible person changed from ${oldResponsibleName} to ${newResponsibleName} with reason: ${reason}`,
                     commentable_id: tid,
-                    commentable_type: "Task",
+                    commentable_type: "BusinessCompassTask",
                     commentor_id: JSON.parse(localStorage.getItem("user"))?.id,
                     active: true,
                 },
@@ -1128,7 +1128,7 @@ const BusinessCompassTasksPage = () => {
                 comment: {
                     body: `Paused with reason: ${reason}`,
                     commentable_id: tid,
-                    commentable_type: "Task",
+                    commentable_type: "BusinessCompassTask",
                     commentor_id: JSON.parse(localStorage.getItem("user"))?.id,
                     active: true,
                 },
@@ -1168,7 +1168,7 @@ const BusinessCompassTasksPage = () => {
                 comment: {
                     body: `On hold with reason: ${reason}`,
                     commentable_id: tid,
-                    commentable_type: "Task",
+                    commentable_type: "BusinessCompassTask",
                     commentor_id: JSON.parse(localStorage.getItem("user"))?.id,
                     active: true,
                 },
@@ -1210,7 +1210,7 @@ const BusinessCompassTasksPage = () => {
                 comment: {
                     body: `Ended with reason: ${reason}`,
                     commentable_id: tid,
-                    commentable_type: "Task",
+                    commentable_type: "BusinessCompassTask",
                     commentor_id: JSON.parse(localStorage.getItem("user"))?.id,
                     active: true,
                 },
@@ -1266,7 +1266,7 @@ const BusinessCompassTasksPage = () => {
                 comment: {
                     body: `Overdue reason: ${reason}`,
                     commentable_id: overdueTaskId,
-                    commentable_type: "Task",
+                    commentable_type: "BusinessCompassTask",
                     commentor_id: JSON.parse(localStorage.getItem("user"))?.id,
                     active: true,
                 },

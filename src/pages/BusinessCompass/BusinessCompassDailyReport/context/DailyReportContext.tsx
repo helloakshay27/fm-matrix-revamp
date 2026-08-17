@@ -33,7 +33,6 @@ import type {
 import {
   cleanReportText,
   getNonEmptyReportItems,
-  getOverdueLabel,
   getPriorityClass,
   getPriorityColors,
   getReportDateKey,
@@ -213,6 +212,7 @@ export interface DailyReportContextValue {
   hasMoreIssues: boolean;
   completedTasksIssuesToday: any[];
   completedItemsLoading: boolean;
+  fetchCompletedItemsForDate: (forDate: string) => void;
   tomorrowScheduledItems: any[];
   tomorrowScheduledLoading: boolean;
   tomorrowFetchDone: boolean;
@@ -616,84 +616,91 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDate, baseUrl, token, userId]);
 
-  useEffect(() => {
-    const forDate = startDate;
-    if (!baseUrl || !token || !userId || !forDate) return;
-    let active = true;
-    setCompletedItemsLoading(true);
-    fetchCompletedItemsForDate(apiCtx(), forDate)
-      .then(({ tasks, issues, todos }) => {
-        const transformedTasks = tasks.map((task: any) => ({
-          id: `task-${task.id}`,
-          title: task.title,
-          type: "task",
-          status: task.status || "completed",
-          priority: task.priority || "Medium",
-          created_at: task.created_at,
-          responsible: task.responsible_person_id,
-          originalData: task,
-        }));
+  const refetchCompletedItemsForDate = useCallback(
+    (forDate: string) => {
+      if (!baseUrl || !token || !userId || !forDate) return;
+      let active = true;
+      setCompletedItemsLoading(true);
+      fetchCompletedItemsForDate(apiCtx(), forDate)
+        .then(({ tasks, issues, todos }) => {
+          const transformedTasks = tasks.map((task: any) => ({
+            id: `task-${task.id}`,
+            title: task.title,
+            type: "task",
+            status: task.status || "completed",
+            priority: task.priority || "Medium",
+            created_at: task.created_at,
+            responsible: task.responsible_person_id,
+            originalData: task,
+          }));
 
-        const transformedIssues = issues.map((issue: any) => ({
-          id: `issue-${issue.id}`,
-          title: issue.title,
-          type: "issue",
-          status: issue.status || "completed",
-          priority: issue.priority || "Medium",
-          created_at: issue.created_at,
-          responsible: issue.responsible_person_id,
-          originalData: issue,
-        }));
+          const transformedIssues = issues.map((issue: any) => ({
+            id: `issue-${issue.id}`,
+            title: issue.title,
+            type: "issue",
+            status: issue.status || "completed",
+            priority: issue.priority || "Medium",
+            created_at: issue.created_at,
+            responsible: issue.responsible_person_id,
+            originalData: issue,
+          }));
 
-        const transformedTodos = todos.map((todo: any) => {
-          if (todo.task_management) {
-            const task = todo.task_management;
+          const transformedTodos = todos.map((todo: any) => {
+            if (todo.task_management) {
+              const task = todo.task_management;
+              return {
+                id: `task-${task.id}`,
+                title: task.title || todo.title,
+                type: "task",
+                status: task.status || "completed",
+                priority: task.priority || todo.priority || "Medium",
+                created_at: task.created_at,
+                responsible: task.responsible_person_id,
+                originalData: task,
+              };
+            }
             return {
-              id: `task-${task.id}`,
-              title: task.title || todo.title,
-              type: "task",
-              status: task.status || "completed",
-              priority: task.priority || todo.priority || "Medium",
-              created_at: task.created_at,
-              responsible: task.responsible_person_id,
-              originalData: task,
+              id: `todo-${todo.id}`,
+              title: todo.title,
+              type: "todo",
+              status: todo.status || "completed",
+              priority: todo.priority || "Medium",
+              created_at: todo.created_at,
+              responsible: todo.user_id,
+              originalData: todo,
             };
-          }
-          return {
-            id: `todo-${todo.id}`,
-            title: todo.title,
-            type: "todo",
-            status: todo.status || "completed",
-            priority: todo.priority || "Medium",
-            created_at: todo.created_at,
-            responsible: todo.user_id,
-            originalData: todo,
-          };
+          });
+
+          const todoPromotedTaskIds = new Set(
+            transformedTodos.filter((t) => t.type === "task").map((t) => t.id)
+          );
+          const dedupedTasks = transformedTasks.filter(
+            (t: any) => !todoPromotedTaskIds.has(t.id)
+          );
+
+          if (active)
+            setCompletedTasksIssuesToday([
+              ...dedupedTasks,
+              ...transformedIssues,
+              ...transformedTodos,
+            ]);
+        })
+        .catch((err) => {
+          console.error("Failed to fetch completed items for date:", err);
+        })
+        .finally(() => {
+          if (active) setCompletedItemsLoading(false);
         });
+      return () => {
+        active = false;
+      };
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [baseUrl, token, userId]
+  );
 
-        const todoPromotedTaskIds = new Set(
-          transformedTodos.filter((t) => t.type === "task").map((t) => t.id)
-        );
-        const dedupedTasks = transformedTasks.filter(
-          (t: any) => !todoPromotedTaskIds.has(t.id)
-        );
-
-        if (active)
-          setCompletedTasksIssuesToday([
-            ...dedupedTasks,
-            ...transformedIssues,
-            ...transformedTodos,
-          ]);
-      })
-      .catch((err) => {
-        console.error("Failed to fetch completed items for date:", err);
-      })
-      .finally(() => {
-        if (active) setCompletedItemsLoading(false);
-      });
-    return () => {
-      active = false;
-    };
+  useEffect(() => {
+    return refetchCompletedItemsForDate(startDate);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDate, baseUrl, token, userId]);
 
@@ -1101,10 +1108,6 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
       const st = item.status;
       const isPlayed = item.originalData?.is_started || item.is_started || playingTaskIds.has(item.originalData?.id);
       const isDone = st === "completed" || st === "closed" || st === "done";
-      const d = item.originalData;
-      const isOverdueByDate =
-        !isDone &&
-        !!getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
       const isInPlanForToday =
         (yesterdaySourceIds.has(item.id) || noteMatchedTaskIssueIds.has(item.id)) &&
         !isPlayed;
@@ -1112,7 +1115,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
         // Shown only in "Plan for Today" / already moved to tomorrow's plan —
         // don't double-count it into a status bucket too.
       } else if (isDone) completed++;
-      else if (isOverdueByDate || st === "overdue" || st === "overdued") overdue++;
+      else if (st === "overdue" || st === "overdued") overdue++;
       else if (st === "on_hold") onHold++;
       else if (st === "in_progress" || (["open", "pending"].includes(st) && isPlayed)) inProgress++;
       else if ((st === "open" || st === "reopen") && !isPlayed) open++;
@@ -1469,15 +1472,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
       .filter((item) => {
         const isDone = ["completed", "closed", "done"].includes(item.status);
         if (isDone) return false;
-        const d = item.originalData;
-        const isOverdueByDate = !!getOverdueLabel(
-          d?.target_date || d?.due_date || d?.end_date
-        );
-        return (
-          isOverdueByDate ||
-          item.status === "overdue" ||
-          item.status === "overdued"
-        );
+        return item.status === "overdue" || item.status === "overdued";
       })
       .forEach(addItemToTomorrow);
   };
@@ -1556,7 +1551,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
         await postComment(apiCtx(), {
           body: `Closure Remarks: ${closureRemarks}`,
           commentable_id: await realId,
-          commentable_type: isTask ? "TaskManagement" : isTodo ? "Todo" : "Issue",
+          commentable_type: isTask ? "BusinessCompassTask" : isTodo ? "BusinessCompassTodo" : "BusinessCompassIssue",
           commentor_id: userId,
           active: true,
         });
@@ -1650,7 +1645,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
           await postComment(apiCtx(), {
             body: `Reopened: ${reason}`,
             commentable_id: Number(realId),
-            commentable_type: "TaskManagement",
+            commentable_type: "BusinessCompassTask",
             commentor_id: userId,
           });
         }
@@ -1662,7 +1657,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
           await postComment(apiCtx(), {
             body: `Reopened: ${reason}`,
             commentable_id: Number(realId),
-            commentable_type: "Issue",
+            commentable_type: "BusinessCompassIssue",
             commentor_id: userId,
           });
         }
@@ -1710,7 +1705,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
       await postComment(apiCtx(), {
         body: `Overdue reason: ${reason}`,
         commentable_id: realId,
-        commentable_type: isTask ? "TaskManagement" : isTodo ? "Todo" : "Issue",
+        commentable_type: isTask ? "BusinessCompassTask" : isTodo ? "BusinessCompassTodo" : "BusinessCompassIssue",
         commentor_id: userId,
         active: true,
       });
@@ -1755,7 +1750,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
       await postComment(apiCtx(), {
         body: `Paused with reason: ${reason}`,
         commentable_id: taskId,
-        commentable_type: "TaskManagement",
+        commentable_type: "BusinessCompassTask",
         commentor_id: JSON.parse(localStorage.getItem("user") || "{}")?.id,
         active: true,
       });
@@ -1799,7 +1794,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
       await postComment(apiCtx(), {
         body: `Paused with reason: ${reason}`,
         commentable_id: issueId,
-        commentable_type: "Issue",
+        commentable_type: "BusinessCompassIssue",
         commentor_id: JSON.parse(localStorage.getItem("user") || "{}")?.id,
         active: true,
       });
@@ -3155,6 +3150,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
     hasMoreIssues,
     completedTasksIssuesToday,
     completedItemsLoading,
+    fetchCompletedItemsForDate: refetchCompletedItemsForDate,
     tomorrowScheduledItems,
     tomorrowScheduledLoading,
     tomorrowFetchDone,

@@ -312,7 +312,7 @@ const Comments = ({
                 comment: {
                     body: comment,
                     commentable_id: taskId,
-                    commentable_type: "Task",
+                    commentable_type: "BusinessCompassTask",
                     commentor_id: currentUser?.id,
                     active: true,
                 },
@@ -723,7 +723,7 @@ const Attachments = ({
             });
 
             await axios.put(
-                `https://${baseUrl}/business_compass/tasks/${taskId}`,
+                `https://${baseUrl}/business_compass/tasks/${taskId}.json`,
                 formData,
                 {
                     headers: {
@@ -1217,7 +1217,7 @@ const BusinessCompassTaskDetailsPage = () => {
         try {
             setIsLoading(true);
             const response = await axios.get(
-                `https://${baseUrl}/business_compass/tasks/${taskId}`,
+                `https://${baseUrl}/business_compass/tasks/${taskId}.json`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             const data = response.data?.task || response.data;

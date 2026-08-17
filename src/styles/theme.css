@@ -1565,9 +1565,11 @@ textarea:focus {
 
 /* ===== SELECT/DROPDOWN FOCUS OVERRIDES ===== */
 select:focus,
-[role="combobox"]:focus {
+[role="combobox"]:focus,
+[role="combobox"][data-state="open"] {
   border-color: var(--color-primary) !important;
   outline: none !important;
+  box-shadow: none !important;
 }
 
 /* ===== SIDEBAR COLOR OVERRIDES ===== */
@@ -2546,10 +2548,18 @@ h4[class*="text-[#1A1A1A]"],
   color: var(--color-text) !important;
   font-size: 13px !important;
 }
+.text-center.font-bold.text-white.leading-tight {
+  color: var(--color-bg) !important;
 
+}
+
+.text-center.font-semibold.text-white.survey-force-white {
+  color: var(--color-bg) !important;
+
+}
 /* Chart subheadings like "Response TAT", "Resolution TAT" - BLACK */
-.text-center.font-semibold,
-.text-center.font-bold {
+.text-center.font-semibold:not(.analytics-header),
+.text-center.font-bold:not(.analytics-header) {
   color: var(--color-text) !important;
 }
 

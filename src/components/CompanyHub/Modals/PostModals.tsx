@@ -123,7 +123,7 @@ export const PostModals: React.FC<PostModalsProps> = ({
               <button
                 disabled={!postText.trim() && selectedFiles.length === 0}
                 onClick={handlePublish}
-                className="bg-[#E67E5F] text-white px-10 py-3 rounded-2xl font-black shadow-xl hover:bg-[#a01a26] disabled:opacity-30 uppercase tracking-widest text-sm"
+                className="bg-brand text-white px-10 py-3 rounded-2xl font-black shadow-xl hover:bg-brand-hover disabled:opacity-30 uppercase tracking-widest text-sm"
               >
                 PUBLISH
               </button>

@@ -467,7 +467,7 @@ export function WingPage() {
                           type="button"
                           variant="outline"
                           onClick={resetCreateForm}
-                          className="border-gray-300"
+                          className="border-brand"
                         >
                           Cancel
                         </Button>

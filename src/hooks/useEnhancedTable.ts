@@ -55,6 +55,40 @@ export function useEnhancedTable<T>({
     direction: null
   });
 
+  // `columns` can grow after mount (e.g. category sub-columns that only exist
+  // once an async-fetched category list resolves). Without this, a column
+  // added later would exist in `columns` but never in `columnOrder`/
+  // `columnVisibility` — which are only seeded once on mount — so it would
+  // silently never appear in `visibleColumns` no matter what data it has.
+  useEffect(() => {
+    const currentKeys = columns.map(column => column.key);
+    const currentKeySet = new Set(currentKeys);
+
+    setColumnVisibility(prev => {
+      let changed = false;
+      const next: Record<string, boolean> = {};
+      columns.forEach(column => {
+        if (column.key in prev) {
+          next[column.key] = prev[column.key];
+        } else {
+          next[column.key] = column.defaultVisible !== false;
+          changed = true;
+        }
+      });
+      if (!changed && Object.keys(prev).length === Object.keys(next).length) return prev;
+      return next;
+    });
+
+    setColumnOrder(prev => {
+      const kept = prev.filter(key => currentKeySet.has(key));
+      const added = currentKeys.filter(key => !kept.includes(key));
+      const next = [...kept, ...added];
+      if (next.length === prev.length && next.every((key, i) => key === prev[i])) return prev;
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [columns]);
+
   // Save column visibility state to localStorage whenever it changes
   useEffect(() => {
     if (storageKey) {

@@ -105,6 +105,14 @@ const exportToExcel = <T extends Record<string, any>>(
   URL.revokeObjectURL(url);
 };
 
+export interface ColumnGroup {
+  /** Text shown in the spanning header cell above this group's columns. */
+  label: string;
+  /** Column keys (matching ColumnConfig.key) this group spans — render contiguously in `columns` for a clean colSpan; a drag that breaks contiguity just splits the span gracefully. */
+  columnKeys: string[];
+  className?: string;
+}
+
 interface BulkAction<T> {
   label: string;
   icon?: React.ComponentType<any>;
@@ -183,6 +191,8 @@ interface EnhancedTableProps<T> {
   renderChildrenRows?: (children: T[], parentId: string) => React.ReactNode;
   enableFreeze?: boolean;
   freezeColumnsCount?: number;
+  /** Renders a spanning group-header row above the normal header row (e.g. a category name spanning its Total/Non-Stack/Stack/Reserved sub-columns). Opt-in — omit for the existing single-row header. */
+  columnGroups?: ColumnGroup[];
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
@@ -246,6 +256,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   renderChildrenRows,
   enableFreeze = false,
   freezeColumnsCount = 0,
+  columnGroups,
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState("");
   const [searchInput, setSearchInput] = useState("");
@@ -558,6 +569,101 @@ export function EnhancedTable<T extends Record<string, any>>({
   const columnIds = visibleColumns
     .map((col) => col.key)
     .filter((key) => key !== "__checkbox__");
+
+  // Merge visible columns into contiguous runs per columnGroups, in current
+  // column order — a column not covered by any group renders as its own
+  // "single" segment. A drag that breaks a group's contiguity just splits it
+  // into multiple spans next render rather than breaking anything.
+  type HeaderSegment =
+    | { type: "group"; group: ColumnGroup; columns: ColumnConfig[] }
+    | { type: "single"; column: ColumnConfig };
+
+  const headerSegments = useMemo<HeaderSegment[] | null>(() => {
+    if (!columnGroups || columnGroups.length === 0) return null;
+    const groupByKey = new Map<string, ColumnGroup>();
+    columnGroups.forEach((group) => {
+      group.columnKeys.forEach((key) => groupByKey.set(key, group));
+    });
+
+    const segments: HeaderSegment[] = [];
+    visibleColumns.forEach((column) => {
+      const group = groupByKey.get(column.key);
+      const last = segments[segments.length - 1];
+      if (group && last && last.type === "group" && last.group === group) {
+        last.columns.push(column);
+      } else if (group) {
+        segments.push({ type: "group", group, columns: [column] });
+      } else {
+        segments.push({ type: "single", column });
+      }
+    });
+    return segments;
+  }, [columnGroups, visibleColumns]);
+
+  const renderColumnHeaderCell = (
+    column: ColumnConfig,
+    columnIndex: number,
+    rowSpan?: number
+  ) => {
+    const frozenConfig = enableFreeze
+      ? getFrozenColumnConfig(
+          columnIndex,
+          freezeColumnsCount,
+          visibleColumns,
+          columnWidths,
+          true // isStickyHeader = true
+        )
+      : null;
+
+    return (
+      <SortableColumnHeader
+        key={column.key}
+        id={column.key}
+        sortable={column.sortable !== false}
+        draggable={column.draggable}
+        rowSpan={rowSpan}
+        sortDirection={
+          sortState.column === column.key ? sortState.direction : null
+        }
+        onSort={() => {
+          if (column.sortable !== false) {
+            if (onSort) {
+              onSort(column.key);
+            } else {
+              handleSort(column.key);
+            }
+          }
+        }}
+        className={cn(
+          "bg-[#f6f4ee] text-left text-black min-w-32 sticky top-0",
+          frozenConfig?.isFrozen && "frozen-header-cell",
+          frozenConfig?.isLastFrozen && "frozen-last-cell"
+        )}
+        style={{
+          width: columnWidths[column.key]
+            ? `${columnWidths[column.key]}px`
+            : undefined,
+          minWidth: columnWidths[column.key]
+            ? `${columnWidths[column.key]}px`
+            : undefined,
+          position: "relative",
+          ...(frozenConfig?.isFrozen && {
+            position: "sticky" as const,
+            zIndex: frozenConfig.zIndex,
+          }),
+        }}
+        data-frozen={frozenConfig?.isFrozen}
+        data-frozen-shadow={frozenConfig?.showShadow}
+      >
+        {column.label}
+        <div
+          className="column-resize-handle"
+          onMouseDown={(e) => handleResizeStart(column.key, e)}
+          onClick={(e) => e.stopPropagation()}
+        />
+      </SortableColumnHeader>
+    );
+  };
 
   // Check if all visible items are selected
   const selectableRows = selectable
@@ -1005,14 +1111,15 @@ export function EnhancedTable<T extends Record<string, any>>({
           >
             <Table className={cn(className, "w-full min-w-max enhancedTable")}>
               <TableHeader className="sticky-header">
-                <TableRow>
-                  <SortableContext
-                    items={columnIds}
-                    strategy={horizontalListSortingStrategy}
-                  >
+                <SortableContext
+                  items={columnIds}
+                  strategy={horizontalListSortingStrategy}
+                >
+                  <TableRow>
                     {collapsible && (
                       <TableHead
                         className="bg-[#f6f4ee] text-center w-12 min-w-12 sticky top-0"
+                        rowSpan={headerSegments ? 2 : undefined}
                         data-collapse
                       >
                         <div className="flex justify-center items-center text-center">
@@ -1023,6 +1130,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                     {selectable && (
                       <TableHead
                         className="bg-[#f6f4ee] w-12 min-w-12 text-center sticky top-0"
+                        rowSpan={headerSegments ? 2 : undefined}
                         data-checkbox
                       >
                         <div className="flex justify-center">
@@ -1041,6 +1149,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                     {renderActions && (
                       <TableHead
                         className="bg-[#f6f4ee] text-center w-16 min-w-16 sticky top-0"
+                        rowSpan={headerSegments ? 2 : undefined}
                         data-actions
                       >
                         <div className="flex justify-center items-center text-center">
@@ -1048,75 +1157,50 @@ export function EnhancedTable<T extends Record<string, any>>({
                         </div>
                       </TableHead>
                     )}
-                    {visibleColumns.map((column, columnIndex) => {
-                      const frozenConfig = enableFreeze
-                        ? getFrozenColumnConfig(
-                            columnIndex,
-                            freezeColumnsCount,
-                            visibleColumns,
-                            columnWidths,
-                            true // isStickyHeader = true
+                    {headerSegments
+                      ? headerSegments.map((segment) =>
+                          segment.type === "single" ? (
+                            renderColumnHeaderCell(
+                              segment.column,
+                              visibleColumns.indexOf(segment.column),
+                              2
+                            )
+                          ) : (
+                            <TableHead
+                              key={`group-${segment.columns[0].key}`}
+                              colSpan={segment.columns.length}
+                              className={cn(
+                                // TableHead's own base class ships `text-left`; because Tailwind's
+                                // generated stylesheet orders utilities alphabetically rather than
+                                // by className string order, a plain `text-center` here loses to
+                                // that base `text-left` — `!text-center` forces the override.
+                                "bg-[#f6f4ee] !text-center text-black sticky top-0",
+                                segment.group.className
+                              )}
+                            >
+                              {segment.group.label}
+                            </TableHead>
                           )
-                        : null;
-
-                      console.log(frozenConfig);
-
-                      return (
-                        <SortableColumnHeader
-                          key={column.key}
-                          id={column.key}
-                          sortable={column.sortable !== false}
-                          draggable={column.draggable}
-                          sortDirection={
-                            sortState.column === column.key
-                              ? sortState.direction
-                              : null
-                          }
-                          onSort={() => {
-                            // Use external onSort if provided, otherwise use internal sorting
-                            if (column.sortable !== false) {
-                              if (onSort) {
-                                onSort(column.key);
-                              } else {
-                                handleSort(column.key);
-                              }
-                            }
-                          }}
-                          className={cn(
-                            "bg-[#f6f4ee] text-left text-black min-w-32 sticky top-0",
-                            frozenConfig?.isFrozen && "frozen-header-cell",
-                            frozenConfig?.isLastFrozen && "frozen-last-cell"
-                          )}
-                          style={{
-                            width: columnWidths[column.key]
-                              ? `${columnWidths[column.key]}px`
-                              : undefined,
-                            minWidth: columnWidths[column.key]
-                              ? `${columnWidths[column.key]}px`
-                              : undefined,
-                            position: "relative",
-                            ...(frozenConfig?.isFrozen && {
-                              position: "sticky" as const,
-                              // left: `${frozenConfig.leftOffset}px`,
-                              zIndex: frozenConfig.zIndex,
-                            }),
-                          }}
-                          data-frozen={frozenConfig?.isFrozen}
-                          data-frozen-shadow={frozenConfig?.showShadow}
-                        >
-                          {column.label}
-                          <div
-                            className="column-resize-handle"
-                            onMouseDown={(e) =>
-                              handleResizeStart(column.key, e)
-                            }
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        </SortableColumnHeader>
-                      );
-                    })}
-                  </SortableContext>
-                </TableRow>
+                        )
+                      : visibleColumns.map((column, columnIndex) =>
+                          renderColumnHeaderCell(column, columnIndex)
+                        )}
+                  </TableRow>
+                  {headerSegments && (
+                    <TableRow>
+                      {headerSegments.flatMap((segment) =>
+                        segment.type === "group"
+                          ? segment.columns.map((column) =>
+                              renderColumnHeaderCell(
+                                column,
+                                visibleColumns.indexOf(column)
+                              )
+                            )
+                          : []
+                      )}
+                    </TableRow>
+                  )}
+                </SortableContext>
               </TableHeader>
               <TableBody>
                 {/* Add Row when canAddRow is true and isAddingRow is true */}

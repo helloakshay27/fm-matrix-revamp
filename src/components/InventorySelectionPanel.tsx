@@ -10,6 +10,7 @@ interface InventorySelectionPanelProps {
   printing?: boolean;
   onAdd?: () => void;
   onImport?: () => void;
+  onImportConsumption?: () => void;
 }
 
 // Inventory specific panel replicating PannelTab styling, restricted to Add Consumable & Print QR
@@ -23,6 +24,7 @@ export const InventorySelectionPanel: React.FC<
   printing = false,
   onAdd,
   onImport,
+  onImportConsumption,
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
   const { isSidebarCollapsed } = useLayout();
@@ -58,6 +60,17 @@ export const InventorySelectionPanel: React.FC<
                     <Upload className="w-6 h-6 mb-1" />
                     <span className="text-sm font-medium text-center">
                       Import
+                    </span>
+                  </button>
+                )}
+                {onImportConsumption && (
+                  <button
+                    onClick={onImportConsumption}
+                    className="flex flex-col items-center justify-center cursor-pointer text-[#374151] hover:text-black w-16 sm:w-auto text-center"
+                  >
+                    <Upload className="w-6 h-6 mb-1" />
+                    <span className="text-sm font-medium">
+                      Import consumption
                     </span>
                   </button>
                 )}

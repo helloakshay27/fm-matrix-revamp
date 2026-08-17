@@ -34,11 +34,13 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import axios from "axios";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 export const AddEventPage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const attachmentInputRef = useRef<HTMLInputElement>(null);
+  const pulseEvents = usePulseEvents();
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -78,6 +80,10 @@ export const AddEventPage = () => {
   // Community Selection State
   const [selectedCommunities, setSelectedCommunities] = useState<number[]>([]);
   const [communities, setCommunities] = useState<any[]>([]);
+
+  useEffect(() => {
+    pulseEvents.onEventCreationViewed();
+  }, [pulseEvents]);
 
   useEffect(() => {
     // Restore form data from localStorage if exists
@@ -414,7 +420,10 @@ export const AddEventPage = () => {
     <div className="p-4 md:px-8 py-6 bg-white min-h-screen">
       <Button
         variant="ghost"
-        onClick={() => navigate(`/pulse/events`)}
+        onClick={() => {
+          pulseEvents.onEventCreationCancelled();
+          navigate(`/pulse/events`);
+        }}
         className="p-0 mb-4 hover:bg-transparent"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />

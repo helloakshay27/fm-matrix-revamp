@@ -360,38 +360,6 @@ const getMemberResponsiblePrefill = (member: any) => {
   return id ? { id: String(id), name } : null;
 };
 
-const stripIgnoredDailyMeetingFields = (value: any): any => {
-  const ignoredNestedReportsKey = ["reportee", "reports"].join("_");
-
-  if (Array.isArray(value)) {
-    let changed = false;
-    const cleaned = value.map((item) => {
-      const next = stripIgnoredDailyMeetingFields(item);
-      if (next !== item) changed = true;
-      return next;
-    });
-    return changed ? cleaned : value;
-  }
-
-  if (!value || typeof value !== "object") return value;
-
-  let changed = false;
-  const cleaned: Record<string, any> = {};
-
-  Object.entries(value).forEach(([key, item]) => {
-    if (key === ignoredNestedReportsKey) {
-      changed = true;
-      return;
-    }
-
-    const next = stripIgnoredDailyMeetingFields(item);
-    if (next !== item) changed = true;
-    cleaned[key] = next;
-  });
-
-  return changed ? cleaned : value;
-};
-
 const fetchDailyMeetingData = async ({
   meetingId,
   dateStr,
@@ -408,8 +376,7 @@ const fetchDailyMeetingData = async ({
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const json = await res.json();
-  return stripIgnoredDailyMeetingFields(json);
+  return await res.json();
 };
 
 // ── Helpers ──
@@ -556,8 +523,10 @@ const fetchItemDetail = async (
   if (itemDetailInflight[key]) return itemDetailInflight[key];
 
   let url: string | null = null;
-  if (type === "task") url = `${getBaseUrl()}/task_managements/${id}.json`;
-  else if (type === "todo") url = `${getBaseUrl()}/todos/${id}.json`;
+  if (type === "task")
+    url = `${getBaseUrl()}/business_compass/tasks/${id}.json`;
+  else if (type === "todo")
+    url = `${getBaseUrl()}/business_compass/todos/${id}.json`;
   else if (type === "issue") url = `${getBaseUrl()}/issues/${id}.json`;
   if (!url) return null;
 
@@ -1506,6 +1475,8 @@ const DailyTab = ({
   const isArrowNav = React.useRef(false);
   const [expandedReports, setExpandedReports] = useState<any[]>([]);
   const [expandedDepartments, setExpandedDepartments] = useState<string[]>([]);
+  // Manager card ke andar uske reportees ki report — key = `${managerId}:${reporteeUserId}`
+  const [expandedReportees, setExpandedReportees] = useState<string[]>([]);
   const [reportMemberFilters, setReportMemberFilters] = useState<Record<string, string>>({});
   const [reportProjectFilters, setReportProjectFilters] = useState<Record<string, string>>({});
   const [selectedReports, setSelectedReports] = useState<any[]>([]);
@@ -1550,11 +1521,15 @@ const DailyTab = ({
     if (!sourceType) return;
 
     if (sourceType === "task") {
-      const navPath = sourceId ? `/vas/tasks/${sourceId}` : '/vas/tasks';
+      const navPath = sourceId
+        ? `/business-compass/tasks/${sourceId}`
+        : '/business-compass/tasks';
       console.log("Navigating to task path:", navPath);
       navigate(navPath);
     } else if (sourceType === "issue") {
-      const navPath = sourceId ? `/vas/issues/${sourceId}` : '/vas/issues';
+      const navPath = sourceId
+        ? `/business-compass/issues/${sourceId}`
+        : '/business-compass/issues';
       console.log("Navigating to issue path:", navPath);
       navigate(navPath);
     }
@@ -1572,9 +1547,10 @@ const DailyTab = ({
 
       if (todoId) {
         try {
-          const res = await fetch(`${getBaseUrl()}/todos/${todoId}.json`, {
-            headers: getAuthHeaders(),
-          });
+          const res = await fetch(
+            `${getBaseUrl()}/business_compass/todos/${todoId}.json`,
+            { headers: getAuthHeaders() }
+          );
           if (res.ok) {
             const json = await res.json();
             const todoDetails = json?.todo || json?.data?.todo || json?.data || json;
@@ -1592,7 +1568,7 @@ const DailyTab = ({
         toast.error("Task details not found for this item.");
         return;
       }
-      navigate(`/vas/tasks/${sourceId}`);
+      navigate(`/business-compass/tasks/${sourceId}`);
       return;
     }
 
@@ -1601,7 +1577,7 @@ const DailyTab = ({
         toast.error("Issue details not found for this item.");
         return;
       }
-      navigate(`/vas/issues/${sourceId}`);
+      navigate(`/business-compass/issues/${sourceId}`);
     }
   };
 
@@ -2575,6 +2551,18 @@ const DailyTab = ({
     return !raw || /^no\s*department$/i.test(raw) ? NO_DEPARTMENT_KEY : raw;
   };
 
+  // Tech is handled first company-wide (their standups run earliest), so it
+  // always sorts to the front of any department list/dropdown; the
+  // no-department catch-all still sorts last, everything else stays A-Z.
+  const isTechDepartmentKey = (key: string) => /^tech$/i.test(key.trim());
+  const compareDepartmentKeys = (a: string, b: string): number => {
+    if (a === NO_DEPARTMENT_KEY) return 1;
+    if (b === NO_DEPARTMENT_KEY) return -1;
+    if (isTechDepartmentKey(a)) return -1;
+    if (isTechDepartmentKey(b)) return 1;
+    return a.localeCompare(b, undefined, { sensitivity: "base" });
+  };
+
   // The Members dropdown is scoped to the selected meeting: its participants are
   // the report owners (and anyone listed as missed) — not every user in the org,
   // which is what `membersList` holds.
@@ -2612,12 +2600,7 @@ const DailyTab = ({
   // HODs, so departments without an HOD are still reachable.
   const departmentFilterKeys = Array.from(
     new Set(memberReports.map((report: any) => resolveDepartmentKey(report)))
-  ).sort((a: string, b: string) => {
-    // Keep the catch-all bucket last.
-    if (a === NO_DEPARTMENT_KEY) return 1;
-    if (b === NO_DEPARTMENT_KEY) return -1;
-    return a.localeCompare(b, undefined, { sensitivity: "base" });
-  });
+  ).sort(compareDepartmentKeys);
   const hodOptions = [
     { value: "all", label: "All Departments" },
     ...departmentFilterKeys.map((key: string) => ({
@@ -2999,7 +2982,7 @@ const DailyTab = ({
                 >
                   {type}
                 </span>
-                <span className="flex-1 min-w-0 text-xs font-semibold text-neutral-800 leading-tight">
+                <span className="flex-1 min-w-0 break-words [overflow-wrap:anywhere] text-xs font-semibold text-neutral-800 leading-tight">
                   {getItemTitle(item)}
                 </span>
                 {hasDetails && (
@@ -3103,7 +3086,9 @@ const DailyTab = ({
                   }
                   className="h-[18px] w-[18px] shrink-0"
                 />
-                <span className="min-w-0 flex-1 text-[13px] font-medium leading-[16px] text-[#2B2F38]">
+                {/* Long URLs waale titles card se bahar nikal jaate the —
+                    `anywhere` unbroken string ko bhi wrap karta hai. */}
+                <span className="min-w-0 flex-1 break-words [overflow-wrap:anywhere] text-[13px] font-medium leading-[16px] text-[#2B2F38]">
                   {getItemTitle(item)}
                 </span>
                 {memberName && (
@@ -3127,6 +3112,380 @@ const DailyTab = ({
     );
   };
 
+  const toggleReportee = (key: string) =>
+    setExpandedReportees((prev) =>
+      prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key]
+    );
+
+  // ── Manager ke andar uske reportees ki report ──
+  // API har `member_reports` row ke saath `reportee_reports` bhejta hai (Akshay
+  // ke andar Atharv/Uzair etc.). Yahan wahi Business Compass ke ReporteeCard
+  // jaisa collapsible list me render hota hai.
+  const renderReporteeReports = (report: any, managerKey: string) => {
+    const reportees: any[] = Array.isArray(report?.reportee_reports)
+      ? report.reportee_reports
+      : [];
+    if (!reportees.length) return null;
+
+    const submittedCount = reportees.filter((member: any) => {
+      const status = String(member?.status || "").toLowerCase();
+      return status !== "missed" && status !== "pending";
+    }).length;
+    const missedCount = reportees.length - submittedCount;
+    // Poora section bhi collapsible hai — default closed, taki manager card
+    // khulte hi reportees ki lambi list na chipak jaye.
+    const sectionKey = `section:${managerKey}`;
+    const isSectionExpanded = expandedReportees.includes(sectionKey);
+
+    return (
+      <div className="bg-white border border-[#E8E2DE] rounded-xl overflow-hidden">
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => toggleReportee(sectionKey)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              toggleReportee(sectionKey);
+            }
+          }}
+          className={cn(
+            "flex cursor-pointer flex-wrap items-center gap-2 px-3 py-3 transition-colors hover:bg-[#FBF9F7]",
+            isSectionExpanded && "border-b border-[#EFE7E2]"
+          )}
+        >
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-100">
+            <Users className="h-4 w-4 text-indigo-600" />
+          </div>
+          <div className="min-w-0">
+            <h4 className="min-w-0 text-[13px] font-extrabold uppercase tracking-[0.14em] text-[#3E342F]">
+              Reportee Reports
+            </h4>
+            <p className="text-[10px] font-medium text-neutral-400">
+              Reports submitted under {report?.name || "this manager"}
+            </p>
+          </div>
+          <div className="ml-auto flex shrink-0 flex-wrap items-center gap-1.5">
+            <span className="rounded-full border border-indigo-100 bg-indigo-50 px-2.5 py-0.5 text-[10px] font-bold text-indigo-600">
+              {reportees.length} Reportee{reportees.length === 1 ? "" : "s"}
+            </span>
+            {submittedCount > 0 && (
+              <span className="rounded-full border border-green-100 bg-green-50 px-2.5 py-0.5 text-[10px] font-bold text-green-700">
+                {submittedCount} Submitted
+              </span>
+            )}
+            {missedCount > 0 && (
+              <span className="rounded-full border border-red-100 bg-red-50 px-2.5 py-0.5 text-[10px] font-bold text-red-600">
+                {missedCount} Missed
+              </span>
+            )}
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 shrink-0 text-neutral-400 transition-transform",
+                isSectionExpanded && "rotate-180"
+              )}
+            />
+          </div>
+        </div>
+
+        {isSectionExpanded && (
+        <div className="space-y-3 p-3">
+          {reportees.map((member: any, memberIndex: number) => {
+            const memberKey = `${managerKey}:${member?.user_id ?? memberIndex}`;
+            const isMemberExpanded = expandedReportees.includes(memberKey);
+            const memberStatus = String(member?.status || "").toLowerCase();
+            const isMemberSubmitted =
+              memberStatus !== "missed" && memberStatus !== "pending";
+            const memberRd = normalizeReportData(resolveRawSource(member));
+            const isMemberAbsent =
+              member?.is_absent === true || memberRd.is_absent === true;
+            const absentReasonText =
+              member?.absent_reason || memberRd.absent_reason || "";
+            const sections = member?.daily_report?.report_data?.sections || {};
+            const hasSubmittedData = Object.keys(sections).length > 0;
+            const totalScore =
+              member?.score != null
+                ? Number(member.score)
+                : hasSubmittedData
+                  ? Object.values(sections).reduce(
+                    (sum: number, value: any) => sum + (Number(value) || 0),
+                    0
+                  )
+                  : 0;
+            const scoreChips = [
+              { label: "KPI", value: Number(sections.kpi_achievement ?? 0) },
+              {
+                label: "Tasks & Todos",
+                value: Number(sections.tasks_issues_todos ?? 0),
+              },
+              {
+                label: "Accomplishments",
+                value: Number(sections.accomplishments ?? 0),
+              },
+              { label: "Planning", value: Number(sections.planning ?? 0) },
+              { label: "Timing", value: Number(sections.timing ?? 0) },
+            ];
+            const openTasksIssues = memberRd.tasks_issues.filter(
+              (item: any) => !isCompletedStatus(getItemStatus(item))
+            );
+            const columns: {
+              key: string;
+              title: string;
+              Icon: React.ComponentType<{ className?: string }>;
+              iconClass: string;
+              items: any[];
+              bucketed?: boolean;
+            }[] = [
+                {
+                  key: "accomplishments",
+                  title: "Accomplishments",
+                  Icon: CheckCircle2,
+                  iconClass: "text-[#798c5e]",
+                  items: memberRd.accomplishments,
+                },
+                {
+                  key: "tasks_issues",
+                  title: "Tasks, Issues & To Do",
+                  Icon: ListTodo,
+                  iconClass: "text-[#DA7756]",
+                  items: openTasksIssues,
+                  bucketed: true,
+                },
+                {
+                  key: "tomorrow_plan",
+                  title: "Tomorrow's Plan",
+                  Icon: Calendar,
+                  iconClass: "text-[#6b9bcc]",
+                  items: memberRd.tomorrow_plan,
+                },
+              ];
+            const submittedStamp = member?.submitted_at
+              ? new Date(member.submitted_at).toLocaleString("en-GB", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+              })
+              : null;
+
+            return (
+              <div
+                key={memberKey}
+                className="overflow-hidden rounded-xl border border-indigo-100 bg-indigo-50/30"
+              >
+                <div
+                  className="flex cursor-pointer flex-col gap-3 p-4 transition-colors hover:bg-indigo-50/60 sm:flex-row sm:items-start sm:justify-between"
+                  onClick={() => toggleReportee(memberKey)}
+                >
+                  <div className="min-w-0">
+                    <div className="mb-1 flex flex-wrap items-center gap-2">
+                      <h5 className="truncate text-sm font-bold text-neutral-900">
+                        {member?.name?.trim() || "Member"}
+                      </h5>
+                      {member?.department && (
+                        <span className="shrink-0 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">
+                          {member.department}
+                        </span>
+                      )}
+                      {isMemberSubmitted && (
+                        <span className="shrink-0 rounded-full border border-green-100 bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700">
+                          Submitted
+                        </span>
+                      )}
+                    </div>
+                    <p className="truncate text-[11px] text-neutral-400">
+                      {member?.email || "—"}
+                      {submittedStamp && (
+                        <span className="ml-1">- {submittedStamp}</span>
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="ml-auto flex shrink-0 items-center gap-2 self-start sm:self-center">
+                    {!isMemberSubmitted ? (
+                      <span className="shrink-0 rounded-full border border-red-100 bg-red-50 px-2.5 py-0.5 text-[10px] font-bold text-red-700">
+                        Missed
+                      </span>
+                    ) : (
+                      <span
+                        className={cn(
+                          "shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-bold",
+                          isMemberAbsent
+                            ? "border-red-100 bg-red-50 text-red-700"
+                            : "border-green-100 bg-green-50 text-green-700"
+                        )}
+                      >
+                        {isMemberAbsent
+                          ? `Absent${absentReasonText ? `: ${absentReasonText}` : ""
+                          }`
+                          : "Present"}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        toggleReportee(memberKey);
+                      }}
+                      className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-50 text-blue-500"
+                    >
+                      <ChevronDown
+                        className={cn(
+                          "h-[15px] w-[15px] transition-transform",
+                          isMemberExpanded && "rotate-180"
+                        )}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                {isMemberExpanded && (
+                  <div className="border-t border-indigo-100 bg-white p-3">
+                    {isMemberAbsent && (
+                      <div className="mb-3 flex items-start gap-2 rounded-lg border border-red-100 bg-red-50 px-3 py-2">
+                        <X className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-500" />
+                        <div>
+                          <p className="text-[11px] font-bold text-red-700">
+                            Absent
+                          </p>
+                          {absentReasonText && (
+                            <p className="text-[11px] font-medium text-red-500">
+                              {absentReasonText}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    {isMemberSubmitted && hasSubmittedData && (
+                      <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                        {scoreChips.map((chip) => (
+                          <span
+                            key={chip.label}
+                            className="inline-flex h-[22px] items-center rounded-full bg-[#FFF3EE] px-2.5 text-[10px] font-semibold text-[#c2664a]"
+                          >
+                            {chip.label}
+                            <span className="ml-1 font-bold">
+                              {chip.value}/20
+                            </span>
+                          </span>
+                        ))}
+                        <span className="inline-flex h-[22px] items-center rounded-full bg-neutral-100 px-2.5 text-[10px] font-bold text-neutral-600">
+                          Total {totalScore}
+                        </span>
+                      </div>
+                    )}
+                    {!isMemberSubmitted && !isMemberAbsent && (
+                      <div className="mb-3 flex items-center gap-2 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2">
+                        <span className="text-[11px] font-semibold text-amber-700">
+                          Report not yet submitted for this date.
+                        </span>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                      {columns.map((column) => (
+                        <div
+                          key={column.key}
+                          className="overflow-hidden rounded-[12px] border border-[#E8E2DE] bg-white"
+                        >
+                          <div className="flex items-center gap-2 border-b border-[#EFE7E2] px-3 py-2.5">
+                            <column.Icon
+                              className={cn(
+                                "h-[15px] w-[15px] shrink-0",
+                                column.iconClass
+                              )}
+                            />
+                            <h6 className="min-w-0 flex-1 truncate text-[11px] font-extrabold uppercase tracking-[0.1em] text-[#3E342F]">
+                              {column.title}
+                            </h6>
+                            <span className="shrink-0 rounded-full bg-neutral-100 px-1.5 text-[10px] font-bold leading-[18px] text-neutral-500">
+                              {isMemberAbsent ? 0 : column.items.length}
+                            </span>
+                          </div>
+                          <div className="p-3">
+                            {(() => {
+                              const emptyText = isMemberSubmitted
+                                ? "None recorded."
+                                : "Not submitted.";
+                              const rows = isMemberAbsent ? [] : column.items;
+
+                              // Tasks column me manager card jaisa hi
+                              // Overdue / In Progress / Open / On Hold
+                              // bifurcation — buckets wahi shared config se.
+                              if (column.bucketed && rows.length > 0) {
+                                const buckets = bucketItemsByStatus(rows, {});
+                                return (
+                                  <div className="space-y-3">
+                                    {TASK_STATUS_BUCKETS.map((bucket) => {
+                                      const bucketItems =
+                                        buckets[bucket.key] || [];
+                                      if (!bucketItems.length) return null;
+                                      return (
+                                        <div
+                                          key={bucket.key}
+                                          className="space-y-1.5"
+                                        >
+                                          <div
+                                            className={cn(
+                                              "flex items-center gap-2 rounded-[6px] px-2 py-1.5",
+                                              bucket.headerBg
+                                            )}
+                                          >
+                                            <span
+                                              className={cn(
+                                                "flex-1 text-[10px] font-black uppercase tracking-wider",
+                                                bucket.colorClass
+                                              )}
+                                            >
+                                              {bucket.label}
+                                            </span>
+                                            <span
+                                              className={cn(
+                                                "rounded-full px-1.5 py-0.5 text-[9px] font-bold",
+                                                bucket.pillBg
+                                              )}
+                                            >
+                                              {bucketItems.length}
+                                            </span>
+                                          </div>
+                                          {renderAccomplishmentRows(
+                                            bucketItems,
+                                            false,
+                                            emptyText,
+                                            undefined,
+                                            // Date / overdue / effort meta
+                                            // sirf isi column me
+                                            true
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                );
+                              }
+
+                              return renderAccomplishmentRows(
+                                rows,
+                                false,
+                                emptyText
+                              );
+                            })()}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        )}
+      </div>
+    );
+  };
+
   const visibleReports = memberReports.filter(
     (report: any) =>
       !isAdminAddedMissedPlanReport(report) &&
@@ -3147,34 +3506,33 @@ const DailyTab = ({
         });
       groups.get(key)!.reports.push(report);
     });
-    return Array.from(groups.values()).sort((a, b) => {
-      // Keep the catch-all bucket last.
-      if (a.key === NO_DEPARTMENT_KEY) return 1;
-      if (b.key === NO_DEPARTMENT_KEY) return -1;
-      return a.label.localeCompare(b.label, undefined, { sensitivity: "base" });
-    });
+    return Array.from(groups.values()).sort((a, b) =>
+      compareDepartmentKeys(a.key, b.key)
+    );
   })();
 
   // Same one-level-up grouping for the "failed to submit" list. Keys are
   // prefixed so a department card here doesn't share expand state with the
   // report card of the same department above.
   const failedMemberGroups = (() => {
-    const groups = new Map<string, { key: string; label: string; members: any[] }>();
+    const groups = new Map<
+      string,
+      { key: string; rawKey: string; label: string; members: any[] }
+    >();
     failedMembers.forEach((member: any) => {
       const key = resolveDepartmentKey(member);
       if (!groups.has(key))
         groups.set(key, {
           key: `missed:${key}`,
+          rawKey: key,
           label: key === NO_DEPARTMENT_KEY ? key : `${key} Department`,
           members: [],
         });
       groups.get(key)!.members.push(member);
     });
-    return Array.from(groups.values()).sort((a, b) => {
-      if (a.label === NO_DEPARTMENT_KEY) return 1;
-      if (b.label === NO_DEPARTMENT_KEY) return -1;
-      return a.label.localeCompare(b.label, undefined, { sensitivity: "base" });
-    });
+    return Array.from(groups.values()).sort((a, b) =>
+      compareDepartmentKeys(a.rawKey, b.rawKey)
+    );
   })();
 
   // Saare meeting members ek hi department ke hon to department-wise
@@ -4878,6 +5236,9 @@ const DailyTab = ({
                                   )}
                                 </div>
                               </div>
+
+                              {/* Manager ke andar uske reportees ki report */}
+                              {renderReporteeReports(report, String(rId))}
 
                               <div className="flex flex-wrap gap-2 pt-1">
                                 <button

@@ -179,7 +179,7 @@ export const RVehiclesOutDashboard = () => {
                     </div>
                     <Button
                       onClick={() => handleOutButtonClick(vehicle.vehicleNumber)}
-                      style={{ backgroundColor: '#EF4444' }}
+                      style={{ backgroundColor: '#DA7756' }}
                       className="hover:opacity-90 text-white px-3 py-1 text-sm"
                     >
                       Out

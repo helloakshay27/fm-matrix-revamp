@@ -10,6 +10,8 @@ export type DirectoryUser = {
   tr: StatusCode;
   kr: StatusCode;
   lm: StatusCode;
+  /** Raw overall-status label from the API (e.g. "In Progress", "Need Action"), when available. */
+  overallLabel?: string;
 };
 
 export const DIRECTORY: DirectoryUser[] = [
@@ -338,12 +340,14 @@ export type KpiDef = {
   tint?: string;
   infoKey: string;
   download: string;
+  /** Hidden from the KPI Overview grid, but kept here in case it's needed again. */
+  hidden?: boolean;
 };
 
 export const ADMIN_KPIS: KpiDef[] = [
   {
     id: 'users',
-    label: 'Total Users',
+    label: 'Total Active Users',
     value: '27,438',
     group: 'users',
     color: C.terra,
@@ -373,6 +377,27 @@ export const ADMIN_KPIS: KpiDef[] = [
     download: 'KRCC',
   },
   {
+    id: 'krcc-pending',
+    label: 'KRCC Pending',
+    value: '2,891',
+    group: 'krcc',
+    color: C.warn,
+    tint: 'rgba(237,196,136,.22)',
+    infoKey: 'krcc-pending',
+    download: 'KRCC',
+  },
+  {
+    id: 'krcc-rejected',
+    label: 'KRCC Rejected',
+    value: '2,891',
+    sub: '(12.6%)',
+    group: 'krcc',
+    color: C.err,
+    tint: 'rgba(231,132,142,.15)',
+    infoKey: 'krcc-rejected',
+    download: 'KRCC',
+  },
+  {
     id: 'train-cat',
     label: 'Category-wise Training Completed',
     value: '84.6%',
@@ -381,6 +406,7 @@ export const ADMIN_KPIS: KpiDef[] = [
     tint: 'rgba(107,155,204,.16)',
     infoKey: 'train-category-kpi',
     download: 'Training',
+    hidden: true,
   },
   {
     id: 'train-user',
@@ -392,6 +418,7 @@ export const ADMIN_KPIS: KpiDef[] = [
     tint: 'rgba(158,200,186,.26)',
     infoKey: 'train-uservise-kpi',
     download: 'Training',
+    hidden: true,
   },
   {
     id: 'train-int',
@@ -402,6 +429,7 @@ export const ADMIN_KPIS: KpiDef[] = [
     tint: 'rgba(121,140,94,.16)',
     infoKey: 'train-pass-internal',
     download: 'Training',
+    hidden: true,
   },
   {
     id: 'train-ext',
@@ -412,6 +440,7 @@ export const ADMIN_KPIS: KpiDef[] = [
     tint: 'rgba(218,119,86,.14)',
     infoKey: 'train-pass-external',
     download: 'Training',
+    hidden: true,
   },
   {
     id: 'lmc',
@@ -422,6 +451,7 @@ export const ADMIN_KPIS: KpiDef[] = [
     tint: 'rgba(107,155,204,.16)',
     infoKey: 'kpi-lmc',
     download: 'LMC',
+    hidden: true,
   },
   {
     id: 'smt',
@@ -432,10 +462,19 @@ export const ADMIN_KPIS: KpiDef[] = [
     tint: 'rgba(206,203,246,.28)',
     infoKey: 'kpi-smt',
     download: 'SMT Visits',
+    hidden: true,
   },
 ];
 
 export function overallStatus(u: DirectoryUser): { t: string; c: string } {
+  const label = u.overallLabel?.trim();
+  if (label) {
+    const s = label.toLowerCase();
+    if (/action|fail|reject/.test(s)) return { t: label, c: 'b-err' };
+    if (/progress|pending/.test(s)) return { t: label, c: 'b-warn' };
+    if (/clear|complete|compliant/.test(s)) return { t: label, c: 'b-ok' };
+    return { t: label, c: 'b-warn' };
+  }
   if (u.tr === 'fail' || u.kr === 'fail') return { t: 'Needs Action', c: 'b-err' };
   if (u.tr === 'pending' || u.kr === 'pending' || u.lm === 'pending' || u.kr === 'na' || u.lm === 'na') {
     return { t: 'In Progress', c: 'b-warn' };

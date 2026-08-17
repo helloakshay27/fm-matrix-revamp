@@ -271,6 +271,11 @@ export function JobsProvider({ children }) {
     (s, k) => s + (Number(k.weightage) || 0),
     0
   );
+  // KRA weightages ka total 100% se upar nahi ja sakta.
+  const totalKraWeight = formKras.reduce(
+    (s, k) => s + (Number(k.weightage) || 0),
+    0
+  );
   const formKpisFitKraWeightage = () =>
     formKras.every((kra, kraIdx) => {
       const limit = Number(kra.weightage) || 0;
@@ -499,7 +504,11 @@ export function JobsProvider({ children }) {
       return jobForm.title && jobForm.dept && jobForm.type && jobForm.level;
     if (step === 1) return jobForm.summary && jobForm.responsibilities;
     if (step === 2)
-      return formKras.length > 0 && formKras.every((k) => k.title);
+      return (
+        formKras.length > 0 &&
+        formKras.every((k) => k.title) &&
+        totalKraWeight <= 100
+      );
     if (step === 3)
       return (
         formKpis.length > 0 &&
@@ -507,6 +516,38 @@ export function JobsProvider({ children }) {
         formKpisFitKraWeightage()
       );
     return true;
+  };
+
+  // Continue dabane par user ko exact wajah toast me batate hain — khaas kar
+  // kaunsi KRA ki KPIs uski weightage cross kar rahi hain.
+  const nextBlockReason = () => {
+    if (step === 2) {
+      if (!formKras.length) return "Add at least one KRA to continue";
+      if (!formKras.every((k) => k.title)) return "Every KRA needs a name";
+      if (totalKraWeight > 100)
+        return `Total KRA weightage is ${totalKraWeight}% — it cannot exceed 100%`;
+      return null;
+    }
+    if (step === 3) {
+      if (!formKpis.length) return "Add at least one KPI to continue";
+      if (!formKpis.every((k) => k.name && k.target))
+        return "Every KPI needs a name and a target value";
+      const offending = formKras
+        .map((kra, kraIdx) => {
+          const limit = Number(kra.weightage) || 0;
+          const used = formKpis
+            .filter((kpi) => kpi.kraIdx === kraIdx)
+            .reduce((sum, kpi) => sum + (Number(kpi.weightage) || 0), 0);
+          return used > limit
+            ? `KRA ${kraIdx + 1} (${kra.title || "Untitled"}): KPIs total ${used}% vs ${limit}% allowed`
+            : null;
+        })
+        .filter(Boolean);
+      if (offending.length)
+        return `KPI weightage exceeds KRA weightage — ${offending.join("; ")}`;
+      return null;
+    }
+    return null;
   };
 
   const saveJd = () => {
@@ -2068,6 +2109,7 @@ export function JobsProvider({ children }) {
     krasForJd,
     initials,
     totalKpiWeight,
+    totalKraWeight,
     simulateAiJd,
     simulateAiKras,
     simulateAiKpis,
@@ -2078,6 +2120,7 @@ export function JobsProvider({ children }) {
     updFormKpi,
     remFormKpi,
     canNext,
+    nextBlockReason,
     saveJd,
     publishJd,
     startEditJd,

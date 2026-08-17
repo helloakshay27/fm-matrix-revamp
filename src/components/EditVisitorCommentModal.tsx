@@ -178,7 +178,7 @@ export const EditVisitorCommentModal = ({ isOpen, onClose, commentData, onUpdate
                 variant="outline"
                 size="sm"
                 onClick={addComment}
-                className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030] h-8"
+                className="border-[#C72030] text-[#C72030]  hover:text-[#C72030] h-8"
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Add

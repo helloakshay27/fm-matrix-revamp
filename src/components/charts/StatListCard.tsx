@@ -15,15 +15,9 @@ export interface StatListCardProps {
   subtitle?: string;
   rows: StatListRow[];
   note?: string;
-  /** Colored left border, matching the ".card" border-left accent pattern in fm_matrix_phase10 (29).html. */
   borderTone?: "error" | "warning";
   className?: string;
 }
-
-const BORDER_TONE_CLASSES: Record<NonNullable<StatListCardProps["borderTone"]>, string> = {
-  error: "border-l-4 border-l-brand-error",
-  warning: "border-l-4 border-l-brand-warning",
-};
 
 /**
  * Simple label→value/badge list card — mirrors the repeated ".card" +
@@ -31,9 +25,9 @@ const BORDER_TONE_CLASSES: Record<NonNullable<StatListCardProps["borderTone"]>, 
  * aged, Godrej Living distress, By User/Department/Tenant, Repeat
  * extensions, etc). No existing chart card covered this shape.
  */
-export function StatListCard({ title, subtitle, rows, note, borderTone, className }: StatListCardProps) {
+export function StatListCard({ title, subtitle, rows, note, className }: StatListCardProps) {
   return (
-    <Card className={cn("border-brand-border", borderTone && BORDER_TONE_CLASSES[borderTone], className)}>
+    <Card className={cn("border-brand-border", className)}>
       <CardHeader className="pb-2">
         <CardTitle className="text-brand-body-3 font-semibold text-brand-text">{title}</CardTitle>
         {subtitle && <p className="text-brand-body-5 text-brand-text-light">{subtitle}</p>}

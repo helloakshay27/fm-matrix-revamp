@@ -4,7 +4,7 @@ import { Button } from '../components/ui/button';
 import { Plus, Edit, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLayout } from '../contexts/LayoutContext';
-import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { EnhancedTable, ColumnGroup } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { SlotConfigBulkUploadModal } from '../components/SlotConfigBulkUploadModal';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
@@ -137,7 +137,7 @@ export const SlotConfigurationPage = () => {
     const categoryCols: ColumnConfig[] = parkingCategories.flatMap((category) =>
       CATEGORY_COLUMN_TYPES.map(({ suffix, label }) => ({
         key: `cat_${category.id}_${suffix}`,
-        label: `${category.name} - ${label}`,
+        label,
         sortable: true,
         hideable: true,
         defaultVisible: true,
@@ -146,6 +146,16 @@ export const SlotConfigurationPage = () => {
 
     return [...base, ...categoryCols];
   }, [parkingCategories]);
+
+  // One spanning group header per parking category, above its Total/Non-Stack/Stack/Reserved sub-columns.
+  const columnGroups: ColumnGroup[] = useMemo(
+    () =>
+      parkingCategories.map((category) => ({
+        label: category.name,
+        columnKeys: CATEGORY_COLUMN_TYPES.map(({ suffix }) => `cat_${category.id}_${suffix}`),
+      })),
+    [parkingCategories]
+  );
 
   const handleEdit = (item: SlotConfigurationData) => {
     navigate(
@@ -180,7 +190,7 @@ export const SlotConfigurationPage = () => {
       const value = (item[columnKey] as number | undefined) ?? 0;
       const isReserved = columnKey.endsWith('_reserved');
       return (
-        <span className={isReserved ? 'text-brand font-medium' : undefined}>{value}</span>
+        <span className={isReserved ? 'text-red-600 font-medium' : undefined}>{value}</span>
       );
     }
 
@@ -246,6 +256,7 @@ export const SlotConfigurationPage = () => {
       <EnhancedTable
         data={slotConfigurationData}
         columns={columns}
+        columnGroups={columnGroups}
         renderCell={renderCell}
         renderActions={renderActions}
         leftActions={leftActions}

@@ -41,12 +41,12 @@ export function groupSites(sites: Site[], names: Record<string, string> = {}): S
 
 /** Role bars are coloured by position — the API returns whatever roles exist in the data. */
 export const ROLE_COLORS: string[] = [
-  'var(--phg-orange)',
-  'var(--phg-blue)',
-  'var(--phg-green)',
-  'var(--phg-midgray)',
-  'var(--phg-amber)',
-  'var(--phg-red)',
+  'var(--blue)',
+  'var(--mint)',
+  'var(--amber)',
+  'var(--faint)',
+  'var(--red)',
+  'var(--green)',
 ];
 
 /**

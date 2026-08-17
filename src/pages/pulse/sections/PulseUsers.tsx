@@ -22,6 +22,7 @@ import {
   type PulseUsersResponse,
   type PulseFilters,
 } from "@/services/pulseDashboardApi";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 const C = {
   green: "#798C5E",
@@ -45,12 +46,18 @@ interface Props {
 }
 
 export function PulseUsers({ filters }: Props) {
+  const pulseEvents = usePulseEvents();
   const [kpi, setKpi] = useState<UsersKpi | null>(null);
   const [bySite, setBySite] = useState<UsersBySite | null>(null);
   const [users, setUsers] = useState<PulseUsersResponse | null>(null);
   const [page, setPage] = useState(1);
   const [tab, setTab] = useState<TabValue>(undefined);
   const [loading, setLoading] = useState(true);
+
+  // Fires once when the Users tab is mounted (tab switch renders a fresh instance).
+  useEffect(() => {
+    pulseEvents.onUserListViewed();
+  }, [pulseEvents]);
 
   useEffect(() => {
     setPage(1);
@@ -245,7 +252,12 @@ export function PulseUsers({ filters }: Props) {
                   key={t.label}
                   type="button"
                   className={`pd-sub-tab${tab === t.value ? " active" : ""}`}
-                  onClick={() => setTab(t.value)}
+                  onClick={() => {
+                    setTab(t.value);
+                    // Fires on clear as well as on set — `t.value` is
+                    // undefined for the "All" tab, which reads as cleared.
+                    pulseEvents.onUserFilterApplied(t.value ?? null);
+                  }}
                 >
                   {t.label}
                 </button>

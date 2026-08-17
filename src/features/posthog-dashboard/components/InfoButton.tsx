@@ -11,7 +11,7 @@ export function InfoButton({ infoKey }: { infoKey: string }) {
   return (
     <button
       ref={btnRef}
-      className="phg-info-btn"
+      className="info-btn"
       title="How this is calculated"
       aria-label="How this is calculated"
       onClick={(e) => {

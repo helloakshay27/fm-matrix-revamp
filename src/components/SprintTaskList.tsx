@@ -131,7 +131,11 @@ export default function SprintTaskList({
     setLoadingTasks(true);
     try {
       const params: Record<string, any> = { ...filters, page };
-      if (search.trim()) params["q[title_or_task_code_or_description_cont]"] = search.trim();
+      if (search.trim()) {
+        // task_code is stored without the "T-" prefix (e.g. "T-23432" -> "23432")
+        const normalizedSearchTerm = search.trim().replace(/^t-/i, "");
+        params["q[id_or_title_or_task_code_or_description_cont]"] = normalizedSearchTerm;
+      }
       const r = await axios.get(
         `https://${baseUrl}/sprints/${sprintId}/sprint_task_list.json`,
         { headers: { Authorization: `Bearer ${token}` }, params }
@@ -526,7 +530,7 @@ export default function SprintTaskList({
     );
   };
 
-  const renderCell = (item: any, columnKey: string) => {
+  const renderCell = (item: any, columnKey: string, isSubtask: boolean = false) => {
     switch (columnKey) {
       case "actions":
         return (
@@ -540,7 +544,7 @@ export default function SprintTaskList({
           </div>
         );
       case "id":
-        return <span className="w-[80px]">T-{item.id}</span>;
+        return <span className="w-[80px]">{isSubtask ? "S-" : "T-"}{item.id}</span>;
       case "title": {
         const isCompleted = item.status === "completed";
         const hasSubtasks = item.total_sub_tasks > 0;
@@ -650,6 +654,33 @@ export default function SprintTaskList({
     }
   };
 
+  // Render subtasks as collapsible child rows
+  const renderChildrenRows = (children: any[], parentId: string) => {
+    return (
+      <>
+        {children.map((subtask, idx) => (
+          <tr
+            key={`${parentId}-subtask-${idx}`}
+            className="bg-blue-50 hover:bg-blue-100 border-b border-gray-200"
+          >
+            {/* Collapse column (empty for subtasks) */}
+            <td className="p-4 text-center w-12 min-w-12"></td>
+
+            {/* Subtask data in same columns */}
+            {sprintTaskColumns.map((column) => (
+              <td
+                key={`${parentId}-subtask-${idx}-${column.key}`}
+                className="p-4 text-left min-w-32"
+              >
+                {renderCell(subtask, column.key, true)}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </>
+    );
+  };
+
   if (loadingTasks) {
     return (
       <div className="flex items-center justify-center py-8 gap-2 text-gray-400">
@@ -676,6 +707,9 @@ export default function SprintTaskList({
         searchValue={tempSearchQuery}
         onSearchChange={(val: string) => setTempSearchQuery(val)}
         onFilterClick={() => setIsFilterModalOpen(true)}
+        collapsible={true}
+        getChildrenKey={() => "sub_tasks_managements"}
+        renderChildrenRows={renderChildrenRows}
         leftActions={
           <div className="flex items-center gap-2 px-4 py-1 bg-gray-50 rounded-lg border border-gray-200">
             <span className="text-gray-700 font-medium text-sm">Total Tasks:</span>

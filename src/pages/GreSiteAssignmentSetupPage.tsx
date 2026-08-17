@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import { useNavigate } from "react-router-dom";
 import { Edit, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,16 @@ const formatDateTime = (value?: string) => {
 };
 
 const GreSiteAssignmentSetupPage = () => {
+  const pulseEvents = usePulseEvents();
+
+  useEffect(() => {
+    pulseEvents.onModuleViewed({
+      module: "GRE Site Assignment Setup",
+      package: "Settings",
+      screen: "pulse_gre_site_assignment_setup",
+    });
+  }, [pulseEvents]);
+
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [assignments, setAssignments] = useState<GreSiteAssignment[]>([]);
