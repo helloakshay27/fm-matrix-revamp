@@ -325,16 +325,28 @@ export const WasteGenerationDetailsPage = () => {
     { label: "Recycled (Kg)", value: wasteData.recycled_unit != null ? wasteData.recycled_unit : undefined },
   ];
 
-  // Table 1.2 — Waste Detail breakdown (single row, since one waste
-  // generation record only carries one category).
-  const wasteDetailTableRows = [
-    {
-      category: wasteData.category?.category_name || "-",
-      totalWeight: wasteData.waste_unit != null ? `${wasteData.waste_unit} kg` : "-",
-      dispatchWeight: dispatchApplicable && wasteData.waste_unit != null ? `${wasteData.waste_unit} kg` : "-",
-      recycleWeight: wasteData.recycled_unit != null ? `${wasteData.recycled_unit} kg` : "-",
-    },
-  ];
+  // Table 1.2 — Waste Detail breakdown. Multi-category records (created via
+  // `waste_entries`) carry one row per category in `categories`; legacy
+  // single-category records fall back to the one flat category on the record.
+  // There's no per-category recycled amount in the API — only a record-level
+  // total — so Recycle Weight is only shown on the legacy single-row case.
+  const wasteDetailTableRows =
+    wasteData.categories && wasteData.categories.length > 0
+      ? wasteData.categories.map((entry) => ({
+          category: entry.category?.category_name || "-",
+          totalWeight: entry.waste_unit != null ? `${entry.waste_unit} ${entry.uom || "kg"}` : "-",
+          dispatchWeight:
+            dispatchApplicable && entry.waste_unit != null ? `${entry.waste_unit} ${entry.uom || "kg"}` : "-",
+          recycleWeight: "-",
+        }))
+      : [
+          {
+            category: wasteData.category?.category_name || "-",
+            totalWeight: wasteData.waste_unit != null ? `${wasteData.waste_unit} kg` : "-",
+            dispatchWeight: dispatchApplicable && wasteData.waste_unit != null ? `${wasteData.waste_unit} kg` : "-",
+            recycleWeight: wasteData.recycled_unit != null ? `${wasteData.recycled_unit} kg` : "-",
+          },
+        ];
 
   const userDetailsFields: Field[] = [
     { label: "User Type", value: wasteData.user_type },

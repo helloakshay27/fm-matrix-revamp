@@ -1,11 +1,15 @@
 // @ts-nocheck
 import axios from "axios";
 import { getAuthHeader } from "@/config/apiConfig";
+import { getApiContext } from "../apiClient";
 
 export interface Department {
   id: number;
   name: string;
 }
+
+/** org_id runtime pe badalta hai — hamesha localStorage se hi padha jaata hai. */
+export const getOrgId = () => String(getApiContext().orgId || "").trim();
 
 export async function fetchDepartments(): Promise<Department[]> {
   // localStorage may hold the host with or without a scheme — normalize both.
@@ -13,23 +17,12 @@ export async function fetchDepartments(): Promise<Department[]> {
     .trim()
     .replace(/\/+$/, "")
     .replace(/^https?:\/\//, "");
-  const selectedCompanyId = localStorage.getItem("selectedCompanyId");
-  const selectedSiteId = localStorage.getItem("selectedSiteId");
-  const storedUser = localStorage.getItem("user");
-  const parsedUser = storedUser ? JSON.parse(storedUser) : null;
-  const fallbackCompanyId =
-    selectedCompanyId ||
-    selectedSiteId ||
-    parsedUser?.company_id ||
-    parsedUser?.lock_role?.company_id ||
-    "";
-
   if (!baseUrl) throw new Error("Base URL not found in localStorage");
-  if (!fallbackCompanyId) {
-    throw new Error("Selected company/site ID not found in localStorage");
-  }
 
-  const url = `https://${baseUrl}/pms/company_setups/${fallbackCompanyId}/departments.json`;
+  const orgId = getOrgId();
+  if (!orgId) throw new Error("org_id not found in localStorage");
+
+  const url = `https://${baseUrl}/pms/departments.json?org_id=${encodeURIComponent(orgId)}`;
 
   const res = await axios.get(url, {
     headers: {
@@ -38,5 +31,11 @@ export async function fetchDepartments(): Promise<Department[]> {
     },
   });
 
-  return res.data?.departments || [];
+  const rows = Array.isArray(res.data) ? res.data : res.data?.departments || [];
+  // Ye endpoint kabhi `name` bhejta hai kabhi `department_name` — dono set kar dete hain.
+  return rows.map((d) => ({
+    ...d,
+    name: d.name || d.department_name || d.title || "",
+    department_name: d.department_name || d.name || d.title || "",
+  }));
 }

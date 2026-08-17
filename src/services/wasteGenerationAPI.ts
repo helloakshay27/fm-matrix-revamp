@@ -59,6 +59,7 @@ export interface WasteGeneration {
   waste_unit: number;
   recycled_unit: number;
   agency_name: string;
+  remark?: string;
   wg_date: string;
   created_at: string;
   updated_at: string;
@@ -192,6 +193,7 @@ export interface UpdateWasteGenerationPayload {
     area_id?: number | null;
     uom?: string;
     type_of_waste?: string;
+    remark?: string;
   };
 }
 
@@ -312,6 +314,11 @@ export const createWasteGeneration = async (
       if (entry.signature) formData.append(`waste_entries[${index}][signature]`, entry.signature);
     });
 
+    // FormData doesn't print its contents via console.log — log the actual
+    // key/value pairs being sent so field-level issues (e.g. a param the
+    // backend isn't receiving) can be confirmed from the browser console.
+    console.log('Create waste generation (multipart) FormData entries:', Array.from(formData.entries()));
+
     response = await fetch(url, {
       method: 'POST',
       headers: { Authorization: getAuthHeader() },
@@ -340,6 +347,106 @@ export const createWasteGeneration = async (
   }
 
   console.log('Create waste generation API response:', data);
+
+  if (!response.ok || data?.success === false) {
+    throw new Error(extractCreateWasteGenerationErrorMessage(data, `HTTP error! status: ${response.status}`));
+  }
+
+  return data ?? {};
+};
+
+// Same shape as CreateWasteGenerationPayload — an existing entry carries its
+// `id` so the backend can update it in place instead of creating a duplicate;
+// entries without an `id` are new rows added during this edit.
+export interface UpdateWasteGenerationEntriesPayload {
+  pms_waste_generation: {
+    wg_date: string;
+    vendor_id: number | null;
+    operational_landlord_id: number;
+    building_id: number;
+    wing_id?: number | null;
+    area_id?: number | null;
+    agency_name: string;
+    recycled_unit?: number;
+    remark?: string;
+  };
+  waste_entries: (WasteEntryInput & { id?: number })[];
+}
+
+// Updates a waste generation record that has one or more category entries,
+// mirroring createWasteGeneration's payload shape and multipart/JSON
+// branching (switches to FormData when any entry carries new attachments).
+//
+// NOTE: the `update_waste` member action is a best guess mirroring
+// create_waste's naming convention — there is no confirmed backend contract
+// for updating a multi-entry record (the sibling wasteDispatchAPI.ts /
+// wasteRecycleEntryAPI.ts only implement create, no update-with-entries).
+// If this 404s or silently drops entries, confirm the real endpoint/payload
+// with backend and adjust this function accordingly.
+export const updateWasteGenerationWithEntries = async (
+  id: number,
+  payload: UpdateWasteGenerationEntriesPayload
+): Promise<CreateWasteGenerationResponse> => {
+  const url = getFullUrl(`/pms/waste_generations/${id}/update_waste`);
+  const { pms_waste_generation, waste_entries } = payload;
+
+  console.log('Updating waste generation (with entries) at:', url);
+  console.log('Update payload:', payload);
+
+  const hasAttachments = waste_entries.some((entry) => (entry.attachments?.length ?? 0) > 0);
+
+  let response: Response;
+
+  if (hasAttachments) {
+    const formData = new FormData();
+    Object.entries(pms_waste_generation).forEach(([key, value]) => {
+      if (value === null || value === undefined) return;
+      formData.append(`pms_waste_generation[${key}]`, String(value));
+    });
+
+    waste_entries.forEach((entry, index) => {
+      if (entry.id) formData.append(`waste_entries[${index}][id]`, String(entry.id));
+      formData.append(`waste_entries[${index}][category_id]`, String(entry.category_id));
+      formData.append(`waste_entries[${index}][commodity_id]`, String(entry.commodity_id));
+      formData.append(`waste_entries[${index}][uom]`, entry.uom);
+      entry.values.forEach((value) => formData.append(`waste_entries[${index}][values][]`, String(value)));
+      (entry.attachments ?? []).forEach((file) => formData.append(`waste_entries[${index}][attachments][]`, file));
+      if (entry.signature) formData.append(`waste_entries[${index}][signature]`, entry.signature);
+    });
+
+    // FormData doesn't print its contents via console.log — dump the actual
+    // key/value pairs so the request can be verified from the browser console.
+    console.log('Update waste generation (multipart) FormData entries:', Array.from(formData.entries()));
+
+    response = await fetch(url, {
+      method: 'PUT',
+      headers: { Authorization: getAuthHeader() },
+      body: formData,
+    });
+  } else {
+    const options = getAuthenticatedFetchOptions('PUT', {
+      pms_waste_generation,
+      waste_entries: waste_entries.map(({ id: entryId, category_id, commodity_id, uom, values, signature }) => ({
+        id: entryId,
+        category_id,
+        commodity_id,
+        uom,
+        values,
+        attachments: [],
+        signature: signature ?? null,
+      })),
+    });
+    response = await fetch(url, options);
+  }
+
+  let data: CreateWasteGenerationResponse | null = null;
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+
+  console.log('Update waste generation (with entries) API response:', data);
 
   if (!response.ok || data?.success === false) {
     throw new Error(extractCreateWasteGenerationErrorMessage(data, `HTTP error! status: ${response.status}`));

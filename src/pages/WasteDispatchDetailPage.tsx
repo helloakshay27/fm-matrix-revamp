@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, FileCheck } from 'lucide-react';
+import { ArrowLeft, FileCheck, Eye, Download, FileText, FileSpreadsheet, File as FileIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { fetchWasteDispatchById, WasteDispatch } from '@/services/wasteDispatchAPI';
+import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 
 const categoryBadgeClass = (category: string) => {
   const c = category.toLowerCase();
@@ -33,6 +34,45 @@ const formatDual = (kg: number | null | undefined, ltr: number | null | undefine
 };
 
 const titleCase = (value: string) => value.replace(/\b\w/g, (c) => c.toUpperCase());
+
+type ExistingAttachment = { id: number; url: string; name: string };
+
+// Real shape returned by the waste APIs: { id, document: "<url-encoded,
+// protocol-relative S3 URL>", active } — no separate filename field, so the
+// display name has to be derived from the URL's last path segment. `id` here
+// is the generic Attachfile record id (same id space `/attachfiles/:id` uses
+// elsewhere in the app), which is why AttachmentPreviewModal can download it.
+const normalizeAttachment = (raw: unknown): ExistingAttachment | null => {
+  if (!raw || typeof raw !== 'object') return null;
+  const record = raw as Record<string, unknown>;
+
+  const rawUrl = [record.document, record.url, record.document_url, record.file_url].find(
+    (v): v is string => typeof v === 'string' && v.trim().length > 0
+  );
+  if (!rawUrl) return null;
+
+  let decoded = rawUrl;
+  try {
+    decoded = decodeURIComponent(rawUrl);
+  } catch {
+    // Not actually URL-encoded — use as-is.
+  }
+  const url = decoded.startsWith('//') ? `https:${decoded}` : decoded;
+
+  const explicitName = [record.document_name, record.document_file_name, record.name, record.file_name].find(
+    (v): v is string => typeof v === 'string' && v.trim().length > 0
+  );
+  const name = explicitName ?? (url.split('/').pop() || 'Attachment').split('?')[0];
+
+  const id = typeof record.id === 'number' ? record.id : Number(record.id) || 0;
+
+  return { id, url, name };
+};
+
+const isImageFile = (url: string) => /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
+const isPdfFile = (url: string) => /\.pdf$/i.test(url);
+const isExcelFile = (url: string) => /\.(xls|xlsx|csv)$/i.test(url);
+const isWordFile = (url: string) => /\.(doc|docx)$/i.test(url);
 
 type Field = { label: string; value: string | number | null | undefined };
 
@@ -100,6 +140,13 @@ const WasteDispatchDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('dispatch-details');
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<{
+    id: number;
+    document_name?: string;
+    document_file_name?: string;
+    url: string;
+  } | null>(null);
 
   useEffect(() => {
     const loadDispatch = async () => {
@@ -258,11 +305,11 @@ const WasteDispatchDetailPage: React.FC = () => {
     { label: 'Created By', value: dispatchData.created_by?.full_name },
     { label: 'Created At', value: dispatchData.created_at ? new Date(dispatchData.created_at).toLocaleString() : undefined },
     { label: 'Updated At', value: dispatchData.updated_at ? new Date(dispatchData.updated_at).toLocaleString() : undefined },
-    {
-      label: 'Supporting Documents',
-      value: dispatchData.attachments && dispatchData.attachments.length > 0 ? `${dispatchData.attachments.length} file(s)` : undefined,
-    },
   ];
+
+  const supportingDocuments = (dispatchData.attachments || [])
+    .map(normalizeAttachment)
+    .filter((a): a is ExistingAttachment => Boolean(a));
 
   const recycleEntry = dispatchData.recycle_entry;
 
@@ -343,6 +390,69 @@ const WasteDispatchDetailPage: React.FC = () => {
             }
           >
             <FieldColumns fields={dispatchFields} />
+            {supportingDocuments.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-3">Supporting Documents</p>
+                <div className="flex flex-wrap gap-4">
+                  {supportingDocuments.map((doc) => {
+                    const image = isImageFile(doc.url);
+                    const pdf = isPdfFile(doc.url);
+                    const excel = isExcelFile(doc.url);
+                    const word = isWordFile(doc.url);
+                    const openPreview = () =>
+                      setSelectedDoc({ id: doc.id, document_name: doc.name, url: doc.url });
+                    return (
+                      <div
+                        key={doc.id}
+                        className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-white shadow-md"
+                      >
+                        <button
+                          type="button"
+                          className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                          title="View"
+                          onClick={() => {
+                            openPreview();
+                            setIsPreviewOpen(true);
+                          }}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        {image ? (
+                          <img
+                            src={doc.url}
+                            alt={doc.name}
+                            className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                            onClick={() => {
+                              openPreview();
+                              setIsPreviewOpen(true);
+                            }}
+                          />
+                        ) : pdf ? (
+                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                            <FileText className="w-6 h-6" />
+                          </div>
+                        ) : excel ? (
+                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                            <FileSpreadsheet className="w-6 h-6" />
+                          </div>
+                        ) : word ? (
+                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                            <FileText className="w-6 h-6" />
+                          </div>
+                        ) : (
+                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                            <FileIcon className="w-6 h-6" />
+                          </div>
+                        )}
+                        <span className="text-xs text-center truncate max-w-[120px] font-medium">
+                          {doc.name}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </CardShell>
         </TabsContent>
 
@@ -459,6 +569,13 @@ const WasteDispatchDetailPage: React.FC = () => {
           </CardShell>
         </TabsContent>
       </Tabs>
+
+      <AttachmentPreviewModal
+        isModalOpen={isPreviewOpen}
+        setIsModalOpen={setIsPreviewOpen}
+        selectedDoc={selectedDoc}
+        setSelectedDoc={setSelectedDoc}
+      />
     </div>
   );
 };
