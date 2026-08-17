@@ -1268,6 +1268,14 @@ const InvoiceClubManagementDashboard = lazy(() => import("./pages/ClubManagement
 const InvoiceClubManagementAdd = lazy(() => import("./pages/ClubManagement/InvoiceClubManagementAdd").then(m => ({ default: m.InvoiceClubManagementAdd })));
 const InvoiceClubManagementDetails = lazy(() => import("./pages/ClubManagement/InvoiceClubManagementDetails").then(m => ({ default: m.InvoiceClubManagementDetails })));
 const InvoiceClubManagementEdit = lazy(() => import("./pages/ClubManagement/InvoiceClubManagementEdit").then(m => ({ default: m.InvoiceClubManagementEdit })));
+const CreditNoteClubDashboard = lazy(() => import("./pages/ClubManagement/CreditNoteClubDashboard").then(m => ({ default: m.CreditNoteClubDashboard })));
+const CreditNoteClubAddPage = lazy(() => import("./pages/ClubManagement/CreditNoteClubAdd").then(m => ({ default: m.CreditNoteClubAddPage })));
+const CreditNoteClubDetails = lazy(() => import("./pages/ClubManagement/CreditNoteClubDetails").then(m => ({ default: m.CreditNoteClubDetails })));
+const CreditNoteClubEditPage = lazy(() => import("./pages/ClubManagement/CreditNoteClubEdit").then(m => ({ default: m.CreditNoteClubEditPage })));
+const DebitNoteClubDashboard = lazy(() => import("./pages/ClubManagement/DebitNoteClubDashboard").then(m => ({ default: m.DebitNoteClubDashboard })));
+const DebitNoteClubAddPage = lazy(() => import("./pages/ClubManagement/DebitNoteClubAdd").then(m => ({ default: m.DebitNoteClubAddPage })));
+const DebitNoteClubDetails = lazy(() => import("./pages/ClubManagement/DebitNoteClubDetails").then(m => ({ default: m.DebitNoteClubDetails })));
+const DebitNoteClubEditPage = lazy(() => import("./pages/ClubManagement/DebitNoteClubEdit").then(m => ({ default: m.DebitNoteClubEditPage })));
 const QuotesDashboard = lazy(() => import("./pages/ClubManagement/QuotesDashboard").then(m => ({ default: m.QuotesDashboard })));
 const QuotesAdd = lazy(() => import("./pages/ClubManagement/QuotesAdd").then(m => ({ default: m.QuotesAdd })));
 const QuotesEdit = lazy(() => import("./pages/ClubManagement/QuotesEdit").then(m => ({ default: m.QuotesEdit })).catch(() => import("./pages/ClubManagement/QuotesEdit")));
@@ -4002,6 +4010,40 @@ function App() {
                             <Route
                               path="/club-management/invoice/edit/:id"
                               element={<InvoiceClubManagementEdit />}
+                            />
+                            {/* Club Management - Credit Note */}
+                            <Route
+                              path="/club-management/credit-note"
+                              element={<CreditNoteClubDashboard />}
+                            />
+                            <Route
+                              path="/club-management/credit-note/add"
+                              element={<CreditNoteClubAddPage />}
+                            />
+                            <Route
+                              path="/club-management/credit-note/details/:id"
+                              element={<CreditNoteClubDetails />}
+                            />
+                            <Route
+                              path="/club-management/credit-note/edit/:id"
+                              element={<CreditNoteClubEditPage />}
+                            />
+                            {/* Club Management - Debit Note */}
+                            <Route
+                              path="/club-management/debit-note"
+                              element={<DebitNoteClubDashboard />}
+                            />
+                            <Route
+                              path="/club-management/debit-note/add"
+                              element={<DebitNoteClubAddPage />}
+                            />
+                            <Route
+                              path="/club-management/debit-note/details/:id"
+                              element={<DebitNoteClubDetails />}
+                            />
+                            <Route
+                              path="/club-management/debit-note/edit/:id"
+                              element={<DebitNoteClubEditPage />}
                             />
                             {/* Snagging Routes */}
                             <Route

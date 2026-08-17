@@ -316,7 +316,9 @@ export const InvoiceClubManagementAdd: React.FC = () => {
     const [billingAddress, setBillingAddress] = useState('');
     const [shippingAddress, setShippingAddress] = useState('');
     const [sameAsBilling, setSameAsBilling] = useState(false);
-
+    // GST — manual entry (guest/member records don't carry GST details the way a customer record would)
+    const [gstTreatment, setGstTreatment] = useState('');
+    const [gstin, setGstin] = useState('');
     // Sales Order Details
     const [salesOrderNumber, setSalesOrderNumber] = useState('');
     const [referenceNumber, setReferenceNumber] = useState('');
@@ -875,7 +877,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
         setAddressFormModalOpen(true);
     };
     const openGstModal = () => {
-        setGstTreatmentDraft(customerDetail?.gst_preference || customerDetail?.gst_treatment || '');
+        setGstTreatmentDraft(gstTreatment);
         setGstModalOpen(true);
     };
     const openGstManageModal = () => {
@@ -1047,6 +1049,19 @@ export const InvoiceClubManagementAdd: React.FC = () => {
         if (!sameAsBilling && selectedShippingAddress) setShippingAddress(formatAddressText(selectedShippingAddress));
     }, [selectedShippingAddressId, shippingAddressBook.length, sameAsBilling]);
 
+    // Local-only address save (no customer record to persist to for a guest/member bill-to)
+    const saveAddressFormLocal = () => {
+        const targetId = editingAddressId ?? addressForm.id ?? `${activeAddressType}-${Date.now()}`;
+        const payload: CustomerAddress = { ...addressForm, id: targetId };
+        const setBook = activeAddressType === 'billing' ? setBillingAddressBook : setShippingAddressBook;
+        const setSelectedId = activeAddressType === 'billing' ? setSelectedBillingAddressId : setSelectedShippingAddressId;
+        setBook(prev => addressFormMode === 'edit'
+            ? prev.map(item => (String(item.id) === String(targetId) ? payload : item))
+            : [...prev, payload]);
+        setSelectedId(targetId);
+        setAddressFormModalOpen(false);
+    };
+
     const handleSaveAddressForm = async () => {
         if (!selectedCustomer?.id) return toast.error("Please select a customer first");
         const baseUrl = localStorage.getItem("baseUrl");
@@ -1104,50 +1119,41 @@ export const InvoiceClubManagementAdd: React.FC = () => {
         }
     };
     const handleUpdateGstConfig = () => {
-        setCustomerDetail((prev) => prev ? { ...prev, gst_preference: gstTreatmentDraft, gst_treatment: gstTreatmentDraft } : prev);
+        setGstTreatment(gstTreatmentDraft);
         setGstModalOpen(false);
     };
     const handleGstinDropdownChange = (value: string | number) => {
         setSelectedGstDetailId(value);
         const selected = gstDetails.find(g => String(g.id) === String(value));
         if (!selected) return;
-        setCustomerDetail((prev) => prev ? { ...prev, gstin: selected.gstin } : prev);
+        setGstin(selected.gstin);
         if (selected.place_of_supply) setPlaceOfSupply(selected.place_of_supply);
         setGstPickerModalOpen(false);
     };
+    // Local-only GST detail save (no customer record to persist to for a guest/member bill-to)
     const handleSaveAndSelectGst = async () => {
-        if (!selectedCustomer?.id) return toast.error("Please select a customer first");
         if (!newGstForm.gstin || !newGstForm.place_of_supply) return toast.error("GSTIN and Place of Supply are required");
         const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
         const normalizedGstin = String(newGstForm.gstin || '').toUpperCase().trim();
         if (!gstinRegex.test(normalizedGstin)) return toast.error('Invalid GSTIN format. e.g. 27AAAAA1234A1Z5');
-        const baseUrl = localStorage.getItem("baseUrl");
-        const token = localStorage.getItem("token");
-        const lock_account_id = localStorage.getItem("lock_account_id");
-        const gstAttribute = {
-            ...(editingGstDetailId ? { id: Number(editingGstDetailId) || editingGstDetailId } : {}),
+        const targetId = editingGstDetailId ?? `gst-${Date.now()}`;
+        const gstDetail: GstDetail = {
+            id: targetId,
             gstin: normalizedGstin,
             place_of_supply: newGstForm.place_of_supply,
             business_legal_name: newGstForm.business_legal_name || '',
-            business_trade_name: newGstForm.business_trade_name || ''
+            business_trade_name: newGstForm.business_trade_name || '',
+            primary: false
         };
-        const payload = { lock_account_customer: { id: selectedCustomer.id, gst_details_attributes: [gstAttribute] } };
-        try {
-            const response = await fetch(`https://${baseUrl}/lock_account_customers/${selectedCustomer.id}.json?lock_account_id=${lock_account_id}`, {
-                method: 'PUT',
-                headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) throw new Error(`GST detail save failed (${response.status})`);
-            setShowNewGstForm(false);
-            setEditingGstDetailId(null);
-            setGstManageModalOpen(false);
-            toast.success("Tax information saved");
-            await fetchCustomerDetail(selectedCustomer.id, normalizedGstin);
-        } catch (error) {
-            console.error("Error saving gst detail:", error);
-            toast.error("Failed to save tax information");
-        }
+        setGstDetails(prev => editingGstDetailId
+            ? prev.map(g => (String(g.id) === String(targetId) ? gstDetail : g))
+            : [...prev, gstDetail]);
+        setSelectedGstDetailId(targetId);
+        setGstin(normalizedGstin);
+        setShowNewGstForm(false);
+        setEditingGstDetailId(null);
+        setGstManageModalOpen(false);
+        toast.success("Tax information saved");
     };
     const handleEditGstDetail = (gst: GstDetail) => {
         setEditingGstDetailId(gst.id);
@@ -1159,25 +1165,13 @@ export const InvoiceClubManagementAdd: React.FC = () => {
             business_trade_name: gst.business_trade_name || ''
         });
     };
-    const handleDeleteGstDetail = async (gstId: number | string) => {
-        if (!selectedCustomer?.id) return toast.error("Please select a customer first");
-        const baseUrl = localStorage.getItem("baseUrl");
-        const token = localStorage.getItem("token");
-        const lock_account_id = localStorage.getItem("lock_account_id");
-        const payload = { lock_account_customer: { id: selectedCustomer.id, gst_details_attributes: [{ id: Number(gstId) || gstId, _destroy: true }] } };
-        try {
-            const response = await fetch(`https://${baseUrl}/lock_account_customers/${selectedCustomer.id}.json?lock_account_id=${lock_account_id}`, {
-                method: 'PUT',
-                headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) throw new Error(`GST detail delete failed (${response.status})`);
-            toast.success("Tax information deleted");
-            await fetchCustomerDetail(selectedCustomer.id);
-        } catch (error) {
-            console.error("Error deleting gst detail:", error);
-            toast.error("Failed to delete tax information");
+    const handleDeleteGstDetail = (gstId: number | string) => {
+        setGstDetails(prev => prev.filter(g => String(g.id) !== String(gstId)));
+        if (String(selectedGstDetailId) === String(gstId)) {
+            setSelectedGstDetailId(null);
+            setGstin('');
         }
+        toast.success("Tax information deleted");
     };
 
     // Calculate item amount
@@ -1559,11 +1553,15 @@ export const InvoiceClubManagementAdd: React.FC = () => {
             const selectedOrFirstBillingId = selectedBillingAddressId ?? billingAddressBook[0]?.id ?? '';
             const selectedOrFirstShippingId = selectedShippingAddressId ?? shippingAddressBook[0]?.id ?? '';
             const selectedOrFirstGstDetailId = selectedGstDetailId ?? gstDetails[0]?.id ?? '';
-            const gstPreferenceValue = customerDetail?.gst_preference || customerDetail?.gst_treatment || '';
             formData.append('lock_account_invoice[address_detail_attributes][billing_address_id]', String(selectedOrFirstBillingId));
             formData.append('lock_account_invoice[address_detail_attributes][shipping_address_id]', String(selectedOrFirstShippingId));
             formData.append('lock_account_invoice[address_detail_attributes][gst_detail_id]', String(selectedOrFirstGstDetailId));
-            formData.append('lock_account_invoice[address_detail_attributes][gst_preference]', String(gstPreferenceValue));
+            formData.append('lock_account_invoice[address_detail_attributes][gst_preference]', gstTreatment);
+            // NOTE: billing/shipping address and GSTIN are now free-text (no customer address-book/GST-detail
+            // records exist for a guest/member) — backend param names below are a best-effort guess, unconfirmed.
+            formData.append('lock_account_invoice[address_detail_attributes][billing_address]', billingAddress);
+            formData.append('lock_account_invoice[address_detail_attributes][shipping_address]', shippingAddress);
+            formData.append('lock_account_invoice[address_detail_attributes][gstin]', gstin);
             // Invoice items
             items.forEach((item, idx) => {
                 const resolvedId = item.item_id || itemOptions.find(opt => opt.name === item.name)?.id;
@@ -1734,7 +1732,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
 
             <div className="space-y-6">
                 {/* Customer Section */}
-                <Section title="Guest/Member Information" icon={<Package className="w-5 h-5" />}>
+                <Section title="Guest & Member Information" icon={<Package className="w-5 h-5" />}>
                     <div className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
@@ -1809,6 +1807,142 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                                         </MenuItem>
                                     ))}
                                 </TextField>
+                            </div>
+                        </div>
+
+                        <div className="mt-4 rounded-lg border border-gray-200 bg-white p-4 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Billing Address */}
+                                <div>
+                                    <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                        Billing Address
+                                        <IconButton size="small" onClick={() => openAddressFormModal(selectedBillingAddress ? 'edit' : 'new', 'billing', selectedBillingAddress || undefined)}>
+                                            <EditOutlined fontSize="small" className="text-brand" />
+                                        </IconButton>
+                                    </div>
+                                    {selectedBillingAddress?.address ? (
+                                        <div className="text-sm text-gray-700 leading-relaxed">
+                                            <div className="font-medium">{selectedBillingAddress.address}</div>
+                                            {selectedBillingAddress.address_line_two && (
+                                                <div>{selectedBillingAddress.address_line_two}</div>
+                                            )}
+                                            <div>
+                                                {[selectedBillingAddress.city, selectedBillingAddress.state]
+                                                    .filter(Boolean)
+                                                    .join(", ")}
+                                                {selectedBillingAddress.pin_code ? ` - ${selectedBillingAddress.pin_code}` : ""}
+                                            </div>
+                                            {selectedBillingAddress.country && (
+                                                <div>{selectedBillingAddress.country}</div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => openAddressFormModal('new', 'billing')}
+                                            className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
+                                        >
+                                            New Address
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Shipping Address */}
+                                <div>
+                                    <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                        Shipping Address
+                                        <IconButton size="small" onClick={() => openAddressFormModal(selectedShippingAddress ? 'edit' : 'new', 'shipping', selectedShippingAddress || undefined)}>
+                                            <EditOutlined fontSize="small" className="text-brand" />
+                                        </IconButton>
+                                    </div>
+                                    {selectedShippingAddress?.address ? (
+                                        <div className="text-sm text-gray-700 leading-relaxed">
+                                            <div className="font-medium">{selectedShippingAddress.address}</div>
+                                            {selectedShippingAddress.address_line_two && (
+                                                <div>{selectedShippingAddress.address_line_two}</div>
+                                            )}
+                                            <div>
+                                                {[selectedShippingAddress.city, selectedShippingAddress.state]
+                                                    .filter(Boolean)
+                                                    .join(", ")}
+                                                {selectedShippingAddress.pin_code ? ` - ${selectedShippingAddress.pin_code}` : ""}
+                                            </div>
+                                            {selectedShippingAddress.country && (
+                                                <div>{selectedShippingAddress.country}</div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => openAddressFormModal('new', 'shipping')}
+                                            className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
+                                        >
+                                            New Address
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* GST Information */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm pt-2">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-gray-500">GST Treatment:</span>
+                                    <span className="text-gray-800">{getGstTreatmentLabel(gstTreatment) || "—"}</span>
+                                    <IconButton size="small" onClick={openGstModal}>
+                                        <EditOutlined fontSize="small" className="text-brand" />
+                                    </IconButton>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-gray-500">GSTIN:</span>
+                                    <span className="text-gray-800 font-medium">{selectedGstDetail?.gstin || gstin || "—"}</span>
+                                    <IconButton size="small" onClick={openGstPickerModal}>
+                                        <EditOutlined fontSize="small" className="text-brand" />
+                                    </IconButton>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </Section>
+
+                {/* Address Section */}
+                <Section title="Address Details" icon={<FileText className="w-5 h-5" />}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Billing Address
+                            </label>
+                            <textarea
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
+                                rows={4}
+                                value={billingAddress}
+                                onChange={(e) => {
+                                    if (e.target.value.length <= 500) setBillingAddress(e.target.value);
+                                }}
+                                placeholder="Enter billing address (max 500 characters)"
+                                maxLength={500}
+                            />
+                            <div className="text-xs text-gray-400 text-right mt-1">
+                                {(billingAddress?.length || 0)}/500
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Shipping Address
+                            </label>
+                            <textarea
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y ${sameAsBilling ? 'bg-gray-50' : ''}`}
+                                rows={4}
+                                value={shippingAddress}
+                                onChange={(e) => {
+                                    if (e.target.value.length <= 500) setShippingAddress(e.target.value);
+                                }}
+                                placeholder="Enter shipping address (max 500 characters)"
+                                readOnly={sameAsBilling}
+                                maxLength={500}
+                            />
+                            <div className="text-xs text-gray-400 text-right mt-1">
+                                {(shippingAddress?.length || 0)}/500
                             </div>
                         </div>
                     </div>
@@ -2398,6 +2532,126 @@ export const InvoiceClubManagementAdd: React.FC = () => {
             </Dialog>
 
 
+
+            <Dialog open={addressFormModalOpen} onClose={() => setAddressFormModalOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle className="!text-base !font-semibold">Additional Address</DialogTitle>
+                <DialogContent dividers>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                        <TextField label="Attention" fullWidth value={addressForm.attention} onChange={(e) => setAddressForm(prev => ({ ...prev, attention: e.target.value }))} className="md:col-span-2" />
+                        <TextField label="Country/Region" select fullWidth value={addressForm.country} onChange={(e) => setAddressForm(prev => ({ ...prev, country: e.target.value }))} className="md:col-span-2">
+                            {addressCountryOptions.map((opt) => (<MenuItem key={opt.code} value={opt.name}>{opt.name}</MenuItem>))}
+                        </TextField>
+                        <TextField label="Address" placeholder="Street 1" fullWidth value={addressForm.address} onChange={(e) => setAddressForm(prev => ({ ...prev, address: e.target.value }))} className="md:col-span-2" />
+                        <TextField placeholder="Street 2" fullWidth value={addressForm.address_line_two} onChange={(e) => setAddressForm(prev => ({ ...prev, address_line_two: e.target.value }))} className="md:col-span-2" />
+                        <TextField label="City" fullWidth value={addressForm.city} onChange={(e) => setAddressForm(prev => ({ ...prev, city: e.target.value }))} className="md:col-span-2" />
+                        <TextField label="State" select fullWidth value={addressForm.state} onChange={(e) => setAddressForm(prev => ({ ...prev, state: e.target.value }))}>
+                            <MenuItem value="">Select</MenuItem>
+                            {states.map((state) => (<MenuItem key={state} value={state}>{state}</MenuItem>))}
+                        </TextField>
+                        <TextField label="Pin Code" fullWidth value={addressForm.pin_code} onChange={(e) => setAddressForm(prev => ({ ...prev, pin_code: e.target.value }))} />
+                        <TextField label="Phone" fullWidth value={addressForm.telephone_number} onChange={(e) => setAddressForm(prev => ({ ...prev, telephone_number: e.target.value }))} InputProps={{ startAdornment: <InputAdornment position="start">+91</InputAdornment> }} />
+                        <TextField label="Fax Number" fullWidth value={addressForm.fax_number} onChange={(e) => setAddressForm(prev => ({ ...prev, fax_number: e.target.value }))} />
+                    </div>
+                </DialogContent>
+                <DialogActions className="!justify-start !px-6 !py-3">
+                    <Button variant="contained" onClick={saveAddressFormLocal} sx={{ backgroundColor: '#DA7756', '&:hover': { backgroundColor: '#C45F40' }, textTransform: 'none' }}>Save</Button>
+                    <Button variant="outlined" onClick={() => setAddressFormModalOpen(false)} sx={{ color: '#DA7756', borderColor: '#DA7756', textTransform: 'none' }}>Cancel</Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={gstModalOpen} onClose={() => setGstModalOpen(false)} maxWidth="xs" fullWidth>
+                <DialogTitle className="!text-base !font-medium !pb-2">Configure Tax Preferences</DialogTitle>
+                <DialogContent className="!pt-2">
+                    <TextField label="GST Treatment" select fullWidth value={gstTreatmentDraft} onChange={(e) => setGstTreatmentDraft(e.target.value)} size="small">
+                        {gstTreatmentOptions.map((opt) => (<MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>))}
+                    </TextField>
+                </DialogContent>
+                <DialogActions className="!justify-start !px-6 !pb-4">
+                    <Button variant="contained" onClick={handleUpdateGstConfig} sx={modalPrimaryButtonSx}>Update</Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={gstManageModalOpen} onClose={() => setGstManageModalOpen(false)} maxWidth="md" fullWidth>
+                <DialogTitle className="!text-base !font-semibold !border-b !border-gray-200 !flex !items-center !justify-between !py-3">
+                    <span>Manage Tax Informations</span>
+                    <IconButton size="small" onClick={() => setGstManageModalOpen(false)}><Close fontSize="small" className="text-brand" /></IconButton>
+                </DialogTitle>
+                <DialogContent className="!pt-4">
+                    <div className="space-y-4">
+                        <Button variant="contained" size="small" onClick={() => { setEditingGstDetailId(null); setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' }); setShowNewGstForm(true); }} sx={modalPrimaryButtonSx}>Add New Tax Information</Button>
+                        {showNewGstForm && (
+                            <div className="border border-gray-200 bg-gray-50 rounded-lg p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <TextField
+                                        label="GSTIN / UIN*"
+                                        fullWidth
+                                        value={newGstForm.gstin}
+                                        onChange={(e) => setNewGstForm(prev => ({ ...prev, gstin: e.target.value.toUpperCase() }))}
+                                        error={!!newGstForm.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(newGstForm.gstin)}
+                                        helperText={newGstForm.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(newGstForm.gstin) ? 'Invalid GSTIN format. e.g. 27AAAAA1234A1Z5' : ''}
+                                        inputProps={{ maxLength: 15 }}
+                                        size="small"
+                                    />
+                                    <button type="button" className="text-brand text-sm mt-1">Validate</button>
+                                </div>
+                                <TextField label="Place of Supply*" select fullWidth value={newGstForm.place_of_supply} onChange={(e) => setNewGstForm(prev => ({ ...prev, place_of_supply: e.target.value }))} size="small">
+                                    <MenuItem value="">Select</MenuItem>
+                                    {states.map((state) => (<MenuItem key={state} value={state}>{state}</MenuItem>))}
+                                </TextField>
+                                <TextField label="Business Legal Name" fullWidth value={newGstForm.business_legal_name} onChange={(e) => setNewGstForm(prev => ({ ...prev, business_legal_name: e.target.value }))} size="small" />
+                                <TextField label="Business Trade Name" fullWidth value={newGstForm.business_trade_name} onChange={(e) => setNewGstForm(prev => ({ ...prev, business_trade_name: e.target.value }))} size="small" />
+                                <div className="md:col-span-3 flex items-center gap-2">
+                                    <Button variant="contained" size="small" onClick={handleSaveAndSelectGst} sx={modalPrimaryButtonSx}>{editingGstDetailId ? 'Save' : 'Save and Select'}</Button>
+                                    <Button variant="outlined" size="small" onClick={() => { setShowNewGstForm(false); setEditingGstDetailId(null); }} sx={modalSecondaryButtonSx}>Cancel</Button>
+                                </div>
+                            </div>
+                        )}
+                        <div className="border border-gray-200 rounded-md overflow-hidden">
+                            <div className="grid grid-cols-5 bg-gray-50 text-xs font-semibold text-gray-500 px-4 py-2">
+                                <div>GSTIN</div><div>PLACE OF SUPPLY</div><div>BUSINESS LEGAL NAME</div><div>BUSINESS TRADE NAME</div><div></div>
+                            </div>
+                            <div className="max-h-[280px] overflow-y-auto">
+                                {gstDetails.map((gst) => (
+                                    <div key={gst.id} className={`grid grid-cols-5 px-4 py-2 text-sm border-t border-gray-100 cursor-pointer ${String(selectedGstDetailId) === String(gst.id) ? 'bg-gray-100' : ''}`} onClick={() => handleGstinDropdownChange(gst.id)}>
+                                        <div>{gst.gstin}{gst.primary && <div className="text-green-600 italic">(Primary Tax Information)</div>}</div>
+                                        <div>{gst.place_of_supply || '—'}</div>
+                                        <div>{gst.business_legal_name || '—'}</div>
+                                        <div>{gst.business_trade_name || '—'}</div>
+                                        <div className="flex items-center gap-2 justify-end">
+                                            {!gst.primary && (
+                                                <>
+                                                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleEditGstDetail(gst); }}><EditOutlined fontSize="small" /></IconButton>
+                                                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleDeleteGstDetail(gst.id); }}><Delete fontSize="small" /></IconButton>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </DialogContent>
+                <DialogActions className="!px-5 !pb-4">
+                    <Button variant="outlined" size="small" onClick={() => setGstManageModalOpen(false)} sx={modalSecondaryButtonSx}>Close</Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={gstPickerModalOpen} onClose={() => setGstPickerModalOpen(false)} maxWidth="xs" fullWidth>
+                <DialogContent className="!p-0">
+                    <div className="max-h-[240px] overflow-y-auto">
+                        {gstDetails.map((gst) => (
+                            <button key={gst.id} type="button" className={`w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-gray-50 text-sm ${String(selectedGstDetailId) === String(gst.id) ? 'bg-gray-100' : ''}`} onClick={() => handleGstinDropdownChange(gst.id)}>
+                                {gst.gstin} - {gst.place_of_supply}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
+                        <button type="button" className="text-brand text-sm flex items-center gap-1" onClick={() => { setGstPickerModalOpen(false); openGstManageModal(); }}>
+                            <span>⚙</span> Manage Tax Informations
+                        </button>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             <Dialog open={exemptionModalOpen} onClose={() => setExemptionModalOpen(false)}
                 maxWidth="sm" fullWidth>
