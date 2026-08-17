@@ -263,7 +263,7 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
           'employee_type_filter.json',
           ['employee_types', 'types', 'data', 'result'],
           ['employee_type_name', 'employee_type', 'type_name', 'name'],
-          ['employee_type_id', 'id'],
+          ['employee_type', 'id'],
           controller.signal,
         ).catch((err) => {
           if ((err as Error).name !== 'AbortError') console.error('Failed to load employee type filter:', err);
