@@ -110,7 +110,7 @@ const AddWasteGenerationPage = () => {
     vendor: '',
     operationalName: '',
     agencyName: '',
-    recycledUnit: '0',
+    // recycledUnit: '0',
     remark: '',
   });
 
@@ -349,15 +349,15 @@ const AddWasteGenerationPage = () => {
       }
     }
 
-    if (formData.recycledUnit && parseFloat(formData.recycledUnit) < 0) {
-      toast.error("Validation Error: Recycled Unit cannot be negative.");
-      return;
-    }
+    // if (formData.recycledUnit && parseFloat(formData.recycledUnit) < 0) {
+    //   toast.error("Validation Error: Recycled Unit cannot be negative.");
+    //   return;
+    // }
 
-    if (parseFloat(formData.recycledUnit || "0") > totalGeneratedUnit) {
-      toast.error("Validation Error: Recycled Unit cannot be greater than total Generated Unit.");
-      return;
-    }
+    // if (parseFloat(formData.recycledUnit || "0") > totalGeneratedUnit) {
+    //   toast.error("Validation Error: Recycled Unit cannot be greater than total Generated Unit.");
+    //   return;
+    // }
 
     setSubmitting(true);
     try {
@@ -370,7 +370,7 @@ const AddWasteGenerationPage = () => {
           wing_id: formData.wing ? parseInt(formData.wing) : null,
           area_id: formData.area ? parseInt(formData.area) : null,
           agency_name: formData.agencyName || '',
-          recycled_unit: formData.recycledUnit ? parseFloat(formData.recycledUnit) : 0,
+          // recycled_unit: formData.recycledUnit ? parseFloat(formData.recycledUnit) : 0,
           remark: formData.remark || '',
         },
         waste_entries: wasteEntries.map((entry): WasteEntryInput => ({
@@ -563,16 +563,7 @@ const AddWasteGenerationPage = () => {
             </div>
 
             {/* Waste Details Section */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-10">
-              {/* Vendor — uses virtualized SupplierSearchSelect to handle large record sets without freezing */}
-              <SupplierSearchSelect
-                value={formData.vendor}
-                onChange={(vendorId) => handleInputChange('vendor', vendorId)}
-                label={<span>Vendor <span style={{ color: '#C72030' }}>*</span></span>}
-                size="schedule"
-                error={false}
-              />
-            </div>
+           
 
             {/* Waste Entries — one table row per category, each with its own
                 commodity, UOM, a dynamic list of bag weights, and attachments */}
@@ -694,7 +685,7 @@ const AddWasteGenerationPage = () => {
 
                         <TableCell className="p-2 align-top">
                           <div className="flex flex-col gap-1.5">
-                            <label className="inline-flex items-center justify-center bg-gray-100 border border-gray-300 rounded px-3 py-1.5 text-xs text-gray-900 cursor-pointer hover:bg-gray-200 w-fit">
+                            <label className="inline-flex h-10 w-full items-center justify-center bg-gray-100 border border-gray-300 rounded px-3 text-xs text-gray-900 cursor-pointer hover:bg-gray-200">
                               Choose File(s)
                               <input
                                 type="file"
@@ -760,7 +751,7 @@ const AddWasteGenerationPage = () => {
 
             {/* Organization Details Section */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-10">
-              <div className="md:col-span-2 min-w-0">
+              <div className="min-w-0">
                 <FormSearchSelect
                   label={
                     <span>
@@ -807,7 +798,16 @@ const AddWasteGenerationPage = () => {
                 sx={fieldStyles}
               />
 
-              <TextField
+              {/* Vendor — uses virtualized SupplierSearchSelect to handle large record sets without freezing */}
+              <SupplierSearchSelect
+                value={formData.vendor}
+                onChange={(vendorId) => handleInputChange('vendor', vendorId)}
+                label={<span>Vendor <span style={{ color: '#C72030' }}>*</span></span>}
+                size="schedule"
+                error={false}
+              />
+
+              {/* <TextField
                 label="Recycled Unit"
                 type="number"
                 placeholder="0"
@@ -822,7 +822,7 @@ const AddWasteGenerationPage = () => {
                   },
                 }}
                 sx={fieldStyles}
-              />
+              /> */}
 
               <div className="md:col-span-2">
                 <TextField

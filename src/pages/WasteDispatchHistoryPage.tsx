@@ -30,7 +30,7 @@ const columns = [
   { key: 'destination_facility', label: 'Destination Facility' },
   { key: 'disposal_method', label: 'Disposal Method' },
   { key: 'supporting_documents', label: 'Supporting Documents' },
-  { key: 'manifest_no', label: 'Manifest No.' },
+  // { key: 'manifest_no', label: 'Manifest No.' },
   { key: 'status', label: 'Status' },
 ];
 
@@ -61,7 +61,7 @@ const renderDispatchCell = (item: WasteDispatch, key: string) => {
   if (key === 'destination_facility') return item.destination_type || '-';
   if (key === 'disposal_method') return item.disposal_method_kg || item.disposal_method_ltr || '-';
   if (key === 'supporting_documents') return item.attachments && item.attachments.length > 0 ? `${item.attachments.length} file(s)` : '-';
-  if (key === 'manifest_no') return item.waste_transfer_note || '-';
+  // if (key === 'manifest_no') return item.waste_transfer_note || '-';
   if (key === 'status') return item.approval_status || '-';
   return '-';
 };
@@ -87,7 +87,7 @@ const toDispatchRecordView = (item: WasteDispatch): DispatchRecord => {
     vehicleNumber: item.vehicle_number || '-',
     dispatchedBy: item.department?.department_name || item.authorized_by_type || '-',
     dispatchDate: item.dispatch_date || '-',
-    manifestNumber: item.waste_transfer_note || '-',
+    // manifestNumber: item.waste_transfer_note || '-',
     status: item.approval_status || '-',
     site: '-',
     weightEntries: [],
@@ -245,7 +245,7 @@ const WasteDispatchHistoryPage: React.FC = () => {
         onSelectItem={handleSelectItem}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
-        searchPlaceholder="Search by vehicle no, vendor, or manifest no..."
+        searchPlaceholder="Search by vehicle no, vendor, ..."
         pagination
         pageSize={10}
         emptyMessage="No dispatch history yet"
