@@ -14,6 +14,8 @@ interface SalesOrder {
     id: number;
     sale_order_number: string;
     customer_name: string;
+    guest_name?: string;
+    member_name?: string;
     date: string;
     shipment_date: string;
     total_amount: number;
@@ -90,8 +92,15 @@ const columns: ColumnConfig[] = [
         draggable: true
     },
     {
-        key: 'customer_name',
-        label: 'Customer Name',
+        key: 'guest_name',
+        label: 'Guest',
+        sortable: true,
+        hideable: true,
+        draggable: true
+    },
+    {
+        key: 'member_name',
+        label: 'Member',
         sortable: true,
         hideable: true,
         draggable: true
@@ -326,8 +335,11 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
         order_number: (
             <div className="font-medium text-brand">{order.order_number}</div>
         ),
-        customer_name: (
-            <span className="text-sm text-gray-900">{order.customer_name}</span>
+        guest_name: (
+            <span className="text-sm text-gray-900">{order.guest_name || '-'}</span>
+        ),
+        member_name: (
+            <span className="text-sm text-gray-900">{order.member_name || '-'}</span>
         ),
         date: (
             <span className="text-sm text-gray-600">
