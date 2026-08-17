@@ -4,8 +4,7 @@ import { INFO } from '../data/constants';
 import { useDashboard } from '../context/DashboardContext';
 
 /** Single floating "how this is calculated" popover, positioned near whichever (i) button opened it.
- *  Portaled to document.body, so its styles (.phg-info-pop) are intentionally kept outside the
- *  `.phg-dashboard` CSS scope in posthog-dashboard.css — see the comment there. */
+ *  Portaled to document.body; `.info-pop` is a global rule in posthog-dashboard.css for that reason. */
 export function InfoPopover() {
   const { infoPopover, closeInfoPopover } = useDashboard();
   const popRef = useRef<HTMLDivElement>(null);
@@ -28,7 +27,7 @@ export function InfoPopover() {
     if (!infoPopover) return;
     const onDocClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (!target.closest('.phg-info-pop') && !target.closest('.phg-info-btn')) closeInfoPopover();
+      if (!target.closest('.info-pop') && !target.closest('.info-btn')) closeInfoPopover();
     };
     const onScroll = () => closeInfoPopover();
     const onResize = () => closeInfoPopover();
@@ -52,12 +51,12 @@ export function InfoPopover() {
   return createPortal(
     <div
       ref={popRef}
-      className="phg-info-pop"
+      className="info-pop"
       style={{ display: 'block', left: pos?.left ?? -9999, top: pos?.top ?? -9999 }}
     >
-      <div className="phg-ipt">{info.t}</div>
-      <div className="phg-ipf"><span className="phg-ipfk">How it's calculated</span>{info.f}</div>
-      <div className="phg-ipd">{info.d}</div>
+      <div className="ipt">{info.t}</div>
+      <div className="ipf"><span className="ipfk">How it's calculated</span>{info.f}</div>
+      <div className="ipd">{info.d}</div>
     </div>,
     document.body,
   );

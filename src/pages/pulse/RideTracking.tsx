@@ -23,6 +23,7 @@ import carGrayImage from "@/assets/car_gray.png";
 import carRedImage from "@/assets/car_red.png";
 import carBlackImage from "@/assets/car_black.png";
 import carBeigeImage from "@/assets/car_beige.png";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -202,6 +203,7 @@ const FlyToLocation: React.FC<FlyToProps> = ({ center, zoom }) => {
 // ─── Main Component ─────────────────────────────────────────────────────────────
 
 export const RideTracking: React.FC = () => {
+  const pulseEvents = usePulseEvents();
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -260,6 +262,11 @@ export const RideTracking: React.FC = () => {
   useEffect(() => {
     fetchRides();
   }, [fetchRides]);
+
+  // Pulse Carpool Live Tracking Viewed — fires once on mount
+  useEffect(() => {
+    pulseEvents.onLiveTrackingViewed();
+  }, [pulseEvents]);
 
   // ── When a ride is selected, fly to it ───────────────────────────────────────
   useEffect(() => {

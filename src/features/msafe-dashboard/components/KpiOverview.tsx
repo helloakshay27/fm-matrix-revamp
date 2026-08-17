@@ -1,9 +1,11 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
+import * as XLSX from 'xlsx';
 import {
   Users,
   FileText,
   CheckCircle2,
+  XCircle,
   GraduationCap,
   UserCheck,
   ShieldCheck,
@@ -11,10 +13,10 @@ import {
   MapPin,
   Download,
 } from 'lucide-react';
-import type { AccordionKey } from '../data/constants';
+import type { AccordionKey, Persona } from '../data/constants';
 import { ADMIN_KPIS } from '../data/mockData';
 import { InfoButton } from './InfoButton';
-import { useMsafeDashboard } from '../context/MsafeDashboardContext';
+import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import { Skeleton } from '@/components/ui/skeleton';
 
 type KpiValueType = 'count' | 'percent';
@@ -25,11 +27,29 @@ function getMsafeBaseUrl(): string {
   return host ? `https://${host}` : 'https://live-api.gophygital.work';
 }
 
-async function fetchMsafeTrainingJson(endpoint: string, signal?: AbortSignal): Promise<unknown> {
+/** Circle Manager filter bar values, applied as query params once the user clicks Apply.
+ *  Only sent for the 'circle' persona — the admin (pan-India) view stays unfiltered. */
+function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
+  if (persona !== 'circle') return {};
+  const params: Record<string, string> = {};
+  if (f.circleId) params.circle_id = f.circleId;
+  if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
+  if (f.zoneId) params.zone_id = f.zoneId;
+  if (f.empTypeId) params.employee_type_id = f.empTypeId;
+  if (f.startDate) params.from_date = f.startDate;
+  if (f.endDate) params.to_date = f.endDate;
+  return params;
+}
+
+async function fetchMsafeTrainingJson(
+  endpoint: string,
+  extraParams?: Record<string, string>,
+  signal?: AbortSignal,
+): Promise<unknown> {
   const token = localStorage.getItem('token') || '';
   const companyId =
     localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '';
-  const params = new URLSearchParams({ company_id: companyId });
+  const params = new URLSearchParams({ company_id: companyId, ...extraParams });
   if (token) {
     params.set('access_token', token);
     params.set('token', token);
@@ -52,25 +72,31 @@ const KPI_FIELD_MAP: Record<string, { valueKeys: string[]; valueType: KpiValueTy
     valueType: 'count',
     subKeys: ['krcc_approved_percentage', 'krcc_approved_percent'],
   },
+  'krcc-pending': { valueKeys: ['krcc_pending', 'krcc_pending_count'], valueType: 'count' },
+  'krcc-rejected': {
+    valueKeys: ['krcc_rejected', 'krcc_rejected_count'],
+    valueType: 'count',
+    subKeys: ['krcc_rejected_percentage', 'krcc_rejected_percent'],
+  },
   'train-cat': {
-    valueKeys: ['category_wise_training_completed', 'train_category_percentage', 'category_wise_completion'],
+    valueKeys: ['average_training_completion_percentage', 'train_category_percentage', 'category_wise_completion'],
     valueType: 'percent',
   },
   'train-user': {
-    valueKeys: ['user_wise_training_completion', 'user_wise_training_completed'],
+    valueKeys: ['training_completed_user_count', 'user_wise_training_completed'],
     valueType: 'count',
     subKeys: ['user_wise_training_completion_percentage', 'user_wise_training_completed_percentage'],
   },
   'train-int': {
-    valueKeys: ['training_pass_rate_internal', 'train_pass_rate_internal', 'internal_pass_rate'],
+    valueKeys: ['internal_training_pass_rate', 'train_pass_rate_internal', 'internal_pass_rate'],
     valueType: 'percent',
   },
   'train-ext': {
-    valueKeys: ['training_pass_rate_external', 'train_pass_rate_external', 'external_pass_rate'],
+    valueKeys: ['external_training_pass_rate', 'train_pass_rate_external', 'external_pass_rate'],
     valueType: 'percent',
   },
   lmc: { valueKeys: ['lmc_today', 'lmc'], valueType: 'count' },
-  smt: { valueKeys: ['smt_visits_this_month', 'smt'], valueType: 'count' },
+  smt: { valueKeys: ['smt_visit_this_month', 'smt'], valueType: 'count' },
 };
 
 function unwrapKpiRecord(data: unknown): Record<string, unknown> {
@@ -117,6 +143,8 @@ const ICONS: Record<string, ReactNode> = {
   users: <Users size={16} />,
   'krcc-filled': <FileText size={16} />,
   'krcc-approved': <CheckCircle2 size={16} />,
+  'krcc-pending': <FileText size={16} />,
+  'krcc-rejected': <XCircle size={16} />,
   'train-cat': <GraduationCap size={16} />,
   'train-user': <UserCheck size={16} />,
   'train-int': <ShieldCheck size={16} />,
@@ -124,6 +152,14 @@ const ICONS: Record<string, ReactNode> = {
   lmc: <ClipboardCheck size={16} />,
   smt: <MapPin size={16} />,
 };
+
+function downloadExcel(label: string, rows: Record<string, unknown>[]) {
+  const worksheet = XLSX.utils.json_to_sheet(rows);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, label.slice(0, 31) || 'Sheet1');
+  const filename = `${label.replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '') || 'export'}.xlsx`;
+  XLSX.writeFile(workbook, filename);
+}
 
 const HINT: Record<string, string> = {
   users: 'Users',
@@ -134,15 +170,20 @@ const HINT: Record<string, string> = {
 };
 
 export function KpiOverview() {
-  const { openAcc, toggleAccordion, showToast } = useMsafeDashboard();
+  const { openAcc, toggleAccordion, showToast, persona, appliedFilters } = useMsafeDashboard();
   const [kpiApiData, setKpiApiData] = useState<Record<string, KpiApiValue>>({});
   const [kpiLoading, setKpiLoading] = useState(true);
 
   useEffect(() => {
     const controller = new AbortController();
+    setKpiLoading(true);
     (async () => {
       try {
-        const data = await fetchMsafeTrainingJson('kpi.json', controller.signal);
+        const data = await fetchMsafeTrainingJson(
+          'kpi.json',
+          buildFilterParams(persona, appliedFilters),
+          controller.signal,
+        );
         const record = unwrapKpiRecord(data);
         const next: Record<string, KpiApiValue> = {};
         for (const [id, map] of Object.entries(KPI_FIELD_MAP)) {
@@ -159,7 +200,7 @@ export function KpiOverview() {
       }
     })();
     return () => controller.abort();
-  }, []);
+  }, [appliedFilters, persona]);
 
   const valueFor = (id: string) => {
     const api = kpiApiData[id];
@@ -185,7 +226,7 @@ export function KpiOverview() {
       </div>
 
       <div className="kpi-grid flow-kpi-grid">
-        {ADMIN_KPIS.map((k) => {
+        {ADMIN_KPIS.filter((k) => !k.hidden).map((k) => {
           const active = openAcc === k.group;
           const style: CSSProperties = {};
           if (k.color) (style as Record<string, string>)['--kpi-c'] = k.color;
@@ -209,7 +250,16 @@ export function KpiOverview() {
                 title="Download Excel"
                 onClick={(e) => {
                   e.stopPropagation();
-                  showToast(`Excel export started · ${k.download}`);
+                  const label = k.download || k.label;
+                  const api = kpiApiData[k.id];
+                  if (kpiLoading || !api) {
+                    showToast(`No data to export yet · ${label}`);
+                    return;
+                  }
+                  const row: Record<string, unknown> = { Metric: k.label, Value: api.value };
+                  if (api.sub) row.Detail = api.sub;
+                  downloadExcel(label, [row]);
+                  showToast(`Excel downloaded · ${label}`);
                 }}
               >
                 <Download size={14} />

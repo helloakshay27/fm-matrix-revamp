@@ -3,9 +3,10 @@ import { Search } from 'lucide-react';
 import { ChartCard } from './ChartCard';
 import { StatusDot } from './StatusDot';
 import { overallStatus, type DirectoryUser } from '../data/mockData';
-import type { StatusCode } from '../data/constants';
-import { useMsafeDashboard } from '../context/MsafeDashboardContext';
+import type { StatusCode, Persona } from '../data/constants';
+import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import { getAuthHeader } from '@/config/apiConfig';
+import { useDebounce } from '@/hooks/useDebounce';
 
 type Filter = 'all' | 'internal' | 'external' | 'pending' | 'cleared';
 
@@ -13,6 +14,20 @@ function getMsafeBaseUrl(): string {
   const fromLS = localStorage.getItem('baseUrl') || '';
   const host = fromLS.replace(/^https?:\/\//, '').replace(/\/$/, '');
   return host ? `https://${host}` : 'https://live-api.gophygital.work';
+}
+
+/** Circle Manager filter bar values, applied as query params once the user clicks Apply.
+ *  Only sent for the 'circle' persona — the admin (pan-India) view stays unfiltered. */
+function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
+  if (persona !== 'circle') return {};
+  const params: Record<string, string> = {};
+  if (f.circleId) params.circle_id = f.circleId;
+  if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
+  if (f.zoneId) params.zone_id = f.zoneId;
+  if (f.empTypeId) params.employee_type = f.empTypeId;
+  if (f.startDate) params.from_date = f.startDate;
+  if (f.endDate) params.to_date = f.endDate;
+  return params;
 }
 
 async function fetchMsafeUserDashboardJson(
@@ -149,9 +164,16 @@ const CHIP_DEFS: { id: Filter; label: string; match: (u: DirectoryUser) => boole
 ];
 
 /** Full searchable/filterable user directory — matches vi_msafe_v6.html */
-export function UserDirectoryCard({ style }: { style?: CSSProperties }) {
-  const { openDrill } = useMsafeDashboard();
+export function UserDirectoryCard({
+  style,
+  hideStatusColumn,
+}: {
+  style?: CSSProperties;
+  hideStatusColumn?: boolean;
+}) {
+  const { openDrill, persona, appliedFilters } = useMsafeDashboard();
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search.trim(), 400);
   const [filter, setFilter] = useState<Filter>('all');
   const [directory, setDirectory] = useState<DirectoryUser[]>([]);
   const [directoryLoading, setDirectoryLoading] = useState(true);
@@ -159,7 +181,8 @@ export function UserDirectoryCard({ style }: { style?: CSSProperties }) {
   const [pagination, setPagination] = useState<Pagination | null>(null);
 
   // The API paginates server-side (per_page ~20, total_entries in the hundred-thousands),
-  // so each page change re-fetches rather than slicing a locally-held full dataset.
+  // so each page change re-fetches rather than slicing a locally-held full dataset. Search
+  // is server-side too (?search=<name>) — debounced so it doesn't fire on every keystroke.
   useEffect(() => {
     let isMounted = true;
     setDirectoryLoading(true);
@@ -169,6 +192,8 @@ export function UserDirectoryCard({ style }: { style?: CSSProperties }) {
         const payload = await fetchMsafeUserDashboardJson('employee_compliance_status.json', {
           page: String(page),
           current_page: String(page),
+          ...(debouncedSearch ? { search: debouncedSearch } : {}),
+          ...buildFilterParams(persona, appliedFilters),
         });
         const normalized = normalizeDirectory(payload);
         if (isMounted) {
@@ -193,22 +218,24 @@ export function UserDirectoryCard({ style }: { style?: CSSProperties }) {
     return () => {
       isMounted = false;
     };
-  }, [page]);
+  }, [page, appliedFilters, persona, debouncedSearch]);
 
-  // Search/filter narrow the currently-loaded page only — there's no confirmed
-  // server-side search/filter param, so they can't reach across all ~112k records.
+  // Jump back to page 1 whenever the applied filters or search term change — the old page
+  // number may no longer exist against the newly filtered result set.
+  useEffect(() => {
+    setPage(1);
+  }, [appliedFilters, persona, debouncedSearch]);
+
+  // The chip filters (Internal/External/Pending/Cleared) only narrow the currently-loaded
+  // page — search itself is now server-side (see fetch above), so it isn't re-applied here.
   const data = useMemo(() => {
     let rows = directory;
     if (filter === 'internal') rows = rows.filter((u) => u.type === 'Internal');
     if (filter === 'external') rows = rows.filter((u) => u.type === 'External');
     if (filter === 'pending') rows = rows.filter((u) => u.tr !== 'ok' || u.kr !== 'ok' || u.lm !== 'ok');
     if (filter === 'cleared') rows = rows.filter((u) => u.tr === 'ok' && u.kr === 'ok' && u.lm === 'ok');
-    if (search) {
-      const q = search.toLowerCase();
-      rows = rows.filter((u) => (u.name + u.emp + u.role).toLowerCase().includes(q));
-    }
     return rows;
-  }, [directory, filter, search]);
+  }, [directory, filter]);
 
   const totalPages = pagination?.totalPages ?? 1;
   const totalEntries = pagination?.totalEntries ?? directory.length;
@@ -224,7 +251,7 @@ export function UserDirectoryCard({ style }: { style?: CSSProperties }) {
         <div className="usr-search">
           <Search size={14} />
           <input
-            placeholder="Search users…"
+            placeholder="Search by name or last name…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -232,7 +259,7 @@ export function UserDirectoryCard({ style }: { style?: CSSProperties }) {
       }
     >
       <div className="mini-filter">
-        {CHIP_DEFS.map((c) => (
+        {CHIP_DEFS.filter((c) => !hideStatusColumn || (c.id !== 'pending' && c.id !== 'cleared')).map((c) => (
           <button
             key={c.id}
             type="button"
@@ -257,19 +284,19 @@ export function UserDirectoryCard({ style }: { style?: CSSProperties }) {
               <th style={{ textAlign: 'center' }}>Training</th>
               <th style={{ textAlign: 'center' }}>KRCC</th>
               <th style={{ textAlign: 'center' }}>LMC</th>
-              <th>Status</th>
+              {hideStatusColumn ? null : <th>Status</th>}
             </tr>
           </thead>
           <tbody>
             {directoryLoading ? (
               <tr>
-                <td colSpan={9} style={{ textAlign: 'center', color: 'var(--sage)', padding: '16px 0' }}>
+                <td colSpan={hideStatusColumn ? 8 : 9} style={{ textAlign: 'center', color: 'var(--sage)', padding: '16px 0' }}>
                   Loading…
                 </td>
               </tr>
             ) : data.length === 0 ? (
               <tr>
-                <td colSpan={9} style={{ textAlign: 'center', color: 'var(--sage)', padding: '16px 0' }}>
+                <td colSpan={hideStatusColumn ? 8 : 9} style={{ textAlign: 'center', color: 'var(--sage)', padding: '16px 0' }}>
                   No users available
                 </td>
               </tr>
@@ -296,9 +323,11 @@ export function UserDirectoryCard({ style }: { style?: CSSProperties }) {
                     <td style={{ textAlign: 'center' }}>
                       <StatusDot value={u.lm} />
                     </td>
-                    <td>
-                      <span className={`badge ${st.c}`}>{st.t}</span>
-                    </td>
+                    {hideStatusColumn ? null : (
+                      <td>
+                        <span className={`badge ${st.c}`}>{st.t}</span>
+                      </td>
+                    )}
                   </tr>
                 );
               })

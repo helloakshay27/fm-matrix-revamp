@@ -16,6 +16,7 @@ import {
 import axios from "axios";
 import { toast } from "sonner";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
+import { usePulseEvents, type RideOpenSource } from "@/components/PostHogPulseEvents";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -151,6 +152,7 @@ interface DriverDetailApiResponse {
 }
 
 export const RideDetail = () => {
+  const pulseEvents = usePulseEvents();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("Ride Details");
@@ -182,6 +184,8 @@ export const RideDetail = () => {
   const [previewImage, setPreviewImage] = useState<{ url: string; name: string } | null>(null);
 
   const rideId = searchParams.get("id");
+  /** Set by the list screens; absent on a deep link or refresh. */
+  const openSource = (searchParams.get("from") as RideOpenSource | null) ?? "direct";
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
 
@@ -231,6 +235,14 @@ export const RideDetail = () => {
       })
       .finally(() => setDriverDetailLoading(false));
   }, [activeTab, apiRide?.driver?.id, baseUrl, token, driverDetailFetched]);
+
+  // Pulse Carpool Ride Detail Opened — the single emit point for this event.
+  // The list screens navigate with ?from=… rather than firing their own copy,
+  // so an open counts exactly once and deep links are still attributed.
+  useEffect(() => {
+    if (!apiRide) return;
+    pulseEvents.onRideDetailOpened(apiRide.id, openSource);
+  }, [apiRide?.id, openSource, pulseEvents]);
 
   // ── Helpers ───────────────────────────────────────────────────────────────────
   const fmt = (ds: string | null | undefined) => {
@@ -299,6 +311,7 @@ export const RideDetail = () => {
   // ── Update report status ──────────────────────────────────────────────────────
   const handleReportStatusChange = async (reportId: number, newStatus: string) => {
     if (!baseUrl || !token) return;
+    const previousStatus = reportStatuses[reportId] ?? currentReport?.status ?? "";
     setUpdatingReportId(reportId);
     // Optimistic
     setReportStatuses((prev) => ({ ...prev, [reportId]: newStatus }));
@@ -308,6 +321,13 @@ export const RideDetail = () => {
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      // Pulse Carpool Ride Report Status Updated
+      pulseEvents.onRideReportStatusUpdated({
+        ride_id: rideId,
+        report_id: reportId,
+        from_status: previousStatus,
+        to_status: newStatus,
+      });
       toast.success("Status updated");
     } catch (err: unknown) {
       const msg = axios.isAxiosError(err)

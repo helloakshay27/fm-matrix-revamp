@@ -13,21 +13,21 @@ interface GuardProps {
 export function Guard({ status, empty, emptyLabel, children }: GuardProps) {
   if (status.loading) {
     return (
-      <div className="phg-state">
-        <span className="phg-spin" /> Loading…
+      <div className="state">
+        <span className="spin" /> Loading…
       </div>
     );
   }
   if (status.error) {
     return (
-      <div className="phg-state phg-state-err">
+      <div className="state err">
         Couldn’t load this metric — {status.error.message}
       </div>
     );
   }
   if (empty) {
     return (
-      <div className="phg-state">
+      <div className="state">
         {emptyLabel ?? 'No activity recorded for this filter set.'}
       </div>
     );

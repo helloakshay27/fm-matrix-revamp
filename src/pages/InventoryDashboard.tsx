@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 // Removed legacy BulkUploadDialog; using new design
 import { InventoryBulkUploadDialog } from "@/components/InventoryBulkUploaddialogbox";
+import { InventoryConsumptionBulkUploadModal } from '@/components/InventoryConsumptionBulkUploadModal';
 import { InventoryFilterDialog } from "@/components/InventoryFilterDialog";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Switch } from '@/components/ui/switch';
@@ -180,6 +181,7 @@ export const InventoryDashboard = () => {
   const [currentPage, setLocalCurrentPage] = useState(reduxCurrentPage || 1);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [showConsumptionBulkUpload, setShowConsumptionBulkUpload] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [visibleSections, setVisibleSections] = useState<string[]>([
     "statusChart",
@@ -784,17 +786,6 @@ export const InventoryDashboard = () => {
             >
               <Pencil className="w-4 h-4" />
             </Button>
-          )}
-          {item.greenProduct && (
-            <img
-              src={bio}
-              alt="Green Product"
-              className="w-4 h-4"
-              style={{
-                filter:
-                  "invert(46%) sepia(66%) saturate(319%) hue-rotate(67deg) brightness(95%) contrast(85%)",
-              }}
-            />
           )}
         </div>
       );
@@ -1631,6 +1622,10 @@ export const InventoryDashboard = () => {
                   }}
                   onAdd={handleAddInventory}
                   onImport={handleImportClick}
+                  onImportConsumption={() => {
+                    setShowActionPanel(false);
+                    setShowConsumptionBulkUpload(true);
+                  }}
                   onClose={() => {
                     // Close panel and clear selection as requested
                     setShowActionPanel(false);
@@ -1758,6 +1753,10 @@ export const InventoryDashboard = () => {
       </div>
 
       {/* AI Assistant Widget - Inventory Module */}
+      <InventoryConsumptionBulkUploadModal 
+        isOpen={showConsumptionBulkUpload} 
+        onClose={() => setShowConsumptionBulkUpload(false)} 
+      />
     </>
   );
 };

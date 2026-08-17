@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, FileCheck, AlertCircle, Star, Eye, Loader2, X } from "lucide-react";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -121,6 +122,7 @@ interface RideHistoryApiResponse {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export const UserDetail = () => {
+  const pulseEvents = usePulseEvents();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("User's Detail");
@@ -152,7 +154,15 @@ export const UserDetail = () => {
       .get<PassengerDetailApiResponse>(`https://${baseUrl}/api/users/${userId}/passenger_detail.json`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-      .then((res) => setPassengerDetail(res.data))
+      .then((res) => {
+        setPassengerDetail(res.data);
+        // Pulse User Detail Opened — fires once the profile has loaded
+        pulseEvents.onUserDetailOpened({
+          user_id: userId,
+          reports_count: res.data.reports_count,
+          reviews_count: res.data.reviews_count,
+        });
+      })
       .catch((err: unknown) => {
         const msg = axios.isAxiosError(err)
           ? err.response?.data?.error ?? err.message
@@ -160,7 +170,7 @@ export const UserDetail = () => {
         setPassengerError(msg);
       })
       .finally(() => setPassengerLoading(false));
-  }, [userId, baseUrl, token]);
+  }, [userId, baseUrl, token, pulseEvents]);
 
   // ── Fetch ride history (lazy — only when Ride History tab is opened) ──────────
   useEffect(() => {

@@ -30,7 +30,10 @@ export default {
 			fontFamily: {
 				poppins: ["Poppins", "sans-serif"],
 				'work-sans': ['Work Sans', 'sans-serif'],
-				sans: ['Poppins', 'sans-serif'], // Set Poppins as default
+				inter: ['Inter', 'sans-serif'],
+				newsreader: ['Newsreader', 'serif'],
+				sans: ['Inter', 'sans-serif'], // Set Inter as default
+				serif: ['Newsreader', 'serif'],
 			},
 			colors: {
 				// ========================================

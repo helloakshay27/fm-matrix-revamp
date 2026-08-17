@@ -1232,7 +1232,7 @@ export const VisitingPurposePage = () => {
                   const currentPurposes = formData.purpose ? formData.purpose.split('|') : [''];
                   setFormData({ ...formData, purpose: [...currentPurposes, ''].join('|') });
                 }}
-                className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030] h-8"
+                className="border-[#C72030] text-[#C72030]  hover:text-[#C72030] h-8"
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Add
@@ -1343,7 +1343,7 @@ export const VisitingPurposePage = () => {
                     const currentPurposes = moveInOutFormData.purpose ? moveInOutFormData.purpose.split('|') : [''];
                     setMoveInOutFormData({...moveInOutFormData, purpose: [...currentPurposes, ''].join('|')});
                   }}
-                  className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030] h-8"
+                  className="border-[#C72030] text-[#C72030]  hover:text-[#C72030] h-8"
                 >
                   <Plus className="w-4 h-4 mr-1" />
                   Add

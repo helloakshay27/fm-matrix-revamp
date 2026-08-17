@@ -14,7 +14,8 @@ import { ChartSwitch } from '../components/ChartSwitch';
 import { ChartTable, DonutChart, SideLegendDonut, SliceBarChart } from '../components/DonutChart';
 import { ProgressRows } from '../components/ProgressRows';
 import { C } from '../data/constants';
-import { useMsafeDashboard } from '../context/MsafeDashboardContext';
+import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
+import type { Persona } from '../data/constants';
 
 type Slice = { name: string; value: number; color: string };
 type CircleBar = { name: string; pct: number; color: string };
@@ -27,11 +28,29 @@ function getMsafeBaseUrl(): string {
   return host ? `https://${host}` : 'https://live-api.gophygital.work';
 }
 
-async function fetchMsafeKrccJson(endpoint: string, signal?: AbortSignal): Promise<unknown> {
+/** Circle Manager filter bar values, applied as query params once the user clicks Apply.
+ *  Only sent for the 'circle' persona — the admin (pan-India) view stays unfiltered. */
+function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
+  if (persona !== 'circle') return {};
+  const params: Record<string, string> = {};
+  if (f.circleId) params.circle_id = f.circleId;
+  if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
+  if (f.zoneId) params.zone_id = f.zoneId;
+  if (f.empTypeId) params.employee_type = f.empTypeId;
+  if (f.startDate) params.from_date = f.startDate;
+  if (f.endDate) params.to_date = f.endDate;
+  return params;
+}
+
+async function fetchMsafeKrccJson(
+  endpoint: string,
+  extraParams?: Record<string, string>,
+  signal?: AbortSignal,
+): Promise<unknown> {
   const token = localStorage.getItem('token') || '';
   const companyId =
     localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '';
-  const params = new URLSearchParams({ company_id: companyId });
+  const params = new URLSearchParams({ company_id: companyId, ...extraParams });
   if (token) {
     params.set('access_token', token);
     params.set('token', token);
@@ -87,17 +106,17 @@ function colorForStatusName(name: string): string {
   return C.sage;
 }
 
-const STATUS_FLAT_FIELDS: [string, string][] = [
-  ['cleared', 'Cleared'],
-  ['pending', 'Pending'],
-  ['not_started', 'Not Started'],
+const STATUS_FLAT_FIELDS: [string[], string][] = [
+  [['completed', 'cleared'], 'Completed'],
+  [['pending'], 'Pending'],
+  [['not_started'], 'Not Started'],
 ];
 
 function normalizeStatus(payload: unknown): Slice[] {
   const record = payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
 
-  const flatSlices = STATUS_FLAT_FIELDS.map(([key, label]) => {
-    const value = getNumber(record, [key]);
+  const flatSlices = STATUS_FLAT_FIELDS.map(([keys, label]) => {
+    const value = getNumber(record, keys);
     if (value === null) return null;
     return { name: label, value, color: colorForStatusName(label) };
   }).filter((item): item is Slice => Boolean(item));
@@ -260,7 +279,7 @@ function DataState({ loading, empty, label }: { loading: boolean; empty: boolean
 }
 
 export function KrccSection() {
-  const { openDrill } = useMsafeDashboard();
+  const { openDrill, persona, appliedFilters } = useMsafeDashboard();
   const [statusMode, setStatusMode] = useState('donut');
   const [catMode, setCatMode] = useState('donut');
   const [tatMode, setTatMode] = useState('bar');
@@ -279,9 +298,14 @@ export function KrccSection() {
 
   useEffect(() => {
     const controller = new AbortController();
+    setStatusLoading(true);
     (async () => {
       try {
-        const payload = await fetchMsafeKrccJson('krcc_clearance_status.json', controller.signal);
+        const payload = await fetchMsafeKrccJson(
+          'krcc_clearance_status.json',
+          buildFilterParams(persona, appliedFilters),
+          controller.signal,
+        );
         const normalized = normalizeStatus(payload);
         warnIfEmpty('krcc_clearance_status.json', normalized, payload);
         if (!controller.signal.aborted) {
@@ -295,13 +319,18 @@ export function KrccSection() {
       }
     })();
     return () => controller.abort();
-  }, []);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
+    setAgingLoading(true);
     (async () => {
       try {
-        const payload = await fetchMsafeKrccJson('krcc_pending_aging.json', controller.signal);
+        const payload = await fetchMsafeKrccJson(
+          'krcc_pending_aging.json',
+          buildFilterParams(persona, appliedFilters),
+          controller.signal,
+        );
         const normalized = normalizeAging(payload);
         warnIfEmpty('krcc_pending_aging.json', normalized, payload);
         if (!controller.signal.aborted) setAgingData(normalized);
@@ -312,13 +341,18 @@ export function KrccSection() {
       }
     })();
     return () => controller.abort();
-  }, []);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
+    setCategoryLoading(true);
     (async () => {
       try {
-        const payload = await fetchMsafeKrccJson('krcc_cleared_by_category.json', controller.signal);
+        const payload = await fetchMsafeKrccJson(
+          'krcc_cleared_by_category.json',
+          buildFilterParams(persona, appliedFilters),
+          controller.signal,
+        );
         const normalized = normalizeCategory(payload);
         warnIfEmpty('krcc_cleared_by_category.json', normalized, payload);
         if (!controller.signal.aborted) setCategoryData(normalized);
@@ -329,30 +363,42 @@ export function KrccSection() {
       }
     })();
     return () => controller.abort();
-  }, []);
+  }, [appliedFilters, persona]);
+
+  // KRCC Turnaround Time by Circle chart is hidden (see JSX below) — API call commented out
+  // so it's not fetched.
+  // useEffect(() => {
+  //   const controller = new AbortController();
+  //   setTurnaroundLoading(true);
+  //   (async () => {
+  //     try {
+  //       const payload = await fetchMsafeKrccJson(
+  //         'krcc_turnaround_time_by_circle.json',
+  //         buildFilterParams(persona, appliedFilters),
+  //         controller.signal,
+  //       );
+  //       const normalized = normalizeTurnaround(payload);
+  //       warnIfEmpty('krcc_turnaround_time_by_circle.json', normalized, payload);
+  //       if (!controller.signal.aborted) setTurnaroundData(normalized);
+  //     } catch (err) {
+  //       if ((err as Error).name !== 'AbortError') console.warn('M-Safe krcc-turnaround-time API failed.', err);
+  //     } finally {
+  //       if (!controller.signal.aborted) setTurnaroundLoading(false);
+  //     }
+  //   })();
+  //   return () => controller.abort();
+  // }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
+    setCirclePctLoading(true);
     (async () => {
       try {
-        const payload = await fetchMsafeKrccJson('krcc_turnaround_time_by_circle.json', controller.signal);
-        const normalized = normalizeTurnaround(payload);
-        warnIfEmpty('krcc_turnaround_time_by_circle.json', normalized, payload);
-        if (!controller.signal.aborted) setTurnaroundData(normalized);
-      } catch (err) {
-        if ((err as Error).name !== 'AbortError') console.warn('M-Safe krcc-turnaround-time API failed.', err);
-      } finally {
-        if (!controller.signal.aborted) setTurnaroundLoading(false);
-      }
-    })();
-    return () => controller.abort();
-  }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    (async () => {
-      try {
-        const payload = await fetchMsafeKrccJson('krcc_cleared_user_percentage_by_circle.json', controller.signal);
+        const payload = await fetchMsafeKrccJson(
+          'krcc_cleared_user_percentage_by_circle.json',
+          buildFilterParams(persona, appliedFilters),
+          controller.signal,
+        );
         const normalized = normalizeClearanceByCircle(payload);
         warnIfEmpty('krcc_cleared_user_percentage_by_circle.json', normalized, payload);
         if (!controller.signal.aborted) setCirclePctData(normalized);
@@ -363,10 +409,10 @@ export function KrccSection() {
       }
     })();
     return () => controller.abort();
-  }, []);
+  }, [appliedFilters, persona]);
 
   const totalStatus = statusData.reduce((sum, s) => sum + s.value, 0);
-  const clearedStatus = statusData.find((s) => /clear/i.test(s.name))?.value ?? 0;
+  const clearedStatus = statusData.find((s) => /clear|complete/i.test(s.name))?.value ?? 0;
   const clearedPct =
     apiClearedPct ?? (totalStatus > 0 ? `${((clearedStatus / totalStatus) * 100).toFixed(1)}%` : '—');
 
@@ -379,7 +425,7 @@ export function KrccSection() {
       <div className="g g2">
         <ChartCard
           title="KRCC Clearance Status"
-          sub="Cleared vs Pending vs Not Started"
+          sub="Completed vs Pending vs Not Started"
           infoKey="krcc-status"
           showPdf
           pdfLabel="KRCC Clearance Status"
@@ -392,7 +438,7 @@ export function KrccSection() {
             <SideLegendDonut
               data={statusData}
               centerValue={clearedPct}
-              centerLabel="Cleared"
+              centerLabel="Completed"
               bodyLabel="Users"
               onRowClick={(name) => openDrill(`krcc-${name.toLowerCase().replace(/\s/g, '')}`, name)}
             />
@@ -489,6 +535,7 @@ export function KrccSection() {
         )}
       </ChartCard>
 
+      {/* KRCC Turnaround Time by Circle hidden — kept for reference, API call above is also commented out.
       <ChartCard
         title="KRCC Turnaround Time by Circle"
         sub="Avg calendar days from initiation to clearance"
@@ -557,6 +604,7 @@ export function KrccSection() {
           </div>
         )}
       </ChartCard>
+      */}
     </AccordionShell>
   );
 }

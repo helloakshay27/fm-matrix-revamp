@@ -1264,6 +1264,10 @@ const InvoiceAdd = lazy(() => import("./pages/ClubManagement/InvoiceAdd").then(m
 const EditInvoicePage = lazy(() => import("./pages/EditInvoicePage").then(m => ({ default: m.EditInvoicePage })));
 const InvoiceDashboardAccounting = lazy(() => import("./pages/ClubManagement/InvoiceDashboard").then(m => ({ default: m.InvoiceDashboardAccounting })));
 const InvoiceDashboardDetailsPage = lazy(() => import("./pages/ClubManagement/InvoiceDashboardDetailsPage").then(m => ({ default: m.InvoiceDashboardDetailsPage })));
+const InvoiceClubManagementDashboard = lazy(() => import("./pages/ClubManagement/InvoiceClubManagementDashboard").then(m => ({ default: m.InvoiceClubManagementDashboard })));
+const InvoiceClubManagementAdd = lazy(() => import("./pages/ClubManagement/InvoiceClubManagementAdd").then(m => ({ default: m.InvoiceClubManagementAdd })));
+const InvoiceClubManagementDetails = lazy(() => import("./pages/ClubManagement/InvoiceClubManagementDetails").then(m => ({ default: m.InvoiceClubManagementDetails })));
+const InvoiceClubManagementEdit = lazy(() => import("./pages/ClubManagement/InvoiceClubManagementEdit").then(m => ({ default: m.InvoiceClubManagementEdit })));
 const QuotesDashboard = lazy(() => import("./pages/ClubManagement/QuotesDashboard").then(m => ({ default: m.QuotesDashboard })));
 const QuotesAdd = lazy(() => import("./pages/ClubManagement/QuotesAdd").then(m => ({ default: m.QuotesAdd })));
 const QuotesEdit = lazy(() => import("./pages/ClubManagement/QuotesEdit").then(m => ({ default: m.QuotesEdit })).catch(() => import("./pages/ClubManagement/QuotesEdit")));
@@ -3981,6 +3985,23 @@ function App() {
                             <Route
                               path="/club-management/accounting/details/:id"
                               element={<PaymentDetailPage />}
+                            />
+                            {/* Club Management - Invoice */}
+                            <Route
+                              path="/club-management/invoice"
+                              element={<InvoiceClubManagementDashboard />}
+                            />
+                            <Route
+                              path="/club-management/invoice/add"
+                              element={<InvoiceClubManagementAdd />}
+                            />
+                            <Route
+                              path="/club-management/invoice/details/:id"
+                              element={<InvoiceClubManagementDetails />}
+                            />
+                            <Route
+                              path="/club-management/invoice/edit/:id"
+                              element={<InvoiceClubManagementEdit />}
                             />
                             {/* Snagging Routes */}
                             <Route

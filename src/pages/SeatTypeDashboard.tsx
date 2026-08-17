@@ -115,7 +115,7 @@ export const SeatTypeDashboard = () => {
                   <Switch
                     checked={item.active}
                     onCheckedChange={() => handleToggleActive(item.id)}
-                    className="data-[state=checked]:bg-green-500"
+                    className="data-[state=checked]:bg-brand"
                   />
                 );
               case "name":

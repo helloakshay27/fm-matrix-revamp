@@ -2179,7 +2179,11 @@ export const PatrollingEditPage: React.FC = () => {
               onClick={addCheckpoint}
               disabled={isSubmitting}
             >
-              <Plus className="w-4 h-4 mr-2" /> Add Checkpoint
+              <Plus
+                className="w-4 h-4 mr-2"
+                data-icon-color
+                style={{ "--glyph-color": "var(--color-primary)" } as React.CSSProperties}
+              /> Add Checkpoint
             </Button>
           </div>
         </div>
@@ -2187,8 +2191,7 @@ export const PatrollingEditPage: React.FC = () => {
 
       <div className="flex items-center gap-3 justify-center pt-2">
         <Button
-          variant="destructive"
-          className="px-8"
+          className="px-8 bg-brand text-white"
           onClick={handleSubmit}
           disabled={isSubmitting}
         >

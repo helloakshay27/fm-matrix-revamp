@@ -23,6 +23,7 @@ import {
   type CommunityBreakdown,
   type PulseFilters,
 } from "@/services/pulseDashboardApi";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 const PALETTE = [
   "#DA7756",
@@ -46,6 +47,14 @@ export function PulseCommunity({ filters }: Props) {
   const [trend, setTrend] = useState<CommunityGrowthTrend | null>(null);
   const [breakdown, setBreakdown] = useState<CommunityBreakdown | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const pulseEvents = usePulseEvents();
+
+
+  // Fires once when the Community tab is mounted (tab switch renders a fresh instance).
+  useEffect(() => {
+    pulseEvents.onCommunityViewed();
+  }, [pulseEvents]);
 
   useEffect(() => {
     loadAll();

@@ -1,4 +1,5 @@
 import ExternalSosDirectory from "@/components/ExternalSosDirectory"
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import InternalSosDirectory from "@/components/InternalSosDirectory"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import axios from "axios"
@@ -15,6 +16,16 @@ const debounce = (func: (...args: any[]) => void, wait: number) => {
 };
 
 const SOSDirectory = () => {
+  const pulseEvents = usePulseEvents();
+
+  useEffect(() => {
+    pulseEvents.onModuleViewed({
+      module: "SOS Directory",
+      package: "Pulse Privilege",
+      screen: "pulse_sos_directory",
+    });
+  }, [pulseEvents]);
+
     const baseUrl = localStorage.getItem('baseUrl')
     const token = localStorage.getItem('token')
 

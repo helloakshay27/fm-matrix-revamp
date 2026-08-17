@@ -110,6 +110,9 @@ interface DashboardContextValue {
   setSubModule: (subModule: string) => void;
   setSessTab: (tab: DashboardState["sessTab"]) => void;
   setLicensedSeats: (seats: number | null) => void;
+  setActivePage: (page: DashboardState["activePage"]) => void;
+  setTheme: (theme: DashboardState["theme"]) => void;
+  setNavCollapsed: (collapsed: boolean) => void;
   togglePrev: () => void;
   refreshAll: () => void;
   benchmarks: Record<string, number | null>;
@@ -159,6 +162,45 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   }, [sites, groups]);
 
   const { from, to } = useMemo(() => dateRangeFor(state.date), [state.date]);
+
+  // Sync theme and nav to HTML tag
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', state.theme);
+    if (state.navCollapsed) {
+      document.documentElement.classList.add('nav-collapsed');
+    } else {
+      document.documentElement.classList.remove('nav-collapsed');
+    }
+    // Try to save to localStorage as well
+    try {
+      localStorage.setItem('fmx-theme', state.theme);
+      localStorage.setItem('fmx-nav', state.navCollapsed ? 'collapsed' : 'expanded');
+    } catch (e) {}
+  }, [state.theme, state.navCollapsed]);
+
+  // Read initial theme/nav state from local storage on mount
+  useEffect(() => {
+    try {
+      const t = localStorage.getItem('fmx-theme');
+      const n = localStorage.getItem('fmx-nav');
+      setState(s => {
+        let updated = false;
+        const nextState = { ...s };
+        if (t === 'dark' || t === 'light') {
+          nextState.theme = t;
+          updated = true;
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          nextState.theme = 'dark';
+          updated = true;
+        }
+        if (n === 'collapsed' || n === 'expanded') {
+          nextState.navCollapsed = n === 'collapsed';
+          updated = true;
+        }
+        return updated ? nextState : s;
+      });
+    } catch (e) {}
+  }, []);
 
   const scopedSites = useMemo(
     () => scopeSites(state, sites, groups),
@@ -356,6 +398,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     setSubModule: (subModule) => setState((s) => ({ ...s, subModule })),
     setSessTab: (sessTab) => setState((s) => ({ ...s, sessTab })),
     setLicensedSeats: (licensedSeats) => setState((s) => ({ ...s, licensedSeats })),
+    setActivePage: (activePage) => setState((s) => ({ ...s, activePage })),
+    setTheme: (theme) => setState((s) => ({ ...s, theme })),
+    setNavCollapsed: (navCollapsed) => setState((s) => ({ ...s, navCollapsed })),
     togglePrev: () => setState((s) => ({ ...s, prev: !s.prev })),
     refreshAll: () => queryClient.invalidateQueries({ queryKey: ["fm-adoption"] }),
     benchmarks,

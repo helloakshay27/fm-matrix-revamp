@@ -1,4 +1,6 @@
 import { useMemo } from 'react';
+import vimyworkspaceLogo from '@/assets/vimyworkspace-logo.png';
+import { getUser } from '@/utils/auth';
 
 function formatViShellDate(d: Date) {
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -34,33 +36,24 @@ function formatViShellDate(d: Date) {
 /** Red Vi My Workspace outer shell — matches vi_msafe_v6.html */
 export function ViShellBanner() {
   const { weekday, date } = useMemo(() => formatViShellDate(new Date()), []);
+  const user = getUser();
+  const displayName = `${user?.firstname || ''} ${user?.lastname || ''}`.trim() || 'User';
 
   return (
     <header className="vi-shell-banner">
       <div className="vi-shell-brand">
-        <div className="vi-shell-logo" aria-hidden>
-          <svg viewBox="0 0 40 40" fill="none">
-            <path
-              d="M4 8l8 24 8-16 8 16 8-24"
-              stroke="#fff"
-              strokeWidth="4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <circle cx="8" cy="6" r="2.5" fill="#fff" />
-            <circle cx="20" cy="6" r="2.5" fill="#fff" />
-            <circle cx="32" cy="6" r="2.5" fill="#fff" />
-          </svg>
+        <div className="vi-shell-logo-chip">
+          <img src={vimyworkspaceLogo} alt="Vimyworkspace" className="vi-shell-logo-img" />
         </div>
         <div className="vi-shell-title">
-          Vi my workspace <span>Dashboard</span> — Vi mSafe
+          <span className="vi-shell-sub">Dashboard — Vi mSafe</span>
         </div>
       </div>
       <div className="vi-shell-right">
         <div className="vi-shell-welcome">
           <b>Welcome,</b>
           <br />
-          Amrita Kulkarni
+          {displayName}
         </div>
         <div className="vi-shell-date">
           <b>{weekday}</b>

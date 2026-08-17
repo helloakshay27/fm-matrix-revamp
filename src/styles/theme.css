@@ -1565,9 +1565,11 @@ textarea:focus {
 
 /* ===== SELECT/DROPDOWN FOCUS OVERRIDES ===== */
 select:focus,
-[role="combobox"]:focus {
+[role="combobox"]:focus,
+[role="combobox"][data-state="open"] {
   border-color: var(--color-primary) !important;
   outline: none !important;
+  box-shadow: none !important;
 }
 
 /* ===== SIDEBAR COLOR OVERRIDES ===== */

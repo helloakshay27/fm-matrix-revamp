@@ -16,11 +16,12 @@ import { ChartTable, DonutChart, SliceBarChart } from '../components/DonutChart'
 import { Leaderboard } from '../components/Leaderboard';
 import { ProgressRows } from '../components/ProgressRows';
 import { C } from '../data/constants';
-import { useMsafeDashboard } from '../context/MsafeDashboardContext';
+import type { Persona } from '../data/constants';
+import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 
 type DailyRow = { d: string; n: number };
 type WeekRow = { label: string; pct: number; val: string; color: string };
-type ManagerRow = { name: string; func: string; count: number };
+type ManagerRow = { name: string; department: string; circle: string; count: number };
 type Slice = { name: string; value: number; color: string };
 type TrendRow = { m: string; n: number };
 
@@ -30,6 +31,20 @@ function getMsafeBaseUrl(): string {
   const fromLS = localStorage.getItem('baseUrl') || '';
   const host = fromLS.replace(/^https?:\/\//, '').replace(/\/$/, '');
   return host ? `https://${host}` : 'https://live-api.gophygital.work';
+}
+
+/** Circle Manager filter bar values, applied as query params once the user clicks Apply.
+ *  Only sent for the 'circle' persona — the admin (pan-India) view stays unfiltered. */
+function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
+  if (persona !== 'circle') return {};
+  const params: Record<string, string> = {};
+  if (f.circleId) params.circle_id = f.circleId;
+  if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
+  if (f.zoneId) params.zone_id = f.zoneId;
+  if (f.empTypeId) params.employee_type = f.empTypeId;
+  if (f.startDate) params.from_date = f.startDate;
+  if (f.endDate) params.to_date = f.endDate;
+  return params;
 }
 
 async function fetchMsafeLmcJson(
@@ -109,13 +124,14 @@ function colorForWeekPct(pct: number): string {
 
 function normalizeWeeklyCompletion(payload: unknown): WeekRow[] {
   const list = unwrapList(payload, ['data', 'result', 'week', 'days']);
-  return list
+  const rows = list
     .map((item) => {
       if (!item || typeof item !== 'object') return null;
       const record = item as Record<string, unknown>;
-      const label = getString(record, ['day', 'day_name', 'label', 'date']);
+      const label = getString(record, ['day_name', 'day', 'label', 'date']);
       if (!label) return null;
       const actual = getNumber(record, [
+        'actual_lmc_completion',
         'actual',
         'actual_signed',
         'completed',
@@ -127,14 +143,24 @@ function normalizeWeeklyCompletion(payload: unknown): WeekRow[] {
         'val',
         'sign_offs',
       ]);
+      if (actual === null) return null;
       const target = getNumber(record, ['daily_target', 'target']);
-      const val = actual ?? target;
-      if (val === null) return null;
       const explicitPct = getNumber(record, ['pct', 'percentage', 'completion_percentage', 'percent']);
-      const pct = explicitPct ?? (actual !== null && target !== null && target > 0 ? Math.round((actual / target) * 100) : 100);
-      return { label, pct, val: val.toLocaleString('en-IN'), color: colorForWeekPct(pct) };
+      return { label, actual, target, explicitPct };
     })
-    .filter((item): item is WeekRow => Boolean(item));
+    .filter((item): item is { label: string; actual: number; target: number | null; explicitPct: number | null } =>
+      Boolean(item),
+    );
+
+  const maxActual = Math.max(1, ...rows.map((r) => r.actual));
+  return rows.map((r) => {
+    const pct =
+      r.explicitPct ??
+      (r.target !== null && r.target > 0
+        ? Math.round((r.actual / r.target) * 100)
+        : Math.round((r.actual / maxActual) * 100));
+    return { label: r.label, pct, val: r.actual.toLocaleString('en-IN'), color: colorForWeekPct(pct) };
+  });
 }
 
 function normalizeManagers(payload: unknown): ManagerRow[] {
@@ -145,10 +171,11 @@ function normalizeManagers(payload: unknown): ManagerRow[] {
       const record = item as Record<string, unknown>;
       const name = getString(record, ['manager_name', 'name', 'employee_name']);
       if (!name) return null;
-      const func = getString(record, ['function', 'func', 'department', 'circle']) ?? '—';
+      const department = getString(record, ['department', 'function', 'func']) ?? '—';
+      const circle = getString(record, ['circle', 'circle_name']) ?? '—';
       const count = getNumber(record, ['total_lmc_signed', 'count', 'value', 'sign_offs', 'lmc_count', 'total']);
       if (count === null) return null;
-      return { name, func, count };
+      return { name, department, circle, count };
     })
     .filter((item): item is ManagerRow => Boolean(item));
 }
@@ -228,7 +255,7 @@ function DataState({ loading, empty, label }: { loading: boolean; empty: boolean
 }
 
 export function LmcSection() {
-  const { openDrill } = useMsafeDashboard();
+  const { openDrill, persona, appliedFilters } = useMsafeDashboard();
   const [dailyMode, setDailyMode] = useState('line');
   const [funcMode, setFuncMode] = useState('donut');
   const [trendMode, setTrendMode] = useState('line');
@@ -247,9 +274,14 @@ export function LmcSection() {
 
   useEffect(() => {
     const controller = new AbortController();
+    setDailyLoading(true);
     (async () => {
       try {
-        const payload = await fetchMsafeLmcJson('daily_lmc_volume.json', undefined, controller.signal);
+        const payload = await fetchMsafeLmcJson(
+          'daily_lmc_volume.json',
+          buildFilterParams(persona, appliedFilters),
+          controller.signal,
+        );
         if (!controller.signal.aborted) setDailyData(normalizeDailyVolume(payload));
       } catch (err) {
         if ((err as Error).name !== 'AbortError') console.warn('M-Safe daily-lmc-volume API failed.', err);
@@ -258,15 +290,17 @@ export function LmcSection() {
       }
     })();
     return () => controller.abort();
-  }, []);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
+    setWeekLoading(true);
     (async () => {
       try {
+        const filterParams = buildFilterParams(persona, appliedFilters);
         const payload = await fetchMsafeLmcJson(
           'lmc_weekly_completion.json',
-          { from_date: '', end_date: '' },
+          { from_date: filterParams.from_date ?? '', end_date: filterParams.to_date ?? '' },
           controller.signal,
         );
         if (!controller.signal.aborted) setWeekData(normalizeWeeklyCompletion(payload));
@@ -277,13 +311,18 @@ export function LmcSection() {
       }
     })();
     return () => controller.abort();
-  }, []);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
+    setManagerLoading(true);
     (async () => {
       try {
-        const payload = await fetchMsafeLmcJson('lmc_signoffs_by_manager.json', undefined, controller.signal);
+        const payload = await fetchMsafeLmcJson(
+          'lmc_signoffs_by_manager.json',
+          buildFilterParams(persona, appliedFilters),
+          controller.signal,
+        );
         if (!controller.signal.aborted) setManagerData(normalizeManagers(payload));
       } catch (err) {
         if ((err as Error).name !== 'AbortError') console.warn('M-Safe lmc-signoffs-by-manager API failed.', err);
@@ -292,13 +331,18 @@ export function LmcSection() {
       }
     })();
     return () => controller.abort();
-  }, []);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
+    setFuncLoading(true);
     (async () => {
       try {
-        const payload = await fetchMsafeLmcJson('lmc_signoffs_by_function.json', undefined, controller.signal);
+        const payload = await fetchMsafeLmcJson(
+          'lmc_signoffs_by_function.json',
+          buildFilterParams(persona, appliedFilters),
+          controller.signal,
+        );
         if (!controller.signal.aborted) setFuncData(normalizeByFunction(payload));
       } catch (err) {
         if ((err as Error).name !== 'AbortError') console.warn('M-Safe lmc-signoffs-by-function API failed.', err);
@@ -307,13 +351,18 @@ export function LmcSection() {
       }
     })();
     return () => controller.abort();
-  }, []);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
+    setStatusLoading(true);
     (async () => {
       try {
-        const payload = await fetchMsafeLmcJson('lmc_status.json', undefined, controller.signal);
+        const payload = await fetchMsafeLmcJson(
+          'lmc_status.json',
+          buildFilterParams(persona, appliedFilters),
+          controller.signal,
+        );
         if (!controller.signal.aborted) setStatusData(normalizeLmcStatus(payload));
       } catch (err) {
         if ((err as Error).name !== 'AbortError') console.warn('M-Safe lmc-status API failed.', err);
@@ -322,13 +371,18 @@ export function LmcSection() {
       }
     })();
     return () => controller.abort();
-  }, []);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
+    setTrendLoading(true);
     (async () => {
       try {
-        const payload = await fetchMsafeLmcJson('monthly_lmc_signoff_volume.json', undefined, controller.signal);
+        const payload = await fetchMsafeLmcJson(
+          'monthly_lmc_signoff_volume.json',
+          buildFilterParams(persona, appliedFilters),
+          controller.signal,
+        );
         if (!controller.signal.aborted) setTrendData(normalizeMonthlyTrend(payload));
       } catch (err) {
         if ((err as Error).name !== 'AbortError') console.warn('M-Safe monthly-lmc-signoff-volume API failed.', err);
@@ -337,7 +391,7 @@ export function LmcSection() {
       }
     })();
     return () => controller.abort();
-  }, []);
+  }, [appliedFilters, persona]);
 
   return (
     <AccordionShell
@@ -411,7 +465,7 @@ export function LmcSection() {
             <Leaderboard
               items={managerData.map((m) => ({
                 name: m.name,
-                meta: m.func,
+                meta: `${m.department} · ${m.circle}`,
                 value: m.count,
                 onClick: () => openDrill('user-detail', m.name),
               }))}

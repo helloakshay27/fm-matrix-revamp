@@ -1,8 +1,6 @@
-import type { CSSProperties, ReactNode } from 'react';
+import React, { CSSProperties, ReactNode } from 'react';
 import { InfoButton } from './InfoButton';
 import { AiButton } from './AiButton';
-
-export type Accent = 'orange' | 'blue' | 'green';
 
 interface CardHeadProps {
   cr?: ReactNode;
@@ -15,15 +13,14 @@ interface CardHeadProps {
 export function CardHead({ cr, ct, cd, ctExtra }: CardHeadProps) {
   return (
     <>
-      {cr && <div className="phg-cr">{cr}</div>}
-      <div className="phg-ct" style={{ margin: 0 }}>{ct}{ctExtra}</div>
-      {cd && <div className="phg-cd">{cd}</div>}
+      {cr && <div className="cr">{cr}</div>}
+      <div className="ct" style={{ margin: 0 }}>{ct}{ctExtra}</div>
+      {cd && <div className="cd">{cd}</div>}
     </>
   );
 }
 
 interface CardProps {
-  accent?: Accent;
   infoKey?: string;
   aiKey?: string;
   className?: string;
@@ -33,13 +30,13 @@ interface CardProps {
   children: ReactNode;
 }
 
-export function Card({ accent, infoKey, aiKey, className, style, head, bodyClassName, children }: CardProps) {
+export const Card = React.forwardRef<HTMLDivElement, CardProps>(({ infoKey, aiKey, className, style, head, bodyClassName, children, ...rest }, ref) => {
   return (
-    <div className={`phg-card${className ? ` ${className}` : ''}`} style={style}>
-      <div className={`phg-card-head${accent ? ` b-${accent}` : ''}`}>{head}</div>
-      <div className={`phg-card-body${bodyClassName ? ` ${bodyClassName}` : ''}`}>{children}</div>
+    <div ref={ref} className={`card${className ? ` ${className}` : ''}`} style={style} {...rest}>
+      <div className="card-head">{head}</div>
+      <div className={`card-body${bodyClassName ? ` ${bodyClassName}` : ''}`}>{children}</div>
       {infoKey && <InfoButton infoKey={infoKey} />}
       {aiKey && <AiButton chartKey={aiKey} />}
     </div>
   );
-}
+});

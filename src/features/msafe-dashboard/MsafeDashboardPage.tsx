@@ -15,7 +15,6 @@ import { TrainingSection } from './sections/TrainingSection';
 import { LmcSection } from './sections/LmcSection';
 import { SmtSection } from './sections/SmtSection';
 import { HeatmapSection } from './sections/HeatmapSection';
-import { UserDirectorySection } from './sections/UserDirectorySection';
 import { MyDashboardSection } from './sections/MyDashboardSection';
 import { Shield } from 'lucide-react';
 
@@ -78,7 +77,6 @@ function MsafeMain() {
           <SmtSection />
         </div>
         <HeatmapSection />
-        <UserDirectorySection />
         <div className="footer">
           M-Safe Dashboard v1 · Wireframe · GoPhygital / Lockated for Vodafone Idea · All data shown is
           illustrative dummy data pending DB integration · July 2026

@@ -91,6 +91,7 @@ interface Invoice {
     plant_detail?: PlantDetail;
     wo_reference_number?: string;
     related_to?: string;
+    pr_type?: string;
     supplier_name?: string;
     invoice_amount?: number;
     total_taxes?: number;
@@ -230,6 +231,13 @@ export const InvoiceDetails = () => {
             fetchData();
         }
     }, [dispatch, baseUrl, token, id]);
+
+    const formatIndian = (val: string | number | null | undefined): string => {
+        if (val === "" || val === null || val === undefined) return "-";
+        const n = parseFloat(String(val));
+        if (isNaN(n)) return String(val);
+        return n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+    };
 
     const handleSendToSap = useCallback(async () => {
         if (!baseUrl || !token || !id) {
@@ -629,6 +637,11 @@ export const InvoiceDetails = () => {
                         <span className="text-gray-900 font-medium">{invoice.related_to}</span>
                     </div>
                     <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">PR Type</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.pr_type}</span>
+                    </div>
+                    <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Adjustment Amount</span>
                         <span className="text-gray-500 mx-2">:</span>
                         <span className="text-gray-900 font-medium">{invoice.adjustment_amount}</span>
@@ -646,32 +659,34 @@ export const InvoiceDetails = () => {
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Invoice Amount</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.invoice_amount}</span>
+                        <span className="text-gray-900 font-medium">{formatIndian(invoice.invoice_amount)}
+                            {formatIndian(grnDetails.retention_amount)}
+                        </span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">TDS Amount</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.tds_amount}</span>
+                        <span className="text-gray-900 font-medium">{formatIndian(invoice.tds_amount)}</span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Total Taxes</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.total_taxes}</span>
+                        <span className="text-gray-900 font-medium">{formatIndian(invoice.total_taxes)}</span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">QC Amount</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.qc_amount}</span>
+                        <span className="text-gray-900 font-medium">{formatIndian(invoice.qc_amount)}</span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Total Invoice Amount</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.total_invoice_amount}</span>
+                        <span className="text-gray-900 font-medium">{formatIndian(invoice.total_invoice_amount)}</span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Payable Amount</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.payable_amount}</span>
+                        <span className="text-gray-900 font-medium">{formatIndian(invoice.payable_amount)}</span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Notes</span>
@@ -752,7 +767,7 @@ export const InvoiceDetails = () => {
                         <span className="font-medium text-gray-700">Amount In Words:</span>
                         <span className="font-medium">
                             {invoice.total_value
-                                ? numberToIndianCurrencyWords(invoice.total_value.toFixed(2))
+                                ? numberToIndianCurrencyWords(invoice.total_value)
                                 : "N/A"}
                         </span>
                     </div>

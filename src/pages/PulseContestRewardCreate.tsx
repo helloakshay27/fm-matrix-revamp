@@ -4,6 +4,7 @@ import axios from "axios";
 import { ArrowLeft, Gift, Trophy, Tag, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import {
     TextField,
     FormControl,
@@ -56,6 +57,7 @@ const SectionHeader = ({ icon: Icon, title }: { icon: any; title: string }) => (
 );
 
 const PulseContestRewardCreate = () => {
+    const pulseEvents = usePulseEvents();
     const navigate = useNavigate();
 
     const [submitting, setSubmitting] = useState(false);
@@ -220,6 +222,12 @@ const PulseContestRewardCreate = () => {
                 }
             );
             toast.success("Reward created successfully");
+            pulseEvents.onRewardCreated({
+                contest_id: Number(form.contest_id),
+                prize_id: Number(form.prize_id),
+                user_id: Number(form.user_id),
+                reward_type: form.reward_type,
+            });
             navigate("/pulse/rewards");
         } catch (error: any) {
             const msg =
