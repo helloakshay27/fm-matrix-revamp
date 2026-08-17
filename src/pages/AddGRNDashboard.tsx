@@ -417,7 +417,7 @@ export const AddGRNDashboard = () => {
         return false;
       }
       if (
-        item.receivedQuantity > item.expectedQuantity
+        parseFloat(item.receivedQuantity) > parseFloat(item.expectedQuantity)
       ) {
         toast.error(`Received Quantity cannot be greater than Expected Quantity for item ${index + 1}`);
         return false;
