@@ -125,6 +125,16 @@ const modulesByPackage = {
       icon: FileText,
       href: "/club-management/invoice",
     },
+    {
+      name: "Credit Note",
+      icon: FileText,
+      href: "/club-management/credit-note",
+    },
+    {
+      name: "Debit Note",
+      icon: FileText,
+      href: "/club-management/debit-note",
+    },
     // {
     //     name: "Accounting",
     //     icon: Calculator,
