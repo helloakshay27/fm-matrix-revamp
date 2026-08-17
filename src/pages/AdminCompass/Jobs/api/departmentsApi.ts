@@ -13,23 +13,12 @@ export async function fetchDepartments(): Promise<Department[]> {
     .trim()
     .replace(/\/+$/, "")
     .replace(/^https?:\/\//, "");
-  const selectedCompanyId = localStorage.getItem("selectedCompanyId");
-  const selectedSiteId = localStorage.getItem("selectedSiteId");
-  const storedUser = localStorage.getItem("user");
-  const parsedUser = storedUser ? JSON.parse(storedUser) : null;
-  const fallbackCompanyId =
-    selectedCompanyId ||
-    selectedSiteId ||
-    parsedUser?.company_id ||
-    parsedUser?.lock_role?.company_id ||
-    "";
-
   if (!baseUrl) throw new Error("Base URL not found in localStorage");
-  if (!fallbackCompanyId) {
-    throw new Error("Selected company/site ID not found in localStorage");
-  }
 
-  const url = `https://${baseUrl}/pms/company_setups/${fallbackCompanyId}/departments.json`;
+  const orgId = (localStorage.getItem("org_id") || "").trim();
+  if (!orgId) throw new Error("org_id not found in localStorage");
+
+  const url = `https://${baseUrl}/pms/departments.json?org_id=${orgId}`;
 
   const res = await axios.get(url, {
     headers: {
@@ -38,5 +27,5 @@ export async function fetchDepartments(): Promise<Department[]> {
     },
   });
 
-  return res.data?.departments || [];
+  return Array.isArray(res.data) ? res.data : res.data?.departments || [];
 }

@@ -345,6 +345,8 @@ export function StepKra() {
       .filter((k) => k.id !== kraId)
       .reduce((sum, k) => sum + (Number(k.weightage) || 0), 0);
   const overLimit = totalKraWeight > 100;
+  // Hint sabhi rows me same dikhta hai — kitna weightage abhi bacha hua hai.
+  const weightLeft = Math.max(0, 100 - totalKraWeight);
 
   return (
     <div>
@@ -424,7 +426,7 @@ export function StepKra() {
                   </Fld>
                   <Fld
                     label="KRA Weightage (%)"
-                    hint={`${Math.max(0, 100 - usedByOthers(kra.id))}% left of 100%`}
+                    hint={`${weightLeft}% left of 100%`}
                   >
                     <FI
                       type="number"
