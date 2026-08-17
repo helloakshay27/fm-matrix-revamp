@@ -119,11 +119,14 @@ const ProjectTeams = () => {
         } else if (item.members && Array.isArray(item.members)) {
             memberIds = item.members.map((m: any) => m.id);
         } else if (item.project_team_members && Array.isArray(item.project_team_members)) {
-            memberIds = item.project_team_members.map((m: any) => {
-                const userId = m.user.id;
-                newMemberIdMap[userId] = m.id;
-                return userId;
-            });
+            memberIds = item.project_team_members
+                .map((m: any) => {
+                    const userId = m.user?.id ?? m.user_id;
+                    if (!userId) return null;
+                    newMemberIdMap[userId] = m.id;
+                    return userId;
+                })
+                .filter((id: number | null): id is number => id !== null);
         }
 
         setMemberIdMap(newMemberIdMap);
@@ -277,7 +280,7 @@ const ProjectTeams = () => {
             case 'members_names':
                 if (Array.isArray(item.project_team_members)) {
                     const names = item.project_team_members
-                        .map((m: any) => m.user.name)
+                        .map((m: any) => m.user?.name || m.user?.full_name)
                         .filter(Boolean);
 
                     if (names.length === 0) return "-";
