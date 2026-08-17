@@ -232,6 +232,13 @@ export const InvoiceDetails = () => {
         }
     }, [dispatch, baseUrl, token, id]);
 
+    const formatIndian = (val: string | number | null | undefined): string => {
+        if (val === "" || val === null || val === undefined) return "-";
+        const n = parseFloat(String(val));
+        if (isNaN(n)) return String(val);
+        return n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+    };
+
     const handleSendToSap = useCallback(async () => {
         if (!baseUrl || !token || !id) {
             toast.error("Missing required configuration");
@@ -652,32 +659,34 @@ export const InvoiceDetails = () => {
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Invoice Amount</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.invoice_amount}</span>
+                        <span className="text-gray-900 font-medium">{formatIndian(invoice.invoice_amount)}
+                            {formatIndian(grnDetails.retention_amount)}
+                        </span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">TDS Amount</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.tds_amount}</span>
+                        <span className="text-gray-900 font-medium">{formatIndian(invoice.tds_amount)}</span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Total Taxes</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.total_taxes}</span>
+                        <span className="text-gray-900 font-medium">{formatIndian(invoice.total_taxes)}</span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">QC Amount</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.qc_amount}</span>
+                        <span className="text-gray-900 font-medium">{formatIndian(invoice.qc_amount)}</span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Total Invoice Amount</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.total_invoice_amount}</span>
+                        <span className="text-gray-900 font-medium">{formatIndian(invoice.total_invoice_amount)}</span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Payable Amount</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.payable_amount}</span>
+                        <span className="text-gray-900 font-medium">{formatIndian(invoice.payable_amount)}</span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Notes</span>
