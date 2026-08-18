@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -125,51 +125,41 @@ const ParkingSlotCategory: React.FC<ParkingSlotCategoryProps> = ({
     onSlotCountChange(categoryId, type, parsed);
   };
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollPosRef = useRef(0);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    scrollPosRef.current = e.currentTarget.scrollTop;
+  };
+
+  useLayoutEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollPosRef.current;
+    }
+  });
+
   return (
     <div>
       <h4 className="font-medium mb-4">{title}</h4>
-      <div className="bg-white rounded-lg p-4 mb-4 h-[200px] border-2 border-dashed border-gray-200 overflow-y-auto">
+      <div ref={scrollRef} onScroll={handleScroll} className="bg-white rounded-lg p-4 mb-4 h-[200px] border-2 border-dashed border-gray-200 overflow-y-auto">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {Array.from({ length: isStack ? count * 2 : count }, (_, index) => index)
-            .sort((a, b) => {
-              // Sort slots by their display names
-              const nameA = generateSlotName(a);
-              const nameB = generateSlotName(b);
-
-              // Extract numeric part for proper sorting
-              const matchA = nameA.match(/(\d+)([A-Z]?)/);
-              const matchB = nameB.match(/(\d+)([A-Z]?)/);
-
-              if (matchA && matchB) {
-                const numA = parseInt(matchA[1]);
-                const numB = parseInt(matchB[1]);
-
-                if (numA !== numB) return numA - numB;
-
-                // If numbers are same, sort by suffix (A before B)
-                const suffixA = matchA[2] || '';
-                const suffixB = matchB[2] || '';
-                return suffixA.localeCompare(suffixB);
-              }
-
-              return nameA.localeCompare(nameB);
-            })
-            .map((index) => (
-              <div key={index} className="relative">
-                <Input
-                  value={generateSlotName(index)}
-                  onChange={(e) => onSlotNameChange(categoryId, type, index, e.target.value)}
-                  className="w-full h-10 text-xs text-center bg-white border-gray-300 rounded-lg font-medium"
-                  placeholder="Slot name"
-                />
-                <button
-                  className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 text-xs border-2 border-white"
-                  onClick={() => onSlotCountChange(categoryId, type, count - 1)}
-                >
-                  &#x2715;
-                </button>
-              </div>
-            ))}
+            {Array.from({ length: isStack ? count * 2 : count }, (_, index) => index)
+              .map((index) => (
+                <div key={index} className="relative">
+                  <Input
+                    value={generateSlotName(index)}
+                    onChange={(e) => onSlotNameChange(categoryId, type, index, e.target.value)}
+                    className="w-full h-10 text-xs text-center bg-white border-gray-300 rounded-lg font-medium"
+                    placeholder="Slot name"
+                  />
+                  <button
+                    className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 text-xs border-2 border-white"
+                    onClick={() => onSlotCountChange(categoryId, type, count - 1)}
+                  >
+                    &#x2715;
+                  </button>
+                </div>
+              ))}
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -569,128 +559,6 @@ export const EditSlotConfigurationPage = () => {
       }
     };
   }, [formData.floorMap]);
-
-  // A reusable component for rendering a parking slot category
-  const ParkingSlotCategory = ({
-    title,
-    categoryId,
-    type,
-    count,
-    buttonColorClass,
-    isStack = false,
-  }: {
-    title: string;
-    categoryId: number;
-    type: 'nonStack' | 'stack' | 'reserved';
-    count: number;
-    buttonColorClass: string;
-    isStack?: boolean;
-  }) => {
-
-    const generateSlotName = (index: number) => {
-      const key = `${categoryId}_${type}_${index}`;
-      const customName = customSlotNames[key];
-      if (customName) return customName;
-
-      const prefix = 'P';
-      const categoryData = formData.categories[categoryId];
-
-      if (isStack) {
-        const stackPairIndex = Math.floor(index / 2);
-        const nonStackCount = categoryData?.nonStack || 0;
-        const stackSlotNumber = nonStackCount + stackPairIndex + 1;
-        const suffix = index % 2 === 0 ? 'A' : 'B';
-        return `${prefix}${stackSlotNumber}${suffix}`;
-      }
-
-      let baseNumber = 1;
-      if (type === 'stack') {
-        baseNumber = (categoryData?.nonStack || 0) + 1;
-      } else if (type === 'reserved') {
-        baseNumber = (categoryData?.nonStack || 0) + (categoryData?.stack || 0) + 1;
-      }
-
-      return `${prefix}${baseNumber + index}`;
-    };
-
-    const handleSlotNameChange = (index: number, newName: string) => {
-      const key = `${categoryId}_${type}_${index}`;
-      setCustomSlotNames(prev => ({
-        ...prev,
-        [key]: newName
-      }));
-    };
-
-    return (
-      <div>
-        <h4 className="font-medium mb-4">{title}</h4>
-        <div className="bg-white rounded-lg p-4 mb-4 h-[200px] border-2 border-dashed border-gray-200 overflow-y-auto">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {Array.from({ length: isStack ? count * 2 : count }, (_, index) => index)
-              .sort((a, b) => {
-                // Sort slots by their display names
-                const nameA = generateSlotName(a);
-                const nameB = generateSlotName(b);
-
-                // Extract numeric part for proper sorting
-                const matchA = nameA.match(/(\d+)([A-Z]?)/);
-                const matchB = nameB.match(/(\d+)([A-Z]?)/);
-
-                if (matchA && matchB) {
-                  const numA = parseInt(matchA[1]);
-                  const numB = parseInt(matchB[1]);
-
-                  if (numA !== numB) return numA - numB;
-
-                  // If numbers are same, sort by suffix (A before B)
-                  const suffixA = matchA[2] || '';
-                  const suffixB = matchB[2] || '';
-                  return suffixA.localeCompare(suffixB);
-                }
-
-                return nameA.localeCompare(nameB);
-              })
-              .map((index) => (
-                <div key={index} className="relative">
-                  <Input
-                    value={generateSlotName(index)}
-                    onChange={(e) => handleSlotNameChange(index, e.target.value)}
-                    className="w-full h-10 text-xs text-center bg-white border-gray-300 rounded-lg font-medium"
-                    placeholder="Slot name"
-                  />
-                  <button
-                    className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 text-xs border-2 border-white"
-                    onClick={() => handleSlotCountChange(categoryId, type, count - 1)}
-                  >
-                    &#x2715;
-                  </button>
-                </div>
-              ))}
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Input
-            type="number"
-            value={count}
-            onChange={(e) => handleSlotCountChange(categoryId, type, parseInt(e.target.value, 10) || 0)}
-            className="w-16 h-8 text-center"
-            min="0"
-          />
-          <Button
-            size="sm"
-            className="fm-button-fix fm-button-brand px-4 py-2"
-            variant="ghost"
-            onClick={() => handleSlotCountChange(categoryId, type, count + 1)}
-          >
-            Add
-          </Button>
-          <span className="text-sm font-medium text-gray-600">
-            Total: {isStack ? count * 2 : count}
-          </span>
-        </div>
-      </div>
-    );
-  };
 
   if (loading) {
     return (

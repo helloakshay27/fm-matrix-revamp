@@ -11,7 +11,7 @@ interface InventoryConsumptionBulkUploadModalProps {
 
 export const InventoryConsumptionBulkUploadModal = ({ isOpen, onClose }: InventoryConsumptionBulkUploadModalProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadType, setUploadType] = useState<'upload' | 'update'>('upload');
+  const [uploadType, setUploadType] = useState<'upload'>('upload');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -150,14 +150,14 @@ export const InventoryConsumptionBulkUploadModal = ({ isOpen, onClose }: Invento
 
         <div className="space-y-6">
           <div className="flex gap-6">
-            {['upload', 'update'].map((type) => (
+            {['upload'].map((type) => (
               <label key={type} className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"
                   name="uploadType"
                   value={type}
                   checked={uploadType === type}
-                  onChange={(e) => setUploadType(e.target.value as 'upload' | 'update')}
+                  onChange={(e) => setUploadType(e.target.value as 'upload')}
                   className="w-4 h-4"
                   style={{ accentColor: '#C72030' }}
                 />
