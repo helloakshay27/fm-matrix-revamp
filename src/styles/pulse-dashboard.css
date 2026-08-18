@@ -12,50 +12,99 @@
 .pulse-db .pd-kpi-grid {
   display: flex;
   flex-wrap: wrap;
-  background: linear-gradient(90deg, #E4924F 0%, #DA7756 32%, #C25A3F 64%, #8C3A2E 100%);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
+  gap: 16px;
   margin-bottom: 20px;
-  box-shadow: var(--shadow-sm);
+}
+
+/* Opt-in modifier — forces exactly 4 cards per row regardless of container
+   width, instead of .pd-kpi-grid's flex-wrap (which fits however many
+   200px-ish cards happen to fit, e.g. 6 on a wide screen). */
+.pulse-db .pd-kpi-grid--4col {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.pulse-db .pd-kpi-grid--4col .pd-kpi-card {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .pulse-db .pd-kpi-grid--4col {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .pulse-db .pd-kpi-card {
-  background: transparent;
-  border: none;
-  border-right: 1px solid rgba(255, 255, 255, .22);
-  border-radius: 0;
+  display: flex;
+  flex-direction: column-reverse;
+  background: var(--color-card-white);
+  border: 1px solid var(--pulse-card-border);
+  border-radius: var(--radius-lg);
   padding: 16px 20px;
-  flex: 1 1 150px;
-  min-width: 130px;
-}
-
-.pulse-db .pd-kpi-card:last-child {
-  border-right: none;
+  flex: 1 1 200px;
+  min-width: 180px;
+  box-shadow: var(--shadow-sm);
 }
 
 .pulse-db .pd-kpi-value {
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 700;
-  color: #fff;
+  color: var(--color-text);
   line-height: 1.15;
+  margin-top: 6px;
 }
 
 .pulse-db .pd-kpi-label {
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: .06em;
-  color: rgba(255, 255, 255, .85);
-  margin-top: 4px;
+  color: var(--color-text-light);
 }
 
 @media (max-width: 640px) {
   .pulse-db .pd-kpi-card {
     flex: 1 1 45%;
-    border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, .22);
   }
 }
+
+/* ── KPI card modifier — label-over-value with an optional trailing badge,
+   e.g. "+8" / "10%". Opt-in via an extra class so the default column-reverse
+   .pd-kpi-card used elsewhere is untouched. ──────────────────────────────── */
+.pulse-db .pd-kpi-card--badged {
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pulse-db .pd-kpi-main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pulse-db .pd-kpi-card--badged .pd-kpi-value {
+  margin-top: 0;
+}
+
+.pulse-db .pd-kpi-badge {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 2px 9px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pulse-db .pd-kpi-badge-success { background: rgba(137, 247, 231, .35); color: #0A7A6A; }
+.pulse-db .pd-kpi-badge-warning { background: rgba(237, 196, 136, .30); color: #8B6914; }
+.pulse-db .pd-kpi-badge-info    { background: rgba(107, 155, 204, .18); color: #2F5C86; }
+.pulse-db .pd-kpi-badge-neutral { background: var(--color-bg); color: var(--color-text-light); }
+.pulse-db .pd-kpi-badge-danger  { background: rgba(231, 132, 142, .18); color: #C0303D; }
 
 /* ── Charts ───────────────────────────────────────────────────────────── */
 .pulse-db .pd-charts-row {
@@ -76,9 +125,1053 @@
   margin-bottom: 20px;
 }
 
+/* Carpool's 4-card row — reuses .pd-growth-row/.pd-growth-card (same format
+   as PulseNotices' cards). Rides Trend/Trust/Peak Hours use Figma's
+   396/374/334px widths as flex-grow ratios so the row fills its container;
+   CO2 Savings is pinned to a literal 200px instead — at ratio-based sizing
+   it could shrink thinner than its 116px ring + padding need, clipping it. */
+.pulse-db .pd-growth-card--carpool-rides-trend  { flex: 396 1 0; }
+.pulse-db .pd-growth-card--carpool-trust-ratings { flex: 374 1 0; }
+.pulse-db .pd-growth-card--carpool-co2-savings  { flex: 0 0 200px; }
+.pulse-db .pd-growth-card--carpool-peak-hours   { flex: 334 1 0; }
+
+/* Carpool's 2nd 4-card row — 474/333/308/189px widths, 14.28px radius,
+   0.89px border (matches PulseUsers' .pd-mini-chart-card--site numbers). */
+.pulse-db .pd-growth-card--carpool-routes       { flex: 474 1 0; border-radius: 14.28px; border: 4px solid #6B9BCCBF; }
+.pulse-db .pd-growth-card--carpool-completion   { flex: 333 1 0; border-radius: 14.28px; border-width: 0.89px; }
+.pulse-db .pd-growth-card--carpool-match-success { flex: 308 1 0; border-radius: 14.28px; border-width: 0.89px; }
+.pulse-db .pd-growth-card--carpool-satisfaction { flex: 189 1 0; border-radius: 14.28px; border-width: 0.89px; }
+
+/* ── CO2 Savings ring + shared small stat row (also reused by the
+   condensed Trust & Ratings card) ─────────────────────────────────────── */
+.pulse-db .pd-co2-ring-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 0;
+}
+
+.pulse-db .pd-co2-ring {
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+  border: 4px solid var(--color-growth-solid);
+  background: color-mix(in srgb, var(--color-growth-solid) 8%, var(--color-card-white));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.pulse-db .pd-co2-ring-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.1;
+}
+
+.pulse-db .pd-co2-ring-value span {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pulse-db .pd-co2-ring-label {
+  font-size: 10px;
+  color: var(--color-text-light);
+  margin-top: 3px;
+}
+
+.pulse-db .pd-co2-stats {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.pulse-db .pd-co2-stat-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.pulse-db .pd-co2-stat-label {
+  font-size: 10px;
+  color: var(--color-text-light);
+  white-space: nowrap;
+}
+
+/* ── Most Active Routes — static node/curve "map" ──────────────────────── */
+.pulse-db .pd-routes-body {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+}
+
+.pulse-db .pd-routes-map {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.pulse-db .pd-routes-node-dot {
+  fill: var(--color-info);
+  stroke: var(--color-card-white);
+  stroke-width: 1.5;
+}
+
+.pulse-db .pd-routes-node-label {
+  position: absolute;
+  transform: translate(9px, -6px);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.pulse-db .pd-routes-legend {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--color-text-light);
+  padding-left: 8px;
+  /* border-left: 1px solid var(--color-border-subtle); */
+}
+
+.pulse-db .pd-routes-legend-title {
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 2px;
+}
+
+.pulse-db .pd-routes-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pulse-db .pd-routes-legend-line {
+  width: 20px;
+  height: 0;
+  border-top: solid var(--color-info);
+  flex-shrink: 0;
+}
+
+/* ── Ride Match Success — big stat + filled sparkline area ─────────────── */
+.pulse-db .pd-match-success-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.pulse-db .pd-match-success-stat-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.pulse-db .pd-match-success-sublabel {
+  font-size: 11px;
+  color: var(--color-text-light);
+  margin-top: 2px;
+  margin-bottom: 8px;
+}
+
+.pulse-db .pd-match-success-chart {
+  flex: 1;
+  min-height: 0;
+  background: var(--color-bg);
+  border-radius: 10px;
+  padding: 8px;
+}
+
+.pulse-db .pd-match-success-chart svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── Rider Satisfaction — big rating number + star row ─────────────────── */
+.pulse-db .pd-rating-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  flex: 1;
+  min-height: 0;
+  gap: 4px;
+}
+
+.pulse-db .pd-rating-value {
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1;
+}
+
+.pulse-db .pd-rating-sublabel {
+  font-size: 11px;
+  color: var(--color-text-light);
+}
+
+.pulse-db .pd-rating-stars {
+  display: flex;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+/* ── Mini charts row — 5 compact cards (growth trend, logins, breakdown,
+   gender pictogram, by-site). The Figma spec gives each card a different
+   fixed width; those are used as flex-grow ratios (not literal widths) so
+   the row fills the available space and never needs to scroll. ─────────── */
+.pulse-db .pd-mini-charts-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.pulse-db .pd-mini-chart-card {
+  height: 220px;
+  box-sizing: border-box;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 24px;
+  border-style: solid;
+  border-color: var(--pulse-card-border);
+}
+
+.pulse-db .pd-mini-chart-card--growth    { flex: 352 1 0;              border-radius: 16.25px; border-width: 1.02px; }
+.pulse-db .pd-mini-chart-card--logins    { flex: 294 1 0;              border-radius: 16px;    border-width: 1px; }
+.pulse-db .pd-mini-chart-card--breakdown { flex: 251 1 0;              border-radius: 16.41px; border-width: 1.03px; }
+.pulse-db .pd-mini-chart-card--gender    { flex: 206 1 0;              border-radius: 16.41px; border-width: 1.03px; }
+.pulse-db .pd-mini-chart-card--site      { flex: 241.02734375 1 0;     border-radius: 14.28px; border-width: 0.89px; }
+
+.pulse-db .pd-mini-chart-inner {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+/* ── Shared chart-plus-legend column layout (pure CSS/JS mini charts) ──── */
+.pulse-db .pd-chart-with-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 100%;
+}
+
+/* Axis chart shell — a y-axis label column, a plotting area, and an x-axis
+   label row, laid out with grid-template-areas so labels align with the
+   evenly-spaced ticks/columns inside the plot without pixel math. ───────── */
+.pulse-db .pd-axis-chart {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  grid-template-rows: 1fr 14px;
+  grid-template-areas:
+    "yaxis graph"
+    ".     xaxis";
+}
+
+.pulse-db .pd-axis-chart-yaxis {
+  grid-area: yaxis;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-right: 4px;
+  font-size: 7px;
+  line-height: 1;
+  color: var(--color-text-light);
+}
+
+.pulse-db .pd-axis-chart-graph {
+  grid-area: graph;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+
+.pulse-db .pd-axis-chart-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Invisible overlay for hover hit-targets over the line chart's data
+   points (real SVG shapes don't reliably support ::after tooltips). ────── */
+.pulse-db .pd-axis-chart-hover-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.pulse-db .pd-chart-hover-point {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+}
+
+/* The visible marker itself — a real HTML circle (fixed px, never
+   distorted by the SVG's non-uniform stretch) centered on the hit-box. */
+.pulse-db .pd-chart-hover-point::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1.4px solid var(--dot-color, var(--color-text));
+  box-sizing: border-box;
+}
+
+/* ── Pure CSS tooltip — attach `data-tooltip="..."` to any element to get
+   a small label bubble on hover, no JS/library involved. ────────────────── */
+.pulse-db [data-tooltip] {
+  position: relative;
+  cursor: default;
+}
+
+.pulse-db [data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translate(-50%, -6px) scale(0.95);
+  background: var(--color-text);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.3;
+  padding: 3px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  z-index: 20;
+}
+
+.pulse-db [data-tooltip]:hover::after {
+  opacity: 1;
+  transform: translate(-50%, -10px) scale(1);
+}
+
+.pulse-db .pd-axis-chart-xaxis {
+  grid-area: xaxis;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 7px;
+  color: var(--color-text-light);
+  padding-top: 2px;
+}
+
+.pulse-db .pd-axis-chart-gridlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.pulse-db .pd-axis-chart-gridline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed var(--color-border-subtle);
+}
+
+/* Legend shared by every pure-CSS mini chart — small dot + label. ───────── */
+.pulse-db .pd-mini-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  font-size: 7px;
+  color: var(--color-text);
+  flex-shrink: 0;
+}
+
+.pulse-db .pd-mini-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+/* Opt-in modifier — stacks legend items in a right-aligned column instead of
+   a centered row, for legends sitting beside a card's title (e.g. Trust &
+   Ratings, Peak Hours) rather than below a chart. */
+.pulse-db .pd-mini-legend--stacked {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 4px;
+}
+
+.pulse-db .pd-mini-legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+/* ── System Logins Per Day — pure CSS bars (flex-grow proportional,
+   same technique as the org-wise-members treemap) ────────────────────── */
+.pulse-db .pd-barchart-plain {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  padding: 0 2px;
+}
+
+.pulse-db .pd-barchart-plain-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pulse-db .pd-barchart-plain-spacer {
+  min-height: 0;
+}
+
+.pulse-db .pd-barchart-plain-bar {
+  min-height: 2px;
+  border-radius: 6px 6px 0 0;
+}
+
+.pulse-db .pd-barchart-plain-label {
+  flex-shrink: 0;
+  padding-top: 4px;
+  font-size: 7px;
+  text-align: center;
+  color: var(--color-text-light);
+}
+
+/* ── User Type Breakdown — pure CSS donut via conic-gradient ──────────── */
+.pulse-db .pd-donut-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 100%;
+}
+
+.pulse-db .pd-donut-hitbox {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  flex-shrink: 0;
+}
+
+.pulse-db .pd-donut {
+  width: 84px;
+  height: 84px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 13px), #000 calc(100% - 13px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 13px), #000 calc(100% - 13px));
+}
+
+/* Invisible per-segment hover hit-target — clip-path restricts both paint
+   and hit-testing to the wedge, so each donut slice gets its own tooltip. */
+.pulse-db .pd-donut-hit {
+  position: absolute;
+  inset: 0;
+}
+
+/* ── Donut-with-center-total cards (Booking Status, Payment Channels) ──── */
+.pulse-db .pd-donut-card-body {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: 100%;
+}
+
+.pulse-db .pd-donut-hitbox-lg {
+  width: 136px;
+  height: 136px;
+}
+
+.pulse-db .pd-donut-lg {
+  width: 108px;
+  height: 108px;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 17px), #000 calc(100% - 17px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 17px), #000 calc(100% - 17px));
+}
+
+.pulse-db .pd-donut-hitbox-xl {
+  width: 150px;
+  height: 150px;
+}
+
+.pulse-db .pd-donut-xl {
+  width: 150px;
+  height: 150px;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 23px), #000 calc(100% - 23px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 23px), #000 calc(100% - 23px));
+}
+
+.pulse-db .pd-donut-hitbox-2xl {
+  width: 144px;
+  height: 144px;
+}
+
+.pulse-db .pd-donut-2xl {
+  width: 144px;
+  height: 144px;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 22px), #000 calc(100% - 22px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 22px), #000 calc(100% - 22px));
+}
+
+.pulse-db .pd-donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.pulse-db .pd-donut-center-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.1;
+}
+
+.pulse-db .pd-donut-center-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--color-text-light);
+}
+
+.pulse-db .pd-donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pulse-db .pd-donut-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--color-text);
+}
+
+.pulse-db .pd-donut-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pulse-db .pd-donut-legend-name {
+  color: var(--color-text-light);
+}
+
+.pulse-db .pd-donut-legend-value {
+  font-weight: 700;
+}
+
+/* ── Revenue by Amenity — pure CSS horizontal bar chart ────────────────── */
+.pulse-db .pd-hbar-chart {
+  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-card-border) transparent;
+}
+
+.pulse-db .pd-hbar-chart::-webkit-scrollbar {
+  width: 5px;
+}
+
+.pulse-db .pd-hbar-chart::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pulse-db .pd-hbar-chart::-webkit-scrollbar-thumb {
+  background: var(--color-card-border);
+  border-radius: 3px;
+}
+
+.pulse-db .pd-hbar-chart::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-light);
+}
+
+/* Vertical gridlines, inset to line up with the track column (which sits
+   between the fixed-width label and value columns in every row). ───────── */
+.pulse-db .pd-hbar-gridlines {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 86px;
+  right: 50px;
+  pointer-events: none;
+}
+
+.pulse-db .pd-hbar-gridline {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--color-border-subtle);
+}
+
+.pulse-db .pd-hbar-list {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  position: relative;
+}
+
+.pulse-db .pd-hbar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pulse-db .pd-hbar-label {
+  width: 76px;
+  flex-shrink: 0;
+  font-size: 11px;
+  line-height: 1.25;
+  color: var(--color-text-light);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pulse-db .pd-hbar-track {
+  flex: 1;
+  height: 16px;
+}
+
+.pulse-db .pd-hbar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--color-secondary-teal);
+}
+
+.pulse-db .pd-hbar-value {
+  width: 40px;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* ── Revenue by event — pure CSS horizontal progress list with an inline
+   value/label per row (label+amount share a line above the bar) ─────────── */
+.pulse-db .pd-event-revenue-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.pulse-db .pd-event-revenue-total {
+  display: flex;
+  align-items: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.pulse-db .pd-event-revenue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Caps the card at a fixed height and scrolls the event list internally
+   instead of the card growing to fit however many events come back. */
+.pulse-db .pd-chart-card--event-revenue {
+  height: 280px;
+  display: flex;
+  flex-direction: column;
+}
+
+.pulse-db .pd-event-revenue-list--scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-card-border) transparent;
+}
+
+.pulse-db .pd-event-revenue-list--scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.pulse-db .pd-event-revenue-list--scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pulse-db .pd-event-revenue-list--scroll::-webkit-scrollbar-thumb {
+  background: var(--color-card-border);
+  border-radius: 3px;
+}
+
+.pulse-db .pd-event-revenue-list--scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-light);
+}
+
+.pulse-db .pd-event-revenue-row-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.pulse-db .pd-event-revenue-name {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.pulse-db .pd-event-revenue-amount {
+  color: var(--color-text-light);
+  font-weight: 600;
+}
+
+.pulse-db .pd-event-revenue-track {
+  display: block;
+  height: 6px;
+  border-radius: 100px;
+  background: var(--color-bg);
+  overflow: hidden;
+}
+
+.pulse-db .pd-event-revenue-fill {
+  display: block;
+  height: 100%;
+  border-radius: 100px;
+  background: var(--color-primary);
+}
+
+/* ── Events Overview — two-segment proportional split bar (pure CSS) ──── */
+.pulse-db .pd-events-split {
+  display: flex;
+  height: 100%;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.pulse-db .pd-events-split-seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  text-align: center;
+}
+
+/* ── Utilization By Facility — pure CSS horizontal progress list ──────── */
+.pulse-db .pd-util-list {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-card-border) transparent;
+}
+
+.pulse-db .pd-util-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.pulse-db .pd-util-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pulse-db .pd-util-list::-webkit-scrollbar-thumb {
+  background: var(--color-card-border);
+  border-radius: 3px;
+}
+
+.pulse-db .pd-util-list::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-light);
+}
+
+.pulse-db .pd-util-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.pulse-db .pd-util-label {
+  width: 90px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--color-text-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pulse-db .pd-util-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 100px;
+  background: var(--color-bg);
+  overflow: hidden;
+}
+
+.pulse-db .pd-util-fill {
+  display: block;
+  height: 100%;
+  border-radius: 100px;
+}
+
+/* ── Users by Site — pure CSS stacked bars (flex-grow proportional) ───── */
+.pulse-db .pd-stackbar-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  height: 100%;
+  padding: 0 4px;
+  box-sizing: border-box;
+}
+
+.pulse-db .pd-stackbar-col {
+  flex: 1;
+  max-width: 46px;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.pulse-db .pd-stackbar-spacer {
+  min-height: 0;
+}
+
+.pulse-db .pd-stackbar-seg-top {
+  min-height: 0;
+  border-radius: 4px 4px 0 0;
+}
+
+.pulse-db .pd-stackbar-seg-bottom {
+  min-height: 0;
+}
+
+.pulse-db .pd-stackbar-label {
+  flex: 1;
+  max-width: 46px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* ── Notice Status — single proportional split bar (pure CSS) ─────────── */
+.pulse-db .pd-status-bar-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+}
+
+.pulse-db .pd-status-bar {
+  display: flex;
+  height: 32px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.pulse-db .pd-status-bar-seg {
+  display: block;
+  min-width: 0;
+}
+
+/* ── Notices by Site — grouped (not stacked) pure CSS bars ─────────────── */
+.pulse-db .pd-groupbar-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 16px;
+  height: 100%;
+  padding: 0 4px;
+  box-sizing: border-box;
+}
+
+.pulse-db .pd-groupbar-group {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 100%;
+  flex: 1;
+  max-width: 60px;
+}
+
+.pulse-db .pd-groupbar-bar-col {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.pulse-db .pd-groupbar-spacer {
+  min-height: 0;
+}
+
+.pulse-db .pd-groupbar-bar {
+  min-height: 0;
+  border-radius: 2px 2px 0 0;
+}
+
+/* ── Weekly Active Broadcasts — pure CSS/SVG line chart without a y-axis
+   label column (the reference design shows none) ─────────────────────── */
+.pulse-db .pd-broadcast-graph {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Booking Source Analytics — pure CSS waffle/unit chart ────────────── */
+.pulse-db .pd-waffle-body {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.pulse-db .pd-waffle-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 4px;
+  flex: 1;
+}
+
+.pulse-db .pd-waffle-cell {
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.pulse-db .pd-waffle-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.pulse-db .pd-waffle-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.pulse-db .pd-waffle-legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.pulse-db .pd-waffle-legend-name {
+  color: var(--color-text-light);
+}
+
+.pulse-db .pd-waffle-legend-pct {
+  font-weight: 700;
+}
+
+/* ── Gender distribution pictogram — a single peg-doll silhouette (SVG path
+   in PulseUsers.tsx), painted in two colors via clip-path bands whose
+   heights are proportional to the live male/female counts. ─────────────── */
+.pulse-db .pd-gender-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  flex: 1;
+  min-height: 0;
+}
+
+.pulse-db .pd-gender-figure {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  padding: 4px 0;
+  box-sizing: border-box;
+}
+
+.pulse-db .pd-gender-doll {
+  height: 100%;
+  width: auto;
+  flex-shrink: 0;
+}
+
+.pulse-db .pd-gender-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 10px;
+  color: var(--color-text);
+}
+
+.pulse-db .pd-gender-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pulse-db .pd-gender-legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pulse-db .pd-gender-legend-dot-male { background: var(--color-error); }
+.pulse-db .pd-gender-legend-dot-female { background: color-mix(in srgb, var(--color-error) 55%, black); }
+.pulse-db .pd-gender-legend-dot-unspecified { background: var(--color-text-light); }
+
 .pulse-db .pd-chart-card {
   background: var(--color-card-white);
-  border: 1px solid var(--color-card-border);
+  border: 1px solid var(--pulse-card-border);
   border-radius: var(--radius-lg);
   padding: 16px;
   box-shadow: var(--shadow-sm);
@@ -109,6 +1202,418 @@
 .pulse-db .pd-chart-inner {
   height: 260px;
   position: relative;
+}
+
+/* ── Growth row (site-wise breakdown + monthly enrollment cards) —
+   sizing matches the Figma spec exactly: 32px gap between cards, each
+   card a fixed 220px tall with 16px internal gap, 16.25px radius,
+   1.02px border and 16/24px padding. ───────────────────────────────── */
+.pulse-db .pd-growth-row {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 20px;
+}
+
+.pulse-db .pd-growth-card {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 220px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--color-card-white);
+  border: 1.02px solid var(--pulse-card-border);
+  border-radius: 16.25px;
+  padding: 16px 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.pulse-db .pd-growth-chart-inner {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+/* Amenities' 3-card trend row — different per-card widths/radii from the
+   Figma spec, applied as flex-grow ratios (not literal widths) on top of
+   the shared .pd-growth-card so the row still fills its container. ─────── */
+.pulse-db .pd-growth-card--amenities-trend {
+  flex: 492 1 0;
+  border-radius: 16px;
+  border-width: 1px;
+}
+
+.pulse-db .pd-growth-card--amenities-source {
+  flex: 352 1 0;
+  border-radius: 14.28px;
+  border-width: 0.89px;
+}
+
+/* Notices' 4-card row — same flex-grow-as-ratio approach. */
+.pulse-db .pd-growth-card--notice-source {
+  flex: 305 1 0;
+  border-radius: 16px;
+  border-width: 1px;
+}
+
+.pulse-db .pd-growth-card--notice-status {
+  flex: 270 1 0;
+  border-radius: 16.25px;
+  border-width: 1.02px;
+}
+
+.pulse-db .pd-growth-card--notices-by-site {
+  flex: 273 1 0;
+  border-radius: 16.25px;
+  border-width: 1.02px;
+}
+
+.pulse-db .pd-growth-card--weekly-broadcasts {
+  flex: 408 1 0;
+  border-radius: 16.25px;
+  border-width: 1.02px;
+  gap: 12px;
+}
+
+/* Community's top chart row — 2 cards per row instead of one flex line.
+   flex-wrap + pinning each card to ~50% width (minus half the row's 32px
+   gap) instead of the usual proportional-ratio single row; the shared
+   .pd-growth-card base already supplies the 16.25px radius / 1.02px border
+   that matches Member Retention Rate. */
+.pulse-db .pd-growth-row--wrap-2col {
+  flex-wrap: wrap;
+}
+
+.pulse-db .pd-growth-row--wrap-2col .pd-growth-card {
+  flex: 1 1 calc(50% - 16px);
+  min-width: 320px;
+}
+
+/* Community's 4-card row — same flex-grow-as-ratio approach. */
+.pulse-db .pd-growth-card--community-retention {
+  flex: 525 1 0;
+  border-radius: 16.25px;
+  border-width: 1.02px;
+}
+
+.pulse-db .pd-growth-card--community-active-member {
+  flex: 231 1 0;
+  border-radius: 16.25px;
+  border-width: 1.02px;
+}
+
+.pulse-db .pd-growth-card--community-engagement {
+  flex: 300 1 0;
+  border-radius: 16.25px;
+  border-width: 1.02px;
+}
+
+.pulse-db .pd-growth-card--community-new-members {
+  flex: 248 1 0;
+  border-radius: 16.25px;
+  border-width: 1.02px;
+}
+
+/* ── Plain panel title (no bullet/divider — used for non-chart panels
+   and chart panels that carry an inline badge) ───────────────────────── */
+.pulse-db .pd-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
+  flex-shrink: 0;
+}
+
+.pulse-db .pd-growth-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 100px;
+  background: var(--color-success-bg);
+  color: var(--color-success-solid);
+}
+
+/* Down-trend variant — same shape, red instead of green. */
+.pulse-db .pd-growth-badge--down {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+}
+
+/* ── Stat card with an inline sparkline (e.g. "New Members This Month") —
+   nests inside a .pd-growth-card, doesn't carry its own card chrome. ────── */
+.pulse-db .pd-newmembers-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 100%;
+}
+
+.pulse-db .pd-stat-spark-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.pulse-db .pd-stat-spark-main .pd-kpi-label {
+  margin: 0;
+}
+
+.pulse-db .pd-stat-spark-main .pd-kpi-value {
+  margin: 0;
+}
+
+.pulse-db .pd-stat-spark-chart {
+  flex-shrink: 0;
+  width: 117px;
+  height: 68px;
+}
+
+.pulse-db .pd-stat-spark-chart svg {
+  display: block;
+}
+
+/* ── Member Retention Rate — pure CSS horizontal funnel bars ───────────── */
+.pulse-db .pd-retention-funnel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+}
+
+.pulse-db .pd-retention-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pulse-db .pd-retention-label {
+  width: 82px;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--color-text-light);
+}
+
+.pulse-db .pd-retention-track {
+  flex: 1;
+  height: 14px;
+  border-radius: 4px;
+  background: var(--color-bg);
+  overflow: hidden;
+}
+
+.pulse-db .pd-retention-fill {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+}
+
+.pulse-db .pd-retention-value {
+  width: 32px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* ── Most Active Member — centered avatar/name/meta ────────────────────── */
+.pulse-db .pd-active-member-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100%;
+}
+
+.pulse-db .pd-active-member-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-secondary-purple);
+  color: color-mix(in srgb, var(--color-secondary-purple) 30%, black);
+}
+
+.pulse-db .pd-active-member-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.pulse-db .pd-active-member-meta {
+  font-size: 12px;
+  color: var(--color-text-light);
+}
+
+/* ── Site-wise breakdown bars ─────────────────────────────────────────── */
+.pulse-db .pd-sitebar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 10px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pulse-db .pd-sitebar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.pulse-db .pd-sitebar-label {
+  width: 92px;
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--color-text-light);
+}
+
+.pulse-db .pd-sitebar-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 100px;
+  background: var(--color-bg);
+  overflow: hidden;
+}
+
+.pulse-db .pd-sitebar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 100px;
+}
+
+.pulse-db .pd-sitebar-value {
+  width: 28px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* ── Active customer rate — concentric ring chart (pure CSS, no lib) ──── */
+.pulse-db .pd-ring-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  gap: 24px;
+  flex: 1;
+  min-height: 0;
+}
+
+.pulse-db .pd-ring-wrap {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  flex-shrink: 0;
+}
+
+.pulse-db .pd-ring {
+  position: absolute;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--ring-color) calc(var(--pct) * 1%),
+    var(--color-bg) 0
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 14px), #000 calc(100% - 14px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 14px), #000 calc(100% - 14px));
+}
+
+.pulse-db .pd-ring-0 { width: 150px; height: 150px; top: 0; left: 0; }
+.pulse-db .pd-ring-1 { width: 114px; height: 114px; top: 18px; left: 18px; }
+.pulse-db .pd-ring-2 { width: 78px; height: 78px; top: 36px; left: 36px; }
+
+.pulse-db .pd-ring-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pulse-db .pd-ring-legend-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.pulse-db .pd-ring-legend-dot {
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pulse-db .pd-ring-legend-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.pulse-db .pd-ring-legend-label {
+  font-size: 12px;
+  color: var(--color-text-light);
+}
+
+.pulse-db .pd-ring-legend-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* ── Organization-wise members — value-proportional treemap, built with
+   flexbox `flex-grow` (not a fixed grid) so each column's width and each
+   cell's height scale with its `value` (pure CSS, no charting lib) ─────── */
+.pulse-db .pd-org-grid {
+  display: flex;
+  gap: 3px;
+  flex: 1;
+  min-height: 0;
+}
+
+.pulse-db .pd-org-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.pulse-db .pd-org-cell {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 8px 10px;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 5px;
+}
+
+.pulse-db .pd-org-cell-name {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: .9;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pulse-db .pd-org-cell-value {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 /* ── Top-level section tab bar ───────────────────────────────────────── */
@@ -251,6 +1756,39 @@
   border-radius: 2px;
 }
 
+/* Opt-in variant for tables that want a plain sentence-case heading instead
+   of the uppercase + accent-bar title (e.g. Entity Management Directory). */
+.pulse-db .pd-tbl-title--plain {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.pulse-db .pd-tbl-title--plain::before {
+  display: none;
+}
+
+.pulse-db .pd-tbl-search-input {
+  font-size: 12px;
+  padding: 6px 12px;
+  min-width: 200px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-card-white);
+  color: var(--color-text);
+  outline: none;
+  transition: border-color .15s;
+}
+
+.pulse-db .pd-tbl-search-input::placeholder {
+  color: var(--color-text-light);
+}
+
+.pulse-db .pd-tbl-search-input:focus {
+  border-color: var(--color-primary);
+}
+
 .pulse-db .pd-tbl-wrap {
   overflow-x: auto;
 }
@@ -293,6 +1831,10 @@
 
 .pulse-db .pd-table tbody tr {
   transition: background .1s ease;
+}
+
+.pulse-db .pd-table tbody tr:nth-child(even) td {
+  background: var(--color-bg);
 }
 
 .pulse-db .pd-table tbody tr:hover td {
@@ -358,6 +1900,30 @@
 .pulse-db .pd-badge-no   { background: rgba(231, 132, 142, .18); color: #C0303D; }
 .pulse-db .pd-badge-pub  { background: rgba(206, 203, 246, .35); color: #4A3F9F; }
 .pulse-db .pd-badge-warn { background: rgba(237, 196, 136, .30); color: #8B6914; }
+
+/* Solid-fill status pill without the leading dot, e.g. the Status column
+   in the Entity Management Directory. */
+.pulse-db .pd-badge--flat::before {
+  display: none;
+}
+
+.pulse-db .pd-badge--flat.pd-badge-yes { background: var(--color-success-bg); color: var(--color-success-solid); }
+.pulse-db .pd-badge--flat.pd-badge-no  { background: var(--color-error-bg); color: var(--color-error); }
+
+/* A plain neutral pill (no leading dot) for descriptive/categorical values,
+   e.g. the Type column in the Entity Management Directory. */
+.pulse-db .pd-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border-subtle);
+  color: var(--color-text-light);
+}
 
 /* ── Pagination ───────────────────────────────────────────────────────── */
 .pulse-db .pd-pagination {
