@@ -659,9 +659,7 @@ export const InvoiceDetails = () => {
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Invoice Amount</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{formatIndian(invoice.invoice_amount)}
-                            {formatIndian(grnDetails.retention_amount)}
-                        </span>
+                        <span className="text-gray-900 font-medium">{formatIndian(invoice.invoice_amount)}                        </span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">TDS Amount</span>
