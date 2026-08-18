@@ -16,15 +16,17 @@ const Transition = forwardRef(function Transition(
     return <Slide direction="left" ref={ref} {...props} />;
 });
 
+const getTodayDate = () => new Date().toISOString().split('T')[0];
+
 const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = null, isEditMode = false, prefillData }) => {
     const baseURL = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState("")
-    const [date, setDate] = useState(null);
+    const [date, setDate] = useState(getTodayDate());
 
     useEffect(() => {
-        setDate(prefillData?.start_date || null);
+        setDate(prefillData?.start_date || getTodayDate());
     }, [prefillData]);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -73,13 +75,13 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
             if (isEditMode && editingTodo) {
                 setTitle(editingTodo.title || '');
                 setDescription(editingTodo.description || '');
-                setDate(editingTodo.target_date || null);
+                setDate(editingTodo.target_date || getTodayDate());
                 setSelectedResponsiblePerson(editingTodo.user_id || '');
                 setPriority(editingTodo.priority || '');
             } else {
                 setTitle(prefillData?.title || '');
                 setDescription('');
-                setDate(prefillData?.start_date || null);
+                setDate(getTodayDate());
                 setSelectedResponsiblePerson(defaultResponsiblePerson);
                 setPriority('');
             }
