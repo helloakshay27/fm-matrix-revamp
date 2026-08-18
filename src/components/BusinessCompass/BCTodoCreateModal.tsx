@@ -16,6 +16,8 @@ const Transition = forwardRef(function Transition(
     return <Slide direction="left" ref={ref} {...props} />;
 });
 
+const getTodayDate = () => new Date().toISOString().split('T')[0];
+
 const BC_API_BASE = `https://${localStorage.getItem('baseUrl')}`;
 
 interface BCTodoCreateModalProps {
@@ -32,10 +34,10 @@ const BCTodoCreateModal = ({ isOpen, onClose, onSuccess, prefilledDate, prefille
     const token = localStorage.getItem('token');
     const [title, setTitle] = useState(prefilledTitle || '');
     const [description, setDescription] = useState("")
-    const [date, setDate] = useState<string | null>(() => prefilledDate ?? null);
+    const [date, setDate] = useState<string | null>(() => prefilledDate ?? getTodayDate());
 
     useEffect(() => {
-        setDate(prefilledDate ?? null);
+        setDate(prefilledDate ?? getTodayDate());
         if (prefilledTitle) {
             setTitle(prefilledTitle);
         }
@@ -81,7 +83,7 @@ const BCTodoCreateModal = ({ isOpen, onClose, onSuccess, prefilledDate, prefille
         if (isOpen) {
             setTitle('');
             setDescription('');
-            setDate(null);
+            setDate(getTodayDate());
             setSelectedResponsiblePerson(userId || '');
             setPriority('');
             setIsEditorReady(true);
