@@ -1005,8 +1005,10 @@ export const DebitNoteClubAddPage: React.FC = () => {
 
     // Item table quick-add: Facility Booking / Membership / Event / Other pickers (per row, single choice)
     const [itemSourceSelection, setItemSourceSelection] = useState<Record<string, 'facility' | 'membership' | 'event' | 'other' | ''>>({});
+    const [selectedEntityByItem, setSelectedEntityByItem] = useState<Record<string, string>>({});
     const setItemSource = (itemId: string, value: 'facility' | 'membership' | 'event' | 'other' | '') => {
         setItemSourceSelection(prev => ({ ...prev, [itemId]: value }));
+        setSelectedEntityByItem(prev => ({ ...prev, [itemId]: '' }));
     };
     const [otherItemNameDraft, setOtherItemNameDraft] = useState<Record<string, string>>({});
     const [facilityBookingOptions, setFacilityBookingOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
@@ -1958,10 +1960,14 @@ export const DebitNoteClubAddPage: React.FC = () => {
                                                                     <FormControl size="small" sx={{ minWidth: 200 }}>
                                                                         <Select
                                                                             displayEmpty
-                                                                            value=""
+                                                                            value={selectedEntityByItem[item.id] || ''}
                                                                             onChange={(e) => {
-                                                                                const selected = activeSource.options.find(o => o.id === e.target.value);
-                                                                                if (selected) applySourceToItem(index, `${activeSource.label}: ${selected.name}`, selected.rate);
+                                                                                const value = String(e.target.value);
+                                                                                const selected = activeSource.options.find(o => o.id === value);
+                                                                                if (selected) {
+                                                                                    setSelectedEntityByItem(prev => ({ ...prev, [item.id]: value }));
+                                                                                    applySourceToItem(index, `${activeSource.label}: ${selected.name}`, selected.rate);
+                                                                                }
                                                                             }}
                                                                         >
                                                                             <MenuItem value="" disabled>

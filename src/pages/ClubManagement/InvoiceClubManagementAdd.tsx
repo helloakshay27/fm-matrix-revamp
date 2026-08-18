@@ -2106,9 +2106,9 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                         {items.map((item, index) => (
                             <tr key={item.id}>
                                 <td className="px-4 py-3">
-                                    {item.name && (
+                                    {/* {item.name && (
                                         <div className="text-sm font-medium">{item.name}</div>
-                                    )}
+                                    )} */}
 
                                     {(() => {
                                         const rowSource = itemSourceSelection[item.id] || '';
@@ -2144,7 +2144,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                                                     <FormControl size="small" sx={{ minWidth: 200 }}>
                                                         <Select
                                                             displayEmpty
-                                                            value=""
+                                                            value={item.line_item_type === activeSource.lineItemType && item.item_id ? item.item_id : ''}
                                                             onChange={(e) => {
                                                                 const selected = activeSource.options.find(o => o.id === e.target.value);
                                                                 if (selected) applySourceToItem(index, selected.name, selected.rate, selected.id, activeSource.lineItemType);
@@ -2179,7 +2179,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
 
                                     <TextField
                                         fullWidth
-                                        label="Item Description"
+                                        label="Description"
                                         size="small"
                                         placeholder="Description"
                                         value={item.description}
