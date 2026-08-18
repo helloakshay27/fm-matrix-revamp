@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BrandRadio } from '@/components/ui/brand-radio';
 import { useNavigate } from 'react-router-dom';
 import {
     TextField,
@@ -273,11 +274,18 @@ export const CreditNoteClubAddPage: React.FC = () => {
         document.title = 'New Bill';
     }, []);
 
-    // Bill-to: Guest / Member selection (replaces Customer + Currency)
-    const [guests, setGuests] = useState<{ id: string; name: string }[]>([]);
-    const [members, setMembers] = useState<{ id: string; name: string }[]>([]);
-    const [selectedGuestId, setSelectedGuestId] = useState('');
-    const [selectedMemberId, setSelectedMemberId] = useState('');
+    // Bill-to: Member / Guest / Staff selection (replaces Customer + Currency) — same pattern as AddFacilityBookingClubPage
+    const [userType, setUserType] = useState<'occupant' | 'guest' | 'fm'>('occupant');
+    const [selectedUser, setSelectedUser] = useState('');
+    const [occupantUsers, setOccupantUsers] = useState<{ id: string; name: string }[]>([]);
+    const [occupantUsersLoading, setOccupantUsersLoading] = useState(false);
+    const [occupantUsersError, setOccupantUsersError] = useState(false);
+    const [guestUsers, setGuestUsers] = useState<{ id: string; name: string }[]>([]);
+    const [guestUsersLoading, setGuestUsersLoading] = useState(false);
+    const [guestUsersError, setGuestUsersError] = useState(false);
+    const [fmUsers, setFmUsers] = useState<{ id: string; name: string }[]>([]);
+    const [fmUsersLoading, setFmUsersLoading] = useState(false);
+    const [fmUsersError, setFmUsersError] = useState(false);
 
     // Customer data
     const [customers, setCustomers] = useState<Customer[]>([]);
@@ -622,7 +630,9 @@ export const CreditNoteClubAddPage: React.FC = () => {
     };
     const getAddressBookByType = (type: 'billing' | 'shipping') => type === 'billing' ? billingAddressBook : shippingAddressBook;
     const selectedBillingAddress = billingAddressBook.find(a => String(a.id) === String(selectedBillingAddressId)) || billingAddressBook[0] || null;
-    const selectedShippingAddress = shippingAddressBook.find(a => String(a.id) === String(selectedShippingAddressId)) || shippingAddressBook[0] || null;
+    const selectedShippingAddress = sameAsBilling
+        ? selectedBillingAddress
+        : (shippingAddressBook.find(a => String(a.id) === String(selectedShippingAddressId)) || shippingAddressBook[0] || null);
     const selectedGstDetail = gstDetails.find(g => String(g.id) === String(selectedGstDetailId)) || gstDetails.find(g => g.primary) || gstDetails[0] || null;
 
     // Generate auto sales order number
@@ -750,75 +760,90 @@ export const CreditNoteClubAddPage: React.FC = () => {
     };
     const openGstPickerModal = () => setGstPickerModalOpen(true);
 
-    // Fetch customers on mount
-
-
-    useEffect(() => {
-        setLoadingCustomers(true);
-        const baseUrl = localStorage.getItem('baseUrl');
-        const token = localStorage.getItem('token');
-        const lock_account_id = localStorage.getItem('lock_account_id');
-        // Fetch customer list
-        axios
-            .get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=${lock_account_id}`, {
-                headers: {
-                    Authorization: token ? `Bearer ${token}` : undefined,
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(res => {
-                setCustomers(res.data || []);
-            })
-            .catch(error => {
-                console.error('Error fetching customers:', error);
-            })
-            .finally(() => {
-                setLoadingCustomers(false);
-            });
-    }, []);
-
-    // Fetch guests on mount
-    useEffect(() => {
+    // Fetch Members (occupant), Guest, or Staff (fm) users — same pattern as AddFacilityBookingClubPage
+    const fetchOccupantUsersDirect = () => {
+        setOccupantUsersLoading(true);
+        setOccupantUsersError(false);
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
         axios
-            .get(`https://${baseUrl}/pms/account_setups/occupant_users.json?per_page=200&q[lock_user_permissions_user_type_eq]=pms_guest`, {
-                headers: {
-                    Authorization: token ? `Bearer ${token}` : undefined,
-                    'Content-Type': 'application/json'
-                }
+            .get(`https://${baseUrl}/pms/account_setups/occupant_users.json`, {
+                params: { 'q[lock_user_permissions_user_type_eq]': 'pms_occupant', active: true },
+                headers: { Authorization: token ? `Bearer ${token}` : undefined, 'Content-Type': 'application/json' }
             })
             .then(res => {
                 const list = res.data?.occupant_users || [];
-                setGuests(list.map((u: any) => ({
+                setOccupantUsers(list.map((u: any) => ({
+                    id: String(u.id),
+                    name: u.name || `${u.firstname ?? ''} ${u.lastname ?? ''}`.trim() || `Member #${u.id}`
+                })));
+            })
+            .catch(error => {
+                console.error('Error fetching occupant users:', error);
+                setOccupantUsersError(true);
+                setOccupantUsers([]);
+            })
+            .finally(() => setOccupantUsersLoading(false));
+    };
+
+    const fetchGuestUsers = () => {
+        setGuestUsersLoading(true);
+        setGuestUsersError(false);
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        axios
+            .get(`https://${baseUrl}/pms/account_setups/occupant_users.json`, {
+                params: { 'q[lock_user_permissions_user_type_eq]': 'pms_guest', active: true },
+                headers: { Authorization: token ? `Bearer ${token}` : undefined, 'Content-Type': 'application/json' }
+            })
+            .then(res => {
+                const list = res.data?.occupant_users || [];
+                setGuestUsers(list.map((u: any) => ({
                     id: String(u.id),
                     name: `${u.firstname ?? ''} ${u.lastname ?? ''}`.trim() || u.email || `Guest #${u.id}`
                 })));
             })
             .catch(error => {
-                console.error('Error fetching guests:', error);
-                setGuests([]);
-            });
-    }, []);
+                console.error('Error fetching guest users:', error);
+                setGuestUsersError(true);
+                setGuestUsers([]);
+            })
+            .finally(() => setGuestUsersLoading(false));
+    };
 
-    // Fetch members on mount
-    useEffect(() => {
+    const fetchFmUsers = () => {
+        setFmUsersLoading(true);
+        setFmUsersError(false);
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
         axios
-            .get(`https://${baseUrl}/club_members.json?access_token=${token}&per_page=200`)
+            .get(`https://${baseUrl}/pms/users/get_escalate_to_users.json`, {
+                headers: { Authorization: token ? `Bearer ${token}` : undefined, 'Content-Type': 'application/json' }
+            })
             .then(res => {
-                const list = res.data?.club_members || [];
-                setMembers(list.map((m: any) => ({
-                    id: String(m.id),
-                    name: m.user_name || m.name || `Member #${m.id}`
+                const list = res.data?.users || [];
+                setFmUsers(list.map((u: any) => ({
+                    id: String(u.id),
+                    name: u.full_name || u.name || `Staff #${u.id}`
                 })));
             })
             .catch(error => {
-                console.error('Error fetching members:', error);
-                setMembers([]);
-            });
-    }, []);
+                console.error('Error fetching staff users:', error);
+                setFmUsersError(true);
+                setFmUsers([]);
+            })
+            .finally(() => setFmUsersLoading(false));
+    };
+
+    useEffect(() => {
+        if (userType === 'occupant') {
+            fetchOccupantUsersDirect();
+        } else if (userType === 'guest') {
+            fetchGuestUsers();
+        } else {
+            fetchFmUsers();
+        }
+    }, [userType]);
 
     // Account groups and ledgers for sales/purchase account dropdowns
     const [accountGroups, setAccountGroups] = React.useState([]);
@@ -978,65 +1003,61 @@ export const CreditNoteClubAddPage: React.FC = () => {
         });
     };
 
-    // Item table quick-add: Facility Booking / Membership / Event pickers (per row)
-    const [itemSourceChecks, setItemSourceChecks] = useState<Record<string, { facility: boolean; membership: boolean; event: boolean }>>({});
-    const toggleItemSourceCheck = (itemId: string, key: 'facility' | 'membership' | 'event', checked: boolean) => {
-        setItemSourceChecks(prev => ({
-            ...prev,
-            [itemId]: { facility: false, membership: false, event: false, ...prev[itemId], [key]: checked }
-        }));
+    // Item table quick-add: Facility Booking / Membership / Event / Other pickers (per row, single choice)
+    const [itemSourceSelection, setItemSourceSelection] = useState<Record<string, 'facility' | 'membership' | 'event' | 'other' | ''>>({});
+    const setItemSource = (itemId: string, value: 'facility' | 'membership' | 'event' | 'other' | '') => {
+        setItemSourceSelection(prev => ({ ...prev, [itemId]: value }));
     };
+    const [otherItemNameDraft, setOtherItemNameDraft] = useState<Record<string, string>>({});
     const [facilityBookingOptions, setFacilityBookingOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
     const [membershipPlanOptions, setMembershipPlanOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
     const [eventOptionsList, setEventOptionsList] = useState<{ id: string; name: string; rate: number }[]>([]);
 
+    // Extracts an options array regardless of which wrapper key the API used, and
+    // normalizes each entity's id/name/rate — exact response shape unconfirmed.
+    const parseEntityOptions = (data: any): { id: string; name: string; rate: number }[] => {
+        const list = data?.options || data?.entity_options || data?.data || (Array.isArray(data) ? data : []);
+        return (list || []).map((item: any) => ({
+            id: String(item.id),
+            name: item.label || item.name || item.title || `#${item.id}`,
+            rate: Number(item.rate ?? item.amount ?? item.price ?? 0) || 0
+        }));
+    };
+
     useEffect(() => {
+        if (!selectedUser) {
+            setFacilityBookingOptions([]);
+            setMembershipPlanOptions([]);
+            setEventOptionsList([]);
+            return;
+        }
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
         const authHeaders = { Authorization: token ? `Bearer ${token}` : undefined, 'Content-Type': 'application/json' };
+        const entityOptionsUrl = (lineItemType: string) =>
+            `https://${baseUrl}/lock_accounts/${lock_account_id}/bill_bookings/entity_options.json?line_item_type=${lineItemType}&user_id=${selectedUser}`;
 
-        axios.get(`https://${baseUrl}/pms/admin/facility_bookings.json`, { headers: authHeaders })
-            .then(res => {
-                const list = res.data?.bookings || [];
-                setFacilityBookingOptions(list.map((b: any) => ({
-                    id: String(b.id),
-                    name: b.facility_name || `Booking #${b.id}`,
-                    rate: Number(b.amount_full) || 0
-                })));
-            })
+        axios.get(entityOptionsUrl('facility_booking'), { headers: authHeaders })
+            .then(res => setFacilityBookingOptions(parseEntityOptions(res.data)))
             .catch(error => {
-                console.error('Error fetching facility bookings:', error);
+                console.error('Error fetching facility booking options:', error);
                 setFacilityBookingOptions([]);
             });
 
-        axios.get(`https://${baseUrl}/membership_plans.json`, { headers: authHeaders })
-            .then(res => {
-                const list = res.data?.plans || [];
-                setMembershipPlanOptions(list.map((p: any) => ({
-                    id: String(p.id),
-                    name: p.name || `Plan #${p.id}`,
-                    rate: Number(p.price) || 0
-                })));
-            })
+        axios.get(entityOptionsUrl('membership'), { headers: authHeaders })
+            .then(res => setMembershipPlanOptions(parseEntityOptions(res.data)))
             .catch(error => {
-                console.error('Error fetching membership plans:', error);
+                console.error('Error fetching membership options:', error);
                 setMembershipPlanOptions([]);
             });
 
-        axios.get(`https://${baseUrl}/pms/admin/events.json?per_page=200&page=1`, { headers: authHeaders })
-            .then(res => {
-                const list = res.data?.classifieds || [];
-                setEventOptionsList(list.map((e: any) => ({
-                    id: String(e.id),
-                    name: e.event_name || `Event #${e.id}`,
-                    rate: 0
-                })));
-            })
+        axios.get(entityOptionsUrl('event'), { headers: authHeaders })
+            .then(res => setEventOptionsList(parseEntityOptions(res.data)))
             .catch(error => {
-                console.error('Error fetching events:', error);
+                console.error('Error fetching event options:', error);
                 setEventOptionsList([]);
             });
-    }, []);
+    }, [selectedUser]);
 
     // Fills the given item row from a Facility Booking / Membership Plan / Event selection
     const applySourceToItem = (index: number, label: string, rate: number) => {
@@ -1159,9 +1180,9 @@ export const CreditNoteClubAddPage: React.FC = () => {
     const validate = (): boolean => {
         const newErrors: Record<string, string> = {};
 
-        if (!selectedGuestId && !selectedMemberId) {
+        if (!selectedUser) {
             setErrors(newErrors);
-            toast.error('Please select a guest or a member');
+            toast.error('Please select a user');
             return false;
         }
 
@@ -1195,7 +1216,7 @@ export const CreditNoteClubAddPage: React.FC = () => {
 
     const saleOrderPayload2 = {
         sale_order: {
-            lock_account_customer_id: selectedGuestId || selectedMemberId,
+            lock_account_customer_id: selectedUser,
             reference_number: referenceNumber,
             date: salesOrderDate,
             shipment_date: expectedShipmentDate,
@@ -1278,7 +1299,7 @@ export const CreditNoteClubAddPage: React.FC = () => {
             );
             // NOTE: backend contract for billing a guest/member (vs. a lock_account_customer) is unconfirmed;
             // sending whichever id was picked under the existing customer_id param as a best-effort mapping.
-            formData.append('lock_account_credit_note[lock_account_customer_id]', selectedGuestId || selectedMemberId || '');
+            formData.append('lock_account_credit_note[lock_account_customer_id]', selectedUser || '');
             formData.append('lock_account_credit_note[reference_number]', referenceNumber);
             formData.append('lock_account_credit_note[date]', salesOrderDate);
             // formData.append('lock_account_credit_note[date]', expectedShipmentDate);
@@ -1464,6 +1485,21 @@ export const CreditNoteClubAddPage: React.FC = () => {
                 taxBreakdown.push({ name: rate.name, rate: rateValue, amount: taxAmount });
             }
         });
+
+    // Flat GST breakdown (hardcoded 5% / 9% / 18% options)
+    items
+        .filter(item => item.item_tax_type === "flat_gst" && item.tax_group_id)
+        .forEach(item => {
+            const rateValue = Number(item.tax_group_id) || 0;
+            const taxAmount = (item.amount * rateValue) / 100;
+            const name = `GST (${rateValue}%)`;
+            const existing = taxBreakdown.find(t => t.name === name);
+            if (existing) {
+                existing.amount += taxAmount;
+            } else {
+                taxBreakdown.push({ name, rate: rateValue, amount: taxAmount });
+            }
+        });
     // Calculate Final Total
 
     const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
@@ -1531,50 +1567,58 @@ export const CreditNoteClubAddPage: React.FC = () => {
                 {/* Customer Section */}
                 <Section title="Guest & Member Information" icon={<Package className="w-5 h-5" />}>
                     <div className="space-y-6">
+                        <div>
+                            <RadioGroup
+                                row
+                                value={userType}
+                                onChange={(e) => {
+                                    setUserType(e.target.value as 'occupant' | 'guest' | 'fm');
+                                    setSelectedUser('');
+                                }}
+                            >
+                                <FormControlLabel
+                                    value="occupant"
+                                    control={<BrandRadio />}
+                                    label="Members"
+                                />
+                                <FormControlLabel
+                                    value="guest"
+                                    control={<BrandRadio />}
+                                    label="Guest"
+                                />
+                                <FormControlLabel
+                                    value="fm"
+                                    control={<BrandRadio />}
+                                    label="Staff"
+                                />
+                            </RadioGroup>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-sm font-medium mb-2">
-                                    Guest
+                                    User
                                 </label>
-                                <FormControl fullWidth>
+                                <FormControl
+                                    fullWidth
+                                    error={userType === 'occupant' ? occupantUsersError : userType === 'guest' ? guestUsersError : fmUsersError}
+                                >
                                     <Select
-                                        value={selectedGuestId}
-                                        onChange={(e) => {
-                                            setSelectedGuestId(String(e.target.value));
-                                            if (e.target.value) setSelectedMemberId('');
-                                        }}
+                                        value={selectedUser}
+                                        onChange={(e) => setSelectedUser(String(e.target.value))}
                                         displayEmpty
+                                        disabled={userType === 'occupant' ? occupantUsersLoading : userType === 'guest' ? guestUsersLoading : fmUsersLoading}
                                         sx={fieldStyles}
                                     >
-                                        <MenuItem value="">Select a guest</MenuItem>
-                                        {guests.map((guest) => (
-                                            <MenuItem key={guest.id} value={guest.id}>
-                                                {guest.name}
-                                            </MenuItem>
+                                        <MenuItem value="">Select a user</MenuItem>
+                                        {userType === 'occupant' && occupantUsers.map((user) => (
+                                            <MenuItem key={user.id} value={user.id}>{user.name}</MenuItem>
                                         ))}
-                                    </Select>
-                                </FormControl>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-2">
-                                    Member
-                                </label>
-                                <FormControl fullWidth>
-                                    <Select
-                                        value={selectedMemberId}
-                                        onChange={(e) => {
-                                            setSelectedMemberId(String(e.target.value));
-                                            if (e.target.value) setSelectedGuestId('');
-                                        }}
-                                        displayEmpty
-                                        sx={fieldStyles}
-                                    >
-                                        <MenuItem value="">Select a member</MenuItem>
-                                        {members.map((member) => (
-                                            <MenuItem key={member.id} value={member.id}>
-                                                {member.name}
-                                            </MenuItem>
+                                        {userType === 'guest' && guestUsers.map((user) => (
+                                            <MenuItem key={user.id} value={user.id}>{user.name}</MenuItem>
+                                        ))}
+                                        {userType === 'fm' && fmUsers.map((user) => (
+                                            <MenuItem key={user.id} value={user.id}>{user.name}</MenuItem>
                                         ))}
                                     </Select>
                                 </FormControl>
@@ -1690,11 +1734,36 @@ export const CreditNoteClubAddPage: React.FC = () => {
                                     <div>
                                         <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                                             Shipping Address
-                                            <IconButton size="small" onClick={() => openAddressListModal('shipping')}>
-                                                <EditOutlined fontSize="small" className="text-brand" />
-                                            </IconButton>
+                                            {!sameAsBilling && (
+                                                <IconButton size="small" onClick={() => openAddressListModal('shipping')}>
+                                                    <EditOutlined fontSize="small" className="text-brand" />
+                                                </IconButton>
+                                            )}
                                         </div>
-                                        {selectedShippingAddress?.address ? (
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    size="small"
+                                                    checked={sameAsBilling}
+                                                    onChange={(e) => setSameAsBilling(e.target.checked)}
+                                                    sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
+                                                />
+                                            }
+                                            label={<span className="text-xs text-gray-600">Same as Billing Address</span>}
+                                            className="mb-1 -mt-1"
+                                        />
+                                        {sameAsBilling ? (
+                                            selectedBillingAddress?.address ? (
+                                                <div className="text-sm text-gray-700 leading-relaxed">
+                                                    <div className="font-medium">{selectedBillingAddress.address}</div>
+                                                    {selectedBillingAddress.address_line_two && <div>{selectedBillingAddress.address_line_two}</div>}
+                                                    <div>{[selectedBillingAddress.city, selectedBillingAddress.state].filter(Boolean).join(', ')}{selectedBillingAddress.pin_code ? ` - ${selectedBillingAddress.pin_code}` : ''}</div>
+                                                    {selectedBillingAddress.country && <div>{selectedBillingAddress.country}</div>}
+                                                </div>
+                                            ) : (
+                                                <div className="text-xs text-gray-400 italic">Add a billing address first</div>
+                                            )
+                                        ) : selectedShippingAddress?.address ? (
                                             <div className="text-sm text-gray-700 leading-relaxed">
                                                 <div className="font-medium">{selectedShippingAddress.address}</div>
                                                 {selectedShippingAddress.address_line_two && <div>{selectedShippingAddress.address_line_two}</div>}
@@ -1708,7 +1777,7 @@ export const CreditNoteClubAddPage: React.FC = () => {
                                         )}
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm pt-2">
+                                {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm pt-2">
                                     <div className="flex items-center gap-2">
                                         <span className="text-gray-500">GST Treatment:</span>
                                         <span className="text-gray-800">{getGstTreatmentLabel(gstTreatment) || '—'}</span>
@@ -1723,13 +1792,13 @@ export const CreditNoteClubAddPage: React.FC = () => {
                                             <EditOutlined fontSize="small" className="text-brand" />
                                         </IconButton>
                                     </div>
-                                </div>
+                                </div> */}
                             </div>
                     </div>
                 </Section>
 
                 {/* Address Section */}
-                <Section title="Address Details" icon={<FileText className="w-5 h-5" />}>
+                {/* <Section title="Address Details" icon={<FileText className="w-5 h-5" />}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-sm font-medium mb-2">
@@ -1770,9 +1839,9 @@ export const CreditNoteClubAddPage: React.FC = () => {
                                 label="Same as Billing Address"
                                 className="mt-2"
                             /> */}
-                        </div>
+                        {/* </div>
                     </div>
-                </Section>
+                </Section> */} 
 
                 {/* Sales Order Details */}
                 <Section title="Credit Note Details" icon={<Calendar className="w-5 h-5" />}>
@@ -1834,7 +1903,7 @@ export const CreditNoteClubAddPage: React.FC = () => {
                         )}
 
                         <div className="border border-border rounded-lg overflow-x-auto">
-                                <table className="w-full min-w-[900px]">
+                                <table className="w-full min-w-[900px] item-table-no-hover">
                                     <thead className="bg-muted/50">
                                         <tr>
                                             <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
@@ -1849,54 +1918,75 @@ export const CreditNoteClubAddPage: React.FC = () => {
                                     <tbody className="divide-y divide-border">
 
                                         {items.map((item, index) => (
-                                            <tr key={item.id} className="hover:bg-muted/30 transition-colors">
+                                            <tr key={item.id}>
                                                 <td className="px-4 py-3">
                                                     {item.name && (
                                                         <div className="text-sm font-medium">{item.name}</div>
                                                     )}
 
                                                     {(() => {
-                                                        const rowChecks = itemSourceChecks[item.id] || { facility: false, membership: false, event: false };
+                                                        const rowSource = itemSourceSelection[item.id] || '';
+                                                        const sourceOptions: { key: 'facility' | 'membership' | 'event'; label: string; options: { id: string; name: string; rate: number }[] }[] = [
+                                                            { key: 'facility', label: 'Facility Booking', options: facilityBookingOptions },
+                                                            { key: 'membership', label: 'Membership', options: membershipPlanOptions },
+                                                            { key: 'event', label: 'Event', options: eventOptionsList },
+                                                        ];
+                                                        const activeSource = sourceOptions.find(s => s.key === rowSource);
                                                         return (
-                                                            <div className="flex flex-wrap items-start gap-4 mt-2">
-                                                                {([
-                                                                    { key: 'facility' as const, label: 'Facility Booking', options: facilityBookingOptions },
-                                                                    { key: 'membership' as const, label: 'Membership', options: membershipPlanOptions },
-                                                                    { key: 'event' as const, label: 'Event', options: eventOptionsList },
-                                                                ]).map(({ key, label, options }) => (
-                                                                    <div key={key} className="flex flex-col gap-1">
+                                                            <div className="mt-2">
+                                                                <RadioGroup
+                                                                    row
+                                                                    value={rowSource}
+                                                                    onChange={(e) => setItemSource(item.id, e.target.value as typeof rowSource)}
+                                                                >
+                                                                    {sourceOptions.map(({ key, label }) => (
                                                                         <FormControlLabel
-                                                                            control={
-                                                                                <Checkbox
-                                                                                    size="small"
-                                                                                    checked={rowChecks[key]}
-                                                                                    onChange={(e) => toggleItemSourceCheck(item.id, key, e.target.checked)}
-                                                                                    sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
-                                                                                />
-                                                                            }
-                                                                            label={<span className="text-xs">{label}</span>}
+                                                                            key={key}
+                                                                            value={key}
+                                                                            control={<BrandRadio />}
+                                                                            label={label}
                                                                         />
-                                                                        {rowChecks[key] && (
-                                                                            <FormControl size="small" sx={{ minWidth: 200 }}>
-                                                                                <Select
-                                                                                    displayEmpty
-                                                                                    value=""
-                                                                                    onChange={(e) => {
-                                                                                        const selected = options.find(o => o.id === e.target.value);
-                                                                                        if (selected) applySourceToItem(index, `${label}: ${selected.name}`, selected.rate);
-                                                                                    }}
-                                                                                >
-                                                                                    <MenuItem value="" disabled>
-                                                                                        {options.length === 0 ? `No ${label.toLowerCase()} records found` : `Select ${label.toLowerCase()}`}
-                                                                                    </MenuItem>
-                                                                                    {options.map(opt => (
-                                                                                        <MenuItem key={opt.id} value={opt.id}>{opt.name}</MenuItem>
-                                                                                    ))}
-                                                                                </Select>
-                                                                            </FormControl>
-                                                                        )}
-                                                                    </div>
-                                                                ))}
+                                                                    ))}
+                                                                    <FormControlLabel
+                                                                        value="other"
+                                                                        control={<BrandRadio />}
+                                                                        label="Other"
+                                                                    />
+                                                                </RadioGroup>
+
+                                                                {activeSource && (
+                                                                    <FormControl size="small" sx={{ minWidth: 200 }}>
+                                                                        <Select
+                                                                            displayEmpty
+                                                                            value=""
+                                                                            onChange={(e) => {
+                                                                                const selected = activeSource.options.find(o => o.id === e.target.value);
+                                                                                if (selected) applySourceToItem(index, `${activeSource.label}: ${selected.name}`, selected.rate);
+                                                                            }}
+                                                                        >
+                                                                            <MenuItem value="" disabled>
+                                                                                {activeSource.options.length === 0 ? `No ${activeSource.label.toLowerCase()} records found` : `Select ${activeSource.label.toLowerCase()}`}
+                                                                            </MenuItem>
+                                                                            {activeSource.options.map(opt => (
+                                                                                <MenuItem key={opt.id} value={opt.id}>{opt.name}</MenuItem>
+                                                                            ))}
+                                                                        </Select>
+                                                                    </FormControl>
+                                                                )}
+
+                                                                {rowSource === 'other' && (
+                                                                    <TextField
+                                                                        size="small"
+                                                                        placeholder="Enter item name"
+                                                                        value={otherItemNameDraft[item.id] ?? ''}
+                                                                        onChange={(e) => setOtherItemNameDraft(prev => ({ ...prev, [item.id]: e.target.value }))}
+                                                                        onBlur={() => {
+                                                                            const name = (otherItemNameDraft[item.id] || '').trim();
+                                                                            if (name) updateItemFields(index, { item_id: null, name });
+                                                                        }}
+                                                                        sx={{ minWidth: 200 }}
+                                                                    />
+                                                                )}
                                                             </div>
                                                         );
                                                     })()}
@@ -1959,51 +2049,26 @@ export const CreditNoteClubAddPage: React.FC = () => {
                                                 <td className="px-4 py-3">
                                                     <FormControl size="small" sx={{ width: 200 }}>
                                                         <Select
-                                                            value={["tax_group", "tax_rate"].includes(item.item_tax_type) ? item.tax_group_id : item.item_tax_type || ""}
+                                                            value={item.item_tax_type === "flat_gst" ? `flat_${item.tax_group_id}` : ""}
                                                             displayEmpty
                                                             onChange={(e) => {
-                                                                const value = e.target.value;
-                                                                const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
-
-                                                                if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
-                                                                    updateItem(index, "item_tax_type", value);
-                                                                    updateItem(index, "tax_group_id", null);
-                                                                    if (value === "non_taxable") {
-                                                                        setCurrentItemIndex(index);
-                                                                        setExemptionModalOpen(true);
-                                                                    }
+                                                                const value = String(e.target.value);
+                                                                if (value.startsWith("flat_")) {
+                                                                    updateItem(index, "item_tax_type", "flat_gst");
+                                                                    updateItem(index, "tax_group_id", Number(value.replace("flat_", "")));
                                                                 } else {
-                                                                    updateItem(index, "item_tax_type", isSameState ? "tax_group" : "tax_rate");
-                                                                    updateItem(index, "tax_group_id", value);
+                                                                    updateItem(index, "item_tax_type", "");
+                                                                    updateItem(index, "tax_group_id", null);
                                                                 }
                                                             }}
                                                         >
                                                             <MenuItem value="">Select Tax</MenuItem>
 
-                                                            {taxTypeOptions.map((opt) => (
-                                                                <MenuItem key={opt.value} value={opt.value}>
-                                                                    {opt.label}
+                                                            {[5, 9, 18].map((percent) => (
+                                                                <MenuItem key={`flat_${percent}`} value={`flat_${percent}`}>
+                                                                    GST {percent}%
                                                                 </MenuItem>
                                                             ))}
-
-                                                            {(() => {
-                                                                const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
-                                                                return isSameState ? (
-                                                                    [
-                                                                        <MenuItem key="__divider__" disabled>Tax Groups</MenuItem>,
-                                                                        ...taxGroups.map((group) => (
-                                                                            <MenuItem key={group.id} value={group.id}>{group.name}</MenuItem>
-                                                                        ))
-                                                                    ]
-                                                                ) : (
-                                                                    [
-                                                                        <MenuItem key="__divider__" disabled>Tax Rates (IGST)</MenuItem>,
-                                                                        ...taxRates.map((rate) => (
-                                                                            <MenuItem key={rate.id} value={rate.id}>{rate.name}</MenuItem>
-                                                                        ))
-                                                                    ]
-                                                                );
-                                                            })()}
                                                         </Select>
                                                     </FormControl>
                                                 </td>
@@ -2099,7 +2164,7 @@ export const CreditNoteClubAddPage: React.FC = () => {
                 </Section>
 
                 {/* Customer Notes */}
-                <Section title="Customer Notes" icon={<FileText className="w-5 h-5" />}>
+                <Section title="Notes" icon={<FileText className="w-5 h-5" />}>
                     <textarea
                         className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
                         rows={3}

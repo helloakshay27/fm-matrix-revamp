@@ -177,17 +177,46 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
 
 
 
+    // Maps a raw bill_booking record (shape unconfirmed) to the SalesOrder shape this table renders
+    const mapBillBookingToSalesOrder = (bb: any): SalesOrder => {
+        const user = bb.user || {};
+        return {
+            id: bb.id,
+            sale_order_number: bb.order_number || bb.sale_order_number || '',
+            customer_name: bb.customer_name || user.name || '',
+            guest_name: bb.guest_name || (user.user_type === 'guest' ? user.name : undefined),
+            member_name: bb.member_name || (user.user_type !== 'guest' ? user.name : undefined),
+            date: bb.bill_date || bb.date || '',
+            shipment_date: bb.shipment_date || '',
+            total_amount: Number(bb.total_amount ?? bb.amount ?? 0),
+            status: bb.status || '',
+            payment_term: bb.payment_term || null,
+            reference_number: bb.order_number || bb.reference_number || '',
+            sales_person_name: bb.sales_person_name || '',
+            active: bb.active !== undefined ? bb.active : true,
+            created_at: bb.created_at || '',
+            updated_at: bb.updated_at || '',
+            fulfilled: !!bb.fulfilled,
+            // Extra fields used directly by renderRow, not part of the base SalesOrder shape
+            ...({
+                invoice_number: bb.invoice_number || bb.bill_number || bb.number || '',
+                order_number: bb.order_number || '',
+                due_date: bb.due_date || '',
+                balance_due: Number(bb.balance_due ?? bb.due_amount ?? bb.total_amount ?? 0),
+            } as any),
+        };
+    };
+
     // Fetch sales order data from API
     const fetchSalesOrderData = async (page = 1, per_page = 10, search = '', filters: SalesOrderFilters = {}) => {
         setLoading(true);
         try {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
-            const lock_account_id = localStorage.getItem("lock_account_id");
+            const lock_account_id = localStorage.getItem('lock_account_id');
             const params = new URLSearchParams({
-                lock_account_id: lock_account_id,
-                // page: String(page),
-                // per_page: String(per_page),
+                page: String(page),
+                per_page: String(per_page),
             });
             if (search) params.append('q[invoice_number_or_customer_name_cont]', search);
             if (filters.status) params.append('q[status_eq]', filters.status);
@@ -195,7 +224,7 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
             if (filters.dateFrom) params.append('q[date_gteq]', filters.dateFrom);
             if (filters.dateTo) params.append('q[date_lteq]', filters.dateTo);
 
-            const response = await fetch(`https://${baseUrl}/lock_account_invoices.json?${params.toString()}`, {
+            const response = await fetch(`https://${baseUrl}/lock_accounts/${lock_account_id}/bill_bookings.json?${params.toString()}`, {
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined,
                     'Content-Type': 'application/json',
@@ -203,15 +232,16 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
             });
             const data = await response.json();
             console.log('API Response:', data);
-            // Assume API returns { data: SalesOrder[], pagination: {...} }
-            setSalesOrderData(Array.isArray(data) ? data : []);
-            setPagination(data.pagination || {
-                current_page: page,
-                per_page: per_page,
-                total_pages: 1,
-                total_count: 0,
-                has_next_page: false,
-                has_prev_page: false
+            // NOTE: response shape for this endpoint is unconfirmed — best-effort parsing across common shapes.
+            const list = data?.bill_bookings || data?.data || (Array.isArray(data) ? data : []);
+            setSalesOrderData(list.map(mapBillBookingToSalesOrder));
+            setPagination({
+                current_page: data?.pagination?.current_page ?? data?.current_page ?? page,
+                per_page: data?.pagination?.per_page ?? data?.per_page ?? per_page,
+                total_pages: data?.pagination?.total_pages ?? data?.total_pages ?? 1,
+                total_count: data?.pagination?.total_count ?? data?.total_count ?? list.length,
+                has_next_page: data?.pagination?.has_next_page ?? false,
+                has_prev_page: data?.pagination?.has_prev_page ?? false,
             });
         } catch (error: unknown) {
             console.error('Error fetching sales order data:', error);
@@ -308,7 +338,7 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="View"
                 >
-                    {/* <Eye className="w-4 h-4" /> */}
+                    <Eye className="w-4 h-4" />
                 </button>
                 <button
                     onClick={() => handleEdit(order.id)}
@@ -446,7 +476,7 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
             const token = localStorage.getItem('token');
             const lock_account_id = localStorage.getItem('lock_account_id');
             await axios.delete(
-                `https://${baseUrl}/lock_account_invoices/${selectedDeleteId}.json${lock_account_id ? `?lock_account_id=${lock_account_id}` : ''}`,
+                `https://${baseUrl}/lock_accounts/${lock_account_id}/bill_bookings/${selectedDeleteId}.json`,
                 {
                     headers: {
                         'Content-Type': 'application/json',
@@ -664,17 +694,7 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
                                 handleDelete();
                             }}
                             disabled={deleteLoading}
-                            style={{
-                                backgroundColor: "#dc2626",
-                                color: "#ffffff",
-                                border: "none",
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = "#b91c1c";
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = "#dc2626";
-                            }}
+                            className="btn-delete-confirm"
                         >
                             {deleteLoading ? "Deleting..." : "OK"}
                         </AlertDialogAction>
