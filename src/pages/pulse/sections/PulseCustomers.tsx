@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   PieChart,
   Pie,
   Cell,
   BarChart,
   Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   Tooltip,
@@ -12,16 +14,14 @@ import {
   CartesianGrid,
   Legend,
 } from "recharts";
-import { Building2 } from "lucide-react";
+import { ArrowUp, ArrowDown, UsersIcon } from "lucide-react";
 import {
-  fetchEntityKpi,
-  fetchEntitiesBySite,
-  fetchEntityList,
-  fetchEntityBreakdown,
-  type EntityKpi,
-  type EntitiesBySite,
-  type EntityListResponse,
-  type EntityBreakdown,
+  fetchTenantsOverview,
+  fetchTenantsDetails,
+  fetchTenantTable,
+  type TenantsOverview,
+  type TenantsDetailsResponse,
+  type TenantTableResponse,
   type PulseFilters,
 } from "@/services/pulseDashboardApi";
 
@@ -32,17 +32,57 @@ const C = {
   orange: "#EDC488",
 };
 
+
+
+const TENANT_COLOR_PALETTE: { bg: string; text: string }[] = [
+  { bg: "var(--color-info)", text: "#fff" },
+  { bg: "var(--color-primary)", text: "#fff" },
+  { bg: "var(--color-secondary-teal)", text: "var(--color-text)" },
+  { bg: "var(--color-warning)", text: "var(--color-text)" },
+  { bg: "var(--color-error)", text: "#fff" },
+  { bg: "var(--color-growth-solid)", text: "#fff" },
+  { bg: "rgba(107, 155, 204, 0.55)", text: "var(--color-text)" },
+];
+
+const MAX_ORG_MEMBER_CELLS = 8;
+
+function groupIntoTreemapColumns<T>(items: T[]): T[][] {
+  if (items.length === 0) return [];
+  const [lead, ...rest] = items;
+  const columns: T[][] = [[lead]];
+  for (let i = 0; i < rest.length; i += 2) {
+    columns.push(rest.slice(i, i + 2));
+  }
+  return columns;
+}
+
 interface Props {
   filters: PulseFilters;
 }
 
 export function PulseCustomers({ filters }: Props) {
-  const [kpi, setKpi] = useState<EntityKpi | null>(null);
-  const [bySite, setBySite] = useState<EntitiesBySite | null>(null);
-  const [list, setList] = useState<EntityListResponse | null>(null);
-  const [breakdown, setBreakdown] = useState<EntityBreakdown | null>(null);
+  const [overview, setOverview] = useState<TenantsOverview | null>(null);
+  const [tenantTable, setTenantTable] = useState<TenantTableResponse | null>(null);
+  const [tenantsDetails, setTenantsDetails] = useState<TenantsDetailsResponse | null>(null);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [entitySearch, setEntitySearch] = useState("");
+
+  const orgMemberColumns = useMemo(() => {
+    const tenants = tenantsDetails?.tenants ?? [];
+    const top = [...tenants]
+      .sort((a, b) => b.users_count - a.users_count)
+      .slice(0, MAX_ORG_MEMBER_CELLS);
+    const maxCount = top[0]?.users_count ?? 0;
+    const sizeFloor = Math.max(1, maxCount * 0.15);
+    const sorted = top.map((t, i) => ({
+      name: t.name,
+      value: t.users_count,
+      weight: Math.max(t.users_count, sizeFloor),
+      ...TENANT_COLOR_PALETTE[i % TENANT_COLOR_PALETTE.length],
+    }));
+    return groupIntoTreemapColumns(sorted);
+  }, [tenantsDetails]);
 
   useEffect(() => {
     setPage(1);
@@ -51,22 +91,22 @@ export function PulseCustomers({ filters }: Props) {
 
   useEffect(() => {
     if (!loading)
-      fetchEntityList(filters, page).then(setList).catch(console.error);
+      fetchTenantTable(filters, page).then(setTenantTable).catch(console.error);
   }, [page]);
 
   async function loadAll(p: number) {
     setLoading(true);
     try {
-      const [k, s, l, b] = await Promise.all([
-        fetchEntityKpi(filters),
-        fetchEntitiesBySite(filters),
-        fetchEntityList(filters, p),
-        fetchEntityBreakdown(filters),
+      const [oR, tblR, tR] = await Promise.allSettled([
+        fetchTenantsOverview(filters),
+        fetchTenantTable(filters, p),
+        fetchTenantsDetails(filters),
       ]);
-      setKpi(k);
-      setBySite(s);
-      setList(l);
-      setBreakdown(b);
+
+      if (oR.status === "fulfilled") setOverview(oR.value);
+      if (tblR.status === "fulfilled") setTenantTable(tblR.value);
+      if (tR.status === "fulfilled") setTenantsDetails(tR.value);
+      else console.error("[PulseCustomers] tenants_details failed:", tR.reason);
     } catch (e) {
       console.error(e);
     }
@@ -82,43 +122,32 @@ export function PulseCustomers({ filters }: Props) {
     );
   }
 
-  const startIdx = list
-    ? (list.pagination.current_page - 1) * list.pagination.per_page
+  const startIdx = tenantTable
+    ? (tenantTable.pagination.current_page - 1) * tenantTable.pagination.per_page
     : 0;
-  const hasData = !!(
-    kpi ||
-    (bySite && bySite.sites.length) ||
-    list ||
-    (breakdown && breakdown.breakdown.length)
-  );
+  const hasData = !!(overview || tenantTable);
+
+  const growth = overview?.monthly_growth;
+  const growthChartData =
+    growth?.points.map((p) => ({ month: p.label, count: p.count })) ?? [];
+  const growthPercentage = growth ? Math.abs(growth.growth_percentage) : 0;
+  const TrendIcon = growth?.trend === "down" ? ArrowDown : ArrowUp;
 
   return (
     <div>
-      <div className="pd-section-header">
-        <div className="pd-section-icon">
-          <Building2 className="w-5 h-5" />
-        </div>
-        <div>
-          <h2 className="pd-section-title">Customers</h2>
-          <div className="pd-section-subtitle">
-            Entities onboarded across sites
-          </div>
-        </div>
-      </div>
-
       {!hasData && (
         <div className="pd-empty">
-          <Building2 className="pd-empty-icon" />
-          No customer data available for the selected filters.
+          <UsersIcon className="pd-empty-icon" />
+          No user data available for the selected filters.
         </div>
       )}
 
-      {kpi && (
+      {overview && (
         <div className="pd-kpi-grid">
           {[
-            { label: "Total Customer Entities", value: kpi.total },
-            { label: "Active", value: kpi.active },
-            { label: "Inactive", value: kpi.inactive },
+            { label: "Total Customer Entities", value: overview.kpis.total_customers },
+            { label: "Active", value: overview.kpis.active_customers },
+            { label: "Inactive", value: overview.kpis.inactive_customers },
           ].map((item) => (
             <div key={item.label} className="pd-kpi-card">
               <div className="pd-kpi-value">{item.value.toLocaleString()}</div>
@@ -128,118 +157,105 @@ export function PulseCustomers({ filters }: Props) {
         </div>
       )}
 
-      <div className="pd-charts-row">
-        {kpi && (
-          <div className="pd-chart-card">
-            <div className="pd-chart-title">Active vs Inactive Customer Entities</div>
-            <div className="pd-chart-inner">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={[
-                      { name: "Active", value: kpi.active },
-                      { name: "Inactive", value: kpi.inactive },
-                    ]}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius="55%"
-                    outerRadius="75%"
-                    dataKey="value"
-                  >
-                    <Cell fill={C.green} />
-                    <Cell fill={C.red} />
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+      <div className="pd-growth-row">
+        <div className="pd-growth-card">
+          <div className="pd-panel-title">
+            Monthly Enrollment Growth
+            {growth && (
+              <span className="pd-growth-badge">
+                <TrendIcon size={10} />
+                {growthPercentage}%
+              </span>
+            )}
           </div>
-        )}
-
-        {bySite && bySite.sites.length > 0 && (
-          <div className="pd-chart-card">
-            <div className="pd-chart-title">Customer Entities by Site</div>
-            <div className="pd-chart-inner">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={bySite.sites} margin={{ bottom: 40 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis
-                    dataKey="site_name"
-                    tick={{ fontSize: 11 }}
-                    angle={-25}
-                    textAnchor="end"
-                    interval={0}
-                  />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Legend verticalAlign="top" />
-                  <Bar
-                    dataKey="active"
-                    name="Active"
-                    fill={C.green}
-                    radius={[3, 3, 0, 0]}
-                  />
-                  <Bar
-                    dataKey="inactive"
-                    name="Inactive"
-                    fill={C.red}
-                    radius={[3, 3, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {breakdown && breakdown.breakdown.length > 0 && (
-        <div className="pd-chart-card" style={{ marginBottom: 20 }}>
-          <div className="pd-chart-title">
-            Customer Entity Breakdown — Users per Customer
-          </div>
-          <div
-            className="pd-chart-inner"
-            style={{ height: Math.max(260, breakdown.breakdown.length * 26) }}
-          >
+          <div className="pd-growth-chart-inner">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                layout="vertical"
-                data={breakdown.breakdown}
-                margin={{ left: 60 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 11 }} />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  tick={{ fontSize: 11 }}
-                  width={120}
-                />
+              <LineChart data={growthChartData} margin={{ left: -10 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                 <Tooltip />
-                <Legend verticalAlign="top" />
-                <Bar
-                  dataKey="active_user_count"
-                  name="Active"
-                  fill={C.green}
-                  stackId="users"
+                <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: 11 }} />
+                <Line
+                  type="monotone"
+                  dataKey="count"
+                  name="Customers"
+                  stroke="var(--color-primary)"
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
                 />
-                <Bar
-                  dataKey="inactive_user_count"
-                  name="Inactive"
-                  fill={C.red}
-                  stackId="users"
-                />
-              </BarChart>
+              </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
-      )}
+      </div>
 
-      {list && (
+      <div className="pd-growth-row">
+        <div className="pd-growth-card">
+          <div className="pd-panel-title">Organization-wise Members</div>
+          <div className="pd-org-grid">
+            {orgMemberColumns.length === 0 && (
+              <div className="pd-empty" style={{ flex: 1, padding: "16px" }}>
+                No organizations with members yet
+              </div>
+            )}
+            {orgMemberColumns.map((column, ci) => {
+              const columnTotal = column.reduce((sum, c) => sum + c.weight, 0);
+              return (
+                <div
+                  key={ci}
+                  className="pd-org-col"
+                  style={{ flexGrow: columnTotal, flexBasis: 0 }}
+                >
+                  {column.map((cell) => (
+                    <div
+                      key={cell.name}
+                      className="pd-org-cell"
+                      style={{
+                        background: cell.bg,
+                        color: cell.text,
+                        flexGrow: cell.weight,
+                        flexBasis: 0,
+                      }}
+                    >
+                      <span className="pd-org-cell-name">{cell.name}</span>
+                      <span className="pd-org-cell-value">{cell.value}</span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="pd-growth-card">
+          <div className="pd-panel-title">Top 3 Organizations By Engagement</div>
+          <div className="pd-ranked-list" style={{ flex: 1, justifyContent: "center" }}>
+            {(tenantsDetails?.top_tenants ?? []).map((o) => (
+              <div key={o.id} className="pd-ranked-row">
+                <div className={`pd-ranked-pos pd-ranked-pos-${o.rank}`}>{o.rank}</div>
+                <div className="pd-ranked-name">{o.name}</div>
+                <div>
+                  <span className="pd-ranked-count">{o.users_count}</span>
+                  <span className="pd-ranked-count-lbl">members</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {tenantTable && (
         <div className="pd-tbl-card">
           <div className="pd-tbl-header">
-            <span className="pd-tbl-title">Customer Entity List</span>
+            <span className="pd-tbl-title pd-tbl-title--plain">Entity Management Directory</span>
+            <input
+              type="text"
+              className="pd-tbl-search-input"
+              placeholder="Search entities..."
+              value={entitySearch}
+              onChange={(e) => setEntitySearch(e.target.value)}
+            />
           </div>
           <div className="pd-tbl-wrap">
             <table className="pd-table">
@@ -247,51 +263,45 @@ export function PulseCustomers({ filters }: Props) {
                 <tr>
                   <th className="pd-num">#</th>
                   <th>Name</th>
-                  <th>Customer Type</th>
-                  {/* <th>Email</th> */}
-                  {/* <th>Mobile</th> */}
+                  <th>Type</th>
                   <th>Site</th>
-                  <th>Active</th>
-                  <th className="pd-num">Leases</th>
-                  <th>Domains</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
-                {list.entities.map((e, i) => (
-                  <tr key={e.entity_id}>
-                    <td className="pd-num">{startIdx + i + 1}</td>
-                    <td style={{ fontWeight: 500 }}>{e.name}</td>
-                    <td>{e.customer_type}</td>
-                    {/* <td>{e.email || "—"}</td> */}
-                    {/* <td>{e.mobile || "—"}</td> */}
-                    <td>{e.site_name}</td>
-                    <td>
-                      <span
-                        className={`pd-badge ${e.active === "Yes" ? "pd-badge-yes" : "pd-badge-no"}`}
-                      >
-                        {e.active}
-                      </span>
-                    </td>
-                    <td className="pd-num">{e.leases.length}</td>
-                    <td
-                      style={{ color: "var(--color-text-light)", fontSize: 12 }}
-                    >
-                      {e.domains.join(", ") || "—"}
-                    </td>
-                  </tr>
-                ))}
+                {tenantTable.tenants
+                  .filter((t) =>
+                    t.name.toLowerCase().includes(entitySearch.trim().toLowerCase())
+                  )
+                  .map((t) => (
+                    <tr key={t.id}>
+                      <td className="pd-num">{t.serial}</td>
+                      <td style={{ fontWeight: 500 }}>{t.name}</td>
+                      <td>
+                        <span className="pd-chip">{t.type ?? "—"}</span>
+                      </td>
+                      <td>{t.site_name}</td>
+                      <td>
+                        <span
+                          className={`pd-badge pd-badge--flat ${t.active ? "pd-badge-yes" : "pd-badge-no"}`}
+                        >
+                          {t.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>
-          {list.pagination.total_pages > 1 && (
+          {tenantTable.pagination.total_pages > 1 && (
             <div className="pd-pagination">
               <span>
                 {startIdx + 1}–
                 {Math.min(
-                  startIdx + list.pagination.per_page,
-                  list.pagination.total_count
+                  startIdx + tenantTable.pagination.per_page,
+                  tenantTable.pagination.total_count
                 )}{" "}
-                of {list.pagination.total_count}
+                of {tenantTable.pagination.total_count}
               </span>
               <div className="pd-pagination-btns">
                 <button
@@ -304,7 +314,7 @@ export function PulseCustomers({ filters }: Props) {
                 <button className={`pd-page-btn active`}>{page}</button>
                 <button
                   className="pd-page-btn"
-                  disabled={page >= list.pagination.total_pages}
+                  disabled={page >= tenantTable.pagination.total_pages}
                   onClick={() => setPage((p) => p + 1)}
                 >
                   Next ›

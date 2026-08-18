@@ -34,6 +34,16 @@ const SECTIONS: { key: Section; label: string }[] = [
   { key: "carpool", label: "Carpool" },
 ];
 
+const SECTION_META: Record<Section, { title: string; subtitle: string }> = {
+  customers: { title: "Customers Dashboard", subtitle: "Entities onboarded across Panchshil estates" },
+  users: { title: "Users Dashboard", subtitle: "Users active across Panchshil estates" },
+  amenities: { title: "Amenities Dashboard", subtitle: "Amenity usage across Panchshil estates" },
+  events: { title: "Events Dashboard", subtitle: "Events hosted across Panchshil estates" },
+  notices: { title: "Notices Dashboard", subtitle: "Notices published across Panchshil estates" },
+  community: { title: "Community Dashboard", subtitle: "Community engagement across Panchshil estates" },
+  carpool: { title: "Carpool Dashboard", subtitle: "Carpool rides across Panchshil estates" },
+};
+
 function getDefaultDates() {
   const now = new Date();
   const fromDate = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()).toISOString().split("T")[0];
@@ -116,25 +126,10 @@ export function PulseDashboardPage() {
       </div>
 
       <div className="pulse-shell">
-        {/* Page nav strip */}
-        {/* <div className="ps-nav">
-          <div className="ps-logo">
-            <div className="ps-logo-mark">
-              <svg viewBox="0 0 24 24">
-                <path d="M2 12h4l2-7 4 14 3-9 2 5h5" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <div>
-              <div className="ps-logo-text">Pulse Analytics</div>
-              <div className="ps-logo-sub">Community &amp; Engagement Dashboard</div>
-            </div>
-          </div>
-          <div className="ps-date-tag">{todayLabel}</div>
-        </div> */}
-
-        <PulseGreeting />
+        {/* <PulseGreeting /> */}
 
         {/* Filter bar */}
+        {/*
         <div className="ps-fbar">
           <div className="ps-flbl">
             <SlidersHorizontal size={11} />
@@ -170,8 +165,47 @@ export function PulseDashboardPage() {
             </button>
           )}
         </div>
+        */}
 
-        <PulseAiAlerts filters={filters} />
+        {/* Dashboard header */}
+        <div className="ps-dash-header">
+          <div className="ps-dash-titlewrap">
+            <div className="ps-dash-title">{SECTION_META[activeSection].title}</div>
+            <div className="ps-dash-subtitle">{SECTION_META[activeSection].subtitle}</div>
+          </div>
+
+          <div className="ps-dash-actions">
+            <Select value={siteSelection} onValueChange={setSiteSelection}>
+              <SelectTrigger className="ps-fsel-trigger">
+                <MapPin size={13} className="ps-fsel-icon" />
+                <SelectValue placeholder="Select Site" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Sites</SelectItem>
+                {sites.map((site) => (
+                  <SelectItem key={site.id} value={String(site.id)}>
+                    {site.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <div className="ps-dash-date-wrap">
+              <UnifiedDateRangeFilter
+                dateRange={dateRange}
+                onDateRangeChange={handleDateRangeChange}
+              />
+            </div>
+
+            {hasActiveFilters && (
+              <button type="button" className="ps-dash-reset" onClick={handleResetFilters}>
+                Reset
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* <PulseAiAlerts filters={filters} /> */}
 
         {/* Section tabs */}
         <div className="ps-tabbar">
