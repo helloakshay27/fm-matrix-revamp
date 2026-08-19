@@ -228,6 +228,8 @@ const EditIssueModal = ({
     // Date picker states
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+    const [showDatePickerInterface, setShowDatePickerInterface] = useState(false);
+    const [showStartDatePickerInterface, setShowStartDatePickerInterface] = useState(false);
     const [showCalender, setShowCalender] = useState(false);
     const [showStartCalender, setShowStartCalender] = useState(false);
     const [startDateTasks, setStartDateTasks] = useState([]);
@@ -1191,7 +1193,8 @@ const EditIssueModal = ({
                                         if (showStartDatePicker) {
                                             setShowStartDatePicker(false);
                                         }
-                                        setShowDatePicker(!showDatePicker);
+                                        setShowDatePicker(true);
+                                        setShowDatePickerInterface(true);
                                     }}
                                     ref={endDateRef}
                                 >
@@ -1199,14 +1202,15 @@ const EditIssueModal = ({
                                         <div className="text-black flex items-center justify-between w-full">
                                             <CalendarIcon className="w-4 h-4" />
                                             <div>
-                                                Target Date : {endDate.date.toString().padStart(2, "0")}{" "}
-                                                {monthNames[endDate.month]}
+                                                {endDate.date.toString().padStart(2, "0")}{" "}
+                                                {monthNames[endDate.month]} {endDate.year}
                                             </div>
                                             <X
                                                 className="w-4 h-4"
                                                 onClick={(e) => {
                                                     e.preventDefault();
                                                     setEndDate(null);
+                                                    setShowDatePickerInterface(false);
                                                 }}
                                             />
                                         </div>
@@ -1228,7 +1232,8 @@ const EditIssueModal = ({
                                         if (showDatePicker) {
                                             setShowDatePicker(false);
                                         }
-                                        setShowStartDatePicker(!showStartDatePicker);
+                                        setShowStartDatePicker(true);
+                                        setShowStartDatePickerInterface(true);
                                     }}
                                     ref={startDateRef}
                                 >
@@ -1236,15 +1241,15 @@ const EditIssueModal = ({
                                         <div className="text-black flex items-center justify-between w-full">
                                             <CalendarIcon className="w-4 h-4" />
                                             <div>
-                                                Start Date :{" "}
                                                 {startDate?.date?.toString().padStart(2, "0")}{" "}
-                                                {monthNames[startDate.month]}
+                                                {monthNames[startDate.month]} {startDate.year}
                                             </div>
                                             <X
                                                 className="w-4 h-4"
                                                 onClick={(e) => {
                                                     e.preventDefault();
                                                     setStartDate(null);
+                                                    setShowStartDatePickerInterface(false);
                                                 }}
                                             />
                                         </div>
@@ -1288,11 +1293,14 @@ const EditIssueModal = ({
                                 willChange: "height, opacity",
                             }}
                         >
-                            {!startDate ? (
+                            {showStartDatePickerInterface ? (
                                 showStartCalender ? (
                                     <CustomCalender
                                         setShowCalender={setShowStartCalender}
-                                        onDateSelect={setStartDate}
+                                        onDateSelect={(date) => {
+                                            setStartDate(date);
+                                            setShowStartDatePickerInterface(false);
+                                        }}
                                         selectedDate={startDate}
                                         taskHoursData={calendarTaskHours}
                                         ref={startDateRef}
@@ -1302,7 +1310,10 @@ const EditIssueModal = ({
                                 ) : (
                                     <TaskDatePicker
                                         selectedDate={startDate}
-                                        onDateSelect={setStartDate}
+                                        onDateSelect={(date) => {
+                                            setStartDate(date);
+                                            setShowStartDatePickerInterface(false);
+                                        }}
                                         startDate={null}
                                         userAvailability={userAvailability}
                                         setShowCalender={setShowStartCalender}
@@ -1311,14 +1322,16 @@ const EditIssueModal = ({
                                     />
                                 )
                             ) : (
-                                <TasksOfDate
-                                    selectedDate={startDate}
-                                    onClose={() => { }}
-                                    tasks={startDateTasks}
-                                    selectedUser={responsiblePerson}
-                                    userAvailability={userAvailability}
-                                    shift={shift}
-                                />
+                                startDate && (
+                                    <TasksOfDate
+                                        selectedDate={startDate}
+                                        onClose={() => { }}
+                                        tasks={startDateTasks}
+                                        selectedUser={responsiblePerson}
+                                        userAvailability={userAvailability}
+                                        shift={shift}
+                                    />
+                                )
                             )}
                         </Box>
 
@@ -1331,11 +1344,14 @@ const EditIssueModal = ({
                                 willChange: "height, opacity",
                             }}
                         >
-                            {!endDate ? (
+                            {showDatePickerInterface ? (
                                 showCalender ? (
                                     <CustomCalender
                                         setShowCalender={setShowCalender}
-                                        onDateSelect={setEndDate}
+                                        onDateSelect={(date) => {
+                                            setEndDate(date);
+                                            setShowDatePickerInterface(false);
+                                        }}
                                         selectedDate={endDate}
                                         taskHoursData={calendarTaskHours}
                                         ref={endDateRef}
@@ -1345,7 +1361,10 @@ const EditIssueModal = ({
                                 ) : (
                                     <TaskDatePicker
                                         selectedDate={endDate}
-                                        onDateSelect={setEndDate}
+                                        onDateSelect={(date) => {
+                                            setEndDate(date);
+                                            setShowDatePickerInterface(false);
+                                        }}
                                         startDate={startDate}
                                         userAvailability={userAvailability}
                                         setShowCalender={setShowCalender}
@@ -1354,14 +1373,16 @@ const EditIssueModal = ({
                                     />
                                 )
                             ) : (
-                                <TasksOfDate
-                                    selectedDate={endDate}
-                                    onClose={() => { }}
-                                    tasks={targetDateTasks}
-                                    selectedUser={responsiblePerson}
-                                    userAvailability={userAvailability}
-                                    shift={shift}
-                                />
+                                endDate && (
+                                    <TasksOfDate
+                                        selectedDate={endDate}
+                                        onClose={() => { }}
+                                        tasks={targetDateTasks}
+                                        selectedUser={responsiblePerson}
+                                        userAvailability={userAvailability}
+                                        shift={shift}
+                                    />
+                                )
                             )}
                         </Box>
 

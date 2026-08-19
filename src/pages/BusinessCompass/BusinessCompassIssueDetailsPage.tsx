@@ -273,7 +273,7 @@ const ActivityLog = ({ issueId }: { issueId: string }) => {
         const fetchLogs = async () => {
             try {
                 const response = await axios.get(
-                    `https://${baseUrl}/business_compass/issues/${issueId}/issue_system_logs.json`,
+                    `https://${baseUrl}/business_compass/issues/${issueId}/activity_logs.json`,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
                 setIssueSystemLogs(response.data || []);
