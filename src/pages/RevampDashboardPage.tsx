@@ -66,6 +66,7 @@ import {
   useVendorDashboardData,
   usePermitsDashboardData,
   useIncidentsDashboardData,
+  useFinanceDashboardData,
 } from "@/hooks/useFmDashboardData";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
@@ -1804,6 +1805,17 @@ export default function RevampDashboardPage() {
     enabled: isSafetyView && !sitesLoading && dashboardSiteIds.length > 0,
   });
 
+  const {
+    data: financeApiData,
+    loading: financeLoading,
+    error: financeError,
+  } = useFinanceDashboardData({
+    siteIds: dashboardSiteIds,
+    fromDate: dashboardFromDate,
+    toDate: dashboardToDate,
+    enabled: isFinanceView && !sitesLoading && dashboardSiteIds.length > 0,
+  });
+
   // Which section(s) failed to load — each one gets its own toast naming the
   // card/API that failed, instead of one generic banner above the grid.
   const failedSections = useMemo(
@@ -1822,6 +1834,7 @@ export default function RevampDashboardPage() {
         { label: "Vendor", error: vendorError },
         { label: "Permits", error: permitsError },
         { label: "Incidents", error: incidentsError },
+        { label: "Finance", error: financeError },
       ].filter((s): s is { label: string; error: string } => s.error !== null),
     [
       sitesError,
@@ -1837,6 +1850,7 @@ export default function RevampDashboardPage() {
       vendorError,
       permitsError,
       incidentsError,
+      financeError,
     ]
   );
   const shownFailedSectionLabelsRef = useRef<Set<string>>(new Set());
@@ -3199,7 +3213,7 @@ export default function RevampDashboardPage() {
               isDraggable
               isResizable
             >
-              <div key="hero-sla" className="h-full">
+              <div key="hero-sla" chart_id="hero-sla" className="h-full">
                 <div ref={registerMaintenanceSectionRef("Tickets")} className="h-0" />
                 <StatHeroCard
                   tone="purple"
@@ -3215,7 +3229,7 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              <div key="hero-customer" className="h-full">
+              <div key="hero-customer" chart_id="hero-customer" className="h-full">
                 <StatHeroCard
                   tone="teal"
                   label="Customer Tickets"
@@ -3225,7 +3239,7 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              <div key="hero-internal" className="h-full">
+              <div key="hero-internal" chart_id="hero-internal" className="h-full">
                 <StatHeroCard
                   tone="peach"
                   label="Internal Tickets"
@@ -3236,7 +3250,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="ticket-pool" className="h-full">
+              <div key="ticket-pool" chart_id="ticket-pool" className="h-full">
                 <PieChartCard
                   title="Ticket pool composition"
                   subtitle={`${poolTotal} total · Pending / In Progress / On Hold / Closed`}
@@ -3254,7 +3268,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="category-bar" className="h-full">
+              <div key="category-bar" chart_id="category-bar" className="h-full">
                 <BarChartCard
                   title="Category comparison"
                   subtitle="Status breakdown per category for the selected sites and date range"
@@ -3281,7 +3295,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="category-table" className="h-full">
+              <div key="category-table" chart_id="category-table" className="h-full">
                 <DataTableCard
                   title="Category comparison — detail"
                   subtitle="Total, breach rate, trend and average ageing per category"
@@ -3297,7 +3311,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="reply-resolution" className="h-full">
+              <div key="reply-resolution" chart_id="reply-resolution" className="h-full">
                 <ComboBarLineChartCard
                   title="First Reply vs Resolution Time"
                   subtitle="Monthly · bars = reply (hrs), line = resolution (days)"
@@ -3312,7 +3326,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="sla-breach" className="h-full overflow-auto bg-white border border-brand-border rounded-lg p-4 flex flex-col gap-3">
+              <div key="sla-breach" chart_id="sla-breach" className="h-full overflow-auto bg-white border border-brand-border rounded-lg p-4 flex flex-col gap-3">
                 <BarChartCard
                   title="SLA breach analysis"
                   subtitle="Breaches per month for the selected date range"
@@ -3344,7 +3358,7 @@ export default function RevampDashboardPage() {
                 </p>
               </div>
 
-              <div key="resolved-age" className="h-full">
+              <div key="resolved-age" chart_id="resolved-age" className="h-full">
                 <BarChartCard
                   title="Resolved tickets by age tier"
                   subtitle="How fast are tickets actually getting closed?"
@@ -3358,7 +3372,7 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              <div key="unresolved-age" className="h-full">
+              <div key="unresolved-age" chart_id="unresolved-age" className="h-full">
                 <BarChartCard
                   title="Unresolved tickets by age tier"
                   subtitle="How long has the still-open backlog been waiting?"
@@ -3373,7 +3387,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="ticket-heatmap" className="h-full">
+              <div key="ticket-heatmap" chart_id="ticket-heatmap" className="h-full">
                 <TicketHeatmapCard
                   title="Ticket volume · hour × day"
                   subtitle="When does demand actually spike?"
@@ -3385,7 +3399,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="tech-workload" className="h-full">
+              <div key="tech-workload" chart_id="tech-workload" className="h-full">
                 {techWorkloadData.length ? (
                   <BarChartCard
                     title="Technician workload"
@@ -3409,7 +3423,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="golden-open" className="h-full">
+              <div key="golden-open" chart_id="golden-open" className="h-full">
                 <StatHeroCard
                   tone="purple"
                   label="Golden Open"
@@ -3419,7 +3433,7 @@ export default function RevampDashboardPage() {
                   className="h-full"
                 />
               </div>
-              <div key="redflag-open" className="h-full">
+              <div key="redflag-open" chart_id="redflag-open" className="h-full">
                 <StatHeroCard
                   tone="teal"
                   label="Red Flag Open"
@@ -3429,7 +3443,7 @@ export default function RevampDashboardPage() {
                   className="h-full"
                 />
               </div>
-              <div key="golden-age" className="h-full">
+              <div key="golden-age" chart_id="golden-age" className="h-full">
                 <StatHeroCard
                   tone="peach"
                   label="Golden Avg Age"
@@ -3439,7 +3453,7 @@ export default function RevampDashboardPage() {
                   className="h-full"
                 />
               </div>
-              <div key="sitewide-age" className="h-full">
+              <div key="sitewide-age" chart_id="sitewide-age" className="h-full">
                 <StatHeroCard
                   tone="blue"
                   label="Site-wide Avg Age"
@@ -3450,7 +3464,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="golden-redflag-chart" className="h-full">
+              <div key="golden-redflag-chart" chart_id="golden-redflag-chart" className="h-full">
                 {goldenRedFlagData.length ? (
                   <BarChartCard
                     title="Golden & Red Flag analysis — by person, by age"
@@ -3504,7 +3518,7 @@ export default function RevampDashboardPage() {
                 />
               </div> */}
 
-              <div key="by-user" className="h-full">
+              <div key="by-user" chart_id="by-user" className="h-full">
                 {byUserRows.length ? (
                   <StatListCard
                     title="By User"
@@ -3522,7 +3536,7 @@ export default function RevampDashboardPage() {
                   />
                 )}
               </div>
-              <div key="by-dept" className="h-full">
+              <div key="by-dept" chart_id="by-dept" className="h-full">
                 {byDeptRows.length ? (
                   <StatListCard
                     title="By Department"
@@ -3539,7 +3553,7 @@ export default function RevampDashboardPage() {
                   />
                 )}
               </div>
-              <div key="by-tenant" className="h-full">
+              <div key="by-tenant" chart_id="by-tenant" className="h-full">
                 <EmptyStateCard
                   title="By Tenant"
                   subtitle="Which tenant raises the most"
@@ -3548,7 +3562,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="location-volume" className="h-full">
+              <div key="location-volume" chart_id="location-volume" className="h-full">
                 {locationVolumeData.length ? (
                   <BarChartCard
                     title="Location-wise Ticket Volume"
@@ -3572,7 +3586,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="csat" className="h-full">
+              <div key="csat" chart_id="csat" className="h-full">
                 <StatHeroCard
                   tone="purple"
                   label="Customer Satisfaction Score"
@@ -3582,7 +3596,7 @@ export default function RevampDashboardPage() {
                   className="h-full"
                 />
               </div>
-              <div key="escalation" className="h-full">
+              <div key="escalation" chart_id="escalation" className="h-full">
                 <StatHeroCard
                   tone="teal"
                   label="Approaching Escalation"
@@ -3593,7 +3607,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="source-origin" className="h-full">
+              <div key="source-origin" chart_id="source-origin" className="h-full">
                 <BarChartCard
                   title="Source-wise ticket origin"
                   subtitle="Manual/Direct · Asset · Checklist · Survey · Patrolling — where tickets actually come from"
@@ -3609,7 +3623,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="repeat-complaints" className="h-full">
+              <div key="repeat-complaints" chart_id="repeat-complaints" className="h-full">
                 {repeatComplaintsData.length ? (
                   <BarChartCard
                     title="Repeat Complaints"
@@ -3633,7 +3647,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="asset-linked-tickets" className="h-full">
+              <div key="asset-linked-tickets" chart_id="asset-linked-tickets" className="h-full">
                 {assetLinkedData.length ? (
                   <BarChartCard
                     title="Asset-Breakdown-Linked Tickets"
@@ -3671,7 +3685,7 @@ export default function RevampDashboardPage() {
                 />
               </div> */}
 
-              <div key="peak-hours" className="h-full">
+              <div key="peak-hours" chart_id="peak-hours" className="h-full">
                 {peakHoursData.length ? (
                   <BarChartCard
                     title="Peak Complaint Hours"
@@ -3694,17 +3708,17 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="assets-section-label" className="h-full flex items-center">
+              <div key="assets-section-label" chart_id="assets-section-label" className="h-full flex items-center">
                 <div ref={registerMaintenanceSectionRef("Assets")} className="h-0" />
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   Asset Management Dashboard
                 </span>
               </div>
 
-              <div key="asset-hero-total" className="h-full">
+              <div key="asset-hero-total" chart_id="asset-hero-total" className="h-full">
                 <StatHeroCard tone="purple" label="Total Assets" value={assetsOverview ? String(assetsOverview.total_assets) : "—"} accent="neutral" subtitle="Full site inventory" className="h-full overflow-auto" />
               </div>
-              <div key="asset-hero-good" className="h-full">
+              <div key="asset-hero-good" chart_id="asset-hero-good" className="h-full">
                 <StatHeroCard
                   tone="teal"
                   label="Good Condition"
@@ -3718,7 +3732,7 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              <div key="asset-hero-fair" className="h-full">
+              <div key="asset-hero-fair" chart_id="asset-hero-fair" className="h-full">
                 <StatHeroCard
                   tone="peach"
                   label="Fair Condition"
@@ -3732,7 +3746,7 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              <div key="asset-hero-bad" className="h-full">
+              <div key="asset-hero-bad" chart_id="asset-hero-bad" className="h-full">
                 <StatHeroCard
                   tone="blue"
                   label="Bad Condition"
@@ -3746,7 +3760,7 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              <div key="asset-hero-health" className="h-full">
+              <div key="asset-hero-health" chart_id="asset-hero-health" className="h-full">
                 <StatHeroCard
                   tone="purple"
                   label="Equipment Health Score"
@@ -3757,11 +3771,11 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              <div key="asset-hero-replacement" className="h-full">
+              <div key="asset-hero-replacement" chart_id="asset-hero-replacement" className="h-full">
                 <StatHeroCard tone="peach" label="Replacement Due" value={assetsOverview ? String(assetsOverview.replacement_due_count) : "—"} accent="error" subtitle="End-of-life · Procure now" className="h-full overflow-auto" />
               </div>
 
-              <div key="asset-health-card" className="h-full">
+              <div key="asset-health-card" chart_id="asset-health-card" className="h-full">
                 <Card className="border-brand-border h-full overflow-auto">
                   <CardHeader className="pb-2">
                     <h3 className="text-brand-body-3 font-bold text-brand-text">Asset Health</h3>
@@ -3807,7 +3821,7 @@ export default function RevampDashboardPage() {
                 </Card>
               </div>
 
-              <div key="asset-breakdown-gauge" className="h-full">
+              <div key="asset-breakdown-gauge" chart_id="asset-breakdown-gauge" className="h-full">
                 <GaugeChartCard
                   title="Breakdown rate vs acceptable range"
                   subtitle={assetHealth ? `${assetHealth.total} total assets · acceptable: 5–10%` : "acceptable: 5–10%"}
@@ -3829,7 +3843,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="asset-value-risk" className="h-full">
+              <div key="asset-value-risk" chart_id="asset-value-risk" className="h-full">
                 <HighlightStatCard
                   title="Asset value at risk right now"
                   subtitle="Portion of total asset value sitting in currently-broken equipment"
@@ -3841,7 +3855,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="asset-critical-noncritical" className="h-full">
+              <div key="asset-critical-noncritical" chart_id="asset-critical-noncritical" className="h-full">
                 <BarChartCard
                   title="Critical vs Non-Critical breakdown rate"
                   subtitle="Is the equipment that matters most failing hardest?"
@@ -3858,7 +3872,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="asset-repeat-breakdowns" className="h-full">
+              <div key="asset-repeat-breakdowns" chart_id="asset-repeat-breakdowns" className="h-full">
                 {repeatOffendersRows.length ? (
                   <StatListCard
                     title="Repeat breakdowns"
@@ -3877,7 +3891,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="asset-breakdown-allocation" className="h-full">
+              <div key="asset-breakdown-allocation" chart_id="asset-breakdown-allocation" className="h-full">
                 {breakdownByAllocationData.length ? (
                   <BarChartCard
                     title="Breakdowns by allocation"
@@ -3901,7 +3915,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="asset-category-breakdown" className="h-full">
+              <div key="asset-category-breakdown" chart_id="asset-category-breakdown" className="h-full">
                 <BarChartCard
                   title="Category-wise Asset Breakdown"
                   subtitle="Top 10 asset groups by count"
@@ -3920,7 +3934,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="asset-lifecycle" className="h-full">
+              <div key="asset-lifecycle" chart_id="asset-lifecycle" className="h-full">
                 <PieChartCard
                   title="Asset Lifecycle Status"
                   subtitle="In Use · Breakdown · Allocated · In Store · Disposed"
@@ -3933,7 +3947,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="asset-amc-pair" className="h-full overflow-auto bg-white border border-brand-border rounded-lg p-4 flex flex-col gap-3">
+              <div key="asset-amc-pair" chart_id="asset-amc-pair" className="h-full overflow-auto bg-white border border-brand-border rounded-lg p-4 flex flex-col gap-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <StatHeroCard
                     tone="purple"
@@ -3967,7 +3981,7 @@ export default function RevampDashboardPage() {
                 </p>
               </div>
 
-              <div key="asset-mttr-pair" className="h-full overflow-auto bg-white border border-brand-border rounded-lg p-4 flex flex-col gap-3">
+              <div key="asset-mttr-pair" chart_id="asset-mttr-pair" className="h-full overflow-auto bg-white border border-brand-border rounded-lg p-4 flex flex-col gap-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <StatHeroCard
                     tone="purple"
@@ -3990,7 +4004,7 @@ export default function RevampDashboardPage() {
                 </p>
               </div>
 
-              <div key="asset-repair-cost-ratio" className="h-full">
+              <div key="asset-repair-cost-ratio" chart_id="asset-repair-cost-ratio" className="h-full">
                 {repairCostRatioData.length ? (
                   <BarChartCard
                     title="Repair Cost vs Asset Value Ratio"
@@ -4015,7 +4029,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="asset-cost-by-category" className="h-full">
+              <div key="asset-cost-by-category" chart_id="asset-cost-by-category" className="h-full">
                 {costByCategoryData.length ? (
                   <BarChartCard
                     title="Cost by Asset Category"
@@ -4040,7 +4054,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="asset-high-maintenance" className="h-full">
+              <div key="asset-high-maintenance" chart_id="asset-high-maintenance" className="h-full">
                 {highMaintenanceCostRows.length ? (
                   <StatListCard
                     title="High Maintenance Cost Assets"
@@ -4060,7 +4074,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="asset-ownership-cost" className="h-full">
+              <div key="asset-ownership-cost" chart_id="asset-ownership-cost" className="h-full">
                 <EmptyStateCard
                   title="Asset Ownership Cost Analysis"
                   subtitle="Repair spend + AMC contract cost, per asset"
@@ -4069,14 +4083,14 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="audit-section-label" className="h-full flex items-center">
+              <div key="audit-section-label" chart_id="audit-section-label" className="h-full flex items-center">
                 <div ref={registerMaintenanceSectionRef("Audit")} className="h-0" />
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   Audit Dashboard
                 </span>
               </div>
 
-              <div key="audit-open-observations" className="h-full">
+              <div key="audit-open-observations" chart_id="audit-open-observations" className="h-full">
                 <StatHeroCard
                   tone="purple"
                   label="Open Observations"
@@ -4086,7 +4100,7 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              <div key="audit-score" className="h-full">
+              <div key="audit-score" chart_id="audit-score" className="h-full">
                 <StatHeroCard
                   tone="teal"
                   label="Audit Score"
@@ -4101,7 +4115,7 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              <div key="audit-asset-completion-pct" className="h-full">
+              <div key="audit-asset-completion-pct" chart_id="audit-asset-completion-pct" className="h-full">
                 <StatHeroCard
                   tone="purple"
                   label="Asset Audit Completion %"
@@ -4115,7 +4129,7 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              <div key="audit-missing-assets" className="h-full">
+              <div key="audit-missing-assets" chart_id="audit-missing-assets" className="h-full">
                 <StatHeroCard
                   tone="teal"
                   label="Missing Assets Detected"
@@ -4125,7 +4139,7 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              <div key="audit-missing-docs" className="h-full">
+              <div key="audit-missing-docs" chart_id="audit-missing-docs" className="h-full">
                 <StatHeroCard
                   tone="purple"
                   label="Assets Missing Documentation"
@@ -4135,7 +4149,7 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              <div key="audit-qr-compliance" className="h-full">
+              <div key="audit-qr-compliance" chart_id="audit-qr-compliance" className="h-full">
                 <StatHeroCard
                   tone="teal"
                   label="QR / Barcode Compliance %"
@@ -4146,7 +4160,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="audit-unauthorized-movement" className="h-full">
+              <div key="audit-unauthorized-movement" chart_id="audit-unauthorized-movement" className="h-full">
                 <EmptyStateCard
                   title="Unauthorized Asset Movement Alerts"
                   subtitle="Assets shifted from designated location without approval"
@@ -4155,7 +4169,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="audit-status-overview" className="h-full">
+              <div key="audit-status-overview" chart_id="audit-status-overview" className="h-full">
                 {auditStatusOverviewData.length ? (
                   <PieChartCard
                     title="Audit Status Overview"
@@ -4181,7 +4195,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="audit-kpi-table" className="h-full">
+              <div key="audit-kpi-table" chart_id="audit-kpi-table" className="h-full">
                 <DataTableCard
                   title="Audit KPIs"
                   subtitle="Computed live from the selected sites and date range"
@@ -4232,7 +4246,7 @@ export default function RevampDashboardPage() {
                 )}
               </div> */}
 
-              <div key="audit-status-repository" className="h-full">
+              <div key="audit-status-repository" chart_id="audit-status-repository" className="h-full">
                 <Card className="border-brand-border h-full overflow-auto">
                   <CardHeader className="pb-2">
                     <h3 className="text-brand-body-3 font-bold text-brand-text">Audit Status by Type</h3>
@@ -4270,7 +4284,7 @@ export default function RevampDashboardPage() {
                 </Card>
               </div>
 
-              <div key="audit-completion-bar" className="h-full">
+              <div key="audit-completion-bar" chart_id="audit-completion-bar" className="h-full">
                 {auditCompletionBarData.length ? (
                   <BarChartCard
                     title="Audit completion by type"
@@ -4298,7 +4312,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="audit-stalled" className="h-full">
+              <div key="audit-stalled" chart_id="audit-stalled" className="h-full">
                 {auditStalledRows.length ? (
                   <StatListCard
                     title="Stalled audits"
@@ -4316,7 +4330,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="audit-execution-concentration" className="h-full">
+              <div key="audit-execution-concentration" chart_id="audit-execution-concentration" className="h-full">
                 {topAuditor ? (
                   <HighlightStatCard
                     title="Audit execution concentration"
@@ -4337,14 +4351,14 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="amc-section-label" className="h-full flex items-center">
+              <div key="amc-section-label" chart_id="amc-section-label" className="h-full flex items-center">
                 <div ref={registerMaintenanceSectionRef("AMC")} className="h-0" />
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   AMC Contracts
                 </span>
               </div>
 
-              <div key="amc-health-card" className="h-full">
+              <div key="amc-health-card" chart_id="amc-health-card" className="h-full">
                 <Card className="border-brand-border h-full overflow-auto">
                   <CardHeader className="pb-2">
                     <h3 className="text-brand-body-3 font-bold text-brand-text">AMC Health</h3>
@@ -4391,7 +4405,7 @@ export default function RevampDashboardPage() {
                 </Card>
               </div>
 
-              <div key="amc-discrepancy-banner" className="h-full overflow-auto bg-brand-warning-light border border-brand-warning rounded-lg p-3 flex items-center">
+              <div key="amc-discrepancy-banner" chart_id="amc-discrepancy-banner" className="h-full overflow-auto bg-brand-warning-light border border-brand-warning rounded-lg p-3 flex items-center">
                 <p className="text-brand-body-5 text-[#8A5A00] leading-relaxed">
                   {amcOverview
                     ? `₹${(amcOverview.cost.total_amc_value / 10000000).toFixed(2)} Cr total AMC value across ${amcOverview.total_contracts.toLocaleString()} contracts — ${amcOverview.cost.cost_at_risk_percent}% of it is sitting in expired or never-serviced contracts.`
@@ -4399,7 +4413,7 @@ export default function RevampDashboardPage() {
                 </p>
               </div>
 
-              <div key="amc-expiry-timeline" className="h-full">
+              <div key="amc-expiry-timeline" chart_id="amc-expiry-timeline" className="h-full">
                 {amcExpiryTimelineData.length ? (
                   <BarChartCard
                     title="AMC contract expiry timeline"
@@ -4422,7 +4436,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="amc-expiry-banner" className="h-full overflow-auto bg-brand-light border border-brand rounded-lg p-3 flex items-center">
+              <div key="amc-expiry-banner" chart_id="amc-expiry-banner" className="h-full overflow-auto bg-brand-light border border-brand rounded-lg p-3 flex items-center">
                 <p className="text-brand-body-5 text-brand font-semibold leading-relaxed">
                   {amcOverview
                     ? `${amcOverview.health.expired.toLocaleString()} of ${amcOverview.total_contracts.toLocaleString()} contracts are already expired, not approaching expiry.`
@@ -4430,7 +4444,7 @@ export default function RevampDashboardPage() {
                 </p>
               </div>
 
-              <div key="amc-urgency-criticality" className="h-full">
+              <div key="amc-urgency-criticality" chart_id="amc-urgency-criticality" className="h-full">
                 {amcUrgencyCriticalityData.length ? (
                   <BarChartCard
                     title="Expiry urgency vs asset criticality"
@@ -4458,7 +4472,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="amc-vendor-concentration" className="h-full">
+              <div key="amc-vendor-concentration" chart_id="amc-vendor-concentration" className="h-full">
                 {amcVendorConcentrationData.length ? (
                   <BarChartCard
                     title="Is this one vendor, or a systemic collapse?"
@@ -4485,7 +4499,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="amc-cost-at-risk" className="h-full">
+              <div key="amc-cost-at-risk" chart_id="amc-cost-at-risk" className="h-full">
                 <HighlightStatCard
                   title="AMC cost at risk"
                   subtitle="Share of total AMC spend sitting in expired or never-serviced contracts"
@@ -4497,7 +4511,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="amc-service-asset-split" className="h-full">
+              <div key="amc-service-asset-split" chart_id="amc-service-asset-split" className="h-full">
                 {amcOverview ? (
                   <BarChartCard
                     title="Service vs Asset Contract Split"
@@ -4523,7 +4537,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="amc-critical-pending-pair" className="h-full overflow-auto bg-white border border-brand-border rounded-lg p-4 flex flex-col gap-3">
+              <div key="amc-critical-pending-pair" chart_id="amc-critical-pending-pair" className="h-full overflow-auto bg-white border border-brand-border rounded-lg p-4 flex flex-col gap-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <StatHeroCard
                     tone="purple"
@@ -4547,7 +4561,7 @@ export default function RevampDashboardPage() {
                 </p>
               </div>
 
-              <div key="amc-coverage-by-category" className="h-full">
+              <div key="amc-coverage-by-category" chart_id="amc-coverage-by-category" className="h-full">
                 {amcCoverageByCategoryData.length ? (
                   <BarChartCard
                     title="AMC Coverage by Asset Category"
@@ -4574,7 +4588,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="amc-cost-trend" className="h-full">
+              <div key="amc-cost-trend" chart_id="amc-cost-trend" className="h-full">
                 {amcCostTrendData.length ? (
                   <AreaTrendChartCard
                     title="Monthly AMC Cost Trend"
@@ -4598,14 +4612,14 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="checklist-section-label" className="h-full flex items-center">
+              <div key="checklist-section-label" chart_id="checklist-section-label" className="h-full flex items-center">
                 <div ref={registerMaintenanceSectionRef("Checklists")} className="h-0" />
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   Digital Checklist Dashboard
                 </span>
               </div>
 
-              <div key="checklist-inhouse-card" className="h-full">
+              <div key="checklist-inhouse-card" chart_id="checklist-inhouse-card" className="h-full">
                 {checklistInHouse ? (
                   <StatusSummaryCard
                     title="In-House"
@@ -4625,7 +4639,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="checklist-oem-card" className="h-full">
+              <div key="checklist-oem-card" chart_id="checklist-oem-card" className="h-full">
                 {checklistVendorExecution ? (
                   <StatusSummaryCard
                     title="Vendor"
@@ -4645,7 +4659,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="checklist-type-breakdown" className="h-full">
+              <div key="checklist-type-breakdown" chart_id="checklist-type-breakdown" className="h-full">
                 {checklistTypeBreakdownData.length ? (
                   <BarChartCard
                     title="Checklist type breakdown"
@@ -4675,7 +4689,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="checklist-skipped-items" className="h-full">
+              <div key="checklist-skipped-items" chart_id="checklist-skipped-items" className="h-full">
                 {checklistSkippedRows.length ? (
                   <StatListCard
                     title="Perpetually skipped items"
@@ -4694,7 +4708,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="checklist-kpi-pair" className="h-full grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div key="checklist-kpi-pair" chart_id="checklist-kpi-pair" className="h-full grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <StatHeroCard
                   tone="purple"
                   label="Checklist Closure Rate"
@@ -4715,7 +4729,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="checklist-top10-completed" className="h-full">
+              <div key="checklist-top10-completed" chart_id="checklist-top10-completed" className="h-full">
                 {checklistTop10CompletedData.length ? (
                   <BarChartCard
                     title="Top Completed Checklists"
@@ -4738,7 +4752,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="checklist-sitewise-compliance" className="h-full">
+              <div key="checklist-sitewise-compliance" chart_id="checklist-sitewise-compliance" className="h-full">
                 {checklistSitewiseComplianceData.length ? (
                   <BarChartCard
                     title="Site-wise Compliance"
@@ -4763,7 +4777,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="checklist-monthly-trend" className="h-full">
+              <div key="checklist-monthly-trend" chart_id="checklist-monthly-trend" className="h-full">
                 {checklistMonthlyTrendData.length ? (
                   <MultiAreaTrendChartCard
                     title="Monthly Completion Trend"
@@ -4793,7 +4807,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="checklist-red-flags" className="h-full">
+              <div key="checklist-red-flags" chart_id="checklist-red-flags" className="h-full">
                 {checklistRedFlagRows.length ? (
                   <StatListCard
                     title="Checklist Red Flags"
@@ -4813,7 +4827,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="checklist-smart-insights" className="h-full">
+              <div key="checklist-smart-insights" chart_id="checklist-smart-insights" className="h-full">
                 {checklistInsightRows.length ? (
                   <StatListCard
                     title="🤖 Checklist Smart Insights"
@@ -4832,7 +4846,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="checklist-tenant-mismatch" className="h-full">
+              <div key="checklist-tenant-mismatch" chart_id="checklist-tenant-mismatch" className="h-full">
                 <EmptyStateCard
                   title="Tenants asking for something that's officially off"
                   subtitle="Inactive services with matching ticket-category volume still coming in"
@@ -4841,14 +4855,14 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="inventory-section-label" className="h-full flex items-center">
+              <div key="inventory-section-label" chart_id="inventory-section-label" className="h-full flex items-center">
                 <div ref={registerMaintenanceSectionRef("Inventory")} className="h-0" />
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   Inventory
                 </span>
               </div>
 
-              <div key="inventory-kpi-row" className="h-full grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div key="inventory-kpi-row" chart_id="inventory-kpi-row" className="h-full grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <StatHeroCard tone="purple" label="Total Items" value={inventoryOverview ? String(inventoryOverview.total_items) : "—"} accent="neutral" subtitle="All types" />
                 <StatHeroCard
                   tone="teal"
@@ -4875,7 +4889,7 @@ export default function RevampDashboardPage() {
                 <StatHeroCard tone="blue" label="Ecofriendly" value={inventoryOverview ? String(inventoryOverview.eco_friendly_count) : "—"} accent="info" subtitle="Tagged sustainable" />
               </div>
 
-              <div key="inventory-urgent-restock" className="h-full">
+              <div key="inventory-urgent-restock" chart_id="inventory-urgent-restock" className="h-full">
                 {inventoryUrgentRestockRows.length ? (
                   <StatListCard
                     title="Urgent restock priority"
@@ -4895,7 +4909,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="inventory-type-breakdown" className="h-full">
+              <div key="inventory-type-breakdown" chart_id="inventory-type-breakdown" className="h-full">
                 {inventoryTypeBreakdownData.length ? (
                   <BarChartCard
                     title="Inventory by type and criticality"
@@ -4920,7 +4934,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="inventory-health-score" className="h-full">
+              <div key="inventory-health-score" chart_id="inventory-health-score" className="h-full">
                 <StatHeroCard
                   tone="peach"
                   label="⭐ Inventory Health Score"
@@ -4932,7 +4946,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="inventory-consumption-trend" className="h-full">
+              <div key="inventory-consumption-trend" chart_id="inventory-consumption-trend" className="h-full">
                 {inventoryConsumptionTrendData.length ? (
                   <AreaTrendChartCard
                     title="Consumption Cost & Trend"
@@ -4954,7 +4968,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="inventory-category-consumption" className="h-full">
+              <div key="inventory-category-consumption" chart_id="inventory-category-consumption" className="h-full">
                 {inventoryCategoryConsumptionData.length ? (
                   <BarChartCard
                     title="Category-wise Consumption"
@@ -4977,7 +4991,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="inventory-deadstock-value" className="h-full">
+              <div key="inventory-deadstock-value" chart_id="inventory-deadstock-value" className="h-full">
                 {inventoryDeadstockData.length ? (
                   <BarChartCard
                     title="Dead Stock & Overstock Value"
@@ -5006,7 +5020,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="inventory-kpi-table" className="h-full">
+              <div key="inventory-kpi-table" chart_id="inventory-kpi-table" className="h-full">
                 <DataTableCard
                   title="Inventory KPIs"
                   subtitle="Computed live from the selected sites and date range"
@@ -5022,7 +5036,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="waste-section-label" className="h-full flex items-center gap-2">
+              <div key="waste-section-label" chart_id="waste-section-label" className="h-full flex items-center gap-2">
                 <div ref={registerMaintenanceSectionRef("Waste")} className="h-0" />
                 <span className="text-sm">♻</span>
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
@@ -5037,7 +5051,7 @@ export default function RevampDashboardPage() {
                 </span>
               </div>
 
-              <div key="waste-kpi-row" className="h-full grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div key="waste-kpi-row" chart_id="waste-kpi-row" className="h-full grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <StatHeroCard
                   tone="purple"
                   label="Waste Generated"
@@ -5076,7 +5090,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="waste-workflow-bottlenecks" className="h-full">
+              <div key="waste-workflow-bottlenecks" chart_id="waste-workflow-bottlenecks" className="h-full">
                 <EmptyStateCard
                   title="Workflow Bottlenecks"
                   subtitle="Where waste records are stuck in the cycle"
@@ -5085,7 +5099,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="waste-breakdown" className="h-full">
+              <div key="waste-breakdown" chart_id="waste-breakdown" className="h-full">
                 {wasteCategoryProgressRows.length || wasteCommodityProgressRows.length || wasteBuildingProgressRows.length ? (
                   <ProgressListCard
                     title="Waste Breakdown"
@@ -5106,7 +5120,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="waste-vendor-performance" className="h-full">
+              <div key="waste-vendor-performance" chart_id="waste-vendor-performance" className="h-full">
                 {wasteVendorRows.length ? (
                   <StatListCard title="Vendor Performance" subtitle="Waste collection compliance" rows={wasteVendorRows} className="h-full overflow-auto" />
                 ) : (
@@ -5119,7 +5133,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="waste-sustainability" className="h-full">
+              <div key="waste-sustainability" chart_id="waste-sustainability" className="h-full">
                 <Card className="border-brand-border h-full overflow-auto">
                   <CardHeader className="pb-2">
                     <h3 className="text-brand-body-3 font-semibold text-brand-text">Sustainability Overview</h3>
@@ -5197,7 +5211,7 @@ export default function RevampDashboardPage() {
                 </Card>
               </div>
 
-              <div key="waste-weekly-trend-stale" className="h-full">
+              <div key="waste-weekly-trend-stale" chart_id="waste-weekly-trend-stale" className="h-full">
                 {wasteWeeklyTrendData.length ? (
                   <BarChartCard
                     title="Waste Generation — Weekly Trend"
@@ -5224,7 +5238,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="waste-records-table" className="h-full">
+              <div key="waste-records-table" chart_id="waste-records-table" className="h-full">
                 {wasteCategoryTableRows.length ? (
                   <DataTableCard
                     title="Waste Generation by Category"
@@ -5244,6 +5258,7 @@ export default function RevampDashboardPage() {
 
               <div
                 key="waste-handoff-banner"
+                chart_id="waste-handoff-banner"
                 className={cn(
                   "h-full overflow-auto rounded-lg p-3 flex items-center border",
                   wasteFreshnessTone === "red" && "bg-brand-light border-brand",
@@ -5275,14 +5290,14 @@ export default function RevampDashboardPage() {
                 </p>
               </div>
 
-              <div key="attendance-section-label" className="h-full flex items-center">
+              <div key="attendance-section-label" chart_id="attendance-section-label" className="h-full flex items-center">
                 <div ref={registerMaintenanceSectionRef("Attendance")} className="h-0" />
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   Attendance
                 </span>
               </div>
 
-              <div key="attendance-card" className="h-full">
+              <div key="attendance-card" chart_id="attendance-card" className="h-full">
                 <Card className="border-brand-border h-full overflow-auto">
                   <CardHeader className="pb-2 flex-row items-center justify-between">
                     <div>
@@ -5326,7 +5341,7 @@ export default function RevampDashboardPage() {
                 </Card>
               </div>
 
-              <div key="attendance-trend" className="h-full">
+              <div key="attendance-trend" chart_id="attendance-trend" className="h-full">
                 {attendanceTrendChartData.length ? (
                   <AreaTrendChartCard
                     title="Attendance trend"
@@ -5344,7 +5359,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="attendance-department-wise" className="h-full">
+              <div key="attendance-department-wise" chart_id="attendance-department-wise" className="h-full">
                 {attendanceDepartmentRows.length ? (
                   <StatListCard
                     title="Department-wise Present/Absent"
@@ -5361,7 +5376,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="attendance-staffing-breach" className="h-full">
+              <div key="attendance-staffing-breach" chart_id="attendance-staffing-breach" className="h-full">
                 <EmptyStateCard
                   title="Staffing gaps vs category breach rate"
                   subtitle="Same days plotted together — is an absence the reason a category spikes?"
@@ -5370,7 +5385,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="attendance-repeat-lateness" className="h-full">
+              <div key="attendance-repeat-lateness" chart_id="attendance-repeat-lateness" className="h-full">
                 {attendanceRepeatAbsenceRows.length || attendanceHabitualLatecomerRows.length ? (
                   <StatListCard
                     title="Repeat absence & habitual lateness"
@@ -5387,14 +5402,14 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="survey-section-label" className="h-full flex items-center">
+              <div key="survey-section-label" chart_id="survey-section-label" className="h-full flex items-center">
                 <div ref={registerMaintenanceSectionRef("Survey")} className="h-0" />
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   Survey
                 </span>
               </div>
 
-              <div key="survey-kpi-row" className="h-full grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div key="survey-kpi-row" chart_id="survey-kpi-row" className="h-full grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <StatHeroCard
                   tone="purple"
                   label="Avg CSAT"
@@ -5425,7 +5440,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="survey-satisfaction-scale" className="h-full">
+              <div key="survey-satisfaction-scale" chart_id="survey-satisfaction-scale" className="h-full">
                 <EmptyStateCard
                   title="Per-question response scale"
                   subtitle="5-point response scale, not just positive/negative"
@@ -5434,7 +5449,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="survey-response-by-category" className="h-full">
+              <div key="survey-response-by-category" chart_id="survey-response-by-category" className="h-full">
                 {surveyCategoryRows.length ? (
                   <ProgressListCard
                     title="Response by Category"
@@ -5447,7 +5462,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="survey-weekly-csat-trend" className="h-full">
+              <div key="survey-weekly-csat-trend" chart_id="survey-weekly-csat-trend" className="h-full">
                 {surveyWeeklyTrendData.length ? (
                   <BarChartCard
                     title="Weekly CSAT trend"
@@ -5463,7 +5478,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="survey-weekly-breakdown-table" className="h-full">
+              <div key="survey-weekly-breakdown-table" chart_id="survey-weekly-breakdown-table" className="h-full">
                 {surveyWeeklyTableRows.length ? (
                   <DataTableCard
                     title="Weekly CSAT Breakdown"
@@ -5477,7 +5492,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="survey-hourly-response" className="h-full">
+              <div key="survey-hourly-response" chart_id="survey-hourly-response" className="h-full">
                 {surveyTiming && surveyTiming.total_responses > 0 ? (
                   <HourlyPatternChartCard
                     title="Response timing — hour of day"
@@ -5497,14 +5512,14 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="vendor-section-label" className="h-full flex items-center">
+              <div key="vendor-section-label" chart_id="vendor-section-label" className="h-full flex items-center">
                 <div ref={registerMaintenanceSectionRef("Vendor")} className="h-0" />
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   Vendor Management
                 </span>
               </div>
 
-              <div key="vendor-kpi-row" className="h-full grid grid-cols-2 sm:grid-cols-4 gap-3 overflow-auto">
+              <div key="vendor-kpi-row" chart_id="vendor-kpi-row" className="h-full grid grid-cols-2 sm:grid-cols-4 gap-3 overflow-auto">
                 <StatHeroCard
                   tone="purple"
                   label="Active Vendors"
@@ -5553,7 +5568,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="vendor-repeat-requests" className="h-full">
+              <div key="vendor-repeat-requests" chart_id="vendor-repeat-requests" className="h-full">
                 {vendorRepeatIssueRows.length ? (
                   <StatListCard
                     title="Repeat service requests — same vendor, same issue"
@@ -5572,7 +5587,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="vendor-response-time" className="h-full">
+              <div key="vendor-response-time" chart_id="vendor-response-time" className="h-full">
                 {vendorPerformanceRows.length ? (
                   <ProgressListCard
                     title="Vendor Response / SLA Performance"
@@ -5585,7 +5600,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="vendor-amc-status-table" className="h-full">
+              <div key="vendor-amc-status-table" chart_id="vendor-amc-status-table" className="h-full">
                 {vendorPerformanceTableRows.length ? (
                   <DataTableCard
                     title="Vendor Performance"
@@ -5609,7 +5624,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="vendor-health" className="h-full">
+              <div key="vendor-health" chart_id="vendor-health" className="h-full">
                 <StatListCard
                   title="Vendor Health"
                   subtitle="Compliance — drill any item"
@@ -5634,7 +5649,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="vendor-response-trend" className="h-full">
+              <div key="vendor-response-trend" chart_id="vendor-response-trend" className="h-full">
                 <EmptyStateCard
                   title="Vendor response time trend"
                   subtitle="Monthly · per-vendor SLA trend"
@@ -5643,7 +5658,7 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="vendor-expired-kyc" className="h-full">
+              <div key="vendor-expired-kyc" chart_id="vendor-expired-kyc" className="h-full">
                 {vendorExpiredKycRows.length ? (
                   <StatListCard
                     title="Active vendors with expired or missing KYC"
@@ -5666,7 +5681,7 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="vendor-data-hygiene-banner" className="h-full overflow-auto bg-brand-warning-light border border-brand-warning rounded-lg p-3 flex items-center">
+              <div key="vendor-data-hygiene-banner" chart_id="vendor-data-hygiene-banner" className="h-full overflow-auto bg-brand-warning-light border border-brand-warning rounded-lg p-3 flex items-center">
                 <p className="text-brand-body-5 leading-relaxed" style={{ color: "#B8860B" }}>
                   {vendorOverview
                     ? `⚠ Only ${vendorOverview.kyc.tracked_count} of ${vendorOverview.total_vendors} vendors have KYC tracking data at all — the "at-risk" and "expiring" figures above only reflect vendors with tracked KYC, so the true risk may be larger than shown.`
@@ -5685,7 +5700,11 @@ export default function RevampDashboardPage() {
             incidentsLoading={incidentsLoading || sitesLoading}
           />
         ) : isFinanceView ? (
-          <FinancePanel activeSection={activeSubTab} />
+          <FinancePanel
+            activeSection={activeSubTab}
+            data={financeApiData}
+            loading={financeLoading || sitesLoading}
+          />
         ) : isCrmView ? (
           <CrmPanel activeSection={activeSubTab} />
         ) : (
