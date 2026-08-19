@@ -96,7 +96,7 @@ export const taskAnalyticsAPI = {
 
     
     
-    const url = getFullUrl(`/pms/custom_forms/chart_technical_checklist_monthly.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${token}`);
+    const url = getFullUrl(`/pms/custom_forms/chart_technical_checklist_monthly.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`);
     
     const response = await fetch(url, {
       method: 'GET',
@@ -119,7 +119,7 @@ export const taskAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = getFullUrl(`/pms/custom_forms/chart_non_technical_checklist_monthly.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${token}`);
+    const url = getFullUrl(`/pms/custom_forms/chart_non_technical_checklist_monthly.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`);
     
     const response = await fetch(url, {
       method: 'GET',
@@ -142,7 +142,7 @@ export const taskAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = getFullUrl(`/pms/custom_forms/top_ten_checklist.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${token}`);
+    const url = getFullUrl(`/pms/custom_forms/top_ten_checklist.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`);
     
     const response = await fetch(url, {
       method: 'GET',
@@ -165,7 +165,7 @@ export const taskAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = getFullUrl(`/pms/custom_forms/site_wise_checklist.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${token}`);
+    const url = getFullUrl(`/pms/custom_forms/site_wise_checklist.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`);
     
     const response = await fetch(url, {
       method: 'GET',

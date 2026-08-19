@@ -114,7 +114,7 @@ export const taskExportService = {
     const siteId = getCurrentSiteId();
     const accessToken = getAccessToken();
     
-    const url = `${getBaseUrl()}/pms/users/export_status?id=${id}&site_id=${siteId}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/users/export_status?id=${id}&site_id=${siteId}`;
     
     console.log('Checking task export status with URL:', url);
     
@@ -162,7 +162,7 @@ export const taskExportService = {
     const siteId = getCurrentSiteId();
     const accessToken = getAccessToken();
     
-    const url = `${getBaseUrl()}/pms/users/download_export?id=${id}&site_id=${siteId}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/users/download_export?id=${id}&site_id=${siteId}`;
     
     try {
       const response = await fetch(url, {

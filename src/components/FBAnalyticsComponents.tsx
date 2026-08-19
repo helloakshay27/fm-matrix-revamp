@@ -211,7 +211,7 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
       const fromDate = formatDate(analyticsDateRange.fromDate);
       const toDate = formatDate(analyticsDateRange.toDate);
 
-      const exportUrl = `https://${baseUrl}/pms/admin/food_orders/food_and_booking.json?site_id=${siteId}&access_token=${encodeURIComponent(accessToken)}&true=order_stats&from_date=${fromDate}&to_date=${toDate}&export=peak_hour_orders`;
+      const exportUrl = `https://${baseUrl}/pms/admin/food_orders/food_and_booking.json?site_id=${siteId}&true=order_stats&from_date=${fromDate}&to_date=${toDate}&export=peak_hour_orders`;
 
       const response = await fetch(exportUrl, {
         headers: {
@@ -258,7 +258,7 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
       const fromDate = formatDate(analyticsDateRange.fromDate);
       const toDate = formatDate(analyticsDateRange.toDate);
 
-      const exportUrl = `https://${baseUrl}/pms/admin/food_orders/food_and_booking.json?site_id=${siteId}&access_token=${encodeURIComponent(accessToken)}&true=order_stats&from_date=${fromDate}&to_date=${toDate}&export=order_overtime`;
+      const exportUrl = `https://${baseUrl}/pms/admin/food_orders/food_and_booking.json?site_id=${siteId}&true=order_stats&from_date=${fromDate}&to_date=${toDate}&export=order_overtime`;
 
       const response = await fetch(exportUrl, {
         headers: {
@@ -305,7 +305,7 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
       const fromDate = formatDate(analyticsDateRange.fromDate);
       const toDate = formatDate(analyticsDateRange.toDate);
 
-      const exportUrl = `https://${baseUrl}/pms/admin/food_orders/food_and_booking.json?site_id=${siteId}&access_token=${encodeURIComponent(accessToken)}&true=order_stats&from_date=${fromDate}&to_date=${toDate}&export=popular_restaurnats`;
+      const exportUrl = `https://${baseUrl}/pms/admin/food_orders/food_and_booking.json?site_id=${siteId}&true=order_stats&from_date=${fromDate}&to_date=${toDate}&export=popular_restaurnats`;
 
       const response = await fetch(exportUrl, {
         headers: {

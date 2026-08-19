@@ -139,130 +139,69 @@ export const DebitNoteClubDashboard: React.FC = () => {
         has_next_page: false,
         has_prev_page: false
     });
-      const baseUrl = localStorage.getItem('baseUrl');
-            const token = localStorage.getItem('token');
+
+    // Maps a raw debit_note record (shape unconfirmed) to the DebitNote shape this table renders
+    const mapDebitNoteRecord = (record: any): DebitNote => {
+        const user = record.user || {};
+        return {
+            id: record.id,
+            debit_note_number: record.debit_note_number || record.number || record.order_number || '',
+            customer_name: record.customer_name || user.name || '',
+            guest_name: record.guest_name || (user.user_type === 'guest' ? user.name : undefined),
+            member_name: record.member_name || (user.user_type !== 'guest' ? user.name : undefined),
+            date: record.date || record.bill_date || record.created_at || '',
+            reference_number: record.reference_number || record.order_number || '',
+            invoice_number: record.invoice_number || '',
+            amount: Number(record.amount ?? record.total_amount ?? 0),
+            balance_due: Number(record.balance_due ?? record.due_amount ?? 0),
+            status: record.status || 'draft',
+            active: record.active !== undefined ? record.active : true,
+            created_at: record.created_at || '',
+            updated_at: record.updated_at || '',
+            // Extra field used directly by renderRow, not part of the base DebitNote shape
+            ...({ total_amount: Number(record.total_amount ?? record.amount ?? 0) } as any),
+        };
+    };
 
     // Fetch debit note data
     const fetchDebitNoteData = async (page = 1, per_page = 10, search = '', filters: DebitNoteFilters = {}) => {
         setLoading(true);
-          const baseUrl = localStorage.getItem('baseUrl');
-            const token = localStorage.getItem('token');
-            const lock_account_id = localStorage.getItem('lock_account_id');
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
 
         try {
-                    const response = await axios.get(
-                        `https://${baseUrl}/lock_account_debit_notes.json?lock_account_id=${lock_account_id}`,
-                        {
-                            params: {
-                                // lock_account_id: 1,
-                                //   page,
-                                //   per_page,
-                                //   search,
-                                //   status: filters.status || undefined,
-                            },
-                            headers: {
-                                Authorization: `Bearer ${localStorage.getItem("token")}`, // if required
-                            },
-                        }
-                    );
-        
-                    // 🔥 Adjust this based on actual API response structure
-                    const apiData = response.data;
-        
-                    const bills: DebitNote[] = apiData?.data || apiData || [];
-        
-                    setDebitNoteData(apiData);
-        
-                    setPagination({
-                        current_page: apiData?.current_page || page,
-                        per_page: apiData?.per_page || per_page,
-                        total_pages: apiData?.total_pages || 1,
-                        total_count: apiData?.total_count || bills.length,
-                        has_next_page:
-                            (apiData?.current_page || page) <
-                            (apiData?.total_pages || 1),
-                        has_prev_page:
-                            (apiData?.current_page || page) > 1,
-                    });
-        
-                } catch (error: unknown) {
-                    console.error("Error fetching bill data:", error);
-        
-                    const errorMessage =
-                        error instanceof Error ? error.message : "Unknown error";
-        
-                    toast.error(`Failed to load bill data: ${errorMessage}`, {
-                        duration: 5000,
-                    });
-        
-                } finally {
-                    setLoading(false);
+            const response = await axios.get(
+                `https://${baseUrl}/debit_notes.json`,
+                {
+                    params: { lock_account_id, page, per_page },
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
                 }
-        // try {
-        //     const mockData: DebitNote[] = [
-        //         {
-        //             id: 1,
-        //             debit_note_number: 'CN-10023',
-        //             customer_name: 'Lockated',
-        //             date: '2026-02-10',
-        //             reference_number: 'REF-001',
-        //             invoice_number: 'INV-1023',
-        //             amount: 3550.00,
-        //             balance_due: 0.00,
-        //             status: 'open',
-        //             active: true,
-        //             created_at: '2026-02-10',
-        //             updated_at: '2026-02-10'
-        //         },
-        //         {
-        //             id: 2,
-        //             debit_note_number: 'CN-10024',
-        //             customer_name: 'Gurughar',
-        //             date: '2026-02-15',
-        //             reference_number: 'REF-002',
-        //             invoice_number: 'INV-1045',
-        //             amount: 1600.00,
-        //             balance_due: 1600.00,
-        //             status: 'draft',
-        //             active: true,
-        //             created_at: '2026-02-15',
-        //             updated_at: '2026-02-15'
-        //         }
-        //     ];
+            );
 
-        //     let filteredData = mockData;
-        //     if (search.trim()) {
-        //         filteredData = mockData.filter(cn =>
-        //             cn.debit_note_number.toLowerCase().includes(search.toLowerCase()) ||
-        //             cn.customer_name.toLowerCase().includes(search.toLowerCase()) ||
-        //             cn.reference_number.toLowerCase().includes(search.toLowerCase())
-        //         );
-        //     }
-        //     if (filters.status) {
-        //         filteredData = filteredData.filter(cn => cn.status === filters.status);
-        //     }
+            // NOTE: response shape is unconfirmed — best-effort parsing across common shapes.
+            const apiData = response.data;
+            const list = apiData?.debit_notes || apiData?.data || (Array.isArray(apiData) ? apiData : []);
 
-        //     const totalCount = filteredData.length;
-        //     const totalPages = Math.ceil(totalCount / per_page);
-        //     const startIndex = (page - 1) * per_page;
-        //     const paginatedData = filteredData.slice(startIndex, startIndex + per_page);
+            setDebitNoteData(list.map(mapDebitNoteRecord));
 
-        //     setDebitNoteData(paginatedData);
-        //     setPagination({
-        //         current_page: page,
-        //         per_page,
-        //         total_pages: totalPages,
-        //         total_count: totalCount,
-        //         has_next_page: page < totalPages,
-        //         has_prev_page: page > 1
-        //     });
-        // } catch (error: unknown) {
-        //     console.error('Error fetching debit note data:', error);
-        //     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        //     toast.error(`Failed to load debit note data: ${errorMessage}`, { duration: 5000 });
-        // } finally {
-        //     setLoading(false);
-        // }
+            setPagination({
+                current_page: apiData?.pagination?.current_page ?? apiData?.current_page ?? page,
+                per_page: apiData?.pagination?.per_page ?? apiData?.per_page ?? per_page,
+                total_pages: apiData?.pagination?.total_pages ?? apiData?.total_pages ?? 1,
+                total_count: apiData?.pagination?.total_count ?? apiData?.total_count ?? list.length,
+                has_next_page: apiData?.pagination?.has_next_page ?? false,
+                has_prev_page: apiData?.pagination?.has_prev_page ?? false,
+            });
+        } catch (error: unknown) {
+            console.error('Error fetching debit note data:', error);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            toast.error(`Failed to load debit note data: ${errorMessage}`, { duration: 5000 });
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => {
@@ -303,7 +242,7 @@ export const DebitNoteClubDashboard: React.FC = () => {
             const lock_account_id = localStorage.getItem('lock_account_id');
 
             await axios.delete(
-                `https://${baseUrl}/lock_account_debit_notes/${deleteTarget.id}.json${lock_account_id ? `?lock_account_id=${lock_account_id}` : ''}`,
+                `https://${baseUrl}/debit_notes/${deleteTarget.id}.json?lock_account_id=${lock_account_id}`,
                 {
                     headers: { Authorization: `Bearer ${token}` },
                 }
@@ -485,17 +424,7 @@ export const DebitNoteClubDashboard: React.FC = () => {
                                 handleConfirmDelete();
                             }}
                             disabled={deleteLoading}
-                            style={{
-                                backgroundColor: "#dc2626",
-                                color: "#ffffff",
-                                border: "none",
-                            }}
-                            onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
-                                (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#b91c1c";
-                            }}
-                            onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
-                                (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#dc2626";
-                            }}
+                            className="btn-delete-confirm"
                         >
                             {deleteLoading ? "Deleting..." : "OK"}
                         </AlertDialogAction>

@@ -779,6 +779,7 @@ const CreatePaymentPage = lazy(() => import("./pages/CreatePaymentPage").then(m 
 
 const ApprovalMatrixSetupPage = lazy(() => import("./pages/settings/ApprovalMatrixSetupPage"));
 const AddApprovalMatrixPage = lazy(() => import("./pages/settings/AddApprovalMatrixPage"));
+const DelegationSetupPage = lazy(() => import("./pages/settings/DelegationSetupPage"));
 
 const MobileAdminOrderDetailsPage = lazy(() => import("./pages/MobileAdminOrderDetailsPage"));
 const MobileSurveyPage = lazy(() => import("./pages/mobile/MobileSurveyPage").then(m => ({ default: m.MobileSurveyPage })));
@@ -6738,6 +6739,10 @@ function App() {
                             <Route
                               path="/settings/approval-matrix/setup/add"
                               element={<AddApprovalMatrixPage />}
+                            />
+                            <Route
+                              path="/settings/delegation/setup"
+                              element={<DelegationSetupPage />}
                             />
                             <Route
                               path="/settings/invoice-approvals/add"

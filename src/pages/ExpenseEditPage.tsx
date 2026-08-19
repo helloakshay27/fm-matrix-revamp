@@ -266,7 +266,7 @@ export const ExpenseEditPage: React.FC = () => {
 
     // Vendors
     setLoadingVendors(true);
-    fetch(`${apiUrl}/pms/purchase_orders/get_suppliers.json?access_token=${token}`)
+    fetch(`${apiUrl}/pms/purchase_orders/get_suppliers.json`)
       .then(r => r.ok ? r.json() : { suppliers: [] })
       .then(data => { if (data.status === 'success') setVendors(data.suppliers || []); })
       .catch(() => sonnerToast.error('Failed to load vendors'))
