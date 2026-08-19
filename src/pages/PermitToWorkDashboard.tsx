@@ -317,7 +317,7 @@ const fetchSiteWisePermitsReport = async (fromDate: Date, toDate: Date) => {
   const siteId = getCurrentSiteId();
   const fromDateStr = formatDateForAPI(fromDate);
   const toDateStr = formatDateForAPI(toDate);
-  const url = `${API_CONFIG.BASE_URL}/pms/permits/site_wise_permits_report.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+  const url = `${API_CONFIG.BASE_URL}/pms/permits/site_wise_permits_report.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -339,7 +339,7 @@ const fetchPermitsStatusData = async (fromDate: Date, toDate: Date) => {
   const siteId = getCurrentSiteId();
   const fromDateStr = formatDateForAPI(fromDate);
   const toDateStr = formatDateForAPI(toDate);
-  const url = `${API_CONFIG.BASE_URL}/pms/permits/permits_status_data.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+  const url = `${API_CONFIG.BASE_URL}/pms/permits/permits_status_data.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -361,7 +361,7 @@ const downloadSiteWisePermits = async (fromDate: Date, toDate: Date) => {
   const siteId = getCurrentSiteId();
   const fromDateStr = formatDateForAPI(fromDate);
   const toDateStr = formatDateForAPI(toDate);
-  const url = `${API_CONFIG.BASE_URL}/pms/permits/site_wise_permits_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+  const url = `${API_CONFIG.BASE_URL}/pms/permits/site_wise_permits_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
   try {
     const response = await fetch(url, {
@@ -395,7 +395,7 @@ const downloadPermitsStatus = async (fromDate: Date, toDate: Date) => {
   const siteId = getCurrentSiteId();
   const fromDateStr = formatDateForAPI(fromDate);
   const toDateStr = formatDateForAPI(toDate);
-  const url = `${API_CONFIG.BASE_URL}/pms/permits/permits_status_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+  const url = `${API_CONFIG.BASE_URL}/pms/permits/permits_status_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
   try {
     const response = await fetch(url, {

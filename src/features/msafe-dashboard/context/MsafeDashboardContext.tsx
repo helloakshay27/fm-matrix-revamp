@@ -120,6 +120,8 @@ const today = new Date();
 const oneMonthAgo = new Date();
 oneMonthAgo.setDate(today.getDate() - 30);
 
+// Circle Manager's defaults (Mumbai + last one month) — applied only when the
+// user explicitly switches into the 'circle' persona (see setPersona below).
 export const DEFAULT_FILTERS: AppliedFilters = {
   circle: 'Mumbai',
   circleId: '',
@@ -130,6 +132,23 @@ export const DEFAULT_FILTERS: AppliedFilters = {
   empType: 'Internal / External',
   empTypeId: '',
   // Last one month, by default: today and the 30 days before it.
+  startDate: toISODate(oneMonthAgo),
+  endDate: toISODate(today),
+};
+
+// The app's actual starting state (persona defaults to 'admin'/Pan India on
+// load) — no preselected circle, but the same last-one-month date default as
+// Circle Manager. setPersona('admin') only runs on an explicit persona switch,
+// not on mount, so this mirrors that branch's dates directly.
+const INITIAL_FILTERS: AppliedFilters = {
+  circle: '',
+  circleId: '',
+  functions: [],
+  functionIds: [],
+  zone: 'All Zones',
+  zoneId: '',
+  empType: 'Internal / External',
+  empTypeId: '',
   startDate: toISODate(oneMonthAgo),
   endDate: toISODate(today),
 };
@@ -211,17 +230,17 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
   const [kpiUsers, setKpiUsers] = useState('27,438');
   const [kpiLmc, setKpiLmc] = useState('1,284');
   const [kpiSmt, setKpiSmt] = useState('438');
-  const [circle, setCircle] = useState(DEFAULT_FILTERS.circle);
-  const [circleId, setCircleId] = useState(DEFAULT_FILTERS.circleId);
-  const [functions, setFunctions] = useState<string[]>(DEFAULT_FILTERS.functions);
-  const [functionIds, setFunctionIds] = useState<string[]>(DEFAULT_FILTERS.functionIds);
-  const [zone, setZone] = useState(DEFAULT_FILTERS.zone);
-  const [zoneId, setZoneId] = useState(DEFAULT_FILTERS.zoneId);
-  const [empType, setEmpType] = useState(DEFAULT_FILTERS.empType);
-  const [empTypeId, setEmpTypeId] = useState(DEFAULT_FILTERS.empTypeId);
-  const [startDate, setStartDate] = useState(DEFAULT_FILTERS.startDate);
-  const [endDate, setEndDate] = useState(DEFAULT_FILTERS.endDate);
-  const [appliedFilters, setAppliedFilters] = useState<AppliedFilters>(DEFAULT_FILTERS);
+  const [circle, setCircle] = useState(INITIAL_FILTERS.circle);
+  const [circleId, setCircleId] = useState(INITIAL_FILTERS.circleId);
+  const [functions, setFunctions] = useState<string[]>(INITIAL_FILTERS.functions);
+  const [functionIds, setFunctionIds] = useState<string[]>(INITIAL_FILTERS.functionIds);
+  const [zone, setZone] = useState(INITIAL_FILTERS.zone);
+  const [zoneId, setZoneId] = useState(INITIAL_FILTERS.zoneId);
+  const [empType, setEmpType] = useState(INITIAL_FILTERS.empType);
+  const [empTypeId, setEmpTypeId] = useState(INITIAL_FILTERS.empTypeId);
+  const [startDate, setStartDate] = useState(INITIAL_FILTERS.startDate);
+  const [endDate, setEndDate] = useState(INITIAL_FILTERS.endDate);
+  const [appliedFilters, setAppliedFilters] = useState<AppliedFilters>(INITIAL_FILTERS);
   const [drill, setDrill] = useState<DrillState>(null);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [selectedAnalytics, setSelectedAnalytics] = useState<string[]>([]);
@@ -301,6 +320,24 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
   const setPersona = useCallback((p: Persona) => {
     setPersonaState(p);
     if (p === 'admin') {
+      // Pan India now shows the exact same filter bar as Circle Manager (Circle, Function,
+      // Employee Type, Date range) — defaults to the same last-one-month date range as
+      // Circle Manager each time this persona is entered, just without picking a circle.
+      setCircle('');
+      setCircleId('');
+      setFunctions(DEFAULT_FILTERS.functions);
+      setFunctionIds(DEFAULT_FILTERS.functionIds);
+      setZone(DEFAULT_FILTERS.zone);
+      setZoneId(DEFAULT_FILTERS.zoneId);
+      setEmpType(DEFAULT_FILTERS.empType);
+      setEmpTypeId(DEFAULT_FILTERS.empTypeId);
+      setStartDate(DEFAULT_FILTERS.startDate);
+      setEndDate(DEFAULT_FILTERS.endDate);
+      setAppliedFilters({
+        ...DEFAULT_FILTERS,
+        circle: '',
+        circleId: '',
+      });
       setPageTitle('M-Safe · Pan India View');
       setScopeText('27,438 registered users across 22 circles');
       setKpiUsers('27,438');
@@ -374,10 +411,14 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
         ...overrides,
       };
       setAppliedFilters(next);
-      setPageTitle(`M-Safe · ${next.circle} Circle`);
+      if (persona === 'circle') {
+        setPageTitle(`M-Safe · ${next.circle} Circle`);
+      } else {
+        setPageTitle(next.circleId ? `M-Safe · ${next.circle} Circle (Pan India)` : 'M-Safe · Pan India View');
+      }
       if (!opts?.silent) showToast('Filter applied');
     },
-    [circle, circleId, functions, functionIds, zone, zoneId, empType, empTypeId, startDate, endDate, showToast],
+    [persona, circle, circleId, functions, functionIds, zone, zoneId, empType, empTypeId, startDate, endDate, showToast],
   );
 
   // Rare-race fallback: covers the sliver of time where the user switches to Circle Manager
@@ -415,9 +456,9 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       startDate: '',
       endDate: '',
     });
-    setPageTitle('M-Safe · Circle Manager');
+    setPageTitle(persona === 'circle' ? 'M-Safe · Circle Manager' : 'M-Safe · Pan India View');
     showToast('Filter reset');
-  }, [showToast]);
+  }, [showToast, persona]);
 
   const value = useMemo(
     () => ({

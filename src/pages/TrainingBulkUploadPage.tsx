@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import {
   Upload,
   X,
@@ -23,11 +23,95 @@ const TrainingBulkUploadPage: React.FC = () => {
     status: "idle",
   });
   const inputRef = useRef<HTMLInputElement>(null);
+  // Guards state updates once the component is gone, so a poll loop that's
+  // still in flight when the user navigates away doesn't touch dead state.
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Get token and baseUrl dynamically - first from URL params, then from auth utils
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get("token") || getToken();
   const baseUrl = urlParams.get("baseUrl") || getBaseUrl();
+
+  const POLL_INTERVAL_MS = 3000;
+  const MAX_POLL_ATTEMPTS = 60; // ~3 minutes at 3s intervals before giving up
+
+  // Extracts the result file from a response and triggers a browser download —
+  // shared by both the "instant blob" upload response and the final
+  // download=true call once polling confirms the job is ready.
+  const downloadBlobResponse = async (response: Response, fallbackName: string) => {
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+
+    const contentDisposition = response.headers.get("content-disposition");
+    let filename = fallbackName;
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(
+        /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/
+      );
+      if (filenameMatch && filenameMatch[1]) {
+        filename = filenameMatch[1].replace(/['"]/g, "");
+      }
+    }
+
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+  };
+
+  // Once the status poll reports the job is ready, make one final call with
+  // download=true — the same endpoint switches from returning job status JSON
+  // to actually serving the result file when this flag is set.
+  const fetchResultFile = async (jobId: string) => {
+    const response = await fetch(
+      `${baseUrl}/trainings/bulk_upload?token=${token}&job_id=${jobId}&download=true`
+    );
+    if (!response.ok) {
+      throw new Error(`Failed to download result file (status ${response.status})`);
+    }
+    await downloadBlobResponse(response, "training_upload_result.xlsx");
+  };
+
+  // Polls the same endpoint with job_id until the response reports
+  // `download_ready: true`, then fetches the result file (with &download=true) and stops.
+  const pollJobStatus = async (jobId: string) => {
+    for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+      if (!isMountedRef.current) return;
+
+      const response = await fetch(
+        `${baseUrl}/trainings/bulk_upload?token=${token}&job_id=${jobId}`
+      );
+      if (!response.ok) {
+        throw new Error(`Status check failed with status ${response.status}`);
+      }
+      const data = await response.json();
+
+      if (data?.download_ready === true) {
+        await fetchResultFile(jobId);
+        if (!isMountedRef.current) return;
+        setUploadStatus({
+          status: "success",
+          message: "File processed! Result file downloaded.",
+        });
+        toast.success("File processed! Result file downloaded.");
+        setSelectedFile(null);
+        return;
+      }
+
+    }
+
+    throw new Error("Processing is taking longer than expected. Please try again later.");
+  };
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -51,28 +135,18 @@ const TrainingBulkUploadPage: React.FC = () => {
   }, []);
 
   const validateAndSetFile = (file: File) => {
-    // Allow common file types for training uploads
-    const allowedTypes = [
-      ".csv",
-      ".xlsx",
-      ".xls",
-      ".pdf",
-      ".doc",
-      ".docx",
-      ".txt",
-    ];
+    // Only .xlsx is accepted for training bulk upload.
+    const allowedTypes = [".xlsx"];
     const fileExtension = "." + file.name.split(".").pop()?.toLowerCase();
 
     if (!allowedTypes.includes(fileExtension)) {
-      toast.error(
-        `Invalid file type. Allowed types: ${allowedTypes.join(", ")}`
-      );
+      toast.error("Invalid file type. Only .xlsx files are allowed.");
       return;
     }
 
-    // Check file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("File size exceeds 10MB limit");
+    // Check file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("File size exceeds 2MB limit");
       return;
     }
 
@@ -109,7 +183,7 @@ const TrainingBulkUploadPage: React.FC = () => {
       formData.append("file", selectedFile);
 
       const response = await fetch(
-        `${baseUrl}/trainings/bulk_upload.json?token=${token}`,
+        `${baseUrl}/trainings/bulk_upload?token=${token}`,
         {
           method: "POST",
           body: formData,
@@ -130,35 +204,15 @@ const TrainingBulkUploadPage: React.FC = () => {
         throw new Error(`Upload failed with status ${response.status}`);
       }
 
-      // Handle file download response (Excel, CSV, etc.)
+      // Handle file download response (Excel, CSV, etc.) — the job finished
+      // synchronously and the result file came back on the very first call.
       if (
         contentType.includes("application/vnd.openxmlformats-officedocument") ||
         contentType.includes("application/vnd.ms-excel") ||
         contentType.includes("application/octet-stream") ||
         contentType.includes("text/csv")
       ) {
-        const blob = await response.blob();
-        const downloadUrl = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = downloadUrl;
-
-        // Extract filename from content-disposition header or use default
-        const contentDisposition = response.headers.get("content-disposition");
-        let filename = "training_upload_result.xlsx";
-        if (contentDisposition) {
-          const filenameMatch = contentDisposition.match(
-            /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/
-          );
-          if (filenameMatch && filenameMatch[1]) {
-            filename = filenameMatch[1].replace(/['"]/g, "");
-          }
-        }
-
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(downloadUrl);
+        await downloadBlobResponse(response, "training_upload_result.xlsx");
 
         setUploadStatus({
           status: "success",
@@ -169,8 +223,33 @@ const TrainingBulkUploadPage: React.FC = () => {
         return;
       }
 
-      // Handle JSON response
+      // Handle JSON response — a job_id means processing happens in the
+      // background, so poll the same endpoint until it reports
+      // download_ready: true, then fetch the result file and stop.
       const data = await response.json();
+
+      if (data?.job_id) {
+        // Rare case: the job already finished by the time this first response
+        // came back, so download_ready is already true — skip straight to the
+        // result fetch instead of waiting a full poll interval for nothing.
+        if (data?.download_ready === true) {
+          await fetchResultFile(data.job_id);
+          setUploadStatus({
+            status: "success",
+            message: "File processed! Result file downloaded.",
+          });
+          toast.success("File processed! Result file downloaded.");
+          setSelectedFile(null);
+          return;
+        }
+
+        setUploadStatus({
+          status: "uploading",
+          message: "File uploaded — processing has started…",
+        });
+        await pollJobStatus(data.job_id);
+        return;
+      }
 
       setUploadStatus({
         status: "success",
@@ -238,7 +317,7 @@ const TrainingBulkUploadPage: React.FC = () => {
             type="file"
             className="hidden"
             onChange={handleFileChange}
-            accept=".csv,.xlsx,.xls,.pdf,.doc,.docx,.txt"
+            accept=".xlsx"
           />
 
           {!selectedFile ? (
@@ -260,7 +339,7 @@ const TrainingBulkUploadPage: React.FC = () => {
                   </button>
                 </p>
                 <p className="text-sm text-gray-400 mt-2">
-                  Supports: CSV, Excel, PDF, DOC, TXT (Max 10MB)
+                  Supports: XLSX only (Max 2MB)
                 </p>
               </div>
             </div>
@@ -310,7 +389,7 @@ const TrainingBulkUploadPage: React.FC = () => {
             )}
             <span className="text-sm font-medium">
               {uploadStatus.status === "uploading"
-                ? "Uploading..."
+                ? uploadStatus.message || "Uploading..."
                 : uploadStatus.message}
             </span>
           </div>

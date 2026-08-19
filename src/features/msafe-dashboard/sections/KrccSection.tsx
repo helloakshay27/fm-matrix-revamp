@@ -29,9 +29,9 @@ function getMsafeBaseUrl(): string {
 }
 
 /** Circle Manager filter bar values, applied as query params once the user clicks Apply.
- *  Only sent for the 'circle' persona — the admin (pan-India) view stays unfiltered. */
+ *  Pan India now uses the exact same filter bar as Circle Manager, so every field applies
+ *  the same way regardless of persona. */
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
-  if (persona !== 'circle') return {};
   const params: Record<string, string> = {};
   if (f.circleId) params.circle_id = f.circleId;
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
@@ -477,39 +477,38 @@ export function KrccSection() {
         {circlePctLoading || circlePctData.length === 0 ? (
           <DataState loading={circlePctLoading} empty={circlePctData.length === 0} label="circle data" />
         ) : (
-          <div style={{ maxHeight: 560, overflowY: 'auto' }}>
-            <ResponsiveContainer width="100%" height={Math.max(320, circlePctData.length * 24)}>
-              <BarChart
-                data={circlePctData}
-                layout="vertical"
-                margin={{ top: 4, right: 32, left: 0, bottom: 4 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
-                <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10, fill: C.sage }} />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  width={150}
-                  interval={0}
-                  tick={{ fontSize: 10, fill: C.sage }}
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: C.dark,
-                    border: 'none',
-                    borderRadius: 6,
-                    fontSize: 11,
-                    color: '#fff',
-                  }}
-                  formatter={(value) => [`${value}%`, 'Cleared %']}
-                />
-                <Bar dataKey="pct" radius={[0, 5, 5, 0]} name="Cleared %">
-                  {circlePctData.map((d) => (
-                    <Cell key={d.name} fill={d.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+          <div style={{ overflowX: 'auto' }}>
+            <div style={{ minWidth: Math.max(700, circlePctData.length * 55) }}>
+              <ResponsiveContainer width="100%" height={360}>
+                <BarChart data={circlePctData} margin={{ top: 4, right: 16, left: 0, bottom: 70 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
+                  <XAxis
+                    dataKey="name"
+                    interval={0}
+                    angle={-45}
+                    textAnchor="end"
+                    height={90}
+                    tick={{ fontSize: 10, fill: C.sage }}
+                  />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: C.sage }} />
+                  <Tooltip
+                    contentStyle={{
+                      background: C.dark,
+                      border: 'none',
+                      borderRadius: 6,
+                      fontSize: 11,
+                      color: '#fff',
+                    }}
+                    formatter={(value) => [`${value}%`, 'Cleared %']}
+                  />
+                  <Bar dataKey="pct" radius={[5, 5, 0, 0]} name="Cleared %">
+                    {circlePctData.map((d) => (
+                      <Cell key={d.name} fill={d.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         )}
       </ChartCard>

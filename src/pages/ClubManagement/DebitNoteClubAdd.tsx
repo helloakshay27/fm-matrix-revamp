@@ -1567,7 +1567,7 @@ export const DebitNoteClubAddPage: React.FC = () => {
 
             <div className="space-y-6">
                 {/* Customer Section */}
-                <Section title="Guest & Member Information" icon={<Package className="w-5 h-5" />}>
+                <Section title="Debit Note Information" icon={<Package className="w-5 h-5" />}>
                     <div className="space-y-6">
                         <div>
                             <RadioGroup

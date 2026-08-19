@@ -7,8 +7,11 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
   Cell,
 } from 'recharts';
+import type { TooltipProps } from 'recharts';
+import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 import { AccordionShell, ChartCard } from '../components/ChartCard';
 import { ChartSwitch } from '../components/ChartSwitch';
 import { ChartTable, DonutChart, SideLegendDonut, SliceBarChart } from '../components/DonutChart';
@@ -25,9 +28,9 @@ function getMsafeBaseUrl(): string {
 }
 
 /** Circle Manager filter bar values, applied as query params once the user clicks Apply.
- *  Only sent for the 'circle' persona — the admin (pan-India) view stays unfiltered. */
+ *  Pan India now uses the exact same filter bar as Circle Manager, so every field applies
+ *  the same way regardless of persona. */
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
-  if (persona !== 'circle') return {};
   const params: Record<string, string> = {};
   if (f.circleId) params.circle_id = f.circleId;
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
@@ -189,7 +192,7 @@ const normalizeTrainingCounts = (payload: unknown): TrainSlice[] => {
       if (!name) return null;
 
       let value: number | null = null;
-      for (const key of ['count', 'value', 'total', 'training_count']) {
+      for (const key of ['count', 'value', 'total', 'total_count', 'completed', 'training_count']) {
         const raw = record[key];
         if (typeof raw === 'number' && Number.isFinite(raw)) {
           value = raw;
@@ -205,6 +208,69 @@ const normalizeTrainingCounts = (payload: unknown): TrainSlice[] => {
       return { name, value, color: TRAIN_CHART_PALETTE[index % TRAIN_CHART_PALETTE.length] };
     })
     .filter((item): item is TrainSlice => Boolean(item));
+};
+
+type TrainCategoryDetail = {
+  name: string;
+  completed: number;
+  pending: number;
+  pendingAssessment: number;
+  total: number;
+};
+
+// Same source list as normalizeTrainingCounts, but keeps the full completed/
+// pending/pending_assessment/total_count breakdown instead of collapsing it
+// down to a single chart value — used for the "Category-wise Trainings" table.
+const normalizeTrainingCategoryDetails = (payload: unknown): TrainCategoryDetail[] => {
+  const source = Array.isArray(payload)
+    ? payload
+    : payload && typeof payload === 'object'
+      ? (payload as Record<string, unknown>)
+      : null;
+
+  let list: unknown[] = Array.isArray(source) ? source : [];
+  if (!Array.isArray(source)) {
+    for (const key of ['data', 'result', 'categories', 'training_categories', 'records']) {
+      const candidate = (source as Record<string, unknown>)?.[key];
+      if (Array.isArray(candidate)) {
+        list = candidate;
+        break;
+      }
+    }
+  }
+
+  const getNum = (record: Record<string, unknown>, keys: string[]): number => {
+    for (const key of keys) {
+      const raw = record[key];
+      if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
+      if (typeof raw === 'string' && raw.trim() && Number.isFinite(Number(raw))) return Number(raw);
+    }
+    return 0;
+  };
+
+  return list
+    .map((item) => {
+      if (!item || typeof item !== 'object') return null;
+      const record = item as Record<string, unknown>;
+
+      const name = [
+        record.training_category,
+        record.category_name,
+        record.training_name,
+        record.name,
+        record.label,
+        record.title,
+      ].find((value): value is string => typeof value === 'string' && value.trim().length > 0);
+      if (!name) return null;
+
+      const completed = getNum(record, ['completed']);
+      const pending = getNum(record, ['pending']);
+      const pendingAssessment = getNum(record, ['pending_assessment']);
+      const total = getNum(record, ['total_count', 'total']) || completed + pending + pendingAssessment;
+
+      return { name, completed, pending, pendingAssessment, total };
+    })
+    .filter((item): item is TrainCategoryDetail => Boolean(item));
 };
 
 type ScoreBucket = { bucket: string; n: number; color: string };
@@ -357,6 +423,7 @@ export function TrainingSection() {
   const [intExtLoading, setIntExtLoading] = useState(true);
   const [trainByNameData, setTrainByNameData] = useState<TrainSlice[]>([]);
   const [trainCategoryData, setTrainCategoryData] = useState<TrainSlice[]>([]);
+  const [trainCategoryDetails, setTrainCategoryDetails] = useState<TrainCategoryDetail[]>([]);
   const [scoreDistribution, setScoreDistribution] = useState<ScoreBucket[]>([]);
   const [trainFailures, setTrainFailures] = useState<TrainFailure[]>([]);
   const [trainCountsLoading, setTrainCountsLoading] = useState(true);
@@ -435,6 +502,7 @@ export function TrainingSection() {
         if (isMounted) {
           setTrainByNameData(normalized);
           setTrainCategoryData(normalized);
+          setTrainCategoryDetails(normalizeTrainingCategoryDetails(payload));
         }
       } catch (error) {
         console.warn('M-Safe category-wise-training-count API failed.', error);
@@ -506,13 +574,40 @@ export function TrainingSection() {
   //   };
   // }, [appliedFilters]);
 
+  // "Category-wise Trainings" donut slices only carry a single total value —
+  // this looks up the full completed/pending/pending-assessment breakdown for
+  // the hovered category so the donut's tooltip matches the bar chart's.
+  const renderCategoryTooltip = ({ active, payload }: TooltipProps<ValueType, NameType>) => {
+    if (!active || !payload?.length) return null;
+    const name = String(payload[0]?.payload?.name ?? payload[0]?.name ?? '');
+    const detail = trainCategoryDetails.find((d) => d.name === name);
+    if (!detail) return null;
+    return (
+      <div className="msafe-chart-tip">
+        <div className="msafe-chart-tip-title">{name}</div>
+        <div className="msafe-chart-tip-row">
+          <span className="msafe-chart-tip-sw" style={{ background: C.ok }} />
+          <span>Completed : {detail.completed.toLocaleString('en-IN')}</span>
+        </div>
+        <div className="msafe-chart-tip-row">
+          <span className="msafe-chart-tip-sw" style={{ background: C.warn }} />
+          <span>Pending : {detail.pending.toLocaleString('en-IN')}</span>
+        </div>
+        <div className="msafe-chart-tip-row">
+          <span className="msafe-chart-tip-sw" style={{ background: C.vi }} />
+          <span>Pending Assessment : {detail.pendingAssessment.toLocaleString('en-IN')}</span>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <AccordionShell
       title="Training — Safety Certification"
       sub="Pass rates, categories, and who still needs a re-attempt"
       excelLabel="Training"
     >
-      <div className="g g3">
+      <div className="g g2">
         <ChartCard
           title="Pass vs Fail Rate"
           sub="All training records"
@@ -569,23 +664,10 @@ export function TrainingSection() {
           )}
         </ChartCard>
 
-        <ChartCard title="Training by Name" sub="Volume by training programme" infoKey="train-name">
-          {trainCountsLoading || trainByNameData.length === 0 ? (
-            <DataState loading={trainCountsLoading} empty={trainByNameData.length === 0} label="training data" />
-          ) : (
-            <div className="chart-wrap">
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={trainByNameData} layout="vertical" margin={{ left: 8 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
-                  <XAxis type="number" tick={{ fontSize: 10, fill: C.sage }} />
-                  <YAxis type="category" dataKey="name" width={80} tick={{ fontSize: 10, fill: C.sage }} />
-                  <Tooltip />
-                  <Bar dataKey="value" fill={C.sage} radius={[0, 5, 5, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </ChartCard>
+        {/* "Training by Name" card hidden per request. Its data came from the same
+            category_wise_training_count.json call that still feeds "Category-wise
+            Trainings" below, so that fetch can't be disabled without breaking that
+            still-visible card — only the setTrainByNameData assignment is now dead. */}
       </div>
 
       <ChartCard
@@ -594,7 +676,13 @@ export function TrainingSection() {
         infoKey="train-category"
         showPdf
         pdfLabel="Category-wise Trainings"
-        exportData={trainCategoryData.map((d) => ({ Category: d.name, Records: d.value }))}
+        exportData={trainCategoryDetails.map((d) => ({
+          Category: d.name,
+          Completed: d.completed,
+          Pending: d.pending,
+          'Pending Assessment': d.pendingAssessment,
+          Total: d.total,
+        }))}
         style={{ marginTop: 16 }}
         chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={catMode} onChange={setCatMode} />}
       >
@@ -603,10 +691,70 @@ export function TrainingSection() {
         ) : (
           <>
             {catMode === 'donut' && (
-              <DonutChart data={trainCategoryData} height={Math.max(220, trainCategoryData.length * 26)} />
+              <DonutChart
+                data={trainCategoryData}
+                height={Math.max(220, trainCategoryData.length * 26)}
+                tooltipContent={renderCategoryTooltip}
+              />
             )}
-            {catMode === 'bar' && <SliceBarChart data={trainCategoryData} />}
-            {catMode === 'table' && <ChartTable data={trainCategoryData} valueLabel="Records" />}
+            {catMode === 'bar' && (
+              <div className="chart-wrap">
+                <ResponsiveContainer width="100%" height={Math.max(220, trainCategoryDetails.length * 30)}>
+                  <BarChart
+                    data={trainCategoryDetails}
+                    layout="vertical"
+                    margin={{ top: 4, right: 16, left: 0, bottom: 4 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
+                    <XAxis type="number" tick={{ fontSize: 10, fill: C.sage }} />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      width={150}
+                      interval={0}
+                      tick={{ fontSize: 10, fill: C.sage }}
+                    />
+                    <Tooltip />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    <Bar dataKey="completed" stackId="training" fill={C.ok} name="Completed" />
+                    <Bar dataKey="pending" stackId="training" fill={C.warn} name="Pending" />
+                    <Bar
+                      dataKey="pendingAssessment"
+                      stackId="training"
+                      fill={C.vi}
+                      name="Pending Assessment"
+                      radius={[0, 5, 5, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+            {catMode === 'table' && (
+              <div className="chart-as-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Category</th>
+                      <th>Completed</th>
+                      <th>Pending</th>
+                      <th>Pending Assessment</th>
+                      <th>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {trainCategoryDetails.map((d) => (
+                      <tr key={d.name}>
+                        <td>{d.name}</td>
+                        <td>{d.completed.toLocaleString('en-IN')}</td>
+                        <td>{d.pending.toLocaleString('en-IN')}</td>
+                        <td>{d.pendingAssessment.toLocaleString('en-IN')}</td>
+                        <td>{d.total.toLocaleString('en-IN')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </>
         )}
       </ChartCard>

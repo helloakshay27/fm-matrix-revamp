@@ -4,6 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   ArrowLeft,
   Edit,
   Package,
@@ -27,11 +38,14 @@ import {
   WasteGeneration,
 } from "../services/wasteGenerationAPI";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { apiClient } from "@/utils/apiClient";
 
 interface BagRow {
   id: string;
+  bagId: number;
   category: string;
   subCategory: string;
+  bagCount: number | string;
   weight: string;
 }
 
@@ -56,6 +70,7 @@ export const WasteGenerationDetailsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("waste-details");
   const [bagRows, setBagRows] = useState<BagRow[]>([]);
+  const [deletingBagRowId, setDeletingBagRowId] = useState<string | null>(null);
 
   const hasData = (value: string | number | null | undefined | object) => {
     if (typeof value === "object" && value !== null) {
@@ -94,6 +109,7 @@ export const WasteGenerationDetailsPage = () => {
           for (const entry of wasteGeneration.categories) {
             const category = entry.category?.category_name ?? "-";
             const subCategory = entry.commodity?.category_name ?? "-";
+            const bagCount = entry.bag_counts ?? "-";
             const uom = entry.uom ?? "";
             for (const bag of entry.waste_bag_details || []) {
               const weightVal = bag.field_value;
@@ -101,7 +117,7 @@ export const WasteGenerationDetailsPage = () => {
                 weightVal !== null && weightVal !== undefined && weightVal !== "" && !isNaN(Number(weightVal))
                   ? `${Number(weightVal)} ${uom}`.trim()
                   : weightVal || "-";
-              rows.push({ id: `bag-${idx}`, category, subCategory, weight });
+              rows.push({ id: `bag-${idx}`, bagId: bag.id, category, subCategory, bagCount, weight });
               idx += 1;
             }
           }
@@ -119,7 +135,14 @@ export const WasteGenerationDetailsPage = () => {
               weightVal !== null && !isNaN(Number(weightVal))
                 ? `${Number(weightVal)} kg`
                 : weightVal ?? "-";
-            return { id: `bag-${idx}`, category, subCategory, weight };
+            return {
+              id: `bag-${idx}`,
+              bagId: Number(bagObj.id),
+              category,
+              subCategory,
+              bagCount: wasteGeneration.bag_counts ?? "-",
+              weight,
+            };
           });
         }
         setBagRows(rows);
@@ -152,10 +175,20 @@ export const WasteGenerationDetailsPage = () => {
     toast.info("Certificate generation is not yet available.");
   };
 
-  const handleDeleteBagRow = (rowId: string) => {
-    // Client-side only — no backend endpoint to persist this deletion yet.
-    setBagRows((prev) => prev.filter((r) => r.id !== rowId));
-    toast.success("Bag entry removed.");
+  const handleDeleteBagRow = async (row: BagRow) => {
+    setDeletingBagRowId(row.id);
+    try {
+      await apiClient.post("/pms/waste_generations/deactivate_bag", {
+        id: row.bagId,
+      });
+      setBagRows((prev) => prev.filter((r) => r.id !== row.id));
+      toast.success("Bag entry removed.");
+    } catch (err) {
+      console.error("Error deactivating bag:", err);
+      toast.error("Failed to remove bag entry.");
+    } finally {
+      setDeletingBagRowId(null);
+    }
   };
 
   // Logs tab — a best-effort activity history built from real timestamps
@@ -286,6 +319,11 @@ export const WasteGenerationDetailsPage = () => {
       ? `${Math.round((wasteData.recycled_unit / wasteData.waste_unit) * 100)}%`
       : "0%";
 
+  const totalBagCount =
+    wasteData.categories && wasteData.categories.length > 0
+      ? wasteData.categories.reduce((sum, entry) => sum + (entry.bag_counts ?? 0), 0)
+      : wasteData.bag_counts;
+
   // Same field set as the Waste Generation list page's columns
   // (UtilityWasteGenerationDashboard.tsx), so this detail view shows
   // everything the list shows for this record.
@@ -302,7 +340,7 @@ export const WasteGenerationDetailsPage = () => {
     // granular location field the API returns.
     { label: "Floor", value: wasteData.area_name || wasteData.wing_name },
     { label: "Waste Category", value: wasteData.category?.category_name },
-    { label: "Total Bags", value: wasteData.bag_counts != null ? wasteData.bag_counts.toString() : undefined },
+    { label: "Total Bags", value: totalBagCount != null ? totalBagCount.toString() : undefined },
     { label: "Quantity (Kg)", value: wasteData.waste_unit != null ? wasteData.waste_unit : undefined },
     { label: "Quantity (Ltr)", value: undefined },
     { label: "Recycle %", value: recycledPct },
@@ -375,7 +413,7 @@ export const WasteGenerationDetailsPage = () => {
   const bagDetailsFields: Field[] = [
     { label: "Category", value: wasteData.category?.category_name },
     { label: "Subcategory", value: wasteData.commodity?.category_name },
-    { label: "No. of Bags", value: wasteData.bag_counts != null ? wasteData.bag_counts.toString() : undefined },
+    { label: "No. of Bags", value: totalBagCount != null ? totalBagCount.toString() : undefined },
     { label: "Device", value: wasteData.device_id != null ? wasteData.device_id.toString() : undefined },
     { label: "Status", value: wasteData.status || undefined },
   ];
@@ -490,6 +528,7 @@ export const WasteGenerationDetailsPage = () => {
                     <TableRow className="bg-gray-50">
                       <TableHead>Category</TableHead>
                       <TableHead>Sub Category</TableHead>
+                      <TableHead>No. of Bags</TableHead>
                       <TableHead>Total Weight (unit)</TableHead>
                       <TableHead>Delete</TableHead>
                     </TableRow>
@@ -497,7 +536,7 @@ export const WasteGenerationDetailsPage = () => {
                   <TableBody>
                     {bagRows.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center text-gray-400 py-6">
+                        <TableCell colSpan={5} className="text-center text-gray-400 py-6">
                           No bag entries.
                         </TableCell>
                       </TableRow>
@@ -506,17 +545,36 @@ export const WasteGenerationDetailsPage = () => {
                         <TableRow key={row.id}>
                           <TableCell className="font-medium text-gray-900">{row.category}</TableCell>
                           <TableCell>{row.subCategory}</TableCell>
+                          <TableCell>{row.bagCount}</TableCell>
                           <TableCell>{row.weight}</TableCell>
                           <TableCell>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteBagRow(row.id)}
-                              className="text-red-600 hover:text-red-700"
-                              title="Delete"
-                              aria-label="Delete"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <button
+                                  type="button"
+                                  disabled={deletingBagRowId === row.id}
+                                  className="text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  title="Delete"
+                                  aria-label="Delete"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Remove this bag entry?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This will deactivate the bag entry. This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteBagRow(row)}>
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </TableCell>
                         </TableRow>
                       ))

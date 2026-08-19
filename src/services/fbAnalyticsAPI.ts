@@ -75,14 +75,13 @@ export interface OrderStatsData {
 export const fbAnalyticsAPI = {
   async getOrderStats(fromDate: Date, toDate: Date): Promise<OrderStatsData> {
     const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
     const baseUrl = localStorage.getItem('baseUrl') || API_CONFIG.BASE_URL.replace('https://', '');
     
     // Format dates for API
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = `https://${baseUrl}/pms/admin/food_orders/food_and_booking.json?site_id=${siteId}&access_token=${encodeURIComponent(accessToken)}&true=order_stats&from_date=${fromDateStr}&to_date=${toDateStr}`;
+    const url = `https://${baseUrl}/pms/admin/food_orders/food_and_booking.json?site_id=${siteId}&true=order_stats&from_date=${fromDateStr}&to_date=${toDateStr}`;
     
     const response = await fetch(url, {
       headers: {

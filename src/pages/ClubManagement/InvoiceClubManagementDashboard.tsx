@@ -16,6 +16,7 @@ interface SalesOrder {
     customer_name: string;
     guest_name?: string;
     member_name?: string;
+    staff_name?: string;
     date: string;
     shipment_date: string;
     total_amount: number;
@@ -105,6 +106,13 @@ const columns: ColumnConfig[] = [
         hideable: true,
         draggable: true
     },
+    {
+        key: 'staff_name',
+        label: 'Staff',
+        sortable: true,
+        hideable: true,
+        draggable: true
+    },
 
     {
         key: 'due_date',
@@ -141,13 +149,13 @@ const columns: ColumnConfig[] = [
         hideable: true,
         draggable: true
     },
-    {
-        key: 'active',
-        label: 'Active/Inactive',
-        sortable: false,
-        hideable: true,
-        draggable: false
-    }
+    // {
+    //     key: 'active',
+    //     label: 'Active/Inactive',
+    //     sortable: false,
+    //     hideable: true,
+    //     draggable: false
+    // }
 ];
 
 export const InvoiceClubManagementDashboard: React.FC = () => {
@@ -184,8 +192,11 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
             id: bb.id,
             sale_order_number: bb.order_number || bb.sale_order_number || '',
             customer_name: bb.customer_name || user.name || '',
+            // NOTE: user.user_type is unconfirmed — the real bill_bookings/credit_notes responses seen so
+            // far don't include a type field on user/customer, so these will usually all fall back to '-'.
             guest_name: bb.guest_name || (user.user_type === 'guest' ? user.name : undefined),
-            member_name: bb.member_name || (user.user_type !== 'guest' ? user.name : undefined),
+            member_name: bb.member_name || (user.user_type === 'occupant' || user.user_type === 'member' ? user.name : undefined),
+            staff_name: bb.staff_name || (user.user_type === 'fm' || user.user_type === 'staff' ? user.name : undefined),
             date: bb.bill_date || bb.date || '',
             shipment_date: bb.shipment_date || '',
             total_amount: Number(bb.total_amount ?? bb.amount ?? 0),
@@ -304,6 +315,7 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
 
     // Helper function to get status badge
     const getStatusBadge = (status: string) => {
+        if (!status) return <span className="text-sm text-gray-900">-</span>;
         return (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                 {status.replace(/_/g, " ").toUpperCase()}
@@ -345,7 +357,7 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="Edit"
                 >
-                    {/* <Edit className="w-4 h-4" /> */}
+                    <Edit className="w-4 h-4" />
                 </button>
                 <button
                     onClick={() => {
@@ -360,10 +372,10 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
             </div>
         ),
         invoice_number: (
-            <div className="font-medium text-brand">{order.invoice_number}</div>
+            <div className="font-medium text-brand">{order.invoice_number || '-'}</div>
         ),
         order_number: (
-            <div className="font-medium text-brand">{order.order_number}</div>
+            <div className="font-medium text-brand">{order.order_number || '-'}</div>
         ),
         guest_name: (
             <span className="text-sm text-gray-900">{order.guest_name || '-'}</span>
@@ -371,13 +383,18 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
         member_name: (
             <span className="text-sm text-gray-900">{order.member_name || '-'}</span>
         ),
+        staff_name: (
+            <span className="text-sm text-gray-900">{order.staff_name || '-'}</span>
+        ),
         date: (
             <span className="text-sm text-gray-600">
-                {new Date(order.date).toLocaleDateString('en-GB', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
-                })}
+                {order.date
+                    ? new Date(order.date).toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                    })
+                    : '-'}
             </span>
         ),
 
@@ -395,21 +412,23 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
 
         total_amount: (
             <span className="text-sm font-medium text-gray-900">
-                ₹
-                {order.total_amount?.toLocaleString("en-IN", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                })}
+                {order.total_amount != null
+                    ? `₹${order.total_amount.toLocaleString("en-IN", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                    })}`
+                    : "-"}
             </span>
         ),
 
         balance_due: (
             <span className="text-sm font-medium text-red-600">
-                ₹
-                {order.balance_due?.toLocaleString("en-IN", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                })}
+                {order.balance_due != null
+                    ? `₹${order.balance_due.toLocaleString("en-IN", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                    })}`
+                    : "-"}
             </span>
         ),
         // shipment_date: (

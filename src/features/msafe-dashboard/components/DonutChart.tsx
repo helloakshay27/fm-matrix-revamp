@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import {
   ResponsiveContainer,
   PieChart,
@@ -12,6 +13,8 @@ import {
   YAxis,
   CartesianGrid,
 } from 'recharts';
+import type { TooltipProps } from 'recharts';
+import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 import { C } from '../data/constants';
 import { MsafeChartTooltip } from './MsafeChartTooltip';
 
@@ -54,12 +57,16 @@ export function DonutChart({
   showLegend = true,
   bodyLabel,
   legendColumns = 2,
+  tooltipContent,
 }: {
   data: Slice[];
   height?: number;
   showLegend?: boolean;
   bodyLabel?: string;
   legendColumns?: number;
+  /** Overrides the default name/value tooltip — e.g. to show a fuller per-slice
+   *  breakdown (completed/pending/etc.) instead of just the slice's total. */
+  tooltipContent?: (props: TooltipProps<ValueType, NameType>) => ReactNode;
 }) {
   const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
   const outer = 78;
@@ -96,7 +103,7 @@ export function DonutChart({
               cursor={false}
               allowEscapeViewBox={{ x: true, y: true }}
               wrapperStyle={{ outline: 'none', zIndex: 40, pointerEvents: 'none' }}
-              content={(props) => <MsafeChartTooltip {...props} bodyLabel={bodyLabel} />}
+              content={tooltipContent ?? ((props) => <MsafeChartTooltip {...props} bodyLabel={bodyLabel} />)}
             />
           </PieChart>
         </ResponsiveContainer>
