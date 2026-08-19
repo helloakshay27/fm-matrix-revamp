@@ -215,6 +215,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           org_id === "1" ||
           org_id === "84" ||
           org_id === "1" ||
+          org_id === "13" ||
           userEmail === "ubaid.hashmat@lockated.com" ||
           userEmail === "besis69240@azeriom.com" ||
           userEmail === "megipow156@aixind.com" ||
