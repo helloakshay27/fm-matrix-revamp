@@ -10,6 +10,8 @@ import {
   Legend,
   Cell,
 } from 'recharts';
+import type { TooltipProps } from 'recharts';
+import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 import { AccordionShell, ChartCard } from '../components/ChartCard';
 import { ChartSwitch } from '../components/ChartSwitch';
 import { ChartTable, DonutChart, SideLegendDonut, SliceBarChart } from '../components/DonutChart';
@@ -572,6 +574,33 @@ export function TrainingSection() {
   //   };
   // }, [appliedFilters]);
 
+  // "Category-wise Trainings" donut slices only carry a single total value —
+  // this looks up the full completed/pending/pending-assessment breakdown for
+  // the hovered category so the donut's tooltip matches the bar chart's.
+  const renderCategoryTooltip = ({ active, payload }: TooltipProps<ValueType, NameType>) => {
+    if (!active || !payload?.length) return null;
+    const name = String(payload[0]?.payload?.name ?? payload[0]?.name ?? '');
+    const detail = trainCategoryDetails.find((d) => d.name === name);
+    if (!detail) return null;
+    return (
+      <div className="msafe-chart-tip">
+        <div className="msafe-chart-tip-title">{name}</div>
+        <div className="msafe-chart-tip-row">
+          <span className="msafe-chart-tip-sw" style={{ background: C.ok }} />
+          <span>Completed : {detail.completed.toLocaleString('en-IN')}</span>
+        </div>
+        <div className="msafe-chart-tip-row">
+          <span className="msafe-chart-tip-sw" style={{ background: C.warn }} />
+          <span>Pending : {detail.pending.toLocaleString('en-IN')}</span>
+        </div>
+        <div className="msafe-chart-tip-row">
+          <span className="msafe-chart-tip-sw" style={{ background: C.vi }} />
+          <span>Pending Assessment : {detail.pendingAssessment.toLocaleString('en-IN')}</span>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <AccordionShell
       title="Training — Safety Certification"
@@ -662,7 +691,11 @@ export function TrainingSection() {
         ) : (
           <>
             {catMode === 'donut' && (
-              <DonutChart data={trainCategoryData} height={Math.max(220, trainCategoryData.length * 26)} />
+              <DonutChart
+                data={trainCategoryData}
+                height={Math.max(220, trainCategoryData.length * 26)}
+                tooltipContent={renderCategoryTooltip}
+              />
             )}
             {catMode === 'bar' && (
               <div className="chart-wrap">
