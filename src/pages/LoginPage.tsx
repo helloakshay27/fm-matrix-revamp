@@ -139,7 +139,13 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
       }
 
       if (orgs.length === 0) {
-        toast.error("No organizations found for this email address.");
+        // VAPT Web-5.29 (account enumeration): avoid confirming whether an
+        // email/organization is registered. NOTE: this is defense-in-depth only —
+        // the enumeration vector is the API response itself
+        // (/api/users/get_organizations_by_email), which must be fixed backend-side.
+        toast.error(
+          "We couldn't continue with those details. Please check and try again, or contact your administrator."
+        );
       }
     } catch (error) {
       toast.error((error as Error).message || "Failed to fetch organizations. Please try again.");
@@ -245,7 +251,13 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
       setOrgsFetched(true);
       setLastFetchedEmail(emailValue);
       if (orgs.length === 0) {
-        toast.error("No organizations found for this email address.");
+        // VAPT Web-5.29 (account enumeration): avoid confirming whether an
+        // email/organization is registered. NOTE: this is defense-in-depth only —
+        // the enumeration vector is the API response itself
+        // (/api/users/get_organizations_by_email), which must be fixed backend-side.
+        toast.error(
+          "We couldn't continue with those details. Please check and try again, or contact your administrator."
+        );
       }
     } catch (error) {
       toast.error((error as Error).message || "Failed to fetch organizations. Please try again.");
@@ -630,7 +642,8 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
       {/* No orgs message */}
       {orgsFetched && !isLoading && organizations.length === 0 && (
         <div className="text-center text-red-500 text-sm py-2 mb-2">
-          No organizations found for this email address.
+          We couldn't continue with those details. Please check and try again,
+          or contact your administrator.
         </div>
       )}
 

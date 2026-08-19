@@ -20,7 +20,7 @@ export const taskAnalyticsDownloadAPI = {
     const toDateStr = formatDateForAPI(toDate);
     
     const endpoint = `${API_CONFIG.BASE_URL}/pms/custom_forms/chart_technical_checklist_download.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
     
     try {
       const response = await fetch(url, {
@@ -59,7 +59,7 @@ export const taskAnalyticsDownloadAPI = {
     const toDateStr = formatDateForAPI(toDate);
     
     const endpoint = `${API_CONFIG.BASE_URL}/pms/custom_forms/chart_non_technical_checklist_download.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
     
     try {
       const response = await fetch(url, {
@@ -95,7 +95,7 @@ export const taskAnalyticsDownloadAPI = {
     const toDateStr = formatDateForAPI(toDate);
     
     const endpoint = `${API_CONFIG.BASE_URL}/pms/custom_forms/top_ten_checklist_download.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
     
     try {
       const response = await fetch(url, {
@@ -131,7 +131,7 @@ export const taskAnalyticsDownloadAPI = {
     const toDateStr = formatDateForAPI(toDate);
     
     const endpoint = `${API_CONFIG.BASE_URL}/pms/custom_forms/chart_checklist_download.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
     
     try {
       const response = await fetch(url, {

@@ -555,7 +555,7 @@ export const PurchaseOrderEditPage: React.FC = () => {
             setLoadingVendors(true);
             let vendorList: Vendor[] = [];
             try {
-                const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PURCHASE_ORDER_SUPPLIERS}?access_token=${API_CONFIG.TOKEN}`;
+                const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PURCHASE_ORDER_SUPPLIERS}`;
                 const res = await fetch(url, { headers: { 'Content-Type': 'application/json' } });
                 const data = await res.json();
                 if (data.status === 'success' && data.suppliers) {

@@ -20,11 +20,10 @@ export const inventoryAnalyticsDownloadAPI = {
   // Download Inventory Cost Over Month Excel file
   downloadInventoryCostOverMonthExcel: async (fromDate: Date, toDate: Date): Promise<void> => {
     const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const endpoint = `${API_CONFIG.BASE_URL}/pms/inventories/month_wise_inventory_consumption_excel.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
     try {
       const response = await fetch(url, {
         method: 'GET',
@@ -52,11 +51,10 @@ export const inventoryAnalyticsDownloadAPI = {
   // Download Inventory Consumption Over Site Excel file
   downloadInventoryConsumptionOverSiteExcel: async (fromDate: Date, toDate: Date): Promise<void> => {
     const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const endpoint = `${API_CONFIG.BASE_URL}/pms/inventories/inventory_consumption_over_site_excel.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
     try {
       const response = await fetch(url, {
         method: 'GET',
@@ -84,11 +82,10 @@ export const inventoryAnalyticsDownloadAPI = {
   // Download Consumption Report Non-Green Excel file
   downloadConsumptionReportNonGreenExcel: async (fromDate: Date, toDate: Date): Promise<void> => {
     const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const endpoint = `${API_CONFIG.BASE_URL}/pms/inventories/inventory_consumption_report_non_green_excel_data.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
     try {
       const response = await fetch(url, {
         method: 'GET',
@@ -116,12 +113,11 @@ export const inventoryAnalyticsDownloadAPI = {
   // Download items status data
   downloadItemsStatusData: async (fromDate: Date, toDate: Date): Promise<void> => {
     const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
     const endpoint = `${API_CONFIG.BASE_URL}/pms/inventories/items_status.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
     
     try {
       const response = await fetch(url, {
@@ -158,12 +154,11 @@ export const inventoryAnalyticsDownloadAPI = {
   // Download category wise data
   downloadCategoryWiseData: async (fromDate: Date, toDate: Date): Promise<void> => {
     const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
     const endpoint = `${API_CONFIG.BASE_URL}/pms/inventories/category_wise_items.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
     
     try {
       const response = await fetch(url, {
@@ -200,11 +195,10 @@ export const inventoryAnalyticsDownloadAPI = {
   // Download Green Consumption Excel file
   downloadGreenConsumptionExcel: async (fromDate: Date, toDate: Date): Promise<void> => {
     const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const endpoint = `${API_CONFIG.BASE_URL}/pms/inventories/inventory_consumption_green_excel_data.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
     try {
       const response = await fetch(url, {
         method: 'GET',
@@ -233,11 +227,10 @@ export const inventoryAnalyticsDownloadAPI = {
   // Download Consumption Report Green Excel file
   downloadConsumptionReportGreenExcel: async (fromDate: Date, toDate: Date): Promise<void> => {
     const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const endpoint = `${API_CONFIG.BASE_URL}/pms/inventories/get_inventory_consumption_report_green_excel_data.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
     try {
       const response = await fetch(url, {
         method: 'GET',
@@ -265,11 +258,10 @@ export const inventoryAnalyticsDownloadAPI = {
   // Download Current Minimum Stock Green Excel file
   downloadCurrentMinimumStockGreenExcel: async (fromDate: Date, toDate: Date): Promise<void> => {
     const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const endpoint = `${API_CONFIG.BASE_URL}/pms/inventories/get_inventory_current_and_minimum_stock_green_excel_data.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
     try {
       const response = await fetch(url, {
         method: 'GET',
@@ -297,11 +289,10 @@ export const inventoryAnalyticsDownloadAPI = {
   // Download Current Minimum Stock Non-Green Excel file
   downloadCurrentMinimumStockNonGreenExcel: async (fromDate: Date, toDate: Date): Promise<void> => {
     const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const endpoint = `${API_CONFIG.BASE_URL}/pms/inventories/inventory_current_and_minimum_stock_non_green_excel_data.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
     try {
       const response = await fetch(url, {
         method: 'GET',
@@ -329,11 +320,10 @@ export const inventoryAnalyticsDownloadAPI = {
   // Download Inventory Consumption Non-Green Excel file
   downloadInventoryConsumptionNonGreenExcel: async (fromDate: Date, toDate: Date): Promise<void> => {
     const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const endpoint = `${API_CONFIG.BASE_URL}/pms/inventories/inventory_consumption_non_green_excel_data.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
     try {
       const response = await fetch(url, {
         method: 'GET',

@@ -123,7 +123,7 @@ export const ViewOperationalAuditSchedulePerformancePage = () => {
             const startDMY = params?.start ? formatDMY(params.start) : formatDMY(startDate);
             const endDMY = params?.end ? formatDMY(params.end) : formatDMY(endDate);
             const assetId = params?.asset_id || selectedTaskId;
-            const url = `${API_CONFIG.BASE_URL}/pms/custom_forms/${customFormCode}/performance.json?q[start_date_gteq]=${startDMY}&q[start_date_lteq]=${endDMY}&asset_id=${assetId}&access_token=${API_CONFIG.TOKEN}`;
+            const url = `${API_CONFIG.BASE_URL}/pms/custom_forms/${customFormCode}/performance.json?q[start_date_gteq]=${startDMY}&q[start_date_lteq]=${endDMY}&asset_id=${assetId}`;
             const res = await fetch(url, {
                 headers: {
                     Authorization: getAuthHeader(),
