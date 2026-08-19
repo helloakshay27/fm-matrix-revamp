@@ -31,9 +31,9 @@ function getMsafeBaseUrl(): string {
 }
 
 /** Circle Manager filter bar values, applied as query params once the user clicks Apply.
- *  Only sent for the 'circle' persona — the admin (pan-India) view stays unfiltered. */
+ *  Pan India now uses the exact same filter bar as Circle Manager, so every field applies
+ *  the same way regardless of persona. */
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
-  if (persona !== 'circle') return {};
   const params: Record<string, string> = {};
   if (f.circleId) params.circle_id = f.circleId;
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
@@ -320,25 +320,26 @@ export function SmtSection() {
     return () => controller.abort();
   }, [appliedFilters, persona]);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    setFreqLoading(true);
-    (async () => {
-      try {
-        const payload = await fetchMsafeSmtJson(
-          'visit_frequency.json',
-          buildFilterParams(persona, appliedFilters),
-          controller.signal,
-        );
-        if (!controller.signal.aborted) setFreqData(normalizeVisitFrequency(payload));
-      } catch (err) {
-        if ((err as Error).name !== 'AbortError') console.warn('M-Safe visit-frequency API failed.', err);
-      } finally {
-        if (!controller.signal.aborted) setFreqLoading(false);
-      }
-    })();
-    return () => controller.abort();
-  }, [appliedFilters, persona]);
+  // "Visit Frequency" card hidden per request — API call disabled too.
+  // useEffect(() => {
+  //   const controller = new AbortController();
+  //   setFreqLoading(true);
+  //   (async () => {
+  //     try {
+  //       const payload = await fetchMsafeSmtJson(
+  //         'visit_frequency.json',
+  //         buildFilterParams(persona, appliedFilters),
+  //         controller.signal,
+  //       );
+  //       if (!controller.signal.aborted) setFreqData(normalizeVisitFrequency(payload));
+  //     } catch (err) {
+  //       if ((err as Error).name !== 'AbortError') console.warn('M-Safe visit-frequency API failed.', err);
+  //     } finally {
+  //       if (!controller.signal.aborted) setFreqLoading(false);
+  //     }
+  //   })();
+  //   return () => controller.abort();
+  // }, [appliedFilters, persona]);
 
   return (
     <AccordionShell
@@ -409,13 +410,8 @@ export function SmtSection() {
           )}
         </ChartCard>
 
-        <ChartCard title="Visit Frequency" sub="Sites visited over last quarter" infoKey="smt-freq">
-          {freqLoading || freqData.length === 0 ? (
-            <DataState loading={freqLoading} empty={freqData.length === 0} label="visit frequency data" />
-          ) : (
-            <ProgressRows rows={freqData} />
-          )}
-        </ChartCard>
+        {/* "Visit Frequency" card hidden per request — see the commented-out
+            fetch effect above for the disabled API call. */}
       </div>
 
       <div className="g g-2-1" style={{ marginTop: 16 }}>
