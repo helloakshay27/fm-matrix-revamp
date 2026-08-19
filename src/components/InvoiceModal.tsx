@@ -528,13 +528,32 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
                         <Box sx={{ display: 'flex', gap: 3, mb: 3, flexWrap: 'wrap' }}>
                             <Box sx={{ flex: '1 1 250px', minWidth: '200px' }}>
-                                <StyledTextField
-                                    fullWidth
-                                    label="Invoice Type *"
-                                    value={billDeskDetail.invoice_type}
-                                    onChange={(e) => setBillDeskDetail(prev => ({ ...prev, invoice_type: e.target.value }))}
-                                    variant="outlined"
-                                />
+                                <FormControl fullWidth variant="outlined">
+                                    <InputLabel shrink sx={{ color: 'hsl(var(--label-text))' }}>Invoice Type *</InputLabel>
+                                    <Select
+                                        label="Invoice Type *"
+                                        value={billDeskDetail.invoice_type}
+                                        onChange={(e) => setBillDeskDetail(prev => ({ ...prev, invoice_type: e.target.value }))}
+                                        displayEmpty
+                                        sx={{
+                                            backgroundColor: 'hsl(var(--background))',
+                                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: 'hsl(var(--invoice-primary))',
+                                            },
+                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: 'hsl(var(--invoice-primary))',
+                                            },
+                                        }}
+                                    >
+                                        <MenuItem value="">
+                                            <em>Select Invoice Type</em>
+                                        </MenuItem>
+                                        <MenuItem value="CR">CR-Credit Note</MenuItem>
+                                        <MenuItem value="CV">CV-Cash Voucher</MenuItem>
+                                        <MenuItem value="DR">DR-Debit Note</MenuItem>
+                                        <MenuItem value="IV">IV-Invoice</MenuItem>
+                                    </Select>
+                                </FormControl>
                             </Box>
                             <Box sx={{ flex: '1 1 250px', minWidth: '200px' }}>
                                 <StyledTextField
