@@ -603,8 +603,8 @@ const SimpleIssueForm = ({
                   <div className="text-black flex items-center justify-between w-full">
                     <CalendarIcon className="w-4 h-4" />
                     <div>
-                      Target Date : {endDate.date.toString().padStart(2, "0")}{" "}
-                      {monthNames[endDate.month]}
+                      {endDate.date.toString().padStart(2, "0")}{" "}
+                      {monthNames[endDate.month]} {endDate.year}
                     </div>
                     <X
                       className="w-4 h-4"
@@ -636,8 +636,8 @@ const SimpleIssueForm = ({
                   <div className="text-black flex items-center justify-between w-full">
                     <CalendarIcon className="w-4 h-4" />
                     <div>
-                      Start Date : {startDate.date.toString().padStart(2, "0")}{" "}
-                      {monthNames[startDate.month]}
+                      {startDate.date.toString().padStart(2, "0")}{" "}
+                      {monthNames[startDate.month]} {startDate.year}
                     </div>
                     <X
                       className="w-4 h-4"
