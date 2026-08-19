@@ -84,7 +84,7 @@ export const scheduleAnalyticsAPI = {
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
     
-    const url = `${API_CONFIG.BASE_URL}/pms/schedule_analytics/overview.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${API_CONFIG.BASE_URL}/pms/schedule_analytics/overview.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
     
     const response = await fetch(url, {
       method: 'GET',
@@ -108,7 +108,7 @@ export const scheduleAnalyticsAPI = {
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
     
-    const url = `${API_CONFIG.BASE_URL}/pms/schedule_analytics/completion.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${API_CONFIG.BASE_URL}/pms/schedule_analytics/completion.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
     
     const response = await fetch(url, {
       method: 'GET',
@@ -132,7 +132,7 @@ export const scheduleAnalyticsAPI = {
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
     
-    const url = `${API_CONFIG.BASE_URL}/pms/schedule_analytics/resource_utilization.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${API_CONFIG.BASE_URL}/pms/schedule_analytics/resource_utilization.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
     
     const response = await fetch(url, {
       method: 'GET',

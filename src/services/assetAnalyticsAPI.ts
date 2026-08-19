@@ -173,8 +173,7 @@ const getAccessToken = (): string => {
 export const assetAnalyticsAPI = {
   async getGroupWiseAssets(fromDate: Date, toDate: Date): Promise<AssetGroupWiseData> {
     const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
-    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&access_token=${accessToken}&assets_group_count_by_name=true`;
+    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&assets_group_count_by_name=true`;
 
     const response = await fetch(url, {
       headers: {
@@ -209,10 +208,9 @@ export const assetAnalyticsAPI = {
 
   async getAssetStatus(fromDate: Date, toDate: Date): Promise<AssetStatusData> {
     const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
     
     // Use the new assets_status endpoint
-    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?assets_status=true&site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&access_token=${accessToken}`;
+    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?assets_status=true&site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`;
 
     const response = await fetch(url, {
       headers: {
@@ -234,9 +232,8 @@ export const assetAnalyticsAPI = {
 
   async getAssetDistribution(fromDate: Date, toDate: Date): Promise<AssetDistributionData> {
     const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
     
-    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&access_token=${accessToken}&assets_distribution=true`;
+    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&assets_distribution=true`;
     
     const response = await fetch(url, {
       headers: {
@@ -270,10 +267,9 @@ export const assetAnalyticsAPI = {
 
   async getAssetStatistics(fromDate: Date, toDate: Date): Promise<AssetStatisticsData> {
     const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
     
     // Note: The API endpoint has "statictics" (not "statistics") - this appears to be the correct endpoint
-    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&access_token=${accessToken}&total_assets=true&assets_in_use=true&assets_in_breakdown=true&critical_assets_breakdown=true&ppm_overdue_assets=true&amc_assets=true`;
+    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&total_assets=true&assets_in_use=true&assets_in_breakdown=true&critical_assets_breakdown=true&ppm_overdue_assets=true&amc_assets=true`;
     
     const response = await fetch(url, {
       headers: {
@@ -295,9 +291,8 @@ export const assetAnalyticsAPI = {
 
   async getAssetBreakdown(fromDate: Date, toDate: Date): Promise<AssetBreakdownData> {
     const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
     
-    const url = `${API_CONFIG.BASE_URL}/pms/assets/asset_breakdown.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&access_token=${accessToken}`;
+    const url = `${API_CONFIG.BASE_URL}/pms/assets/asset_breakdown.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`;
     
     const response = await fetch(url, {
       headers: {
@@ -317,10 +312,9 @@ export const assetAnalyticsAPI = {
 
   async getCategoryWiseAssets(fromDate: Date, toDate: Date): Promise<CategoryWiseAssetsData> {
     const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
     
     try {
-      const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&access_token=${accessToken}&asset_categorywise=true`;
+      const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&asset_categorywise=true`;
       
       const response = await fetch(url, {
         headers: {
