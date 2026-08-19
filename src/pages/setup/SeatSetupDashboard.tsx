@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Edit } from "lucide-react";
+import { Plus, Edit, Loader2 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 
 interface SeatSetupData {
@@ -19,6 +19,7 @@ interface SeatSetupData {
 
 export const SeatSetupDashboard = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
   const [seatSetups] = useState<SeatSetupData[]>([
     {
       id: 1,
@@ -82,6 +83,11 @@ export const SeatSetupDashboard = () => {
     }
   ]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
   const seatTypeHeaders = ["Angular Ws", "Flexi Desk", "Cabin", "Fixed Desk", "IOS", "cabin", "circular", "Rectangle"];
 
   const handleAddClick = () => {
@@ -94,15 +100,15 @@ export const SeatSetupDashboard = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <div className="flex-1 p-6">
+      <div className="flex-1 min-w-0 p-6">
         {/* Header */}
         <div className="mb-6">
           <div className="text-sm text-gray-500 mb-2">Space &gt; Seat Setup</div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <h1 className="text-2xl font-bold text-gray-800">SEAT SETUP</h1>
             <Button 
               onClick={handleAddClick}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
+              className="bg-brand hover:bg-brand-hover text-white flex items-center gap-2 [&_svg]:text-white shrink-0 whitespace-nowrap"
             >
               <Plus className="w-4 h-4" />
               Add
@@ -111,8 +117,8 @@ export const SeatSetupDashboard = () => {
         </div>
 
         {/* Seat Type Headers */}
-        <div className="bg-white rounded-lg border shadow-sm overflow-hidden mb-4">
-          <div className="bg-gray-100 p-4">
+        <div className="bg-white rounded-lg border shadow-sm overflow-x-auto mb-4">
+          <div className="bg-gray-100 p-4 min-w-[1200px]">
             <div className="flex gap-4">
               <div className="w-32">
                 <span className="text-sm font-medium text-gray-700">Seat Type</span>
@@ -127,8 +133,8 @@ export const SeatSetupDashboard = () => {
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
-          <Table>
+        <div className="bg-white rounded-lg border shadow-sm overflow-x-auto">
+          <Table className="min-w-[1200px]">
             <TableHeader>
               <TableRow className="bg-gray-50">
                 <TableHead className="font-semibold text-gray-700">Location</TableHead>
@@ -145,7 +151,16 @@ export const SeatSetupDashboard = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {seatSetups.map((setup) => (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={seatTypeHeaders.length + 3} className="text-center py-8 text-gray-500">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-5 h-5 animate-spin text-black" />
+                      <span>Loading...</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : seatSetups.map((setup) => (
                 <TableRow key={setup.id} className="border-b">
                   <TableCell className="font-medium">{setup.location}</TableCell>
                   <TableCell>{setup.floor}</TableCell>

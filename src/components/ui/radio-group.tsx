@@ -1,7 +1,5 @@
-
 import * as React from "react"
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group"
-import { Circle } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -11,12 +9,13 @@ const RadioGroup = React.forwardRef<
 >(({ className, ...props }, ref) => {
   return (
     <RadioGroupPrimitive.Root
+      ref={ref}
       className={cn("grid gap-2", className)}
       {...props}
-      ref={ref}
     />
   )
 })
+
 RadioGroup.displayName = RadioGroupPrimitive.Root.displayName
 
 const RadioGroupItem = React.forwardRef<
@@ -37,11 +36,12 @@ const RadioGroupItem = React.forwardRef<
       {...props}
     >
       <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
-        <Circle className="h-2.5 w-2.5 fill-[#C72030] text-[#C72030]" />
+        <div className="h-2 w-2 rounded-full bg-brand" />
       </RadioGroupPrimitive.Indicator>
     </RadioGroupPrimitive.Item>
   )
 })
+
 RadioGroupItem.displayName = RadioGroupPrimitive.Item.displayName
 
 export { RadioGroup, RadioGroupItem }

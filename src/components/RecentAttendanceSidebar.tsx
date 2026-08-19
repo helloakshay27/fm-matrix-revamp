@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Building2 } from 'lucide-react';
+import { User, Building2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 type RecentUser = {
   id: number;
@@ -15,6 +15,9 @@ export function RecentAttendanceSidebar() {
   const [users, setUsers] = useState<RecentUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    try { return localStorage.getItem("sidebarCollapsed") === "true"; } catch { return false; }
+  });
 
   useEffect(() => {
     const controller = new AbortController();
@@ -62,17 +65,52 @@ export function RecentAttendanceSidebar() {
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+    <div
+      className="bg-white border flex flex-col transition-all duration-300"
+      style={{
+        boxShadow: "0px 4px 14.2px 0px #0000001A",
+        width: isCollapsed ? 48 : 350,
+        minWidth: isCollapsed ? 48 : 350,
+        maxWidth: isCollapsed ? 48 : 350,
+        height: "100%",
+        overflow: "hidden",
+      }}
+    >
       {/* Header */}
-      <div className="mb-6">
-        <h2 className="text-lg font-bold text-[#C72030] mb-1">Recent Attendance</h2>
-        <div className="text-sm font-semibold text-black tracking-wide">
-          {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-        </div>
+      <div className={`flex items-center justify-between px-3 py-3 border-b border-gray-100 flex-shrink-0 ${isCollapsed ? "flex-col gap-2" : ""}`}>
+        {!isCollapsed && (
+          <h2 className="text-base font-semibold" style={{ color: "#c72030" }}>
+            Recent Attendance
+          </h2>
+        )}
+        <button
+          onClick={() => setIsCollapsed((v) => {
+            const next = !v;
+            try { localStorage.setItem("sidebarCollapsed", String(next)); } catch {}
+            return next;
+          })}
+          title={isCollapsed ? "Expand" : "Collapse"}
+          className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500"
+        >
+          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </button>
       </div>
 
+      {/* Collapsed vertical label */}
+      {isCollapsed && (
+        <div className="flex-1 flex items-center justify-center">
+          <span
+            className="text-xs font-semibold tracking-widest"
+            style={{ writingMode: "vertical-rl", color: "#c72030", transform: "rotate(180deg)" }}
+          >
+            Recent Attendance
+          </span>
+        </div>
+      )}
+
       {/* Attendance List */}
-      <div className="flex-1 overflow-y-auto space-y-6 pr-1 custom-scrollbar">
+      {!isCollapsed && (
+      <div className="flex-1 overflow-y-auto space-y-6 p-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {loading ? (
           <div className="text-sm text-black">Loading…</div>
         ) : error ? (
@@ -133,6 +171,7 @@ export function RecentAttendanceSidebar() {
           })
         )}
       </div>
+      )}
     </div>
   );
 }

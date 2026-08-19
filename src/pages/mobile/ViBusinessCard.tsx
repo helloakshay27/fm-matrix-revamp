@@ -64,6 +64,8 @@ export const ViBusinessCard: React.FC = () => {
   const [userData, setUserData] = useState<UserCardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const source = searchParams.get("source") || "";
+  const scannedById = searchParams.get("scanned_by_id") || "";
 
   // Add meta tags for cache control
   useEffect(() => {
@@ -109,13 +111,26 @@ export const ViBusinessCard: React.FC = () => {
 
         // Add timestamp for cache busting
         const timestamp = new Date().getTime();
+        const params = new URLSearchParams({
+          token: card,
+          // _t: timestamp.toString(),s
+        });
+
+        if (source) {
+          params.set("source", source);
+        }
+
+        if (scannedById) {
+          params.set("scanned_by_id", scannedById);
+        }
+
         const response = await fetch(
-          `https://live-api.gophygital.work/pms/users/user_info.json?token=${card}&_t=${timestamp}`
+          `https://live-api.gophygital.work/pms/users/user_info_by_enc_id.json?${params.toString()}`
         );
 
         if (!response.ok) {
           throw new Error("Failed to fetch user data");
-        }
+        } 
 
         const data: ApiResponse = await response.json();
 
@@ -423,7 +438,7 @@ END:VCARD`;
                         <span>
                           {item.title
                             ? item.title.charAt(0).toUpperCase() +
-                              item.title.slice(1)
+                            item.title.slice(1)
                             : ""}
                           :
                         </span>{" "}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './PATMCeoDashboard.css';
 import TopNav from './components/TopNav';
 import DateRangeBar from './components/DateRangeBar';
@@ -16,13 +16,53 @@ function fmtDate(d: string) {
   return dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+function monthDateRange() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const from = `${y}-${m}-01`;
+  const lastDay = new Date(y, now.getMonth() + 1, 0).getDate();
+  const to = `${y}-${m}-${String(lastDay).padStart(2, '0')}`;
+  return { from, to };
+}
+
+function fmtMonthLabel(from: string, to: string) {
+  const f = fmtDate(from);
+  const t = fmtDate(to);
+  return `This Month · ${f} – ${t}`;
+}
+
 export default function PATMCeoDashboard() {
+  const { from, to } = monthDateRange();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [activePreset, setActivePreset] = useState('This Month');
-  const [fromDate, setFromDate] = useState('2026-05-01');
-  const [toDate, setToDate] = useState('2026-05-31');
-  const [activeLabel, setActiveLabel] = useState('This Month · 01 May – 31 May 2026');
+  const [fromDate, setFromDate] = useState(from);
+  const [toDate, setToDate] = useState(to);
+  const [activeLabel, setActiveLabel] = useState(fmtMonthLabel(from, to));
   const [aiOpen, setAiOpen] = useState(false);
+  const [quote, setQuote] = useState<{ greeting?: string; quotes?: string } | null>(null);
+
+  // Fetch quote when AI modal opens
+  useEffect(() => {
+    let cancelled = false;
+    const fetchQuote = async () => {
+      try {
+        const token = localStorage.getItem('token') || '';
+        const res = await fetch('https://lockated-api.gophygital.work/patm_dashboard/patm_chatbot_quotes', {
+          headers: {
+            Authorization: token ? `Bearer ${token}` : 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxODkwMzcsImVtYWlsIjoiYXRoYXJ2Lmthcm5la2FyQGxvY2thdGVkLmNvbSJ9.K9KDSk-Ltl8ptPWB3FDxlwnhP080pHWzmIi8tKZJ1dg'
+          }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled) setQuote(data);
+      } catch (e) {
+        console.error('Failed to fetch quote', e);
+      }
+    };
+    fetchQuote();
+    return () => { cancelled = true; };
+  }, []);
 
   function handlePreset(label: string, from: string, to: string) {
     setActivePreset(label);
@@ -61,7 +101,7 @@ export default function PATMCeoDashboard() {
           onApply={handleApply}
         />
 
-        <KpiStrip />
+        <KpiStrip fromDate={fromDate} toDate={toDate} />
 
         <StickyActionBar />
 
@@ -79,12 +119,12 @@ export default function PATMCeoDashboard() {
         </div>
 
         {/* TAB CONTENT */}
-        {activeTab === 'overview' && <OverviewTab />}
-        {activeTab === 'delivery' && <DeliveryTab />}
-        {activeTab === 'team' && <TeamTab />}
+        {activeTab === 'overview' && <OverviewTab fromDate={fromDate} toDate={toDate} />}
+        {activeTab === 'delivery' && <DeliveryTab fromDate={fromDate} toDate={toDate} />}
+        {activeTab === 'team' && <TeamTab fromDate={fromDate} toDate={toDate} />}
       </div>
 
-      <AiBot isOpen={aiOpen} onToggle={() => setAiOpen((o) => !o)} />
+      <AiBot isOpen={aiOpen} onToggle={() => setAiOpen((o) => !o)} externalQuote={quote} />
     </div>
   );
 }

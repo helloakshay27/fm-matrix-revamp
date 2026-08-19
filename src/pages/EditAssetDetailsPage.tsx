@@ -83,6 +83,7 @@ import { MeterMeasureFields } from "@/components/asset/MeterMeasureFields";
 import { FormatShapes } from "@mui/icons-material";
 import { toast } from "sonner";
 import { assetFieldsConfig } from "../config/assetFieldsConfig";
+import { useAssetEvents } from "@/components/PostHogAssetEvents";
 
 // Image compression function
 const compressImage = async (
@@ -265,6 +266,9 @@ const AssetImageUpload = ({
 };
 
 export const EditAssetDetailsPage = () => {
+  const assetEvents = useAssetEvents();
+  // Snapshot of classification fields at load, to diff on save (Asset Classified Updated)
+  const originalClassRef = React.useRef<{ group: string; subGroup: string; criticality: string } | null>(null);
   const currency =
     (typeof window !== "undefined" &&
       window.localStorage.getItem("currency")) ||
@@ -2073,6 +2077,12 @@ export const EditAssetDetailsPage = () => {
         const asset = response?.data?.asset || response?.data;
         if (asset) {
           prefillFromAsset(asset);
+          // Capture original classification for change-detection on save
+          originalClassRef.current = {
+            group: String(asset.pms_asset_group_id ?? ""),
+            subGroup: String(asset.pms_asset_sub_group_id ?? ""),
+            criticality: asset.critical ? "critical" : "non_critical",
+          };
         }
       } catch (error) {
         console.error("Failed to fetch asset for edit", error);
@@ -4542,6 +4552,29 @@ export const EditAssetDetailsPage = () => {
     return [];
   };
 
+  // Emit "Asset Classified Updated" once per changed classification field, diffing
+  // the current form values against the snapshot captured at load.
+  const captureClassifiedUpdates = () => {
+    const orig = originalClassRef.current;
+    if (!orig) return;
+    const newGroup = String(formData.pms_asset_group_id ?? "");
+    const newSubGroup = String(formData.pms_asset_sub_group_id ?? "");
+    const newCriticality = String(formData.critical).toLowerCase().includes("non")
+      ? "non_critical"
+      : (String(formData.critical).toLowerCase().includes("critical") ? "critical" : "");
+    if (newGroup !== orig.group) {
+      assetEvents.onAssetClassifiedUpdated(id ?? null, "group", orig.group, newGroup);
+    }
+    if (newSubGroup !== orig.subGroup) {
+      assetEvents.onAssetClassifiedUpdated(id ?? null, "sub_group", orig.subGroup, newSubGroup);
+    }
+    if (newCriticality && newCriticality !== orig.criticality) {
+      assetEvents.onAssetClassifiedUpdated(id ?? null, "criticality", orig.criticality, newCriticality);
+    }
+    // Refresh the snapshot so a second save in the same session diffs correctly
+    originalClassRef.current = { group: newGroup, subGroup: newSubGroup, criticality: newCriticality || orig.criticality };
+  };
+
   const handleSaveAndShow = () => {
     setSubmitting(true);
     // Validate mandatory fields one by one
@@ -5086,6 +5119,7 @@ export const EditAssetDetailsPage = () => {
         .then((response) => {
           console.log("Asset updated successfully:", response.data);
           const assetId = response.data.asset?.id || id;
+          captureClassifiedUpdates();
           toast.success("Asset Updated Successfully", {
             description: "The asset has been updated and saved.",
             duration: 3000,
@@ -5143,6 +5177,7 @@ export const EditAssetDetailsPage = () => {
         .then((response) => {
           console.log("Asset updated successfully:", response.data);
           const assetId = response.data.asset?.id || id;
+          captureClassifiedUpdates();
           toast.success("Asset Updated Successfully", {
             description: "The asset has been updated and saved.",
             duration: 3000,
@@ -5694,6 +5729,7 @@ export const EditAssetDetailsPage = () => {
         .then((response) => {
           console.log("Asset updated successfully:", response.data);
           const assetId = response.data.asset?.id || id;
+          captureClassifiedUpdates();
           toast.success("Asset Updated Successfully", {
             description: "The asset has been updated and saved.",
             duration: 3000,
@@ -5769,6 +5805,7 @@ export const EditAssetDetailsPage = () => {
         .then((response) => {
           console.log("Asset updated successfully:", response.data);
           const assetId = response.data.asset?.id || id;
+          captureClassifiedUpdates();
           toast.success("Asset Updated Successfully", {
             description: "The asset has been updated and saved.",
             duration: 3000,

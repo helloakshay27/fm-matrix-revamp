@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "react-router-dom";
 import { ticketApi, type TicketFilters } from "@/api/tickets";
@@ -11,6 +11,7 @@ import Spinner from "@/components/common/Spinner";
 import ErrorState from "@/components/common/ErrorState";
 import NewTicketModal from "./NewTicketModal";
 import type { Category } from "@/types/schemas/ticket";
+import { useTicketEvents } from "@/components/PostHogTicketCreate";
 
 const statusDotColor: Record<string, string> = {
   open: "var(--forest)",
@@ -36,6 +37,7 @@ const CHANNELS = ["email", "whatsapp", "voice", "web", "api"];
 
 const TicketsPage = () => {
   const location = useLocation();
+  const events = useTicketEvents();
   const [showNew, setShowNew] = useState(false);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -45,6 +47,12 @@ const TicketsPage = () => {
   const [showFilters, setShowFilters] = useState(() =>
     Object.values((location.state as any)?.filters ?? {}).some(Boolean)
   );
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // MA-1, UE-1: Helpdesk Viewed — ticket list screen
+  useEffect(() => {
+    events.onHelpdeskViewed("ticket_list");
+  }, []);
 
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
 
@@ -88,7 +96,16 @@ const TicketsPage = () => {
   const topCategories = allCategories.filter((c: Category) => !c.parentId);
 
   const setFilter = useCallback((key: keyof typeof filters, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value || undefined }));
+    setFilters((prev) => {
+      const next = { ...prev, [key]: value || undefined };
+      if (value) {
+        events.onFilterApplied(
+          Object.keys(next).filter((k) => next[k as keyof typeof next]),
+          Object.values(next).filter(Boolean).length
+        );
+      }
+      return next;
+    });
     setPage(1);
   }, []);
 
@@ -101,6 +118,12 @@ const TicketsPage = () => {
   const handleSearch = (val: string) => {
     setSearch(val);
     setPage(1);
+    clearTimeout(searchDebounceRef.current);
+    if (val.trim()) {
+      searchDebounceRef.current = setTimeout(() => {
+        events.onSearchPerformed(val.length, data?.meta.total ?? 0);
+      }, 600);
+    }
   };
 
   return (
@@ -120,7 +143,13 @@ const TicketsPage = () => {
             </p>
           )}
         </div>
-        <button onClick={() => setShowNew(true)} className="btn-primary">
+        <button
+          onClick={() => {
+            setShowNew(true);
+            events.onTicketCreateFormOpened("add_button");
+          }}
+          className="btn-primary"
+        >
           + New Ticket
         </button>
       </div>
@@ -397,6 +426,9 @@ const TicketsPage = () => {
                         }
                         onMouseLeave={(e) =>
                           (e.currentTarget.style.color = "var(--text)")
+                        }
+                        onClick={() =>
+                          events.onTicketDetailOpened(ticket.id, "list")
                         }
                       >
                         {ticket.subject}

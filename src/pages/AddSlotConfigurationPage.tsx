@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Input } from '../components/ui/input';
+import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLayout } from '../contexts/LayoutContext';
@@ -19,6 +19,147 @@ import {
   fetchParkingCategories, 
   ParkingCategory 
 } from '../services/parkingConfigAPI';
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: '#ffffff !important',
+  },
+};
+
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
+
+type SlotType = 'nonStack' | 'stack' | 'reserved';
+
+interface ParkingSlotCategoryProps {
+  title: string;
+  categoryId: number;
+  type: SlotType;
+  count: number;
+  nonStackCount: number;
+  stackCount: number;
+  buttonColorClass: string;
+  isStack?: boolean;
+  customSlotNames: Record<string, string>;
+  onSlotCountChange: (categoryId: number, type: SlotType, value: number) => void;
+  onSlotNameChange: (categoryId: number, type: SlotType, index: number, newName: string) => void;
+}
+
+// Defined at module scope (not inside the page component) so its identity stays
+// stable across re-renders — otherwise every keystroke recreated this component,
+// forcing React to unmount/remount the whole slot grid and losing scroll/focus.
+const ParkingSlotCategory: React.FC<ParkingSlotCategoryProps> = ({
+  title,
+  categoryId,
+  type,
+  count,
+  nonStackCount,
+  stackCount,
+  buttonColorClass,
+  isStack = false,
+  customSlotNames,
+  onSlotCountChange,
+  onSlotNameChange,
+}) => {
+  // Local, uncommitted value — typing here must NOT touch the actual slot
+  // count/grid until "Add" is clicked.
+  const [draftCount, setDraftCount] = useState(String(count));
+
+  useEffect(() => {
+    setDraftCount(String(count));
+  }, [count]);
+
+  const generateSlotName = (index: number) => {
+    const key = `${categoryId}_${type}_${index}`;
+    const customName = customSlotNames[key];
+    if (customName) return customName;
+
+    const prefix = 'P';
+
+    if (isStack) {
+      const stackPairIndex = Math.floor(index / 2);
+      const stackSlotNumber = nonStackCount + stackPairIndex + 1;
+      const suffix = index % 2 === 0 ? 'A' : 'B';
+      return `${prefix}${stackSlotNumber}${suffix}`;
+    }
+
+    let baseNumber = 1;
+    if (type === 'stack') {
+      baseNumber = nonStackCount + 1;
+    } else if (type === 'reserved') {
+      baseNumber = nonStackCount + stackCount + 1;
+    }
+
+    return `${prefix}${baseNumber + index}`;
+  };
+
+  const handleAddClick = () => {
+    const parsed = Math.max(0, parseInt(draftCount, 10) || 0);
+    onSlotCountChange(categoryId, type, parsed);
+  };
+
+  return (
+    <div>
+      <h4 className="font-medium mb-4">{title}</h4>
+      <div className="bg-white rounded-lg p-4 mb-4 h-[200px] border-2 border-dashed border-gray-200 overflow-y-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          {Array.from({ length: isStack ? count * 2 : count }, (_, index) => (
+            <div key={index} className="relative">
+              <Input
+                value={generateSlotName(index)}
+                onChange={(e) => onSlotNameChange(categoryId, type, index, e.target.value)}
+                className="w-full h-10 text-xs text-center bg-white border-gray-300 rounded-lg font-medium"
+                placeholder="Slot name"
+              />
+              <button
+                className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 text-xs border-2 border-white"
+                onClick={() => onSlotCountChange(categoryId, type, count - 1)}
+              >
+                &#x2715;
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <Input
+          type="number"
+          value={draftCount}
+          onChange={(e) => setDraftCount(e.target.value)}
+          className="w-16 h-8 text-center"
+          min="0"
+        />
+        <Button
+          size="sm"
+          className={`${buttonColorClass} text-white`}
+          onClick={handleAddClick}
+        >
+          Add
+        </Button>
+        <span className="text-sm font-medium text-gray-600">
+          Total: {isStack ? count * 2 : count}
+        </span>
+      </div>
+    </div>
+  );
+};
 
 export const AddSlotConfigurationPage = () => {
   const navigate = useNavigate();
@@ -287,6 +428,19 @@ export const AddSlotConfigurationPage = () => {
     }));
   };
 
+  const handleSlotNameChange = (
+    categoryId: number,
+    type: 'nonStack' | 'stack' | 'reserved',
+    index: number,
+    newName: string
+  ) => {
+    const key = `${categoryId}_${type}_${index}`;
+    setCustomSlotNames(prev => ({
+      ...prev,
+      [key]: newName
+    }));
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     
@@ -307,101 +461,6 @@ export const AddSlotConfigurationPage = () => {
     };
   }, [formData.floorMap]);
 
-  // A reusable component for rendering a parking slot category
-  const ParkingSlotCategory = ({
-    title,
-    categoryId,
-    type,
-    count,
-    buttonColorClass,
-    isStack = false,
-  }: {
-    title: string;
-    categoryId: number;
-    type: 'nonStack' | 'stack' | 'reserved';
-    count: number;
-    buttonColorClass: string;
-    isStack?: boolean;
-  }) => {
-
-    const generateSlotName = (index: number) => {
-        const key = `${categoryId}_${type}_${index}`;
-        const customName = customSlotNames[key];
-        if (customName) return customName;
-        
-        const prefix = 'P'; // Use 'P' prefix for all categories
-        
-        if (isStack) {
-            const stackPairIndex = Math.floor(index / 2);
-            const nonStackCount = formData.categories[categoryId]?.nonStack || 0;
-            const stackSlotNumber = nonStackCount + stackPairIndex + 1;
-            const suffix = index % 2 === 0 ? 'A' : 'B';
-            return `${prefix}${stackSlotNumber}${suffix}`;
-        }
-        
-        let baseNumber = 1;
-        if (type === 'stack') {
-             baseNumber = (formData.categories[categoryId]?.nonStack || 0) + 1;
-        } else if (type === 'reserved') {
-             baseNumber = (formData.categories[categoryId]?.nonStack || 0) + (formData.categories[categoryId]?.stack || 0) + 1;
-        }
-        
-        return `${prefix}${baseNumber + index}`;
-    };
-    
-    const handleSlotNameChange = (index: number, newName: string) => {
-      const key = `${categoryId}_${type}_${index}`;
-      setCustomSlotNames(prev => ({
-        ...prev,
-        [key]: newName
-      }));
-    };
-
-    return (
-      <div>
-        <h4 className="font-medium mb-4">{title}</h4>
-        <div className="bg-white rounded-lg p-4 mb-4 h-[200px] border-2 border-dashed border-gray-200 overflow-y-auto">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {Array.from({ length: isStack ? count * 2 : count }, (_, index) => (
-              <div key={index} className="relative">
-                <Input
-                  value={generateSlotName(index)}
-                  onChange={(e) => handleSlotNameChange(index, e.target.value)}
-                  className="w-full h-10 text-xs text-center bg-white border-gray-300 rounded-lg font-medium"
-                  placeholder="Slot name"
-                />
-                <button
-                  className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 text-xs border-2 border-white"
-                  onClick={() => handleSlotCountChange(categoryId, type, count - 1)}
-                >
-                  &#x2715;
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Input
-            type="number"
-            value={count}
-            onChange={(e) => handleSlotCountChange(categoryId, type, parseInt(e.target.value, 10) || 0)}
-            className="w-16 h-8 text-center"
-            min="0"
-          />
-          <Button
-            size="sm"
-            className={`${buttonColorClass} text-white`}
-            onClick={() => handleSlotCountChange(categoryId, type, count + 1)}
-          >
-            Add
-          </Button>
-          <span className="text-sm font-medium text-gray-600">
-            Total: {isStack ? count * 2 : count}
-          </span>
-        </div>
-      </div>
-    );
-  };
 
 
   return (
@@ -421,50 +480,59 @@ export const AddSlotConfigurationPage = () => {
       <div className="bg-white rounded-lg p-6 shadow-sm">
         {/* Location and Floor Selection */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">Location <span className="text-red-500">*</span></label>
-            <Select 
-              value={formData.building_id} 
-              onValueChange={(value) => setFormData(prev => ({ ...prev, building_id: value }))}
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="location-label">Location *</InputLabel>
+            <MuiSelect
+              labelId="location-label"
+              label="Location *"
+              value={formData.building_id}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, building_id: e.target.value as string }))
+              }
               disabled={loading}
+              sx={fieldStyles}
+              MenuProps={selectMenuProps}
             >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={loading ? "Loading buildings..." : "Select Location"} />
-              </SelectTrigger>
-              <SelectContent>
-                {buildings.map((building) => (
-                  <SelectItem key={building.id} value={building.id.toString()}>
-                    {building.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">Floor <span className="text-red-500">*</span></label>
-            <Select 
-              value={formData.floor_id} 
-              onValueChange={(value) => setFormData(prev => ({ ...prev, floor_id: value }))}
+              <MenuItem value="">
+                <em>{loading ? 'Loading buildings...' : 'Select Location'}</em>
+              </MenuItem>
+              {buildings.map((building) => (
+                <MenuItem key={building.id} value={building.id.toString()}>
+                  {building.name}
+                </MenuItem>
+              ))}
+            </MuiSelect>
+          </FormControl>
+
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="floor-label">Floor *</InputLabel>
+            <MuiSelect
+              labelId="floor-label"
+              label="Floor *"
+              value={formData.floor_id}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, floor_id: e.target.value as string }))
+              }
               disabled={loading || !formData.building_id}
+              sx={fieldStyles}
+              MenuProps={selectMenuProps}
             >
-              <SelectTrigger className="w-full">
-                <SelectValue 
-                  placeholder={
-                    !formData.building_id ? "Select Location first" :
-                    loading ? "Loading floors..." : 
-                    "Select Floor"
-                  } 
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {floors.map((floor) => (
-                  <SelectItem key={floor.id} value={floor.id.toString()}>
-                    {floor.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              <MenuItem value="">
+                <em>
+                  {!formData.building_id
+                    ? 'Select Location first'
+                    : loading
+                      ? 'Loading floors...'
+                      : 'Select Floor'}
+                </em>
+              </MenuItem>
+              {floors.map((floor) => (
+                <MenuItem key={floor.id} value={floor.id.toString()}>
+                  {floor.name}
+                </MenuItem>
+              ))}
+            </MuiSelect>
+          </FormControl>
         </div>
 
         {/* QR Code Configuration */}
@@ -487,12 +555,11 @@ export const AddSlotConfigurationPage = () => {
       
         {/* Parking Configuration */}
         <div className="mb-8">
-          <div className="text-sm font-semibold text-red-600 mb-6 border-b pb-2">Parking Configuration</div>
+          <div className="text-sm font-semibold text-brand mb-6 border-b pb-2">Parking Configuration</div>
           
-          {/* 2 Wheeler Section */}
           {/* Dynamic Parking Categories */}
           {parkingCategories.map((category, index) => (
-            <div key={category.id} className={`${index % 2 === 0 ? 'bg-pink-50' : 'bg-blue-50'} rounded-lg p-6 mb-6`}>
+            <div key={category.id} className={`${index % 2 === 0 ? 'bg-gray-50' : 'bg-gray-50'} rounded-lg p-6 mb-6`}>
               <h3 className="text-lg font-semibold mb-6">
                 {category.name}
               </h3>
@@ -502,14 +569,24 @@ export const AddSlotConfigurationPage = () => {
                   categoryId={category.id}
                   type="nonStack"
                   count={formData.categories[category.id]?.nonStack || 0}
-                  buttonColorClass="bg-purple-600 hover:bg-purple-700"
+                  nonStackCount={formData.categories[category.id]?.nonStack || 0}
+                  stackCount={formData.categories[category.id]?.stack || 0}
+                  customSlotNames={customSlotNames}
+                  onSlotCountChange={handleSlotCountChange}
+                  onSlotNameChange={handleSlotNameChange}
+                  buttonColorClass="bg-brand hover:bg-brand-hover"
                 />
                 <ParkingSlotCategory
                   title="Stack Parking"
                   categoryId={category.id}
                   type="stack"
                   count={formData.categories[category.id]?.stack || 0}
-                  buttonColorClass="bg-cyan-500 hover:bg-cyan-600"
+                  nonStackCount={formData.categories[category.id]?.nonStack || 0}
+                  stackCount={formData.categories[category.id]?.stack || 0}
+                  customSlotNames={customSlotNames}
+                  onSlotCountChange={handleSlotCountChange}
+                  onSlotNameChange={handleSlotNameChange}
+                  buttonColorClass="bg-brand hover:bg-brand-hover"
                   isStack
                 />
                 <ParkingSlotCategory
@@ -517,7 +594,12 @@ export const AddSlotConfigurationPage = () => {
                   categoryId={category.id}
                   type="reserved"
                   count={formData.categories[category.id]?.reserved || 0}
-                  buttonColorClass={index % 2 === 0 ? "bg-purple-600 hover:bg-purple-700" : "bg-cyan-500 hover:bg-cyan-600"}
+                  nonStackCount={formData.categories[category.id]?.nonStack || 0}
+                  stackCount={formData.categories[category.id]?.stack || 0}
+                  customSlotNames={customSlotNames}
+                  onSlotCountChange={handleSlotCountChange}
+                  onSlotNameChange={handleSlotNameChange}
+                  buttonColorClass="bg-brand hover:bg-brand-hover"
                 />
               </div>
             </div>
@@ -537,7 +619,7 @@ export const AddSlotConfigurationPage = () => {
             />
             <label
               htmlFor="floorMap"
-              className="cursor-pointer text-red-600 font-medium hover:text-red-700"
+              className="cursor-pointer text-brand font-medium hover:text-brand-hover"
             >
               Choose File
             </label>
@@ -562,20 +644,22 @@ export const AddSlotConfigurationPage = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-center items-center gap-4">
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-3">
           <Button
             onClick={handleSubmit}
             disabled={submitting || !formData.building_id || !formData.floor_id}
-            className="bg-purple-600 hover:bg-purple-700 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
+            variant="ghost"
+            className="fm-button-fix fm-button-brand px-8 w-full sm:w-auto"
           >
-            {submitting ? 'Creating...' : 'Submit'}
+            {submitting ? 'Creating...' : 'SUBMIT'}
           </Button>
           <Button
             variant="outline"
             onClick={handleCancel}
             disabled={submitting}
+            className="border-brand text-brand px-8 w-full sm:w-auto"
           >
-            Cancel
+            CANCEL
           </Button>
         </div>
       </div>

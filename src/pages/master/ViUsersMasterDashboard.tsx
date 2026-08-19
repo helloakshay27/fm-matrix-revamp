@@ -193,7 +193,7 @@ export const ViUsersMasterDashboard = () => {
                         onCheckedChange={(checked) =>
                             handleToggleUserStatus(user.id, checked)
                         }
-                        className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                        className="disabled:data-[state=checked]:bg-gray-300 disabled:data-[state=unchecked]:bg-gray-200"
                     />
                 );
             case "status":
@@ -359,7 +359,7 @@ export const ViUsersMasterDashboard = () => {
                                 id="webEnabledFilter"
                                 checked={webEnabledFilter}
                                 onCheckedChange={handleWebEnabledFilterChange}
-                                className="data-[state=checked]:bg-[#C72030]"
+                                className="data-[state=checked]:bg-[#C72030] disabled:data-[state=checked]:bg-gray-300 disabled:data-[state=unchecked]:bg-gray-200"
                             />
                             <Label htmlFor="webEnabledFilter" className="text-sm text-gray-600 cursor-pointer">
                                 Web Enabled Only

@@ -1,13 +1,22 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { SlidersHorizontal } from 'lucide-react';
 import { RVehiclesHistoryFilterModal } from '@/components/RVehiclesHistoryFilterModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useNavigate } from 'react-router-dom';
 
-const vehicleHistoryData = [
+interface VehicleHistoryItem {
+  id: number;
+  vehicleNumber: string;
+  category: string;
+  staffName: string;
+  inDate: string;
+  inTime: string;
+  outDate: string;
+  outTime: string;
+}
+
+const vehicleHistoryData: VehicleHistoryItem[] = [
   {
     id: 1,
     vehicleNumber: 'DD55GG5555',
@@ -16,7 +25,7 @@ const vehicleHistoryData = [
     inDate: '13/04/2020',
     inTime: '12:08 PM',
     outDate: '05/10/2020',
-    outTime: '1:16 PM'
+    outTime: '1:16 PM',
   },
   {
     id: 2,
@@ -26,7 +35,7 @@ const vehicleHistoryData = [
     inDate: '13/04/2020',
     inTime: '',
     outDate: '05/10/2020',
-    outTime: '1:16 PM'
+    outTime: '1:16 PM',
   },
   {
     id: 3,
@@ -36,7 +45,7 @@ const vehicleHistoryData = [
     inDate: '13/04/2020',
     inTime: '12:38 PM',
     outDate: '',
-    outTime: ''
+    outTime: '',
   },
   {
     id: 4,
@@ -46,7 +55,7 @@ const vehicleHistoryData = [
     inDate: '13/04/2020',
     inTime: '12:45 PM',
     outDate: '',
-    outTime: ''
+    outTime: '',
   },
   {
     id: 5,
@@ -56,7 +65,7 @@ const vehicleHistoryData = [
     inDate: '13/04/2020',
     inTime: '12:45 PM',
     outDate: '',
-    outTime: ''
+    outTime: '',
   },
   {
     id: 6,
@@ -66,7 +75,7 @@ const vehicleHistoryData = [
     inDate: '13/04/2020',
     inTime: '12:45 PM',
     outDate: '',
-    outTime: ''
+    outTime: '',
   },
   {
     id: 7,
@@ -76,7 +85,7 @@ const vehicleHistoryData = [
     inDate: '05/10/2020',
     inTime: '4:25 PM',
     outDate: '05/10/2020',
-    outTime: '5:14 PM'
+    outTime: '5:14 PM',
   },
   {
     id: 8,
@@ -86,7 +95,7 @@ const vehicleHistoryData = [
     inDate: '05/10/2020',
     inTime: '4:57 PM',
     outDate: '05/10/2020',
-    outTime: '5:14 PM'
+    outTime: '5:14 PM',
   },
   {
     id: 9,
@@ -96,7 +105,7 @@ const vehicleHistoryData = [
     inDate: '05/10/2020',
     inTime: '5:18 PM',
     outDate: '05/10/2020',
-    outTime: '5:19 PM'
+    outTime: '5:19 PM',
   },
   {
     id: 10,
@@ -106,7 +115,7 @@ const vehicleHistoryData = [
     inDate: '05/10/2020',
     inTime: '6:51 PM',
     outDate: '05/10/2020',
-    outTime: '6:52 PM'
+    outTime: '6:52 PM',
   },
   {
     id: 11,
@@ -116,7 +125,7 @@ const vehicleHistoryData = [
     inDate: '05/10/2020',
     inTime: '6:59 PM',
     outDate: '05/10/2020',
-    outTime: '6:59 PM'
+    outTime: '6:59 PM',
   },
   {
     id: 12,
@@ -126,7 +135,7 @@ const vehicleHistoryData = [
     inDate: '05/10/2020',
     inTime: '6:59 PM',
     outDate: '05/10/2020',
-    outTime: '7:01 PM'
+    outTime: '7:01 PM',
   },
   {
     id: 13,
@@ -136,7 +145,7 @@ const vehicleHistoryData = [
     inDate: '05/10/2020',
     inTime: '7:00 PM',
     outDate: '06/10/2020',
-    outTime: '5:11 PM'
+    outTime: '5:11 PM',
   },
   {
     id: 14,
@@ -146,91 +155,128 @@ const vehicleHistoryData = [
     inDate: '06/10/2020',
     inTime: '10:39 AM',
     outDate: '06/10/2020',
-    outTime: '5:11 PM'
-  }
+    outTime: '5:11 PM',
+  },
 ];
 
-// Column configuration for the enhanced table
 const historyColumns: ColumnConfig[] = [
-  { key: 'vehicleNumber', label: 'Vehicle Number', sortable: true, hideable: true, draggable: true },
-  { key: 'category', label: 'Category', sortable: true, hideable: true, draggable: true },
-  { key: 'staffName', label: 'Staff Name', sortable: true, hideable: true, draggable: true },
-  { key: 'inDate', label: 'In Date', sortable: true, hideable: true, draggable: true },
-  { key: 'inTime', label: 'In Time', sortable: true, hideable: true, draggable: true },
-  { key: 'outDate', label: 'Out Date', sortable: true, hideable: true, draggable: true },
-  { key: 'outTime', label: 'Out Time', sortable: true, hideable: true, draggable: true }
+  { key: 'vehicleNumber', label: 'Vehicle Number', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'category', label: 'Category', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'staffName', label: 'Staff Name', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'inDate', label: 'In Date', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'inTime', label: 'In Time', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'outDate', label: 'Out Date', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'outTime', label: 'Out Time', sortable: true, hideable: true, draggable: true, defaultVisible: true },
 ];
 
 export const RVehiclesHistoryDashboard = () => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [historyData, setHistoryData] = useState<VehicleHistoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    let active = true;
+    const fetchHistory = async () => {
+      setLoading(true);
+      try {
+        await new Promise((res) => setTimeout(res, 800));
+        if (active) setHistoryData(vehicleHistoryData);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    fetchHistory();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const filteredData = useMemo(() => {
+    if (!searchTerm) return historyData;
+    const q = searchTerm.toLowerCase();
+    return historyData.filter((item) =>
+      Object.values(item).some((value) =>
+        String(value ?? '').toLowerCase().includes(q)
+      )
+    );
+  }, [historyData, searchTerm]);
 
   const handleAllVehiclesClick = () => {
     navigate('/security/vehicle/r-vehicles');
   };
 
-  // Render row function for enhanced table
-  const renderHistoryRow = (vehicle: any) => ({
-    vehicleNumber: <span className="font-medium text-gray-900">{vehicle.vehicleNumber}</span>,
-    category: vehicle.category || '--',
-    staffName: vehicle.staffName ? <span className="text-blue-600">{vehicle.staffName}</span> : '--',
-    inDate: vehicle.inDate,
-    inTime: vehicle.inTime ? <span className="text-blue-600">{vehicle.inTime}</span> : '--',
-    outDate: vehicle.outDate || '--',
-    outTime: vehicle.outTime ? <span className="text-blue-600">{vehicle.outTime}</span> : '--'
-  });
+  const renderCell = (vehicle: VehicleHistoryItem, columnKey: string) => {
+    switch (columnKey) {
+      case 'vehicleNumber':
+        return <span className="font-medium text-gray-900">{vehicle.vehicleNumber}</span>;
+      case 'category':
+        return vehicle.category || '--';
+      case 'staffName':
+        return vehicle.staffName ? (
+          <span className="text-gray-900 font-medium">{vehicle.staffName}</span>
+        ) : (
+          '--'
+        );
+      case 'inDate':
+        return vehicle.inDate || '--';
+      case 'inTime':
+        return vehicle.inTime ? (
+          <span className="text-gray-900">{vehicle.inTime}</span>
+        ) : (
+          '--'
+        );
+      case 'outDate':
+        return vehicle.outDate || '--';
+      case 'outTime':
+        return vehicle.outTime ? (
+          <span className="text-gray-900">{vehicle.outTime}</span>
+        ) : (
+          '--'
+        );
+      default:
+        return vehicle[columnKey as keyof VehicleHistoryItem] ?? '--';
+    }
+  };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Vehicle History</h1>
-      
-      {/* Action Buttons */}
-      <div className="flex items-center gap-3 mb-6">
-        <Button 
-          onClick={() => setIsFilterModalOpen(true)}
-          style={{ backgroundColor: '#C72030' }}
-          className="hover:opacity-90 text-white px-4 py-2 rounded flex items-center gap-2"
-        >
-          <SlidersHorizontal className="w-4 h-4" />
-          Filters
-        </Button>
-        <Button 
-          onClick={handleAllVehiclesClick}
-          style={{ backgroundColor: '#C72030' }}
-          className="hover:opacity-90 text-white px-6 py-2 rounded"
-        >
-          All Vehicles
-        </Button>
-      </div>
-      {/* Enhanced Table */}
+    <div className="flex-1 p-6 bg-white min-h-screen">
+      <h1 className="text-2xl font-bold text-gray-900 tracking-tight mb-6">
+        Vehicle History
+      </h1>
+
       <EnhancedTable
-        data={vehicleHistoryData}
+        data={filteredData}
         columns={historyColumns}
-        renderRow={renderHistoryRow}
-        enableSearch={true}
-        enableSelection={false}
-        enableExport={true}
+        renderCell={renderCell}
+        enableSearch
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        enableExport
         storageKey="r-vehicles-history-table"
         emptyMessage="No vehicle history available"
         exportFileName="r-vehicles-history"
         searchPlaceholder="Search by vehicle number, category, or staff name"
         hideTableExport={false}
         hideColumnsButton={false}
+        loading={loading}
+        pagination
+        pageSize={10}
+        onFilterClick={() => setIsFilterModalOpen(true)}
         leftActions={
-          <div className="flex gap-3">
-            <Button 
+          <div className="flex items-center gap-2">
+            <Button
               onClick={handleAllVehiclesClick}
-              style={{ backgroundColor: '#C72030' }}
-              className="hover:opacity-90 text-white px-4 py-2"
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap"
             >
               All Vehicles
             </Button>
           </div>
         }
-        onFilterClick={() => setIsFilterModalOpen(true)}
       />
 
-      <RVehiclesHistoryFilterModal 
+      <RVehiclesHistoryFilterModal
         isOpen={isFilterModalOpen}
         onClose={() => setIsFilterModalOpen(false)}
       />

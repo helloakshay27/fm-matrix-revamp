@@ -20,6 +20,7 @@ import {
   type CommunityEngagement,
   type PulseFilters,
 } from "@/services/pulseDashboardApi";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 const PALETTE = [
   "#DA7756",
@@ -67,6 +68,14 @@ export function PulseCommunity({ filters }: Props) {
   const [overview, setOverview] = useState<CommunityOverview | null>(null);
   const [engagementData, setEngagementData] = useState<CommunityEngagement | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const pulseEvents = usePulseEvents();
+
+
+  // Fires once when the Community tab is mounted (tab switch renders a fresh instance).
+  useEffect(() => {
+    pulseEvents.onCommunityViewed();
+  }, [pulseEvents]);
 
   useEffect(() => {
     loadAll();

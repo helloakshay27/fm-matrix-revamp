@@ -83,6 +83,13 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
+    key: "rejectionReason",
+    label: "Rejection Reason",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
     key: "createdBy",
     label: "Created By",
     sortable: true,
@@ -166,6 +173,7 @@ export const MaterialPRDashboard = () => {
       activeInactive: item.active,
       allLevelApproved: item.all_level_approved,
       canEditAll: item.can_edit_all,
+      rejectionReason: item.rejection_reason,
     }));
     setMaterialPR(formatedResponse);
     setPagination({

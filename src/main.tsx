@@ -2,40 +2,59 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import "./styles/product-pages.css";
+import "./styles/feature-system.css";
 import { initColorPatch } from "./utils/colorPatch.ts";
 import { Provider } from "react-redux";
 import { store } from "./store/store.ts";
 import { BrowserRouter as Router } from "react-router-dom";
 import { PostHogProvider } from "@posthog/react";
 import { PostHogPageView } from "./components/PostHogPageView.tsx";
+import posthog from "posthog-js";
 // import { registerServiceWorker } from "./utils/pwa.ts";
 
 // Register service worker for PWA
 // registerServiceWorker();
 
 // Apply Lockated Brand Theme and color patch on live and local environments
-if (
-  window.location.hostname === "fm-matrix.lockated.com" ||
-  window.location.hostname === "lockated.gophygital.work" ||
-  window.location.hostname === "pulse-uat.panchshil.com" ||
-  window.location.hostname === "localhost"
-) {
-  import("./styles/theme.css"); // Lockated Brand Theme - Edit this file for global color changes
-  // Initialise runtime color patcher — overrides MUI inline styles and any
-  // legacy #C72030 / #C62828 colors injected via sx props or inline styles.
-  initColorPatch();
+// if (
+//   window.location.hostname === "fm-matrix.lockated.com" ||
+//   window.location.hostname === "lockated.gophygital.work" ||
+//   window.location.hostname === "localhost"
+// ) {
+import("./styles/theme.css"); // Lockated Brand Theme - Edit this file for global color changes
+// Initialise runtime color patcher — overrides MUI inline styles and any
+// legacy #C72030 / #C62828 colors injected via sx props or inline styles.
+initColorPatch();
+// }
+
+// Initialize posthog BEFORE React renders so posthog.capture() calls inside
+// useEffect hooks are never made on an uninitialized instance. When using
+// apiKey + options directly in PostHogProvider, posthog.init() is called in a
+// useEffect (after render), so child components that call posthog.capture()
+// during their own mount effects race against init and events get dropped.
+const posthogToken = import.meta.env.VITE_POSTHOG_PROJECT_TOKEN;
+const posthogHost = import.meta.env.VITE_POSTHOG_HOST;
+
+// posthog.init(undefined) does not throw — it returns a client that silently
+// drops every capture(). That failure mode is indistinguishable from "the
+// instrumentation is broken", so say so loudly instead of guessing later.
+if (!posthogToken || posthogToken === "phc_replace_me") {
+  console.error(
+    "[PostHog] VITE_POSTHOG_PROJECT_TOKEN is not set — analytics is DISABLED " +
+    "and every event will be dropped. Copy .env.example to .env and restart " +
+    "the dev server (Vite inlines VITE_* at build time)."
+  );
+} else {
+  posthog.init(posthogToken, {
+    api_host: posthogHost,
+    autocapture: false,
+    capture_pageview: false, // handled manually by PostHogPageView
+    disable_session_recording: true,
+  });
 }
 
-const posthogOptions = {
-  api_host: import.meta.env.VITE_POSTHOG_HOST,
-  defaults: "2026-01-30",
-} as const;
-
 createRoot(document.getElementById("root")!).render(
-  <PostHogProvider
-    apiKey={import.meta.env.VITE_POSTHOG_PROJECT_TOKEN}
-    options={posthogOptions}
-  >
+  <PostHogProvider client={posthog}>
     <Provider store={store}>
       <Router>
         <PostHogPageView />

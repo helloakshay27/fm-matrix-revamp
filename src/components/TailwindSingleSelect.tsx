@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 export type TSOption = { label: string; value: string };
 
 type Props = {
-  label?: string;
+  label?: React.ReactNode;
   options: TSOption[];
   value: string | null | undefined;
   onChange: (value: string) => void;
@@ -13,7 +13,9 @@ type Props = {
   buttonClassName?: string;
 };
 
-// Tailwind-styled single-select matching TailwindMultiSelect visuals (same height, border, chevron)
+const VI_RED = '#EE0B0B';
+const LABEL_COLOR = '#6B7C5A';
+
 const TailwindSingleSelect: React.FC<Props> = ({
   label,
   options,
@@ -30,7 +32,6 @@ const TailwindSingleSelect: React.FC<Props> = ({
   const [coords, setCoords] = useState<{ top: number; left: number; width: number } | null>(null);
   const [search, setSearch] = useState('');
 
-  // close on outside click
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
       const target = e.target as Node;
@@ -42,12 +43,11 @@ const TailwindSingleSelect: React.FC<Props> = ({
     return () => document.removeEventListener('mousedown', onDocClick);
   }, []);
 
-  // position menu using viewport coords
   useEffect(() => {
     const updateCoords = () => {
       if (!buttonRef.current) return;
       const r = buttonRef.current.getBoundingClientRect();
-      setCoords({ top: r.bottom, left: r.left, width: r.width });
+      setCoords({ top: r.bottom + 4, left: r.left, width: r.width });
     };
     if (open) {
       updateCoords();
@@ -65,17 +65,18 @@ const TailwindSingleSelect: React.FC<Props> = ({
     return found?.label ?? placeholder;
   }, [options, value, placeholder]);
 
-  // Filter options by search
   const filteredOptions = useMemo(() => {
     if (!search.trim()) return options;
     const s = search.trim().toLowerCase();
-    return options.filter(o => o.label.toLowerCase().includes(s));
+    return options.filter((o) => o.label.toLowerCase().includes(s));
   }, [options, search]);
 
   const handleSelect = (v: string) => {
     onChange(v);
     setOpen(false);
   };
+
+  const hasValue = Boolean(value);
 
   return (
     <div ref={rootRef} className={`relative ${className}`}>
@@ -84,13 +85,13 @@ const TailwindSingleSelect: React.FC<Props> = ({
           style={{
             display: 'block',
             fontFamily: '"Work Sans", "Helvetica Neue", Arial, sans-serif',
-            fontWeight: 400,
-            fontStyle: 'normal',
-            fontSize: '16px',
+            fontWeight: 500,
+            fontSize: '12px',
             lineHeight: '100%',
-            letterSpacing: '0%',
-            marginBottom: '0.25rem',
-             marginLeft: '10px',
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
+            color: LABEL_COLOR,
+            marginBottom: '6px',
           }}
         >
           {label}
@@ -98,68 +99,102 @@ const TailwindSingleSelect: React.FC<Props> = ({
       ) : null}
       <button
         type="button"
-        className={`w-56 min-w-[160px] h-10 inline-flex items-center justify-between rounded-[25px] border border-gray-300 bg-white px-3 py-0 text-left text-sm text-gray-900 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-0 focus:border-gray-400 ${buttonClassName}`}
+        className={`w-full h-10 inline-flex items-center justify-between rounded-lg border bg-white px-3 py-0 text-left text-sm transition-colors focus:outline-none ${
+          open
+            ? 'border-[#EE0B0B] ring-1 ring-[#EE0B0B]/30'
+            : 'border-gray-300 hover:border-[#EE0B0B]'
+        } ${buttonClassName}`}
         onClick={() => setOpen((o) => !o)}
         ref={buttonRef}
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        <span className="truncate">{selectedLabel}</span>
+        <span className={`truncate ${hasValue ? 'text-gray-900' : 'text-gray-400'}`}>
+          {selectedLabel}
+        </span>
         <svg
-          className={`ml-2 h-4 w-4 text-gray-500 transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
+          className={`ml-2 h-4 w-4 text-gray-500 transition-transform duration-150 flex-shrink-0 ${
+            open ? 'rotate-180' : ''
+          }`}
           viewBox="0 0 20 20"
           fill="currentColor"
           aria-hidden="true"
         >
-          <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
+          <path
+            fillRule="evenodd"
+            d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+            clipRule="evenodd"
+          />
         </svg>
       </button>
 
-      {open && coords && createPortal(
-        <div
-          ref={portalRef}
-          className="z-[9999] max-h-64 overflow-auto rounded-[18px] border border-gray-200 bg-white shadow-lg"
-          style={{ position: 'fixed', top: coords.top, left: coords.left, width: Math.max(200, Math.floor(coords.width)) }}
-        >
-          <div className="px-3 pt-2 pb-1">
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search..."
-              className="w-full rounded-[12px] border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:border-gray-400"
-              autoFocus
-            />
-          </div>
-          <ul className="py-1 text-sm text-gray-900" role="listbox">
-            {filteredOptions.length === 0 ? (
-              <li className="px-3 py-2 text-gray-400 select-none">No options found</li>
-            ) : (
-              filteredOptions.map((o) => {
-                const active = o.value === value;
-                return (
-                  <li
-                    key={o.value}
-                    className={`flex items-center px-3 py-2 cursor-pointer hover:bg-gray-50 ${active ? 'bg-gray-50' : ''}`}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => { handleSelect(o.value); setSearch(''); }}
-                    role="option"
-                    aria-selected={active}
-                  >
-                    <span className="truncate">{o.label}</span>
-                    {active ? (
-                      <svg className="ml-auto h-4 w-4 text-red-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fillRule="evenodd" d="M16.704 5.29a1 1 0 010 1.42l-7.5 7.5a1 1 0 01-1.42 0l-3-3a1 1 0 011.42-1.42l2.29 2.29 6.79-6.79a1 1 0 011.42 0z" clipRule="evenodd" />
-                      </svg>
-                    ) : null}
-                  </li>
-                );
-              })
-            )}
-          </ul>
-        </div>,
-        document.body
-      )}
+      {open &&
+        coords &&
+        createPortal(
+          <div
+            ref={portalRef}
+            className="z-[9999] max-h-64 overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg"
+            style={{
+              position: 'fixed',
+              top: coords.top,
+              left: coords.left,
+              width: Math.max(200, Math.floor(coords.width)),
+            }}
+          >
+            <div className="px-3 pt-2 pb-1">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search..."
+                className="w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-sm focus:outline-none focus:border-[#EE0B0B]"
+                autoFocus
+              />
+            </div>
+            <ul className="py-1 text-sm text-gray-900" role="listbox">
+              {filteredOptions.length === 0 ? (
+                <li className="px-3 py-2 text-gray-400 select-none">No options found</li>
+              ) : (
+                filteredOptions.map((o) => {
+                  const active = o.value === value;
+                  return (
+                    <li
+                      key={o.value}
+                      className={`flex items-center px-3 py-2 cursor-pointer hover:bg-red-50 ${
+                        active ? 'bg-red-50' : ''
+                      }`}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        handleSelect(o.value);
+                        setSearch('');
+                      }}
+                      role="option"
+                      aria-selected={active}
+                    >
+                      <span className="truncate">{o.label}</span>
+                      {active ? (
+                        <svg
+                          className="ml-auto h-4 w-4 flex-shrink-0"
+                          style={{ color: VI_RED }}
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.704 5.29a1 1 0 010 1.42l-7.5 7.5a1 1 0 01-1.42 0l-3-3a1 1 0 011.42-1.42l2.29 2.29 6.79-6.79a1 1 0 011.42 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      ) : null}
+                    </li>
+                  );
+                })
+              )}
+            </ul>
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

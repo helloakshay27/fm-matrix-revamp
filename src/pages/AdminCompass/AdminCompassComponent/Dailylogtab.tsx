@@ -17,24 +17,27 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronRight,
-  MessageSquare,
   Layers,
   Circle,
-  Loader2,
   Trophy,
   Crown,
   Calendar,
+  CircleAlert,
+  ListTodo,
+  FilePen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";/*  */
 import { getBaseUrl, getAuthHeaders } from "./Shared";
 import { toast } from "sonner";
-import ProjectTaskCreateModal from "../../../components/ProjectTaskCreateModal";
-import AddIssueModal from "../../../components/AddIssueModal";
-import AddToDoModal from "../../../components/AddToDoModal";
 import TodoDetailsModal from "@/components/TodoDetailsModal";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
-import { ReportItemMeta } from "./Dailytab";
+import {
+  ReportItemMeta,
+  TaskChecksIcon,
+  getMemberBadgeClass,
+  getMemberShortName,
+} from "./Dailytab";
 
 // ─────────────────────────────────────────────
 // MUI z-index override 
@@ -469,14 +472,74 @@ const getItemTypeLabel = (type) =>
         ? "Task"
         : "Note";
 
-const getItemTypePillClass = (type) =>
-  type === "todo"
-    ? "bg-purple-50 text-purple-700 border-purple-200"
-    : type === "issue"
-      ? "bg-red-50 text-red-600 border-red-200"
-      : type === "task"
-        ? "bg-orange-50 text-orange-600 border-orange-200"
-        : "bg-white text-neutral-700 border-gray-200";
+/**
+ * Report ki ek row — Daily tab jaisi hi dikhti hai: type ka glyph icon (task /
+ * issue / todo orange, note blue), title, member badge, poori row par hover
+ * tooltip + click se us record par redirect, aur neeche date/overdue meta.
+ * Type ka text pill jaan-boojh kar nahi hai — icon hi type batata hai (Daily
+ * tab me bhi wahi pattern hai).
+ */
+const ReportItemRow = ({ item, onOpen, memberFallback = "" }) => {
+  const type = getItemType(item);
+  const hasDetails = ["task", "issue", "todo"].includes(type);
+  const typeLabel = getItemTypeLabel(type);
+  const ItemIcon =
+    type === "task"
+      ? TaskChecksIcon
+      : type === "issue"
+        ? CircleAlert
+        : type === "todo"
+          ? ListTodo
+          : FilePen;
+  const memberName =
+    String(
+      item?.member ||
+      item?.member_name ||
+      item?.owner_name ||
+      item?.user_name ||
+      ""
+    ).trim() || memberFallback;
+
+  return (
+    <li
+      title={hasDetails ? `${typeLabel} · Click to open` : typeLabel}
+      onClick={hasDetails ? () => onOpen?.(item) : undefined}
+      className={cn(
+        "flex min-h-[54px] flex-col rounded-[10px] border border-[#ECEFF3] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]",
+        hasDetails &&
+        "cursor-pointer hover:border-[#DA7756]/40 hover:bg-[#FFF8F5]"
+      )}
+    >
+      <div className="flex flex-1 items-center gap-3 px-4 py-3">
+        <ItemIcon
+          data-icon-color="true"
+          title={typeLabel}
+          style={
+            {
+              "--glyph-color": type !== "note" ? "#F36A3D" : "#4BA3F2",
+            } as React.CSSProperties
+          }
+          className="h-[18px] w-[18px] shrink-0"
+        />
+        <span className="min-w-0 flex-1 text-[13px] font-medium leading-[16px] text-[#2B2F38]">
+          {getItemTitle(item)}
+        </span>
+        {memberName && (
+          <span
+            className={cn(
+              "flex h-[22px] min-w-[22px] shrink-0 items-center justify-center rounded-full px-1.5 text-[9px] font-extrabold leading-none",
+              getMemberBadgeClass(memberName)
+            )}
+            title={memberName}
+          >
+            {getMemberShortName(memberName)}
+          </span>
+        )}
+      </div>
+      <ReportItemMeta item={item} />
+    </li>
+  );
+};
 
 const getItemSourceId = (item) => {
   const rawId =
@@ -601,42 +664,8 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
   const [details, setDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
-  const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
-  const [isTodoModalOpen, setIsTodoModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedTodo, setSelectedTodo] = useState(null);
-  const [actionMemberPrefill, setActionMemberPrefill] = useState(null);
-
-  const openTaskModalForMember = () => {
-    const responsiblePerson = { id: String(log.userId || log._raw?.user_id || log.id), name: log.user || log._raw?.name || "Unknown" };
-    if (!responsiblePerson.id || responsiblePerson.id === "undefined") {
-      toast.error("User ID not found for this member.");
-      return;
-    }
-    setActionMemberPrefill({ responsible_person: responsiblePerson });
-    setIsTaskModalOpen(true);
-  };
-
-  const openIssueModalForMember = () => {
-    const responsiblePerson = { id: String(log.userId || log._raw?.user_id || log.id), name: log.user || log._raw?.name || "Unknown" };
-    if (!responsiblePerson.id || responsiblePerson.id === "undefined") {
-      toast.error("User ID not found for this member.");
-      return;
-    }
-    setActionMemberPrefill({ responsible_person: responsiblePerson });
-    setIsIssueModalOpen(true);
-  };
-
-  const openTodoModalForMember = () => {
-    const responsiblePerson = { id: String(log.userId || log._raw?.user_id || log.id), name: log.user || log._raw?.name || "Unknown" };
-    if (!responsiblePerson.id || responsiblePerson.id === "undefined") {
-      toast.error("User ID not found for this member.");
-      return;
-    }
-    setActionMemberPrefill({ responsible_person: responsiblePerson });
-    setIsTodoModalOpen(true);
-  };
 
   const handleViewTaskIssueTodoItem = async (item) => {
     const sourceType = getItemType(item);
@@ -674,12 +703,6 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
 
   const [quickActionOpen, setQuickActionOpen] = useState(false);
   const [quickActionText, setQuickActionText] = useState("");
-
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [feedbackRating, setFeedbackRating] = useState(0);
-  const [feedbackMessage, setFeedbackMessage] = useState("");
-  const [fetchedFeedbacks, setFetchedFeedbacks] = useState([]);
-  const [isFetchingFeedbacks, setIsFetchingFeedbacks] = useState(false);
 
   // log.id is journal_id (or daily_report.id as fallback) from the meeting report
   const hasValidId = log.id && /^\d+$/.test(String(log.id));
@@ -900,66 +923,6 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
     return false;
   };
 
-  // ── Feedback ──
-  const loadPastFeedbacks = async () => {
-    setIsFetchingFeedbacks(true);
-    try {
-      const loggedInUserId = localStorage.getItem("userId") || "";
-      const targetUserId = log._raw?.user_id || log.userId || "";
-      const res = await fetch(
-        `${getBaseUrl()}/ratings?resource_type=User&resource_id=${targetUserId}&rating_from_id=${loggedInUserId}`,
-        { method: "GET", headers: getAuthHeaders() },
-      );
-      if (res.ok) {
-        const data = await res.json();
-        const rawList = Array.isArray(data)
-          ? data
-          : data.data || data.ratings || [];
-        const sorted = [...rawList].sort(
-          (a, b) => new Date(b.created_at) - new Date(a.created_at),
-        );
-        setFetchedFeedbacks(sorted);
-      }
-    } catch (error) {
-      console.error("Failed to fetch feedbacks:", error);
-    } finally {
-      setIsFetchingFeedbacks(false);
-    }
-  };
-
-  const handleSubmitFeedback = async () => {
-    if (feedbackRating === 0) {
-      toast.error("Please select a star rating!");
-      return;
-    }
-    try {
-      const loggedInUserId = localStorage.getItem("userId") || "";
-      const payload = {
-        resource_type: "User",
-        resource_id: log._raw?.user_id || log.userId || "",
-        rating_from_id: loggedInUserId,
-        score: feedbackRating,
-        reviews: feedbackMessage,
-        positive_opening: "",
-        constructive_feedback: "",
-        positive_closing: "",
-      };
-      const res = await fetch(`${getBaseUrl()}/ratings`, {
-        method: "POST",
-        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      toast.success("Feedback added!");
-      setFeedbackOpen(false);
-      setFeedbackRating(0);
-      setFeedbackMessage("");
-      loadPastFeedbacks();
-    } catch (err) {
-      toast.error("Error adding feedback: " + err.message);
-    }
-  };
-
   return (
     <>
       {createPortal(
@@ -1144,46 +1107,16 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                               None recorded.
                             </p>
                           ) : (
-                            <div className="space-y-1.5">
-                              {filteredAccomplishments.map((item, i) => {
-                                const type = getItemType(item);
-                                const hasDetails = ["task", "issue", "todo"].includes(type);
-                                return (
-                                  <div
-                                    key={i}
-                                    className="flex flex-col rounded-[10px] border border-green-200 bg-green-50 min-h-[36px]"
-                                  >
-                                    <div className="flex items-center gap-2 px-2.5 py-2">
-                                    <span
-                                      className={cn(
-                                        "shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase border",
-                                        getItemTypePillClass(type),
-                                      )}
-                                    >
-                                      {getItemTypeLabel(type)}
-                                    </span>
-                                    <span className="flex-1 min-w-0 whitespace-normal break-words text-xs font-bold leading-snug text-neutral-900">
-                                      {getItemTitle(item)}
-                                    </span>
-                                    {hasDetails && (
-                                      <button
-                                        type="button"
-                                        onClick={(event) => {
-                                          event.stopPropagation();
-                                          handleViewTaskIssueTodoItem(item);
-                                        }}
-                                        className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
-                                        title={`View ${getItemTypeLabel(type)}`}
-                                      >
-                                        <Eye className="w-3 h-3" />
-                                      </button>
-                                    )}
-                                    </div>
-                                    <ReportItemMeta item={item} />
-                                  </div>
-                                );
-                              })}
-                            </div>
+                            <ul className="space-y-3">
+                              {filteredAccomplishments.map((item, i) => (
+                                <ReportItemRow
+                                  key={`acc-${i}`}
+                                  item={item}
+                                  onOpen={handleViewTaskIssueTodoItem}
+                                  memberFallback={log?.user || log?.name || ""}
+                                />
+                              ))}
+                            </ul>
                           )}
                         </div>
 
@@ -1288,49 +1221,16 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                                       {sectionItems.length}
                                     </span>
                                   </div>
-                                  {sectionItems.map((item, i) => {
-                                    const type = getItemType(item);
-                                    const hasDetails = ["task", "issue", "todo"].includes(type);
-                                    return (
-                                      <div
+                                  <ul className="space-y-3">
+                                    {sectionItems.map((item, i) => (
+                                      <ReportItemRow
                                         key={`${section.key}-${i}`}
-                                        onClick={hasDetails ? () => handleViewTaskIssueTodoItem(item) : undefined}
-                                        className={cn(
-                                          "flex flex-col rounded-lg border transition-all",
-                                          section.itemBg,
-                                          hasDetails && "cursor-pointer hover:border-[#DA7756]/40 hover:bg-[#FFF8F5]",
-                                        )}
-                                      >
-                                        <div className="flex items-center gap-2 px-2.5 py-2 min-h-[36px]">
-                                          <span
-                                            className={cn(
-                                              "shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase border",
-                                              getItemTypePillClass(type),
-                                            )}
-                                          >
-                                            {getItemTypeLabel(type)}
-                                          </span>
-                                          <span className="flex-1 min-w-0 whitespace-normal break-words text-xs font-bold leading-snug text-neutral-900">
-                                            {getItemTitle(item)}
-                                          </span>
-                                          {hasDetails && (
-                                            <button
-                                              type="button"
-                                              onClick={(event) => {
-                                                event.stopPropagation();
-                                                handleViewTaskIssueTodoItem(item);
-                                              }}
-                                              className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
-                                              title={`View ${getItemTypeLabel(type)}`}
-                                            >
-                                              <Eye className="w-3 h-3" />
-                                            </button>
-                                          )}
-                                        </div>
-                                        <ReportItemMeta item={item} />
-                                      </div>
-                                    );
-                                  })}
+                                        item={item}
+                                        onOpen={handleViewTaskIssueTodoItem}
+                                        memberFallback={log?.user || log?.name || ""}
+                                      />
+                                    ))}
+                                  </ul>
                                 </div>
                               ) : null;
                             })}
@@ -1353,87 +1253,18 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                               None recorded.
                             </p>
                           ) : (
-                            <div className="space-y-1.5">
-                              {filteredTomorrowPlan.map((item, i) => {
-                                const type = getItemType(item);
-                                const hasDetails = ["task", "issue", "todo"].includes(type);
-                                return (
-                                  <div
-                                    key={i}
-                                    className="flex flex-col rounded-[10px] border border-blue-200 bg-blue-50 min-h-[36px]"
-                                  >
-                                    <div className="flex items-center gap-2 px-2.5 py-2">
-                                    <span
-                                      className={cn(
-                                        "shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase border",
-                                        getItemTypePillClass(type),
-                                      )}
-                                    >
-                                      {getItemTypeLabel(type)}
-                                    </span>
-                                    <span className="flex-1 min-w-0 whitespace-normal break-words text-xs font-bold leading-snug text-neutral-900">
-                                      {getItemTitle(item)}
-                                    </span>
-                                    {hasDetails && (
-                                      <button
-                                        type="button"
-                                        onClick={(event) => {
-                                          event.stopPropagation();
-                                          handleViewTaskIssueTodoItem(item);
-                                        }}
-                                        className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
-                                        title={`View ${getItemTypeLabel(type)}`}
-                                      >
-                                        <Eye className="w-3 h-3" />
-                                      </button>
-                                    )}
-                                    </div>
-                                    <ReportItemMeta item={item} />
-                                  </div>
-                                );
-                              })}
-                            </div>
+                            <ul className="space-y-3">
+                              {filteredTomorrowPlan.map((item, i) => (
+                                <ReportItemRow
+                                  key={`plan-${i}`}
+                                  item={item}
+                                  onOpen={handleViewTaskIssueTodoItem}
+                                  memberFallback={log?.user || log?.name || ""}
+                                />
+                              ))}
+                            </ul>
                           )}
                         </div>
-                      </div>
-                    )}
-
-                    {/* Action Buttons */}
-                    {!isDetailAbsent && (
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        <button
-                          onClick={openTaskModalForMember}
-                          className="flex items-center gap-1.5 px-4 py-1.5 text-blue-600 bg-white border border-blue-200 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors"
-                        >
-                          <Plus className="w-3.5 h-3.5" /> Add Task
-                        </button>
-                        <button
-                          onClick={openIssueModalForMember}
-                          className="flex items-center gap-1.5 px-4 py-1.5 text-red-600 bg-white border border-red-200 rounded-full text-xs font-bold shadow-sm hover:bg-red-50 transition-colors"
-                        >
-                          <Plus className="w-3.5 h-3.5" /> Stuck Issue
-                        </button>
-                        <button
-                          onClick={openTodoModalForMember}
-                          className="flex items-center gap-1.5 px-4 py-1.5 text-emerald-600 bg-white border border-emerald-200 rounded-full text-xs font-bold shadow-sm hover:bg-emerald-50 transition-colors"
-                        >
-                          <Plus className="w-3.5 h-3.5" /> Add Todo
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (feedbackOpen) {
-                              setFeedbackOpen(false);
-                            } else {
-                              setFeedbackOpen(true);
-                              setFeedbackRating(0);
-                              setFeedbackMessage("");
-                              loadPastFeedbacks();
-                            }
-                          }}
-                          className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-purple-600 border border-purple-700 rounded-full text-xs font-bold shadow-sm hover:bg-purple-700 transition-colors"
-                        >
-                          <MessageSquare className="w-3.5 h-3.5" /> Feedback
-                        </button>
                       </div>
                     )}
 
@@ -1500,253 +1331,11 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                       </div>
                     )}
 
-                    {/* Feedback Block */}
-                    {!isDetailAbsent && feedbackOpen && (
-                      <div className="bg-white border border-purple-100 rounded-2xl p-6 shadow-sm">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                          {/* Left: Add new feedback */}
-                          <div>
-                            <p className="text-xs font-black text-purple-800 uppercase tracking-widest mb-4 flex items-center gap-2">
-                              <MessageSquare className="w-3.5 h-3.5" /> Provide
-                              Feedback
-                            </p>
-                            <p className="text-sm font-bold text-neutral-800 mb-2">
-                              Rating (1–5 stars)
-                            </p>
-                            <div className="flex items-center gap-1.5 mb-5">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <button
-                                  key={star}
-                                  type="button"
-                                  onClick={() => setFeedbackRating(star)}
-                                  className="transition-transform hover:scale-110 focus:outline-none"
-                                >
-                                  <svg
-                                    className="w-10 h-10"
-                                    viewBox="0 0 24 24"
-                                    fill={
-                                      star <= feedbackRating
-                                        ? "#F59E0B"
-                                        : "none"
-                                    }
-                                    stroke={
-                                      star <= feedbackRating
-                                        ? "#F59E0B"
-                                        : "#D1D5DB"
-                                    }
-                                    strokeWidth="1.5"
-                                  >
-                                    <path
-                                      strokeLinejoin="round"
-                                      d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
-                                    />
-                                  </svg>
-                                </button>
-                              ))}
-                            </div>
-                            <p className="text-sm font-bold text-neutral-800 mb-2">
-                              Feedback Message
-                            </p>
-                            <textarea
-                              autoFocus
-                              value={feedbackMessage}
-                              onChange={(e) =>
-                                setFeedbackMessage(e.target.value)
-                              }
-                              placeholder="Enter constructive feedback..."
-                              rows={4}
-                              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-medium text-neutral-800 focus:outline-none focus:ring-2 focus:ring-purple-200 placeholder:text-neutral-400 resize-y"
-                            />
-                            <div className="flex items-center gap-3 mt-5">
-                              <button
-                                onClick={handleSubmitFeedback}
-                                className="px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm"
-                              >
-                                Submit Feedback
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setFeedbackOpen(false);
-                                  setFeedbackRating(0);
-                                  setFeedbackMessage("");
-                                }}
-                                className="px-6 py-2.5 rounded-xl text-sm font-bold text-neutral-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Right: Recent feedbacks */}
-                          <div className="bg-[#FAF7F5] rounded-xl p-6 border border-[#EAE3DF] flex flex-col">
-                            <div className="flex items-center justify-between mb-5">
-                              <p className="text-xs font-black text-neutral-500 uppercase tracking-widest">
-                                Recent Feedbacks
-                              </p>
-                              <button
-                                onClick={() =>
-                                (window.location.href =
-                                  "/admin-compass/feedback-dashboard")
-                                }
-                                className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1"
-                              >
-                                View All <ChevronRight className="w-3 h-3" />
-                              </button>
-                            </div>
-
-                            {isFetchingFeedbacks ? (
-                              <div className="flex justify-center items-center h-full py-10">
-                                <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
-                              </div>
-                            ) : fetchedFeedbacks.length === 0 ? (
-                              <div className="flex flex-col items-center justify-center h-full py-10 text-neutral-400">
-                                <MessageSquare className="w-10 h-10 opacity-20 mb-3" />
-                                <span className="text-sm font-medium italic">
-                                  No past feedback found.
-                                </span>
-                              </div>
-                            ) : (
-                              <div className="space-y-4 overflow-y-auto pr-2 flex-1">
-                                {fetchedFeedbacks.slice(0, 3).map((fb, idx) => (
-                                  <div
-                                    key={fb.id ?? idx}
-                                    className="bg-white p-4 rounded-xl shadow-sm border border-gray-100"
-                                  >
-                                    <div className="flex items-center gap-1 mb-2">
-                                      {[1, 2, 3, 4, 5].map((star) => (
-                                        <Star
-                                          key={star}
-                                          className={cn(
-                                            "w-3.5 h-3.5",
-                                            star <= fb.score
-                                              ? "text-yellow-400 fill-yellow-400"
-                                              : "text-gray-200",
-                                          )}
-                                        />
-                                      ))}
-                                      {fb.created_at && (
-                                        <span className="text-[10px] text-gray-400 ml-auto font-bold">
-                                          {new Date(
-                                            fb.created_at,
-                                          ).toLocaleDateString("en-IN", {
-                                            day: "numeric",
-                                            month: "short",
-                                            year: "2-digit",
-                                          })}
-                                        </span>
-                                      )}
-                                    </div>
-                                    {fb.reviews ? (
-                                      <p className="text-sm text-neutral-700 font-medium leading-relaxed">
-                                        {fb.reviews}
-                                      </p>
-                                    ) : (
-                                      <p className="text-sm text-neutral-400 italic">
-                                        No review provided.
-                                      </p>
-                                    )}
-                                    {fb.reviewer && (
-                                      <p className="text-[9px] text-neutral-400 mt-1 font-semibold">
-                                        — {fb.reviewer.trim()}
-                                      </p>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
             </div>
           </div>
-
-          {/* Add Task slide-over */}
-          {isTaskModalOpen && (
-            <MuiZIndexFix>
-              <div className="fixed inset-0 z-[10000] flex justify-end">
-                <div
-                  className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-                  onClick={() => {
-                    setIsTaskModalOpen(false);
-                    setActionMemberPrefill(null);
-                  }}
-                />
-                <div
-                  className="relative flex flex-col bg-white shadow-2xl h-full border-l border-gray-200"
-                  style={{ width: "min(760px, 95vw)" }}
-                >
-                  <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0 bg-gray-50">
-                    <h2 className="text-lg font-bold text-gray-900">
-                      Add Task
-                    </h2>
-                    <button
-                      onClick={() => {
-                        setIsTaskModalOpen(false);
-                        setActionMemberPrefill(null);
-                      }}
-                      className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-200 transition-colors text-gray-500"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <div className="flex-1 overflow-y-auto p-4">
-                    <ProjectTaskCreateModal
-                      isEdit={false}
-                      onCloseModal={() => {
-                        setIsTaskModalOpen(false);
-                        setActionMemberPrefill(null);
-                      }}
-                      className="max-w-full mx-0"
-                      prefillData={actionMemberPrefill}
-                      opportunityId={null}
-                      onSuccess={async () => {
-                        setIsTaskModalOpen(false);
-                        setActionMemberPrefill(null);
-                        refetchDetails(true);
-                      }}
-                      isConversion={false}
-                    />
-                  </div>
-                </div>
-              </div>
-            </MuiZIndexFix>
-          )}
-
-          {isIssueModalOpen && (
-            <MuiZIndexFix>
-              <AddIssueModal
-                openDialog={isIssueModalOpen}
-                handleCloseDialog={() => {
-                  setIsIssueModalOpen(false);
-                  setActionMemberPrefill(null);
-                }}
-                preSelectedProjectId={undefined}
-                prefillData={actionMemberPrefill}
-              />
-            </MuiZIndexFix>
-          )}
-
-          {isTodoModalOpen && (
-            <MuiZIndexFix>
-              <AddToDoModal
-                isModalOpen={isTodoModalOpen}
-                setIsModalOpen={(val) => {
-                  setIsTodoModalOpen(val);
-                  if (!val) setActionMemberPrefill(null);
-                }}
-                getTodos={async () => {
-                  setIsTodoModalOpen(false);
-                  setActionMemberPrefill(null);
-                  refetchDetails(true);
-                }}
-                prefillData={actionMemberPrefill}
-              />
-            </MuiZIndexFix>
-          )}
 
           <MuiZIndexFix>
             <TodoDetailsModal

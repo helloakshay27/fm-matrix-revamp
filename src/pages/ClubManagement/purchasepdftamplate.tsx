@@ -1,27 +1,9 @@
 import React from "react";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
+import { getDocumentTemplateSettings, slugifyDocumentType } from "@/utils/documentTemplate";
 
 export const getAccountingPdfStatusStyle = (status) => {
-  const styles = {
-    draft: { backgroundColor: "#f3f4f6", color: "#1f2937", borderColor: "#e5e7eb" },
-    sent: { backgroundColor: "#dbeafe", color: "#1e40af", borderColor: "#bfdbfe" },
-    open: { backgroundColor: "#dbeafe", color: "#1e40af", borderColor: "#bfdbfe" },
-    accepted: { backgroundColor: "#dcfce7", color: "#166534", borderColor: "#bbf7d0" },
-    approved: { backgroundColor: "#dcfce7", color: "#166534", borderColor: "#bbf7d0" },
-    paid: { backgroundColor: "#dcfce7", color: "#166534", borderColor: "#bbf7d0" },
-    delivered: { backgroundColor: "#dcfce7", color: "#166534", borderColor: "#bbf7d0" },
-    confirmed: { backgroundColor: "#dbeafe", color: "#1d4ed8", borderColor: "#bfdbfe" },
-    processing: { backgroundColor: "#fef9c3", color: "#854d0e", borderColor: "#fde68a" },
-    pending_approval: { backgroundColor: "#ffedd5", color: "#9a3412", borderColor: "#fed7aa" },
-    overdue: { backgroundColor: "#fee2e2", color: "#991b1b", borderColor: "#fecaca" },
-    declined: { backgroundColor: "#fee2e2", color: "#991b1b", borderColor: "#fecaca" },
-    rejected: { backgroundColor: "#fee2e2", color: "#991b1b", borderColor: "#fecaca" },
-    cancelled: { backgroundColor: "#fee2e2", color: "#991b1b", borderColor: "#fecaca" },
-    expired: { backgroundColor: "#ffedd5", color: "#9a3412", borderColor: "#fed7aa" },
-    shipped: { backgroundColor: "#f3e8ff", color: "#6b21a8", borderColor: "#e9d5ff" },
-    converted: { backgroundColor: "#f3e8ff", color: "#6b21a8", borderColor: "#e9d5ff" },
-  };
-  return styles[String(status || "").toLowerCase()] || styles.draft;
+  return { backgroundColor: "#f3f4f6", color: "#1f2937", borderColor: "#e5e7eb" };
 };
 
 const formatStatus = (status) => {
@@ -44,6 +26,7 @@ const formatAddressBlock = (address) => {
 
 export const PurchaseDocumentPdf = ({
   documentTitle,
+  documentType = "",
   documentNumber,
   documentDate,
   status,
@@ -58,8 +41,10 @@ export const PurchaseDocumentPdf = ({
   secondaryDateLabel,
   secondaryDate,
   referenceNumber,
+  bankDetail,
 }) => {
   const statusDisplay = formatStatus(status);
+  const templateSettings = getDocumentTemplateSettings(documentType || slugifyDocumentType(documentTitle));
   const partyName = vendorName || customerName;
   const billingAddress = data?.address_detail?.billing_address || data?.billing_address;
   const shippingAddress = data?.address_detail?.shipping_address || data?.shipping_address;
@@ -76,9 +61,12 @@ export const PurchaseDocumentPdf = ({
         <div className="border border-gray-500 bg-white">
           <div className="grid grid-cols-[1fr_230px] border-b border-gray-500">
             <div className="p-3 min-h-[96px]">
+              {templateSettings.logo && (
+                <img src={templateSettings.logo} alt="Logo" className="mb-2" style={{ maxHeight: "48px", maxWidth: "180px", objectFit: "contain" }} />
+              )}
               <h2 className="text-[17px] font-bold mb-2">{localStorage.getItem("companyName") || "Lockated"}</h2>
               <div className="space-y-1">
-                <p>{localStorage.getItem("companyAddress") || "pune Maharashtra 411006"}</p>
+                <p>{templateSettings.organizationAddress || localStorage.getItem("companyAddress") || "pune Maharashtra 411006"}</p>
                 <p>{localStorage.getItem("companyCountry") || "India"}</p>
                 <p>{localStorage.getItem("companyEmail") || "ajay.pihulkar@lockated.com"}</p>
                 <p>GSTIN: {data?.address_detail?.gst_detail?.gstin || localStorage.getItem("gstin") || "27AGOPL6958QABC"}</p>
@@ -88,7 +76,9 @@ export const PurchaseDocumentPdf = ({
               <span className="inline-flex items-center border px-3 py-1 text-[11px] font-bold" style={getAccountingPdfStatusStyle(status)}>
                 {statusDisplay}
               </span>
-              <h1 className="text-[30px] font-serif font-normal tracking-wide text-right">{documentTitle}</h1>
+              <h1 className="text-[30px] font-serif font-normal tracking-wide text-right">
+                {templateSettings.templateName ? templateSettings.templateName.toUpperCase() : documentTitle}
+              </h1>
             </div>
           </div>
 
@@ -126,20 +116,20 @@ export const PurchaseDocumentPdf = ({
               </div>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-2 border-b border-gray-500 bg-gray-100 font-bold">
             <div className="px-2 py-1 border-r border-gray-500">{partyLabel}</div>
             <div className="px-2 py-1">Ship To</div>
           </div>
           <div className="grid grid-cols-2 border-b border-gray-500 min-h-[30px]">
             <div className="px-2 py-2 border-r border-gray-500">
-              <p className="font-bold text-blue-700">{partyName || "N/A"}</p>
+              <p className="font-bold">{partyName || "N/A"}</p>
               {formatAddressBlock(billingAddress).map((line, index) => (
                 <p key={index}>{line}</p>
               ))}
             </div>
             <div className="px-2 py-2">
-              <p className="font-bold text-blue-700">{partyName || "N/A"}</p>
+              <p className="font-bold">{partyName || "N/A"}</p>
               {formatAddressBlock(shippingAddress || billingAddress).map((line, index) => (
                 <p key={index}>{line}</p>
               ))}
@@ -224,18 +214,62 @@ export const PurchaseDocumentPdf = ({
 
           <div className="grid grid-cols-[1fr_305px]">
             <div className="p-3 border-r border-gray-500 min-h-[190px]">
+              {/* {bankDetail && (
+                <div className="mb-4">
+                  <p className="font-bold">Bank Details</p>
+                  <p className="mt-1">{bankDetail.bankName} - A/C {bankDetail.accountNo}</p>
+                  <p>{bankDetail.beneficiaryName}{bankDetail.ifscCode ? `, IFSC: ${bankDetail.ifscCode}` : ""}{bankDetail.branch ? `, ${bankDetail.branch}` : ""}</p>
+                </div>
+              )} */}
+
+              {bankDetail && (
+                <div className="mb-4">
+                  <p className="font-bold">Bank Details</p>
+
+                  <div className="mt-2 space-y-1 text-[11px]">
+                    {[
+                      ["Bank Name", bankDetail.bankName],
+                      ["A/c No.", bankDetail.accountNo],
+                      ["Beneficiary / Account Name", bankDetail.beneficiaryName],
+                      ["A/c Type", bankDetail.accountType],
+                      ["IFSC Code", bankDetail.ifscCode],
+                      ["Swift Code", bankDetail.swiftCode],
+                      ["Branch", bankDetail.branch],
+                    ]
+                      .filter(([, value]) => value)
+                      .map(([label, value]) => (
+                        <div key={label} className="flex gap-2">
+                          <span className="font-semibold min-w-[150px]">
+                            {label}:
+                          </span>
+                          <span>{value}</span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
               <div className="mb-4">
                 <p className="font-bold">Notes</p>
                 <p className="whitespace-pre-wrap mt-1">{notes || "-"}</p>
               </div>
               <div>
                 <p className="font-bold">Terms & Conditions</p>
-                <p className="whitespace-pre-wrap mt-1">{terms || "-"}</p>
+                <p className="whitespace-pre-wrap mt-1">{terms || templateSettings.termsAndConditions || "-"}</p>
               </div>
             </div>
             <div className="p-3 min-h-[190px] flex flex-col justify-end">
               <div className="text-right">
-                <p className="font-bold mb-12">For {localStorage.getItem("companyName") || "Lockated"}</p>
+                <p className="font-bold mb-2">For {localStorage.getItem("companyName") || "Lockated"}</p>
+                {templateSettings.signature ? (
+                  <img
+                    src={templateSettings.signature}
+                    alt="Signature"
+                    className="ml-auto mb-2"
+                    style={{ maxHeight: "50px", maxWidth: "170px", objectFit: "contain" }}
+                  />
+                ) : (
+                  <div className="mb-12" />
+                )}
                 <div className="border-t border-gray-500 ml-auto w-[170px] pt-2 text-center font-bold">
                   Authorized Signature
                 </div>

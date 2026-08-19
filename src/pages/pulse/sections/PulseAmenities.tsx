@@ -30,6 +30,7 @@ import {
   type FacilitiesDetailsResponse,
   type PulseFilters,
 } from "@/services/pulseDashboardApi";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 const C = {
   green: "#798C5E",
@@ -119,6 +120,14 @@ export function PulseAmenities({ filters }: Props) {
   const [facilityUtil, setFacilityUtil] = useState<FacilityUtilizationOverview | null>(null);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+
+  const pulseEvents = usePulseEvents();
+
+
+  // Fires once when the Amenities tab is mounted (tab switch renders a fresh instance).
+  useEffect(() => {
+    pulseEvents.onAmenityListViewed();
+  }, [pulseEvents]);
 
   useEffect(() => {
     setPage(1);

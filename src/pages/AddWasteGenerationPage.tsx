@@ -2,9 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
-import { TextField } from '@mui/material';
-import { Recycle, ArrowLeft } from 'lucide-react';
-import { FormSearchSelect } from '@/components/FormSearchSelect';
+import { TextField, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
+import { Recycle, ArrowLeft, Plus, Trash2, X } from 'lucide-react';
 import {
   fetchBuildings,
   fetchWings,
@@ -18,41 +17,85 @@ import {
   Area,
   Commodity,
   Category,
-  OperationalLandlord
+  OperationalLandlord,
+  WasteEntryInput
 } from '@/services/wasteGenerationAPI';
 import { SupplierSearchSelect } from '@/components/SupplierSearchSelect';
+import { FormSearchSelect } from '@/components/FormSearchSelect';
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { toast } from 'sonner';
+
+// One row in the "Waste Entries" section: a category + commodity with a bag
+// count and overall weight (which gets split evenly across that many bags
+// before being sent as the `values` array the create_waste API expects),
+// plus attachments.
+interface WasteEntryRow {
+  key: string;
+  category: string;
+  commodity: string;
+  uom: string;
+  bagCount: string;
+  overallWeight: string;
+  attachments: File[];
+}
+
+let wasteEntryRowSeq = 0;
+const createEmptyWasteEntryRow = (): WasteEntryRow => ({
+  key: `entry-${++wasteEntryRowSeq}`,
+  category: '',
+  commodity: '',
+  uom: 'Kg',
+  bagCount: '1',
+  overallWeight: '',
+  attachments: [],
+});
+
+// Splits `total` evenly across `count` bags (e.g. 50 over 5 bags -> [10,10,10,10,10]).
+// Rounds each share to 2 decimals and folds any rounding remainder into the
+// last bag so the values always sum back to exactly `total`.
+const distributeWeight = (total: number, count: number): number[] => {
+  if (count <= 0 || !(total >= 0)) return [];
+  const share = Math.floor((total / count) * 100) / 100;
+  const values = Array(count).fill(share);
+  const remainder = Math.round((total - share * count) * 100) / 100;
+  values[values.length - 1] = Math.round((values[values.length - 1] + remainder) * 100) / 100;
+  return values;
+};
 
 // Field styles for Material-UI components
 const fieldStyles = {
-  height: "45px",
-  backgroundColor: "#fff",
-  borderRadius: "4px",
-  "& .MuiOutlinedInput-root": {
-    height: "45px",
-    "& fieldset": { borderColor: "#999" },
-    "&:hover fieldset": { borderColor: "#1976d2" },
-    "&.Mui-focused fieldset": { borderColor: "#1976d2" },
+  height: { xs: 28, sm: 36, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px', sm: '10px', md: '12px' },
   },
-  "& .MuiInputLabel-root": {
-    "&.Mui-focused": { color: "#1976d2" },
-    "& .MuiInputLabel-asterisk": {
-      color: "#C72030 !important",
+};
+
+// Compact variant of fieldStyles for inputs/selects placed inside the
+// Waste Entries table cells, where the column header already acts as the label
+const tableFieldStyles = {
+  height: 40,
+  backgroundColor: 'white',
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: '8px 10px',
+  },
+};
+
+// Shared MenuProps so Select dropdowns render correctly (positioned under the
+// field, not detached) and match the brand-consistent styling used elsewhere
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
     },
-    "&.Mui-required .MuiInputLabel-asterisk": {
-      color: "#C72030 !important",
-    },
   },
-  "& .MuiFormLabel-asterisk": {
-    color: "#C72030 !important",
-  },
-  "& .MuiInputLabel-asterisk": {
-    color: "#C72030 !important",
-  },
-  // Additional asterisk selectors to ensure red color
-  "& .MuiFormLabel-root .MuiFormLabel-asterisk": {
-    color: "#C72030 !important",
-  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
 };
 
 const AddWasteGenerationPage = () => {
@@ -65,15 +108,13 @@ const AddWasteGenerationPage = () => {
     area: '',
     date: '',
     vendor: '',
-    commodity: '',
-    category: '',
     operationalName: '',
     agencyName: '',
-    generatedUnit: '',
-    recycledUnit: '0',
-    uom: 'KG',
-    typeOfWaste: ''
+    // recycledUnit: '0',
+    remark: '',
   });
+
+  const [wasteEntries, setWasteEntries] = useState<WasteEntryRow[]>([createEmptyWasteEntryRow()]);
 
   // API data state
   const [buildings, setBuildings] = useState<BuildingType[]>([]);
@@ -205,16 +246,9 @@ const AddWasteGenerationPage = () => {
   }, [formData.wing]);
 
   const handleInputChange = (field: string, value: string) => {
-
- if (
-    (field === "generatedUnit" || field === "recycledUnit") &&
-    Number(value) < 0
-  ) {
-    return;
-  }
-
-
-
+    if (field === "recycledUnit" && Number(value) < 0) {
+      return;
+    }
 
     setFormData(prev => ({
       ...prev,
@@ -222,14 +256,49 @@ const AddWasteGenerationPage = () => {
     }));
   };
 
-  // if (!formData.building || !formData.vendor || !formData.commodity || !formData.category || !formData.operationalName || !formData.generatedUnit || !formData.date) {
-  //   reactToast({
-  //     title: "Error",
-  //     description: "Please fill in all required fields",
-  //     variant: "destructive"
-  //   });
-  //   return;
-  // }
+  // Waste entry (category row) helpers
+  const addWasteEntry = () => {
+    setWasteEntries(prev => [...prev, createEmptyWasteEntryRow()]);
+  };
+
+  const removeWasteEntry = (key: string) => {
+    setWasteEntries(prev => (prev.length > 1 ? prev.filter(entry => entry.key !== key) : prev));
+  };
+
+  const updateWasteEntry = (
+    key: string,
+    field: 'category' | 'commodity' | 'uom' | 'bagCount' | 'overallWeight',
+    value: string
+  ) => {
+    if ((field === 'bagCount' || field === 'overallWeight') && Number(value) < 0) {
+      return;
+    }
+    setWasteEntries(prev =>
+      prev.map(entry => (entry.key === key ? { ...entry, [field]: value } : entry))
+    );
+  };
+
+  const addAttachments = (key: string, files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setWasteEntries(prev =>
+      prev.map(entry =>
+        entry.key === key ? { ...entry, attachments: [...entry.attachments, ...Array.from(files)] } : entry
+      )
+    );
+  };
+
+  const removeAttachment = (key: string, index: number) => {
+    setWasteEntries(prev =>
+      prev.map(entry =>
+        entry.key === key ? { ...entry, attachments: entry.attachments.filter((_, i) => i !== index) } : entry
+      )
+    );
+  };
+
+  const totalGeneratedUnit = useMemo(
+    () => wasteEntries.reduce((sum, entry) => sum + (parseFloat(entry.overallWeight) || 0), 0),
+    [wasteEntries]
+  );
 
   const handleSave = async () => {
     if (!formData.building) {
@@ -247,65 +316,71 @@ const AddWasteGenerationPage = () => {
       return;
     }
 
-    if (!formData.commodity) {
-      toast.error("Validation Error: Commodity is required.");
-      return;
-    }
-
-    if (!formData.category) {
-      toast.error("Validation Error: Category is required.");
-      return;
-    }
-
     if (!formData.operationalName) {
       toast.error("Validation Error: Operational Name of Landlord/Tenant is required.");
       return;
     }
 
-    if (!formData.generatedUnit) {
-      toast.error("Validation Error: Generated Unit is required.");
+    if (wasteEntries.length === 0) {
+      toast.error("Validation Error: At least one waste category entry is required.");
       return;
     }
 
-    if (parseFloat(formData.generatedUnit) <= 0) {
-      toast.error("Validation Error: Generated Unit must be greater than 0.");
-      return;
+    for (const entry of wasteEntries) {
+      if (!entry.category) {
+        toast.error("Validation Error: Category is required for every waste entry.");
+        return;
+      }
+      if (!entry.commodity) {
+        toast.error("Validation Error: Commodity is required for every waste entry.");
+        return;
+      }
+      if (!entry.uom.trim()) {
+        toast.error("Validation Error: UOM is required for every waste entry.");
+        return;
+      }
+      if (!entry.bagCount || parseInt(entry.bagCount, 10) <= 0) {
+        toast.error("Validation Error: Bag Count must be at least 1 for every waste entry.");
+        return;
+      }
+      if (!entry.overallWeight || parseFloat(entry.overallWeight) <= 0) {
+        toast.error("Validation Error: Overall Weight must be greater than 0 for every waste entry.");
+        return;
+      }
     }
 
-    if (formData.recycledUnit && parseFloat(formData.recycledUnit) < 0) {
-      toast.error("Validation Error: Recycled Unit cannot be negative.");
-      return;
-    }
+    // if (formData.recycledUnit && parseFloat(formData.recycledUnit) < 0) {
+    //   toast.error("Validation Error: Recycled Unit cannot be negative.");
+    //   return;
+    // }
 
-    if (
-      parseFloat(formData.recycledUnit || "0") >
-      parseFloat(formData.generatedUnit)
-    ) {
-      toast.error("Validation Error: Recycled Unit cannot be greater than Generated Unit.");
-      return;
-    }
-    // continue with API call...
-
-
+    // if (parseFloat(formData.recycledUnit || "0") > totalGeneratedUnit) {
+    //   toast.error("Validation Error: Recycled Unit cannot be greater than total Generated Unit.");
+    //   return;
+    // }
 
     setSubmitting(true);
     try {
       const payload = {
         pms_waste_generation: {
+          wg_date: formData.date,
+          vendor_id: formData.vendor ? parseInt(formData.vendor) : null,
+          operational_landlord_id: parseInt(formData.operationalName),
           building_id: parseInt(formData.building),
           wing_id: formData.wing ? parseInt(formData.wing) : null,
           area_id: formData.area ? parseInt(formData.area) : null,
-          vendor_id: formData.vendor ? parseInt(formData.vendor) : null,
-          commodity_id: parseInt(formData.commodity),
-          category_id: parseInt(formData.category),
-          operational_landlord_id: parseInt(formData.operationalName),
           agency_name: formData.agencyName || '',
-          waste_unit: parseFloat(formData.generatedUnit),
-          recycled_unit: formData.recycledUnit ? parseFloat(formData.recycledUnit) : 0,
-          wg_date: formData.date,
-          uom: formData.uom || '',
-          type_of_waste: formData.typeOfWaste || ''
-        }
+          // recycled_unit: formData.recycledUnit ? parseFloat(formData.recycledUnit) : 0,
+          remark: formData.remark || '',
+        },
+        waste_entries: wasteEntries.map((entry): WasteEntryInput => ({
+          category_id: parseInt(entry.category),
+          commodity_id: parseInt(entry.commodity),
+          uom: entry.uom,
+          values: distributeWeight(parseFloat(entry.overallWeight), parseInt(entry.bagCount, 10)),
+          attachments: entry.attachments,
+          signature: null,
+        })),
       };
 
       console.log('Submitting waste generation data:', payload);
@@ -356,10 +431,12 @@ const AddWasteGenerationPage = () => {
   );
   const operationalLandlordOptions = useMemo(
     () =>
-      operationalLandlords.map((l) => ({
-        value: l.id.toString(),
-        label: l.category_name,
-      })),
+      operationalLandlords
+        .filter((l) => l?.id != null && String(l.category_name || '').trim() !== '')
+        .map((l) => ({
+          value: String(l.id),
+          label: String(l.category_name).trim(),
+        })),
     [operationalLandlords]
   );
 
@@ -391,41 +468,80 @@ const AddWasteGenerationPage = () => {
           <div className="p-6 space-y-10">
             {/* Location Details Section */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-10">
-              <FormSearchSelect
-                label={<>Building <span className="text-red-500">*</span></>}
-                value={formData.building}
-                onChange={(v) => handleInputChange('building', v)}
-                options={buildingOptions}
-                placeholder="Select Building"
-                isLoading={loadingBuildings}
-                disabled={loadingBuildings}
-              />
+              <FormControl fullWidth disabled={loadingBuildings}>
+                <InputLabel shrink id="building-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                  Building <span className="text-red-500">*</span>
+                </InputLabel>
+                <Select
+                  labelId="building-label"
+                  value={formData.building}
+                  onChange={(e: SelectChangeEvent<string>) => handleInputChange('building', e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value="">
+                    <em>{loadingBuildings ? 'Loading...' : 'Select Building'}</em>
+                  </MenuItem>
+                  {buildingOptions.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-              <FormSearchSelect
-                label="Wing"
-                value={formData.wing}
-                onChange={(v) => handleInputChange('wing', v)}
-                options={wingOptions}
-                placeholder={
-                  !formData.building
-                    ? 'Select Building First'
-                    : 'Select Wing (Optional)'
-                }
-                isLoading={loadingWings}
-                disabled={loadingWings || !formData.building}
-              />
+              <FormControl fullWidth disabled={loadingWings || !formData.building}>
+                <InputLabel shrink id="wing-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                  Wing
+                </InputLabel>
+                <Select
+                  labelId="wing-label"
+                  value={formData.wing}
+                  onChange={(e: SelectChangeEvent<string>) => handleInputChange('wing', e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value="">
+                    <em>
+                      {loadingWings
+                        ? 'Loading...'
+                        : !formData.building
+                        ? 'Select Building First'
+                        : 'Select Wing (Optional)'}
+                    </em>
+                  </MenuItem>
+                  {wingOptions.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-              <FormSearchSelect
-                label="Area"
-                value={formData.area}
-                onChange={(v) => handleInputChange('area', v)}
-                options={areaOptions}
-                placeholder={
-                  !formData.wing ? 'Select Wing First' : 'Select Area (Optional)'
-                }
-                isLoading={loadingAreas}
-                disabled={loadingAreas || !formData.wing}
-              />
+              <FormControl fullWidth disabled={loadingAreas || !formData.wing}>
+                <InputLabel shrink id="area-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                  Area
+                </InputLabel>
+                <Select
+                  labelId="area-label"
+                  value={formData.area}
+                  onChange={(e: SelectChangeEvent<string>) => handleInputChange('area', e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value="">
+                    <em>
+                      {loadingAreas
+                        ? 'Loading...'
+                        : !formData.wing
+                        ? 'Select Wing First'
+                        : 'Select Area (Optional)'}
+                    </em>
+                  </MenuItem>
+                  {areaOptions.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
               <TextField
                 label={<span>Date <span className="text-red-500">*</span></span>}
@@ -447,80 +563,210 @@ const AddWasteGenerationPage = () => {
             </div>
 
             {/* Waste Details Section */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-10">
-              {/* Vendor — uses virtualized SupplierSearchSelect to handle large record sets without freezing */}
-              <SupplierSearchSelect
-                value={formData.vendor}
-                onChange={(vendorId) => handleInputChange('vendor', vendorId)}
-                label={<span>Vendor <span style={{ color: '#C72030' }}>*</span></span>}
-                size="schedule"
-                error={false}
-              />
+           
 
-              <FormSearchSelect
-                label={<>Commodity <span className="text-red-500">*</span></>}
-                value={formData.commodity}
-                onChange={(v) => handleInputChange('commodity', v)}
-                options={commodityOptions}
-                placeholder="Select Commodity"
-                isLoading={loadingCommodities}
-                disabled={loadingCommodities}
-              />
+            {/* Waste Entries — one table row per category, each with its own
+                commodity, UOM, a dynamic list of bag weights, and attachments */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base font-semibold text-gray-900">Waste Entries</h3>
+              </div>
 
-              <FormSearchSelect
-                label={<>Category <span className="text-red-500">*</span></>}
-                value={formData.category}
-                onChange={(v) => handleInputChange('category', v)}
-                options={categoryOptions}
-                placeholder="Select Category"
-                isLoading={loadingCategories}
-                disabled={loadingCategories}
-              />
-              <TextField
-                fullWidth
-                label="UOM"
-                variant="outlined"
-                value={formData.uom}
-                onChange={(e) => handleInputChange('uom', e.target.value)}
-                placeholder="Enter UOM"
-                // sx={{ '& .MuiInputBase-root': fieldStyles }}
-                sx={fieldStyles}
-                InputLabelProps={{ shrink: true }}
-              />
-            </div>
+              <div className="border border-gray-200 rounded-md overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-gray-50">
+                    <TableRow className="border-b-gray-200 hover:bg-gray-50">
+                      <TableHead className="w-12 font-semibold text-gray-600">Sr. No.</TableHead>
+                      <TableHead className="min-w-[180px] font-semibold text-gray-600">
+                        Category <span className="text-red-500">*</span>
+                      </TableHead>
+                      <TableHead className="min-w-[180px] font-semibold text-gray-600">
+                        Commodity <span className="text-red-500">*</span>
+                      </TableHead>
+                      <TableHead className="min-w-[110px] font-semibold text-gray-600">
+                        UOM <span className="text-red-500">*</span>
+                      </TableHead>
+                      <TableHead className="min-w-[280px] font-semibold text-gray-600">
+                        Bags / Weights <span className="text-red-500">*</span>
+                      </TableHead>
+                      <TableHead className="min-w-[220px] font-semibold text-gray-600">Attachments</TableHead>
+                      <TableHead className="w-10"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {wasteEntries.map((entry, entryIndex) => (
+                      <TableRow key={entry.key} className="border-b-gray-200 hover:bg-transparent align-top">
+                        <TableCell className="pt-4 text-sm text-gray-600">{entryIndex + 1}</TableCell>
 
-            {/* Additional Waste Details */}
-            <div className="">
+                        <TableCell className="p-2 align-top">
+                          <FormControl fullWidth size="small" disabled={loadingCategories}>
+                            <Select
+                              value={entry.category}
+                              onChange={(e: SelectChangeEvent<string>) => updateWasteEntry(entry.key, 'category', e.target.value)}
+                              displayEmpty
+                              sx={tableFieldStyles}
+                              MenuProps={selectMenuProps}
+                            >
+                              <MenuItem value="">
+                                <em>{loadingCategories ? 'Loading...' : 'Select Category'}</em>
+                              </MenuItem>
+                              {categoryOptions.map((opt) => (
+                                <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </TableCell>
 
+                        <TableCell className="p-2 align-top">
+                          <FormControl fullWidth size="small" disabled={loadingCommodities}>
+                            <Select
+                              value={entry.commodity}
+                              onChange={(e: SelectChangeEvent<string>) => updateWasteEntry(entry.key, 'commodity', e.target.value)}
+                              displayEmpty
+                              sx={tableFieldStyles}
+                              MenuProps={selectMenuProps}
+                            >
+                              <MenuItem value="">
+                                <em>{loadingCommodities ? 'Loading...' : 'Select Commodity'}</em>
+                              </MenuItem>
+                              {commodityOptions.map((opt) => (
+                                <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </TableCell>
 
-              {/* <TextField
-                fullWidth
-                label="Type of Waste"
-                variant="outlined"
-                value={formData.typeOfWaste}
-                onChange={(e) => handleInputChange('typeOfWaste', e.target.value)}
-                placeholder="Enter type of waste"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
-                InputLabelProps={{ shrink: true }}
-              /> */}
+                        <TableCell className="p-2 align-top">
+                          <TextField
+                            fullWidth
+                            variant="outlined"
+                            value={entry.uom}
+                            onChange={(e) => updateWasteEntry(entry.key, 'uom', e.target.value)}
+                            placeholder="UOM"
+                            sx={tableFieldStyles}
+                          />
+                        </TableCell>
+
+                        <TableCell className="p-2 align-top">
+                          <div className="flex items-start gap-2">
+                            <TextField
+                              type="number"
+                              label="Bag Count"
+                              value={entry.bagCount}
+                              onChange={(e) => updateWasteEntry(entry.key, 'bagCount', e.target.value)}
+                              variant="outlined"
+                              inputProps={{ min: '1', step: '1' }}
+                              sx={{ width: 100, ...tableFieldStyles }}
+                              InputLabelProps={{ shrink: true }}
+                            />
+                            <TextField
+                              type="number"
+                              label="Overall Weight"
+                              value={entry.overallWeight}
+                              onChange={(e) => updateWasteEntry(entry.key, 'overallWeight', e.target.value)}
+                              variant="outlined"
+                              inputProps={{ min: '0' }}
+                              sx={{ width: 120, ...tableFieldStyles }}
+                              InputLabelProps={{ shrink: true }}
+                            />
+                          </div>
+                          {(() => {
+                            const count = parseInt(entry.bagCount, 10);
+                            const total = parseFloat(entry.overallWeight);
+                            if (!(count > 0) || !(total > 0)) return null;
+                            const perBag = distributeWeight(total, count);
+                            return (
+                              <p className="text-xs text-gray-500 mt-1.5 max-w-[280px] break-words">
+                                {count} bag{count > 1 ? 's' : ''}: {perBag.join(', ')} {entry.uom || ''}
+                              </p>
+                            );
+                          })()}
+                        </TableCell>
+
+                        <TableCell className="p-2 align-top">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="inline-flex h-10 w-full items-center justify-center bg-gray-100 border border-gray-300 rounded px-3 text-xs text-gray-900 cursor-pointer hover:bg-gray-200">
+                              Choose File(s)
+                              <input
+                                type="file"
+                                multiple
+                                className="hidden"
+                                onChange={(e) => {
+                                  addAttachments(entry.key, e.target.files);
+                                  e.target.value = '';
+                                }}
+                              />
+                            </label>
+                            {entry.attachments.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {entry.attachments.map((file, fileIndex) => (
+                                  <span
+                                    key={fileIndex}
+                                    className="inline-flex items-center gap-1 bg-white border border-gray-300 rounded px-1.5 py-0.5 text-xs text-gray-700 max-w-[160px]"
+                                  >
+                                    <span className="truncate">{file.name}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeAttachment(entry.key, fileIndex)}
+                                      className="text-gray-400 hover:text-red-600 shrink-0"
+                                      aria-label="Remove attachment"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+
+                        <TableCell className="p-2 pt-4 text-center">
+                          {wasteEntries.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeWasteEntry(entry.key)}
+                              className="text-gray-400 hover:text-red-600 transition-colors"
+                              aria-label="Remove category"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addWasteEntry}
+                className="mt-3 border-brand text-brand hover:bg-brand-selected hover:text-brand"
+              >
+                <Plus className="w-4 h-4 mr-1" /> Add Category
+              </Button>
             </div>
 
             {/* Organization Details Section */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-10">
-              <FormSearchSelect
-                label={
-                  <>
-                    <span className="text-red-500">*</span> Operational Name of
-                    Landlord/ Tenant
-                  </>
-                }
-                value={formData.operationalName}
-                onChange={(v) => handleInputChange('operationalName', v)}
-                options={operationalLandlordOptions}
-                placeholder="Select Operational Name"
-                isLoading={loadingOperationalLandlords}
-                disabled={loadingOperationalLandlords}
-              />
+              <div className="min-w-0">
+                <FormSearchSelect
+                  label={
+                    <span>
+                      <span className="text-red-500">*</span> Operational Name of Landlord/Tenant
+                    </span>
+                  }
+                  value={formData.operationalName}
+                  onChange={(value) => handleInputChange('operationalName', value)}
+                  options={operationalLandlordOptions}
+                  placeholder="Select Operational Name"
+                  disabled={loadingOperationalLandlords}
+                  isLoading={loadingOperationalLandlords}
+                  isClearable
+                />
+              </div>
 
               <TextField
                 label="Agency Name"
@@ -535,33 +781,33 @@ const AddWasteGenerationPage = () => {
                   },
                 }}
                 sx={fieldStyles}
-              // InputProps={{
-              //   sx: fieldStyles,
-              // }}
               />
 
               <TextField
-                // label="Generated Unit*"
-                label={<span>Generated Unit <span className="text-red-500">*</span></span>}
+                label="Total Generated Unit"
                 type="number"
-                placeholder="Enter Unit"
-                value={formData.generatedUnit}
-                onChange={(e) => handleInputChange('generatedUnit', e.target.value)}
+                value={totalGeneratedUnit}
                 fullWidth
                 variant="outlined"
-                inputProps={{ min: "0" }}
+                disabled
                 slotProps={{
                   inputLabel: {
                     shrink: true,
                   },
                 }}
                 sx={fieldStyles}
-              // InputProps={{
-              //   sx: fieldStyles,
-              // }}
               />
 
-              <TextField
+              {/* Vendor — uses virtualized SupplierSearchSelect to handle large record sets without freezing */}
+              <SupplierSearchSelect
+                value={formData.vendor}
+                onChange={(vendorId) => handleInputChange('vendor', vendorId)}
+                label={<span>Vendor <span style={{ color: '#C72030' }}>*</span></span>}
+                size="schedule"
+                error={false}
+              />
+
+              {/* <TextField
                 label="Recycled Unit"
                 type="number"
                 placeholder="0"
@@ -576,10 +822,25 @@ const AddWasteGenerationPage = () => {
                   },
                 }}
                 sx={fieldStyles}
-              // InputProps={{
-              //   sx: fieldStyles,
-              // }}
-              />
+              /> */}
+
+              <div className="md:col-span-2">
+                <TextField
+                  label="Remark"
+                  placeholder="Enter remark"
+                  value={formData.remark}
+                  onChange={(e) => handleInputChange('remark', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  multiline
+                  minRows={2}
+                  slotProps={{
+                    inputLabel: {
+                      shrink: true,
+                    },
+                  }}
+                />
+              </div>
             </div>
           </div>
 
@@ -598,8 +859,7 @@ const AddWasteGenerationPage = () => {
               variant="outline"
               onClick={handleBack}
               disabled={submitting}
-              style={{ borderColor: '#d1d5db', color: '#374151' }}
-              className="hover:bg-gray-50 px-8 py-2 disabled:opacity-50 rounded-md"
+              className="border-brand text-brand hover:bg-brand-selected hover:text-brand px-8 py-2 disabled:opacity-50 rounded-md"
             >
               Back
             </Button>

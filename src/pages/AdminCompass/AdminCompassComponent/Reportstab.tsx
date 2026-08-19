@@ -99,13 +99,13 @@ const PillSelect = ({
   }, []);
 
   return (
-    <div ref={ref} className="relative shrink-0" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div ref={ref} className="relative w-full sm:w-auto sm:shrink-0" style={{ fontFamily: "'Inter', sans-serif" }}>
       <button
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setOpen(!open)}
         className={cn(
-          "flex items-center gap-1.5 bg-white border rounded-full px-4 py-1.5 text-sm font-medium transition-all",
+          "flex w-full items-center justify-between gap-1.5 bg-white border rounded-full px-4 py-1.5 text-sm font-medium transition-all sm:w-auto",
           open ? "border-[#DA7756] shadow-sm" : "border-gray-200 hover:border-gray-300",
           disabled && "opacity-60 cursor-not-allowed"
         )}
@@ -371,7 +371,7 @@ const ReportsTab = ({
   };
 
   return (
-    <div className="space-y-5 pb-12" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="space-y-5 pb-12 min-w-0" style={{ fontFamily: "'Inter', sans-serif" }}>
 
       {/* ── TOP HEADER ROW ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -385,7 +385,7 @@ const ReportsTab = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
           <PillSelect
             value={selectedMeetingId}
             onChange={(val) => setSelectedMeetingId(String(val))}
@@ -402,7 +402,7 @@ const ReportsTab = ({
           <button
             onClick={() => { loadReport(); loadCalendarWeek(); }}
             disabled={isLoading || isCalendarLoading}
-            className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 hover:text-[#DA7756] hover:border-orange-200 transition-all disabled:opacity-40 shadow-sm"
+            className="w-9 h-9 shrink-0 flex items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 hover:text-[#DA7756] hover:border-orange-200 transition-all disabled:opacity-40 shadow-sm"
           >
             <RefreshCw className={cn("w-3.5 h-3.5", (isLoading || isCalendarLoading) && "animate-spin text-[#DA7756]")} />
           </button>
@@ -423,7 +423,7 @@ const ReportsTab = ({
         <div className="space-y-5 animate-pulse">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-5">
             <div className="bg-white rounded-2xl border border-gray-100 p-5 h-[220px]" />
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[1, 2, 3, 4].map(i => (
                 <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 h-[100px]" />
               ))}
@@ -457,12 +457,12 @@ const ReportsTab = ({
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="px-5 pt-5 pb-4">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-5">
-                  <div>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+                  <div className="min-w-0">
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Weekly View</p>
-                    <p className="text-sm font-semibold text-gray-700">{getCalendarDateLabel()}</p>
+                    <p className="text-sm font-semibold text-gray-700 break-words">{getCalendarDateLabel()}</p>
                   </div>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 self-end sm:self-auto">
                     <button
                       onClick={() => setWeekOffset((prev) => prev + 1)}
                       className="w-8 h-8 flex items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 text-gray-400 hover:text-gray-700 transition-colors"
@@ -586,7 +586,7 @@ const ReportsTab = ({
             </div>
 
             {/* KPI Stats 2×2 */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <StatCard
                 icon={Calendar}
                 iconBg="bg-blue-50"
@@ -632,7 +632,7 @@ const ReportsTab = ({
             {/* Attendance Trend */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="p-5">
-                <div className="flex items-center justify-between mb-5">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-xl bg-green-50 flex items-center justify-center">
                       <TrendingUp className="w-4 h-4 text-green-500" />
@@ -688,7 +688,7 @@ const ReportsTab = ({
             {/* KPI Achievement */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="p-5">
-                <div className="flex items-center justify-between mb-5">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center">
                       <Activity className="w-4 h-4 text-red-500" />
@@ -799,14 +799,14 @@ const ReportsTab = ({
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <button
               type="button"
-              className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50/80 transition-colors text-left"
+              className="w-full px-4 sm:px-5 py-4 flex items-center justify-between gap-3 hover:bg-gray-50/80 transition-colors text-left"
               onClick={() => setIsKpiExpanded(!isKpiExpanded)}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex min-w-0 items-center gap-3">
                 <div className="w-8 h-8 rounded-xl bg-orange-50 flex items-center justify-center">
                   <Users className="w-4 h-4 text-[#DA7756]" />
                 </div>
-                <span className="font-bold text-gray-900 text-sm">Team Member KPIs</span>
+                <span className="font-bold text-gray-900 text-sm truncate">Team Member KPIs</span>
                 <span
                   className="min-w-[28px] h-6 flex items-center justify-center rounded-full text-white text-xs font-bold px-2"
                   style={{ background: "#DA7756" }}
@@ -833,19 +833,19 @@ const ReportsTab = ({
                     <p className="text-sm font-medium text-gray-400">No team members found</p>
                   </div>
                 ) : (
-                  <div className="p-4 grid grid-cols-1 gap-3 max-h-[520px] overflow-y-auto">
+                  <div className="p-3 sm:p-4 grid grid-cols-1 gap-3 max-h-[520px] overflow-y-auto">
                     {r.memberStats.map((member, i) => (
                       <div key={i} className="bg-gray-50/60 rounded-2xl border border-gray-100 p-4">
                         {/* Member header */}
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2.5">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                          <div className="flex min-w-0 items-center gap-2.5">
                             <div
                               className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-bold shrink-0"
                               style={{ background: "#DA7756" }}
                             >
                               {(member.name || "?").charAt(0).toUpperCase()}
                             </div>
-                            <span className="font-bold text-sm text-gray-900">{member.name || "Unknown Member"}</span>
+                            <span className="font-bold text-sm text-gray-900 truncate">{member.name || "Unknown Member"}</span>
                           </div>
                           <span className="px-2.5 py-0.5 bg-white border border-gray-200 text-gray-500 text-[10px] font-bold uppercase tracking-widest rounded-lg">
                             {member.kpis?.length || 0} KPIs
@@ -863,7 +863,7 @@ const ReportsTab = ({
                               return (
                                 <div
                                   key={kIdx}
-                                  className="flex justify-between items-center bg-white border border-gray-100 p-3 rounded-xl"
+                                  className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 bg-white border border-gray-100 p-3 rounded-xl"
                                 >
                                   <div className="flex-1 min-w-0 pr-2">
                                     <div className="text-sm font-semibold text-gray-900 truncate mb-0.5">{kpi.name}</div>

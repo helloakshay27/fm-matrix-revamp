@@ -1,4 +1,5 @@
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -54,6 +55,16 @@ const columns: ColumnConfig[] = [
 ];
 
 const PlusServiceDashboard = () => {
+  const pulseEvents = usePulseEvents();
+
+  useEffect(() => {
+    pulseEvents.onModuleViewed({
+      module: "Plus Service",
+      package: "Pulse Privilege",
+      screen: "pulse_plus_service",
+    });
+  }, [pulseEvents]);
+
   const navigate = useNavigate();
   const [plusServices, setPlusServices] = useState([]);
   const [updatingStatus, setUpdatingStatus] = useState<{ [key: string]: boolean }>({});
@@ -314,7 +325,7 @@ const PlusServiceDashboard = () => {
   return (
     <div className="p-6">
       <div className="mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">Plus Services</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Services</h1>
       </div>
 
       <EnhancedTable

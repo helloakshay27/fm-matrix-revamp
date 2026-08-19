@@ -5,6 +5,7 @@ import { Search, RefreshCw, MapPin, User, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { VisitorsHistoryFilterModal } from '@/components/VisitorsHistoryFilterModal';
 import { NewVisitorDialog } from '@/components/NewVisitorDialog';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 const visitorsData = [
   {
@@ -54,6 +55,7 @@ const visitorsData = [
 ];
 
 export const VisitorsHistoryDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const [activeTab, setActiveTab] = useState('History');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentSearchTerm, setCurrentSearchTerm] = useState('');
@@ -156,15 +158,17 @@ export const VisitorsHistoryDashboard = () => {
       </div>
 
       {/* Floating Add Button */}
-      <div className="fixed bottom-8 right-8">
-        <Button 
-          onClick={() => setIsNewVisitorDialogOpen(true)}
-          style={{ backgroundColor: '#C72030' }}
-          className="w-12 h-12 rounded-full text-white hover:bg-[#C72030]/90 shadow-lg"
-        >
-          <Plus className="w-6 h-6" />
-        </Button>
-      </div>
+      {shouldShow("Visitor", "create") && (
+        <div className="fixed bottom-8 right-8">
+          <Button
+            onClick={() => setIsNewVisitorDialogOpen(true)}
+            style={{ backgroundColor: '#C72030' }}
+            className="w-12 h-12 rounded-full text-white hover:bg-[#C72030]/90 shadow-lg"
+          >
+            <Plus className="w-6 h-6" />
+          </Button>
+        </div>
+      )}
 
       <VisitorsHistoryFilterModal 
         isOpen={isFilterModalOpen}

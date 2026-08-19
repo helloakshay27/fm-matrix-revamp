@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Filter, FileCheck, Clock, HourglassIcon, CheckCircle, XCircle, RotateCcw, Archive } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PermitFilterModal } from '@/components/PermitFilterModal';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 const statsData = [
   { label: 'Total Permits', count: 0, icon: FileCheck },
@@ -21,6 +22,7 @@ const statsData = [
 
 export const PermitListDashboard = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
 
@@ -84,7 +86,8 @@ export const PermitListDashboard = () => {
 
       {/* Action Buttons */}
       <div className="flex gap-4 mb-6">
-        <Button 
+        {shouldShow("Permit", "create") && (
+        <Button
           onClick={handleAddPermit}
           style={{ backgroundColor: '#C72030' }}
           className="text-white hover:opacity-90"
@@ -92,6 +95,7 @@ export const PermitListDashboard = () => {
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
+        )}
         <Button 
           onClick={() => setShowFilterModal(true)}
           variant="outline"

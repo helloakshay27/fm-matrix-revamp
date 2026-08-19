@@ -230,7 +230,7 @@ export const OccupantUsersFilterDialog = ({
             <Button
               onClick={handleResetFilters}
               variant="outline"
-              className="bg-white text-gray-700 hover:bg-gray-50 border-gray-300 px-6 py-2"
+              className="bg-white text-brand hover:bg-gray-50 border-brand px-6 py-2"
             >
               Reset
             </Button>

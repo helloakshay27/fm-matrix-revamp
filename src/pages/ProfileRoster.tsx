@@ -387,7 +387,7 @@ const ProfileRoster = ({ rosterId }) => {
         <div className="space-y-6 mt-4">
             {/* Header */}
             <header className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-[#C72030]/10 text-[#C72030] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-[#E5E0D3] text-brand flex items-center justify-center">
                     <Eye className="w-5 h-5" />
                 </div>
                 <div>

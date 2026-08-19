@@ -24,6 +24,7 @@ import {
   type EventsDetailsResponse,
   type PulseFilters,
 } from "@/services/pulseDashboardApi";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 const C = {
   green: "#798C5E",
@@ -47,6 +48,14 @@ export function PulseEvents({ filters }: Props) {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [eventSearch, setEventSearch] = useState("");
+
+  const pulseEvents = usePulseEvents();
+
+
+  // Fires once when the Events tab is mounted (tab switch renders a fresh instance).
+  useEffect(() => {
+    pulseEvents.onEventListViewed();
+  }, [pulseEvents]);
 
   useEffect(() => {
     setPage(1);

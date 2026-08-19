@@ -25,7 +25,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import recessLogo from "@/assets/recess-logo";
+import { RecessClubLogo } from "@/components/RecessClubLogo";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { useNavigate } from "react-router-dom";
@@ -37,6 +37,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useNotification } from "@/contexts/NotificationContext";
 import { useLayout } from "@/contexts/LayoutContext";
 import { usePermissions } from "@/contexts/PermissionsContext";
@@ -128,7 +129,7 @@ const navMenuOptions: Record<
       title: "Business Compass",
       description: "",
       icon: <Shield className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
-      href: "/business-compass/profile",
+      href: "/business-compass/dashboard",
     },
     {
       title: "Admin Compass",
@@ -500,11 +501,7 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
                 alt=""
               />
             ) : isClubSite ? (
-              <img
-                src={recessLogo}
-                alt="Recess Logo"
-                style={{ height: 60, width: "auto", objectFit: "contain" }}
-              />
+              <RecessClubLogo />
             ) : isPulseSite ? (
               <img
                 src="https://www.panchshil.com/assets/images/home/logo.png"
@@ -619,7 +616,7 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
             onClick={() => navigate("/employee-wallet")}
           >
             <Wallet className="w-5 h-5 text-[#DA7756]" /> ₹{" "}
-            {availableBalance.toFixed(2)}
+            {availableBalance?.toFixed(2)}
           </button>
 
           <button
@@ -652,17 +649,20 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
             onOpenChange={setIsNotificationOpen}
           >
             <DropdownMenuTrigger asChild>
-              <button className="relative p-2 hover:bg-gray-50 rounded-lg transition-colors">
-                <Bell className="w-5 h-5 text-gray-600" />
+              <Button
+                variant="ghost"
+                className="fm-button-fix relative !bg-transparent !text-[#DA7756] hover:!bg-[#fdf0ea] rounded-full [&_svg]:!text-[#DA7756] [&_svg]:!stroke-[#DA7756]"
+              >
+                <Bell className="w-5 h-5" />
                 {notificationCount > 0 && (
                   <Badge
                     variant="destructive"
-                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                    className="absolute -top-1 -right-1 !h-5 !w-5 !min-w-5 !rounded-full flex items-center justify-center !p-0 text-xs"
                   >
                     {notificationCount}
                   </Badge>
                 )}
-              </button>
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
@@ -735,8 +735,8 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
           {/* User Profile Dropdown */}
           <DropdownMenu open={isProfileOpen} onOpenChange={setIsProfileOpen}>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 p-1.5 hover:bg-gray-50 rounded-lg transition-colors">
-                <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center flex-shrink-0">
+              <button className="flex h-9 w-9 items-center justify-center rounded-full p-0 transition-colors hover:bg-[#fdf0ea]">
+                <div className="h-8 w-8 rounded-full bg-[#DA7756] flex items-center justify-center flex-shrink-0">
                   <User className="w-4 h-4 text-white" />
                 </div>
               </button>

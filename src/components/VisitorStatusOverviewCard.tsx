@@ -37,12 +37,12 @@ export const VisitorStatusOverviewCard: React.FC<VisitorStatusOverviewCardProps>
 
     setIsLoading(true);
     try {
-      // Format dates as DD/MM/YYYY to match API expectation
+      // Format dates as YYYY-MM-DD to match API expectation
       const formatDate = (date: Date): string => {
-        const day = date.getDate().toString().padStart(2, '0');
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
         const year = date.getFullYear();
-        return `${day}/${month}/${year}`;
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
       };
 
       const fromDate = formatDate(dateRange.startDate);
@@ -52,9 +52,9 @@ export const VisitorStatusOverviewCard: React.FC<VisitorStatusOverviewCardProps>
 
       if (response.success) {
         setVisitorData({
-          totalVisitors: response.summary.totalVisitors,
-          expectedVisitors: response.summary.expectedVisitors,
-          unexpectedVisitors: response.summary.unexpectedVisitors
+          totalVisitors: response.totalVisitors,
+          expectedVisitors: response.expectedVisitors,
+          unexpectedVisitors: response.unexpectedVisitors
         });
       }
     } catch (error) {
@@ -133,26 +133,26 @@ export const VisitorStatusOverviewCard: React.FC<VisitorStatusOverviewCardProps>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="relative text-center p-4 bg-red-50 rounded-lg border border-red-200">
-              <Download
+              {/* <Download
                 className="absolute top-3 right-3 w-4 h-4 cursor-pointer text-[#C72030] hover:text-[#A01829] transition-colors"
                 onClick={() => handleDownload('total')}
-              />
+              /> */}
               <div className="text-2xl font-bold text-[#C72030]">{visitorData.totalVisitors}</div>
               <div className="text-sm text-red-700 font-medium">Total Visitors</div>
             </div>
             <div className="relative text-center p-4 bg-green-50 rounded-lg border border-green-200">
-              <Download
+              {/* <Download
                 className="absolute top-3 right-3 w-4 h-4 cursor-pointer text-green-600 hover:text-green-700 transition-colors"
                 onClick={() => handleDownload('expected')}
-              />
+              /> */}
               <div className="text-2xl font-bold text-green-600">{visitorData.expectedVisitors}</div>
               <div className="text-sm text-green-700 font-medium">Expected</div>
             </div>
             <div className="relative text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
-              <Download
+              {/* <Download
                 className="absolute top-3 right-3 w-4 h-4 cursor-pointer text-orange-600 hover:text-orange-700 transition-colors"
                 onClick={() => handleDownload('unexpected')}
-              />
+              /> */}
               <div className="text-2xl font-bold text-orange-600">{visitorData.unexpectedVisitors}</div>
               <div className="text-sm text-orange-700 font-medium">Unexpected</div>
             </div>

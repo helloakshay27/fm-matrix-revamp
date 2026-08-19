@@ -1,13 +1,28 @@
-import { useState } from 'react';
-import ChartCanvas from '../ChartCanvas';
+import { useState } from "react";
+import ChartCanvas from "../ChartCanvas";
+import { useCeoDashboardEfficiencyOverview } from "@/hooks/useCeoDashboardEfficiencyOverview";
+import { useCeoDashboardPeopleAlerts } from "@/hooks/useCeoDashboardPeopleAlerts";
+import { useCeoDashboardEffortAndOverdue } from "@/hooks/useCeoDashboardEffortAndOverdue";
+import { useCeoDashboardPersonWiseAgeingMatrix } from "@/hooks/useCeoDashboardPersonWiseAgeingMatrix";
+import { useCeoDashboardPerPersonBreakdown } from "@/hooks/useCeoDashboardPerPersonBreakdown";
 
-const ok = '#108C72', warn = '#EDC488', err = '#E7848E', dark = '#2C2C2C',
-  lav = '#CECBF6', terra = '#DA7756', grid = 'rgba(197,184,157,0.22)', green = '#798C5E';
+const ok = "#108C72",
+  warn = "#EDC488",
+  err = "#E7848E",
+  dark = "#2C2C2C",
+  lav = "#CECBF6",
+  terra = "#DA7756",
+  grid = "rgba(197,184,157,0.22)",
+  green = "#798C5E";
 
 const baseOpts = (legend = false) => ({
-  responsive: true, maintainAspectRatio: false,
+  responsive: true,
+  maintainAspectRatio: false,
   plugins: {
-    legend: { display: legend, labels: { font: { size: 9 }, boxWidth: 8, padding: 6, color: dark } },
+    legend: {
+      display: legend,
+      labels: { font: { size: 9 }, boxWidth: 8, padding: 6, color: dark },
+    },
     tooltip: { titleFont: { size: 11 }, bodyFont: { size: 10 } },
   },
   scales: {
@@ -16,94 +31,217 @@ const baseOpts = (legend = false) => ({
   },
 });
 
-const DEPT_OPTS = [
-  { value: '', label: 'All Departments' },
-  { value: 'cs', label: 'Customer Success & Operations' },
-  { value: 'design', label: 'Design' },
-  { value: 'finance', label: 'Finance' },
-  { value: 'hr', label: 'HR & Admin' },
-  { value: 'leadership', label: 'Leadership' },
-  { value: 'ops', label: 'Operational Excellence' },
-  { value: 'qa', label: 'Quality Assurance' },
-  { value: 'sales', label: 'Sales' },
-  { value: 'tech', label: 'Tech' },
-];
-
-type PersonRow = {
-  name: string; dept: string; rowClass?: string;
-  taskOpen: string | number; taskInProg: string | number; taskDone: string | number; taskOverdue: string | number;
-  todoOpen: string | number; todoDone: string | number; todoOverdue: string | number;
-  issues: string | number; doneYest: string; topOverdue: string; topOverdueColor?: string;
+const SCORE_LABEL_STYLE: Record<string, { emoji: string; color: string }> = {
+  Healthy: { emoji: "🟢", color: "#89F7E7" },
+  "Needs Attention": { emoji: "🟡", color: "#EDC488" },
+  Critical: { emoji: "🔴", color: "#E7848E" },
 };
 
-const PEOPLE: PersonRow[] = [
-  // CS
-  { name: 'Deepak Gupta', dept: 'cs', rowClass: 'row-overloaded', taskOpen: 184, taskInProg: 0, taskDone: 52, taskOverdue: 0, todoOpen: 0, todoDone: 26, todoOverdue: 16, issues: 0, doneYest: '—', topOverdue: '◆ todo: VI - check why (2026-04-23)\n◆ todo: Runwal Realty App (2026-04-23)' },
-  { name: 'Anjali Lungare', dept: 'cs', taskOpen: 0, taskInProg: 2, taskDone: 99, taskOverdue: 4, todoOpen: 0, todoDone: 21, todoOverdue: 3, issues: 1, doneYest: '1', topOverdue: '• Panchshil FM user roles (2026-04-22)\n• Reset passwords for FM user (2026-04-16)\n◆ todo: FILL SELF EVALUATION (2026-05-04)' },
-  { name: 'Sagar Singh', dept: 'cs', taskOpen: 0, taskInProg: 0, taskDone: 27, taskOverdue: 2, todoOpen: 0, todoDone: 122, todoOverdue: 11, issues: 0, doneYest: '—', topOverdue: '• zoom config on meeting module (2026-05-04)\n• cloud telephony activation (2026-04-01)' },
-  // Design
-  { name: 'Shahab Tufail Anwar', dept: 'design', taskOpen: 20, taskInProg: 0, taskDone: 14, taskOverdue: 1, todoOpen: 0, todoDone: 4, todoOverdue: 1, issues: 0, doneYest: '—', topOverdue: '• making PTW screens (2026-02-25)\n◆ todo: Meeting with Komal (2026-05-06)' },
-  { name: 'Jahnvi Mulchandani', dept: 'design', taskOpen: 0, taskInProg: 0, taskDone: 15, taskOverdue: 0, todoOpen: 0, todoDone: 14, todoOverdue: 0, issues: 0, doneYest: '—', topOverdue: '✓ None', topOverdueColor: '#108C72' },
-  { name: 'Kshitij Rasal', dept: 'design', taskOpen: 0, taskInProg: 0, taskDone: 143, taskOverdue: 0, todoOpen: 0, todoDone: 14, todoOverdue: 0, issues: 0, doneYest: '—', topOverdue: '✓ None', topOverdueColor: '#108C72' },
-  // Finance
-  { name: 'Punit Jain', dept: 'finance', taskOpen: 0, taskInProg: 0, taskDone: 2, taskOverdue: 1, todoOpen: 1, todoDone: 83, todoOverdue: 3, issues: 0, doneYest: 'TODO Invoicing', topOverdue: '• NDA with all vendors (2026-04-04)\n◆ todo: Ledger Reconciliation (2026-04-30)' },
-  { name: 'Shraddha Barje', dept: 'finance', taskOpen: 0, taskInProg: 0, taskDone: 1, taskOverdue: 0, todoOpen: 1, todoDone: 115, todoOverdue: 6, issues: 0, doneYest: 'TODO Kaleyra', topOverdue: '◆ todo: declaration - piramal (2026-05-06)\n◆ todo: update holidays in PATM (2026-05-06)' },
-  // HR
-  { name: 'Ravi Sampat', dept: 'hr', taskOpen: 0, taskInProg: 0, taskDone: 6, taskOverdue: 0, todoOpen: 0, todoDone: 5, todoOverdue: 1, issues: 0, doneYest: 'TODO visitor register', topOverdue: '◆ todo: Set up server and UPS (2026-03-26)' },
-  { name: 'Shalaka Nachare', dept: 'hr', taskOpen: 0, taskInProg: 0, taskDone: 0, taskOverdue: 0, todoOpen: 0, todoDone: 167, todoOverdue: 0, issues: 0, doneYest: 'TODO Interviews', topOverdue: '✓ None', topOverdueColor: '#108C72' },
-  // Leadership
-  { name: 'Chetan Bafna', dept: 'leadership', taskOpen: 0, taskInProg: 0, taskDone: 2, taskOverdue: 1, todoOpen: 0, todoDone: 31, todoOverdue: 10, issues: 0, doneYest: 'TODO Annexure 1', topOverdue: '• Setting Up All Accounts (2026-04-06)\n◆ todo: review holiday calendar (2026-04-30)' },
-  // Ops
-  { name: 'Adhip Shetty', dept: 'ops', taskOpen: 0, taskInProg: 0, taskDone: 15, taskOverdue: 2, todoOpen: 0, todoDone: 41, todoOverdue: 3, issues: 0, doneYest: 'TODO SHA Draft', topOverdue: '• Configure Research Agent (2026-04-15)\n• n8n INSTALLATION (2026-04-09)\n◆ todo: Share Business Plan (2026-05-07)' },
-  { name: 'Manav Gandhi', dept: 'ops', taskOpen: 0, taskInProg: 0, taskDone: 0, taskOverdue: 1, todoOpen: 0, todoDone: 0, todoOverdue: 0, issues: 0, doneYest: '—', topOverdue: '• Onlyoffice Automation (2026-03-28)' },
-  // QA
-  { name: 'Komal Shinde ⭐', dept: 'qa', rowClass: 'row-star', taskOpen: 0, taskInProg: 0, taskDone: 127, taskOverdue: 0, todoOpen: 0, todoDone: 144, todoOverdue: 1, issues: 0, doneYest: '—', topOverdue: '✓ None', topOverdueColor: '#108C72' },
-  { name: 'Dinesh Shinde', dept: 'qa', taskOpen: 9, taskInProg: 1, taskDone: 111, taskOverdue: 14, todoOpen: 0, todoDone: 37, todoOverdue: 0, issues: 1, doneYest: '—', topOverdue: '• Hi society Revamp Testing (2026-04-29)\n• Appointmentz Module testing (2026-04-27)' },
-  { name: 'Vinayak Mane', dept: 'qa', taskOpen: 0, taskInProg: 0, taskDone: 22, taskOverdue: 2, todoOpen: 0, todoDone: 64, todoOverdue: 0, issues: 0, doneYest: '—', topOverdue: '• Test Loyalty Rustomjee (2026-03-26)\n• QA android, ios, web (2026-03-06)' },
-  { name: 'Ubaid Hashmat', dept: 'qa', taskOpen: 0, taskInProg: 0, taskDone: 38, taskOverdue: 2, todoOpen: 0, todoDone: 4, todoOverdue: 6, issues: 1, doneYest: '—', topOverdue: '• Connect with Ajay for backend (2026-04-06)\n• Module not appears on web portal (2026-02-23)' },
-  { name: 'Sakshi Salunke', dept: 'qa', taskOpen: 0, taskInProg: 0, taskDone: 5, taskOverdue: 0, todoOpen: 1, todoDone: 64, todoOverdue: 0, issues: 0, doneYest: 'TODO Assign Faisal', topOverdue: '✓ None', topOverdueColor: '#108C72' },
-  // Sales
-  { name: 'Aquil Hussain', dept: 'sales', taskOpen: 0, taskInProg: 0, taskDone: 0, taskOverdue: 0, todoOpen: 0, todoDone: 0, todoOverdue: 2, issues: 0, doneYest: '—', topOverdue: '◆ todo: Review STEM Agreement (2026-03-20)\n◆ todo: Send STEM Profile to Delhi (2026-03-13)' },
-  // Tech
-  { name: 'Akshay Shinde ⭐', dept: 'tech', rowClass: 'row-star', taskOpen: 1, taskInProg: 0, taskDone: 449, taskOverdue: 3, todoOpen: 0, todoDone: 9, todoOverdue: 6, issues: 16, doneYest: '—', topOverdue: '• forecast module as per zoho (2026-05-07)\n• User roles unit testing (2026-05-07)' },
-  { name: 'Bilal Shaikh 🔴', dept: 'tech', rowClass: 'row-critical', taskOpen: 406, taskInProg: 0, taskDone: 47, taskOverdue: 7, todoOpen: 0, todoDone: 12, todoOverdue: 0, issues: 2, doneYest: '—', topOverdue: '• Resolve Panchshil Connect Event (2026-05-06)\n• Panchshil Connect app events (2026-05-06)' },
-  { name: 'Mahendra Lungare 🔴', dept: 'tech', rowClass: 'row-critical', taskOpen: 435, taskInProg: 0, taskDone: 17, taskOverdue: 5, todoOpen: 1, todoDone: 3, todoOverdue: 2, issues: 3, doneYest: '—', topOverdue: '• Club Payment Showing Success (2026-04-28)\n◆ todo: Rustomjee CMS linkage (2026-05-06)' },
-  { name: 'Ajay Pihulkar', dept: 'tech', taskOpen: 3, taskInProg: 1, taskDone: 154, taskOverdue: 5, todoOpen: 0, todoDone: 26, todoOverdue: 0, issues: 0, doneYest: 'TODO Kalerya mtg', topOverdue: '• Attach QR for Club membership (2026-05-07)\n• Patrolling new report (2026-05-04)' },
-  { name: 'Abhishek Sharma', dept: 'tech', taskOpen: 5, taskInProg: 0, taskDone: 51, taskOverdue: 17, todoOpen: 0, todoDone: 1, todoOverdue: 2, issues: 15, doneYest: '—', topOverdue: '• QR based helpdesk point (2026-05-07)\n• Oman LNG sites Task (2026-05-07)\n• FM PASSWORD RESET (2026-05-05)' },
-  { name: 'Prasad Nayak', dept: 'tech', taskOpen: 0, taskInProg: 0, taskDone: 80, taskOverdue: 13, todoOpen: 0, todoDone: 4, todoOverdue: 0, issues: 5, doneYest: '—', topOverdue: '• Notification screen revamp (2026-05-08)\n• Rustomjee plus module (2026-04-07)' },
-  { name: 'Tejas Chaudhari', dept: 'tech', taskOpen: 1, taskInProg: 0, taskDone: 80, taskOverdue: 3, todoOpen: 0, todoDone: 29, todoOverdue: 0, issues: 19, doneYest: 'TODO Rustomjee CMS', topOverdue: '• My Bills backend (2026-04-08)\n• Connect new CMS and lockated (2026-03-13)' },
-  { name: 'Rashid Raees Khan', dept: 'tech', taskOpen: 0, taskInProg: 0, taskDone: 31, taskOverdue: 9, todoOpen: 0, todoDone: 1, todoOverdue: 1, issues: 24, doneYest: '—', topOverdue: '• Login/SignUp OTP page (2026-04-20)\n• Visitor test notification (2026-04-16)' },
-  { name: 'Dhananjay Bhoyar', dept: 'tech', taskOpen: 6, taskInProg: 0, taskDone: 116, taskOverdue: 2, todoOpen: 0, todoDone: 0, todoOverdue: 0, issues: 7, doneYest: '—', topOverdue: '• enhancement in life compass (2026-05-07)\n• Require form in f&b module (2026-05-07)' },
-  { name: 'Ajay Ghenand', dept: 'tech', taskOpen: 0, taskInProg: 0, taskDone: 111, taskOverdue: 1, todoOpen: 0, todoDone: 10, todoOverdue: 0, issues: 6, doneYest: '—', topOverdue: '• Fitout Flat Rate (2026-04-10)' },
-  { name: 'Parag Patil', dept: 'tech', taskOpen: 0, taskInProg: 1, taskDone: 14, taskOverdue: 1, todoOpen: 0, todoDone: 7, todoOverdue: 0, issues: 0, doneYest: '—', topOverdue: '• Assessment Dashboard Issues (2026-03-25)' },
-  // No dept
-  { name: 'Abdul Ghaffar', dept: '', rowClass: 'row-critical', taskOpen: 394, taskInProg: 0, taskDone: 0, taskOverdue: 4, todoOpen: 0, todoDone: 67, todoOverdue: 1, issues: 0, doneYest: '—', topOverdue: '• Research and documentation (2026-03-13)\n• Holiday Calendar Full flow (2026-02-27)\n• Survey setup for OIG all sites (2026-02-23)' },
-  { name: 'Sadanand Gupta', dept: '', taskOpen: 1214, taskInProg: 0, taskDone: 0, taskOverdue: '—', todoOpen: 0, todoDone: 0, todoOverdue: 0, issues: 0, doneYest: '—', topOverdue: '1,214 overdue — department not set in PATM. Fix immediately.', topOverdueColor: '#C0303D' },
-  { name: 'Gayatri Gaikwad', dept: '', taskOpen: 2, taskInProg: 2, taskDone: 2, taskOverdue: 0, todoOpen: 1, todoDone: 18, todoOverdue: 0, issues: 0, doneYest: '—', topOverdue: '✓ None', topOverdueColor: '#108C72' },
-];
-
-const DEPT_LABELS: Record<string, string> = {
-  cs: 'Customer Success & Operations',
-  design: 'Design',
-  finance: 'Finance',
-  hr: 'HR & Admin',
-  leadership: 'Leadership',
-  ops: 'Operational Excellence',
-  qa: 'Quality Assurance',
-  sales: 'Sales',
-  tech: 'Tech',
-  '': '⚠️ No Department Set — Has Active Work',
-};
-
-function numCell(val: string | number, className: string) {
-  return <td className={className}>{val}</td>;
+function scoreLabelStyle(label: string | undefined) {
+  return SCORE_LABEL_STYLE[label ?? ""] ?? SCORE_LABEL_STYLE["Needs Attention"];
 }
 
-export default function TeamTab() {
-  const [deptFilter, setDeptFilter] = useState('');
+function kpiTone(value: number, goodAt: number, warnAt: number, higherIsBetter = true) {
+  const isGood = higherIsBetter ? value >= goodAt : value <= goodAt;
+  const isWarn = higherIsBetter ? value >= warnAt : value <= warnAt;
+  if (isGood) return { color: "#108C72", barColor: "#89F7E7" };
+  if (isWarn) return { color: "#8B6914", barColor: "#EDC488" };
+  return { color: "#C0303D", barColor: "#E7848E" };
+}
 
-  const depts = Array.from(new Set(PEOPLE.map((p) => p.dept)));
-  const visibleDepts = deptFilter ? [deptFilter] : depts;
+function overdueRankTone(rank: number) {
+  if (rank <= 5) return { color: "#C0303D", barColor: "#E7848E" };
+  if (rank <= 7) return { color: "#8B6914", barColor: "#EDC488" };
+  return { color: "var(--sub)", barColor: "var(--lav)" };
+}
+
+const AVATAR_PALETTE = [
+  { bg: "#E7848E", color: "#fff" },
+  { bg: "#EDC488", color: "#5A3E00" },
+  { bg: "#9EC8BA", color: "#0A4A3D" },
+  { bg: "#CECBF6", color: "#3D3470" },
+  { bg: "#6B9BCC", color: "#fff" },
+];
+
+function avatarStyle(index: number) {
+  return AVATAR_PALETTE[index % AVATAR_PALETTE.length];
+}
+
+const PEOPLE_BADGE_CLASS: Record<string, string> = {
+  "No work": "br",
+  Blocked: "br",
+  Idle: "bw",
+  Test: "bw",
+};
+
+function peopleBadgeClass(badge: string) {
+  return PEOPLE_BADGE_CLASS[badge] ?? "bd";
+}
+
+const RISK_BADGE_CLASS: Record<string, string> = {
+  "High Risk": "br",
+  "Medium Risk": "bw",
+  Distributed: "bg",
+};
+
+function riskBadgeClass(risk: string) {
+  return RISK_BADGE_CLASS[risk] ?? "bd";
+}
+
+const OUTLIER_BADGE_CLASS: Record<string, string> = {
+  Overloaded: "br",
+  Watch: "bw",
+  "Under est.": "bg",
+};
+
+const OUTLIER_COLOR: Record<string, string> = {
+  Overloaded: "#C0303D",
+  Watch: "#8B6914",
+  "Under est.": "#108C72",
+};
+
+const AGE_BUCKET_BAR_COLOR = ["#89F7E7", "#EDC488", "#E7848E", "#C0303D", "#8B0000"];
+const AGE_BUCKET_VAL_COLOR = ["#0A7A6A", "#8B6914", "#C0303D", "#C0303D", "#8B0000"];
+
+function ageingRowTone(total: number, maxTotal: number) {
+  const ratio = maxTotal > 0 ? total / maxTotal : 0;
+  if (ratio >= 0.7) return { bg: "#FFF0F0", nameColor: "#C0303D", nameBold: true, totalColor: "#C0303D" };
+  if (ratio >= 0.35) return { bg: undefined, nameColor: "#C0303D", nameBold: false, totalColor: "#C0303D" };
+  if (ratio >= 0.15) return { bg: undefined, nameColor: "#8B6914", nameBold: false, totalColor: "#8B6914" };
+  return { bg: "#FAFAF8", nameColor: "var(--dark)", nameBold: false, totalColor: "#C0303D" };
+}
+
+const STATUS_EMOJI: Record<string, string> = {
+  critical: "🔴",
+  overloaded: "🟡",
+  performing: "🟢",
+  high_performer: "🟢",
+  low_work: "⬜",
+};
+
+const STATUS_ROW_CLASS: Record<string, string> = {
+  critical: "row-critical",
+  overloaded: "row-overloaded",
+  high_performer: "row-star",
+};
+
+function truncate(str: string, max: number) {
+  return str.length > max ? `${str.slice(0, max - 1)}…` : str;
+}
+
+interface TeamTabProps {
+  fromDate?: string;
+  toDate?: string;
+}
+
+export default function TeamTab({ fromDate, toDate }: TeamTabProps) {
+  const [deptFilter, setDeptFilter] = useState("");
+
+  const {
+    data: efficiencyOverview,
+    isLoading: isEfficiencyLoading,
+    isError: isEfficiencyError,
+  } = useCeoDashboardEfficiencyOverview(fromDate, toDate);
+
+  const {
+    data: peopleAlerts,
+    isLoading: isPeopleAlertsLoading,
+    isError: isPeopleAlertsError,
+  } = useCeoDashboardPeopleAlerts(fromDate, toDate);
+
+  const topOverdueOwners = peopleAlerts?.top_overdue_owners;
+  const zeroWork = peopleAlerts?.zero_work;
+  const zeroVelocity = peopleAlerts?.zero_velocity;
+  const workConcentrationRisk = peopleAlerts?.work_concentration_risk;
+
+  const {
+    data: effortAndOverdue,
+    isLoading: isEffortLoading,
+    isError: isEffortError,
+  } = useCeoDashboardEffortAndOverdue(fromDate, toDate);
+
+  const effortAccuracy = effortAndOverdue?.effort_accuracy;
+  const overdueAgeTrend = effortAndOverdue?.overdue_age_trend;
+
+  const {
+    data: ageingMatrix,
+    isLoading: isAgeingMatrixLoading,
+    isError: isAgeingMatrixError,
+  } = useCeoDashboardPersonWiseAgeingMatrix(fromDate, toDate);
+
+  const ageingMaxTotal = ageingMatrix
+    ? Math.max(...ageingMatrix.rows.map((r) => r.total_overdue), 1)
+    : 1;
+
+  const scoreStyle = scoreLabelStyle(efficiencyOverview?.execution_score.label);
+
+  const efficiencyKpis = efficiencyOverview
+    ? [
+        {
+          label: "Task Completion",
+          val: `${efficiencyOverview.task_completion.percentage}%`,
+          sub: `${efficiencyOverview.task_completion.completed.toLocaleString("en-IN")} of ${efficiencyOverview.task_completion.total.toLocaleString("en-IN")} · Live DB`,
+          barW: `${Math.min(efficiencyOverview.task_completion.percentage, 100)}%`,
+          note: efficiencyOverview.task_completion.percentage >= 60 ? "✓ Meets target" : "↓ Target: 60%+",
+          noteColor: efficiencyOverview.task_completion.percentage >= 60 ? "#108C72" : "#C0303D",
+          ...kpiTone(efficiencyOverview.task_completion.percentage, 60, 40, true),
+        },
+        {
+          label: "Avg Cycle Time",
+          val: `${efficiencyOverview.avg_cycle_time_days}d`,
+          sub: "Live DB",
+          barW: `${Math.min((efficiencyOverview.avg_cycle_time_days / 20) * 100, 100)}%`,
+          note: efficiencyOverview.avg_cycle_time_days <= 5 ? "✓ Meets target" : "↓ Target: under 5d",
+          noteColor: efficiencyOverview.avg_cycle_time_days <= 5 ? "#108C72" : "#C0303D",
+          ...kpiTone(efficiencyOverview.avg_cycle_time_days, 5, 10, false),
+        },
+        {
+          label: "Overdue Rate",
+          val: `${efficiencyOverview.overdue_rate.percentage}%`,
+          sub: `${efficiencyOverview.overdue_rate.overdue.toLocaleString("en-IN")} of ${efficiencyOverview.overdue_rate.total.toLocaleString("en-IN")} · Live DB`,
+          barW: `${Math.min(efficiencyOverview.overdue_rate.percentage, 100)}%`,
+          note: efficiencyOverview.overdue_rate.percentage <= 5 ? "✓ Meets target" : "↓ Target: under 5%",
+          noteColor: efficiencyOverview.overdue_rate.percentage <= 5 ? "#108C72" : "#C0303D",
+          ...kpiTone(efficiencyOverview.overdue_rate.percentage, 5, 10, false),
+        },
+        {
+          label: "Estimation Coverage",
+          val: `${efficiencyOverview.estimation_coverage.percentage}%`,
+          sub: `${efficiencyOverview.estimation_coverage.with_hours.toLocaleString("en-IN")} of ${efficiencyOverview.estimation_coverage.total.toLocaleString("en-IN")} · Live DB`,
+          barW: `${Math.min(efficiencyOverview.estimation_coverage.percentage, 100)}%`,
+          note: `Only ${efficiencyOverview.estimation_coverage.percentage}% tasks have hours set`,
+          noteColor: kpiTone(efficiencyOverview.estimation_coverage.percentage, 70, 40, true).color,
+          ...kpiTone(efficiencyOverview.estimation_coverage.percentage, 70, 40, true),
+        },
+        {
+          label: "MoM Follow-through",
+          val: `${efficiencyOverview.mom_follow_through.percentage}%`,
+          sub: `${efficiencyOverview.mom_follow_through.followed.toLocaleString("en-IN")} of ${efficiencyOverview.mom_follow_through.total.toLocaleString("en-IN")} · Live DB`,
+          barW: `${Math.min(efficiencyOverview.mom_follow_through.percentage, 100)}%`,
+          note: efficiencyOverview.mom_follow_through.percentage >= 80 ? "✓ Meets target" : "↓ Target: 80%+",
+          noteColor: efficiencyOverview.mom_follow_through.percentage >= 80 ? "#108C72" : "#C0303D",
+          ...kpiTone(efficiencyOverview.mom_follow_through.percentage, 80, 40, true),
+        },
+      ]
+    : [];
+
+  const {
+    data: perPersonBreakdown,
+    isLoading: isBreakdownLoading,
+    isError: isBreakdownError,
+  } = useCeoDashboardPerPersonBreakdown(fromDate, toDate);
+
+  const departments = perPersonBreakdown?.departments ?? [];
+  const deptOptions = [
+    { value: "", label: "All Departments" },
+    ...departments.map((d) => ({
+      value: d.department_name,
+      label: `${d.department_name} (${d.member_count})`,
+    })),
+  ];
+  const visibleDepartments = deptFilter
+    ? departments.filter((d) => d.department_name === deptFilter)
+    : departments;
 
   return (
     <div>
@@ -112,45 +250,175 @@ export default function TeamTab() {
         <div className="sec-hd">
           <div className="sec-lbl">Efficiency Overview</div>
           <div className="sec-line" />
-          <span style={{ fontSize: 10, color: 'var(--sub)', paddingLeft: 8 }}>Based on 22,218 tasks · 07 May 2026</span>
+          {efficiencyOverview && (
+            <span style={{ fontSize: 10, color: "var(--sub)", paddingLeft: 8 }}>
+              Based on {efficiencyOverview.task_completion.total.toLocaleString("en-IN")} tasks · Live data
+            </span>
+          )}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 12, marginBottom: 12 }}>
+        {isEfficiencyLoading && (
+          <div className="card" style={{ fontSize: 12, color: "var(--sub)" }}>Loading efficiency overview…</div>
+        )}
+        {isEfficiencyError && (
+          <div className="card" style={{ fontSize: 12, color: "#C0303D" }}>Failed to load efficiency overview data</div>
+        )}
+        {!isEfficiencyLoading && !isEfficiencyError && efficiencyOverview && (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "200px 1fr",
+            gap: 12,
+            marginBottom: 12,
+          }}
+        >
           {/* Execution score */}
-          <div className="card" style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg,#2C2C2C,#3D2E20)' }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'rgba(255,255,255,.5)', marginBottom: 8 }}>Execution Score</div>
-            <div style={{ fontSize: 52, fontWeight: 700, color: '#EDC488', lineHeight: 1 }}>58</div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,.6)', marginTop: 4 }}>out of 100</div>
-            <div style={{ background: '#EDC48825', border: '1px solid #EDC48850', borderRadius: 'var(--r100)', padding: '4px 14px', marginTop: 10, fontSize: 11, fontWeight: 700, color: '#EDC488' }}>🟡 Needs Attention</div>
-            <div style={{ fontSize: 9, color: 'rgba(255,255,255,.3)', marginTop: 8, lineHeight: 1.4 }}>Completion Rate · On-Time · Effort Accuracy · MoM Follow-through</div>
+          <div
+            className="card"
+            style={{
+              textAlign: "center",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "linear-gradient(135deg,#2C2C2C,#3D2E20)",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: ".08em",
+                color: "rgba(255,255,255,.5)",
+                marginBottom: 8,
+              }}
+            >
+              Execution Score
+            </div>
+            <div
+              style={{
+                fontSize: 52,
+                fontWeight: 700,
+                color: scoreStyle.color,
+                lineHeight: 1,
+              }}
+            >
+              {efficiencyOverview.execution_score.score}
+            </div>
+            <div
+              style={{
+                fontSize: 11,
+                color: "rgba(255,255,255,.6)",
+                marginTop: 4,
+              }}
+            >
+              out of {efficiencyOverview.execution_score.out_of}
+            </div>
+            <div
+              style={{
+                background: `${scoreStyle.color}25`,
+                border: `1px solid ${scoreStyle.color}50`,
+                borderRadius: "var(--r100)",
+                padding: "4px 14px",
+                marginTop: 10,
+                fontSize: 11,
+                fontWeight: 700,
+                color: scoreStyle.color,
+              }}
+            >
+              {scoreStyle.emoji} {efficiencyOverview.execution_score.label}
+            </div>
+            <div
+              style={{
+                fontSize: 9,
+                color: "rgba(255,255,255,.3)",
+                marginTop: 8,
+                lineHeight: 1.4,
+              }}
+            >
+              {efficiencyOverview.execution_score.factors}
+            </div>
           </div>
           {/* 5 KPIs */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10 }}>
-            {[
-              { label: 'Task Completion', val: '23.9%', color: '#8B6914', sub: '5,312 of 22,218 · Live DB', barW: '24%', barColor: '#EDC488', note: '↓ Target: 60%+', noteColor: '#C0303D' },
-              { label: 'Avg Cycle Time', val: '16.2d', color: '#C0303D', sub: '3,436 tasks · Live DB', barW: '81%', barColor: '#E7848E', note: '↓ Target: under 5d', noteColor: '#C0303D' },
-              { label: 'Overdue Rate', val: '9.9%', color: '#C0303D', sub: '2,192 of 22,218 · Live DB', barW: '10%', barColor: '#E7848E', note: '↓ Target: under 5%', noteColor: '#C0303D' },
-              { label: 'Estimation Coverage', val: '12.5%', color: '#8B6914', sub: '2,773 of 22,218 · Live DB', barW: '13%', barColor: '#EDC488', note: 'Only 12.5% tasks have hours set', noteColor: '#8B6914' },
-              { label: 'MoM Follow-through', val: '11%', color: '#C0303D', sub: '547 of 4,970 · Live DB', barW: '11%', barColor: '#E7848E', note: '↓ Target: 80%+', noteColor: '#C0303D' },
-            ].map((k) => (
-              <div key={k.label} className="card" style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--sub)', marginBottom: 6 }}>{k.label}</div>
-                <div style={{ fontSize: 26, fontWeight: 700, color: k.color }}>{k.val}</div>
-                <div style={{ fontSize: 10, color: 'var(--sub)', marginTop: 2 }}>{k.sub}</div>
-                <div style={{ height: 4, background: 'var(--divider)', borderRadius: 2, overflow: 'hidden', marginTop: 8 }}>
-                  <div style={{ width: k.barW, height: 4, background: k.barColor, borderRadius: 2 }} />
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(5,1fr)",
+              gap: 10,
+            }}
+          >
+            {efficiencyKpis.map((k) => (
+              <div
+                key={k.label}
+                className="card"
+                style={{ textAlign: "center" }}
+              >
+                <div
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: ".06em",
+                    color: "var(--sub)",
+                    marginBottom: 6,
+                  }}
+                >
+                  {k.label}
                 </div>
-                <div style={{ fontSize: 9, color: k.noteColor, marginTop: 4 }}>{k.note}</div>
+                <div style={{ fontSize: 26, fontWeight: 700, color: k.color }}>
+                  {k.val}
+                </div>
+                <div
+                  style={{ fontSize: 10, color: "var(--sub)", marginTop: 2 }}
+                >
+                  {k.sub}
+                </div>
+                <div
+                  style={{
+                    height: 4,
+                    background: "var(--divider)",
+                    borderRadius: 2,
+                    overflow: "hidden",
+                    marginTop: 8,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: k.barW,
+                      height: 4,
+                      background: k.barColor,
+                      borderRadius: 2,
+                    }}
+                  />
+                </div>
+                <div style={{ fontSize: 9, color: k.noteColor, marginTop: 4 }}>
+                  {k.note}
+                </div>
               </div>
             ))}
           </div>
         </div>
+        )}
       </div>
 
       {/* RECURRING TASK INSIGHT */}
-      <div className="insight" style={{ background: '#6B9BCC12', borderColor: '#6B9BCC', marginBottom: 20 }}>
-        <div className="i-lbl" style={{ color: '#2D5F8A' }}>⚠ Process gap — Only 17 of 22,307 tasks use recurring (0.08%)</div>
-        <div className="i-txt">Team is manually recreating the same tasks every week instead of setting them up once — contributing directly to backlog growth. Action: Adhip Shetty to run a 30-min session on recurring task setup this week.</div>
-      </div>
+      {efficiencyOverview?.process_gap && (
+        <div
+          className="insight"
+          style={{
+            background: "#6B9BCC12",
+            borderColor: "#6B9BCC",
+            marginBottom: 20,
+          }}
+        >
+          <div className="i-lbl" style={{ color: "#2D5F8A" }}>
+            ⚠ Process gap — Only {efficiencyOverview.process_gap.recurring_count} of {efficiencyOverview.process_gap.total.toLocaleString("en-IN")} tasks use recurring ({efficiencyOverview.process_gap.percentage}%)
+          </div>
+          <div className="i-txt">
+            {efficiencyOverview.process_gap.message}
+          </div>
+        </div>
+      )}
 
       {/* PEOPLE ALERTS */}
       <div className="sec">
@@ -158,122 +426,287 @@ export default function TeamTab() {
           <div className="sec-lbl">People Alerts</div>
           <div className="sec-line" />
         </div>
+        {isPeopleAlertsLoading && (
+          <div className="card" style={{ fontSize: 12, color: "var(--sub)" }}>Loading people alerts…</div>
+        )}
+        {isPeopleAlertsError && (
+          <div className="card" style={{ fontSize: 12, color: "#C0303D" }}>Failed to load people alerts data</div>
+        )}
+        {!isPeopleAlertsLoading && !isPeopleAlertsError && (
         <div className="g g3">
           {/* Top 10 Overdue */}
           <div className="card">
-            <div className="ct">🔴 Top 10 Overdue Task Owners</div>
-            {[
-              { rank: 1, name: 'Sadanand Gupta', barW: '100%', val: '1,214', color: '#C0303D', rankColor: '#C0303D' },
-              { rank: 2, name: 'Mahendra Lungare', barW: '36%', val: '440', color: '#C0303D', rankColor: '#C0303D' },
-              { rank: 3, name: 'Bilal Shaikh', barW: '34%', val: '410', color: '#C0303D', rankColor: '#C0303D' },
-              { rank: 4, name: 'Pooja Jadhav', barW: '33%', val: '402', color: '#C0303D', rankColor: '#C0303D' },
-              { rank: 5, name: 'Abdul Ghaffar', barW: '33%', val: '398', color: '#C0303D', rankColor: '#C0303D' },
-              { rank: 6, name: 'Deepak Gupta', barW: '15%', val: '184', color: '#8B6914', rankColor: '#8B6914', barColor: '#EDC488' },
-              { rank: 7, name: 'Sohail Ansari', barW: '3%', val: '35', color: '#8B6914', rankColor: '#8B6914', barColor: '#EDC488' },
-              { rank: 8, name: 'Dinesh Shinde', barW: '2%', val: '22', color: 'var(--sub)', rankColor: 'var(--sub)', barColor: 'var(--lav)' },
-              { rank: 9, name: 'Shahab Tufail', barW: '2%', val: '21', color: 'var(--sub)', rankColor: 'var(--sub)', barColor: 'var(--lav)' },
-              { rank: 10, name: 'Yash Rathod', barW: '1%', val: '18', color: 'var(--sub)', rankColor: 'var(--sub)', barColor: 'var(--lav)' },
-            ].map((r, i) => (
-              <div key={r.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0', borderBottom: i < 9 ? '1px solid var(--divider)' : 'none', fontSize: 11 }}>
-                <div style={{ width: 18, fontSize: 10, fontWeight: 700, color: r.rankColor, flexShrink: 0 }}>{r.rank}</div>
-                <div style={{ flex: 1, fontWeight: r.rank <= 3 ? 600 : 400 }}>{r.name}</div>
-                <div style={{ width: 80, background: 'var(--divider)', borderRadius: 3, height: 6, overflow: 'hidden' }}>
-                  <div style={{ width: r.barW, height: 6, borderRadius: 3, background: (r as any).barColor || '#E7848E' }} />
+            <div className="ct">🔴 {topOverdueOwners?.title}</div>
+            {topOverdueOwners?.owners.map((r, i, arr) => {
+              const tone = overdueRankTone(r.rank);
+              const maxCount = Math.max(...arr.map((o) => o.overdue_count), 1);
+              return (
+                <div
+                  key={r.name}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "6px 0",
+                    borderBottom: i < arr.length - 1 ? "1px solid var(--divider)" : "none",
+                    fontSize: 11,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 18,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: tone.color,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {r.rank}
+                  </div>
+                  <div style={{ flex: 1, fontWeight: r.rank <= 3 ? 600 : 400 }}>
+                    {r.name}
+                  </div>
+                  <div
+                    style={{
+                      width: 80,
+                      background: "var(--divider)",
+                      borderRadius: 3,
+                      height: 6,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${(r.overdue_count / maxCount) * 100}%`,
+                        height: 6,
+                        borderRadius: 3,
+                        background: tone.barColor,
+                      }}
+                    />
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: tone.color,
+                      width: 38,
+                      textAlign: "right",
+                    }}
+                  >
+                    {r.overdue_count}
+                  </div>
                 </div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: r.color, width: 38, textAlign: 'right' }}>{r.val}</div>
+              );
+            })}
+            {topOverdueOwners?.warning_box && (
+              <div
+                className="insight"
+                style={{
+                  background: "#E7848E12",
+                  borderColor: "#E7848E",
+                  marginTop: 10,
+                }}
+              >
+                <div className="i-lbl" style={{ color: "#C0303D" }}>
+                  {topOverdueOwners.warning_box.title}
+                </div>
+                <div className="i-txt">
+                  {topOverdueOwners.warning_box.description}
+                </div>
               </div>
-            ))}
-            <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 10 }}>
-              <div className="i-lbl" style={{ color: '#C0303D' }}>Top 5 own 2,864 overdue tasks — redistribution needed</div>
-              <div className="i-txt">This is a workload allocation problem. CEO-level decision needed to redistribute or deprioritise tasks this week.</div>
-            </div>
+            )}
           </div>
 
           {/* Zero Work + Zero Velocity */}
           <div>
             <div className="card" style={{ marginBottom: 12 }}>
-              <div className="ct">⚪ Zero Work — 5 People</div>
-              <div style={{ fontSize: 11, color: 'var(--sub)', marginBottom: 10 }}>No tasks, to-dos, or issues assigned. Review capacity and allocation.</div>
+              <div className="ct">⚪ {zeroWork?.title}</div>
+              <div
+                style={{ fontSize: 11, color: "var(--sub)", marginBottom: 10 }}
+              >
+                {zeroWork?.description}
+              </div>
               <div className="zero-card">
-                {[
-                  { initials: 'AL', bg: '#EDC488', color: '#5A3E00', name: 'Anjali L.', sub: 'Test account', badgeClass: 'bw', badge: 'Test' },
-                  { initials: 'PY', bg: '#E7848E', color: '#fff', name: 'Pratik Yadav', sub: 'Dept not set', badgeClass: 'br', badge: 'No work' },
-                  { initials: 'SP', bg: '#E7848E', color: '#fff', name: 'Siddharth Patil', sub: 'Sales', badgeClass: 'br', badge: 'No work' },
-                  { initials: 'SS', bg: '#E7848E', color: '#fff', name: 'Sneha Shivane', sub: 'CS & Ops', badgeClass: 'br', badge: 'No work' },
-                  { initials: 'VB', bg: '#E7848E', color: '#fff', name: 'Vidhya Balota', sub: 'HR & Admin', badgeClass: 'br', badge: 'No work' },
-                ].map((p) => (
-                  <div key={p.name} className="zero-row">
-                    <div className="av" style={{ background: p.bg, color: p.color }}>{p.initials}</div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600 }}>{p.name}</div>
-                      <div style={{ fontSize: 10, color: 'var(--sub)' }}>{p.sub}</div>
+                {zeroWork?.people.map((p, i) => {
+                  const avatar = avatarStyle(i);
+                  return (
+                    <div key={p.name} className="zero-row">
+                      <div
+                        className="av"
+                        style={{ background: avatar.bg, color: avatar.color }}
+                      >
+                        {p.initials}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 600 }}>{p.name}</div>
+                        <div style={{ fontSize: 10, color: "var(--sub)" }}>
+                          {p.department}
+                        </div>
+                      </div>
+                      <span className={`badge ${peopleBadgeClass(p.badge)}`}>{p.badge}</span>
                     </div>
-                    <span className={`badge ${p.badgeClass}`}>{p.badge}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
             <div className="card">
-              <div className="ct">🔴 Zero Velocity — Work Assigned, Nothing Completing</div>
-              <div style={{ fontSize: 11, color: 'var(--sub)', marginBottom: 10 }}>These people have tasks assigned but completed 0 tasks this month. Different from zero-work — they are blocked or disengaged.</div>
+              <div className="ct">
+                🔴 {zeroVelocity?.title}
+              </div>
+              <div
+                style={{ fontSize: 11, color: "var(--sub)", marginBottom: 10 }}
+              >
+                {zeroVelocity?.description}
+              </div>
               <div className="zero-card">
-                {[
-                  { initials: 'AG', bg: '#E7848E', color: '#fff', name: 'Abdul Ghaffar', sub: '394 tasks assigned · 0 completed this month', badgeClass: 'br', badge: 'Blocked' },
-                  { initials: 'MT', bg: '#EDC488', color: '#5A3E00', name: 'Mohsin Tanwar', sub: 'Tech Dev · 0 tasks, 0 todos, 0 issues', badgeClass: 'bw', badge: 'Idle' },
-                  { initials: 'AQ', bg: '#EDC488', color: '#5A3E00', name: 'Aquil Hussain', sub: 'Sales · 0 tasks completed', badgeClass: 'bw', badge: 'Idle' },
-                ].map((p) => (
-                  <div key={p.name} className="zero-row">
-                    <div className="av" style={{ background: p.bg, color: p.color }}>{p.initials}</div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600 }}>{p.name}</div>
-                      <div style={{ fontSize: 10, color: 'var(--sub)' }}>{p.sub}</div>
+                {zeroVelocity?.people.map((p, i) => {
+                  const avatar = avatarStyle(i);
+                  return (
+                    <div key={p.name} className="zero-row">
+                      <div
+                        className="av"
+                        style={{ background: avatar.bg, color: avatar.color }}
+                      >
+                        {p.initials}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 600 }}>{p.name}</div>
+                        <div style={{ fontSize: 10, color: "var(--sub)" }}>
+                          {p.subtitle}
+                        </div>
+                      </div>
+                      <span className={`badge ${peopleBadgeClass(p.badge)}`}>{p.badge}</span>
                     </div>
-                    <span className={`badge ${p.badgeClass}`}>{p.badge}</span>
+                  );
+                })}
+              </div>
+              {zeroVelocity?.warning_box && (
+                <div
+                  className="insight"
+                  style={{
+                    background: "#E7848E12",
+                    borderColor: "#E7848E",
+                    marginTop: 10,
+                  }}
+                >
+                  <div className="i-lbl" style={{ color: "#C0303D" }}>
+                    {zeroVelocity.warning_box.title}
                   </div>
-                ))}
-              </div>
-              <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 10 }}>
-                <div className="i-lbl" style={{ color: '#C0303D' }}>Zero velocity ≠ zero work — something is blocking these people</div>
-                <div className="i-txt">Check if tasks are blocked, unclear, or if the person is actually working outside PATM. Either close the tasks or reassign them.</div>
-              </div>
+                  <div className="i-txt">
+                    {zeroVelocity.warning_box.description}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Work Concentration Risk */}
           <div className="card">
-            <div className="ct">⚠️ Work Concentration Risk</div>
-            <div style={{ fontSize: 11, color: 'var(--sub)', marginBottom: 12 }}>If any one of these people is unavailable, a significant share of work stops moving.</div>
+            <div className="ct">⚠️ {workConcentrationRisk?.title}</div>
+            <div
+              style={{ fontSize: 11, color: "var(--sub)", marginBottom: 12 }}
+            >
+              {workConcentrationRisk?.description}
+            </div>
             <div style={{ height: 160 }}>
-              <ChartCanvas id="concentrationChart" config={{
-                type: 'doughnut',
-                data: { labels: ['Bilal Shaikh', 'Mahendra Lungare', 'Abdul Ghaffar', 'Rest of team'], datasets: [{ data: [406, 435, 394, 1500], backgroundColor: [err, err + 'cc', err + '88', ok + '44'], borderWidth: 0, hoverOffset: 4 }] },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { display: true, position: 'right', labels: { font: { size: 9 }, boxWidth: 8, padding: 6, color: dark } } } },
-              } as any} />
+              <ChartCanvas
+                key={`concentrationChart-${workConcentrationRisk?.chart_data.map((d) => `${d.name}:${d.percentage}`).join(",")}`}
+                id="concentrationChart"
+                config={
+                  {
+                    type: "doughnut",
+                    data: {
+                      labels: workConcentrationRisk?.chart_data.map((d) => d.name) ?? [],
+                      datasets: [
+                        {
+                          data: workConcentrationRisk?.chart_data.map((d) => d.percentage) ?? [],
+                          backgroundColor: workConcentrationRisk?.chart_data.map((_d, i, arr) =>
+                            i === arr.length - 1 ? ok + "44" : err + ["", "cc", "88", "55"][i % 4]
+                          ) ?? [],
+                          borderWidth: 0,
+                          hoverOffset: 4,
+                        },
+                      ],
+                    },
+                    options: {
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      cutout: "60%",
+                      plugins: {
+                        legend: {
+                          display: true,
+                          position: "right",
+                          labels: {
+                            font: { size: 9 },
+                            boxWidth: 8,
+                            padding: 6,
+                            color: dark,
+                          },
+                        },
+                      },
+                    },
+                  } as any
+                }
+              />
             </div>
             <div style={{ marginTop: 12 }}>
-              {[
-                { name: 'Bilal Shaikh', tasks: '406 open tasks' },
-                { name: 'Mahendra Lungare', tasks: '435 open tasks' },
-                { name: 'Abdul Ghaffar', tasks: '394 open tasks' },
-              ].map((r) => (
-                <div key={r.name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, padding: '6px 0', borderBottom: '1px solid var(--divider)' }}>
+              {workConcentrationRisk?.top_holders.map((r) => (
+                <div
+                  key={r.name}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: 11,
+                    padding: "6px 0",
+                    borderBottom: "1px solid var(--divider)",
+                  }}
+                >
                   <span style={{ fontWeight: 600 }}>{r.name}</span>
-                  <span style={{ color: '#C0303D', fontWeight: 700 }}>{r.tasks}</span>
-                  <span className="badge br">High Risk</span>
+                  <span style={{ color: "#C0303D", fontWeight: 700 }}>
+                    {r.open_tasks.toLocaleString("en-IN")} open tasks
+                  </span>
+                  <span className={`badge ${riskBadgeClass(r.risk)}`}>{r.risk}</span>
                 </div>
               ))}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, padding: '6px 0' }}>
-                <span style={{ color: 'var(--sub)' }}>All other team members</span>
-                <span style={{ color: 'var(--sub)' }}>remaining 53%</span>
-                <span className="badge bg">Distributed</span>
+              {workConcentrationRisk?.rest_of_team && (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: 11,
+                    padding: "6px 0",
+                  }}
+                >
+                  <span style={{ color: "var(--sub)" }}>
+                    {workConcentrationRisk.rest_of_team.label}
+                  </span>
+                  <span style={{ color: "var(--sub)" }}>remaining {workConcentrationRisk.rest_of_team.percentage}%</span>
+                  <span className={`badge ${riskBadgeClass(workConcentrationRisk.rest_of_team.risk)}`}>
+                    {workConcentrationRisk.rest_of_team.risk}
+                  </span>
+                </div>
+              )}
+            </div>
+            {workConcentrationRisk?.warning_box && (
+              <div
+                className="insight"
+                style={{
+                  background: "#E7848E12",
+                  borderColor: "#E7848E",
+                  marginTop: 10,
+                }}
+              >
+                <div className="i-lbl" style={{ color: "#C0303D" }}>
+                  {workConcentrationRisk.warning_box.title}
+                </div>
+                <div className="i-txt">
+                  {workConcentrationRisk.warning_box.description}
+                </div>
               </div>
-            </div>
-            <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 10 }}>
-              <div className="i-lbl" style={{ color: '#C0303D' }}>3 people hold 47% of all open work</div>
-              <div className="i-txt">Start pairing junior team members with these 3 now. If any one leaves, their context and work goes with them.</div>
-            </div>
+            )}
           </div>
         </div>
+        )}
       </div>
 
       {/* EFFORT & OVERDUE */}
@@ -282,145 +715,345 @@ export default function TeamTab() {
           <div className="sec-lbl">Effort &amp; Overdue</div>
           <div className="sec-line" />
         </div>
+        {isEffortLoading && (
+          <div className="card" style={{ fontSize: 12, color: "var(--sub)" }}>Loading effort &amp; overdue…</div>
+        )}
+        {isEffortError && (
+          <div className="card" style={{ fontSize: 12, color: "#C0303D" }}>Failed to load effort &amp; overdue data</div>
+        )}
+        {!isEffortLoading && !isEffortError && (
         <div className="g g2">
           <div className="card">
-            <div className="ct">Effort accuracy — estimated vs actual hours per person</div>
+            <div className="ct">
+              {effortAccuracy?.title}
+            </div>
             <div style={{ height: 180 }}>
-              <ChartCanvas id="effortChart" config={{
-                type: 'bar',
-                data: {
-                  labels: ['Gayatri', 'Akshay', 'Kshitij', 'Dinesh', 'Sadanand', 'Abdul', 'Abhishek', 'Prasad'],
-                  datasets: [
-                    { label: 'Estimated hrs', data: [120, 90, 100, 110, 140, 130, 95, 85], backgroundColor: lav, borderRadius: 3 },
-                    { label: 'Actual hrs', data: [108, 72, 88, 142, 156, 164, 118, 92], backgroundColor: terra + 'cc', borderRadius: 3 },
-                  ],
-                },
-                options: baseOpts(true),
-              } as any} />
+              <ChartCanvas
+                key={`effortChart-${effortAccuracy?.chart_data.map((d) => `${d.name}:${d.estimated_hrs}:${d.actual_hrs}`).join(",")}`}
+                id="effortChart"
+                config={
+                  {
+                    type: "bar",
+                    data: {
+                      labels: effortAccuracy?.chart_data.map((d) => d.name) ?? [],
+                      datasets: [
+                        {
+                          label: "Estimated hrs",
+                          data: effortAccuracy?.chart_data.map((d) => d.estimated_hrs) ?? [],
+                          backgroundColor: lav,
+                          borderRadius: 3,
+                        },
+                        {
+                          label: "Actual hrs",
+                          data: effortAccuracy?.chart_data.map((d) => d.actual_hrs) ?? [],
+                          backgroundColor: terra + "cc",
+                          borderRadius: 3,
+                        },
+                      ],
+                    },
+                    options: baseOpts(true),
+                  } as any
+                }
+              />
             </div>
             <div style={{ marginTop: 10 }}>
-              {[
-                { name: 'Abdul Ghaffar', note: '+34 hrs over', badge: 'br', label: 'Overloaded' },
-                { name: 'Dinesh Shinde', note: '+32 hrs over', badge: 'br', label: 'Overloaded' },
-                { name: 'Sadanand Gupta', note: '+16 hrs over', badge: 'bw', label: 'Watch', noteColor: '#8B6914' },
-                { name: 'Akshay Shinde', note: '−18 hrs', badge: 'bg', label: 'Under est.', noteColor: '#108C72' },
-              ].map((r) => (
-                <div key={r.name} className="row">
+              {effortAccuracy?.outliers.map((r) => (
+                <div key={r.user_id} className="row">
                   <span className="rn">{r.name}</span>
-                  <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    <span className="rv" style={{ color: (r as any).noteColor || '#C0303D' }}>{r.note}</span>
-                    <span className={`badge ${r.badge}`}>{r.label}</span>
+                  <span
+                    style={{ display: "flex", gap: 6, alignItems: "center" }}
+                  >
+                    <span
+                      className="rv"
+                      style={{ color: OUTLIER_COLOR[r.badge] || "#C0303D" }}
+                    >
+                      {r.diff_label}
+                    </span>
+                    <span className={`badge ${OUTLIER_BADGE_CLASS[r.badge] ?? "bd"}`}>{r.badge}</span>
                   </span>
                 </div>
               ))}
             </div>
-            <div className="insight" style={{ background: '#EDC48815', borderColor: '#EDC488', marginTop: 10 }}>
-              <div className="i-lbl" style={{ color: '#8B6914' }}>Only 12.5% of tasks have hours estimated — data above is partial</div>
-              <div className="i-txt">Make hour estimation mandatory for all tasks above 2 hours in PATM.</div>
-            </div>
+            {effortAccuracy?.warning_box && (
+              <div
+                className="insight"
+                style={{
+                  background: "#EDC48815",
+                  borderColor: "#EDC488",
+                  marginTop: 10,
+                }}
+              >
+                <div className="i-lbl" style={{ color: "#8B6914" }}>
+                  {effortAccuracy.warning_box.title}
+                </div>
+                <div className="i-txt">
+                  {effortAccuracy.warning_box.description}
+                </div>
+              </div>
+            )}
           </div>
           <div className="card">
-            <div className="ct">Overdue by age + trend</div>
-            {[
-              { label: '1 day', w: '28%', color: '#89F7E7', val: 614, pct: '28%', valColor: '#0A7A6A' },
-              { label: '2–7 days', w: '32%', color: '#EDC488', val: 701, pct: '32%', valColor: '#8B6914' },
-              { label: '8–15 days', w: '18%', color: '#E7848E', val: 394, pct: '18%', valColor: '#C0303D' },
-              { label: '16–30 days', w: '14%', color: '#C0303D', val: 307, pct: '14%', valColor: '#C0303D' },
-              { label: '30+ days', w: '8%', color: '#8B0000', val: 176, pct: '8%', valColor: '#8B0000' },
-            ].map((r, i) => (
-              <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: i < 4 ? '1px solid var(--divider)' : 'none', fontSize: 11 }}>
-                <div style={{ width: 80, fontSize: 10, color: 'var(--sub)', flexShrink: 0 }}>{r.label}</div>
-                <div style={{ flex: 1, height: 8, background: 'var(--divider)', borderRadius: 4, overflow: 'hidden' }}>
-                  <div style={{ width: r.w, height: 8, borderRadius: 4, background: r.color }} />
+            <div className="ct">{overdueAgeTrend?.title}</div>
+            {overdueAgeTrend?.age_buckets.map((r, i, arr) => (
+              <div
+                key={r.bucket}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "7px 0",
+                  borderBottom: i < arr.length - 1 ? "1px solid var(--divider)" : "none",
+                  fontSize: 11,
+                }}
+              >
+                <div
+                  style={{
+                    width: 80,
+                    fontSize: 10,
+                    color: "var(--sub)",
+                    flexShrink: 0,
+                  }}
+                >
+                  {r.bucket}
                 </div>
-                <div style={{ fontWeight: 700, color: r.valColor, width: 38, textAlign: 'right' }}>{r.val}</div>
-                <div style={{ width: 28, fontSize: 9, color: 'var(--sub)', textAlign: 'right' }}>{r.pct}</div>
+                <div
+                  style={{
+                    flex: 1,
+                    height: 8,
+                    background: "var(--divider)",
+                    borderRadius: 4,
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${r.percentage}%`,
+                      height: 8,
+                      borderRadius: 4,
+                      background: AGE_BUCKET_BAR_COLOR[i % AGE_BUCKET_BAR_COLOR.length],
+                    }}
+                  />
+                </div>
+                <div
+                  style={{
+                    fontWeight: 700,
+                    color: AGE_BUCKET_VAL_COLOR[i % AGE_BUCKET_VAL_COLOR.length],
+                    width: 38,
+                    textAlign: "right",
+                  }}
+                >
+                  {r.count}
+                </div>
+                <div
+                  style={{
+                    width: 28,
+                    fontSize: 9,
+                    color: "var(--sub)",
+                    textAlign: "right",
+                  }}
+                >
+                  {r.percentage}%
+                </div>
               </div>
             ))}
             <div style={{ marginTop: 10 }}>
-              <div className="ct-sm">Overdue trend — last 4 weeks</div>
+              <div className="ct-sm">{overdueAgeTrend?.trend_panel.title}</div>
               <div style={{ height: 90 }}>
-                <ChartCanvas id="overduetrend" config={{
-                  type: 'line',
-                  data: { labels: ['4 wks ago', '3 wks ago', '2 wks ago', 'Last wk', 'This wk'], datasets: [{ label: 'Overdue Tasks', data: [1840, 1920, 2050, 2130, 2192], borderColor: err, backgroundColor: err + '22', fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: err, borderWidth: 2 }] },
-                  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: grid }, ticks: { font: { size: 9 }, color: green } }, y: { grid: { color: grid }, ticks: { font: { size: 9 }, color: green }, min: 1600 } } },
-                } as any} />
+                <ChartCanvas
+                  key={`overduetrend-${overdueAgeTrend?.trend_panel.chart_data.map((d) => `${d.label}:${d.count}`).join(",")}`}
+                  id="overduetrend"
+                  config={
+                    {
+                      type: "line",
+                      data: {
+                        labels: overdueAgeTrend?.trend_panel.chart_data.map((d) => d.label) ?? [],
+                        datasets: [
+                          {
+                            label: "Overdue Tasks",
+                            data: overdueAgeTrend?.trend_panel.chart_data.map((d) => d.count) ?? [],
+                            borderColor: err,
+                            backgroundColor: err + "22",
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 4,
+                            pointBackgroundColor: err,
+                            borderWidth: 2,
+                          },
+                        ],
+                      },
+                      options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                          x: {
+                            grid: { color: grid },
+                            ticks: { font: { size: 9 }, color: green },
+                          },
+                          y: {
+                            grid: { color: grid },
+                            ticks: { font: { size: 9 }, color: green },
+                          },
+                        },
+                      },
+                    } as any
+                  }
+                />
               </div>
             </div>
-            <div className="insight" style={{ background: '#E7848E12', borderColor: '#E7848E', marginTop: 10 }}>
-              <div className="i-lbl" style={{ color: '#C0303D' }}>176 tasks 30+ days overdue — abandoned, not delayed</div>
-              <div className="i-txt">Close or reassign all tasks overdue 30+ days this sprint.</div>
-            </div>
+            {overdueAgeTrend?.trend_panel.warning_box && (
+              <div
+                className="insight"
+                style={{
+                  background: "#E7848E12",
+                  borderColor: "#E7848E",
+                  marginTop: 10,
+                }}
+              >
+                <div className="i-lbl" style={{ color: "#C0303D" }}>
+                  {overdueAgeTrend.trend_panel.warning_box.title}
+                </div>
+                <div className="i-txt">
+                  {overdueAgeTrend.trend_panel.warning_box.description}
+                </div>
+              </div>
+            )}
           </div>
         </div>
+        )}
       </div>
 
       {/* PERSON-WISE AGEING MATRIX */}
       <div className="sec" style={{ marginTop: 0, paddingTop: 0 }}>
         <div className="sec-hd">
-          <div className="sec-lbl">Person-wise Ageing Matrix</div>
+          <div className="sec-lbl">{ageingMatrix?.title ?? "Person-wise Ageing Matrix"}</div>
           <div className="sec-line" />
-          <span style={{ fontSize: 10, color: 'var(--sub)', paddingLeft: 8 }}>
-            Overdue tasks distributed by age bucket per person · Dummy data — pending responsible_person_id join confirmation (Akshay)
-          </span>
+          {ageingMatrix?.description && (
+            <span style={{ fontSize: 10, color: "var(--sub)", paddingLeft: 8 }}>
+              {ageingMatrix.description}
+            </span>
+          )}
         </div>
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
+        {isAgeingMatrixLoading && (
+          <div className="card" style={{ fontSize: 12, color: "var(--sub)" }}>Loading ageing matrix…</div>
+        )}
+        {isAgeingMatrixError && (
+          <div className="card" style={{ fontSize: 12, color: "#C0303D" }}>Failed to load ageing matrix data</div>
+        )}
+        {!isAgeingMatrixLoading && !isAgeingMatrixError && (
+        <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+          <div style={{ overflowX: "auto" }}>
             <table className="tbl" style={{ minWidth: 650 }}>
               <thead>
                 <tr>
-                  <th style={{ textAlign: 'left', minWidth: 150 }}>Person</th>
-                  <th style={{ textAlign: 'center', color: '#0A7A6A' }}>1 Day</th>
-                  <th style={{ textAlign: 'center', color: '#8B6914' }}>2–7 Days</th>
-                  <th style={{ textAlign: 'center', color: '#C0303D' }}>8–15 Days</th>
-                  <th style={{ textAlign: 'center', color: '#C0303D' }}>16–30 Days</th>
-                  <th style={{ textAlign: 'center', color: '#8B0000' }}>30+ Days</th>
-                  <th style={{ textAlign: 'center', fontWeight: 700, color: 'var(--dark)', borderLeft: '2px solid var(--divider)' }}>Total Overdue</th>
+                  <th style={{ textAlign: "left", minWidth: 150 }}>Person</th>
+                  <th style={{ textAlign: "center", color: "#0A7A6A" }}>
+                    1 Day
+                  </th>
+                  <th style={{ textAlign: "center", color: "#8B6914" }}>
+                    2–7 Days
+                  </th>
+                  <th style={{ textAlign: "center", color: "#C0303D" }}>
+                    8–15 Days
+                  </th>
+                  <th style={{ textAlign: "center", color: "#C0303D" }}>
+                    16–30 Days
+                  </th>
+                  <th style={{ textAlign: "center", color: "#8B0000" }}>
+                    30+ Days
+                  </th>
+                  <th
+                    style={{
+                      textAlign: "center",
+                      fontWeight: 700,
+                      color: "var(--dark)",
+                      borderLeft: "2px solid var(--divider)",
+                    }}
+                  >
+                    Total Overdue
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {[
-                  { name: 'Sadanand Gupta', d1: 124, d2: 292, d8: 298, d16: 312, d30: 188, total: '1,214', bg: '#FFF0F0', nameColor: '#C0303D', nameBold: true },
-                  { name: 'Mahendra Lungare', d1: 98, d2: 118, d8: 78, d16: 84, d30: 62, total: '440', nameColor: '#C0303D' },
-                  { name: 'Bilal Shaikh', d1: 82, d2: 127, d8: 86, d16: 72, d30: 43, total: '410', bg: '#FFF8F0', nameColor: '#C0303D' },
-                  { name: 'Pooja Jadhav', d1: 76, d2: 114, d8: 82, d16: 70, d30: 60, total: '402', nameColor: '#C0303D' },
-                  { name: 'Abdul Ghaffar', d1: 64, d2: 90, d8: 74, d16: 98, d30: 72, total: '398', bg: '#FFF8F0', nameColor: '#C0303D' },
-                  { name: 'Deepak Gupta', d1: 38, d2: 58, d8: 42, d16: 32, d30: 14, total: '184', nameColor: '#8B6914', totalColor: '#8B6914' },
-                  { name: 'Sohail Ansari', d1: 8, d2: 14, d8: 8, d16: 3, d30: 2, total: '35', bg: '#FAFAF8' },
-                  { name: 'Dinesh Shinde', d1: 6, d2: 8, d8: 4, d16: 3, d30: 1, total: '22' },
-                  { name: 'Shahab Tufail', d1: 5, d2: 7, d8: 4, d16: 3, d30: 2, total: '21', bg: '#FAFAF8' },
-                  { name: 'Yash Rathod', d1: 4, d2: 6, d8: 4, d16: 2, d30: 2, total: '18' },
-                ].map((r) => (
-                  <tr key={r.name} style={{ background: (r as any).bg }}>
-                    <td style={{ fontWeight: (r as any).nameBold ? 700 : 600, color: (r as any).nameColor || 'var(--dark)' }}>{r.name}</td>
-                    <td style={{ textAlign: 'center', color: '#0A7A6A' }}>{r.d1}</td>
-                    <td style={{ textAlign: 'center', color: '#8B6914' }}>{r.d2}</td>
-                    <td style={{ textAlign: 'center', color: '#C0303D' }}>{r.d8}</td>
-                    <td style={{ textAlign: 'center', color: '#C0303D' }}>{r.d16}</td>
-                    <td style={{ textAlign: 'center', color: '#8B0000', fontWeight: 700 }}>{r.d30}</td>
-                    <td style={{ textAlign: 'center', fontWeight: (r as any).nameBold ? 800 : 700, color: (r as any).totalColor || '#C0303D', borderLeft: '2px solid var(--divider)' }}>{r.total}</td>
+                {ageingMatrix?.rows.map((r) => {
+                  const tone = ageingRowTone(r.total_overdue, ageingMaxTotal);
+                  return (
+                    <tr key={r.user_id} style={{ background: tone.bg }}>
+                      <td
+                        style={{
+                          fontWeight: tone.nameBold ? 700 : 600,
+                          color: tone.nameColor,
+                        }}
+                      >
+                        {r.name}
+                      </td>
+                      <td style={{ textAlign: "center", color: "#0A7A6A" }}>
+                        {r.bucket_1_day}
+                      </td>
+                      <td style={{ textAlign: "center", color: "#8B6914" }}>
+                        {r.bucket_2_7_days}
+                      </td>
+                      <td style={{ textAlign: "center", color: "#C0303D" }}>
+                        {r.bucket_8_15_days}
+                      </td>
+                      <td style={{ textAlign: "center", color: "#C0303D" }}>
+                        {r.bucket_16_30_days}
+                      </td>
+                      <td
+                        style={{
+                          textAlign: "center",
+                          color: "#8B0000",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {r.bucket_30_plus_days}
+                      </td>
+                      <td
+                        style={{
+                          textAlign: "center",
+                          fontWeight: tone.nameBold ? 800 : 700,
+                          color: tone.totalColor,
+                          borderLeft: "2px solid var(--divider)",
+                        }}
+                      >
+                        {r.total_overdue}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {ageingMatrix?.others && (
+                  <tr style={{ background: "#F0EDE8", fontStyle: "italic" }}>
+                    <td style={{ color: "var(--sub)", fontSize: 10 }}>
+                      {ageingMatrix.others.label}
+                    </td>
+                    {[
+                      ageingMatrix.others.bucket_1_day,
+                      ageingMatrix.others.bucket_2_7_days,
+                      ageingMatrix.others.bucket_8_15_days,
+                      ageingMatrix.others.bucket_16_30_days,
+                      ageingMatrix.others.bucket_30_plus_days,
+                      ageingMatrix.others.total_overdue,
+                    ].map((v, i) => (
+                      <td
+                        key={i}
+                        style={{
+                          textAlign: "center",
+                          color: "var(--sub)",
+                          fontSize: 10,
+                          borderLeft:
+                            i === 5 ? "2px solid var(--divider)" : undefined,
+                        }}
+                      >
+                        {v}
+                      </td>
+                    ))}
                   </tr>
-                ))}
-                <tr style={{ background: '#F0EDE8', fontStyle: 'italic' }}>
-                  <td style={{ color: 'var(--sub)', fontSize: 10 }}>+ others (remaining ~448)</td>
-                  {['109', '—', '—', '—', '—', '~448'].map((v, i) => (
-                    <td key={i} style={{ textAlign: 'center', color: 'var(--sub)', fontSize: 10, borderLeft: i === 5 ? '2px solid var(--divider)' : undefined }}>{v}</td>
-                  ))}
-                </tr>
+                )}
               </tbody>
             </table>
           </div>
-          <div style={{ padding: '12px 16px', borderTop: '1px solid var(--divider)', background: 'var(--bg)' }}>
-            <div className="insight" style={{ background: '#EDC48815', borderColor: '#EDC488', marginTop: 0 }}>
-              <div className="i-lbl" style={{ color: '#8B6914' }}>⚠ Open item — Pending DB confirmation</div>
-              <div className="i-txt">
-                Person-level breakdown requires confirming that{' '}
-                <code style={{ fontSize: 10, background: '#00000010', padding: '1px 4px', borderRadius: 3 }}>responsible_person_id</code>{' '}
-                join is available in storejust DB for all open overdue tasks. Akshay to confirm before this chart is data-connected. Numbers above are dummy data based on total overdue counts from the PM report.
-              </div>
-            </div>
-          </div>
         </div>
+        )}
       </div>
 
       {/* PER PERSON BREAKDOWN TABLE */}
@@ -428,73 +1061,201 @@ export default function TeamTab() {
         <div className="sec-hd">
           <div className="sec-lbl">Per-Person Breakdown</div>
           <div className="sec-line" />
-          <span style={{ fontSize: 10, color: 'var(--sub)', whiteSpace: 'nowrap', paddingLeft: 10 }}>
-            🔴 Critical &nbsp;🟡 Overloaded &nbsp;🟢 Performing &nbsp;⬜ Low work
+          <span
+            style={{
+              fontSize: 10,
+              color: "var(--sub)",
+              whiteSpace: "nowrap",
+              paddingLeft: 10,
+            }}
+          >
+            🔴 Critical &nbsp;🟡 Overloaded &nbsp;🟢 Performing &nbsp;⬜ Low
+            work
           </span>
         </div>
         {/* Filters */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', marginBottom: 12, borderBottom: '1px solid var(--divider)', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--sub)' }}>Filter:</span>
-          <select className="fsel-sm" value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)}>
-            {DEPT_OPTS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "10px 0",
+            marginBottom: 12,
+            borderBottom: "1px solid var(--divider)",
+            flexWrap: "wrap",
+          }}
+        >
+          <span style={{ fontSize: 10, fontWeight: 600, color: "var(--sub)" }}>
+            Filter:
+          </span>
+          <select
+            className="fsel-sm"
+            value={deptFilter}
+            onChange={(e) => setDeptFilter(e.target.value)}
+          >
+            {deptOptions.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
           </select>
-          <span style={{ fontSize: 9, color: 'var(--sub)', marginLeft: 4, fontStyle: 'italic' }}>Date filter functional after data connection</span>
         </div>
 
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
+        {isBreakdownLoading && (
+          <div className="card" style={{ fontSize: 12, color: "var(--sub)" }}>Loading per-person breakdown…</div>
+        )}
+        {isBreakdownError && (
+          <div className="card" style={{ fontSize: 12, color: "#C0303D" }}>Failed to load per-person breakdown data</div>
+        )}
+        {!isBreakdownLoading && !isBreakdownError && (
+        <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+          <div style={{ overflowX: "auto" }}>
             <table className="team-tbl">
               <thead>
                 <tr>
-                  <th style={{ textAlign: 'left', minWidth: 140 }}>Name</th>
-                  <th colSpan={4} style={{ background: '#DA775610', borderRight: '1px solid var(--divider)', textAlign: 'center' }}>Tasks</th>
-                  <th colSpan={3} style={{ background: '#CECBF625', borderRight: '1px solid var(--divider)', textAlign: 'center' }}>To-Dos</th>
+                  <th style={{ textAlign: "left", minWidth: 140 }}>Name</th>
+                  <th
+                    colSpan={4}
+                    style={{
+                      background: "#DA775610",
+                      borderRight: "1px solid var(--divider)",
+                      textAlign: "center",
+                    }}
+                  >
+                    Tasks
+                  </th>
+                  <th
+                    colSpan={3}
+                    style={{
+                      background: "#CECBF625",
+                      borderRight: "1px solid var(--divider)",
+                      textAlign: "center",
+                    }}
+                  >
+                    To-Dos
+                  </th>
                   <th>Issues</th>
-                  <th>Done Yest.</th>
-                  <th style={{ minWidth: 220, textAlign: 'left' }}>Top Overdue</th>
+                  <th>Done Recently</th>
+                  <th style={{ minWidth: 220, textAlign: "left" }}>
+                    Top Overdue
+                  </th>
                 </tr>
                 <tr>
                   <th>—</th>
-                  <th style={{ background: '#DA775608' }}>Open</th>
-                  <th style={{ background: '#DA775608' }}>In Prog</th>
-                  <th style={{ background: '#DA775608' }}>Done</th>
-                  <th style={{ background: '#DA775608', borderRight: '1px solid var(--divider)' }}>Overdue</th>
-                  <th style={{ background: '#CECBF615' }}>Open</th>
-                  <th style={{ background: '#CECBF615' }}>Done</th>
-                  <th style={{ background: '#CECBF615', borderRight: '1px solid var(--divider)' }}>Overdue</th>
+                  <th style={{ background: "#DA775608" }}>Open</th>
+                  <th style={{ background: "#DA775608" }}>In Prog</th>
+                  <th style={{ background: "#DA775608" }}>Done</th>
+                  <th
+                    style={{
+                      background: "#DA775608",
+                      borderRight: "1px solid var(--divider)",
+                    }}
+                  >
+                    Overdue
+                  </th>
+                  <th style={{ background: "#CECBF615" }}>Open</th>
+                  <th style={{ background: "#CECBF615" }}>Done</th>
+                  <th
+                    style={{
+                      background: "#CECBF615",
+                      borderRight: "1px solid var(--divider)",
+                    }}
+                  >
+                    Overdue
+                  </th>
                   <th>Open</th>
                   <th>—</th>
-                  <th style={{ textAlign: 'left' }}>—</th>
+                  <th style={{ textAlign: "left" }}>—</th>
                 </tr>
               </thead>
               <tbody>
-                {visibleDepts.map((dept) => {
-                  const rows = PEOPLE.filter((p) => p.dept === dept);
-                  if (!rows.length) return null;
-                  const isNoDept = dept === '';
+                {visibleDepartments.map((dept) => {
+                  if (!dept.members.length) return null;
+                  const isNoDept = !dept.department_name || /no\s*dept/i.test(dept.department_name);
                   return (
                     <>
-                      <tr key={`dept-${dept}`} className="dept-hd" style={isNoDept ? { background: '#E7848E15' } : undefined}>
-                        <td colSpan={11}>{DEPT_LABELS[dept] || dept}</td>
+                      <tr
+                        key={`dept-${dept.department_name}`}
+                        className="dept-hd"
+                        style={
+                          isNoDept ? { background: "#E7848E15" } : undefined
+                        }
+                      >
+                        <td colSpan={11}>{dept.department_name || "No Department Set"} ({dept.member_count})</td>
                       </tr>
-                      {rows.map((p) => (
-                        <tr key={p.name} className={p.rowClass || ''}>
-                          <td>{p.name}</td>
-                          <td className={`num-open ${Number(p.taskOpen) >= 100 ? 'num-red' : Number(p.taskOpen) > 0 ? 'num-warn' : 'num-muted'}`}>{p.taskOpen}</td>
-                          <td className={Number(p.taskInProg) > 0 ? 'num-warn' : 'num-muted'}>{p.taskInProg}</td>
-                          <td className={Number(p.taskDone) > 0 ? 'num-ok' : 'num-muted'} style={Number(p.taskDone) > 300 ? { fontWeight: 800, fontSize: 13 } : undefined}>{p.taskDone}</td>
-                          <td className={Number(p.taskOverdue) > 10 ? 'num-red' : Number(p.taskOverdue) > 0 ? 'num-red' : 'num-muted'} style={{ borderRight: '1px solid var(--divider)' }}>{p.taskOverdue}</td>
-                          <td className={Number(p.todoOpen) > 0 ? 'num-warn' : 'num-muted'}>{p.todoOpen}</td>
-                          <td className={Number(p.todoDone) > 0 ? 'num-ok' : 'num-muted'}>{p.todoDone}</td>
-                          <td className={Number(p.todoOverdue) > 5 ? 'num-warn' : Number(p.todoOverdue) > 0 ? 'num-warn' : 'num-muted'} style={{ borderRight: '1px solid var(--divider)' }}>{p.todoOverdue}</td>
-                          <td>{p.issues}</td>
-                          <td>{p.doneYest}</td>
-                          <td className="top-overdue" style={p.topOverdueColor ? { color: p.topOverdueColor } : undefined}>
-                            {p.topOverdue.split('\n').map((line, i) => (
-                              <span key={i}>{line}{i < p.topOverdue.split('\n').length - 1 && <br />}</span>
-                            ))}
+                      {dept.members.map((p) => (
+                        <tr key={p.user_id} className={STATUS_ROW_CLASS[p.status_indicator] ?? ""}>
+                          <td>{STATUS_EMOJI[p.status_indicator] ?? ""} {p.name}</td>
+                          <td
+                            className={`num-open ${p.tasks.open >= 100 ? "num-red" : p.tasks.open > 0 ? "num-warn" : "num-muted"}`}
+                          >
+                            {p.tasks.open}
+                          </td>
+                          <td
+                            className={
+                              p.tasks.in_progress > 0
+                                ? "num-warn"
+                                : "num-muted"
+                            }
+                          >
+                            {p.tasks.in_progress}
+                          </td>
+                          <td
+                            className={
+                              p.tasks.done > 0 ? "num-ok" : "num-muted"
+                            }
+                            style={
+                              p.tasks.done > 300
+                                ? { fontWeight: 800, fontSize: 13 }
+                                : undefined
+                            }
+                          >
+                            {p.tasks.done}
+                          </td>
+                          <td
+                            className={p.tasks.overdue > 0 ? "num-red" : "num-muted"}
+                            style={{ borderRight: "1px solid var(--divider)" }}
+                          >
+                            {p.tasks.overdue}
+                          </td>
+                          <td
+                            className={
+                              p.todos.open > 0 ? "num-warn" : "num-muted"
+                            }
+                          >
+                            {p.todos.open}
+                          </td>
+                          <td
+                            className={
+                              p.todos.done > 0 ? "num-ok" : "num-muted"
+                            }
+                          >
+                            {p.todos.done}
+                          </td>
+                          <td
+                            className={p.todos.overdue > 0 ? "num-warn" : "num-muted"}
+                            style={{ borderRight: "1px solid var(--divider)" }}
+                          >
+                            {p.todos.overdue}
+                          </td>
+                          <td>{p.issues.open}</td>
+                          <td title={p.done_recently?.title ?? ""}>
+                            {p.done_recently
+                              ? `${p.done_recently.count} ${p.done_recently.type}${p.done_recently.count === 1 ? "" : "s"}`
+                              : "—"}
+                          </td>
+                          <td className="top-overdue">
+                            {p.top_overdue.length ? (
+                              p.top_overdue.map((item, i) => (
+                                <span key={i}>
+                                  {item.type === "todo" ? "◆ todo: " : "• "}
+                                  {truncate(item.title, 60)} ({item.due_date})
+                                  {i < p.top_overdue.length - 1 && <br />}
+                                </span>
+                              ))
+                            ) : (
+                              <span style={{ color: "#108C72" }}>✓ None</span>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -505,6 +1266,7 @@ export default function TeamTab() {
             </table>
           </div>
         </div>
+        )}
       </div>
     </div>
   );

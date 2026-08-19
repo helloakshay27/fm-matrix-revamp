@@ -108,15 +108,18 @@ const RedButton = styled(MuiButton)(({ theme }) => ({
 RedButton.defaultProps = { color: 'inherit' };
 
 const DraftButton = styled(MuiButton)(({ theme }) => ({
-  backgroundColor: '#f6f4ee',
+  backgroundColor: '#ffffff',
   color: '#da7756',
+  border: '1px solid #da7756',
   borderRadius: 0,
   textTransform: 'none',
   padding: '8px 16px',
   fontFamily: 'Work Sans, sans-serif',
   fontWeight: 500,
   '&:hover': {
-    backgroundColor: '#f0ebe0',
+    backgroundColor: '#F2EEE9',
+    borderColor: '#C45F40',
+    color: '#C45F40',
   },
 }));
 
@@ -244,7 +247,7 @@ export const AddVendorClub = () => {
   const [complianceAttachments, setComplianceAttachments] = useState<File[]>([]);
   const [otherAttachments, setOtherAttachments] = useState<File[]>([]);
   const [openingBalances, setOpeningBalances] = useState([
-    { billNo: '', date: '', dueDate: '', amount: '' }
+    { billNo: '', date: '', dueDate: '', accountType: 'Bill', amount: '' }
   ]);
 
   const validateStep = () => {
@@ -569,10 +572,13 @@ export const AddVendorClub = () => {
     // Step 0 (cont): Opening Balance Details - optional, only append if data exists
     openingBalances.forEach((row, index) => {
       if (row.billNo || row.date || row.dueDate || row.amount) {
+        const absAmount = row.amount ? Math.abs(Number(row.amount)) : 0;
+        const signedAmount = row.accountType === 'Vendor credit' ? -absAmount : absAmount;
         apiFormData.append(`pms_supplier[opening_balance_details_attributes][${index}][bill_no]`, row.billNo || '');
         apiFormData.append(`pms_supplier[opening_balance_details_attributes][${index}][date]`, row.date || '');
         apiFormData.append(`pms_supplier[opening_balance_details_attributes][${index}][due_date]`, row.dueDate || '');
-        apiFormData.append(`pms_supplier[opening_balance_details_attributes][${index}][amount]`, row.amount || '');
+        apiFormData.append(`pms_supplier[opening_balance_details_attributes][${index}][account_type]`, row.accountType || 'Bill');
+        apiFormData.append(`pms_supplier[opening_balance_details_attributes][${index}][amount]`, String(signedAmount));
       }
     });
 
@@ -723,7 +729,7 @@ export const AddVendorClub = () => {
     const fileNames = currentFiles.map(f => f.name);
 
     return (
-      <div className={`border-2 border-dashed rounded-lg p-6 text-center ${fileNames.length > 0 ? 'border-[#da7756] bg-red-50' : 'border-gray-300'}`}>
+      <div className={`border-2 border-dashed rounded-lg p-6 text-center ${fileNames.length > 0 ? 'border-[#da7756] bg-orange-50' : 'border-gray-300'}`}>
         <p className="text-gray-600 font-medium mb-2">{title}</p>
         <label className="cursor-pointer">
           <div className="flex flex-col items-center">
@@ -763,7 +769,7 @@ export const AddVendorClub = () => {
               <Box p={3}>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                   <TextField
-                    label={<span>Company Name <span style={{ color: 'red' }}>*</span></span>}
+                    label={<span>Company Name <span style={{ color: '#DA7756' }}>*</span></span>}
                     fullWidth
                     value={formData.companyName}
                     onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
@@ -788,7 +794,7 @@ export const AddVendorClub = () => {
                     helperText={errors.secondaryPhone}
                   />
                   <TextField
-                    label={<span>Email <span style={{ color: 'red' }}>*</span></span>}
+                    label={<span>Email <span style={{ color: '#DA7756' }}>*</span></span>}
                     type="email"
                     fullWidth
                     value={formData.email}
@@ -924,7 +930,7 @@ export const AddVendorClub = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                   {/* GST Treatment - Dropdown */}
                   <TextField
-                    label={<span>GST Treatment <span style={{ color: 'red' }}>*</span></span>}
+                    label={<span>GST Treatment <span style={{ color: '#DA7756' }}>*</span></span>}
                     select
                     fullWidth
                     value={formData.gstTreatment}
@@ -1021,13 +1027,13 @@ export const AddVendorClub = () => {
                 </div>
               </Box>
             </SectionCard>
-            <SectionCard>
+            <SectionCard className="mb-10 " >
               <SectionHeader>
                 <Landmark className="text-[#da7756]" />
                 <SectionTitle>OPENING BALANCE</SectionTitle>
               </SectionHeader>
               <Box p={3}>
-                <div className="space-y-3">
+                <div className="space-y-3 mb-5">
                   {openingBalances.map((row, index) => (
                     <div key={index} className="flex items-center gap-3">
                       <TextField
@@ -1106,22 +1112,41 @@ export const AddVendorClub = () => {
                         sx={{ flex: 1 }}
                       />
                       <TextField
+                        select
+                        label="Type"
+                        size="small"
+                        value={row.accountType || 'Bill'}
+                        onChange={(e) => {
+                          const updated = [...openingBalances];
+                          updated[index].accountType = e.target.value;
+                          setOpeningBalances(updated);
+                        }}
+                        sx={{ flex: 1 }}
+                      >
+                        <MenuItem value="Bill">Bill</MenuItem>
+                        <MenuItem value="Vendor credit">Vendor Credit</MenuItem>
+                      </TextField>
+                      <TextField
                         label="Amount"
                         placeholder="Enter amount"
-                        type="number"
                         size="small"
                         value={row.amount}
                         onChange={(e) => {
                           const updated = [...openingBalances];
-                          updated[index].amount = e.target.value;
+                          updated[index].amount = e.target.value.replace(/^-/, '');
                           setOpeningBalances(updated);
+                        }}
+                        InputProps={{
+                          startAdornment: row.accountType === 'Vendor credit' && row.amount !== ''
+                            ? <span style={{ marginRight: 2 }}>-</span>
+                            : null,
                         }}
                         sx={{ flex: 1 }}
                       />
                       <IconButton
                         onClick={() => {
                           if (index === openingBalances.length - 1) {
-                            setOpeningBalances([...openingBalances, { billNo: '', date: '', dueDate: '', amount: '' }]);
+                            setOpeningBalances([...openingBalances, { billNo: '', date: '', dueDate: '', accountType: 'Bill', amount: '' }]);
                           } else {
                             setOpeningBalances(openingBalances.filter((_, i) => i !== index));
                           }
@@ -1161,7 +1186,7 @@ export const AddVendorClub = () => {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                     <TextField
-                      label={<span>Country <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>Country <span style={{ color: '#DA7756' }}>*</span></span>}
                       fullWidth
                       value={billingAddress.country}
                       onChange={(e) => setBillingAddress({ ...billingAddress, country: e.target.value })}
@@ -1171,7 +1196,7 @@ export const AddVendorClub = () => {
                       placeholder="e.g., India"
                     />
                     <TextField
-                      label={<span>State <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>State <span style={{ color: '#DA7756' }}>*</span></span>}
                       fullWidth
                       value={billingAddress.state}
                       onChange={(e) => setBillingAddress({ ...billingAddress, state: e.target.value })}
@@ -1181,7 +1206,7 @@ export const AddVendorClub = () => {
                       placeholder="e.g., Maharashtra"
                     />
                     <TextField
-                      label={<span>City <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>City <span style={{ color: '#DA7756' }}>*</span></span>}
                       fullWidth
                       value={billingAddress.city}
                       onChange={(e) => setBillingAddress({ ...billingAddress, city: e.target.value })}
@@ -1202,7 +1227,7 @@ export const AddVendorClub = () => {
                   </div>
                   <div className="grid grid-cols-1 gap-4">
                     <TextField
-                      label={<span>Address Line 1 <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>Address Line 1 <span style={{ color: '#DA7756' }}>*</span></span>}
                       fullWidth
                       value={billingAddress.addressLine1}
                       onChange={(e) => setBillingAddress({ ...billingAddress, addressLine1: e.target.value })}
@@ -1224,7 +1249,7 @@ export const AddVendorClub = () => {
                     <span className="text-sm font-semibold text-gray-700">
                       Shipping Address
                       <span
-                        className="text-blue-600 text-xs ml-2 cursor-pointer hover:text-blue-800 hover:underline"
+                        className="text-brand text-xs ml-2 cursor-pointer hover:underline"
                         onClick={() => setShippingAddress({ ...billingAddress })}
                       >
                         (Copy billing address)
@@ -1233,7 +1258,7 @@ export const AddVendorClub = () => {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                     <TextField
-                      label={<span>Country <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>Country <span style={{ color: '#DA7756' }}>*</span></span>}
                       fullWidth
                       value={shippingAddress.country}
                       onChange={(e) => setShippingAddress({ ...shippingAddress, country: e.target.value })}
@@ -1243,7 +1268,7 @@ export const AddVendorClub = () => {
                       placeholder="e.g., India"
                     />
                     <TextField
-                      label={<span>State <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>State <span style={{ color: '#DA7756' }}>*</span></span>}
                       fullWidth
                       value={shippingAddress.state}
                       onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
@@ -1253,7 +1278,7 @@ export const AddVendorClub = () => {
                       placeholder="e.g., Maharashtra"
                     />
                     <TextField
-                      label={<span>City <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>City <span style={{ color: '#DA7756' }}>*</span></span>}
                       fullWidth
                       value={shippingAddress.city}
                       onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
@@ -1274,7 +1299,7 @@ export const AddVendorClub = () => {
                   </div>
                   <div className="grid grid-cols-1 gap-4">
                     <TextField
-                      label={<span>Address Line 1 <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>Address Line 1 <span style={{ color: '#DA7756' }}>*</span></span>}
                       fullWidth
                       value={shippingAddress.addressLine1}
                       onChange={(e) => setShippingAddress({ ...shippingAddress, addressLine1: e.target.value })}
@@ -1367,11 +1392,11 @@ export const AddVendorClub = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {errors[`contact_${index}_general`] && (
                       <div className="col-span-full">
-                        <p className="text-red-500 text-sm mt-1">{errors[`contact_${index}_general`]}</p>
+                        <p className="text-brand text-sm mt-1">{errors[`contact_${index}_general`]}</p>
                       </div>
                     )}
                     <TextField
-                      label={<span>First Name <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>First Name <span style={{ color: '#DA7756' }}>*</span></span>}
                       fullWidth
                       value={contact.firstName}
                       onChange={(e) => handleContactPersonChange(index, 'firstName', e.target.value)}
@@ -1379,7 +1404,7 @@ export const AddVendorClub = () => {
                       helperText={errors[`contact_${index}_firstName`]}
                     />
                     <TextField
-                      label={<span>Last Name <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>Last Name <span style={{ color: '#DA7756' }}>*</span></span>}
                       fullWidth
                       value={contact.lastName}
                       onChange={(e) => handleContactPersonChange(index, 'lastName', e.target.value)}
@@ -1387,7 +1412,7 @@ export const AddVendorClub = () => {
                       helperText={errors[`contact_${index}_lastName`]}
                     />
                     <TextField
-                      label={<span>Primary Email <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>Primary Email <span style={{ color: '#DA7756' }}>*</span></span>}
                       type="email"
                       fullWidth
                       value={contact.primaryEmail}
@@ -1462,7 +1487,7 @@ export const AddVendorClub = () => {
                 <TextField
                   label={
                     <span>
-                      Start Date <span style={{ color: 'red' }}>*</span>
+                      Start Date <span style={{ color: '#DA7756' }}>*</span>
                     </span>
                   }
                   id="startFrom"
@@ -1508,7 +1533,21 @@ export const AddVendorClub = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 bg-gray-50 min-h-screen vendor-club-form">
+      <style>{`
+        .vendor-club-form .Mui-error {
+          color: #DA7756 !important;
+        }
+        .vendor-club-form .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline {
+          border-color: #DA7756 !important;
+        }
+        .vendor-club-form .MuiFormHelperText-root.Mui-error {
+          color: #DA7756 !important;
+        }
+        .vendor-club-form .MuiInputLabel-root.Mui-error {
+          color: #DA7756 !important;
+        }
+      `}</style>
       {/* Header with Back Button and Breadcrumbs */}
       <div className="mb-6">
         <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
@@ -1589,7 +1628,7 @@ export const AddVendorClub = () => {
         {getStepContent(activeStep)}
       </div>
 
-      <div className="flex justify-end gap-4 mt-8">
+      <div className="flex justify-end gap-4 mt-8 " style={{ marginBottom: '100px' }}>
         <DraftButton disabled={activeStep === 0} onClick={handleBack}>
           Back
         </DraftButton>

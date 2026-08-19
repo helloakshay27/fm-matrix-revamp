@@ -14,6 +14,8 @@ import {
   fetchProjectTasksById,
   fetchTargetDateTasks,
   fetchUserAvailability,
+  createTaskDependency,
+  deleteTaskDependency,
 } from "@/store/slices/projectTasksSlice";
 import {
   FormControl,
@@ -94,6 +96,13 @@ const fieldStyles = {
   },
 };
 
+const priorityOptions = [
+  { value: "P1", label: "Q1: Urgent & Important" },
+  { value: "P2", label: "Q2: Important, Not Urgent" },
+  { value: "P3", label: "Q3: Urgent, Not Important" },
+  { value: "P4", label: "Q4: Not Urgent or Important" },
+];
+
 const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
@@ -140,8 +149,13 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
   const [calendarTaskHours, setCalendarTaskHours] = useState([]);
   const [originalDateWiseHrs, setOriginalDateWiseHrs] = useState([]);
   const [parentId, setParentId] = useState("")
+  const [dependentTaskIds, setDependentTaskIds] = useState<{ label: string; value: string | number; id?: string | number }[]>([]);
+  const [projectTasks, setProjectTasks] = useState<any[]>([]);
+  const [predecessorTaskIds, setPredecessorTaskIds] = useState<number[]>([]);
+  const [dependenciesLoading, setDependenciesLoading] = useState(false);
 
   const [formData, setFormData] = useState({
+    taskCode: "",
     taskTitle: "",
     description: "",
     responsiblePerson: "",
@@ -334,6 +348,26 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
     [baseUrl, token]
   );
 
+  const fetchProjectTasksForDependency = useCallback(async () => {
+    const milestoneId = selectedMilestoneId;
+    if (!milestoneId) {
+      setProjectTasks([]);
+      return;
+    }
+    setDependenciesLoading(true);
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/task_managements.json?q[milestone_id_eq]=${milestoneId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setProjectTasks(response.data.task_managements || []);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setDependenciesLoading(false);
+    }
+  }, [baseUrl, token, selectedMilestoneId]);
+
   useEffect(() => {
     if (taskId) {
       dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId }));
@@ -342,6 +376,24 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
     getTags();
     getProjects();
   }, [taskId, baseUrl, token, dispatch, getUsers, getTags, getProjects]);
+
+  useEffect(() => {
+    fetchProjectTasksForDependency();
+  }, [fetchProjectTasksForDependency, selectedMilestoneId]);
+
+  useEffect(() => {
+    if (projectTasks.length > 0 && predecessorTaskIds.length > 0) {
+      const mapped = predecessorTaskIds
+        .map((id) => {
+          const task = projectTasks.find((t: any) => Number(t.id) === Number(id));
+          return task
+            ? { label: task.title, value: task.id, id: task.id }
+            : null;
+        })
+        .filter(Boolean) as { label: string; value: string | number; id?: string | number }[];
+      setDependentTaskIds(mapped);
+    }
+  }, [projectTasks, predecessorTaskIds]);
 
   useEffect(() => {
     if (Array.isArray(userAvailability) && userAvailability.length > 0) {
@@ -387,6 +439,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
       const taskData = task as {
         project_management_id?: string;
         milestone_id?: string;
+        task_code?: string;
         title?: string;
         description?: string;
         responsible_person_id?: string;
@@ -402,6 +455,8 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
         task_allocation_times?: Array<any>;
         parent_id?: string | null;
         is_recurring?: boolean;
+        predecessor_task?: any[];
+        task_dependencies?: Array<{ id: number; dependent_task_id: number }>;
       };
 
       console.log(taskData);
@@ -445,6 +500,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
         ) || [];
 
       setFormData({
+        taskCode: taskData.task_code || "",
         taskTitle: taskData.title || "",
         description: taskData.description || "",
         responsiblePerson: taskData.responsible_person_id || "",
@@ -487,6 +543,13 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
 
       setPrevTags(mappedTags);
       setPrevObservers(mappedObservers);
+
+      if (Array.isArray(taskData.predecessor_task)) {
+        const ids = taskData.predecessor_task.flat(Infinity).filter(Boolean).map(Number);
+        setPredecessorTaskIds(ids);
+      } else {
+        setPredecessorTaskIds([]);
+      }
 
       // Fetch user availability for responsible person
       if (taskData.responsible_person_id) {
@@ -687,6 +750,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
 
     const payload = {
       task_management: {
+        task_code: formData.taskCode,
         title: formData.taskTitle,
         description: formData.description,
         responsible_person_id: formData.responsiblePerson,
@@ -708,6 +772,54 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
       await dispatch(
         editProjectTask({ baseUrl, token, id: taskId, data: payload })
       ).unwrap();
+
+      if (dependentTaskIds.length > 0 || predecessorTaskIds.length > 0) {
+        const newIds = dependentTaskIds.map((opt) => Number(opt.value));
+        const oldIds = predecessorTaskIds;
+
+        const toCreate = newIds.filter((id) => !oldIds.includes(id));
+        const toDelete = oldIds.filter((id) => !newIds.includes(id));
+
+        const taskData = task as any;
+        const depMap: Record<number, number> = {};
+        if (Array.isArray(taskData?.task_dependencies)) {
+          taskData.task_dependencies.forEach((dep: any) => {
+            depMap[Number(dep.dependent_task_id)] = dep.id;
+          });
+        }
+
+        await Promise.all([
+          ...toCreate.map((depTaskId) =>
+            dispatch(
+              createTaskDependency({
+                token: token || '',
+                baseUrl: baseUrl || '',
+                data: {
+                  task_dependency: {
+                    task_id: taskId,
+                    dependent_task_id: String(depTaskId),
+                    active: true,
+                    dependence_type: "Predecessor",
+                  },
+                },
+              })
+            ).unwrap()
+          ),
+          ...toDelete.map((depTaskId) => {
+            const depId = depMap[depTaskId];
+            if (depId) {
+              return dispatch(
+                deleteTaskDependency({
+                  token: token || '',
+                  baseUrl: baseUrl || '',
+                  id: String(depId),
+                })
+              ).unwrap();
+            }
+            return Promise.resolve();
+          }),
+        ]);
+      }
 
       // Post comment if responsible person was changed with reason
       const taskData = task as any;
@@ -816,13 +928,28 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
           }
 
           {/* Task Title */}
-          <div className="mb-1">
+          <div className="mb-4">
             <TextField
               fullWidth
               label="Task Title *"
               name="taskTitle"
               placeholder="Enter Task Title"
               value={formData.taskTitle}
+              onChange={handleInputChange}
+              variant="outlined"
+              size="small"
+              sx={fieldStyles}
+            />
+          </div>
+
+          {/* Task Code */}
+          <div className="mb-1">
+            <TextField
+              fullWidth
+              label="Task Code"
+              name="taskCode"
+              placeholder="Enter Task Code"
+              value={formData.taskCode}
               onChange={handleInputChange}
               variant="outlined"
               size="small"
@@ -959,8 +1086,8 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                   <div className="text-black flex items-center justify-between w-full">
                     <CalendarIcon className="w-4 h-4" />
                     <div>
-                      Target : {endDate.date.toString().padStart(2, "0")}{" "}
-                      {monthNames[endDate.month]}
+                      {endDate.date.toString().padStart(2, "0")}{" "}
+                      {monthNames[endDate.month]} {endDate.year}
                     </div>
                     <X
                       className="w-4 h-4"
@@ -995,9 +1122,8 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                   <div className="text-black flex items-center justify-between w-full">
                     <CalendarIcon className="w-4 h-4" />
                     <div>
-                      Start Date :{" "}
                       {startDate?.date?.toString().padStart(2, "0")}{" "}
-                      {monthNames[startDate.month]}
+                      {monthNames[startDate.month]} {startDate.year}
                     </div>
                     <X
                       className="w-4 h-4"
@@ -1131,9 +1257,11 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                 <MenuItem value="">
                   <em>Select Priority</em>
                 </MenuItem>
-                <MenuItem value="High">High</MenuItem>
-                <MenuItem value="Medium">Medium</MenuItem>
-                <MenuItem value="Low">Low</MenuItem>
+                {priorityOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </div>
@@ -1168,6 +1296,40 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
               onChange={(values) => handleMultiSelectChange("tags", values)}
               placeholder="Select Tags"
             />
+          </div>
+
+          {/* Dependent Tasks */}
+          <div className="mb-6">
+            {dependenciesLoading ? (
+              <div
+                style={{
+                  height: 56,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: "1px dashed #ccc",
+                  borderRadius: 4,
+                  color: "#888",
+                  fontSize: 13,
+                }}
+              >
+                Loading tasks...
+              </div>
+            ) : (
+              <MuiMultiSelect
+                label="Dependent Tasks (optional)"
+                options={projectTasks
+                  .filter((t: any) => t.id !== (taskId ? Number(taskId) : undefined))
+                  .map((task: any) => ({
+                    label: task.title,
+                    value: task.id,
+                    id: task.id,
+                  }))}
+                value={dependentTaskIds}
+                onChange={(values) => setDependentTaskIds(values)}
+                placeholder="Select Dependent Tasks"
+              />
+            )}
           </div>
         </div>
 

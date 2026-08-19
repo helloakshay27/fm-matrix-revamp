@@ -1,4 +1,5 @@
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -76,6 +77,16 @@ const columns: ColumnConfig[] = [
 ];
 
 const CuratedServiceDashboard = () => {
+  const pulseEvents = usePulseEvents();
+
+  useEffect(() => {
+    pulseEvents.onModuleViewed({
+      module: "Curated Service",
+      package: "Pulse Privilege",
+      screen: "pulse_curated_service",
+    });
+  }, [pulseEvents]);
+
   const navigate = useNavigate();
   const [plusServices, setPlusServices] = useState<any[]>([]);
   const [updatingStatus, setUpdatingStatus] = useState<{

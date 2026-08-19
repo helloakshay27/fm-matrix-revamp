@@ -17,7 +17,7 @@ import EisenhowerMatrix from "@/components/EisenhowerMatrix";
 import { useTodos, useToggleTodo, usePriorityTodos } from "@/hooks/useTodos";
 import PriorityTodo from "@/components/PriorityTodo";
 import { DndContext, DragEndEvent, useDraggable, useDroppable, DragOverlay, Active } from "@dnd-kit/core";
-
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 // Countdown timer component with real-time updates
 const CountdownTimer = ({
   startDate,
@@ -112,7 +112,7 @@ const TodoSkeleton = () => {
 
 export default function Todo() {
   const { setCurrentSection } = useLayout();
-
+  const { shouldShow } = useDynamicPermissions();
   const view = localStorage.getItem("selectedView");
   const [taskType, setTaskType] = useState<"all" | "my">("my");
   const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
@@ -565,12 +565,16 @@ export default function Todo() {
           <div className="flex items-center justify-between gap-3 sm:gap-6 flex-wrap">
             {/* Date Filters - Left Side */}
             <div className="flex items-end gap-4 flex-shrink-0">
-              <Button
-                onClick={() => setIsAddTodoModalOpen(true)}
-              >
-                <Plus size={18} />
-                Add
-              </Button>
+              {(shouldShow("Todo", "create") &&
+                <Button
+                  onClick={() => setIsAddTodoModalOpen(true)}
+                  className="fm-button-fix fm-button-brand px-4 py-2"
+                  variant="ghost"
+                >
+                  <Plus size={18} />
+                  Add
+                </Button>
+              )}
             </div>
 
             {/* Existing Controls - Right Side */}
@@ -620,7 +624,7 @@ export default function Todo() {
               <Button
                 variant="outline"
                 size="sm"
-                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 flex items-center gap-2"
+                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 flex items-center gap-2 rounded-lg"
                 title='Filter'
                 onClick={() => setIsFilterModalOpen(true)}
               >
@@ -936,8 +940,8 @@ const PendingTasksCard = ({
   const { setNodeRef, isOver } = useDroppable({ id: "pending-section" });
 
   return (
-    <Card ref={setNodeRef} className={`shadow-sm border border-border transition-colors ${isOver ? 'bg-blue-50' : ''}`}>
-      <div className="flex items-center gap-3 p-4 bg-[#F6F4EE] border border-[#D9D9D9]">
+    <Card ref={setNodeRef} className={`shadow-sm border border-[#D9D9D9] transition-colors ${isOver ? 'bg-blue-50' : ''}`}>
+      <div className="flex items-center gap-3 p-4 bg-[#F6F4EE] border-b border-[#D9D9D9] rounded-t-[10px]">
         <div className="font-semibold w-8  h-8 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
           {pendingTodos.length.toString().padStart(2, "0")}
         </div>
@@ -1084,8 +1088,8 @@ const CompletedTasksCard = ({
   const { setNodeRef, isOver } = useDroppable({ id: "completed-section" });
 
   return (
-    <Card ref={setNodeRef} className={`shadow-sm border border-border transition-colors ${isOver ? 'bg-green-50' : ''}`}>
-      <div className="flex items-center gap-3 p-4 bg-[#F6F4EE] border border-[#D9D9D9]">
+    <Card ref={setNodeRef} className={`shadow-sm border border-[#D9D9D9] transition-colors ${isOver ? 'bg-green-50' : ''}`}>
+      <div className="flex items-center gap-3 p-4 bg-[#F6F4EE] border-b border-[#D9D9D9] rounded-t-[10px]">
         <div className="font-semibold w-8  h-8 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
           {completedTodos.length.toString().padStart(2, "0")}
         </div>

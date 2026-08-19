@@ -485,7 +485,7 @@ const CustomSelect = ({
   return (
     <div
       ref={ref}
-      className="relative shrink-0"
+      className="relative w-full sm:w-auto sm:shrink-0"
       style={{
         fontFamily: "'Poppins', sans-serif",
         zIndex: open ? 50 : "auto",
@@ -496,7 +496,7 @@ const CustomSelect = ({
         disabled={disabled}
         onClick={() => !disabled && setOpen(!open)}
         className={cn(
-          "flex items-center gap-2 bg-[#FCFAFA] border rounded-[16px] pl-5 pr-4 py-2.5 transition-all min-w-[160px] shadow-sm",
+          "flex w-full items-center gap-2 bg-[#FCFAFA] border rounded-[16px] pl-5 pr-4 py-2.5 transition-all min-w-0 sm:min-w-[160px] shadow-sm",
           open
             ? "border-[#CE7A5A] shadow-[0_0_0_3px_rgba(206,122,90,0.10)]"
             : "border-[#F0EBE8] hover:border-[#CE7A5A]",
@@ -848,10 +848,10 @@ const MeetingCard = ({
     <>
       <div className="bg-white border border-[#F1E8E3] rounded-[24px] shadow-sm overflow-hidden">
         {/* Header */}
-        <div className="bg-[#CE7A5A] px-6 py-5 rounded-t-[24px]">
+        <div className="bg-[#CE7A5A] px-4 sm:px-6 py-5 rounded-t-[24px]">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div>
-              <h3 className="text-[22px] font-black tracking-tight mb-2 m-0 p-0">
+              <h3 className="text-lg sm:text-[22px] font-black tracking-tight mb-2 m-0 p-0 leading-tight">
                 <span
                   className="!text-white"
                   style={{ color: "#ffffff", display: "inline-block" }}
@@ -916,7 +916,7 @@ const MeetingCard = ({
         {/* Raw Meeting Notes Toggle */}
         <div>
           <div
-            className="px-6 py-4 flex items-center justify-between cursor-pointer bg-[#FCFAFA] hover:bg-[#FFF3EE] border-b border-[#E0D8F0] transition-colors"
+            className="px-4 sm:px-6 py-4 flex items-center justify-between cursor-pointer bg-[#FCFAFA] hover:bg-[#FFF3EE] border-b border-[#E0D8F0] transition-colors"
             onClick={() => setIsNotesExpanded(!isNotesExpanded)}
           >
             <div className="flex items-center gap-2">
@@ -932,11 +932,11 @@ const MeetingCard = ({
             )}
           </div>
           {isNotesExpanded && (
-            <div className="px-6 py-5 bg-white">
+            <div className="px-4 sm:px-6 py-5 bg-white">
               {compiledNotes ? (
-                <div className="bg-[#FAFAFA] border border-[#EDEDED] rounded-[14px] px-6 py-5">
+                <div className="bg-[#FAFAFA] border border-[#EDEDED] rounded-[14px] px-4 sm:px-6 py-5 overflow-x-hidden">
                   <pre
-                    className="whitespace-pre-wrap text-sm text-[#1A1A1A] leading-[1.9]"
+                    className="whitespace-pre-wrap break-words text-sm text-[#1A1A1A] leading-[1.9]"
                     style={{ fontFamily: "'Poppins', sans-serif" }}
                   >
                     {compiledNotes}
@@ -1015,8 +1015,8 @@ const MeetingCard = ({
               className="bg-white rounded-[20px] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between px-6 py-5 border-b border-[#EBEBEB]">
-                <h2 className="text-[18px] font-black text-[#1A1A1A]">
+              <div className="flex items-start justify-between gap-3 px-4 sm:px-6 py-5 border-b border-[#EBEBEB]">
+                <h2 className="text-base sm:text-[18px] font-black text-[#1A1A1A] leading-tight">
                   Edit Meeting - {formattedFullDate}
                 </h2>
                 <button
@@ -1027,7 +1027,7 @@ const MeetingCard = ({
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <div className="px-6 py-5 flex-1 overflow-y-auto bg-white">
+              <div className="px-4 sm:px-6 py-5 flex-1 overflow-y-auto bg-white">
                 <label className="text-sm font-bold text-[#1A1A1A] mb-3 block">
                   Meeting Notes & Detailed Reports
                 </label>
@@ -1040,7 +1040,7 @@ const MeetingCard = ({
                   placeholder="Enter key discussion points here..."
                 />
               </div>
-              <div className="px-6 py-4 border-t border-[#EBEBEB] flex justify-end gap-3">
+              <div className="px-4 sm:px-6 py-4 border-t border-[#EBEBEB] flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
                 <button
                   onClick={() => setIsEditModalOpen(false)}
                   disabled={isSaving}
@@ -1285,7 +1285,7 @@ const HistoryTab = ({
 
   return (
     <div
-      className="pb-12 space-y-6 min-h-screen"
+      className="pb-12 space-y-6 min-h-screen min-w-0"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
       {/* Controls Row */}
@@ -1298,7 +1298,7 @@ const HistoryTab = ({
             View and edit past daily meeting reports
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
           <CustomSelect
             value={selectedMeetingId}
             onChange={(val: string) => setSelectedMeetingId(val)}
@@ -1306,7 +1306,7 @@ const HistoryTab = ({
             placeholder="Select Meeting"
             options={meetingOptions}
           />
-          <div className="flex items-center gap-1.5">
+          <div className="flex w-full items-center gap-1.5 sm:w-auto">
             <button
               onClick={handlePrevDay}
               className="p-2 bg-white border border-[#F0EBE8] rounded-[12px] hover:bg-[#FCFAFA] text-[#8C8580] shadow-sm transition-all"
@@ -1317,7 +1317,7 @@ const HistoryTab = ({
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="bg-[#FCFAFA] border border-[#F0EBE8] rounded-[16px] py-2.5 px-4 text-sm font-bold text-[#1A1A1A] focus:outline-none focus:border-[#CE7A5A] shadow-sm transition-colors"
+              className="min-w-0 flex-1 bg-[#FCFAFA] border border-[#F0EBE8] rounded-[16px] py-2.5 px-4 text-sm font-bold text-[#1A1A1A] focus:outline-none focus:border-[#CE7A5A] shadow-sm transition-colors sm:flex-none"
             />
             <button
               onClick={handleNextDay}
@@ -1328,7 +1328,7 @@ const HistoryTab = ({
           </div>
           <button
             onClick={() => setRefreshKey((k) => k + 1)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#F0EBE8] rounded-[16px] hover:bg-[#FCFAFA] shadow-sm text-sm font-bold text-[#1A1A1A] transition-all"
+            className="flex w-full items-center justify-center gap-2 px-4 py-2.5 bg-white border border-[#F0EBE8] rounded-[16px] hover:bg-[#FCFAFA] shadow-sm text-sm font-bold text-[#1A1A1A] transition-all sm:w-auto"
           >
             <RefreshCw
               className={cn(

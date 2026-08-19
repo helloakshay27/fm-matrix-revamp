@@ -13,6 +13,7 @@ import {
   updateServiceActiveStaus,
 } from "@/store/slices/servicePRSlice";
 import { cache } from "@/utils/cacheUtils";
+import { useProcurementEvents } from "@/components/PostHogProcurementEvents";
 
 const CACHE_TTL = 5 * 60 * 1000;
 const STALE_TTL = 30 * 60 * 1000;
@@ -93,6 +94,13 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
+    key: "rejection_reason",
+    label: "Rejection Reason",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
     key: "created_by",
     label: "Created By",
     sortable: true,
@@ -126,6 +134,7 @@ export const ServicePRDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { shouldShow } = useDynamicPermissions()
+  const procurementEvents = useProcurementEvents();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
   const location = useLocation();
@@ -209,6 +218,7 @@ export const ServicePRDashboard = () => {
       ).unwrap();
       cache.set(cacheKey, response, CACHE_TTL);
       applyResponse(response);
+      try { procurementEvents.onProcurementListViewed("service_pr_list", { list_type: "service_pr_list", row_count: response.work_orders.length }); } catch (err) {}
     } catch (error) {
       toast.error(error);
     } finally {

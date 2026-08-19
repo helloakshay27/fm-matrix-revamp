@@ -90,13 +90,18 @@ export default function DebtorsCreditorsReport() {
     // today's date
     const today = new Date().toLocaleDateString("en-GB", {
         day: "2-digit",
-        month: "short",
+        month: "2-digit",
         year: "numeric",
     });
 
     const formatDate = (date) => {
         const d = new Date(date);
-        return `${d.getDate()}-${d.getMonth() + 1}-${d.getFullYear()}`;
+        if (isNaN(d.getTime())) return String(date);
+        return d.toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+        });
     };
     return (
         <div className="p-6 bg-white">
@@ -126,7 +131,7 @@ export default function DebtorsCreditorsReport() {
           className="border border-gray-300 rounded px-3 py-2 text-sm"
         />
 
-        <button className="bg-blue-600 text-white px-4 py-2 rounded text-sm">
+        <button className="bg-brand text-white px-4 py-2 rounded text-sm">
           Apply
         </button>
 
@@ -145,7 +150,7 @@ export default function DebtorsCreditorsReport() {
             Total Receivable
           </p>
 
-          <p className="text-lg font-semibold text-blue-600">
+          <p className="text-lg font-semibold text-brand">
             ₹575.00
           </p>
 
@@ -209,7 +214,7 @@ export default function DebtorsCreditorsReport() {
                         Total Receivable
                     </p>
 
-                    <p className="text-lg font-semibold text-blue-600">
+                    <p className="font-semibold text-brand" style={{ fontSize: '1.125rem', lineHeight: '1.75rem' }}>
                         ₹{totalReceivable.toFixed(2)}
                     </p>
 
@@ -226,7 +231,7 @@ export default function DebtorsCreditorsReport() {
                         Total Payable
                     </p>
 
-                    <p className="text-lg font-semibold text-red-600">
+                    <p className="font-semibold text-brand" style={{ fontSize: '1.125rem', lineHeight: '1.75rem' }}>
                         ₹{totalPayable.toFixed(2)}
                     </p>
 
@@ -244,8 +249,9 @@ export default function DebtorsCreditorsReport() {
                     </p>
 
                     <p
-                        className={`text-lg font-semibold ${netPosition >= 0 ? "text-green-600" : "text-red-600"
+                        className={`font-semibold ${netPosition >= 0 ? "text-green-600" : "text-red-600"
                             }`}
+                        style={{ fontSize: '1.125rem', lineHeight: '1.75rem' }}
                     >
                         ₹{netPosition.toFixed(2)}
                     </p>
@@ -332,7 +338,7 @@ export default function DebtorsCreditorsReport() {
                 <td className="border px-4 py-3">15 Mar 2026</td>
 
                 <td className="border px-4 py-3">
-                  <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs">
+                  <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs">
                     Invoice
                   </span>
                 </td>
@@ -446,7 +452,7 @@ export default function DebtorsCreditorsReport() {
                                     ))}
 
                                     {/* Ledger Total */}
-                                    <tr className="bg-blue-50 font-semibold">
+                                    <tr className="bg-brand-light font-semibold">
                                         <td colSpan={4} className="border px-4 py-3 text-right">
                                             Ledger Total
                                         </td>
@@ -471,7 +477,7 @@ export default function DebtorsCreditorsReport() {
                 </div>
 
 
-                <div className="bg-[#0f1c3f] text-white text-right px-6 py-3 font-medium">
+                <div className="bg-brand text-white text-right px-6 py-3 font-medium">
                     {/* TOTAL RECEIVABLE ₹575.00 */}
                     {/* TOTAL RECEIVABLE ₹{debtors?.totals?.closing_balance} */}
                     TOTAL RECEIVABLE ₹{receivableTotal}
@@ -656,7 +662,7 @@ export default function DebtorsCreditorsReport() {
                                     ))}
 
                                     {/* Ledger Total */}
-                                    <tr className="bg-blue-50 font-semibold">
+                                    <tr className="bg-brand-light font-semibold">
                                         <td colSpan={4} className="border px-4 py-3 text-right">
                                             Ledger Total
                                         </td>
@@ -682,7 +688,7 @@ export default function DebtorsCreditorsReport() {
                 </div>
 
 
-                <div className="bg-[#0f1c3f] text-white text-right px-6 py-3 font-medium">
+                <div className="bg-brand text-white text-right px-6 py-3 font-medium">
                     {/* TOTAL PAYABLE ₹2,596.00 */}
                     TOTAL PAYABLE ₹{payableTotal}
                 </div>
@@ -731,23 +737,23 @@ export default function DebtorsCreditorsReport() {
                 <div className="flex justify-end gap-6">
 
                     {/* Total Receivable */}
-                    <div className="text-right bg-green-50 border border-green-200 rounded-md px-6 py-3">
-                        <p className="text-xs text-green-700 uppercase">
+                    <div className="text-right bg-brand-light border border-brand/20 rounded-md px-6 py-3">
+                        <p className="text-xs text-brand uppercase">
                             Total Receivable
                         </p>
 
-                        <p className="text-lg font-semibold text-green-600">
+                        <p className="font-semibold text-brand" style={{ fontSize: '1.125rem', lineHeight: '1.75rem' }}>
                             ₹{receivableTotal.toFixed(2)}
                         </p>
                     </div>
 
                     {/* Total Payable */}
-                    <div className="text-right bg-red-50 border border-red-200 rounded-md px-6 py-3">
-                        <p className="text-xs text-red-700 uppercase">
+                    <div className="text-right bg-brand-light border border-brand/20 rounded-md px-6 py-3">
+                        <p className="text-xs text-brand uppercase">
                             Total Payable
                         </p>
 
-                        <p className="text-lg font-semibold text-red-600">
+                        <p className="font-semibold text-brand" style={{ fontSize: '1.125rem', lineHeight: '1.75rem' }}>
                             ₹{payableTotal.toFixed(2)}
                         </p>
                     </div>
@@ -767,8 +773,9 @@ export default function DebtorsCreditorsReport() {
                         </p>
 
                         <p
-                            className={`text-lg font-semibold ${netPosition >= 0 ? "text-green-600" : "text-red-600"
+                            className={`font-semibold ${netPosition >= 0 ? "text-green-600" : "text-red-600"
                                 }`}
+                            style={{ fontSize: '1.125rem', lineHeight: '1.75rem' }}
                         >
                             ₹{netPosition.toFixed(2)}
                         </p>

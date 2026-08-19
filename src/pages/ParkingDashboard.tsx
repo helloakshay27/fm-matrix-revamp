@@ -2,9 +2,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Plus, Download, Eye, Search, Grid3x3, X, Upload, MoreHorizontal, Car, Bike, MapPin, CheckCircle, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Download, Eye, Grid3x3, X, Upload, MoreHorizontal, Car, Bike, MapPin, CheckCircle, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -15,9 +13,8 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { BulkUploadModal } from "@/components/BulkUploadModal";
-import { ColumnVisibilityDropdown } from "@/components/ColumnVisibilityDropdown";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { useNavigate,useLocation } from "react-router-dom";
-import { useLayout } from '@/contexts/LayoutContext';
 import { toast } from 'sonner';
 import { fetchParkingBookings, ParkingBookingClient, ParkingBookingSummary } from '@/services/parkingConfigurationsAPI';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
@@ -30,7 +27,6 @@ const ParkingDashboard = () => {
   const { shouldShow } = useDynamicPermissions();
 
   const location = useLocation();
-  const { isSidebarCollapsed } = useLayout();
   const panelRef = useRef<HTMLDivElement>(null);
 
   // API state
@@ -46,16 +42,16 @@ const ParkingDashboard = () => {
 });
   const [itemsPerPage] = useState(10);
 
-  // Column visibility state
-  const [columns, setColumns] = useState([
-    { key: 'action', label: 'Action', visible: true },
-    { key: 'clientName', label: 'Client Name', visible: true },
-    { key: 'twoWheeler', label: 'No. of 2 Wheeler', visible: true },
-    { key: 'fourWheeler', label: 'No. of 4 Wheeler', visible: true },
-    { key: 'freeParking', label: 'Free Parking', visible: true },
-    { key: 'paidParking', label: 'Paid Parking', visible: true },
-    { key: 'availableSlots', label: 'Available Parking Slots', visible: true }
-  ]);
+  // Table column config
+  const columns = [
+    { key: 'action', label: 'Action', sortable: false },
+    { key: 'clientName', label: 'Client Name', sortable: true },
+    { key: 'twoWheeler', label: 'No. of 2 Wheeler', sortable: true },
+    { key: 'fourWheeler', label: 'No. of 4 Wheeler', sortable: true },
+    { key: 'freeParking', label: 'Free Parking', sortable: true },
+    { key: 'paidParking', label: 'Paid Parking', sortable: true },
+    { key: 'availableSlots', label: 'Available Parking Slots', sortable: true }
+  ];
   
   useEffect(() => {
   navigate(`${location.pathname}?page=${currentPage}`, {
@@ -236,18 +232,45 @@ const ParkingDashboard = () => {
     setCurrentPage(1); // Reset to first page when searching
   };
 
-  // Column visibility functions
-  const handleColumnToggle = (columnKey: string, visible: boolean) => {
-    setColumns(prev => 
-      prev.map(col => 
-        col.key === columnKey ? { ...col, visible } : col
-      )
-    );
+  // Render cell content per column
+  const renderCell = (item: ParkingBookingClient, columnKey: string) => {
+    if (columnKey === 'action') {
+      return (
+        shouldShow("Parking", "show") && (
+          <button
+            className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleViewDetails(item.id);
+            }}
+            title="View Details"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
+        )
+      );
+    }
+    if (columnKey === 'clientName') return item.name;
+    if (columnKey === 'twoWheeler') return item.two_wheeler_count;
+    if (columnKey === 'fourWheeler') return item.four_wheeler_count;
+    if (columnKey === 'freeParking') return item.free_parking;
+    if (columnKey === 'paidParking') return item.paid_parking;
+    if (columnKey === 'availableSlots') return item.available_parking_slots;
+    return null;
   };
 
-  const isColumnVisible = (columnKey: string) => {
-    return columns.find(col => col.key === columnKey)?.visible ?? true;
-  };
+  const renderActionButton = () => (
+    shouldShow("Parking", "create") && (
+      <Button
+        className="fm-button-fix fm-button-brand px-4 py-2"
+        variant="ghost"
+        onClick={handleActionClick}
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Action
+      </Button>
+    )
+  );
 
   return (
     <div className="p-6 space-y-6 min-h-screen">
@@ -257,19 +280,19 @@ const ParkingDashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
         {loading ? (
           Array.from({ length: 7 }).map((_, index) => (
             <div
               key={index}
-              className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 animate-pulse bg-[#f6f4ee]"
+              className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 animate-pulse"
             >
-              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <div className="w-4 h-4 sm:w-6 sm:h-6 bg-gray-300 rounded"></div>
+              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
+                <div className="w-6 h-6 bg-gray-300 rounded"></div>
               </div>
-              <div className="flex flex-col min-w-0">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate text-gray-400">0</div>
-                <div className="text-xs sm:text-sm font-medium leading-tight text-gray-400">Loading...</div>
+              <div>
+                <div className="text-2xl font-semibold text-gray-400">0</div>
+                <div className="text-sm font-medium text-gray-400">Loading...</div>
               </div>
             </div>
           ))
@@ -277,19 +300,16 @@ const ParkingDashboard = () => {
           parkingStats.map((stat, index) => (
             <div
               key={index}
-              className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] hover:bg-[#e6e2da] transition-all duration-200"
+              className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4"
             >
-              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <stat.icon
-                  className="w-4 h-4 sm:w-6 sm:h-6"
-                  style={{ color: '#C72030' }}
-                />
+              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
+                <stat.icon className="w-6 h-6 text-[#C72030]" />
               </div>
-              <div className="flex flex-col min-w-0">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+              <div>
+                <div className="text-2xl font-semibold text-[#1A1A1A]">
                   {stat.count}
                 </div>
-                <div className="text-xs sm:text-sm font-medium leading-tight text-muted-foreground">
+                <div className="text-sm font-medium text-[#1A1A1A]">
                   {stat.title}
                 </div>
               </div>
@@ -298,92 +318,26 @@ const ParkingDashboard = () => {
         )}
       </div>
 
-      {/* Controls Section */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        {/* Action Button */}
-        <div className="flex gap-2">
-          {shouldShow("Parking","create")&&(
-          <Button 
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none border-none shadow-none" 
-            onClick={handleActionClick}
-          >
-             <Plus className="w-4 h-4 mr-2" />
-           
-            Action
-          </Button>)}
-        </div>
-
-        {/* Right Side Controls */}
-        <div className="flex items-center gap-2">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Search clients..."
-              value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10 w-64"
-            />
-          </div>
-
-          {/* Column Visibility */}
-          <ColumnVisibilityDropdown
-            columns={columns}
-            onColumnToggle={handleColumnToggle}
-          />
-        </div>
-      </div>
-
       {/* Data Table */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              {isColumnVisible('action') && <TableHead className="font-semibold">Action</TableHead>}
-              {isColumnVisible('clientName') && <TableHead className="font-semibold">Client Name</TableHead>}
-              {isColumnVisible('twoWheeler') && <TableHead className="font-semibold text-center">No. of 2 Wheeler</TableHead>}
-              {isColumnVisible('fourWheeler') && <TableHead className="font-semibold text-center">No. of 4 Wheeler</TableHead>}
-              {isColumnVisible('freeParking') && <TableHead className="font-semibold text-center">Free Parking</TableHead>}
-              {isColumnVisible('paidParking') && <TableHead className="font-semibold text-center">Paid Parking</TableHead>}
-              {isColumnVisible('availableSlots') && <TableHead className="font-semibold text-center">Available Parking Slots</TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedData.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columns.filter(col => col.visible).length} className="text-center py-8 text-gray-500">
-                  {loading ? 'Loading parking data...' : 
-                   error ? error :
-                   searchTerm.trim() ? `No clients found matching "${searchTerm}"` : 'No parking data available'}
-                </TableCell>
-              </TableRow>
-            ) : (
-              paginatedData.map((row) => (
-                <TableRow key={row.id} className="hover:bg-gray-50">
-                  {isColumnVisible('action') && (
-                    <TableCell>
-                      {shouldShow("Parking","show")&&(
-                      <button 
-                        className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded"
-                        onClick={() => handleViewDetails(row.id)}
-                        title="View Details"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>)}
-                    </TableCell>
-                  )}
-                  {isColumnVisible('clientName') && <TableCell className="font-medium">{row.name}</TableCell>}
-                  {isColumnVisible('twoWheeler') && <TableCell className="text-center">{row.two_wheeler_count}</TableCell>}
-                  {isColumnVisible('fourWheeler') && <TableCell className="text-center">{row.four_wheeler_count}</TableCell>}
-                  {isColumnVisible('freeParking') && <TableCell className="text-center">{row.free_parking}</TableCell>}
-                  {isColumnVisible('paidParking') && <TableCell className="text-center">{row.paid_parking}</TableCell>}
-                  {isColumnVisible('availableSlots') && <TableCell className="text-center">{row.available_parking_slots}</TableCell>}
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <EnhancedTable
+        data={paginatedData}
+        columns={columns}
+        renderCell={renderCell}
+        storageKey="parking-bookings-table"
+        emptyMessage={
+          error ? error :
+          searchTerm.trim() ? `No clients found matching "${searchTerm}"` : 'No parking data available'
+        }
+        enableSearch={true}
+        searchTerm={searchTerm}
+        onSearchChange={handleSearch}
+        disableClientSearch={true}
+        searchPlaceholder="Search clients..."
+        leftActions={renderActionButton()}
+        loading={loading}
+        loadingMessage="Loading..."
+        className="transition-all duration-500 ease-in-out"
+      />
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
@@ -398,10 +352,11 @@ const ParkingDashboard = () => {
                     }
                   }}
                   className={
-                    currentPage === 1
+                    currentPage === 1 || loading
                       ? "pointer-events-none opacity-50"
-                      : ""
+                      : "cursor-pointer"
                   }
+                  aria-disabled={loading || currentPage === 1}
                 />
               </PaginationItem>
 
@@ -409,10 +364,12 @@ const ParkingDashboard = () => {
                 { length: Math.min(totalPages, 10) },
                 (_, i) => i + 1
               ).map((page) => (
-                <PaginationItem key={page}>
+                <PaginationItem key={page} className="cursor-pointer">
                   <PaginationLink
-                    onClick={() => setCurrentPage(page)}
+                    onClick={() => !loading && setCurrentPage(page)}
                     isActive={currentPage === page}
+                    aria-disabled={loading}
+                    className={loading ? 'pointer-events-none opacity-50' : ''}
                   >
                     {page}
                   </PaginationLink>
@@ -433,10 +390,11 @@ const ParkingDashboard = () => {
                     }
                   }}
                   className={
-                    currentPage === totalPages
+                    currentPage === totalPages || loading
                       ? "pointer-events-none opacity-50"
-                      : ""
+                      : "cursor-pointer"
                   }
+                  aria-disabled={loading || currentPage === totalPages}
                 />
               </PaginationItem>
             </PaginationContent>
@@ -459,59 +417,51 @@ const ParkingDashboard = () => {
       {/* Action Panel */}
       {showActionPanel && (
         <div
-          className={`fixed z-50 flex items-end justify-center pb-8 sm:pb-[16rem] pointer-events-none transition-all duration-300 ${
-            isSidebarCollapsed ? 'left-16' : 'left-64'
-          } right-0 bottom-0`}
+          ref={panelRef}
+          className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white shadow-[0px_4px_20px_rgba(0,0,0,0.15)] rounded-lg z-50 flex h-[105px]"
         >
-          {/* Main panel + right bar container */}
-          <div className="flex max-w-full pointer-events-auto bg-white border border-gray-200 rounded-lg shadow-lg mx-4 overflow-hidden">
-            {/* Right vertical bar */}
-            <div className="hidden sm:flex w-8 bg-[#C4B89D54] items-center justify-center text-red-600 font-semibold text-sm">
+          {/* Beige left strip */}
+          <div className="w-[44px] bg-[#C4B59A] rounded-l-lg flex flex-col items-center justify-center" />
+
+          {/* Main content */}
+          <div className="flex items-center justify-between gap-4 px-6 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-[#1a1a1a]">Action</span>
             </div>
 
-            {/* Main content */}
-            <div ref={panelRef} className="p-4 sm:p-6 w-full sm:w-auto">
-              <div className="flex flex-wrap justify-center sm:justify-start items-center gap-6 sm:gap-12">
-                {/* Add Booking */}
-                {/* <button
-                  onClick={handleAddBooking}
-                  className="flex flex-col items-center justify-center cursor-pointer text-[#374151] hover:text-black w-16 sm:w-auto"
-                >
-                  <Plus className="w-6 h-6 mb-1" />
-                  <span className="text-sm font-medium text-center">Add Booking</span>
-                </button> */}
+            <div className="flex items-center gap-2">
+              {/* Import */}
+              <Button
+                onClick={handleExport}
+                variant="ghost"
+                size="sm"
+                className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
+              >
+                <Upload className="w-6 h-6 text-black" />
+                <span className="text-xs text-gray-600">Import</span>
+              </Button>
 
-                {/* Import */}
-                <button
-                  onClick={handleExport}
-                  className="flex flex-col items-center justify-center cursor-pointer text-[#374151] hover:text-black w-16 sm:w-auto"
-                >
-                  <Upload className="w-6 h-6 mb-1" />
-                  <span className="text-sm font-medium text-center">Import</span>
-                </button>
-
-                {/* View Bookings */}
-                <button
-                  onClick={handleViewBookings}
-                  className="flex flex-col items-center justify-center cursor-pointer text-[#374151] hover:text-black w-16 sm:w-auto"
-                >
-                  <Eye className="w-6 h-6 mb-1" />
-                  <span className="text-sm font-medium text-center">View Bookings</span>
-                </button>
-
-                {/* Vertical divider */}
-                <div className="w-px h-8 bg-black opacity-20 mx-2 sm:mx-4" />
-
-                {/* Close icon */}
-                <div
-                  onClick={handleClearSelection}
-                  className="flex flex-col items-center justify-center cursor-pointer text-gray-400 hover:text-gray-600 w-16 sm:w-auto"
-                >
-                  <X className="w-6 h-6 mb-1" />
-                  <span className="text-sm font-medium text-center">Close</span>
-                </div>
-              </div>
+              {/* View Bookings */}
+              <Button
+                onClick={handleViewBookings}
+                variant="ghost"
+                size="sm"
+                className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
+              >
+                <Eye className="w-6 h-6 text-black" />
+                <span className="text-xs text-gray-600">View Bookings</span>
+              </Button>
             </div>
+          </div>
+
+          {/* Close strip */}
+          <div className="w-[44px] flex items-center justify-center border-l border-gray-200">
+            <button
+              onClick={handleClearSelection}
+              className="w-full h-full flex items-center justify-center hover:bg-gray-50 transition-colors duration-200"
+            >
+              <X className="w-4 h-4 text-black" />
+            </button>
           </div>
         </div>
       )}

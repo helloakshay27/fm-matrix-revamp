@@ -1,8 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Eye, Plus } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
@@ -15,28 +14,32 @@ import {
     PaginationNext,
     PaginationEllipsis,
 } from '@/components/ui/pagination';
+import {
+    SacHsnFilterDialog,
+    type SacHsnFilters,
+} from '@/components/SacHsnFilterDialog';
 
+const emptyFilters: SacHsnFilters = {
+    type: '',
+    category: '',
+    code: '',
+    createdBy: '',
+};
 
 const SacHsn = () => {
     const { shouldShow } = useDynamicPermissions();
-
-    const [showActionPanel, setShowActionPanel] = React.useState(false);
     const navigate = useNavigate();
 
     const handleAddClick = useCallback(() => navigate('/settings/inventory-management/sac-hsn-code/add'), [navigate])
 
-    const handleActionClick = useCallback(() => {
-        setShowActionPanel(true);
-    }, []);
-
-
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string | null>(null);
     const [searching, setSearching] = useState<boolean>(false);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [paginationData, setPaginationData] = useState<{ current_page: number; total_pages: number; total_count: number; next_page: number | null; prev_page: number | null }>({ current_page: 1, total_pages: 1, total_count: 0, next_page: null, prev_page: null });
     const [currentSearchTerm, setCurrentSearchTerm] = useState<string>('');
+    const [showFilters, setShowFilters] = useState(false);
+    const [filters, setFilters] = useState<SacHsnFilters>(emptyFilters);
 
     // initial sample row kept as fallback until API responds
     const initialSample = [
@@ -57,16 +60,19 @@ const SacHsn = () => {
     useEffect(() => {
         const fetchHsns = async (page: number = 1) => {
             setLoading(true);
-            setError(null);
-            if (currentSearchTerm) setSearching(true);
+            if (currentSearchTerm || Object.values(filters).some(Boolean)) setSearching(true);
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
                 const url = `https://${baseUrl}/pms/hsns.json`;
+                const categoryTerm = filters.category || currentSearchTerm;
                 const resp = await axios.get(url, {
                     params: {
                         ...(page ? { page } : {}),
-                        ...(currentSearchTerm ? { 'q[category_cont]': currentSearchTerm } : {}),
+                        ...(categoryTerm ? { 'q[category_cont]': categoryTerm } : {}),
+                        ...(filters.type ? { 'q[hsn_type_cont]': filters.type } : {}),
+                        ...(filters.code ? { 'q[code_cont]': filters.code } : {}),
+                        ...(filters.createdBy ? { 'q[created_by_cont]': filters.createdBy } : {}),
                     },
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                 });
@@ -98,7 +104,6 @@ const SacHsn = () => {
                     setData(items);
                 }
             } catch (err: any) {
-                setError(err?.message || 'Failed to fetch HSN data');
                 setData(initialSample);
             } finally {
                 setLoading(false);
@@ -107,7 +112,7 @@ const SacHsn = () => {
         };
 
         fetchHsns(currentPage);
-    }, [currentPage, currentSearchTerm]);
+    }, [currentPage, currentSearchTerm, filters]);
 
     // Server-side search handler: query by category (q[category_cont])
     const handleGlobalSearch = (term: string, page: number = 1) => {
@@ -115,6 +120,39 @@ const SacHsn = () => {
         setCurrentSearchTerm(term);
         setCurrentPage(page);
     };
+
+    const handleApplyFilters = (nextFilters: SacHsnFilters) => {
+        setFilters(nextFilters);
+        setCurrentPage(1);
+    };
+
+    const handleResetFilters = () => {
+        setFilters(emptyFilters);
+        setCurrentPage(1);
+    };
+
+    const filteredData = useMemo(() => {
+        return data.filter((item) => {
+            const type = String(item.hsn_type || item.type || '').toLowerCase();
+            const category = String(item.category || item.category_name || '').toLowerCase();
+            const code = String(item.code || item.hsn_code || '').toLowerCase();
+            const createdBy = String(item.created_by || item.createdBy || '').toLowerCase();
+
+            if (filters.type && !type.includes(filters.type.toLowerCase())) {
+                return false;
+            }
+            if (filters.category && !category.includes(filters.category.toLowerCase())) {
+                return false;
+            }
+            if (filters.code && !code.includes(filters.code.toLowerCase())) {
+                return false;
+            }
+            if (filters.createdBy && !createdBy.includes(filters.createdBy.toLowerCase())) {
+                return false;
+            }
+            return true;
+        });
+    }, [data, filters]);
 
     const columns = [
         { key: 'actions', label: 'Action', sortable: false },
@@ -171,7 +209,7 @@ const SacHsn = () => {
     const leftActions = (
         <div className="flex flex-wrap gap-3">
             {shouldShow("SAC/HSN Code", "create") && (
-            <Button onClick={handleAddClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button onClick={handleAddClick} variant="ghost" className="fm-button-fix fm-button-brand px-4 py-2">
                 <Plus className="w-4 h-4" /> Add
             </Button>
             )}
@@ -278,7 +316,7 @@ const SacHsn = () => {
         <div className="p-4 sm:p-6">
 
             <EnhancedTable
-                data={data}
+                data={filteredData}
                 columns={columns}
                 renderCell={renderCell}
                 pagination={false}
@@ -291,6 +329,7 @@ const SacHsn = () => {
                 enableGlobalSearch={true}
                 onGlobalSearch={(term: string) => handleGlobalSearch(term, 1)}
                 searchPlaceholder="Search category..."
+                onFilterClick={() => setShowFilters(true)}
             />
             {!loading && (
                 <div className="flex justify-center mt-6">
@@ -315,6 +354,14 @@ const SacHsn = () => {
                     </Pagination>
                 </div>
             )}
+
+            <SacHsnFilterDialog
+                isOpen={showFilters}
+                onClose={() => setShowFilters(false)}
+                filters={filters}
+                onApplyFilters={handleApplyFilters}
+                onResetFilters={handleResetFilters}
+            />
         </div>
     );
 };

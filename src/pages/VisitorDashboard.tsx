@@ -26,6 +26,9 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { MaterialDatePicker } from "@/components/ui/material-date-picker";
 
 // Mock data for visitors
 const mockVisitors = [
@@ -99,6 +102,9 @@ const getStatusColor = (status: string) => {
 export const VisitorDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   const stats = calculateStats(mockVisitors);
   const filteredVisitors = mockVisitors.filter(visitor =>
@@ -113,6 +119,15 @@ export const VisitorDashboard = () => {
 
   const handleViewVisitor = (visitorId: string) => {
     navigate(`/security/visitor/details/${visitorId}`);
+  };
+
+  const handleExport = () => {
+    const fromParts = fromDate.split("/");
+    const toParts = toDate.split("/");
+    const encodedRange = `${fromParts[1]}%2F${fromParts[0]}%2F${fromParts[2]}-${toParts[1]}%2F${toParts[0]}%2F${toParts[2]}`;
+    const exportUrl = `/api/visitors/export?q[date_range]=${encodedRange}`;
+    window.open(exportUrl, "_blank");
+    setExportDialogOpen(false);
   };
 
   const StatCard = ({ icon, label, value }: any) => (
@@ -185,7 +200,7 @@ export const VisitorDashboard = () => {
               <Button variant="outline" size="icon">
                 <RefreshCw className="w-4 h-4" />
               </Button>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" onClick={() => setExportDialogOpen(true)}>
                 <Download className="w-4 h-4" />
               </Button>
             </div>
@@ -284,6 +299,44 @@ export const VisitorDashboard = () => {
           </div>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Export Visitors Data</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>From</Label>
+              <MaterialDatePicker
+                value={fromDate}
+                onChange={setFromDate}
+                placeholder="Select start date"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label>To</Label>
+              <MaterialDatePicker
+                value={toDate}
+                onChange={setToDate}
+                placeholder="Select end date"
+                className="mt-1"
+              />
+            </div>
+            <div className="flex justify-end pt-4">
+              <Button
+                style={{ backgroundColor: "#F2EEE9", color: "#BF213E" }}
+                className="hover:bg-[#F2EEE9]/90 px-8"
+                onClick={handleExport}
+                disabled={!fromDate || !toDate}
+              >
+                Export
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

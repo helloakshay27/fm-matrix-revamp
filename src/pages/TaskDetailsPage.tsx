@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { PostHogTaskActivity } from "@/components/PostHogTaskActivity";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,6 +50,7 @@ import { ticketManagementAPI } from "@/services/ticketManagementAPI";
 import { bulkTaskService, EscalateUser } from "@/services/bulkTaskService";
 import { JobSheetModal } from "@/components/JobSheetModal";
 import { getReturnToFromState } from "@/utils/listBackNavigation";
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // If User type is not imported, define minimally here:
 type User = {
@@ -60,6 +62,20 @@ export const TaskDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { shouldShow } = useDynamicPermissions();
+  const taskEventKeyRef = useRef(0);
+  const [taskEvents, setTaskEvents] = useState<Array<{
+    key: number;
+    event: React.ComponentProps<typeof PostHogTaskActivity>['event'];
+    properties?: Record<string, unknown>;
+  }>>([]);
+
+  const captureTaskEvent = (
+    event: React.ComponentProps<typeof PostHogTaskActivity>['event'],
+    properties?: Record<string, unknown>
+  ) => {
+    setTaskEvents(prev => [...prev, { key: ++taskEventKeyRef.current, event, properties }]);
+  };
   const [taskDetails, setTaskDetails] = useState<TaskOccurrence | null>(null);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
@@ -458,6 +474,27 @@ export const TaskDetailsPage = () => {
     }
   };
 
+  // Auto-fetch job sheet when task is closed/completed/partially closed
+  useEffect(() => {
+    const status =
+      taskDetails?.task_details?.status?.value?.toLowerCase() ||
+      taskDetails?.task_status?.toLowerCase() ||
+      "";
+    if (
+      id &&
+      ["closed", "completed", "partially closed"].includes(status) &&
+      !jobSheetData &&
+      !jobSheetLoading
+    ) {
+      setJobSheetLoading(true);
+      taskService
+        .getJobSheet(id)
+        .then(setJobSheetData)
+        .catch(() => {})
+        .finally(() => setJobSheetLoading(false));
+    }
+  }, [taskDetails, id]);
+
   // File upload handler for form
   const handleFileUpload = (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -499,6 +536,16 @@ export const TaskDetailsPage = () => {
 
       sonnerToast.dismiss(loadingToastId);
       sonnerToast.success("Task rescheduled successfully!");
+
+      // Usage/interaction plane
+      captureTaskEvent('Task Rescheduled (UI)', { task_id: id });
+      // Business lifecycle plane (Task & PPM catalogue)
+      captureTaskEvent('Maintenance Task Rescheduled', {
+        task_id: id,
+        old_due: taskDetails?.task_details?.scheduled_on ?? null,
+        new_due: dateTimeString,
+        platform: 'web',
+      });
 
       // Refresh task details after successful reschedule
       const updatedDetails = await taskService.getTaskDetails(id!);
@@ -1075,6 +1122,7 @@ export const TaskDetailsPage = () => {
       case "actions":
         return (
           <div className="flex items-center gap-1">
+            {shouldShow("Ticket", "show") && (
             <button
               className="p-1 hover:bg-gray-100 rounded"
               onClick={() => handleTicketView(item.ticket_number)}
@@ -1082,6 +1130,7 @@ export const TaskDetailsPage = () => {
             >
               <Eye className="w-4 h-4 text-gray-600" />
             </button>
+            )}
             <button
               className={`p-1 hover:bg-gray-100 rounded transition-colors ${item.is_flagged
                 ? "text-red-500 hover:text-red-600"
@@ -1258,6 +1307,10 @@ export const TaskDetailsPage = () => {
   };
   return (
     <>
+      <PostHogTaskActivity event="Task Detail Opened" />
+      {taskEvents.map(evt => (
+        <PostHogTaskActivity key={evt.key} event={evt.event} properties={evt.properties} />
+      ))}
       <div className="p-4 sm:p-6 min-h-screen bg-gray-50">
         {/* Header */}
         <div className="mb-6">
@@ -1291,7 +1344,7 @@ export const TaskDetailsPage = () => {
                         taskDetails?.actions?.can_edit) && (
                           <Button
                             onClick={handleTaskReschedule}
-                            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                            className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
                           >
                             Task Reschedule
                           </Button>
@@ -1300,7 +1353,7 @@ export const TaskDetailsPage = () => {
                         taskDetails?.actions?.can_edit) && (
                           <Button
                             onClick={handleSubmitTask}
-                            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                            className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
                           >
                             Submit Task
                           </Button>
@@ -1314,7 +1367,7 @@ export const TaskDetailsPage = () => {
                         taskDetails?.actions?.can_edit) && (
                           <Button
                             onClick={handleTaskReschedule}
-                            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                            className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
                           >
                             Task Reschedule
                           </Button>
@@ -1336,7 +1389,7 @@ export const TaskDetailsPage = () => {
                           <Button
                             onClick={handleJobSheetModalClick}
                             variant="outline"
-                            className="border-[#1e40af] text-[#1e40af] hover:bg-[#1e40af]/10 px-4 py-2"
+                            className="border-brand text-brand hover:bg-brand-light px-4 py-2"
                           >
                             Job Sheet
                           </Button>
@@ -1351,7 +1404,7 @@ export const TaskDetailsPage = () => {
                     <>
                       <Button
                         onClick={handleSubmitTask}
-                        className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                        className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
                       >
                         Submit Task
                       </Button>
@@ -1369,7 +1422,7 @@ export const TaskDetailsPage = () => {
                         <Button
                           onClick={handleJobSheetModalClick}
                           variant="outline"
-                          className="border-[#1e40af] text-[#1e40af] hover:bg-[#1e40af]/10 px-4 py-2"
+                          className="border-brand text-brand hover:bg-brand-light px-4 py-2"
                         >
                           Job Sheet
                         </Button>
@@ -1377,7 +1430,7 @@ export const TaskDetailsPage = () => {
                     {taskDetails?.actions?.can_submit_task && (
                       <Button
                         onClick={handleSubmitTask}
-                        className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                        className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
                       >
                         Submit Task
                       </Button>
@@ -2022,6 +2075,29 @@ export const TaskDetailsPage = () => {
               )}
             </div>
           </Card>
+
+          {/* Task Comments from Job Sheet */}
+          {(jobSheetData?.data?.job_sheet?.task_details?.task_comments ||
+            jobSheetData?.job_sheet?.task_details?.task_comments) && (
+            <Card className="w-full bg-transparent shadow-none border-none">
+              <div className="figma-card-header">
+                <div className="flex items-center gap-3">
+                  <div className="figma-card-icon-wrapper">
+                    <FileText className="figma-card-icon" />
+                  </div>
+                  <h3 className="figma-card-title">Task Comments</h3>
+                </div>
+              </div>
+              <div className="figma-card-content">
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <p className="text-sm whitespace-pre-wrap text-gray-700">
+                    {jobSheetData?.data?.job_sheet?.task_details?.task_comments ||
+                      jobSheetData?.job_sheet?.task_details?.task_comments}
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
 
           {/* Attachments - Show only for closed/completed/partially closed status */}
           {(() => {

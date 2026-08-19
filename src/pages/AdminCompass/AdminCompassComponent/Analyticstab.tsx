@@ -116,7 +116,7 @@ const CustomSelect = ({
   return (
     <div
       ref={ref}
-      className="relative shrink-0"
+      className="relative w-full sm:w-auto sm:shrink-0"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
       <button
@@ -124,7 +124,7 @@ const CustomSelect = ({
         disabled={disabled}
         onClick={() => !disabled && setOpen(!open)}
         className={cn(
-          "flex items-center gap-2 bg-[#FCFAFA] border rounded-[16px] pl-5 pr-4 py-3 transition-all min-w-[160px]",
+          "flex w-full items-center gap-2 bg-[#FCFAFA] border rounded-[16px] pl-5 pr-4 py-3 transition-all min-w-0 sm:min-w-[160px]",
           open
             ? "border-[#EB4A4A] shadow-[0_0_0_3px_rgba(235,74,74,0.10)]"
             : "border-[#F0EBE8] hover:border-[#EB4A4A]",
@@ -328,18 +328,18 @@ const AnalyticsTab = ({
 
   return (
     <div
-      className="space-y-6 pb-12 min-h-screen"
+      className="space-y-6 pb-12 min-h-screen min-w-0"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
       {/* Dynamic Header and Controls */}
-      <div className="bg-white rounded-[32px] border border-[#F0EBE8] shadow-sm p-6 sm:p-8">
+      <div className="bg-white rounded-[24px] sm:rounded-[32px] border border-[#F0EBE8] shadow-sm p-4 sm:p-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
+          <div className="flex min-w-0 items-start sm:items-center gap-3 sm:gap-4">
             <div className="w-[48px] h-[48px] rounded-[14px] bg-[#FDF5F1] border border-[#F6E1D7] flex items-center justify-center shrink-0">
               <Activity className="w-6 h-6 text-[#D37E5F]" />
             </div>
             <div>
-              <h2 className="text-[24px] font-black text-[#1A1A1A] tracking-tight">
+              <h2 className="text-xl sm:text-[24px] font-black text-[#1A1A1A] tracking-tight leading-tight">
                 Team Analytics
               </h2>
               <p className="text-[12px] font-bold text-[#8C8580] uppercase tracking-widest mt-1">
@@ -348,7 +348,7 @@ const AnalyticsTab = ({
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+          <div className="flex w-full flex-col sm:w-auto sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
             {/* ── Meeting dropdown ── */}
             <CustomSelect
               value={selectedMeetingId}
@@ -362,11 +362,11 @@ const AnalyticsTab = ({
             />
 
             {/* Time Period Filter */}
-            <div className="relative shrink-0">
+            <div className="relative w-full sm:w-auto sm:shrink-0">
               <select
                 value={period}
                 onChange={(e) => setPeriod(e.target.value)}
-                className="appearance-none border border-[#F0EBE8] bg-[#FCFAFA] rounded-[16px] pl-5 pr-10 py-3 text-sm font-bold text-[#1A1A1A] focus:outline-none focus:border-[#EB4A4A] min-w-[180px] w-full cursor-pointer transition-colors"
+                className="appearance-none border border-[#F0EBE8] bg-[#FCFAFA] rounded-[16px] pl-5 pr-10 py-3 text-sm font-bold text-[#1A1A1A] focus:outline-none focus:border-[#EB4A4A] min-w-0 sm:min-w-[180px] w-full cursor-pointer transition-colors"
               >
                 <option value="last_7_days">Last 7 Days</option>
                 <option value="last_14_days">Last 14 Days</option>
@@ -433,7 +433,7 @@ const AnalyticsTab = ({
           </div>
 
           {/* Bottom Section Skeleton */}
-          <div className="bg-white rounded-[32px] border border-[#F0EBE8] shadow-sm p-6 sm:p-8">
+          <div className="bg-white rounded-[24px] sm:rounded-[32px] border border-[#F0EBE8] shadow-sm p-4 sm:p-8">
             <div className="flex items-center gap-3 mb-8">
               <div className="w-10 h-10 rounded-[12px] bg-[#F0EBE8]"></div>
               <div className="h-5 bg-[#F0EBE8] rounded-full w-1/4"></div>
@@ -508,8 +508,8 @@ const AnalyticsTab = ({
             {/* Middle Section: Trend Chart & Department Breakdown Progress */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Activity Trend Chart */}
-              <div className="bg-white rounded-[24px] border border-[#F0EBE8] shadow-sm p-6 sm:p-8 flex flex-col">
-                <div className="flex items-center gap-3 mb-6 text-sm font-black text-[#1A1A1A] uppercase tracking-wider">
+              <div className="bg-white rounded-[24px] border border-[#F0EBE8] shadow-sm p-4 sm:p-8 flex flex-col min-w-0">
+                <div className="flex items-center gap-3 mb-6 text-xs sm:text-sm font-black text-[#1A1A1A] uppercase tracking-wider">
                   <div className="w-8 h-8 rounded-[8px] bg-[#EB4A4A]/10 flex items-center justify-center">
                     <Activity className="w-4 h-4 text-[#EB4A4A]" />
                   </div>
@@ -577,22 +577,22 @@ const AnalyticsTab = ({
               </div>
 
               {/* Department Breakdown Progress Bars */}
-              <div className="bg-white rounded-[24px] border border-[#F0EBE8] shadow-sm p-6 sm:p-8 flex flex-col">
-                <div className="flex items-center gap-3 mb-6 text-sm font-black text-[#1A1A1A] uppercase tracking-wider">
+              <div className="bg-white rounded-[24px] border border-[#F0EBE8] shadow-sm p-4 sm:p-8 flex flex-col min-w-0">
+                <div className="flex items-center gap-3 mb-6 text-xs sm:text-sm font-black text-[#1A1A1A] uppercase tracking-wider">
                   <div className="w-8 h-8 rounded-[8px] bg-[#F4D35E]/20 flex items-center justify-center">
                     <Building2 className="w-4 h-4 text-[#DAB835]" />
                   </div>
                   Department Breakdown
                 </div>
-                <div className="space-y-4 overflow-y-auto max-h-[260px] pr-2">
+                <div className="space-y-4 overflow-y-auto max-h-[260px] pr-1 sm:pr-2">
                   {a.deptBreakdown.map((dept) => (
                     <div
                       key={dept.name}
                       className="flex flex-col gap-2 bg-[#FCFAFA] p-4 rounded-[16px] border border-[#F0EBE8]"
                     >
-                      <div className="flex justify-between items-center">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                         <div
-                          className="text-sm font-black text-[#1A1A1A] truncate max-w-[200px]"
+                          className="text-sm font-black text-[#1A1A1A] break-words sm:truncate sm:max-w-[200px]"
                           title={dept.name}
                         >
                           {dept.name}
@@ -622,8 +622,8 @@ const AnalyticsTab = ({
             </div>
 
             {/* Department Reporting Summary Grid (Deep Dive) */}
-            <div className="bg-white rounded-[32px] border border-[#F0EBE8] shadow-sm p-6 sm:p-8">
-              <div className="flex items-center gap-3 mb-8 text-lg font-black text-[#1A1A1A] uppercase tracking-wider">
+            <div className="bg-white rounded-[24px] sm:rounded-[32px] border border-[#F0EBE8] shadow-sm p-4 sm:p-8">
+              <div className="flex items-center gap-3 mb-8 text-base sm:text-lg font-black text-[#1A1A1A] uppercase tracking-wider">
                 <div className="w-10 h-10 rounded-[12px] bg-[#FDF5F1] border border-[#F6E1D7] flex items-center justify-center">
                   <Building2 className="w-5 h-5 text-[#D37E5F]" />
                 </div>
@@ -640,7 +640,7 @@ const AnalyticsTab = ({
                     <div className="flex justify-between items-start mb-5">
                       <div>
                         <h3
-                          className="font-black text-[#1A1A1A] text-base mb-1 truncate max-w-[160px]"
+                          className="font-black text-[#1A1A1A] text-base mb-1 break-words sm:truncate sm:max-w-[160px]"
                           title={dept.name}
                         >
                           {dept.name}
@@ -655,7 +655,7 @@ const AnalyticsTab = ({
                     </div>
 
                     {/* Stats Inner Cards (Today / This Week) */}
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3">
                       {/* TODAY */}
                       <div className="bg-white rounded-[16px] p-3.5 flex-1 shadow-sm border border-[#F0EBE8]">
                         <div className="text-[10px] text-[#8C8580] uppercase font-black tracking-widest mb-2 border-b border-[#F0EBE8] pb-1">

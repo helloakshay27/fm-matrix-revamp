@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import {
   Plus,
   Eye,
@@ -13,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
-import { useNavigate,useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
@@ -86,6 +87,16 @@ const columns: ColumnConfig[] = [
 ];
 
 export const BroadcastDashboard = () => {
+  const pulseEvents = usePulseEvents();
+
+  useEffect(() => {
+    pulseEvents.onModuleViewed({
+      module: "Notices",
+      package: "Pulse Privilege",
+      screen: "pulse_notices",
+    });
+  }, [pulseEvents]);
+
   const { shouldShow } = useDynamicPermissions();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -104,13 +115,13 @@ export const BroadcastDashboard = () => {
   //   total_pages: 0,
   // });
   const [pagination, setPagination] = useState(() => {
-  const params = new URLSearchParams(window.location.search);
-  return {
-    current_page: Number(params.get('page')) || 1,
-    total_count: 0,
-    total_pages: 0,
-  };
-});
+    const params = new URLSearchParams(window.location.search);
+    return {
+      current_page: Number(params.get('page')) || 1,
+      total_count: 0,
+      total_pages: 0,
+    };
+  });
   const [updatingStatus, setUpdatingStatus] = useState<Record<string, boolean>>({});
   const [cardData, setCardData] = useState({
     total_notices: "",
@@ -121,13 +132,13 @@ export const BroadcastDashboard = () => {
     expired_notices: ""
   })
 
-useEffect(() => {
-  const params = new URLSearchParams(location.search);
-  const urlPage = Number(params.get('page')) || 1;
-  if (urlPage !== pagination.current_page) {
-    navigate(`${location.pathname}?page=${pagination.current_page}`, { replace: true });
-  }
-}, [pagination.current_page]);
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const urlPage = Number(params.get('page')) || 1;
+    if (urlPage !== pagination.current_page) {
+      navigate(`${location.pathname}?page=${pagination.current_page}`, { replace: true });
+    }
+  }, [pagination.current_page]);
 
 
   useEffect(() => {
@@ -150,7 +161,7 @@ useEffect(() => {
           inactive_notices: response.inactive_notices,
           expired_notices: response.expired_notices
         })
-      setPagination((prev) => ({
+        setPagination((prev) => ({
           ...prev,
           total_count: response.pagination.total_count,
           total_pages: response.pagination.total_pages,
@@ -382,30 +393,30 @@ useEffect(() => {
   // };
 
   const handlePageChange = async (page: number) => {
-  navigate(`${location.pathname}?page=${page}`, { replace: true });
-  setPagination((prev) => ({
-    ...prev,
-    current_page: page,
-  }));
-  try {
-    const response = await dispatch(
-      fetchBroadcasts({
-        baseUrl,
-        token,
-        per_page: 10,
-        page: page,
-      })
-    ).unwrap();
-    setBroadcasts(response.noticeboards || []);
+    navigate(`${location.pathname}?page=${page}`, { replace: true });
     setPagination((prev) => ({
       ...prev,
-      total_count: response.pagination.total_count,
-      total_pages: response.pagination.total_pages,
+      current_page: page,
     }));
-  } catch (error) {
-    toast.error("Failed to fetch bookings");
-  }
-};
+    try {
+      const response = await dispatch(
+        fetchBroadcasts({
+          baseUrl,
+          token,
+          per_page: 10,
+          page: page,
+        })
+      ).unwrap();
+      setBroadcasts(response.noticeboards || []);
+      setPagination((prev) => ({
+        ...prev,
+        total_count: response.pagination.total_count,
+        total_pages: response.pagination.total_pages,
+      }));
+    } catch (error) {
+      toast.error("Failed to fetch bookings");
+    }
+  };
   const handleAdd = () => {
     navigate("/pulse/notices/add");
   };
@@ -430,7 +441,7 @@ useEffect(() => {
     }
 
     if (data.created_by) {
-      params.append("q[created_by_eq]", data.created_by);
+      params.append("q[id_user_eq]", data.created_by);
     }
 
     if (data.created_at) {
@@ -448,7 +459,7 @@ useEffect(() => {
         })
       ).unwrap();
 
-     setBroadcasts(response.noticeboards || []);
+      setBroadcasts(response.noticeboards || []);
       setPagination((prev) => ({
         ...prev,
         total_count: response.pagination.total_count,
@@ -578,37 +589,37 @@ useEffect(() => {
 
   const renderActions = (item: any) => (
     <div className="flex items-center justify-center gap-1">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="!h-7 !w-7 !min-h-7 !p-0 !bg-transparent !text-[#DA7756] hover:!bg-[#DA7756]/10 hover:!text-[#DA7756] [&_svg]:!text-[#DA7756] [&_svg]:!stroke-[#DA7756]"
+      <button
+        type="button"
+        className="p-1 rounded hover:bg-gray-100 transition-colors text-brand disabled:opacity-50"
         onClick={() => handleImportantClick(item)}
         disabled={updatingStatus[`important_${item.id}`]}
+        title="Mark important"
       >
         <Star
-          className="w-4 h-4"
-          fill={item.is_important ? "#DA7756" : "none"}
+          className="w-4 h-4 text-brand"
+          fill={item.is_important ? "currentColor" : "none"}
         />
-      </Button>
+      </button>
       {shouldShow("Broadcast", "show") && (
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => handleView(item.id)}
-        className="!h-7 !w-7 !min-h-7 !p-0 !bg-transparent !text-[#DA7756] hover:!bg-[#DA7756]/10 hover:!text-[#DA7756] [&_svg]:!text-[#DA7756] [&_svg]:!stroke-[#DA7756]"
-      >
-        <Eye className="w-4 h-4" />
-      </Button>
+        <button
+          type="button"
+          onClick={() => handleView(item.id)}
+          className="p-1 rounded transition-colors !text-[#1A1A1A] hover:!text-[#1A1A1A] hover:!bg-gray-100"
+          title="View"
+        >
+          <Eye className="w-4 h-4 text-[#1A1A1A]" />
+        </button>
       )}
       {shouldShow("Broadcast", "update") && (
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => handleEdit(item.id)}
-        className="!h-7 !w-7 !min-h-7 !p-0 !bg-transparent !text-[#DA7756] hover:!bg-[#DA7756]/10 hover:!text-[#DA7756] [&_svg]:!text-[#DA7756] [&_svg]:!stroke-[#DA7756]"
-      >
-        <Edit className="w-4 h-4" />
-      </Button>
+        <button
+          type="button"
+          onClick={() => handleEdit(item.id)}
+          className="p-1 text-black hover:bg-gray-100 rounded transition-colors"
+          title="Edit"
+        >
+          <Edit className="w-4 h-4" />
+        </button>
       )}
     </div>
   );
@@ -661,13 +672,13 @@ useEffect(() => {
         onFilterClick={() => setIsFilterModalOpen(true)}
         leftActions={
           shouldShow("Broadcast", "create") ? (
-          <Button
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-            onClick={handleAdd}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add
-          </Button>
+            <Button
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+              onClick={handleAdd}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add
+            </Button>
           ) : null
         }
       />

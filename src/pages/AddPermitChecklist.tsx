@@ -5,6 +5,7 @@ import { Plus, X } from 'lucide-react';
 import { useLayout } from '@/contexts/LayoutContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { usePermitEvents } from "@/components/PostHogPermitEvents";
 
 interface AnswerOption {
     text: string;
@@ -19,6 +20,49 @@ interface Question {
     options: AnswerOption[];
 }
 
+const fieldStyles = {
+    height: { xs: 36, sm: 40, md: 45 },
+    backgroundColor: '#fff',
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+        padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+    },
+    '& .MuiOutlinedInput-root': {
+        backgroundColor: '#fff',
+        '& fieldset': { borderColor: '#e5e7eb' },
+        '&:hover fieldset': { borderColor: '#C72030' },
+        '&.Mui-focused fieldset': { borderColor: '#C72030' },
+    },
+    '& .MuiInputLabel-root.Mui-focused': {
+        color: '#C72030',
+    },
+};
+
+const compactFieldStyles = {
+    ...fieldStyles,
+    height: 40,
+    '& .MuiOutlinedInput-root': {
+        ...fieldStyles['& .MuiOutlinedInput-root'],
+        height: 40,
+    },
+};
+
+const selectMenuProps = {
+    PaperProps: {
+        style: {
+            maxHeight: 224,
+            backgroundColor: 'white',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+            boxShadow:
+                '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            zIndex: 9999,
+        },
+    },
+    disablePortal: false,
+    disableAutoFocus: true,
+    disableEnforceFocus: true,
+};
+
 export const AddPermitChecklist = () => {
     const { setCurrentSection } = useLayout();
     const navigate = useNavigate();
@@ -26,6 +70,12 @@ export const AddPermitChecklist = () => {
     React.useEffect(() => {
         setCurrentSection('Safety');
     }, [setCurrentSection]);
+
+    const { onChecklistCreateOpened, onChecklistSaved } = usePermitEvents();
+
+    React.useEffect(() => {
+        onChecklistCreateOpened();
+    }, []);
 
     const [formData, setFormData] = useState({
         category: '',
@@ -195,6 +245,11 @@ export const AddPermitChecklist = () => {
         }
 
         try {
+            onChecklistSaved({
+                question_count: questions.length,
+                has_mandatory: questions.some(q => q.mandatory)
+            });
+
             setIsSubmitting(true);
 
             let baseUrl = localStorage.getItem('baseUrl') || '';
@@ -288,12 +343,21 @@ export const AddPermitChecklist = () => {
 
                 {/* Category & Title */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <FormControl fullWidth size="small" disabled={isLoadingCategories}>
-                        <InputLabel>Category *</InputLabel>
+                    <FormControl fullWidth variant="outlined" disabled={isLoadingCategories}>
+                        <InputLabel shrink>Category *</InputLabel>
                         <MuiSelect
                             value={formData.category}
                             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                             label="Category *"
+                            notched
+                            displayEmpty
+                            sx={fieldStyles}
+                            MenuProps={selectMenuProps}
+                            renderValue={(selected) =>
+                                selected
+                                    ? categories.find((c) => c.id.toString() === String(selected))?.name || String(selected)
+                                    : <span style={{ color: '#999' }}>{isLoadingCategories ? 'Loading...' : 'Select Category'}</span>
+                            }
                         >
                             {isLoadingCategories ? (
                                 <MenuItem value="" disabled>Loading categories...</MenuItem>
@@ -310,12 +374,14 @@ export const AddPermitChecklist = () => {
                     </FormControl>
 
                     <TextField
-                        label="Title"
+                        label="Title *"
                         placeholder="Enter the title"
                         value={formData.title}
                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                         fullWidth
-                        size="small"
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        sx={fieldStyles}
                         required
                     />
                 </div>
@@ -325,7 +391,7 @@ export const AddPermitChecklist = () => {
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-base font-medium">Add No. of Questions</h3>
                         <div className="flex items-center gap-4">
-                            <FormControl size="small" style={{ width: '80px' }}>
+                            <FormControl variant="outlined" sx={{ width: 80 }}>
                                 <MuiSelect
                                     value={questionCount.toString().padStart(2, '0')}
                                     onChange={(e) => {
@@ -335,6 +401,8 @@ export const AddPermitChecklist = () => {
                                             for (let i = 0; i < newCount - questions.length; i++) addQuestion();
                                         } else setQuestions(questions.slice(0, newCount));
                                     }}
+                                    sx={compactFieldStyles}
+                                    MenuProps={selectMenuProps}
                                 >
                                     {Array.from({ length: 20 }, (_, i) => (
                                         <MenuItem key={i + 1} value={(i + 1).toString().padStart(2, '0')}>
@@ -347,7 +415,7 @@ export const AddPermitChecklist = () => {
                             <Button
                                 type="button"
                                 onClick={addQuestion}
-                                className="bg-[#C72030] hover:bg-[#B8252F] text-white h-8 w-8 rounded-full p-0"
+                                className="bg-brand hover:bg-brand-hover text-white h-8 w-8 rounded-full p-0 [&_svg]:text-white"
                             >
                                 <Plus className="w-4 h-4" />
                             </Button>
@@ -385,38 +453,46 @@ export const AddPermitChecklist = () => {
                                 fullWidth
                                 multiline
                                 rows={3}
-                                size="small"
+                                variant="outlined"
                                 className="mb-4"
                                 sx={{
-                                    "& .MuiOutlinedInput-root": {
-                                        height: "auto !important",
-                                        padding: "2px !important",
-                                        display: "flex",
+                                    backgroundColor: '#fff',
+                                    '& .MuiOutlinedInput-root': {
+                                        height: 'auto !important',
+                                        padding: '2px !important',
+                                        display: 'flex',
+                                        backgroundColor: '#fff',
+                                        '& fieldset': { borderColor: '#e5e7eb' },
+                                        '&:hover fieldset': { borderColor: '#C72030' },
+                                        '&.Mui-focused fieldset': { borderColor: '#C72030' },
                                     },
                                     "& .MuiInputBase-input[aria-hidden='true']": {
                                         flex: 0,
                                         width: 0,
                                         height: 0,
-                                        padding: "0 !important",
+                                        padding: '0 !important',
                                         margin: 0,
-                                        display: "none",
+                                        display: 'none',
                                     },
-                                    "& .MuiInputBase-input": {
-                                        resize: "none !important",
+                                    '& .MuiInputBase-input': {
+                                        resize: 'none !important',
                                     },
                                 }}
                             />
 
                             {/* Answer Type + Mandatory */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                <FormControl fullWidth size="small">
-                                    <InputLabel>Select Answer Type</InputLabel>
+                                <FormControl fullWidth variant="outlined">
+                                    <InputLabel shrink>Select Answer Type</InputLabel>
                                     <MuiSelect
                                         value={question.answerType}
                                         onChange={(e) =>
                                             updateQuestion(question.id, 'answerType', e.target.value as 'Multiple Choice' | 'Input Box' | 'Description Box')
                                         }
                                         label="Select Answer Type"
+                                        notched
+                                        sx={fieldStyles}
+                                        MenuProps={selectMenuProps}
                                     >
                                         <MenuItem value="Multiple Choice">Multiple Choice</MenuItem>
                                         {/* <MenuItem value="Input Box">Input Box</MenuItem>
@@ -432,6 +508,10 @@ export const AddPermitChecklist = () => {
                                                 onChange={(e) =>
                                                     updateQuestion(question.id, 'mandatory', e.target.checked)
                                                 }
+                                                sx={{
+                                                    color: '#C72030',
+                                                    '&.Mui-checked': { color: '#C72030' },
+                                                }}
                                             />
                                         }
                                         label="Mandatory"
@@ -450,16 +530,20 @@ export const AddPermitChecklist = () => {
                                                 onChange={(e) =>
                                                     updateOption(question.id, i, 'text', e.target.value)
                                                 }
-                                                size="small"
                                                 fullWidth
+                                                variant="outlined"
+                                                InputLabelProps={{ shrink: true }}
+                                                sx={compactFieldStyles}
                                             />
 
-                                            <FormControl size="small" style={{ width: '70px' }}>
+                                            <FormControl variant="outlined" sx={{ width: 70 }}>
                                                 <MuiSelect
                                                     value={option.type}
                                                     onChange={(e) =>
                                                         updateOption(question.id, i, 'type', e.target.value)
                                                     }
+                                                    sx={compactFieldStyles}
+                                                    MenuProps={selectMenuProps}
                                                 >
                                                     <MenuItem value="P">P</MenuItem>
                                                     <MenuItem value="N">N</MenuItem>
@@ -480,11 +564,11 @@ export const AddPermitChecklist = () => {
 
                                     <Button
                                         type="button"
-                                        variant="outline"
                                         onClick={() => addOption(question.id)}
-                                        className="mt-2 h-9 w-9 p-0 border-2 border-dashed border-gray-300 hover:border-gray-400"
+                                        className="mt-2 flex items-center gap-2 bg-brand hover:bg-brand-hover text-white [&_svg]:!text-white"
                                     >
                                         <Plus className="w-4 h-4" />
+                                        Add Option
                                     </Button>
                                 </div>
                             )}
@@ -515,19 +599,21 @@ export const AddPermitChecklist = () => {
                 </div>
 
                 {/* Bottom Buttons */}
-                <div className="flex justify-end space-x-4 mt-8 pt-6 border-t">
+                <div className="flex justify-end gap-3 mt-8 pt-6 border-t">
                     <Button
+                        type="button"
                         variant="outline"
-                        className="px-8"
+                        className="px-8 border-brand text-brand hover:bg-brand-selected hover:text-brand"
                         disabled={isSubmitting}
                         onClick={() => navigate('/safety/permit/checklist')}
                     >
                         Cancel
                     </Button>
                     <Button
+                        type="button"
                         onClick={handleSubmit}
-                        className="bg-[#C72030] hover:bg-[#B8252F] text-white px-8"
-                        disabled={isSubmitting || isLoadingCategories}
+                        className="px-8 !bg-brand hover:!bg-brand-hover !text-white disabled:!opacity-100 disabled:!bg-brand"
+                        disabled={isSubmitting}
                     >
                         {isSubmitting ? 'Saving...' : 'Save Checklist'}
                     </Button>

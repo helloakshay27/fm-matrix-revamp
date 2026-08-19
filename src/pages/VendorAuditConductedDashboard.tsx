@@ -1,10 +1,13 @@
-import React, { useState, useEffect, Fragment } from "react";
+import React, { useState, useEffect, useRef, Fragment } from "react";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { API_CONFIG } from "@/config/apiConfig";
 import { apiClient } from "@/utils/apiClient";
+import { PostHogAuditActivity } from "@/components/PostHogAuditActivity";
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import {
   Pagination,
   PaginationContent,
@@ -38,6 +41,7 @@ interface AuditConductedResponse {
 }
 
 export const VendorAuditConductedDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [conductedData, setConductedData] = useState<
     AuditConductedOccurrence[]
@@ -46,6 +50,12 @@ export const VendorAuditConductedDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [auditEvent, setAuditEvent] = useState<{ key: number; event: "Report opened" } | null>(null);
+  const auditEventKeyRef = useRef(0);
+  const captureAuditEvent = (event: "Report opened") => {
+    auditEventKeyRef.current += 1;
+    setAuditEvent({ key: auditEventKeyRef.current, event });
+  };
 
   useEffect(() => {
     fetchAuditsConducted();
@@ -93,6 +103,7 @@ export const VendorAuditConductedDashboard = () => {
       const blob = new Blob([response.data], { type: "application/pdf" });
       const blobUrl = window.URL.createObjectURL(blob);
       window.open(blobUrl, "_blank");
+      captureAuditEvent("Report opened");
 
       // Clean up the blob URL after a delay
       setTimeout(() => {
@@ -165,7 +176,7 @@ export const VendorAuditConductedDashboard = () => {
   const renderCell = (item: AuditConductedOccurrence, columnKey: string) => {
     switch (columnKey) {
       case "actions":
-        return (
+        return shouldShow("Vendor Audit", "show") ? (
           <Button
             variant="ghost"
             size="sm"
@@ -173,7 +184,7 @@ export const VendorAuditConductedDashboard = () => {
           >
             <Eye className="w-4 h-4" />
           </Button>
-        );
+        ) : null;
       case "report":
         return item.has_response && item.print_pdf_url ? (
           <Button
@@ -254,6 +265,10 @@ export const VendorAuditConductedDashboard = () => {
 
   return (
     <div className="p-6">
+      <PostHogAuditActivity event="Audit Conducted List Viewed" />
+      {auditEvent && (
+        <PostHogAuditActivity key={auditEvent.key} event={auditEvent.event} />
+      )}
       <div className="mb-6">
         <div>
           <p className="text-[#1a1a1a] opacity-70 mb-2">
@@ -265,13 +280,39 @@ export const VendorAuditConductedDashboard = () => {
         </div>
       </div>
 
-      {loading && (
-        <div className="flex justify-center items-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      {loading ? (
+        <div className="bg-white rounded-lg border border-gray-200">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[#f6f4ee]">
+                <TableHead className="font-medium">Report</TableHead>
+                <TableHead className="font-medium">ID</TableHead>
+                <TableHead className="font-medium">Audit Name</TableHead>
+                <TableHead className="font-medium">Start Date & Time</TableHead>
+                <TableHead className="font-medium">Conducted By</TableHead>
+                <TableHead className="font-medium">Status</TableHead>
+                <TableHead className="font-medium">Site</TableHead>
+                <TableHead className="font-medium">Duration</TableHead>
+                <TableHead className="font-medium">%</TableHead>
+                <TableHead className="font-medium">Delete</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell colSpan={11} className="pt-4 pb-16">
+                  <div className="w-full flex items-center justify-start gap-3 pl-4">
+                    <div
+                      className="h-5 w-5 rounded-full animate-spin"
+                      style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                    />
+                    <span className="text-sm text-black">Loading ...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
-      )}
-
-      {!loading && (
+      ) : (
         <>
           <div className="overflow-x-auto">
             <EnhancedTable
@@ -286,6 +327,7 @@ export const VendorAuditConductedDashboard = () => {
               storageKey="conducted-audit-table"
               className="w-full"
               pagination={false}
+              emptyMessage="No data is present"
             />
           </div>
 

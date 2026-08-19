@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useEffect } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -80,6 +80,29 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
     betweenMonthEnd = "December",
   } = data;
 
+  const MONTH_DAYS: Record<string, number> = {
+    January: 31, February: 28, March: 31, April: 30,
+    May: 31, June: 30, July: 31, August: 31,
+    September: 30, October: 31, November: 30, December: 31,
+  };
+
+  const maxDays = useMemo(() => {
+    if (monthMode === 'specific' && selectedMonths.length > 0) {
+      return Math.max(...selectedMonths.map(m => MONTH_DAYS[m] ?? 31));
+    }
+    return 31;
+  }, [monthMode, selectedMonths]);
+
+  // Remove selected days that exceed the max days of the currently selected month(s)
+  useEffect(() => {
+    if (dayMode === 'specific' && selectedDays.length > 0) {
+      const validDays = selectedDays.filter(d => parseInt(d, 10) <= maxDays);
+      if (validDays.length !== selectedDays.length) {
+        onChange?.("selectedDays", validDays);
+      }
+    }
+  }, [maxDays]);
+
   const hours = Array.from({ length: 24 }, (_, i) =>
     i.toString().padStart(2, "0")
   );
@@ -100,7 +123,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
   const allMinutes = Array.from({ length: 60 }, (_, i) =>
     i.toString().padStart(2, "0")
   );
-  const days = Array.from({ length: 31 }, (_, i) =>
+  const days = Array.from({ length: maxDays }, (_, i) =>
     (i + 1).toString().padStart(2, "0")
   );
   const months = [

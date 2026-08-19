@@ -790,13 +790,13 @@ export const RecordPaymentPage: React.FC = () => {
                         [customerDetail.salutation, customerDetail.first_name, customerDetail.last_name]
                           .filter(Boolean)
                           .join(" ")}
-                      <span className="text-blue-500 cursor-pointer text-sm">↗</span>
+                      <span className="text-brand cursor-pointer text-sm">↗</span>
                     </div>
                     {customerDetail.company_name && (
                       <div className="text-sm text-gray-500">{customerDetail.company_name}</div>
                     )}
                     {customerDetail.email && (
-                      <div className="text-xs text-blue-500">{customerDetail.email}</div>
+                      <div className="text-xs text-brand">{customerDetail.email}</div>
                     )}
                   </div>
                 </div>
@@ -808,7 +808,7 @@ export const RecordPaymentPage: React.FC = () => {
                       key={t}
                       onClick={() => setDrawerActiveTab(i)}
                       className={`py-2 px-3 text-sm font-medium border-b-2 transition-colors ${drawerActiveTab === i
-                        ? "border-[#C72030] text-[#C72030]"
+                        ? "border-brand text-brand"
                         : "border-transparent text-gray-500 hover:text-gray-700"
                         }`}
                     >
@@ -853,7 +853,7 @@ export const RecordPaymentPage: React.FC = () => {
                         ["Tax Preference", customerDetail.tax_preference || "—"],
                       ].map(([label, value]) => (
                         <div key={label} className="flex justify-between items-start py-1.5 border-b border-gray-100 last:border-0">
-                          <span className="text-xs text-[#C72030] w-36 shrink-0">{label}</span>
+                          <span className="text-xs text-brand w-36 shrink-0">{label}</span>
                           <span className="text-xs text-gray-700 text-right">{value}</span>
                         </div>
                       ))}
@@ -985,7 +985,7 @@ export const RecordPaymentPage: React.FC = () => {
                                 )}
                               </div>
                             ) : (
-                              <div className="text-xs text-[#C72030] italic border-l-4 border-[#C72030] pl-2">No Shipping Address</div>
+                              <div className="text-xs text-brand italic border-l-4 border-brand pl-2">No Shipping Address</div>
                             )}
                           </div>
                         </div>
@@ -1036,7 +1036,7 @@ export const RecordPaymentPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Customer Name<span className="text-red-500">*</span>
+                    Customer Name<span className="text-brand">*</span>
                   </label>
                   <FormControl fullWidth>
                     <Select
@@ -1059,7 +1059,7 @@ export const RecordPaymentPage: React.FC = () => {
                   </FormControl>
                   {selectedCustomer && (
                     <div className="mt-2 text-[12px] text-gray-500 space-y-1">
-                      <p>PAN: <span className="text-blue-500">{selectedCustomer.pan || "—"}</span></p>
+                      <p>PAN: <span className="text-brand">{selectedCustomer.pan || "—"}</span></p>
                     </div>
                   )}
                   {selectedCustomer && (
@@ -1093,7 +1093,7 @@ export const RecordPaymentPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Amount Received<span className="text-red-500">*</span>
+                    Amount Received<span className="text-brand">*</span>
                   </label>
                   <TextField
                     fullWidth
@@ -1269,7 +1269,7 @@ export const RecordPaymentPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Payment Date<span className="text-red-500">*</span>
+                    Payment Date<span className="text-brand">*</span>
                   </label>
                   <TextField
                     fullWidth
@@ -1326,7 +1326,7 @@ export const RecordPaymentPage: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Deposit To<span className="text-red-500">*</span>
+                    Deposit To<span className="text-brand">*</span>
                   </label>
                   <FormControl fullWidth>
                     <Select
@@ -1405,7 +1405,7 @@ export const RecordPaymentPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      TDS Tax Account<span className="text-red-500">*</span>
+                      TDS Tax Account<span className="text-brand">*</span>
                     </label>
                     <FormControl fullWidth>
                       <Select
@@ -1683,7 +1683,7 @@ export const RecordPaymentPage: React.FC = () => {
                   </span>
                 </label>
                 <textarea
-                  className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                  className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-brand focus:border-brand resize-y"
                   rows={4}
                   value={notes}
                   onChange={(e) => {
@@ -1787,7 +1787,7 @@ export const RecordPaymentPage: React.FC = () => {
                 {/* Left: Customer Name */}
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Customer Name<span className="text-red-500">*</span>
+                    Customer Name<span className="text-brand">*</span>
                   </label>
                   <FormControl fullWidth>
                     <Select
@@ -1804,9 +1804,9 @@ export const RecordPaymentPage: React.FC = () => {
                   </FormControl>
                   {selectedCustomer && (
                     <div className="mt-2 text-[12px] text-gray-500 space-y-1">
-                      <p>PAN: <span className="text-blue-500">{selectedCustomer.pan || "—"}</span></p>
-                      <p>GST Treatment: {selectedCustomer.gst_treatment || "Registered Business - Regular"} <span className="text-blue-500 cursor-pointer ml-1">✎</span></p>
-                      <p>GSTIN: {selectedCustomer.gstin || "—"} <span className="text-blue-500 cursor-pointer ml-1">✎</span></p>
+                      <p>PAN: <span className="text-brand">{selectedCustomer.pan || "—"}</span></p>
+                      <p>GST Treatment: {selectedCustomer.gst_treatment || "Registered Business - Regular"} <span className="text-brand cursor-pointer ml-1">✎</span></p>
+                      <p>GSTIN: {selectedCustomer.gstin || "—"} <span className="text-brand cursor-pointer ml-1">✎</span></p>
                     </div>
                   )}
                   {selectedCustomer && (
@@ -1832,7 +1832,7 @@ export const RecordPaymentPage: React.FC = () => {
                 {selectedCustomer && (
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Place of Supply<span className="text-red-500">*</span>
+                      Place of Supply<span className="text-brand">*</span>
                     </label>
                     <TextField
                       select
@@ -1875,7 +1875,7 @@ export const RecordPaymentPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Amount Received<span className="text-red-500">*</span>
+                    Amount Received<span className="text-brand">*</span>
                   </label>
                   <TextField
                     fullWidth
@@ -1920,7 +1920,7 @@ export const RecordPaymentPage: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Payment Date<span className="text-red-500">*</span>
+                    Payment Date<span className="text-brand">*</span>
                   </label>
                   <TextField
                     fullWidth
@@ -1936,7 +1936,7 @@ export const RecordPaymentPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Payment #<span className="text-red-500">*</span>
+                    Payment #<span className="text-brand">*</span>
                   </label>
                   <TextField
                     fullWidth
@@ -1946,7 +1946,7 @@ export const RecordPaymentPage: React.FC = () => {
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position="end">
-                          <span className="text-blue-500 cursor-pointer text-lg">⚙️</span>
+                          <span className="text-brand cursor-pointer text-lg">⚙️</span>
                         </InputAdornment>
                       ),
                     }}
@@ -1973,7 +1973,7 @@ export const RecordPaymentPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Deposit To<span className="text-red-500">*</span>
+                    Deposit To<span className="text-brand">*</span>
                   </label>
                   <FormControl fullWidth>
                     <Select
@@ -2019,7 +2019,7 @@ export const RecordPaymentPage: React.FC = () => {
                   </span>
                 </label>
                 <textarea
-                  className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                  className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-brand focus:border-brand resize-y"
                   rows={4}
                   value={notes}
                   onChange={(e) => {
@@ -2080,16 +2080,16 @@ export const RecordPaymentPage: React.FC = () => {
           variant="outlined"
           onClick={() => navigate(-1)}
           disabled={submitting}
+          className="fm-button-fix px-8 py-2"
           sx={{
             textTransform: "none",
-            px: 4,
-            borderColor: "#C72030",
-            color: "#C72030",
             fontWeight: 600,
+            borderColor: "#DA7756",
+            color: "#DA7756",
             "&:hover": {
-              borderColor: "#A01020",
-              bgcolor: "#f8f1f1",
-              color: "#A01020",
+              borderColor: "#C45F40",
+              bgcolor: "#F2EEE9",
+              color: "#C45F40",
             },
           }}
         >
@@ -2113,13 +2113,10 @@ export const RecordPaymentPage: React.FC = () => {
           variant="text"
           onClick={() => handleSubmit("paid")}
           disabled={submitting}
+          className="fm-button-fix fm-button-brand px-8 py-2"
           sx={{
-            bgcolor: "#f8f1f1",
-            color: "#C72030",
-            fontWeight: 600,
-            px: 4,
-            "&:hover": { bgcolor: "#f1e8e8", color: "#A01020" },
             textTransform: "none",
+            fontWeight: 600,
           }}
         >
           {submitting ? "Saving…" : "Save as Paid"}

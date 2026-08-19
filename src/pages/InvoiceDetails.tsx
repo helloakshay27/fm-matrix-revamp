@@ -3,7 +3,8 @@ import { refreshPendingApprovalsCount } from "@/utils/pendingApprovalsRefresh";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ClipboardList, Contact, Download, Eye, File, FileSpreadsheet, FileText, Images, Printer, Rss, ScrollText, Loader2, Edit2 } from "lucide-react";
+import { ArrowLeft, AlertTriangle, ClipboardList, Contact, Download, Eye, File, FileSpreadsheet, FileText, Images, Printer, Rss, ScrollText, Loader2, Edit2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -60,6 +61,7 @@ interface ApprovalLevel {
     status?: string;
     updated_by?: string;
     status_updated_at?: string;
+    rejection_reason?: string | null;
 }
 
 interface DebitNote {
@@ -73,6 +75,15 @@ interface DebitNote {
     created_by?: string;
 }
 
+interface BillDeskDetail {
+    invoice_type?: string | null;
+    billdesk_number?: string;
+    tracking_number?: string;
+    status?: string;
+    billdesk_remark?: string;
+    location?: string;
+}
+
 interface Invoice {
     id?: string;
     invoice_number?: string;
@@ -80,6 +91,7 @@ interface Invoice {
     plant_detail?: PlantDetail;
     wo_reference_number?: string;
     related_to?: string;
+    pr_type?: string;
     supplier_name?: string;
     invoice_amount?: number;
     total_taxes?: number;
@@ -100,6 +112,7 @@ interface Invoice {
     approval_levels?: ApprovalLevel[];
     debit_notes?: DebitNote[];
     external_api_calls?: ExternalApiCall[];
+    billdesk_detail?: BillDeskDetail;
 }
 
 interface ExternalApiCall {
@@ -191,7 +204,14 @@ export const InvoiceDetails = () => {
         description: "",
     });
 
+    const [loading, setLoading] = useState<boolean>(true);
+
     const fetchData = async () => {
+        if (!id) {
+            setLoading(false);
+            return;
+        }
+        setLoading(true);
         try {
             const response = await dispatch(
                 getInvoiceById({ baseUrl, token, id })
@@ -201,6 +221,8 @@ export const InvoiceDetails = () => {
         } catch (error) {
             console.error("Error fetching invoice:", error);
             toast.error(String(error) || "Failed to fetch invoice");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -209,6 +231,13 @@ export const InvoiceDetails = () => {
             fetchData();
         }
     }, [dispatch, baseUrl, token, id]);
+
+    const formatIndian = (val: string | number | null | undefined): string => {
+        if (val === "" || val === null || val === undefined) return "-";
+        const n = parseFloat(String(val));
+        if (isNaN(n)) return String(val);
+        return n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+    };
 
     const handleSendToSap = useCallback(async () => {
         if (!baseUrl || !token || !id) {
@@ -372,6 +401,17 @@ export const InvoiceDetails = () => {
         setRejectComment("");
     };
 
+    if (loading) {
+        return (
+            <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+                    <p className="text-gray-700">Loading invoice details...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
             <Button
@@ -402,7 +442,7 @@ export const InvoiceDetails = () => {
                             <Button
                                 size="sm"
                                 variant="outline"
-                                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                                // className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
                                 onClick={() => setOpenDebitModal(true)}
                             >
                                 Debit Note
@@ -413,7 +453,7 @@ export const InvoiceDetails = () => {
                         <Button
                             size="sm"
                             variant="outline"
-                            className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                            // className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
                             onClick={handleSendToSap}
                             disabled={sapPushDisabled}
                         >
@@ -423,7 +463,7 @@ export const InvoiceDetails = () => {
                     <Button
                         size="sm"
                         variant="outline"
-                        className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                        // className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
                         onClick={handleFeeds}
                     >
                         <Rss className="w-4 h-4 mr-1" />
@@ -451,27 +491,52 @@ export const InvoiceDetails = () => {
                 </div>
             </div>
 
-            <div className='flex items-start gap-4 my-4'>
-                {
-                    invoice?.approval_levels?.map(level => (
-                        <div className='space-y-3'>
-                            <div className={`px-3 py-1 bg-green-100 text-green-800 text-sm rounded-md font-medium w-max ${getStatusColor(
-                                level.status
-                            )}`}>
-                                {`${level?.name?.toUpperCase()} approved : ${level.status}`}
-                            </div>
-                            {
-                                level.updated_by && level.status_updated_at &&
-                                <div className='ms-2 w-[177px]'>
-                                    {
-                                        `${level.updated_by} (${level.status_updated_at})`
-                                    }
+            <TooltipProvider>
+                <div className='flex flex-wrap items-start gap-3 my-4'>
+                    {invoice?.approval_levels?.map((level, idx) => (
+                        <div className='space-y-2' key={idx}>
+                            {level.status?.toLowerCase() === 'rejected' ? (
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(level.status)}`}>
+                                            {`${level?.name?.toUpperCase()} : ${level.status}`}
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Rejection Reason: {level.rejection_reason ?? 'No reason provided'}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            ) : (
+                                <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(level.status)}`}>
+                                    {`${level?.name?.toUpperCase()} : ${level.status}`}
                                 </div>
-                            }
+                            )}
+                            {level.updated_by && level.status_updated_at && (
+                                <div className='ms-2 w-[177px] text-sm text-gray-600'>
+                                    {`${level.updated_by} (${level.status_updated_at})`}
+                                </div>
+                            )}
                         </div>
-                    ))
-                }
-            </div>
+                    ))}
+                </div>
+            </TooltipProvider>
+
+            {/* Rejection alert boxes */}
+            {invoice?.approval_levels?.filter(a => a.status?.toLowerCase() === 'rejected').map((a, idx) => (
+                <div key={idx} className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-lg p-4 mb-2">
+                    <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-red-700">
+                            Rejected by {a.name}
+                            {a.updated_by ? ` — ${a.updated_by}` : ''}
+                            {a.status_updated_at ? ` (${a.status_updated_at})` : ''}
+                        </p>
+                        <p className="text-sm text-red-600 mt-0.5">
+                            Reason: {a.rejection_reason ?? 'No reason provided'}
+                        </p>
+                    </div>
+                </div>
+            ))}
 
             {/* Vendor/Contact Details Section */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
@@ -572,6 +637,11 @@ export const InvoiceDetails = () => {
                         <span className="text-gray-900 font-medium">{invoice.related_to}</span>
                     </div>
                     <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">PR Type</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.pr_type}</span>
+                    </div>
+                    <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Adjustment Amount</span>
                         <span className="text-gray-500 mx-2">:</span>
                         <span className="text-gray-900 font-medium">{invoice.adjustment_amount}</span>
@@ -589,32 +659,32 @@ export const InvoiceDetails = () => {
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Invoice Amount</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.invoice_amount}</span>
+                        <span className="text-gray-900 font-medium">{formatIndian(invoice.invoice_amount)}                        </span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">TDS Amount</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.tds_amount}</span>
+                        <span className="text-gray-900 font-medium">{formatIndian(invoice.tds_amount)}</span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Total Taxes</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.total_taxes}</span>
+                        <span className="text-gray-900 font-medium">{formatIndian(invoice.total_taxes)}</span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">QC Amount</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.qc_amount}</span>
+                        <span className="text-gray-900 font-medium">{formatIndian(invoice.qc_amount)}</span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Total Invoice Amount</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.total_invoice_amount}</span>
+                        <span className="text-gray-900 font-medium">{formatIndian(invoice.total_invoice_amount)}</span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Payable Amount</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.payable_amount}</span>
+                        <span className="text-gray-900 font-medium">{formatIndian(invoice.payable_amount)}</span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Notes</span>
@@ -622,6 +692,35 @@ export const InvoiceDetails = () => {
                         <span className="text-gray-900 font-medium">{invoice.notes}</span>
                     </div>
                 </div>
+                {invoice.billdesk_detail && (
+                    <>
+                        <h4 className="text-sm font-semibold uppercase text-[#1A1A1A] mt-6 mb-3">Billdesk Details</h4>
+                        <EnhancedTable
+                            data={[{
+                                invoice_type: invoice.billdesk_detail.invoice_type || "-",
+                                billdesk_number: invoice.billdesk_detail.billdesk_number || "-",
+                                tracking_number: invoice.billdesk_detail.tracking_number || "-",
+                                status: invoice.billdesk_detail.status || "-",
+                                billdesk_remark: invoice.billdesk_detail.billdesk_remark || "-",
+                                location: invoice.billdesk_detail.location || "-",
+                            }]}
+                            columns={[
+                                { key: "invoice_type", label: "Invoice Type", sortable: false, draggable: false, defaultVisible: true },
+                                { key: "billdesk_number", label: "Billdesk Number", sortable: false, draggable: false, defaultVisible: true },
+                                { key: "tracking_number", label: "Tracking Number", sortable: false, draggable: false, defaultVisible: true },
+                                { key: "status", label: "Status", sortable: false, draggable: false, defaultVisible: true },
+                                { key: "billdesk_remark", label: "Billdesk Remark", sortable: false, draggable: false, defaultVisible: true },
+                                { key: "location", label: "Location", sortable: false, draggable: false, defaultVisible: true },
+                            ]}
+                            renderCell={(item, col) => item[col]}
+                            storageKey="invoice-billdesk-table"
+                            hideColumnsButton={true}
+                            hideTableSearch={true}
+                            hideTableExport={true}
+                            pagination={false}
+                        />
+                    </>
+                )}
             </div>
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
@@ -666,7 +765,7 @@ export const InvoiceDetails = () => {
                         <span className="font-medium text-gray-700">Amount In Words:</span>
                         <span className="font-medium">
                             {invoice.total_value
-                                ? numberToIndianCurrencyWords(invoice.total_value.toFixed(2))
+                                ? numberToIndianCurrencyWords(invoice.total_value)
                                 : "N/A"}
                         </span>
                     </div>

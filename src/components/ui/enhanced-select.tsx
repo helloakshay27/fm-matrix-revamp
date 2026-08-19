@@ -218,7 +218,7 @@ export const SearchableSelect: React.FC<
                       setOpen(false);
                     }}
                     disabled={option.disabled}
-                    className="cursor-pointer rounded-md px-2.5 py-2 text-[14px] whitespace-normal break-words leading-tight aria-selected:bg-blue-50 aria-selected:text-blue-700 w-full"
+                    className="cursor-pointer rounded-md px-2.5 py-2 text-[14px] whitespace-normal break-words leading-tight aria-selected:bg-brand-light aria-selected:text-brand w-full"
                   >
                     {option.label}
                   </CommandItem>

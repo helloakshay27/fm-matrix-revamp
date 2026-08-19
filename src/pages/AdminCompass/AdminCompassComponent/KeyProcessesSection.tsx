@@ -529,6 +529,21 @@ const ThemeStyle = () => (
       .kp-process-card .card-actions {
         opacity: 1 !important;
       }
+      /* Card header: let title take its own line so the status badge +
+         edit/delete actions wrap neatly below instead of cramping. */
+      .kp-card-head {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+      }
+      .kp-card-head > span:first-child {
+        width: 100% !important;
+        padding-right: 0 !important;
+        font-size: 14px !important;
+      }
+      .kp-card-head .card-actions button {
+        min-width: 32px !important;
+        min-height: 32px !important;
+      }
     }
     .kp-checkbox-custom {
       width: 17px; height: 17px;
@@ -1329,6 +1344,7 @@ export const KeyProcessesSection = () => {
               {displayedSops.map((p) => (
                 <div key={p.id} className="kp-process-card">
                   <div
+                    className="kp-card-head"
                     style={{
                       display: "flex",
                       alignItems: "flex-start",

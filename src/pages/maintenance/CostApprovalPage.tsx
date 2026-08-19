@@ -7,15 +7,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Badge } from '@/components/ui/badge';
 import { X, Trash2, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { apiClient } from '@/utils/apiClient';
 import { API_CONFIG } from '@/config/apiConfig';
-import { TextField, FormControl as MuiFormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
-import ReactSelect from 'react-select';
+import {
+  TextField,
+  FormControl as MuiFormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+  Checkbox as MuiCheckbox,
+  ListItemText,
+} from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material/Select';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
@@ -72,6 +79,22 @@ const fieldStyles = {
       color: '#C72030',
     },
   },
+};
+
+const selectMenuProps = {
+  PaperProps: {
+    sx: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
 };
 
 const createCostApprovalSchema = (existingRules: CostApprovalGetResponse[], activeTab: string) => 
@@ -334,22 +357,30 @@ export const CostApprovalPage: React.FC = () => {
               <FormField
                 control={form.control}
                 name="costUnit"
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <FormItem>
                     <FormLabel>Cost Unit</FormLabel>
                     <FormControl>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Cost Unit" />
-                        </SelectTrigger>
-                        <SelectContent>
+                      <MuiFormControl fullWidth size="small" error={!!fieldState.error}>
+                        <MuiSelect
+                          displayEmpty
+                          value={field.value ?? ''}
+                          onChange={(event) => field.onChange(event.target.value)}
+                          onBlur={field.onBlur}
+                          inputRef={field.ref}
+                          sx={fieldStyles}
+                          MenuProps={selectMenuProps}
+                        >
+                          <MenuItem value="" disabled>
+                            <em>Select Cost Unit</em>
+                          </MenuItem>
                           {COST_UNITS.map(unit => (
-                            <SelectItem key={unit.value} value={unit.value}>
+                            <MenuItem key={unit.value} value={unit.value}>
                               {unit.label}
-                            </SelectItem>
+                            </MenuItem>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </MuiSelect>
+                      </MuiFormControl>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -419,56 +450,48 @@ export const CostApprovalPage: React.FC = () => {
                       <tr key={level} className="border-b last:border-b-0">
                         <td className="p-3 text-sm font-medium">{level}</td>
                         <td className="p-3">
-                          <ReactSelect
-                            isMulti
-                            options={userOptions}
-                            onChange={(selected) => handleUserSelect(level, selected as { value: number; label: string }[])}
-                            value={userOptions.filter(option => (selectedUsers[level] || []).includes(option.value))}
-                            placeholder="Select up to 15 users..."
-                            isLoading={usersLoading}
-                            isDisabled={usersLoading}
-                            className="min-w-[250px]"
-                            menuPortalTarget={document.body}
-                            menuPosition="fixed"
-                            styles={{
-                              control: (base) => ({
-                                ...base,
-                                minHeight: '40px',
-                                fontSize: '14px',
-                                border: '1px solid #d1d5db',
-                                borderRadius: '6px',
-                                boxShadow: 'none',
-                                '&:hover': {
-                                  borderColor: '#9ca3af'
-                                }
-                              }),
-                              menuPortal: (base) => ({
-                                ...base,
-                                zIndex: 9999
-                              }),
-                              menu: (base) => ({
-                                ...base,
-                                zIndex: 9999
-                              }),
-                              multiValue: (base) => ({
-                                ...base,
-                                fontSize: '12px',
-                                backgroundColor: '#f3f4f6'
-                              }),
-                              multiValueLabel: (base) => ({
-                                ...base,
-                                color: '#374151'
-                              }),
-                              multiValueRemove: (base) => ({
-                                ...base,
-                                color: '#6b7280',
-                                '&:hover': {
-                                  backgroundColor: '#ef4444',
-                                  color: 'white'
-                                }
-                              })
-                            }}
-                          />
+                          <MuiFormControl size="small" className="min-w-[250px]">
+                            <MuiSelect
+                              multiple
+                              displayEmpty
+                              disabled={usersLoading}
+                              value={(selectedUsers[level] || []).map(String)}
+                              onChange={(e: SelectChangeEvent<string[]>) => {
+                                const value = e.target.value;
+                                const ids = typeof value === 'string' ? value.split(',') : value;
+                                handleUserSelect(
+                                  level,
+                                  ids
+                                    .map(Number)
+                                    .filter(id => !Number.isNaN(id))
+                                    .map(id => ({ value: id, label: getUserDisplayName(id) }))
+                                );
+                              }}
+                              renderValue={(selected) =>
+                                selected.length > 0
+                                  ? `${selected.length} user(s) selected`
+                                  : 'Select up to 15 users...'
+                              }
+                              sx={fieldStyles}
+                              MenuProps={selectMenuProps}
+                            >
+                              {userOptions.length === 0 ? (
+                                <MenuItem disabled value="">
+                                  <em>{usersLoading ? 'Loading users...' : 'No users available'}</em>
+                                </MenuItem>
+                              ) : (
+                                userOptions.map((option) => (
+                                  <MenuItem key={option.value} value={String(option.value)}>
+                                    <MuiCheckbox
+                                      checked={(selectedUsers[level] || []).includes(option.value)}
+                                      size="small"
+                                    />
+                                    <ListItemText primary={option.label} />
+                                  </MenuItem>
+                                ))
+                              )}
+                            </MuiSelect>
+                          </MuiFormControl>
                         </td>
                       </tr>
                     ))}
@@ -541,34 +564,44 @@ export const CostApprovalPage: React.FC = () => {
                       <Label htmlFor="cost-filter" className="text-sm font-medium text-gray-700">
                         Cost Range
                       </Label>
-                      <Select value={selectedCostFilter} onValueChange={setSelectedCostFilter}>
-                        <SelectTrigger className="w-48 border-gray-200 focus:border-[#C72030] focus:ring-[#C72030]">
-                          <SelectValue placeholder="Select Cost Range" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Ranges</SelectItem>
+                      <MuiFormControl size="small" className="w-48">
+                        <MuiSelect
+                          displayEmpty
+                          value={selectedCostFilter ?? ''}
+                          onChange={(event) => setSelectedCostFilter(event.target.value)}
+                          renderValue={(selected) =>
+                            selected ? (
+                              selected === 'all' ? 'All Ranges' : selected
+                            ) : (
+                              <span className="text-gray-500">Select Cost Range</span>
+                            )
+                          }
+                          sx={fieldStyles}
+                          MenuProps={selectMenuProps}
+                        >
+                          <MenuItem value="all">All Ranges</MenuItem>
                           {rules
                             .filter(rule => rule.related_to === (activeTab === 'fm' ? 'FM' : 'Project') && rule.active === true)
                             .map((rule) => (
-                              <SelectItem key={rule.id} value={getCostRangeDisplay(rule)}>
+                              <MenuItem key={rule.id} value={getCostRangeDisplay(rule)}>
                                 {getCostRangeDisplay(rule)}
-                              </SelectItem>
+                              </MenuItem>
                             ))}
-                        </SelectContent>
-                      </Select>
+                        </MuiSelect>
+                      </MuiFormControl>
                     </div>
                     <Button 
-                      variant="default"
+                      variant="ghost"
                       size="sm" 
-                      className="bg-[#C72030] hover:bg-[#A61B29] text-white border-none font-semibold px-4"
+                      className="fm-button-fix fm-button-brand px-4 py-2"
                       onClick={() => setSelectedCostFilter('all')}
                     >
                       Apply
                     </Button>
                     <Button 
-                      variant="outline" 
+                      variant="ghost" 
                       size="sm" 
-                      className="border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold px-4"
+                      className="bg-white border border-brand text-brand hover:bg-brand-selected px-4 py-2"
                       onClick={() => setSelectedCostFilter('all')}
                     >
                       Reset
@@ -687,34 +720,44 @@ export const CostApprovalPage: React.FC = () => {
                       <Label htmlFor="cost-filter" className="text-sm font-medium text-gray-700">
                         Cost Range
                       </Label>
-                      <Select value={selectedCostFilter} onValueChange={setSelectedCostFilter}>
-                        <SelectTrigger className="w-48 border-gray-200 focus:border-[#C72030] focus:ring-[#C72030]">
-                          <SelectValue placeholder="Select Cost Range" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Ranges</SelectItem>
+                      <MuiFormControl size="small" className="w-48">
+                        <MuiSelect
+                          displayEmpty
+                          value={selectedCostFilter ?? ''}
+                          onChange={(event) => setSelectedCostFilter(event.target.value)}
+                          renderValue={(selected) =>
+                            selected ? (
+                              selected === 'all' ? 'All Ranges' : selected
+                            ) : (
+                              <span className="text-gray-500">Select Cost Range</span>
+                            )
+                          }
+                          sx={fieldStyles}
+                          MenuProps={selectMenuProps}
+                        >
+                          <MenuItem value="all">All Ranges</MenuItem>
                           {rules
                             .filter(rule => rule.related_to === (activeTab === 'fm' ? 'FM' : 'Project') && rule.active === true)
                             .map((rule) => (
-                              <SelectItem key={rule.id} value={getCostRangeDisplay(rule)}>
+                              <MenuItem key={rule.id} value={getCostRangeDisplay(rule)}>
                                 {getCostRangeDisplay(rule)}
-                              </SelectItem>
+                              </MenuItem>
                             ))}
-                        </SelectContent>
-                      </Select>
+                        </MuiSelect>
+                      </MuiFormControl>
                     </div>
                     <Button 
-                      variant="default"
+                      variant="ghost"
                       size="sm" 
-                      className="bg-[#C72030] hover:bg-[#A61B29] text-white border-none font-semibold px-4"
+                      className="fm-button-fix fm-button-brand px-4 py-2"
                       onClick={() => setSelectedCostFilter('all')}
                     >
                       Apply
                     </Button>
                     <Button 
-                      variant="outline" 
+                      variant="ghost" 
                       size="sm" 
-                      className="border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold px-4"
+                      className="bg-white border border-brand text-brand hover:bg-brand-selected px-4 py-2"
                       onClick={() => setSelectedCostFilter('all')}
                     >
                       Reset

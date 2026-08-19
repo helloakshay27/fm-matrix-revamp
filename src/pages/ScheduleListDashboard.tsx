@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -8,7 +8,7 @@ import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormLabel from '@mui/material/FormLabel';
 import { Button } from '@/components/ui/button';
-import Switch from '@mui/material/Switch';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Upload, Filter, Download, Eye, Edit, Copy, Calendar, BarChart3, Clock, Settings, Wrench, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -28,9 +28,23 @@ import { Pagination, PaginationItem, PaginationContent, PaginationPrevious, Pagi
 import axios from 'axios';
 import { Loader2 } from 'lucide-react';
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { PostHogScheduleActivity } from '@/components/PostHogScheduleActivity';
+
+type ScheduleEvent = React.ComponentProps<typeof PostHogScheduleActivity>['event'];
+
 export const ScheduleListDashboard = () => {
   const navigate = useNavigate();
   const { shouldShow } = useDynamicPermissions();
+  const scheduleEventKeyRef = useRef(0);
+  const [scheduleEvent, setScheduleEvent] = useState<{
+    key: number;
+    event: ScheduleEvent;
+    properties?: Record<string, unknown>;
+  } | null>(null);
+
+  const captureScheduleEvent = (event: ScheduleEvent, properties?: Record<string, unknown>) => {
+    setScheduleEvent({ key: ++scheduleEventKeyRef.current, event, properties });
+  };
   // State for deactivate modal (must be inside component)
   const [deactivateModal, setDeactivateModal] = useState<{ open: boolean; scheduleId: string | null }>({ open: false, scheduleId: null });
   const [deactivateOption, setDeactivateOption] = useState<'upcoming' | 'all'>('upcoming');
@@ -229,6 +243,12 @@ export const ScheduleListDashboard = () => {
   console.log('Processed schedules:', schedules);
   console.log('Search Query State:', { searchQuery, debouncedSearchQuery });
   console.log('Pagination info:', { currentPage, totalPages, totalCount });
+
+
+  const handleImportClick = () => {
+    captureScheduleEvent('Schedule Import Opened');
+    setShowImportModal(true);
+  };
 
   function formatDateDDMMYYYY(dateString: string): string {
     const date = new Date(dateString);
@@ -457,7 +477,7 @@ export const ScheduleListDashboard = () => {
     {shouldShow("Schedule", "create") && (
       <Button
         onClick={handleActionClick}
-        className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
+        className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
       >
         <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
         Action
@@ -481,9 +501,11 @@ export const ScheduleListDashboard = () => {
     <Edit className="w-4 h-4" />
   </Button>
 )}
+          {shouldShow("Schedule", "create") && (
           <Button variant="ghost" size="sm" onClick={() => handleCopySchedule(item)} title="Clone Schedule">
             <Copy className="w-4 h-4" />
           </Button>
+          )}
          {shouldShow("Schedule", "show") && (
   <Button
     variant="ghost"
@@ -513,15 +535,11 @@ export const ScheduleListDashboard = () => {
           );
       return (
         <div className="flex items-center justify-center">
-          <div
-            className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${isActive ? 'bg-green-500' : 'bg-gray-300'}`}
-            onClick={() => handleToggleActive(item.custom_form_code)}
-            aria-label={isActive ? 'Deactivate schedule' : 'Activate schedule'}
-          >
-            <span
-              className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${isActive ? 'translate-x-6' : 'translate-x-1'}`}
-            />
-          </div>
+          <Switch
+            checked={isActive}
+            onCheckedChange={() => handleToggleActive(item.custom_form_code)}
+            className="data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756] data-[state=unchecked]:bg-gray-300"
+          />
         </div>
       );
     }
@@ -835,7 +853,7 @@ export const ScheduleListDashboard = () => {
           actions={selectionActions}
           // onAdd={handleAddSchedule}
           onClearSelection={() => setShowActionPanel(false)}
-          onImport={() => setShowImportModal(true)}
+          onImport={handleImportClick}
         />
       )}
 
@@ -860,7 +878,6 @@ export const ScheduleListDashboard = () => {
             emptyMessage={isLoading ? "Loading schedules..." : (debouncedSearchQuery ? `No schedules found for "${debouncedSearchQuery}"` : "No schedules available")}
             disableClientSearch={true}
             searchStatus={isLoading ? 'Loading...' : (searchQuery !== debouncedSearchQuery ? 'Searching...' : `${schedules.length} schedule(s) found`)}
-            customSearchInput={true}
           />
 
           {/* Pagination */}
@@ -1007,6 +1024,10 @@ export const ScheduleListDashboard = () => {
 
   return (
     <div className="p-2 sm:p-4 lg:p-6">
+      <PostHogScheduleActivity event="Schedule List Viewed" />
+      {scheduleEvent && (
+        <PostHogScheduleActivity key={scheduleEvent.key} event={scheduleEvent.event} properties={scheduleEvent.properties} />
+      )}
       {/* Sonner Toaster for notifications */}
       <Toaster position="top-right" richColors closeButton />
       {/* Deactivate Checklist Modal */}

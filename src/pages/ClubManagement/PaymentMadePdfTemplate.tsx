@@ -1,34 +1,13 @@
 import React from "react";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
+import { getDocumentTemplateSettings } from "@/utils/documentTemplate";
 
-export const getAccountingPdfStatusStyle = (status) => {
-  const styles = {
-    draft: {
-      backgroundColor: "#f3f4f6",
-      color: "#1f2937",
-      borderColor: "#e5e7eb",
-    },
-    paid: {
-      backgroundColor: "#dcfce7",
-      color: "#166534",
-      borderColor: "#bbf7d0",
-    },
-    partial: {
-      backgroundColor: "#fef9c3",
-      color: "#854d0e",
-      borderColor: "#fde68a",
-    },
-    cancelled: {
-      backgroundColor: "#fee2e2",
-      color: "#991b1b",
-      borderColor: "#fecaca",
-    },
+export const getAccountingPdfStatusStyle = () => {
+  return {
+    backgroundColor: "#f3f4f6",
+    color: "#1f2937",
+    borderColor: "#e5e7eb",
   };
-
-  return (
-    styles[String(status || "").toLowerCase()] ||
-    styles.draft
-  );
 };
 
 const formatStatus = (status) => {
@@ -82,7 +61,10 @@ const PaymentMadePdf = ({
     localStorage.getItem("companyName") ||
     "Lockated";
 
+  const templateSettings = getDocumentTemplateSettings('payment_made');
+
   const companyAddress =
+    templateSettings.organizationAddress ||
     localStorage.getItem("companyAddress") ||
     "Pune Maharashtra 411006";
 
@@ -136,17 +118,20 @@ const PaymentMadePdf = ({
         {/* HEADER */}
         <div className="relative p-8 border-b border-gray-300">
           {/* Ribbon */}
-          <div className="absolute top-0 left-0">
+          {/* <div className="absolute top-0 left-0">
             <div
-              className="bg-green-500 text-white text-[10px] px-8 py-1 rotate-[-45deg] translate-x-[-28px] translate-y-[18px] uppercase tracking-wide"
+              className="bg-gray-800 text-white text-[10px] px-8 py-1 rotate-[-45deg] translate-x-[-28px] translate-y-[18px] uppercase tracking-wide"
             >
               Paid
             </div>
-          </div>
+          </div> */}
 
           <div className="flex justify-between items-start">
             {/* Company */}
             <div>
+              {templateSettings.logo && (
+                <img src={templateSettings.logo} alt="Logo" className="mb-2" style={{ maxHeight: "48px", maxWidth: "180px", objectFit: "contain" }} />
+              )}
               <h1 className="text-[22px] font-bold mb-2">
                 {companyName}
               </h1>
@@ -213,7 +198,7 @@ const PaymentMadePdf = ({
                   Paid To
                 </p>
 
-                <p className="font-semibold text-blue-700">
+                <p className="font-semibold">
                   {vendor}
                 </p>
 
@@ -252,12 +237,12 @@ const PaymentMadePdf = ({
             </div>
 
             {/* Amount Box */}
-            <div className="bg-green-50 border border-green-300 flex flex-col justify-center items-center h-fit p-5">
+            <div className="bg-gray-50 border border-gray-300 flex flex-col justify-center items-center h-fit p-5">
               <p className="text-[11px] text-gray-600 mb-2">
                 Amount Paid
               </p>
 
-              <p className="text-[24px] font-bold text-green-700">
+              <p className="text-[24px] font-bold text-black">
                 {formatCurrency(totalAmount)}
               </p>
             </div>
@@ -273,7 +258,7 @@ const PaymentMadePdf = ({
                 Paid To
               </p>
 
-              <p className="font-bold text-blue-700 mb-2">
+              <p className="font-bold mb-2">
                 {vendor}
               </p>
 
@@ -292,9 +277,20 @@ const PaymentMadePdf = ({
             {/* Right */}
             <div className="flex items-end justify-end">
               <div className="text-right">
-                <p className="font-bold mb-16">
+                <p className="font-bold mb-2">
                   For {companyName}
                 </p>
+
+                {templateSettings.signature ? (
+                  <img
+                    src={templateSettings.signature}
+                    alt="Signature"
+                    className="ml-auto mb-2"
+                    style={{ maxHeight: "50px", maxWidth: "180px", objectFit: "contain" }}
+                  />
+                ) : (
+                  <div className="mb-14" />
+                )}
 
                 <div className="border-t border-gray-500 w-[180px] pt-2 text-center font-bold text-[11px]">
                   Authorized Signature
@@ -335,7 +331,7 @@ const PaymentMadePdf = ({
               {bills.length > 0 ? (
                 bills.map((bill, index) => (
                   <tr key={bill.id || index}>
-                    <td className="border border-gray-300 p-2 text-blue-700">
+                    <td className="border border-gray-300 p-2">
                       {bill.bill_number ||
                         bill.number ||
                         "-"}

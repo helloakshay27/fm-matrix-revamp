@@ -136,6 +136,13 @@ const fieldStyles = {
     },
 };
 
+const priorityOptions = [
+    { value: "P1", label: "Q1: Urgent & Important" },
+    { value: "P2", label: "Q2: Important, Not Urgent" },
+    { value: "P3", label: "Q3: Urgent, Not Important" },
+    { value: "P4", label: "Q4: Not Urgent or Important" },
+];
+
 const monthNames = [
     "Jan",
     "Feb",
@@ -567,8 +574,8 @@ const SubtaskForm = ({
                             <div className="text-black flex items-center justify-between w-full">
                                 <CalendarIcon className="w-4 h-4" />
                                 <div>
-                                    Target Date : {endDate.date.toString().padStart(2, "0")}{" "}
-                                    {monthNames[endDate.month]}
+                                    {endDate.date.toString().padStart(2, "0")}{" "}
+                                    {monthNames[endDate.month]} {endDate.year}
                                 </div>
                                 <X
                                     className="w-4 h-4"
@@ -602,8 +609,8 @@ const SubtaskForm = ({
                             <div className="text-black flex items-center justify-between w-full">
                                 <CalendarIcon className="w-4 h-4" />
                                 <div>
-                                    Start Date : {startDate?.date?.toString().padStart(2, "0")}{" "}
-                                    {monthNames[startDate.month]}
+                                    {startDate?.date?.toString().padStart(2, "0")}{" "}
+                                    {monthNames[startDate.month]} {startDate.year}
                                 </div>
                                 <X
                                     className="w-4 h-4"
@@ -729,9 +736,11 @@ const SubtaskForm = ({
                         <MenuItem value="">
                             <em>Select Priority</em>
                         </MenuItem>
-                        <MenuItem value="High">High</MenuItem>
-                        <MenuItem value="Medium">Medium</MenuItem>
-                        <MenuItem value="Low">Low</MenuItem>
+                        {priorityOptions.map((option) => (
+                            <MenuItem key={option.value} value={option.value}>
+                                {option.label}
+                            </MenuItem>
+                        ))}
                     </Select>
                 </FormControl>
             </div>

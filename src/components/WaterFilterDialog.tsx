@@ -9,8 +9,96 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  FormControl as MuiFormControl,
+  Select as MuiSelect,
+  MenuItem,
+} from '@mui/material';
 import { X } from 'lucide-react';
+
+// `rounded-none` on the old triggers is preserved via borderRadius: 0.
+const fieldStyles = {
+  height: '40px',
+  borderRadius: 0,
+  backgroundColor: '#fff',
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderRadius: 0,
+    borderColor: '#d1d5db',
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'var(--color-primary)',
+  },
+  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'var(--color-primary)',
+  },
+  '& .MuiSelect-select': {
+    fontSize: '14px',
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+const selectMenuProps = {
+  // Radix's modal Dialog sets `pointer-events: none` on <body>, which the
+  // portaled menu inherits — without this the backdrop never receives the
+  // click that closes the menu.
+  sx: { pointerEvents: 'auto' },
+  PaperProps: {
+    sx: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e5e7eb',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
+
+interface FilterSelectProps {
+  label: string;
+  placeholder: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+}
+
+const FilterSelect: React.FC<FilterSelectProps> = ({
+  label,
+  placeholder,
+  value,
+  onChange,
+  options,
+}) => (
+  <div>
+    <Label className="text-sm font-medium mb-2">{label}</Label>
+    <MuiFormControl fullWidth size="small">
+      <MuiSelect
+        displayEmpty
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        renderValue={(selected) =>
+          selected ? (
+            options.find((option) => option.value === selected)?.label ?? selected
+          ) : (
+            <span className="text-gray-500">{placeholder}</span>
+          )
+        }
+        sx={fieldStyles}
+        MenuProps={selectMenuProps}
+      >
+        {options.map((option) => (
+          <MenuItem key={option.value} value={option.value}>
+            {option.label}
+          </MenuItem>
+        ))}
+      </MuiSelect>
+    </MuiFormControl>
+  </div>
+);
 
 interface WaterFilterDialogProps {
   isOpen: boolean;
@@ -76,83 +164,71 @@ export const WaterFilterDialog: React.FC<WaterFilterDialogProps> = ({ isOpen, on
         </DialogHeader>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4">
-          <div>
-            <Label className="text-sm font-medium mb-2">Site</Label>
-            <Select value={filters.site} onValueChange={(value) => handleFilterChange('site', value)}>
-              <SelectTrigger className="rounded-none">
-                <SelectValue placeholder="Select Site" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="site1">Site 1</SelectItem>
-                <SelectItem value="site2">Site 2</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <FilterSelect
+            label="Site"
+            placeholder="Select Site"
+            value={filters.site}
+            onChange={(value) => handleFilterChange('site', value)}
+            options={[
+              { value: 'site1', label: 'Site 1' },
+              { value: 'site2', label: 'Site 2' },
+            ]}
+          />
 
-          <div>
-            <Label className="text-sm font-medium mb-2">Building</Label>
-            <Select value={filters.building} onValueChange={(value) => handleFilterChange('building', value)}>
-              <SelectTrigger className="rounded-none">
-                <SelectValue placeholder="Select Building" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="building1">Building 1</SelectItem>
-                <SelectItem value="building2">Building 2</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <FilterSelect
+            label="Building"
+            placeholder="Select Building"
+            value={filters.building}
+            onChange={(value) => handleFilterChange('building', value)}
+            options={[
+              { value: 'building1', label: 'Building 1' },
+              { value: 'building2', label: 'Building 2' },
+            ]}
+          />
 
-          <div>
-            <Label className="text-sm font-medium mb-2">Wing</Label>
-            <Select value={filters.wing} onValueChange={(value) => handleFilterChange('wing', value)}>
-              <SelectTrigger className="rounded-none">
-                <SelectValue placeholder="Select Wing" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="wing1">Wing 1</SelectItem>
-                <SelectItem value="wing2">Wing 2</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <FilterSelect
+            label="Wing"
+            placeholder="Select Wing"
+            value={filters.wing}
+            onChange={(value) => handleFilterChange('wing', value)}
+            options={[
+              { value: 'wing1', label: 'Wing 1' },
+              { value: 'wing2', label: 'Wing 2' },
+            ]}
+          />
 
-          <div>
-            <Label className="text-sm font-medium mb-2">Floor</Label>
-            <Select value={filters.floor} onValueChange={(value) => handleFilterChange('floor', value)}>
-              <SelectTrigger className="rounded-none">
-                <SelectValue placeholder="Select Floor" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="floor1">Floor 1</SelectItem>
-                <SelectItem value="floor2">Floor 2</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <FilterSelect
+            label="Floor"
+            placeholder="Select Floor"
+            value={filters.floor}
+            onChange={(value) => handleFilterChange('floor', value)}
+            options={[
+              { value: 'floor1', label: 'Floor 1' },
+              { value: 'floor2', label: 'Floor 2' },
+            ]}
+          />
 
-          <div>
-            <Label className="text-sm font-medium mb-2">Area</Label>
-            <Select value={filters.area} onValueChange={(value) => handleFilterChange('area', value)}>
-              <SelectTrigger className="rounded-none">
-                <SelectValue placeholder="Select Area" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="area1">Area 1</SelectItem>
-                <SelectItem value="area2">Area 2</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <FilterSelect
+            label="Area"
+            placeholder="Select Area"
+            value={filters.area}
+            onChange={(value) => handleFilterChange('area', value)}
+            options={[
+              { value: 'area1', label: 'Area 1' },
+              { value: 'area2', label: 'Area 2' },
+            ]}
+          />
 
-          <div>
-            <Label className="text-sm font-medium mb-2">Room</Label>
-            <Select value={filters.room} onValueChange={(value) => handleFilterChange('room', value)}>
-              <SelectTrigger className="rounded-none">
-                <SelectValue placeholder="Select Room" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="room1">Room 1</SelectItem>
-                <SelectItem value="room2">Room 2</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <FilterSelect
+            label="Room"
+            placeholder="Select Room"
+            value={filters.room}
+            onChange={(value) => handleFilterChange('room', value)}
+            options={[
+              { value: 'room1', label: 'Room 1' },
+              { value: 'room2', label: 'Room 2' },
+            ]}
+          />
 
           <div>
             <Label className="text-sm font-medium mb-2">Asset Name</Label>
@@ -174,33 +250,29 @@ export const WaterFilterDialog: React.FC<WaterFilterDialogProps> = ({ isOpen, on
             />
           </div>
 
-          <div>
-            <Label className="text-sm font-medium mb-2">Status</Label>
-            <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
-              <SelectTrigger className="rounded-none">
-                <SelectValue placeholder="Select Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="maintenance">Maintenance</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <FilterSelect
+            label="Status"
+            placeholder="Select Status"
+            value={filters.status}
+            onChange={(value) => handleFilterChange('status', value)}
+            options={[
+              { value: 'active', label: 'Active' },
+              { value: 'inactive', label: 'Inactive' },
+              { value: 'maintenance', label: 'Maintenance' },
+            ]}
+          />
 
-          <div>
-            <Label className="text-sm font-medium mb-2">Meter Type</Label>
-            <Select value={filters.meterType} onValueChange={(value) => handleFilterChange('meterType', value)}>
-              <SelectTrigger className="rounded-none">
-                <SelectValue placeholder="Select Meter Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="water">Water</SelectItem>
-                <SelectItem value="flow">Flow</SelectItem>
-                <SelectItem value="pressure">Pressure</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <FilterSelect
+            label="Meter Type"
+            placeholder="Select Meter Type"
+            value={filters.meterType}
+            onChange={(value) => handleFilterChange('meterType', value)}
+            options={[
+              { value: 'water', label: 'Water' },
+              { value: 'flow', label: 'Flow' },
+              { value: 'pressure', label: 'Pressure' },
+            ]}
+          />
         </div>
 
         <div className="flex justify-end gap-3 pt-4">

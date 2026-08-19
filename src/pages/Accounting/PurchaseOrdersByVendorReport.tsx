@@ -263,7 +263,7 @@ const PurchaseOrdersByVendorReport: React.FC = () => {
     vendor_name: isTotal ? (
       <span className="font-bold">Total</span>
     ) : (
-      <span className="text-blue-600 font-medium">
+      <span className="text-brand font-medium">
         {row.vendor_name}
       </span>
     ),

@@ -1185,15 +1185,15 @@ export const AddTicketDashboardEmployee = () => {
             <div className="flex gap-8">
               <RadioGroup value={ticketType} onValueChange={setTicketType} className="flex gap-8">
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="request" id="request" className="text-[#C72030] border-[#C72030]" />
+                  <RadioGroupItem value="request" id="request" />
                   <label htmlFor="request" className="text-sm font-medium">Request</label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="complaint" id="complaint" className="text-[#C72030] border-[#C72030]" />
+                  <RadioGroupItem value="complaint" id="complaint" />
                   <label htmlFor="complaint" className="text-sm font-medium">Complaint</label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="suggestion" id="suggestion" className="text-[#C72030] border-[#C72030]" />
+                  <RadioGroupItem value="suggestion" id="suggestion" />
                   <label htmlFor="suggestion" className="text-sm font-medium">Suggestion</label>
                 </div>
               </RadioGroup>
@@ -1677,7 +1677,7 @@ export const AddTicketDashboardEmployee = () => {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2"
+            className="bg-brand hover:bg-brand-hover text-white px-8 py-2"
           >
             {isSubmitting ? 'Creating...' : 'Create Tickets'}
           </Button>
@@ -1685,7 +1685,7 @@ export const AddTicketDashboardEmployee = () => {
             type="button"
             variant="outline"
             onClick={() => navigate(-1)}
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2"
+            className="border-brand text-brand hover:bg-brand-selected px-8 py-2"
           >
             Cancel
           </Button>

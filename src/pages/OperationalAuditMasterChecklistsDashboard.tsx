@@ -1,21 +1,45 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Plus, Upload } from "lucide-react";
+import { Plus, Upload, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { PostHogAuditActivity } from "@/components/PostHogAuditActivity";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { MasterChecklistFilterDialog } from "@/components/MasterChecklistFilterDialog";
 
 export const OperationalAuditMasterChecklistsDashboard = () => {
   const navigate = useNavigate();
   const { shouldShow } = useDynamicPermissions();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [auditEvents, setAuditEvents] = useState<
+    Array<{
+      key: number;
+      event:
+        | "Master Checklist Import clicked"
+        | "Download Sample Format clicked"
+        | "Master Checklist Created";
+      properties?: Record<string, unknown>;
+    }>
+  >([]);
+  const auditEventKeyRef = useRef(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const captureAuditEvent = (
+    event:
+      | "Master Checklist Import clicked"
+      | "Download Sample Format clicked"
+      | "Master Checklist Created",
+    properties?: Record<string, unknown>
+  ) => {
+    auditEventKeyRef.current += 1;
+    setAuditEvents((prev) => [
+      ...prev,
+      { key: auditEventKeyRef.current, event, properties },
+    ]);
+  };
 
   const handleAddMasterChecklist = () => {
     navigate("/maintenance/audit/operational/master-checklists/add");
@@ -28,157 +52,141 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
     }
   };
 
-  const handleDragOver = (event: React.DragEvent) => {
-    event.preventDefault();
-  };
-
-  const handleDrop = (event: React.DragEvent) => {
-    event.preventDefault();
-    const file = event.dataTransfer.files[0];
-    if (file) {
-      setSelectedFile(file);
-    }
-  };
-
   const handleDownloadSampleFormat = () => {
-    console.log("Downloading sample format...");
-    // Add download logic here
+    captureAuditEvent("Download Sample Format clicked");
   };
 
   const handleImportQuestions = () => {
     if (selectedFile) {
-      console.log("Importing questions from file:", selectedFile.name);
-      // Add import logic here
+      captureAuditEvent("Master Checklist Import clicked");
+      captureAuditEvent("Master Checklist Created", { import_method: "excel" });
     } else {
-      alert("Please select a file first");
+      fileInputRef.current?.click();
     }
   };
 
-  // Sample data - empty table as shown in image
   const masterChecklistData: any[] = [];
 
+  const columns: ColumnConfig[] = [
+    { key: "id", label: "ID", sortable: true, draggable: true, defaultVisible: true },
+    { key: "activityName", label: "Activity Name", sortable: true, draggable: true, defaultVisible: true },
+    { key: "numberOfQuestions", label: "Number Of Questions", sortable: true, draggable: true, defaultVisible: true },
+  ];
+
+  const filteredData = searchTerm
+    ? masterChecklistData.filter((item) =>
+        Object.values(item).some((value) =>
+          String(value ?? "").toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      )
+    : masterChecklistData;
+
+  const renderCell = (item: any, columnKey: string) => {
+    if (columnKey === "id") {
+      return <span className="text-gray-900 font-medium">{item.id}</span>;
+    }
+    return <span>{item[columnKey] ?? "-"}</span>;
+  };
+
+  const canCreate = shouldShow("Master Checklist", "create");
+
   return (
-    <div className="p-6">
+    <div className="flex-1 p-6 bg-white min-h-screen">
+      <PostHogAuditActivity
+        event="Audit Schedule List Viewed"
+        properties={{ list_type: "master_checklist" }}
+      />
+      {auditEvents.map((evt) => (
+        <PostHogAuditActivity
+          key={evt.key}
+          event={evt.event}
+          properties={evt.properties}
+        />
+      ))}
+
       <div className="mb-6">
-        <div>
-          <p className="text-[#1a1a1a] opacity-70 mb-2">
-            Master Checklist &gt; Master Checklist List
-          </p>
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">
-            MASTER CHECKLIST LIST
-          </h1>
-        </div>
+        <p className="text-sm text-gray-500 mb-1">
+          Master Checklist &gt; Master Checklist List
+        </p>
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+          Master Checklist List
+        </h1>
       </div>
 
-      <div className="mb-6 flex items-center gap-6">
-        {shouldShow("Master Checklist", "create") && (
-          <Button
-            onClick={handleAddMasterChecklist}
-            style={{
-              backgroundColor: "#C72030",
-            }}
-            className="fm-button-fix fm-button-brand px-4 py-2"
-            variant="ghost"
-          >
-            <Plus className="w-4 h-4" />
-            Add
-          </Button>
-        )}
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        onChange={handleFileSelect}
+        accept=".xlsx,.xls,.csv"
+      />
 
-        {/* File Upload Section */}
-        {shouldShow("Master Checklist", "create") && (
-          <div
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            className="border-2 border-dashed border-[#C72030] rounded-lg px-4 py-2 text-center h-10 flex items-center min-w-[150px]"
-          >
-            <div className="flex items-center justify-center w-full">
-              <Upload className="w-4 h-4 text-[#C72030] mr-2" />
-              <input
-                type="file"
-                id="fileInput"
-                className="hidden"
-                onChange={handleFileSelect}
-                accept=".xlsx,.xls,.csv"
-              />
-              <label
-                htmlFor="fileInput"
-                className="text-[#C72030] cursor-pointer hover:opacity-75 text-sm"
+      <EnhancedTable
+        data={filteredData}
+        columns={columns}
+        renderCell={renderCell}
+        storageKey="master-checklist-table"
+        emptyMessage="No data available"
+        pagination
+        pageSize={10}
+        enableSearch
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search checklists..."
+        hideTableExport
+        onFilterClick={() => setShowFilters(true)}
+        leftActions={
+          canCreate ? (
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={handleAddMasterChecklist}
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap"
               >
-                {selectedFile
-                  ? selectedFile.name.substring(0, 15) +
-                    (selectedFile.name.length > 15 ? "..." : "")
-                  : "Choose File"}
-              </label>
+                <Plus className="w-4 h-4 mr-2" />
+                Add
+              </Button>
             </div>
-          </div>
-        )}
+          ) : undefined
+        }
+        filterAdjacentActions={
+          canCreate ? (
+            <>
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                title={selectedFile ? selectedFile.name : "Choose File"}
+                size="icon"
+                className="!rounded-lg border border-brand text-brand hover:bg-brand-selected"
+                variant="outline"
+              >
+                <Upload className="w-4 h-4" />
+              </Button>
+              <Button
+                onClick={handleDownloadSampleFormat}
+                title="Download Sample Format"
+                size="icon"
+                className="!rounded-lg border border-brand text-brand hover:bg-brand-selected"
+                variant="outline"
+              >
+                <Download className="w-4 h-4" />
+              </Button>
+              <Button
+                onClick={handleImportQuestions}
+                title="Import Questions"
+                size="icon"
+                className="!rounded-lg border border-brand text-brand hover:bg-brand-selected"
+                variant="outline"
+              >
+                <Upload className="w-4 h-4" />
+              </Button>
+            </>
+          ) : undefined
+        }
+      />
 
-        <div className="flex gap-3">
-          {shouldShow("Master Checklist", "create") && (
-            <Button
-              onClick={handleDownloadSampleFormat}
-              style={{
-                backgroundColor: "#C72030",
-              }}
-              className="fm-button-fix fm-button-brand px-4 py-2"
-              variant="ghost"
-            >
-              Download Sample Format
-            </Button>
-          )}
-          {shouldShow("Master Checklist", "create") && (
-            <Button
-              onClick={handleImportQuestions}
-              style={{
-                backgroundColor: "#C72030",
-              }}
-              className="fm-button-fix fm-button-brand px-4 py-2"
-              variant="ghost"
-            >
-              Import Questions
-            </Button>
-          )}
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg border shadow-sm overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold text-gray-700">ID</TableHead>
-              <TableHead className="font-semibold text-gray-700">
-                Activity Name
-              </TableHead>
-              <TableHead className="font-semibold text-gray-700">
-                Number Of Questions
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {masterChecklistData.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={3}
-                  className="text-center py-8 text-gray-500"
-                >
-                  No data available
-                </TableCell>
-              </TableRow>
-            ) : (
-              masterChecklistData.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell className="text-blue-600 font-medium">
-                    {item.id}
-                  </TableCell>
-                  <TableCell>{item.activityName}</TableCell>
-                  <TableCell>{item.numberOfQuestions}</TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <MasterChecklistFilterDialog
+        isOpen={showFilters}
+        onClose={() => setShowFilters(false)}
+      />
     </div>
   );
 };

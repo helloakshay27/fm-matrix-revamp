@@ -31,6 +31,7 @@ import { CalendarIcon } from 'lucide-react';
 import { addMonths, format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import {
   Pagination,
   PaginationContent,
@@ -96,6 +97,7 @@ const LTM_PER_PAGE = 20;
 
 const VehicleCheckIn: React.FC<VehicleCheckInProps> = ({ onFilterClick }) => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [apiData, setApiData] = useState<LtmRecord[]>([]);
   const [apiLoading, setApiLoading] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -390,13 +392,15 @@ const VehicleCheckIn: React.FC<VehicleCheckInProps> = ({ onFilterClick }) => {
     switch (columnKey) {
       case 'action':
         return (
-          <button
-            className="p-1 rounded hover:bg-gray-100"
-            title="Edit"
-            onClick={() => navigate('/vehicle-history/update', { state: { record: item } })}
-          >
-            <Pencil className="w-4 h-4 text-gray-600" />
-          </button>
+          shouldShow("Vehicle Check In", "update") && (
+            <button
+              className="p-1 rounded hover:bg-gray-100"
+              title="Edit"
+              onClick={() => navigate('/vehicle-history/update', { state: { record: item } })}
+            >
+              <Pencil className="w-4 h-4 text-gray-600" />
+            </button>
+          )
         );
       case 'vehicle':
         return (

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, FileChartColumnIncreasing, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
+import { useUtilityEvents } from '@/components/PostHogUtilityEvents';
 
 // Interface definitions for API response
 interface CustomerName {
@@ -54,6 +55,7 @@ const transformApiMeasurement = (measurement: ApiMeasurement): MeasurementData =
 export default function EditMeasurementPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { onMeterReadingEditOpened, onMeterReadingUpdated } = useUtilityEvents();
 
   const [formData, setFormData] = useState<MeasurementData>({
     id: '',
@@ -105,6 +107,7 @@ export default function EditMeasurementPage() {
 
       if (measurement) {
         setFormData(transformApiMeasurement(measurement));
+        onMeterReadingEditOpened({ reading_id: id, asset_id: measurement.asset_name });
       } else {
         throw new Error('Measurement not found');
       }
@@ -163,6 +166,14 @@ export default function EditMeasurementPage() {
       }
 
       toast.success('Measurement updated successfully');
+      
+      const newConsumption = parseFloat(formData.consumption) || 0;
+      onMeterReadingUpdated({
+        fields_changed: ['reading', 'consumption'],
+        consumption_overridden: true,
+        old_consumption_sign: 'positive', // Best effort placeholder
+        new_consumption_sign: newConsumption > 0 ? 'positive' : (newConsumption < 0 ? 'negative' : 'zero')
+      });
 
       navigate('/utility/daily-readings');
     } catch (err) {
@@ -304,10 +315,10 @@ export default function EditMeasurementPage() {
                 <Button
                   type="submit"
                   disabled={saving}
-                  className="bg-[#6B2D5C] hover:bg-[#5A2449] text-white px-8 py-2 h-10 rounded-none font-medium transition-colors duration-200 flex items-center gap-2"
+                  className="!bg-[#DA7756] hover:!bg-[#C45F40] px-8 py-2 h-10 rounded-none font-medium transition-colors duration-200 flex items-center gap-2"
                 >
                   {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
-                  {saving ? 'Updating...' : 'Update'}
+                  <span className="!text-white font-medium">{saving ? 'Updating...' : 'Update'}</span>
                 </Button>
               </div>
             </form>

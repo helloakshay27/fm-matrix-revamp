@@ -311,11 +311,18 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose, filters, setFilter
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 pt-6">
-            <Button onClick={handleApply} className="flex-1 h-11 bg-blue-600 hover:bg-blue-700">
-              Apply
+            <Button
+              onClick={handleApply}
+              className="flex-1 h-11 !bg-[#DA7756] hover:!bg-[#C45F40]"
+            >
+              <span className="!text-white font-medium">Apply</span>
             </Button>
-            <Button variant="outline" onClick={handleReset} className="flex-1 h-11">
-              Reset
+            <Button
+              variant="outline"
+              onClick={handleReset}
+              className="flex-1 h-11 !border-[#DA7756] !text-[#DA7756] hover:!bg-[#FFF4F0] hover:!text-[#C45F40]"
+            >
+              <span className="font-medium">Reset</span>
             </Button>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   Box,
@@ -56,17 +56,17 @@ import { assetService } from '@/services/assetService';
 
 // Styled Components
 const RedButton = styled(MuiButton)(({ theme }) => ({
-  backgroundColor: '#C72030',
+  backgroundColor: 'var(--color-primary)',
   color: 'white',
   borderRadius: 4,
   textTransform: 'none',
   padding: '10px 20px',
   fontFamily: 'Work Sans, sans-serif',
   fontWeight: 500,
-  boxShadow: '0 2px 4px rgba(199, 32, 48, 0.2)',
+  boxShadow: '0 2px 4px rgba(218, 119, 86, 0.2)',
   '&:hover': {
-    backgroundColor: '#B8252F',
-    boxShadow: '0 4px 8px rgba(199, 32, 48, 0.3)',
+    backgroundColor: 'var(--color-primary-hover)',
+    boxShadow: '0 4px 8px rgba(218, 119, 86, 0.3)',
   },
 }));
 
@@ -114,16 +114,16 @@ const fieldStyles = {
       borderColor: '#ddd',
     },
     '&:hover fieldset': {
-      borderColor: '#C72030',
+      borderColor: 'var(--color-primary)',
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
+      borderColor: 'var(--color-primary)',
     },
   },
   '& .MuiInputLabel-root': {
     fontSize: '14px',
     '&.Mui-focused': {
-      color: '#C72030',
+      color: 'var(--color-primary)',
     },
   },
   '& .MuiInputBase-input': {
@@ -2435,7 +2435,7 @@ const CloneSchedulePage = () => {
   // Load template data when a template is selected
   const loadTemplateData = async (templateId: string) => {
     if (!templateId || templateId === '') {
-      console.log("Template unselected — clearing only template tasks.");
+      console.log("Template unselected â€” clearing only template tasks.");
       setQuestionSections(sections => {
         // Always ensure only one section with one empty task remains
         return [
@@ -2747,7 +2747,7 @@ const CloneSchedulePage = () => {
       {/* Header with icon and title */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Box sx={{
-          backgroundColor: '#C72030',
+          backgroundColor: 'var(--color-primary)',
           borderRadius: '50%',
           width: '32px',
           height: '32px',
@@ -2758,7 +2758,7 @@ const CloneSchedulePage = () => {
         }}>
           <Cog size={16} color="white" />
         </Box>
-        <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030', textTransform: 'uppercase' }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
           Basic Configuration
         </Typography>
       </Box>
@@ -2778,7 +2778,7 @@ const CloneSchedulePage = () => {
             value="PPM"
             control={
               <Radio
-                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
               />
             }
             label="PPM"
@@ -2787,7 +2787,7 @@ const CloneSchedulePage = () => {
             value="AMC"
             control={
               <Radio
-                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
               />
             }
             label="AMC"
@@ -2796,7 +2796,7 @@ const CloneSchedulePage = () => {
             value="Preparedness"
             control={
               <Radio
-                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
               />
             }
             label="Preparedness"
@@ -2805,7 +2805,7 @@ const CloneSchedulePage = () => {
             value="Routine"
             control={
               <Radio
-                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
               />
             }
             label="Routine"
@@ -2816,7 +2816,7 @@ const CloneSchedulePage = () => {
       {/* Schedule For section */}
       <Box sx={{ my: 3 }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
-          Schedule For <span style={{ color: '#C72030' }}>*</span>
+          Schedule For <span style={{ color: 'var(--color-primary)' }}>*</span>
         </Typography>
         <RadioGroup
           row
@@ -2828,7 +2828,7 @@ const CloneSchedulePage = () => {
             value="Asset"
             control={
               <Radio
-                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
               />
             }
             label="Asset"
@@ -2837,7 +2837,7 @@ const CloneSchedulePage = () => {
             value="Service"
             control={
               <Radio
-                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
               />
             }
             label="Service"
@@ -2885,7 +2885,7 @@ const CloneSchedulePage = () => {
         helperText={
           fieldErrors.activityName || 
           (isValidatingActivityName ? 'Checking availability...' : 
-           (activityNameValidationResult === true ? '✓ Activity name is available' : ''))
+           (activityNameValidationResult === true ? 'âœ“ Activity name is available' : ''))
         }
       />
 
@@ -3011,16 +3011,16 @@ const CloneSchedulePage = () => {
             variant="outlined"
             onClick={addAttachment}
             sx={{
-              borderColor: '#C72030',
-              color: '#C72030',
+              borderColor: 'var(--color-primary)',
+              color: 'var(--color-primary)',
               textTransform: 'none',
               fontFamily: 'Work Sans, sans-serif',
               fontWeight: 500,
               borderRadius: '0',
               padding: '8px 16px',
               '&:hover': {
-                borderColor: '#B8252F',
-                backgroundColor: 'rgba(199, 32, 48, 0.04)',
+                borderColor: 'var(--color-primary-hover)',
+                backgroundColor: 'rgba(218, 119, 86, 0.04)',
               },
             }}
           >
@@ -3041,7 +3041,7 @@ const CloneSchedulePage = () => {
         mb: 3
       }}>
         <Box sx={{
-          backgroundColor: '#C72030',
+          backgroundColor: 'var(--color-primary)',
           borderRadius: '50%',
           width: '32px',
           height: '32px',
@@ -3051,7 +3051,7 @@ const CloneSchedulePage = () => {
         }}>
           <Cog size={16} color="white" />
         </Box>
-        <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030', textTransform: 'uppercase' }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
           Schedule Setup
         </Typography>
       </Box>
@@ -3072,7 +3072,7 @@ const CloneSchedulePage = () => {
                   value="Individual"
                   control={
                     <Radio
-                      sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                     />
                   }
                   label="Individual"
@@ -3081,7 +3081,7 @@ const CloneSchedulePage = () => {
                   value="Asset Group"
                   control={
                     <Radio
-                      sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                     />
                   }
                   label="Asset Group"
@@ -3106,7 +3106,7 @@ const CloneSchedulePage = () => {
               value="active"
               control={
                 <Radio
-                  sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                  sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                 />
               }
               label="Active"
@@ -3115,7 +3115,7 @@ const CloneSchedulePage = () => {
               value="inactive"
               control={
                 <Radio
-                  sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                  sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                 />
               }
               label="Inactive"
@@ -3392,11 +3392,11 @@ const CloneSchedulePage = () => {
                           size="small"
                           variant="outlined"
                           sx={{ 
-                            borderColor: '#C72030',
-                            color: '#C72030',
+                            borderColor: 'var(--color-primary)',
+                            color: 'var(--color-primary)',
                             '&:hover': {
-                              borderColor: '#B8252F',
-                              backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                              borderColor: 'var(--color-primary-hover)',
+                              backgroundColor: 'rgba(218, 119, 86, 0.04)'
                             }
                           }}
                         />
@@ -3700,8 +3700,8 @@ const CloneSchedulePage = () => {
     <div>
       {/* Header Outside the Box */}
       <div className="flex justify-between items-center p-6">
-        <div className="flex items-center gap-2 text-[#C72030] text-lg font-semibold" style={{ textTransform: 'uppercase' }}>
-          <span className="bg-[#C72030] text-white rounded-full w-8 h-8 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm">
+        <div className="flex items-center gap-2 text-brand text-lg font-semibold" style={{ textTransform: 'uppercase' }}>
+          <span className="bg-brand text-white rounded-full w-8 h-8 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm">
             <Cog className="w-6 h-6" />
           </span>
           QUESTION SETUP
@@ -3709,7 +3709,7 @@ const CloneSchedulePage = () => {
 
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1">
-            <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${createNew ? 'bg-[#C72030]' : 'bg-gray-300'}`}>
+            <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${createNew ? 'bg-brand' : 'bg-gray-300'}`}>
               <input
                 type="checkbox"
                 checked={createNew}
@@ -3728,7 +3728,7 @@ const CloneSchedulePage = () => {
             <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Create Template</span>
           </div>
           <div className="flex items-center gap-1">
-            <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${weightage ? 'bg-[#C72030]' : 'bg-gray-300'}`}>
+            <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${weightage ? 'bg-brand' : 'bg-gray-300'}`}>
               <input
                 type="checkbox"
                 checked={weightage}
@@ -3740,7 +3740,7 @@ const CloneSchedulePage = () => {
             <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Weightage</span>
           </div>
           <div className="flex items-center gap-1">
-            <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${autoTicket ? 'bg-[#C72030]' : 'bg-gray-300'}`}>
+            <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${autoTicket ? 'bg-brand' : 'bg-gray-300'}`}>
               <input
                 type="checkbox"
                 checked={autoTicket}
@@ -3801,12 +3801,12 @@ const CloneSchedulePage = () => {
               >
                 <FormControlLabel
                   value="checklist"
-                  control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
+                  control={<Radio sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                   label="Checklist Level"
                 />
                 <FormControlLabel
                   value="question"
-                  control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
+                  control={<Radio sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                   label="Question Level"
                 />
               </RadioGroup>
@@ -3868,7 +3868,7 @@ const CloneSchedulePage = () => {
               {questionSections.length > 1 && (
                 <IconButton
                   onClick={() => removeQuestionSection(section.id)}
-                  sx={{ color: '#C72030' }}
+                  sx={{ color: 'var(--color-primary)' }}
                 >
                   <Close />
                 </IconButton>
@@ -3965,7 +3965,7 @@ const CloneSchedulePage = () => {
                         backgroundColor: 'rgba(255, 255, 255, 0.8)',
                         '&:hover': {
                           backgroundColor: 'rgba(255, 255, 255, 1)',
-                          color: '#C72030'
+                          color: 'var(--color-primary)'
                         }
                       }}
                       size="small"
@@ -3981,7 +3981,7 @@ const CloneSchedulePage = () => {
                           <Checkbox
                             checked={task.mandatory}
                             onChange={(e) => updateTaskInSection(section.id, task.id, 'mandatory', e.target.checked)}
-                            sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                            sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                           />
                         }
                         label="Mandatory"
@@ -3991,7 +3991,7 @@ const CloneSchedulePage = () => {
                           <Checkbox
                             checked={task.helpText}
                             onChange={(e) => updateTaskInSection(section.id, task.id, 'helpText', e.target.checked)}
-                            sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                            sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                           />
                         }
                         label="Help Text"
@@ -4007,7 +4007,7 @@ const CloneSchedulePage = () => {
                                 updateTaskInSection(section.id, task.id, 'inputType', 'number');
                               }
                             }}
-                            sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                            sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                           />
                         }
                         label="Reading"
@@ -4018,7 +4018,7 @@ const CloneSchedulePage = () => {
                             <Checkbox
                               checked={task.rating}
                               onChange={(e) => updateTaskInSection(section.id, task.id, 'rating', e.target.checked)}
-                              sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                              sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                             />
                           }
                           label="Rating"
@@ -4125,14 +4125,14 @@ const CloneSchedulePage = () => {
                             startIcon={<AttachFile />}
                             onClick={() => addHelpTextAttachment(section.id, task.id)}
                             sx={{
-                              color: '#C72030',
-                              borderColor: '#C72030',
+                              color: 'var(--color-primary)',
+                              borderColor: 'var(--color-primary)',
                               fontSize: '12px',
                               padding: '4px 8px',
                               minWidth: 'auto',
                               '&:hover': {
-                                borderColor: '#C72030',
-                                backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                borderColor: 'var(--color-primary)',
+                                backgroundColor: 'rgba(218, 119, 86, 0.04)'
                               }
                             }}
                           >
@@ -4227,7 +4227,7 @@ const CloneSchedulePage = () => {
                               <IconButton
                                 size="small"
                                 onClick={() => removeDropdownValue(section.id, task.id, valueIndex)}
-                                sx={{ color: '#C72030' }}
+                                sx={{ color: 'var(--color-primary)' }}
                               >
                                 <Close />
                               </IconButton>
@@ -4241,13 +4241,13 @@ const CloneSchedulePage = () => {
                             startIcon={<Add />}
                             onClick={() => addDropdownValue(section.id, task.id)}
                             sx={{
-                              color: '#C72030',
-                              borderColor: '#C72030',
+                              color: 'var(--color-primary)',
+                              borderColor: 'var(--color-primary)',
                               fontSize: '12px',
                               padding: '4px 12px',
                               '&:hover': {
-                                borderColor: '#C72030',
-                                backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                borderColor: 'var(--color-primary)',
+                                backgroundColor: 'rgba(218, 119, 86, 0.04)'
                               }
                             }}
                           >
@@ -4281,7 +4281,7 @@ const CloneSchedulePage = () => {
                             <Radio
                               checked={valueIndex === 0} // First option selected by default
                               name={`radio-${section.id}-${task.id}`}
-                              sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                              sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                             />
 
                             <TextField
@@ -4316,7 +4316,7 @@ const CloneSchedulePage = () => {
                               <IconButton
                                 size="small"
                                 onClick={() => removeRadioValue(section.id, task.id, valueIndex)}
-                                sx={{ color: '#C72030' }}
+                                sx={{ color: 'var(--color-primary)' }}
                               >
                                 <Close />
                               </IconButton>
@@ -4331,13 +4331,13 @@ const CloneSchedulePage = () => {
                             startIcon={<Add />}
                             onClick={() => addRadioValue(section.id, task.id)}
                             sx={{
-                              color: '#C72030',
-                              borderColor: '#C72030',
+                              color: 'var(--color-primary)',
+                              borderColor: 'var(--color-primary)',
                               fontSize: '12px',
                               padding: '4px 12px',
                               '&:hover': {
-                                borderColor: '#C72030',
-                                backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                borderColor: 'var(--color-primary)',
+                                backgroundColor: 'rgba(218, 119, 86, 0.04)'
                               }
                             }}
                           >
@@ -4371,7 +4371,7 @@ const CloneSchedulePage = () => {
                             <Checkbox
                               checked={task.checkboxSelectedStates?.[valueIndex] || false}
                               onChange={(e) => updateCheckboxSelectedState(section.id, task.id, valueIndex, e.target.checked)}
-                              sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                              sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                             />
 
                             <TextField
@@ -4407,7 +4407,7 @@ const CloneSchedulePage = () => {
                               <IconButton
                                 size="small"
                                 onClick={() => removeCheckboxValue(section.id, task.id, valueIndex)}
-                                sx={{ color: '#C72030' }}
+                                sx={{ color: 'var(--color-primary)' }}
                               >
                                 <Close />
                               </IconButton>
@@ -4422,13 +4422,13 @@ const CloneSchedulePage = () => {
                             startIcon={<Add />}
                             onClick={() => addCheckboxValue(section.id, task.id)}
                             sx={{
-                              color: '#C72030',
-                              borderColor: '#C72030',
+                              color: 'var(--color-primary)',
+                              borderColor: 'var(--color-primary)',
                               fontSize: '12px',
                               padding: '4px 12px',
                               '&:hover': {
-                                borderColor: '#C72030',
-                                backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                borderColor: 'var(--color-primary)',
+                                backgroundColor: 'rgba(218, 119, 86, 0.04)'
                               }
                             }}
                           >
@@ -4446,7 +4446,7 @@ const CloneSchedulePage = () => {
             <div className="flex justify-end mt-4 gap-4">
               <button
                 onClick={() => addTaskToSection(section.id)}
-                className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
+                className="flex items-center gap-1 text-brand text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
                 style={{ fontFamily: 'Work Sans, sans-serif' }}
               >
                 <Add className="w-4 h-4" />
@@ -4455,7 +4455,7 @@ const CloneSchedulePage = () => {
               {(questionSections.length === 1 || sectionIndex === questionSections.length - 1) && (
                 <button
                   onClick={addQuestionSection}
-                  className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
+                  className="flex items-center gap-1 text-brand text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
                   style={{ fontFamily: 'Work Sans, sans-serif' }}
                 >
                   <Add className="w-4 h-4" />
@@ -4483,7 +4483,7 @@ const CloneSchedulePage = () => {
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box sx={{
-            backgroundColor: '#C72030',
+            backgroundColor: 'var(--color-primary)',
             borderRadius: '50%',
             width: '32px',
             height: '32px',
@@ -4493,7 +4493,7 @@ const CloneSchedulePage = () => {
           }}>
             <Cog size={16} color="white" />
           </Box>
-          <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030', textTransform: 'uppercase' }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
             Time Setup
           </Typography>
         </Box>
@@ -4504,9 +4504,9 @@ const CloneSchedulePage = () => {
               checked={editTiming}
               onChange={(e) => setEditTiming(e.target.checked)}
               sx={{
-                color: '#C72030',
+                color: 'var(--color-primary)',
                 '&.Mui-checked': {
-                  color: '#C72030'
+                  color: 'var(--color-primary)'
                 }
               }}
             />
@@ -4533,9 +4533,9 @@ const CloneSchedulePage = () => {
 
   const renderMapping = () => (
     <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-      <div className="border-l-4 border-l-[#C72030] p-4 sm:p-6 bg-white">
-        <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold mb-6" style={{ textTransform: 'uppercase' }}>
-          <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+      <div className="border-l-4 border-l-[var(--color-primary)] p-4 sm:p-6 bg-white">
+        <div className="flex items-center gap-2 text-[var(--color-primary)] text-sm sm:text-base font-semibold mb-6" style={{ textTransform: 'uppercase' }}>
+          <span className="bg-[var(--color-primary)] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
             <Cog className="w-3 h-3 sm:w-4 sm:h-4" />
           </span>
           MAPPING
@@ -4583,12 +4583,14 @@ const CloneSchedulePage = () => {
       {/* Action Buttons */}
       <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 4, pt: 3, borderTop: '1px solid #e0e0e0' }}>
         <CancelButton
+          className="fm-button-fix fm-button-brand px-4 py-2"
           onClick={() => navigate('/maintenance/schedule')}
         >
           Cancel
         </CancelButton>
 
         <RedButton
+          className="fm-button-fix fm-button-brand px-4 py-2"
           onClick={handleCloneSchedule}
           disabled={isSubmitting}
         >

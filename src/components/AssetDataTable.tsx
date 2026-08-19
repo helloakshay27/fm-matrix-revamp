@@ -683,7 +683,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   };
 
   const getRowClassName = (asset: Asset) =>
-    asset.disabled ? "bg-gray-100 text-gray-500 opacity-60 cursor-not-allowed" : "";
+    asset.disabled ? "cursor-not-allowed" : "";
 
   const isRowDisabled = (asset: Asset) => !!asset.disabled;
 
@@ -727,7 +727,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
         key={`asset-table-${availableCustomFields.map(f => f.key).join('-')}`} // Force re-render when custom fields change
         leftActions={
           shouldShow("Assets", "create") && !(isRestrictedUser && window.location.pathname.includes('/maintenance/asset')) ? (
-            <Button size="sm" className="fm-button-fix fm-button-brand px-4 py-2" onClick={handleActionClick}>
+            <Button size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium" onClick={handleActionClick}>
               <Plus className="w-4 h-4 mr-2" />
               Action
             </Button>

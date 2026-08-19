@@ -17,6 +17,7 @@ import {
   LineChart,
   BarChart3,
   Users,
+  Briefcase,
 } from "lucide-react";
 
 // Module-based navigation structures for Admin Compass
@@ -29,10 +30,11 @@ const adminCompassNavigation: Record<string, any> = {
     icon: MessageSquare,
     href: "/admin-compass/daily-meeting",
   },
-  KPI: {
-    icon: BarChart3,
-    href: "/admin-compass/kpi",
-  },
+  // KPI module hidden
+  // KPI: {
+  //   icon: BarChart3,
+  //   href: "/admin-compass/kpi",
+  // },
   "Weekly Meetings": {
     icon: Trophy,
     href: "/admin-compass/weekly-meetings",
@@ -56,6 +58,10 @@ const adminCompassNavigation: Record<string, any> = {
   "Team Setup": {
     icon: Users,
     href: "/admin-compass/team-setup",
+  },
+  Jobs: {
+    icon: Briefcase,
+    href: "/admin-compass/jobs",
   },
 };
 

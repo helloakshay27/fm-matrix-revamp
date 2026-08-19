@@ -12,6 +12,7 @@ import {
   updateVehicleBrand,
   toggleVehicleBrandActive,
 } from "@/services/vehicleConfigApi";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 const columns: ColumnConfig[] = [
   { key: "id", label: "Id", sortable: true, draggable: true },
@@ -30,6 +31,7 @@ const fieldStyles = {
 };
 
 export const VehicleBrandsTab = () => {
+  const pulseEvents = usePulseEvents();
   const [brands, setBrands] = useState<VehicleBrand[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -77,9 +79,11 @@ export const VehicleBrandsTab = () => {
     try {
       if (editingBrand) {
         await updateVehicleBrand(editingBrand.id, name.trim());
+        pulseEvents.onVehicleBrandSaved("updated", name.trim());
         toast.success("Brand updated successfully");
       } else {
         await createVehicleBrand(name.trim());
+        pulseEvents.onVehicleBrandSaved("added", name.trim());
         toast.success("Brand added successfully");
       }
       setIsModalOpen(false);
@@ -111,14 +115,12 @@ export const VehicleBrandsTab = () => {
         <button
           type="button"
           onClick={() => handleToggleStatus(item)}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            item.active ? "bg-brand" : "bg-gray-300"
-          }`}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${item.active ? "bg-brand" : "bg-gray-300"
+            }`}
         >
           <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-              item.active ? "translate-x-6" : "translate-x-1"
-            }`}
+            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${item.active ? "translate-x-6" : "translate-x-1"
+              }`}
           />
         </button>
       );

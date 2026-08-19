@@ -24,7 +24,7 @@ export const ticketAnalyticsDownloadAPI = {
     const toDateStr = formatDateForAPI(toDate);
 
     const endpoint = `${API_CONFIG.BASE_URL}/pms/admin/complaints/ticket_ageing_matrix_downloads.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
     try {
       const response = await fetch(url, {
@@ -63,7 +63,7 @@ export const ticketAnalyticsDownloadAPI = {
     const toDateStr = formatDateForAPI(toDate);
 
     const endpoint = `${API_CONFIG.BASE_URL}/pms/admin/complaints/chart_ticket_status_downloads.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
     try {
       const response = await fetch(url, {
@@ -99,7 +99,7 @@ export const ticketAnalyticsDownloadAPI = {
     const toDateStr = formatDateForAPI(toDate);
 
     const endpoint = `${API_CONFIG.BASE_URL}/pms/admin/complaints/chart_unit_categorywise_downloads.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
     try {
       const response = await fetch(url, {
@@ -135,7 +135,7 @@ export const ticketAnalyticsDownloadAPI = {
     const toDateStr = formatDateForAPI(toDate);
 
     const endpoint = `${API_CONFIG.BASE_URL}/pms/admin/complaints/tickets_categorywise_proactive_reactive_export.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
     try {
       const response = await fetch(url, {
@@ -173,7 +173,7 @@ export const ticketAnalyticsDownloadAPI = {
     const toDateStr = formatDateForAPI(toDate);
 
     const endpoint = `${API_CONFIG.BASE_URL}/pms/admin/complaints/chart_unit_categorywise_downloads.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
     try {
       const response = await fetch(url, {
@@ -209,7 +209,7 @@ export const ticketAnalyticsDownloadAPI = {
     const toDateStr = formatDateForAPI(toDate);
 
     const endpoint = `${API_CONFIG.BASE_URL}/pms/admin/complaints/chart_resolution_tat_downloads.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
     try {
       const response = await fetch(url, {
@@ -245,7 +245,7 @@ export const ticketAnalyticsDownloadAPI = {
     const toDateStr = formatDateForAPI(toDate);
 
     const endpoint = `${API_CONFIG.BASE_URL}/pms/admin/complaints/chart_response_tat_downloads.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
     try {
       const response = await fetch(url, {

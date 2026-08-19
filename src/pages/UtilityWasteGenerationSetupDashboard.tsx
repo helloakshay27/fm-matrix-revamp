@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Search } from "lucide-react";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { Plus } from "lucide-react";
+import {
+  TextField,
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+} from "@mui/material";
 import {
   Dialog,
   DialogContent,
@@ -11,17 +15,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { API_CONFIG } from '@/config/apiConfig';
-import { getToken } from '@/utils/auth';
+import { API_CONFIG } from "@/config/apiConfig";
+import { getToken } from "@/utils/auth";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import {
+  WasteGenerationTagsFilterDialog,
+  type WasteGenerationTagsFilters,
+} from "@/components/WasteGenerationTagsFilterDialog";
 
 interface CommodityData {
   id: number;
@@ -53,60 +56,181 @@ interface LandlordData {
   url: string;
 }
 
+const emptyFilters: WasteGenerationTagsFilters = {
+  name: "",
+  status: "",
+};
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  backgroundColor: "#fff",
+  "& .MuiInputBase-input, & .MuiSelect-select": {
+    padding: { xs: "8px 12px", sm: "10px 14px", md: "12px 14px" },
+  },
+  "& .MuiOutlinedInput-root": {
+    backgroundColor: "white",
+    "& fieldset": {
+      borderColor: "#ddd",
+    },
+    "&:hover fieldset": {
+      borderColor: "#C72030",
+    },
+    "&.Mui-focused fieldset": {
+      borderColor: "#C72030",
+    },
+  },
+  "& .MuiInputLabel-root": {
+    "&.Mui-focused": {
+      color: "#C72030",
+    },
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: "white",
+      border: "1px solid #e2e8f0",
+      borderRadius: "8px",
+      boxShadow:
+        "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
+
+const isMuiOverlayTarget = (target: EventTarget | null) =>
+  !!(target as HTMLElement | null)?.closest?.(
+    ".MuiPopover-root, .MuiModal-root, .MuiMenu-root"
+  );
+
+const commodityColumns: ColumnConfig[] = [
+  {
+    key: "category_name",
+    label: "Commodity",
+    sortable: true,
+    defaultVisible: true,
+  },
+  { key: "status", label: "Status", sortable: true, defaultVisible: true },
+  {
+    key: "created_at",
+    label: "Created On",
+    sortable: true,
+    defaultVisible: true,
+  },
+];
+
+const categoryColumns: ColumnConfig[] = [
+  {
+    key: "parent_name",
+    label: "Parent Commodity",
+    sortable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "category_name",
+    label: "Category",
+    sortable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "category_type",
+    label: "Category Type",
+    sortable: true,
+    defaultVisible: true,
+  },
+  { key: "status", label: "Status", sortable: true, defaultVisible: true },
+  {
+    key: "created_at",
+    label: "Created On",
+    sortable: true,
+    defaultVisible: true,
+  },
+];
+
+const landlordColumns: ColumnConfig[] = [
+  {
+    key: "category_name",
+    label: "Operational Name",
+    sortable: true,
+    defaultVisible: true,
+  },
+  { key: "status", label: "Status", sortable: true, defaultVisible: true },
+  {
+    key: "created_at",
+    label: "Created On",
+    sortable: true,
+    defaultVisible: true,
+  },
+];
+
+const formatDate = (value: string) => {
+  try {
+    return new Date(value).toLocaleDateString("en-GB");
+  } catch {
+    return value || "-";
+  }
+};
+
 export const UtilityWasteGenerationSetupDashboard = () => {
   const { toast } = useToast();
+  const { shouldShow } = useDynamicPermissions();
   const [activeTab, setActiveTab] = useState("Commodity");
-  const [searchTerm, setSearchTerm] = useState('');
-  
-  // Modal states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] =
+    useState<WasteGenerationTagsFilters>(emptyFilters);
+
   const [isAddCommodityModalOpen, setIsAddCommodityModalOpen] = useState(false);
   const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
   const [isAddLandlordModalOpen, setIsAddLandlordModalOpen] = useState(false);
-  
-  // Form states
-  const [commodityInput, setCommodityInput] = useState('');
-  const [categoryInputs, setCategoryInputs] = useState({
-    parent_id: '',
-    category_name: '',
-    category_type: ''
-  });
-  const [landlordInput, setLandlordInput] = useState('');
 
-  // Data states
+  const [commodityInput, setCommodityInput] = useState("");
+  const [categoryInputs, setCategoryInputs] = useState({
+    parent_id: "",
+    category_name: "",
+    category_type: "",
+  });
+  const [landlordInput, setLandlordInput] = useState("");
+
   const [commodities, setCommodities] = useState<CommodityData[]>([]);
   const [categories, setCategories] = useState<CategoryData[]>([]);
   const [landlords, setLandlords] = useState<LandlordData[]>([]);
-  
-  // Loading states
-  const [loading, setLoading] = useState(false);
+
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  // Load data on component mount and when tab changes
   useEffect(() => {
     loadData();
   }, [activeTab]);
 
   const getApiUrl = (endpoint: string) => {
     const baseUrl = API_CONFIG.BASE_URL;
-    const token = API_CONFIG.TOKEN;
-    return `${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}${endpoint}`;
+    return `${baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`}${endpoint}`;
   };
 
   const loadData = async () => {
     setLoading(true);
     try {
       const token = getToken();
-      let endpoint = '';
-      
+      let endpoint = "";
+
       switch (activeTab) {
-        case 'Commodity':
-          endpoint = '/pms/generic_tags.json?q[tag_type_eq]=Commodity';
+        case "Commodity":
+          endpoint = "/pms/generic_tags.json?q[tag_type_eq]=Commodity";
           break;
-        case 'Category':
-          endpoint = '/pms/generic_tags.json?q[tag_type_eq]=Category';
+        case "Category":
+          endpoint = "/pms/generic_tags.json?q[tag_type_eq]=Category";
           break;
-        case 'Operational Name of Landlord/Tenant':
-          endpoint = '/pms/generic_tags.json?q[tag_type_eq]=operational_name_of_landlord';
+        case "Operational Name of Landlord/Tenant":
+          endpoint =
+            "/pms/generic_tags.json?q[tag_type_eq]=operational_name_of_landlord";
           break;
         default:
           return;
@@ -114,77 +238,108 @@ export const UtilityWasteGenerationSetupDashboard = () => {
 
       const response = await fetch(getApiUrl(endpoint), {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch data');
+        throw new Error("Failed to fetch data");
       }
 
       const data = await response.json();
-      
+
       switch (activeTab) {
-        case 'Commodity':
+        case "Commodity":
           setCommodities(data);
           break;
-        case 'Category':
+        case "Category":
           setCategories(data);
+          // Keep commodities available for parent dropdown
+          if (commodities.length === 0) {
+            const commodityRes = await fetch(
+              getApiUrl("/pms/generic_tags.json?q[tag_type_eq]=Commodity"),
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+            if (commodityRes.ok) {
+              setCommodities(await commodityRes.json());
+            }
+          }
           break;
-        case 'Operational Name of Landlord/Tenant':
+        case "Operational Name of Landlord/Tenant":
           setLandlords(data);
           break;
       }
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error("Error loading data:", error);
       toast({
         title: "Error",
         description: "Failed to load data",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
 
-  // Filter data based on search
-  const getFilteredData = () => {
+  const filteredData = useMemo(() => {
+    let rows: Array<CommodityData | CategoryData | LandlordData> = [];
     switch (activeTab) {
-      case 'Commodity':
-        return commodities.filter(item =>
-          item.category_name.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-      case 'Category':
-        return categories.filter(item =>
-          item.category_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (item.parent_name && item.parent_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (item.category_type && item.category_type.toLowerCase().includes(searchTerm.toLowerCase()))
-        );
-      case 'Operational Name of Landlord/Tenant':
-        return landlords.filter(item =>
-          item.category_name.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-      default:
-        return [];
+      case "Commodity":
+        rows = commodities;
+        break;
+      case "Category":
+        rows = categories;
+        break;
+      case "Operational Name of Landlord/Tenant":
+        rows = landlords;
+        break;
     }
-  };
+
+    return rows.filter((item) => {
+      const name = String(item.category_name || "").toLowerCase();
+      const status = item.active ? "active" : "inactive";
+      const parentName =
+        "parent_name" in item
+          ? String(item.parent_name || "").toLowerCase()
+          : "";
+      const categoryType =
+        "category_type" in item
+          ? String(item.category_type || "").toLowerCase()
+          : "";
+      const createdOn = formatDate(item.created_at).toLowerCase();
+
+      if (filters.name && !name.includes(filters.name.toLowerCase())) {
+        return false;
+      }
+      if (filters.status && status !== filters.status.toLowerCase()) {
+        return false;
+      }
+
+      if (searchTerm.trim()) {
+        const q = searchTerm.toLowerCase();
+        return (
+          name.includes(q) ||
+          parentName.includes(q) ||
+          categoryType.includes(q) ||
+          status.includes(q) ||
+          createdOn.includes(q)
+        );
+      }
+
+      return true;
+    });
+  }, [activeTab, commodities, categories, landlords, searchTerm, filters]);
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
-    setSearchTerm(''); // Clear search when switching tabs
-  };
-
-  const handleAddCommodity = () => {
-    setIsAddCommodityModalOpen(true);
-  };
-
-  const handleAddCategory = () => {
-    setIsAddCategoryModalOpen(true);
-  };
-
-  const handleAddLandlord = () => {
-    setIsAddLandlordModalOpen(true);
+    setSearchTerm("");
+    setFilters(emptyFilters);
   };
 
   const handleCommoditySubmit = async () => {
@@ -192,7 +347,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
       toast({
         title: "Error",
         description: "Please enter a commodity name",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -204,39 +359,36 @@ export const UtilityWasteGenerationSetupDashboard = () => {
         pms_generic_tag: {
           tag_type: "Commodity",
           active: "1",
-          category_name: commodityInput
-        }
+          category_name: commodityInput,
+        },
       };
 
-      const response = await fetch(getApiUrl('/pms/generic_tags.json'), {
-        method: 'POST',
+      const response = await fetch(getApiUrl("/pms/generic_tags.json"), {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to add commodity');
+        throw new Error("Failed to add commodity");
       }
 
-      setCommodityInput('');
+      setCommodityInput("");
       setIsAddCommodityModalOpen(false);
-      
       toast({
         title: "Success",
-        description: "Commodity added successfully"
+        description: "Commodity added successfully",
       });
-      
-      // Reload data
       loadData();
     } catch (error) {
-      console.error('Error adding commodity:', error);
+      console.error("Error adding commodity:", error);
       toast({
         title: "Error",
         description: "Failed to add commodity",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setSubmitting(false);
@@ -244,11 +396,15 @@ export const UtilityWasteGenerationSetupDashboard = () => {
   };
 
   const handleCategorySubmit = async () => {
-    if (!categoryInputs.parent_id || !categoryInputs.category_name || !categoryInputs.category_type) {
+    if (
+      !categoryInputs.parent_id ||
+      !categoryInputs.category_name ||
+      !categoryInputs.category_type
+    ) {
       toast({
         title: "Error",
         description: "Please fill all required fields",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -262,39 +418,40 @@ export const UtilityWasteGenerationSetupDashboard = () => {
           active: "1",
           parent_id: categoryInputs.parent_id,
           category_name: categoryInputs.category_name,
-          category_type: categoryInputs.category_type
-        }
+          category_type: categoryInputs.category_type,
+        },
       };
 
-      const response = await fetch(getApiUrl('/pms/generic_tags.json'), {
-        method: 'POST',
+      const response = await fetch(getApiUrl("/pms/generic_tags.json"), {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to add category');
+        throw new Error("Failed to add category");
       }
 
-      setCategoryInputs({ parent_id: '', category_name: '', category_type: '' });
+      setCategoryInputs({
+        parent_id: "",
+        category_name: "",
+        category_type: "",
+      });
       setIsAddCategoryModalOpen(false);
-      
       toast({
         title: "Success",
-        description: "Category added successfully"
+        description: "Category added successfully",
       });
-      
-      // Reload data
       loadData();
     } catch (error) {
-      console.error('Error adding category:', error);
+      console.error("Error adding category:", error);
       toast({
         title: "Error",
         description: "Failed to add category",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setSubmitting(false);
@@ -306,7 +463,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
       toast({
         title: "Error",
         description: "Please enter landlord/tenant name",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -318,340 +475,202 @@ export const UtilityWasteGenerationSetupDashboard = () => {
         pms_generic_tag: {
           tag_type: "operational_name_of_landlord",
           active: "1",
-          category_name: landlordInput
-        }
+          category_name: landlordInput,
+        },
       };
 
-      const response = await fetch(getApiUrl('/pms/generic_tags.json'), {
-        method: 'POST',
+      const response = await fetch(getApiUrl("/pms/generic_tags.json"), {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to add landlord/tenant');
+        throw new Error("Failed to add landlord/tenant");
       }
 
-      setLandlordInput('');
+      setLandlordInput("");
       setIsAddLandlordModalOpen(false);
-      
       toast({
         title: "Success",
-        description: "Landlord/Tenant added successfully"
+        description: "Landlord/Tenant added successfully",
       });
-      
-      // Reload data
       loadData();
     } catch (error) {
-      console.error('Error adding landlord/tenant:', error);
+      console.error("Error adding landlord/tenant:", error);
       toast({
         title: "Error",
         description: "Failed to add landlord/tenant",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDelete = (id: number) => {
-    switch (activeTab) {
-      case 'commodity':
-        setCommodities(commodities.filter(item => item.id !== id));
-        break;
-      case 'category':
-        setCategories(categories.filter(item => item.id !== id));
-        break;
-      case 'landlord':
-        setLandlords(landlords.filter(item => item.id !== id));
-        break;
-    }
-    
-    toast({
-      title: "Success",
-      description: "Item deleted successfully"
-    });
-  };
-
   const handleStatusToggle = (id: number) => {
     switch (activeTab) {
-      case 'Commodity':
-        setCommodities(commodities.map(item =>
-          item.id === id ? { ...item, active: !item.active } : item
-        ));
+      case "Commodity":
+        setCommodities((list) =>
+          list.map((item) =>
+            item.id === id ? { ...item, active: !item.active } : item
+          )
+        );
         break;
-      case 'Category':
-        setCategories(categories.map(item =>
-          item.id === id ? { ...item, active: !item.active } : item
-        ));
+      case "Category":
+        setCategories((list) =>
+          list.map((item) =>
+            item.id === id ? { ...item, active: !item.active } : item
+          )
+        );
         break;
-      case 'Operational Name of Landlord/Tenant':
-        setLandlords(landlords.map(item =>
-          item.id === id ? { ...item, active: !item.active } : item
-        ));
+      case "Operational Name of Landlord/Tenant":
+        setLandlords((list) =>
+          list.map((item) =>
+            item.id === id ? { ...item, active: !item.active } : item
+          )
+        );
         break;
     }
   };
+
+  const columns =
+    activeTab === "Category"
+      ? categoryColumns
+      : activeTab === "Operational Name of Landlord/Tenant"
+        ? landlordColumns
+        : commodityColumns;
+
+  const renderCell = (
+    item: CommodityData | CategoryData | LandlordData,
+    columnKey: string
+  ) => {
+    switch (columnKey) {
+      case "category_name":
+        return <span className="font-medium">{item.category_name}</span>;
+      case "parent_name":
+        return (item as CategoryData).parent_name || "-";
+      case "category_type":
+        return (item as CategoryData).category_type || "-";
+      case "status":
+        return (
+          <span
+            className={`px-3 py-1 text-xs font-medium rounded-full cursor-pointer ${
+              item.active
+                ? "bg-green-100 text-green-800"
+                : "bg-red-100 text-red-800"
+            }`}
+            onClick={() => handleStatusToggle(item.id)}
+          >
+            {item.active ? "Active" : "Inactive"}
+          </span>
+        );
+      case "created_at":
+        return (
+          <span className="text-sm text-gray-600">
+            {formatDate(item.created_at)}
+          </span>
+        );
+      default:
+        return "-";
+    }
+  };
+
+  const leftActions = shouldShow("Waste Generation", "create") ? (
+    <Button
+      onClick={() => {
+        if (activeTab === "Commodity") setIsAddCommodityModalOpen(true);
+        else if (activeTab === "Category") setIsAddCategoryModalOpen(true);
+        else setIsAddLandlordModalOpen(true);
+      }}
+      className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
+    >
+      <Plus className="w-4 h-4 mr-2" />
+      {activeTab === "Commodity"
+        ? "Add Commodity"
+        : activeTab === "Category"
+          ? "Add Category"
+          : "Add Landlord/Tenant"}
+    </Button>
+  ) : null;
 
   return (
     <>
-      <div className="p-6 bg-gray-50 min-h-screen">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">WASTE GENERATION TAGS</h2>
-            <p className="text-muted-foreground mt-1">
-              Manage waste categories, commodities, and units of measurement
-            </p>
-          </div>
+      <div className="p-6 space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">
+            WASTE GENERATION TAGS
+          </h2>
+          <p className="text-muted-foreground mt-1">
+            Manage waste categories, commodities, and units of measurement
+          </p>
         </div>
 
-        <Card>
-          <CardContent className="p-0">
-            {/* Custom Tab Navigation */}
-            <div className="flex border-b border-gray-200">
-              {['Commodity', 'Category', 'Operational Name of Landlord/Tenant'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => handleTabClick(tab)}
-                  className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === tab
-                      ? 'border-primary text-primary bg-primary/5'
-                      : 'border-transparent text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
+        <div className="flex border-b border-gray-200 bg-white rounded-t-lg">
+          {[
+            "Commodity",
+            "Category",
+            "Operational Name of Landlord/Tenant",
+          ].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => handleTabClick(tab)}
+              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === tab
+                  ? "border-brand text-brand bg-brand-selected"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
 
-            {/* Commodity Tab */}
-            {activeTab === 'Commodity' && (
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <Button
-                    onClick={handleAddCommodity}
-                    className="bg-[#6B2C91] hover:bg-[#5A2579] text-white"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Commodity
-                  </Button>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input
-                      type="text"
-                      placeholder="Search..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#E95420]"
-                    />
-                  </div>
-                </div>
-                <div className="overflow-x-auto border rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-[#f6f4ee]">
-                        <TableHead className="px-4 py-3 min-w-[200px]">Commodity</TableHead>
-                        <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
-                        <TableHead className="px-4 py-3 min-w-[150px]">Created On</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {loading ? (
-                        <TableRow>
-                          <TableCell colSpan={3} className="px-4 py-8 text-center text-gray-500">
-                            Loading...
-                          </TableCell>
-                        </TableRow>
-                      ) : (getFilteredData() as CommodityData[]).length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={3} className="px-4 py-8 text-center text-gray-500">
-                            No data available
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        (getFilteredData() as CommodityData[]).map((item) => (
-                          <TableRow key={item.id} className="hover:bg-gray-50">
-                            <TableCell className="px-4 py-3 font-medium">{item.category_name}</TableCell>
-                            <TableCell className="px-4 py-3 text-center">
-                              <span
-                                className={`px-3 py-1 text-xs font-medium rounded-full cursor-pointer ${
-                                  item.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                }`}
-                                onClick={() => handleStatusToggle(item.id)}
-                              >
-                                {item.active ? 'Active' : 'Inactive'}
-                              </span>
-                            </TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">
-                              {new Date(item.created_at).toLocaleDateString('en-GB')}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            )}
+        <EnhancedTable
+          data={filteredData}
+          columns={columns}
+          renderCell={renderCell}
+          leftActions={leftActions}
+          storageKey={`waste-generation-tags-${activeTab}`}
+          emptyMessage={
+            searchTerm || Object.values(filters).some(Boolean)
+              ? "No records found matching your search"
+              : "No records found"
+          }
+          loading={loading}
+          loadingMessage="Loading..."
+          enableSearch
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Search..."
+          disableClientSearch
+          onFilterClick={() => setShowFilters(true)}
+          hideTableExport
+          pagination
+          pageSize={10}
+          getItemId={(item) => String(item.id)}
+        />
 
-            {/* Category Tab */}
-            {activeTab === 'Category' && (
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <Button
-                    onClick={handleAddCategory}
-                    className="bg-[#6B2C91] hover:bg-[#5A2579] text-white"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Category
-                  </Button>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input
-                      type="text"
-                      placeholder="Search..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#E95420]"
-                    />
-                  </div>
-                </div>
-                <div className="overflow-x-auto border rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-[#f6f4ee]">
-                        <TableHead className="px-4 py-3 min-w-[150px]">Parent Commodity</TableHead>
-                        <TableHead className="px-4 py-3 min-w-[150px]">Category</TableHead>
-                        <TableHead className="px-4 py-3 min-w-[120px]">Category Type</TableHead>
-                        <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
-                        <TableHead className="px-4 py-3 min-w-[150px]">Created On</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {loading ? (
-                        <TableRow>
-                          <TableCell colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                            Loading...
-                          </TableCell>
-                        </TableRow>
-                      ) : (getFilteredData() as CategoryData[]).length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                            No data available
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        (getFilteredData() as CategoryData[]).map((item) => (
-                          <TableRow key={item.id} className="hover:bg-gray-50">
-                            <TableCell className="px-4 py-3 font-medium">{item.parent_name || '-'}</TableCell>
-                            <TableCell className="px-4 py-3 font-medium">{item.category_name}</TableCell>
-                            <TableCell className="px-4 py-3 text-sm">{item.category_type || '-'}</TableCell>
-                            <TableCell className="px-4 py-3 text-center">
-                              <span
-                                className={`px-3 py-1 text-xs font-medium rounded-full cursor-pointer ${
-                                  item.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                }`}
-                                onClick={() => handleStatusToggle(item.id)}
-                              >
-                                {item.active ? 'Active' : 'Inactive'}
-                              </span>
-                            </TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">
-                              {new Date(item.created_at).toLocaleDateString('en-GB')}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            )}
-
-            {/* Landlord Tab */}
-            {activeTab === 'Operational Name of Landlord/Tenant' && (
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <Button
-                    onClick={handleAddLandlord}
-                    className="bg-[#6B2C91] hover:bg-[#5A2579] text-white"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Landlord/Tenant
-                  </Button>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input
-                      type="text"
-                      placeholder="Search..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#E95420]"
-                    />
-                  </div>
-                </div>
-                <div className="overflow-x-auto border rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-[#f6f4ee]">
-                        <TableHead className="px-4 py-3 min-w-[250px]">Operational Name</TableHead>
-                        <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
-                        <TableHead className="px-4 py-3 min-w-[150px]">Created On</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {loading ? (
-                        <TableRow>
-                          <TableCell colSpan={3} className="px-4 py-8 text-center text-gray-500">
-                            Loading...
-                          </TableCell>
-                        </TableRow>
-                      ) : (getFilteredData() as LandlordData[]).length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={3} className="px-4 py-8 text-center text-gray-500">
-                            No data available
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        (getFilteredData() as LandlordData[]).map((item) => (
-                          <TableRow key={item.id} className="hover:bg-gray-50">
-                            <TableCell className="px-4 py-3 font-medium">{item.category_name}</TableCell>
-                            <TableCell className="px-4 py-3 text-center">
-                              <span
-                                className={`px-3 py-1 text-xs font-medium rounded-full cursor-pointer ${
-                                  item.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                }`}
-                                onClick={() => handleStatusToggle(item.id)}
-                              >
-                                {item.active ? 'Active' : 'Inactive'}
-                              </span>
-                            </TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">
-                              {new Date(item.created_at).toLocaleDateString('en-GB')}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <WasteGenerationTagsFilterDialog
+          isOpen={showFilters}
+          onClose={() => setShowFilters(false)}
+          filters={filters}
+          onApplyFilters={setFilters}
+          onResetFilters={() => setFilters(emptyFilters)}
+        />
       </div>
 
-      {/* Add Commodity Modal */}
-      <Dialog open={isAddCommodityModalOpen} onOpenChange={setIsAddCommodityModalOpen}>
+      <Dialog
+        open={isAddCommodityModalOpen}
+        onOpenChange={setIsAddCommodityModalOpen}
+      >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Add New Commodity</DialogTitle>
-            <DialogDescription>
-              Enter commodity details below
-            </DialogDescription>
+            <DialogDescription>Enter commodity details below</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <TextField
@@ -666,37 +685,75 @@ export const UtilityWasteGenerationSetupDashboard = () => {
             />
           </div>
           <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => setIsAddCommodityModalOpen(false)} disabled={submitting}>
+            <Button
+              variant="outline"
+              onClick={() => setIsAddCommodityModalOpen(false)}
+              disabled={submitting}
+              className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030]"
+            >
               Cancel
             </Button>
-            <Button onClick={handleCommoditySubmit} className="bg-[#6B2C91] hover:bg-[#5A2579] text-white" disabled={submitting}>
-              {submitting ? 'Submitting...' : 'Submit'}
+            <Button
+              onClick={handleCommoditySubmit}
+              className="bg-brand text-white hover:bg-brand-hover"
+              disabled={submitting}
+            >
+              {submitting ? "Submitting..." : "Submit"}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Add Category Modal */}
-      <Dialog open={isAddCategoryModalOpen} onOpenChange={setIsAddCategoryModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+      {/* modal={false} lets portaled MUI Select menus receive clicks/scroll */}
+      <Dialog
+        open={isAddCategoryModalOpen}
+        onOpenChange={setIsAddCategoryModalOpen}
+        modal={false}
+      >
+        <DialogContent
+          className="sm:max-w-[500px]"
+          onPointerDownOutside={(e) => {
+            if (isMuiOverlayTarget(e.target)) {
+              e.preventDefault();
+            }
+          }}
+          onInteractOutside={(e) => {
+            if (isMuiOverlayTarget(e.target)) {
+              e.preventDefault();
+            }
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Add New Category</DialogTitle>
-            <DialogDescription>
-              Enter category details below
-            </DialogDescription>
+            <DialogDescription>Enter category details below</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <FormControl fullWidth variant="outlined" size="small">
-              <InputLabel shrink>Parent Commodity*</InputLabel>
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="parent-commodity-label" shrink>
+                Parent Commodity*
+              </InputLabel>
               <MuiSelect
+                labelId="parent-commodity-label"
                 value={categoryInputs.parent_id}
-                onChange={(e) => setCategoryInputs(prev => ({ ...prev, parent_id: e.target.value }))}
+                onChange={(e) =>
+                  setCategoryInputs((prev) => ({
+                    ...prev,
+                    parent_id: e.target.value as string,
+                  }))
+                }
                 label="Parent Commodity*"
                 displayEmpty
+                notched
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
               >
-                <MenuItem value=""><em>Select Parent Commodity</em></MenuItem>
+                <MenuItem value="">
+                  <em>Select Parent Commodity</em>
+                </MenuItem>
                 {commodities.map((commodity) => (
-                  <MenuItem key={commodity.id} value={commodity.id.toString()}>{commodity.category_name}</MenuItem>
+                  <MenuItem key={commodity.id} value={commodity.id.toString()}>
+                    {commodity.category_name}
+                  </MenuItem>
                 ))}
               </MuiSelect>
             </FormControl>
@@ -705,43 +762,62 @@ export const UtilityWasteGenerationSetupDashboard = () => {
               label="Category Name*"
               placeholder="Enter category name"
               value={categoryInputs.category_name}
-              onChange={(e) => setCategoryInputs(prev => ({ ...prev, category_name: e.target.value }))}
+              onChange={(e) =>
+                setCategoryInputs((prev) => ({
+                  ...prev,
+                  category_name: e.target.value,
+                }))
+              }
               fullWidth
               variant="outlined"
-              size="small"
               InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
             />
 
             <TextField
               label="Category Type*"
               placeholder="Enter category type"
               value={categoryInputs.category_type}
-              onChange={(e) => setCategoryInputs(prev => ({ ...prev, category_type: e.target.value }))}
+              onChange={(e) =>
+                setCategoryInputs((prev) => ({
+                  ...prev,
+                  category_type: e.target.value,
+                }))
+              }
               fullWidth
               variant="outlined"
-              size="small"
               InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
             />
           </div>
           <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => setIsAddCategoryModalOpen(false)} disabled={submitting}>
+            <Button
+              variant="outline"
+              onClick={() => setIsAddCategoryModalOpen(false)}
+              disabled={submitting}
+              className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030]"
+            >
               Cancel
             </Button>
-            <Button onClick={handleCategorySubmit} className="bg-[#6B2C91] hover:bg-[#5A2579] text-white" disabled={submitting}>
-              {submitting ? 'Submitting...' : 'Submit'}
+            <Button
+              onClick={handleCategorySubmit}
+              className="bg-brand text-white hover:bg-brand-hover"
+              disabled={submitting}
+            >
+              {submitting ? "Submitting..." : "Submit"}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Add Landlord Modal */}
-      <Dialog open={isAddLandlordModalOpen} onOpenChange={setIsAddLandlordModalOpen}>
+      <Dialog
+        open={isAddLandlordModalOpen}
+        onOpenChange={setIsAddLandlordModalOpen}
+      >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Add New Landlord/Tenant</DialogTitle>
-            <DialogDescription>
-              Enter operational name below
-            </DialogDescription>
+            <DialogDescription>Enter operational name below</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <TextField
@@ -756,11 +832,20 @@ export const UtilityWasteGenerationSetupDashboard = () => {
             />
           </div>
           <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => setIsAddLandlordModalOpen(false)} disabled={submitting}>
+            <Button
+              variant="outline"
+              onClick={() => setIsAddLandlordModalOpen(false)}
+              disabled={submitting}
+              className="border-brand text-brand hover:bg-brand-selected"
+            >
               Cancel
             </Button>
-            <Button onClick={handleLandlordSubmit} className="bg-[#6B2C91] hover:bg-[#5A2579] text-white" disabled={submitting}>
-              {submitting ? 'Submitting...' : 'Submit'}
+            <Button
+              onClick={handleLandlordSubmit}
+              className="bg-brand text-white hover:bg-brand-hover"
+              disabled={submitting}
+            >
+              {submitting ? "Submitting..." : "Submit"}
             </Button>
           </div>
         </DialogContent>

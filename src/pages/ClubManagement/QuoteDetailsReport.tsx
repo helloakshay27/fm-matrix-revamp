@@ -38,7 +38,7 @@ const formatDisplayDate = (value: string) => {
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const year = d.getFullYear();
 
-  return `${day}-${month}-${year}`;
+  return `${day}/${month}/${year}`;
 };
 
 const formatAmount = (value: number) =>
@@ -47,12 +47,12 @@ const formatAmount = (value: number) =>
   })}`;
 
 const statusColorMap: Record<string, string> = {
-  Overdue: "bg-orange-100 text-orange-700",
-  Sent: "bg-blue-100 text-blue-700",
+  Overdue: "bg-gray-100 text-gray-800",
+  Sent: "bg-gray-100 text-gray-800",
   Open: "bg-gray-100 text-gray-800",
-  Paid: "bg-green-100 text-green-700",
-  Draft: "bg-yellow-100 text-yellow-700",
-  Accepted: "bg-green-100 text-green-700",
+  Paid: "bg-gray-100 text-gray-800",
+  Draft: "bg-gray-100 text-gray-800",
+  Accepted: "bg-gray-100 text-gray-800",
 };
 
 // ✅ Columns
@@ -151,7 +151,7 @@ const QuoteDetailsReport: React.FC = () => {
       ) : (
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            statusColorMap[row.status] || "bg-gray-100 text-gray-700"
+            statusColorMap[row.status] || "bg-gray-100 text-gray-800"
           }`}
         >
           {row.status}
@@ -162,15 +162,15 @@ const QuoteDetailsReport: React.FC = () => {
       quoteNo: isTotal ? <span /> : (
         <button
           onClick={() => navigate(`/accounting/quotes/details/${row.quoteId}`)}
-          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+          className="text-sm font-medium !text-brand hover:underline text-left"
         >
           {row.quoteNo}
         </button>
       ),
       referenceNo: <span className="text-sm text-gray-600">{isTotal ? "" : row.referenceNo}</span>,
-      customerName: <span className="text-sm font-medium text-blue-600">{isTotal ? "" : row.customerName}</span>,
+      customerName: <span className="text-sm font-medium text-brand">{isTotal ? "" : row.customerName}</span>,
       quoteAmount: (
-        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`}>
+        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-brand"}`}>
           {formatAmount(row.quoteAmount)}
         </span>
       ),

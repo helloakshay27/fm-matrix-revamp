@@ -926,8 +926,8 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
                         {showFilter && (
                             <Button
                                 onClick={() => setIsAnalyticsFilterOpen(true)}
-                                variant="outline"
-                                className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
+                                variant="ghost"
+                                className="fm-button-fix fm-button-brand flex items-center gap-2 px-4 py-2"
                             >
                                 <CalendarIcon className="w-4 h-4 text-gray-600" />
                                 <span className="text-sm font-medium text-gray-700">
@@ -949,8 +949,8 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
             </div>
 
             {showRecentAssets ? (
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-2 min-h-[calc(100vh-200px)]">
-                    <div className="lg:col-span-8">
+                <div className="flex flex-col xl:flex-row gap-2 min-h-[calc(100vh-200px)]">
+                    <div className="flex-1 min-w-0">
                         <div className={`space-y-6 ${className}`}>
                             {renderErrorMessages()}
 
@@ -970,8 +970,8 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
                         </div>
                     </div>
 
-                    {/* Right Sidebar - Recent Assets (1 column) */}
-                    <div className="lg:col-span-4">
+                    {/* Right Sidebar - Recent Assets */}
+                    <div className="flex-shrink-0 self-stretch">
                         <RecentAssetsSidebar />
                     </div>
                 </div>

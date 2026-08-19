@@ -187,9 +187,9 @@ export const BookingsFilterDialog: React.FC<BookingsFilterDialogProps> = ({
           {/* Action buttons */}
           <div className="flex justify-end gap-4">
             <Button
-              variant="outline"
+              variant="ghost"
               onClick={handleReset}
-              className="border-gray-300 text-gray-700 hover:bg-gray-50"
+              className="fm-button-fix fm-button-brand px-4 py-2"
             >
               Reset
             </Button>

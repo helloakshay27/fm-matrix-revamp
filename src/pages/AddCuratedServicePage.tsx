@@ -586,9 +586,9 @@ export const AddCuratedServicePage = () => {
           <Button
             type="submit"
             disabled={loading}
-            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2"
+            className="!bg-[#D77754] hover:!bg-[#CA6A48] px-8 py-2"
           >
-            {loading ? "Creating..." : "Create Service"}
+            <span className="!text-white font-medium">{loading ? "Creating..." : "Create Service"}</span>
           </Button>
           <Button
             type="button"

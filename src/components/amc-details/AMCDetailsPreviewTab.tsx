@@ -2,6 +2,15 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Eye, Download, FileText, FileSpreadsheet, X } from "lucide-react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { API_CONFIG } from "@/config/apiConfig";
@@ -27,13 +36,13 @@ const HOUR_VALUES = Array.from({ length: 24 }, (_, idx) => idx);
 const MINUTE_VALUES = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
 
 const WEEKDAY_CODE_TO_NAME: Record<string, string> = {
-  "1": "Sunday",
-  "2": "Monday",
-  "3": "Tuesday",
-  "4": "Wednesday",
-  "5": "Thursday",
-  "6": "Friday",
-  "7": "Saturday",
+  "0": "Sunday",
+  "1": "Monday",
+  "2": "Tuesday",
+  "3": "Wednesday",
+  "4": "Thursday",
+  "5": "Friday",
+  "6": "Saturday",
 };
 
 type CronConfig = {
@@ -221,6 +230,15 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
   amcId,
 }) => {
   const [showScheduleSection, setShowScheduleSection] = useState(false);
+  const [activePreviewFreqTab, setActivePreviewFreqTab] = useState(0);
+  const [visitPage, setVisitPage] = useState(1);
+  const frequencyGroups: Array<{
+    frequency_config_id: number;
+    frequency: string;
+    description?: string;
+    cron_expression?: string;
+    active?: boolean;
+  }> = Array.isArray((amc as any)?.visit_logs_by_frequency) ? (amc as any).visit_logs_by_frequency : [];
   const cronExpression = amc?.cron_expression || "";
   const cronConfig = useMemo(() => parseCronExpression(cronExpression), [cronExpression]);
   const contractDocuments = useMemo(
@@ -240,11 +258,13 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
   const normalizedAmcType = (amc?.amc_type || "").toString().toLowerCase();
   const normalizedChecklistType = (amc?.checklist_type || "").toString().toLowerCase();
   const normalizedResourceType = (amc?.resource_type || "").toString().toLowerCase();
-  const normalizedCoverageType = normalizedAmcType === "non-comprehensive"
-    ? "Non-Comprehensive"
-    : normalizedAmcType === "comprehensive"
-      ? "Comprehensive"
-      : (amc?.coverage_type || amc?.amc_coverage_type || "").toString();
+  const normalizedCoverageType = (() => {
+    const pmsType = (amc?.pms_amc_type || "").toString();
+    if (pmsType) return pmsType;
+    if (normalizedAmcType === "non-comprehensive") return "Non-Comprehensive";
+    if (normalizedAmcType === "comprehensive") return "Comprehensive";
+    return (amc?.coverage_type || amc?.amc_coverage_type || "").toString();
+  })();
   const isAssetType =
     normalizedAmcType === "asset" ||
     normalizedChecklistType === "asset" ||
@@ -479,6 +499,171 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
   const betweenMonthEndValue = cronConfig.betweenMonthEnd || betweenMonthStartValue;
   const betweenMinuteStartValue = cronConfig.betweenMinuteStart.toString().padStart(2, "0");
   const betweenMinuteEndValue = cronConfig.betweenMinuteEnd.toString().padStart(2, "0");
+
+  const renderCronVisual = (cfg: CronConfig) => {
+    const bMonthStart = cfg.betweenMonthStart || "January";
+    const bMonthEnd = cfg.betweenMonthEnd || bMonthStart;
+    const bMinStart = cfg.betweenMinuteStart.toString().padStart(2, "0");
+    const bMinEnd = cfg.betweenMinuteEnd.toString().padStart(2, "0");
+    const monthChecked = (m: string) => cfg.selectedMonths.includes(m);
+    const weekdayChecked = (d: string) => cfg.dayMode === "all" || (cfg.dayMode === "weekdays" && cfg.selectedWeekdays.includes(d));
+    const dayNumChecked = (d: number) => cfg.dayMode === "all" || (cfg.dayMode === "specific" && cfg.selectedDays.includes(d));
+    const hourChecked = (h: number) => cfg.hourMode === "all" || cfg.selectedHours.includes(h);
+    const minuteChecked = (m: number) => {
+      if (cfg.minuteMode === "all") return true;
+      if (cfg.minuteMode === "specific") return cfg.selectedMinutes.includes(m);
+      const s = cfg.betweenMinuteStart, e = cfg.betweenMinuteEnd;
+      return s <= e ? m >= s && m <= e : m >= e && m <= s;
+    };
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-0">
+        {/* Month */}
+        <div style={{ border: '1px dashed rgba(11,10,10,0.56)', borderRadius: '4px', overflow: 'hidden' }}>
+          <div style={{ background: 'rgba(234,230,221,1)', padding: '12px 16px', borderBottom: '1px dashed rgba(11,10,10,0.56)' }}>
+            <h3 className="text-sm font-semibold text-[#1a1a1a]">Month</h3>
+          </div>
+          <div style={{ padding: '16px', background: 'rgba(246,247,247,1)' }}>
+            <div className="space-y-3">
+              <label className="flex items-center cursor-pointer">
+                <input type="radio" checked={cfg.monthMode !== "between"} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
+                <span className="text-[#1a1a1a] font-medium text-sm">Placeholder</span>
+              </label>
+              <div className="space-y-2 mt-4">
+                <label className="flex items-center text-sm cursor-pointer">
+                  <input type="checkbox" checked={cfg.monthMode === "all"} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
+                  <span className="text-[#1a1a1a] font-medium">Select All</span>
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {MONTHS.map((month) => (
+                    <label key={month} className="flex items-center text-sm cursor-pointer">
+                      <input type="checkbox" checked={monthChecked(month)} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
+                      <span className="text-[#1a1a1a]">{month.substring(0, 3)}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <label className="flex items-center mt-4 cursor-pointer">
+                <input type="radio" checked={cfg.monthMode === "between"} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
+                <span className="text-[#1a1a1a] font-medium text-sm">Every month between</span>
+              </label>
+              <div className="flex items-center gap-2 mt-3">
+                <select className="px-2 py-1 border border-gray-300 rounded text-sm" style={{ minWidth: '100px' }} value={bMonthStart} onChange={() => { }}>
+                  {MONTHS.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
+                <span className="text-sm text-[#1a1a1a]">and</span>
+                <select className="px-2 py-1 border border-gray-300 rounded text-sm" style={{ minWidth: '100px' }} value={bMonthEnd} onChange={() => { }}>
+                  {MONTHS.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Day */}
+        <div style={{ border: '1px dashed rgba(11,10,10,0.56)', borderRadius: '4px', overflow: 'hidden' }}>
+          <div style={{ background: 'rgba(234,230,221,1)', padding: '12px 16px', borderBottom: '1px dashed rgba(11,10,10,0.56)' }}>
+            <h3 className="text-sm font-semibold text-[#1a1a1a]">Day</h3>
+          </div>
+          <div style={{ padding: '16px', background: 'rgba(246,247,247,1)' }}>
+            <div className="space-y-3">
+              <label className="flex items-center cursor-pointer">
+                <input type="radio" checked={cfg.dayMode !== "specific"} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
+                <span className="text-[#1a1a1a] font-medium text-sm">Placeholder</span>
+              </label>
+              <div className="space-y-2 mt-4">
+                <label className="flex items-center text-sm cursor-pointer">
+                  <input type="checkbox" checked={cfg.dayMode === "all"} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
+                  <span className="text-[#1a1a1a] font-medium">Select All</span>
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+                    <label key={day} className="flex items-center text-sm cursor-pointer">
+                      <input type="checkbox" checked={weekdayChecked(day)} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
+                      <span className="text-[#1a1a1a]">{day.substring(0, 3)}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <label className="flex items-center mt-4 cursor-pointer">
+                <input type="radio" checked={cfg.dayMode === "specific"} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
+                <span className="text-[#1a1a1a] font-medium text-sm">Specific date of month</span>
+              </label>
+              <div className="grid grid-cols-6 gap-1 mt-3">
+                {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                  <label key={day} className="flex items-center text-xs cursor-pointer">
+                    <input type="checkbox" checked={dayNumChecked(day)} readOnly className="mr-1 w-3 h-3" style={{ accentColor: '#C72030' }} />
+                    <span className="text-[#1a1a1a]">{day.toString().padStart(2, '0')}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Hours */}
+        <div style={{ border: '1px dashed rgba(11,10,10,0.56)', borderRadius: '4px', overflow: 'hidden' }}>
+          <div style={{ background: 'rgba(234,230,221,1)', padding: '12px 16px', borderBottom: '1px dashed rgba(11,10,10,0.56)' }}>
+            <h3 className="text-sm font-semibold text-[#1a1a1a]">Hours</h3>
+          </div>
+          <div style={{ padding: '16px', background: 'rgba(246,247,247,1)' }}>
+            <div className="space-y-3">
+              <label className="flex items-center cursor-pointer">
+                <input type="radio" checked={cfg.hourMode !== "all"} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
+                <span className="text-[#1a1a1a] font-medium text-sm">Choose one or more specific hours</span>
+              </label>
+              <div className="space-y-2 mt-4">
+                <label className="flex items-center text-sm cursor-pointer">
+                  <input type="checkbox" checked={cfg.hourMode === "all"} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
+                  <span className="text-[#1a1a1a] font-medium">Select All</span>
+                </label>
+                <div className="grid grid-cols-7 gap-1">
+                  {Array.from({ length: 25 }, (_, i) => i).map((hour) => (
+                    <label key={hour} className="flex items-center text-xs cursor-pointer">
+                      <input type="checkbox" checked={hourChecked(hour)} readOnly className="mr-1 w-3 h-3" style={{ accentColor: '#C72030' }} />
+                      <span className="text-[#1a1a1a]">{hour.toString().padStart(2, '0')}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Minutes */}
+        <div style={{ border: '1px dashed rgba(11,10,10,0.56)', borderRadius: '4px', overflow: 'hidden' }}>
+          <div style={{ background: 'rgba(234,230,221,1)', padding: '12px 16px', borderBottom: '1px dashed rgba(11,10,10,0.56)' }}>
+            <h3 className="text-sm font-semibold text-[#1a1a1a]">Minutes</h3>
+          </div>
+          <div style={{ padding: '16px', background: 'rgba(246,247,247,1)' }}>
+            <div className="space-y-3">
+              <label className="flex items-center cursor-pointer">
+                <input type="radio" checked={cfg.minuteMode !== "between"} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
+                <span className="text-[#1a1a1a] font-medium text-sm">Specific minutes</span>
+              </label>
+              <div className="grid grid-cols-4 gap-1 mt-4">
+                {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((minute) => (
+                  <label key={minute} className="flex items-center text-xs cursor-pointer">
+                    <input type="checkbox" checked={minuteChecked(minute)} readOnly className="mr-1 w-3 h-3" style={{ accentColor: '#C72030' }} />
+                    <span className="text-[#1a1a1a]">{minute.toString().padStart(2, '0')} min</span>
+                  </label>
+                ))}
+              </div>
+              <label className="flex items-center mt-4 cursor-pointer">
+                <input type="radio" checked={cfg.minuteMode === "between"} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
+                <span className="text-[#1a1a1a] font-medium text-sm">Every minute between minute</span>
+              </label>
+              <div className="flex items-center gap-2 mt-3">
+                <select className="px-2 py-1 border border-gray-300 rounded text-sm" style={{ minWidth: '60px' }} value={bMinStart} onChange={() => { }}>
+                  {MINUTE_VALUES.map((m) => <option key={m} value={m.toString().padStart(2, "0")}>{m.toString().padStart(2, "0")}</option>)}
+                </select>
+                <span className="text-sm text-[#1a1a1a]">and minute</span>
+                <select className="px-2 py-1 border border-gray-300 rounded text-sm" style={{ minWidth: '60px' }} value={bMinEnd} onChange={() => { }}>
+                  {MINUTE_VALUES.map((m) => <option key={m} value={m.toString().padStart(2, "0")}>{m.toString().padStart(2, "0")}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
 
   // Material-UI field styles to match AddAMCPage
@@ -883,6 +1068,23 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
               sx={{ mb: 3 }}
             />
 
+            {frequencyGroups.length > 0 && (
+              <div className="md:col-span-3">
+                <div className="text-sm font-medium text-gray-500 mb-2">AMC Frequency</div>
+                <div className="flex flex-wrap gap-2">
+                  {frequencyGroups.map((g) => (
+                    <span
+                      key={g.frequency_config_id}
+                      className="px-3 py-1 text-sm font-medium rounded-full border"
+                      style={{ backgroundColor: '#FFF0F0', color: '#C72030', borderColor: '#C72030' }}
+                    >
+                      {g.frequency.charAt(0).toUpperCase() + g.frequency.slice(1)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div></div>
           </div>
         </CardContent>
@@ -938,392 +1140,173 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
         {/* Step Content - Schedule */}
         {!showScheduleSection ? (
           <CardContent className="p-0" style={{ backgroundColor: 'rgb(246, 247, 247)' }}>
-            <div className="overflow-x-auto" style={{ maxHeight: '600px', overflowY: 'auto' }}>
-              <table className="min-w-full">
-                <thead style={{ position: 'sticky', top: 0, backgroundColor: '#F6F4EE', zIndex: 10 }}>
-                  <tr className="border-b border-gray-200" style={{ backgroundColor: '#F6F4EE' }}>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Schedule Date</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Visit Date</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Visit No.</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Attendant Name</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">No. of Assets Covered</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Remarks</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Attachment</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Array.isArray(amc?.amc_visit_logs) && amc.amc_visit_logs.length > 0 ? (
-                    amc.amc_visit_logs.map((visit: any, index: number) => (
-                      <tr key={visit.id || index} className="border-b border-gray-100">
-                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.scheduled_date || visit.asset_period || '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.visit_date ? new Date(visit.visit_date).toLocaleDateString('en-GB') : '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.visit_number || '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.attendant_name || visit.technician?.name || '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-sm text-center">{visit.no_of_assets ?? visit.assets_covered ?? '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.remarks || '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.attachment?.document_url || visit.attachment?.document ? '📎 Attached' : '-'}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr className="border-b border-gray-100">
-                      <td colSpan={7} className="py-3 px-4 text-center text-gray-500">
-                        No schedule visits found
-                      </td>
-                    </tr>
+            {(() => {
+              const visitLogs = Array.isArray(amc?.amc_visit_logs) ? amc.amc_visit_logs : [];
+              const VISIT_PER_PAGE = 15;
+              const visitTotalPages = Math.max(1, Math.ceil(visitLogs.length / VISIT_PER_PAGE));
+              const visitPageLogs = visitLogs.slice((visitPage - 1) * VISIT_PER_PAGE, visitPage * VISIT_PER_PAGE);
+
+              const renderVisitPaginationItems = () => {
+                const items: React.ReactNode[] = [];
+                const delta = 1;
+                const left = visitPage - delta;
+                const right = visitPage + delta;
+                let last = 0;
+                for (let i = 1; i <= visitTotalPages; i++) {
+                  if (i === 1 || i === visitTotalPages || (i >= left && i <= right)) {
+                    if (last && i - last > 1) {
+                      items.push(
+                        <PaginationItem key={`ellipsis-${i}`}>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      );
+                    }
+                    items.push(
+                      <PaginationItem key={i}>
+                        <PaginationLink
+                          isActive={visitPage === i}
+                          onClick={() => setVisitPage(i)}
+                          className="cursor-pointer"
+                        >
+                          {i}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                    last = i;
+                  }
+                }
+                return items;
+              };
+
+              return (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full">
+                      <thead style={{ position: 'sticky', top: 0, backgroundColor: '#F6F4EE', zIndex: 10 }}>
+                        <tr className="border-b border-gray-200" style={{ backgroundColor: '#F6F4EE' }}>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">Schedule Date</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">Visit Date</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">Visit No.</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">Attendant Name</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">No. of Assets Covered</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">Remarks</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">Attachment</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {visitLogs.length > 0 ? (
+                          visitPageLogs.map((visit: any, index: number) => (
+                            <tr key={visit.id || index} className="border-b border-gray-100">
+                              <td className="py-3 px-4 text-gray-600 text-sm">{visit.scheduled_date || visit.asset_period || '-'}</td>
+                              <td className="py-3 px-4 text-gray-600 text-sm">{visit.visit_date ? new Date(visit.visit_date).toLocaleDateString('en-GB') : '-'}</td>
+                              <td className="py-3 px-4 text-gray-600 text-sm">{visit.visit_number || '-'}</td>
+                              <td className="py-3 px-4 text-gray-600 text-sm">{visit.attendant_name || visit.technician?.name || '-'}</td>
+                              <td className="py-3 px-4 text-gray-600 text-sm text-center">{visit.no_of_assets ?? visit.assets_covered ?? '-'}</td>
+                              <td className="py-3 px-4 text-gray-600 text-sm">{visit.remarks || '-'}</td>
+                              <td className="py-3 px-4 text-gray-600 text-sm">{visit.attachment?.document_url || visit.attachment?.document ? '📎 Attached' : '-'}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr className="border-b border-gray-100">
+                            <td colSpan={7} className="py-3 px-4 text-center text-gray-500">
+                              No schedule visits found
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {visitLogs.length > 0 && (
+                    <div className="flex justify-center mt-4 mb-4">
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious
+                              onClick={() => setVisitPage((p) => Math.max(1, p - 1))}
+                              className={visitPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            />
+                          </PaginationItem>
+                          {renderVisitPaginationItems()}
+                          <PaginationItem>
+                            <PaginationNext
+                              onClick={() => setVisitPage((p) => Math.min(visitTotalPages, p + 1))}
+                              className={visitPage === visitTotalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
                   )}
-                </tbody>
-              </table>
-            </div>
-            {Array.isArray(amc?.amc_visit_logs) && amc.amc_visit_logs.length > 0 && (
-              <div style={{ padding: '12px 16px', backgroundColor: '#F6F4EE', borderTop: '1px solid #D9D9D9', fontSize: '12px', color: '#666' }}>
-                Total {amc.amc_visit_logs.length} records. Scroll to view all.
-              </div>
-            )}
+                </>
+              );
+            })()}
           </CardContent>
         ) : (
           <CardContent className="p-0" style={{ backgroundColor: 'rgba(246, 247, 247, 1)' }}>
-            <div className="px-6 py-3 text-sm text-gray-600">
-              Cron Expression:{" "}
-              <span className="font-semibold text-[#1a1a1a]">
-                {cronExpression || "N/A"}
-              </span>
-            </div>
-            <div style={{
-              background: 'rgba(246, 247, 247, 1)',
-              borderRadius: '4px',
-              padding: '0px 0px 20px 0px'
-            }}>
-              {/* Four Column Layout */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-0">
-                {/* Month Column */}
-                <div style={{
-                  border: '1px dashed rgba(11, 10, 10, 0.56)',
-                  borderRadius: '4px',
-                  overflow: 'hidden'
-                }}>
-                  <div style={{
-                    background: 'rgba(234, 230, 221, 1)',
-                    padding: '12px 16px',
-                    borderBottom: '1px dashed rgba(11, 10, 10, 0.56)'
-                  }}>
-                    <h3 className="text-sm font-semibold text-[#1a1a1a]" style={{ background: 'rgba(234, 230, 221, 1)' }}>Month</h3>
-                  </div>
-                  <div style={{ padding: '16px', background: 'rgba(246, 247, 247, 1)' }}>
-                    <div className="space-y-3">
-                      <label className="flex items-center cursor-pointer">
-                        <input
-                          type="radio"
-                          name="monthType"
-                          value="placeholder"
-                          checked={cronConfig.monthMode !== "between"}
-                          readOnly
-                          className="mr-2 w-4 h-4"
-                          style={{ accentColor: '#C72030' }}
-                        />
-                        <span className="text-[#1a1a1a] font-medium text-sm">Placeholder</span>
-                      </label>
-
-                      <div className="space-y-2 mt-4">
-                        <label className="flex items-center text-sm cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={cronConfig.monthMode === "all"}
-                            readOnly
-                            className="mr-2 w-4 h-4"
-                            style={{ accentColor: '#C72030' }}
-                          />
-                          <span className="text-[#1a1a1a] font-medium">Select All</span>
-                        </label>
-                        <div className="grid grid-cols-3 gap-2">
-                          {['January', 'February', 'March', 'April', 'May', 'June',
-                            'July', 'August', 'September', 'October', 'November', 'December'].map((month) => (
-                              <label key={month} className="flex items-center text-sm cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={isMonthChecked(month)}
-                                  readOnly
-                                  className="mr-2 w-4 h-4"
-                                  style={{ accentColor: '#C72030' }}
-                                />
-                                <span className="text-[#1a1a1a]">{month.substring(0, 3)}</span>
-                              </label>
-                            ))}
-                        </div>
-                      </div>
-
-                      <label className="flex items-center mt-4 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="monthType"
-                          value="between"
-                          checked={cronConfig.monthMode === "between"}
-                          readOnly
-                          className="mr-2 w-4 h-4"
-                          style={{ accentColor: '#C72030' }}
-                        />
-                        <span className="text-[#1a1a1a] font-medium text-sm">Every month between</span>
-                      </label>
-                      <div className="flex items-center gap-2 mt-3">
-                        <select
-                          className="px-2 py-1 border border-gray-300 rounded text-sm"
-                          style={{ minWidth: '100px' }}
-                          value={betweenMonthStartValue}
-                          onChange={() => { }}
-                        >
-                          {MONTHS.map((month) => (
-                            <option key={month} value={month}>
-                              {month}
-                            </option>
-                          ))}
-                        </select>
-                        <span className="text-sm text-[#1a1a1a]">and</span>
-                        <select
-                          className="px-2 py-1 border border-gray-300 rounded text-sm"
-                          style={{ minWidth: '100px' }}
-                          value={betweenMonthEndValue}
-                          onChange={() => { }}
-                        >
-                          {MONTHS.map((month) => (
-                            <option key={month} value={month}>
-                              {month}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
+            {frequencyGroups.some(g => g.frequency_config_id !== null) ? (
+              /* Multi-frequency tabbed cron view */
+              <div>
+                {/* Frequency tab buttons */}
+                <div className="flex border-b border-gray-200 overflow-x-auto px-2 pt-2">
+                  {frequencyGroups.map((group, idx) => (
+                    <button
+                      key={group.frequency_config_id}
+                      type="button"
+                      onClick={() => setActivePreviewFreqTab(idx)}
+                      className={`px-5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors ${idx === activePreviewFreqTab
+                          ? "border-b-2 border-[#C72030] text-[#C72030] bg-[#FFF8F8]"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        }`}
+                    >
+                      {group.frequency.charAt(0).toUpperCase() + group.frequency.slice(1)}
+                    </button>
+                  ))}
                 </div>
 
-                {/* Day Column */}
-                <div style={{
-                  border: '1px dashed rgba(11, 10, 10, 0.56)',
-                  borderRadius: '4px',
-                  overflow: 'hidden'
-                }}>
-                  <div style={{
-                    background: 'rgba(234, 230, 221, 1)',
-                    padding: '12px 16px',
-                    borderBottom: '1px dashed rgba(11, 10, 10, 0.56)'
-                  }}>
-                    <h3 className="text-sm font-semibold text-[#1a1a1a]" style={{ background: 'rgba(234, 230, 221, 1)' }}>Day</h3>
-                  </div>
-                  <div style={{ padding: '16px', background: 'rgba(246, 247, 247, 1)' }}>
-                    <div className="space-y-3">
-                      <label className="flex items-center cursor-pointer">
-                        <input
-                          type="radio"
-                          name="dayType"
-                          value="placeholder"
-                          checked={cronConfig.dayMode !== "specific"}
-                          readOnly
-                          className="mr-2 w-4 h-4"
-                          style={{ accentColor: '#C72030' }}
-                        />
-                        <span className="text-[#1a1a1a] font-medium text-sm">Placeholder</span>
-                      </label>
-
-                      <div className="space-y-2 mt-4">
-                        <label className="flex items-center text-sm cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={cronConfig.dayMode === "all"}
-                            readOnly
-                            className="mr-2 w-4 h-4"
-                            style={{ accentColor: '#C72030' }}
-                          />
-                          <span className="text-[#1a1a1a] font-medium">Select All</span>
-                        </label>
-                        <div className="grid grid-cols-2 gap-2">
-                          {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
-                            <label key={day} className="flex items-center text-sm cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={isWeekdayChecked(day)}
-                                readOnly
-                                className="mr-2 w-4 h-4"
-                                style={{ accentColor: '#C72030' }}
-                              />
-                              <span className="text-[#1a1a1a]">{day.substring(0, 3)}</span>
-                            </label>
-                          ))}
-                        </div>
+                {/* Per-frequency content panels */}
+                {frequencyGroups.map((group, idx) => {
+                  if (idx !== activePreviewFreqTab) return null;
+                  const freqCronConfig = parseCronExpression(group.cron_expression || cronExpression);
+                  return (
+                    <div key={group.frequency_config_id}>
+                      {/* Info row */}
+                      <div className="flex flex-wrap items-center gap-6 px-6 py-3 text-sm text-gray-600 border-b border-gray-100">
+                        {group.description && (
+                          <span>
+                            <span className="font-semibold text-[#1a1a1a]">Description:</span> {group.description}
+                          </span>
+                        )}
+                        <span>
+                          <span className="font-semibold text-[#1a1a1a]">Cron Expression:</span>{" "}
+                          <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">{group.cron_expression || "N/A"}</code>
+                        </span>
+                        {group.active !== undefined && (
+                          <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${group.active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                            {group.active ? "Active" : "Inactive"}
+                          </span>
+                        )}
                       </div>
-
-                      <label className="flex items-center mt-4 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="dayType"
-                          value="specific"
-                          checked={cronConfig.dayMode === "specific"}
-                          readOnly
-                          className="mr-2 w-4 h-4"
-                          style={{ accentColor: '#C72030' }}
-                        />
-                        <span className="text-[#1a1a1a] font-medium text-sm">Specific date of month (choose one or many)</span>
-                      </label>
-                      <div className="grid grid-cols-6 gap-1 mt-3">
-                        {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-                          <label key={day} className="flex items-center text-xs cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={isDayNumberChecked(day)}
-                              readOnly
-                              className="mr-1 w-3 h-3"
-                              style={{ accentColor: '#C72030' }}
-                            />
-                            <span className="text-[#1a1a1a]">{day.toString().padStart(2, '0')}</span>
-                          </label>
-                        ))}
+                      {/* Cron visual */}
+                      <div style={{ background: 'rgba(246,247,247,1)', borderRadius: '4px', padding: '0px 0px 20px 0px' }}>
+                        {renderCronVisual(freqCronConfig)}
                       </div>
                     </div>
-                  </div>
+                  );
+                })}
+              </div>
+            ) : (
+              /* Single cron view fallback */
+              <div>
+                <div className="px-6 py-3 text-sm text-gray-600">
+                  Cron Expression:{" "}
+                  <span className="font-semibold text-[#1a1a1a]">{cronExpression || "N/A"}</span>
                 </div>
-
-                {/* Hours Column */}
-                <div style={{
-                  border: '1px dashed rgba(11, 10, 10, 0.56)',
-                  borderRadius: '4px',
-                  overflow: 'hidden'
-                }}>
-                  <div style={{
-                    background: 'rgba(234, 230, 221, 1)',
-                    padding: '12px 16px',
-                    borderBottom: '1px dashed rgba(11, 10, 10, 0.56)'
-                  }}>
-                    <h3 className="text-sm font-semibold text-[#1a1a1a]" style={{ background: 'rgba(234, 230, 221, 1)' }}>Hours</h3>
-                  </div>
-                  <div style={{ padding: '16px', background: 'rgba(246, 247, 247, 1)' }}>
-                    <div className="space-y-3">
-                      <label className="flex items-center cursor-pointer">
-                        <input
-                          type="radio"
-                          name="hourType"
-                          value="specific"
-                          checked={cronConfig.hourMode !== "all"}
-                          readOnly
-                          className="mr-2 w-4 h-4"
-                          style={{ accentColor: '#C72030' }}
-                        />
-                        <span className="text-[#1a1a1a] font-medium text-sm">Choose one or more specific hours</span>
-                      </label>
-
-                      <div className="space-y-2 mt-4">
-                        <label className="flex items-center text-sm cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={cronConfig.hourMode === "all"}
-                            readOnly
-                            className="mr-2 w-4 h-4"
-                            style={{ accentColor: '#C72030' }}
-                          />
-                          <span className="text-[#1a1a1a] font-medium">Select All</span>
-                        </label>
-                        <div className="grid grid-cols-7 gap-1">
-                          {Array.from({ length: 25 }, (_, i) => i).map((hour) => (
-                            <label key={hour} className="flex items-center text-xs cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={isHourChecked(hour)}
-                                readOnly
-                                className="mr-1 w-3 h-3"
-                                style={{ accentColor: '#C72030' }}
-                              />
-                              <span className="text-[#1a1a1a]">{hour.toString().padStart(2, '0')}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Minutes Column */}
-                <div style={{
-                  border: '1px dashed rgba(11, 10, 10, 0.56)',
-                  borderRadius: '4px',
-                  overflow: 'hidden'
-                }}>
-                  <div style={{
-                    background: 'rgba(234, 230, 221, 1)',
-                    padding: '12px 16px',
-                    borderBottom: '1px dashed rgba(11, 10, 10, 0.56)'
-                  }}>
-                    <h3 className="text-sm font-semibold text-[#1a1a1a]" style={{ background: 'rgba(234, 230, 221, 1)' }}>Minutes</h3>
-                  </div>
-                  <div style={{ padding: '16px', background: 'rgba(246, 247, 247, 1)' }}>
-                    <div className="space-y-3">
-                      <label className="flex items-center cursor-pointer">
-                        <input
-                          type="radio"
-                          name="minuteType"
-                          value="specific"
-                          checked={cronConfig.minuteMode !== "between"}
-                          readOnly
-                          className="mr-2 w-4 h-4"
-                          style={{ accentColor: '#C72030' }}
-                        />
-                        <span className="text-[#1a1a1a] font-medium text-sm">Specific minutes (choose one or many)</span>
-                      </label>
-
-                      <div className="grid grid-cols-4 gap-1 mt-4">
-                        {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((minute) => (
-                          <label key={minute} className="flex items-center text-xs cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={isMinuteChecked(minute)}
-                              readOnly
-                              className="mr-1 w-3 h-3"
-                              style={{ accentColor: '#C72030' }}
-                            />
-                            <span className="text-[#1a1a1a]">{minute.toString().padStart(2, '0')} min</span>
-                          </label>
-                        ))}
-                      </div>
-
-                      <label className="flex items-center mt-4 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="minuteType"
-                          value="between"
-                          checked={cronConfig.minuteMode === "between"}
-                          readOnly
-                          className="mr-2 w-4 h-4"
-                          style={{ accentColor: '#C72030' }}
-                        />
-                        <span className="text-[#1a1a1a] font-medium text-sm">Every minute between minute</span>
-                      </label>
-                      <div className="flex items-center gap-2 mt-3">
-                        <select
-                          className="px-2 py-1 border border-gray-300 rounded text-sm"
-                          style={{ minWidth: '60px' }}
-                          value={betweenMinuteStartValue}
-                          onChange={() => { }}
-                        >
-                          {MINUTE_VALUES.map((minute) => (
-                            <option key={minute} value={minute.toString().padStart(2, "0")}>
-                              {minute.toString().padStart(2, "0")}
-                            </option>
-                          ))}
-                        </select>
-                        <span className="text-sm text-[#1a1a1a]">and minute</span>
-                        <select
-                          className="px-2 py-1 border border-gray-300 rounded text-sm"
-                          style={{ minWidth: '60px' }}
-                          value={betweenMinuteEndValue}
-                          onChange={() => { }}
-                        >
-                          {MINUTE_VALUES.map((minute) => (
-                            <option key={minute} value={minute.toString().padStart(2, "0")}>
-                              {minute.toString().padStart(2, "0")}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
+                <div style={{ background: 'rgba(246,247,247,1)', borderRadius: '4px', padding: '0px 0px 20px 0px' }}>
+                  {renderCronVisual(cronConfig)}
                 </div>
               </div>
-            </div>
+            )}
           </CardContent>
         )}
       </Card>
@@ -1369,7 +1352,7 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
             </div>
 
             <div className="bg-[#F6F4EE] rounded-lg p-6">
-              <h3 className="text-[#1a1a1a] font-semibold text-base mb-3">AMC Invoice</h3>
+              <h3 className="text-[#1a1a1a] font-semibold text-base mb-3">Other Documents</h3>
               <div className="flex flex-wrap gap-4">
                 {renderAttachmentCards(invoiceDocuments, "No AMC invoice attachments available")}
               </div>

@@ -211,7 +211,7 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
       const fromDate = formatDate(analyticsDateRange.fromDate);
       const toDate = formatDate(analyticsDateRange.toDate);
 
-      const exportUrl = `https://${baseUrl}/pms/admin/food_orders/food_and_booking.json?site_id=${siteId}&access_token=${encodeURIComponent(accessToken)}&true=order_stats&from_date=${fromDate}&to_date=${toDate}&export=peak_hour_orders`;
+      const exportUrl = `https://${baseUrl}/pms/admin/food_orders/food_and_booking.json?site_id=${siteId}&true=order_stats&from_date=${fromDate}&to_date=${toDate}&export=peak_hour_orders`;
 
       const response = await fetch(exportUrl, {
         headers: {
@@ -258,7 +258,7 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
       const fromDate = formatDate(analyticsDateRange.fromDate);
       const toDate = formatDate(analyticsDateRange.toDate);
 
-      const exportUrl = `https://${baseUrl}/pms/admin/food_orders/food_and_booking.json?site_id=${siteId}&access_token=${encodeURIComponent(accessToken)}&true=order_stats&from_date=${fromDate}&to_date=${toDate}&export=order_overtime`;
+      const exportUrl = `https://${baseUrl}/pms/admin/food_orders/food_and_booking.json?site_id=${siteId}&true=order_stats&from_date=${fromDate}&to_date=${toDate}&export=order_overtime`;
 
       const response = await fetch(exportUrl, {
         headers: {
@@ -305,7 +305,7 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
       const fromDate = formatDate(analyticsDateRange.fromDate);
       const toDate = formatDate(analyticsDateRange.toDate);
 
-      const exportUrl = `https://${baseUrl}/pms/admin/food_orders/food_and_booking.json?site_id=${siteId}&access_token=${encodeURIComponent(accessToken)}&true=order_stats&from_date=${fromDate}&to_date=${toDate}&export=popular_restaurnats`;
+      const exportUrl = `https://${baseUrl}/pms/admin/food_orders/food_and_booking.json?site_id=${siteId}&true=order_stats&from_date=${fromDate}&to_date=${toDate}&export=popular_restaurnats`;
 
       const response = await fetch(exportUrl, {
         headers: {
@@ -1147,13 +1147,13 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
               <Button
                 onClick={() => setIsAnalyticsFilterOpen(true)}
                 variant="outline"
-                className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
+                className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-orange-50 border-[#da7756]"
               >
-                <CalendarIcon className="w-4 h-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">
+                <CalendarIcon className="w-4 h-4 text-[#da7756]" />
+                <span className="text-sm font-medium text-[#da7756]">
                   {getFormattedDateRange()}
                 </span>
-                <Filter className="w-4 h-4 text-gray-600" />
+                <Filter className="w-4 h-4 text-[#da7756]" />
               </Button>
             )}
 

@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
+import { usePermitEvents } from '@/components/PostHogPermitEvents';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Checkbox, ListItemText, FormControlLabel } from '@mui/material';
 
 const fieldStyles = {
@@ -66,6 +67,35 @@ const menuProps = {
 
 export const AddPermitPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const {
+    onPermitCreateFormOpened,
+    onPermitCreateStepCompleted,
+    onPermitActivityBlockAdded,
+    onPermitRequestRaised,
+    onPermitCreateFormAbandoned,
+    onPermitFormValidationFailed
+  } = usePermitEvents();
+
+  const mountTime = useRef(Date.now());
+  const isSubmitted = useRef(false);
+  const stepsTracked = useRef({ requestor: false, basic: false, permit: false, attachments: false });
+  const lastFocusedField = useRef('');
+
+  useEffect(() => {
+    onPermitCreateFormOpened({ entry_source: location.state?.from || 'direct_link' });
+
+    return () => {
+      if (!isSubmitted.current) {
+        onPermitCreateFormAbandoned({
+          last_field_focused: lastFocusedField.current,
+          activity_block_count: activitiesRef.current.length,
+          time_on_form_sec: Math.floor((Date.now() - mountTime.current) / 1000)
+        });
+      }
+    };
+  }, []);
+
   const [permitData, setPermitData] = useState({
     // Requestor Details
     name: '',
@@ -96,8 +126,26 @@ export const AddPermitPage = () => {
     comment: '',
 
     // Attachments
-    attachments: null as File | null
+    attachments: null as File | null,
+
+    // Supplier user
+    supplierUser: '',
   });
+
+  const [activities, setActivities] = useState([
+    {
+      activity: '',
+      subActivity: '',
+      categoryOfHazards: '',
+      selectedRisks: [] as string[],
+      subActivities: [] as { id: number; name: string; parent_id: number }[],
+      hazardCategories: [] as { id: number; name: string; parent_id: number }[],
+      risks: [] as { id: number; name: string; parent_id: number }[],
+      loadingSubActivities: false,
+      loadingHazardCategories: false,
+      loadingRisks: false,
+    }
+  ]);
 
   // State for user account loading
   const [loadingUserAccount, setLoadingUserAccount] = useState(false);
@@ -111,7 +159,32 @@ export const AddPermitPage = () => {
   const [loadingEntityOptions, setLoadingEntityOptions] = useState(false);
 
   // State for Permit Types data
-  const [permitTypes, setPermitTypes] = useState<{ id: number; name: string }[]>([]);
+  const [permitTypes, setPermitTypes] = useState<{ id: number; name: string }[]>([]);  // ─── API State ─────────────────────────────────────────────────────────────
+  const activitiesRef = useRef(activities);
+
+  useEffect(() => {
+    activitiesRef.current = activities;
+  }, [activities]);
+
+  useEffect(() => {
+    if (permitData.department && !stepsTracked.current.requestor) {
+      stepsTracked.current.requestor = true;
+      onPermitCreateStepCompleted({ step_key: 'requestor', step_index: 1 });
+    }
+    if (permitData.permitFor && !stepsTracked.current.basic) {
+      stepsTracked.current.basic = true;
+      onPermitCreateStepCompleted({ step_key: 'basic', step_index: 2 });
+    }
+    if (permitData.permitType && !stepsTracked.current.permit) {
+      stepsTracked.current.permit = true;
+      onPermitCreateStepCompleted({ step_key: 'permit', step_index: 3 });
+    }
+    if (permitData.attachments && !stepsTracked.current.attachments) {
+      stepsTracked.current.attachments = true;
+      onPermitCreateStepCompleted({ step_key: 'attachments', step_index: 4 });
+    }
+  }, [permitData]);
+
   const [loadingPermitTypes, setLoadingPermitTypes] = useState(false);
 
   // State for Permit Activities data
@@ -123,6 +196,10 @@ export const AddPermitPage = () => {
   // State for Suppliers/Vendors data
   const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>([]);
   const [loadingSuppliers, setLoadingSuppliers] = useState(false);
+
+  // State for Supplier Users data
+  const [supplierUsers, setSupplierUsers] = useState<{ id: number; firstname: string; lastname: string }[]>([]);
+  const [loadingSupplierUsers, setLoadingSupplierUsers] = useState(false);
 
   // State for buildings data
   const [buildings, setBuildings] = useState<{ id: number; name: string }[]>([]);
@@ -141,22 +218,25 @@ export const AddPermitPage = () => {
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [activities, setActivities] = useState([
-    {
-      activity: '',
-      subActivity: '',
-      categoryOfHazards: '',
-      selectedRisks: [] as string[],
-      subActivities: [] as { id: number; name: string; parent_id: number }[],
-      hazardCategories: [] as { id: number; name: string; parent_id: number }[],
-      risks: [] as { id: number; name: string; parent_id: number }[],
-      loadingSubActivities: false,
-      loadingHazardCategories: false,
-      loadingRisks: false,
-    }
-  ]);
-
   // Handler for multi-select changes
+  const handleInputChange = (field: string, value: string) => {
+    lastFocusedField.current = field;
+    if (field === 'clientSpecific') {
+      // Reset copy to and list of entity when client specific changes
+      setPermitData(prev => ({
+        ...prev,
+        [field]: value,
+        copyTo: [],
+        listOfEntity: []
+      }));
+    } else {
+      setPermitData(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
+  };
+
   const handleMultiSelectChange = (field: string, value: string[]) => {
     setPermitData(prev => ({
       ...prev,
@@ -286,6 +366,30 @@ export const AddPermitPage = () => {
       toast.error('Failed to fetch suppliers');
     } finally {
       setLoadingSuppliers(false);
+    }
+  };
+
+  // Fetch users for a supplier
+  const fetchSupplierUsers = async (supplierId: string) => {
+    if (!supplierId) {
+      setSupplierUsers([]);
+      return;
+    }
+    try {
+      setLoadingSupplierUsers(true);
+      const url = getFullUrl(`/pms/suppliers/get_user_details_for_supplier.json?supplier_id=${supplierId}`);
+      const options = getAuthenticatedFetchOptions('GET');
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      const users = Array.isArray(data) ? data : (data.users || []);
+      setSupplierUsers(users.map((u: any) => ({ id: u.id, firstname: u.firstname || '', lastname: u.lastname || '' })));
+    } catch (error) {
+      console.error('Error fetching supplier users:', error);
+      toast.error('Failed to fetch supplier users');
+      setSupplierUsers([]);
+    } finally {
+      setLoadingSupplierUsers(false);
     }
   };
 
@@ -853,23 +957,6 @@ export const AddPermitPage = () => {
     fetchRooms();
   }, [permitData.floor]);
 
-  const handleInputChange = (field: string, value: string) => {
-    if (field === 'clientSpecific') {
-      // Reset copy to and list of entity when client specific changes
-      setPermitData(prev => ({
-        ...prev,
-        [field]: value,
-        copyTo: [],
-        listOfEntity: []
-      }));
-    } else {
-      setPermitData(prev => ({
-        ...prev,
-        [field]: value
-      }));
-    }
-  };
-
   // Handle building change and reset dependent dropdowns
   const handleBuildingChange = (value: string) => {
     setPermitData(prev => ({
@@ -924,6 +1011,7 @@ export const AddPermitPage = () => {
   };
 
   const handleAddActivity = () => {
+    onPermitActivityBlockAdded({ block_index: activities.length });
     setActivities(prev => [...prev, {
       activity: '',
       subActivity: '',
@@ -1081,43 +1169,49 @@ export const AddPermitPage = () => {
 
     try {
       setIsSubmitting(true);
+      const failed_fields: string[] = [];
 
       // Validate required fields
       if (!permitData.permitFor.trim()) {
+        failed_fields.push('permitFor');
         toast.error('Please enter permit for field');
-        return;
       }
       if (!permitData.building) {
+        failed_fields.push('building');
         toast.error('Please select building');
-        return;
       }
       if (!permitData.permitType) {
+        failed_fields.push('permitType');
         toast.error('Please select permit type');
-        return;
       }
       if (activities.length === 0 || !activities[0].activity) {
+        failed_fields.push('activity');
         toast.error('Please add at least one activity');
-        return;
       }
 
       // Validate first activity details (mandatory: sub activity, category of hazards, risks)
       const firstActivity = activities[0];
       if (!firstActivity.subActivity) {
+        failed_fields.push('subActivity');
         toast.error('Please select sub activity for Activity 1');
-        return;
       }
       if (!firstActivity.categoryOfHazards) {
+        failed_fields.push('categoryOfHazards');
         toast.error('Please select category of hazards for Activity 1');
-        return;
       }
       if (firstActivity.selectedRisks.length === 0) {
+        failed_fields.push('selectedRisks');
         toast.error('Please select at least one risk for Activity 1');
-        return;
       }
 
       // Validate vendor (mandatory)
       if (!permitData.vendor) {
+        failed_fields.push('vendor');
         toast.error('Please select vendor');
+      }
+
+      if (failed_fields.length > 0) {
+        onPermitFormValidationFailed({ failed_fields });
         return;
       }
 
@@ -1148,6 +1242,11 @@ export const AddPermitPage = () => {
       // Vendor ID
       if (permitData.vendor) {
         formData.append('pms_permit[vendor_id]', permitData.vendor);
+      }
+
+      // Vendor User ID
+      if (permitData.supplierUser) {
+        formData.append('pms_permit[vendor_user_id]', permitData.supplierUser);
       }
 
       // Permit details (activities) with nested attributes
@@ -1198,6 +1297,15 @@ export const AddPermitPage = () => {
 
       const responseData = await response.json();
       console.log('Permit created successfully:', responseData);
+
+      isSubmitted.current = true;
+      onPermitRequestRaised({
+        permit_type: permitTypes.find(t => t.id.toString() === permitData.permitType)?.name || 'Unknown',
+        activity_block_count: activities.length,
+        location_depth: [permitData.building, permitData.wing, permitData.floor, permitData.room].filter(Boolean).length,
+        has_attachments: !!permitData.attachments,
+        time_on_form_sec: Math.floor((Date.now() - mountTime.current) / 1000)
+      });
 
       toast.success(`Permit created successfully! Reference Number: ${responseData.permit?.reference_number || 'N/A'}`);
       navigate('/safety/permit');
@@ -1827,14 +1935,18 @@ export const AddPermitPage = () => {
               <MuiSelect
                 label="Vendor"
                 value={permitData.vendor}
-                onChange={(e) => handleInputChange('vendor', e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setPermitData(prev => ({ ...prev, vendor: val, supplierUser: '' }));
+                  setSupplierUsers([]);
+                  fetchSupplierUsers(val);
+                }}
                 displayEmpty
                 sx={fieldStyles}
                 MenuProps={menuProps}
                 disabled={loadingSuppliers}
               >
                 <MenuItem value="">
-                  {/* <em>{loadingSuppliers ? 'Loading suppliers...' : 'Select Vendor'}</em> */}
                 </MenuItem>
                 {suppliers.map((supplier) => (
                   <MenuItem key={supplier.id} value={supplier.id}>
@@ -1843,6 +1955,32 @@ export const AddPermitPage = () => {
                 ))}
               </MuiSelect>
             </FormControl>
+
+            {permitData.vendor && (
+              <FormControl fullWidth variant="outlined">
+                <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>
+                  Supplier User
+                </InputLabel>
+                <MuiSelect
+                  label="Supplier User"
+                  value={permitData.supplierUser}
+                  onChange={(e) => handleInputChange('supplierUser', e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                  MenuProps={menuProps}
+                  disabled={loadingSupplierUsers}
+                >
+                  <MenuItem value="">
+                    <em>{loadingSupplierUsers ? 'Loading users...' : 'Select User'}</em>
+                  </MenuItem>
+                  {supplierUsers.map((user) => (
+                    <MenuItem key={user.id} value={user.id.toString()}>
+                      {`${user.firstname} ${user.lastname}`.trim()}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+            )}
 
             {/* <TextField
               label="Comment (Optional)"

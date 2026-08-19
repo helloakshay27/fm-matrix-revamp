@@ -24,6 +24,7 @@ import {
   type TenantTableResponse,
   type PulseFilters,
 } from "@/services/pulseDashboardApi";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 const C = {
   green: "#798C5E",
@@ -67,6 +68,13 @@ export function PulseCustomers({ filters }: Props) {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [entitySearch, setEntitySearch] = useState("");
+
+  const pulseEvents = usePulseEvents();
+
+
+  useEffect(() => {
+    pulseEvents.onCustomerListViewed();
+  }, [pulseEvents]);
 
   const orgMemberColumns = useMemo(() => {
     const tenants = tenantsDetails?.tenants ?? [];

@@ -29,13 +29,13 @@
 //       borderColor: '#9ca3af',
 //     },
 //     '&.Mui-focused fieldset': {
-//       borderColor: '#C72030',
+//       borderColor: '#DA7756',
 //     },
 //   },
 //   '& .MuiInputLabel-root': {
 //     color: '#6b7280',
 //     '&.Mui-focused': {
-//       color: '#C72030',
+//       color: '#DA7756',
 //     },
 //   },
 // };
@@ -623,7 +623,7 @@
 //           <span className="mx-2">{'>'}</span>
 //           <span>Incident</span>
 //         </nav>
-//         <Heading level="h1" variant="primary" spacing="none" className="text-[#C72030] font-semibold">
+//         <Heading level="h1" variant="primary" spacing="none" className="text-[#DA7756] font-semibold">
 //           NEW INCIDENT
 //         </Heading>
 //       </div>
@@ -632,17 +632,17 @@
 //       <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
 //         <CardHeader className='bg-[#F6F4EE] mb-4'>
 //           <CardTitle className="text-lg text-black flex items-center">
-//             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
+//             <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
 //             INCIDENT DETAILS
 //           </CardTitle>
 //         </CardHeader>
 //         <CardContent className="p-6 bg-white">
 //           {/* Time & Date Section */}
 //           <div className="mb-6">
-//             <h3 className="text-sm font-medium mb-3">Time & Date <span style={{ color: '#C72030' }}>*</span></h3>
+//             <h3 className="text-sm font-medium mb-3">Time & Date <span style={{ color: '#DA7756' }}>*</span></h3>
 //             <div className="grid grid-cols-5 gap-2">
 //               <FormControl fullWidth variant="outlined">
-//                 <InputLabel shrink>Year <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//                 <InputLabel shrink>Year <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //                 <MuiSelect
 //                   label="Year *"
 //                   value={incidentData.year}
@@ -664,7 +664,7 @@
 //               </FormControl>
 
 //               <FormControl fullWidth variant="outlined">
-//                 <InputLabel shrink>Month <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//                 <InputLabel shrink>Month <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //                 <MuiSelect
 //                   label="Month *"
 //                   value={incidentData.month}
@@ -690,7 +690,7 @@
 //               </FormControl>
 
 //               <FormControl fullWidth variant="outlined">
-//                 <InputLabel shrink>Day <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//                 <InputLabel shrink>Day <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //                 <MuiSelect
 //                   label="Day *"
 //                   value={incidentData.day}
@@ -707,7 +707,7 @@
 //               </FormControl>
 
 //               <FormControl fullWidth variant="outlined">
-//                 <InputLabel shrink>Hour <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//                 <InputLabel shrink>Hour <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //                 <MuiSelect
 //                   label="Hour *"
 //                   value={incidentData.hour}
@@ -724,7 +724,7 @@
 //               </FormControl>
 
 //               <FormControl fullWidth variant="outlined">
-//                 <InputLabel shrink>Minute <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//                 <InputLabel shrink>Minute <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //                 <MuiSelect
 //                   label="Minute *"
 //                   value={incidentData.minute}
@@ -747,7 +747,7 @@
 //           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
 //             {/* Building Dropdown */}
 //             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-//               <InputLabel shrink>Building <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//               <InputLabel shrink>Building <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //               <MuiSelect
 //                 label="Building *"
 //                 value={incidentData.building}
@@ -766,7 +766,7 @@
 //             {/* PRIMARY CATEGORY HIERARCHY */}
 //             {/* Level 1: Category */}
 //             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-//               <InputLabel shrink>Primary Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//               <InputLabel shrink>Primary Category <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //               <MuiSelect
 //                 label="Primary Category *"
 //                 value={incidentData.categoryForIncident}
@@ -784,7 +784,7 @@
 
 //             {/* Level 2: Sub Category */}
 //             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }} disabled={!incidentData.categoryForIncident}>
-//               <InputLabel shrink>Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//               <InputLabel shrink>Sub Category <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //               <MuiSelect
 //                 label="Sub Category *"
 //                 value={incidentData.primaryCategory}
@@ -802,7 +802,7 @@
 
 //             {/* Level 3: Sub Sub Category */}
 //             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }} disabled={!incidentData.primaryCategory}>
-//               <InputLabel shrink>Sub Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//               <InputLabel shrink>Sub Sub Category <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //               <MuiSelect
 //                 label="Sub Sub Category *"
 //                 value={incidentData.subCategory}
@@ -820,7 +820,7 @@
 
 //             {/* Level 4: Sub Sub Sub Category */}
 //             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }} disabled={!incidentData.subCategory}>
-//               <InputLabel shrink>Sub Sub Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//               <InputLabel shrink>Sub Sub Sub Category <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //               <MuiSelect
 //                 label="Sub Sub Sub Category *"
 //                 value={incidentData.subSubCategory}
@@ -910,7 +910,7 @@
 //             </FormControl>
 
 //             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-//               <InputLabel shrink>Severity <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//               <InputLabel shrink>Severity <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //               <MuiSelect
 //                 label="Severity *"
 //                 value={incidentData.severity}
@@ -929,7 +929,7 @@
 //             </FormControl>
 
 //             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-//               <InputLabel shrink>Probability <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//               <InputLabel shrink>Probability <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //               <MuiSelect
 //                 label="Probability *"
 //                 value={incidentData.probability}
@@ -948,7 +948,7 @@
 //             </FormControl>
 
 //             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-//               <InputLabel shrink>Incident level <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//               <InputLabel shrink>Incident level <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //               <MuiSelect
 //                 label="Incident level *"
 //                 value={incidentData.incidentLevel}
@@ -980,7 +980,7 @@
 //           {/* Description */}
 //           {/* <div className="mt-6">
 //             <TextField
-//               label={<>Description<span style={{ color: '#C72030' }}>*</span></>}
+//               label={<>Description<span style={{ color: '#DA7756' }}>*</span></>}
 //               value={incidentData.description}
 //               onChange={e => handleInputChange('description', e.target.value)}
 //               fullWidth
@@ -1012,7 +1012,7 @@
 //           </div> */}
 //           <div className="mt-6">
 //             <TextField
-//               label={<>Description<span style={{ color: '#C72030' }}>*</span></>}
+//               label={<>Description<span style={{ color: '#DA7756' }}>*</span></>}
 //               value={incidentData.description}
 //               onChange={e => handleInputChange('description', e.target.value)}
 //               fullWidth
@@ -1041,7 +1041,7 @@
 //       <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
 //         <CardHeader className='bg-[#F6F4EE] mb-4'>
 //           <CardTitle className="text-lg text-black flex items-center">
-//             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
+//             <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
 //             SUPPORT & DISCLAIMER
 //           </CardTitle>
 //         </CardHeader>
@@ -1055,9 +1055,9 @@
 //                     checked={incidentData.supportRequired}
 //                     onChange={(e) => handleCheckboxChange('supportRequired', e.target.checked)}
 //                     sx={{
-//                       color: '#C72030',
+//                       color: '#DA7756',
 //                       '&.Mui-checked': {
-//                         color: '#C72030',
+//                         color: '#DA7756',
 //                       },
 //                     }}
 //                   />
@@ -1067,16 +1067,16 @@
 //             </div>
 
 //             <div>
-//               <h3 className="text-lg font-medium mb-3">Disclaimer <span style={{ color: '#C72030' }}>*</span></h3>
+//               <h3 className="text-lg font-medium mb-3">Disclaimer <span style={{ color: '#DA7756' }}>*</span></h3>
 //               <FormControlLabel
 //                 control={
 //                   <Checkbox
 //                     checked={incidentData.factsCorrect}
 //                     onChange={(e) => handleCheckboxChange('factsCorrect', e.target.checked)}
 //                     sx={{
-//                       color: '#C72030',
+//                       color: '#DA7756',
 //                       '&.Mui-checked': {
-//                         color: '#C72030',
+//                         color: '#DA7756',
 //                       },
 //                     }}
 //                   />
@@ -1092,7 +1092,7 @@
 //       <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
 //         <CardHeader className='bg-[#F6F4EE] mb-4'>
 //           <CardTitle className="text-lg text-black flex items-center">
-//             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
+//             <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
 //             ATTACHMENTS
 //           </CardTitle>
 //         </CardHeader>
@@ -1120,7 +1120,7 @@
 //             <div>
 //               <Button
 //                 style={{
-//                   backgroundColor: '#C72030'
+//                   backgroundColor: '#DA7756'
 //                 }}
 //                 className="text-white hover:opacity-90"
 //               >
@@ -1156,10 +1156,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Checkbox, FormControlLabel } from '@mui/material';
 import { Heading } from '@/components/ui/heading';
+import { useIncidentEvents, type IncidentCreateStepKey } from '@/components/PostHogIncidentEvents';
 
 const fieldStyles = {
   height: {
@@ -1184,13 +1185,13 @@ const fieldStyles = {
       borderColor: '#9ca3af',
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
+      borderColor: '#DA7756',
     },
   },
   '& .MuiInputLabel-root': {
     color: '#6b7280',
     '&.Mui-focused': {
-      color: '#C72030',
+      color: '#DA7756',
     },
   },
 };
@@ -1239,7 +1240,58 @@ const getCurrentDateTime = () => {
 
 export const AddIncidentPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const incidentEvents = useIncidentEvents();
   const currentDateTime = getCurrentDateTime();
+
+  // PostHog F1 funnel tracking
+  const formOpenedAtRef = useRef<number>(Date.now());
+  const stepStartAtRef = useRef<number>(Date.now());
+  const stepsSeenRef = useRef<Set<IncidentCreateStepKey>>(new Set());
+  const lastFieldFocusedRef = useRef<string | null>(null);
+  const hasSubmittedRef = useRef(false);
+  // Mirror of incidentData so the unmount cleanup reads the latest values, not the mount-time snapshot
+  const incidentDataRef = useRef<any>(null);
+
+  useEffect(() => {
+    const entrySource = (location.state as { entrySource?: string } | null)?.entrySource ?? 'direct';
+    incidentEvents.onIncidentCreateFormOpened(entrySource);
+    return () => {
+      // Fire F1 drop-off attribution on unmount if the form was never submitted
+      if (hasSubmittedRef.current) return;
+      const snapshot = incidentDataRef.current;
+      const filledFields = Object.entries(snapshot).filter(([, v]) => {
+        if (typeof v === 'boolean') return v;
+        if (Array.isArray(v)) return v.length > 0;
+        return Boolean(v);
+      }).length;
+      const primaryLevels = [
+        snapshot.primaryCategory,
+        snapshot.subCategory,
+        snapshot.subSubCategory,
+        snapshot.subSubSubCategory,
+      ];
+      incidentEvents.onIncidentCreateFormAbandoned({
+        last_field_focused: lastFieldFocusedRef.current,
+        fields_completed_count: filledFields,
+        category_depth_reached: primaryLevels.filter(Boolean).length,
+        time_on_form_sec: Math.round((Date.now() - formOpenedAtRef.current) / 1000),
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Fire an F1 step-completion once, when a step's key field is first filled.
+  // Steps: time_building (step 0) → categorise (1) → assess (2) → describe_disclaim (3)
+  const markStepCompleted = (stepKey: IncidentCreateStepKey) => {
+    if (stepsSeenRef.current.has(stepKey)) return;
+    const order: IncidentCreateStepKey[] = ['time_building', 'categorise', 'assess', 'describe_disclaim'];
+    stepsSeenRef.current.add(stepKey);
+    const now = Date.now();
+    const stepDurationSec = Math.round((now - stepStartAtRef.current) / 1000);
+    stepStartAtRef.current = now;
+    incidentEvents.onIncidentCreateStepCompleted(stepKey, order.indexOf(stepKey), stepDurationSec);
+  };
 
   const [incidentData, setIncidentData] = useState({
     year: currentDateTime.year,
@@ -1269,6 +1321,11 @@ export const AddIncidentPage = () => {
     factsCorrect: false,
     attachments: [] as File[]
   });
+
+  // Keep a ref mirror of incidentData for the unmount abandon handler
+  useEffect(() => {
+    incidentDataRef.current = incidentData;
+  }, [incidentData]);
 
 
   // State for buildings
@@ -1535,10 +1592,24 @@ export const AddIncidentPage = () => {
     return '';
   };
 
+  // Map a form field to its F1 funnel step
+  const stepForField = (field: string): IncidentCreateStepKey | null => {
+    if (['year', 'month', 'day', 'hour', 'minute', 'building'].includes(field)) return 'time_building';
+    if (field.toLowerCase().includes('category') || field.toLowerCase().includes('categor')) return 'categorise';
+    if (['severity', 'probability', 'incidentLevel'].includes(field)) return 'assess';
+    if (['description'].includes(field)) return 'describe_disclaim';
+    return null;
+  };
+
   const handleInputChange = (field: string, value: string) => {
     // Character limit for description field
     if (field === 'description' && value.length > 240) {
       return; // Don't update state if exceeds 240 characters
+    }
+    lastFieldFocusedRef.current = field;
+    if (value) {
+      const step = stepForField(field);
+      if (step) markStepCompleted(step);
     }
     setIncidentData(prev => ({ ...prev, [field]: value }));
   };
@@ -1575,6 +1646,10 @@ export const AddIncidentPage = () => {
   };
 
   const handleCheckboxChange = (field: string, checked: boolean) => {
+    lastFieldFocusedRef.current = field;
+    if (field === 'factsCorrect' && checked) {
+      markStepCompleted('describe_disclaim');
+    }
     setIncidentData(prev => ({
       ...prev,
       [field]: checked
@@ -1592,6 +1667,22 @@ export const AddIncidentPage = () => {
   };
 
   const handleSubmit = async () => {
+    // Collect all missing required fields up-front for the validation-friction event
+    const failedFields: string[] = [];
+    if (!incidentData.year || !incidentData.month || !incidentData.day) failedFields.push('date');
+    if (!incidentData.hour || !incidentData.minute) failedFields.push('time');
+    if (!incidentData.building) failedFields.push('building');
+    if (!incidentData.primaryCategory) failedFields.push('primaryCategory');
+    if (!incidentData.subCategory) failedFields.push('subCategory');
+    if (!incidentData.subSubCategory) failedFields.push('subSubCategory');
+    if (!incidentData.severity) failedFields.push('severity');
+    if (!incidentData.probability) failedFields.push('probability');
+    if (!incidentData.description || incidentData.description.trim() === '') failedFields.push('description');
+    if (!incidentData.factsCorrect) failedFields.push('disclaimer');
+    if (failedFields.length > 0) {
+      incidentEvents.onIncidentFormValidationFailed(failedFields);
+    }
+
     // Time validation
     if (!incidentData.year || !incidentData.month || !incidentData.day) {
       toast.error('Please select complete date (day, month, year)');
@@ -1720,6 +1811,32 @@ export const AddIncidentPage = () => {
         throw new Error(errText || 'Failed to create incident');
       }
 
+      // F1 funnel end (= business Incident Reported)
+      hasSubmittedRef.current = true;
+      const primaryLevels = [
+        incidentData.primaryCategory,
+        incidentData.subCategory,
+        incidentData.subSubCategory,
+        incidentData.subSubSubCategory,
+      ];
+      const categoryDepthReached = primaryLevels.filter(Boolean).length;
+      const secondaryUsed = Boolean(
+        incidentData.secondaryCategory ||
+        incidentData.secondarySubCategory ||
+        incidentData.secondarySubSubCategory ||
+        incidentData.secondarySubSubSubCategory
+      );
+      incidentEvents.onIncidentCreateFormSubmitted({
+        category_depth_reached: categoryDepthReached,
+        secondary_used: secondaryUsed,
+        severity: incidentData.severity,
+        probability: incidentData.probability,
+        incident_level: incidentData.incidentLevel,
+        support_required: incidentData.supportRequired,
+        has_attachments: incidentData.attachments.length > 0,
+        time_on_form_sec: Math.round((Date.now() - formOpenedAtRef.current) / 1000),
+      });
+
       toast.success('Incident reported successfully!');
       navigate('/safety/incident');
     } catch (err: any) {
@@ -1739,7 +1856,7 @@ export const AddIncidentPage = () => {
           <span className="mx-2">{'>'}</span>
           <span>Incident</span>
         </nav>
-        <Heading level="h1" variant="primary" spacing="none" className="text-[#C72030] font-semibold">
+        <Heading level="h1" variant="primary" spacing="none" className="text-[#DA7756] font-semibold">
           NEW INCIDENT
         </Heading>
       </div>
@@ -1748,17 +1865,17 @@ export const AddIncidentPage = () => {
       <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
         <CardHeader className='bg-[#F6F4EE] mb-4'>
           <CardTitle className="text-lg text-black flex items-center">
-            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
+            <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
             INCIDENT DETAILS
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 bg-white">
           {/* Time & Date Section */}
           <div className="mb-6">
-            <h3 className="text-sm font-medium mb-3">Time & Date <span style={{ color: '#C72030' }}>*</span></h3>
+            <h3 className="text-sm font-medium mb-3">Time & Date <span style={{ color: '#DA7756' }}>*</span></h3>
             <div className="grid grid-cols-5 gap-2">
               <FormControl fullWidth variant="outlined">
-                <InputLabel shrink>Year <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                <InputLabel shrink>Year <span style={{ color: '#DA7756' }}>*</span></InputLabel>
                 <MuiSelect
                   label="Year *"
                   value={incidentData.year}
@@ -1780,7 +1897,7 @@ export const AddIncidentPage = () => {
               </FormControl>
 
               <FormControl fullWidth variant="outlined">
-                <InputLabel shrink>Month <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                <InputLabel shrink>Month <span style={{ color: '#DA7756' }}>*</span></InputLabel>
                 <MuiSelect
                   label="Month *"
                   value={incidentData.month}
@@ -1806,7 +1923,7 @@ export const AddIncidentPage = () => {
               </FormControl>
 
               <FormControl fullWidth variant="outlined">
-                <InputLabel shrink>Day <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                <InputLabel shrink>Day <span style={{ color: '#DA7756' }}>*</span></InputLabel>
                 <MuiSelect
                   label="Day *"
                   value={incidentData.day}
@@ -1823,7 +1940,7 @@ export const AddIncidentPage = () => {
               </FormControl>
 
               <FormControl fullWidth variant="outlined">
-                <InputLabel shrink>Hour <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                <InputLabel shrink>Hour <span style={{ color: '#DA7756' }}>*</span></InputLabel>
                 <MuiSelect
                   label="Hour *"
                   value={incidentData.hour}
@@ -1840,7 +1957,7 @@ export const AddIncidentPage = () => {
               </FormControl>
 
               <FormControl fullWidth variant="outlined">
-                <InputLabel shrink>Minute <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                <InputLabel shrink>Minute <span style={{ color: '#DA7756' }}>*</span></InputLabel>
                 <MuiSelect
                   label="Minute *"
                   value={incidentData.minute}
@@ -1863,7 +1980,7 @@ export const AddIncidentPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             {/* Building Dropdown */}
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Building <span style={{ color: '#C72030' }}>*</span></InputLabel>
+              <InputLabel shrink>Building <span style={{ color: '#DA7756' }}>*</span></InputLabel>
               <MuiSelect
                 label="Building *"
                 value={incidentData.building}
@@ -1882,7 +1999,7 @@ export const AddIncidentPage = () => {
             {/* PRIMARY CATEGORY HIERARCHY */}
             {/* Level 1: Primary Category */}
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Primary Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+              <InputLabel shrink>Primary Category <span style={{ color: '#DA7756' }}>*</span></InputLabel>
               <MuiSelect
                 label="Primary Category *"
                 value={incidentData.primaryCategory}
@@ -1900,7 +2017,7 @@ export const AddIncidentPage = () => {
 
             {/* Level 2: Sub Category */}
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }} disabled={!incidentData.primaryCategory}>
-              <InputLabel shrink>Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+              <InputLabel shrink>Sub Category <span style={{ color: '#DA7756' }}>*</span></InputLabel>
               <MuiSelect
                 label="Sub Category *"
                 value={incidentData.subCategory}
@@ -1918,7 +2035,7 @@ export const AddIncidentPage = () => {
 
             {/* Level 3: Sub Sub Category */}
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }} disabled={!incidentData.subCategory}>
-              <InputLabel shrink>Sub Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+              <InputLabel shrink>Sub Sub Category <span style={{ color: '#DA7756' }}>*</span></InputLabel>
               <MuiSelect
                 label="Sub Sub Category *"
                 value={incidentData.subSubCategory}
@@ -2026,7 +2143,7 @@ export const AddIncidentPage = () => {
             </FormControl>
 
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Severity <span style={{ color: '#C72030' }}>*</span></InputLabel>
+              <InputLabel shrink>Severity <span style={{ color: '#DA7756' }}>*</span></InputLabel>
               <MuiSelect
                 label="Severity *"
                 value={incidentData.severity}
@@ -2045,7 +2162,7 @@ export const AddIncidentPage = () => {
             </FormControl>
 
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Probability <span style={{ color: '#C72030' }}>*</span></InputLabel>
+              <InputLabel shrink>Probability <span style={{ color: '#DA7756' }}>*</span></InputLabel>
               <MuiSelect
                 label="Probability *"
                 value={incidentData.probability}
@@ -2064,7 +2181,7 @@ export const AddIncidentPage = () => {
             </FormControl>
 
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Incident level <span style={{ color: '#C72030' }}>*</span></InputLabel>
+              <InputLabel shrink>Incident level <span style={{ color: '#DA7756' }}>*</span></InputLabel>
               <MuiSelect
                 label="Incident level *"
                 value={incidentData.incidentLevel}
@@ -2096,7 +2213,7 @@ export const AddIncidentPage = () => {
           {/* Description */}
           <div className="mt-6">
             <TextField
-              label={<>Description<span style={{ color: '#C72030' }}>*</span></>}
+              label={<>Description<span style={{ color: '#DA7756' }}>*</span></>}
               value={incidentData.description}
               onChange={e => handleInputChange('description', e.target.value)}
               fullWidth
@@ -2136,7 +2253,7 @@ export const AddIncidentPage = () => {
       <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
         <CardHeader className='bg-[#F6F4EE] mb-4'>
           <CardTitle className="text-lg text-black flex items-center">
-            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
+            <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
             SUPPORT & DISCLAIMER
           </CardTitle>
         </CardHeader>
@@ -2150,9 +2267,9 @@ export const AddIncidentPage = () => {
                     checked={incidentData.supportRequired}
                     onChange={(e) => handleCheckboxChange('supportRequired', e.target.checked)}
                     sx={{
-                      color: '#C72030',
+                      color: '#DA7756',
                       '&.Mui-checked': {
-                        color: '#C72030',
+                        color: '#DA7756',
                       },
                     }}
                   />
@@ -2162,16 +2279,16 @@ export const AddIncidentPage = () => {
             </div>
 
             <div>
-              <h3 className="text-lg font-medium mb-3">Disclaimer <span style={{ color: '#C72030' }}>*</span></h3>
+              <h3 className="text-lg font-medium mb-3">Disclaimer <span style={{ color: '#DA7756' }}>*</span></h3>
               <FormControlLabel
                 control={
                   <Checkbox
                     checked={incidentData.factsCorrect}
                     onChange={(e) => handleCheckboxChange('factsCorrect', e.target.checked)}
                     sx={{
-                      color: '#C72030',
+                      color: '#DA7756',
                       '&.Mui-checked': {
-                        color: '#C72030',
+                        color: '#DA7756',
                       },
                     }}
                   />
@@ -2187,7 +2304,7 @@ export const AddIncidentPage = () => {
       <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
         <CardHeader className='bg-[#F6F4EE] mb-4'>
           <CardTitle className="text-lg text-black flex items-center">
-            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
+            <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
             ATTACHMENTS
           </CardTitle>
         </CardHeader>
@@ -2299,7 +2416,7 @@ export const AddIncidentPage = () => {
             {/* <div>
               <Button
                 style={{
-                  backgroundColor: '#C72030'
+                  backgroundColor: '#DA7756'
                 }}
                 className="text-white hover:opacity-90"
               >
@@ -2314,11 +2431,7 @@ export const AddIncidentPage = () => {
       <div className="flex justify-center pt-6">
         <Button
           onClick={handleSubmit}
-          // style={{
-          //   backgroundColor: '#8B4A8C'
-          // }}
-          // className="text-white hover:opacity-90 px-8 py-3 text-lg"
-          className='text-[18px]'
+          className="px-8 bg-brand hover:bg-brand-hover text-white"
         >
           Create Incident
         </Button>

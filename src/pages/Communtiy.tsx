@@ -1,4 +1,5 @@
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable"
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import { Button } from "@/components/ui/button"
 import { Switch } from "@mui/material"
 import { ColumnConfig } from "@/hooks/useEnhancedTable"
@@ -56,6 +57,16 @@ const columns: ColumnConfig[] = [
 ]
 
 const Communtiy = () => {
+  const pulseEvents = usePulseEvents();
+
+  useEffect(() => {
+    pulseEvents.onModuleViewed({
+      module: "Community",
+      package: "Pulse Privilege",
+      screen: "pulse_community_list",
+    });
+  }, [pulseEvents]);
+
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const baseUrl = localStorage.getItem("baseUrl")
@@ -357,12 +368,6 @@ const Communtiy = () => {
                             },
                             '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
                                 backgroundColor: '#04A231',
-                            },
-                            '& .MuiSwitch-switchBase:not(.Mui-checked)': {
-                                color: '#C72030',
-                            },
-                            '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
-                                backgroundColor: 'rgba(199, 32, 48, 0.5)',
                             },
                         }}
                     />

@@ -59,6 +59,11 @@ interface DashboardData {
       components: BusinessHealthComponents;
     };
     top_stuck_issues: { total: number; items: TopStuckIssue[] };
+    tasks_overview?: {
+      assigned: number;
+      completed: number;
+      overdue: number;
+    };
     latest_team_chat: { total: number; items: any[] };
     hall_of_fame: { items: any[] };
     counters: {
@@ -93,6 +98,7 @@ interface AiSuggestionsResponse {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
 
 const AI_SUGGESTION_CATEGORY_STYLE = {
   issues: {
@@ -333,6 +339,16 @@ const BusinessCompassDashboard: React.FC = () => {
   const displayTodosHigh = focusMode === "Weekly" ? weeklyTodosHigh : todosHigh;
   const displayLoading =
     focusMode === "Weekly" ? weeklyLoading : todosLoading || dayDataLoading;
+
+  // Tasks Overview – straight off the dashboard API
+  const taskStats = useMemo(() => {
+    const overview = dashboardData?.data?.tasks_overview;
+    return {
+      assigned: overview?.assigned ?? 0,
+      completed: overview?.completed ?? 0,
+      overdue: overview?.overdue ?? 0,
+    };
+  }, [dashboardData]);
 
   // ── Fetch data for a specific day ─────────────────────────────────────
   const fetchDayData = async (date: Date) => {
@@ -671,8 +687,8 @@ const BusinessCompassDashboard: React.FC = () => {
   const outOf = health?.out_of ?? 100;
   const scoreLabel = health?.label ?? "Needs Attention";
   const scorePct = Math.min((score / outOf) * 100, 100);
+  const stuckIssues = d?.top_stuck_issues?.items ?? [];
   const kpis = d?.critical_numbers?.items ?? [];
-  const issues = d?.top_stuck_issues?.items ?? [];
   const counters = d?.counters;
   const profileName = useMemo(() => {
     try {
@@ -866,13 +882,14 @@ const BusinessCompassDashboard: React.FC = () => {
 
   const issueBadgeStyle = (priority: string): React.CSSProperties => {
     const p = (priority ?? "").toLowerCase();
-    if (p === "medium")
+    // API sends P1–P4 for issues; older callers pass high/medium/low
+    if (p === "medium" || p === "p3" || p === "in_progress")
       return {
         background: "#fff",
         border: "1px solid #f59e0b",
         color: "#b45309",
       };
-    if (p === "low")
+    if (p === "low" || p === "p4")
       return {
         background: "#fff",
         border: "1px solid #22c55e",
@@ -1461,16 +1478,8 @@ const BusinessCompassDashboard: React.FC = () => {
                       Tasks Overview
                     </p>
                     {(() => {
-                      const assigned =
-                        focusMode === "Weekly"
-                          ? (counters?.weekly_reports ?? 0)
-                          : (counters?.daily_reports ?? 0);
-                      const pending =
-                        focusMode === "Weekly"
-                          ? (counters?.weekly_pending ?? 0)
-                          : (counters?.daily_pending ?? 0);
-                      const completed = Math.max(0, assigned - pending);
-                      const maxVal = Math.max(assigned, 1);
+                      const { assigned, completed, overdue } = taskStats;
+                      const maxVal = Math.max(assigned, completed, overdue, 1);
                       const rings = [
                         {
                           value: assigned,
@@ -1485,7 +1494,7 @@ const BusinessCompassDashboard: React.FC = () => {
                           label: "Completed",
                         },
                         {
-                          value: pending,
+                          value: overdue,
                           color: "#f87171",
                           track: "#fee2e2",
                           label: "Overdue",
@@ -1759,7 +1768,7 @@ const BusinessCompassDashboard: React.FC = () => {
                           ))
                         ) : (
                           <div className="col-span-2 text-center py-6 text-[11px] text-gray-400 italic bg-white rounded-xl border border-gray-200">
-                            No KPIs assigned
+                            {loading ? "Loading KPI's..." : "No KPIs assigned"}
                           </div>
                         )}
                       </div>
@@ -1801,20 +1810,21 @@ const BusinessCompassDashboard: React.FC = () => {
                   </button>
                 </div>
                 <div className="flex flex-col gap-2">
-                  {issues.length > 0 ? (
-                    issues.slice(0, 8).map((issue: any, i: number) => (
+                  {stuckIssues.length > 0 ? (
+                    stuckIssues.slice(0, 8).map((issue) => (
                       <div
-                        key={i}
+                        key={issue.id}
                         className="flex items-center justify-between gap-2 bg-white rounded-xl px-3 py-2.5"
                       >
                         <span className="text-[11px] text-gray-700 flex-1 line-clamp-2 leading-snug">
-                          {issue.title}
+                          {issue.title?.trim()}
                         </span>
                         <span
-                          className="flex-shrink-0 text-[10px] px-2.5 py-0.5 rounded-full font-semibold"
+                          className="flex-shrink-0 text-[10px] px-2.5 py-0.5 rounded-full font-semibold capitalize"
                           style={issueBadgeStyle(issue.priority)}
                         >
-                          {issue.priority || issue.status || "High"}
+                          {issue.priority ||
+                            (issue.status ?? "open").replace(/_/g, " ")}
                         </span>
                       </div>
                     ))
@@ -1867,7 +1877,9 @@ const BusinessCompassDashboard: React.FC = () => {
                   </div>
                   <div className="text-center p-3 rounded-xl bg-white border border-gray-200">
                     <p className="text-[9px] text-gray-400 font-semibold leading-tight mb-1">KPI</p>
-                    <p className="text-[15px] font-black text-[#1a1a1a]">{counters?.kpis ?? 0}</p>
+                    <p className="text-[15px] font-black text-[#1a1a1a]">
+                      {counters?.kpis ?? 0}
+                    </p>
                   </div>
                   <div className="relative text-center p-3 rounded-xl bg-white border border-gray-200">
                     <p className="text-[9px] text-gray-400 font-semibold leading-tight mb-1">JDs</p>

@@ -4,6 +4,7 @@ import { AlertTriangle, Users, MapPin, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -24,6 +25,7 @@ interface SOSAlert {
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 export const ActiveSOS: React.FC = () => {
+  const pulseEvents = usePulseEvents();
   const navigate = useNavigate();
   const [alerts, setAlerts] = useState<SOSAlert[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,6 +67,11 @@ export const ActiveSOS: React.FC = () => {
 
     fetchSOSAlerts();
   }, [baseUrl, token]);
+
+  // Pulse SOS Alert List Viewed — fires once per screen visit
+  useEffect(() => {
+    pulseEvents.onSosAlertListViewed();
+  }, [pulseEvents]);
 
   const formatAlertTime = (timeStr: string) => {
     if (!timeStr) return "";

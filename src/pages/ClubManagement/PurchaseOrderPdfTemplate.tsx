@@ -1,103 +1,13 @@
 import React from "react";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
+import { getDocumentTemplateSettings, slugifyDocumentType } from "@/utils/documentTemplate";
 
-export const getAccountingPdfStatusStyle = (status) => {
-  const styles = {
-    draft: {
-      backgroundColor: "#f3f4f6",
-      color: "#1f2937",
-      borderColor: "#e5e7eb",
-    },
-    sent: {
-      backgroundColor: "#dbeafe",
-      color: "#1e40af",
-      borderColor: "#bfdbfe",
-    },
-    open: {
-      backgroundColor: "#dbeafe",
-      color: "#1e40af",
-      borderColor: "#bfdbfe",
-    },
-    accepted: {
-      backgroundColor: "#dcfce7",
-      color: "#166534",
-      borderColor: "#bbf7d0",
-    },
-    approved: {
-      backgroundColor: "#dcfce7",
-      color: "#166534",
-      borderColor: "#bbf7d0",
-    },
-    paid: {
-      backgroundColor: "#dcfce7",
-      color: "#166534",
-      borderColor: "#bbf7d0",
-    },
-    delivered: {
-      backgroundColor: "#dcfce7",
-      color: "#166534",
-      borderColor: "#bbf7d0",
-    },
-    confirmed: {
-      backgroundColor: "#dbeafe",
-      color: "#1d4ed8",
-      borderColor: "#bfdbfe",
-    },
-    processing: {
-      backgroundColor: "#fef9c3",
-      color: "#854d0e",
-      borderColor: "#fde68a",
-    },
-    pending_approval: {
-      backgroundColor: "#ffedd5",
-      color: "#9a3412",
-      borderColor: "#fed7aa",
-    },
-    overdue: {
-      backgroundColor: "#fee2e2",
-      color: "#991b1b",
-      borderColor: "#fecaca",
-    },
-    declined: {
-      backgroundColor: "#fee2e2",
-      color: "#991b1b",
-      borderColor: "#fecaca",
-    },
-    rejected: {
-      backgroundColor: "#fee2e2",
-      color: "#991b1b",
-      borderColor: "#fecaca",
-    },
-    cancelled: {
-      backgroundColor: "#fee2e2",
-      color: "#991b1b",
-      borderColor: "#fecaca",
-    },
-    expired: {
-      backgroundColor: "#ffedd5",
-      color: "#9a3412",
-      borderColor: "#fed7aa",
-    },
-    shipped: {
-      backgroundColor: "#f3e8ff",
-      color: "#6b21a8",
-      borderColor: "#e9d5ff",
-    },
-    converted: {
-      backgroundColor: "#f3e8ff",
-      color: "#6b21a8",
-      borderColor: "#e9d5ff",
-    },
-    closed: {
-      backgroundColor: "#16a34a",
-      color: "#ffffff",
-      borderColor: "#16a34a",
-    },
+export const getAccountingPdfStatusStyle = () => {
+  return {
+    backgroundColor: "#f3f4f6",
+    color: "#1f2937",
+    borderColor: "#e5e7eb",
   };
-
-  return (
-    styles[String(status || "").toLowerCase()] || styles.draft
-  );
 };
 
 const formatStatus = (status) => {
@@ -164,6 +74,7 @@ const aggregateTax = (items, type) => {
 
 export const PurchaseDocumentPdf = ({
   documentTitle = "PURCHASE ORDER",
+  documentType = "",
   documentNumber,
   documentDate,
   status,
@@ -178,8 +89,10 @@ export const PurchaseDocumentPdf = ({
   secondaryDateLabel,
   secondaryDate,
   referenceNumber,
+  bankDetail,
 }) => {
   const statusDisplay = formatStatus(data?.status || status);
+  const templateSettings = getDocumentTemplateSettings(documentType || slugifyDocumentType(documentTitle));
 
   const partyName = vendorName || data?.supplier_name || customerName;
 
@@ -255,13 +168,17 @@ export const PurchaseDocumentPdf = ({
           <div className="flex justify-between items-start mb-8 pb-6 border-b border-gray-300">
             {/* COMPANY INFO */}
             <div className="text-[11px] leading-[16px]">
+              {templateSettings.logo && (
+                <img src={templateSettings.logo} alt="Logo" className="mb-2" style={{ maxHeight: "48px", maxWidth: "180px", objectFit: "contain" }} />
+              )}
               <h2 className="text-[18px] font-bold mb-3">
                 {localStorage.getItem("companyName") ||
                   "Lockated"}
               </h2>
 
               <p className="mb-1">
-                {localStorage.getItem("companyAddress") ||
+                {templateSettings.organizationAddress ||
+                  localStorage.getItem("companyAddress") ||
                   "Pune Maharashtra 411006"}
               </p>
 
@@ -299,7 +216,7 @@ export const PurchaseDocumentPdf = ({
               ) : null}
 
               <h1 className="text-[40px] font-serif tracking-wide mb-2">
-                {documentTitle}
+                {templateSettings.templateName ? templateSettings.templateName.toUpperCase() : documentTitle}
               </h1>
 
               <p className="text-[12px] font-semibold">
@@ -318,7 +235,7 @@ export const PurchaseDocumentPdf = ({
                 {partyLabel}
               </h3>
 
-              <p className="font-bold text-blue-700 mb-2">
+              <p className="font-bold mb-2">
                 {partyName || "Vendor"}
               </p>
 
@@ -347,7 +264,7 @@ export const PurchaseDocumentPdf = ({
                 Deliver To
               </h3>
 
-              <p className="font-bold text-blue-700 mb-2">
+              <p className="font-bold mb-2">
                 {localStorage.getItem("companyName") ||
                   "Lockated"}
               </p>
@@ -509,7 +426,7 @@ export const PurchaseDocumentPdf = ({
                   <span className="font-medium">
                     Discount
                   </span>
-                  <span className="font-semibold text-red-600">
+                  <span className="font-semibold text-black">
                     (-)
                     {formatCurrency
                       ? formatCurrency(
@@ -574,7 +491,7 @@ export const PurchaseDocumentPdf = ({
                   <span className="font-medium">
                     Amount Withheld
                   </span>
-                  <span className="font-semibold text-red-600">
+                  <span className="font-semibold text-black">
                     (-)
                     {formatCurrency
                       ? formatCurrency(
@@ -620,24 +537,68 @@ export const PurchaseDocumentPdf = ({
 
           {/* AMOUNT IN WORDS */}
           {totalInWords && (
-            <div className="mb-6 px-4 py-3 bg-blue-50 border border-blue-300 rounded text-[11px]">
-              <p className="font-bold text-blue-900 mb-1">
+            <div className="mb-6 px-4 py-3 bg-gray-50 border border-gray-300 rounded text-[11px]">
+              <p className="font-bold text-black mb-1">
                 Amount in Words
               </p>
-              <p className="italic font-semibold text-blue-900">
+              <p className="italic font-semibold text-black">
                 {totalInWords}
               </p>
             </div>
           )}
 
+          {/* BANK DETAILS */}
+          {/* {bankDetail && (
+            <div className="mb-6 text-[11px]">
+              <p className="font-bold mb-2">
+                Bank Details
+              </p>
+              <p className="mb-1">
+                {bankDetail.bankName} - A/C {bankDetail.accountNo}
+              </p>
+              <p>
+                {bankDetail.beneficiaryName}
+                {bankDetail.ifscCode ? `, IFSC: ${bankDetail.ifscCode}` : ""}
+                {bankDetail.branch ? `, ${bankDetail.branch}` : ""}
+              </p>
+            </div>
+          )} */}
+
+          {bankDetail && (
+  <div className="mb-4">
+    <p className="font-bold">Bank Details</p>
+
+    <div className="mt-2 space-y-1 text-[11px]">
+      {[
+        ["Bank Name", bankDetail.bankName],
+        ["A/c No.", bankDetail.accountNo],
+        ["Beneficiary / Account Name", bankDetail.beneficiaryName],
+        ["A/c Type", bankDetail.accountType],
+        ["IFSC Code", bankDetail.ifscCode],
+        ["Swift Code", bankDetail.swiftCode],
+        ["Branch", bankDetail.branch],
+      ]
+        .filter(([, value]) => value)
+        .map(([label, value]) => (
+          <div key={label} className="flex gap-2">
+            <span className="font-semibold min-w-[150px]">
+              {label}:
+            </span>
+            <span>{value}</span>
+          </div>
+        ))}
+    </div>
+  </div>
+)}
+
           {/* TERMS & CONDITIONS */}
-          {data?.terms_conditions && (
+          {(data?.terms_conditions || templateSettings.termsAndConditions) && (
             <div className="mb-6 text-[11px]">
               <p className="font-bold mb-2">
                 Terms & Conditions
               </p>
               <p className="whitespace-pre-wrap leading-relaxed">
-                {data?.terms_conditions}
+                {data?.terms_conditions || templateSettings.termsAndConditions}
               </p>
             </div>
           )}
@@ -647,11 +608,22 @@ export const PurchaseDocumentPdf = ({
             <div />
 
             <div className="text-right text-[11px]">
-              <p className="font-bold mb-6">
+              <p className="font-bold mb-2">
                 For{" "}
                 {localStorage.getItem("companyName") ||
                   "Lockated"}
               </p>
+
+              {templateSettings.signature ? (
+                <img
+                  src={templateSettings.signature}
+                  alt="Signature"
+                  className="ml-auto mb-2"
+                  style={{ maxHeight: "50px", maxWidth: "180px", objectFit: "contain" }}
+                />
+              ) : (
+                <div className="mb-6" />
+              )}
 
               <div className="border-t border-black w-[180px] pt-2 text-center font-semibold">
                 Authorized Signature

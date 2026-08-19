@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const columns: ColumnConfig[] = [
     {
@@ -44,7 +45,7 @@ const ProjectIssueTypes = () => {
     const [description, setDescription] = useState('');
     const [editingId, setEditingId] = useState<number | null>(null);
     const [issueTypes, setIssueTypes] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Fetch issue types on component mount
@@ -248,7 +249,8 @@ const ProjectIssueTypes = () => {
         <>
         {shouldShow("Issue Types","create")&&(
             <Button
-                className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                className="fm-button-fix fm-button-brand px-4 py-2"
+                variant="ghost"
                 onClick={openAddDialog}
             >
                 <Plus className="w-4 h-4 mr-2" />
@@ -259,15 +261,43 @@ const ProjectIssueTypes = () => {
 
     return (
         <div className="p-6">
+            {isLoading ? (
+                <div className="bg-white rounded-lg border border-gray-200">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="bg-[#f6f4ee]">
+                                <TableHead className="font-medium">Issues Type Name</TableHead>
+                                <TableHead className="font-medium">CreatedOn</TableHead>
+                                <TableHead className="font-medium">Description</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            <TableRow>
+                                <TableCell colSpan={3} className="pt-4 pb-16">
+                                    <div className="w-full flex items-center justify-start gap-3 pl-4">
+                                        <div
+                                            className="h-5 w-5 rounded-full animate-spin"
+                                            style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                                        />
+                                        <span className="text-sm text-black">Loading ...</span>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
+                </div>
+            ) : (
             <EnhancedTable
                 data={issueTypes}
                 columns={columns}
                 renderActions={renderActions}
                 renderCell={renderCell}
                 leftActions={leftActions}
+                emptyMessage=""
                 pagination={true}
                 pageSize={10}
             />
+            )}
 
             {/* Dialog Modal */}
             {isDialogOpen && (
@@ -326,7 +356,8 @@ const ProjectIssueTypes = () => {
                                     Cancel
                                 </Button>
                                 <Button
-                                    className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                                    className="fm-button-fix fm-button-brand px-6"
+                                    variant="ghost"
                                     onClick={handleSubmit}
                                 >
                                     {isEditMode ? 'Update' : 'Save'}

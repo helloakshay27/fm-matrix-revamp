@@ -97,8 +97,8 @@ export const StaffsFilterModal = ({ isOpen, onClose }: StaffsFilterModalProps) =
           <div className="flex justify-end gap-3 pt-4">
             <Button
               onClick={handleReset}
-              variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2 rounded-none"
+              variant="ghost"
+              className="fm-button-fix fm-button-brand px-4 py-2"
             >
               Reset
             </Button>

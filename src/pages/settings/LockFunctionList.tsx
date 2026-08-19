@@ -2,11 +2,13 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2, Lock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate,useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 import { CreateLockFunctionDialog } from './CreateLockFunctionDialog';
+import { EditLockFunctionDialog } from './EditLockFunctionDialog';
 import { CreateFunctionDialog } from './CreateFunctionDialog';
 import { lockFunctionService, LockFunction as ApiLockFunctionItem } from '@/services/lockFunctionService';
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
@@ -156,6 +158,8 @@ export const LockFunctionList = () => {
   const { shouldShow } = useDynamicPermissions();
   const location = useLocation();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingLockFunctionId, setEditingLockFunctionId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return Number(params.get('page')) || 1;
@@ -193,6 +197,16 @@ export const LockFunctionList = () => {
   useEffect(() => {
     fetchLockFunctionData();
   }, []);
+
+  // Open edit popup when redirected from legacy /edit/:id route
+  useEffect(() => {
+    const editId = (location.state as { editLockFunctionId?: number } | null)?.editLockFunctionId;
+    if (editId) {
+      setEditingLockFunctionId(editId);
+      setIsEditDialogOpen(true);
+      navigate(location.pathname + location.search, { replace: true, state: {} });
+    }
+  }, [location.state, location.pathname, location.search, navigate]);
 
  // Reset to page 1 only when search changes
   const prevSearchRef = useRef('');
@@ -262,31 +276,37 @@ export const LockFunctionList = () => {
   // Render row function for enhanced table
   const renderRow = (lockFunction: LockFunctionItem) => ({
     actions: (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-center gap-1">
         {shouldShow("Lock Function","update")&&(
-        <button 
-          onClick={() => handleEdit(lockFunction.id)} 
-          className="p-1 text-blue-600 hover:bg-blue-50 rounded" 
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleEdit(lockFunction.id)}
+          className="h-8 w-8 p-0 hover:bg-gray-100"
           title="Edit"
         >
           <Edit className="w-4 h-4" />
-        </button>)}
+        </Button>)}
         {shouldShow("Lock Function","show")&&(
-        <button 
-          onClick={() => handleView(lockFunction.id)} 
-          className="p-1 text-green-600 hover:bg-green-50 rounded" 
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleView(lockFunction.id)}
+          className="h-8 w-8 p-0 hover:bg-gray-100"
           title="View"
         >
           <Eye className="w-4 h-4" />
-        </button>)}
+        </Button>)}
         {shouldShow("Lock Function","destroy")&&(
-        <button 
-          onClick={() => handleDelete(lockFunction.id)} 
-          className="p-1 text-red-600 hover:bg-red-50 rounded" 
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleDelete(lockFunction.id)}
+          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
           title="Delete"
         >
           <Trash2 className="w-4 h-4" />
-        </button>)}
+        </Button>)}
       </div>
     ),
     functionName: (
@@ -333,8 +353,8 @@ export const LockFunctionList = () => {
   };
 
   const handleEdit = (id: number) => {
-    console.log('Edit lock function:', id);
-    navigate(`/settings/account/lock-function/edit/${id}`);
+    setEditingLockFunctionId(id);
+    setIsEditDialogOpen(true);
   };
 
   const handleDelete = async (id: number) => {
@@ -446,7 +466,7 @@ export const LockFunctionList = () => {
     <div className="p-6 space-y-6">
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#C72030]/10 text-[#C72030] flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-[#E5E0D3] text-brand flex items-center justify-center">
             <Lock className="w-5 h-5" />
           </div>
           <div>
@@ -455,14 +475,44 @@ export const LockFunctionList = () => {
           </div>
         </div>
       </header>
-
-      {loading && (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
+{loading ? (
+        <div className="bg-white rounded-lg border border-gray-200">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[#f6f4ee]">
+                <TableHead className="font-medium">Actions</TableHead>
+                <TableHead className="font-medium">Function Name</TableHead>
+                <TableHead className="font-medium">Description</TableHead>
+                <TableHead className="font-medium">Lock Type</TableHead>
+                <TableHead className="font-medium">Duration</TableHead>
+                <TableHead className="font-medium">Created On</TableHead>
+                <TableHead className="font-medium">Created By</TableHead>
+                <TableHead className="font-medium">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            
+      
+            <TableBody>
+              <TableRow>
+                <TableCell colSpan={8} className="pt-4 pb-16">
+                  <div className="w-full flex items-center justify-start gap-3 pl-4">
+                    <div
+                      className="h-5 w-5 rounded-full animate-spin"
+                      style={{
+                        border: "2px solid #000000",
+                        borderTopColor: "transparent",
+                      }}
+                    />
+                    <span className="text-sm text-black">
+                      Loading ...
+                    </span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
-      )}
-
-      {!loading && (
+      ) : (
         <div className="">
           <EnhancedTable
             data={currentLockFunctionData}
@@ -475,30 +525,30 @@ export const LockFunctionList = () => {
             enableExport={false}
             exportFileName="lock-function-data"
             leftActions={
-              <div className="flex items-center gap-2">
-                {shouldShow("Lock Function","create")&&(
-                <Button 
-                  onClick={handleAdd} 
-                  className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+              shouldShow("Lock Function","create") ? (
+                <Button
+                  onClick={handleAdd}
+                  className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4 mr-2" />
                   Add
-                </Button>)}
+                </Button>
+              ) : null
+            }
+            filterAdjacentActions={
+              <>
                 <Button
                   onClick={handleImportClick}
-                  className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                  variant="outline"
+                  size="icon"
+                  title={importing ? "Importing..." : "Import Excel"}
                   disabled={importing}
+                  className="!rounded-lg border border-brand text-brand hover:bg-brand-selected"
                 >
                   {importing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Importing...
-                    </>
+                    <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <>
-                      <Upload className="w-4 h-4" />
-                      Import Excel
-                    </>
+                    <Upload className="w-4 h-4" />
                   )}
                 </Button>
                 <input
@@ -508,11 +558,10 @@ export const LockFunctionList = () => {
                   ref={fileInputRef}
                   className="hidden"
                 />
-              </div>
+              </>
             }
-            pagination={false} // Disable built-in pagination since we're adding custom
-            loading={loading}
-            emptyMessage="No lock functions found. Create your first lock function to get started."
+            pagination={false}
+            emptyMessage=""
           />
 
           {/* Pagination Controls - matching ShiftDashboard style */}
@@ -600,6 +649,21 @@ export const LockFunctionList = () => {
         onOpenChange={setIsCreateDialogOpen}
         onLockFunctionCreated={() => {
           setIsCreateDialogOpen(false);
+          fetchLockFunctionData();
+        }}
+      />
+
+      {/* Edit Lock Function Dialog */}
+      <EditLockFunctionDialog
+        open={isEditDialogOpen}
+        onOpenChange={(open) => {
+          setIsEditDialogOpen(open);
+          if (!open) setEditingLockFunctionId(null);
+        }}
+        lockFunctionId={editingLockFunctionId}
+        onLockFunctionUpdated={() => {
+          setIsEditDialogOpen(false);
+          setEditingLockFunctionId(null);
           fetchLockFunctionData();
         }}
       />

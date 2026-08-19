@@ -47,6 +47,8 @@ interface Question {
   answerType: string;
   mandatory: boolean;
   answerOptions?: AnswerOption[];
+  placeholderText?: string;
+  maxLength?: string;
   additionalFieldOnNegative?: boolean;
   additionalFields?: Array<{
     title: string;
@@ -631,13 +633,15 @@ export const AddSurveyPage = () => {
               ? "checkbox"
               : question.answerType === "date"
                 ? "date"
-                : question.answerType === "rating"
-                  ? "rating"
-                  : question.answerType === "emojis"
-                    ? "emoji"
-                    : question.answerType === "input-box"
-                      ? "input_box"
-                      : "description";
+                : question.answerType === "time"
+                  ? "time"
+                  : question.answerType === "rating"
+                    ? "rating"
+                    : question.answerType === "emojis"
+                      ? "emoji"
+                      : question.answerType === "input-box"
+                        ? "input_box"
+                        : "description";
 
         formData.append(`question[][qtype]`, qtype);
         formData.append(
@@ -645,6 +649,17 @@ export const AddSurveyPage = () => {
           question.mandatory.toString()
         );
         formData.append(`question[][image_mandatory]`, "false");
+
+        if (question.answerType === "input-box") {
+          formData.append(
+            `question[][placeholder_text]`,
+            question.placeholderText || ""
+          );
+          formData.append(
+            `question[][max_length]`,
+            question.maxLength || ""
+          );
+        }
 
         // Handle question image upload
         if (question.questionImage) {
@@ -1229,8 +1244,48 @@ export const AddSurveyPage = () => {
                       <MenuItem value="input-box">Input Box</MenuItem>
                       <MenuItem value="checkbox">Checkbox</MenuItem>
                       <MenuItem value="date">Date</MenuItem>
+                      <MenuItem value="time">Time</MenuItem>
                     </MuiSelect>
                   </FormControl>
+
+                  {question.answerType === "input-box" && (
+                    <TextField
+                      label="Placeholder"
+                      placeholder="Enter placeholder"
+                      value={question.placeholderText || ""}
+                      onChange={(e) =>
+                        handleQuestionChange(
+                          question.id,
+                          "placeholderText",
+                          e.target.value
+                        )
+                      }
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                    />
+                  )}
+
+                  {question.answerType === "input-box" && (
+                    <TextField
+                      label="Max Length"
+                      placeholder="Enter max length"
+                      type="number"
+                      value={question.maxLength || ""}
+                      onChange={(e) =>
+                        handleQuestionChange(
+                          question.id,
+                          "maxLength",
+                          e.target.value
+                        )
+                      }
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles, inputProps: { min: 0 } }}
+                    />
+                  )}
 
                   {["multiple-choice", "rating", "emojis", "checkbox"].includes(
                     question.answerType
@@ -1647,9 +1702,9 @@ export const AddSurveyPage = () => {
               <Button
                 onClick={handleAddQuestion}
                 variant="outline"
-                className="border-dashed border-gray-300 hover:border-red-400 hover:text-red-600"
+                className="border-dashed border-brand hover:border-brand-hover hover:text-brand"
               >
-                <Plus className="w-4 h-4 mr-2" /> Add More Questions
+                <Plus className="w-4 h-4 mr-2 text-brand" /> Add More Questions
               </Button>
             </div>
           </div>
@@ -1669,7 +1724,7 @@ export const AddSurveyPage = () => {
             variant="outline"
             onClick={() => navigate(-1)}
             disabled={loading || isSubmitting}
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2 h-auto disabled:opacity-50"
+            className="border-brand text-brand hover:bg-gray-50 px-8 py-2 h-auto disabled:opacity-50"
           >
             Cancel
           </Button>

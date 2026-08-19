@@ -3,9 +3,97 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  FormControl as MuiFormControl,
+  Select as MuiSelect,
+  MenuItem,
+} from '@mui/material';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { X } from 'lucide-react';
+
+const fieldStyles = {
+  height: '40px',
+  backgroundColor: '#fff',
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: '#d1d5db',
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'var(--color-primary)',
+  },
+  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'var(--color-primary)',
+  },
+  '& .MuiSelect-select': {
+    fontSize: '14px',
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+const selectMenuProps = {
+  // Radix's modal Dialog sets `pointer-events: none` on <body>, which the
+  // portaled menu inherits — without this the backdrop never receives the
+  // click that closes the menu.
+  sx: { pointerEvents: 'auto' },
+  PaperProps: {
+    sx: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e5e7eb',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
+
+interface ScheduleSelectProps {
+  id: string;
+  label: string;
+  placeholder: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+}
+
+const ScheduleSelect: React.FC<ScheduleSelectProps> = ({
+  id,
+  label,
+  placeholder,
+  value,
+  onChange,
+  options,
+}) => (
+  <div>
+    <Label htmlFor={id} className="text-sm font-medium">{label}</Label>
+    <MuiFormControl fullWidth size="small" className="mt-1">
+      <MuiSelect
+        id={id}
+        displayEmpty
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        renderValue={(selected) =>
+          selected ? (
+            options.find((option) => option.value === selected)?.label ?? selected
+          ) : (
+            <span className="text-gray-500">{placeholder}</span>
+          )
+        }
+        sx={fieldStyles}
+        MenuProps={selectMenuProps}
+      >
+        {options.map((option) => (
+          <MenuItem key={option.value} value={option.value}>
+            {option.label}
+          </MenuItem>
+        ))}
+      </MuiSelect>
+    </MuiFormControl>
+  </div>
+);
 
 interface CreateScheduleModalProps {
   isOpen: boolean;
@@ -48,54 +136,51 @@ export const CreateScheduleModal = ({ isOpen, onClose, onSubmit }: CreateSchedul
 
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="flat" className="text-sm font-medium">Select Flat</Label>
-              <Select onValueChange={(value) => handleInputChange('flat', value)}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="a-101">A-101</SelectItem>
-                  <SelectItem value="a-102">A-102</SelectItem>
-                  <SelectItem value="a-103">A-103</SelectItem>
-                  <SelectItem value="a-104">A-104</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <ScheduleSelect
+              id="flat"
+              label="Select Flat"
+              placeholder="select"
+              value={formData.flat}
+              onChange={(value) => handleInputChange('flat', value)}
+              options={[
+                { value: 'a-101', label: 'A-101' },
+                { value: 'a-102', label: 'A-102' },
+                { value: 'a-103', label: 'A-103' },
+                { value: 'a-104', label: 'A-104' },
+              ]}
+            />
 
-            <div>
-              <Label htmlFor="category" className="text-sm font-medium">Select Category</Label>
-              <Select onValueChange={(value) => handleInputChange('category', value)}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="select Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pest-control">Pest Control</SelectItem>
-                  <SelectItem value="deep-cleaning">Deep Cleaning</SelectItem>
-                  <SelectItem value="civil-mason">Civil & Mason Works</SelectItem>
-                  <SelectItem value="invisible-grill">Invisible Grill</SelectItem>
-                  <SelectItem value="mosquito-mesh">Mosquito Mesh</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <ScheduleSelect
+              id="category"
+              label="Select Category"
+              placeholder="select Category"
+              value={formData.category}
+              onChange={(value) => handleInputChange('category', value)}
+              options={[
+                { value: 'pest-control', label: 'Pest Control' },
+                { value: 'deep-cleaning', label: 'Deep Cleaning' },
+                { value: 'civil-mason', label: 'Civil & Mason Works' },
+                { value: 'invisible-grill', label: 'Invisible Grill' },
+                { value: 'mosquito-mesh', label: 'Mosquito Mesh' },
+              ]}
+            />
           </div>
 
-          <div>
-            <Label htmlFor="subCategory" className="text-sm font-medium">Select Sub Category</Label>
-            <Select onValueChange={(value) => handleInputChange('subCategory', value)}>
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="standard-cockroach">Standard Cockroach Control</SelectItem>
-                <SelectItem value="4d-cockroach">4D Cockroach Control</SelectItem>
-                <SelectItem value="bathroom-cleaning">Bathroom Cleaning</SelectItem>
-                <SelectItem value="sofa-cleaning">Sofa Cleaning</SelectItem>
-                <SelectItem value="grouting-tiles">Grouting Of Tiles</SelectItem>
-                <SelectItem value="residential-apartment">Residential Apartment</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <ScheduleSelect
+            id="subCategory"
+            label="Select Sub Category"
+            placeholder=""
+            value={formData.subCategory}
+            onChange={(value) => handleInputChange('subCategory', value)}
+            options={[
+              { value: 'standard-cockroach', label: 'Standard Cockroach Control' },
+              { value: '4d-cockroach', label: '4D Cockroach Control' },
+              { value: 'bathroom-cleaning', label: 'Bathroom Cleaning' },
+              { value: 'sofa-cleaning', label: 'Sofa Cleaning' },
+              { value: 'grouting-tiles', label: 'Grouting Of Tiles' },
+              { value: 'residential-apartment', label: 'Residential Apartment' },
+            ]}
+          />
 
           <div>
             <Label className="text-sm font-medium text-gray-900 block mb-2">Schedule Visit</Label>
@@ -111,20 +196,19 @@ export const CreateScheduleModal = ({ isOpen, onClose, onSubmit }: CreateSchedul
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="paymentMethod" className="text-sm font-medium">Select Payment method</Label>
-            <Select onValueChange={(value) => handleInputChange('paymentMethod', value)}>
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Card" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="card">Card</SelectItem>
-                <SelectItem value="cash">Cash</SelectItem>
-                <SelectItem value="bank-transfer">Bank Transfer</SelectItem>
-                <SelectItem value="upi">UPI</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <ScheduleSelect
+            id="paymentMethod"
+            label="Select Payment method"
+            placeholder="Card"
+            value={formData.paymentMethod}
+            onChange={(value) => handleInputChange('paymentMethod', value)}
+            options={[
+              { value: 'card', label: 'Card' },
+              { value: 'cash', label: 'Cash' },
+              { value: 'bank-transfer', label: 'Bank Transfer' },
+              { value: 'upi', label: 'UPI' },
+            ]}
+          />
 
           <div className="bg-gray-50 p-3 rounded text-xs text-gray-600">
             <strong>Disclaimer:</strong> The Services include the provision of the Platform that enables you to arrange and
@@ -135,7 +219,8 @@ export const CreateScheduleModal = ({ isOpen, onClose, onSubmit }: CreateSchedul
           <div className="flex justify-center pt-2">
             <Button
               onClick={handleSubmit}
-              className="bg-green-600 hover:bg-green-700 text-white px-8 py-2"
+              className="fm-button-fix fm-button-brand px-4 py-2"
+              variant="ghost"
             >
               Pay {localStorage.getItem('currency')}
             </Button>

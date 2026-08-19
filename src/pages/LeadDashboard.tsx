@@ -1,36 +1,37 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StatsCard } from "@/components/StatsCard";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import {
   Plus,
   Eye,
-  Filter,
   Target,
-  Clock,
-  CheckCircle,
-  XCircle,
-  Download,
-  RefreshCw,
   Settings,
-  Search,
-  Phone,
   Mail,
+  Phone,
 } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
-// Mock data for leads
-const mockLeads = [
+interface Lead {
+  id: string;
+  name: string;
+  contactPerson: string;
+  email: string;
+  phone: string;
+  source: string;
+  status: string;
+  value: number;
+  probability: number;
+  expectedCloseDate: string;
+  assignedTo: string;
+  industry: string;
+}
+
+const mockLeads: Lead[] = [
   {
     id: "LEAD001",
     name: "John Corporation",
@@ -75,26 +76,45 @@ const mockLeads = [
   },
 ];
 
-const calculateStats = (leads: any[]) => {
+const columns: ColumnConfig[] = [
+  { key: "id", label: "Lead ID", sortable: true, hideable: true, defaultVisible: true },
+  { key: "name", label: "Company", sortable: true, hideable: true, defaultVisible: true },
+  { key: "contactPerson", label: "Contact Person", sortable: true, hideable: true, defaultVisible: true },
+  { key: "source", label: "Source", sortable: true, hideable: true, defaultVisible: true },
+  { key: "status", label: "Status", sortable: true, hideable: true, defaultVisible: true },
+  { key: "value", label: "Value", sortable: true, hideable: true, defaultVisible: true },
+  { key: "probability", label: "Probability", sortable: true, hideable: true, defaultVisible: true },
+  { key: "expectedCloseDate", label: "Expected Close", sortable: true, hideable: true, defaultVisible: true },
+  { key: "assignedTo", label: "Assigned To", sortable: true, hideable: true, defaultVisible: true },
+];
+
+const calculateStats = (leads: Lead[]) => {
   return {
     total: leads.length,
-    new: leads.filter(l => l.status === "New").length,
-    qualified: leads.filter(l => l.status === "Qualified").length,
-    converted: leads.filter(l => l.status === "Converted").length,
-    lost: leads.filter(l => l.status === "Lost").length,
+    new: leads.filter((l) => l.status === "New").length,
+    qualified: leads.filter((l) => l.status === "Qualified").length,
+    converted: leads.filter((l) => l.status === "Converted").length,
+    lost: leads.filter((l) => l.status === "Lost").length,
     totalValue: leads.reduce((sum, l) => sum + l.value, 0),
-    avgValue: leads.reduce((sum, l) => sum + l.value, 0) / leads.length,
-    conversionRate: (leads.filter(l => l.status === "Converted").length / leads.length) * 100,
+    avgValue: leads.length ? leads.reduce((sum, l) => sum + l.value, 0) / leads.length : 0,
+    conversionRate: leads.length
+      ? (leads.filter((l) => l.status === "Converted").length / leads.length) * 100
+      : 0,
   };
 };
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case "New": return "bg-blue-100 text-blue-800";
-    case "Qualified": return "bg-yellow-100 text-yellow-800";
-    case "Converted": return "bg-green-100 text-green-800";
-    case "Lost": return "bg-red-100 text-red-800";
-    default: return "bg-gray-100 text-gray-800";
+    case "New":
+      return "bg-[rgba(218,119,86,0.18)] text-[#DA7756] border-0 hover:bg-[rgba(218,119,86,0.18)]";
+    case "Qualified":
+      return "bg-[#F2EBC9] text-[#2c2c2c] border-0 hover:bg-[#F2EBC9]";
+    case "Converted":
+      return "bg-[#C7EDDA] text-[#2c2c2c] border-0 hover:bg-[#C7EDDA]";
+    case "Lost":
+      return "bg-[#F2C8C4] text-[#2c2c2c] border-0 hover:bg-[#F2C8C4]";
+    default:
+      return "bg-[#E5E0D8] text-[#2c2c2c] border-0 hover:bg-[#E5E0D8]";
   }
 };
 
@@ -102,13 +122,42 @@ export const LeadDashboard = () => {
   const { shouldShow } = useDynamicPermissions();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [leads, setLeads] = useState<Lead[]>([]);
 
-  const stats = calculateStats(mockLeads);
-  const filteredLeads = mockLeads.filter(lead =>
-    lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lead.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lead.contactPerson.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    let active = true;
+    const fetchLeads = async () => {
+      setLoading(true);
+      try {
+        await new Promise((res) => setTimeout(res, 800));
+        if (active) setLeads(mockLeads);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    fetchLeads();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const stats = calculateStats(leads);
+
+  const filteredLeads = useMemo(() => {
+    if (!searchTerm) return leads;
+    const q = searchTerm.toLowerCase();
+    return leads.filter(
+      (lead) =>
+        lead.name.toLowerCase().includes(q) ||
+        lead.id.toLowerCase().includes(q) ||
+        lead.contactPerson.toLowerCase().includes(q) ||
+        lead.source.toLowerCase().includes(q) ||
+        lead.status.toLowerCase().includes(q) ||
+        lead.assignedTo.toLowerCase().includes(q)
+    );
+  }, [leads, searchTerm]);
 
   const handleAddLead = () => {
     navigate("/crm/lead/add");
@@ -118,20 +167,100 @@ export const LeadDashboard = () => {
     navigate(`/crm/lead/details/${leadId}`);
   };
 
-  const StatCard = ({ icon, label, value }: any) => (
-    <div className="bg-[#f6f4ee] p-6 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4">
-      <div className="w-14 h-14 bg-[#FBEDEC] rounded-full flex items-center justify-center">
-        {React.cloneElement(icon, { className: `w-6 h-6 text-[#C72030]` })}
-      </div>
-      <div>
-        <div className="text-2xl font-bold text-[#C72030]">{value}</div>
-        <div className="text-sm font-medium text-gray-600">{label}</div>
-      </div>
-    </div>
-  );
+  const handleExport = () => {
+    const headers = [
+      "Lead ID",
+      "Company",
+      "Contact Person",
+      "Email",
+      "Phone",
+      "Source",
+      "Status",
+      "Value",
+      "Probability",
+      "Expected Close",
+      "Assigned To",
+    ];
+    const rows = filteredLeads.map((lead) => [
+      lead.id,
+      lead.name,
+      lead.contactPerson,
+      lead.email,
+      lead.phone,
+      lead.source,
+      lead.status,
+      lead.value,
+      lead.probability,
+      lead.expectedCloseDate,
+      lead.assignedTo,
+    ]);
+    const csv = [headers, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `leads-${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const renderCell = (item: Lead, columnKey: string) => {
+    switch (columnKey) {
+      case "id":
+        return <span className="text-gray-900 font-medium">{item.id}</span>;
+      case "name":
+        return <span>{item.name}</span>;
+      case "contactPerson":
+        return (
+          <div>
+            <div className="font-medium text-gray-900">{item.contactPerson}</div>
+            <div className="text-sm text-gray-500 flex items-center gap-2">
+              <Mail className="w-3 h-3" />
+              {item.email}
+            </div>
+            <div className="text-sm text-gray-500 flex items-center gap-2">
+              <Phone className="w-3 h-3" />
+              {item.phone}
+            </div>
+          </div>
+        );
+      case "status":
+        return (
+          <Badge className={getStatusColor(item.status)}>
+            {item.status}
+          </Badge>
+        );
+      case "value":
+        return `$${item.value.toLocaleString()}`;
+      case "probability":
+        return `${item.probability}%`;
+      default:
+        return <span>{item[columnKey as keyof Lead] ?? "-"}</span>;
+    }
+  };
+
+  const renderActions = (item: Lead) =>
+    shouldShow("Lead", "show") ? (
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8 w-8 p-0 text-[#C72030] hover:bg-[#C72030]/10 hover:text-[#C72030]"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleViewLead(item.id);
+        }}
+        title="View lead"
+      >
+        <Eye className="w-4 h-4" />
+      </Button>
+    ) : null;
 
   return (
-    <div className="p-4 sm:p-6">
+    <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
       <Tabs defaultValue="list" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger
@@ -152,148 +281,131 @@ export const LeadDashboard = () => {
 
         <TabsContent value="list" className="mt-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
-            <StatCard icon={<Target />} label="Total Leads" value={stats.total} />
-            <StatCard icon={<Clock />} label="New" value={stats.new} />
-            <StatCard icon={<CheckCircle />} label="Qualified" value={stats.qualified} />
-            <StatCard icon={<CheckCircle />} label="Converted" value={stats.converted} />
-            <StatCard icon={<Target />} label="Total Value" value={`$${stats.totalValue.toLocaleString()}`} />
-            <StatCard icon={<Target />} label="Avg Value" value={`$${stats.avgValue.toLocaleString()}`} />
-            <StatCard icon={<CheckCircle />} label="Conversion Rate" value={`${stats.conversionRate.toFixed(1)}%`} />
+            <StatsCard
+              title="Total Leads"
+              value={stats.total}
+              icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+            />
+            <StatsCard
+              title="New"
+              value={stats.new}
+              icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+            />
+            <StatsCard
+              title="Qualified"
+              value={stats.qualified}
+              icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+            />
+            <StatsCard
+              title="Converted"
+              value={stats.converted}
+              icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+            />
+            <StatsCard
+              title="Total Value"
+              value={`$${stats.totalValue.toLocaleString()}`}
+              icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+            />
+            <StatsCard
+              title="Avg Value"
+              value={`$${stats.avgValue.toLocaleString()}`}
+              icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+            />
+            <StatsCard
+              title="Conversion Rate"
+              value={`${stats.conversionRate.toFixed(1)}%`}
+              icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+            />
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6 bg-white p-4 rounded-lg shadow-sm">
-            <div className="flex items-center gap-2">
-              {shouldShow("Lead", "create") && (
-              <Button
-                onClick={handleAddLead}
-                className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add Lead
-              </Button>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2 flex-1 max-w-md">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search leads..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Button variant="outline" size="icon">
-                <Filter className="w-4 h-4" />
-              </Button>
-              <Button variant="outline" size="icon">
-                <RefreshCw className="w-4 h-4" />
-              </Button>
-              <Button variant="outline" size="icon">
-                <Download className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Lead ID</TableHead>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Contact Person</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Value</TableHead>
-                  <TableHead>Probability</TableHead>
-                  <TableHead>Expected Close</TableHead>
-                  <TableHead>Assigned To</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredLeads.map((lead) => (
-                  <TableRow key={lead.id}>
-                    <TableCell className="font-medium">{lead.id}</TableCell>
-                    <TableCell>{lead.name}</TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{lead.contactPerson}</div>
-                        <div className="text-sm text-gray-500 flex items-center gap-2">
-                          <Mail className="w-3 h-3" />
-                          {lead.email}
-                        </div>
-                        <div className="text-sm text-gray-500 flex items-center gap-2">
-                          <Phone className="w-3 h-3" />
-                          {lead.phone}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{lead.source}</TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(lead.status)}>
-                        {lead.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>${lead.value.toLocaleString()}</TableCell>
-                    <TableCell>{lead.probability}%</TableCell>
-                    <TableCell>{lead.expectedCloseDate}</TableCell>
-                    <TableCell>{lead.assignedTo}</TableCell>
-                    <TableCell className="text-right">
-                      {shouldShow("Lead", "show") && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewLead(lead.id)}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <EnhancedTable
+            data={filteredLeads}
+            columns={columns}
+            renderCell={renderCell}
+            renderActions={renderActions}
+            storageKey="lead-dashboard-table"
+            emptyMessage="No leads found"
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Search leads..."
+            enableSearch
+            enableExport
+            handleExport={handleExport}
+            pagination
+            pageSize={10}
+            loading={loading}
+            loadingMessage="Loading..."
+            onFilterClick={() => setShowFilters((prev) => !prev)}
+            leftActions={
+              shouldShow("Lead", "create") ? (
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={handleAddLead}
+                    className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Lead
+                  </Button>
+                </div>
+              ) : undefined
+            }
+          />
         </TabsContent>
 
         <TabsContent value="analytics" className="mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white p-6 rounded-lg shadow-sm">
               <h3 className="text-lg font-semibold mb-4">Lead Status Distribution</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>New: {stats.new}</span>
-                  <span>{((stats.new / stats.total) * 100).toFixed(1)}%</span>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div
+                    className="h-5 w-5 rounded-full animate-spin"
+                    style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                  />
                 </div>
-                <div className="flex justify-between">
-                  <span>Qualified: {stats.qualified}</span>
-                  <span>{((stats.qualified / stats.total) * 100).toFixed(1)}%</span>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>New: {stats.new}</span>
+                    <span>{stats.total ? ((stats.new / stats.total) * 100).toFixed(1) : "0.0"}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Qualified: {stats.qualified}</span>
+                    <span>{stats.total ? ((stats.qualified / stats.total) * 100).toFixed(1) : "0.0"}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Converted: {stats.converted}</span>
+                    <span>{stats.total ? ((stats.converted / stats.total) * 100).toFixed(1) : "0.0"}%</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span>Converted: {stats.converted}</span>
-                  <span>{((stats.converted / stats.total) * 100).toFixed(1)}%</span>
-                </div>
-              </div>
+              )}
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-sm">
               <h3 className="text-lg font-semibold mb-4">Lead Performance</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Total Pipeline Value:</span>
-                  <span>${stats.totalValue.toLocaleString()}</span>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div
+                    className="h-5 w-5 rounded-full animate-spin"
+                    style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                  />
                 </div>
-                <div className="flex justify-between">
-                  <span>Average Lead Value:</span>
-                  <span>${stats.avgValue.toLocaleString()}</span>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>Total Pipeline Value:</span>
+                    <span>${stats.totalValue.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Average Lead Value:</span>
+                    <span>${stats.avgValue.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Conversion Rate:</span>
+                    <span>{stats.conversionRate.toFixed(1)}%</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span>Conversion Rate:</span>
-                  <span>{stats.conversionRate.toFixed(1)}%</span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </TabsContent>

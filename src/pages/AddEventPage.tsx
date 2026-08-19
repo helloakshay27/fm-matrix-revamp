@@ -34,11 +34,13 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import axios from "axios";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 export const AddEventPage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const attachmentInputRef = useRef<HTMLInputElement>(null);
+  const pulseEvents = usePulseEvents();
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -78,6 +80,10 @@ export const AddEventPage = () => {
   // Community Selection State
   const [selectedCommunities, setSelectedCommunities] = useState<number[]>([]);
   const [communities, setCommunities] = useState<any[]>([]);
+
+  useEffect(() => {
+    pulseEvents.onEventCreationViewed();
+  }, [pulseEvents]);
 
   useEffect(() => {
     // Restore form data from localStorage if exists
@@ -418,7 +424,10 @@ export const AddEventPage = () => {
     <div className="p-4 md:px-8 py-6 bg-white min-h-screen">
       <Button
         variant="ghost"
-        onClick={() => navigate(`/pulse/events`)}
+        onClick={() => {
+          pulseEvents.onEventCreationCancelled();
+          navigate(`/pulse/events`);
+        }}
         className="p-0 mb-4 hover:bg-transparent"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
@@ -744,17 +753,17 @@ export const AddEventPage = () => {
                 >
                   <FormControlLabel
                     value="play"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-[12px] text-gray-600">Play</span>}
                   />
                   <FormControlLabel
                     value="panasche"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-[12px] text-gray-600">Panache</span>}
                   />
                   <FormControlLabel
                     value="persuit"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-[12px] text-gray-600">Pursuit</span>}
                   />
                 </RadioGroup>
@@ -773,12 +782,12 @@ export const AddEventPage = () => {
                 >
                   <FormControlLabel
                     value="yes"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-[12px] text-gray-600">Yes</span>}
                   />
                   <FormControlLabel
                     value="no"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-[12px] text-gray-600">No</span>}
                   />
                 </RadioGroup>
@@ -797,12 +806,12 @@ export const AddEventPage = () => {
                 >
                   <FormControlLabel
                     value="yes"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-[12px] text-gray-600">Yes</span>}
                   />
                   <FormControlLabel
                     value="no"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-[12px] text-gray-600">No</span>}
                   />
                 </RadioGroup>
@@ -821,12 +830,12 @@ export const AddEventPage = () => {
                 >
                   <FormControlLabel
                     value="yes"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-[12px] text-gray-600">Yes</span>}
                   />
                   <FormControlLabel
                     value="no"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-[12px] text-gray-600">No</span>}
                   />
                 </RadioGroup>
@@ -923,12 +932,12 @@ export const AddEventPage = () => {
                 >
                   <FormControlLabel
                     value="all"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-sm text-gray-600">All Tech Park</span>}
                   />
                   <FormControlLabel
                     value="individual"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-sm text-gray-600">Individual Tech Park</span>}
                   />
                 </RadioGroup>
@@ -947,12 +956,12 @@ export const AddEventPage = () => {
                 >
                   <FormControlLabel
                     value="yes"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-sm text-gray-600">Yes</span>}
                   />
                   <FormControlLabel
                     value="no"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-sm text-gray-600">No</span>}
                   />
                 </RadioGroup>
@@ -1105,16 +1114,18 @@ export const AddEventPage = () => {
 
         <div className="flex justify-end gap-4 mt-8 pb-8">
           <Button
+            type="button"
             onClick={() => navigate(`/pulse/events`)}
             variant="outline"
-            className="bg-[#fdf5f2] border border-[#DA7756] text-[#DA7756] hover:bg-[#f8e7df] min-w-[150px] h-10"
+            className="min-w-[150px] h-10 !border-brand !text-brand bg-white hover:!bg-brand-selected hover:!text-brand"
           >
             Cancel
           </Button>
           <Button
+            type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="fm-button-fix fm-button-brand min-w-[150px] h-10 disabled:opacity-70"
+            className="min-w-[150px] h-10 !bg-brand hover:!bg-brand-hover !text-white disabled:!opacity-100 disabled:!bg-brand"
           >
             {isSubmitting ? "Submitting..." : "Submit"}
           </Button>

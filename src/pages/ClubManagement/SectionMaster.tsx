@@ -4,18 +4,9 @@ import { Button } from '@/components/ui/button';
 import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, FormControl, InputLabel, MenuItem, Select, TextField } from '@mui/material';
 import { API_CONFIG } from '@/config/apiConfig';
 import { toast } from 'sonner';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 interface Section {
   id: number;
@@ -236,19 +227,13 @@ export const SectionMaster: React.FC = () => {
         enableSearch={true}
         loading={loading}
         leftActions={(
-          // <Button
-          //   className="bg-primary text-white hover:bg-primary/90"
-          //   onClick={() => setAddModalOpen(true)}
-          // >
-          //   <Plus className="w-4 h-4 mr-2 text-white" /> Add
-          // </Button>
           <Button
-  className="bg-primary !text-white hover:bg-primary/90"
-  onClick={() => setAddModalOpen(true)}
->
-  <Plus className="w-4 h-4 mr-2 !text-white" />
-  <span className="!text-white" >Add</span> 
-</Button>
+            className="bg-primary !text-white hover:bg-primary/90"
+            onClick={() => setAddModalOpen(true)}
+          >
+            <Plus className="w-4 h-4 mr-2 !text-white" />
+            <span className="!text-white" >Add</span>
+          </Button>
         )}
       />
 
@@ -269,130 +254,200 @@ export const SectionMaster: React.FC = () => {
       )}
 
       {/* Add Modal */}
-      <Dialog open={addModalOpen} onOpenChange={(open) => { setAddModalOpen(open); if (!open) { setAddErrors({}); setAddForm({ name: '', tax_type: 'tds', group_name: '' }); } }}>
-        <DialogContent className="bg-white data-[state=open]:animate-in">
-          <DialogHeader>
-            <DialogTitle>Add Section</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1">
-              <Label htmlFor="add-name">Name <span className="text-red-500">*</span></Label>
-              <Input
-                id="add-name"
-                value={addForm.name}
-                onChange={(e) => { setAddForm((s) => ({ ...s, name: e.target.value })); if (e.target.value.trim()) setAddErrors((s) => ({ ...s, name: undefined })); }}
-                placeholder="Enter section name"
-                className={addErrors.name ? 'border-red-500 focus-visible:ring-red-500' : ''}
-              />
-              {addErrors.name && <p className="text-xs text-red-500">{addErrors.name}</p>}
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="add-tax-type">Tax Type <span className="text-red-500">*</span></Label>
+      <Dialog open={addModalOpen} onClose={() => { setAddModalOpen(false); setAddErrors({}); setAddForm({ name: '', tax_type: 'tds', group_name: '' }); }} fullWidth>
+        <div className="flex items-center justify-between px-6 pt-6">
+          <h5 className="text-lg font-semibold">Add Section</h5>
+        </div>
+        <DialogContent>
+          <style>{`
+            .section-master-form .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+              border-color: #DA7756 !important;
+            }
+            .section-master-form .MuiInputLabel-root.Mui-focused {
+              color: #DA7756 !important;
+            }
+            .section-master-form [class*="MuiFormControl"]:has(.MuiInputBase-multiline) [class*="MuiInputLabel"].Mui-focused,
+            .section-master-form [class*="MuiFormControl"]:has(textarea) [class*="MuiInputLabel"].Mui-focused {
+              color: #DA7756 !important;
+            }
+            .section-master-form .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline {
+              border-color: #DA7756 !important;
+            }
+            .section-master-form .MuiInputLabel-root.Mui-error {
+              color: #DA7756 !important;
+            }
+            .section-master-form .MuiFormHelperText-root.Mui-error {
+              color: #DA7756 !important;
+            }
+          `}</style>
+          <form className="section-master-form space-y-4">
+            <TextField
+              fullWidth
+              margin="normal"
+              label={<span>Name<span style={{ color: '#C72030' }}>*</span></span>}
+              name="name"
+              placeholder="Enter section name"
+              InputLabelProps={{ shrink: true }}
+              value={addForm.name}
+              onChange={(e) => { setAddForm((s) => ({ ...s, name: e.target.value })); if (e.target.value.trim()) setAddErrors((s) => ({ ...s, name: undefined })); }}
+              error={!!addErrors.name}
+              helperText={addErrors.name}
+            />
+            <FormControl fullWidth margin="normal">
+              <InputLabel id="add-tax-type-label" shrink error={!!addErrors.tax_type}>
+                Tax Type<span style={{ color: '#C72030' }}>*</span>
+              </InputLabel>
               <Select
+                labelId="add-tax-type-label"
+                label="Tax Type*"
+                displayEmpty
+                notched
                 value={addForm.tax_type}
-                onValueChange={(val) => { setAddForm((s) => ({ ...s, tax_type: val })); setAddErrors((s) => ({ ...s, tax_type: undefined })); }}
+                onChange={(e) => { setAddForm((s) => ({ ...s, tax_type: e.target.value })); setAddErrors((s) => ({ ...s, tax_type: undefined })); }}
+                error={!!addErrors.tax_type}
               >
-                <SelectTrigger id="add-tax-type" className={addErrors.tax_type ? 'border-red-500' : ''}>
-                  <SelectValue placeholder="Select tax type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TAX_TYPE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                <MenuItem value="" disabled>Select tax type</MenuItem>
+                {TAX_TYPE_OPTIONS.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                ))}
               </Select>
-              {addErrors.tax_type && <p className="text-xs text-red-500">{addErrors.tax_type}</p>}
+              {addErrors.tax_type && <p className="text-xs mt-1" style={{ color: '#DA7756' }}>{addErrors.tax_type}</p>}
+            </FormControl>
+            <TextField
+              fullWidth
+              margin="normal"
+              label={<span>Group Name<span style={{ color: '#C72030' }}>*</span></span>}
+              name="group_name"
+              placeholder="Enter group name"
+              InputLabelProps={{ shrink: true }}
+              value={addForm.group_name}
+              onChange={(e) => { setAddForm((s) => ({ ...s, group_name: e.target.value })); if (e.target.value.trim()) setAddErrors((s) => ({ ...s, group_name: undefined })); }}
+              error={!!addErrors.group_name}
+              helperText={addErrors.group_name}
+            />
+            <div className="mt-4 pt-5 flex justify-center gap-3">
+              <Button
+                type="button"
+                onClick={handleAddSection}
+                disabled={addSubmitting}
+                style={{ backgroundColor: "#C72030" }}
+                className="text-white hover:bg-[#C72030]/90 min-w-[100px]"
+              >
+                {addSubmitting ? 'Adding...' : 'Add'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => { setAddModalOpen(false); setAddErrors({}); setAddForm({ name: '', tax_type: 'tds', group_name: '' }); }}
+                disabled={addSubmitting}
+                className="min-w-[100px]"
+              >
+                Cancel
+              </Button>
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="add-group-name">Group Name <span className="text-red-500">*</span></Label>
-              <Input
-                id="add-group-name"
-                value={addForm.group_name}
-                onChange={(e) => { setAddForm((s) => ({ ...s, group_name: e.target.value })); if (e.target.value.trim()) setAddErrors((s) => ({ ...s, group_name: undefined })); }}
-                placeholder="Enter group name"
-                className={addErrors.group_name ? 'border-red-500 focus-visible:ring-red-500' : ''}
-              />
-              {addErrors.group_name && <p className="text-xs text-red-500">{addErrors.group_name}</p>}
-            </div>
-          </div>
-          <DialogFooter>
-             <Button onClick={handleAddSection} disabled={addSubmitting}>
-              {addSubmitting ? 'Adding...' : 'Add'}
-            </Button>
-            <Button variant="outline" onClick={() => { setAddModalOpen(false); setAddErrors({}); setAddForm({ name: '', tax_type: 'tds', group_name: '' }); }} disabled={addSubmitting}>
-              Cancel
-            </Button>
-           
-          </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 
       {/* Edit Modal */}
-      <Dialog open={editModalOpen} onOpenChange={(open) => { setEditModalOpen(open); if (!open) setEditErrors({}); }}>
-        <DialogContent className="bg-white data-[state=open]:animate-in">
-          <DialogHeader>
-            <DialogTitle>Edit Section</DialogTitle>
-          </DialogHeader>
+      <Dialog open={editModalOpen} onClose={() => { setEditModalOpen(false); setEditErrors({}); }} fullWidth>
+        <div className="flex items-center justify-between px-6 pt-6">
+          <h5 className="text-lg font-semibold">Edit Section</h5>
+        </div>
+        <DialogContent>
+          <style>{`
+            .section-master-form .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+              border-color: #DA7756 !important;
+            }
+            .section-master-form .MuiInputLabel-root.Mui-focused {
+              color: #DA7756 !important;
+            }
+            .section-master-form [class*="MuiFormControl"]:has(.MuiInputBase-multiline) [class*="MuiInputLabel"].Mui-focused,
+            .section-master-form [class*="MuiFormControl"]:has(textarea) [class*="MuiInputLabel"].Mui-focused {
+              color: #DA7756 !important;
+            }
+            .section-master-form .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline {
+              border-color: #DA7756 !important;
+            }
+            .section-master-form .MuiInputLabel-root.Mui-error {
+              color: #DA7756 !important;
+            }
+            .section-master-form .MuiFormHelperText-root.Mui-error {
+              color: #DA7756 !important;
+            }
+          `}</style>
           {editLoading ? (
             <div className="flex items-center justify-center py-8">
               <span className="text-sm text-muted-foreground">Loading...</span>
             </div>
           ) : (
-            <div className="space-y-4 py-2">
-              <div className="space-y-1">
-                <Label htmlFor="edit-name">Name <span className="text-red-500">*</span></Label>
-                <Input
-                  id="edit-name"
-                  value={editForm.name}
-                  onChange={(e) => { setEditForm((s) => ({ ...s, name: e.target.value })); if (e.target.value.trim()) setEditErrors((s) => ({ ...s, name: undefined })); }}
-                  placeholder="Enter section name"
-                  className={editErrors.name ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                />
-                {editErrors.name && <p className="text-xs text-red-500">{editErrors.name}</p>}
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="edit-tax-type">Tax Type <span className="text-red-500">*</span></Label>
+            <form className="section-master-form space-y-4">
+              <TextField
+                fullWidth
+                margin="normal"
+                label={<span>Name<span style={{ color: '#C72030' }}>*</span></span>}
+                name="name"
+                placeholder="Enter section name"
+                InputLabelProps={{ shrink: true }}
+                value={editForm.name}
+                onChange={(e) => { setEditForm((s) => ({ ...s, name: e.target.value })); if (e.target.value.trim()) setEditErrors((s) => ({ ...s, name: undefined })); }}
+                error={!!editErrors.name}
+                helperText={editErrors.name}
+              />
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="edit-tax-type-label" shrink error={!!editErrors.tax_type}>
+                  Tax Type<span style={{ color: '#C72030' }}>*</span>
+                </InputLabel>
                 <Select
+                  labelId="edit-tax-type-label"
+                  label="Tax Type*"
+                  displayEmpty
+                  notched
                   value={editForm.tax_type}
-                  onValueChange={(val) => { setEditForm((s) => ({ ...s, tax_type: val })); setEditErrors((s) => ({ ...s, tax_type: undefined })); }}
+                  onChange={(e) => { setEditForm((s) => ({ ...s, tax_type: e.target.value })); setEditErrors((s) => ({ ...s, tax_type: undefined })); }}
+                  error={!!editErrors.tax_type}
                 >
-                  <SelectTrigger id="edit-tax-type" className={editErrors.tax_type ? 'border-red-500' : ''}>
-                    <SelectValue placeholder="Select tax type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TAX_TYPE_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+                  <MenuItem value="" disabled>Select tax type</MenuItem>
+                  {TAX_TYPE_OPTIONS.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                  ))}
                 </Select>
-                {editErrors.tax_type && <p className="text-xs text-red-500">{editErrors.tax_type}</p>}
+                {editErrors.tax_type && <p className="text-xs mt-1" style={{ color: '#DA7756' }}>{editErrors.tax_type}</p>}
+              </FormControl>
+              <TextField
+                fullWidth
+                margin="normal"
+                label={<span>Group Name<span style={{ color: '#C72030' }}>*</span></span>}
+                name="group_name"
+                placeholder="Enter group name"
+                InputLabelProps={{ shrink: true }}
+                value={editForm.group_name}
+                onChange={(e) => { setEditForm((s) => ({ ...s, group_name: e.target.value })); if (e.target.value.trim()) setEditErrors((s) => ({ ...s, group_name: undefined })); }}
+                error={!!editErrors.group_name}
+                helperText={editErrors.group_name}
+              />
+              <div className="mt-4 pt-5 flex justify-center gap-3">
+                <Button
+                  type="button"
+                  onClick={handleEditSection}
+                  disabled={editSubmitting}
+                  style={{ backgroundColor: "#C72030" }}
+                  className="text-white hover:bg-[#C72030]/90 min-w-[100px]"
+                >
+                  {editSubmitting ? 'Updating...' : 'Update'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => { setEditModalOpen(false); setEditErrors({}); }}
+                  disabled={editSubmitting}
+                  className="min-w-[100px]"
+                >
+                  Cancel
+                </Button>
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="edit-group-name">Group Name <span className="text-red-500">*</span></Label>
-                <Input
-                  id="edit-group-name"
-                  value={editForm.group_name}
-                  onChange={(e) => { setEditForm((s) => ({ ...s, group_name: e.target.value })); if (e.target.value.trim()) setEditErrors((s) => ({ ...s, group_name: undefined })); }}
-                  placeholder="Enter group name"
-                  className={editErrors.group_name ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                />
-                {editErrors.group_name && <p className="text-xs text-red-500">{editErrors.group_name}</p>}
-              </div>
-            </div>
+            </form>
           )}
-          <DialogFooter>
-            <Button onClick={handleEditSection} disabled={editSubmitting || editLoading}>
-              {editSubmitting ? 'Updating...' : 'Update'}
-            </Button>
-            <Button variant="outline" onClick={() => { setEditModalOpen(false); setEditErrors({}); }} disabled={editSubmitting}>
-              Cancel
-            </Button>
-            
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

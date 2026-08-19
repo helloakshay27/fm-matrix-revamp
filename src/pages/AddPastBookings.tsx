@@ -1447,7 +1447,6 @@ export const AddPastBookings = () => {
                 <div className="flex justify-center">
                     <Button
                         type="submit"
-                        className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white px-8 py-2"
                     >
                         Submit
                     </Button>
@@ -1493,7 +1492,6 @@ export const AddPastBookings = () => {
                     <DialogActions>
                         <Button
                             onClick={() => setOpenCancelPolicy(false)}
-                            className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
                         >
                             Close
                         </Button>
@@ -1520,7 +1518,6 @@ export const AddPastBookings = () => {
                     <DialogActions>
                         <Button
                             onClick={() => setOpenTerms(false)}
-                            className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
                         >
                             Close
                         </Button>

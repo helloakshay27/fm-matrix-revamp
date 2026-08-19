@@ -234,15 +234,45 @@ export class JobSheetHTMLPreview {
     }
   }
 
+  // The job sheet API returns both `task_details.asset` and `task_details.service`,
+  // but only one is populated depending on `task_of`/`is_service_task` — the other
+  // comes back all-null. Pick whichever one actually holds the data.
+  private resolveAssetOrService(jobSheet: any): {
+    name: string;
+    code: string;
+    category: string;
+    location: any;
+    isService: boolean;
+    label: string;
+  } {
+    const taskDetails = jobSheet?.task_details;
+    const isService =
+      taskDetails?.is_service_task === true ||
+      taskDetails?.task_of === "Pms::Service" ||
+      !taskDetails?.asset?.id;
+    const source = isService ? taskDetails?.service : taskDetails?.asset;
+
+    return {
+      name: source?.name || "",
+      code: source?.code || "",
+      category: source?.category || "",
+      location: source?.location || null,
+      isService,
+      label: isService ? "Service" : "Asset",
+    };
+  }
+
   private generateClientInfo(taskDetails: any, jobSheetData: any): string {
     const jobSheet = jobSheetData?.data?.job_sheet || jobSheetData?.job_sheet;
 
     // Enhanced data mapping from new API structure
     const siteName = jobSheet?.task_details?.site?.name || "";
-    const assetName = jobSheet?.task_details?.asset?.name || "";
-    const assetCode = jobSheet?.task_details?.asset?.code || "";
+    const assetOrService = this.resolveAssetOrService(jobSheet);
+    const assetName = assetOrService.name;
+    const assetCode = assetOrService.code;
+    const assetOrServiceLabel = assetOrService.label;
     const jobCode = jobSheet?.basic_info?.job_card_no || "";
-    const group = jobSheet?.task_details?.asset?.category || "";
+    const group = assetOrService.category;
     const serialNumber = jobSheet?.basic_info?.job_id || "";
 
     // Get sub group from group_scores if available
@@ -291,9 +321,9 @@ export class JobSheetHTMLPreview {
               <td class="figma-value-cell">${jobCode}</td>
             </tr>
             <tr>
-              <td class="figma-label-cell">Asset Name:</td>
+              <td class="figma-label-cell">${assetOrServiceLabel} Name:</td>
               <td class="figma-value-cell">${assetName}</td>
-              <td class="figma-label-cell">Asset No.:</td>
+              <td class="figma-label-cell">${assetOrServiceLabel} No.:</td>
               <td class="figma-value-cell">${assetCode}</td>
             </tr>
             <tr>
@@ -342,7 +372,7 @@ export class JobSheetHTMLPreview {
 
   private generateLocationDetails(jobSheetData: any): string {
     const jobSheet = jobSheetData?.data?.job_sheet || jobSheetData?.job_sheet;
-    const location = jobSheet?.task_details?.asset?.location;
+    const location = this.resolveAssetOrService(jobSheet).location;
 
     if (!location) {
       return `
@@ -563,7 +593,7 @@ export class JobSheetHTMLPreview {
       activities: grouped[key]
     }));
 
-    const assetCategory = jobSheet?.task_details?.asset?.category || "";
+    const assetCategory = this.resolveAssetOrService(jobSheet).category;
     const mainTitle = taskName
       ? taskName.toUpperCase()
       : assetCategory

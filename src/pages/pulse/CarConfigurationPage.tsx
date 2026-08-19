@@ -1,12 +1,15 @@
+import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VehicleBrandsTab } from "@/components/pulse-carpool/VehicleBrandsTab";
 import { VehicleModelsTab } from "@/components/pulse-carpool/VehicleModelsTab";
 import { VehicleColoursTab } from "@/components/pulse-carpool/VehicleColoursTab";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 const TAB_VALUES = ["brands", "models", "colours"] as const;
 
 const CarConfigurationPage = () => {
+  const pulseEvents = usePulseEvents();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
   const activeTab = TAB_VALUES.includes(tabParam as typeof TAB_VALUES[number])
@@ -16,6 +19,12 @@ const CarConfigurationPage = () => {
   const setActiveTab = (tab: string) => {
     setSearchParams({ tab }, { replace: true });
   };
+
+  // Pulse Carpool Car Configuration Viewed — fires once on mount
+  useEffect(() => {
+    pulseEvents.onCarConfigurationViewed(activeTab);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="p-6 space-y-6">

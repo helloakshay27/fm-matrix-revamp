@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Eye } from 'lucide-react';
 import { toast } from 'sonner';
@@ -11,6 +11,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { buildReturnToPath } from "@/utils/listBackNavigation";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useProcurementEvents } from '@/components/PostHogProcurementEvents';
 
 const columns: ColumnConfig[] = [
   {
@@ -42,6 +43,27 @@ const columns: ColumnConfig[] = [
     draggable: true,
   },
   {
+    key: 'approved_status',
+    label: 'Approved Status',
+    sortable: true,
+    defaultVisible: true,
+    draggable: true,
+  },
+  {
+    key: 'rejection_reason',
+    label: 'Rejection Reason',
+    sortable: true,
+    defaultVisible: true,
+    draggable: true,
+  },
+  {
+    key: 'last_approved_by',
+    label: 'Last Approved By',
+    sortable: true,
+    defaultVisible: true,
+    draggable: true,
+  },
+  {
     key: 'wo_number',
     label: 'W.O. Number',
     sortable: true,
@@ -65,20 +87,6 @@ const columns: ColumnConfig[] = [
   {
     key: 'total_invoice_amount',
     label: 'Total Invoice Amount',
-    sortable: true,
-    defaultVisible: true,
-    draggable: true,
-  },
-  {
-    key: 'last_approved_by',
-    label: 'Last Approved By',
-    sortable: true,
-    defaultVisible: true,
-    draggable: true,
-  },
-  {
-    key: 'approved_status',
-    label: 'Approved Status',
     sortable: true,
     defaultVisible: true,
     draggable: true,
@@ -188,6 +196,7 @@ export const InvoicesDashboard = () => {
   const location = useLocation();
   const dispatch = useAppDispatch();
   const { shouldShow } = useDynamicPermissions();
+  const procurementEvents = useProcurementEvents();
 
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem("token");
@@ -201,6 +210,7 @@ export const InvoicesDashboard = () => {
     invoiceNumber: urlParams.get("invoiceNumber") || "",
     invoiceDate: urlParams.get("invoiceDate") || "",
     supplierName: urlParams.get("supplierName") || "",
+    woNumber: urlParams.get("woNumber") || "",
   };
 
   const [searchTerm, setSearchTerm] = useState(initialSearch);
@@ -213,18 +223,22 @@ export const InvoicesDashboard = () => {
   });
   const [invoicesData, setInvoicesData] = useState([]);
 
-  const fetchData = async (page: number = 1) => {
+  const fetchData = async (page: number = 1, filters = appliedFilters, search = searchTerm) => {
     try {
-      const response = await dispatch(getInvoinces({ baseUrl, token, page })).unwrap();
-      // setInvoicesData(response.work_order_invoices);
-      // setPagination({
-      //   current_page: response.pagination.current_page,
-      //   total_count: response.pagination.total_count,
-      //   total_pages: response.pagination.total_pages
-      // })
+      const response = await dispatch(getInvoinces({
+        baseUrl,
+        token,
+        page,
+        search,
+        invoice_number: filters.invoiceNumber,
+        invoice_date: filters.invoiceDate,
+        supplier_name: filters.supplierName,
+        wo_number: filters.woNumber,
+      })).unwrap();
       setInvoicesData(response.work_order_invoices);
       setPagination((prev) => ({
         ...prev,
+        current_page: response.pagination.current_page ?? page,
         total_count: response.pagination.total_count,
         total_pages: response.pagination.total_pages
       }));
@@ -246,12 +260,24 @@ export const InvoicesDashboard = () => {
     if (appliedFilters.invoiceNumber) params.set("invoiceNumber", appliedFilters.invoiceNumber);
     if (appliedFilters.invoiceDate) params.set("invoiceDate", appliedFilters.invoiceDate);
     if (appliedFilters.supplierName) params.set("supplierName", appliedFilters.supplierName);
+    if (appliedFilters.woNumber) params.set("woNumber", appliedFilters.woNumber);
 
     navigate({ search: params.toString() }, { replace: true });
   }, [pagination.current_page, searchTerm, appliedFilters, navigate]);
 
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchTerm(query);
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      fetchData(1, appliedFilters, query);
+    }, 500);
+  }, [appliedFilters]);
+
   const handleFilterApply = (filters: typeof appliedFilters) => {
     setAppliedFilters(filters);
+    fetchData(1, filters, searchTerm);
     toast.success('Filters applied successfully');
   };
 
@@ -277,9 +303,9 @@ export const InvoicesDashboard = () => {
           size="sm"
           variant="ghost"
           className="p-1"
-          onClick={() => navigate(`/finance/invoices/${item.id}`, {
-            state: { returnTo: buildReturnToPath(location.pathname, location.search) },
-          })}
+          onClick={() => { try { procurementEvents.onInvoiceOpened(item.approved_status || null); } catch (err) {};
+            navigate(`/finance/invoices/${item.id}`, { state: { returnTo: buildReturnToPath(location.pathname, location.search) }, });
+          }}
         >
           <Eye className="w-4 h-4" />
         </Button>
@@ -310,6 +336,7 @@ export const InvoicesDashboard = () => {
       return;
     }
     setPagination((prev) => ({ ...prev, current_page: page }));
+    fetchData(page, appliedFilters, searchTerm);
   };
 
   const renderPaginationItems = () => {
@@ -444,7 +471,8 @@ export const InvoicesDashboard = () => {
         storageKey="invoices-dashboard"
         emptyMessage="No invoices found matching your criteria"
         searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
+        onSearchChange={handleSearchChange}
+        disableClientSearch={true}
         searchPlaceholder="Search..."
         loading={loading}
         onFilterClick={() => setIsFilterDialogOpen(true)}

@@ -23,6 +23,7 @@ import {
   updateVehicleModel,
   toggleVehicleModelActive,
 } from "@/services/vehicleConfigApi";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 const columns: ColumnConfig[] = [
   { key: "id", label: "Id", sortable: true, draggable: true },
@@ -62,6 +63,7 @@ const fieldStyles = {
 };
 
 export const VehicleModelsTab = () => {
+  const pulseEvents = usePulseEvents();
   const [models, setModels] = useState<VehicleModel[]>([]);
   const [brands, setBrands] = useState<VehicleBrand[]>([]);
   const [loading, setLoading] = useState(false);
@@ -129,11 +131,18 @@ export const VehicleModelsTab = () => {
 
     setSubmitting(true);
     try {
+      const modelProps = {
+        model_name: name.trim(),
+        brand_id: Number(brandId),
+        seats: Number(seat),
+      };
       if (editingModel) {
         await updateVehicleModel(editingModel.id, name.trim(), Number(brandId), Number(seat));
+        pulseEvents.onVehicleModelSaved("updated", modelProps);
         toast.success("Model updated successfully");
       } else {
         await createVehicleModel(name.trim(), Number(brandId), Number(seat));
+        pulseEvents.onVehicleModelSaved("added", modelProps);
         toast.success("Model added successfully");
       }
       setIsModalOpen(false);

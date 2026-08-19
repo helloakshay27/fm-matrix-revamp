@@ -6,6 +6,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchPulseAiAlerts, type PulseAiAlert, type AlertSeverity } from "@/services/pulseAiAlertsApi";
 import type { PulseFilters } from "@/services/pulseDashboardApi";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 const SKELETON_BG = "bg-[var(--color-border-subtle)]";
 
@@ -18,6 +19,7 @@ const SEVERITY_META: Record<AlertSeverity, { label: string; icon: typeof ShieldA
 interface Props { filters: PulseFilters }
 
 export function PulseAiAlerts({ filters }: Props) {
+  const pulseEvents = usePulseEvents();
   const [alerts, setAlerts] = useState<PulseAiAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -33,6 +35,11 @@ export function PulseAiAlerts({ filters }: Props) {
   useEffect(() => {
     load(false);
   }, [load]);
+
+  // Pulse AI Alert List Viewed — fires once per screen visit
+  useEffect(() => {
+    pulseEvents.onAiAlertListViewed();
+  }, [pulseEvents]);
 
   if (loading) {
     return (

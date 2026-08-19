@@ -37,6 +37,7 @@ import {
 import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
+import { useProcurementEvents } from "@/components/PostHogProcurementEvents";
 
 const fieldStyles = {
   height: {
@@ -63,6 +64,8 @@ interface Attachment {
 export const AddPODashboard = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+
+  const procurementEvents = useProcurementEvents();
 
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
@@ -354,6 +357,11 @@ export const AddPODashboard = () => {
       ).unwrap();
       toast.success("Purchase Order created successfully");
       cache.invalidatePattern("po*");
+      try {
+        procurementEvents.onPoSubmitted({ advance_amount: formData.advanceAmount || null, item_count: items.length });
+      } catch (err) {
+        // ignore instrumentation errors
+      }
       navigate("/finance/po");
     } catch (error) {
       console.log(error);

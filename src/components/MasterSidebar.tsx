@@ -12,8 +12,7 @@ import {
   DoorOpen,
   PackagePlus,
   Ticket,
-  Wallet,
-  Settings2
+  Wallet
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -57,14 +56,6 @@ const masterItems = [
     href: '/master/unit-default'
   },
   {
-    name: 'Ticket Master',
-    icon: Ticket,
-    hasChildren: true,
-    children: [
-      { name: 'Complaint QR Setup', href: '/master/ticket/golden-qr' },
-    ]
-  },
-  {
     name: 'Material Master -> EBom',
     icon: FileText,
     href: '/master/material-ebom'
@@ -78,11 +69,6 @@ const masterItems = [
     name: 'Plant Detail Setup',
     icon: DoorOpen,
     href: '/master/plant-detail'
-  },
-  {
-    name: 'Fields Setup',
-    icon: Settings2,
-    href: '/master/fields-setup'
   },
 ];
 

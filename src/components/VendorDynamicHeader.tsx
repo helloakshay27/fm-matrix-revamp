@@ -14,9 +14,9 @@ export const VendorDynamicHeader: React.FC = () => {
       <div className="flex items-center gap-2">
         <span
           className="flex items-center justify-center w-7 h-7 rounded"
-          style={{ backgroundColor: "rgba(199, 32, 48, 0.1)" }}
+          style={{ backgroundColor: "rgba(218, 119, 86, 0.12)" }}
         >
-          <Store className="w-4 h-4" style={{ color: "#C72030" }} />
+          <Store className="w-4 h-4" style={{ color: "#DA7756" }} />
         </span>
         <span
           className="text-sm font-semibold tracking-wide uppercase"

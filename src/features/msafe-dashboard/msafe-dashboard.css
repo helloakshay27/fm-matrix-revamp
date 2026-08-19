@@ -1,0 +1,1686 @@
+/* M-Safe Dashboard — scoped under .msafe-dash (ported from vi_msafe_v6.html) */
+
+.msafe-dash {
+  min-height: 100vh;
+  /* Design tokens — Lockated + VI crimson */
+  /* Lockated core */
+  --terra:#DA7756;
+  --sage:#798C5E;
+  --bg:#F6F4EE;
+  --dark:#2C2C2C;
+  --teal:#9EC8BA;
+  --lav:#CECBF6;
+  --blue:#6B9BCC;
+  --ok:#108C72;
+  --warn:#EDC488;
+  --err:#E7848E;
+  --border:#C4B89D;
+  --div:#E8E2D5;
+
+  /* VI crimson accent (for critical / primary actions only) */
+  --vi-red:#EE2737;
+  --vi-red-dark:#C81F2C;
+  --vi-red-tint:#FDE8E9;
+
+  /* Surface */
+  --surface:#FFFFFF;
+  --surface-alt:#FAFAF8;
+  --hdr-bg:#F0EDE6;
+
+  /* Radii */
+  --r6:6px; --r8:8px; --r10:10px; --r12:12px; --r14:14px;
+
+  /* Type */
+  --shadow-sm:0 1px 2px rgba(44,44,44,.04);
+  --shadow-md:0 2px 8px rgba(44,44,44,.06);
+  --shadow-lg:0 8px 24px rgba(44,44,44,.10);
+  font-family: 'Poppins', sans-serif;
+  background: var(--bg);
+  color: var(--dark);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+.msafe-dash *,
+.msafe-dash *::before,
+.msafe-dash *::after { box-sizing: border-box; }
+.msafe-dash ul { list-style: none; margin: 0; padding: 0; }
+.msafe-dash button { font-family: inherit; cursor: pointer; }
+.msafe-dash main.module-content { display: none !important; }
+.msafe-dash main.module-content.active { display: flex !important; }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   VI MY WORKSPACE — OUTER APP SHELL BANNER
+═══════════════════════════════════════════════════════════════ */
+.msafe-dash .vi-shell-banner {
+  background: linear-gradient(90deg, var(--vi-red-dark) 0%, var(--vi-red) 100%);
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  color: #fff;
+  flex-shrink: 0;
+}
+.msafe-dash .vi-shell-brand { display: flex; align-items: center; gap: 12px; }
+.msafe-dash .vi-shell-logo-chip {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 8px;
+  padding: 5px 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  flex-shrink: 0;
+}
+.msafe-dash .vi-shell-logo-img { height: 22px; width: auto; display: block; }
+.msafe-dash .vi-shell-title { display: flex; flex-direction: column; line-height: 1.25; }
+.msafe-dash .vi-shell-sub {
+  font-size: 11px;
+  font-weight: 400;
+  color: #fff;
+  opacity: .85;
+}
+.msafe-dash .vi-shell-right { display: flex; align-items: center; gap: 22px; }
+.msafe-dash .vi-shell-welcome,
+.msafe-dash .vi-shell-date {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: #fff;
+  text-align: right;
+}
+.msafe-dash .vi-shell-welcome b,
+.msafe-dash .vi-shell-date b { font-weight: 700; }
+.msafe-dash .vi-shell-date {
+  border-left: 1px solid rgba(255,255,255,.35);
+  padding-left: 22px;
+}
+
+/* Lock replica colors against global theme remaps (theme.css #C72030 / brand overrides) */
+.msafe-dash .vi-shell-banner {
+  background: linear-gradient(90deg, #C81F2C 0%, #EE2737 100%) !important;
+}
+.msafe-dash .cm-apply-btn {
+  background: #EE2737 !important;
+  color: #fff !important;
+}
+.msafe-dash .cm-apply-btn:hover {
+  background: #C81F2C !important;
+}
+.msafe-dash .brand-mark {
+  background: linear-gradient(135deg, #EE2737 0%, #DA7756 100%) !important;
+}
+.msafe-dash .mydash-btn {
+  border-color: var(--border) !important;
+  color: #DA7756 !important;
+  background: #fff !important;
+}
+.msafe-dash .mydash-btn:hover {
+  background: rgba(218, 119, 86, 0.08) !important;
+  border-color: #DA7756 !important;
+  color: #DA7756 !important;
+}
+.msafe-dash .mydash-btn.active {
+  background: #DA7756 !important;
+  color: #fff !important;
+  border-color: #DA7756 !important;
+  box-shadow: 0 2px 6px rgba(218, 119, 86, 0.30) !important;
+}
+.msafe-dash .cm-reset-btn {
+  color: #798C5E !important;
+  border-color: #C4B89D !important;
+  background: #fff !important;
+}
+.msafe-dash .cm-reset-btn:hover {
+  background: #F6F4EE !important;
+  color: #2C2C2C !important;
+  border-color: #798C5E !important;
+}
+.msafe-dash .select-analytics-btn,
+.msafe-dash .am-apply-btn {
+  background: #DA7756 !important;
+  color: #fff !important;
+}
+.msafe-dash .select-analytics-btn:hover,
+.msafe-dash .am-apply-btn:hover {
+  background: #C46141 !important;
+}
+.msafe-dash .acc-dl-btn {
+  background: #108C72 !important;
+  color: #fff !important;
+}
+.msafe-dash .acc-dl-btn:hover {
+  background: #0D7562 !important;
+}
+.msafe-dash .kpi-dl-btn:hover {
+  background: #108C72 !important;
+  color: #fff !important;
+  border-color: #108C72 !important;
+}
+.msafe-dash .chart-pdf-btn:hover {
+  background: #DA7756 !important;
+  color: #fff !important;
+  border-color: #DA7756 !important;
+}
+.msafe-dash .info-btn:hover {
+  background: #DA7756 !important;
+  color: #fff !important;
+  border-color: #DA7756 !important;
+}
+.msafe-dash .dr-btn:not(.sec):not(.err) {
+  background: #DA7756 !important;
+  color: #fff !important;
+}
+.msafe-dash .dr-btn:not(.sec):not(.err):hover {
+  background: #C46141 !important;
+}
+.msafe-dash .tb-avatar .av {
+  background: #DA7756 !important;
+  color: #fff !important;
+}
+
+/* Export / download / configure icons — theme.css forces title="Export" to brand red;
+   replica uses sage (#798C5E) with neutral border. */
+.msafe-dash .tb-icon-btn,
+.msafe-dash .page-hd .tb-icon-btn,
+.msafe-dash button.tb-icon-btn[title="Export"],
+.msafe-dash button.tb-icon-btn[title="Configure"] {
+  background: #fff !important;
+  border: 1px solid #C4B89D !important;
+  color: #798C5E !important;
+  box-shadow: none !important;
+}
+.msafe-dash .tb-icon-btn:hover,
+.msafe-dash .page-hd .tb-icon-btn:hover,
+.msafe-dash button.tb-icon-btn[title="Export"]:hover,
+.msafe-dash button.tb-icon-btn[title="Configure"]:hover {
+  background: #fff !important;
+  color: #2C2C2C !important;
+  border-color: #798C5E !important;
+}
+.msafe-dash .tb-icon-btn svg,
+.msafe-dash .tb-icon-btn .lucide,
+.msafe-dash button.tb-icon-btn[title="Export"] svg,
+.msafe-dash button.tb-icon-btn[title="Export"] .lucide,
+.msafe-dash button.tb-icon-btn[title="Configure"] svg,
+.msafe-dash button.tb-icon-btn[title="Configure"] .lucide {
+  color: inherit !important;
+  stroke: currentColor !important;
+  fill: none !important;
+}
+.msafe-dash .kpi-dl-btn {
+  background: #fff !important;
+  border: 1px solid #E8E2D5 !important;
+  color: #798C5E !important;
+}
+.msafe-dash .kpi-dl-btn svg,
+.msafe-dash .kpi-dl-btn .lucide {
+  color: inherit !important;
+  stroke: currentColor !important;
+  fill: none !important;
+}
+.msafe-dash .kpi-dl-btn:hover {
+  background: #108C72 !important;
+  color: #fff !important;
+  border-color: #108C72 !important;
+}
+.msafe-dash .kpi-dl-btn:hover svg,
+.msafe-dash .kpi-dl-btn:hover .lucide {
+  color: #fff !important;
+  stroke: #fff !important;
+}
+.msafe-dash .chart-pdf-btn {
+  background: #F6F4EE !important;
+  border: 1px solid #E8E2D5 !important;
+  color: #798C5E !important;
+}
+.msafe-dash .chart-pdf-btn svg,
+.msafe-dash .chart-pdf-btn .lucide {
+  color: inherit !important;
+  stroke: currentColor !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DESIGN TOKENS — Lockated base + VI crimson accent (hybrid)
+═══════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════
+   TOP BAR
+═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   CIRCLE MANAGER FILTER BAR — expanded filter row
+═══════════════════════════════════════════════════════════════ */
+.msafe-dash .cm-filter-bar {
+  background:var(--surface-alt);
+  border-bottom:1px solid var(--div);
+  padding:12px 24px;
+  display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;
+  position:relative;z-index:50;
+}
+.msafe-dash .cm-filter-field {display:flex;flex-direction:column;gap:4px;min-width:150px}
+.msafe-dash .cm-filter-field select, .msafe-dash .cm-filter-field input[type=date] {
+  height:36px;padding:0 10px;
+  border:1px solid var(--border);border-radius:8px;
+  background:var(--surface);
+  font-family:'Poppins',sans-serif;font-size:12px;color:var(--dark);
+  outline:none;
+}
+.msafe-dash .cm-filter-label {font-size:10px;font-weight:700;color:var(--sage);text-transform:uppercase;letter-spacing:.4px}
+.msafe-dash .cm-filter-label em {color:var(--vi-red);font-style:normal}
+.msafe-dash .cm-date-field {min-width:130px}
+.msafe-dash .cm-filter-to {font-size:11px;color:var(--sage);padding-bottom:12px;align-self:flex-end}
+.msafe-dash .cm-apply-btn {
+  height:40px;padding:0 26px;border-radius:8px;
+  background:var(--vi-red);color:#fff;border:none;
+  font-size:12.5px;font-weight:700;cursor:pointer;
+  transition:background .15s;
+  align-self:flex-end;
+}
+.msafe-dash .cm-apply-btn:hover {background:var(--vi-red-dark)}
+.msafe-dash .cm-reset-btn {
+  height:40px;padding:0 20px;border-radius:8px;
+  background:var(--surface);color:var(--terra);border:1px solid var(--terra);
+  font-size:12.5px;font-weight:600;cursor:pointer;
+  transition:all .15s;
+  align-self:flex-end;
+}
+.msafe-dash .cm-reset-btn:hover {background:rgba(218,119,86,.08);color:var(--terra);border-color:var(--terra)}
+
+/* Function multi-select dropdown (legacy fallback) */
+.msafe-dash .cm-multiselect {position:relative}
+.msafe-dash .cm-multiselect-btn {
+  height:36px;padding:0 10px;
+  border:1px solid var(--border);border-radius:8px;
+  background:var(--surface);
+  font-family:'Poppins',sans-serif;font-size:12px;color:var(--dark);
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  cursor:pointer;min-width:150px;
+}
+.msafe-dash .cm-multiselect-btn svg {width:13px;height:13px;color:var(--sage);flex-shrink:0}
+.msafe-dash .cm-multiselect-panel {
+  display:none;
+  position:absolute;top:calc(100% + 4px);left:0;
+  width:220px;max-height:220px;overflow-y:auto;
+  background:var(--surface);
+  border:1px solid var(--border);border-radius:10px;
+  box-shadow:var(--shadow-lg);
+  padding:8px;z-index:60;
+}
+.msafe-dash .cm-multiselect-panel.open {display:block}
+.msafe-dash .cm-ms-item {
+  display:flex;align-items:center;gap:8px;
+  padding:7px 6px;border-radius:6px;
+  font-size:12px;color:var(--dark);cursor:pointer;
+}
+.msafe-dash .cm-ms-item:hover {background:var(--bg)}
+.msafe-dash .cm-ms-item input {width:14px;height:14px;accent-color:var(--terra);cursor:pointer}
+
+/* ═══════════════════════════════════════════════════════════════
+   TOAST NOTIFICATIONS — for Excel/PDF export buttons
+═══════════════════════════════════════════════════════════════ */
+.msafe-dash .toast-wrap {
+  position:fixed;bottom:24px;right:24px;z-index:400;
+  display:flex;flex-direction:column;gap:8px;
+}
+.msafe-dash .toast {
+  background:var(--dark);color:#fff;
+  padding:12px 16px;border-radius:10px;
+  font-size:12px;font-weight:500;
+  display:flex;align-items:center;gap:10px;
+  box-shadow:0 8px 24px rgba(0,0,0,.24);
+  opacity:0;transform:translateY(8px);
+  transition:opacity .25s,transform .25s;
+  min-width:240px;
+}
+.msafe-dash .toast.show {opacity:1;transform:translateY(0)}
+.msafe-dash .toast svg {width:16px;height:16px;color:var(--ok);flex-shrink:0}
+
+.msafe-dash .topbar {
+  position:sticky;top:0;z-index:60;
+  background:var(--surface);
+  border-bottom:1px solid var(--div);
+  height:64px;
+  display:flex;align-items:center;
+  padding:0 24px;
+  gap:16px;
+  box-shadow:var(--shadow-sm);
+}
+.msafe-dash .brand {display:flex;align-items:center;gap:12px;flex-shrink:0}
+.msafe-dash .brand-mark {
+  width:36px;height:36px;border-radius:8px;
+  background:linear-gradient(135deg,var(--vi-red) 0%,var(--terra) 100%);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:800;font-size:15px;letter-spacing:.5px;
+}
+.msafe-dash .brand-text .name {font-size:15px;font-weight:700;color:var(--dark);line-height:1.1}
+.msafe-dash .brand-text .sub {font-size:10.5px;color:var(--sage);line-height:1.2;margin-top:1px}
+
+/* Persona toggle */
+.msafe-dash .persona-toggle {
+  display:flex;
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:22px;
+  padding:3px;
+  gap:2px;
+  margin-left:20px;
+}
+.msafe-dash .persona-pill {
+  padding:6px 14px;
+  border-radius:20px;
+  font-size:11.5px;
+  font-weight:600;
+  color:var(--sage);
+  background:transparent;
+  border:none;
+  transition:all .15s;
+  white-space:nowrap;
+}
+.msafe-dash .persona-pill.active {
+  background:var(--dark);
+  color:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.15);
+}
+.msafe-dash .persona-pill:hover:not(.active) {color:var(--dark)}
+
+.msafe-dash .tb-spacer {flex:1}
+
+.msafe-dash .tb-filter {
+  display:flex;align-items:center;gap:6px;
+  padding:0 12px;height:34px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  font-size:12px;font-weight:500;color:var(--dark);
+}
+.msafe-dash .tb-filter select {
+  border:none;background:transparent;outline:none;
+  font-family:inherit;font-size:12px;font-weight:500;color:var(--dark);
+  cursor:pointer;padding-right:4px;
+}
+.msafe-dash .tb-filter-label {font-size:10px;color:var(--sage);text-transform:uppercase;letter-spacing:.4px;font-weight:600}
+
+.msafe-dash .tb-icon-btn {
+  width:34px;height:34px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--sage);
+  position:relative;
+}
+.msafe-dash .tb-icon-btn:hover {color:var(--dark);border-color:var(--sage)}
+.msafe-dash .tb-icon-btn svg {width:16px;height:16px}
+.msafe-dash .tb-badge {
+  position:absolute;top:5px;right:6px;
+  min-width:14px;height:14px;border-radius:7px;
+  background:var(--vi-red);
+  color:#fff;font-size:9px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 3px;
+  border:1.5px solid var(--surface);
+}
+
+.msafe-dash .tb-avatar {
+  display:flex;align-items:center;gap:8px;
+  padding:3px 12px 3px 3px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:22px;
+}
+.msafe-dash .tb-avatar .av {
+  width:28px;height:28px;border-radius:50%;
+  background:var(--terra);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;
+}
+.msafe-dash .tb-avatar .av-txt .n {font-size:11.5px;font-weight:600;color:var(--dark);line-height:1.1}
+.msafe-dash .tb-avatar .av-txt .r {font-size:9.5px;color:var(--sage)}
+
+/* ═══════════════════════════════════════════════════════════════
+   MY DASHBOARD — topbar entry button
+═══════════════════════════════════════════════════════════════ */
+.msafe-dash .mydash-btn {
+  display:flex;align-items:center;gap:7px;
+  padding:8px 16px;margin-left:12px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:22px;
+  font-size:12px;font-weight:600;color:var(--terra);
+  transition:all .15s;
+  white-space:nowrap;
+}
+.msafe-dash .mydash-btn svg {width:14px;height:14px}
+.msafe-dash .mydash-btn:hover {background:rgba(218,119,86,.08);border-color:var(--terra)}
+.msafe-dash .mydash-btn.active {
+  background:var(--terra);color:#fff;border-color:var(--terra);
+  box-shadow:0 2px 6px rgba(218,119,86,.30);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MY DASHBOARD — content area
+═══════════════════════════════════════════════════════════════ */
+.msafe-dash .mydash-hd {display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.msafe-dash .mydash-hd .sub {font-size:12px;color:var(--sage);margin-top:4px}
+.msafe-dash .select-analytics-btn {
+  display:flex;align-items:center;gap:8px;
+  padding:10px 18px;border-radius:8px;
+  background:var(--terra);color:#fff;border:none;
+  font-size:12.5px;font-weight:600;
+  white-space:nowrap;flex-shrink:0;
+  transition:background .15s;
+}
+.msafe-dash .select-analytics-btn:hover {background:#C46141}
+.msafe-dash .select-analytics-btn svg {width:15px;height:15px}
+
+.msafe-dash .mydash-empty {
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;padding:80px 20px;
+  border:2px dashed var(--border);
+  border-radius:14px;
+  background:var(--surface-alt);
+}
+.msafe-dash .mydash-empty svg {width:48px;height:48px;color:var(--border)}
+.msafe-dash .mydash-empty .t {font-size:15px;font-weight:700;color:var(--dark)}
+.msafe-dash .mydash-empty .s {font-size:12px;color:var(--sage);max-width:360px;text-align:center;line-height:1.5}
+
+.msafe-dash .mydash-grid {
+  display:grid;grid-template-columns:repeat(auto-fill, minmax(340px, 1fr));
+  gap:16px;
+}
+.msafe-dash .mydash-grid .kpi {position:relative}
+.msafe-dash .mydash-card-remove {
+  position:absolute;top:10px;right:10px;
+  width:22px;height:22px;border-radius:6px;
+  background:var(--bg);border:1px solid var(--div);
+  color:var(--sage);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .15s;
+  z-index:2;
+}
+.msafe-dash .mydash-card-remove:hover {background:var(--vi-red-tint);color:var(--vi-red);border-color:rgba(238,39,55,.30)}
+.msafe-dash .mydash-card-remove svg {width:12px;height:12px}
+.msafe-dash .mydash-chart-card {position:relative}
+.msafe-dash .mydash-module-tag {
+  display:inline-block;font-size:9px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.4px;
+  padding:2px 8px;border-radius:10px;
+  background:var(--bg);color:var(--sage);
+  border:1px solid var(--div);
+  margin-bottom:6px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SELECT ANALYTICS MODAL
+═══════════════════════════════════════════════════════════════ */
+.msafe-dash .am-scrim {
+  position:fixed;inset:0;background:rgba(44,44,44,.40);
+  z-index:210;opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.msafe-dash .am-scrim.open {opacity:1;pointer-events:auto}
+.msafe-dash .am-modal {
+  position:fixed;top:50%;left:50%;
+  transform:translate(-50%,-50%) scale(.96);
+  width:560px;max-width:92vw;max-height:80vh;
+  background:#fff;
+  border-radius:16px;
+  box-shadow:0 24px 64px rgba(44,44,44,.24);
+  z-index:211;
+  display:flex;flex-direction:column;
+  opacity:0;pointer-events:none;
+  transition:opacity .2s, transform .2s;
+  font-family:'Poppins',sans-serif;
+}
+.msafe-dash .am-modal.open {opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+.msafe-dash .am-hd {padding:22px 24px 16px;border-bottom:1px solid var(--div);flex-shrink:0}
+.msafe-dash .am-hd h3 {font-size:18px;font-weight:700;color:var(--dark);margin:0}
+.msafe-dash .am-hd .s {font-size:12px;color:var(--sage);margin-top:4px}
+.msafe-dash .am-body {padding:8px 24px;overflow-y:auto;flex:1;min-height:0}
+.msafe-dash .am-group {padding:14px 0;border-bottom:1px solid var(--div)}
+.msafe-dash .am-group:last-child {border-bottom:none}
+.msafe-dash .am-group-hd {display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.msafe-dash .am-group-hd svg {width:16px;height:16px;color:#DA7756;flex-shrink:0}
+.msafe-dash .am-group-hd .name {font-size:13.5px;font-weight:700;color:var(--dark);flex:1}
+.msafe-dash .am-item {
+  display:flex;align-items:center;gap:10px;
+  padding:7px 0 7px 26px;
+  font-size:12.5px;color:var(--dark);
+  cursor:pointer;
+  background:transparent;border:none;
+  width:100%;text-align:left;
+  font-family:inherit;
+}
+.msafe-dash .am-item:hover {color:#DA7756}
+.msafe-dash .am-checkbox {
+  width:16px;height:16px;border-radius:4px;
+  border:1.5px solid var(--border) !important;
+  display:inline-flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all .12s;
+  background:#fff !important;
+  padding:0;cursor:pointer;
+  box-shadow:none !important;
+}
+.msafe-dash .am-checkbox.checked {
+  background:#DA7756 !important;
+  border-color:#DA7756 !important;
+}
+.msafe-dash .am-checkbox svg {
+  width:10px;height:10px;color:#fff !important;
+  opacity:0;transition:opacity .1s;
+  pointer-events:none;
+}
+.msafe-dash .am-checkbox.checked svg {opacity:1}
+.msafe-dash .am-group-hd .am-checkbox {width:17px;height:17px}
+.msafe-dash .am-ft {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 24px;border-top:1px solid var(--div);
+  flex-shrink:0;background:var(--surface-alt);
+  border-radius:0 0 16px 16px;
+}
+.msafe-dash .am-ft .count {font-size:12px;color:var(--sage);font-weight:500}
+.msafe-dash .am-ft-actions {display:flex;gap:10px;align-items:center}
+.msafe-dash .am-clear-btn {
+  background:none;border:none;font-size:12.5px;font-weight:600;
+  color:var(--sage);cursor:pointer;font-family:inherit;padding:0;
+}
+.msafe-dash .am-clear-btn:hover {color:var(--vi-red)}
+.msafe-dash .am-apply-btn {
+  padding:9px 22px;border-radius:8px;
+  background:#DA7756 !important;color:#fff !important;border:none;
+  font-size:12.5px;font-weight:700;cursor:pointer;
+  transition:background .15s;font-family:inherit;
+}
+.msafe-dash .am-apply-btn:hover {background:#C46141 !important}
+
+/* ═══════════════════════════════════════════════════════════════
+   MODULE TABS — M-Safe (single tab; also serves as "back" control
+   when viewing My Dashboard). Audit/Incident/PGI removed for this
+   development phase — M-Safe only, per client review.
+═══════════════════════════════════════════════════════════════ */
+.msafe-dash .module-tabs {
+  position:sticky;top:64px;z-index:56;
+  background:var(--dark);
+  padding:0 24px;
+  display:flex;gap:4px;
+  height:46px;align-items:center;
+  overflow-x:auto;
+}
+.msafe-dash .mtab {
+  padding:9px 18px;border-radius:7px 7px 0 0;
+  background:transparent;border:none;
+  font-size:12.5px;font-weight:600;color:rgba(255,255,255,.55);
+  transition:all .15s;white-space:nowrap;
+  display:flex;align-items:center;gap:7px;
+}
+.msafe-dash .mtab svg {width:14px;height:14px}
+.msafe-dash .mtab:hover {color:#fff;background:rgba(255,255,255,.06)}
+.msafe-dash .mtab.active {
+  background:var(--bg);color:var(--dark);
+}
+.msafe-dash .mtab .mtab-badge {
+  font-size:8.5px;font-weight:700;
+  background:var(--vi-red);color:#fff;
+  padding:1px 6px;border-radius:8px;
+  letter-spacing:.3px;
+}
+.msafe-dash .mtab.active .mtab-badge {background:var(--terra)}
+
+/* subnav needs to sit below module-tabs now */
+.msafe-dash .subnav { top:110px; }
+
+/* Module content wrapper — hidden/shown as a unit.
+   Uses element+class specificity (main.module-content) so this reliably
+   overrides .content{display:flex} regardless of stylesheet order. */
+
+.msafe-dash .subnav {
+  position:sticky;top:64px;z-index:55;
+  background:var(--surface);
+  border-bottom:1px solid var(--div);
+  padding:0 24px;
+  display:flex;gap:2px;
+  overflow-x:auto;
+  height:44px;align-items:center;
+}
+.msafe-dash .snp {
+  padding:8px 14px;border-radius:6px;
+  background:transparent;border:none;
+  font-size:12px;font-weight:600;color:var(--sage);
+  transition:all .15s;
+  white-space:nowrap;
+}
+.msafe-dash .snp:hover {background:var(--bg);color:var(--dark)}
+.msafe-dash .snp.active {
+  background:var(--dark);color:#fff;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CONTENT
+═══════════════════════════════════════════════════════════════ */
+.msafe-dash .content {padding:24px;max-width:1680px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+
+.msafe-dash .page-hd {
+  display:flex;justify-content:space-between;align-items:flex-end;
+  margin-bottom:-8px;
+}
+.msafe-dash .page-hd h2 {font-size:22px;font-weight:700;letter-spacing:-.3px;margin:0;color:var(--dark)}
+.msafe-dash .page-hd .sub {font-size:12px;color:var(--sage);margin-top:4px}
+.msafe-dash .page-hd .live-dot {
+  display:inline-block;width:8px;height:8px;border-radius:50%;
+  background:var(--ok);margin-right:6px;
+  box-shadow:0 0 0 3px rgba(16,140,114,.15);
+  animation:pulse 2s infinite;
+}
+@keyframes pulse{
+  0%,100%{box-shadow:0 0 0 3px rgba(16,140,114,.15)}
+  50%{box-shadow:0 0 0 6px rgba(16,140,114,.05)}
+}
+
+/* Section heading */
+.msafe-dash .sec {scroll-margin-top:120px}
+.msafe-dash #sec-heatmap,
+.msafe-dash #sec-directory {
+  display: block;
+  width: 100%;
+}
+.msafe-dash .sec-hd {
+  display:flex;align-items:center;gap:12px;
+  margin-bottom:12px;
+}
+.msafe-dash .sec-lbl {
+  font-size:11px;font-weight:700;color:var(--dark);
+  text-transform:uppercase;letter-spacing:.6px;
+  white-space:nowrap;
+}
+.msafe-dash .sec-line {flex:1;height:1px;background:var(--div)}
+
+/* Alert strip */
+.msafe-dash .alert-strip {
+  background:linear-gradient(90deg, rgba(238,39,55,.06) 0%, rgba(238,39,55,.02) 100%);
+  border:1px solid rgba(238,39,55,.18);
+  border-left:3px solid var(--vi-red);
+  border-radius:8px;
+  padding:10px 14px;
+  display:flex;align-items:center;gap:10px;
+  font-size:12px;
+}
+.msafe-dash .alert-strip .a-lbl {
+  font-size:9.5px;font-weight:700;color:var(--vi-red);
+  text-transform:uppercase;letter-spacing:.6px;
+  margin-right:4px;
+}
+.msafe-dash .alert-chip {
+  padding:3px 10px;border-radius:12px;
+  background:rgba(238,39,55,.10);color:#B01B27;
+  font-size:10.5px;font-weight:600;
+  transition:all .15s;
+  border:none;
+}
+.msafe-dash .alert-chip:hover {background:rgba(238,39,55,.20)}
+.msafe-dash .alert-chip.warn {background:rgba(237,196,136,.18);color:#8A5A00}
+.msafe-dash .alert-chip.warn:hover {background:rgba(237,196,136,.30)}
+
+/* ═══════════════════════════════════════════════════════════════
+   KPI GRID
+═══════════════════════════════════════════════════════════════ */
+.msafe-dash .kpi-grid {
+  display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FLOW KPI — click-to-expand navigation cards
+═══════════════════════════════════════════════════════════════ */
+.msafe-dash .flow-hint {font-size:11px;color:var(--sage);margin:-4px 0 12px;font-style:italic}
+.msafe-dash .flow-kpi-grid {grid-template-columns:repeat(auto-fit, minmax(190px, 1fr))}
+.msafe-dash .flow-kpi {position:relative;transition:all .18s}
+.msafe-dash .flow-kpi:hover {border-color:var(--kpi-c,var(--terra))}
+.msafe-dash .flow-kpi.kpi-active {
+  border-color:var(--kpi-c,var(--terra));
+  box-shadow:0 0 0 2px var(--kpi-tint,rgba(218,119,86,.15));
+  background:var(--kpi-tint,rgba(218,119,86,.04));
+}
+.msafe-dash .kpi-flow-arrow {
+  font-size:10px;color:var(--sage);font-weight:600;
+  margin-top:6px;opacity:.75;
+  padding-right:26px;
+}
+.msafe-dash .flow-kpi.kpi-active .kpi-flow-arrow {color:var(--kpi-c,var(--terra));opacity:1}
+.msafe-dash .kpi-val-sub {font-size:12px;font-weight:600;color:var(--sage)}
+.msafe-dash .kpi-dl-btn {
+  position:absolute;bottom:10px;right:10px;
+  width:22px;height:22px;border-radius:6px;
+  background:var(--surface);border:1px solid var(--div);
+  color:var(--sage);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .15s;
+  z-index:2;
+}
+.msafe-dash .kpi-dl-btn svg {width:12px;height:12px}
+.msafe-dash .kpi-dl-btn:hover {background:var(--ok);color:#fff;border-color:var(--ok)}
+
+/* ═══════════════════════════════════════════════════════════════
+   ACCORDION PANELS — expand-in-place section content
+═══════════════════════════════════════════════════════════════ */
+.msafe-dash .accordion-panel {
+  border:1px solid var(--div);
+  border-radius:14px;
+  background:var(--surface-alt);
+  padding:16px;
+  margin-bottom:16px;
+  transition:box-shadow .3s ease, border-color .3s ease;
+}
+.msafe-dash .accordion-panel.nav-highlight,
+.msafe-dash .msafe-acc-anchor.nav-highlight .accordion-panel {
+  border-color:var(--terra);
+  box-shadow:0 0 0 3px rgba(218,119,86,.16);
+}
+.msafe-dash .msafe-acc-anchor {
+  scroll-margin-top: 16px;
+}
+.msafe-dash .acc-hd {
+  display:flex;justify-content:space-between;align-items:flex-start;
+  margin-bottom:16px;
+  padding-bottom:12px;
+  border-bottom:1px solid var(--div);
+}
+.msafe-dash .acc-title {font-size:16px;font-weight:700;color:var(--dark)}
+.msafe-dash .acc-sub {font-size:11.5px;color:var(--sage);margin-top:3px}
+.msafe-dash .acc-hd-actions {display:flex;gap:8px;align-items:center;flex-shrink:0}
+.msafe-dash .acc-dl-btn {
+  display:flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:8px;
+  background:var(--ok);color:#fff;border:none;
+  font-size:11.5px;font-weight:600;cursor:pointer;
+  transition:background .15s;
+}
+.msafe-dash .acc-dl-btn svg {width:13px;height:13px}
+.msafe-dash .acc-dl-btn:hover {background:#0D7562}
+
+/* Chart card PDF download + row layout with chart-switch */
+.msafe-dash .card-actions-row {display:flex;align-items:center;gap:8px}
+.msafe-dash .chart-pdf-btn {
+  width:26px;height:26px;border-radius:6px;
+  background:var(--bg);border:1px solid var(--div);
+  color:var(--sage);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .15s;flex-shrink:0;
+}
+.msafe-dash .chart-pdf-btn svg {width:13px;height:13px}
+.msafe-dash .chart-pdf-btn:hover {background:var(--terra);color:#fff;border-color:var(--terra)}
+
+.msafe-dash .kpi {
+  background:var(--surface);
+  border:1px solid var(--div);
+  border-radius:12px;
+  padding:14px;
+  display:flex;flex-direction:column;gap:8px;
+  cursor:pointer;
+  transition:all .15s;
+  position:relative;overflow:hidden;
+}
+.msafe-dash .kpi:hover {box-shadow:var(--shadow-md);transform:translateY(-1px);border-color:var(--border)}
+.msafe-dash .kpi::before {
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:var(--kpi-c,var(--terra));
+}
+.msafe-dash .kpi-top {display:flex;justify-content:space-between;align-items:flex-start}
+.msafe-dash .kpi-lbl {font-size:10px;font-weight:600;color:var(--sage);text-transform:uppercase;letter-spacing:.3px;line-height:1.3}
+.msafe-dash .kpi-ico {
+  width:26px;height:26px;border-radius:6px;
+  background:var(--kpi-tint,rgba(218,119,86,.12));
+  color:var(--kpi-c,var(--terra));
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.msafe-dash .kpi-ico svg {width:14px;height:14px}
+.msafe-dash .kpi-val {font-size:24px;font-weight:800;letter-spacing:-.4px;color:var(--dark);line-height:1}
+.msafe-dash .kpi-sub {display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:500;color:var(--sage)}
+.msafe-dash .kpi-trend {display:flex;align-items:center;gap:3px;font-size:10.5px;font-weight:600}
+.msafe-dash .kpi-trend.up {color:var(--ok)}
+.msafe-dash .kpi-trend.down {color:var(--vi-red)}
+.msafe-dash .kpi-trend.warn {color:#8A5A00}
+.msafe-dash .kpi-trend svg {width:10px;height:10px}
+
+/* ═══════════════════════════════════════════════════════════════
+   CARDS & LAYOUTS
+═══════════════════════════════════════════════════════════════ */
+.msafe-dash .card {
+  background:var(--surface);
+  border:1px solid var(--div);
+  border-radius:12px;
+  padding:16px;
+}
+.msafe-dash .card-hd {
+  display:flex;justify-content:space-between;align-items:flex-start;
+  margin-bottom:12px;gap:10px;
+}
+.msafe-dash .card-title {font-size:13px;font-weight:700;color:var(--dark);line-height:1.2}
+.msafe-dash .card-sub {font-size:10.5px;color:var(--sage);margin-top:2px}
+
+.msafe-dash .card-actions {display:flex;gap:6px;align-items:center}
+.msafe-dash .chart-switch {
+  display:flex;gap:1px;background:var(--bg);border-radius:5px;padding:2px;
+}
+.msafe-dash .chart-switch button {
+  background:transparent;border:none;
+  padding:3px 8px;border-radius:4px;
+  font-size:10px;font-weight:600;color:var(--sage);
+  cursor:pointer;font-family:inherit;
+}
+.msafe-dash .chart-switch button.active {background:var(--surface);color:var(--dark);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.msafe-dash .chart-switch button:hover:not(.active) {color:var(--dark)}
+
+.msafe-dash .card-tag {
+  font-size:9.5px;font-weight:600;padding:3px 8px;border-radius:12px;
+  background:var(--bg);color:var(--sage);
+  border:1px solid var(--div);
+  text-transform:uppercase;letter-spacing:.3px;
+}
+
+.msafe-dash .g {display:grid;gap:16px}
+.msafe-dash .g2 {grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.msafe-dash .g3 {grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)}
+.msafe-dash .g4 {grid-template-columns:repeat(4,minmax(0,1fr))}
+.msafe-dash .g-2-1 {grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+.msafe-dash .g-1-2 {grid-template-columns:minmax(0,1fr) minmax(0,2fr)}
+.msafe-dash .g-3-2 {grid-template-columns:minmax(0,3fr) minmax(0,2fr)}
+/* Safety net: grid children never grow past their allocated column */
+.msafe-dash .g > *, .msafe-dash .kpi-grid > * {min-width:0}
+/* Prevent any residual overflow from bleeding to horizontal page scroll */
+
+/* ═══════════════════════════════════════════════════════════════
+   COMPLIANCE FUNNEL
+═══════════════════════════════════════════════════════════════ */
+.msafe-dash .funnel {
+  display:flex;align-items:center;gap:6px;
+  padding:8px 0;
+}
+.msafe-dash .funnel-step {
+  flex:1;
+  background:var(--surface-alt);
+  border:1px solid var(--div);
+  border-radius:10px;
+  padding:14px 12px;
+  position:relative;
+  cursor:pointer;
+  transition:all .15s;
+}
+.msafe-dash .funnel-step:hover {transform:translateY(-1px);box-shadow:var(--shadow-md);border-color:var(--border)}
+.msafe-dash .funnel-step .f-lbl {font-size:10px;font-weight:600;color:var(--sage);text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px}
+.msafe-dash .funnel-step .f-val {font-size:22px;font-weight:800;color:var(--dark);line-height:1}
+.msafe-dash .funnel-step .f-pct {font-size:10px;color:var(--sage);margin-top:4px}
+.msafe-dash .funnel-step .f-bar {
+  height:3px;background:var(--div);border-radius:2px;margin-top:8px;overflow:hidden;
+}
+.msafe-dash .funnel-step .f-bar-fill {height:3px;border-radius:2px;background:var(--f-c,var(--terra))}
+.msafe-dash .funnel-arrow {
+  color:var(--border);font-size:14px;flex-shrink:0;padding:0 2px;font-weight:800;
+}
+.msafe-dash .funnel-step.critical .f-val {color:var(--vi-red)}
+.msafe-dash .funnel-step.critical {border-color:rgba(238,39,55,.25);background:rgba(253,232,233,.4)}
+
+/* ═══════════════════════════════════════════════════════════════
+   PROGRESS BARS
+═══════════════════════════════════════════════════════════════ */
+.msafe-dash .pb-row {
+  display:flex;align-items:center;gap:10px;
+  padding:6px 0;
+  cursor:pointer;font-size:11.5px;
+}
+.msafe-dash .pb-row:hover .pb-label {color:var(--dark)}
+.msafe-dash .pb-label {flex:1;color:var(--sage);font-weight:500}
+.msafe-dash .pb-wrap {width:100px;height:6px;background:var(--div);border-radius:3px;overflow:hidden;flex-shrink:0}
+.msafe-dash .pb-fill {height:6px;border-radius:3px;transition:width .3s}
+.msafe-dash .pb-val {width:38px;text-align:right;font-weight:700;color:var(--dark);font-size:11.5px}
+
+/* ═══════════════════════════════════════════════════════════════
+   TABLES
+═══════════════════════════════════════════════════════════════ */
+.msafe-dash .tbl {width:100%;border-collapse:collapse;font-size:11.5px}
+.msafe-dash .tbl thead th {
+  text-align:left;
+  padding:8px 10px;
+  font-size:10px;font-weight:700;
+  color:var(--sage);
+  text-transform:uppercase;letter-spacing:.4px;
+  background:var(--hdr-bg);
+  border-bottom:1px solid var(--div);
+}
+.msafe-dash .tbl thead th:first-child {border-radius:6px 0 0 0}
+.msafe-dash .tbl thead th:last-child {border-radius:0 6px 0 0}
+.msafe-dash .tbl tbody td {
+  padding:9px 10px;
+  border-bottom:1px solid var(--div);
+  color:var(--dark);
+}
+.msafe-dash .tbl tbody tr {cursor:pointer;transition:background .12s}
+.msafe-dash .tbl tbody tr:hover {background:var(--bg)}
+.msafe-dash .tbl tbody tr:last-child td {border-bottom:none}
+.msafe-dash .tbl-scroll {max-height:340px;overflow-y:auto;border:1px solid var(--div);border-radius:8px}
+.msafe-dash .tbl .cell-strong {font-weight:600;color:var(--dark)}
+.msafe-dash .tbl .cell-mono {font-family:'SF Mono',Menlo,monospace;font-size:10.5px}
+
+/* Badges */
+.msafe-dash .badge {
+  display:inline-flex;align-items:center;gap:4px;
+  padding:2px 8px;border-radius:10px;
+  font-size:10px;font-weight:600;
+  white-space:nowrap;
+}
+.msafe-dash .b-ok {background:rgba(16,140,114,.14);color:var(--ok)}
+.msafe-dash .b-warn {background:rgba(237,196,136,.24);color:#8A5A00}
+.msafe-dash .b-err {background:rgba(238,39,55,.14);color:#B01B27}
+.msafe-dash .b-pending {background:rgba(237,196,136,.24);color:#8A5A00}
+.msafe-dash .b-cleared {background:rgba(16,140,114,.14);color:var(--ok)}
+.msafe-dash .b-approved {background:rgba(16,140,114,.14);color:var(--ok)}
+.msafe-dash .b-completed {background:rgba(16,140,114,.14);color:var(--ok)}
+.msafe-dash .b-pass {background:rgba(16,140,114,.14);color:var(--ok)}
+.msafe-dash .b-fail {background:rgba(238,39,55,.14);color:#B01B27}
+.msafe-dash .b-info {background:rgba(107,155,204,.18);color:#3A6790}
+.msafe-dash .b-neutral {background:var(--bg);color:var(--sage);border:1px solid var(--div)}
+
+/* Status dot column */
+.msafe-dash .status-dots {display:flex;gap:4px}
+.msafe-dash .sdot {
+  width:16px;height:16px;border-radius:4px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:800;
+  cursor:help;
+}
+.msafe-dash .sdot.ok {background:rgba(16,140,114,.18);color:var(--ok)}
+.msafe-dash .sdot.pending {background:rgba(237,196,136,.30);color:#8A5A00}
+.msafe-dash .sdot.fail {background:rgba(238,39,55,.15);color:#B01B27}
+.msafe-dash .sdot.na {background:var(--div);color:var(--sage)}
+
+/* ═══════════════════════════════════════════════════════════════
+   CHART WRAPPERS
+═══════════════════════════════════════════════════════════════ */
+.msafe-dash .chart-wrap {position:relative;height:220px;width:100%;max-width:100%;min-width:0;overflow:hidden}
+.msafe-dash .chart-wrap.chart-wrap--pie {overflow:visible}
+.msafe-dash .chart-wrap.small {height:160px}
+.msafe-dash .chart-wrap.tall {height:280px}
+.msafe-dash .chart-wrap canvas {max-width:100%!important}
+.msafe-dash .donut-center {
+  position:absolute;
+  top:42%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  text-align:center;
+  pointer-events:none;
+  z-index:1;
+}
+.msafe-dash .donut-center-val {font-size:18px;font-weight:800;color:var(--dark);line-height:1}
+.msafe-dash .donut-center-lbl {font-size:10px;color:var(--sage);margin-top:4px;font-weight:600}
+
+/* Donut w/ center label */
+.msafe-dash .donut-block {display:flex;gap:16px;align-items:center;min-height:150px}
+.msafe-dash .donut-block .donut-c, .msafe-dash .ring-stat .ring-c {position:relative}
+.msafe-dash .donut-block .donut-c {width:150px;height:150px;flex-shrink:0;overflow:visible;position:relative;z-index:1}
+.msafe-dash .donut-block .donut-center, .msafe-dash .ring-stat .ring-c .donut-center {
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  text-align:center;
+  pointer-events:none;
+  z-index:2;
+}
+.msafe-dash .donut-block .dh-val {font-size:22px;font-weight:800;color:var(--dark);line-height:1}
+.msafe-dash .donut-block .dh-lbl {font-size:9.5px;color:var(--sage);text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
+.msafe-dash .donut-legend {flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+.msafe-dash .dl-row {display:flex;align-items:center;gap:8px;font-size:11px;cursor:pointer;padding:4px 0}
+.msafe-dash .dl-row:hover {color:var(--dark)}
+.msafe-dash .dl-sw {width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.msafe-dash .dl-lbl {flex:1;color:var(--sage);font-weight:500}
+.msafe-dash .dl-val {font-weight:700;color:var(--dark);font-variant-numeric:tabular-nums}
+
+/* ═══════════════════════════════════════════════════════════════
+   HEATMAP (Circle × Module compliance)
+═══════════════════════════════════════════════════════════════ */
+.msafe-dash .hm-wrap {display:flex;flex-direction:column;gap:6px;font-size:11px}
+.msafe-dash .hm-hd {
+  display:grid;
+  grid-template-columns:120px repeat(5, 1fr);
+  gap:4px;
+  font-size:9.5px;font-weight:700;color:var(--sage);
+  text-transform:uppercase;letter-spacing:.3px;
+  padding-bottom:4px;border-bottom:1px solid var(--div);
+}
+.msafe-dash .hm-hd div {text-align:center}
+.msafe-dash .hm-hd div:first-child {text-align:left}
+.msafe-dash .hm-row {
+  display:grid;
+  grid-template-columns:120px repeat(5, 1fr);
+  gap:4px;
+  align-items:center;
+}
+.msafe-dash .hm-label {font-size:11px;font-weight:600;color:var(--dark)}
+.msafe-dash .hm-cell {
+  height:36px;
+  border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:var(--dark);
+  cursor:pointer;
+  transition:transform .12s;
+}
+.msafe-dash .hm-cell:hover {transform:scale(1.05)}
+.msafe-dash .hm-cell.c1 {background:rgba(238,39,55,.28)}
+.msafe-dash .hm-cell.c2 {background:rgba(237,196,136,.35)}
+.msafe-dash .hm-cell.c3 {background:rgba(158,200,186,.35)}
+.msafe-dash .hm-cell.c4 {background:rgba(16,140,114,.22)}
+.msafe-dash .hm-scale {
+  display:flex;align-items:center;gap:8px;
+  font-size:9.5px;color:var(--sage);
+  margin-top:6px;
+}
+.msafe-dash .hm-scale-block {display:flex;gap:2px}
+.msafe-dash .hm-scale-block span {width:16px;height:8px;border-radius:2px;display:block}
+
+/* ═══════════════════════════════════════════════════════════════
+   USER DIRECTORY
+═══════════════════════════════════════════════════════════════ */
+.msafe-dash .usr-search {
+  display:flex;align-items:center;gap:8px;
+  background:var(--bg);
+  border:1px solid var(--div);
+  border-radius:8px;
+  padding:0 12px;height:32px;
+  width:280px;
+}
+.msafe-dash .usr-search svg {width:14px;height:14px;color:var(--sage)}
+.msafe-dash .usr-search input {
+  border:none;background:transparent;outline:none;
+  font-family:inherit;font-size:11.5px;
+  width:100%;color:var(--dark);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ACTIVITY FEED
+═══════════════════════════════════════════════════════════════ */
+.msafe-dash .feed {display:flex;flex-direction:column;gap:0;max-height:340px;overflow-y:auto}
+.msafe-dash .feed-item {
+  display:flex;gap:10px;
+  padding:10px 4px;
+  border-bottom:1px solid var(--div);
+  cursor:pointer;
+  transition:background .12s;
+}
+.msafe-dash .feed-item:hover {background:var(--bg)}
+.msafe-dash .feed-item:last-child {border-bottom:none}
+.msafe-dash .feed-dot {
+  width:8px;height:8px;border-radius:50%;
+  background:var(--sage);flex-shrink:0;margin-top:5px;
+}
+.msafe-dash .feed-dot.ok {background:var(--ok)}
+.msafe-dash .feed-dot.warn {background:var(--warn)}
+.msafe-dash .feed-dot.err {background:var(--vi-red)}
+.msafe-dash .feed-content {flex:1;font-size:11.5px;line-height:1.5}
+.msafe-dash .feed-content b {font-weight:600;color:var(--dark)}
+.msafe-dash .feed-time {font-size:10px;color:var(--sage);margin-top:2px}
+
+/* ═══════════════════════════════════════════════════════════════
+   MANAGER LEADERBOARD
+═══════════════════════════════════════════════════════════════ */
+.msafe-dash .lb-row {
+  display:flex;align-items:center;gap:10px;
+  padding:8px 4px;
+  border-bottom:1px solid var(--div);
+  cursor:pointer;
+  transition:background .12s;
+}
+.msafe-dash .lb-row:last-child {border-bottom:none}
+.msafe-dash .lb-row:hover {background:var(--bg)}
+.msafe-dash .lb-rank {
+  width:22px;height:22px;border-radius:50%;
+  background:var(--bg);color:var(--sage);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10.5px;font-weight:700;flex-shrink:0;
+}
+.msafe-dash .lb-row:nth-child(1) .lb-rank {background:var(--vi-red);color:#fff}
+.msafe-dash .lb-row:nth-child(2) .lb-rank {background:var(--terra);color:#fff}
+.msafe-dash .lb-row:nth-child(3) .lb-rank {background:var(--warn);color:#fff}
+.msafe-dash .lb-info {flex:1;min-width:0}
+.msafe-dash .lb-name {font-size:11.5px;font-weight:600;color:var(--dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msafe-dash .lb-meta {font-size:10px;color:var(--sage)}
+.msafe-dash .lb-val {font-size:14px;font-weight:800;color:var(--dark)}
+
+/* ═══════════════════════════════════════════════════════════════
+   DRILL PANEL
+═══════════════════════════════════════════════════════════════ */
+.msafe-dash .drill-scrim {
+  position:fixed;inset:0;
+  background:rgba(44,44,44,.35);
+  z-index:200;
+  opacity:0;pointer-events:none;
+  transition:opacity .2s;
+}
+.msafe-dash .drill-scrim.open {opacity:1;pointer-events:auto}
+.msafe-dash .drill {
+  position:fixed;top:0;right:0;bottom:0;
+  width:520px;max-width:92vw;
+  background:var(--surface);
+  border-left:1px solid var(--div);
+  z-index:201;
+  transform:translateX(100%);
+  transition:transform .25s ease;
+  box-shadow:-8px 0 24px rgba(44,44,44,.10);
+  display:flex;flex-direction:column;
+}
+.msafe-dash .drill.open {transform:translateX(0)}
+.msafe-dash .drill-hd {
+  padding:16px 20px;
+  border-bottom:1px solid var(--div);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.msafe-dash .drill-hd .crumb {font-size:10px;color:var(--sage);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px}
+.msafe-dash .drill-hd h3 {font-size:16px;font-weight:700;margin:0;color:var(--dark)}
+.msafe-dash .drill-close {
+  background:var(--bg);border:none;
+  width:30px;height:30px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--sage);
+}
+.msafe-dash .drill-close:hover {background:var(--div);color:var(--dark)}
+.msafe-dash .drill-body {padding:16px 20px;overflow-y:auto;flex:1}
+.msafe-dash .drill-body h4 {font-size:11px;font-weight:700;color:var(--sage);text-transform:uppercase;letter-spacing:.4px;margin:16px 0 8px}
+.msafe-dash .drill-body h4:first-child {margin-top:0}
+.msafe-dash .drill-body p {margin:0 0 8px;line-height:1.5}
+
+/* Drill data views */
+.msafe-dash .dr-stats {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:6px 0 14px}
+.msafe-dash .dr-stats.two {grid-template-columns:repeat(2,minmax(0,1fr))}
+.msafe-dash .dr-stat {background:var(--bg);border-radius:8px;padding:10px 12px;border:1px solid var(--div)}
+.msafe-dash .dr-stat .v {font-size:19px;font-weight:800;color:var(--dark);line-height:1}
+.msafe-dash .dr-stat .l {font-size:9.5px;color:var(--sage);text-transform:uppercase;letter-spacing:.4px;margin-top:4px;font-weight:600}
+.msafe-dash .dr-stat.ok .v {color:var(--ok)}
+.msafe-dash .dr-stat.warn .v {color:#8A5A00}
+.msafe-dash .dr-stat.err .v {color:var(--vi-red)}
+.msafe-dash .dr-tbl {width:100%;border-collapse:collapse;font-size:11px;margin:4px 0 12px;border:1px solid var(--div);border-radius:6px;overflow:hidden}
+.msafe-dash .dr-tbl th {text-align:left;padding:6px 8px;background:var(--hdr-bg);font-size:9.5px;font-weight:700;color:var(--sage);text-transform:uppercase;letter-spacing:.3px;border-bottom:1px solid var(--div)}
+.msafe-dash .dr-tbl td {padding:6px 8px;border-bottom:1px solid var(--div);color:var(--dark)}
+.msafe-dash .dr-tbl tr:last-child td {border-bottom:none}
+.msafe-dash .dr-tbl td.num {text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.msafe-dash .dr-tbl td.strong {font-weight:600}
+.msafe-dash .dr-actions {display:flex;gap:6px;margin-top:14px;flex-wrap:wrap}
+.msafe-dash .dr-btn {padding:7px 14px;border-radius:6px;background:var(--terra);color:#fff;border:none;font-size:11px;font-weight:600;cursor:pointer}
+.msafe-dash .dr-btn:hover {background:#C46141}
+.msafe-dash .dr-btn.sec {background:var(--bg);color:var(--dark);border:1px solid var(--border)}
+.msafe-dash .dr-btn.sec:hover {background:var(--div)}
+.msafe-dash .dr-btn.err {background:var(--vi-red)}
+.msafe-dash .dr-btn.err:hover {background:var(--vi-red-dark)}
+.msafe-dash .dr-note {background:var(--bg);border:1px solid var(--div);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--sage);line-height:1.5;margin:8px 0}
+.msafe-dash .dr-chips {display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 12px}
+.msafe-dash .dr-chip {padding:4px 10px;border-radius:12px;background:var(--bg);border:1px solid var(--div);font-size:10.5px;font-weight:600;color:var(--dark)}
+.msafe-dash .dr-chip.terra {background:rgba(218,119,86,.14);color:var(--terra);border-color:rgba(218,119,86,.30)}
+.msafe-dash .dr-chip.ok {background:rgba(16,140,114,.14);color:var(--ok);border-color:rgba(16,140,114,.30)}
+.msafe-dash .dr-chip.warn {background:rgba(237,196,136,.24);color:#8A5A00;border-color:rgba(237,196,136,.40)}
+.msafe-dash .dr-chip.err {background:rgba(238,39,55,.14);color:var(--vi-red);border-color:rgba(238,39,55,.30)}
+
+/* Filter bar */
+.msafe-dash .mini-filter {
+  display:flex;gap:8px;flex-wrap:wrap;
+  padding:12px 0;
+}
+.msafe-dash .mini-chip {
+  padding:5px 10px;border-radius:14px;
+  background:var(--bg);
+  border:1px solid var(--div);
+  font-size:10.5px;font-weight:600;color:var(--sage);
+}
+.msafe-dash .mini-chip.active {background:var(--dark);color:#fff;border-color:var(--dark)}
+.msafe-dash .mini-chip:hover:not(.active) {color:var(--dark)}
+
+/* Table pagination */
+.msafe-dash .tbl-pagination {
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  flex-wrap:wrap;
+  padding:10px 2px 2px;
+  font-size:11px;color:var(--sage);
+}
+.msafe-dash .tbl-pagination .pg-controls {display:flex;align-items:center;gap:4px}
+.msafe-dash .tbl-pagination .pg-btn {
+  padding:4px 10px;border-radius:8px;
+  background:var(--bg);
+  border:1px solid var(--div);
+  font-size:11px;font-weight:600;color:var(--sage);
+  cursor:pointer;
+}
+.msafe-dash .tbl-pagination .pg-btn:hover:not(:disabled) {color:var(--dark);border-color:var(--dark)}
+.msafe-dash .tbl-pagination .pg-btn:disabled {opacity:.45;cursor:not-allowed}
+.msafe-dash .tbl-pagination .pg-page {padding:0 4px;font-weight:600;color:var(--dark)}
+
+/* Persona-specific hint block */
+.msafe-dash .persona-hint {
+  background:linear-gradient(135deg,rgba(158,200,186,.10) 0%,rgba(206,203,246,.06) 100%);
+  border:1px solid rgba(158,200,186,.30);
+  border-radius:10px;
+  padding:12px 16px;
+  font-size:11.5px;
+  color:var(--dark);
+  line-height:1.5;
+  display:flex;align-items:center;gap:12px;
+}
+.msafe-dash .persona-hint .p-tag {
+  font-size:9.5px;font-weight:700;
+  padding:3px 8px;border-radius:10px;
+  background:var(--teal);color:#0F5A48;
+  text-transform:uppercase;letter-spacing:.4px;
+  flex-shrink:0;
+}
+
+/* Footer */
+.msafe-dash .footer {
+  text-align:center;padding:28px 0 40px;
+  font-size:10px;color:var(--sage);
+  border-top:1px solid var(--div);
+  margin-top:12px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INFO BUTTON + TOOLTIP
+═══════════════════════════════════════════════════════════════ */
+.msafe-dash .info-btn {
+  width:15px;height:15px;border-radius:50%;
+  background:var(--bg);
+  border:1px solid var(--border);
+  color:var(--sage);
+  font-size:9px;font-weight:800;font-style:italic;font-family:'Poppins',serif;
+  display:inline-flex;align-items:center;justify-content:center;
+  cursor:help;
+  margin-left:6px;vertical-align:middle;
+  transition:all .15s;padding:0;line-height:1;
+  flex-shrink:0;
+}
+.msafe-dash .info-btn:hover {
+  background: #DA7756 !important;
+  color: #fff !important;
+  border-color: #DA7756 !important;
+}
+.msafe-dash .info-float {
+  position:fixed;z-index:300;
+  min-width:260px;max-width:340px;
+  background:var(--dark);color:#fff;
+  border-radius:10px;padding:12px 14px;
+  font-size:11px;line-height:1.55;
+  box-shadow:0 12px 32px rgba(0,0,0,.24);
+  opacity:0;pointer-events:none;
+  transform:translateY(4px);
+  transition:opacity .15s,transform .15s;
+}
+.msafe-dash .info-float.show {opacity:1;transform:translateY(0)}
+.msafe-dash .info-float .info-hd {
+  display:inline-block;
+  background:rgba(218,119,86,.20);color:var(--terra);
+  font-size:9px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.5px;
+  padding:3px 8px;border-radius:4px;
+  margin-bottom:8px;
+  border:1px solid rgba(218,119,86,.35);
+}
+.msafe-dash .info-float .info-body {color:#F4F1EA;font-weight:400}
+
+/* Portal tooltip lives on document.body — keep same look outside .msafe-dash */
+.info-float {
+  position:fixed;z-index:400;
+  min-width:260px;max-width:340px;
+  background:#2C2C2C;color:#fff;
+  border-radius:10px;padding:12px 14px;
+  font-size:11px;line-height:1.55;
+  font-family:'Poppins',sans-serif;
+  box-shadow:0 12px 32px rgba(0,0,0,.24);
+  opacity:0;pointer-events:none;
+  transform:translateY(4px);
+  transition:opacity .15s,transform .15s;
+}
+.info-float.show {opacity:1;transform:translateY(0)}
+.info-float .info-hd {
+  display:inline-block;
+  background:rgba(218,119,86,.20);color:#DA7756;
+  font-size:9px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.5px;
+  padding:3px 8px;border-radius:4px;
+  margin-bottom:8px;
+  border:1px solid rgba(218,119,86,.35);
+}
+.info-float .info-body {color:#F4F1EA;font-weight:400}
+.funnel-step.success {
+  border-color:rgba(16,140,114,.30);
+  background:rgba(16,140,114,.06);
+}
+.msafe-dash .funnel-step.success .f-val {color:var(--ok)}
+
+/* Chart-as-Table view */
+.msafe-dash .chart-as-table {
+  width:100%;max-height:220px;overflow-y:auto;
+  border:1px solid var(--div);border-radius:8px;
+}
+.msafe-dash .chart-as-table.tall {max-height:280px}
+.msafe-dash .chart-as-table table {
+  width:100%;border-collapse:collapse;font-size:11px;
+}
+.msafe-dash .chart-as-table thead th {
+  text-align:left;padding:7px 10px;
+  font-size:9.5px;font-weight:700;color:var(--sage);
+  text-transform:uppercase;letter-spacing:.3px;
+  background:var(--hdr-bg);
+  border-bottom:1px solid var(--div);
+  position:sticky;top:0;z-index:1;
+}
+.msafe-dash .chart-as-table thead th:not(:first-child) {
+  text-align:right;
+}
+.msafe-dash .chart-as-table tbody td {
+  padding:6px 10px;border-bottom:1px solid var(--div);
+  color:var(--dark);
+}
+.msafe-dash .chart-as-table tbody td:not(:first-child) {
+  text-align:right;font-weight:600;font-variant-numeric:tabular-nums;
+}
+.msafe-dash .chart-as-table tbody tr:last-child td {border-bottom:none}
+.msafe-dash .chart-as-table tbody tr:hover {background:var(--bg)}
+
+/* Non-compliance card */
+.msafe-dash .nc-item {
+  display:flex;gap:12px;
+  padding:12px;
+  border:1px solid var(--div);
+  border-radius:10px;
+  margin-bottom:8px;
+  cursor:pointer;
+  transition:all .15s;
+  background:var(--surface);
+}
+.msafe-dash .nc-item:hover {border-color:var(--vi-red);background:var(--vi-red-tint)}
+.msafe-dash .nc-item:last-child {margin-bottom:0}
+.msafe-dash .nc-icon {
+  width:36px;height:36px;border-radius:8px;
+  background:var(--vi-red-tint);
+  color:var(--vi-red);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.msafe-dash .nc-icon svg {width:18px;height:18px}
+.msafe-dash .nc-title {font-size:12px;font-weight:600;color:var(--dark);line-height:1.35}
+.msafe-dash .nc-meta {font-size:10.5px;color:var(--sage);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap}
+.msafe-dash .nc-meta span::before {content:'·';margin-right:6px;color:var(--border)}
+.msafe-dash .nc-meta span:first-child::before {content:none;margin:0}
+.msafe-dash .nc-severity {
+  padding:3px 8px;border-radius:10px;
+  font-size:9.5px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.3px;
+  align-self:flex-start;
+  white-space:nowrap;
+}
+.msafe-dash .nc-severity.critical {background:var(--vi-red);color:#fff}
+.msafe-dash .nc-severity.high {background:rgba(238,39,55,.15);color:#B01B27}
+.msafe-dash .nc-severity.med {background:rgba(237,196,136,.30);color:#8A5A00}
+
+/* Ring chart custom style */
+.msafe-dash .ring-stat {
+  display:flex;flex-direction:column;align-items:center;
+  padding:8px 0;
+}
+.msafe-dash .ring-stat .ring-val {font-size:28px;font-weight:800;color:var(--dark);line-height:1;margin-top:6px}
+.msafe-dash .ring-stat .ring-lbl {font-size:10.5px;color:var(--sage);margin-top:6px;text-align:center;line-height:1.4}
+.msafe-dash .ring-stat .ring-c {position:relative;width:120px;height:120px}
+
+/* Responsive tweaks */
+@media (max-width:1200px){
+
+  .msafe-dash .kpi-grid {grid-template-columns:repeat(3,minmax(0,1fr))}
+  .msafe-dash .g4 {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .msafe-dash .g3 {grid-template-columns:minmax(0,1fr)}
+  .msafe-dash .g-2-1, .msafe-dash .g-1-2, .msafe-dash .g-3-2 {grid-template-columns:minmax(0,1fr)}
+  .msafe-dash .funnel {flex-wrap:wrap}
+
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CHART COLOR LOCK — defeat global theme.css analytics remaps
+   theme.css maps #6B9BCC → --analytics-color-4 (#e9704d orange),
+   #798C5E → blue, #CECBF6 → amber, etc. Keep HTML replica colors.
+═══════════════════════════════════════════════════════════════ */
+.msafe-dash svg path[fill="#6B9BCC"],
+.msafe-dash svg path[fill="#6b9bcc"],
+.msafe-dash svg rect[fill="#6B9BCC"],
+.msafe-dash svg rect[fill="#6b9bcc"],
+.msafe-dash svg circle[fill="#6B9BCC"],
+.msafe-dash svg .recharts-sector[fill="#6B9BCC"],
+.msafe-dash svg .recharts-pie-sector[fill="#6B9BCC"],
+.msafe-dash svg .recharts-cell[fill="#6B9BCC"],
+.msafe-dash svg .recharts-bar-rectangle[fill="#6B9BCC"],
+.msafe-dash svg .recharts-legend-icon[fill="#6B9BCC"],
+.msafe-dash svg [fill="#6B9BCC"],
+.msafe-dash svg [fill="#6b9bcc"] {
+  fill: #6B9BCC !important;
+}
+
+.msafe-dash svg path[fill="#DA7756"],
+.msafe-dash svg path[fill="#da7756"],
+.msafe-dash svg rect[fill="#DA7756"],
+.msafe-dash svg rect[fill="#da7756"],
+.msafe-dash svg circle[fill="#DA7756"],
+.msafe-dash svg .recharts-sector[fill="#DA7756"],
+.msafe-dash svg .recharts-pie-sector[fill="#DA7756"],
+.msafe-dash svg .recharts-cell[fill="#DA7756"],
+.msafe-dash svg .recharts-bar-rectangle[fill="#DA7756"],
+.msafe-dash svg .recharts-legend-icon[fill="#DA7756"],
+.msafe-dash svg [fill="#DA7756"],
+.msafe-dash svg [fill="#da7756"] {
+  fill: #DA7756 !important;
+}
+
+.msafe-dash svg path[fill="#798C5E"],
+.msafe-dash svg path[fill="#798c5e"],
+.msafe-dash svg rect[fill="#798C5E"],
+.msafe-dash svg rect[fill="#798c5e"],
+.msafe-dash svg .recharts-sector[fill="#798C5E"],
+.msafe-dash svg .recharts-pie-sector[fill="#798C5E"],
+.msafe-dash svg .recharts-cell[fill="#798C5E"],
+.msafe-dash svg .recharts-bar-rectangle[fill="#798C5E"],
+.msafe-dash svg [fill="#798C5E"],
+.msafe-dash svg [fill="#798c5e"] {
+  fill: #798C5E !important;
+}
+
+.msafe-dash svg path[fill="#9EC8BA"],
+.msafe-dash svg path[fill="#9ec8ba"],
+.msafe-dash svg rect[fill="#9EC8BA"],
+.msafe-dash svg rect[fill="#9ec8ba"],
+.msafe-dash svg .recharts-sector[fill="#9EC8BA"],
+.msafe-dash svg .recharts-pie-sector[fill="#9EC8BA"],
+.msafe-dash svg .recharts-cell[fill="#9EC8BA"],
+.msafe-dash svg .recharts-bar-rectangle[fill="#9EC8BA"],
+.msafe-dash svg [fill="#9EC8BA"],
+.msafe-dash svg [fill="#9ec8ba"] {
+  fill: #9EC8BA !important;
+}
+
+.msafe-dash svg path[fill="#CECBF6"],
+.msafe-dash svg path[fill="#cecbf6"],
+.msafe-dash svg rect[fill="#CECBF6"],
+.msafe-dash svg rect[fill="#cecbf6"],
+.msafe-dash svg .recharts-sector[fill="#CECBF6"],
+.msafe-dash svg .recharts-pie-sector[fill="#CECBF6"],
+.msafe-dash svg .recharts-cell[fill="#CECBF6"],
+.msafe-dash svg .recharts-bar-rectangle[fill="#CECBF6"],
+.msafe-dash svg [fill="#CECBF6"],
+.msafe-dash svg [fill="#cecbf6"] {
+  fill: #CECBF6 !important;
+}
+
+.msafe-dash svg path[fill="#108C72"],
+.msafe-dash svg path[fill="#108c72"],
+.msafe-dash svg rect[fill="#108C72"],
+.msafe-dash svg rect[fill="#108c72"],
+.msafe-dash svg .recharts-sector[fill="#108C72"],
+.msafe-dash svg .recharts-pie-sector[fill="#108C72"],
+.msafe-dash svg .recharts-cell[fill="#108C72"],
+.msafe-dash svg .recharts-bar-rectangle[fill="#108C72"],
+.msafe-dash svg [fill="#108C72"],
+.msafe-dash svg [fill="#108c72"] {
+  fill: #108C72 !important;
+}
+
+.msafe-dash svg path[fill="#EDC488"],
+.msafe-dash svg path[fill="#edc488"],
+.msafe-dash svg rect[fill="#EDC488"],
+.msafe-dash svg rect[fill="#edc488"],
+.msafe-dash svg .recharts-sector[fill="#EDC488"],
+.msafe-dash svg .recharts-pie-sector[fill="#EDC488"],
+.msafe-dash svg .recharts-cell[fill="#EDC488"],
+.msafe-dash svg .recharts-bar-rectangle[fill="#EDC488"],
+.msafe-dash svg [fill="#EDC488"],
+.msafe-dash svg [fill="#edc488"] {
+  fill: #EDC488 !important;
+}
+
+.msafe-dash svg path[fill="#E7848E"],
+.msafe-dash svg path[fill="#e7848e"],
+.msafe-dash svg rect[fill="#E7848E"],
+.msafe-dash svg rect[fill="#e7848e"],
+.msafe-dash svg .recharts-sector[fill="#E7848E"],
+.msafe-dash svg .recharts-pie-sector[fill="#E7848E"],
+.msafe-dash svg .recharts-cell[fill="#E7848E"],
+.msafe-dash svg .recharts-bar-rectangle[fill="#E7848E"],
+.msafe-dash svg [fill="#E7848E"],
+.msafe-dash svg [fill="#e7848e"] {
+  fill: #E7848E !important;
+}
+
+.msafe-dash svg path[fill="#EE2737"],
+.msafe-dash svg path[fill="#ee2737"],
+.msafe-dash svg rect[fill="#EE2737"],
+.msafe-dash svg rect[fill="#ee2737"],
+.msafe-dash svg .recharts-sector[fill="#EE2737"],
+.msafe-dash svg .recharts-pie-sector[fill="#EE2737"],
+.msafe-dash svg .recharts-cell[fill="#EE2737"],
+.msafe-dash svg .recharts-bar-rectangle[fill="#EE2737"],
+.msafe-dash svg [fill="#EE2737"],
+.msafe-dash svg [fill="#ee2737"] {
+  fill: #EE2737 !important;
+}
+
+.msafe-dash svg path[fill="#B4A38A"],
+.msafe-dash svg path[fill="#b4a38a"],
+.msafe-dash svg rect[fill="#B4A38A"],
+.msafe-dash svg .recharts-sector[fill="#B4A38A"],
+.msafe-dash svg .recharts-pie-sector[fill="#B4A38A"],
+.msafe-dash svg .recharts-cell[fill="#B4A38A"],
+.msafe-dash svg [fill="#B4A38A"],
+.msafe-dash svg [fill="#b4a38a"] {
+  fill: #B4A38A !important;
+}
+
+/* Line / area strokes (New Registrations, etc.) */
+.msafe-dash svg path[stroke="#DA7756"],
+.msafe-dash svg path[stroke="#da7756"],
+.msafe-dash svg .recharts-curve[stroke="#DA7756"],
+.msafe-dash svg [stroke="#DA7756"],
+.msafe-dash svg [stroke="#da7756"] {
+  stroke: #DA7756 !important;
+}
+.msafe-dash svg path[stroke="#6B9BCC"],
+.msafe-dash svg path[stroke="#6b9bcc"],
+.msafe-dash svg .recharts-curve[stroke="#6B9BCC"],
+.msafe-dash svg [stroke="#6B9BCC"],
+.msafe-dash svg [stroke="#6b9bcc"] {
+  stroke: #6B9BCC !important;
+}
+.msafe-dash svg path[stroke="#798C5E"],
+.msafe-dash svg path[stroke="#798c5e"],
+.msafe-dash svg .recharts-curve[stroke="#798C5E"],
+.msafe-dash svg [stroke="#798C5E"] {
+  stroke: #798C5E !important;
+}
+.msafe-dash svg path[stroke="#EE2737"],
+.msafe-dash svg path[stroke="#ee2737"],
+.msafe-dash svg .recharts-curve[stroke="#EE2737"],
+.msafe-dash svg [stroke="#EE2737"] {
+  stroke: #EE2737 !important;
+}
+.msafe-dash svg path[stroke="#108C72"],
+.msafe-dash svg path[stroke="#108c72"],
+.msafe-dash svg [stroke="#108C72"] {
+  stroke: #108C72 !important;
+}
+
+/* Side-legend swatches + progress row colors (inline backgrounds) */
+.msafe-dash .dl-sw[style*="#6B9BCC"],
+.msafe-dash .dl-sw[style*="#6b9bcc"] { background-color: #6B9BCC !important; }
+.msafe-dash .dl-sw[style*="#DA7756"],
+.msafe-dash .dl-sw[style*="#da7756"] { background-color: #DA7756 !important; }
+.msafe-dash .dl-sw[style*="#798C5E"],
+.msafe-dash .dl-sw[style*="#798c5e"] { background-color: #798C5E !important; }
+.msafe-dash .dl-sw[style*="#9EC8BA"],
+.msafe-dash .dl-sw[style*="#9ec8ba"] { background-color: #9EC8BA !important; }
+.msafe-dash .dl-sw[style*="#CECBF6"],
+.msafe-dash .dl-sw[style*="#cecbf6"] { background-color: #CECBF6 !important; }
+.msafe-dash .dl-sw[style*="#108C72"],
+.msafe-dash .dl-sw[style*="#108c72"] { background-color: #108C72 !important; }
+.msafe-dash .dl-sw[style*="#EDC488"],
+.msafe-dash .dl-sw[style*="#edc488"] { background-color: #EDC488 !important; }
+.msafe-dash .dl-sw[style*="#E7848E"],
+.msafe-dash .dl-sw[style*="#e7848e"] { background-color: #E7848E !important; }
+.msafe-dash .dl-sw[style*="#EE2737"],
+.msafe-dash .dl-sw[style*="#ee2737"] { background-color: #EE2737 !important; }
+.msafe-dash .dl-sw[style*="#B4A38A"],
+.msafe-dash .dl-sw[style*="#b4a38a"] { background-color: #B4A38A !important; }
+
+/* ═══════════════════════════════════════════════════════════════
+   CHART TOOLTIP — Chart.js dark style (overrides global theme.css
+   white recharts-default-tooltip)
+═══════════════════════════════════════════════════════════════ */
+.msafe-chart-tip {
+  background: #2C2C2C;
+  color: #fff;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 11px;
+  line-height: 1.4;
+  box-shadow: 0 8px 20px rgba(44, 44, 44, 0.28);
+  border: none;
+  min-width: 88px;
+  pointer-events: none;
+}
+.msafe-chart-tip-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 6px;
+}
+.msafe-chart-tip-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 400;
+}
+.msafe-chart-tip-sw {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* Fallback when a chart still uses default Recharts Tooltip */
+.msafe-dash .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: #2C2C2C !important;
+  border: none !important;
+  border-radius: 6px !important;
+  box-shadow: 0 8px 20px rgba(44, 44, 44, 0.28) !important;
+  padding: 10px 12px !important;
+}
+.msafe-dash .recharts-tooltip-label,
+.msafe-dash .recharts-tooltip-item,
+.msafe-dash .recharts-tooltip-item-name,
+.msafe-dash .recharts-tooltip-item-value,
+.msafe-dash .recharts-tooltip-item-separator {
+  color: #fff !important;
+  font-size: 11px !important;
+  font-family: 'Poppins', sans-serif !important;
+}
+.msafe-dash .recharts-tooltip-label {
+  font-weight: 600 !important;
+  margin-bottom: 4px !important;
+}

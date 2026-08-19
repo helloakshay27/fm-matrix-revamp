@@ -10,8 +10,11 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { SMTImportModal } from '@/components/SMTImportModal';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 
 const SMTDashboard = () => {
+  const msafeEvents = useMSafeEvents();
   // simple debounce hook (local)
   function useDebounce<T>(value: T, delay: number) {
     const [debounced, setDebounced] = useState(value);
@@ -72,6 +75,7 @@ const SMTDashboard = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const debouncedSearch = useDebounce(searchTerm, 500);
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
 
@@ -100,6 +104,7 @@ const SMTDashboard = () => {
       const pagination: PaginationData = payload.pagination || { current_page: page, total_count: rows.length, total_pages: Math.max(1, Math.ceil((payload.total_count || rows.length) / pageSize)) };
       setServerData(rows);
       setPaginationData(pagination);
+      msafeEvents.onMSafeSubmoduleViewed('smt', pagination.total_count);
     } catch (e: any) {
       console.error('Failed to fetch SMTs:', e);
       setError(e?.message || 'Failed to fetch SMTs');
@@ -148,14 +153,16 @@ const SMTDashboard = () => {
       case 'actions':
         return (
           <div className="flex items-center justify-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => navigate(`/safety/m-safe/smt/${item.id}`, { state: { row: item } })}
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
+            {shouldShow("SMT", "show") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => navigate(`/safety/m-safe/smt/${item.id}`, { state: { row: item } })}
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+            )}
             {/* <Button
               variant="ghost"
               size="sm"
@@ -593,7 +600,7 @@ const SMTDashboard = () => {
         columns={columns}
         renderCell={renderCell}
         leftActions={
-          canSeeActionButton ? (
+          canSeeActionButton && shouldShow("SMT", "create") ? (
             <Button
               onClick={() => setShowActionPanel(true)}
               className="text-white bg-[#C72030] hover:bg-[#C72030]/90"

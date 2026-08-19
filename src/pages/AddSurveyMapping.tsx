@@ -1140,12 +1140,12 @@ export const AddSurveyMapping = () => {
 
           <div className="flex justify-end">
             <Button
-              variant="outline"
               onClick={addSurveyMapping}
               disabled={isSubmitting}
-              className="flex items-center gap-2"
+              variant="ghost"
+              className="fm-button-fix fm-button-brand px-4 py-2"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 mr-2" />
               Add Location
             </Button>
           </div>
@@ -1284,8 +1284,8 @@ export const AddSurveyMapping = () => {
 
       <div className="flex items-center gap-3 justify-center pt-2">
         <Button
-          variant="destructive"
-          className="px-8"
+          variant="ghost"
+          className="fm-button-fix fm-button-brand px-8"
           onClick={handleSubmit}
           disabled={isSubmitting}
         >
@@ -1300,7 +1300,7 @@ export const AddSurveyMapping = () => {
         </Button>
         <Button
           variant="outline"
-          className="px-8"
+          className="px-8 border-brand text-brand hover:bg-brand-selected hover:text-brand"
           onClick={() => navigate("/maintenance/survey/mapping")}
           disabled={isSubmitting}
         >

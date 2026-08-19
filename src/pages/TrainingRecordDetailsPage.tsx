@@ -5,10 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Edit, Download, Mail, Phone } from 'lucide-react';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export const TrainingRecordDetailsPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { shouldShow } = useDynamicPermissions();
 
   // Mock data - in real app, this would be fetched based on the ID
   const trainingRecord = {
@@ -70,13 +72,15 @@ export const TrainingRecordDetailsPage = () => {
             <Download className="w-4 h-4" />
             Export
           </Button>
-          <Button 
-            onClick={() => navigate(`/safety/training-list/edit/${id}`)}
-            className="bg-[#C72030] hover:bg-[#A01020] flex items-center gap-2"
-          >
-            <Edit className="w-4 h-4" />
-            Edit Record
-          </Button>
+          {shouldShow("Training List", "update") && (
+            <Button
+              onClick={() => navigate(`/safety/training-list/edit/${id}`)}
+              className="bg-[#C72030] hover:bg-[#A01020] flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              Edit Record
+            </Button>
+          )}
         </div>
       </div>
 

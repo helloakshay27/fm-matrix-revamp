@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Plus, FileText, Eye, Settings, AlertCircle, X, Flag } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -24,6 +25,7 @@ import axios from 'axios';
 import { useDebounce } from '@/hooks/useDebounce';
 import { StatsCard } from '@/components/StatsCard';
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { PostHogServiceActivity } from '@/components/PostHogServiceActivity';
 
 interface ServiceRecord {
   id: number;
@@ -795,14 +797,12 @@ export const ServiceDashboard = () => {
       case 'status':
         return (
           <div className="flex justify-center items-center h-full w-full">
-            <div
-              onClick={() => !togglingIds.has(item.id) && handleStatusToggle(item.id)}
-              className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${item.active ? 'bg-green-500' : 'bg-gray-400'} ${togglingIds.has(item.id) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-            >
-              <span
-                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${item.active ? 'translate-x-6' : 'translate-x-1'}`}
-              />
-            </div>
+            <Switch
+              checked={item.active}
+              onCheckedChange={() => !togglingIds.has(item.id) && handleStatusToggle(item.id)}
+              disabled={togglingIds.has(item.id)}
+              className="data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756] data-[state=unchecked]:bg-gray-300"
+            />
           </div>
         );
       case 'createdOn':
@@ -993,6 +993,7 @@ export const ServiceDashboard = () => {
 
   return (
     <div className="p-4 sm:p-6">
+      <PostHogServiceActivity event="Soft Service List Viewed" />
       {error && (
         <div className="flex justify-center items-center py-8">
           <div className="text-red-600">Error: {error}</div>

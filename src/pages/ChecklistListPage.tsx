@@ -28,7 +28,7 @@ export const ChecklistListPage = () => {
   // Fetch checklist master data from API
   const {
     data: checklistData,
-    isLoading,
+    isPending,
     error
   } = useQuery({
     queryKey: ['checklist-master'],
@@ -254,7 +254,7 @@ export const ChecklistListPage = () => {
             enableSearch={true}
             searchPlaceholder="Search checklists..."
             leftActions={renderCustomActions()}
-            loading={isLoading}
+            loading={isPending}
             emptyMessage={error ? "Error loading checklists. Please try again." : "No checklists found."}
           />
         </div>

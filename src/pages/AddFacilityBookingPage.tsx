@@ -5,6 +5,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { TextField, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { CheckCircle, FileText, Shield, ArrowLeft } from 'lucide-react';
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchFMUsers } from '@/store/slices/fmUserSlice';
 import { fetchEntities } from '@/store/slices/entitiesSlice';
@@ -43,6 +44,17 @@ export const AddFacilityBookingPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [searchParams] = useSearchParams();
+
+  const pulseEvents = usePulseEvents();
+
+  useEffect(() => {
+    pulseEvents.onModuleViewed({
+      module: "Amenities",
+      package: "Pulse Privilege",
+      screen: "pulse_amenity_add",
+      guard: true,
+    });
+  }, [pulseEvents]);
 
   // Get URL parameters
   const urlFacilityId = searchParams.get('facility_id');
@@ -186,7 +198,7 @@ export const AddFacilityBookingPage = () => {
     return true;
   };
 
-  // Helper: Check if a slot can be selected (enforce consecutive rule for requestable)
+  // Helper: Check if a slot can be selected
   const isSlotSelectable = (slotId: number) => {
     if (!canSelectSlots) return false;
     if (selectedSlots.includes(slotId)) return true; // allow deselect

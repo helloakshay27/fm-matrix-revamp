@@ -25,6 +25,7 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { toast } from "sonner";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { useIncidentEvents } from "@/components/PostHogIncidentEvents";
 import { AssetAnalyticsSelector } from "@/components/AssetAnalyticsSelector";
 import { AssetAnalyticsFilterDialog } from "@/components/AssetAnalyticsFilterDialog";
 import { CumulativePowerWidget } from "@/components/charts/CumulativePowerWidget";
@@ -159,46 +160,48 @@ const getLevelColor = (level: string) => {
   switch (level) {
     case "High Risk":
     case "Extreme Risk":
-      return "bg-red-100 text-red-800";
+      return "bg-[#F2C8C4] text-[#2c2c2c]";
     case "Medium Risk":
     case "Moderate Risk":
-      return "bg-yellow-100 text-yellow-800";
+      return "bg-[#F2EBC9] text-[#2c2c2c]";
     case "Low Risk":
-      return "bg-green-100 text-green-800";
+      return "bg-[#C7EDDA] text-[#2c2c2c]";
     default:
-      return "bg-gray-100 text-gray-800";
+      return "bg-[#E5E0D8] text-[#2c2c2c]";
   }
 };
 
 const getStatusColor = (status: string) => {
   switch (status) {
     case "Open":
-      return "bg-blue-100 text-blue-800";
+      return "bg-[#C7EDDA] text-[#2c2c2c]";
     case "Closed":
-      return "bg-green-100 text-green-800";
+      return "bg-[#F2C8C4] text-[#2c2c2c]";
     case "Under Observation":
-      return "bg-yellow-100 text-yellow-800";
+      return "bg-[#F2EBC9] text-[#2c2c2c]";
     case "final_closure":
-      return "bg-purple-100 text-purple-800";
+      return "bg-[#CECBF6] text-[#2c2c2c]";
     case "provisional_closure":
-      return "bg-orange-100 text-orange-800";
+      return "bg-[#F8E4C7] text-[#2c2c2c]";
     case "Draft":
-      return "bg-gray-100 text-gray-600";
+      return "bg-[#E5E0D8] text-[#2c2c2c]";
     default:
-      return "bg-gray-100 text-gray-800";
+      return "bg-[#E5E0D8] text-[#2c2c2c]";
   }
 };
 
 const getIncidentStatusColor = (status: string) => {
   switch (status) {
     case "Open":
-      return "bg-blue-100 text-blue-800";
+      return "bg-[#C7EDDA] text-[#2c2c2c]";
     case "Under Observation":
-      return "bg-yellow-100 text-yellow-800";
+    case "Under Investigation":
+    case "Pending":
+      return "bg-[#F2EBC9] text-[#2c2c2c]";
     case "Closed":
-      return "bg-green-100 text-green-800";
+      return "bg-[#F2C8C4] text-[#2c2c2c]";
     default:
-      return "bg-gray-100 text-gray-800";
+      return "bg-[#E5E0D8] text-[#2c2c2c]";
   }
 };
 
@@ -542,6 +545,7 @@ const RcaTable = ({
 export const IncidentDashboard = () => {
   const { shouldShow } = useDynamicPermissions();
   const navigate = useNavigate();
+  const incidentEvents = useIncidentEvents();
 
   // ── List tab state
   const [incidents, setIncidents] = useState<Incident[]>([]);
@@ -605,6 +609,12 @@ export const IncidentDashboard = () => {
       startDate: formatToDDMMYYYY(startStr),
       endDate: formatToDDMMYYYY(endStr),
     });
+    const startMs = new Date(startStr).getTime();
+    const endMs = new Date(endStr).getTime();
+    const rangeDays = Number.isNaN(startMs) || Number.isNaN(endMs)
+      ? 0
+      : Math.round((endMs - startMs) / (1000 * 60 * 60 * 24));
+    incidentEvents.onIncidentAnalyticsDateRangeChanged(rangeDays);
   };
 
   // ── Analytics API data states
@@ -762,6 +772,10 @@ export const IncidentDashboard = () => {
       setCurrentPage(pagination.current_page || 1);
       setTotalPages(pagination.total_pages || 1);
       setTotalCount(pagination.total_count || incidentsArr.length || 0);
+      incidentEvents.onIncidentListViewed(
+        pagination.total_count || incidentsArr.length || 0,
+        pagination.current_page || page
+      );
     } catch (err) {
       setError("Failed to fetch incidents");
       console.error(err);
@@ -860,6 +874,7 @@ export const IncidentDashboard = () => {
         `https://${baseUrl}/incident_dashboard/rca_data.json?${params}`,
         `rca_data_${new Date().toISOString().split("T")[0]}.xlsx`
       );
+      incidentEvents.onIncidentAnalyticsChartInteracted("rcaTable");
     } catch {
       toast.error("Failed to export RCA data");
     }
@@ -920,6 +935,7 @@ export const IncidentDashboard = () => {
         `https://${baseUrl}/incident_dashboard/status_summary.json?${params}`,
         `incident_status_distribution_${new Date().toISOString().split("T")[0]}.xlsx`
       );
+      incidentEvents.onIncidentAnalyticsChartInteracted("statusWiseChart");
     } catch {
       toast.error("Failed to export incident status distribution");
     }
@@ -989,6 +1005,7 @@ export const IncidentDashboard = () => {
         `https://${baseUrl}/incident_dashboard/level_wise.json?${params}`,
         `level_wise_${new Date().toISOString().split("T")[0]}.xlsx`
       );
+      incidentEvents.onIncidentAnalyticsChartInteracted("levelWiseChart");
     } catch {
       toast.error("Failed to export level wise data");
     }
@@ -1007,6 +1024,7 @@ export const IncidentDashboard = () => {
         `https://${baseUrl}/incident_dashboard/top_categories.json?${params}`,
         `top_categories_${new Date().toISOString().split("T")[0]}.xlsx`
       );
+      incidentEvents.onIncidentAnalyticsChartInteracted("categoryPieChart");
     } catch {
       toast.error("Failed to export top categories");
     }
@@ -1023,6 +1041,7 @@ export const IncidentDashboard = () => {
         `https://${baseUrl}/pms/incidents/export.xlsx?access_token=${token}`,
         `incidents_${new Date().toISOString().split("T")[0]}.xlsx`
       );
+      incidentEvents.onIncidentListExported(totalCount, Boolean(activeFilterQuery));
     } catch {
       toast.error("Failed to export incidents");
     }
@@ -1033,10 +1052,12 @@ export const IncidentDashboard = () => {
     switch (columnKey) {
       case "srNo":
         return (
-          <span className="font-medium">
+          <span className="font-medium text-gray-900">
             {(currentPage - 1) * 20 + index + 1}
           </span>
         );
+      case "id":
+        return <span className="text-gray-900 font-medium">{item.id}</span>;
       case "site_name":
         return <span>{item.site_name || item.building_name || "-"}</span>;
       case "inc_time":
@@ -1058,7 +1079,7 @@ export const IncidentDashboard = () => {
           </Badge>
         );
       default:
-        return <span>{String(item[columnKey as keyof Incident] ?? "-")}</span>;
+        return <span className="text-gray-900">{String(item[columnKey as keyof Incident] ?? "-")}</span>;
     }
   };
 
@@ -1080,7 +1101,11 @@ export const IncidentDashboard = () => {
 
   return (
     <div className="p-4 sm:p-6">
-      <Tabs defaultValue="list" className="w-full">
+      <Tabs
+        defaultValue="list"
+        className="w-full"
+        onValueChange={(v) => incidentEvents.onIncidentTabSwitched(v === "analytics" ? "analytics" : "list")}
+      >
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger
             value="list"
@@ -1172,8 +1197,11 @@ export const IncidentDashboard = () => {
                 <Button
                   variant="ghost"
                   size="sm"
+                  className="h-8 w-8 p-0 text-black hover:bg-gray-100"
                   onClick={() =>
-                    navigate(`/safety/incident/new-details/${item.id}`)
+                    navigate(`/safety/incident/new-details/${item.id}`, {
+                      state: { openSource: activeFilterQuery ? "filter" : "list" },
+                    })
                   }
                 >
                   <Eye className="w-4 h-4" />
@@ -1183,18 +1211,29 @@ export const IncidentDashboard = () => {
             loading={loading}
             emptyMessage={error ?? "No incidents found"}
             enableSearch
+            onSearchChange={(value: string) => {
+              const q = (value || "").trim();
+              if (!q) return;
+              const matches = incidents.filter((i) =>
+                [i.description, i.site_name, i.building_name, i.category_name, i.inc_level_name]
+                  .some((f) => typeof f === "string" && f.toLowerCase().includes(q.toLowerCase()))
+              );
+              incidentEvents.onIncidentSearchPerformed(q.length, matches.length);
+            }}
             enableExport
             handleExport={handleExportIncidents}
             storageKey="incidents-dashboard"
             pagination={false}
             leftActions={
               shouldShow("Incident", "create") && (
-                <Button
-                  onClick={() => navigate("/safety/incident/add")}
-                  className="bg-[#C72030] text-white"
-                >
-                  <Plus className="w-4 h-4 mr-2" /> Add Incident
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => navigate("/safety/incident/add", { state: { entrySource: "list_button" } })}
+                    className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap"
+                  >
+                    <Plus className="w-4 h-4 mr-2" /> Add Incident
+                  </Button>
+                </div>
               )
             }
             onFilterClick={() => setIsFilterModalOpen(true)}
@@ -1204,6 +1243,7 @@ export const IncidentDashboard = () => {
             <div className="mt-6 flex justify-center items-center gap-4 text-sm text-gray-600">
               <Button
                 variant="outline"
+                className="h-9"
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => p - 1)}
               >
@@ -1214,6 +1254,7 @@ export const IncidentDashboard = () => {
               </span>
               <Button
                 variant="outline"
+                className="h-9"
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => p + 1)}
               >
@@ -1388,6 +1429,19 @@ export const IncidentDashboard = () => {
           setIncidents(f);
           setActiveFilterQuery(q || "");
           setCurrentPage(1);
+          // Derive filter fields from the ransack-style query string (e.g. q[current_status_eq]=Open)
+          const fields = Array.from(
+            new Set(
+              (q || "")
+                .split("&")
+                .map((pair) => decodeURIComponent(pair.split("=")[0] || ""))
+                .map((key) => key.replace(/^q\[/, "").replace(/\]$/, ""))
+                .filter(Boolean)
+            )
+          );
+          if (fields.length > 0) {
+            incidentEvents.onIncidentFilterApplied(fields, fields.length);
+          }
         }}
         onReset={() => {
           setIncidents(originalIncidents);

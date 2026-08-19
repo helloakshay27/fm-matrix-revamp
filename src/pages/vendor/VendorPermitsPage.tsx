@@ -1,9 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Eye, RefreshCw, Settings } from "lucide-react";
+import {
+  Eye,
+  RefreshCw,
+  ClipboardList,
+  FileEdit,
+  PauseCircle,
+  FolderOpen,
+  CheckCircle,
+  XCircle,
+  CalendarClock,
+  Lock,
+} from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { StatsCard } from "@/components/StatsCard";
 import {
   Pagination,
   PaginationContent,
@@ -32,7 +44,8 @@ export const VendorPermitsPage = () => {
 
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  
+  const [selectedSummary, setSelectedSummary] = useState<string | null>(null);
+
   const [permitList, setPermitList] = useState<any[]>([]);
 
   const [stats, setStats] = useState({
@@ -92,10 +105,12 @@ export const VendorPermitsPage = () => {
         });
       }
 
+      const pg = data?.pagination;
       setPagination((prev) => ({
         ...prev,
-        total_count: data?.total_count || formatted.length,
-        total_pages: data?.total_pages || 1,
+        current_page: pg?.current_page ?? prev.current_page,
+        total_count: pg?.total_count ?? data?.total_count ?? formatted.length,
+        total_pages: pg?.total_pages ?? data?.total_pages ?? 1,
       }));
     } catch (error: any) {
       console.error(error);
@@ -139,7 +154,7 @@ export const VendorPermitsPage = () => {
         size="sm"
         variant="ghost"
         className="p-1"
-        onClick={() => {}}
+        onClick={() => navigate(`/safety/permit/details/${item.id}`)}
         title="View"
       >
         <Eye className="w-4 h-4" />
@@ -177,79 +192,63 @@ export const VendorPermitsPage = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 h-[100px]">
-          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
-            <Settings className="w-5 h-5 text-[#D92818]" />
-          </div>
-          <div>
-            <p className="text-[#D92818] font-bold text-lg leading-tight">{stats.totalPermits}</p>
-            <p className="text-xs text-gray-500 font-medium">Total Permits</p>
-          </div>
-        </div>
-        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 h-[100px]">
-          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
-            <Settings className="w-5 h-5 text-[#D92818]" />
-          </div>
-          <div>
-            <p className="text-[#D92818] font-bold text-lg leading-tight">{stats.draftPermits}</p>
-            <p className="text-xs text-gray-500 font-medium">Draft Permits</p>
-          </div>
-        </div>
-        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 h-[100px]">
-          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
-            <Settings className="w-5 h-5 text-[#D92818]" />
-          </div>
-          <div>
-            <p className="text-[#D92818] font-bold text-lg leading-tight">{stats.holdPermits}</p>
-            <p className="text-xs text-gray-500 font-medium">Hold Permits</p>
-          </div>
-        </div>
-        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 h-[100px]">
-          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
-            <Settings className="w-5 h-5 text-[#D92818]" />
-          </div>
-          <div>
-            <p className="text-[#D92818] font-bold text-lg leading-tight">{stats.openPermits}</p>
-            <p className="text-xs text-gray-500 font-medium">Open Permits</p>
-          </div>
-        </div>
-        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 h-[100px]">
-          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
-            <Settings className="w-5 h-5 text-[#D92818]" />
-          </div>
-          <div>
-            <p className="text-[#D92818] font-bold text-lg leading-tight">{stats.approvedPermits}</p>
-            <p className="text-xs text-gray-500 font-medium">Approved</p>
-          </div>
-        </div>
-        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 h-[100px]">
-          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
-            <Settings className="w-5 h-5 text-[#D92818]" />
-          </div>
-          <div>
-            <p className="text-[#D92818] font-bold text-lg leading-tight">{stats.rejectedPermits}</p>
-            <p className="text-xs text-gray-500 font-medium">Rejected</p>
-          </div>
-        </div>
-        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 h-[100px]">
-          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
-            <Settings className="w-5 h-5 text-[#D92818]" />
-          </div>
-          <div>
-            <p className="text-[#D92818] font-bold text-lg leading-tight">{stats.extendedPermits}</p>
-            <p className="text-xs text-gray-500 font-medium">Extended</p>
-          </div>
-        </div>
-        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 h-[100px]">
-          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
-            <Settings className="w-5 h-5 text-[#D92818]" />
-          </div>
-          <div>
-            <p className="text-[#D92818] font-bold text-lg leading-tight">{stats.closedPermits}</p>
-            <p className="text-xs text-gray-500 font-medium">Closed</p>
-          </div>
-        </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-6">
+        <StatsCard
+          title="Total Permits"
+          value={stats.totalPermits}
+          selected={selectedSummary === "total"}
+          icon={<ClipboardList className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          onClick={() => setSelectedSummary("total")}
+        />
+        <StatsCard
+          title="Draft Permits"
+          value={stats.draftPermits}
+          selected={selectedSummary === "draft"}
+          icon={<FileEdit className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          onClick={() => setSelectedSummary("draft")}
+        />
+        <StatsCard
+          title="Hold Permits"
+          value={stats.holdPermits}
+          selected={selectedSummary === "hold"}
+          icon={<PauseCircle className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          onClick={() => setSelectedSummary("hold")}
+        />
+        <StatsCard
+          title="Open Permits"
+          value={stats.openPermits}
+          selected={selectedSummary === "open"}
+          icon={<FolderOpen className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          onClick={() => setSelectedSummary("open")}
+        />
+        <StatsCard
+          title="Approved"
+          value={stats.approvedPermits}
+          selected={selectedSummary === "approved"}
+          icon={<CheckCircle className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          onClick={() => setSelectedSummary("approved")}
+        />
+        <StatsCard
+          title="Rejected"
+          value={stats.rejectedPermits}
+          selected={selectedSummary === "rejected"}
+          icon={<XCircle className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          onClick={() => setSelectedSummary("rejected")}
+        />
+        <StatsCard
+          title="Extended"
+          value={stats.extendedPermits}
+          selected={selectedSummary === "extended"}
+          icon={<CalendarClock className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          onClick={() => setSelectedSummary("extended")}
+        />
+        <StatsCard
+          title="Closed"
+          value={stats.closedPermits}
+          selected={selectedSummary === "closed"}
+          icon={<Lock className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          onClick={() => setSelectedSummary("closed")}
+        />
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
@@ -272,27 +271,71 @@ export const VendorPermitsPage = () => {
         />
       </div>
 
-      <div className="flex justify-center mt-6">
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
-                className={pagination.current_page === 1 || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
-              />
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink isActive>1</PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationNext
-                onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
-                className={pagination.current_page === pagination.total_pages || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
+      {pagination.total_pages > 1 && (
+        <div className="flex items-center justify-between mt-6">
+          <p className="text-sm text-gray-500">
+            Showing page {pagination.current_page} of {pagination.total_pages} ({pagination.total_count} total)
+          </p>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => handlePageChange(pagination.current_page - 1)}
+                  className={pagination.current_page === 1 || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+
+              {/* First page */}
+              {pagination.current_page > 3 && (
+                <>
+                  <PaginationItem>
+                    <PaginationLink className="cursor-pointer" onClick={() => handlePageChange(1)}>1</PaginationLink>
+                  </PaginationItem>
+                  {pagination.current_page > 4 && (
+                    <PaginationItem><span className="px-2 text-gray-400">…</span></PaginationItem>
+                  )}
+                </>
+              )}
+
+              {/* Pages around current */}
+              {Array.from({ length: pagination.total_pages }, (_, i) => i + 1)
+                .filter(p => p >= pagination.current_page - 2 && p <= pagination.current_page + 2)
+                .map(p => (
+                  <PaginationItem key={p}>
+                    <PaginationLink
+                      isActive={p === pagination.current_page}
+                      className={p === pagination.current_page ? "pointer-events-none" : "cursor-pointer"}
+                      onClick={() => handlePageChange(p)}
+                    >
+                      {p}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+
+              {/* Last page */}
+              {pagination.current_page < pagination.total_pages - 2 && (
+                <>
+                  {pagination.current_page < pagination.total_pages - 3 && (
+                    <PaginationItem><span className="px-2 text-gray-400">…</span></PaginationItem>
+                  )}
+                  <PaginationItem>
+                    <PaginationLink className="cursor-pointer" onClick={() => handlePageChange(pagination.total_pages)}>
+                      {pagination.total_pages}
+                    </PaginationLink>
+                  </PaginationItem>
+                </>
+              )}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => handlePageChange(pagination.current_page + 1)}
+                  className={pagination.current_page === pagination.total_pages || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
     </div>
   );
 };

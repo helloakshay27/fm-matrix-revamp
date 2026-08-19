@@ -21,6 +21,7 @@ import { fetchServicePR, getWorkOrderById } from "@/store/slices/workOrderSlice"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import axios from "axios";
+import { useProcurementEvents } from "@/components/PostHogProcurementEvents";
 
 interface Attachment {
   id: number;
@@ -52,6 +53,7 @@ export const WorkOrderAddPage: React.FC = () => {
   const [servicePR, setServicePR] = useState([])
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const procurementEvents = useProcurementEvents();
 
   const [formData, setFormData] = useState({
     servicePr: "",
@@ -502,6 +504,7 @@ export const WorkOrderAddPage: React.FC = () => {
       setSubmitting(true);
       await dispatch(createServicePR({ data: payload, baseUrl, token })).unwrap();
       toast.success("Work Order created successfully");
+      try { procurementEvents.onWoSubmitted(detailsForms.length); } catch (err) {}
       navigate('/finance/wo');
     } catch (error) {
       console.log(error);
@@ -1548,10 +1551,10 @@ export const WorkOrderAddPage: React.FC = () => {
             {/* Add Items Button inside details card */}
             <div className="mt-6 pt-6 border-t border-gray-200">
               <Button
-                className="bg-purple-700 hover:bg-purple-800 text-white px-6 py-2"
+                className="!bg-[#DA7756] hover:!bg-[#C45F40] px-6 py-2"
                 onClick={addNewDetailsForm}
               >
-                Add Items
+                <span className="!text-white font-medium">Add Items</span>
               </Button>
             </div>
           </div>

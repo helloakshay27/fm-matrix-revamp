@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2, Key, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Key, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate,useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 import { CreateLockSubFunctionDialog } from './LockSubFunctionCreate';
+import { EditLockSubFunctionDialog } from './EditLockSubFunctionDialog';
 import { CreateSubFunctionDialog } from './CreateSubFunctionDialog';
 import { lockSubFunctionService, LockSubFunction as ApiLockSubFunctionItem } from '@/services/lockSubFunctionService';
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
@@ -169,6 +171,8 @@ export const LockSubFunctionList = () => {
   const { shouldShow } = useDynamicPermissions();
   const location = useLocation();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingLockSubFunctionId, setEditingLockSubFunctionId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return Number(params.get('page')) || 1;
@@ -204,6 +208,16 @@ export const LockSubFunctionList = () => {
   useEffect(() => {
     fetchLockSubFunctionData();
   }, []);
+
+  // Open edit popup when redirected from legacy /edit/:id route
+  useEffect(() => {
+    const editId = (location.state as { editLockSubFunctionId?: number } | null)?.editLockSubFunctionId;
+    if (editId) {
+      setEditingLockSubFunctionId(editId);
+      setIsEditDialogOpen(true);
+      navigate(location.pathname + location.search, { replace: true, state: {} });
+    }
+  }, [location.state, location.pathname, location.search, navigate]);
 
 useEffect(() => {
     navigate(`${location.pathname}?page=${currentPage}`, { replace: true });
@@ -294,7 +308,7 @@ useEffect(() => {
         {shouldShow("Lock Sub Function","destroy")&&(
         <button 
           onClick={() => handleDelete(lockSubFunction.id)} 
-          className="p-1 text-red-600 hover:bg-red-50 rounded" 
+          className="p-1 text-black hover:bg-gray-100 rounded" 
           title="Delete"
         >
           <Trash2 className="w-4 h-4" />
@@ -364,8 +378,8 @@ useEffect(() => {
   };
 
   const handleEdit = (id: number) => {
-    console.log('Edit lock sub function:', id);
-    navigate(`/settings/account/lock-sub-function/edit/${id}`);
+    setEditingLockSubFunctionId(id);
+    setIsEditDialogOpen(true);
   };
 
   const handleDelete = async (id: number) => {
@@ -389,7 +403,7 @@ useEffect(() => {
     <div className="p-6 space-y-6">
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#C72030]/10 text-[#C72030] flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-[#E5E0D3] text-brand flex items-center justify-center">
             <Key className="w-5 h-5" />
           </div>
           <div>
@@ -399,13 +413,38 @@ useEffect(() => {
         </div>
       </header>
 
-      {loading && (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
+      {loading ? (
+        <div className="bg-white rounded-lg border border-gray-200">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[#f6f4ee]">
+                <TableHead className="font-medium">Actions</TableHead>
+                <TableHead className="font-medium">Sub Function Name</TableHead>
+                <TableHead className="font-medium">Parent Function</TableHead>
+                <TableHead className="font-medium">Description</TableHead>
+                <TableHead className="font-medium">Priority</TableHead>
+                <TableHead className="font-medium">Conditions</TableHead>
+                <TableHead className="font-medium">Created On</TableHead>
+                <TableHead className="font-medium">Created By</TableHead>
+                <TableHead className="font-medium">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell colSpan={9} className="pt-4 pb-16">
+                  <div className="w-full flex items-center justify-start gap-3 pl-4">
+                    <div
+                      className="h-5 w-5 rounded-full animate-spin"
+                      style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                    />
+                    <span className="text-sm text-black">Loading ...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
-      )}
-
-      {!loading && (
+      ) : (
         <div className="">
           <EnhancedTable
             data={currentLockSubFunctionData}
@@ -421,15 +460,15 @@ useEffect(() => {
               shouldShow("Lock Sub Function","create")&&(
               <Button 
                 onClick={handleAdd} 
-                className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                className="fm-button-fix fm-button-brand px-4 py-2"
+                variant="ghost"
               >
                 <Plus className="w-4 h-4" />
                 Add
               </Button>
        )}
-            pagination={false} // Disable built-in pagination since we're adding custom
-            loading={loading}
-            emptyMessage="No lock sub functions found. Create your first lock sub function to get started."
+            pagination={false}
+            emptyMessage=""
           />
 
           {/* Pagination Controls - matching ShiftDashboard style */}
@@ -517,6 +556,21 @@ useEffect(() => {
         onOpenChange={setIsCreateDialogOpen}
         onLockSubFunctionCreated={() => {
           setIsCreateDialogOpen(false);
+          fetchLockSubFunctionData();
+        }}
+      />
+
+      {/* Edit Lock Sub Function Dialog */}
+      <EditLockSubFunctionDialog
+        open={isEditDialogOpen}
+        onOpenChange={(open) => {
+          setIsEditDialogOpen(open);
+          if (!open) setEditingLockSubFunctionId(null);
+        }}
+        lockSubFunctionId={editingLockSubFunctionId}
+        onLockSubFunctionUpdated={() => {
+          setIsEditDialogOpen(false);
+          setEditingLockSubFunctionId(null);
           fetchLockSubFunctionData();
         }}
       />

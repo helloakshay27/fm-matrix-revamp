@@ -5,6 +5,7 @@ import axios from "axios"
 import { Button } from "@/components/ui/button"
 import { Eye, Plus } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import { usePulseEvents } from "@/components/PostHogPulseEvents"
 
 interface UserContestReward {
     id: number
@@ -105,6 +106,7 @@ const columns: ColumnConfig[] = [
 ]
 
 const PulseContestRewards = () => {
+    const pulseEvents = usePulseEvents()
     const navigate = useNavigate();
 
     const [claims, setClaims] = useState<any[]>([])
@@ -164,6 +166,11 @@ const PulseContestRewards = () => {
         fetchClaims()
     }, [])
 
+    // Fires once on mount for the reward-claims list screen
+    useEffect(() => {
+        pulseEvents.onRewardListViewed()
+    }, [])
+
     const renderCell = (row: any, columnKey: string) => {
         switch (columnKey) {
             default:
@@ -201,7 +208,7 @@ const PulseContestRewards = () => {
                 leftActions={
                     <Button
                         onClick={() => navigate("/pulse/rewards/create")}
-                        className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-4 py-2 rounded-md flex items-center gap-2"
+                        className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-4 py-2 rounded-none flex items-center gap-2"
                     >
                         <Plus className="w-4 h-4" />
                         Create Reward

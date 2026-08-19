@@ -215,13 +215,12 @@ export const KRCCFormFilterDialog = ({ isOpen, onClose, onApplyFilters }: KRCCFo
         {/* </LocalizationProvider> */}
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2, pt: 2 }}>
-        <Button 
+        <Button
           onClick={handleSubmit}
-          className="flex-1 text-white cursor-pointer"
-          style={{ backgroundColor: '#C72030' }}
+          className="fm-button-fix fm-button-brand px-4 py-2"
           disabled={!emailProvided}
         >
-          Submit
+          Apply Filters
         </Button>
         {/* <Button 
           onClick={handleExport}
@@ -231,10 +230,10 @@ export const KRCCFormFilterDialog = ({ isOpen, onClose, onApplyFilters }: KRCCFo
         >
           {exporting ? 'Exporting...' : 'Export'}
         </Button> */}
-        <Button 
+        <Button
           onClick={handleReset}
           variant="outline"
-          className="flex-1 cursor-pointer"
+          className="border-brand text-brand hover:bg-brand-selected hover:text-brand"
           disabled={!emailProvided}
         >
           Reset

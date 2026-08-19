@@ -1,23 +1,30 @@
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useState, useEffect, useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-// import { Switch } from '@/components/ui/switch';
-import { Edit, Plus } from 'lucide-react';
-import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { Department } from '@/services/departmentService';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchDepartmentData, addDepartment, updateDepartment } from '@/store/slices/departmentSlice';
-import { toast } from 'sonner';
-import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { Switch } from '@mui/material';
+} from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Edit, Plus } from "lucide-react";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { Department } from "@/services/departmentService";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  fetchDepartmentData,
+  addDepartment,
+  updateDepartment,
+} from "@/store/slices/departmentSlice";
+import { toast } from "sonner";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import {
+  DepartmentFilterDialog,
+  type DepartmentFilters,
+} from "@/components/DepartmentFilterDialog";
 
 interface LocalDepartment extends Department {
   id: number;
@@ -25,22 +32,48 @@ interface LocalDepartment extends Department {
   status: boolean;
 }
 
+const columns: ColumnConfig[] = [
+  {
+    key: "name",
+    label: "Department",
+    sortable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "status",
+    label: "Status",
+    sortable: true,
+    defaultVisible: true,
+  },
+];
+
+const emptyFilters: DepartmentFilters = {
+  name: "",
+  status: "",
+};
+
 export const DepartmentDashboard = () => {
   const dispatch = useAppDispatch();
   const { shouldShow } = useDynamicPermissions();
 
-  const { data: departmentData, loading, error } = useAppSelector((state) => state.department);
+  const { data: departmentData, loading, error } = useAppSelector(
+    (state) => state.department
+  );
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [departmentName, setDepartmentName] = useState('');
-  const [editingDepartment, setEditingDepartment] = useState<LocalDepartment | null>(null);
-  const [editDepartmentName, setEditDepartmentName] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [departmentName, setDepartmentName] = useState("");
+  const [editingDepartment, setEditingDepartment] =
+    useState<LocalDepartment | null>(null);
+  const [editDepartmentName, setEditDepartmentName] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<DepartmentFilters>(emptyFilters);
   const [departments, setDepartments] = useState<LocalDepartment[]>([]);
 
-  // Transform API data to local format
-  const transformDepartments = (apiDepartments: Department[]): LocalDepartment[] => {
+  const transformDepartments = (
+    apiDepartments: Department[]
+  ): LocalDepartment[] => {
     return apiDepartments.map((dept) => ({
       id: dept.id || 0,
       name: dept.department_name,
@@ -63,20 +96,41 @@ export const DepartmentDashboard = () => {
     }
   }, [departmentData, error]);
 
+  const filteredDepartments = useMemo(() => {
+    return departments.filter((department) => {
+      const name = String(department.name || "").toLowerCase();
+      const status = department.status ? "active" : "inactive";
+
+      if (filters.name && !name.includes(filters.name.toLowerCase())) {
+        return false;
+      }
+      if (filters.status && status !== filters.status.toLowerCase()) {
+        return false;
+      }
+
+      if (searchTerm.trim()) {
+        const q = searchTerm.toLowerCase();
+        return name.includes(q) || status.includes(q);
+      }
+
+      return true;
+    });
+  }, [departments, filters, searchTerm]);
+
   const handleSubmit = async () => {
     if (!departmentName.trim()) {
-      toast.error('Please enter a department name.');
+      toast.error("Please enter a department name.");
       return;
     }
 
     try {
       await dispatch(addDepartment(departmentName.trim())).unwrap();
-      setDepartmentName('');
+      setDepartmentName("");
       setIsDialogOpen(false);
-      toast.success('Department added successfully!');
+      toast.success("Department added successfully!");
       dispatch(fetchDepartmentData());
-    } catch (error) {
-      console.error('Error adding department:', error);
+    } catch (err) {
+      console.error("Error adding department:", err);
     }
   };
 
@@ -89,13 +143,13 @@ export const DepartmentDashboard = () => {
             departmentName: editDepartmentName.trim(),
           })
         ).unwrap();
-        setEditDepartmentName('');
+        setEditDepartmentName("");
         setEditingDepartment(null);
         setIsEditDialogOpen(false);
-        toast.success('Department updated successfully!');
+        toast.success("Department updated successfully!");
         dispatch(fetchDepartmentData());
-      } catch (error) {
-        console.error('Error updating department:', error);
+      } catch (err) {
+        console.error("Error updating department:", err);
       }
     }
   };
@@ -107,230 +161,196 @@ export const DepartmentDashboard = () => {
   };
 
   const toggleStatus = (id: number) => {
-    setDepartments(
-      departments.map((dept) =>
+    setDepartments((prev) =>
+      prev.map((dept) =>
         dept.id === id ? { ...dept, status: !dept.status } : dept
       )
     );
   };
 
-  // Define columns for EnhancedTable
-  const columns: ColumnConfig[] = [
-    {
-      key: 'name',
-      label: 'Department',
-      sortable: true,
-      defaultVisible: true,
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      sortable: true,
-      defaultVisible: true,
-    },
-  ];
+  const handleApplyFilters = (nextFilters: DepartmentFilters) => {
+    setFilters(nextFilters);
+  };
 
-  const renderCell = (item: any, columnKey: string) => {
+  const handleResetFilters = () => {
+    setFilters(emptyFilters);
+  };
+
+  const renderCell = (item: LocalDepartment, columnKey: string) => {
     switch (columnKey) {
-      case 'status':
+      case "name":
+        return <span className="font-medium text-gray-900">{item.name}</span>;
+      case "status":
         return (
-          // <Switch
-          //   checked={item.status}
-          //   onCheckedChange={() => toggleStatus(item.id)}
-          //   className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
-          // />
-          <Switch
-            checked={item.status}
-            onChange={() => toggleStatus(item.id)}
-            size='small'
-            sx={{
-              '& .MuiSwitch-switchBase.Mui-checked': {
-                color: '#04A231',
-              },
-              '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                backgroundColor: '#04A231',
-              },
-              '& .MuiSwitch-switchBase:not(.Mui-checked)': {
-                color: '#C72030',
-              },
-              '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
-                backgroundColor: 'rgba(199, 32, 48, 0.5)',
-              },
-            }}
-          />
+          <div className="flex items-center">
+            <Switch
+              checked={item.status}
+              onCheckedChange={() => toggleStatus(item.id)}
+            />
+          </div>
         );
       default:
-        return item[columnKey];
+        return (item as Record<string, unknown>)[columnKey] != null
+          ? String((item as Record<string, unknown>)[columnKey])
+          : "-";
     }
-  }
+  };
 
-  const renderActions = (item: any) => (
-    <div className="flex gap-2 w-20 justify-center">
-      {shouldShow("Department","update")&&(
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
-        onClick={(e) => {
-          e.stopPropagation();
-          openEditDialog(item);
-        }}
-      >
-        <Edit className="w-4 h-4" />
-      </Button>)}
+  const renderActions = (item: LocalDepartment) => (
+    <div className="flex items-center justify-center gap-1">
+      {shouldShow("Department", "update") && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-8 w-8 p-0 hover:bg-gray-100"
+          title="Edit"
+          onClick={(e) => {
+            e.stopPropagation();
+            openEditDialog(item);
+          }}
+        >
+          <Edit className="w-4 h-4" />
+        </Button>
+      )}
     </div>
   );
 
-  const leftActions = (
-    <>
-    {shouldShow("Department","create")&&(
-      <Button className="bg-[#C72030] hover:bg-[#A11D2A] text-white w-full sm:w-auto" onClick={() => setIsDialogOpen(true)}>
-        <Plus className="w-4 h-4 mr-2" />
-        Add Department
-      </Button>
-      )}
-    </>
-  );
+  const leftActions = shouldShow("Department", "create") ? (
+    <Button
+      className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
+      onClick={() => setIsDialogOpen(true)}
+    >
+      <Plus className="w-4 h-4 mr-2" />
+      Add Department
+    </Button>
+  ) : null;
 
   return (
     <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
-      <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">DEPARTMENT</h1>
+      <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
+        DEPARTMENT
+      </h1>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-        {/* Error State */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-            <p className="text-red-600">{typeof error === 'string' ? error : 'Failed to fetch departments'}</p>
-          </div>
-        )}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-600">
+            {typeof error === "string"
+              ? error
+              : "Failed to fetch departments"}
+          </p>
+        </div>
+      )}
 
-        {!loading && (
-          <>
-            {/* Header with Add Department button */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="sm:max-w-md mx-4 sm:mx-0">
-                  <DialogHeader>
-                    <DialogTitle className="bg-[#C72030] text-white p-3 -m-6 mb-4 rounded-t-lg text-sm sm:text-base">
-                      Add Department
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 pt-2">
-                    <div>
-                      <Label htmlFor="departmentName" className="text-sm">
-                        Department Name<span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        id="departmentName"
-                        value={departmentName}
-                        onChange={(e) => setDepartmentName(e.target.value)}
-                        placeholder="Department Name"
-                        className="mt-1"
-                      />
-                    </div>
-                    <div className="flex justify-end">
-                      <Button
-                        onClick={handleSubmit}
-                        className="bg-green-600 hover:bg-green-700 text-white px-6 w-full sm:w-auto"
-                      >
-                        Submit
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
+      <EnhancedTable
+        data={filteredDepartments}
+        columns={columns}
+        renderCell={renderCell}
+        renderActions={renderActions}
+        leftActions={leftActions}
+        storageKey="department-table"
+        emptyMessage={
+          searchTerm || Object.values(filters).some(Boolean)
+            ? "No departments found matching your search"
+            : "No departments found"
+        }
+        loading={loading}
+        loadingMessage="Loading departments..."
+        enableSearch
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search departments..."
+        disableClientSearch
+        onFilterClick={() => setShowFilters(true)}
+        hideTableExport
+        pagination
+        pageSize={10}
+        getItemId={(item) => String(item.id)}
+      />
 
-            {/* Mobile Cards View */}
-            <div className="block sm:hidden space-y-3">
-              {departments
-                .filter((department) =>
-                  department.name.toLowerCase().includes(searchTerm.toLowerCase())
-                )
-                .map((department) => (
-                  <div key={department.id} className="bg-gray-50 rounded-lg p-4 space-y-3">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-medium text-gray-900">{department.name}</h3>
-                        <p className="text-sm text-gray-500 mt-1">
-                          Status: {department.status ? 'Active' : 'Inactive'}
-                        </p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-[#C72030] hover:text-[#A11D2A] hover:bg-[#C72030]/10 p-2"
-                        onClick={() => openEditDialog(department)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-700">Toggle Status</span>
-                      <Switch
-                        checked={department.status}
-                        onCheckedChange={() => toggleStatus(department.id)}
-                        className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
-                      />
-                    </div>
-                  </div>
-                ))}
-            </div>
+      <DepartmentFilterDialog
+        isOpen={showFilters}
+        onClose={() => setShowFilters(false)}
+        filters={filters}
+        onApplyFilters={handleApplyFilters}
+        onResetFilters={handleResetFilters}
+      />
 
-            {/* Desktop Table View with EnhancedTable */}
-            <div className="hidden sm:block overflow-x-auto">
-              <EnhancedTable
-                data={departments}
-                columns={columns}
-                searchTerm={searchTerm}
-                renderCell={renderCell}
-                renderActions={renderActions}
-                onSearchChange={setSearchTerm}
-                searchPlaceholder="Search departments..."
-                enableSearch={true}
-                enableExport={false} // Set to true if you want to enable export
-                pagination={true}
-                pageSize={10}
-                loading={loading}
-                leftActions={leftActions}
-                emptyMessage="No departments found"
-                storageKey="department-table"
-                className="w-full"
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-md mx-4 sm:mx-0">
+          <DialogHeader>
+            <DialogTitle className="text-base sm:text-lg font-semibold">
+              Add Department
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div>
+              <Label htmlFor="departmentName" className="text-sm">
+                Department Name<span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="departmentName"
+                value={departmentName}
+                onChange={(e) => setDepartmentName(e.target.value)}
+                placeholder="Department Name"
+                className="mt-1"
               />
             </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsDialogOpen(false)}
+                className="border-brand text-brand hover:bg-brand-selected hover:text-brand"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                className="bg-brand text-white hover:bg-brand-hover"
+              >
+                Submit
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-            {/* Edit Department Dialog */}
-            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-              <DialogContent className="sm:max-w-md mx-4 sm:mx-0">
-                <DialogHeader>
-                  <DialogTitle className="text-base sm:text-lg font-semibold">Edit Details</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="editDepartmentName" className="text-sm">
-                      Department Name<span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id="editDepartmentName"
-                      value={editDepartmentName}
-                      onChange={(e) => setEditDepartmentName(e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div className="flex justify-end">
-                    <Button
-                      onClick={handleEditSubmit}
-                      className="bg-[#C72030] hover:bg-[#A11D2A] text-white px-6 w-full sm:w-auto"
-                    >
-                      Submit
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </>
-        )}
-      </div>
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-md mx-4 sm:mx-0">
+          <DialogHeader>
+            <DialogTitle className="text-base sm:text-lg font-semibold">
+              Edit Details
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="editDepartmentName" className="text-sm">
+                Department Name<span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="editDepartmentName"
+                value={editDepartmentName}
+                onChange={(e) => setEditDepartmentName(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsEditDialogOpen(false)}
+                className="border-brand text-brand hover:bg-brand-selected hover:text-brand"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleEditSubmit}
+                className="bg-brand text-white hover:bg-brand-hover"
+              >
+                Submit
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -117,7 +117,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
     return (
       <div className={`relative bg-white rounded-lg border border-gray-200 p-6 shadow-sm ${className}`}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold" style={{ color: titleColor || '#C72030' }}>{title}</h3>
+          <h3 className="text-lg font-bold" style={{ color: titleColor || '#DA7756' }}>{title}</h3>
           {showDownload && (
             <div
               className="p-1 rounded hover:bg-gray-100 transition-colors cursor-pointer"
@@ -168,7 +168,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                 className="bg-[#f6f4ee] rounded shadow p-2 min-w-[70px] flex flex-col items-center h-[60px] justify-center"
                 style={{ fontSize: '0.85rem' }}
               >
-                <div className="font-semibold text-[#C72030] text-xs">{site}</div>
+                <div className="font-semibold text-[#DA7756] text-xs">{site}</div>
                 <div className="font-bold text-gray-800 text-base mt-1">{value}</div>
               </div>
             ))}
@@ -219,7 +219,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                 <span className="w-3 h-3 rounded-sm bg-gradient-to-r from-[#D5DbDB] to-[#C4b89D]"></span>
                 <span className="font-medium text-gray-700">Monthly Cost</span>
               </div>
-              <div className="text-sm font-semibold text-gray-800">Total: <span className="text-[#C72030]">{currency}{total}</span></div>
+              <div className="text-sm font-semibold text-gray-800">Total: <span className="text-[#DA7756]">{currency}{total}</span></div>
             </div>
             <div className="w-full h-[260px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -267,15 +267,15 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
             <table className="min-w-full table-auto">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="px-4 py-2 text-center text-sm font-medium text-gray-700">Date</th>
-                  <th className="px-4 py-2 text-center text-sm font-medium text-gray-700">Product</th>
-                  <th className="px-4 py-2 text-center text-sm font-medium text-gray-700">Unit</th>
-                  <th className="px-4 py-2 text-center text-sm font-medium text-gray-700">Opening</th>
-                  <th className="px-4 py-2 text-center text-sm font-medium text-gray-700">Addition</th>
-                  <th className="px-4 py-2 text-center textsm font-medium text-gray-700">Consumption</th>
-                  <th className="px-4 py-2 text-center textsm font-medium text-gray-700">Current Stock</th>
-                  <th className="px-4 py-2 text-center textsm font-medium text-gray-700">Cost/Unit</th>
-                  <th className="px-4 py-2 text-center textsm font-medium text-gray-700">Total Cost</th>
+                  <th className="px-4 py-2 text-center text-sm font-medium !text-white bg-[#DA7756]">Date</th>
+                  <th className="px-4 py-2 text-center text-sm font-medium !text-white bg-[#DA7756]">Product</th>
+                  <th className="px-4 py-2 text-center text-sm font-medium !text-white bg-[#DA7756]">Unit</th>
+                  <th className="px-4 py-2 text-center text-sm font-medium !text-white bg-[#DA7756]">Opening</th>
+                  <th className="px-4 py-2 text-center text-sm font-medium !text-white bg-[#DA7756]">Addition</th>
+                  <th className="px-4 py-2 text-center text-sm font-medium !text-white bg-[#DA7756]">Consumption</th>
+                  <th className="px-4 py-2 text-center text-sm font-medium !text-white bg-[#DA7756]">Current Stock</th>
+                  <th className="px-4 py-2 text-center text-sm font-medium !text-white bg-[#DA7756]">Cost/Unit</th>
+                  <th className="px-4 py-2 text-center text-sm font-medium !text-white bg-[#DA7756]">Total Cost</th>
                 </tr>
               </thead>
               <tbody>
@@ -370,8 +370,8 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                         {['Date', 'Product', 'Unit', 'Opening', 'Addition', 'Consumption', 'Current Stock', 'Cost/Unit', 'Total Cost'].map((h, i) => (
                           <th
                             key={h}
-                            className={`px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center`}
-                            style={{ backgroundColor: '#D97655' }}
+                            className={`px-4 py-3 !text-white font-semibold text-xs whitespace-nowrap analytics-header text-center`}
+                            style={{ backgroundColor: '#DA7756' }}
                           >
                             {h}
                           </th>
@@ -586,8 +586,8 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                         {['Date', 'Product', 'Unit', 'Opening', 'Addition', 'Consumption', 'Current Stock', 'Cost/Unit', 'Total Cost'].map((h, i) => (
                           <th
                             key={h}
-                            className={`px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center`}
-                            style={{ backgroundColor: '#D97655' }}
+                            className={`px-4 py-3 !text-white font-semibold text-xs whitespace-nowrap analytics-header text-center`}
+                            style={{ backgroundColor: '#DA7756' }}
                           >
                             {h}
                           </th>
@@ -774,7 +774,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
   return (
   <div className={`relative bg-white rounded-lg border border-gray-200 p-4 shadow-sm h-[420px] flex flex-col ${className}`}>
       <div className="flex items-center justify-between mb-4 shrink-0">
-        <h3 className="text-lg font-bold" style={{ color: titleColor || '#C72030' }}>{title}</h3>
+        <h3 className="text-lg font-bold" style={{ color: titleColor || '#DA7756' }}>{title}</h3>
         <div className="flex items-center gap-2">
           {type === 'greenConsumption' && (
             <>
@@ -806,7 +806,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                     }
                     const from = formatDate(dateRange.startDate);
                     const to = formatDate(dateRange.endDate);
-                    const url = `https://${baseUrl}/pms/inventories/inventory_consumption_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
+                    const url = `https://${baseUrl}/pms/inventories/inventory_consumption_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
                     setRefreshLoading(true);
                     const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (!resp.ok) throw new Error('Failed to refresh data');
@@ -862,7 +862,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                     }
                     const from = formatDate(dateRange.startDate);
                     const to = formatDate(dateRange.endDate);
-                    const url = `https://${baseUrl}/pms/inventories/category_wise_items.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
+                    const url = `https://${baseUrl}/pms/inventories/category_wise_items.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
                     setRefreshLoading(true);
                     const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (!resp.ok) throw new Error('Failed to refresh data');
@@ -916,7 +916,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                     }
                     const from = formatDate(dateRange.startDate);
                     const to = formatDate(dateRange.endDate);
-                    const url = `https://${baseUrl}/pms/inventories/card_inventory_cost_over_month.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
+                    const url = `https://${baseUrl}/pms/inventories/card_inventory_cost_over_month.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
                     setRefreshLoading(true);
                     const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (!resp.ok) throw new Error('Failed to refresh data');
@@ -970,7 +970,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                     }
                     const from = formatDate(dateRange.startDate);
                     const to = formatDate(dateRange.endDate);
-                    const url = `https://${baseUrl}/pms/inventories/consumption_report_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
+                    const url = `https://${baseUrl}/pms/inventories/consumption_report_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
                     setRefreshLoading(true);
                     const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (!resp.ok) throw new Error('Failed to refresh data');
@@ -1024,7 +1024,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                     }
                     const from = formatDate(dateRange.startDate);
                     const to = formatDate(dateRange.endDate);
-                    const url = `https://${baseUrl}/pms/inventories/consumption_report_non_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
+                    const url = `https://${baseUrl}/pms/inventories/consumption_report_non_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
                     setRefreshLoading(true);
                     const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (!resp.ok) throw new Error('Failed to refresh data');
@@ -1078,7 +1078,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                     }
                     const from = formatDate(dateRange.startDate);
                     const to = formatDate(dateRange.endDate);
-                    const url = `https://${baseUrl}/pms/inventories/current_minimum_stock_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
+                    const url = `https://${baseUrl}/pms/inventories/current_minimum_stock_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
                     setRefreshLoading(true);
                     const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (!resp.ok) throw new Error('Failed to refresh data');
@@ -1132,7 +1132,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                     }
                     const from = formatDate(dateRange.startDate);
                     const to = formatDate(dateRange.endDate);
-                    const url = `https://${baseUrl}/pms/inventories/current_minimum_stock_non_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
+                    const url = `https://${baseUrl}/pms/inventories/current_minimum_stock_non_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
                     setRefreshLoading(true);
                     const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (!resp.ok) throw new Error('Failed to refresh data');
@@ -1186,7 +1186,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                     }
                     const from = formatDate(dateRange.startDate);
                     const to = formatDate(dateRange.endDate);
-                    const url = `https://${baseUrl}/pms/inventories/items_status.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
+                    const url = `https://${baseUrl}/pms/inventories/items_status.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
                     setRefreshLoading(true);
                     const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (!resp.ok) throw new Error('Failed to refresh data');
@@ -1236,7 +1236,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
         {refreshLoading ? (
           <div className="absolute inset-0 bg-white flex items-center justify-center z-30 rounded-lg">
             <div className="flex flex-col items-center gap-3">
-              <Loader2 className="w-10 h-10 animate-spin text-[#C72030]" />
+              <Loader2 className="w-10 h-10 animate-spin text-[#DA7756]" />
               <span className="text-sm font-semibold text-gray-700">Refreshing data...</span>
             </div>
           </div>

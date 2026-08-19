@@ -16,7 +16,7 @@ const permitToWorkAnalyticsAPI = {
     const siteId = getSiteId();
     const from = fmt(fromDate);
     const to = fmt(toDate);
-    const url = `${API_CONFIG.BASE_URL}/pms/permits/site_wise_permits_report.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `${API_CONFIG.BASE_URL}/pms/permits/site_wise_permits_report.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
     const resp = await fetch(url, { method: 'GET', headers: { Authorization: getAuthHeader() } });
     if (!resp.ok) throw new Error('Failed to fetch site-wise permits report');
     return resp.json();
@@ -26,7 +26,7 @@ const permitToWorkAnalyticsAPI = {
     const siteId = getSiteId();
     const from = fmt(fromDate);
     const to = fmt(toDate);
-    const url = `${API_CONFIG.BASE_URL}/pms/permits/permits_status_data.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `${API_CONFIG.BASE_URL}/pms/permits/permits_status_data.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
     const resp = await fetch(url, { method: 'GET', headers: { Authorization: getAuthHeader() } });
     if (!resp.ok) throw new Error('Failed to fetch permits status data');
     return resp.json();
@@ -36,7 +36,7 @@ const permitToWorkAnalyticsAPI = {
     const siteId = getSiteId();
     const from = fmt(fromDate);
     const to = fmt(toDate);
-    const url = `${API_CONFIG.BASE_URL}/pms/permits/site_wise_permits_download.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `${API_CONFIG.BASE_URL}/pms/permits/site_wise_permits_download.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
     const resp = await fetch(url, { method: 'GET', headers: { Authorization: getAuthHeader() } });
     if (!resp.ok) throw new Error('Download failed');
     const blob = await resp.blob();
@@ -53,7 +53,7 @@ const permitToWorkAnalyticsAPI = {
     const siteId = getSiteId();
     const from = fmt(fromDate);
     const to = fmt(toDate);
-    const url = `${API_CONFIG.BASE_URL}/pms/permits/permits_status_download.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `${API_CONFIG.BASE_URL}/pms/permits/permits_status_download.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
     const resp = await fetch(url, { method: 'GET', headers: { Authorization: getAuthHeader() } });
     if (!resp.ok) throw new Error('Download failed');
     const blob = await resp.blob();

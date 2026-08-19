@@ -5,7 +5,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { MaterialDatePicker } from "@/components/ui/material-date-picker";
 import { useNavigate } from 'react-router-dom';
+import { parse } from 'date-fns';
+
+const selectTriggerClass =
+  "h-10 bg-white border-gray-300 shadow-none focus:ring-0 focus:ring-offset-0 focus:!border-gray-300 focus:!shadow-none data-[state=open]:ring-0 data-[state=open]:ring-offset-0 data-[state=open]:!border-gray-300 data-[state=open]:!shadow-none";
 
 export const CreateRosterTemplateDashboard = () => {
   const navigate = useNavigate();
@@ -16,6 +21,8 @@ export const CreateRosterTemplateDashboard = () => {
   const [selectedSeatType, setSelectedSeatType] = useState<string>("");
   const [allocationType, setAllocationType] = useState<string>("Allocation");
   const [periodType, setPeriodType] = useState<string>("Week");
+  const [periodFrom, setPeriodFrom] = useState<string>("");
+  const [periodTo, setPeriodTo] = useState<string>("");
   const [numberOfDays, setNumberOfDays] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
@@ -28,6 +35,8 @@ export const CreateRosterTemplateDashboard = () => {
       selectedSeatType,
       allocationType,
       periodType,
+      periodFrom,
+      periodTo,
       numberOfDays
     });
     navigate('/vas/space-management/setup/roster');
@@ -49,7 +58,7 @@ export const CreateRosterTemplateDashboard = () => {
         <div className="flex-1 bg-white rounded-lg border shadow-sm p-6">
           {/* Location Details Header */}
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+            <div className="w-8 h-8 bg-[#da7756] rounded-full flex items-center justify-center text-white font-bold text-sm">
               3
             </div>
             <h2 className="text-lg font-semibold text-orange-500 uppercase">LOCATION DETAILS</h2>
@@ -74,7 +83,7 @@ export const CreateRosterTemplateDashboard = () => {
                   Location<span className="text-red-500">*</span>
                 </Label>
                 <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-                  <SelectTrigger className="h-10">
+                  <SelectTrigger className={selectTriggerClass}>
                     <SelectValue placeholder="Select Location" />
                   </SelectTrigger>
                   <SelectContent>
@@ -93,7 +102,7 @@ export const CreateRosterTemplateDashboard = () => {
                   Department<span className="text-red-500">*</span>
                 </Label>
                 <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                  <SelectTrigger className="h-10">
+                  <SelectTrigger className={selectTriggerClass}>
                     <SelectValue placeholder="Select Department" />
                   </SelectTrigger>
                   <SelectContent>
@@ -108,7 +117,7 @@ export const CreateRosterTemplateDashboard = () => {
                   Shift<span className="text-red-500">*</span>
                 </Label>
                 <Select value={selectedShift} onValueChange={setSelectedShift}>
-                  <SelectTrigger className="h-10">
+                  <SelectTrigger className={selectTriggerClass}>
                     <SelectValue placeholder="Select Shift" />
                   </SelectTrigger>
                   <SelectContent>
@@ -127,7 +136,7 @@ export const CreateRosterTemplateDashboard = () => {
                   Seat Type<span className="text-red-500">*</span>
                 </Label>
                 <Select value={selectedSeatType} onValueChange={setSelectedSeatType}>
-                  <SelectTrigger className="h-10">
+                  <SelectTrigger className={selectTriggerClass}>
                     <SelectValue placeholder="Select Seat Type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -145,78 +154,31 @@ export const CreateRosterTemplateDashboard = () => {
               <Label className="text-sm font-medium text-gray-700 mb-1 block">
                 Select Period From
               </Label>
-              <div className="flex items-center gap-2">
-                <Select defaultValue="20">
-                  <SelectTrigger className="w-16 h-8 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 31 }, (_, i) => (
-                      <SelectItem key={i + 1} value={String(i + 1)}>
-                        {i + 1}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select defaultValue="6">
-                  <SelectTrigger className="w-12 h-8 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 12 }, (_, i) => (
-                      <SelectItem key={i + 1} value={String(i + 1)}>
-                        {i + 1}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select defaultValue="2025">
-                  <SelectTrigger className="w-20 h-8 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="2022">2022</SelectItem>
-                    <SelectItem value="2023">2023</SelectItem>
-                    <SelectItem value="2024">2024</SelectItem>
-                    <SelectItem value="2025">2025</SelectItem>
-                  </SelectContent>
-                </Select>
-                <span className="text-sm text-gray-600">To</span>
-                <Select defaultValue="20">
-                  <SelectTrigger className="w-16 h-8 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 31 }, (_, i) => (
-                      <SelectItem key={i + 1} value={String(i + 1)}>
-                        {i + 1}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select defaultValue="7">
-                  <SelectTrigger className="w-12 h-8 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 12 }, (_, i) => (
-                      <SelectItem key={i + 1} value={String(i + 1)}>
-                        {i + 1}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select defaultValue="2025">
-                  <SelectTrigger className="w-20 h-8 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="2022">2022</SelectItem>
-                    <SelectItem value="2023">2023</SelectItem>
-                    <SelectItem value="2024">2024</SelectItem>
-                    <SelectItem value="2025">2025</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 items-end">
+                <div>
+                  <Label className="text-xs font-medium text-gray-500 mb-1 block">From</Label>
+                  <MaterialDatePicker
+                    value={periodFrom}
+                    onChange={setPeriodFrom}
+                    placeholder="Select From Date"
+                    className="h-10 !shadow-none focus:!ring-0 focus:!border-gray-300"
+                  />
+                </div>
+                <span className="hidden sm:flex text-sm text-gray-600 pb-2.5 justify-center">To</span>
+                <div>
+                  <Label className="text-xs font-medium text-gray-500 mb-1 block">To</Label>
+                  <MaterialDatePicker
+                    value={periodTo}
+                    onChange={setPeriodTo}
+                    placeholder="Select To Date"
+                    className="h-10 !shadow-none focus:!ring-0 focus:!border-gray-300"
+                    minDate={
+                      periodFrom
+                        ? parse(periodFrom, 'dd/MM/yyyy', new Date())
+                        : undefined
+                    }
+                  />
+                </div>
               </div>
             </div>
 
@@ -272,9 +234,9 @@ export const CreateRosterTemplateDashboard = () => {
             <div className="flex gap-4 pt-6">
               <Button 
                 onClick={handleSubmit}
-                className="bg-green-600 hover:bg-green-700 text-white px-8 h-10"
+                className="!bg-[#DA7756] hover:!bg-[#C45F40] px-8 h-10"
               >
-                Submit
+                <span className="!text-white font-medium">Submit</span>
               </Button>
               <Button 
                 onClick={handleCancel}
@@ -302,10 +264,10 @@ export const CreateRosterTemplateDashboard = () => {
           
           <div className="flex justify-end">
             <Button 
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 h-8 text-sm"
+              className="!bg-[#DA7756] hover:!bg-[#C45F40] px-6 h-8 text-sm"
               size="sm"
             >
-              View List
+              <span className="!text-white font-medium">View List</span>
             </Button>
           </div>
           

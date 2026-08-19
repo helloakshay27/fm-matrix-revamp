@@ -469,14 +469,14 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
             <Button
               variant="outline"
               onClick={handleReset}
-              className="border-gray-300 text-gray-700 hover:bg-gray-50"
+              className="border-brand text-brand hover:bg-brand-selected hover:text-brand"
             >
               Reset
             </Button>
             <Button
+              variant="ghost"
               onClick={handleApply}
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:bg-[#C72030]/90"
+              className="fm-button-fix fm-button-brand px-4 py-2"
             >
               Apply
             </Button>

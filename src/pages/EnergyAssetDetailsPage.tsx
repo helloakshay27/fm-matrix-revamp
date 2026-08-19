@@ -15,10 +15,12 @@ import { EnergyLogsTab } from '@/components/energy-asset-details/EnergyLogsTab';
 import { EnergyHistoryCardTab } from '@/components/energy-asset-details/EnergyHistoryCardTab';
 import { EnergyCostOfOwnershipTab } from '@/components/energy-asset-details/EnergyCostOfOwnershipTab';
 import { EditStatusModal } from '@/components/EditStatusModal';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export const EnergyAssetDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [isInUse, setIsInUse] = useState(true);
   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
 
@@ -154,21 +156,25 @@ export const EnergyAssetDetailsPage = () => {
               <Edit className="w-4 h-4 mr-2" />
             </Button>
             
-            <Button 
-              onClick={handleEditDetails}
-              variant="outline"
-              className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Edit Details
-            </Button>
-            
-            <Button 
-              onClick={handleCreateChecklist}
-              className="bg-[#C72030] hover:bg-[#A61B2A] text-white"
-            >
-              Create a Checklist
-            </Button>
+            {shouldShow("Energy", "update") && (
+              <Button
+                onClick={handleEditDetails}
+                variant="outline"
+                className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit Details
+              </Button>
+            )}
+
+            {shouldShow("Energy", "create") && (
+              <Button
+                onClick={handleCreateChecklist}
+                className="bg-[#C72030] hover:bg-[#A61B2A] text-white"
+              >
+                Create a Checklist
+              </Button>
+            )}
           </div>
         </div>
 

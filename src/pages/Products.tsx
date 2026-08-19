@@ -11,6 +11,7 @@ import {
 import { EmployeeHeader } from "@/components/EmployeeHeader";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { canViewProduct } from "@/pages/products/productVisibility";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -378,7 +379,7 @@ const productData: Product[] = [
     problemSolved:
       "Individuals manage goals, habits, and personal development across scattered apps and notebooks, leading to inconsistent follow-through, untracked progress, burnout risk, and a gap between intention and execution.",
     type: "Facility Management",
-    isActive: false,
+    isActive: true,
   },
   {
     id: "20",
@@ -914,6 +915,10 @@ const Products: React.FC = () => {
   );
 
   const filteredProducts = productData.filter((product) => {
+    // Restricted products (e.g. Life Compass) are only listed for allow-listed
+    // users, or when running locally. See productVisibility.ts
+    if (!canViewProduct(product.slug)) return false;
+
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.industries.toLowerCase().includes(searchTerm.toLowerCase()) ||

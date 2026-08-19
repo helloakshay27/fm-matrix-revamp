@@ -1,5 +1,7 @@
 ﻿import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { renderGroupedUserCheckboxList } from "@/components/GroupedUserCheckboxList";
 import {
     Tooltip,
     TooltipContent,
@@ -15,6 +17,7 @@ import {
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { ActiveTimer } from "@/pages/ProjectTaskDetails";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useAppDispatch } from "@/store/hooks";
 import {
@@ -35,6 +38,7 @@ import {
 import { useDebounce } from "@/hooks/useDebounce";
 import {
     ChartNoAxesColumn,
+    ChartNoAxesGantt,
     ChevronDown,
     Eye,
     List,
@@ -45,6 +49,7 @@ import {
     Play,
     Pause,
     ArrowLeft,
+    Calendar as CalendarIcon,
 } from "lucide-react";
 import { useEffect, useState, useRef, forwardRef, useCallback } from "react";
 import { cache } from "@/utils/cacheUtils";
@@ -79,6 +84,7 @@ import axios from "axios";
 import { baseClient } from "@/utils/withoutTokenBase";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
 import { CommonImportModal } from "@/components/CommonImportModal";
+import TasksGanttChart from "@/components/TasksGanttChart";
 import { useSearchParams } from "react-router-dom";
 
 const Transition = forwardRef(function Transition(
@@ -99,13 +105,6 @@ const columns: ColumnConfig[] = [
     {
         key: "id",
         label: "Task ID",
-        sortable: true,
-        draggable: true,
-        defaultVisible: true,
-    },
-    {
-        key: "task_code",
-        label: "Task Code",
         sortable: true,
         draggable: true,
         defaultVisible: true,
@@ -174,22 +173,8 @@ const columns: ColumnConfig[] = [
         defaultVisible: true,
     },
     {
-        key: "started_time",
-        label: "Actual Efforts Taken",
-        sortable: false,
-        draggable: true,
-        defaultVisible: true,
-    },
-    {
         key: "duration",
         label: "Time Left",
-        sortable: true,
-        draggable: true,
-        defaultVisible: true,
-    },
-    {
-        key: "efforts_duration",
-        label: "Efforts Duration",
         sortable: true,
         draggable: true,
         defaultVisible: true,
@@ -273,7 +258,6 @@ const STATUS_OPTIONS = [
 // Map frontend column keys to backend field names
 const COLUMN_TO_BACKEND_MAP: Record<string, string> = {
     id: "id",
-    task_code: "task_code",
     title: "title",
     status: "status",
     workflowStatus: "project_status_id",
@@ -282,7 +266,6 @@ const COLUMN_TO_BACKEND_MAP: Record<string, string> = {
     expected_start_date: "expected_start_date",
     target_date: "target_date",
     duration: "target_date",
-    efforts_duration: "estimated_hour",
     subtasks: "total_sub_tasks",
     issues: "total_issues",
     priority: "priority",
@@ -378,6 +361,27 @@ const validateDateRange = (
     return { valid: true };
 };
 
+// Date <-> "YYYY-MM-DD" helpers for the date range filter
+const formatDateToYMD = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+    return `${year}-${month}-${day}`;
+};
+
+const parseYMDToDate = (value: string): Date | null => {
+    if (!value) return null;
+    const [year, month, day] = value.split("-").map(Number);
+    return new Date(year, month - 1, day);
+};
+
+// "yyyy-MM-dd" -> "MM/DD/YYYY" for the date range input display
+const formatYMDToDisplay = (value: string): string => {
+    if (!value) return "";
+    const [year, month, day] = value.split("-");
+    return `${day}/${month}/${year}`;
+};
+
 const statusOptions = [
     { value: "open", label: "Open" },
     { value: "in_progress", label: "In Progress" },
@@ -424,7 +428,7 @@ const PauseReasonModal = ({
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full max-w-[30rem] mx-4">
-                <h2 className="text-lg font-semibold mb-4 text-gray-800">
+                <h2 className="fm-button-fix fm-button-brand px-4 py-2">
                     Reason for Pause/End
                 </h2>
 
@@ -443,7 +447,7 @@ const PauseReasonModal = ({
                     <Button
                         onClick={handleEndTask}
                         disabled={isLoading}
-                        className="px-4 py-2 !bg-red-600 !text-white rounded-md !hover:bg-red-700 disabled:opacity-50"
+                        className="fm-button-fix fm-button-brand px-4 py-2"
                     >
                         {isLoading ? "Submitting..." : "End Task"}
                     </Button>
@@ -454,7 +458,7 @@ const PauseReasonModal = ({
                         <Button
                             onClick={handleSubmit}
                             disabled={isLoading}
-                            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                            className="fm-button-fix fm-button-brand px-4 py-2"
                         >
                             {isLoading ? "Submitting..." : "Pause Task"}
                         </Button>
@@ -520,7 +524,6 @@ const ResponsiblePersonReasonModal = ({
                     <Button
                         onClick={handleSubmit}
                         disabled={isLoading}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
                     >
                         {isLoading ? "Submitting..." : "Change Responsible Person"}
                     </Button>
@@ -575,7 +578,6 @@ const HoldReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
                     <Button
                         onClick={handleSubmit}
                         disabled={isLoading}
-                        className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50"
                     >
                         {isLoading ? "Submitting..." : "Put on Hold"}
                     </Button>
@@ -630,7 +632,7 @@ const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                     <Button
                         onClick={handleSubmit}
                         disabled={isLoading}
-                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                        className="fm-button-fix fm-button-brand px-4 py-2"
                     >
                         {isLoading ? "Submitting..." : "Submit"}
                     </Button>
@@ -762,9 +764,9 @@ const ProjectTasksPage = () => {
     const [projectName, setProjectName] = useState<string>("");
     const [milestoneName, setMilestoneName] = useState<string>("");
     const [openTaskModal, setOpenTaskModal] = useState(false);
-    const [selectedView, setSelectedView] = useState<"Kanban" | "List">(() => {
+    const [selectedView, setSelectedView] = useState<"Kanban" | "List" | "Gantt">(() => {
         const saved = localStorage.getItem("taskPageViewPreference");
-        return (saved as "Kanban" | "List") || "List";
+        return (saved as "Kanban" | "List" | "Gantt") || "List";
     });
     const [isOpen, setIsOpen] = useState(false);
     const [openStatusOptions, setOpenStatusOptions] = useState(false);
@@ -818,6 +820,11 @@ const ProjectTasksPage = () => {
         endDate: "",
         completedAt: "",
     });
+    const [dateRangeFilter, setDateRangeFilter] = useState({
+        startDate: "",
+        endDate: "",
+    });
+    const [isDateRangePickerOpen, setIsDateRangePickerOpen] = useState(false);
     const [projectOptions, setProjectOptions] = useState<any[]>([]);
     const [tags, setTags] = useState<any[]>([]);
     const [dropdowns, setDropdowns] = useState({
@@ -830,6 +837,7 @@ const ProjectTasksPage = () => {
         startDate: false,
         endDate: false,
         completedAt: false,
+        dateRange: false,
     });
     const [searchTerms, setSearchTerms] = useState({
         status: "",
@@ -898,6 +906,7 @@ const ProjectTasksPage = () => {
 
     const fetchSprintsList = useCallback(async () => {
         try {
+            const user_id = localStorage.getItem("userId")
             const result = await dispatch(fetchSprints({ token, baseUrl })).unwrap();
             const list =
                 result?.sprints ||
@@ -925,25 +934,48 @@ const ProjectTasksPage = () => {
                 })
             ).unwrap();
 
+            const createdTaskIds: number[] = result?.created_task_ids || [];
+            const createdIssueIds: number[] = result?.created_issue_ids || [];
             const existingTaskIds: number[] = result?.existing_task_ids || [];
             const existingIssueIds: number[] = result?.existing_issue_ids || [];
+            const notAddedTasks: Array<{
+                task_id: number;
+                project_management_title?: string;
+                message: string;
+            }> = result?.not_added_tasks || [];
+            const notAddedIssues: Array<{ issue_id: number; message: string }> =
+                result?.not_added_issues || [];
+
+            if (createdTaskIds.length > 0 || createdIssueIds.length > 0) {
+                const parts: string[] = [];
+                if (createdTaskIds.length > 0) parts.push(`${createdTaskIds.length} task(s)`);
+                if (createdIssueIds.length > 0) parts.push(`${createdIssueIds.length} issue(s)`);
+                toast.success(`${parts.join(" and ")} added to sprint successfully`);
+            }
 
             if (existingTaskIds.length > 0) {
-                toast.error(
-                    `Tasks with IDs ${existingTaskIds.join(", ")} are already added to this sprint`
+                toast.warning(
+                    `Task${existingTaskIds.length > 1 ? "s" : ""} T-${existingTaskIds.join(", T-")} already added to this sprint`
                 );
             }
             if (existingIssueIds.length > 0) {
-                toast.error(
-                    `Issues with IDs ${existingIssueIds.join(", ")} are already added to this sprint`
+                toast.warning(
+                    `Issue${existingIssueIds.length > 1 ? "s" : ""} ${existingIssueIds.join(", ")} already added to this sprint`
                 );
             }
-            if (existingTaskIds.length === 0 && existingIssueIds.length === 0) {
-                toast.success("Tasks added to sprint successfully");
-                setIsAddToSprintModalOpen(false);
-                setSelectedSprintId("");
-                setSelectedItems([]);
-            }
+
+            notAddedTasks.forEach((t) => {
+                toast.error(
+                    `T-${t.task_id}${t.project_management_title ? ` (${t.project_management_title})` : ""}: ${t.message}`
+                );
+            });
+            notAddedIssues.forEach((i) => {
+                toast.error(`Issue ${i.issue_id}: ${i.message}`);
+            });
+
+            setIsAddToSprintModalOpen(false);
+            setSelectedSprintId("");
+            setSelectedItems([]);
         } catch (error) {
             toast.error("Failed to add tasks to sprint");
         } finally {
@@ -1003,6 +1035,8 @@ const ProjectTasksPage = () => {
         const urlStartDate = searchParams.get("start_date") || "";
         const urlEndDate = searchParams.get("end_date") || "";
         const urlCompletedAt = searchParams.get("completed_at") || "";
+        const urlDateRangeStart = searchParams.get("date_range_start") || "";
+        const urlDateRangeEnd = searchParams.get("date_range_end") || "";
 
         if (urlStatuses.length > 0) {
             setSelectedStatuses(urlStatuses);
@@ -1029,8 +1063,14 @@ const ProjectTasksPage = () => {
                 completedAt: urlCompletedAt,
             });
         }
+        if (urlDateRangeStart || urlDateRangeEnd) {
+            setDateRangeFilter({
+                startDate: urlDateRangeStart,
+                endDate: urlDateRangeEnd,
+            });
+        }
 
-        const urlView = (searchParams.get("view") || "List") as "Kanban" | "List";
+        const urlView = (searchParams.get("view") || "List") as "Kanban" | "List" | "Gantt";
         if (urlView !== selectedView) {
             setSelectedView(urlView);
         }
@@ -1239,6 +1279,7 @@ const ProjectTasksPage = () => {
             selectedWorkflowStatus,
             selectedTags,
             dates,
+            dateRangeFilter,
             statusSearch: searchTerms.status,
             workflowStatusSearch: searchTerms.workflowStatus,
             ResponsiblePersonSearch: searchTerms.responsiblePerson,
@@ -1255,7 +1296,9 @@ const ProjectTasksPage = () => {
             selectedTags?.length > 0 ||
             dates.startDate ||
             dates.endDate ||
-            dates.completedAt
+            dates.completedAt ||
+            dateRangeFilter.startDate ||
+            dateRangeFilter.endDate
         ) {
             localStorage.setItem("taskFilters", JSON.stringify(filters));
         }
@@ -1267,6 +1310,7 @@ const ProjectTasksPage = () => {
         selectedWorkflowStatus,
         selectedTags,
         dates,
+        dateRangeFilter,
         searchTerms,
     ]);
 
@@ -1285,6 +1329,7 @@ const ProjectTasksPage = () => {
                 startDate: false,
                 endDate: false,
                 completedAt: false,
+                dateRange: false,
                 tags: false,
                 [key]: true,
             };
@@ -1377,6 +1422,12 @@ const ProjectTasksPage = () => {
                 params["q[completed_at_gteq]"] = `${dates.completedAt}T00:00:00`;
                 params["q[completed_at_lteq]"] = `${dates.completedAt}T23:59:59`;
             }
+            if (dateRangeFilter.startDate && dateRangeFilter.endDate) {
+                params["q[expected_start_date_gteq]"] = dateRangeFilter.startDate;
+                params["q[expected_start_date_lteq]"] = dateRangeFilter.endDate;
+                params["q[target_date_gteq]"] = dateRangeFilter.startDate;
+                params["q[target_date_lteq]"] = dateRangeFilter.endDate;
+            }
             if (mid) {
                 params["q[milestone_id_eq]"] = mid;
             }
@@ -1398,6 +1449,8 @@ const ProjectTasksPage = () => {
                     start_date: dates.startDate || undefined,
                     end_date: dates.endDate || undefined,
                     completed_at: dates.completedAt || undefined,
+                    date_range_start: dateRangeFilter.startDate || undefined,
+                    date_range_end: dateRangeFilter.endDate || undefined,
                 },
                 true
             );
@@ -1457,11 +1510,21 @@ const ProjectTasksPage = () => {
             filters["q[completed_at_gteq]"] = `${dates.completedAt}T00:00:00`;
             filters["q[completed_at_lteq]"] = `${dates.completedAt}T23:59:59`;
         }
+        if (dateRangeFilter.startDate && dateRangeFilter.endDate) {
+            filters["q[expected_start_date_gteq]"] = dateRangeFilter.startDate;
+            filters["q[expected_start_date_lteq]"] = dateRangeFilter.endDate;
+            filters["q[target_date_gteq]"] = dateRangeFilter.startDate;
+            filters["q[target_date_lteq]"] = dateRangeFilter.endDate;
+        }
 
         // Add global search filter (searches in title, task_code, and description)
         if (debouncedSearchTerm.trim()) {
-            filters["q[title_or_task_code_or_description_cont]"] =
-                debouncedSearchTerm.trim();
+            // task_code is stored without the "T-" prefix (e.g. "T-23432" -> "23432")
+            const normalizedSearchTerm = debouncedSearchTerm
+                .trim()
+                .replace(/^t-/i, "");
+            filters["q[id_or_title_or_task_code_or_description_cont]"] =
+                normalizedSearchTerm;
         }
 
         return filters;
@@ -1506,6 +1569,7 @@ const ProjectTasksPage = () => {
         setSelectedWorkflowStatus([]);
         setSelectedTags([]);
         setDates({ startDate: "", endDate: "", completedAt: "" });
+        setDateRangeFilter({ startDate: "", endDate: "" });
         setSearchTerms({
             status: "",
             workflowStatus: "",
@@ -1528,6 +1592,8 @@ const ProjectTasksPage = () => {
                 start_date: undefined,
                 end_date: undefined,
                 completed_at: undefined,
+                date_range_start: undefined,
+                date_range_end: undefined,
             },
             true
         );
@@ -1776,7 +1842,7 @@ const ProjectTasksPage = () => {
                 expected_start_date: data.expected_start_date,
                 target_date: data.target_date,
                 status: data.status || "open",
-                priority: data.priority || "Medium",
+                priority: data.priority || "P2",
                 active: true,
                 responsible_person_id: data.responsible || data.responsible_person_id,
                 ...(projectId && { project_management_id: projectId }),
@@ -2213,7 +2279,7 @@ const ProjectTasksPage = () => {
             toast.success("Task started successfully");
         } catch (error) {
             console.log(error);
-            toast.error("Failed to start task");
+            toast.error(error.response?.data?.error || "Failed to start task");
         }
     };
 
@@ -2344,6 +2410,11 @@ const ProjectTasksPage = () => {
         return `${wholeHours} hr${wholeHours !== 1 ? "s" : ""} ${remainingMinutes} min${remainingMinutes !== 1 ? "s" : ""}`;
     }
 
+    const getEffortsDuration = (item: any): number =>
+        item?.total_allocated_hours
+            ? item.total_allocated_hours
+            : (item?.estimated_hour || 0) + (item?.estimated_min || 0) / 60;
+
     const renderCell = (
         item: any,
         columnKey: string,
@@ -2403,10 +2474,17 @@ const ProjectTasksPage = () => {
                 );
             case "id":
                 return (
-                    <span className="w-[80px]">
-                        {isSubtask ? "S-" : "T-"}
-                        {item.id}
-                    </span>
+                    <div className="flex flex-col w-[100px]">
+                        <span>
+                            {isSubtask ? "S-" : "T-"}
+                            {item.id}
+                        </span>
+                        {item.task_code && (
+                            <span className="text-[11px] text-gray-500 font-medium">
+                                {item.task_code}
+                            </span>
+                        )}
+                    </div>
                 );
             case "title":
                 const isCompleted = item.status === "completed";
@@ -2414,41 +2492,56 @@ const ProjectTasksPage = () => {
                 const hasSubtasks = item.total_sub_tasks > 0;
 
                 return (
-                    <div className="flex items-center gap-2 w-[20rem]">
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <span className="w-full truncate">{item.title}</span>
-                                </TooltipTrigger>
-                                <TooltipContent className="rounded-[5px]">
-                                    <p>{item.title}</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                        {!hasSubtasks &&
-                            !isCompleted &&
-                            (isTaskStarted ? (
-                                <button
-                                    onClick={() => {
-                                        setPauseTaskId(item.id);
-                                        setIsPauseModalOpen(true);
-                                    }}
-                                    disabled={isCompleted}
-                                    className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
-                                    title="Pause task"
-                                >
-                                    <Pause size={13} className="text-orange-500" />
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={() => handlePlayTask(item.id)}
-                                    disabled={isCompleted}
-                                    className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
-                                    title="Play task"
-                                >
-                                    <Play size={13} className="text-green-500" />
-                                </button>
-                            ))}
+                    <div className="flex flex-col gap-1 w-[20rem]">
+                        <div className="flex items-center gap-2">
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <span className="w-full truncate">{item.title}</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="rounded-[5px]">
+                                        <p>{item.title}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                            {!hasSubtasks &&
+                                !isCompleted &&
+                                (isTaskStarted ? (
+                                    <button
+                                        onClick={() => {
+                                            setPauseTaskId(item.id);
+                                            setIsPauseModalOpen(true);
+                                        }}
+                                        disabled={isCompleted}
+                                        className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
+                                        title="Pause task"
+                                    >
+                                        <Pause size={13} className="text-orange-500" />
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => handlePlayTask(item.id)}
+                                        disabled={isCompleted}
+                                        className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
+                                        title="Play task"
+                                    >
+                                        <Play size={13} color="#22c55e" />
+                                    </button>
+                                ))}
+                        </div>
+                        <div className="flex items-center gap-3 text-[11px] text-gray-500 font-medium">
+                            <span className="flex items-center gap-1">
+                                Effort taken:
+                                <ActiveTimer
+                                    activeTimeTillNow={item?.active_time_till_now}
+                                    isStarted={item?.is_started}
+                                />
+                            </span>
+                            <span>•</span>
+                            <span>
+                                Duration: {formatHours(getEffortsDuration(item))}
+                            </span>
+                        </div>
                     </div>
                 );
             case "status": {
@@ -2610,20 +2703,9 @@ const ProjectTasksPage = () => {
                     />
                 );
             }
-            case "efforts_duration": {
-                return `${formatHours(item?.total_allocated_hours || 0)}`;
-            }
             case "priority": {
                 return (
                     item.priority.charAt(0).toUpperCase() + item.priority.slice(1) || "-"
-                );
-            }
-            case "started_time": {
-                return (
-                    <ActiveTimer
-                        activeTimeTillNow={item?.active_time_till_now}
-                        isStarted={item?.is_started}
-                    />
                 );
             }
             case "predecessor": {
@@ -2758,15 +2840,16 @@ const ProjectTasksPage = () => {
         if (columnKey === "priority") {
             return (
                 <Select
-                    value={value || "Medium"}
+                    value={value || "P2"}
                     onChange={(e) => onChange(e.target.value)}
                     displayEmpty
                     size="small"
                     sx={{ minWidth: 110 }}
                 >
-                    <MenuItem value="High">High</MenuItem>
-                    <MenuItem value="Medium">Medium</MenuItem>
-                    <MenuItem value="Low">Low</MenuItem>
+                    <MenuItem value="P1">P1</MenuItem>
+                    <MenuItem value="P2">P2</MenuItem>
+                    <MenuItem value="P3">P3</MenuItem>
+                    <MenuItem value="P4">P4</MenuItem>
                 </Select>
             );
         }
@@ -2846,6 +2929,8 @@ const ProjectTasksPage = () => {
                     <span className="text-[#C72030] font-medium flex items-center gap-1">
                         {selectedView === "Kanban" ? (
                             <ChartNoAxesColumn className="w-3.5 h-3.5 rotate-180 text-[#C72030]" />
+                        ) : selectedView === "Gantt" ? (
+                            <ChartNoAxesGantt className="w-3.5 h-3.5 rotate-180 text-[#C72030]" />
                         ) : (
                             <List className="w-3.5 h-3.5 text-[#C72030]" />
                         )}
@@ -2857,6 +2942,18 @@ const ProjectTasksPage = () => {
                 {isOpen && (
                     <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[150px]">
                         <div className="py-2">
+                            <button
+                                onClick={() => {
+                                    setSelectedView("Gantt");
+                                    setIsOpen(false);
+                                }}
+                                className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+                            >
+                                <div className="w-4 flex justify-center">
+                                    <ChartNoAxesGantt className="rotate-180 text-[#C72030]" />
+                                </div>
+                                <span className="text-gray-700">Gantt</span>
+                            </button>
                             <button
                                 onClick={() => {
                                     setSelectedView("Kanban");
@@ -2922,6 +3019,106 @@ const ProjectTasksPage = () => {
         </div>
     );
 
+    if (selectedView === "Gantt") {
+        return (
+            <div className="p-3 sm:p-6">
+                {location.pathname.includes("projects") && (
+                    <Button
+                        variant="ghost"
+                        onClick={() => navigate(-1)}
+                        className="px-0 mb-2"
+                    >
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        Back
+                    </Button>
+                )}
+                <div className="flex items-center justify-between mb-4">
+                    <Button
+                        className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                        onClick={handleOpenDialog}
+                    >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add
+                    </Button>
+                    <div className="relative" ref={viewDropdownRef}>
+                        <button
+                            onClick={() => setIsOpen(!isOpen)}
+                            className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
+                        >
+                            <span className="text-[#C72030] font-medium flex items-center gap-2">
+                                <ChartNoAxesGantt className="w-4 h-4 rotate-180 text-[#C72030]" />
+                                {selectedView}
+                            </span>
+                            <ChevronDown className="w-4 h-4 text-gray-600" />
+                        </button>
+                        {isOpen && (
+                            <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
+                                <div className="py-2">
+                                    <button
+                                        onClick={() => { setSelectedView("Gantt"); setIsOpen(false); }}
+                                        className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+                                    >
+                                        <div className="w-4 flex justify-center">
+                                            <ChartNoAxesGantt className="rotate-180 text-[#C72030]" />
+                                        </div>
+                                        <span className="text-gray-700">Gantt</span>
+                                    </button>
+                                    <button
+                                        onClick={() => { setSelectedView("Kanban"); setIsOpen(false); }}
+                                        className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+                                    >
+                                        <div className="w-4 flex justify-center">
+                                            <ChartNoAxesColumn className="rotate-180 text-[#C72030]" />
+                                        </div>
+                                        <span className="text-gray-700">Kanban</span>
+                                    </button>
+                                    <button
+                                        onClick={() => { setSelectedView("List"); setIsOpen(false); }}
+                                        className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+                                    >
+                                        <div className="w-4 flex justify-center">
+                                            <List className="w-4 h-4 text-[#C72030]" />
+                                        </div>
+                                        <span className="text-gray-700">List</span>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <TasksGanttChart
+                    projectId={projectId}
+                    milestoneId={mid}
+                    taskType={taskType}
+                    filters={buildFilters()}
+                />
+
+                <Dialog
+                    open={openTaskModal}
+                    onClose={handleCloseModal}
+                    TransitionComponent={Transition}
+                    maxWidth={false}
+                >
+                    <DialogContent
+                        className="w-full sm:w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
+                        style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }}
+                        sx={{ padding: "0 !important", "& .MuiDialogContent-root": { padding: "0 !important", overflow: "auto" } }}
+                    >
+                        <div className="sticky top-0 bg-white z-10">
+                            <h3 className="text-[14px] font-medium text-center mt-8">Add Tasks</h3>
+                            <X className="absolute top-[26px] right-8 cursor-pointer w-4 h-4" onClick={handleCloseModal} />
+                            <hr className="border border-[#E95420] mt-4" />
+                        </div>
+                        <div className="flex-1 overflow-y-auto">
+                            <ProjectTaskCreateModal isEdit={false} onCloseModal={handleCloseModal} />
+                        </div>
+                    </DialogContent>
+                </Dialog>
+            </div>
+        );
+    }
+
     if (selectedView === "Kanban") {
         return (
             <div className="p-3 sm:p-6">
@@ -2978,6 +3175,8 @@ const ProjectTasksPage = () => {
                                 <span className="text-[#C72030] font-medium flex items-center gap-2">
                                     {selectedView === "Kanban" ? (
                                         <ChartNoAxesColumn className="w-4 h-4 rotate-180 text-[#C72030]" />
+                                    ) : selectedView === "Gantt" ? (
+                                        <ChartNoAxesGantt className="w-4 h-4 rotate-180 text-[#C72030]" />
                                     ) : (
                                         <List className="w-4 h-4 text-[#C72030]" />
                                     )}
@@ -2989,6 +3188,18 @@ const ProjectTasksPage = () => {
                             {isOpen && (
                                 <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
                                     <div className="py-2">
+                                        <button
+                                            onClick={() => {
+                                                setSelectedView("Gantt");
+                                                setIsOpen(false);
+                                            }}
+                                            className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+                                        >
+                                            <div className="w-4 flex justify-center">
+                                                <ChartNoAxesGantt className="rotate-180 text-[#C72030]" />
+                                            </div>
+                                            <span className="text-gray-700">Gantt</span>
+                                        </button>
                                         <button
                                             onClick={() => {
                                                 setSelectedView("Kanban");
@@ -3093,19 +3304,18 @@ const ProjectTasksPage = () => {
                         {/* Collapse column (empty for subtasks) */}
                         <td className="p-4 text-center w-12 min-w-12"></td>
 
-                        {/* Indented actions cell */}
-                        <td className="p-4 text-center w-16 min-w-16">
-                            {/* <div className="flex justify-center items-center gap-2 ml-4">
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="p-1"
-                                    onClick={() => handleView(subtask.id)}
-                                    title="View Subtask Details"
-                                >
-                                    <Eye className="w-4 h-4" />
-                                </Button>
-                            </div> */}
+                        {/* Checkbox to add this subtask to a sprint, same as parent tasks */}
+                        <td className="p-4 w-12 min-w-12 text-center">
+                            <div className="flex justify-center">
+                                <Checkbox
+                                    checked={selectedItems.includes(String(subtask.id))}
+                                    onCheckedChange={(checked) =>
+                                        handleSelectItem(String(subtask.id), !!checked)
+                                    }
+                                    aria-label={`Select subtask ${subtask.id}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                            </div>
                         </td>
 
                         {/* Subtask data in same columns */}
@@ -3182,8 +3392,9 @@ const ProjectTasksPage = () => {
                     storageKey="projects-table"
                     onSort={handleColumnSort}
                     onSearchChange={handleSearchChange}
+                    disableClientSearch
                     onFilterClick={() => setIsFilterModalOpen(true)}
-                    canAddRow={true}
+                    // canAddRow={true}
                     loading={isLoading}
                     readonlyColumns={["id", "duration", "predecessor", "successor"]}
                     onAddRow={(newRowData) => {
@@ -3507,12 +3718,8 @@ const ProjectTasksPage = () => {
                                             }
                                         />
                                     </div>
-                                    {renderCheckboxList(
-                                        users.map((u) => ({
-                                            ...u,
-                                            label: u.full_name,
-                                            value: u.id,
-                                        })),
+                                    {renderGroupedUserCheckboxList(
+                                        users,
                                         selectedResponsible,
                                         setSelectedResponsible,
                                         searchTerms.responsiblePerson
@@ -3556,12 +3763,8 @@ const ProjectTasksPage = () => {
                                             }
                                         />
                                     </div>
-                                    {renderCheckboxList(
-                                        users.map((u) => ({
-                                            ...u,
-                                            label: u.full_name,
-                                            value: u.id,
-                                        })),
+                                    {renderGroupedUserCheckboxList(
+                                        users,
                                         selectedCreators,
                                         setSelectedCreators,
                                         searchTerms.createdBy
@@ -3696,6 +3899,76 @@ const ProjectTasksPage = () => {
                                         }
                                         className="w-full p-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-red-600"
                                     />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Date Range */}
+                        <div className="p-6 py-3">
+                            <div
+                                className="flex items-center justify-between cursor-pointer"
+                                onClick={() => toggleDropdown("dateRange")}
+                            >
+                                <span className="font-medium text-sm select-none">
+                                    Date Range
+                                </span>
+                                {dropdowns.dateRange ? (
+                                    <ChevronDown className="text-gray-400" />
+                                ) : (
+                                    <ChevronRight className="text-gray-400" />
+                                )}
+                            </div>
+                            {dropdowns.dateRange && (
+                                <div className="mt-4">
+                                    <div className="relative mb-3">
+                                        <input
+                                            type="text"
+                                            readOnly
+                                            placeholder="MM/DD/YYYY – MM/DD/YYYY"
+                                            onClick={() => setIsDateRangePickerOpen(true)}
+                                            value={
+                                                dateRangeFilter.startDate
+                                                    ? `${formatYMDToDisplay(dateRangeFilter.startDate)} – ${dateRangeFilter.endDate
+                                                        ? formatYMDToDisplay(dateRangeFilter.endDate)
+                                                        : "MM/DD/YYYY"
+                                                    }`
+                                                    : ""
+                                            }
+                                            className="w-full rounded-md border border-gray-300 px-3 py-2 pr-9 text-sm cursor-pointer focus:outline-none focus:ring-1 focus:ring-red-600"
+                                        />
+                                        {dateRangeFilter.startDate ? (
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setDateRangeFilter({ startDate: "", endDate: "" })
+                                                }
+                                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                                aria-label="Clear date range"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        ) : (
+                                            <CalendarIcon
+                                                size={14}
+                                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                                            />
+                                        )}
+                                    </div>
+                                    {isDateRangePickerOpen && (
+                                        <DateRangePicker
+                                            startDate={parseYMDToDate(dateRangeFilter.startDate)}
+                                            endDate={parseYMDToDate(dateRangeFilter.endDate)}
+                                            onChange={({ startDate, endDate }) => {
+                                                setDateRangeFilter({
+                                                    startDate: startDate ? formatDateToYMD(startDate) : "",
+                                                    endDate: endDate ? formatDateToYMD(endDate) : "",
+                                                });
+                                                if (startDate && endDate) {
+                                                    setIsDateRangePickerOpen(false);
+                                                }
+                                            }}
+                                        />
+                                    )}
                                 </div>
                             )}
                         </div>

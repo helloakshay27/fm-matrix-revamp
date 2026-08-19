@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import axios from "axios";
-import { ArrowLeft, Edit2 } from "lucide-react";
+import { ArrowLeft, Edit2, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -164,6 +164,7 @@ const mapLockPayment = (lp: LockPaymentAPI): PaymentReceived => {
 export const PaymentReceivedDetailsPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const location = useLocation();
   const pdfRef = React.useRef<HTMLDivElement>(null);
   const lock_account_id = localStorage.getItem("lock_account_id");
   const baseUrl = localStorage.getItem("baseUrl");
@@ -178,7 +179,7 @@ const [showPdfPreview, setShowPdfPreview] = React.useState(false);
     TransactionRecord[]
   >([]);
   const [billPayments, setBillPayments] = React.useState<BillPayment[]>([]);
-const [activeTab, setActiveTab] = React.useState("details");
+const [activeTab, setActiveTab] = React.useState((location.state as any)?.tab === "pdf" ? "pdf" : "details");
   // fetch payment details
   React.useEffect(() => {
     if (!id) return;
@@ -352,15 +353,7 @@ const [activeTab, setActiveTab] = React.useState("details");
       </h2>
 
       {selected && (
-        <span
-          className={`ml-3 px-3 py-1 rounded-full text-xs font-medium ${
-            selected.status === "PAID"
-              ? "bg-green-100 text-green-700"
-              : selected.status === "VOID"
-              ? "bg-red-100 text-red-700"
-              : "bg-yellow-100 text-yellow-700"
-          }`}
-        >
+        <span className="ml-3 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
           {selected.status}
         </span>
       )}
@@ -378,8 +371,16 @@ const [activeTab, setActiveTab] = React.useState("details");
   </Button>
 
   <Button
+    variant="outline"
+    onClick={() => navigate("/accounting/payments-received/template", { state: { recordId: id } })}
+  >
+    <Settings2 className="h-4 w-4 mr-2" />
+    Template Edit
+  </Button>
+
+  <Button
     onClick={handleDownloadPdf}
-    className="bg-blue-600 hover:bg-blue-700 text-white"
+    className="fm-button-fix fm-button-brand px-8 py-2"
   >
       <Download className="h-4 w-4 mr-2" />
     Download PDF
@@ -406,11 +407,17 @@ const [activeTab, setActiveTab] = React.useState("details");
   className="w-full"
 >
     <TabsList className="mb-6 bg-transparent border-b rounded-none h-auto p-0 gap-8">
-      <TabsTrigger value="details">
+      <TabsTrigger
+        value="details"
+        className="rounded-none border-b-2 border-transparent pb-3 data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand"
+      >
         Details View
       </TabsTrigger>
 
-      <TabsTrigger value="pdf">
+      <TabsTrigger
+        value="pdf"
+        className="rounded-none border-b-2 border-transparent pb-3 data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand"
+      >
         PDF View
       </TabsTrigger>
 
@@ -474,15 +481,7 @@ const [activeTab, setActiveTab] = React.useState("details");
               <div className="relative">
               {selected && (
                 <div className="absolute -top-3 left-0 z-10">
-                  <div
-                    className={`text-white px-4 py-1 rotate-[-45deg] transform origin-left shadow text-sm font-medium ${
-                      selected.status === "PAID"
-                        ? "bg-green-500"
-                        : selected.status === "VOID"
-                          ? "bg-red-500"
-                          : "bg-yellow-500"
-                    }`}
-                  >
+                  <div className="bg-gray-100 text-gray-800 px-4 py-1 rotate-[-45deg] transform origin-left shadow text-sm font-medium">
                     {selected.status === "PAID"
                       ? "Paid"
                       : selected.status === "VOID"
@@ -505,9 +504,9 @@ const [activeTab, setActiveTab] = React.useState("details");
                   </div>
 
                   <div className="col-span-4 flex justify-end">
-                    <div className="bg-green-500 text-white p-6 rounded shadow text-center">
+                    <div className="bg-[#DA7756] text-white p-6 rounded shadow text-center">
                       <div className="text-sm">Amount Received</div>
-                      <div className="text-2xl font-semibold mt-2">
+                      <div className="text-2xl mt-2 !text-white" style={{ fontWeight: 600 }}>
                         {amountFormatted}
                       </div>
                     </div>
@@ -558,7 +557,7 @@ const [activeTab, setActiveTab] = React.useState("details");
                   <div className="col-span-6">
                     <div className="text-sm text-gray-600">Received From</div>
                     <div className="mt-2">
-                      <a className="text-blue-600 font-medium">
+                      <a className="text-brand font-medium">
                         {customerName ||
                           (selected
                             ? `Customer #${selected.payment_of_id}`
@@ -586,7 +585,7 @@ const [activeTab, setActiveTab] = React.useState("details");
                       <tbody>
                         {billPayments.map((bp) => (
                           <tr key={bp.id} className="border-t">
-                            <td className="p-3 text-blue-600">
+                            <td className="p-3 text-brand">
                               {bp.formatted_number || `INV-${bp.resource_id}`}
                             </td>
                             <td className="p-3">
@@ -799,7 +798,7 @@ const [activeTab, setActiveTab] = React.useState("details");
 
         <Button
           onClick={handleDownloadPdf}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          className="fm-button-fix fm-button-brand px-8 py-2"
         >
             <Download className="h-4 w-4 mr-2" />
           Download PDF

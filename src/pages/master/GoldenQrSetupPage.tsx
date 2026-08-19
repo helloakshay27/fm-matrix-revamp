@@ -1,17 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Loader2, Download, ChevronLeft, ChevronRight, Upload, FileSpreadsheet, X, Pencil } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Plus, Loader2, Download, Upload, FileSpreadsheet, X, Pencil, QrCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { EnhancedSelect } from '@/components/ui/enhanced-select';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+} from '@mui/material';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import {
   Dialog,
   DialogContent,
@@ -41,6 +40,35 @@ interface GoldenQrRecord {
   [key: string]: any;
 }
 
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  "& .MuiInputBase-input, & .MuiSelect-select": {
+    padding: { xs: "8px 12px", sm: "10px 14px", md: "12px 14px" },
+  },
+  "& .MuiOutlinedInput-root": {
+    backgroundColor: "white",
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: "white",
+      border: "1px solid #e2e8f0",
+      borderRadius: "8px",
+      boxShadow:
+        "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
+
 export function GoldenQrSetupPage() {
   const dispatch = useAppDispatch();
   const { buildings, wings, areas, floors, rooms } = useAppSelector(
@@ -54,9 +82,11 @@ export function GoldenQrSetupPage() {
   const [tableData, setTableData] = useState<GoldenQrRecord[]>([]);
   const [qrModalUrl, setQrModalUrl] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [isSelectAllMode, setIsSelectAllMode] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
   const perPage = 20;
 
   const [showImportDialog, setShowImportDialog] = useState(false);
@@ -180,11 +210,13 @@ export function GoldenQrSetupPage() {
     try {
       const baseUrl = getBaseUrl();
       const token = getToken();
-      const params = Array.from(selectedIds)
-        .map((id) => `ids[]=${id}`)
-        .join('&');
+      // "Select all" means "every record", so the request goes out unfiltered —
+      // passing ids[] in that case would limit the PDF to just this page's rows.
+      const query = isSelectAllMode
+        ? ''
+        : `?${Array.from(selectedIds).map((id) => `ids[]=${id}`).join('&')}`;
       const response = await fetch(
-        `${baseUrl}/pms/account_setups/download_golden_qr_pdf?${params}`,
+        `${baseUrl}/pms/account_setups/download_golden_qr_pdf${query}`,
         {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
@@ -198,6 +230,7 @@ export function GoldenQrSetupPage() {
       a.download = 'golden_qr_codes.pdf';
       a.click();
       window.URL.revokeObjectURL(url);
+      toast.success('QR codes downloaded successfully');
     } catch {
       toast.error('Failed to download QR PDF');
     } finally {
@@ -205,10 +238,16 @@ export function GoldenQrSetupPage() {
     }
   };
 
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+    setIsSelectAllMode(false);
+  };
+
   const allCurrentSelected =
     tableData.length > 0 && tableData.every((r) => r.id != null && selectedIds.has(r.id));
 
   const toggleSelectAll = (checked: boolean) => {
+    setIsSelectAllMode(checked);
     if (checked) {
       setSelectedIds((prev) => {
         const next = new Set(prev);
@@ -225,6 +264,9 @@ export function GoldenQrSetupPage() {
   };
 
   const toggleRow = (id: number, checked: boolean) => {
+    // A manual, single-row toggle is no longer "select all" — fall back to
+    // sending explicit ids[] so the PDF only covers what's actually checked.
+    setIsSelectAllMode(false);
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (checked) next.add(id);
@@ -412,203 +454,244 @@ export function GoldenQrSetupPage() {
   const getRoomName = (id: string | number) =>
     rooms.data?.find((r) => String(r.id) === String(id))?.name || id;
 
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
+
+  const columns: ColumnConfig[] = [
+     { key: 'action', label: 'Action', sortable: false, hideable: false },
+    { key: 'sr_no', label: 'Sr. No.', sortable: false, hideable: false },
+    { key: 'building', label: 'Building', sortable: true, defaultVisible: true },
+    { key: 'wing', label: 'Wing', sortable: true, defaultVisible: true },
+    { key: 'area', label: 'Area', sortable: true, defaultVisible: true },
+    { key: 'floor', label: 'Floor', sortable: true, defaultVisible: true },
+    { key: 'room', label: 'Room', sortable: true, defaultVisible: true },
+    { key: 'mark_golden_ticket', label: 'Golden Ticket', sortable: true, defaultVisible: true },
+    { key: 'show_requester', label: 'Show Requester', sortable: true, defaultVisible: true },
+    { key: 'qr_code', label: 'QR Code', sortable: false, defaultVisible: true },
+   
+  ];
+
+  const renderCell = (item: GoldenQrRecord, columnKey: string) => {
+    const content = item.content || item;
+    const index = tableData.indexOf(item);
+
+    switch (columnKey) {
+      case 'sr_no':
+        return (
+          <span className="text-gray-900">
+            {(currentPage - 1) * perPage + index + 1}
+          </span>
+        );
+      case 'building':
+        return getBuildingName(content.building_id);
+      case 'wing':
+        return getWingName(content.wing_id) || '-';
+      case 'area':
+        return getAreaName(content.area_id) || '-';
+      case 'floor':
+        return getFloorName(content.floor) || '-';
+      case 'room':
+        return getRoomName(content.room) || '-';
+      case 'mark_golden_ticket':
+        return String(item.mark_golden_ticket) === 'true' ? (
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+            Yes
+          </span>
+        ) : (
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+            No
+          </span>
+        );
+      case 'show_requester':
+        return String(item.show_requester) === 'true' ? (
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+            Yes
+          </span>
+        ) : (
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+            No
+          </span>
+        );
+      case 'qr_code':
+        return item.qr_code_url ? (
+          <img
+            src={item.qr_code_url}
+            alt="QR Code"
+            className="w-12 h-12 object-contain cursor-pointer hover:opacity-75 transition-opacity"
+            onClick={() => setQrModalUrl(item.qr_code_url)}
+          />
+        ) : (
+          <span className="text-gray-400">-</span>
+        );
+      case 'action':
+        return (
+          <button
+            onClick={() => handleEditClick(item)}
+            className="p-1.5 rounded text-gray-900"
+            title="Edit"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
+        );
+      default:
+        return item[columnKey] ?? '--';
+    }
+  };
+
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4">
+      {/* Header */}
+      {/* <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Golden QR Setup</h1>
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={handleDownloadPdf}
-            disabled={selectedIds.size === 0 || isDownloading}
-            variant="outline"
-            className="bg-[#C72030] hover:bg-[#a01828] text-white"
-          >
-            {isDownloading ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Download className="w-4 h-4 mr-2" />
-            )}
-            Download QR PDF {selectedIds.size > 0 && `(${selectedIds.size})`}
-          </Button>
-          <Button
-            onClick={() => setShowImportDialog(true)}
-            variant="outline"
-            className="border-gray-300 text-gray-700 hover:bg-gray-50"
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Import
-          </Button>
+      </div> */}
+
+      {/* Table */}
+      <EnhancedTable
+        data={tableData}
+        columns={columns}
+        renderCell={renderCell}
+        storageKey="golden-qr-table"
+        loading={isLoadingTable}
+        loadingMessage="Loading records..."
+        emptyMessage="No records found"
+        enableSearch={true}
+        searchTerm={searchQuery}
+        onSearchChange={handleSearch}
+        searchPlaceholder="Search Golden QR..."
+        selectable={true}
+        selectedItems={Array.from(selectedIds).map(id => id.toString())}
+        onSelectItem={(id, checked) => toggleRow(Number(id), checked)}
+        onSelectAll={(checked) => toggleSelectAll(checked)}
+        getItemId={(item) => item.id?.toString() || ''}
+        pagination={false}
+        leftActions={
           <Button
             onClick={() => setShowDialog(true)}
-            className="bg-[#C72030] hover:bg-[#a01828] text-white"
+            className="bg-brand hover:bg-brand-hover text-white h-9 px-4 text-sm font-medium"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
-        </div>
-      </div>
+        }
+        filterAdjacentActions={
+          <Button
+            onClick={() => setShowImportDialog(true)}
+            variant="outline"
+            size="icon"
+            className="!rounded-lg border border-brand text-brand hover:bg-brand-selected"
+            title="Import"
+          >
+            <Upload className="w-4 h-4" />
+          </Button>
+        }
+      />
 
-      {/* Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        {isLoadingTable ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-[#C72030]" />
-          </div>
-        ) : (
-          <>
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-[#F5F5F5]">
-                <TableHead className="w-10">
-                  <Checkbox
-                    checked={allCurrentSelected}
-                    onCheckedChange={(checked) => toggleSelectAll(Boolean(checked))}
-                    aria-label="Select all"
-                  />
-                </TableHead>
-                <TableHead className="font-semibold text-gray-700">Sr. No.</TableHead>
-                <TableHead className="font-semibold text-gray-700">Building</TableHead>
-                <TableHead className="font-semibold text-gray-700">Wing</TableHead>
-                <TableHead className="font-semibold text-gray-700">Area</TableHead>
-                <TableHead className="font-semibold text-gray-700">Floor</TableHead>
-                <TableHead className="font-semibold text-gray-700">Room</TableHead>
-                <TableHead className="font-semibold text-gray-700">Golden Ticket</TableHead>
-                <TableHead className="font-semibold text-gray-700">Show Requester</TableHead>
-                <TableHead className="font-semibold text-gray-700">QR Code</TableHead>
-                <TableHead className="font-semibold text-gray-700">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tableData.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={11} className="text-center py-8 text-gray-500">
-                    No records found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                tableData.map((record, index) => {
-                  const content = record.content || record;
-                  const rowChecked = record.id != null && selectedIds.has(record.id);
-                  return (
-                    <TableRow key={record.id ?? index} className="hover:bg-gray-50">
-                      <TableCell>
-                        <Checkbox
-                          checked={rowChecked}
-                          onCheckedChange={(checked) =>
-                            record.id != null && toggleRow(record.id, Boolean(checked))
-                          }
-                          aria-label={`Select row ${record.id}`}
-                        />
-                      </TableCell>
-                      <TableCell>{(currentPage - 1) * perPage + index + 1}</TableCell>
-                      <TableCell>{getBuildingName(content.building_id)}</TableCell>
-                      <TableCell>{getWingName(content.wing_id) || '-'}</TableCell>
-                      <TableCell>{getAreaName(content.area_id) || '-'}</TableCell>
-                      <TableCell>{getFloorName(content.floor) || '-'}</TableCell>
-                      <TableCell>{getRoomName(content.room) || '-'}</TableCell>
-                      <TableCell>
-                        {String(record.mark_golden_ticket) === 'true' ? (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                            Yes
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                            No
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {String(record.show_requester) === 'true' ? (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                            Yes
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                            No
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {record.qr_code_url ? (
-                          <img
-                            src={record.qr_code_url}
-                            alt="QR Code"
-                            className="w-16 h-16 object-contain cursor-pointer hover:opacity-75 transition-opacity"
-                            onClick={() => setQrModalUrl(record.qr_code_url)}
-                          />
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <button
-                          onClick={() => handleEditClick(record)}
-                          className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-[#C72030] transition-colors"
-                          title="Edit"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
-              <p className="text-sm text-gray-600">
-                Showing {(currentPage - 1) * perPage + 1}–{Math.min(currentPage * perPage, totalCount)} of {totalCount} records
-              </p>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => { loadTableData(currentPage - 1); setCurrentPage(currentPage - 1); }}
-                  disabled={currentPage <= 1 || isLoadingTable}
-                  className="h-8 w-8 p-0"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
-                  .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
-                    if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('ellipsis');
-                    acc.push(p);
-                    return acc;
-                  }, [])
-                  .map((item, idx) =>
-                    item === 'ellipsis' ? (
-                      <span key={`ellipsis-${idx}`} className="px-2 text-gray-400">…</span>
-                    ) : (
-                      <Button
-                        key={item}
-                        variant={item === currentPage ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => { loadTableData(item as number); setCurrentPage(item as number); }}
-                        disabled={isLoadingTable}
-                        className={`h-8 w-8 p-0 ${item === currentPage ? 'bg-[#C72030] hover:bg-[#a01828] text-white border-[#C72030]' : ''}`}
-                      >
-                        {item}
-                      </Button>
-                    )
-                  )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => { loadTableData(currentPage + 1); setCurrentPage(currentPage + 1); }}
-                  disabled={currentPage >= totalPages || isLoadingTable}
-                  className="h-8 w-8 p-0"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
+      {/* Floating selection panel — appears once rows are checked */}
+      {selectedIds.size > 0 && (
+        <div className="selection-panel bg-white">
+          <div className="flex items-center justify-between w-full h-full pr-6">
+            <div className="flex items-center gap-2">
+              <div className="text-brand bg-[#C4B89D] rounded-lg w-[44px] h-[105px] flex items-center justify-center text-xs font-bold">
+                {selectedIds.size}
+              </div>
+              <div className="flex flex-col justify-center px-3 py-2 flex-1">
+                <span className="text-[16px] font-semibold text-[#1A1A1A] whitespace-nowrap leading-none">
+                  Selection
+                </span>
+                <span className="text-[12px] font-medium text-[#6B7280] break-words leading-tight">
+                  {selectedIds.size} record{selectedIds.size > 1 ? 's' : ''} selected
+                </span>
               </div>
             </div>
-          )}
-          </>
-        )}
-      </div>
+
+            <div className="flex items-center ml-10">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDownloadPdf}
+                disabled={isDownloading}
+                className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-2 h-auto mr-5 disabled:opacity-50"
+              >
+                {isDownloading ? (
+                  <Loader2 className="w-6 h-6 mt-4 mb-2 animate-spin" />
+                ) : (
+                  <QrCode className="w-6 h-6 mt-4 mb-2" />
+                )}
+                <span className="text-xs font-medium">Download QR</span>
+              </Button>
+
+              <div className="w-px h-8 bg-gray-300 mr-5"></div>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={clearSelection}
+                className="text-gray-600 hover:bg-gray-100"
+                style={{ width: '44px', height: '44px' }}
+              >
+                <X className="w-6 h-6" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-lg">
+          <p className="text-sm text-gray-600">
+            Showing {(currentPage - 1) * perPage + 1}–{Math.min(currentPage * perPage, totalCount)} of {totalCount} records
+          </p>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { loadTableData(currentPage - 1); setCurrentPage(currentPage - 1); }}
+              disabled={currentPage <= 1 || isLoadingTable}
+              className="h-8 w-8 p-0"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+              .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
+                if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('ellipsis');
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((item, idx) =>
+                item === 'ellipsis' ? (
+                  <span key={`ellipsis-${idx}`} className="px-2 text-gray-400">...</span>
+                ) : (
+                  <Button
+                    key={item}
+                    variant={item === currentPage ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => { loadTableData(item as number); setCurrentPage(item as number); }}
+                    disabled={isLoadingTable}
+                    className={`h-8 w-8 p-0 ${item === currentPage ? 'bg-brand hover:bg-brand-hover text-white border-brand' : ''}`}
+                  >
+                    {item}
+                  </Button>
+                )
+              )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { loadTableData(currentPage + 1); setCurrentPage(currentPage + 1); }}
+              disabled={currentPage >= totalPages || isLoadingTable}
+              className="h-8 w-8 p-0"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* QR Code Modal */}
       <Dialog open={!!qrModalUrl} onOpenChange={(open) => !open && setQrModalUrl(null)}>
@@ -653,9 +736,9 @@ export function GoldenQrSetupPage() {
                 onChange={(e) => setImportFile(e.target.files?.[0] ?? null)}
               />
               {importFile ? (
-                <div className="flex items-center justify-between p-3 rounded-lg border border-[#C72030] bg-red-50">
+                <div className="flex items-center justify-between p-3 rounded-lg border border-brand bg-brand-light">
                   <div className="flex items-center gap-2 min-w-0">
-                    <FileSpreadsheet className="w-4 h-4 text-[#C72030] shrink-0" />
+                    <FileSpreadsheet className="w-4 h-4 text-brand shrink-0" />
                     <span className="text-sm text-gray-700 truncate">{importFile.name}</span>
                   </div>
                   <button
@@ -668,7 +751,7 @@ export function GoldenQrSetupPage() {
               ) : (
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full flex flex-col items-center justify-center gap-2 p-6 rounded-lg border-2 border-dashed border-gray-300 hover:border-[#C72030] hover:bg-red-50 transition-colors cursor-pointer"
+                  className="w-full flex flex-col items-center justify-center gap-2 p-6 rounded-lg border-2 border-dashed border-gray-300 hover:border-brand hover:bg-brand-light transition-colors cursor-pointer"
                 >
                   <Upload className="w-6 h-6 text-gray-400" />
                   <span className="text-sm text-gray-500">Click to browse .xlsx / .xls / .csv</span>
@@ -683,7 +766,7 @@ export function GoldenQrSetupPage() {
                 size="sm"
                 onClick={handleDownloadSample}
                 disabled={isDownloadingSample}
-                className="border-green-600 text-green-600 hover:bg-green-50"
+                className="border-[#C72030] text-[#C72030] hover:bg-green-50"
               >
                 {isDownloadingSample ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -703,7 +786,7 @@ export function GoldenQrSetupPage() {
                 <Button
                   onClick={handleImport}
                   disabled={!importFile || isImporting}
-                  className="bg-[#C72030] hover:bg-[#a01828] text-white"
+                  className="bg-brand hover:bg-brand-hover text-white"
                 >
                   {isImporting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   Import
@@ -715,76 +798,154 @@ export function GoldenQrSetupPage() {
       </Dialog>
 
       {/* Add / Edit Dialog */}
-      <Dialog open={showDialog} onOpenChange={(open) => { if (!open) resetForm(); setShowDialog(open); }}>
-        <DialogContent className="max-w-lg">
+      <Dialog
+        open={showDialog}
+        onOpenChange={(open) => { if (!open) resetForm(); setShowDialog(open); }}
+        modal={false}
+      >
+        <DialogContent
+          className="w-full sm:max-w-[500px] bg-white overflow-visible"
+          onPointerDownOutside={(e) => {
+            if ((e.target as HTMLElement).closest(".MuiPopover-root, .MuiModal-root, .MuiMenu-root")) {
+              e.preventDefault();
+            }
+          }}
+          onInteractOutside={(e) => {
+            if ((e.target as HTMLElement).closest(".MuiPopover-root, .MuiModal-root, .MuiMenu-root")) {
+              e.preventDefault();
+            }
+          }}
+        >
           <DialogHeader>
-            <DialogTitle className="text-lg font-semibold text-gray-900">
-              {isEditMode ? 'Edit Golden QR Setup' : 'Add Golden QR Setup'}
-            </DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-lg font-semibold">
+                {isEditMode ? 'Edit Golden QR Setup' : 'Add Golden QR Setup'}
+              </DialogTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  resetForm();
+                  setShowDialog(false);
+                }}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
-            {/* Building */}
-            <EnhancedSelect
-              label={<span>Building <span className="text-red-500">*</span></span>}
-              value={selectedBuilding}
-              onChange={(val) => setSelectedBuilding(String(val))}
-              options={buildings.data?.map((b) => ({ value: String(b.id), label: b.name })) || []}
-              placeholder="Search and Select Building"
-              searchable={true}
-              fullWidth
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
+            <FormControl fullWidth variant="outlined" className="sm:col-span-2">
+              <InputLabel id="building-label">Building *</InputLabel>
+              <MuiSelect
+                labelId="building-label"
+                label="Building *"
+                value={selectedBuilding || ""}
+                onChange={(e) => setSelectedBuilding(String(e.target.value))}
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value="">
+                  <em>Select Building</em>
+                </MenuItem>
+                {buildings.data?.map((b) => (
+                  <MenuItem key={b.id} value={String(b.id)}>
+                    {b.name}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
 
-            {/* Wing */}
-            <EnhancedSelect
-              label="Wing"
-              value={selectedWing}
-              onChange={(val) => setSelectedWing(String(val))}
-              options={wings.data?.map((w) => ({ value: String(w.id), label: w.name })) || []}
-              placeholder="Search and Select Wing"
-              searchable={true}
-              disabled={!selectedBuilding}
-              fullWidth
-            />
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="wing-label">Wing</InputLabel>
+              <MuiSelect
+                labelId="wing-label"
+                label="Wing"
+                value={selectedWing || ""}
+                onChange={(e) => setSelectedWing(String(e.target.value))}
+                disabled={!selectedBuilding}
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value="">
+                  <em>Select Wing</em>
+                </MenuItem>
+                {wings.data?.map((w) => (
+                  <MenuItem key={w.id} value={String(w.id)}>
+                    {w.name}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
 
-            {/* Area */}
-            <EnhancedSelect
-              label="Area"
-              value={selectedArea}
-              onChange={(val) => setSelectedArea(String(val))}
-              options={areas.data?.map((a) => ({ value: String(a.id), label: a.name })) || []}
-              placeholder="Search and Select Area"
-              searchable={true}
-              disabled={!selectedBuilding}
-              fullWidth
-            />
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="area-label">Area</InputLabel>
+              <MuiSelect
+                labelId="area-label"
+                label="Area"
+                value={selectedArea || ""}
+                onChange={(e) => setSelectedArea(String(e.target.value))}
+                disabled={!selectedBuilding}
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value="">
+                  <em>Select Area</em>
+                </MenuItem>
+                {areas.data?.map((a) => (
+                  <MenuItem key={a.id} value={String(a.id)}>
+                    {a.name}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
 
-            {/* Floor */}
-            <EnhancedSelect
-              label="Floor"
-              value={selectedFloor}
-              onChange={(val) => setSelectedFloor(String(val))}
-              options={floors.data?.map((f) => ({ value: String(f.id), label: f.name })) || []}
-              placeholder="Search and Select Floor"
-              searchable={true}
-              disabled={!selectedArea}
-              fullWidth
-            />
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="floor-label">Floor</InputLabel>
+              <MuiSelect
+                labelId="floor-label"
+                label="Floor"
+                value={selectedFloor || ""}
+                onChange={(e) => setSelectedFloor(String(e.target.value))}
+                disabled={!selectedArea}
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value="">
+                  <em>Select Floor</em>
+                </MenuItem>
+                {floors.data?.map((f) => (
+                  <MenuItem key={f.id} value={String(f.id)}>
+                    {f.name}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
 
-            {/* Room */}
-            <EnhancedSelect
-              label="Room"
-              value={selectedRoom}
-              onChange={(val) => setSelectedRoom(String(val))}
-              options={rooms.data?.map((r) => ({ value: String(r.id), label: r.name })) || []}
-              placeholder="Search and Select Room"
-              searchable={true}
-              disabled={!selectedFloor}
-              fullWidth
-            />
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="room-label">Room</InputLabel>
+              <MuiSelect
+                labelId="room-label"
+                label="Room"
+                value={selectedRoom || ""}
+                onChange={(e) => setSelectedRoom(String(e.target.value))}
+                disabled={!selectedFloor}
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value="">
+                  <em>Select Room</em>
+                </MenuItem>
+                {rooms.data?.map((r) => (
+                  <MenuItem key={r.id} value={String(r.id)}>
+                    {r.name}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
 
-            {/* Mark as Golden Ticket */}
-            <div className="flex items-center gap-3 pt-1">
+            <div className="flex items-center gap-3 sm:col-span-2 pt-1">
               <Checkbox
                 id="mark-golden"
                 checked={markGolden}
@@ -798,8 +959,7 @@ export function GoldenQrSetupPage() {
               </Label>
             </div>
 
-            {/* Show Requester */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 sm:col-span-2">
               <Checkbox
                 id="show-requester"
                 checked={showRequester}
@@ -812,28 +972,34 @@ export function GoldenQrSetupPage() {
                 Show Requester
               </Label>
             </div>
+          </div>
 
-            {/* Actions */}
-            <div className="flex justify-end gap-3 pt-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  resetForm();
-                  setShowDialog(false);
-                }}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="bg-[#C72030] hover:bg-[#a01828] text-white"
-              >
-                {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Save
-              </Button>
-            </div>
+          <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
+            <Button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto disabled:!opacity-100"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'SAVE'
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                resetForm();
+                setShowDialog(false);
+              }}
+              disabled={isSubmitting}
+              className="border-brand text-brand px-8 w-full sm:w-auto"
+            >
+              CANCEL
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

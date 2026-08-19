@@ -44,10 +44,10 @@ const detailColumns: ColumnConfig[] = [
 ];
 
 const statusColorMap: Record<string, string> = {
-  Unbilled: "bg-orange-100 text-orange-700",
-  "Non-Billable": "bg-gray-100 text-gray-700",
-  Billable: "bg-blue-100 text-blue-700",
-  Billed: "bg-green-100 text-green-700",
+  Unbilled: "bg-gray-100 text-gray-800",
+  "Non-Billable": "bg-gray-100 text-gray-800",
+  Billable: "bg-gray-100 text-gray-800",
+  Billed: "bg-gray-100 text-gray-800",
 };
 
 const getCurrentMonthRange = () => {
@@ -279,14 +279,14 @@ const ExpensesByCustomerReport: React.FC = () => {
 
   const renderRow = (row: ExpensesByCustomerRow) => {
     const isTotal = row.id === "__total__";
-    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`;
+    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-brand"}`;
     return {
       customer_name: isTotal ? (
         <span className="text-sm font-bold text-[#1A1A1A]">Total</span>
       ) : (
         <button
           onClick={() => fetchDetail(row, filters.fromDate, filters.toDate)}
-          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+          className="text-sm font-medium !text-brand hover:underline text-left"
         >
           {row.customer_name}
         </button>
@@ -303,20 +303,20 @@ const ExpensesByCustomerReport: React.FC = () => {
 
   const renderDetailRow = (row: ExpenseDetailRow) => {
     const isTotal = row.status === "__total__";
-    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`;
+    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-brand"}`;
     return {
       status: isTotal ? (
         <span className="text-sm font-bold text-[#1A1A1A]">Total</span>
       ) : (
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            statusColorMap[row.status] || "bg-gray-100 text-gray-700"
+            statusColorMap[row.status] || "bg-gray-100 text-gray-800"
           }`}
         >
           {row.status}
         </span>
       ),
-      date: <span className="text-sm text-gray-600">{isTotal ? "" : row.date}</span>,
+      date: <span className="text-sm text-gray-600">{isTotal ? "" : formatDisplayDate(row.date)}</span>,
       reference_number: <span className="text-sm text-gray-900">{isTotal ? "" : row.reference_number}</span>,
       category: <span className="text-sm text-gray-900">{isTotal ? "" : row.category}</span>,
       notes: <span className="text-sm text-gray-500">{isTotal ? "" : row.notes}</span>,

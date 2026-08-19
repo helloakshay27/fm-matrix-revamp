@@ -427,6 +427,14 @@ select:focus {
   color: var(--color-primary) !important;
 }
 
+/* MUI Radio - unchecked/base state. Several pages set inline
+   sx={{ color: '#C72030', ... }} for the *unchecked* ring specifically, which
+   the checked-only rule below never touches — force the base color too. */
+.MuiRadio-root,
+[class*="MuiRadio-root"] {
+  color: var(--color-primary) !important;
+}
+
 /* MUI Radio with any checked state - override inline sx styles */
 .MuiRadio-root.Mui-checked,
 [class*="MuiRadio-root"].Mui-checked {
@@ -439,10 +447,24 @@ select:focus {
   color: inherit !important;
 }
 
-/* MUI Checkbox with any checked state */
+/* MUI Checkbox - unchecked/base state. Several pages set inline
+   sx={{ color: '#C72030', ... }} for the *unchecked* ring specifically, which
+   the checked-only rule below never touches — force the base color too. */
+.MuiCheckbox-root,
+[class*="MuiCheckbox-root"] {
+  color: var(--color-primary) !important;
+}
+
+/* MUI Checkbox with any checked state - override inline sx styles */
 .MuiCheckbox-root.Mui-checked,
 [class*="MuiCheckbox-root"].Mui-checked {
   color: var(--color-primary) !important;
+}
+
+/* MUI Checkbox SVG icon */
+.MuiCheckbox-root svg,
+[class*="MuiCheckbox-root"] svg {
+  color: inherit !important;
 }
 
 /* MUI Switches */
@@ -511,6 +533,7 @@ input[type="radio"] {
 [role="radio"] {
   border-color: var(--color-primary) !important;
   color: var(--color-primary) !important;
+  border-radius: 9999px !important;
 }
 [role="radio"][data-state="checked"] {
   border-color: var(--color-primary) !important;
@@ -525,16 +548,20 @@ input[type="radio"] {
   border-color: var(--color-primary) !important;
 }
 
-/* Radio inner indicator circle fill */
+/* Radio inner indicator circle fill — force a true circle regardless of the
+   indicator's own border-radius classes, so it never renders as a square */
 [role="radio"] span,
-[role="radio"] > span {
+[role="radio"] > span,
+[role="radio"] div {
   background-color: var(--color-primary) !important;
+  border-radius: 9999px !important;
 }
 [role="radio"] svg,
 [role="radio"] svg[class*="fill-[#C72030]"],
 [role="radio"] svg[class*="text-[#C72030]"] {
   fill: var(--color-primary) !important;
   color: var(--color-primary) !important;
+  border-radius: 9999px !important;
 }
 
 /* Flag / bookmark SVG icons using Tailwind red-500 as brand action colour */
@@ -949,6 +976,187 @@ button.text-\[\#C72030\] svg {
 }
 
 /* ===========================================
+   BUTTON PURPLE COLOR OVERRIDES
+   Legacy Tailwind purple- and violet- utility classes (bg-purple-500/600/700/800,
+   bg-violet-600, etc.) applied directly on buttons — render as brand primary
+   instead. [class*="bg-purple-"] substring-matches any shade without
+   enumerating each one.
+   =========================================== */
+
+button[class*="bg-purple-"],
+[type="button"][class*="bg-purple-"],
+[type="submit"][class*="bg-purple-"],
+a[class*="bg-purple-"],
+.btn[class*="bg-purple-"],
+button[class*="bg-violet-"],
+[type="button"][class*="bg-violet-"],
+[type="submit"][class*="bg-violet-"],
+a[class*="bg-violet-"],
+.btn[class*="bg-violet-"] {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: white !important;
+}
+
+/* Icons inside purple-background buttons should be white */
+button[class*="bg-purple-"] svg,
+button[class*="bg-purple-"] .lucide,
+button[class*="bg-violet-"] svg,
+button[class*="bg-violet-"] .lucide {
+  color: white !important;
+  stroke: white !important;
+}
+
+button[class*="hover:bg-purple-"]:hover,
+[type="button"][class*="hover:bg-purple-"]:hover,
+[type="submit"][class*="hover:bg-purple-"]:hover,
+a[class*="hover:bg-purple-"]:hover,
+.btn[class*="hover:bg-purple-"]:hover,
+button[class*="hover:bg-violet-"]:hover,
+[type="button"][class*="hover:bg-violet-"]:hover,
+[type="submit"][class*="hover:bg-violet-"]:hover,
+a[class*="hover:bg-violet-"]:hover,
+.btn[class*="hover:bg-violet-"]:hover {
+  background-color: var(--color-primary-hover) !important;
+}
+
+/* Outline/text buttons with purple text or border */
+button[class*="text-purple-"],
+a[class*="text-purple-"],
+.btn[class*="text-purple-"],
+button[class*="border-purple-"],
+a[class*="border-purple-"],
+button[class*="text-violet-"],
+a[class*="text-violet-"],
+.btn[class*="text-violet-"],
+button[class*="border-violet-"],
+a[class*="border-violet-"] {
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+button[class*="text-purple-"] svg,
+button[class*="border-purple-"] svg,
+button[class*="text-violet-"] svg,
+button[class*="border-violet-"] svg {
+  color: var(--color-primary) !important;
+}
+
+button[class*="hover:text-purple-"]:hover,
+a[class*="hover:text-purple-"]:hover,
+button[class*="hover:text-violet-"]:hover,
+a[class*="hover:text-violet-"]:hover {
+  color: var(--color-primary-hover) !important;
+}
+
+/* ===========================================
+   BUTTON ARBITRARY-HEX PURPLE OVERRIDES
+   One-off hardcoded purple hexes (Tailwind bg-[#......] arbitrary values)
+   scattered across dozens of Add/Edit/List pages — every distinct shade
+   found in the codebase is enumerated here and mapped to brand primary.
+   Do not add a new one-off purple hex; migrate the component to bg-brand instead.
+   =========================================== */
+
+button[class*="bg-[#8B4B8C]"],
+[type="button"][class*="bg-[#8B4B8C]"],
+[type="submit"][class*="bg-[#8B4B8C]"],
+a[class*="bg-[#8B4B8C]"],
+button[class*="bg-[#8b4b8c]"],
+a[class*="bg-[#8b4b8c]"],
+button[class*="bg-[#8B5CF6]"],
+a[class*="bg-[#8B5CF6]"],
+button[class*="bg-[#532D5F]"],
+a[class*="bg-[#532D5F]"],
+button[class*="bg-[#5B2D66]"],
+a[class*="bg-[#5B2D66]"],
+button[class*="bg-[#6B2C65]"],
+a[class*="bg-[#6B2C65]"],
+button[class*="bg-[#6B2C91]"],
+a[class*="bg-[#6B2C91]"],
+button[class*="bg-[#6B3FA0]"],
+a[class*="bg-[#6B3FA0]"],
+button[class*="bg-[#8B4A9C]"],
+a[class*="bg-[#8B4A9C]"],
+button[class*="bg-[#8B4B6B]"],
+a[class*="bg-[#8B4B6B]"],
+button[class*="bg-[#8B5A99]"],
+a[class*="bg-[#8B5A99]"],
+button[class*="bg-[#6B2245]"],
+a[class*="bg-[#6B2245]"],
+button[class*="bg-[#4B003F]"],
+a[class*="bg-[#4B003F]"],
+button[class*="bg-[#C1A5FF]"],
+a[class*="bg-[#C1A5FF]"] {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: white !important;
+}
+
+button[class*="bg-[#8B4B8C]"] svg,
+button[class*="bg-[#8B5CF6]"] svg,
+button[class*="bg-[#532D5F]"] svg,
+button[class*="bg-[#5B2D66]"] svg,
+button[class*="bg-[#6B2C65]"] svg,
+button[class*="bg-[#6B2C91]"] svg,
+button[class*="bg-[#6B3FA0]"] svg,
+button[class*="bg-[#8B4A9C]"] svg,
+button[class*="bg-[#8B4B6B]"] svg,
+button[class*="bg-[#8B5A99]"] svg,
+button[class*="bg-[#6B2245]"] svg,
+button[class*="bg-[#4B003F]"] svg,
+button[class*="bg-[#C1A5FF]"] svg {
+  color: white !important;
+  stroke: white !important;
+}
+
+/* Hover variants — every hover hex paired with the base colors above,
+   plus each base color's own /opacity hover (e.g. hover:bg-[#532D5F]/90) */
+button[class*="hover:bg-[#7A3F7B]"]:hover,
+a[class*="hover:bg-[#7A3F7B]"]:hover,
+button[class*="hover:bg-[#7A4077]"]:hover,
+a[class*="hover:bg-[#7A4077]"]:hover,
+button[class*="hover:bg-[#7A427B]"]:hover,
+a[class*="hover:bg-[#7A427B]"]:hover,
+button[class*="hover:bg-[#7C3AED]"]:hover,
+a[class*="hover:bg-[#7C3AED]"]:hover,
+button[class*="hover:bg-[#5a2455]"]:hover,
+a[class*="hover:bg-[#5a2455]"]:hover,
+button[class*="hover:bg-[#5A2478]"]:hover,
+a[class*="hover:bg-[#5A2478]"]:hover,
+button[class*="hover:bg-[#5A2579]"]:hover,
+a[class*="hover:bg-[#5A2579]"]:hover,
+button[class*="hover:bg-[#7A4089]"]:hover,
+a[class*="hover:bg-[#7A4089]"]:hover,
+button[class*="hover:bg-[#7A4260]"]:hover,
+a[class*="hover:bg-[#7A4260]"]:hover,
+button[class*="hover:bg-[#B195FF]"]:hover,
+a[class*="hover:bg-[#B195FF]"]:hover,
+button[class*="hover:bg-[#8B4B8C]"]:hover,
+a[class*="hover:bg-[#8B4B8C]"]:hover,
+button[class*="hover:bg-[#532D5F]"]:hover,
+a[class*="hover:bg-[#532D5F]"]:hover,
+button[class*="hover:bg-[#6B2245]"]:hover,
+a[class*="hover:bg-[#6B2245]"]:hover {
+  background-color: var(--color-primary-hover) !important;
+}
+
+/* Outline/ghost buttons with an arbitrary purple hex as text/border */
+button[class*="text-[#8B4B8C]"],
+a[class*="text-[#8B4B8C]"],
+button[class*="border-[#8B4B8C]"],
+button[class*="text-[#6B2C91]"],
+a[class*="text-[#6B2C91]"],
+button[class*="border-[#8B5CF6]"] {
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+button[class*="hover:text-[#7A4077]"]:hover,
+a[class*="hover:text-[#7A4077]"]:hover {
+  color: var(--color-primary-hover) !important;
+}
+
+/* ===========================================
    FILTER CHIP & BADGE OVERRIDES
    =========================================== */
 
@@ -1358,9 +1566,11 @@ textarea:focus {
 
 /* ===== SELECT/DROPDOWN FOCUS OVERRIDES ===== */
 select:focus,
-[role="combobox"]:focus {
+[role="combobox"]:focus,
+[role="combobox"][data-state="open"] {
   border-color: var(--color-primary) !important;
   outline: none !important;
+  box-shadow: none !important;
 }
 
 /* ===== SIDEBAR COLOR OVERRIDES ===== */
@@ -2339,10 +2549,18 @@ h4[class*="text-[#1A1A1A]"],
   color: var(--color-text) !important;
   font-size: 13px !important;
 }
+.text-center.font-bold.text-white.leading-tight {
+  color: var(--color-bg) !important;
 
+}
+
+.text-center.font-semibold.text-white.survey-force-white {
+  color: var(--color-bg) !important;
+
+}
 /* Chart subheadings like "Response TAT", "Resolution TAT" - BLACK */
-.text-center.font-semibold,
-.text-center.font-bold {
+.text-center.font-semibold:not(.analytics-header),
+.text-center.font-bold:not(.analytics-header) {
   color: var(--color-text) !important;
 }
 
@@ -2683,6 +2901,22 @@ table tbody tr:hover,
   background-color: var(--color-primary-selected) !important;
 }
 
+/* Opt-out: Item Table on the Invoice/Credit Note/Debit Note Add pages has no row hover tint */
+table.item-table-no-hover tbody tr:hover {
+  background-color: transparent !important;
+}
+
+/* Reusable brand-orange "confirm delete" button — apply to any delete-confirmation
+   OK/Delete button instead of hardcoding red inline styles. */
+.btn-delete-confirm {
+  background-color: var(--color-primary) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+.btn-delete-confirm:hover {
+  background-color: var(--color-primary-hover) !important;
+}
+
 /* ===========================================
    ANALYTICS CARD STYLING
    =========================================== */
@@ -2847,14 +3081,28 @@ table tbody tr:hover,
    FAILED TO LOAD / ERROR STATES
    =========================================== */
 
-/* Error/Failed state containers */
+/* Error/Failed state containers
+   Do NOT use [class*="text-destructive"] — it also matches
+   text-destructive-foreground on toasts and kills contrast. */
 .error-message,
 .error-state,
 [class*="error-message"],
 [class*="failed-to-load"],
-.text-destructive,
-[class*="text-destructive"] {
+.text-destructive {
   color: var(--color-danger) !important;
+}
+
+/* Keep toast text readable against brand-error-bg */
+[data-radix-collection-item].destructive,
+.destructive[role="status"],
+li.destructive,
+div.destructive.group {
+  color: var(--color-text) !important;
+}
+div.destructive.group [class*="ToastTitle"],
+div.destructive.group [class*="ToastDescription"],
+.destructive.group > div {
+  color: var(--color-text) !important;
 }
 
 /* Failed to load card styling */
@@ -2926,19 +3174,20 @@ table tbody tr:hover,
    (No component-level edits required)
    =========================================== */
 
-/* Primary CTA buttons using legacy red shades */
+/* Primary CTA buttons using legacy red shades
+   Use ~= / exact class so hover:bg-[#C72030]/10 action icons stay ghost. */
 button.bg-\[\#C62828\],
 button.bg-\[\#c62828\],
 button.bg-\[\#C72030\],
 button.bg-\[\#c72030\],
-button[class*="bg-[#C62828]"],
-button[class*="bg-[#c62828]"],
-button[class*="bg-[#C72030]"],
-button[class*="bg-[#c72030]"],
+button[class~="bg-[#C62828]"],
+button[class~="bg-[#c62828]"],
+button[class~="bg-[#C72030]"],
+button[class~="bg-[#c72030]"],
 input[type="submit"].bg-\[\#C62828\],
 input[type="submit"].bg-\[\#C72030\],
-input[type="submit"][class*="bg-[#C62828]"],
-input[type="submit"][class*="bg-[#C72030]"] {
+input[type="submit"][class~="bg-[#C62828]"],
+input[type="submit"][class~="bg-[#C72030]"] {
   background-color: var(--color-primary) !important;
   border-color: var(--color-primary) !important;
   color: #fff !important;
@@ -2988,6 +3237,43 @@ form input[type="submit"]:hover {
   filter: brightness(0.98);
 }
 
+/* CRITICAL: Protect solid brand fill buttons from hover overrides.
+   Do NOT match outline/Reset hovers like hover:bg-brand-selected or
+   hover:bg-brand-light — those must stay as light tints, not solid fill. */
+button.bg-brand:hover,
+button[class~="bg-brand"]:hover,
+button[class*="hover:bg-brand-hover"]:hover {
+  background-color: var(--color-primary-hover) !important;
+  filter: none !important;
+}
+
+/* Outline / secondary Reset-Cancel hover — light brand tint only */
+button[class*="hover:bg-brand-selected"]:hover {
+  background-color: var(--color-primary-selected) !important;
+  color: var(--color-primary) !important;
+  filter: none !important;
+}
+button[class*="hover:bg-brand-light"]:hover {
+  background-color: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
+  filter: none !important;
+}
+
+/* Outline Reset/Cancel with mistaken hover:bg-brand (solid orange fill) —
+   force light tint + keep brand text (never white-on-solid). */
+button[class*="border-brand"][class*="hover:bg-brand"]:not([class*="hover:bg-brand-selected"]):not([class*="hover:bg-brand-hover"]):not([class*="hover:bg-brand-light"]):not([class~="bg-brand"]):hover,
+button[class*="border-[#C72030]"][class*="hover:bg-brand"]:not([class~="bg-brand"]):hover,
+button[class*="border-[#c72030]"][class*="hover:bg-brand"]:not([class~="bg-brand"]):hover {
+  background-color: var(--color-primary-selected) !important;
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  filter: none !important;
+}
+button[class*="border-brand"][class*="hover:bg-brand"]:not([class*="hover:bg-brand-selected"]):not([class*="hover:bg-brand-hover"]):not([class*="hover:bg-brand-light"]):not([class~="bg-brand"]):hover *,
+button[class*="border-brand"][class*="hover:text-white"]:not([class~="bg-brand"]):hover {
+  color: var(--color-primary) !important;
+}
+
 /* Logout consistency without forcing destructive treatment */
 button[class*="logout"],
 a[class*="logout"],
@@ -3017,7 +3303,7 @@ svg.lucide-eye {
 
 button[title*="View"]:hover svg,
 button[title*="view"]:hover svg {
-  color: var(--color-primary) !important;
+  color: var(--color-text) !important;
 }
 
 /* ===========================================
@@ -3091,11 +3377,12 @@ button[class*="hover:text-red-700"]:not([aria-label*="delete"]):not(
 }
 
 /* IssueFilterModal Apply (bg-[#C62828]) and Reset (border-[#C62828]) buttons
-   — attribute substring selectors are the most reliable for arbitrary values */
-[class*="bg-[#C62828]"],
-[class*="bg-[#c62828]"],
-[class*="bg-[#C72030]"],
-[class*="bg-[#c72030]"] {
+   — use ~= so hover:bg-[#C72030]/10 is NOT matched (that was painting
+   ghost Eye/action icons as solid brand squares) */
+[class~="bg-[#C62828]"],
+[class~="bg-[#c62828]"],
+[class~="bg-[#C72030]"],
+[class~="bg-[#c72030]"] {
   background-color: var(--color-primary) !important;
   border-color: var(--color-primary) !important;
   color: #ffffff !important;
@@ -3175,7 +3462,7 @@ button[class*="hover:text-red-700"]:not([aria-label*="delete"]):not(
 
 /* Primary action buttons on login page */
 button.bg-\[\#C72030\],
-button[class*="bg-[#C72030]"] {
+button[class~="bg-[#C72030]"] {
   background-color: #da7756 !important;
 }
 button.hover\:bg-\[\#a81c29\]:hover,
@@ -3273,11 +3560,10 @@ input[type="checkbox"]:checked,
   accent-color: #da7756 !important;
 }
 
-/* Calendar selected day */
+/* Calendar selected day — solid brand only (exclude /10 tint circles) */
 .rdp-day_selected,
 [class*="day_selected"],
-.bg-\[\#C72030\].text-white.rounded-full,
-[class*="bg-[#C72030]"].rounded-full {
+.bg-\[\#C72030\].text-white.rounded-full {
   background-color: #da7756 !important;
   color: #ffffff !important;
 }
@@ -3340,17 +3626,20 @@ svg[color="#C72030"] *,
   color: #da7756 !important;
 }
 
-/* Notification dot bg-[#C72030] */
-.bg-\[\#C72030\].rounded-full,
-[class*="bg-[#C72030]"].rounded-full {
+/* Notification / solid avatar dots — exact solid bg only, not /10 tints */
+.bg-\[\#C72030\].rounded-full {
   background-color: #da7756 !important;
 }
 
-/* Avatar circle bg-[#C72030] */
+/* Avatar circle solid bg-[#C72030] only — not bg-[#C72030]/10 tints */
 .w-8.h-8.bg-\[\#C72030\].rounded-full,
-.w-10.h-10.bg-\[\#C72030\].rounded-full,
-[class*="bg-[#C72030]"][class*="rounded-full"] {
+.w-10.h-10.bg-\[\#C72030\].rounded-full {
   background-color: #da7756 !important;
+}
+
+/* Light brand tint for icon wells (page headers, section badges) */
+.bg-\[\#C72030\]\/10 {
+  background-color: rgba(218, 119, 86, 0.1) !important;
 }
 
 /* Hover bg-[#C72030] on list items */
@@ -3403,19 +3692,24 @@ svg .recharts-symbols [fill="#C72030"] {
   border-color: var(--color-primary) !important;
 }
 
-/* Force toolbar buttons to white background + brand border/text */
+/* Force toolbar buttons to white background + brand border/text
+   Match search input radius (8px / --radius-md) — override Button's rounded-none
+   and any fm-button-fix border-radius: 0 so shape stays consistent. */
 button[title="Filter"],
 button[title="Columns"],
-button[title="Export"] {
+button[title="Export"],
+button[title="Exporting..."] {
   background-color: #ffffff !important;
   border-color: var(--color-primary) !important;
   color: var(--color-primary) !important;
   border-width: 1px !important;
   border-style: solid !important;
+  border-radius: var(--radius-md) !important;
 }
 button[title="Filter"]:hover,
 button[title="Columns"]:hover,
-button[title="Export"]:hover {
+button[title="Export"]:hover,
+button[title="Exporting..."]:hover {
   background-color: rgba(218, 119, 86, 0.08) !important;
   border-color: var(--color-primary) !important;
   color: var(--color-primary) !important;
@@ -3425,7 +3719,9 @@ button[title="Filter"] .lucide,
 button[title="Columns"] svg,
 button[title="Columns"] .lucide,
 button[title="Export"] svg,
-button[title="Export"] .lucide {
+button[title="Export"] .lucide,
+button[title="Exporting..."] svg,
+button[title="Exporting..."] .lucide {
   color: var(--color-primary) !important;
   stroke: var(--color-primary) !important;
 }
@@ -3669,4 +3965,31 @@ rect[fill="#E6DDCD"] {
 }
 .bg-\[\#f0e8dc\] {
   background-color: #f0e8dc !important;
+}
+
+/* ===========================================
+   BRAND ACCENT TEXT — wins over table/card black overrides
+   Use on labels/headers that must stay brand orange
+   =========================================== */
+.text-brand-accent,
+table th.text-brand-accent,
+table td.text-brand-accent,
+thead th.text-brand-accent,
+tbody td.text-brand-accent,
+tbody td.text-brand-accent span,
+table td:first-child.text-brand-accent,
+[class*="CardHeader"] .text-brand-accent,
+[class*="CardHeader"] .font-semibold.text-brand-accent,
+.text-2xl.font-semibold.text-brand-accent,
+.text-lg.font-semibold.text-brand-accent,
+.text-base.font-semibold.text-brand-accent,
+.text-sm.font-semibold.text-brand-accent,
+.text-sm.font-medium.text-brand-accent,
+label.text-brand-accent,
+div.text-brand-accent,
+h1.text-brand-accent,
+h2.text-brand-accent,
+h3.text-brand-accent,
+span.text-brand-accent {
+  color: var(--color-primary) !important;
 }

@@ -10,14 +10,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+  TextField,
+} from '@mui/material';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { X } from 'lucide-react';
 import { EmailRule, TRIGGER_TYPES, PERIOD_TYPES } from '@/types/emailRule';
@@ -28,7 +27,7 @@ import { toast } from 'sonner';
 
 const emailRuleSchema = z.object({
   ruleName: z.string().min(1, 'Rule name is required'),
-  triggerType: z.enum(['PPM', 'AMC']),
+  triggerType: z.enum(['PPM', 'AMC','Asset Breakdown', 'Asset InUse', 'Asset Breakdown Reminder']),
   triggerTo: z.enum(['Site Admin', 'Occupant Admin', 'Supplier']),
   role: z.array(z.string()).min(1, 'At least one role is required'),
   periodValue: z.number().min(1, 'Period value must be at least 1'),
@@ -44,6 +43,35 @@ interface CreateEmailRuleDialogNewProps {
   onSuccess?: () => void; // Add callback for successful API call
 }
 
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  "& .MuiInputBase-input, & .MuiSelect-select": {
+    padding: { xs: "8px 12px", sm: "10px 14px", md: "12px 14px" },
+  },
+  "& .MuiOutlinedInput-root": {
+    backgroundColor: "white",
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: "white",
+      border: "1px solid #e2e8f0",
+      borderRadius: "8px",
+      boxShadow:
+        "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
+
 export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> = ({
   open,
   onClose,
@@ -55,7 +83,7 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { control, handleSubmit, reset, formState: { errors }, setValue, watch } = useForm<EmailRuleFormData>({
+  const { control, handleSubmit, reset, formState: { errors }, setValue } = useForm<EmailRuleFormData>({
     resolver: zodResolver(emailRuleSchema),
     defaultValues: {
       ruleName: '',
@@ -156,8 +184,23 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-[500px] max-h-[85vh] overflow-hidden flex flex-col">
+    // modal={false} lets portaled MUI Select menus receive clicks/scroll
+    // (Radix modal mode otherwise traps pointer events outside DialogContent).
+    <Dialog open={open} onOpenChange={onClose} modal={false}>
+      <DialogContent
+        className="w-[95vw] max-w-[500px] max-h-[85vh] overflow-hidden flex flex-col bg-white"
+        onPointerDownOutside={(e) => {
+          // Keep dialog open when interacting with the MUI select menu
+          if ((e.target as HTMLElement).closest(".MuiPopover-root, .MuiModal-root, .MuiMenu-root")) {
+            e.preventDefault();
+          }
+        }}
+        onInteractOutside={(e) => {
+          if ((e.target as HTMLElement).closest(".MuiPopover-root, .MuiModal-root, .MuiMenu-root")) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle>Create Email Rule</DialogTitle>
@@ -179,45 +222,49 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
           <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-3 p-1">
           {/* Rule Name */}
           <div className="space-y-1">
-            <Label htmlFor="ruleName">Rule Name</Label>
             <Controller
               name="ruleName"
               control={control}
               render={({ field }) => (
-                <Input
+                <TextField
                   {...field}
                   id="ruleName"
+                  label="Rule Name"
                   placeholder="Enter rule name"
-                  className={errors.ruleName ? 'border-red-500' : ''}
+                  fullWidth
+                  variant="outlined"
+                  sx={fieldStyles}
+                  error={!!errors.ruleName}
+                  helperText={errors.ruleName?.message}
                 />
               )}
             />
-            {errors.ruleName && (
-              <p className="text-sm text-red-500">{errors.ruleName.message}</p>
-            )}
           </div>
 
           {/* Trigger Type */}
           <div className="space-y-1">
-            <Label>Trigger Type</Label>
-            <Controller
-              name="triggerType"
-              control={control}
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className={errors.triggerType ? 'border-red-500' : ''}>
-                    <SelectValue placeholder="Select trigger type" />
-                  </SelectTrigger>
-                  <SelectContent>
+            <FormControl fullWidth variant="outlined" error={!!errors.triggerType}>
+              <InputLabel id="trigger-type-label">Trigger Type</InputLabel>
+              <Controller
+                name="triggerType"
+                control={control}
+                render={({ field }) => (
+                  <MuiSelect
+                    {...field}
+                    labelId="trigger-type-label"
+                    label="Trigger Type"
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
                     {TRIGGER_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>
+                      <MenuItem key={type} value={type}>
                         {type}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
+                  </MuiSelect>
+                )}
+              />
+            </FormControl>
             {errors.triggerType && (
               <p className="text-sm text-red-500">{errors.triggerType.message}</p>
             )}
@@ -225,29 +272,32 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
 
           {/* Trigger To */}
           <div className="space-y-1">
-            <Label>Trigger To</Label>
-            <Controller
-              name="triggerTo"
-              control={control}
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className={errors.triggerTo ? 'border-red-500' : ''}>
-                    <SelectValue placeholder="Select trigger to" />
-                  </SelectTrigger>
-                  <SelectContent>
+            <FormControl fullWidth variant="outlined" error={!!errors.triggerTo}>
+              <InputLabel id="trigger-to-label">Trigger To</InputLabel>
+              <Controller
+                name="triggerTo"
+                control={control}
+                render={({ field }) => (
+                  <MuiSelect
+                    {...field}
+                    labelId="trigger-to-label"
+                    label="Trigger To"
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
                     {[
                       ['Site Admin', 'Site Admin'],
-                      ['Occupant Admin', 'Occupant Admin'], 
+                      ['Occupant Admin', 'Occupant Admin'],
                       ['Supplier', 'Supplier']
                     ].map(([label, value]) => (
-                      <SelectItem key={value} value={value}>
+                      <MenuItem key={value} value={value}>
                         {label}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
+                  </MuiSelect>
+                )}
+              />
+            </FormControl>
             {errors.triggerTo && (
               <p className="text-sm text-red-500">{errors.triggerTo.message}</p>
             )}
@@ -287,47 +337,50 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
           {/* Period Value and Type */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="periodValue">Period Value</Label>
               <Controller
                 name="periodValue"
                 control={control}
                 render={({ field }) => (
-                  <Input
+                  <TextField
                     {...field}
                     id="periodValue"
+                    label="Period Value"
                     type="number"
-                    min="1"
                     placeholder="Enter value"
-                    className={errors.periodValue ? 'border-red-500' : ''}
+                    fullWidth
+                    variant="outlined"
+                    sx={fieldStyles}
+                    error={!!errors.periodValue}
+                    helperText={errors.periodValue?.message}
                     onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
                   />
                 )}
               />
-              {errors.periodValue && (
-                <p className="text-sm text-red-500">{errors.periodValue.message}</p>
-              )}
             </div>
             
             <div className="space-y-1">
-              <Label>Period Type</Label>
-              <Controller
-                name="periodType"
-                control={control}
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className={errors.periodType ? 'border-red-500' : ''}>
-                      <SelectValue placeholder="Select period" />
-                    </SelectTrigger>
-                    <SelectContent>
+              <FormControl fullWidth variant="outlined" error={!!errors.periodType}>
+                <InputLabel id="period-type-label">Period Type</InputLabel>
+                <Controller
+                  name="periodType"
+                  control={control}
+                  render={({ field }) => (
+                    <MuiSelect
+                      {...field}
+                      labelId="period-type-label"
+                      label="Period Type"
+                      sx={fieldStyles}
+                      MenuProps={selectMenuProps}
+                    >
                       {PERIOD_TYPES.map((type) => (
-                        <SelectItem key={type} value={type}>
+                        <MenuItem key={type} value={type}>
                           {type}
-                        </SelectItem>
+                        </MenuItem>
                       ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
+                    </MuiSelect>
+                  )}
+                />
+              </FormControl>
               {errors.periodType && (
                 <p className="text-sm text-red-500">{errors.periodType.message}</p>
               )}
@@ -335,10 +388,10 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
           </div>
 
           <div className="flex flex-col sm:flex-row justify-end gap-2 pt-3">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onClose} className="border-brand text-brand px-8">
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="bg-brand hover:bg-brand-hover text-white px-8">
               {isSubmitting ? 'Creating...' : 'Create Rule'}
             </Button>
           </div>

@@ -132,8 +132,8 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          size="sm"
-          className="h-8 flex items-center gap-2"
+          size="icon"
+          className="!rounded-lg border border-brand text-brand"
           title="Columns"
         >
           <Grid3x3 className="w-4 h-4" />

@@ -27,8 +27,10 @@ import {
 } from "lucide-react";
 // Removed legacy BulkUploadDialog; using new design
 import { InventoryBulkUploadDialog } from "@/components/InventoryBulkUploaddialogbox";
+import { InventoryConsumptionBulkUploadModal } from '@/components/InventoryConsumptionBulkUploadModal';
 import { InventoryFilterDialog } from "@/components/InventoryFilterDialog";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InventorySelector } from "@/components/InventorySelector";
 import { InventoryAnalyticsSelector } from "@/components/InventoryAnalyticsSelector";
@@ -179,6 +181,7 @@ export const InventoryDashboard = () => {
   const [currentPage, setLocalCurrentPage] = useState(reduxCurrentPage || 1);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [showConsumptionBulkUpload, setShowConsumptionBulkUpload] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [visibleSections, setVisibleSections] = useState<string[]>([
     "statusChart",
@@ -784,17 +787,6 @@ export const InventoryDashboard = () => {
               <Pencil className="w-4 h-4" />
             </Button>
           )}
-          {item.greenProduct && (
-            <img
-              src={bio}
-              alt="Green Product"
-              className="w-4 h-4"
-              style={{
-                filter:
-                  "invert(46%) sepia(66%) saturate(319%) hue-rotate(67deg) brightness(95%) contrast(85%)",
-              }}
-            />
-          )}
         </div>
       );
     }
@@ -834,18 +826,11 @@ export const InventoryDashboard = () => {
           className="flex items-center justify-center w-full"
           onClick={(e) => e.stopPropagation()}
         >
-          <div
-            className={`relative inline-flex items-center h-6 w-12 rounded-full cursor-pointer transition-colors ${
-              item.active === "Active" ? "bg-green-500" : "bg-gray-300"
-            }`}
-            onClick={() => handleStatusToggle(item.id)}
-          >
-            <span
-              className={`inline-block w-5 h-5 transform bg-white rounded-full shadow transition-transform ${
-                item.active === "Active" ? "translate-x-6" : "translate-x-1"
-              }`}
-            />
-          </div>
+          <Switch
+            checked={item.active === "Active"}
+            onCheckedChange={() => handleStatusToggle(item.id)}
+            className="data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756] data-[state=unchecked]:bg-gray-300"
+          />
         </div>
       );
     }
@@ -1087,6 +1072,42 @@ export const InventoryDashboard = () => {
     }
   };
 
+  // Polls pms/inventories/qr_pdf_status until the generated PDF is ready.
+  // Backend returns 202 (processing), 422 (failed) or 404 (expired/not found) as JSON,
+  // and streams the PDF directly (as application/pdf) once generation completes.
+  const waitForQRPdfReady = async (
+    exportKey: string,
+    baseUrl: string
+  ): Promise<Response> => {
+    while (true) {
+      const res = await fetch(
+        `https://${baseUrl}/pms/inventories/qr_pdf_status?key=${encodeURIComponent(
+          exportKey
+        )}`,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
+
+      const contentType = res.headers.get("content-type");
+      if (contentType?.includes("application/pdf")) {
+        return res; // ✅ PDF is ready
+      }
+
+      const data = await res.json().catch(() => ({} as any));
+
+      if (res.status === 422 || data.status === "failed") {
+        throw new Error(data.message || "QR PDF generation failed");
+      }
+      if (res.status === 404 || data.status === "error") {
+        throw new Error(data.message || "Export not found or has expired");
+      }
+
+      // res.status === 202 / data.status === "processing" → keep polling
+      await new Promise((r) => setTimeout(r, 1500));
+    }
+  };
+
   // Bulk / single QR code PDF download similar to ServiceDashboard pattern
   const handlePrintQR = async () => {
     if (selectedItems.length === 0 || downloadingQR) return;
@@ -1098,21 +1119,46 @@ export const InventoryDashboard = () => {
     }
     try {
       setDownloadingQR(true);
-      // API (single existing pattern) used inventory_ids=[id]; extend for multiple by comma joining
+
+      // If every row currently loaded in the table is selected, request all
+      // records via `all=true` instead of an explicit inventory_ids list.
+      const allSelected =
+        paginatedData.length > 0 &&
+        selectedItems.length === paginatedData.length;
+
       const idsParam = selectedItems.join(",");
-      const url = `https://${baseUrl}/pms/inventories/inventory_qr_codes.pdf?inventory_ids=[${idsParam}]`;
+      const url = allSelected
+        ? `https://${baseUrl}/pms/inventories/inventory_qr_codes.json?all=true`
+        : `https://${baseUrl}/pms/inventories/inventory_qr_codes.json?inventory_ids=[${idsParam}]`;
+
+      toast.info("Preparing QR code PDF...", {
+        description: "Please wait while the file is being generated...",
+      });
+
+      // STEP 1: Start QR PDF generation
       const resp = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!resp.ok) throw new Error("Failed to generate QR PDF");
-      const blob = await resp.blob();
+
+      const { export_key } = await resp.json();
+      if (!export_key) {
+        throw new Error("Export key not returned from server");
+      }
+
+      // STEP 2: ⏳ Poll status until the PDF is ready
+      const fileResponse = await waitForQRPdfReady(export_key, baseUrl);
+
+      // STEP 3: Download file
+      const blob = await fileResponse.blob();
       const dlUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = dlUrl;
-      link.download =
-        selectedItems.length === 1
-          ? `inventory-qr-${selectedItems[0]}.pdf`
-          : `inventory-qr-bulk-${selectedItems.length}.pdf`;
+      link.download = allSelected
+        ? "inventory-qr-all.pdf"
+        : selectedItems.length === 1
+        ? `inventory-qr-${selectedItems[0]}.pdf`
+        : `inventory-qr-bulk-${selectedItems.length}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -1339,8 +1385,8 @@ export const InventoryDashboard = () => {
               <div className="flex items-center gap-2">
                 <Button
                   onClick={() => setIsAnalyticsFilterOpen(true)}
-                  variant="outline"
-                  className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
+                  variant="ghost"
+                  className="fm-button-fix fm-button-brand flex items-center gap-2"
                 >
                   <CalendarIcon className="w-4 h-4 text-gray-600" />
                   <span className="text-sm font-medium text-gray-700">
@@ -1576,6 +1622,10 @@ export const InventoryDashboard = () => {
                   }}
                   onAdd={handleAddInventory}
                   onImport={handleImportClick}
+                  onImportConsumption={() => {
+                    setShowActionPanel(false);
+                    setShowConsumptionBulkUpload(true);
+                  }}
                   onClose={() => {
                     // Close panel and clear selection as requested
                     setShowActionPanel(false);
@@ -1583,7 +1633,7 @@ export const InventoryDashboard = () => {
                     setPanelManuallyClosed(false);
                     setKeepOpenWithoutSelection(false); // reset manual open state
                   }}
-                />
+                />  
               )}
               <EnhancedTable
                 handleExport={handleExport}
@@ -1703,6 +1753,10 @@ export const InventoryDashboard = () => {
       </div>
 
       {/* AI Assistant Widget - Inventory Module */}
+      <InventoryConsumptionBulkUploadModal 
+        isOpen={showConsumptionBulkUpload} 
+        onClose={() => setShowConsumptionBulkUpload(false)} 
+      />
     </>
   );
 };

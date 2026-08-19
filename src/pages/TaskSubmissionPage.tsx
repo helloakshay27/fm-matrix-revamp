@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { PostHogTaskActivity } from "@/components/PostHogTaskActivity";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +50,20 @@ interface ChecklistItem {
 export const TaskSubmissionPage: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const checklistStartedRef = useRef(false);
+  const taskEventKeyRef = useRef(0);
+  const [taskEvents, setTaskEvents] = useState<Array<{
+    key: number;
+    event: React.ComponentProps<typeof PostHogTaskActivity>['event'];
+    properties?: Record<string, unknown>;
+  }>>([]);
+
+  const captureTaskEvent = (
+    event: React.ComponentProps<typeof PostHogTaskActivity>['event'],
+    properties?: Record<string, unknown>
+  ) => {
+    setTaskEvents(prev => [...prev, { key: ++taskEventKeyRef.current, event, properties }]);
+  };
 
   const [taskDetails, setTaskDetails] = useState<TaskOccurrence | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,6 +77,9 @@ export const TaskSubmissionPage: React.FC = () => {
     negativeFeedback: 0,
     ticketsRaised: 0,
   });
+
+  const [showDraftModal, setShowDraftModal] = useState(false);
+  const [loadedDraftData, setLoadedDraftData] = useState<any>(null);
 
   // File upload refs
   const beforePhotoRef = useRef<HTMLInputElement>(null);
@@ -532,10 +550,12 @@ export const TaskSubmissionPage: React.FC = () => {
     // This preserves data when navigating between steps
   };
 
+  const draftLoadedRef = useRef(false);
+
   // Initialize checklist data when task details are loaded
   useEffect(() => {
-    if (taskDetails && dynamicChecklist.length > 0) {
-      const initialChecklist = dynamicChecklist.reduce((acc, item) => {
+    if (taskDetails && dynamicChecklist.length > 0 && !draftLoadedRef.current) {
+      let initialChecklist = dynamicChecklist.reduce((acc, item) => {
         acc[item.id] = {
           value: item.type === "checkbox" ? [] : "",
           comment: "",
@@ -545,8 +565,54 @@ export const TaskSubmissionPage: React.FC = () => {
       }, {} as { [key: string]: { value: any; comment: string; attachment: File | null } });
 
       setFormData((prev) => ({ ...prev, checklist: initialChecklist }));
+
+      try {
+        const draftStr = localStorage.getItem(`task_draft_${id}`);
+        if (draftStr) {
+          const draftData = JSON.parse(draftStr);
+          if (draftData && draftData.formData && draftData.formData.checklist) {
+            setLoadedDraftData(draftData);
+            setShowDraftModal(true);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load draft:", error);
+      }
+
+      draftLoadedRef.current = true;
     }
-  }, [taskDetails]);
+  }, [taskDetails, id]);
+
+  const handleContinueWithDraft = () => {
+    if (loadedDraftData) {
+      setFormData(prev => {
+        const updatedChecklist = { ...prev.checklist };
+        Object.keys(loadedDraftData.formData.checklist).forEach((key) => {
+          if (updatedChecklist[key]) {
+            const draftItem = loadedDraftData.formData.checklist[key];
+            updatedChecklist[key].value = draftItem.value !== undefined ? draftItem.value : updatedChecklist[key].value;
+            updatedChecklist[key].comment = draftItem.comment || updatedChecklist[key].comment;
+          }
+        });
+        return { ...prev, checklist: updatedChecklist };
+      });
+      if (loadedDraftData.currentStep) {
+        setCurrentStep(loadedDraftData.currentStep);
+      }
+      if (loadedDraftData.completedSteps) {
+        setCompletedSteps(loadedDraftData.completedSteps);
+      }
+    }
+    setShowDraftModal(false);
+    sonnerToast.info("Draft restored! Continue from where you left off.");
+  };
+
+  const handleStartFresh = () => {
+    localStorage.removeItem(`task_draft_${id}`);
+    setShowDraftModal(false);
+    setLoadedDraftData(null);
+    sonnerToast.info("Starting fresh! Previous draft has been cleared.");
+  };
 
   // Auto-mark steps as completed when they have valid data
   useEffect(() => {
@@ -611,16 +677,64 @@ export const TaskSubmissionPage: React.FC = () => {
     field: "value" | "comment" | "attachment",
     value: any
   ) => {
-    setFormData((prev) => ({
-      ...prev,
-      checklist: {
-        ...prev.checklist,
-        [itemId]: {
-          ...prev.checklist[itemId],
-          [field]: value,
+    if (!checklistStartedRef.current) {
+      checklistStartedRef.current = true;
+      // Usage/interaction plane
+      captureTaskEvent('Checklist Execution Started', {
+        task_id: id,
+        platform: 'web',
+        step_count: dynamicChecklist.length,
+      });
+      // Business lifecycle plane (Task & PPM catalogue)
+      captureTaskEvent('Checklist Started', {
+        task_id: id,
+        platform: 'web',
+        checklist_template_id: taskDetails?.activity?.id ?? taskDetails?.task_details?.task_id ?? null,
+        step_count: dynamicChecklist.length,
+      });
+    }
+
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        checklist: {
+          ...prev.checklist,
+          [itemId]: { ...prev.checklist[itemId], [field]: value },
         },
-      },
-    }));
+      };
+      if (field === 'value') {
+        const item = updated.checklist[itemId];
+        const checklistDef = dynamicChecklist.find(c => c.id === itemId);
+        const hasReading = typeof value === 'number' || checklistDef?.type === 'text';
+        // Derive canonical item_result (pass/fail/na/reading) from the answer
+        const normalized = typeof value === 'string' ? value.toLowerCase() : value;
+        let itemResult: 'pass' | 'fail' | 'na' | 'reading' = 'na';
+        if (hasReading && (typeof value === 'number' || (value !== '' && value != null))) {
+          itemResult = 'reading';
+        } else if (normalized === 'yes' || normalized === 'pass' || normalized === 'good') {
+          itemResult = 'pass';
+        } else if (normalized === 'no' || normalized === 'fail' || normalized === 'poor' || normalized === 'bad') {
+          itemResult = 'fail';
+        }
+        // Usage/interaction plane
+        captureTaskEvent('Checklist Item Answered', {
+          task_id: id,
+          has_reading: typeof value === 'number',
+          has_photo: !!item?.attachment,
+          has_comment: !!item?.comment,
+        });
+        // Business lifecycle plane (Task & PPM catalogue)
+        captureTaskEvent('Checklist Item Completed', {
+          task_id: id,
+          item_result: itemResult,
+          has_reading: hasReading,
+          has_photo: !!item?.attachment,
+          has_comment: !!item?.comment,
+          platform: 'web',
+        });
+      }
+      return updated;
+    });
   };
 
   const handleNext = () => {
@@ -872,6 +986,40 @@ export const TaskSubmissionPage: React.FC = () => {
 
         sonnerToast.dismiss(loadingToastId);
         sonnerToast.success("Task submitted successfully!");
+
+        const completenessScore = response.question_attended_count
+          ? Math.round((response.question_attended_count / dynamicChecklist.length) * 100)
+          : 0;
+        // Usage/interaction plane
+        captureTaskEvent('Task Submitted (UI)', {
+          task_id: id,
+          platform: 'web',
+          completeness_score: completenessScore,
+        });
+        // Business lifecycle plane (Task & PPM catalogue)
+        const dueRaw = taskDetails?.task_details?.scheduled_date
+          || (taskDetails as any)?.due_date
+          || (taskDetails as any)?.due_datetime
+          || null;
+        let onTime: boolean | null = null;
+        let completionLagVsDueMin: number | null = null;
+        if (dueRaw) {
+          const dueMs = new Date(dueRaw).getTime();
+          if (!Number.isNaN(dueMs)) {
+            const lagMs = Date.now() - dueMs;
+            completionLagVsDueMin = Math.round(lagMs / 60000);
+            onTime = lagMs <= 0;
+          }
+        }
+        captureTaskEvent('Maintenance Task Submitted', {
+          task_id: id,
+          platform: 'web',
+          on_time: onTime,
+          completion_lag_vs_due_min: completionLagVsDueMin,
+          fail_item_count: response.negative_answers_count ?? 0,
+          completeness_score: completenessScore,
+        });
+
         setShowSuccessModal(true);
       }
     } catch (error: any) {
@@ -3165,6 +3313,9 @@ export const TaskSubmissionPage: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 min-h-screen bg-gray-50">
+      {taskEvents.map(evt => (
+        <PostHogTaskActivity key={evt.key} event={evt.event} properties={evt.properties} />
+      ))}
       {/* Header */}
       <div className="mb-4">
         <button
@@ -3297,6 +3448,37 @@ export const TaskSubmissionPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Draft Modal */}
+      <Dialog open={showDraftModal} onOpenChange={setShowDraftModal}>
+        <DialogContent className="sm:max-w-md rounded-none font-sans">
+          <DialogHeader className="bg-[#da7756] text-white p-4 -m-6 mb-4">
+            <DialogTitle className="text-white font-semibold text-lg">
+              Draft Found
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            <Typography variant="body2" className="text-gray-800 text-sm">
+              We found a saved draft from your previous session. Would you like to continue with the saved draft or start fresh?
+            </Typography>
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={handleStartFresh}
+              className="bg-[#f5f5f5] text-[#666] border-none hover:bg-gray-200 rounded"
+            >
+              Start Fresh
+            </Button>
+            <Button
+              onClick={handleContinueWithDraft}
+              className="bg-[#C72030] text-white hover:bg-[#B11E2A] rounded"
+            >
+              Continue with Draft
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Success Modal */}
       <TaskSubmissionSuccessModal

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ import {
   Copy,
   Share2,
   ShoppingCart,
+  Settings2,
 } from "lucide-react";
 import {
   Dialog,
@@ -214,10 +215,11 @@ const mockSalesOrder = {
 export const CreditNoteDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [salesOrder, setSalesOrder] = useState<SalesOrder>(mockSalesOrder);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("order-details");
+  const [activeTab, setActiveTab] = useState((location.state as any)?.tab === "pdf" ? "pdf" : "order-details");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const [renderDownloadPdf, setRenderDownloadPdf] = useState(false);
@@ -290,15 +292,7 @@ export const CreditNoteDetails = () => {
   };
 
   const getStatusColor = (status: string) => {
-    const colors: { [key: string]: string } = {
-      draft: "bg-gray-100 text-gray-800 border-gray-200",
-      confirmed: "bg-blue-100 text-blue-800 border-blue-200",
-      processing: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      shipped: "bg-purple-100 text-purple-800 border-purple-200",
-      delivered: "bg-green-100 text-green-800 border-green-200",
-      cancelled: "bg-red-100 text-red-800 border-red-200",
-    };
-    return colors[status] || colors.draft;
+    return "bg-gray-100 text-gray-800 border-gray-200";
   };
 
   const handleEdit = () => {
@@ -423,7 +417,7 @@ export const CreditNoteDetails = () => {
 
   return (
     <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="w-full mx-auto space-y-6 px-2">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -460,6 +454,16 @@ export const CreditNoteDetails = () => {
             >
               <FileText className="h-4 w-4" />
               PDF
+            </Button>
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => navigate("/accounting/credit-note/template", { state: { recordId: id } })}
+              className="gap-2"
+            >
+              <Settings2 className="h-4 w-4" />
+              Template Edit
             </Button>
 
             <Button
@@ -520,27 +524,13 @@ export const CreditNoteDetails = () => {
             backgroundColor: "rgba(250, 250, 250, 1)",
           }}
         >
-          <style>{`
-                        .credit-note-tabs button[data-state="active"] {
-                            background-color: rgba(237, 234, 227, 1) !important;
-                            color: rgba(199, 32, 48, 1) !important;
-                        }
-                    `}</style>
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
             className="w-full"
           >
             <TabsList
-              className="credit-note-tabs w-full flex flex-nowrap rounded-t-lg p-0 overflow-x-auto mb-4"
-              style={{
-                gap: "0",
-                padding: "0",
-                backgroundColor: "rgba(246, 247, 247, 1)",
-                height: "50px",
-                marginBottom: "16px",
-                justifyContent: "flex-start",
-              }}
+              className="flex flex-wrap w-full max-w-3xl justify-start"
             >
               {[
                 { label: "Credit Note Details", value: "order-details" },
@@ -551,25 +541,7 @@ export const CreditNoteDetails = () => {
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
-                  className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030]"
-                  style={{
-                    width: "230px",
-                    height: "36px",
-                    paddingTop: "10px",
-                    paddingRight: "20px",
-                    paddingBottom: "10px",
-                    paddingLeft: "20px",
-                    borderRadius: "0",
-                    border: "none",
-                    margin: "0",
-                    fontFamily: "Work Sans",
-                    fontWeight: 500,
-                    fontSize: "14px",
-                    lineHeight: "100%",
-                    letterSpacing: "0%",
-                    color: "rgba(26, 26, 26, 1)",
-                    backgroundColor: "rgba(246, 247, 247, 1)",
-                  }}
+                  className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand"
                 >
                   {tab.label}
                 </TabsTrigger>
@@ -1050,6 +1022,7 @@ export const CreditNoteDetails = () => {
                     <div className="mx-auto bg-white" ref={activeTab === "pdf" ? creditNotePdfRef : null}>
                       <AccountingDocumentPdf
                         documentTitle="CREDIT NOTE"
+                        documentType="credit_note"
                         documentNumber={salesOrder.credit_note_number}
                         documentDate={salesOrder.date || salesOrder.credit_note_date}
                         status={salesOrder.status}
@@ -1077,6 +1050,7 @@ export const CreditNoteDetails = () => {
           <div ref={creditNotePdfRef}>
             <AccountingDocumentPdf
               documentTitle="CREDIT NOTE"
+              documentType="credit_note"
               documentNumber={salesOrder.credit_note_number}
               documentDate={salesOrder.date || salesOrder.credit_note_date}
               status={salesOrder.status}
@@ -1098,7 +1072,7 @@ export const CreditNoteDetails = () => {
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Sales Order</DialogTitle>
+            <DialogTitle>Delete Credit Note</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete this credit note? This action
               cannot be undone.
@@ -1107,6 +1081,7 @@ export const CreditNoteDetails = () => {
           <div className="flex gap-3 justify-end mt-4">
             <Button
               variant="outline"
+              className="fm-button-fix"
               onClick={() => setShowDeleteDialog(false)}
             >
               Cancel

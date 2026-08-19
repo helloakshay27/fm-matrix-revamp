@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
+import { PostHogScheduleActivity } from '@/components/PostHogScheduleActivity';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, FileText, Box, Clock, Calendar, Link, Mail, MapPin, Loader2, Eye, Download, File, FileSpreadsheet, Layers, FolderOpen } from 'lucide-react';
 import { SetApprovalModal } from '@/components/SetApprovalModal';
@@ -82,6 +84,13 @@ const multilineFieldStyles = {
     borderRadius: '0',
   },
 };
+
+interface TimeSetupRow {
+  hours: string;
+  minutes: string;
+  dayValue: string;
+  month: string;
+}
 
 export const ViewSchedulePage = () => {
   const { id } = useParams();
@@ -282,12 +291,10 @@ export const ViewSchedulePage = () => {
 
   if (isLoading) {
     return (
-      <div className="p-6 mx-auto">
-        <div className="flex items-center justify-center h-32">
-          <div className="flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin" />
-            <span className="ml-2">Loading schedule details...</span>
-          </div>
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading schedule details...</p>
         </div>
       </div>
     );
@@ -322,6 +329,7 @@ export const ViewSchedulePage = () => {
 
   return (
     <div className="p-4 sm:p-6 min-h-screen">
+      <PostHogScheduleActivity event="Schedule Detail Viewed" />
       {/* Header */}
       <div className="mb-6">
         <button
@@ -861,26 +869,37 @@ export const ViewSchedulePage = () => {
                     }
                   }
 
+                  const timeSetupColumns: ColumnConfig[] = [
+                    { key: 'hours', label: 'Hours', sortable: false, hideable: false, defaultVisible: true },
+                    { key: 'minutes', label: 'Minutes', sortable: false, hideable: false, defaultVisible: true },
+                    { key: 'dayValue', label: dayColumnHeader, sortable: false, hideable: false, defaultVisible: true },
+                    { key: 'month', label: 'Month', sortable: false, hideable: false, defaultVisible: true },
+                  ];
+
+                  const timeSetupData: TimeSetupRow[] = [
+                    {
+                      hours: hours.join(', '),
+                      minutes: minutes.join(', '),
+                      dayValue: dayColumnValue,
+                      month: months.join(', '),
+                    },
+                  ];
+
                   return (
                     <div className="rounded-lg border border-gray-200 overflow-hidden">
-                      <Table className="border-separate">
-                        <TableHeader>
-                          <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#e6e2d8' }}>
-                            <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Hours</TableHead>
-                            <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Minutes</TableHead>
-                            <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>{dayColumnHeader}</TableHead>
-                            <TableHead className="font-semibold text-gray-900 py-3 px-4" style={{ borderColor: '#fff' }}>Month</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          <TableRow className="hover:bg-gray-50 transition-colors">
-                            <TableCell className="py-3 px-4 font-medium">{hours.join(', ')}</TableCell>
-                            <TableCell className="py-3 px-4">{minutes.join(', ')}</TableCell>
-                            <TableCell className="py-3 px-4">{dayColumnValue}</TableCell>
-                            <TableCell className="py-3 px-4">{months.join(', ')}</TableCell>
-                          </TableRow>
-                        </TableBody>
-                      </Table>
+                      <EnhancedTable
+                        data={timeSetupData}
+                        columns={timeSetupColumns}
+                        renderCell={(item: TimeSetupRow, columnKey: string) =>
+                          item[columnKey as keyof TimeSetupRow]
+                        }
+                        storageKey="view-schedule-time-setup-table"
+                        hideTableSearch
+                        hideTableExport
+                        hideColumnsButton
+                        emptyMessage="No time setup available"
+                        getItemId={(item) => `${item.hours}-${item.minutes}-${item.dayValue}-${item.month}`}
+                      />
                     </div>
                   );
                 })()}
@@ -1010,63 +1029,51 @@ export const ViewSchedulePage = () => {
               <CardContent>
                 {customForm?.sch_type === 'Service' ? (
                   <div className="rounded-lg border border-gray-200 overflow-hidden">
-                    <Table className="border-separate">
-                      <TableHeader>
-                        <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#e6e2d8' }}>
-                          <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Service Name</TableHead>
-                          <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Service Code</TableHead>
-                          <TableHead className="font-semibold text-gray-900 py-3 px-4" style={{ borderColor: '#fff' }}>Created on</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {assetTask?.services && assetTask.services.length > 0 ? (
-                          assetTask.services.map((service, index) => (
-                            <TableRow key={index} className="hover:bg-gray-50 transition-colors">
-                              <TableCell className="py-3 px-4 font-medium">{service.service_name}</TableCell>
-                              <TableCell className="py-3 px-4">{service.service_code}</TableCell>
-                              <TableCell className="py-3 px-4">{formatDateTime(service.created_at)}</TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={3} className="text-center text-gray-500 py-8">
-                              No services associated
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
+                    <EnhancedTable
+                      data={(assetTask?.services || []).map((service, index) => ({
+                        rowId: `service-${index}`,
+                        serviceName: service.service_name || 'N/A',
+                        serviceCode: service.service_code || 'N/A',
+                        createdOn: service.created_at ? formatDateTime(service.created_at) : 'N/A',
+                      }))}
+                      columns={[
+                        { key: 'serviceName', label: 'Service Name', sortable: false, hideable: false, defaultVisible: true },
+                        { key: 'serviceCode', label: 'Service Code', sortable: false, hideable: false, defaultVisible: true },
+                        { key: 'createdOn', label: 'Created on', sortable: false, hideable: false, defaultVisible: true },
+                      ]}
+                      renderCell={(item, columnKey) => item[columnKey as keyof typeof item]}
+                      storageKey="view-schedule-association-service-table"
+                      hideTableSearch
+                      hideTableExport
+                      hideColumnsButton
+                      emptyMessage="No services associated"
+                      getItemId={(item) => item.rowId}
+                    />
                   </div>
                 ) : (
                   <div className="rounded-lg border border-gray-200 overflow-hidden">
-                    <Table className="border-separate">
-                      <TableHeader>
-                        <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#e6e2d8' }}>
-                          <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Asset Name</TableHead>
-                          <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Model Number</TableHead>
-                          <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Purchase Cost</TableHead>
-                          <TableHead className="font-semibold text-gray-900 py-3 px-4" style={{ borderColor: '#fff' }}>Created on</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {assetTask?.assets && assetTask.assets.length > 0 ? (
-                          assetTask.assets.map((asset, index) => (
-                            <TableRow key={index} className="hover:bg-gray-50 transition-colors">
-                              <TableCell className="py-3 px-4 font-medium">{asset.name || 'N/A'}</TableCell>
-                              <TableCell className="py-3 px-4">{asset.model_number || 'N/A'}</TableCell>
-                              <TableCell className="py-3 px-4">{asset.purchase_cost || 'N/A'}</TableCell>
-                              <TableCell className="py-3 px-4">{asset.created_at ? formatDateTime(asset.created_at) : 'N/A'}</TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={4} className="text-center text-gray-500 py-8">
-                              No assets associated
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
+                    <EnhancedTable
+                      data={(assetTask?.assets || []).map((asset, index) => ({
+                        rowId: `asset-${index}`,
+                        assetName: asset.name || 'N/A',
+                        modelNumber: asset.model_number || 'N/A',
+                        purchaseCost: asset.purchase_cost || 'N/A',
+                        createdOn: asset.created_at ? formatDateTime(asset.created_at) : 'N/A',
+                      }))}
+                      columns={[
+                        { key: 'assetName', label: 'Asset Name', sortable: false, hideable: false, defaultVisible: true },
+                        { key: 'modelNumber', label: 'Model Number', sortable: false, hideable: false, defaultVisible: true },
+                        { key: 'purchaseCost', label: 'Purchase Cost', sortable: false, hideable: false, defaultVisible: true },
+                        { key: 'createdOn', label: 'Created on', sortable: false, hideable: false, defaultVisible: true },
+                      ]}
+                      renderCell={(item, columnKey) => item[columnKey as keyof typeof item]}
+                      storageKey="view-schedule-association-asset-table"
+                      hideTableSearch
+                      hideTableExport
+                      hideColumnsButton
+                      emptyMessage="No assets associated"
+                      getItemId={(item) => item.rowId}
+                    />
                   </div>
                 )}
               </CardContent>
@@ -1086,38 +1093,32 @@ export const ViewSchedulePage = () => {
               </CardHeader>
               <CardContent>
                 <div className="rounded-lg border border-gray-200 overflow-hidden">
-                  <Table className="border-separate">
-                    <TableHeader>
-                      <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#e6e2d8' }}>
-                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Rule Name</TableHead>
-                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Trigger Type</TableHead>
-                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Trigger To</TableHead>
-                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Period Value</TableHead>
-                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Period Type</TableHead>
-                        <TableHead className="font-semibold text-gray-900 py-3 px-4" style={{ borderColor: '#fff' }}>Created By</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {emailRules && emailRules.length > 0 ? (
-                        emailRules.map((rule, index) => (
-                          <TableRow key={index} className="hover:bg-gray-50 transition-colors">
-                            <TableCell className="py-3 px-4 font-medium">{rule.rule_name || 'N/A'}</TableCell>
-                            <TableCell className="py-3 px-4">{rule.trigger_type || 'N/A'}</TableCell>
-                            <TableCell className="py-3 px-4">{rule.trigger_to || 'N/A'}</TableCell>
-                            <TableCell className="py-3 px-4">{rule.period_value || 'N/A'}</TableCell>
-                            <TableCell className="py-3 px-4">{rule.period_type || 'N/A'}</TableCell>
-                            <TableCell className="py-3 px-4">{rule.created_by || 'N/A'}</TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={6} className="text-center text-gray-500 py-8">
-                            No email trigger rules found
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                  <EnhancedTable
+                    data={(emailRules || []).map((rule, index) => ({
+                      rowId: `email-rule-${index}`,
+                      ruleName: rule.rule_name || 'N/A',
+                      triggerType: rule.trigger_type || 'N/A',
+                      triggerTo: rule.trigger_to || 'N/A',
+                      periodValue: rule.period_value || 'N/A',
+                      periodType: rule.period_type || 'N/A',
+                      createdBy: rule.created_by || 'N/A',
+                    }))}
+                    columns={[
+                      { key: 'ruleName', label: 'Rule Name', sortable: false, hideable: false, defaultVisible: true },
+                      { key: 'triggerType', label: 'Trigger Type', sortable: false, hideable: false, defaultVisible: true },
+                      { key: 'triggerTo', label: 'Trigger To', sortable: false, hideable: false, defaultVisible: true },
+                      { key: 'periodValue', label: 'Period Value', sortable: false, hideable: false, defaultVisible: true },
+                      { key: 'periodType', label: 'Period Type', sortable: false, hideable: false, defaultVisible: true },
+                      { key: 'createdBy', label: 'Created By', sortable: false, hideable: false, defaultVisible: true },
+                    ]}
+                    renderCell={(item, columnKey) => item[columnKey as keyof typeof item]}
+                    storageKey="view-schedule-email-rules-table"
+                    hideTableSearch
+                    hideTableExport
+                    hideColumnsButton
+                    emptyMessage="No email trigger rules found"
+                    getItemId={(item) => item.rowId}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -1136,59 +1137,58 @@ export const ViewSchedulePage = () => {
               </CardHeader>
               <CardContent>
                 <div className="rounded-lg border border-gray-200 overflow-hidden">
-                  <Table className="border-separate">
-                    <TableHeader>
-                      <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#e6e2d8' }}>
-                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>{customForm?.sch_type === 'Service' ? 'Service Name' : 'Asset Name'}</TableHead>
-                        <TableHead className="font-semibold text-gray-900 py-3 px-4" style={{ borderColor: '#fff' }}>Tasks</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {customForm?.sch_type === 'Service' ? (
-                        assetTask?.services && assetTask.services.length > 0 ? (
-                          assetTask.services.map((service, index) => (
-                            <TableRow key={index} className="hover:bg-gray-50 transition-colors">
-                              <TableCell className="py-3 px-4 font-medium">{service.service_name}</TableCell>
-                              <TableCell className="py-3 px-4">
-                                {customForm?.content?.map((task, taskIndex) => (
-                                  <span key={taskIndex} className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs mr-1 mb-1">
-                                    {task.label}
-                                  </span>
-                                ))}
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={2} className="text-center text-gray-500 py-8">
-                              No service mappings found
-                            </TableCell>
-                          </TableRow>
-                        )
-                      ) : (
-                        assetTask?.assets && assetTask.assets.length > 0 ? (
-                          assetTask.assets.map((asset, index) => (
-                            <TableRow key={index} className="hover:bg-gray-50 transition-colors">
-                              <TableCell className="py-3 px-4 font-medium">{asset.name || asset.asset_name || 'N/A'}</TableCell>
-                              <TableCell className="py-3 px-4">
-                                {customForm?.content?.map((task, taskIndex) => (
-                                  <span key={taskIndex} className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs mr-1 mb-1">
-                                    {task.label}
-                                  </span>
-                                ))}
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={2} className="text-center text-gray-500 py-8">
-                              No asset mappings found
-                            </TableCell>
-                          </TableRow>
-                        )
-                      )}
-                    </TableBody>
-                  </Table>
+                  <EnhancedTable
+                    data={
+                      customForm?.sch_type === 'Service'
+                        ? (assetTask?.services || []).map((service, index) => ({
+                            rowId: `service-mapping-${index}`,
+                            name: service.service_name || 'N/A',
+                            tasks: customForm?.content || [],
+                          }))
+                        : (assetTask?.assets || []).map((asset, index) => ({
+                            rowId: `asset-mapping-${index}`,
+                            name: asset.name || asset.asset_name || 'N/A',
+                            tasks: customForm?.content || [],
+                          }))
+                    }
+                    columns={[
+                      {
+                        key: 'name',
+                        label: customForm?.sch_type === 'Service' ? 'Service Name' : 'Asset Name',
+                        sortable: true,
+                        hideable: false,
+                        defaultVisible: true,
+                      },
+                      { key: 'tasks', label: 'Tasks', sortable: false, hideable: false, defaultVisible: true },
+                    ]}
+                    renderCell={(item, columnKey) => {
+                      if (columnKey === 'tasks') {
+                        return (
+                          <>
+                            {(item.tasks as { label?: string }[]).map((task, taskIndex) => (
+                              <span
+                                key={taskIndex}
+                                className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs mr-1 mb-1"
+                              >
+                                {task.label}
+                              </span>
+                            ))}
+                          </>
+                        );
+                      }
+                      return item[columnKey as keyof typeof item] as React.ReactNode;
+                    }}
+                    storageKey="view-schedule-asset-mapping-table"
+                    hideTableSearch
+                    hideTableExport
+                    hideColumnsButton
+                    emptyMessage={
+                      customForm?.sch_type === 'Service'
+                        ? 'No service mappings found'
+                        : 'No asset mappings found'
+                    }
+                    getItemId={(item) => item.rowId}
+                  />
                 </div>
               </CardContent>
             </Card>

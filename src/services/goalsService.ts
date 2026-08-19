@@ -74,7 +74,8 @@ export interface KRAEvaluation {
 export const fetchGoals = async (): Promise<GoalsResponse> => {
   try {
     const token = localStorage.getItem("token");
-    const baseUrl = localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
+    const baseUrl =
+      localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
     const protocol = baseUrl.startsWith("http") ? "" : "https://";
 
     const response = await axios.get(
@@ -102,9 +103,9 @@ export const fetchKRAs = async (email: string): Promise<KRAEvaluation[]> => {
       }
     );
 
-    return response.data;
+    return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
     console.error("Failed to fetch KRAs:", error);
-    throw error;
+    return [];
   }
 };

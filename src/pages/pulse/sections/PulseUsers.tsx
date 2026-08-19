@@ -21,6 +21,7 @@ import {
   type UsersDetailsResponse,
   type PulseFilters,
 } from "@/services/pulseDashboardApi";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 const C = {
   green: "#798C5E",
@@ -51,10 +52,15 @@ interface Props {
 }
 
 export function PulseUsers({ filters }: Props) {
+  const pulseEvents = usePulseEvents();
   const [usersOverview, setUsersOverview] = useState<UsersOverview | null>(null);
   const [users, setUsers] = useState<UsersDetailsResponse | null>(null);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    pulseEvents.onUserListViewed();
+  }, [pulseEvents]);
 
   useEffect(() => {
     setPage(1);

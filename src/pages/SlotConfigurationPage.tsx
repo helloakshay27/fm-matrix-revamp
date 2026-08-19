@@ -1,16 +1,22 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
-import { Plus, Search, Edit, Upload } from 'lucide-react';
+import { Plus, Edit, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLayout } from '../contexts/LayoutContext';
-import { ColumnVisibilityDropdown } from '../components/ColumnVisibilityDropdown';
+import { EnhancedTable, ColumnGroup } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { SlotConfigBulkUploadModal } from '../components/SlotConfigBulkUploadModal';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { fetchParkingConfigurations, GroupedParkingConfiguration } from '../services/parkingConfigurationsAPI';
 import { fetchParkingCategories, ParkingCategory } from '../services/parkingConfigAPI';
+
+interface CategoryCounts {
+  totalParkings: number;
+  nonStackParkings: number;
+  stackParkings: number;
+  reservedParkings: number;
+}
 
 interface SlotConfigurationData {
   id: string;
@@ -19,20 +25,17 @@ interface SlotConfigurationData {
   location: string;
   floor: string;
   qrcode_needed: boolean;
-  twoWheeler: {
-    totalParkings: number;
-    nonStackParkings: number;
-    stackParkings: number;
-    reservedParkings: number;
-  };
-  fourWheeler: {
-    totalParkings: number;
-    nonStackParkings: number;
-    stackParkings: number;
-    reservedParkings: number;
-  };
+  categories: Record<number, CategoryCounts>;
   createdOn: string;
+  [key: string]: unknown;
 }
+
+const CATEGORY_COLUMN_TYPES: Array<{ suffix: string; label: string; countKey: keyof CategoryCounts }> = [
+  { suffix: 'total', label: 'Total Parkings', countKey: 'totalParkings' },
+  { suffix: 'nonstack', label: 'Non Stack Parkings', countKey: 'nonStackParkings' },
+  { suffix: 'stack', label: 'Stack Parkings', countKey: 'stackParkings' },
+  { suffix: 'reserved', label: 'Reserved Parkings', countKey: 'reservedParkings' },
+];
 
 export const SlotConfigurationPage = () => {
   const { shouldShow } = useDynamicPermissions();
@@ -41,60 +44,66 @@ export const SlotConfigurationPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [slotConfigurationData, setSlotConfigurationData] = useState<SlotConfigurationData[]>([]);
   const [parkingCategories, setParkingCategories] = useState<ParkingCategory[]>([]);
-  const [twoWheelerCategoryName, setTwoWheelerCategoryName] = useState('2 Wheeler');
-  const [fourWheelerCategoryName, setFourWheelerCategoryName] = useState('4 Wheeler');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
-  const [visibleColumns, setVisibleColumns] = useState({
-    actions: true,
-    location: true,
-    floor: true,
-    qrcode_needed: true,
-    twoWheelerTotal: true,
-    twoWheelerNonStack: true,
-    twoWheelerStack: true,
-    twoWheelerReserved: true,
-    fourWheelerTotal: true,
-    fourWheelerNonStack: true,
-    fourWheelerStack: true,
-    fourWheelerReserved: true
-  });
 
   const fetchParkingCategoriesData = useCallback(async () => {
     try {
       const categoriesData = await fetchParkingCategories();
       setParkingCategories(categoriesData);
-      console.log('Fetched parking categories:', categoriesData);
-      
-      // Find and set category names dynamically
-      const twoWheelerCategory = categoriesData.find(cat => 
-        cat.id === 5 || 
-        cat.name.toLowerCase().includes('2') ||
-        cat.name.toLowerCase().includes('two') ||
-        cat.name.toLowerCase().includes('wheeler')
-      );
-      const fourWheelerCategory = categoriesData.find(cat => 
-        cat.id === 6 || 
-        (cat.name.toLowerCase().includes('4') ||
-        cat.name.toLowerCase().includes('four') ||
-        cat.name.toLowerCase().includes('car')) &&
-        cat.id !== twoWheelerCategory?.id
-      );
-      
-      if (twoWheelerCategory) {
-        setTwoWheelerCategoryName(twoWheelerCategory.name);
-        console.log('Two Wheeler Category Name:', twoWheelerCategory.name);
-      }
-      if (fourWheelerCategory) {
-        setFourWheelerCategoryName(fourWheelerCategory.name);
-        console.log('Four Wheeler Category Name:', fourWheelerCategory.name);
-      }
-    } catch (error) {
-      console.error('Error fetching parking categories:', error);
+    } catch (err) {
+      console.error('Error fetching parking categories:', err);
       toast.error('Failed to fetch parking categories');
     }
   }, []);
+
+  const transformApiDataToTableData = useCallback(
+    (apiData: GroupedParkingConfiguration[]): SlotConfigurationData[] => {
+      const tableData: SlotConfigurationData[] = [];
+
+      apiData.forEach((group) => {
+        const categoriesData: Record<number, CategoryCounts> = {};
+
+        group.parking_configurations.forEach((config) => {
+          const nonStackCount = config.parking_numbers.filter((p) => !p.stacked && !p.reserved).length;
+          const stackCount = config.parking_numbers.filter((p) => p.stacked && !p.reserved).length;
+          const reservedCount = config.parking_numbers.filter((p) => p.reserved).length;
+          const totalCount = config.parking_numbers.length;
+
+          categoriesData[config.parking_category_id] = {
+            totalParkings: totalCount,
+            nonStackParkings: nonStackCount,
+            stackParkings: stackCount,
+            reservedParkings: reservedCount,
+          };
+        });
+
+        const row: SlotConfigurationData = {
+          id: `${group.building_id}-${group.floor_id}`,
+          building_id: parseInt(group.building_id),
+          floor_id: group.floor_id,
+          location: group.building_name,
+          floor: group.floor_name,
+          qrcode_needed: group.qrcode_needed === 'true' || group.qrcode_needed === true,
+          categories: categoriesData,
+          createdOn: new Date().toLocaleDateString(),
+        };
+
+        // Flatten category counts onto the row for EnhancedTable search/sort
+        Object.entries(categoriesData).forEach(([categoryId, counts]) => {
+          CATEGORY_COLUMN_TYPES.forEach(({ suffix, countKey }) => {
+            row[`cat_${categoryId}_${suffix}`] = counts[countKey];
+          });
+        });
+
+        tableData.push(row);
+      });
+
+      return tableData;
+    },
+    []
+  );
 
   const fetchData = useCallback(async () => {
     try {
@@ -110,7 +119,7 @@ export const SlotConfigurationPage = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [transformApiDataToTableData]);
 
   useEffect(() => {
     setCurrentSection('Settings');
@@ -118,298 +127,161 @@ export const SlotConfigurationPage = () => {
     fetchData();
   }, [setCurrentSection, fetchData, fetchParkingCategoriesData]);
 
-  const transformApiDataToTableData = (apiData: GroupedParkingConfiguration[]): SlotConfigurationData[] => {
-    const tableData: SlotConfigurationData[] = [];
-    console.log('Transform API Data - Input:', apiData);
+  const columns: ColumnConfig[] = useMemo(() => {
+    const base: ColumnConfig[] = [
+      { key: 'location', label: 'Location', sortable: true, hideable: true, defaultVisible: true },
+      { key: 'floor', label: 'Floor', sortable: true, hideable: true, defaultVisible: true },
+      { key: 'qrcode_needed', label: 'QR Needed', sortable: true, hideable: true, defaultVisible: true },
+    ];
 
-    apiData.forEach((group) => {
-      // Initialize counters for 2W and 4W
-      let twoWheelerData = {
-        totalParkings: 0,
-        nonStackParkings: 0,
-        stackParkings: 0,
-        reservedParkings: 0
-      };
-      let fourWheelerData = {
-        totalParkings: 0,
-        nonStackParkings: 0,
-        stackParkings: 0,
-        reservedParkings: 0
-      };
+    const categoryCols: ColumnConfig[] = parkingCategories.flatMap((category) =>
+      CATEGORY_COLUMN_TYPES.map(({ suffix, label }) => ({
+        key: `cat_${category.id}_${suffix}`,
+        label,
+        sortable: true,
+        hideable: true,
+        defaultVisible: true,
+      }))
+    );
 
-      // Process each parking configuration
-      group.parking_configurations.forEach((config) => {
-        console.log('Processing config:', config.category_name, 'ID:', config.parking_category_id);
-        console.log('Config data:', {
-          no_of_parkings: config.no_of_parkings,
-          reserved_parkings: config.reserved_parkings,
-          unstacked_count: config.unstacked_count,
-          stacked_count: config.stacked_count,
-          parking_numbers_length: config.parking_numbers.length
-        });
-        
-        // Calculate actual counts from parking_numbers array
-        const nonStackCount = config.parking_numbers.filter(p => !p.stacked && !p.reserved).length;
-        const stackCount = config.parking_numbers.filter(p => p.stacked && !p.reserved).length;
-        const reservedCount = config.parking_numbers.filter(p => p.reserved).length;
-        const totalCount = config.parking_numbers.length;
-        
-        console.log('Calculated counts:', {
-          nonStack: nonStackCount,
-          stack: stackCount,
-          reserved: reservedCount,
-          total: totalCount
-        });
-        
-        // Use parking_category_id as primary matching criteria for reliability
-        if (config.parking_category_id === 5) {
-          console.log('Matched as Two Wheeler by ID:', config);
-          twoWheelerData = {
-            totalParkings: totalCount,
-            nonStackParkings: nonStackCount,
-            stackParkings: stackCount,
-            reservedParkings: reservedCount
-          };
-        } else if (config.parking_category_id === 6) {
-          console.log('Matched as Four Wheeler by ID:', config);
-          fourWheelerData = {
-            totalParkings: totalCount,
-            nonStackParkings: nonStackCount,
-            stackParkings: stackCount,
-            reservedParkings: reservedCount
-          };
-        } else {
-          // Fallback to name-based matching only if ID-based matching fails
-          if (config.category_name.toLowerCase().includes('2') ||
-              config.category_name.toLowerCase().includes('two') ||
-              config.category_name.toLowerCase().includes('wheeler') && 
-              !config.category_name.toLowerCase().includes('4') &&
-              !config.category_name.toLowerCase().includes('four')) {
-            console.log('Matched as Two Wheeler by name:', config);
-            twoWheelerData = {
-              totalParkings: totalCount,
-              nonStackParkings: nonStackCount,
-              stackParkings: stackCount,
-              reservedParkings: reservedCount
-            };
-          } else if (config.category_name.toLowerCase().includes('4') ||
-                     config.category_name.toLowerCase().includes('four') ||
-                     config.category_name.toLowerCase().includes('car')) {
-            console.log('Matched as Four Wheeler by name:', config);
-            fourWheelerData = {
-              totalParkings: totalCount,
-              nonStackParkings: nonStackCount,
-              stackParkings: stackCount,
-              reservedParkings: reservedCount
-            };
-          } else {
-            console.log('No match found for config:', config);
-          }
-        }
-      });
+    return [...base, ...categoryCols];
+  }, [parkingCategories]);
 
-      console.log('Final data for building/floor:', group.building_name, group.floor_name);
-      console.log('Two Wheeler Data:', twoWheelerData);
-      console.log('Four Wheeler Data:', fourWheelerData);
-
-      tableData.push({
-        id: `${group.building_id}-${group.floor_id}`, // Use building_id-floor_id as unique identifier for edit navigation
-        building_id: parseInt(group.building_id), // Store building_id for API calls
-        floor_id: group.floor_id, // Store floor_id for API calls
-        location: group.building_name,
-        floor: group.floor_name,
-        qrcode_needed: group.qrcode_needed === 'true' || group.qrcode_needed === true,
-        twoWheeler: twoWheelerData,
-        fourWheeler: fourWheelerData,
-        createdOn: new Date().toLocaleDateString() // API doesn't provide this, using current date
-      });
-    });
-
-    return tableData;
-  };
-
-  const filteredData = slotConfigurationData.filter(item =>
-    (item.location && item.location.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (item.floor && item.floor.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (item.id && item.id.toString().includes(searchTerm))
+  // One spanning group header per parking category, above its Total/Non-Stack/Stack/Reserved sub-columns.
+  const columnGroups: ColumnGroup[] = useMemo(
+    () =>
+      parkingCategories.map((category) => ({
+        label: category.name,
+        columnKeys: CATEGORY_COLUMN_TYPES.map(({ suffix }) => `cat_${category.id}_${suffix}`),
+      })),
+    [parkingCategories]
   );
 
   const handleEdit = (item: SlotConfigurationData) => {
-    // Navigate with building_id-floor_id format for the EditSlotConfigurationPage
-    // This will trigger the API call: /pms/manage/parking_configurations.json?q[building_id_eq]=123&q[floor_id_eq]=123
-    console.log('Navigating to edit with building_id:', item.building_id, 'floor_id:', item.floor_id);
-    navigate(`/settings/vas/parking-management/slot-configuration/edit/${item.building_id}-${item.floor_id}`);
+    navigate(
+      `/settings/vas/parking-management/slot-configuration/edit/${item.building_id}-${item.floor_id}`
+    );
   };
 
   const handleAdd = () => {
     navigate('/settings/vas/parking-management/slot-configuration/add');
   };
 
-  const handleBulkUpload = () => {
-    setIsBulkUploadOpen(true);
+  const renderCell = (item: SlotConfigurationData, columnKey: string) => {
+    if (columnKey === 'location') {
+      return <span className="font-medium">{item.location}</span>;
+    }
+    if (columnKey === 'floor') {
+      return item.floor;
+    }
+    if (columnKey === 'qrcode_needed') {
+      return (
+        <input
+          type="checkbox"
+          checked={item.qrcode_needed}
+          disabled
+          className="w-4 h-4 text-brand bg-gray-100 border-gray-300 rounded cursor-not-allowed"
+          aria-label="QR Needed"
+        />
+      );
+    }
+
+    if (columnKey.startsWith('cat_')) {
+      const value = (item[columnKey] as number | undefined) ?? 0;
+      const isReserved = columnKey.endsWith('_reserved');
+      return (
+        <span className={isReserved ? 'text-red-600 font-medium' : undefined}>{value}</span>
+      );
+    }
+
+    return (item[columnKey] as React.ReactNode) ?? '-';
   };
 
-  const handleBulkUploadClose = () => {
-    setIsBulkUploadOpen(false);
+  const renderActions = (item: SlotConfigurationData) => {
+    if (!shouldShow('Slot Configuration', 'update')) return null;
+
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8 w-8 p-0"
+        onClick={() => handleEdit(item)}
+        title="Edit"
+      >
+        <Edit className="w-4 h-4" />
+      </Button>
+    );
   };
 
-  const handleColumnToggle = (columnKey: string, visible: boolean) => {
-    setVisibleColumns(prev => ({
-      ...prev,
-      [columnKey]: visible
-    }));
-  };
+  const leftActions = shouldShow('Slot Configuration', 'create') ? (
+    <Button
+      onClick={handleAdd}
+      className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
+    >
+      <Plus className="w-4 h-4 mr-2" />
+      Add
+    </Button>
+  ) : null;
 
-  // Column definitions for visibility control
-  const columns = [
-    { key: 'actions', label: 'Actions', visible: visibleColumns.actions },
-    { key: 'location', label: 'Location', visible: visibleColumns.location },
-    { key: 'floor', label: 'Floor', visible: visibleColumns.floor },
-    { key: 'qrcode_needed', label: 'QR Code Needed', visible: visibleColumns.qrcode_needed },
-    { key: 'twoWheelerTotal', label: '2W Total Parkings', visible: visibleColumns.twoWheelerTotal },
-    { key: 'twoWheelerNonStack', label: '2W Non Stack', visible: visibleColumns.twoWheelerNonStack },
-    { key: 'twoWheelerStack', label: '2W Stack', visible: visibleColumns.twoWheelerStack },
-    { key: 'twoWheelerReserved', label: '2W Reserved', visible: visibleColumns.twoWheelerReserved },
-    { key: 'fourWheelerTotal', label: '4W Total Parkings', visible: visibleColumns.fourWheelerTotal },
-    { key: 'fourWheelerNonStack', label: '4W Non Stack', visible: visibleColumns.fourWheelerNonStack },
-    { key: 'fourWheelerStack', label: '4W Stack', visible: visibleColumns.fourWheelerStack },
-    { key: 'fourWheelerReserved', label: '4W Reserved', visible: visibleColumns.fourWheelerReserved }
-  ];
+  const filterAdjacentActions = (
+    <Button
+      onClick={() => setIsBulkUploadOpen(true)}
+      variant="outline"
+      size="icon"
+      className="!rounded-lg h-9 w-9 border border-brand text-brand hover:bg-brand-light"
+      title="Import"
+    >
+      <Upload className="w-4 h-4" />
+    </Button>
+  );
+
+  if (error) {
+    return (
+      <div className="p-6 min-h-screen">
+        <div className="flex justify-center items-center py-8 gap-4">
+          <div className="text-red-500">{error}</div>
+          <Button
+            onClick={fetchData}
+            className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
+          >
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 min-h-screen">
-      {/* Action Bar */}
-      <div className="flex items-center justify-between mb-6">
-        {shouldShow("Slot Configuration", "create") && (
-        <Button 
-          onClick={handleAdd}
-          className="bg-[#00B4D8] hover:bg-[#00B4D8]/90 text-white px-4 py-2"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add
-        </Button>
-        )}
+      <EnhancedTable
+        data={slotConfigurationData}
+        columns={columns}
+        columnGroups={columnGroups}
+        renderCell={renderCell}
+        renderActions={renderActions}
+        leftActions={leftActions}
+        filterAdjacentActions={filterAdjacentActions}
+        storageKey="slot-configuration-table"
+        emptyMessage={
+          searchTerm
+            ? 'No slot configurations found matching your search'
+            : 'No slot configurations found'
+        }
+        loading={loading}
+        loadingMessage="Loading..."
+        enableSearch
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search..."
+        hideTableExport
+        pagination
+        pageSize={10}
+        getItemId={(item) => item.id}
+      />
 
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <Input
-              placeholder="Search"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-80"
-            />
-          </div>
-          <Button 
-            onClick={handleBulkUpload}
-            variant="outline"
-            className="px-4 py-2 border-gray-300"
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Import
-          </Button>
-          <ColumnVisibilityDropdown
-            columns={columns}
-            onColumnToggle={handleColumnToggle}
-          />
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-lg border overflow-hidden">
-        {loading ? (
-          <div className="flex justify-center items-center py-8">
-            <div className="text-gray-500">Loading parking configurations...</div>
-          </div>
-        ) : error ? (
-          <div className="flex justify-center items-center py-8">
-            <div className="text-red-500">{error}</div>
-            <Button 
-              onClick={fetchData}
-              className="ml-4 bg-[#00B4D8] hover:bg-[#00B4D8]/90 text-white px-4 py-2"
-            >
-              Retry
-            </Button>
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-[#f6f4ee]">
-                {visibleColumns.actions && <TableHead className="text-center" rowSpan={2}>Actions</TableHead>}
-                {visibleColumns.location && <TableHead rowSpan={2}>Location</TableHead>}
-                {visibleColumns.floor && <TableHead rowSpan={2}>Floor</TableHead>}
-                {visibleColumns.qrcode_needed && <TableHead className="text-center" rowSpan={2}>QR<br/>Needed</TableHead>}
-                <TableHead className="text-center" colSpan={4}>{twoWheelerCategoryName}</TableHead>
-                <TableHead className="text-center" colSpan={4}>{fourWheelerCategoryName}</TableHead>
-              </TableRow>
-              <TableRow className="bg-[#f6f4ee]">
-                {visibleColumns.twoWheelerTotal && <TableHead className="text-center">Total<br/>Parkings</TableHead>}
-                {visibleColumns.twoWheelerNonStack && <TableHead className="text-center">Non Stack<br/>Parkings</TableHead>}
-                {visibleColumns.twoWheelerStack && <TableHead className="text-center">Stack<br/>Parkings</TableHead>}
-                {visibleColumns.twoWheelerReserved && <TableHead className="text-center text-red-600">Reserved<br/>Parkings</TableHead>}
-                {visibleColumns.fourWheelerTotal && <TableHead className="text-center">Total<br/>Parkings</TableHead>}
-                {visibleColumns.fourWheelerNonStack && <TableHead className="text-center">Non Stack<br/>Parkings</TableHead>}
-                {visibleColumns.fourWheelerStack && <TableHead className="text-center">Stack<br/>Parkings</TableHead>}
-                {visibleColumns.fourWheelerReserved && <TableHead className="text-center text-red-600">Reserved<br/>Parkings</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredData.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={12} className="text-center py-8 text-gray-500">
-                    No parking configurations found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredData.map((item) => (
-                  <TableRow key={item.id} className="hover:bg-gray-50">
-                    {visibleColumns.actions && (
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          {shouldShow("Slot Configuration", "update") && (
-                          <button
-                            onClick={() => handleEdit(item)}
-                            className="p-1 hover:bg-gray-100 rounded"
-                            title="Edit"
-                          >
-                            <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                          </button>
-                          )}
-                        </div>
-                      </TableCell>
-                    )}
-                    {visibleColumns.location && <TableCell className="font-medium">{item.location}</TableCell>}
-                    {visibleColumns.floor && <TableCell>{item.floor}</TableCell>}
-                    {visibleColumns.qrcode_needed && (
-                      <TableCell className="text-center">
-                        <input
-                          type="checkbox"
-                          checked={item.qrcode_needed}
-                          disabled
-                          className="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded cursor-not-allowed"
-                        />
-                      </TableCell>
-                    )}
-                    {visibleColumns.twoWheelerTotal && <TableCell className="text-center">{item.twoWheeler.totalParkings}</TableCell>}
-                    {visibleColumns.twoWheelerNonStack && <TableCell className="text-center">{item.twoWheeler.nonStackParkings}</TableCell>}
-                    {visibleColumns.twoWheelerStack && <TableCell className="text-center">{item.twoWheeler.stackParkings}</TableCell>}
-                    {visibleColumns.twoWheelerReserved && <TableCell className="text-center text-red-600">{item.twoWheeler.reservedParkings}</TableCell>}
-                    {visibleColumns.fourWheelerTotal && <TableCell className="text-center">{item.fourWheeler.totalParkings}</TableCell>}
-                    {visibleColumns.fourWheelerNonStack && <TableCell className="text-center">{item.fourWheeler.nonStackParkings}</TableCell>}
-                    {visibleColumns.fourWheelerStack && <TableCell className="text-center">{item.fourWheeler.stackParkings}</TableCell>}
-                    {visibleColumns.fourWheelerReserved && <TableCell className="text-center text-red-600">{item.fourWheeler.reservedParkings}</TableCell>}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        )}
-      </div>
-
-      {/* Bulk Upload Modal */}
-      <SlotConfigBulkUploadModal 
-        isOpen={isBulkUploadOpen} 
-        onClose={handleBulkUploadClose} 
+      <SlotConfigBulkUploadModal
+        isOpen={isBulkUploadOpen}
+        onClose={() => setIsBulkUploadOpen(false)}
       />
     </div>
   );

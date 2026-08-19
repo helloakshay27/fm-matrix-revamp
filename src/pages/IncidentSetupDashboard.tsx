@@ -1,11 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Edit, Trash2 } from 'lucide-react';
 import { TextField, Select as MuiSelect, MenuItem, FormControl, InputLabel, Chip, OutlinedInput, Box } from '@mui/material';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import {
+  IncidentSetupFilterDialog,
+  type IncidentSetupFilters,
+} from '@/components/IncidentSetupFilterDialog';
 
 export const IncidentSetupDashboard = () => {
   // Get baseUrl and token from localStorage, ensure baseUrl starts with https://
@@ -46,6 +51,9 @@ export const IncidentSetupDashboard = () => {
   // Track selected Sub Sub Category (id) for creating Sub Sub Sub Category
   const [selectedSubSubCategory, setSelectedSubSubCategory] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [tableSearchTerm, setTableSearchTerm] = useState('');
+  const [showTableFilters, setShowTableFilters] = useState(false);
+  const [tableFilters, setTableFilters] = useState<IncidentSetupFilters>({ name: '' });
   const [editingItem, setEditingItem] = useState(null);
   const [editFormData, setEditFormData] = useState({
     category: '',
@@ -2013,6 +2021,252 @@ export const IncidentSetupDashboard = () => {
   };
 
 
+  const incidentTableColumns = useMemo((): ColumnConfig[] => {
+    switch (selectedCategory) {
+      case 'Secondary Sub Category':
+        return [
+          { key: 'secondaryCategory', label: 'Secondary Category', sortable: true, defaultVisible: true },
+          { key: 'secondarySubCategory', label: 'Secondary Sub Category', sortable: true, defaultVisible: true },
+        ];
+      case 'Secondary Sub Sub Category':
+        return [
+          { key: 'secondaryCategory', label: 'Secondary Category', sortable: true, defaultVisible: true },
+          { key: 'secondarySubCategory', label: 'Secondary Sub Category', sortable: true, defaultVisible: true },
+          { key: 'secondarySubSubCategory', label: 'Secondary Sub Sub Category', sortable: true, defaultVisible: true },
+        ];
+      case 'Secondary Sub Sub Sub Category':
+        return [
+          { key: 'secondaryCategory', label: 'Secondary Category', sortable: true, defaultVisible: true },
+          { key: 'secondarySubCategory', label: 'Secondary Sub Category', sortable: true, defaultVisible: true },
+          { key: 'secondarySubSubCategory', label: 'Secondary Sub Sub Category', sortable: true, defaultVisible: true },
+          { key: 'secondarySubSubSubCategory', label: 'Secondary Sub Sub Sub Category', sortable: true, defaultVisible: true },
+        ];
+      case 'Escalations':
+        return [
+          { key: 'name', label: 'Level', sortable: true, defaultVisible: true },
+          { key: 'after_days', label: 'Escalate In Days', sortable: true, defaultVisible: true },
+          { key: 'escalate_to_users', label: 'Escalate To Users', sortable: false, defaultVisible: true },
+        ];
+      case 'Sub Sub Sub Category':
+        return [
+          { key: 'category', label: 'Category', sortable: true, defaultVisible: true },
+          { key: 'subCategory', label: 'Sub Category', sortable: true, defaultVisible: true },
+          { key: 'subSubCategory', label: 'Sub Sub Category', sortable: true, defaultVisible: true },
+          { key: 'subSubSubCategory', label: 'Sub Sub Sub Category', sortable: true, defaultVisible: true },
+        ];
+      case 'Sub Sub Category':
+        return [
+          { key: 'category', label: 'Category', sortable: true, defaultVisible: true },
+          { key: 'subCategory', label: 'Sub Category', sortable: true, defaultVisible: true },
+          { key: 'subSubCategory', label: 'Sub Sub Category', sortable: true, defaultVisible: true },
+        ];
+      case 'Sub Category':
+        return [
+          { key: 'category', label: 'Category', sortable: true, defaultVisible: true },
+          { key: 'subCategory', label: 'Sub Category', sortable: true, defaultVisible: true },
+        ];
+      case 'Incidence level':
+        return [
+          { key: 'name', label: 'Name', sortable: true, defaultVisible: true },
+          { key: 'color', label: 'Color', sortable: false, defaultVisible: true },
+        ];
+      case 'Category':
+        return [
+          { key: 'name', label: 'Name', sortable: true, defaultVisible: true },
+          { key: 'icon', label: 'Icon', sortable: false, defaultVisible: true },
+        ];
+      default:
+        return [
+          { key: 'name', label: 'Name', sortable: true, defaultVisible: true },
+        ];
+    }
+  }, [selectedCategory]);
+
+  const incidentTableData = useMemo(() => {
+    let rows: any[] = [];
+    switch (selectedCategory) {
+      case 'Secondary Sub Category':
+        rows = secondarySubCategories;
+        break;
+      case 'Secondary Sub Sub Category':
+        rows = secondarySubSubCategories;
+        break;
+      case 'Secondary Sub Sub Sub Category':
+        rows = secondarySubSubSubCategories;
+        break;
+      case 'Who got injured':
+        rows = whoGotInjured;
+        break;
+      case 'Property Damage Category':
+        rows = propertyDamageCategories;
+        break;
+      case 'RCA Category':
+        rows = rcaCategories;
+        break;
+      case 'Substandard Act':
+        rows = substandardActCategories;
+        break;
+      case 'Substandard Condition':
+        rows = substandardConditionCategories;
+        break;
+      case 'Preventive Action':
+        rows = preventiveActions;
+        break;
+      case 'Corrective Action':
+        rows = correctiveActions;
+        break;
+      case 'Escalations':
+        rows = escalationMatrix;
+        break;
+      case 'Secondary Category':
+        rows = secondaryCategories;
+        break;
+      case 'Incidence level':
+        rows = incidenceLevels;
+        break;
+      case 'Incidence status':
+        rows = incidenceStatuses;
+        break;
+      case 'Sub Sub Sub Category':
+        rows = subSubSubCategories;
+        break;
+      case 'Sub Sub Category':
+        rows = subSubCategories.map((item) => ({
+          ...item,
+          category:
+            subCategories.find((s) => String(s.id) === String(item.subCategoryId))?.category ||
+            item.subCategoryName ||
+            '',
+        }));
+        break;
+      case 'Sub Category':
+        rows = subCategories;
+        break;
+      case 'Category':
+      default:
+        rows = categories;
+        break;
+    }
+
+    const q = tableSearchTerm.trim().toLowerCase();
+    const nameFilter = tableFilters.name.trim().toLowerCase();
+
+    return rows.filter((item) => {
+      const searchable = Object.values(item || {})
+        .flatMap((v) => {
+          if (v == null) return [];
+          if (typeof v === 'string' || typeof v === 'number') return [String(v)];
+          if (Array.isArray(v)) return v.map((x) => String(x));
+          return [];
+        })
+        .join(' ')
+        .toLowerCase();
+
+      if (nameFilter && !searchable.includes(nameFilter)) return false;
+      if (q && !searchable.includes(q)) return false;
+      return true;
+    });
+  }, [
+    selectedCategory,
+    categories,
+    subCategories,
+    subSubCategories,
+    subSubSubCategories,
+    secondaryCategories,
+    secondarySubCategories,
+    secondarySubSubCategories,
+    secondarySubSubSubCategories,
+    whoGotInjured,
+    propertyDamageCategories,
+    rcaCategories,
+    substandardActCategories,
+    substandardConditionCategories,
+    preventiveActions,
+    correctiveActions,
+    escalationMatrix,
+    incidenceLevels,
+    incidenceStatuses,
+    tableSearchTerm,
+    tableFilters,
+  ]);
+
+  const renderIncidentCell = (item: any, columnKey: string) => {
+    switch (columnKey) {
+      case 'icon':
+        return item.icon_url ? (
+          <img
+            src={item.icon_url}
+            alt="icon"
+            className="h-8 w-8 object-cover rounded border"
+          />
+        ) : (
+          <span className="text-gray-400 text-xs">No icon</span>
+        );
+      case 'color':
+        return (
+          <div className="flex items-center gap-2">
+            <div
+              style={{ backgroundColor: item.color_code || '#000000' }}
+              className="w-8 h-8 rounded border border-gray-300"
+            />
+            <span className="text-sm text-gray-600">
+              {item.color_code || '#000000'}
+            </span>
+          </div>
+        );
+      case 'escalate_to_users':
+        return (
+          <div className="flex flex-wrap gap-1 max-w-xs">
+            {item.escalate_to_users && item.escalate_to_users.length > 0 ? (
+              item.escalate_to_users.map((user: any, index: number) => (
+                <span
+                  key={index}
+                  className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-xs"
+                >
+                  {`${user[0]} ${user[1]}`}
+                </span>
+              ))
+            ) : (
+              <span className="text-gray-400">No users assigned</span>
+            )}
+          </div>
+        );
+      case 'after_days':
+        return item.after_days ?? '-';
+      case 'name':
+        return item.name ?? '-';
+      default:
+        return item[columnKey] ?? '-';
+    }
+  };
+
+  const renderIncidentActions = (item: any) => (
+    <div className="flex items-center justify-center gap-1">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8 w-8 p-0 text-brand hover:bg-brand-selected"
+        onClick={() => handleEdit(item, selectedCategory)}
+        title="Edit"
+      >
+        <Edit className="w-4 h-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8 w-8 p-0 text-black hover:bg-black/10"
+        onClick={() =>
+          selectedCategory === 'Escalations'
+            ? handleDeleteEscalation(item)
+            : handleDelete(item, selectedCategory)
+        }
+        title="Delete"
+      >
+        <Trash2 className="w-4 h-4" />
+      </Button>
+    </div>
+  );
+
   return (
     <div className="flex-1 p-6 bg-white min-h-screen">
       <h1 className="text-2xl font-semibold text-gray-900 mb-8">Incidents Setup</h1>
@@ -2023,7 +2277,11 @@ export const IncidentSetupDashboard = () => {
             {menuItems.map(item => (
               <div
                 key={item}
-                onClick={() => setSelectedCategory(item)}
+                onClick={() => {
+                  setSelectedCategory(item);
+                  setTableSearchTerm('');
+                  setTableFilters({ name: '' });
+                }}
                 className={`px-4 py-3 rounded-lg font-medium cursor-pointer transition-colors ${selectedCategory === item ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-700 hover:bg-white/50'
                   }`}
               >
@@ -2181,7 +2439,9 @@ export const IncidentSetupDashboard = () => {
                   </div>
 
                   <div className="flex gap-3 pt-2">
-                    <Button onClick={handleEditEsclation} className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2">
+                    <Button onClick={handleEditEsclation} 
+                    className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost">
                       Submit
                     </Button>
                     <Button onClick={handleEditBack} variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2">
@@ -2977,427 +3237,45 @@ export const IncidentSetupDashboard = () => {
                       />
                     </div>
                   )}
-                  <Button onClick={handleSubmit} className="bg-purple-600 hover:bg-purple-700 text-white px-8">
+                  <Button onClick={handleSubmit} className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost">
                     {selectedCategory === 'Approval Setup' && existingApprovalSetupId ? 'Update' : 'Submit'}
                   </Button>
                 </div>
               </div>
 
               {selectedCategory !== 'Approval Setup' && (
-                <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-[#f6f4ee] border-b border-[#D5DbDB]">
-                          {selectedCategory === 'Secondary Sub Category' ? (
-                            <>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Category</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Category</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                            </>
-                          ) : selectedCategory === 'Secondary Sub Sub Category' ? (
-                            <>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Category</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Category</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Sub Category</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                            </>
-                          ) : selectedCategory === 'Secondary Sub Sub Sub Category' ? (
-                            <>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Category</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Category</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Sub Category</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Sub Sub Category</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                            </>
-                          ) : selectedCategory === 'Who got injured' ? (
-                            <>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                            </>
-                          ) : selectedCategory === 'Property Damage Category' ? (
-                            <>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                            </>
-                          ) : selectedCategory === 'RCA Category' ? (
-                            <>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                            </>
-                          ) : selectedCategory === 'Substandard Act' ? (
-                            <>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                            </>
-                          ) : selectedCategory === 'Substandard Condition' ? (
-                            <>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                            </>
-                          ) : selectedCategory === 'Approval Setup' ? (
-                            <>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Users</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                            </>
-                          ) : selectedCategory === 'Escalations' ? (
-                            <>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Level</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Escalate In Days</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Escalate To Users</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                            </>
-                          ) : selectedCategory === 'Sub Sub Sub Category' ? (
-                            <>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Category</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Category</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Sub Category</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Sub Sub Category</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                            </>
-                          ) : selectedCategory === 'Sub Sub Category' ? (
-                            <>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Category</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Category</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Sub Category</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                            </>
-                          ) : selectedCategory === 'Sub Category' ? (
-                            <>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Category</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Category</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                            </>
-                          ) : selectedCategory === 'Incidence level' ? (
-                            <>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Color</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                            </>
-                          ) : (
-                            <>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Icon</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                            </>
-                          )}
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {selectedCategory === 'Secondary Sub Category' ? secondarySubCategories.map(secondarySub => (
-                          <TableRow key={secondarySub.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{secondarySub.secondaryCategory}</TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">{secondarySub.secondarySubCategory}</TableCell>
-                            <TableCell className="px-4 py-3">
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(secondarySub, 'Secondary Sub Category')}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(secondarySub, 'Secondary Sub Category')}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )) : selectedCategory === 'Secondary Sub Sub Category' ? secondarySubSubCategories.map(item => (
-                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.secondaryCategory}</TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubCategory}</TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubCategory}</TableCell>
-                            <TableCell className="px-4 py-3">
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Secondary Sub Sub Category')}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Secondary Sub Sub Category')}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )) : selectedCategory === 'Secondary Sub Sub Sub Category' ? secondarySubSubSubCategories.map(item => (
-                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.secondaryCategory}</TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubCategory}</TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubCategory}</TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubSubCategory}</TableCell>
-                            <TableCell className="px-4 py-3">
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Secondary Sub Sub Sub Category')}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Secondary Sub Sub Sub Category')}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )) : selectedCategory === 'Who got injured' ? whoGotInjured.map(item => (
-                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
-                            <TableCell className="px-4 py-3">
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Who got injured')}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Who got injured')}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )) : selectedCategory === 'Property Damage Category' ? propertyDamageCategories.map(item => (
-                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
-                            <TableCell className="px-4 py-3">
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Property Damage Category')}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Property Damage Category')}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )) : selectedCategory === 'RCA Category' ? rcaCategories.map(item => (
-                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
-                            <TableCell className="px-4 py-3">
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'RCA Category')}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'RCA Category')}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )) : selectedCategory === 'Substandard Act' ? substandardActCategories.map(item => (
-                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
-                            <TableCell className="px-4 py-3">
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Substandard Act')}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Substandard Act')}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )) : selectedCategory === 'Substandard Condition' ? substandardConditionCategories.map(item => (
-                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
-                            <TableCell className="px-4 py-3">
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Substandard Condition')}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Substandard Condition')}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )) : selectedCategory === 'Preventive Action' ? preventiveActions.map(item => (
-                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
-                            <TableCell className="px-4 py-3">
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Preventive Action')}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Preventive Action')}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )) : selectedCategory === 'Corrective Action' ? correctiveActions.map(item => (
-                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
-                            <TableCell className="px-4 py-3">
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Corrective Action')}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Corrective Action')}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-
-
-                        )) : selectedCategory === 'Approval Setup' ? approvalSetups.map(approval => (
-                          <TableRow key={approval.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{approval.users}</TableCell>
-                            <TableCell className="px-4 py-3">
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(approval, 'Approval Setup')}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(approval, 'Approval Setup')}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )) : selectedCategory === 'Escalations' ? escalationMatrix.map(escalation => (
-                          <TableRow key={escalation.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{escalation.name}</TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">{escalation.after_days}</TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600 max-w-xs">
-                              <div className="flex flex-wrap gap-1">
-                                {escalation.escalate_to_users && escalation.escalate_to_users.length > 0 ? escalation.escalate_to_users.map((user, index) => (
-                                  <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-xs">
-                                    {`${user[0]} ${user[1]}`}
-                                  </span>
-                                )) : (
-                                  <span className="text-gray-400">No users assigned</span>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell className="px-4 py-3">
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(escalation, 'Escalations')}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDeleteEscalation(escalation)}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )) : selectedCategory === 'Secondary Category' ? secondaryCategories.map(secondary => (
-                          <TableRow key={secondary.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{secondary.name}</TableCell>
-                            <TableCell className="px-4 py-3">
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(secondary, 'Secondary Category')}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(secondary, 'Secondary Category')}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )) : selectedCategory === 'Incidence level' ? incidenceLevels.map(level => (
-                          <TableRow key={level.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{level.name}</TableCell>
-                            <TableCell className="px-4 py-3">
-                              <div className="flex items-center gap-2">
-                                <div
-                                  style={{ backgroundColor: level.color_code || '#000000' }}
-                                  className="w-8 h-8 rounded border border-gray-300"
-                                />
-                                <span className="text-sm text-gray-600">{level.color_code || '#000000'}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="px-4 py-3">
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(level, 'Incidence level')}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(level, 'Incidence level')}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )) : selectedCategory === 'Incidence status' ? incidenceStatuses.map(status => (
-                          <TableRow key={status.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{status.name}</TableCell>
-                            <TableCell className="px-4 py-3">
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(status, 'Incidence status')}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(status, 'Incidence status')}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )) : selectedCategory === 'Sub Sub Sub Category' ? subSubSubCategories.map(item => (
-                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.category}</TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subCategory}</TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subSubCategory}</TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subSubSubCategory}</TableCell>
-                            <TableCell className="px-4 py-3">
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Sub Sub Sub Category')}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Sub Sub Sub Category')}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )) : selectedCategory === 'Sub Sub Category' ? subSubCategories.map(item => (
-                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">
-                              {subCategories.find(s => String(s.id) === String(item.subCategoryId))?.category || item.subCategoryName || ''}
-                            </TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subCategory}</TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subSubCategory}</TableCell>
-                            <TableCell className="px-4 py-3">
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Sub Sub Category')}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Sub Sub Category')}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )) : selectedCategory === 'Sub Category' ? subCategories.map(item => (
-                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.category}</TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subCategory}</TableCell>
-                            <TableCell className="px-4 py-3">
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Sub Category')}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Sub Category')}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )) : categories.map(category => (
-                          <TableRow key={category.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{category.name}</TableCell>
-                            <TableCell className="px-4 py-3">
-                              {category.icon_url
-                                ? <img src={category.icon_url} alt="icon" className="h-8 w-8 object-cover rounded border" />
-                                : <span className="text-gray-400 text-xs">No icon</span>
-                              }
-                            </TableCell>
-                            <TableCell className="px-4 py-3">
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(category, 'Category')}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(category, 'Category')}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
+                <>
+                  <EnhancedTable
+                    data={incidentTableData}
+                    columns={incidentTableColumns}
+                    renderCell={renderIncidentCell}
+                    renderActions={renderIncidentActions}
+                    storageKey={`incident-setup-${selectedCategory}`}
+                    emptyMessage={
+                      tableSearchTerm || tableFilters.name
+                        ? 'No records found matching your search'
+                        : 'No records found'
+                    }
+                    enableSearch
+                    searchTerm={tableSearchTerm}
+                    onSearchChange={setTableSearchTerm}
+                    searchPlaceholder="Search..."
+                    disableClientSearch
+                    onFilterClick={() => setShowTableFilters(true)}
+                    hideTableExport
+                    pagination
+                    pageSize={10}
+                    getItemId={(item) => String(item.id)}
+                  />
+                  <IncidentSetupFilterDialog
+                    isOpen={showTableFilters}
+                    onClose={() => setShowTableFilters(false)}
+                    filters={tableFilters}
+                    onApplyFilters={setTableFilters}
+                    onResetFilters={() => setTableFilters({ name: '' })}
+                  />
+                </>
               )}
             </>
           )}

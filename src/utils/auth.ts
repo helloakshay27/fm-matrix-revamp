@@ -88,6 +88,9 @@ export interface Organization {
   };
   backend_url?: string;
   backend_domain?: string;
+  // The API sends this as a JSON object, but some endpoints return it as a
+  // stringified blob — `savePatmBcLinked` handles both.
+  other_config?: Record<string, any> | string | null;
 }
 
 // Local storage keys
@@ -97,7 +100,31 @@ export const AUTH_KEYS = {
   TEMP_PHONE: "temp_phone",
   TEMP_EMAIL: "temp_email",
   BASE_URL: "baseUrl",
+  PATM_BC_LINKED: "patm_bc_linked",
 } as const;
+
+// ── PATM ↔ Business Compass linkage flag ──
+// Persisted at organization-select time so feature gating does not need to
+// re-fetch the organization. Always written as the string "true" / "false" so a
+// missing key can be told apart from an explicit false.
+export const savePatmBcLinked = (org: Organization | null | undefined): boolean => {
+  let config: any = org?.other_config ?? null;
+  if (typeof config === "string") {
+    try {
+      config = JSON.parse(config);
+    } catch {
+      config = null;
+    }
+  }
+  const raw = config?.patm_bc_linked;
+  // The API sends "true"/"false" as strings; accept real booleans too.
+  const linked = raw === true || String(raw).toLowerCase() === "true";
+  localStorage.setItem(AUTH_KEYS.PATM_BC_LINKED, String(linked));
+  return linked;
+};
+
+export const isPatmBcLinked = (): boolean =>
+  localStorage.getItem(AUTH_KEYS.PATM_BC_LINKED) === "true";
 
 // Save user data to localStorage
 export const saveUser = (user: User): void => {
@@ -241,12 +268,12 @@ const isViSite =
   hostname.includes("vi-web.gophygital.work") ||
   hostname.includes("web.gophygital.work") ||
   hostname.includes("lockated.gophygital.work") ||
-  hostname.includes("community.gophygital.work")
+  hostname.includes("community.gophygital.work") ;
+
 const isFmSite =
   hostname === "fm-uat.gophygital.work" ||
   hostname === "fm.gophygital.work" ||
-  hostname === "fm-matrix.lockated.com" ||
-  hostname === "localhost";
+  hostname === "fm-matrix.lockated.com"|| hostname === "localhost"
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
@@ -396,9 +423,9 @@ export const getOrganizationsByEmail = async (
 // Asset module access restrictions for specific users
 const ASSET_RESTRICTED_EMAILS = [
   "reception1@gmail.com",
-  "reception.pune@zycus.com",
-  "reception.blr@zycus.com",
-  "Reception@zycusitis.onmicrosoft.com",
+  // "reception.pune@zycus.com",
+  // "reception.blr@zycus.com",
+  // "Reception@zycusitis.onmicrosoft.com",
 ].map((email) => email.toLowerCase());
 
 export const isAssetRestrictedUser = (

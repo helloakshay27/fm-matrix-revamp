@@ -44,6 +44,15 @@ export const SelectionPanel: React.FC<SelectionPanelProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+
+      // Don't treat clicking a row checkbox (or its table cell) as "outside" —
+      // otherwise every additional row selected first wipes the previous ones,
+      // making multi-select behave like single-select.
+      if (target.closest('[role="checkbox"], [data-checkbox]')) {
+        return;
+      }
+
       if (
         panelRef.current &&
         !panelRef.current.contains(event.target as Node)

@@ -5,6 +5,7 @@ import { useLayout } from '@/contexts/LayoutContext';
 import { useNavigate } from 'react-router-dom';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 interface PermitChecklist {
     id: number;
@@ -18,6 +19,7 @@ interface PermitChecklist {
 export const PermitChecklistList = () => {
     const { setCurrentSection } = useLayout();
     const navigate = useNavigate();
+    const { shouldShow } = useDynamicPermissions();
 
     React.useEffect(() => {
         setCurrentSection('Safety');
@@ -96,35 +98,6 @@ export const PermitChecklistList = () => {
         fetchChecklists();
     }, []);
 
-    if (isLoading) {
-        return (
-            <div className="p-6">
-                <div className="flex flex-col items-center justify-center min-h-[400px]">
-                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mb-4"></div>
-                    <p className="text-gray-600">Loading checklists...</p>
-                </div>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="p-6">
-                <div className="flex flex-col items-center justify-center min-h-[400px]">
-                    <div className="text-red-500 mb-4">
-                        <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                    <p className="text-gray-600 mb-4">{error}</p>
-                    <Button onClick={fetchChecklists} className="bg-purple-600 hover:bg-purple-700">
-                        Retry
-                    </Button>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div className="p-6">
             {/* Header */}
@@ -133,9 +106,20 @@ export const PermitChecklistList = () => {
 
             </div>
 
+            {error && (
+                <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+                    {error}
+                    <Button onClick={fetchChecklists} className="ml-3 bg-purple-600 hover:bg-purple-700">
+                        Retry
+                    </Button>
+                </div>
+            )}
+
             {/* Enhanced Table */}
             <EnhancedTable
                 data={checklists}
+                loading={isLoading}
+                loadingMessage="Loading..."
                 columns={[
                     {
                         key: 'sr_no',
@@ -173,14 +157,16 @@ export const PermitChecklistList = () => {
                     return <div className="text-center">{item[columnKey as keyof PermitChecklist]}</div>;
                 }}
                 renderActions={(item) => (
-                    <Button
-                        onClick={() => handleViewDetails(item.id)}
-                        variant="ghost"
-                        size="sm"
-                        className="p-2 hover:bg-gray-100"
-                    >
-                        <Eye className="h-4 w-4" />
-                    </Button>
+                    shouldShow("Permit Checklist", "show") && (
+                        <Button
+                            onClick={() => handleViewDetails(item.id)}
+                            variant="ghost"
+                            size="sm"
+                            className="p-2 hover:bg-gray-100"
+                        >
+                            <Eye className="h-4 w-4" />
+                        </Button>
+                    )
                 )}
                 enableSearch={true}
                 searchPlaceholder="Search checklists..."
@@ -189,13 +175,13 @@ export const PermitChecklistList = () => {
                 storageKey="permit-checklist-list"
                 enableExport={true}
                 exportFileName="permit-checklists"
-                leftActions={(<Button
+                leftActions={(shouldShow("Permit Checklist", "create") && (<Button
                     onClick={handleAddChecklist}
                     className="fm-button-fix fm-button-brand px-4 py-2"
                     variant="ghost"                >
                     <Plus className="h-4 w-4" />
                     Add Checklist
-                </Button>)}
+                </Button>))}
             />
         </div>
     );

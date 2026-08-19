@@ -6,6 +6,7 @@ import {
   fetchBookingDetails,
   getLogs,
 } from "@/store/slices/facilityBookingsSlice";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import { ArrowLeft, Logs, Receipt, Ticket } from "lucide-react";
 import { CustomTabs } from "@/components/CustomTabs";
 import { LogsTimeline } from "@/components/LogTimeline";
@@ -80,6 +81,16 @@ export const BookingDetailsPage = () => {
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
+  const pulseEvents = usePulseEvents();
+
+  useEffect(() => {
+    pulseEvents.onModuleViewed({
+      module: "Amenities",
+      package: "Pulse Privilege",
+      screen: "pulse_amenity_detail",
+      guard: true,
+    });
+  }, [pulseEvents]);
 
   const fetchDetails = async () => {
     try {

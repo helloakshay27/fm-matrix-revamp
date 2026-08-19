@@ -11,11 +11,11 @@ import {
   Select,
   MenuItem,
   SelectChangeEvent,
-  Button,
   Box,
   Grid,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { Button } from '@/components/ui/button';
 
 interface InventoryFilterDialogProps {
   open: boolean;
@@ -137,7 +137,16 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={() => onOpenChange(false)} maxWidth="md" fullWidth>
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <DialogTitle
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          fontSize: '1.125rem',
+          fontWeight: 600,
+          color: '#111827',
+        }}
+      >
         FILTER BY
         <IconButton size="small" onClick={() => onOpenChange(false)}>
           <CloseIcon fontSize="small" />
@@ -271,42 +280,15 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button
           onClick={handleApply}
-          sx={{
-            height: '45px',
-            backgroundColor: '#F7F3F0',
-            color: '#C72030',
-            // borderRadius: '6px',
-            textTransform: 'none',
-            fontWeight: 500,
-            fontSize: '16px',
-            padding: '0 20px',
-            boxShadow: 'none',
-            '&:hover': {
-              backgroundColor: '#eee7e3',
-              boxShadow: 'none',
-            },
-          }}
+          className="fm-button-fix fm-button-brand px-4 py-2"
         >
-          Apply
+          Apply Filters
         </Button>
 
         <Button
+          variant="outline"
           onClick={handleReset}
-          sx={{
-            height: '45px',
-            backgroundColor: '#F7F3F0',
-            color: '#C72030',
-            // borderRadius: '6px',
-            textTransform: 'none',
-            fontWeight: 500,
-            fontSize: '16px',
-            padding: '0 20px',
-            boxShadow: 'none',
-            '&:hover': {
-              backgroundColor: '#eee7e3',
-              boxShadow: 'none',
-            },
-          }}
+          className="border-brand text-brand hover:bg-brand-selected hover:text-brand"
         >
           Reset
         </Button>

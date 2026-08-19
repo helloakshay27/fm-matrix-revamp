@@ -1,13 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { TextField } from '@mui/material';
 import { X, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { editMoveInOutPurpose } from '@/services/moveInOutPurposeAPI';
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  backgroundColor: '#fff',
+  '& .MuiInputBase-input': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: '#ffffff',
+    '& fieldset': { borderColor: '#e5e7eb' },
+    '&:hover fieldset': { borderColor: '#C72030' },
+    '&.Mui-focused fieldset': { borderColor: '#C72030' },
+  },
+  '& .MuiInputLabel-root.Mui-focused': {
+    color: '#C72030',
+  },
+};
 
 interface MoveInOutData {
   id: string;
@@ -156,13 +172,13 @@ export const EditMoveInOutModal = ({ isOpen, onClose, moveInOutData, onUpdate }:
           {/* Multiple Move In/Out Purpose Input */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label>Enter move in/ out purpose <span className="text-red-500">*</span></Label>
+              <span className="text-sm font-medium text-gray-700">Purpose *</span>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={addPurpose}
-                className="text-primary border-primary hover:bg-primary/10"
+                className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030] h-8"
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Add
@@ -172,36 +188,23 @@ export const EditMoveInOutModal = ({ isOpen, onClose, moveInOutData, onUpdate }:
             <div className="space-y-3">
               {purposes.map((purpose, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <div className="flex-1">
-                    <TextField
-                      placeholder="Enter purpose"
-                      value={purpose}
-                      onChange={(e) => updatePurpose(index, e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      size="small"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '& fieldset': {
-                            borderColor: '#d1d5db',
-                          },
-                          '&:hover fieldset': {
-                            borderColor: '#C72030',
-                          },
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#C72030',
-                          },
-                        },
-                      }}
-                    />
-                  </div>
+                  <TextField
+                    label={`Purpose ${index + 1} *`}
+                    placeholder="Enter purpose"
+                    value={purpose}
+                    onChange={(e) => updatePurpose(index, e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
+                  />
                   {purposes.length > 1 && (
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       onClick={() => removePurpose(index)}
-                      className="text-destructive border-destructive hover:bg-destructive/10 flex-shrink-0"
+                      className="text-destructive border-destructive hover:bg-destructive/10 flex-shrink-0 h-10 w-10 p-0"
                     >
                       <X className="w-4 h-4" />
                     </Button>
@@ -226,7 +229,7 @@ export const EditMoveInOutModal = ({ isOpen, onClose, moveInOutData, onUpdate }:
         <div className="flex justify-center px-6 py-4 border-t border-gray-200">
           <Button
             onClick={handleSubmit}
-            className="bg-green-600 hover:bg-green-700 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-brand hover:bg-brand-hover text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={isSubmitting || purposes.every(p => !p.trim())}
           >
             {isSubmitting ? (

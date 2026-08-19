@@ -1,13 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { TextField } from '@mui/material';
 import { X, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { editVisitorComment } from '@/services/visitorCommentAPI';
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  backgroundColor: '#fff',
+  '& .MuiInputBase-input': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: '#ffffff',
+    '& fieldset': { borderColor: '#e5e7eb' },
+    '&:hover fieldset': { borderColor: '#C72030' },
+    '&.Mui-focused fieldset': { borderColor: '#C72030' },
+  },
+  '& .MuiInputLabel-root.Mui-focused': {
+    color: '#C72030',
+  },
+};
 
 interface VisitorCommentData {
   id: string;
@@ -156,13 +172,13 @@ export const EditVisitorCommentModal = ({ isOpen, onClose, commentData, onUpdate
           {/* Multiple Comment Input */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label>Comment</Label>
+              <span className="text-sm font-medium text-gray-700">Comment *</span>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={addComment}
-                className="text-primary border-primary hover:bg-primary/10"
+                className="border-[#C72030] text-[#C72030]  hover:text-[#C72030] h-8"
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Add
@@ -172,38 +188,23 @@ export const EditVisitorCommentModal = ({ isOpen, onClose, commentData, onUpdate
             <div className="space-y-3">
               {comments.map((comment, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <div className="flex-1">
-                    <TextField
-                      placeholder="Enter visitor comment"
-                      value={comment}
-                      onChange={(e) => updateComment(index, e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      multiline
-                      rows={2}
-                      size="small"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '& fieldset': {
-                            borderColor: '#d1d5db',
-                          },
-                          '&:hover fieldset': {
-                            borderColor: '#C72030',
-                          },
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#C72030',
-                          },
-                        },
-                      }}
-                    />
-                  </div>
+                  <TextField
+                    label={`Comment ${index + 1} *`}
+                    placeholder="Enter visitor comment"
+                    value={comment}
+                    onChange={(e) => updateComment(index, e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
+                  />
                   {comments.length > 1 && (
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       onClick={() => removeComment(index)}
-                      className="text-destructive border-destructive hover:bg-destructive/10 flex-shrink-0"
+                      className="text-destructive border-destructive hover:bg-destructive/10 flex-shrink-0 h-10 w-10 p-0"
                     >
                       <X className="w-4 h-4" />
                     </Button>
@@ -228,7 +229,7 @@ export const EditVisitorCommentModal = ({ isOpen, onClose, commentData, onUpdate
         <div className="flex justify-center px-6 py-4 border-t border-gray-200">
           <Button
             onClick={handleSubmit}
-            className="bg-green-600 hover:bg-green-700 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-brand hover:bg-brand-hover text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={isSubmitting || comments.every(c => !c.trim())}
           >
             {isSubmitting ? (

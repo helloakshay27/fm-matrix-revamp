@@ -1,15 +1,9 @@
 import React from "react";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
+import { getDocumentTemplateSettings } from "@/utils/documentTemplate";
 
-export const getAccountingPdfStatusStyle = (status) => {
-  const styles = {
-    draft: { backgroundColor: "#f3f4f6", color: "#1f2937", borderColor: "#e5e7eb" },
-    paid: { backgroundColor: "#dcfce7", color: "#166534", borderColor: "#bbf7d0" },
-    partial: { backgroundColor: "#fef9c3", color: "#854d0e", borderColor: "#fde68a" },
-    cancelled: { backgroundColor: "#fee2e2", color: "#991b1b", borderColor: "#fecaca" },
-  };
-
-  return styles[String(status || "").toLowerCase()] || styles.draft;
+export const getAccountingPdfStatusStyle = () => {
+  return { backgroundColor: "#f3f4f6", color: "#1f2937", borderColor: "#e5e7eb" };
 };
 
 const formatStatus = (status) => {
@@ -48,7 +42,10 @@ const PaymentReceivedPdf = ({
   const companyName =
     localStorage.getItem("companyName") || "Lockated";
 
+  const templateSettings = getDocumentTemplateSettings('payment_received');
+
   const companyAddress =
+    templateSettings.organizationAddress ||
     localStorage.getItem("companyAddress") ||
     "Pune Maharashtra 411006";
 
@@ -97,16 +94,19 @@ const PaymentReceivedPdf = ({
       >
         {/* Header */}
         <div className="relative border-b border-gray-400 p-6">
-          <div className="absolute top-0 left-0">
+          {/* <div className="absolute top-0 left-0">
             <div
-              className="bg-green-500 text-white text-[10px] px-8 py-1 rotate-[-45deg] translate-x-[-28px] translate-y-[18px]"
+              className="bg-gray-800 text-white text-[10px] px-8 py-1 rotate-[-45deg] translate-x-[-28px] translate-y-[18px]"
             >
               PAID
             </div>
-          </div>
+          </div> */}
 
           <div className="flex justify-between items-start">
             <div>
+              {templateSettings.logo && (
+                <img src={templateSettings.logo} alt="Logo" className="mb-2" style={{ maxHeight: "48px", maxWidth: "180px", objectFit: "contain" }} />
+              )}
               <h1 className="text-[22px] font-bold mb-2">
                 {companyName}
               </h1>
@@ -169,12 +169,12 @@ const PaymentReceivedPdf = ({
               </div>
             </div>
 
-            <div className="border border-green-300 bg-green-50 flex flex-col justify-center items-center p-4 h-fit">
+            <div className="border border-gray-300 bg-gray-50 flex flex-col justify-center items-center p-4 h-fit">
               <p className="text-[11px] text-gray-600 mb-2">
                 Amount Received
               </p>
 
-              <p className="text-[24px] font-bold text-green-700">
+              <p className="text-[24px] font-bold text-black">
                 {formatCurrency(totalAmount)}
               </p>
             </div>
@@ -189,7 +189,7 @@ const PaymentReceivedPdf = ({
                 Received From
               </p>
 
-              <p className="font-bold text-blue-700 mb-2">
+              <p className="font-bold mb-2">
                 {customer}
               </p>
 
@@ -202,9 +202,20 @@ const PaymentReceivedPdf = ({
 
             <div className="flex items-end justify-end">
               <div className="text-right">
-                <p className="font-bold mb-14">
+                <p className="font-bold mb-2">
                   For {companyName}
                 </p>
+
+                {templateSettings.signature ? (
+                  <img
+                    src={templateSettings.signature}
+                    alt="Signature"
+                    className="ml-auto mb-2"
+                    style={{ maxHeight: "50px", maxWidth: "170px", objectFit: "contain" }}
+                  />
+                ) : (
+                  <div className="mb-12" />
+                )}
 
                 <div className="border-t border-gray-500 w-[170px] pt-2 text-center font-bold">
                   Authorized Signature
@@ -245,7 +256,7 @@ const PaymentReceivedPdf = ({
               {invoices.length > 0 ? (
                 invoices.map((invoice, index) => (
                   <tr key={invoice.id || index}>
-                    <td className="border border-gray-300 p-2 text-blue-700">
+                    <td className="border border-gray-300 p-2">
                       {invoice.invoice_number ||
                         invoice.number ||
                         "-"}

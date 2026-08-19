@@ -1,24 +1,65 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   ArrowLeft,
-  Trash,
-  Package,
-  Calendar,
   Edit,
-  ChevronUp,
-  ChevronDown,
-  FileText,
-  LucideIcon,
+  Package,
+  User,
+  ShoppingBag,
+  History,
+  FileCheck,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table";
 import {
   fetchWasteGenerationById,
   WasteGeneration,
 } from "../services/wasteGenerationAPI";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { apiClient } from "@/utils/apiClient";
+
+interface BagRow {
+  id: string;
+  bagId: number;
+  category: string;
+  subCategory: string;
+  bagCount: number | string;
+  weight: string;
+}
+
+// Defensively pull a value out of a loosely-typed bag object by trying a list
+// of key-name patterns, since the API doesn't guarantee a fixed shape here.
+const extractBagField = (bagObj: Record<string, unknown>, patterns: RegExp[]): string | null => {
+  for (const key of Object.keys(bagObj)) {
+    if (patterns.some((p) => p.test(key))) {
+      const val = bagObj[key];
+      if (val !== null && val !== undefined && val !== "") return String(val);
+    }
+  }
+  return null;
+};
 
 export const WasteGenerationDetailsPage = () => {
   const { id } = useParams();
@@ -27,11 +68,13 @@ export const WasteGenerationDetailsPage = () => {
   const [wasteData, setWasteData] = useState<WasteGeneration | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("waste-details");
+  const [bagRows, setBagRows] = useState<BagRow[]>([]);
+  const [deletingBagRowId, setDeletingBagRowId] = useState<string | null>(null);
 
-  // Helper function to check if value has data
   const hasData = (value: string | number | null | undefined | object) => {
     if (typeof value === "object" && value !== null) {
-      return true; // Objects are considered to have data if they exist
+      return true;
     }
     return (
       value &&
@@ -43,37 +86,6 @@ export const WasteGenerationDetailsPage = () => {
     );
   };
 
-  // State for expandable sections - will be set dynamically based on data
-  const [expandedSections, setExpandedSections] = useState({
-    wasteDetails: false,
-    dateInfo: false,
-    notes: false,
-  });
-
-  useEffect(() => {
-    if (wasteData) {
-      setExpandedSections({
-        wasteDetails:
-          hasData(wasteData.location_details) ||
-          hasData(wasteData.vendor?.company_name) ||
-          hasData(wasteData.commodity?.category_name) ||
-          hasData(wasteData.category?.category_name),
-        dateInfo:
-          hasData(wasteData.wg_date) ||
-          hasData(wasteData.created_by?.full_name) ||
-          hasData(wasteData.created_at),
-        notes: false, // Can be expanded based on additional data
-      });
-    }
-  }, [wasteData]);
-
-  const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [section]: !prev[section],
-    }));
-  };
-
   useEffect(() => {
     const fetchWasteDetails = async () => {
       if (!id) return;
@@ -82,10 +94,58 @@ export const WasteGenerationDetailsPage = () => {
         setLoading(true);
         setError(null);
 
-        // Use the specific API endpoint for fetching single waste generation
         const wasteGeneration = await fetchWasteGenerationById(parseInt(id));
 
         setWasteData(wasteGeneration);
+
+        // Multi-category records (created via `waste_entries`) carry their bag
+        // breakdown per-entry in `categories`, each with its own category/commodity
+        // and unit of measure. Legacy single-category records instead carry one
+        // flat `waste_bag_details` list off the record itself.
+        let rows: BagRow[];
+        if (wasteGeneration.categories && wasteGeneration.categories.length > 0) {
+          rows = [];
+          let idx = 0;
+          for (const entry of wasteGeneration.categories) {
+            const category = entry.category?.category_name ?? "-";
+            const subCategory = entry.commodity?.category_name ?? "-";
+            const bagCount = entry.bag_counts ?? "-";
+            const uom = entry.uom ?? "";
+            for (const bag of entry.waste_bag_details || []) {
+              const weightVal = bag.field_value;
+              const weight =
+                weightVal !== null && weightVal !== undefined && weightVal !== "" && !isNaN(Number(weightVal))
+                  ? `${Number(weightVal)} ${uom}`.trim()
+                  : weightVal || "-";
+              rows.push({ id: `bag-${idx}`, bagId: bag.id, category, subCategory, bagCount, weight });
+              idx += 1;
+            }
+          }
+        } else {
+          rows = (wasteGeneration.waste_bag_details || []).map((bag: unknown, idx: number) => {
+            const bagObj = bag as Record<string, unknown>;
+            const category = extractBagField(bagObj, [/^category$/i, /category_name/i])
+              ?? wasteGeneration.category?.category_name
+              ?? "-";
+            const subCategory = extractBagField(bagObj, [/sub.?categ/i, /commodity/i])
+              ?? wasteGeneration.commodity?.category_name
+              ?? "-";
+            const weightVal = extractBagField(bagObj, [/value|weight/i]);
+            const weight =
+              weightVal !== null && !isNaN(Number(weightVal))
+                ? `${Number(weightVal)} kg`
+                : weightVal ?? "-";
+            return {
+              id: `bag-${idx}`,
+              bagId: Number(bagObj.id),
+              category,
+              subCategory,
+              bagCount: wasteGeneration.bag_counts ?? "-",
+              weight,
+            };
+          });
+        }
+        setBagRows(rows);
       } catch (err) {
         console.error("Error fetching waste generation details:", err);
         setError("Failed to fetch waste generation details");
@@ -98,7 +158,7 @@ export const WasteGenerationDetailsPage = () => {
   }, [id]);
 
   const handleBackToList = () => {
-    navigate("/maintenance/waste/generation"); // Navigate back to waste generation list
+    navigate("/maintenance/waste/generation");
   };
 
   const handleUpdate = () => {
@@ -110,15 +170,77 @@ export const WasteGenerationDetailsPage = () => {
     });
   };
 
-  const handleDelete = () => {
-    toast.info("Delete functionality not yet implemented.");
+  const handleCertificate = () => {
+    // TODO: wire this up to a real certificate-generation endpoint once the backend exposes one.
+    toast.info("Certificate generation is not yet available.");
   };
+
+  const handleDeleteBagRow = async (row: BagRow) => {
+    setDeletingBagRowId(row.id);
+    try {
+      await apiClient.post("/pms/waste_generations/deactivate_bag", {
+        id: row.bagId,
+      });
+      setBagRows((prev) => prev.filter((r) => r.id !== row.id));
+      toast.success("Bag entry removed.");
+    } catch (err) {
+      console.error("Error deactivating bag:", err);
+      toast.error("Failed to remove bag entry.");
+    } finally {
+      setDeletingBagRowId(null);
+    }
+  };
+
+  // Logs tab — a best-effort activity history built from real timestamps
+  // already on the record. There's no dedicated audit-log API yet, so this
+  // isn't a complete history, just what can be honestly derived today.
+  // Computed unconditionally (before the loading/error early returns below)
+  // so the hook order stays stable across renders.
+  const logEntries = useMemo(() => {
+    if (!wasteData) return [];
+    const dispatchApplicable = hasData(wasteData.vendor?.company_name);
+    const entries: { date: string; activity: string; performedBy: string; remarks: string }[] = [];
+    if (wasteData.wg_date) {
+      entries.push({
+        date: new Date(wasteData.wg_date).toLocaleString(),
+        activity: "Waste Generated",
+        performedBy: wasteData.user_name || wasteData.created_by?.full_name || "-",
+        remarks: wasteData.category?.category_name ? `Category: ${wasteData.category.category_name}` : "-",
+      });
+    }
+    if (wasteData.updated_at && wasteData.updated_at !== wasteData.created_at) {
+      entries.push({
+        date: new Date(wasteData.updated_at).toLocaleString(),
+        activity: "Record Updated",
+        performedBy: wasteData.created_by?.full_name || "-",
+        remarks: "-",
+      });
+    }
+    if (dispatchApplicable) {
+      entries.push({
+        date: new Date(wasteData.updated_at || wasteData.wg_date).toLocaleString(),
+        activity: `Dispatched to ${wasteData.vendor?.company_name}`,
+        performedBy: wasteData.created_by?.full_name || "-",
+        remarks: wasteData.waste_unit != null ? `${wasteData.waste_unit} KG` : "-",
+      });
+    }
+    if (wasteData.recycled_unit > 0) {
+      entries.push({
+        date: new Date(wasteData.updated_at || wasteData.wg_date).toLocaleString(),
+        activity: "Recycling Confirmed",
+        performedBy: "-",
+        remarks: `${wasteData.recycled_unit} KG recycled`,
+      });
+    }
+    return entries;
+  }, [wasteData]);
 
   if (loading) {
     return (
-      <div className="p-6 bg-white min-h-screen">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Loading waste generation details...</div>
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading waste generation details...</p>
         </div>
       </div>
     );
@@ -136,218 +258,373 @@ export const WasteGenerationDetailsPage = () => {
     );
   }
 
-  // Expandable Section Component - Removed, UI refactored inline
+  type Field = { label: string; value: string | number | null | undefined };
 
-  const InfoRow = ({
-    label,
-    value,
+  // Card shell matching TicketDetailsPage.tsx's card pattern: icon-badge
+  // header bar + bordered body.
+  const DetailCard = ({
+    icon: Icon,
+    title,
+    children,
   }: {
-    label: string;
-    value: string | number | null | undefined;
-  }) =>
-    hasData(value) && (
-      <div className="flex items-start">
-        <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
-          {label}
-        </span>
-        <span className="text-gray-500 mx-3">:</span>
-        <span
-          className="text-gray-900 font-semibold flex-1 break-words truncate max-w-full"
-          style={{
-            wordBreak: "break-word",
-            overflowWrap: "anywhere",
-            minWidth: 0,
-            display: "block",
-          }}
-          title={String(value)}
-        >
-          {String(value)}
-        </span>
+    icon: React.ElementType;
+    title: string;
+    children: React.ReactNode;
+  }) => (
+    <Card className="w-full bg-white rounded-lg shadow-sm border mb-6">
+      <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+          <Icon className="w-5 h-5 text-brand" />
+        </div>
+        <h3 className="text-lg font-semibold uppercase text-black">{title}</h3>
+      </div>
+      <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-4">
+        {children}
+      </div>
+    </Card>
+  );
+
+  // Renders a field list as two side-by-side columns, matching
+  // TicketDetailsPage.tsx's key/value row layout exactly.
+  const FieldColumns = ({ fields }: { fields: Field[] }) => {
+    const visible = fields.filter((f) => hasData(f.value));
+    if (visible.length === 0) {
+      return <p className="text-sm text-gray-500">No data available.</p>;
+    }
+    const midpoint = Math.ceil(visible.length / 2);
+    const colA = visible.slice(0, midpoint);
+    const colB = visible.slice(midpoint);
+    return (
+      <div className="flex flex-col sm:flex-row gap-10">
+        {[colA, colB].map((col, ci) => (
+          <div key={ci} className="flex flex-col gap-4 min-w-[280px] flex-1">
+            {col.map((field) => (
+              <div key={field.label} className="flex text-[14px] leading-snug min-w-0">
+                <div className="w-[180px] flex-shrink-0 text-[#6B6B6B] font-medium">
+                  {field.label}
+                </div>
+                <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
+                  {String(field.value)}
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
     );
+  };
+
+  const recycledPct =
+    wasteData.waste_unit > 0
+      ? `${Math.round((wasteData.recycled_unit / wasteData.waste_unit) * 100)}%`
+      : "0%";
+
+  const totalBagCount =
+    wasteData.categories && wasteData.categories.length > 0
+      ? wasteData.categories.reduce((sum, entry) => sum + (entry.bag_counts ?? 0), 0)
+      : wasteData.bag_counts;
+
+  // Same field set as the Waste Generation list page's columns
+  // (UtilityWasteGenerationDashboard.tsx), so this detail view shows
+  // everything the list shows for this record.
+  const wasteDetailsFields: Field[] = [
+    { label: "Generation ID", value: wasteData.id },
+    {
+      label: "Date & Time",
+      value: wasteData.wg_date
+        ? `${wasteData.wg_date.split("T")[0]}${wasteData.created_at ? ` ${new Date(wasteData.created_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}` : ""}`
+        : undefined,
+    },
+    { label: "Building", value: wasteData.building_name },
+    // No dedicated "floor" field on the record — Area is the closest/most
+    // granular location field the API returns.
+    { label: "Floor", value: wasteData.area_name || wasteData.wing_name },
+    { label: "Waste Category", value: wasteData.category?.category_name },
+    { label: "Total Bags", value: totalBagCount != null ? totalBagCount.toString() : undefined },
+    { label: "Quantity (Kg)", value: wasteData.waste_unit != null ? wasteData.waste_unit : undefined },
+    { label: "Quantity (Ltr)", value: undefined },
+    { label: "Recycle %", value: recycledPct },
+    { label: "Status", value: wasteData.status },
+    { label: "Device Id", value: wasteData.device_id != null ? wasteData.device_id.toString() : undefined },
+    { label: "Remarks", value: (wasteData as unknown as Record<string, unknown>).remarks as string | undefined },
+    { label: "Location", value: wasteData.location_details },
+    { label: "Operational Name", value: wasteData.operational_landlord?.category_name },
+    { label: "Agency Name", value: wasteData.agency_name },
+    { label: "Reference Number", value: wasteData.reference_number },
+  ];
+
+  // "Dispatch" info only exists on this record once it's been sent to a
+  // vendor — shown only when that data is actually present.
+  const dispatchApplicable = hasData(wasteData.vendor?.company_name);
+  const dispatchFields: Field[] = [
+    { label: "Vendor / Facility", value: wasteData.vendor?.company_name },
+    { label: "Status", value: wasteData.status },
+    { label: "Dispatch Weight (Kg)", value: wasteData.waste_unit != null ? wasteData.waste_unit : undefined },
+    { label: "Recycled (Kg)", value: wasteData.recycled_unit != null ? wasteData.recycled_unit : undefined },
+  ];
+
+  // Table 1.2 — Waste Detail breakdown. Multi-category records (created via
+  // `waste_entries`) carry one row per category in `categories`; legacy
+  // single-category records fall back to the one flat category on the record.
+  // There's no per-category recycled amount in the API — only a record-level
+  // total — so Recycle Weight is only shown on the legacy single-row case.
+  const wasteDetailTableRows =
+    wasteData.categories && wasteData.categories.length > 0
+      ? wasteData.categories.map((entry) => ({
+          category: entry.category?.category_name || "-",
+          totalWeight: entry.waste_unit != null ? `${entry.waste_unit} ${entry.uom || "kg"}` : "-",
+          dispatchWeight:
+            dispatchApplicable && entry.waste_unit != null ? `${entry.waste_unit} ${entry.uom || "kg"}` : "-",
+          recycleWeight: "-",
+        }))
+      : [
+          {
+            category: wasteData.category?.category_name || "-",
+            totalWeight: wasteData.waste_unit != null ? `${wasteData.waste_unit} kg` : "-",
+            dispatchWeight: dispatchApplicable && wasteData.waste_unit != null ? `${wasteData.waste_unit} kg` : "-",
+            recycleWeight: wasteData.recycled_unit != null ? `${wasteData.recycled_unit} kg` : "-",
+          },
+        ];
+
+  const userDetailsFields: Field[] = [
+    { label: "User Type", value: wasteData.user_type },
+    { label: "User Name", value: wasteData.user_name || wasteData.created_by?.full_name },
+    {
+      label: "Client Name",
+      value: wasteData.client_name || wasteData.vendor?.company_name || wasteData.agency_name,
+    },
+    { label: "Email Id", value: wasteData.created_by?.email },
+    { label: "Vendor", value: wasteData.vendor?.company_name },
+    { label: "Created By", value: wasteData.created_by?.full_name },
+    {
+      label: "Waste Date",
+      value: wasteData.wg_date ? new Date(wasteData.wg_date).toLocaleDateString() : undefined,
+    },
+    {
+      label: "Created At",
+      value: wasteData.created_at ? new Date(wasteData.created_at).toLocaleString() : undefined,
+    },
+    {
+      label: "Updated At",
+      value: wasteData.updated_at ? new Date(wasteData.updated_at).toLocaleString() : undefined,
+    },
+  ];
+
+  const bagDetailsFields: Field[] = [
+    { label: "Category", value: wasteData.category?.category_name },
+    { label: "Subcategory", value: wasteData.commodity?.category_name },
+    { label: "No. of Bags", value: totalBagCount != null ? totalBagCount.toString() : undefined },
+    { label: "Device", value: wasteData.device_id != null ? wasteData.device_id.toString() : undefined },
+    { label: "Status", value: wasteData.status || undefined },
+  ];
 
   return (
-    <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
-      <Button variant="ghost" onClick={handleBackToList} className="mb-2 p-0">
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Back
-      </Button>
-
-      {/* Header */}
-      <div className="flex justify-between items-end mb-6">
-        <h1 className="text-2xl font-semibold">WASTE GENERATION DETAILS</h1>
-        <div className="flex gap-2 flex-wrap">
-          {shouldShow("Waste Generation", "update") && (
-            <Button
-              size="sm"
-              onClick={handleUpdate}
-              className="bg-[#6B2C91] hover:bg-[#5A2579] text-white"
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Edit
-            </Button>
-          )}
-          {shouldShow("Waste Generation", "destroy") && (
-            <Button
-              size="sm"
-              onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              <Trash className="w-4 h-4 mr-2" />
-              Delete
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Section 1: Waste Details */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <div
-          onClick={() => toggleSection("wasteDetails")}
-          className="flex items-center justify-between cursor-pointer"
+    <div className="p-6">
+      <div className="mb-6">
+        <button
+          onClick={handleBackToList}
+          className="flex items-center gap-1 hover:text-gray-800 mb-4"
         >
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-              <Package className="w-4 h-4" style={{ color: "#C72030" }} />
-            </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-              WASTE DETAILS
-            </h3>
-          </div>
-          <div className="flex items-center gap-2">
-            {!hasData(wasteData.location_details) &&
-              !hasData(wasteData.vendor?.company_name) &&
-              !hasData(wasteData.commodity?.category_name) && (
-                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                  No data
-                </span>
-              )}
-            {expandedSections.wasteDetails ? (
-              <ChevronUp className="w-5 h-5 text-gray-600" />
-            ) : (
-              <ChevronDown className="w-5 h-5 text-gray-600" />
+          <ArrowLeft className="w-4 h-4" />
+          Back to Waste Generation List
+        </button>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-[#1a1a1a]">Waste Generation Details</h1>
+          <div className="flex gap-2">
+            {shouldShow("Waste Generation", "update") && (
+              <Button
+                onClick={handleUpdate}
+                variant="outline"
+                className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit
+              </Button>
             )}
+            <Button
+              onClick={handleCertificate}
+              variant="outline"
+              className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
+            >
+              <FileCheck className="w-4 h-4 mr-2" />
+              Certificate
+            </Button>
           </div>
         </div>
-
-        {expandedSections.wasteDetails && (
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
-              <div className="space-y-4">
-                <InfoRow label="Location" value={wasteData.location_details} />
-                <InfoRow
-                  label="Commodity/Source"
-                  value={wasteData.commodity?.category_name}
-                />
-                <InfoRow
-                  label="Operational Name"
-                  value={wasteData.operational_landlord?.category_name}
-                />
-                <InfoRow
-                  label="Generated Unit"
-                  value={`${wasteData.waste_unit} KG`}
-                />
-                <InfoRow label="Agency Name" value={wasteData.agency_name} />
-                <InfoRow
-                  label="Reference Number"
-                  value={wasteData.reference_number}
-                />
-              </div>
-
-              <div className="space-y-4">
-                <InfoRow
-                  label="Vendor"
-                  value={wasteData.vendor?.company_name}
-                />
-                <InfoRow
-                  label="Category"
-                  value={wasteData.category?.category_name}
-                />
-                <InfoRow
-                  label="Recycled Unit"
-                  value={`${wasteData.recycled_unit} KG`}
-                />
-                <InfoRow label="Building" value={wasteData.building_name} />
-                <InfoRow label="Wing" value={wasteData.wing_name} />
-                <InfoRow label="Area" value={wasteData.area_name} />
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Section 2: Date & Creator Information */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <div
-          onClick={() => toggleSection("dateInfo")}
-          className="flex items-center justify-between cursor-pointer"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-              <Calendar className="w-4 h-4" style={{ color: "#C72030" }} />
-            </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-              DATE & CREATOR INFORMATION
-            </h3>
-          </div>
-          <div className="flex items-center gap-2">
-            {!hasData(wasteData.wg_date) &&
-              !hasData(wasteData.created_by?.full_name) && (
-                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                  No data
-                </span>
-              )}
-            {expandedSections.dateInfo ? (
-              <ChevronUp className="w-5 h-5 text-gray-600" />
-            ) : (
-              <ChevronDown className="w-5 h-5 text-gray-600" />
-            )}
-          </div>
-        </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch mb-4">
+          {[
+            { label: "Waste Details", value: "waste-details", icon: Package },
+            { label: "User Details", value: "user-details", icon: User },
+            { label: "Bag Details", value: "bag-details", icon: ShoppingBag },
+            { label: "Logs", value: "logs", icon: History },
+          ].map((tab) => (
+            <TabsTrigger
+              key={tab.value}
+              value={tab.value}
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-brand border-r border-gray-200 last:border-r-0 flex items-center justify-center gap-2"
+            >
+              <tab.icon className="w-4 h-4" />
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-        {expandedSections.dateInfo && (
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
-              <div className="space-y-4">
-                <InfoRow
-                  label="Waste Date"
-                  value={
-                    wasteData.wg_date
-                      ? new Date(wasteData.wg_date).toLocaleDateString()
-                      : "N/A"
-                  }
-                />
-                <InfoRow
-                  label="Created At"
-                  value={
-                    wasteData.created_at
-                      ? new Date(wasteData.created_at).toLocaleString()
-                      : "N/A"
-                  }
-                />
-              </div>
-              <div className="space-y-4">
-                <InfoRow
-                  label="Created By"
-                  value={wasteData.created_by?.full_name}
-                />
-                <InfoRow
-                  label="Creator Email"
-                  value={wasteData.created_by?.email}
-                />
-                <InfoRow
-                  label="Updated At"
-                  value={
-                    wasteData.updated_at
-                      ? new Date(wasteData.updated_at).toLocaleString()
-                      : "N/A"
-                  }
-                />
+        <TabsContent value="waste-details">
+          <DetailCard icon={Package} title="Waste Details">
+            <FieldColumns fields={wasteDetailsFields} />
+          </DetailCard>
+
+          {dispatchApplicable && (
+            <DetailCard icon={Package} title="Dispatch Details">
+              <FieldColumns fields={dispatchFields} />
+            </DetailCard>
+          )}
+
+          <DetailCard icon={Package} title="Waste Detail">
+            <div className="border border-gray-200 rounded-md overflow-hidden bg-white">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead>Category</TableHead>
+                    <TableHead>Total Weight</TableHead>
+                    <TableHead>Dispatch Weight</TableHead>
+                    <TableHead>Recycle Weight</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {wasteDetailTableRows.map((row, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell className="font-medium text-gray-900">{row.category}</TableCell>
+                      <TableCell>{row.totalWeight}</TableCell>
+                      <TableCell>{row.dispatchWeight}</TableCell>
+                      <TableCell>{row.recycleWeight}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </DetailCard>
+        </TabsContent>
+
+        <TabsContent value="user-details">
+          <DetailCard icon={User} title="User Details">
+            <FieldColumns fields={userDetailsFields} />
+          </DetailCard>
+        </TabsContent>
+
+        <TabsContent value="bag-details">
+          <DetailCard icon={ShoppingBag} title="Bag Details">
+            <FieldColumns fields={bagDetailsFields} />
+            <div className="mt-6">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                Bag Details Tab
+              </h4>
+              <div className="border border-gray-200 rounded-md overflow-hidden bg-white">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50">
+                      <TableHead>Category</TableHead>
+                      <TableHead>Sub Category</TableHead>
+                      <TableHead>No. of Bags</TableHead>
+                      <TableHead>Total Weight (unit)</TableHead>
+                      <TableHead>Delete</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {bagRows.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-gray-400 py-6">
+                          No bag entries.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      bagRows.map((row) => (
+                        <TableRow key={row.id}>
+                          <TableCell className="font-medium text-gray-900">{row.category}</TableCell>
+                          <TableCell>{row.subCategory}</TableCell>
+                          <TableCell>{row.bagCount}</TableCell>
+                          <TableCell>{row.weight}</TableCell>
+                          <TableCell>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <button
+                                  type="button"
+                                  disabled={deletingBagRowId === row.id}
+                                  className="text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  title="Delete"
+                                  aria-label="Delete"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Remove this bag entry?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This will deactivate the bag entry. This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteBagRow(row)}>
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          </DetailCard>
+        </TabsContent>
+
+        <TabsContent value="logs">
+          <DetailCard icon={History} title="Logs">
+            <div className="border border-gray-200 rounded-md overflow-hidden bg-white">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead>Date</TableHead>
+                    <TableHead>Activity</TableHead>
+                    <TableHead>Performed By</TableHead>
+                    <TableHead>Remarks</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {logEntries.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-gray-400 py-6">
+                        No activity recorded yet.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    logEntries.map((entry, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell className="whitespace-nowrap">{entry.date}</TableCell>
+                        <TableCell className="font-medium text-gray-900">{entry.activity}</TableCell>
+                        <TableCell>{entry.performedBy}</TableCell>
+                        <TableCell>{entry.remarks}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+            <p className="text-xs text-gray-500 mt-3">
+              This history is derived from the timestamps available on this record. A dedicated
+              activity-log endpoint would be needed for a complete audit trail.
+            </p>
+          </DetailCard>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

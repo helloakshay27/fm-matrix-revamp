@@ -1,15 +1,36 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { TextField } from '@mui/material';
 import { X } from "lucide-react";
+import { toast } from 'sonner';
 
 interface AddSeatTypeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: { categoryName: string; file?: File }) => void;
 }
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: '#ffffff !important',
+    borderRadius: '8px',
+    '& fieldset': {
+      borderColor: '#E5E7EB',
+    },
+    '&:hover fieldset': {
+      borderColor: '#D1D5DB',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#DA7756',
+      borderWidth: '1px',
+    },
+  },
+};
 
 export const AddSeatTypeDialog: React.FC<AddSeatTypeDialogProps> = ({
   open,
@@ -28,16 +49,15 @@ export const AddSeatTypeDialog: React.FC<AddSeatTypeDialogProps> = ({
 
   const handleSubmit = () => {
     if (!categoryName.trim()) {
-      alert('Please enter a category name');
+      toast.error('Please enter a category name');
       return;
     }
-    
-    onSubmit({ 
+
+    onSubmit({
       categoryName: categoryName.trim(),
-      file: selectedFile || undefined 
+      file: selectedFile || undefined,
     });
-    
-    // Reset form
+
     setCategoryName('');
     setSelectedFile(null);
     onOpenChange(false);
@@ -51,8 +71,8 @@ export const AddSeatTypeDialog: React.FC<AddSeatTypeDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md [&>button]:hidden">
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+      <DialogContent className="sm:max-w-md [&>button]:hidden !bg-white">
+        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <DialogTitle className="text-lg font-semibold">Create Category</DialogTitle>
           <Button
             variant="ghost"
@@ -63,47 +83,78 @@ export const AddSeatTypeDialog: React.FC<AddSeatTypeDialogProps> = ({
             <X className="h-4 w-4" />
           </Button>
         </DialogHeader>
-        
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium mb-2 block">
-              Category Name<span className="text-red-500">*</span>
-            </label>
-            <Input
-              placeholder="Enter Name"
-              value={categoryName}
-              onChange={(e) => setCategoryName(e.target.value)}
-              className="text-sm h-10"
-            />
-          </div>
-          
-          <div className="text-center">
-            <div className="border-2 border-dashed border-orange-300 rounded-lg p-6">
-              <Input
-                type="file"
-                onChange={handleFileChange}
-                className="hidden"
-                id="file-upload-seat-type"
-                accept="image/*"
-              />
-              <label 
-                htmlFor="file-upload-seat-type" 
-                className="text-orange-500 hover:text-orange-600 cursor-pointer font-medium"
+
+        <div className="space-y-5 py-2">
+          <TextField
+            fullWidth
+            variant="outlined"
+            label="Category Name *"
+            placeholder="Enter Name"
+            value={categoryName}
+            onChange={(e) => setCategoryName(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            sx={{
+              ...fieldStyles,
+              '& .MuiInputLabel-root': {
+                color: '#6B7280',
+                '&.Mui-focused': {
+                  color: '#DA7756',
+                },
+              },
+            }}
+          />
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-900">Upload Category Icon</label>
+            <div className="flex items-center space-x-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="border-brand text-brand hover:bg-brand-selected"
+                onClick={() => document.getElementById('file-upload-seat-type')?.click()}
               >
                 Choose File
-              </label>
-              <div className="mt-2 text-sm text-gray-600">
+              </Button>
+              <span className="text-sm text-gray-500 truncate">
                 {selectedFile ? selectedFile.name : 'No file chosen'}
-              </div>
+              </span>
+              <input
+                id="file-upload-seat-type"
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
             </div>
+
+            {selectedFile && (
+              <div className="mt-2">
+                <p className="text-sm text-gray-600 mb-2">Image Preview:</p>
+                <div className="w-24 h-24 bg-gray-100 rounded border overflow-hidden">
+                  <img
+                    src={URL.createObjectURL(selectedFile)}
+                    alt="Category preview"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="pt-4">
-            <Button 
+          <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
+            <Button
               onClick={handleSubmit}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white h-10"
+              className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto"
             >
               Submit
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleClose}
+              className="border-brand text-brand px-8 w-full sm:w-auto"
+            >
+              Cancel
             </Button>
           </div>
         </div>

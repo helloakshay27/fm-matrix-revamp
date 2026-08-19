@@ -52,10 +52,10 @@ const Transition = forwardRef(function Transition(
 });
 
 const globalPriorityOptions = [
-  { value: 2, label: "Low" },
-  { value: 3, label: "Medium" },
-  { value: 4, label: "High" },
-  { value: 5, label: "Urgent" },
+  { value: "P1", label: "Q1: Urgent & Important" },
+  { value: "P2", label: "Q2: Important, Not Urgent" },
+  { value: "P3", label: "Q3: Urgent, Not Important" },
+  { value: "P4", label: "Q4: Not Urgent or Important" },
 ];
 
 const Attachments = ({ attachments, setAttachments }) => {
@@ -148,11 +148,10 @@ const Attachments = ({ attachments, setAttachments }) => {
         onDragOver={handleDrag}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
-        className={`relative p-6 rounded-lg border-2 border-dashed transition-all cursor-pointer ${
-          isDragActive
-            ? 'border-blue-500 bg-blue-50'
-            : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
-        }`}
+        className={`relative p-6 rounded-lg border-2 border-dashed transition-all cursor-pointer ${isDragActive
+          ? 'border-blue-500 bg-blue-50'
+          : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
+          }`}
       >
         <div className="flex flex-col items-center justify-center space-y-2">
           <CloudUploadIcon
@@ -305,13 +304,17 @@ const AddIssueModal = ({
     setEndDate(targetDate);
   }, [prefillData]);
 
-  const [startDate, setStartDate] = useState(null);
+  const [startDate, setStartDate] = useState(() => {
+    const today = new Date();
+    return { year: today.getFullYear(), month: today.getMonth(), date: today.getDate() };
+  });
 
   useEffect(() => {
     const targetDate = prefillData?.target_date;
 
     if (!targetDate) {
-      setStartDate(null);
+      const today = new Date();
+      setStartDate({ year: today.getFullYear(), month: today.getMonth(), date: today.getDate() });
       return;
     }
 
@@ -387,6 +390,8 @@ const AddIssueModal = ({
   // Date picker states
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [showDatePickerInterface, setShowDatePickerInterface] = useState(false);
+  const [showStartDatePickerInterface, setShowStartDatePickerInterface] = useState(false);
   const [showCalender, setShowCalender] = useState(false);
   const [showStartCalender, setShowStartCalender] = useState(false);
   const [startDateTasks, setStartDateTasks] = useState([]);
@@ -473,12 +478,12 @@ const AddIssueModal = ({
         prev.some((user) => user.id === responsiblePersonId)
           ? prev
           : [
-              ...prev,
-              {
-                id: String(responsiblePersonId),
-                full_name: prefillData.responsible_person.name,
-              },
-            ]
+            ...prev,
+            {
+              id: String(responsiblePersonId),
+              full_name: prefillData.responsible_person.name,
+            },
+          ]
       );
     }
   }, [prefillData]);
@@ -504,12 +509,12 @@ const AddIssueModal = ({
         setUsers(
           shouldAddPrefilledUser
             ? [
-                ...apiUsers,
-                {
-                  id: String(responsiblePersonId),
-                  full_name: responsiblePersonName || `User ${responsiblePersonId}`,
-                },
-              ]
+              ...apiUsers,
+              {
+                id: String(responsiblePersonId),
+                full_name: responsiblePersonName || `User ${responsiblePersonId}`,
+              },
+            ]
             : apiUsers
         );
       } catch (error) {
@@ -546,7 +551,7 @@ const AddIssueModal = ({
           Authorization: `Bearer ${token}`,
         },
       });
-      setMentionTags(response.data || []);
+      setMentionTags(response.data?.filter(tag => tag?.active) || []);
     } catch (error) {
       console.log("Error fetching mention tags:", error);
     }
@@ -952,14 +957,7 @@ const AddIssueModal = ({
       formData.append("issue[description]", description || "");
       formData.append("issue[start_date]", formattedStartDate || "");
       formData.append("issue[end_date]", formattedEndDate || "");
-      formData.append(
-        "issue[priority]",
-        String(
-          globalPriorityOptions.find(
-            (option) => String(option.value) === String(priority)
-          )?.label || ""
-        )
-      );
+      formData.append("issue[priority]", String(priority));
       formData.append(
         "issue[created_by_id]",
         JSON.parse(localStorage.getItem("user") || "{}")?.id || ""
@@ -1109,7 +1107,7 @@ const AddIssueModal = ({
       maxWidth={false}
       PaperProps={{
         sx: {
-          width: { xs: "100vw", lg: "42rem" },
+          width: { xs: "100vw", sm: "50vw" },
           maxWidth: "none",
           height: "100vh",
           maxHeight: "100vh",
@@ -1352,7 +1350,8 @@ const AddIssueModal = ({
                     if (showStartDatePicker) {
                       setShowStartDatePicker(false);
                     }
-                    setShowDatePicker(!showDatePicker);
+                    setShowDatePicker(true);
+                    setShowDatePickerInterface(true);
                   }}
                   ref={endDateRef}
                 >
@@ -1360,14 +1359,15 @@ const AddIssueModal = ({
                     <div className="text-black flex items-center justify-between w-full">
                       <CalendarIcon className="w-4 h-4" />
                       <div>
-                        Target Date : {endDate.date.toString().padStart(2, "0")}{" "}
-                        {monthNames[endDate.month]}
+                        {endDate.date.toString().padStart(2, "0")}{" "}
+                        {monthNames[endDate.month]} {endDate.year}
                       </div>
                       <X
                         className="w-4 h-4"
                         onClick={(e) => {
                           e.preventDefault();
                           setEndDate(null);
+                          setShowDatePickerInterface(false);
                         }}
                       />
                     </div>
@@ -1389,7 +1389,8 @@ const AddIssueModal = ({
                     if (showDatePicker) {
                       setShowDatePicker(false);
                     }
-                    setShowStartDatePicker(!showStartDatePicker);
+                    setShowStartDatePicker(true);
+                    setShowStartDatePickerInterface(true);
                   }}
                   ref={startDateRef}
                 >
@@ -1397,15 +1398,15 @@ const AddIssueModal = ({
                     <div className="text-black flex items-center justify-between w-full">
                       <CalendarIcon className="w-4 h-4" />
                       <div>
-                        Start Date :{" "}
                         {startDate?.date?.toString().padStart(2, "0")}{" "}
-                        {monthNames[startDate.month]}
+                        {monthNames[startDate.month]} {startDate.year}
                       </div>
                       <X
                         className="w-4 h-4"
                         onClick={(e) => {
                           e.preventDefault();
                           setStartDate(null);
+                          setShowStartDatePickerInterface(false);
                         }}
                       />
                     </div>
@@ -1448,11 +1449,14 @@ const AddIssueModal = ({
                 willChange: "height, opacity",
               }}
             >
-              {!startDate ? (
+              {showStartDatePickerInterface ? (
                 showStartCalender ? (
                   <CustomCalender
                     setShowCalender={setShowStartCalender}
-                    onDateSelect={setStartDate}
+                    onDateSelect={(date) => {
+                      setStartDate(date);
+                      setShowStartDatePickerInterface(false);
+                    }}
                     selectedDate={startDate}
                     taskHoursData={calendarTaskHours}
                     ref={startDateRef}
@@ -1462,7 +1466,10 @@ const AddIssueModal = ({
                 ) : (
                   <TaskDatePicker
                     selectedDate={startDate}
-                    onDateSelect={setStartDate}
+                    onDateSelect={(date) => {
+                      setStartDate(date);
+                      setShowStartDatePickerInterface(false);
+                    }}
                     startDate={null}
                     userAvailability={userAvailability}
                     setShowCalender={setShowStartCalender}
@@ -1471,14 +1478,16 @@ const AddIssueModal = ({
                   />
                 )
               ) : (
-                <TasksOfDate
-                  selectedDate={startDate}
-                  onClose={() => { }}
-                  tasks={startDateTasks}
-                  selectedUser={responsiblePerson}
-                  userAvailability={userAvailability}
-                  shift={shift}
-                />
+                startDate && (
+                  <TasksOfDate
+                    selectedDate={startDate}
+                    onClose={() => { }}
+                    tasks={startDateTasks}
+                    selectedUser={responsiblePerson}
+                    userAvailability={userAvailability}
+                    shift={shift}
+                  />
+                )
               )}
             </Box>
 
@@ -1491,11 +1500,14 @@ const AddIssueModal = ({
                 willChange: "height, opacity",
               }}
             >
-              {!endDate ? (
+              {showDatePickerInterface ? (
                 showCalender ? (
                   <CustomCalender
                     setShowCalender={setShowCalender}
-                    onDateSelect={setEndDate}
+                    onDateSelect={(date) => {
+                      setEndDate(date);
+                      setShowDatePickerInterface(false);
+                    }}
                     selectedDate={endDate}
                     taskHoursData={calendarTaskHours}
                     ref={endDateRef}
@@ -1505,7 +1517,10 @@ const AddIssueModal = ({
                 ) : (
                   <TaskDatePicker
                     selectedDate={endDate}
-                    onDateSelect={setEndDate}
+                    onDateSelect={(date) => {
+                      setEndDate(date);
+                      setShowDatePickerInterface(false);
+                    }}
                     startDate={startDate}
                     userAvailability={userAvailability}
                     setShowCalender={setShowCalender}
@@ -1514,14 +1529,16 @@ const AddIssueModal = ({
                   />
                 )
               ) : (
-                <TasksOfDate
-                  selectedDate={endDate}
-                  onClose={() => { }}
-                  tasks={targetDateTasks}
-                  selectedUser={responsiblePerson}
-                  userAvailability={userAvailability}
-                  shift={shift}
-                />
+                endDate && (
+                  <TasksOfDate
+                    selectedDate={endDate}
+                    onClose={() => { }}
+                    tasks={targetDateTasks}
+                    selectedUser={responsiblePerson}
+                    userAvailability={userAvailability}
+                    shift={shift}
+                  />
+                )
               )}
             </Box>
 
@@ -1566,10 +1583,10 @@ const AddIssueModal = ({
 
             <Box className="mb-4">
               <Box
-                className="text-[12px] text-[red] text-right cursor-pointer mb-2"
+                className="text-[12px] text-right cursor-pointer mb-2"
                 onClick={() => setIsTagModalOpen(true)}
               >
-                <i>Create new tag</i>
+                <span className="text-orange-500 font-medium">Create new tag</span>
               </Box>
               <MuiMultiSelect
                 label="Tags"
@@ -1619,6 +1636,7 @@ const AddIssueModal = ({
             >
               <Button
                 type="submit"
+                className="fm-button-fix fm-button-brand px-4 py-2"
                 variant="outlined"
                 disabled={isSubmitting}
                 sx={{

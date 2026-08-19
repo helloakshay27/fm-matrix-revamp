@@ -87,7 +87,7 @@ export const CashFlowDetails = () => {
     if (loading || ledgerLoading) {
         return (
             <div className="flex justify-center items-center h-64">
-                <div className="animate-spin h-8 w-8 border-b-2 border-blue-600 rounded-full" />
+                <div className="animate-spin h-8 w-8 border-b-2 border-brand rounded-full" />
             </div>
         );
     }
@@ -147,20 +147,20 @@ export const CashFlowDetails = () => {
                                         <td className="border border-gray-300 px-4 py-3 text-right">
                                             {t.debit ? (
                                                 (() => { const route = getTransactionRoute(t.transaction_type, t.transaction_id); return route ? (
-                                                    <span className="text-blue-600 cursor-pointer hover:underline" onClick={() => navigate(route)}>₹{Number(t.debit).toFixed(2)}</span>
+                                                    <span className="text-brand cursor-pointer hover:underline" onClick={() => navigate(route)}>₹{Number(t.debit).toFixed(2)}</span>
                                                 ) : `₹${Number(t.debit).toFixed(2)}`; })()
                                             ) : '-'}
                                         </td>
                                         <td className="border border-gray-300 px-4 py-3 text-right">
                                             {t.credit ? (
                                                 (() => { const route = getTransactionRoute(t.transaction_type, t.transaction_id); return route ? (
-                                                    <span className="text-blue-600 cursor-pointer hover:underline" onClick={() => navigate(route)}>₹{Number(t.credit).toFixed(2)}</span>
+                                                    <span className="text-brand cursor-pointer hover:underline" onClick={() => navigate(route)}>₹{Number(t.credit).toFixed(2)}</span>
                                                 ) : `₹${Number(t.credit).toFixed(2)}`; })()
                                             ) : '-'}
                                         </td>
                                         <td className="border border-gray-300 px-4 py-3 text-right font-medium">
                                             {(() => { const route = getTransactionRoute(t.transaction_type, t.transaction_id); return route ? (
-                                                <span className="text-blue-600 cursor-pointer hover:underline" onClick={() => navigate(route)}>₹{Number(t.amount).toFixed(2)}</span>
+                                                <span className="text-brand cursor-pointer hover:underline" onClick={() => navigate(route)}>₹{Number(t.amount).toFixed(2)}</span>
                                             ) : `₹${Number(t.amount).toFixed(2)}`; })()}
                                         </td>
                                     </tr>

@@ -213,11 +213,7 @@ interface EnhancedSelectProviderProps {
 export const EnhancedSelectProvider: React.FC<EnhancedSelectProviderProps> = ({ 
   children 
 }) => {
-  return (
-    <ThemeProvider theme={enhancedSelectTheme}>
-      {children}
-    </ThemeProvider>
-  );
+  return React.createElement(ThemeProvider, { theme: enhancedSelectTheme }, children);
 };
 
 export default EnhancedSelectProvider;

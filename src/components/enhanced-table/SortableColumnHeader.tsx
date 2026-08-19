@@ -15,6 +15,8 @@ interface SortableColumnHeaderProps {
   onSort?: () => void;
   className?: string;
   style?: React.CSSProperties;
+  /** Spans this header cell down through a second grouped-header row (see EnhancedTable's `columnGroups`). */
+  rowSpan?: number;
 }
 
 export const SortableColumnHeader: React.FC<SortableColumnHeaderProps> = ({
@@ -25,7 +27,8 @@ export const SortableColumnHeader: React.FC<SortableColumnHeaderProps> = ({
   sortDirection,
   onSort,
   className,
-  style: externalStyle
+  style: externalStyle,
+  rowSpan
 }) => {
   const {
     attributes,
@@ -51,6 +54,7 @@ export const SortableColumnHeader: React.FC<SortableColumnHeaderProps> = ({
   return (
     <th
       ref={setNodeRef}
+      rowSpan={rowSpan}
       style={style}
       className={cn(
         "h-12 px-4 py-4 text-center align-middle font-medium text-gray-700 border-b border-gray-300 whitespace-nowrap relative group bg-[#f5f5dc]",

@@ -15,13 +15,65 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  FormControl as MuiFormControl,
+  Select as MuiSelect,
+  MenuItem,
+} from '@mui/material';
 import { Search, Download, Upload, Filter, Edit, RefreshCw, X } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { toast } from 'sonner';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useUtilityEvents } from '@/components/PostHogUtilityEvents';
+
+const ASSET_OPTIONS = [
+  { value: 'asset1', label: 'Asset 1' },
+  { value: 'asset2', label: 'Asset 2' },
+  { value: 'asset3', label: 'Asset 3' },
+  { value: 'asset4', label: 'Asset 4' },
+];
+
+const fieldStyles = {
+  height: '40px',
+  backgroundColor: '#fff',
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: '#d1d5db',
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'var(--color-primary)',
+  },
+  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'var(--color-primary)',
+  },
+  '& .MuiSelect-select': {
+    fontSize: '14px',
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+const selectMenuProps = {
+  // Radix's modal Dialog sets `pointer-events: none` on <body>, which the
+  // portaled menu inherits — without this the backdrop never receives the
+  // click that closes the menu.
+  sx: { pointerEvents: 'auto' },
+  PaperProps: {
+    sx: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e5e7eb',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 // Interface definitions for API response
 interface CustomerName {
@@ -96,8 +148,10 @@ const columns: ColumnConfig[] = [
 
 export default function UtilityDailyReadingsDashboard() {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const { onDailyReadingsListViewed, onReadingsImportOpened, onReadingsImportSubmitted } = useUtilityEvents();
 
   // API state management
   const [dailyReadingsData, setDailyReadingsData] = useState<DailyReadingItem[]>([]);
@@ -192,6 +246,9 @@ export default function UtilityDailyReadingsDashboard() {
 
       const transformedData = measurementsArray.map(transformMeasurement);
       setDailyReadingsData(transformedData);
+      
+      const filterNames = filters ? Object.keys(filters).filter(k => filters[k]).join(',') : '';
+      onDailyReadingsListViewed({ row_count: transformedData.length, filter_used: filterNames });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred while fetching measurements';
       setError(errorMessage);
@@ -356,11 +413,13 @@ export default function UtilityDailyReadingsDashboard() {
   };
 
   const handleImport = () => {
+    onReadingsImportOpened();
     setIsBulkUploadOpen(true);
   };
 
   const handleImportComplete = (file: File) => {
     // Refresh the data after successful import
+    onReadingsImportSubmitted({ row_count: 0, error_count: 0 }); // Placeholder row_count and error_count since not returned directly
     fetchMeasurements(1); // Reset to first page after import
     setCurrentPage(1);
     toast.success('Data imported successfully');
@@ -404,14 +463,16 @@ export default function UtilityDailyReadingsDashboard() {
       case 'actions':
         return (
           <div className="flex items-center justify-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleEdit(item)}
-              className="h-8 w-8 p-0"
-            >
-              <Edit className="w-4 h-4" />
-            </Button>
+            {shouldShow("Daily Readings", "update") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleEdit(item)}
+                className="h-8 w-8 p-0"
+              >
+                <Edit className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         );
       case 'id':
@@ -483,12 +544,7 @@ export default function UtilityDailyReadingsDashboard() {
 
       {/* Enhanced Data Table */}
       <div>
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <RefreshCw className="w-6 h-6 animate-spin mr-2" />
-            <span>Loading daily readings...</span>
-          </div>
-        ) : error ? (
+        {error ? (
           <div className="text-center py-12">
             <p className="text-red-600 mb-4">{error}</p>
             <Button onClick={handleRefresh} variant="outline">
@@ -516,6 +572,7 @@ export default function UtilityDailyReadingsDashboard() {
               // selectable={true}
               storageKey="daily-readings-table"
               leftActions={leftActions}
+              loading={loading}
             />
 
             {/* Custom Pagination Controls */}
@@ -634,20 +691,28 @@ export default function UtilityDailyReadingsDashboard() {
                 <label className="text-sm font-medium text-gray-700">
                   Asset
                 </label>
-                <Select
-                  value={filterFormData.asset}
-                  onValueChange={(value) => handleFilterChange('asset', value)}
-                >
-                  <SelectTrigger className="border-gray-300">
-                    <SelectValue placeholder="Select Asset" className="text-gray-400" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="asset1">Asset 1</SelectItem>
-                    <SelectItem value="asset2">Asset 2</SelectItem>
-                    <SelectItem value="asset3">Asset 3</SelectItem>
-                    <SelectItem value="asset4">Asset 4</SelectItem>
-                  </SelectContent>
-                </Select>
+                <MuiFormControl fullWidth size="small">
+                  <MuiSelect
+                    displayEmpty
+                    value={filterFormData.asset ?? ''}
+                    onChange={(event) => handleFilterChange('asset', event.target.value)}
+                    renderValue={(selected) =>
+                      selected ? (
+                        ASSET_OPTIONS.find((option) => option.value === selected)?.label ?? selected
+                      ) : (
+                        <span className="text-gray-400">Select Asset</span>
+                      )
+                    }
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    {ASSET_OPTIONS.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </MuiFormControl>
               </div>
 
               {/* Date Range */}
@@ -670,30 +735,36 @@ export default function UtilityDailyReadingsDashboard() {
                 <label className="text-sm font-medium text-gray-700">
                   Customer Name
                 </label>
-                <Select
-                  value={filterFormData.customerName}
-                  onValueChange={(value) => handleFilterChange('customerName', value)}
-                  disabled={customersLoading}
-                >
-                  <SelectTrigger className="border-gray-300">
-                    <SelectValue
-                      placeholder={customersLoading ? "Loading customers..." : "Select Customer Name"}
-                      className="text-gray-400"
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
+                <MuiFormControl fullWidth size="small" disabled={customersLoading}>
+                  <MuiSelect
+                    displayEmpty
+                    value={filterFormData.customerName ?? ''}
+                    onChange={(event) => handleFilterChange('customerName', event.target.value)}
+                    renderValue={(selected) =>
+                      selected ? (
+                        customers.find((customer) => customer.id.toString() === selected)?.name ??
+                        selected
+                      ) : (
+                        <span className="text-gray-400">
+                          {customersLoading ? 'Loading customers...' : 'Select Customer Name'}
+                        </span>
+                      )
+                    }
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
                     {customers.map((customer) => (
-                      <SelectItem key={customer.id} value={customer.id.toString()}>
+                      <MenuItem key={customer.id} value={customer.id.toString()}>
                         {customer.name}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
                     {customers.length === 0 && !customersLoading && (
-                      <SelectItem value="api-pending" disabled>
+                      <MenuItem value="api-pending" disabled>
                         API will provide customer data
-                      </SelectItem>
+                      </MenuItem>
                     )}
-                  </SelectContent>
-                </Select>
+                  </MuiSelect>
+                </MuiFormControl>
               </div>
 
               {/* Parameter Name */}
@@ -717,16 +788,15 @@ export default function UtilityDailyReadingsDashboard() {
               <Button
                 onClick={handleFilterReset}
                 variant="outline"
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2"
+                className="border-brand text-brand hover:bg-brand-selected hover:text-brand px-8 py-2"
               >
                 Reset
               </Button>
               <Button
                 onClick={() => handleFilterApply(filterFormData)}
-                style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-8 py-2"
+                className="!bg-brand hover:!bg-brand-hover !text-white px-8 py-2"
               >
-                Submit
+                Apply
               </Button>
             </div>
           </div>

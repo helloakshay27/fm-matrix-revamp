@@ -18,6 +18,7 @@ import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@/components/ui/select';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 const enhancedTableColumns: ColumnConfig[] = [
   { key: 'id', label: 'ID', sortable: true, draggable: true },
@@ -115,6 +116,16 @@ const BookingListDashboard = () => {
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
   const isPulsePath = window.location.pathname.startsWith('/pulse/amenity');
+  const pulseEvents = usePulseEvents();
+
+  useEffect(() => {
+    pulseEvents.onModuleViewed({
+      module: "Amenities",
+      package: "Pulse Privilege",
+      screen: "pulse_amenity_list",
+      guard: true,
+    });
+  }, [pulseEvents]);
 
   const { data: bookings, loading, error } = useAppSelector((state) => state.facilityBookings);
 
@@ -961,7 +972,8 @@ const BookingListDashboard = () => {
               <div className="flex gap-3 pt-4">
                 <Button
                   onClick={handleApplyFilters}
-                  className="flex-1 bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
+                  variant="outline"
+                  className="fm-button-fix fm-button-brand flex-1"
                   disabled={isFiltering}
                 >
                   Apply
@@ -969,7 +981,7 @@ const BookingListDashboard = () => {
                 <Button
                   onClick={handleResetFilters}
                   variant="outline"
-                  className="flex-1"
+                  className="fm-button-fix fm-button-brand flex-1"
                 >
                   Reset
                 </Button>

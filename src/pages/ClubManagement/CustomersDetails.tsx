@@ -165,7 +165,7 @@ export const CustomersDetails = () => {
         return (
             <div className="p-6 bg-white">
                 <div className="flex items-center justify-center h-64">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand"></div>
                 </div>
             </div>
         );
@@ -194,10 +194,9 @@ export const CustomersDetails = () => {
                         </Button>
                         <div className="flex items-center gap-2">
                             <Button
-                                // variant="outline"
+                                variant="ghost"
                                 onClick={handleEditClick}
-                                // className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-                                className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                                className="fm-button-fix fm-button-brand px-8 py-2"
                             >
                                 Edit
                             </Button>
@@ -209,7 +208,7 @@ export const CustomersDetails = () => {
                     {/* Customer Overview Section */}
                     <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                         <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-brand">
                                 <User className="w-6 h-6" />
                             </div>
                             <div>
@@ -274,7 +273,7 @@ export const CustomersDetails = () => {
                                 <div className="flex items-start">
                                     <span className="text-gray-500 min-w-[140px]">Email</span>
                                     <span className="text-gray-500 mx-2">:</span>
-                                    <span className="text-blue-600 font-medium">
+                                    <span className="text-brand font-medium">
                                         <a href={`mailto:${customerData.email}`}>
                                             {customerData.email || "-"}
                                         </a>
@@ -360,7 +359,7 @@ export const CustomersDetails = () => {
                     {customerData?.opening_balances && customerData?.opening_balances.length > 0 && (
                         <div className="bg-white rounded-lg border-2 p-6">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3] text-brand">
                                     ₹
                                 </div>
                                 <h3 className="text-lg font-semibold text-[#1A1A1A]">
@@ -375,6 +374,7 @@ export const CustomersDetails = () => {
                                             <th className="px-3 py-2 text-left rounded-l-lg">Bill No</th>
                                             <th className="px-3 py-2 text-left">Bill Date</th>
                                             <th className="px-3 py-2 text-left">Due Date</th>
+                                            <th className="px-3 py-2 text-left">Type</th>
                                             <th className="px-3 py-2 text-left rounded-r-lg">Amount</th>
                                         </tr>
                                     </thead>
@@ -392,6 +392,7 @@ export const CustomersDetails = () => {
                                                         ? new Date(item.due_date).toLocaleDateString("en-GB")
                                                         : "-"}
                                                 </td>
+                                                <td className="px-3 py-2 capitalize">{item.account_type || "-"}</td>
                                                 <td className="px-3 py-2 font-medium">
                                                     ₹ {item.amount || 0}
                                                 </td>
@@ -405,7 +406,7 @@ export const CustomersDetails = () => {
                     {customerData.billing_address && (
                         <div className="bg-white rounded-lg border-2 p-6">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3] text-brand">
                                     <MapPin className="w-5 h-5" />
                                 </div>
                                 <h3 className="text-lg font-semibold text-[#1A1A1A]">
@@ -516,7 +517,7 @@ export const CustomersDetails = () => {
                     {customerData.shipping_address && (
                         <div className="bg-white rounded-lg border-2 p-6">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3] text-brand">
                                     <MapPin className="w-5 h-5" />
                                 </div>
                                 <h3 className="text-lg font-semibold text-[#1A1A1A]">
@@ -627,7 +628,7 @@ export const CustomersDetails = () => {
                     {customerData.contact_persons && customerData.contact_persons.length > 0 && (
                         <div className="bg-white rounded-lg border-2 p-6">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3] text-brand">
                                     <User className="w-5 h-5" />
                                 </div>
                                 <h3 className="text-lg font-semibold text-[#1A1A1A]">
@@ -654,7 +655,7 @@ export const CustomersDetails = () => {
                                                 <td className="px-3 py-2">{person.first_name || "-"}</td>
                                                 <td className="px-3 py-2">{person.last_name || "-"}</td>
                                                 <td className="px-3 py-2">
-                                                    <a href={`mailto:${person.email}`} className="text-blue-600">
+                                                    <a href={`mailto:${person.email}`} className="text-brand">
                                                         {person.email || "-"}
                                                     </a>
                                                 </td>

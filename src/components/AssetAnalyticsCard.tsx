@@ -70,8 +70,12 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
                 tickLine={{ stroke: '#D1D5DB' }}
               />
               <Tooltip
-                formatter={(value) => [value, 'Assets']}
-                labelStyle={{ color: '#374151', fontWeight: 'bold' }}
+                formatter={(value: any, _name: any, props: any) => [
+                  value,
+                  props?.payload?.name ?? 'Count',
+                ]}
+                labelFormatter={() => ''}
+                labelStyle={{ display: 'none' }}
                 contentStyle={{
                   backgroundColor: '#FFFFFF',
                   border: '1px solid #E5E7EB',
@@ -114,7 +118,10 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value) => [value, 'Assets']}
+                formatter={(value: any, _name: any, props: any) => [
+                  value,
+                  props?.payload?.name ?? 'Count',
+                ]}
                 labelStyle={{ color: '#374151', fontWeight: 'bold' }}
                 contentStyle={{
                   backgroundColor: '#FFFFFF',

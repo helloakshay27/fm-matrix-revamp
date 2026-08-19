@@ -84,8 +84,11 @@ interface TrainingRow {
 import { useNavigate } from 'react-router-dom';
 import { Users, ClipboardList, CalendarCheck2, UserCheck, FileText, FileSpreadsheet, Download } from 'lucide-react';
 import TrainingFilterDialog from '@/components/TrainingFilterDialog';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 
 const TrainingDashboard = () => {
+  const msafeEvents = useMSafeEvents();
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [trainings, setTrainings] = useState<TrainingRow[]>([]);
@@ -104,6 +107,7 @@ const TrainingDashboard = () => {
   const [filterEmail, setFilterEmail] = useState('');
   const [filterTrainingName, setFilterTrainingName] = useState('');
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
 
   const formatDateTime = (iso: string | null): string => {
     if (!iso) return '—';
@@ -183,9 +187,11 @@ const TrainingDashboard = () => {
         setCurrentPage(json.pagination.current_page);
         setTotalPages(json.pagination.total_pages);
         setTotalCount(json.pagination.total_count);
+        msafeEvents.onMSafeSubmoduleViewed('training', json.pagination.total_count);
       } else {
         setTotalPages(1);
         setTotalCount(mapped.length);
+        msafeEvents.onMSafeSubmoduleViewed('training', mapped.length);
       }
     } catch (e: any) {
       console.error('Training fetch error', e);
@@ -229,15 +235,17 @@ const TrainingDashboard = () => {
       case 'actions':
         return (
           <div className="flex items-center justify-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              title="View user trainings"
-              onClick={() => navigate(`/safety/m-safe/training-list/training-user-details/${item.id}`, { state: { row: item } })}
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
+            {shouldShow("Training", "show") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                title="View user trainings"
+                onClick={() => navigate(`/safety/m-safe/training-list/training-user-details/${item.id}`, { state: { row: item } })}
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+            )}
             {/* <Button
               variant="ghost"
               size="sm"

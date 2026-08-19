@@ -105,6 +105,7 @@ function mapRecurringBillToBill(recurringBill, customers, itemOptions) {
         // || recurringBill?.shipping_address?.state || '',
         customerNotes: recurringBill?.notes || recurringBill?.customer_notes || '',
         termsAndConditions: recurringBill?.terms_and_conditions || '',
+        bankMasterId: recurringBill?.bank_master_id ? String(recurringBill.bank_master_id) : (recurringBill?.bank_master?.id ? String(recurringBill.bank_master.id) : ''),
         discountOnTotal: Number(recurringBill?.discount_per ?? recurringBill?.discount_amount ?? 0),
         discountTypeOnTotal: recurringBill?.discount_per ? 'percentage' : 'amount',
         adjustment: Number(recurringBill?.charge_amount || 0),
@@ -178,6 +179,7 @@ function mapLockAccountBillToBill(bill, customers, itemOptions) {
         destinationOfSupply: bill?.destination_of_supply || '',
         customerNotes: bill?.notes || bill?.customer_notes || '',
         termsAndConditions: bill?.terms_and_conditions || '',
+        bankMasterId: bill?.bank_master_id ? String(bill.bank_master_id) : (bill?.bank_master?.id ? String(bill.bank_master.id) : ''),
         discountOnTotal: Number(bill?.discount_per ?? bill?.discount_amount ?? 0),
         discountTypeOnTotal: bill?.discount_per ? 'percentage' : 'amount',
         adjustment: Number(bill?.charge_amount || 0),
@@ -225,6 +227,12 @@ import {
 } from '@mui/icons-material';
 import { ShoppingCart, Package, Calendar, FileText, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
+import {
+    BankRecord,
+    bankMasterListUrl,
+    getBankMasterApiConfig,
+    mapApiBankRecord,
+} from './bankMasterUtils';
 import { toast } from "sonner";
 import { Button } from '@/components/ui/button';
 import ItemSearchInput from '@/components/ItemSearchInput';
@@ -371,7 +379,7 @@ export const BillEdit: React.FC = () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
             try {
-                const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}&q[can_be_purchase_eq]=1`, {
+                const res = await axios.get(`https://${baseUrl}/lock_account_items/select_list.json?lock_account_id=${lock_account_id}&q[can_be_purchase_eq]=1&active=true`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
@@ -801,6 +809,24 @@ export const BillEdit: React.FC = () => {
     const [customerNotes, setCustomerNotes] = useState('');
     const [termsAndConditions, setTermsAndConditions] = useState('');
     const [attachments, setAttachments] = useState<File[]>([]);
+
+    // Bank Details
+    const [bankOptions, setBankOptions] = useState<BankRecord[]>([]);
+    const [selectedBankId, setSelectedBankId] = useState<string>('');
+
+    useEffect(() => {
+        const fetchBanks = async () => {
+            try {
+                const { baseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+                const res = await axios.get(`${bankMasterListUrl(baseUrl, lockAccountId)}&active=true`, { headers });
+                const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+                setBankOptions(data.map(mapApiBankRecord));
+            } catch (err) {
+                setBankOptions([]);
+            }
+        };
+        fetchBanks();
+    }, []);
     const [displayAttachmentsInPortal, setDisplayAttachmentsInPortal] = useState(false);
 
     // Email Communications
@@ -1102,6 +1128,7 @@ export const BillEdit: React.FC = () => {
             if (recurringBillPrefill.destinationOfSupply) setDestinationOfSupply(recurringBillPrefill.destinationOfSupply);
             if (recurringBillPrefill.customerNotes) setCustomerNotes(recurringBillPrefill.customerNotes);
             if (recurringBillPrefill.termsAndConditions) setTermsAndConditions(recurringBillPrefill.termsAndConditions);
+            if (recurringBillPrefill.bankMasterId) setSelectedBankId(recurringBillPrefill.bankMasterId);
             setDiscountOnTotal(recurringBillPrefill.discountOnTotal || 0);
             setDiscountTypeOnTotal(recurringBillPrefill.discountTypeOnTotal || 'percentage');
             setAdjustment(recurringBillPrefill.adjustment || 0);
@@ -1130,6 +1157,7 @@ export const BillEdit: React.FC = () => {
             setDestinationOfSupply(normalizeIndianState(billPrefill.destinationOfSupply));
             setCustomerNotes(billPrefill.customerNotes || '');
             setTermsAndConditions(billPrefill.termsAndConditions || '');
+            setSelectedBankId(billPrefill.bankMasterId || '');
             setDiscountOnTotal(billPrefill.discountOnTotal || 0);
             setDiscountTypeOnTotal(billPrefill.discountTypeOnTotal || 'percentage');
             setAdjustment(billPrefill.adjustment || 0);
@@ -1540,6 +1568,13 @@ export const BillEdit: React.FC = () => {
             return false;
         }
 
+        if (!selectedBankId) {
+            newErrors.bank = 'Bank is required';
+            setErrors(newErrors);
+            toast.error('Please select a bank');
+            return false;
+        }
+
         const hasValidItems = items.some(
             item => item.name && item.quantity > 0 && item.rate > 0
         );
@@ -1693,6 +1728,7 @@ export const BillEdit: React.FC = () => {
             // formData.append('sale_order[delivery_method]', deliveryMethod);
             // formData.append('sale_order[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
             formData.append('lock_account_bill[notes]', customerNotes);
+            formData.append('lock_account_bill[bank_master_id]', selectedBankId || '');
             // formData.append('lock_account_bill[terms_and_conditions]', termsAndConditions);
             formData.append('lock_account_bill[subject]', subject || '');
             formData.append(
@@ -2062,7 +2098,7 @@ export const BillEdit: React.FC = () => {
                                     <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                                         Billing Address
                                         <IconButton size="small" onClick={() => openAddressListModal('billing')}>
-                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                            <EditOutlined fontSize="small" className="text-brand" />
                                         </IconButton>
                                     </div>
                                     {selectedBillingAddress?.address ? (
@@ -2076,7 +2112,7 @@ export const BillEdit: React.FC = () => {
                                             {selectedBillingAddress.country && <div>{selectedBillingAddress.country}</div>}
                                         </div>
                                     ) : (
-                                        <button type="button" onClick={() => openAddressFormModal('new', 'billing')} className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
+                                        <button type="button" onClick={() => openAddressFormModal('new', 'billing')} className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
                                             New Address
                                         </button>
                                     )}
@@ -2086,7 +2122,7 @@ export const BillEdit: React.FC = () => {
                                     <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                                         Shipping Address
                                         <IconButton size="small" onClick={() => openAddressListModal('shipping')}>
-                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                            <EditOutlined fontSize="small" className="text-brand" />
                                         </IconButton>
                                     </div>
                                     {selectedShippingAddress?.address ? (
@@ -2100,7 +2136,7 @@ export const BillEdit: React.FC = () => {
                                             {selectedShippingAddress.country && <div>{selectedShippingAddress.country}</div>}
                                         </div>
                                     ) : (
-                                        <button type="button" onClick={() => openAddressFormModal('new', 'shipping')} className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
+                                        <button type="button" onClick={() => openAddressFormModal('new', 'shipping')} className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
                                             New Address
                                         </button>
                                     )}
@@ -2114,14 +2150,14 @@ export const BillEdit: React.FC = () => {
                                     <span className="text-gray-500">GST Treatment:</span>
                                     <span className="text-gray-800">{getGstTreatmentLabel(selectedCustomer.gst_preference || selectedCustomer.gst_treatment)}</span>
                                     <IconButton size="small" onClick={openGstModal}>
-                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                        <EditOutlined fontSize="small" className="text-brand" />
                                     </IconButton>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <span className="text-gray-500">GSTIN:</span>
                                     <span className="text-gray-800 font-medium">{selectedCustomer.gstin || "—"}</span>
                                     <IconButton size="small" onClick={openGstModal}>
-                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                        <EditOutlined fontSize="small" className="text-brand" />
                                     </IconButton>
                                 </div>
                             </div>
@@ -2149,12 +2185,12 @@ export const BillEdit: React.FC = () => {
                                 </label>
                                 {selectedCustomer && (
                                     <IconButton size="small" onClick={() => openAddressListModal('billing')}>
-                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                        <EditOutlined fontSize="small" className="text-brand" />
                                     </IconButton>
                                 )}
                             </div>
                             <textarea
-                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
                                 rows={4}
                                 maxLength={500}
                                 value={billingAddress}
@@ -2168,7 +2204,7 @@ export const BillEdit: React.FC = () => {
                                 <button
                                     type="button"
                                     onClick={() => openAddressFormModal('new', 'billing')}
-                                    className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block mt-2"
+                                    className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block mt-2"
                                 >
                                     New Address
                                 </button>
@@ -2182,12 +2218,12 @@ export const BillEdit: React.FC = () => {
                                 </label>
                                 {selectedCustomer && (
                                     <IconButton size="small" onClick={() => openAddressListModal('shipping')}>
-                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                        <EditOutlined fontSize="small" className="text-brand" />
                                     </IconButton>
                                 )}
                             </div>
                             <textarea
-                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y ${sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
                                 rows={4}
                                 maxLength={500}
                                 value={shippingAddress}
@@ -2202,7 +2238,7 @@ export const BillEdit: React.FC = () => {
                                 <button
                                     type="button"
                                     onClick={() => openAddressFormModal('new', 'shipping')}
-                                    className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block mt-2"
+                                    className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block mt-2"
                                 >
                                     New Address
                                 </button>
@@ -2350,7 +2386,7 @@ export const BillEdit: React.FC = () => {
                                 Subject
                             </label>
                             <textarea
-                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
                                 rows={3}
                                 maxLength={500}
                                 value={subject}
@@ -2367,7 +2403,7 @@ export const BillEdit: React.FC = () => {
                                 id="reverseCharge"
                                 checked={reverseCharge}
                                 onChange={(e) => setReverseCharge(e.target.checked)}
-                                className="w-4 h-4 accent-[#bf213e] cursor-pointer"
+                                className="w-4 h-4 accent-[#DA7756] cursor-pointer"
                             />
                             <label
                                 htmlFor="reverseCharge"
@@ -2706,13 +2742,11 @@ export const BillEdit: React.FC = () => {
 
                         <div className="flex gap-3 pt-4">
                             <Button
-                                startIcon={<Add />}
                                 onClick={addItem}
-                                // variant="outlined"
                                 variant="outline"
-                                sx={{ textTransform: 'none' }}
+                                className="fm-button-fix px-8 py-2"
                             >
-                                Add New Row
+                                <span className="flex items-center gap-2"><Add fontSize="small" /> Add New Row</span>
                             </Button>
                             {/* <Button
                                 variant="outlined"
@@ -2797,12 +2831,12 @@ export const BillEdit: React.FC = () => {
                                 >
                                     <FormControlLabel
                                         value="TDS"
-                                        control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
+                                        control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                                         label={<span className="text-sm">TDS</span>}
                                     />
                                     <FormControlLabel
                                         value="TCS"
-                                        control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
+                                        control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                                         label={<span className="text-sm">TCS</span>}
                                     />
                                 </RadioGroup>
@@ -2876,7 +2910,7 @@ export const BillEdit: React.FC = () => {
                 {/* Customer Notes */}
                 <Section title="Notes" icon={<FileText className="w-5 h-5" />}>
                     <textarea
-                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
                         rows={3}
                         maxLength={500}
                         value={customerNotes}
@@ -2886,6 +2920,45 @@ export const BillEdit: React.FC = () => {
                         placeholder="Enter any notes for the bill"
                     />
                     <p className="text-xs text-gray-400 text-right mt-1">{customerNotes.length}/500</p>
+
+                    <div className="mt-4 w-1/2">
+                        <label className="block text-sm font-medium mb-2">
+                            Bank<span className="text-red-500">*</span>
+                        </label>
+                        <FormControl fullWidth size="small" error={!!errors.bank}>
+                            <Select
+                                displayEmpty
+                                value={selectedBankId}
+                                onChange={(e) => {
+                                    setSelectedBankId(String(e.target.value));
+                                    if (errors.bank) {
+                                        setErrors((prev) => {
+                                            const next = { ...prev };
+                                            delete next.bank;
+                                            return next;
+                                        });
+                                    }
+                                }}
+                                renderValue={(val) =>
+                                    val
+                                        ? (() => {
+                                            const bank = bankOptions.find(b => String(b.id) === String(val));
+                                            return bank ? `${bank.bankName} - ${bank.accountNo} (${bank.beneficiaryName})` : '';
+                                        })()
+                                        : <span style={{ color: '#aaa' }}>Select Bank</span>
+                                }
+                                sx={fieldStyles}
+                            >
+                                <MenuItem value=""><em>Select Bank</em></MenuItem>
+                                {bankOptions.map((bank) => (
+                                    <MenuItem key={bank.id} value={String(bank.id)}>
+                                        {bank.bankName} - {bank.accountNo} ({bank.beneficiaryName})
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        {errors.bank && <p className="text-xs text-red-500 mt-1">{errors.bank}</p>}
+                    </div>
                 </Section>
 
                 {/* Terms & Conditions */}
@@ -3039,10 +3112,10 @@ export const BillEdit: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3 justify-center pt-2">
-                <Button className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded" onClick={() => handleSubmit()} disabled={isSubmitting}>
+                <Button className="fm-button-fix fm-button-brand px-8 py-2" onClick={() => handleSubmit()} disabled={isSubmitting}>
                     {isSubmitting ? 'Updating...' : 'Update'}
                 </Button>
-                <Button variant="outline" onClick={() => navigate('/accounting/bills')} disabled={isSubmitting}>
+                <Button variant="outline" className="fm-button-fix px-8 py-2" onClick={() => navigate('/accounting/bills')} disabled={isSubmitting}>
                     Cancel
                 </Button>
                 
@@ -3056,7 +3129,7 @@ export const BillEdit: React.FC = () => {
                             <div
                                 key={addr.id}
                                 className={`border rounded-md p-3 text-sm cursor-pointer transition-colors ${String(activeAddressType === 'billing' ? selectedBillingAddressId : selectedShippingAddressId) === String(addr.id)
-                                    ? 'border-[#C72030] bg-red-50'
+                                    ? 'border-[#DA7756] bg-red-50'
                                     : 'border-gray-200 hover:border-gray-300'
                                     }`}
                                 onClick={() => {
@@ -3080,7 +3153,7 @@ export const BillEdit: React.FC = () => {
                                             openAddressFormModal('edit', activeAddressType, addr);
                                         }}
                                     >
-                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                        <EditOutlined fontSize="small" className="text-brand" />
                                     </IconButton>
                                 </div>
                             </div>
@@ -3090,7 +3163,7 @@ export const BillEdit: React.FC = () => {
                 <DialogActions className="!justify-between !px-4">
                     <button
                         type="button"
-                        className="text-[#1d4ed8] text-sm font-medium"
+                        className="text-brand text-sm font-medium"
                         onClick={() => openAddressFormModal('new', activeAddressType)}
                     >
                         + New address
@@ -3167,7 +3240,7 @@ export const BillEdit: React.FC = () => {
                     </div>
                 </DialogContent>
                 <DialogActions>
-                    <Button className="bg-[#C72030] hover:bg-[#A01020] text-white" onClick={handleSaveAddressForm}>Save</Button>
+                    <Button className="bg-[#DA7756] hover:bg-[#C45F40] text-white" onClick={handleSaveAddressForm}>Save</Button>
                     <Button variant="outline" onClick={() => setAddressFormModalOpen(false)}>Cancel</Button>
                 </DialogActions>
             </Dialog>
@@ -3196,7 +3269,7 @@ export const BillEdit: React.FC = () => {
                     </div>
                 </DialogContent>
                 <DialogActions>
-                    <Button className="bg-[#C72030] hover:bg-[#A01020] text-white" onClick={handleUpdateGstConfig}>Update</Button>
+                    <Button className="bg-[#DA7756] hover:bg-[#C45F40] text-white" onClick={handleUpdateGstConfig}>Update</Button>
                     <Button variant="outline" onClick={() => setGstModalOpen(false)}>Cancel</Button>
                 </DialogActions>
             </Dialog>
@@ -3212,8 +3285,8 @@ export const BillEdit: React.FC = () => {
                     <div className="p-6 space-y-6">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                                    <span className="text-xl font-bold text-blue-600">
+                                <div className="w-12 h-12 rounded-full bg-brand-light flex items-center justify-center">
+                                    <span className="text-xl font-bold text-brand">
                                         {(selectedCustomer.company_name || selectedCustomer.name || 'V').charAt(0).toUpperCase()}
                                     </span>
                                 </div>
@@ -3242,7 +3315,7 @@ export const BillEdit: React.FC = () => {
                                     Outstanding Payables
                                 </Typography>
                             </div>
-                            <div className="bg-green-50 rounded-lg p-4 text-center">
+                            <div className="bg-orange-50 rounded-lg p-4 text-center">
                                 <Typography variant="h6" className="font-bold">
                                     ₹0.00
                                 </Typography>
@@ -3266,7 +3339,7 @@ export const BillEdit: React.FC = () => {
                                 ['Shipping Address', formatInlineAddress(selectedCustomer.default_shipping_address || selectedCustomer.shipping_address)],
                             ].map(([label, value]) => (
                                 <div key={label} className="flex justify-between items-start py-1.5 border-b border-gray-100 last:border-0 gap-4">
-                                    <span className="text-xs text-[#C72030] w-36 shrink-0">{label}</span>
+                                    <span className="text-xs text-[#DA7756] w-36 shrink-0">{label}</span>
                                     <span className="text-xs text-gray-700 text-right">{value}</span>
                                 </div>
                             ))}
@@ -3280,13 +3353,12 @@ export const BillEdit: React.FC = () => {
                                     Contact Persons
                                 </Typography>
                                 <Button
-                                    size="small"
-                                    startIcon={<Add />}
+                                    size="sm"
                                     onClick={() => setContactPersonDialogOpen(true)}
-                                    variant="outlined"
-                                    sx={{ textTransform: 'none' }}
+                                    variant="outline"
+                                    className="fm-button-fix"
                                 >
-                                    Add
+                                    <span className="flex items-center gap-2"><Add fontSize="small" /> Add</span>
                                 </Button>
                             </div>
 
@@ -3351,8 +3423,8 @@ export const BillEdit: React.FC = () => {
                     </div>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setAddUserDialogOpen(false)}>Cancel</Button>
-                    <Button onClick={handleAddExternalUser} variant="contained">Add</Button>
+                    <Button onClick={() => setAddUserDialogOpen(false)} variant="outline" className="fm-button-fix px-8 py-2">Cancel</Button>
+                    <Button onClick={handleAddExternalUser} className="fm-button-fix fm-button-brand px-8 py-2">Add</Button>
                 </DialogActions>
             </Dialog>
 
@@ -3441,8 +3513,8 @@ export const BillEdit: React.FC = () => {
                     </div>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setContactPersonDialogOpen(false)}>Cancel</Button>
-                    <Button onClick={handleAddContactPerson} variant="contained">Save</Button>
+                    <Button onClick={() => setContactPersonDialogOpen(false)} variant="outline" className="fm-button-fix px-8 py-2">Cancel</Button>
+                    <Button onClick={handleAddContactPerson} className="fm-button-fix fm-button-brand px-8 py-2">Save</Button>
                 </DialogActions>
             </Dialog>
 
@@ -3481,7 +3553,7 @@ export const BillEdit: React.FC = () => {
                         Cancel
                     </button>
                     <button
-                        className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                        className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded"
                         onClick={() => {
                             if (currentItemIndex !== null) {
                                 updateItem(currentItemIndex, "tax_exemption_id", selectedExemption);
