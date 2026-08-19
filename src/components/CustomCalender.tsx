@@ -42,9 +42,6 @@ export const CustomCalender = forwardRef<HTMLDivElement, CustomCalendarProps>(
             }
         }, []);
 
-        // Default to current month and today as selected
-        const [currentDate, setCurrentDate] = useState(initialDate || today);
-
         // Normalize selectedDate to an object shape { date, month, year }
         const getDateFromObject = (dateObj) => {
             if (!dateObj) return null;
@@ -67,6 +64,15 @@ export const CustomCalender = forwardRef<HTMLDivElement, CustomCalendarProps>(
                 year: today.getFullYear(),
             }
         );
+
+        // Open the calendar on the already-selected date's month/year (e.g. Jan
+        // 2027) instead of always defaulting to the current month — callers only
+        // ever pass `selectedDate`, never `initialDate`.
+        const [currentDate, setCurrentDate] = useState(() => {
+            const selected = getDateFromObject(propSelectedDate);
+            if (selected) return new Date(selected.year, selected.month, selected.date);
+            return initialDate || today;
+        });
 
         // Weekday labels (start week on Sunday)
         const daysOfWeek = ['Su', 'M', 'T', 'W', 'Th', 'F', 'Sa'];
