@@ -112,7 +112,7 @@ const TodoSkeleton = () => {
 
 export default function Todo() {
   const { setCurrentSection } = useLayout();
- const { shouldShow } = useDynamicPermissions(); 
+  const { shouldShow } = useDynamicPermissions();
   const view = localStorage.getItem("selectedView");
   const [taskType, setTaskType] = useState<"all" | "my">("my");
   const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
@@ -565,15 +565,15 @@ export default function Todo() {
           <div className="flex items-center justify-between gap-3 sm:gap-6 flex-wrap">
             {/* Date Filters - Left Side */}
             <div className="flex items-end gap-4 flex-shrink-0">
-              {(shouldShow("Todo","create") &&
-              <Button
-                onClick={() => setIsAddTodoModalOpen(true)}
-                className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
-              >
-                <Plus size={18} />
-                Add
-              </Button>
+              {(shouldShow("Todo", "create") &&
+                <Button
+                  onClick={() => setIsAddTodoModalOpen(true)}
+                  className="fm-button-fix fm-button-brand px-4 py-2"
+                  variant="ghost"
+                >
+                  <Plus size={18} />
+                  Add
+                </Button>
               )}
             </div>
 
@@ -940,8 +940,8 @@ const PendingTasksCard = ({
   const { setNodeRef, isOver } = useDroppable({ id: "pending-section" });
 
   return (
-    <Card ref={setNodeRef} className={`shadow-sm border border-border transition-colors ${isOver ? 'bg-blue-50' : ''}`}>
-      <div className="flex items-center gap-3 p-4 bg-[#F6F4EE] border border-[#D9D9D9]">
+    <Card ref={setNodeRef} className={`shadow-sm border border-[#D9D9D9] transition-colors ${isOver ? 'bg-blue-50' : ''}`}>
+      <div className="flex items-center gap-3 p-4 bg-[#F6F4EE] border-b border-[#D9D9D9] rounded-t-[10px]">
         <div className="font-semibold w-8  h-8 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
           {pendingTodos.length.toString().padStart(2, "0")}
         </div>
@@ -1088,8 +1088,8 @@ const CompletedTasksCard = ({
   const { setNodeRef, isOver } = useDroppable({ id: "completed-section" });
 
   return (
-    <Card ref={setNodeRef} className={`shadow-sm border border-border transition-colors ${isOver ? 'bg-green-50' : ''}`}>
-      <div className="flex items-center gap-3 p-4 bg-[#F6F4EE] border border-[#D9D9D9]">
+    <Card ref={setNodeRef} className={`shadow-sm border border-[#D9D9D9] transition-colors ${isOver ? 'bg-green-50' : ''}`}>
+      <div className="flex items-center gap-3 p-4 bg-[#F6F4EE] border-b border-[#D9D9D9] rounded-t-[10px]">
         <div className="font-semibold w-8  h-8 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
           {completedTodos.length.toString().padStart(2, "0")}
         </div>

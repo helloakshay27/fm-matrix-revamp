@@ -733,7 +733,7 @@ export const IncidentNewDetails = () => {
                 baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
             }
 
-            const response = await fetch(`${baseUrl}/pms/incidents/${id}/incident_report?access_token=${token}`, {
+            const response = await fetch(`${baseUrl}/pms/incidents/${id}/incident_report`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`

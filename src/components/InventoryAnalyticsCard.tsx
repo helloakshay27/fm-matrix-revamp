@@ -806,7 +806,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                     }
                     const from = formatDate(dateRange.startDate);
                     const to = formatDate(dateRange.endDate);
-                    const url = `https://${baseUrl}/pms/inventories/inventory_consumption_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
+                    const url = `https://${baseUrl}/pms/inventories/inventory_consumption_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
                     setRefreshLoading(true);
                     const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (!resp.ok) throw new Error('Failed to refresh data');
@@ -862,7 +862,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                     }
                     const from = formatDate(dateRange.startDate);
                     const to = formatDate(dateRange.endDate);
-                    const url = `https://${baseUrl}/pms/inventories/category_wise_items.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
+                    const url = `https://${baseUrl}/pms/inventories/category_wise_items.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
                     setRefreshLoading(true);
                     const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (!resp.ok) throw new Error('Failed to refresh data');
@@ -916,7 +916,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                     }
                     const from = formatDate(dateRange.startDate);
                     const to = formatDate(dateRange.endDate);
-                    const url = `https://${baseUrl}/pms/inventories/card_inventory_cost_over_month.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
+                    const url = `https://${baseUrl}/pms/inventories/card_inventory_cost_over_month.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
                     setRefreshLoading(true);
                     const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (!resp.ok) throw new Error('Failed to refresh data');
@@ -970,7 +970,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                     }
                     const from = formatDate(dateRange.startDate);
                     const to = formatDate(dateRange.endDate);
-                    const url = `https://${baseUrl}/pms/inventories/consumption_report_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
+                    const url = `https://${baseUrl}/pms/inventories/consumption_report_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
                     setRefreshLoading(true);
                     const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (!resp.ok) throw new Error('Failed to refresh data');
@@ -1024,7 +1024,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                     }
                     const from = formatDate(dateRange.startDate);
                     const to = formatDate(dateRange.endDate);
-                    const url = `https://${baseUrl}/pms/inventories/consumption_report_non_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
+                    const url = `https://${baseUrl}/pms/inventories/consumption_report_non_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
                     setRefreshLoading(true);
                     const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (!resp.ok) throw new Error('Failed to refresh data');
@@ -1078,7 +1078,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                     }
                     const from = formatDate(dateRange.startDate);
                     const to = formatDate(dateRange.endDate);
-                    const url = `https://${baseUrl}/pms/inventories/current_minimum_stock_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
+                    const url = `https://${baseUrl}/pms/inventories/current_minimum_stock_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
                     setRefreshLoading(true);
                     const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (!resp.ok) throw new Error('Failed to refresh data');
@@ -1132,7 +1132,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                     }
                     const from = formatDate(dateRange.startDate);
                     const to = formatDate(dateRange.endDate);
-                    const url = `https://${baseUrl}/pms/inventories/current_minimum_stock_non_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
+                    const url = `https://${baseUrl}/pms/inventories/current_minimum_stock_non_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
                     setRefreshLoading(true);
                     const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (!resp.ok) throw new Error('Failed to refresh data');
@@ -1186,7 +1186,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                     }
                     const from = formatDate(dateRange.startDate);
                     const to = formatDate(dateRange.endDate);
-                    const url = `https://${baseUrl}/pms/inventories/items_status.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
+                    const url = `https://${baseUrl}/pms/inventories/items_status.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
                     setRefreshLoading(true);
                     const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (!resp.ok) throw new Error('Failed to refresh data');

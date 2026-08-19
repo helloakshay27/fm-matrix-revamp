@@ -428,9 +428,8 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
   const handleTotalOrdersExport = async () => {
     try {
       const siteId = localStorage.getItem('selectedSiteId') || '0';
-      const accessToken = token || '';
 
-      const exportUrl = `https://${baseUrl}/pms/admin/food_orders/food_and_booking.json?site_id=${siteId}&access_token=${encodeURIComponent(accessToken)}&export=total_orders`;
+      const exportUrl = `https://${baseUrl}/pms/admin/food_orders/food_and_booking.json?site_id=${siteId}&export=total_orders`;
 
       const response = await fetch(exportUrl, {
         headers: {

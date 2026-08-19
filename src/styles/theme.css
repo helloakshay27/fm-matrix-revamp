@@ -79,6 +79,7 @@
   --color-card-white: #ffffff;
   --color-border-subtle: #d5dbdb;
   --color-divider: #e5e5e5;
+  --pulse-card-border: #E5E3DB;
 
   /* Sidebar */
   --color-sidebar: #c4b89d;
@@ -2898,6 +2899,22 @@ tbody td {
 table tbody tr:hover,
 [class*="table"] tbody tr:hover {
   background-color: var(--color-primary-selected) !important;
+}
+
+/* Opt-out: Item Table on the Invoice/Credit Note/Debit Note Add pages has no row hover tint */
+table.item-table-no-hover tbody tr:hover {
+  background-color: transparent !important;
+}
+
+/* Reusable brand-orange "confirm delete" button — apply to any delete-confirmation
+   OK/Delete button instead of hardcoding red inline styles. */
+.btn-delete-confirm {
+  background-color: var(--color-primary) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+.btn-delete-confirm:hover {
+  background-color: var(--color-primary-hover) !important;
 }
 
 /* ===========================================

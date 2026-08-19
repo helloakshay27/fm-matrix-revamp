@@ -520,7 +520,7 @@ export const EmployeeUnifiedCalendar: React.FC<
         },
       };
       const res = await fetch(
-        `${baseUrl}/api/google_calendar_events?access_token=${token}`,
+        `${baseUrl}/api/google_calendar_events`,
         {
           method: "POST",
           headers: {

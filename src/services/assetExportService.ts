@@ -69,7 +69,7 @@ export const assetExportService = {
     const siteId = getCurrentSiteId();
     const accessToken = getAccessToken();
     
-    const url = `${getBaseUrl()}/pms/assets/assets_data_report_export?site_id=${siteId}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/assets/assets_data_report_export?site_id=${siteId}`;
     
     console.log('Starting asset export with URL:', url);
     
@@ -101,7 +101,7 @@ export const assetExportService = {
    */
   checkDigitalRegisterExportStatus: async (key: string): Promise<ExportStatusResponse> => {
     const accessToken = getAccessToken();
-    const url = `${getBaseUrl()}/pms/assets/export_status?key=${key}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/assets/export_status?key=${key}`;
 
     try {
       const response = await fetch(url, {
@@ -136,7 +136,7 @@ export const assetExportService = {
     const siteId = getCurrentSiteId();
     const accessToken = getAccessToken();
     
-    const url = `${getBaseUrl()}/pms/assets/export_status.json?key=${key}&site_id=${siteId}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/assets/export_status.json?key=${key}&site_id=${siteId}`;
     
     console.log('Checking export status with URL:', url);
     
@@ -184,7 +184,7 @@ export const assetExportService = {
     const siteId = getCurrentSiteId();
     const accessToken = getAccessToken();
     
-    const url = `${getBaseUrl()}/pms/assets/download_export.json?key=${key}&site_id=${siteId}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/assets/download_export.json?key=${key}&site_id=${siteId}`;
     
     try {
       const response = await fetch(url, {

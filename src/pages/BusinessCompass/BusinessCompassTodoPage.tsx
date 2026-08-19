@@ -249,8 +249,8 @@ const PendingTasksCard = ({
     const { setNodeRef, isOver } = useDroppable({ id: "pending-section" });
 
     return (
-        <Card ref={setNodeRef} className={`shadow-sm border border-border transition-colors ${isOver ? "bg-blue-50" : ""}`}>
-            <div className="flex items-center gap-3 p-4 bg-[#F6F4EE] border border-[#D9D9D9]">
+        <Card ref={setNodeRef} className={`shadow-sm border border-[#D9D9D9] transition-colors ${isOver ? "bg-blue-50" : ""}`}>
+            <div className="flex items-center gap-3 p-4 bg-[#F6F4EE] border-b border-[#D9D9D9] rounded-t-[10px]">
                 <div className="font-semibold w-8 h-8 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     {pendingTodos.length.toString().padStart(2, "0")}
                 </div>
@@ -386,8 +386,8 @@ const CompletedTasksCard = ({
     const { setNodeRef, isOver } = useDroppable({ id: "completed-section" });
 
     return (
-        <Card ref={setNodeRef} className={`shadow-sm border border-border transition-colors ${isOver ? "bg-green-50" : ""}`}>
-            <div className="flex items-center gap-3 p-4 bg-[#F6F4EE] border border-[#D9D9D9]">
+        <Card ref={setNodeRef} className={`shadow-sm border border-[#D9D9D9] transition-colors ${isOver ? "bg-green-50" : ""}`}>
+            <div className="flex items-center gap-3 p-4 bg-[#F6F4EE] border-b border-[#D9D9D9] rounded-t-[10px]">
                 <div className="font-semibold w-8 h-8 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     {completedTodos.length.toString().padStart(2, "0")}
                 </div>

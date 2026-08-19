@@ -452,7 +452,7 @@ export const AMCDetailsPage = () => {
     setOccurrencesLoading(true);
     try {
       const idsQs = assetIds.map((aid: number) => `ids[]=${aid}`).join("&");
-      const url = `https://${baseUrl}/pms/asset_amcs/occurrences.json?${idsQs}&access_token=${token}&page=${page}&per_page=15`;
+      const url = `https://${baseUrl}/pms/asset_amcs/occurrences.json?${idsQs}&page=${page}&per_page=15`;
       const res = await fetch(url, { headers: { Accept: "application/json" } });
       if (!res.ok) throw new Error(`Occurrences fetch failed: ${res.status}`);
       const data = await res.json();

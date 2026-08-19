@@ -30,13 +30,28 @@ const InventoryConsumptionDashboard = () => {
   // New state for monthly costs from API
   const [monthlyCosts, setMonthlyCosts] = useState<Record<string, number>>({});
 
-  const categories = [
-    { name: 'Non Technical', value: 'Non Technical', icon: '📦' },
-    { name: 'Technical', value: 'Technical', icon: '⚙️' },
-    { name: 'Housekeeping', value: 'Houskeeping', icon: '🧹' },
-    { name: 'Stationary', value: 'Stationary', icon: '📎' },
-    { name: 'Pantry', value: 'Pantry', icon: '☕' },
-  ];
+  // Categories shown under each month come entirely from that month's
+  // inventory_consumption_history_by_category.json response — no fixed
+  // master list. A month whose response hasn't landed yet just has no entry.
+  const [monthCategories, setMonthCategories] = useState<Record<string, { name: string; value: string; icon: string }[]>>({});
+  const [monthCategoriesLoading, setMonthCategoriesLoading] = useState<Record<string, boolean>>({});
+
+  // Best-effort icon by keyword — the API only returns category names, no icons.
+  const getCategoryIcon = (name: string): string => {
+    const n = name.toLowerCase();
+    if (n.includes('housekeeping') || n.includes('cleaning')) return '🧹';
+    if (n.includes('pantry') || n.includes('kitchen') || n.includes('condiment')) return '☕';
+    if (n.includes('tea') || n.includes('coffee') || n.includes('beverage') || n.includes('dairy')) return '🥤';
+    if (n.includes('stationery') || n.includes('stationary') || n.includes('office')) return '📎';
+    if (n.includes('technical') || n.includes('electrical') || n.includes('lighting')) return '⚙️';
+    if (n.includes('plumbing') || n.includes('hardware')) return '🔧';
+    if (n.includes('hygiene') || n.includes('personal care')) return '🧼';
+    if (n.includes('fruit') || n.includes('vegetable')) return '🥦';
+    if (n.includes('snack') || n.includes('food')) return '🍪';
+    if (n.includes('recreation')) return '🎯';
+    if (n.includes('disposable') || n.includes('crockery')) return '🍽️';
+    return '📦';
+  };
 
   const fetchMonthlyCosts = async () => {
     try {
@@ -235,11 +250,13 @@ const InventoryConsumptionDashboard = () => {
       );
     }
     if (columnKey === 'cost') {
-      // Handle different possible cost field names
-      const costValue = item.cost !== undefined && item.cost !== null
-        ? item.cost
-        : item.unit_cost !== undefined && item.unit_cost !== null
-          ? item.unit_cost
+      // "Unit Cost" — by_category consumption records give this directly as
+      // `unit_cost` (confirmed: unit_cost * difference === cost, the
+      // transaction total used below for "Consumption Cost Total").
+      const costValue = item.unit_cost !== undefined && item.unit_cost !== null
+        ? item.unit_cost
+        : item.cost !== undefined && item.cost !== null
+          ? item.cost
           : item.price !== undefined && item.price !== null
             ? item.price
             : null;
@@ -251,16 +268,25 @@ const InventoryConsumptionDashboard = () => {
       return <span className="font-semibold text-green-600">{costValue !== null && costValue !== undefined ? `${getCurrencySymbol()}${formatNumber(costValue)}` : '-'}</span>;
     }
     if (columnKey === 'name') {
-      return <span className="font-medium text-gray-900">{value}</span>;
+      // by_category consumption records use `inventory_name`, not `name`.
+      const nameValue = value ?? item.inventory_name;
+      return <span className="font-medium text-gray-900">{nameValue ?? '-'}</span>;
     }
     if (columnKey === 'quantity' || columnKey === 'consumption') {
-      return <span className="text-gray-700">{value !== null && value !== undefined ? formatNumber(value) : '-'}</span>;
+      // by_category consumption records track stock via `closing` (post-transaction
+      // balance, used as "Available Stock") and `difference` (amount consumed in
+      // this transaction, used as "Consumed Quantity") instead of quantity/consumption.
+      const fallback = columnKey === 'quantity' ? item.closing : item.difference;
+      const cellValue = value ?? fallback;
+      return <span className="text-gray-700">{cellValue !== null && cellValue !== undefined ? formatNumber(cellValue) : '-'}</span>;
     }
     if (columnKey === 'category') {
       return <span className="text-gray-700">{value !== null && value !== undefined ? value : '-'}</span>;
     }
     if (columnKey === 'total_cost') {
-      return <span className="font-semibold text-red-600">{value !== null && value !== undefined ? `${getCurrencySymbol()}${formatNumber(value)}` : '-'}</span>;
+      // by_category consumption records carry the transaction's total cost in `cost`.
+      const totalCostValue = value ?? item.cost ?? null;
+      return <span className="font-semibold text-red-600">{totalCostValue !== null && totalCostValue !== undefined ? `${getCurrencySymbol()}${formatNumber(totalCostValue)}` : '-'}</span>;
     }
     if (columnKey === 'criticality') {
       return <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">{value}</span>;
@@ -290,14 +316,87 @@ const InventoryConsumptionDashboard = () => {
     }
     setExpandedMonth(month);
     setExpandedCategory(null);
-    
-    // Fetch data for all categories in the background to get totals
-    categories.forEach(cat => {
-      const key = `${month}-${cat.value}`;
-      if (!categoryData[key] || (!categoryData[key].loading && categoryData[key].total_cost === null)) {
-        fetchCategoryData(month, cat.value);
+
+    // One request returns every category's consumption for this month at
+    // once, instead of firing a separate request per category.
+    fetchMonthCategoryData(month);
+  };
+
+  // Fetches all categories' consumption data for a month in a single call.
+  // Confirmed real shape: { total_cost, categories: [{ category, total_quantity,
+  // total_cost, consumptions: [...] }] } — a few other plausible shapes are
+  // still handled defensively in case this varies by environment/version.
+  const fetchMonthCategoryData = async (month: string, isRefresh = false) => {
+    setMonthCategoriesLoading((prev) => ({ ...prev, [month]: true }));
+
+    try {
+      const { start, end } = getMonthDateRange(month);
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      const url = `https://${baseUrl}/pms/inventories/inventory_consumption_history_by_category.json?q[created_at_gteq]=${start}&q[created_at_lteq]=${end}`;
+
+      const response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = response.data;
+
+      const grouped: Record<string, { items: any[]; totalCost: number | null }> = {};
+      const addItem = (categoryName: unknown, item: any) => {
+        if (typeof categoryName !== 'string' || !categoryName) return;
+        if (!grouped[categoryName]) grouped[categoryName] = { items: [], totalCost: null };
+        grouped[categoryName].items.push(item);
+      };
+
+      if (Array.isArray(data?.categories)) {
+        data.categories.forEach((group: any) => {
+          const categoryName = group.category || group.category_name || group.name;
+          const items = group.consumptions || group.inventories || group.items || [];
+          if (typeof categoryName === 'string' && categoryName) {
+            grouped[categoryName] = {
+              items: Array.isArray(items) ? items : [],
+              totalCost: typeof group.total_cost === 'number' ? group.total_cost : null,
+            };
+          }
+        });
+      } else if (Array.isArray(data?.inventories)) {
+        data.inventories.forEach((item: any) => addItem(item.category, item));
+      } else if (Array.isArray(data)) {
+        data.forEach((item: any) => addItem(item.category, item));
+      } else if (data && typeof data === 'object') {
+        Object.entries(data).forEach(([key, value]) => {
+          if (Array.isArray(value)) grouped[key] = { items: value, totalCost: null };
+        });
       }
-    });
+
+      // The categories shown for this month are exactly the ones the API
+      // actually returned data for — nothing added from a fixed master list.
+      const monthCats = Object.keys(grouped)
+        .filter((name) => name.trim() !== '')
+        .sort((a, b) => a.localeCompare(b))
+        .map((name) => ({ name, value: name, icon: getCategoryIcon(name) }));
+      setMonthCategories((prev) => ({ ...prev, [month]: monthCats }));
+
+      setCategoryData((prev) => {
+        const next = { ...prev };
+        monthCats.forEach((cat) => {
+          const key = `${month}-${cat.value}`;
+          const group = grouped[cat.value] || { items: [], totalCost: null };
+          // Items here are wastage/consumption entries with their own `cost`
+          // field (not `total_cost`) — prefer the API's own group-level
+          // total_cost when present, falling back to summing item costs.
+          const totalCost =
+            group.totalCost ??
+            group.items.reduce((sum: number, item: any) => sum + (item.total_cost ?? item.cost ?? 0), 0);
+          next[key] = { loading: false, inventories: group.items, total_cost: totalCost };
+        });
+        return next;
+      });
+    } catch (error) {
+      console.error(`❌ Error fetching category-wise consumption data for ${month}:`, error);
+      setMonthCategories((prev) => ({ ...prev, [month]: prev[month] || [] }));
+    } finally {
+      setMonthCategoriesLoading((prev) => ({ ...prev, [month]: false }));
+    }
   };
 
   const fetchCategoryData = async (month: string, categoryValue: string, isRefresh = false) => {
@@ -376,15 +475,13 @@ const InventoryConsumptionDashboard = () => {
   };
 
   const refreshMonthData = (month: string) => {
-    categories.forEach(cat => {
-      refreshCategoryData(month, cat.value);
-    });
+    fetchMonthCategoryData(month, true);
     fetchMonthlyCosts();
   };
 
   const downloadMonthData = (month: string) => {
     const allItems: any[] = [];
-    categories.forEach(cat => {
+    (monthCategories[month] || []).forEach(cat => {
       const key = `${month}-${cat.value}`;
       const data = categoryData[key];
       if (data && data.inventories) {
@@ -437,7 +534,10 @@ const InventoryConsumptionDashboard = () => {
   };
 
   // Navigate to view page
-  // Pass id, start_date, end_date to the view page
+  // The :id route param is used directly as `resource_id` by the view page
+  // (InventoryConsumptionViewPage -> fetchInventoryConsumptionDetails), so it
+  // must be the inventory's resource_id, not the consumption transaction's
+  // own `id` (e.g. resource_id: 96197 vs the consumption record's id: 162878).
   const handleViewItem = (item: any) => {
     // Find the expanded month and its date range
     const monthObj = monthlyData.find(m => m.month === expandedMonth);
@@ -447,9 +547,10 @@ const InventoryConsumptionDashboard = () => {
       start = s;
       end = e;
     }
+    const resourceId = item.resource_id ?? item.id;
     // Use the correct API path for the detail page navigation
     // Only one '?' in the URL, use '&' for additional params
-    navigate(`/maintenance/inventory-consumption/view/${item.id}?start_date=${start}&end_date=${end}`);
+    navigate(`/maintenance/inventory-consumption/view/${resourceId}?start_date=${start}&end_date=${end}`);
   };
 
 
@@ -531,10 +632,15 @@ const InventoryConsumptionDashboard = () => {
               </div>
             </div>
 
-            {/* Expanded Month - Show Categories */}
+            {/* Expanded Month - Show Categories (from that month's API response only) */}
             {expandedMonth === m.month && (
               <div className="border-t border-gray-200 bg-gray-50 p-4 space-y-3">
-                {categories.map((cat) => {
+                {monthCategoriesLoading[m.month] && (monthCategories[m.month]?.length ?? 0) === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-4">Loading categories...</p>
+                ) : (monthCategories[m.month]?.length ?? 0) === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-4">No category data for this month.</p>
+                ) : null}
+                {(monthCategories[m.month] || []).map((cat) => {
                   const catKey = `${m.month}-${cat.value}`;
                   const isCatExpanded = expandedCategory === cat.value;
                   const data = categoryData[catKey];
