@@ -164,6 +164,10 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
   const set = (field: keyof Filters, value: string) =>
     setFilters(prev => ({ ...prev, [field]: value }));
 
+  // ISO date strings (YYYY-MM-DD, the native <input type="date"> format) compare
+  // correctly with a plain string comparison, so no Date parsing is needed here.
+  const dateRangeInvalid = Boolean(filters.fromDate && filters.toDate && filters.fromDate > filters.toDate);
+
   const formatDate = (dateStr: string): string => {
     const [y, m, d] = dateStr.split('-');
     return `${d}/${m}/${y}`;
@@ -185,7 +189,7 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
   };
 
   const handleSubmit = () => {
-    if (filters.fromDate && filters.toDate && filters.fromDate > filters.toDate) {
+    if (dateRangeInvalid) {
       toast.error('From Date cannot be later than To Date.');
       return;
     }
@@ -242,7 +246,10 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
                 onChange={e => set('fromDate', e.target.value)}
                 fullWidth
                 variant="outlined"
+                error={dateRangeInvalid}
+                helperText={dateRangeInvalid ? 'From Date cannot be later than To Date.' : ' '}
                 slotProps={{ inputLabel: { shrink: true } }}
+                inputProps={filters.toDate ? { max: filters.toDate } : undefined}
                 InputProps={{ sx: fieldStyles }}
               />
               <TextField
@@ -252,7 +259,10 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
                 onChange={e => set('toDate', e.target.value)}
                 fullWidth
                 variant="outlined"
+                error={dateRangeInvalid}
+                helperText={dateRangeInvalid ? 'To Date cannot be earlier than From Date.' : ' '}
                 slotProps={{ inputLabel: { shrink: true } }}
+                inputProps={filters.fromDate ? { min: filters.fromDate } : undefined}
                 InputProps={{ sx: fieldStyles }}
               />
             </div>
@@ -397,7 +407,8 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
           <div className="mt-8 flex justify-end gap-2 border-t border-gray-200 pt-6">
             <Button
               onClick={handleSubmit}
-              className="fm-button-fix fm-button-brand px-4 py-2"
+              disabled={dateRangeInvalid}
+              className="fm-button-fix fm-button-brand px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Apply Filter
             </Button>

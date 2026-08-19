@@ -782,7 +782,7 @@ const EditWasteGenerationPage = () => {
                             if (!(count > 0) || !(total > 0)) return null;
                             const perBag = distributeWeight(total, count);
                             return (
-                              <p className="text-xs text-gray-500 mt-1.5">
+                              <p className="text-xs text-gray-500 mt-1.5 max-w-[280px] break-words">
                                 {count} bag{count > 1 ? 's' : ''}: {perBag.join(', ')} {entry.uom || ''}
                               </p>
                             );
