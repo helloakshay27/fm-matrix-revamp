@@ -17,9 +17,9 @@ function getMsafeBaseUrl(): string {
 }
 
 /** Circle Manager filter bar values, applied as query params once the user clicks Apply.
- *  Only sent for the 'circle' persona — the admin (pan-India) view stays unfiltered. */
+ *  Pan India now uses the exact same filter bar as Circle Manager, so every field applies
+ *  the same way regardless of persona. */
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
-  if (persona !== 'circle') return {};
   const params: Record<string, string> = {};
   if (f.circleId) params.circle_id = f.circleId;
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
@@ -124,8 +124,10 @@ const normalizeDirectory = (payload: unknown): DirectoryUser[] => {
       const kr = mapStatus(record.krcc_status ?? record.kr_status ?? record.krcc ?? record.kr);
       const lm = mapStatus(record.lmc_status ?? record.lm_status ?? record.lmc ?? record.lm);
       const overallLabel = getFirstString(record, ['overall_status']) ?? undefined;
+      const email = getFirstString(record, ['email', 'email_id']) ?? undefined;
+      const mobile = getFirstString(record, ['mobile', 'mobile_number', 'phone', 'phone_number']) ?? undefined;
 
-      return { name, emp, type, circle, role, tr, kr, lm, overallLabel };
+      return { name, emp, type, circle, role, tr, kr, lm, overallLabel, email, mobile };
     })
     .filter((item): item is DirectoryUser => Boolean(item));
 };
@@ -243,15 +245,15 @@ export function UserDirectoryCard({
 
   return (
     <ChartCard
-      title="All Users — with KRCC, LMC, Training status at a glance"
-      sub="Search by name, email, or emp ID · click any user for full drill-down"
+      title="All Users — with KRCC, LMC status at a glance"
+      sub="Search by name, emp ID, mobile no., or email · click any user for full drill-down"
       infoKey="directory"
       style={style}
       tag={
         <div className="usr-search">
           <Search size={14} />
           <input
-            placeholder="Search by name or last name…"
+            placeholder="Search by name, emp ID, mobile, or email…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -278,10 +280,11 @@ export function UserDirectoryCard({
             <tr>
               <th>Name</th>
               <th>Emp ID</th>
+              <th>Email</th>
+              <th>Mobile No.</th>
               <th>Type</th>
               <th>Circle</th>
               <th>Role</th>
-              <th style={{ textAlign: 'center' }}>Training</th>
               <th style={{ textAlign: 'center' }}>KRCC</th>
               <th style={{ textAlign: 'center' }}>LMC</th>
               {hideStatusColumn ? null : <th>Status</th>}
@@ -290,13 +293,13 @@ export function UserDirectoryCard({
           <tbody>
             {directoryLoading ? (
               <tr>
-                <td colSpan={hideStatusColumn ? 8 : 9} style={{ textAlign: 'center', color: 'var(--sage)', padding: '16px 0' }}>
+                <td colSpan={hideStatusColumn ? 9 : 10} style={{ textAlign: 'center', color: 'var(--sage)', padding: '16px 0' }}>
                   Loading…
                 </td>
               </tr>
             ) : data.length === 0 ? (
               <tr>
-                <td colSpan={hideStatusColumn ? 8 : 9} style={{ textAlign: 'center', color: 'var(--sage)', padding: '16px 0' }}>
+                <td colSpan={hideStatusColumn ? 9 : 10} style={{ textAlign: 'center', color: 'var(--sage)', padding: '16px 0' }}>
                   No users available
                 </td>
               </tr>
@@ -307,6 +310,8 @@ export function UserDirectoryCard({
                   <tr key={u.emp + u.name} onClick={() => openDrill('user-detail', u.name)}>
                     <td className="cell-strong">{u.name}</td>
                     <td className="cell-mono">{u.emp}</td>
+                    <td>{u.email ?? '—'}</td>
+                    <td className="cell-mono">{u.mobile ?? '—'}</td>
                     <td>
                       <span className={`badge ${u.type === 'Internal' ? 'b-info' : 'b-neutral'}`}>
                         {u.type}
@@ -314,9 +319,6 @@ export function UserDirectoryCard({
                     </td>
                     <td>{u.circle}</td>
                     <td>{u.role}</td>
-                    <td style={{ textAlign: 'center' }}>
-                      <StatusDot value={u.tr} />
-                    </td>
                     <td style={{ textAlign: 'center' }}>
                       <StatusDot value={u.kr} />
                     </td>

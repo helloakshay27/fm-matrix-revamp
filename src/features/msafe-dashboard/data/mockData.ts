@@ -12,6 +12,8 @@ export type DirectoryUser = {
   lm: StatusCode;
   /** Raw overall-status label from the API (e.g. "In Progress", "Need Action"), when available. */
   overallLabel?: string;
+  email?: string;
+  mobile?: string;
 };
 
 export const DIRECTORY: DirectoryUser[] = [
