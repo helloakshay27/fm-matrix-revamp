@@ -879,7 +879,7 @@ const ActivityLog = ({ taskId }: { taskId: string }) => {
         const fetchLogs = async () => {
             try {
                 const response = await axios.get(
-                    `https://${baseUrl}/business_compass/tasks/${taskId}/task_system_logs.json`,
+                    `https://${baseUrl}/business_compass/tasks/${taskId}/activity_logs.json`,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
                 setTaskStatusLogs(response.data || []);

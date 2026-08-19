@@ -22,7 +22,10 @@ export const TaskDatePicker = ({
         return null;
     };
 
-    const initialDate = startDate ? getDateFromObject(startDate) : today;
+    // Prefer the field's own already-selected date (e.g. Jan 2027) over the
+    // anchor `startDate` prop, so re-opening the picker shows what's actually
+    // selected instead of jumping back to the anchor/today's month.
+    const initialDate = getDateFromObject(selectedDate) || getDateFromObject(startDate) || today;
 
     const [currentMonth, setCurrentMonth] = useState(initialDate?.getMonth());
     const [currentYear, setCurrentYear] = useState(initialDate?.getFullYear());
@@ -44,17 +47,15 @@ export const TaskDatePicker = ({
     ];
 
     useEffect(() => {
-        if (startDate) {
-            const sd = getDateFromObject(startDate);
-            if (sd) {
-                setCurrentMonth(sd.getMonth());
-                setCurrentYear(sd.getFullYear());
-            }
+        const sd = getDateFromObject(selectedDate) || getDateFromObject(startDate);
+        if (sd) {
+            setCurrentMonth(sd.getMonth());
+            setCurrentYear(sd.getFullYear());
         }
-    }, [startDate]);
+    }, [selectedDate, startDate]);
 
     const getWeekDates = () => {
-        const rawBase = startDate ? getDateFromObject(startDate) : new Date();
+        const rawBase = getDateFromObject(selectedDate) || getDateFromObject(startDate) || new Date();
         if (!rawBase) return [];
 
         const baseDate = new Date(rawBase.getFullYear(), rawBase.getMonth(), rawBase.getDate());
