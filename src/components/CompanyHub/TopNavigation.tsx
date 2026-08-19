@@ -41,6 +41,7 @@ import { Button } from "@/components/ui/button";
 import { useNotification } from "@/contexts/NotificationContext";
 import { useLayout } from "@/contexts/LayoutContext";
 import { usePermissions } from "@/contexts/PermissionsContext";
+import { useActionLayout } from "@/contexts/ActionLayoutContext";
 import { permissionService } from "@/services/permissionService";
 import { getUser, clearAuth } from "@/utils/auth";
 import axios from "axios";
@@ -53,6 +54,9 @@ interface TopNavigationProps {
 
 // Action name mapping for menu items
 const menuItemActionMap: Record<string, string> = {
+  "Company Hub": "employee_company_hub",
+  "Create Note": "employee_create_note",
+  "Create Form": "employee_create_form",
   "Create Booking": "employee_create_booking",
   "Create MOM": "employee_create_mom",
   "Create Ticket": "employee_create_ticket",
@@ -65,12 +69,12 @@ const menuItemActionMap: Record<string, string> = {
   Contacts: "employee_contacts",
   "Ask AI": "employee_askai",
   Announcements: "employee_announcements",
-  Documents: "employee_documents",
+  Documents: "employee_documets",
   Activity: "employee_activity",
   "Seat Booking": "employee_seat_booking",
   Parkings: "employee_parking",
   Bookings: "employee_booking",
-  "F&B": "employee_f&B",
+  "F&B": "employee_fb",
   Visitors: "employee_ticket",
 };
 
@@ -234,27 +238,25 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLNavElement>(null);
   const { userRole } = usePermissions();
+  const { getModuleFunctions } = useActionLayout();
 
-  // Build filtered menu options based on user permissions
-  const filteredNavMenuOptions = useMemo(() => {
-    if (!userRole || !userRole.lock_modules) {
-      return navMenuOptions;
-    }
+  // Build filtered menu options based on user permissions — sourced the same
+  // dynamic way as ActionHeader/ActionSidebar, via the shared ActionLayoutContext,
+  // instead of parsing userRole.lock_modules directly. Also exposes `activeActions`
+  // so standalone nav items (e.g. the "Company Hub" link, which isn't part of any
+  // navMenuOptions category) can be gated by the same permission set.
+  const { activeActions, filteredNavMenuOptions } = useMemo(() => {
+    const sidebarFunctions = getModuleFunctions("Employee Sidebar");
 
-    // Find Employee Sidebar module for menu permissions
-    const sidebarModule = userRole.lock_modules.find(
-      (m: any) => m.module_name === "Employee Sidebar"
-    );
-
-    if (!sidebarModule) {
-      return navMenuOptions;
+    if (!sidebarFunctions.length) {
+      return { activeActions: null as Set<string> | null, filteredNavMenuOptions: navMenuOptions };
     }
 
     // Get all active function action_names
     const activeActions = new Set(
-      sidebarModule.lock_functions
-        .filter((func: any) => func.function_active === 1)
-        .map((func: any) => func.action_name)
+      sidebarFunctions
+        .filter((func) => func.function_active === 1)
+        .map((func) => func.action_name)
     );
 
     // Filter each menu category
@@ -270,8 +272,18 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
       });
     });
 
-    return filtered;
-  }, [userRole]);
+    return { activeActions, filteredNavMenuOptions: filtered };
+  }, [getModuleFunctions]);
+
+  // Same "no restriction data => show it" fallback the category filter above uses.
+  const isCompanyHubVisible =
+    !activeActions || activeActions.has(menuItemActionMap["Company Hub"]);
+
+  // Only show a category tab (Create/Work/Communicate/etc.) if at least one of
+  // its items survived permission filtering — otherwise it'd open an empty dropdown.
+  const visibleCategories = Object.keys(navMenuOptions).filter(
+    (category) => (filteredNavMenuOptions[category]?.length ?? 0) > 0
+  );
   const {
     notifications,
     notificationCount,
@@ -558,28 +570,23 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
           </button>
 
           <nav ref={navRef} className="hidden lg:flex items-center gap-6">
-            <div
-              onClick={() => {
-                setActiveNavMenu(null);
-                navigate("/employee/company-hub");
-              }}
-              className="flex items-center gap-1.5 cursor-pointer group"
-            >
-              {/* <Globe className="w-3.5 h-3.5 text-[#DA7756]" /> */}
-              <span
-                className={`text-[13px] font-medium tracking-wider transition-colors`}
+            {isCompanyHubVisible && (
+              <div
+                onClick={() => {
+                  setActiveNavMenu(null);
+                  navigate("/employee/company-hub");
+                }}
+                className="flex items-center gap-1.5 cursor-pointer group"
               >
-                Company Hub
-              </span>
-            </div>
-            {[
-              "Create",
-              "Work",
-              "Communicate",
-              "Workspace",
-              "Operations",
-              "Insight",
-            ].map((item) => (
+                {/* <Globe className="w-3.5 h-3.5 text-[#DA7756]" /> */}
+                <span
+                  className={`text-[13px] font-medium tracking-wider transition-colors`}
+                >
+                  Company Hub
+                </span>
+              </div>
+            )}
+            {visibleCategories.map((item) => (
               <div
                 key={item}
                 onClick={(e) => {
@@ -589,20 +596,18 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
                 className="flex items-center gap-1.5 cursor-pointer group"
               >
                 <span
-                  className={`text-[13px] font-medium tracking-wider transition-colors ${
-                    activeNavMenu === item
-                      ? "text-[#DA7756]"
-                      : "text-[rgba(16,24,40,1)] group-hover:text-gray-900"
-                  }`}
+                  className={`text-[13px] font-medium tracking-wider transition-colors ${activeNavMenu === item
+                    ? "text-[#DA7756]"
+                    : "text-[rgba(16,24,40,1)] group-hover:text-gray-900"
+                    }`}
                 >
                   {item}
                 </span>
                 <ChevronRight
-                  className={`w-3.5 h-3.5 transition-transform ${
-                    activeNavMenu === item
-                      ? "-rotate-90 text-[#DA7756]"
-                      : "rotate-90 text-[rgba(16,24,40,1)]"
-                  }`}
+                  className={`w-3.5 h-3.5 transition-transform ${activeNavMenu === item
+                    ? "-rotate-90 text-[#DA7756]"
+                    : "rotate-90 text-[rgba(16,24,40,1)]"
+                    }`}
                 />
               </div>
             ))}
@@ -817,34 +822,28 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
       {isMobileNavOpen && (
         <div className="lg:hidden fixed top-[57px] sm:top-[65px] left-0 right-0 bg-[#FAF9F6] border-b border-[rgba(211,209,199,1)] z-40 shadow-md animate-in slide-in-from-top-2 fade-in duration-200">
           <div className="flex flex-col px-4 py-3 gap-1">
-            <button
-              onClick={() => {
-                navigate("/employee/company-hub");
-                setIsMobileNavOpen(false);
-              }}
-              className="text-left px-3 py-2.5 text-sm font-medium text-gray-800 hover:bg-[#f0ede6] rounded-lg transition-colors"
-            >
-              Company Hub
-            </button>
-            {[
-              "Create",
-              "Work",
-              "Communicate",
-              "Workspace",
-              "Operations",
-              "Insight",
-            ].map((item) => (
+            {isCompanyHubVisible && (
+              <button
+                onClick={() => {
+                  navigate("/employee/company-hub");
+                  setIsMobileNavOpen(false);
+                }}
+                className="text-left px-3 py-2.5 text-sm font-medium text-gray-800 hover:bg-[#f0ede6] rounded-lg transition-colors"
+              >
+                Company Hub
+              </button>
+            )}
+            {visibleCategories.map((item) => (
               <button
                 key={item}
                 onClick={() => {
                   setActiveNavMenu(activeNavMenu === item ? null : item);
                   setIsMobileNavOpen(false);
                 }}
-                className={`text-left px-3 py-2.5 text-sm font-medium rounded-lg transition-colors flex items-center justify-between ${
-                  activeNavMenu === item
-                    ? "text-[#DA7756] bg-[#f0ede6]"
-                    : "text-gray-800 hover:bg-[#f0ede6]"
-                }`}
+                className={`text-left px-3 py-2.5 text-sm font-medium rounded-lg transition-colors flex items-center justify-between ${activeNavMenu === item
+                  ? "text-[#DA7756] bg-[#f0ede6]"
+                  : "text-gray-800 hover:bg-[#f0ede6]"
+                  }`}
               >
                 {item}
                 <ChevronRight
