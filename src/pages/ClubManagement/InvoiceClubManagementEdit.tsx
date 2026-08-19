@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import ItemSearchInput from '@/components/ItemSearchInput';
+import { BrandRadio } from '@/components/ui/brand-radio';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import {
     TextField,
     Button,
@@ -46,7 +46,7 @@ import {
     mapApiBankRecord,
 } from './bankMasterUtils';
 
-// Section component - matching premium design
+// Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
     <section className="bg-card rounded-lg border border-border shadow-sm">
         <div className="px-6 py-4 border-b border-border flex items-center gap-3">
@@ -152,10 +152,11 @@ interface Item {
     tax: string;
     taxRate: number;
     amount: number;
-    item_tax_type?: string;
-    tax_group_id?: number | null;
-    tax_exemption_id?: number | null;
-    line_item_id?: number; // DB item ID for existing ones
+    item_tax_type?: string
+    tax_group_id?: number | null
+    tax_exemption_id?: number | null
+    line_item_type?: 'facility_booking' | 'membership' | 'event' | 'other'
+    dbId?: number
 }
 
 interface ExternalUser {
@@ -164,18 +165,97 @@ interface ExternalUser {
 }
 
 export const InvoiceClubManagementEdit: React.FC = () => {
-    const { id } = useParams<{ id: string }>();
-    const navigate = useNavigate();
-
-    const lock_account_id = localStorage.getItem("lock_account_id");
-    const baseUrl = localStorage.getItem('baseUrl');
-    const token = localStorage.getItem('token');
-
-    const [loading, setLoading] = useState(true);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
     // Subject field
     const [subject, setSubject] = useState('');
+    // Fetch item list from API
+    const lock_account_id = localStorage.getItem("lock_account_id");
+    // console.log("lock id:",lock_account_id)
+    useEffect(() => {
+        const fetchItems = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            try {
+                const res = await axios.get(`https://${baseUrl}/lock_account_items/select_list.json?lock_account_id=${lock_account_id}&q[can_be_sold_eq]=1&active=true`, {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (res && res.data && Array.isArray(res.data)) {
+                    setItemOptions(res.data.map(item => ({
+                        id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description,
+                        tax_preference: item.tax_preference,
+                        tax_exemption_id: item.tax_exemption_id,
+                        tax_group_id: Number(item.intra_state_tax_rate_id) || null,
+                        inter_state_tax_rate_id: item.inter_state_tax_rate_id
+                    })));
+                    console.log('Fetched items:', res.data);
+                }
+            } catch (err) {
+                setItemOptions([]);
+            }
+        };
+        fetchItems();
+    }, []);
+
+    // Fetch salespersons from API
+    useEffect(() => {
+        const fetchSalespersons = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            try {
+                const res = await axios.get(`https://${baseUrl}/sales_persons.json?lock_account_id=${lock_account_id}&q[active_eq]=1`, {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (res && res.data && Array.isArray(res.data)) {
+                    setSalespersons(res.data.map(person => ({ id: person.id, name: person.name })));
+                }
+            } catch (err) {
+                setSalespersons([]);
+            }
+        };
+        fetchSalespersons();
+    }, []);
+    // Fetch payment terms from API and set as dropdown options
+    useEffect(() => {
+        const fetchPaymentTerms = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            try {
+                const res = await axios.get(`https://${baseUrl}/payment_terms.json?lock_account_id=${lock_account_id}`, {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (res && res.data && Array.isArray(res.data)) {
+                    const terms = res.data.map(pt => ({ id: pt.id, name: pt.name, days: pt.no_of_days }));
+                    setPaymentTermsList(terms);
+                    const dueOnReceipt = terms.find(t => t.name.toLowerCase() === 'due on receipt');
+                    if (dueOnReceipt) {
+                        setSelectedTerm(dueOnReceipt.id);
+                    }
+                }
+            } catch (err) {
+                setPaymentTermsList([]);
+            }
+        };
+        fetchPaymentTerms();
+    }, []);
+    // Payment Terms Modal Handlers
+    const handleAddNewTerm = () => {
+        setEditTerms((prev) => [...prev, { name: '', days: '' }]);
+    };
+    const handleNewRowChange = (idx, field, value) => {
+        setEditTerms(rows => rows.map((row, i) => i === idx ? { ...row, [field]: value } : row));
+    };
+    const handleRemoveNewRow = (idx) => {
+        setEditTerms(rows => rows.filter((_, i) => i !== idx));
+    };
+    // Payment Terms Dropdown State
     const [selectedTerm, setSelectedTerm] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [showConfig, setShowConfig] = useState(false);
@@ -184,6 +264,26 @@ export const InvoiceClubManagementEdit: React.FC = () => {
     const filteredTerms = paymentTermsList.filter(term =>
         term.name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { id } = useParams<{ id: string }>();
+
+    useEffect(() => {
+        document.title = 'Edit Invoice';
+    }, []);
+
+    // Bill-to: Member / Guest / Staff selection (replaces Customer + Currency) — same pattern as AddFacilityBookingClubPage
+    const [userType, setUserType] = useState<'occupant' | 'guest' | 'fm'>('occupant');
+    const [selectedUser, setSelectedUser] = useState('');
+    const [occupantUsers, setOccupantUsers] = useState<{ id: string; name: string }[]>([]);
+    const [occupantUsersLoading, setOccupantUsersLoading] = useState(false);
+    const [occupantUsersError, setOccupantUsersError] = useState(false);
+    const [guestUsers, setGuestUsers] = useState<{ id: string; name: string }[]>([]);
+    const [guestUsersLoading, setGuestUsersLoading] = useState(false);
+    const [guestUsersError, setGuestUsersError] = useState(false);
+    const [fmUsers, setFmUsers] = useState<{ id: string; name: string }[]>([]);
+    const [fmUsersLoading, setFmUsersLoading] = useState(false);
+    const [fmUsersError, setFmUsersError] = useState(false);
 
     // Customer data
     const [customers, setCustomers] = useState<Customer[]>([]);
@@ -227,16 +327,19 @@ export const InvoiceClubManagementEdit: React.FC = () => {
     const [billingAddress, setBillingAddress] = useState('');
     const [shippingAddress, setShippingAddress] = useState('');
     const [sameAsBilling, setSameAsBilling] = useState(false);
-
-    // Invoice Details
-    const [invoiceNumber, setInvoiceNumber] = useState('');
+    // GST — manual entry (guest/member records don't carry GST details the way a customer record would)
+    const [gstTreatment, setGstTreatment] = useState('');
+    const [gstin, setGstin] = useState('');
+    // Sales Order Details
+    const [salesOrderNumber, setSalesOrderNumber] = useState('');
     const [referenceNumber, setReferenceNumber] = useState('');
     const [salesOrderDate, setSalesOrderDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [expectedShipmentDate, setExpectedShipmentDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+    const [paymentTerms, setPaymentTerms] = useState('');
     const [deliveryMethod, setDeliveryMethod] = useState('');
     const [salesperson, setSalesperson] = useState('');
 
-    // Items and deleted items tracking
+    // Items
     const [items, setItems] = useState<Item[]>([
         {
             id: Date.now().toString(),
@@ -250,42 +353,144 @@ export const InvoiceClubManagementEdit: React.FC = () => {
             taxRate: 0,
             amount: 0,
             item_tax_type: "",
-            tax_group_id: null,
-            tax_exemption_id: null
+            tax_group_id: "",
+            tax_exemption_id: ""
         }
     ]);
-    const [deletedItemIds, setDeletedItemIds] = useState<number[]>([]);
 
     const taxTypeOptions = [
         { value: "non_taxable", label: "Non-Taxable" },
         { value: "out_of_scope", label: "Out of Scope" },
-        { value: "non_gst_supply", label: "Non-GST Supply" }
+        { value: "non_gst_supply", label: "Non-GST Supply" },
+        //   { value: "tax_group", label: "Tax Group" }
     ];
     const [placeOfSupply, setPlaceOfSupply] = useState("");
     const [orgState, setOrgState] = useState<string>("");
     const [taxGroups, setTaxGroups] = useState<any[]>([]);
     const [loadingTaxGroups, setLoadingTaxGroups] = useState(false);
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+
+        setLoadingTaxGroups(true);
+
+        axios
+            .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_groups_view.json`, {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    "Content-Type": "application/json"
+                }
+            })
+            .then((res) => {
+                setTaxGroups(res.data || []);
+            })
+            .catch((error) => {
+                console.error("Error fetching tax groups:", error);
+            })
+            .finally(() => {
+                setLoadingTaxGroups(false);
+            });
+    }, []);
+
     const [taxRates, setTaxRates] = useState<any[]>([]);
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+        axios
+            .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_rates.json?q[rate_type_eq]=IGST`, {
+                headers: { Authorization: token ? `Bearer ${token}` : undefined, "Content-Type": "application/json" }
+            })
+            .then((res) => setTaxRates(res.data || []))
+            .catch((error) => console.error("Error fetching IGST tax rates:", error));
+    }, []);
+
+    // Fetch organisation state on mount
+    useEffect(() => {
+        const fetchOrgState = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
+            const organisation_id = localStorage.getItem('org_id') || localStorage.getItem('organisation_id');
+            if (!organisation_id || !baseUrl || !token) return;
+            try {
+                const res = await axios.get(
+                    `https://${baseUrl}/organizations/${organisation_id}.json?lock_account_id=${lock_account_id}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                const org = res.data?.organization || res.data;
+                const state = org?.address?.state || '';
+                console.log('[InvoiceAdd] Org state from API:', state);
+                setOrgState(state);
+            } catch (err) {
+                console.error('[InvoiceAdd] Failed to fetch org state:', err);
+            }
+        };
+        fetchOrgState();
+    }, []);
+
+    // Re-preselect tax on all taxable items when place of supply or orgState changes
+    useEffect(() => {
+        if (!placeOfSupply) return;
+        const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+        setItems(prev => prev.map(item => {
+            if (!["tax_group", "tax_rate"].includes(item.item_tax_type)) return item;
+            const matched = (itemOptions as any[]).find(opt => opt.name === item.name);
+            if (!matched) return item;
+            return {
+                ...item,
+                item_tax_type: isSameState ? "tax_group" : "tax_rate",
+                tax_group_id: isSameState ? matched.tax_group_id : matched.inter_state_tax_rate_id,
+            };
+        }));
+    }, [placeOfSupply, orgState]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const [exemptionModalOpen, setExemptionModalOpen] = useState(false);
+    const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
     const [selectedExemption, setSelectedExemption] = useState("");
     const [currentItemIndex, setCurrentItemIndex] = useState<number | null>(null);
 
     const [customerExemptions, setCustomerExemptions] = useState<any[]>([]);
     const [loadingExemptions, setLoadingExemptions] = useState(false);
 
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+
+        setLoadingExemptions(true);
+
+        axios
+            .get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=${lock_account_id}&q[exemption_type_eq]=item`, {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    "Content-Type": "application/json"
+                }
+            })
+            .then((res) => {
+                setCustomerExemptions(res.data || []);
+            })
+            .catch((error) => {
+                console.error("Error fetching tax exemptions:", error);
+            })
+            .finally(() => {
+                setLoadingExemptions(false);
+            });
+    }, []);
+
+
     // Summary
     const [discountOnTotal, setDiscountOnTotal] = useState(0);
     const [discountTypeOnTotal, setDiscountTypeOnTotal] = useState<'percentage' | 'amount'>('percentage');
-    const [adjustment, setAdjustment] = useState<number | ''>(0);
+    // const [taxType, setTaxType] = useState<'TDS' | 'TCS'>('TDS');
+    // const [selectedTax, setSelectedTax] = useState('');
+    const [adjustment, setAdjustment] = useState(0);
     const [adjustmentLabel, setAdjustmentLabel] = useState('Adjustment');
 
     // Notes & Attachments
     const [customerNotes, setCustomerNotes] = useState('');
     const [termsAndConditions, setTermsAndConditions] = useState('');
     const [attachments, setAttachments] = useState<File[]>([]);
-    const [existingAttachments, setExistingAttachments] = useState<any[]>([]);
-    const [deletedAttachmentIds, setDeletedAttachmentIds] = useState<number[]>([]);
     const [displayAttachmentsInPortal, setDisplayAttachmentsInPortal] = useState(false);
 
     // Bank Details
@@ -309,13 +514,33 @@ export const InvoiceClubManagementEdit: React.FC = () => {
     // Email Communications
     const [sendEmailToCustomer, setSendEmailToCustomer] = useState(false);
     const [externalUsers, setExternalUsers] = useState<ExternalUser[]>([]);
+    const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
+    const [newUserName, setNewUserName] = useState('');
+    const [newUserEmail, setNewUserEmail] = useState('');
+
+    // Contact Person Dialog
+    const [contactPersonDialogOpen, setContactPersonDialogOpen] = useState(false);
+    const [newContactPerson, setNewContactPerson] = useState<ContactPerson>({
+        id: '',
+        salutation: '',
+        firstName: '',
+        lastName: '',
+        email: '',
+        workPhone: '',
+        mobile: '',
+        skype: '',
+        designation: '',
+        department: ''
+    });
 
     // Dropdowns data
     const [itemOptions, setItemOptions] = useState<{ id: string; name: string; rate: number; description?: string; tax_preference?: string; tax_exemption_id?: number | null; tax_group_id?: number | null; inter_state_tax_rate_id?: any }[]>([]);
     const [salespersons, setSalespersons] = useState<{ id: string; name: string }[]>([]);
+    // const [taxOptions, setTaxOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
     const [taxType, setTaxType] = useState<'TDS' | 'TCS'>('TDS');
     const [taxOptions, setTaxOptions] = useState<any[]>([]);
     const [selectedTax, setSelectedTax] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     const fieldStyles = {
@@ -398,172 +623,35 @@ export const InvoiceClubManagementEdit: React.FC = () => {
     };
     const getAddressBookByType = (type: 'billing' | 'shipping') => type === 'billing' ? billingAddressBook : shippingAddressBook;
     const selectedBillingAddress = billingAddressBook.find(a => String(a.id) === String(selectedBillingAddressId)) || billingAddressBook[0] || null;
-    const selectedShippingAddress = shippingAddressBook.find(a => String(a.id) === String(selectedShippingAddressId)) || shippingAddressBook[0] || null;
+    const selectedShippingAddress = sameAsBilling
+        ? selectedBillingAddress
+        : (shippingAddressBook.find(a => String(a.id) === String(selectedShippingAddressId)) || shippingAddressBook[0] || null);
     const selectedGstDetail = gstDetails.find(g => String(g.id) === String(selectedGstDetailId)) || gstDetails.find(g => g.primary) || gstDetails[0] || null;
 
-    // Load active settings and dropdown resources
+    // Generate auto sales order number
     useEffect(() => {
-        document.title = 'Edit Invoice';
-
-        const fetchItems = async () => {
-            try {
-                const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}&q[can_be_sold_eq]=1`, {
-                    headers: {
-                        Authorization: token ? `Bearer ${token}` : undefined,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                if (res && res.data && Array.isArray(res.data)) {
-                    setItemOptions(res.data.map(item => ({
-                        id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description,
-                        tax_preference: item.tax_preference,
-                        tax_exemption_id: item.tax_exemption_id,
-                        tax_group_id: Number(item.intra_state_tax_rate_id) || null,
-                        inter_state_tax_rate_id: item.inter_state_tax_rate_id
-                    })));
-                }
-            } catch (err) {
-                setItemOptions([]);
-            }
+        const generateOrderNumber = () => {
+            const timestamp = Date.now();
+            const random = Math.floor(Math.random() * 1000);
+            setSalesOrderNumber(`SO-${timestamp.toString().slice(-5)}${random}`);
         };
-
-        const fetchSalespersons = async () => {
-            try {
-                const res = await axios.get(`https://${baseUrl}/sales_persons.json?lock_account_id=${lock_account_id}&q[active_eq]=1`, {
-                    headers: {
-                        Authorization: token ? `Bearer ${token}` : undefined,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                if (res && res.data && Array.isArray(res.data)) {
-                    setSalespersons(res.data.map(person => ({ id: person.id, name: person.name })));
-                }
-            } catch (err) {
-                setSalespersons([]);
-            }
-        };
-
-        const fetchPaymentTerms = async () => {
-            try {
-                const res = await axios.get(`https://${baseUrl}/payment_terms.json?lock_account_id=${lock_account_id}`, {
-                    headers: {
-                        Authorization: token ? `Bearer ${token}` : undefined,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                if (res && res.data && Array.isArray(res.data)) {
-                    const terms = res.data.map((pt: any) => ({ id: pt.id, name: pt.name, days: pt.no_of_days }));
-                    setPaymentTermsList(terms);
-                }
-            } catch (err) {
-                setPaymentTermsList([]);
-            }
-        };
-
-        const fetchTaxGroups = async () => {
-            setLoadingTaxGroups(true);
-            try {
-                const res = await axios.get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_groups_view.json`, {
-                    headers: {
-                        Authorization: token ? `Bearer ${token}` : undefined,
-                        "Content-Type": "application/json"
-                    }
-                });
-                setTaxGroups(res.data || []);
-            } catch (error) {
-                console.error("Error fetching tax groups:", error);
-            } finally {
-                setLoadingTaxGroups(false);
-            }
-        };
-
-        const fetchTaxRates = async () => {
-            try {
-                const res = await axios.get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_rates.json?q[rate_type_eq]=IGST`, {
-                    headers: { Authorization: token ? `Bearer ${token}` : undefined, "Content-Type": "application/json" }
-                });
-                setTaxRates(res.data || []);
-            } catch (error) {
-                console.error("Error fetching IGST tax rates:", error);
-            }
-        };
-
-        const fetchOrgState = async () => {
-            const organisation_id = localStorage.getItem('org_id') || localStorage.getItem('organisation_id');
-            if (!organisation_id) return;
-            try {
-                const res = await axios.get(
-                    `https://${baseUrl}/organizations/${organisation_id}.json?lock_account_id=${lock_account_id}`,
-                    { headers: { Authorization: `Bearer ${token}` } }
-                );
-                const org = res.data?.organization || res.data;
-                const state = org?.address?.state || '';
-                setOrgState(state);
-            } catch (err) {
-                console.error('Failed to fetch org state:', err);
-            }
-        };
-
-        const fetchExemptions = async () => {
-            setLoadingExemptions(true);
-            try {
-                const res = await axios.get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=${lock_account_id}&q[exemption_type_eq]=item`, {
-                    headers: {
-                        Authorization: token ? `Bearer ${token}` : undefined,
-                        "Content-Type": "application/json"
-                    }
-                });
-                setCustomerExemptions(res.data || []);
-            } catch (error) {
-                console.error("Error fetching tax exemptions:", error);
-            } finally {
-                setLoadingExemptions(false);
-            }
-        };
-
-        const fetchCustomers = async () => {
-            setLoadingCustomers(true);
-            try {
-                const res = await axios.get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=${lock_account_id}`, {
-                    headers: {
-                        Authorization: token ? `Bearer ${token}` : undefined,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                setCustomers(res.data || []);
-            } catch (error) {
-                console.error('Error fetching customers:', error);
-            } finally {
-                setLoadingCustomers(false);
-            }
-        };
-
-        fetchItems();
-        fetchSalespersons();
-        fetchPaymentTerms();
-        fetchTaxGroups();
-        fetchTaxRates();
-        fetchOrgState();
-        fetchExemptions();
-        fetchCustomers();
+        generateOrderNumber();
     }, []);
 
+    // Fetch customer detail from API
     const fetchCustomerDetail = async (
         customerId: string | number,
         preferredGstin?: string,
         newAddressToSelect?: { type: 'billing' | 'shipping', attention: string, address: string, pin_code: string }
     ) => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem("lock_account_id");
         setCustomerDetailLoading(true);
         try {
-            const response = await fetch(
-                `https://${baseUrl}/lock_account_customers/${customerId}.json?lock_account_id=${lock_account_id}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                }
-            );
+            const response = await fetch(`https://${baseUrl}/lock_account_customers/${customerId}.json?lock_account_id=${lock_account_id}`, {
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+            });
             const data = await response.json();
             setCustomerDetail(data);
             const nextBilling = Array.isArray(data.billing_addresses) && data.billing_addresses.length
@@ -576,13 +664,11 @@ export const InvoiceClubManagementEdit: React.FC = () => {
             setShippingAddressBook(nextShipping);
             const nextGstDetails: GstDetail[] = Array.isArray(data.gst_details) ? data.gst_details : [];
             setGstDetails(nextGstDetails);
-
             const defaultGst =
                 (preferredGstin ? nextGstDetails.find(g => g.gstin === preferredGstin) : null) ||
                 nextGstDetails.find(g => g.primary) ||
                 nextGstDetails[0] ||
                 null;
-
             if (defaultGst) {
                 setSelectedGstDetailId(defaultGst.id);
                 setPlaceOfSupply(defaultGst.place_of_supply || data.place_of_supply || (data.billing_address as any)?.state || placeOfSupply);
@@ -633,149 +719,163 @@ export const InvoiceClubManagementEdit: React.FC = () => {
             setSelectedShippingAddressId(finalShipping?.id ?? null);
             setBillingAddress(formatAddressText(finalBilling));
             setShippingAddress(formatAddressText(finalShipping));
-
-            return {
-                nextBilling,
-                nextShipping,
-                defaultBilling: finalBilling,
-                defaultShipping: finalShipping
-            };
         } catch (error) {
-            console.error("Error fetching customer details:", error);
-            toast.error("Failed to fetch customer details");
+            console.error('Error fetching customer detail:', error);
+            toast.error('Failed to load customer details');
         } finally {
             setCustomerDetailLoading(false);
         }
     };
 
-    // Load existing Invoice details
+    const openCustomerDrawer = (customerId: string | number) => {
+        fetchCustomerDetail(customerId);
+        setCustomerDrawerOpen(true);
+    };
+
+    // Pre-fill from quote when navigated via Convert to Invoice
     useEffect(() => {
-        const fetchInvoice = async () => {
-            if (!id) return;
-            setLoading(true);
-            try {
-                const res = await axios.get(`https://${baseUrl}/lock_account_invoices/${id}.json?lock_account_id=${lock_account_id}`, {
-                    headers: { Authorization: token ? `Bearer ${token}` : undefined }
-                });
-                const data = res.data?.data || res.data;
-                if (data) {
-                    setInvoiceNumber(data.invoice_number || '');
-                    setReferenceNumber(data.order_number || data.reference_number || '');
-                    setSalesOrderDate(data.date ? data.date.split('T')[0] : format(new Date(), 'yyyy-MM-dd'));
-                    setExpectedShipmentDate(data.due_date ? data.due_date.split('T')[0] : '');
-                    setSalesperson(data.sales_person_id ? String(data.sales_person_id) : '');
-                    setSelectedTerm(data.payment_term_id ? String(data.payment_term_id) : '');
-                    setCustomerNotes(data.customer_notes || '');
-                    setTermsAndConditions(data.terms_and_conditions || '');
-                    setSubject(data.subject || '');
-                    setSelectedBankId(data.bank_master_id ? String(data.bank_master_id) : (data.bank_master?.id ? String(data.bank_master.id) : ''));
-
-                    if (data.discount_per) {
-                        setDiscountTypeOnTotal('percentage');
-                        setDiscountOnTotal(Number(data.discount_per) || 0);
-                    } else if (data.discount_amount) {
-                        setDiscountTypeOnTotal('amount');
-                        setDiscountOnTotal(Number(data.discount_amount) || 0);
-                    } else {
-                        setDiscountOnTotal(0);
-                    }
-
-                    if (data.charge_amount) {
-                        setAdjustment(Number(data.charge_amount) || 0);
-                        setAdjustmentLabel(data.charge_name || 'Adjustment');
-                    }
-
-                    if (data.tax_type) {
-                        setTaxType((data.tax_type.toUpperCase() as 'TDS' | 'TCS') || 'TDS');
-                    }
-                    if (data.lock_account_tax_id) {
-                        setSelectedTax(String(data.lock_account_tax_id));
-                    }
-                    if (data.place_of_supply) {
-                        setPlaceOfSupply(data.place_of_supply);
-                    }
-
-                    // Pre-fill selected customer and detail book
-                    if (data.lock_account_customer_id) {
-                        setSelectedCustomer({
-                            id: String(data.lock_account_customer_id),
-                            name: data.customer_name || 'Customer',
-                            currency: data.currency || 'INR'
-                        } as any);
-
-                        const customerDetailResult = await fetchCustomerDetail(data.lock_account_customer_id);
-
-                        const billingId = data.address_detail?.billing_address_id || data.address_detail?.billing_address?.id || customerDetailResult?.defaultBilling?.id || null;
-                        const shippingId = data.address_detail?.shipping_address_id || data.address_detail?.shipping_address?.id || customerDetailResult?.defaultShipping?.id || null;
-
-                        setSelectedBillingAddressId(billingId);
-                        setSelectedShippingAddressId(shippingId);
-
-                        const billingAddressFromOrder = customerDetailResult?.nextBilling.find((addr: CustomerAddress) => String(addr.id) === String(billingId))
-                            || customerDetailResult?.defaultBilling
-                            || (data.address_detail?.billing_address ? mapAddress(data.address_detail.billing_address, 'billing') : null);
-                        const shippingAddressFromOrder = customerDetailResult?.nextShipping.find((addr: CustomerAddress) => String(addr.id) === String(shippingId))
-                            || customerDetailResult?.defaultShipping
-                            || (data.address_detail?.shipping_address ? mapAddress(data.address_detail.shipping_address, 'shipping') : null);
-
-                        setBillingAddress(formatAddressText(billingAddressFromOrder));
-                        setShippingAddress(formatAddressText(shippingAddressFromOrder));
-
-                        if (data.address_detail?.gst_detail_id) {
-                            setSelectedGstDetailId(data.address_detail.gst_detail_id);
-                        }
-                        if (data.address_detail?.gst_detail?.place_of_supply) {
-                            setPlaceOfSupply(data.address_detail.gst_detail.place_of_supply);
-                        }
-                    }
-
-                    // Map line items
-                    const lineItems = data.item_details || data.sale_order_items || [];
-                    if (lineItems.length > 0) {
-                        setItems(lineItems.map((item: any, idx: number) => ({
-                            id: String(idx + 1),
-                            line_item_id: item.id,
-                            name: item.item_name || item.name || '',
-                            item_id: item.lock_account_item_id ? String(item.lock_account_item_id) : null,
-                            description: item.description || '',
-                            quantity: item.quantity || '',
-                            rate: item.rate || '',
-                            discount: 0,
-                            discountType: 'percentage' as const,
-                            tax: '',
-                            taxRate: 0,
-                            amount: item.total_amount || 0,
-                            item_tax_type: item.tax_type || '',
-                            tax_group_id: item.tax_group_id || null,
-                            tax_exemption_id: item.tax_exemption_id || null
-                        })));
-                    }
-
-                    // Map existing attachments
-                    if (data.attachments && data.attachments.length > 0) {
-                        setExistingAttachments(data.attachments.map((att: any) => ({
-                            id: att.id,
-                            name: att.name || att.document_file_name || 'Attachment',
-                            url: att.url || att.document_url
-                        })));
-                    }
-                }
-            } catch (err) {
-                console.error('Failed to load invoice details:', err);
-                toast.error('Failed to load invoice details');
-            } finally {
-                setLoading(false);
+        const quoteId = location.state?.quoteData?.id;
+        if (!quoteId) return;
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        axios.get(`https://${baseUrl}/lock_account_quotes/${quoteId}.json`, {
+            headers: { Authorization: token ? `Bearer ${token}` : undefined }
+        }).then(async (res) => {
+            const q = res.data;
+            // NOTE: Do NOT pre-fill referenceNumber (Order Number field) from quote's reference_number
+            if (q.quote_number) {
+                setReferenceNumber(q.quote_number);
             }
-        };
+            if (q.date) setSalesOrderDate(q.date);
+            if (q.customer_notes) setCustomerNotes(q.customer_notes);
+            if (q.terms_and_conditions) setTermsAndConditions(q.terms_and_conditions);
+            if (q.subject) setSubject(q.subject);
+            if (q.sales_person_id) setSalesperson(String(q.sales_person_id));
+            if (q.payment_term_id) setSelectedTerm(String(q.payment_term_id));
+            if (q.bank_master_id) setSelectedBankId(String(q.bank_master_id));
+            // Set place of supply directly from quote
+            const quotePlaceOfSupply = q.place_of_supply || q.address_detail?.gst_detail?.place_of_supply || '';
+            if (quotePlaceOfSupply) setPlaceOfSupply(quotePlaceOfSupply);
+            if (q.lock_account_customer_id) {
+                setSelectedCustomer({ id: String(q.lock_account_customer_id), name: q.customer_name || '' } as any);
+                // Fetch customer details (addresses, GST), then re-apply quote's place of supply
+                await fetchCustomerDetail(String(q.lock_account_customer_id));
+                if (quotePlaceOfSupply) setPlaceOfSupply(quotePlaceOfSupply);
+            }
+            if (Array.isArray(q.item_details) && q.item_details.length > 0) {
+                setItems(q.item_details.map((item: any, idx: number) => ({
+                    id: String(idx + 1),
+                    name: item.item_name || '',
+                    item_id: item.lock_account_item_id ? String(item.lock_account_item_id) : null,
+                    description: item.description || '',
+                    quantity: item.quantity || '',
+                    rate: item.rate || '',
+                    discount: 0,
+                    discountType: 'percentage' as const,
+                    tax: item.tax_group?.name || '',
+                    taxRate: 0,
+                    amount: item.total_amount || 0,
+                    item_tax_type: item.tax_type || '',
+                    tax_group_id: item.tax_group?.id || null,
+                    tax_exemption_id: null,
+                })));
+            }
+        }).catch((err) => {
+            console.error('Failed to fetch quote for pre-fill:', err);
+        });
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-        if (id && baseUrl && token) fetchInvoice();
-    }, [id]);
+    // Pre-fill from sales order when navigated via Convert to Invoice
+    useEffect(() => {
+        const saleOrderId = location.state?.saleOrderId;
+        if (!saleOrderId) return;
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        axios.get(`https://${baseUrl}/sale_orders/${saleOrderId}.json`, {
+            headers: { Authorization: token ? `Bearer ${token}` : undefined }
+        }).then(async (res) => {
+            const saleOrder = res.data;
+            const addressDetail = saleOrder?.address_detail || {};
+            const preferredGstin = addressDetail?.gst_detail?.gstin;
+
+            // Keep the new invoice order number blank; conversion metadata is submitted separately.
+            if (saleOrder.sale_order_number) {
+                setReferenceNumber(saleOrder.sale_order_number);
+            }
+            if (saleOrder.date) setSalesOrderDate(saleOrder.date);
+            if (saleOrder.shipment_date) setExpectedShipmentDate(saleOrder.shipment_date);
+            if (saleOrder.customer_notes) setCustomerNotes(saleOrder.customer_notes);
+            if (saleOrder.terms_and_conditions) setTermsAndConditions(saleOrder.terms_and_conditions);
+            if (saleOrder.subject) setSubject(saleOrder.subject);
+            if (saleOrder.sales_person_id || saleOrder.sales_person_name) {
+                setSalesperson(String(saleOrder.sales_person_id || saleOrder.sales_person_name));
+            }
+            if (saleOrder.payment_term_id) setSelectedTerm(String(saleOrder.payment_term_id));
+            if (saleOrder.bank_master_id) setSelectedBankId(String(saleOrder.bank_master_id));
+
+            const convertedPlaceOfSupply =
+                saleOrder.place_of_supply ||
+                addressDetail?.gst_detail?.place_of_supply ||
+                '';
+            if (convertedPlaceOfSupply) setPlaceOfSupply(convertedPlaceOfSupply);
+
+            if (saleOrder.discount_per !== null && saleOrder.discount_per !== undefined && saleOrder.discount_per !== '') {
+                setDiscountTypeOnTotal('percentage');
+                setDiscountOnTotal(Number(saleOrder.discount_per) || 0);
+            } else {
+                setDiscountTypeOnTotal('amount');
+                setDiscountOnTotal(Number(saleOrder.discount_amount) || 0);
+            }
+
+            setAdjustment(Number(saleOrder.charge_amount) || 0);
+            setAdjustmentLabel(saleOrder.charge_name || 'Adjustment');
+
+            if (saleOrder.tax_type) {
+                const normalizedTaxType = String(saleOrder.tax_type).toUpperCase();
+                if (normalizedTaxType === 'TDS' || normalizedTaxType === 'TCS') {
+                    setTaxType(normalizedTaxType);
+                }
+            }
+            if (saleOrder.lock_account_tax_id || saleOrder.lock_account_tax?.id) {
+                setSelectedTax(String(saleOrder.lock_account_tax_id || saleOrder.lock_account_tax?.id));
+            }
+
+            if (saleOrder.lock_account_customer_id) {
+                setSelectedCustomer({ id: String(saleOrder.lock_account_customer_id), name: saleOrder.customer_name || '' } as any);
+                await fetchCustomerDetail(String(saleOrder.lock_account_customer_id), preferredGstin);
+                if (addressDetail?.billing_address_id) setSelectedBillingAddressId(addressDetail.billing_address_id);
+                if (addressDetail?.shipping_address_id) setSelectedShippingAddressId(addressDetail.shipping_address_id);
+                if (addressDetail?.gst_detail_id) setSelectedGstDetailId(addressDetail.gst_detail_id);
+                if (convertedPlaceOfSupply) setPlaceOfSupply(convertedPlaceOfSupply);
+            }
+
+            if (Array.isArray(saleOrder.item_details) && saleOrder.item_details.length > 0) {
+                setItems(saleOrder.item_details.map((item: any, idx: number) => ({
+                    id: String(idx + 1),
+                    name: item.item_name || '',
+                    item_id: item.lock_account_item_id ? String(item.lock_account_item_id) : null,
+                    description: item.description || '',
+                    quantity: item.quantity || '',
+                    rate: item.rate || '',
+                    discount: 0,
+                    discountType: 'percentage' as const,
+                    tax: item.tax_group?.name || item.tax_rate?.name || '',
+                    taxRate: 0,
+                    amount: item.total_amount || 0,
+                    item_tax_type: item.tax_type || '',
+                    tax_group_id: item.tax_group?.id || item.tax_rate?.id || null,
+                    tax_exemption_id: item.tax_exemption_id || null,
+                })));
+            }
+        }).catch((err) => {
+            console.error('Failed to fetch sales order for invoice pre-fill:', err);
+        });
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const openAddressListModal = (type: 'billing' | 'shipping') => {
         setActiveAddressType(type);
         setAddressListModalOpen(true);
     };
-
     const openAddressFormModal = (mode: 'new' | 'edit', type: 'billing' | 'shipping', address?: CustomerAddress) => {
         setActiveAddressType(type);
         setAddressFormMode(mode);
@@ -789,24 +889,397 @@ export const InvoiceClubManagementEdit: React.FC = () => {
         setSelectedAddressTaxInfoId(selectedGstDetailId ? String(selectedGstDetailId) : '');
         setAddressFormModalOpen(true);
     };
-
     const openGstModal = () => {
-        setGstTreatmentDraft(customerDetail?.gst_preference || customerDetail?.gst_treatment || '');
+        setGstTreatmentDraft(gstTreatment);
         setGstModalOpen(true);
     };
-
     const openGstManageModal = () => {
         setShowNewGstForm(false);
         setEditingGstDetailId(null);
         setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' });
         setGstManageModalOpen(true);
     };
-
     const openGstPickerModal = () => setGstPickerModalOpen(true);
 
-    // Save Address
+    // Fetch customers on mount
+    useEffect(() => {
+        setLoadingCustomers(true);
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        // Fetch customer list
+        axios
+            .get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=${lock_account_id}`, {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(res => {
+                setCustomers(res.data || []);
+            })
+            .catch(error => {
+                console.error('Error fetching customers:', error);
+            })
+            .finally(() => {
+                setLoadingCustomers(false);
+            });
+    }, []);
+
+    // Fetch Members (occupant), Guest, or Staff (fm) users — same pattern as AddFacilityBookingClubPage
+    const fetchOccupantUsersDirect = () => {
+        setOccupantUsersLoading(true);
+        setOccupantUsersError(false);
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        axios
+            .get(`https://${baseUrl}/pms/account_setups/occupant_users.json`, {
+                params: { 'q[lock_user_permissions_user_type_eq]': 'pms_occupant', active: true },
+                headers: { Authorization: token ? `Bearer ${token}` : undefined, 'Content-Type': 'application/json' }
+            })
+            .then(res => {
+                const list = res.data?.occupant_users || [];
+                setOccupantUsers(list.map((u: any) => ({
+                    id: String(u.id),
+                    name: u.name || `${u.firstname ?? ''} ${u.lastname ?? ''}`.trim() || `Member #${u.id}`
+                })));
+            })
+            .catch(error => {
+                console.error('Error fetching occupant users:', error);
+                setOccupantUsersError(true);
+                setOccupantUsers([]);
+            })
+            .finally(() => setOccupantUsersLoading(false));
+    };
+
+    const fetchGuestUsers = () => {
+        setGuestUsersLoading(true);
+        setGuestUsersError(false);
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        axios
+            .get(`https://${baseUrl}/pms/account_setups/occupant_users.json`, {
+                params: { 'q[lock_user_permissions_user_type_eq]': 'pms_guest', active: true },
+                headers: { Authorization: token ? `Bearer ${token}` : undefined, 'Content-Type': 'application/json' }
+            })
+            .then(res => {
+                const list = res.data?.occupant_users || [];
+                setGuestUsers(list.map((u: any) => ({
+                    id: String(u.id),
+                    name: `${u.firstname ?? ''} ${u.lastname ?? ''}`.trim() || u.email || `Guest #${u.id}`
+                })));
+            })
+            .catch(error => {
+                console.error('Error fetching guest users:', error);
+                setGuestUsersError(true);
+                setGuestUsers([]);
+            })
+            .finally(() => setGuestUsersLoading(false));
+    };
+
+    const fetchFmUsers = () => {
+        setFmUsersLoading(true);
+        setFmUsersError(false);
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        axios
+            .get(`https://${baseUrl}/pms/users/get_escalate_to_users.json`, {
+                headers: { Authorization: token ? `Bearer ${token}` : undefined, 'Content-Type': 'application/json' }
+            })
+            .then(res => {
+                const list = res.data?.users || [];
+                setFmUsers(list.map((u: any) => ({
+                    id: String(u.id),
+                    name: u.full_name || u.name || `Staff #${u.id}`
+                })));
+            })
+            .catch(error => {
+                console.error('Error fetching staff users:', error);
+                setFmUsersError(true);
+                setFmUsers([]);
+            })
+            .finally(() => setFmUsersLoading(false));
+    };
+
+    useEffect(() => {
+        if (userType === 'occupant') {
+            fetchOccupantUsersDirect();
+        } else if (userType === 'guest') {
+            fetchGuestUsers();
+        } else {
+            fetchFmUsers();
+        }
+    }, [userType]);
+
+    // Item table quick-add: Facility Booking / Membership / Event / Other pickers (per row, single choice)
+    const [itemSourceSelection, setItemSourceSelection] = useState<Record<string, 'facility' | 'membership' | 'event' | 'other' | ''>>({});
+    const setItemSource = (itemId: string, value: 'facility' | 'membership' | 'event' | 'other' | '') => {
+        setItemSourceSelection(prev => ({ ...prev, [itemId]: value }));
+    };
+    const [otherItemNameDraft, setOtherItemNameDraft] = useState<Record<string, string>>({});
+    const [facilityBookingOptions, setFacilityBookingOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
+    const [membershipPlanOptions, setMembershipPlanOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
+    const [eventOptionsList, setEventOptionsList] = useState<{ id: string; name: string; rate: number }[]>([]);
+
+    // --- Edit mode: fetch the existing bill_booking and prefill the whole form ---
+    const [editLoading, setEditLoading] = useState(true);
+
+    // Best-effort: the details response doesn't say whether the billed user is a
+    // Member/Guest/Staff, so probe each list and match by id. Defaults to 'occupant'.
+    const detectUserType = async (userId: string): Promise<'occupant' | 'guest' | 'fm'> => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const authHeaders = { Authorization: token ? `Bearer ${token}` : undefined, 'Content-Type': 'application/json' };
+        try {
+            const [guestRes, fmRes] = await Promise.all([
+                axios.get(`https://${baseUrl}/pms/account_setups/occupant_users.json`, {
+                    params: { 'q[lock_user_permissions_user_type_eq]': 'pms_guest', active: true },
+                    headers: authHeaders
+                }).catch(() => null),
+                axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json`, { headers: authHeaders }).catch(() => null),
+            ]);
+            const guestList = guestRes?.data?.occupant_users || [];
+            const fmList = fmRes?.data?.users || [];
+            if (guestList.some((u: any) => String(u.id) === String(userId))) return 'guest';
+            if (fmList.some((u: any) => String(u.id) === String(userId))) return 'fm';
+            return 'occupant';
+        } catch {
+            return 'occupant';
+        }
+    };
+
+    const mapFetchedAddress = (addr: any): CustomerAddress => ({
+        id: addr.id,
+        attention: addr.contact_person || '',
+        address: addr.address || '',
+        address_line_two: addr.address_line_two || '',
+        country: addr.country || 'India',
+        state: addr.state || '',
+        city: addr.city || '',
+        pin_code: addr.pin_code || '',
+        telephone_number: addr.telephone_number || '',
+        fax_number: addr.fax_number || '',
+        mobile: addr.mobile || ''
+    });
+
+    useEffect(() => {
+        if (!id) {
+            setEditLoading(false);
+            return;
+        }
+        const fetchBillBookingForEdit = async () => {
+            try {
+                const baseUrl = localStorage.getItem('baseUrl');
+                const token = localStorage.getItem('token');
+                const authHeaders = { Authorization: token ? `Bearer ${token}` : undefined, 'Content-Type': 'application/json' };
+
+                const res = await axios.get(
+                    `https://${baseUrl}/lock_accounts/${lock_account_id}/bill_bookings/${id}.json`,
+                    { headers: authHeaders }
+                );
+                const data = res.data?.bill_booking || res.data || {};
+                const fetchedLineItems = res.data?.line_items || data.line_items || [];
+
+                setReferenceNumber(data.order_number || '');
+                setSalesOrderDate(data.bill_date || data.date || format(new Date(), 'yyyy-MM-dd'));
+                setExpectedShipmentDate(data.due_date || format(new Date(), 'yyyy-MM-dd'));
+                setSubject(data.subject || '');
+                setCustomerNotes(data.note || '');
+                setTermsAndConditions(data.terms_and_conditions || '');
+                setSelectedBankId(data.bank_master_id ? String(data.bank_master_id) : '');
+                setPlaceOfSupply(data.destination_of_supply || '');
+                if (data.discount_per) {
+                    setDiscountOnTotal(Number(data.discount_per));
+                    setDiscountTypeOnTotal('percentage');
+                }
+
+                const addressDetail = data.address_detail || data.address_detail_attributes || {};
+                setGstTreatment(addressDetail.gst_preference || '');
+                setGstin(data.billing_gstin || addressDetail.gst_detail?.gstin || '');
+
+                if (addressDetail.gst_detail) {
+                    const gd = addressDetail.gst_detail;
+                    setGstDetails([{
+                        id: gd.id,
+                        gstin: gd.gstin || data.billing_gstin || '',
+                        place_of_supply: gd.place_of_supply || data.destination_of_supply || '',
+                        business_legal_name: gd.business_legal_name || null,
+                        business_trade_name: gd.business_trade_name || null,
+                        primary: true
+                    }]);
+                    setSelectedGstDetailId(gd.id);
+                }
+
+                if (addressDetail.billing_address) {
+                    const billingEntry = mapFetchedAddress(addressDetail.billing_address);
+                    setBillingAddressBook([billingEntry]);
+                    setSelectedBillingAddressId(billingEntry.id);
+                }
+                if (addressDetail.shipping_address) {
+                    const shippingEntry = mapFetchedAddress(addressDetail.shipping_address);
+                    setShippingAddressBook([shippingEntry]);
+                    setSelectedShippingAddressId(shippingEntry.id);
+                    if (addressDetail.billing_address) {
+                        const sameAddress = ['address', 'city', 'state', 'country', 'pin_code'].every(
+                            (key) => (addressDetail.billing_address[key] || '') === (addressDetail.shipping_address[key] || '')
+                        );
+                        setSameAsBilling(sameAddress);
+                    }
+                }
+
+                if (Array.isArray(fetchedLineItems) && fetchedLineItems.length > 0) {
+                    const mappedItems: Item[] = fetchedLineItems.map((li: any, idx: number) => {
+                        const gstRate = Number(li.cgst_rate || 0) + Number(li.sgst_rate || 0) || Number(li.gst_rate || 0) || 0;
+                        return {
+                            id: `edit-${li.id ?? idx}-${idx}`,
+                            dbId: li.id,
+                            name: li.name || '',
+                            item_id: li.line_item_reference_id ? String(li.line_item_reference_id) : null,
+                            description: '',
+                            quantity: Number(li.quantity) || 0,
+                            rate: Number(li.rate) || 0,
+                            discount: Number(li.discount) || 0,
+                            discountType: 'amount',
+                            tax: '',
+                            taxRate: 0,
+                            amount: Number(li.amount) || 0,
+                            item_tax_type: gstRate ? 'flat_gst' : '',
+                            tax_group_id: gstRate || null,
+                            tax_exemption_id: null,
+                            line_item_type: li.line_item_type || 'other',
+                        };
+                    });
+                    setItems(mappedItems);
+
+                    const sourceSel: Record<string, 'facility' | 'membership' | 'event' | 'other' | ''> = {};
+                    const draftNames: Record<string, string> = {};
+                    mappedItems.forEach((it) => {
+                        if (it.line_item_type === 'facility_booking') sourceSel[it.id] = 'facility';
+                        else if (it.line_item_type === 'membership') sourceSel[it.id] = 'membership';
+                        else if (it.line_item_type === 'event') sourceSel[it.id] = 'event';
+                        else sourceSel[it.id] = 'other';
+                        if (it.line_item_type === 'other') draftNames[it.id] = it.name;
+                    });
+                    setItemSourceSelection(sourceSel);
+                    setOtherItemNameDraft(draftNames);
+                }
+
+                if (data.user?.id) {
+                    const uid = String(data.user.id);
+                    const type = await detectUserType(uid);
+                    setUserType(type);
+                    setSelectedUser(uid);
+                }
+            } catch (error) {
+                console.error('Error fetching invoice for edit:', error);
+                toast.error('Failed to load invoice details');
+            } finally {
+                setEditLoading(false);
+            }
+        };
+        fetchBillBookingForEdit();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id]);
+
+    // Extracts an options array regardless of which wrapper key the API used, and
+    // normalizes each entity's id/name/rate — exact response shape unconfirmed.
+    const parseEntityOptions = (data: any): { id: string; name: string; rate: number }[] => {
+        const list = data?.options || data?.entity_options || data?.data || (Array.isArray(data) ? data : []);
+        return (list || []).map((item: any) => ({
+            id: String(item.id),
+            name: item.label || item.name || item.title || `#${item.id}`,
+            rate: Number(item.rate ?? item.amount ?? item.price ?? 0) || 0
+        }));
+    };
+
+    useEffect(() => {
+        if (!selectedUser) {
+            setFacilityBookingOptions([]);
+            setMembershipPlanOptions([]);
+            setEventOptionsList([]);
+            return;
+        }
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const authHeaders = { Authorization: token ? `Bearer ${token}` : undefined, 'Content-Type': 'application/json' };
+        const entityOptionsUrl = (lineItemType: string) =>
+            `https://${baseUrl}/lock_accounts/${lock_account_id}/bill_bookings/entity_options.json?line_item_type=${lineItemType}&user_id=${selectedUser}`;
+
+        axios.get(entityOptionsUrl('facility_booking'), { headers: authHeaders })
+            .then(res => setFacilityBookingOptions(parseEntityOptions(res.data)))
+            .catch(error => {
+                console.error('Error fetching facility booking options:', error);
+                setFacilityBookingOptions([]);
+            });
+
+        axios.get(entityOptionsUrl('membership'), { headers: authHeaders })
+            .then(res => setMembershipPlanOptions(parseEntityOptions(res.data)))
+            .catch(error => {
+                console.error('Error fetching membership options:', error);
+                setMembershipPlanOptions([]);
+            });
+
+        axios.get(entityOptionsUrl('event'), { headers: authHeaders })
+            .then(res => setEventOptionsList(parseEntityOptions(res.data)))
+            .catch(error => {
+                console.error('Error fetching event options:', error);
+                setEventOptionsList([]);
+            });
+    }, [selectedUser]);
+
+    // Fills the given item row from a Facility Booking / Membership Plan / Event selection
+    const applySourceToItem = (index: number, name: string, rate: number, referenceId: string, lineItemType: 'facility_booking' | 'membership' | 'event') => {
+        updateItemFields(index, { item_id: referenceId, name, rate, line_item_type: lineItemType });
+    };
+
+    console.log('Customers:', customers)
+    // Fetch items, salespersons, taxes
+    useEffect(() => {
+
+        // setTermsAndConditions('1. Use this to issue for all sales orders of all customers.\n2. Payment should be made within 30 days of the invoice date.\n3. Late payments may incur additional charges.');
+    }, []);
+
+    // When customer is selected
+    useEffect(() => {
+        if (selectedCustomer) {
+            setBillingAddress(selectedCustomer.billingAddress);
+            setShippingAddress(selectedCustomer.shippingAddress);
+            setPaymentTerms(selectedCustomer.paymentTerms);
+        }
+    }, [selectedCustomer]);
+
+    // Same as billing address
+    useEffect(() => {
+        if (sameAsBilling) {
+            setShippingAddress(billingAddress);
+        }
+    }, [sameAsBilling, billingAddress]);
+    useEffect(() => {
+        if (selectedBillingAddress) setBillingAddress(formatAddressText(selectedBillingAddress));
+    }, [selectedBillingAddressId, billingAddressBook.length]);
+    useEffect(() => {
+        if (!sameAsBilling && selectedShippingAddress) setShippingAddress(formatAddressText(selectedShippingAddress));
+    }, [selectedShippingAddressId, shippingAddressBook.length, sameAsBilling]);
+
+    // Local-only address save (no customer record to persist to for a guest/member bill-to)
+    const saveAddressFormLocal = () => {
+        const targetId = editingAddressId ?? addressForm.id ?? `${activeAddressType}-${Date.now()}`;
+        const payload: CustomerAddress = { ...addressForm, id: targetId };
+        const setBook = activeAddressType === 'billing' ? setBillingAddressBook : setShippingAddressBook;
+        const setSelectedId = activeAddressType === 'billing' ? setSelectedBillingAddressId : setSelectedShippingAddressId;
+        setBook(prev => addressFormMode === 'edit'
+            ? prev.map(item => (String(item.id) === String(targetId) ? payload : item))
+            : [...prev, payload]);
+        setSelectedId(targetId);
+        setAddressFormModalOpen(false);
+    };
+
     const handleSaveAddressForm = async () => {
         if (!selectedCustomer?.id) return toast.error("Please select a customer first");
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
+        const lock_account_id = localStorage.getItem("lock_account_id");
+        const setBook = activeAddressType === 'billing' ? setBillingAddressBook : setShippingAddressBook;
+        const setSelectedId = activeAddressType === 'billing' ? setSelectedBillingAddressId : setSelectedShippingAddressId;
         const targetId = editingAddressId ?? addressForm.id ?? `${activeAddressType}-${Date.now()}`;
         const payload: CustomerAddress = { ...addressForm, id: targetId };
         const addressAttr: any = {
@@ -826,9 +1299,7 @@ export const InvoiceClubManagementEdit: React.FC = () => {
             contact_person: addressForm.attention || '',
             gst_detail_id: selectedAddressTaxInfoId ? Number(selectedAddressTaxInfoId) : null
         };
-        if (addressFormMode === 'edit' && !String(targetId).startsWith(`${activeAddressType}-`)) {
-            addressAttr.id = Number(targetId) || targetId;
-        }
+        if (addressFormMode === 'edit' && !String(targetId).startsWith(`${activeAddressType}-`)) addressAttr.id = Number(targetId) || targetId;
         const updatePayload = {
             lock_account_customer: {
                 id: selectedCustomer.id,
@@ -842,8 +1313,6 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                 body: JSON.stringify(updatePayload)
             });
             if (!response.ok) throw new Error(`Address save failed (${response.status})`);
-            const setBook = activeAddressType === 'billing' ? setBillingAddressBook : setShippingAddressBook;
-            const setSelectedId = activeAddressType === 'billing' ? setSelectedBillingAddressId : setSelectedShippingAddressId;
             setBook(prev => addressFormMode === 'edit' ? prev.map(item => (String(item.id) === String(targetId) ? payload : item)) : [...prev, payload]);
             setSelectedId(targetId);
             setAddressFormModalOpen(false);
@@ -860,53 +1329,43 @@ export const InvoiceClubManagementEdit: React.FC = () => {
             toast.error("Failed to save address");
         }
     };
-
     const handleUpdateGstConfig = () => {
-        setCustomerDetail((prev) => prev ? { ...prev, gst_preference: gstTreatmentDraft, gst_treatment: gstTreatmentDraft } : prev);
+        setGstTreatment(gstTreatmentDraft);
         setGstModalOpen(false);
     };
-
     const handleGstinDropdownChange = (value: string | number) => {
         setSelectedGstDetailId(value);
         const selected = gstDetails.find(g => String(g.id) === String(value));
         if (!selected) return;
-        setCustomerDetail((prev) => prev ? { ...prev, gstin: selected.gstin } : prev);
+        setGstin(selected.gstin);
         if (selected.place_of_supply) setPlaceOfSupply(selected.place_of_supply);
         setGstPickerModalOpen(false);
     };
-
+    // Local-only GST detail save (no customer record to persist to for a guest/member bill-to)
     const handleSaveAndSelectGst = async () => {
-        if (!selectedCustomer?.id) return toast.error("Please select a customer first");
         if (!newGstForm.gstin || !newGstForm.place_of_supply) return toast.error("GSTIN and Place of Supply are required");
         const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
         const normalizedGstin = String(newGstForm.gstin || '').toUpperCase().trim();
         if (!gstinRegex.test(normalizedGstin)) return toast.error('Invalid GSTIN format. e.g. 27AAAAA1234A1Z5');
-        const gstAttribute = {
-            ...(editingGstDetailId ? { id: Number(editingGstDetailId) || editingGstDetailId } : {}),
+        const targetId = editingGstDetailId ?? `gst-${Date.now()}`;
+        const gstDetail: GstDetail = {
+            id: targetId,
             gstin: normalizedGstin,
             place_of_supply: newGstForm.place_of_supply,
             business_legal_name: newGstForm.business_legal_name || '',
-            business_trade_name: newGstForm.business_trade_name || ''
+            business_trade_name: newGstForm.business_trade_name || '',
+            primary: false
         };
-        const payload = { lock_account_customer: { id: selectedCustomer.id, gst_details_attributes: [gstAttribute] } };
-        try {
-            const response = await fetch(`https://${baseUrl}/lock_account_customers/${selectedCustomer.id}.json?lock_account_id=${lock_account_id}`, {
-                method: 'PUT',
-                headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) throw new Error(`GST detail save failed (${response.status})`);
-            setShowNewGstForm(false);
-            setEditingGstDetailId(null);
-            setGstManageModalOpen(false);
-            toast.success("Tax information saved");
-            await fetchCustomerDetail(selectedCustomer.id, normalizedGstin);
-        } catch (error) {
-            console.error("Error saving gst detail:", error);
-            toast.error("Failed to save tax information");
-        }
+        setGstDetails(prev => editingGstDetailId
+            ? prev.map(g => (String(g.id) === String(targetId) ? gstDetail : g))
+            : [...prev, gstDetail]);
+        setSelectedGstDetailId(targetId);
+        setGstin(normalizedGstin);
+        setShowNewGstForm(false);
+        setEditingGstDetailId(null);
+        setGstManageModalOpen(false);
+        toast.success("Tax information saved");
     };
-
     const handleEditGstDetail = (gst: GstDetail) => {
         setEditingGstDetailId(gst.id);
         setShowNewGstForm(true);
@@ -917,67 +1376,28 @@ export const InvoiceClubManagementEdit: React.FC = () => {
             business_trade_name: gst.business_trade_name || ''
         });
     };
-
-    const handleDeleteGstDetail = async (gstId: number | string) => {
-        if (!selectedCustomer?.id) return toast.error("Please select a customer first");
-        const payload = { lock_account_customer: { id: selectedCustomer.id, gst_details_attributes: [{ id: Number(gstId) || gstId, _destroy: true }] } };
-        try {
-            const response = await fetch(`https://${baseUrl}/lock_account_customers/${selectedCustomer.id}.json?lock_account_id=${lock_account_id}`, {
-                method: 'PUT',
-                headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) throw new Error(`GST detail delete failed (${response.status})`);
-            toast.success("Tax information deleted");
-            await fetchCustomerDetail(selectedCustomer.id);
-        } catch (error) {
-            console.error("Error deleting gst detail:", error);
-            toast.error("Failed to delete tax information");
+    const handleDeleteGstDetail = (gstId: number | string) => {
+        setGstDetails(prev => prev.filter(g => String(g.id) !== String(gstId)));
+        if (String(selectedGstDetailId) === String(gstId)) {
+            setSelectedGstDetailId(null);
+            setGstin('');
         }
+        toast.success("Tax information deleted");
     };
 
-    // Address same as billing address checkbox
-    useEffect(() => {
-        if (sameAsBilling) {
-            setShippingAddress(billingAddress);
-        }
-    }, [sameAsBilling, billingAddress]);
-
-    useEffect(() => {
-        if (selectedBillingAddress) setBillingAddress(formatAddressText(selectedBillingAddress));
-    }, [selectedBillingAddressId, billingAddressBook.length]);
-
-    useEffect(() => {
-        if (!sameAsBilling && selectedShippingAddress) setShippingAddress(formatAddressText(selectedShippingAddress));
-    }, [selectedShippingAddressId, shippingAddressBook.length, sameAsBilling]);
-
-    // Preselect tax rates on place of supply changes
-    useEffect(() => {
-        if (!placeOfSupply) return;
-        const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
-        setItems(prev => prev.map(item => {
-            if (!["tax_group", "tax_rate"].includes(item.item_tax_type || "")) return item;
-            const matched = (itemOptions as any[]).find(opt => opt.name === item.name);
-            if (!matched) return item;
-            return {
-                ...item,
-                item_tax_type: isSameState ? "tax_group" : "tax_rate",
-                tax_group_id: isSameState ? matched.tax_group_id : matched.inter_state_tax_rate_id,
-            };
-        }));
-    }, [placeOfSupply, orgState]);
-
+    // Calculate item amount
     const calculateItemAmount = (item: Item): number => {
-        const baseAmount = (Number(item.quantity) || 0) * (Number(item.rate) || 0);
+        const baseAmount = item.quantity * item.rate;
         const discountAmount = item.discountType === 'percentage'
-            ? (baseAmount * (Number(item.discount) || 0)) / 100
-            : (Number(item.discount) || 0);
+            ? (baseAmount * item.discount) / 100
+            : item.discount;
         const afterDiscount = baseAmount - discountAmount;
         const taxAmount = (afterDiscount * item.taxRate) / 100;
         return afterDiscount + taxAmount;
     };
 
-    const updateItem = (index: number, field: keyof Item, value: any) => {
+    // Update item
+    const updateItem = (index: number, field: keyof Item, value: string | number | 'percentage' | 'amount') => {
         setItems(prev => {
             const newItems = [...prev];
             newItems[index] = { ...newItems[index], [field]: value };
@@ -986,6 +1406,7 @@ export const InvoiceClubManagementEdit: React.FC = () => {
         });
     };
 
+    // Update multiple fields at once (avoids multiple re-renders)
     const updateItemFields = (index: number, fields: Partial<Item>) => {
         setItems(prev => {
             const newItems = [...prev];
@@ -995,10 +1416,12 @@ export const InvoiceClubManagementEdit: React.FC = () => {
         });
     };
 
+    // Add item row
     const addItem = () => {
         setItems(prev => [...prev, {
             id: Date.now().toString(),
             name: '',
+            item_id: null,
             description: '',
             quantity: 1,
             rate: 0,
@@ -1010,38 +1433,344 @@ export const InvoiceClubManagementEdit: React.FC = () => {
         }]);
     };
 
-    const removeItem = (index: number) => {
-        const target = items[index];
-        if (target.line_item_id) {
-            setDeletedItemIds(prev => [...prev, target.line_item_id!]);
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [deleteTargetIndex, setDeleteTargetIndex] = useState<number | null>(null);
+    const [deleteTargetType, setDeleteTargetType] = useState<'item' | 'attachment' | null>(null);
+
+    const handleDeleteConfirm = () => {
+        if (deleteTargetIndex !== null) {
+            if (deleteTargetType === 'item') {
+                removeItem(deleteTargetIndex);
+            } else if (deleteTargetType === 'attachment') {
+                removeAttachment(deleteTargetIndex);
+            }
         }
+        setDeleteConfirmOpen(false);
+        setDeleteTargetIndex(null);
+        setDeleteTargetType(null);
+    };
+
+    // Remove item
+    const removeItem = (index: number) => {
         if (items.length > 1) {
             setItems(prev => prev.filter((_, i) => i !== index));
         }
     };
+    const [taxAmount2, setTaxAmount2] = useState(0);
+    const [totalAmount2, setTotalAmount2] = useState(0);
 
-    // Remove existing attachment
-    const removeExistingAttachment = (attId: number) => {
-        setDeletedAttachmentIds(prev => [...prev, attId]);
-        setExistingAttachments(prev => prev.filter(att => att.id !== attId));
-    };
-
-    // Calculations
-    const subTotal = items.reduce((sum, item) => sum + ((Number(item.quantity) || 0) * (Number(item.rate) || 0)), 0);
+    // Calculate totals
+    const subTotal = items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
     const totalDiscount = discountTypeOnTotal === 'percentage'
         ? (subTotal * discountOnTotal) / 100
         : discountOnTotal;
     const afterDiscount = subTotal - totalDiscount;
+    const taxAmount = items.reduce((sum, item) => {
+        const itemSubtotal = item.quantity * item.rate;
+        const itemDiscount = item.discountType === 'percentage'
+            ? (itemSubtotal * item.discount) / 100
+            : item.discount;
+        return sum + ((itemSubtotal - itemDiscount) * item.taxRate / 100);
+    }, 0);
+    // Update totalAmount to subtract TDS/TCS (taxAmount2)
+    const totalAmount = afterDiscount + adjustment - taxAmount2;
 
-    const [taxAmount2, setTaxAmount2] = useState(0);
-    const [totalAmount2, setTotalAmount2] = useState(0);
+    // Handle file upload
+    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const files = event.target.files;
+        if (files) {
+            const newFiles = Array.from(files).filter(file => {
+                if (file.size > 5 * 1024 * 1024) {
+                    alert(`${file.name} exceeds 5MB limit`);
+                    return false;
+                }
+                return true;
+            });
 
-    // Fetch tax options based on TDS/TCS Selection
+            if (attachments.length + newFiles.length > 10) {
+                alert('Maximum 10 files allowed');
+                return;
+            }
+
+            setAttachments(prev => [...prev, ...newFiles]);
+        }
+    };
+
+    // Remove attachment
+    const removeAttachment = (index: number) => {
+        setAttachments(prev => prev.filter((_, i) => i !== index));
+    };
+
+    // Add external user
+    const handleAddExternalUser = () => {
+        if (newUserName && newUserEmail) {
+            setExternalUsers(prev => [...prev, { name: newUserName, email: newUserEmail }]);
+            setNewUserName('');
+            setNewUserEmail('');
+            setAddUserDialogOpen(false);
+        }
+    };
+
+    // Remove external user
+    const removeExternalUser = (index: number) => {
+        setExternalUsers(prev => prev.filter((_, i) => i !== index));
+    };
+
+    // Add contact person
+    const handleAddContactPerson = () => {
+        if (selectedCustomer && newContactPerson.firstName && newContactPerson.email) {
+            const updatedCustomer = {
+                ...selectedCustomer,
+                contactPersons: [
+                    ...selectedCustomer.contactPersons,
+                    { ...newContactPerson, id: Date.now().toString() }
+                ]
+            };
+            setSelectedCustomer(updatedCustomer);
+            setCustomers(prev => prev.map(c => c.id === updatedCustomer.id ? updatedCustomer : c));
+            setContactPersonDialogOpen(false);
+            setNewContactPerson({
+                id: '',
+                salutation: '',
+                firstName: '',
+                lastName: '',
+                email: '',
+                workPhone: '',
+                mobile: '',
+                skype: '',
+                designation: '',
+                department: ''
+            });
+        }
+    };
+
+    // Validation
+    // const validate = (): boolean => {
+    //     const newErrors: Record<string, string> = {};
+
+    //     if (!selectedCustomer) newErrors.customer = 'Customer is required';
+    //     if (!salesOrderDate) newErrors.salesOrderDate = 'Sales order date is required';
+    //     if (!expectedShipmentDate) newErrors.expectedShipmentDate = 'Expected shipment date is required';
+    //     if (!paymentTerms) newErrors.paymentTerms = 'Payment terms is required';
+
+    //     const hasValidItems = items.some(item => item.name && item.quantity > 0 && item.rate > 0);
+    //     if (!hasValidItems) newErrors.items = 'At least one valid item is required';
+
+    //     setErrors(newErrors);
+    //     return Object.keys(newErrors).length === 0;
+    // };
+
+
+    //     const validate = (): boolean => {
+    //     const newErrors: Record<string, string> = {};
+
+    //     if (!selectedCustomer) {
+    //         newErrors.customer = 'Customer is required';
+    //         toast.error('Customer is required');
+    //     }
+
+    //     if (!salesOrderDate) {
+    //         newErrors.salesOrderDate = 'Sales order date is required';
+    //         toast.error('Sales order date is required');
+    //     }
+
+    //     if (!expectedShipmentDate) {
+    //         newErrors.expectedShipmentDate = 'Expected shipment date is required';
+    //         toast.error('Expected shipment date is required');
+    //     }
+
+    //     if (!paymentTerms) {
+    //         newErrors.paymentTerms = 'Payment terms is required';
+    //         toast.error('Payment terms is required');
+    //     }
+
+    //     const hasValidItems = items.some(
+    //         item => item.name && item.quantity > 0 && item.rate > 0
+    //     );
+
+    //     if (!hasValidItems) {
+    //         newErrors.items = 'At least one valid item is required';
+    //         toast.error('Please add at least one valid item');
+    //     }
+
+    //     setErrors(newErrors);
+    //     return Object.keys(newErrors).length === 0;
+    // };
+
+
+    const validate = (): boolean => {
+        const newErrors: Record<string, string> = {};
+
+        if (!selectedUser) {
+            setErrors(newErrors);
+            toast.error('Please select a user');
+            return false;
+        }
+
+        if (!salesOrderDate) {
+            // newErrors.salesOrderDate = 'Sales order date is required';
+            setErrors(newErrors);
+            toast.error('Invoice date is required');
+            return false;
+        }
+
+        if (!expectedShipmentDate) {
+            // newErrors.expectedShipmentDate = 'Expected shipment date is required';
+            setErrors(newErrors);
+            toast.error('Due date is required');
+            return false;
+        } else if (salesOrderDate && new Date(expectedShipmentDate) < new Date(salesOrderDate)) {
+            setErrors(newErrors);
+            toast.error('Due date cannot be earlier than Invoice date');
+            return false;
+        }
+
+        if (!placeOfSupply) {
+            setErrors(newErrors);
+            toast.error('Place of Supply is required');
+            return false;
+        }
+
+        const hasValidItems = items.some(
+            item => item.name && item.quantity > 0 && item.rate > 0
+        );
+
+        if (!hasValidItems) {
+            // newErrors.items = 'At least one valid item is required';
+            setErrors(newErrors);
+            toast.error('Please add at least one valid item');
+            return false;
+        }
+
+        setErrors({});
+        return true;
+    };
+
+
+    // Maps an item's line_item_type to the PascalCase resource_type the bill_bookings API expects
+    const LINE_ITEM_RESOURCE_TYPE: Record<string, string> = {
+        facility_booking: 'FacilityBooking',
+        membership: 'Membership',
+        event: 'Event',
+    };
+
+    // Handle submit
+    const handleSubmit = async () => {
+        if (!validate()) {
+            return;
+        }
+
+        setIsSubmitting(true);
+
+        try {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+
+            const formData = new FormData();
+
+            formData.append('bill_booking[user_id]', String(selectedUser || ''));
+            formData.append('bill_booking[bill_date]', salesOrderDate);
+            formData.append('bill_booking[due_date]', expectedShipmentDate);
+            formData.append('bill_booking[order_number]', referenceNumber || '');
+            formData.append('bill_booking[subject]', subject || '');
+            formData.append('bill_booking[note]', customerNotes || '');
+            formData.append('bill_booking[terms_and_conditions]', termsAndConditions || '');
+            formData.append('bill_booking[bank_master_id]', selectedBankId || '');
+            // NOTE: source_of_supply/destination_of_supply mapped from orgState/placeOfSupply — unconfirmed against backend contract.
+            formData.append('bill_booking[source_of_supply]', orgState || '');
+            formData.append('bill_booking[destination_of_supply]', placeOfSupply || '');
+            formData.append('bill_booking[discount_per]', discountTypeOnTotal === 'percentage' ? String(discountOnTotal) : '0');
+
+            // resource_type/resource_id: use the first line item backed by a real entity (facility booking/membership/event)
+            const resourceItem = items.find(item => item.line_item_type && item.line_item_type !== 'other' && item.item_id);
+            if (resourceItem && resourceItem.line_item_type) {
+                formData.append('bill_booking[resource_type]', LINE_ITEM_RESOURCE_TYPE[resourceItem.line_item_type]);
+                formData.append('bill_booking[resource_id]', String(resourceItem.item_id));
+            }
+
+            formData.append('bill_booking[address_detail_attributes][gst_detail_id]', selectedGstDetail?.id ? String(selectedGstDetail.id) : '');
+            formData.append('bill_booking[address_detail_attributes][gst_preference]', gstTreatment || '');
+
+            if (selectedBillingAddress) {
+                formData.append('bill_booking[address_detail_attributes][billing_address_attributes][address]', selectedBillingAddress.address || '');
+                formData.append('bill_booking[address_detail_attributes][billing_address_attributes][city]', selectedBillingAddress.city || '');
+                formData.append('bill_booking[address_detail_attributes][billing_address_attributes][state]', selectedBillingAddress.state || '');
+                formData.append('bill_booking[address_detail_attributes][billing_address_attributes][country]', selectedBillingAddress.country || '');
+                formData.append('bill_booking[address_detail_attributes][billing_address_attributes][pin_code]', selectedBillingAddress.pin_code || '');
+                formData.append('bill_booking[address_detail_attributes][billing_address_attributes][contact_person]', selectedBillingAddress.attention || '');
+                formData.append('bill_booking[address_detail_attributes][billing_address_attributes][mobile]', selectedBillingAddress.mobile || selectedBillingAddress.telephone_number || '');
+            }
+            if (selectedShippingAddress) {
+                formData.append('bill_booking[address_detail_attributes][shipping_address_attributes][address]', selectedShippingAddress.address || '');
+                formData.append('bill_booking[address_detail_attributes][shipping_address_attributes][city]', selectedShippingAddress.city || '');
+                formData.append('bill_booking[address_detail_attributes][shipping_address_attributes][state]', selectedShippingAddress.state || '');
+                formData.append('bill_booking[address_detail_attributes][shipping_address_attributes][country]', selectedShippingAddress.country || '');
+                formData.append('bill_booking[address_detail_attributes][shipping_address_attributes][pin_code]', selectedShippingAddress.pin_code || '');
+            }
+            formData.append('bill_booking[billing_gstin]', selectedGstDetail?.gstin || gstin || '');
+
+            // Line items — sibling of bill_booking, matching the sample payload shape
+            items.forEach((item, idx) => {
+                const baseAmount = Number(item.quantity || 0) * Number(item.rate || 0);
+                const discountAmount = item.discountType === 'percentage'
+                    ? (baseAmount * Number(item.discount || 0)) / 100
+                    : Number(item.discount || 0);
+                const gstRate = item.item_tax_type === 'flat_gst' ? Number(item.tax_group_id) || 0 : 0;
+
+                if (item.dbId) {
+                    formData.append(`line_items[${idx}][id]`, String(item.dbId));
+                }
+                formData.append(`line_items[${idx}][line_item_type]`, item.line_item_type || 'other');
+                if (item.line_item_type && item.line_item_type !== 'other' && item.item_id) {
+                    formData.append(`line_items[${idx}][line_item_reference_id]`, String(item.item_id));
+                }
+                formData.append(`line_items[${idx}][name]`, item.name);
+                formData.append(`line_items[${idx}][quantity]`, String(item.quantity));
+                formData.append(`line_items[${idx}][rate]`, String(item.rate));
+                formData.append(`line_items[${idx}][amount]`, String(baseAmount));
+                formData.append(`line_items[${idx}][discount]`, String(discountAmount));
+                formData.append(`line_items[${idx}][gst_rate]`, String(gstRate));
+            });
+
+            // Attachments — param name unconfirmed, sample payload has no attachments key
+            attachments.forEach((file) => {
+                formData.append('bill_booking[attachments][]', file);
+            });
+
+            await fetch(`https://${baseUrl}/lock_accounts/${lock_account_id}/bill_bookings/${id}.json`, {
+                method: 'PATCH',
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined
+                    // Do NOT set Content-Type, browser will set it for FormData
+                },
+                body: formData
+            });
+
+            toast.success('Invoice updated successfully!');
+            navigate('/club-management/invoice');
+        } catch (error) {
+            console.error('Error updating invoice:', error);
+            toast.error('Failed to update invoice');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // --- Tax Section State and Effect ---
+
+
+
     useEffect(() => {
+        // Fetch tax options based on taxType, using baseUrl and Bearer token
         const fetchTaxSections = async () => {
             try {
+                const baseUrl = localStorage.getItem('baseUrl');
+                const token = localStorage.getItem('token');
                 const type = taxType.toLowerCase();
-                const url = `https://${baseUrl}/lock_account_taxes.json?q[tax_type_eq]=${type}&lock_account_id=${lock_account_id}`;
+                const url =
+
+
+                    `https://${baseUrl}/lock_account_taxes.json?q[tax_type_eq]=${type}&lock_account_id=${lock_account_id}`;
                 const response = await fetch(url, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
@@ -1054,14 +1783,19 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                 setTaxOptions([]);
             }
         };
-        if (baseUrl && token) fetchTaxSections();
+        fetchTaxSections();
         setSelectedTax('');
     }, [taxType]);
 
-    // Update taxAmount2 (TDS/TCS)
+
+
+
+    // Update taxAmount using percentage from selected tax option
     useEffect(() => {
         const selected = taxOptions.find(t => t.name === selectedTax);
+        // Use percentage key for calculation
         if (selected && typeof selected.percentage === 'number') {
+            // Calculate tax on afterDiscount
             setTaxAmount2((afterDiscount * selected.percentage) / 100);
         } else {
             setTaxAmount2(0);
@@ -1077,8 +1811,7 @@ export const InvoiceClubManagementEdit: React.FC = () => {
             const group = taxGroups.find(g => g.id === item.tax_group_id);
             if (!group) return;
             group.tax_rates.forEach((rate: any) => {
-                const itemSubtotal = (Number(item.quantity) || 0) * (Number(item.rate) || 0);
-                const taxAmount = (itemSubtotal * rate.rate) / 100;
+                const taxAmount = (item.amount * rate.rate) / 100;
                 const existing = taxBreakdown.find(t => t.name === rate.name);
                 if (existing) existing.amount += taxAmount;
                 else taxBreakdown.push({ name: rate.name, rate: rate.rate, amount: taxAmount });
@@ -1091,209 +1824,38 @@ export const InvoiceClubManagementEdit: React.FC = () => {
         .forEach(item => {
             const rate = taxRates.find(r => r.id === item.tax_group_id);
             if (!rate) return;
-            const itemSubtotal = (Number(item.quantity) || 0) * (Number(item.rate) || 0);
-            const taxAmount = (itemSubtotal * rate.rate) / 100;
+            const taxAmount = (item.amount * rate.rate) / 100;
             const existing = taxBreakdown.find(t => t.name === rate.name);
             if (existing) existing.amount += taxAmount;
             else taxBreakdown.push({ name: rate.name, rate: rate.rate, amount: taxAmount });
         });
 
-    const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
+    // Flat GST breakdown (hardcoded 5% / 9% / 18% options)
+    items
+        .filter(item => item.item_tax_type === "flat_gst" && item.tax_group_id)
+        .forEach(item => {
+            const rateValue = Number(item.tax_group_id) || 0;
+            const taxAmount = (item.amount * rateValue) / 100;
+            const name = `GST (${rateValue}%)`;
+            const existing = taxBreakdown.find(t => t.name === name);
+            if (existing) existing.amount += taxAmount;
+            else taxBreakdown.push({ name, rate: rateValue, amount: taxAmount });
+        });
+    // Calculate Final Total
 
+    const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
     useEffect(() => {
         const total =
             afterDiscount +
-            totalTax -
-            taxAmount2 +
+            totalTax  // tax from tax groups
+            - taxAmount2 + // TDS/TCS
             (Number(adjustment) || 0);
+
         setTotalAmount2(total);
+
+
     }, [afterDiscount, totalTax, taxAmount2, adjustment]);
-
-    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const files = event.target.files;
-        if (files) {
-            const newFiles = Array.from(files).filter(file => {
-                if (file.size > 5 * 1024 * 1024) {
-                    toast.error(`${file.name} exceeds 5MB limit`);
-                    return false;
-                }
-                return true;
-            });
-            if (attachments.length + newFiles.length > 10) {
-                toast.error('Maximum 10 files allowed');
-                return;
-            }
-            setAttachments(prev => [...prev, ...newFiles]);
-        }
-    };
-
-    const removeNewAttachment = (index: number) => {
-        setAttachments(prev => prev.filter((_, i) => i !== index));
-    };
-
-    const openCustomerDrawer = () => {
-        if (selectedCustomer?.id) {
-            fetchCustomerDetail(selectedCustomer.id);
-            setCustomerDrawerOpen(true);
-        }
-    };
-
-    const validate = (): boolean => {
-        if (!selectedCustomer) {
-            toast.error('Customer is required');
-            return false;
-        }
-        if (!salesOrderDate) {
-            toast.error('Invoice date is required');
-            return false;
-        }
-        if (!expectedShipmentDate) {
-            toast.error('Due date is required');
-            return false;
-        } else if (salesOrderDate && new Date(expectedShipmentDate) < new Date(salesOrderDate)) {
-            toast.error('Due date cannot be earlier than Invoice date');
-            return false;
-        }
-        if (!selectedTerm) {
-            toast.error('Payment terms is required');
-            return false;
-        }
-        if (!selectedBankId) {
-            setErrors((prev) => ({ ...prev, bank: 'Bank is required' }));
-            toast.error('Please select a bank');
-            return false;
-        }
-        const hasValidItems = items.some(item => item.name && (Number(item.quantity) || 0) > 0 && (Number(item.rate) || 0) > 0);
-        if (!hasValidItems) {
-            toast.error('Please add at least one valid item');
-            return false;
-        }
-        return true;
-    };
-
-    const handleSubmit = async (saveAsDraft: boolean = false) => {
-        if (!validate()) return;
-        setIsSubmitting(true);
-
-        try {
-            const formData = new FormData();
-            const totalGSTAmount = taxBreakdown.reduce((sum, tax) => sum + Number(tax.amount || 0), 0);
-
-            formData.append('lock_account_invoice[sub_total_amount]', String(subTotal));
-            formData.append('lock_account_invoice[taxable_amount]', String(totalGSTAmount));
-            formData.append('lock_account_invoice[lock_account_tax_amount]', String(taxAmount2));
-            formData.append('lock_account_invoice[lock_account_customer_id]', selectedCustomer?.id || '');
-            formData.append('lock_account_invoice[order_number]', referenceNumber);
-            formData.append('lock_account_invoice[date]', salesOrderDate);
-            formData.append('lock_account_invoice[due_date]', expectedShipmentDate);
-            formData.append('lock_account_invoice[payment_term_id]', selectedTerm);
-            formData.append('lock_account_invoice[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
-            formData.append('lock_account_invoice[customer_notes]', customerNotes);
-            formData.append('lock_account_invoice[bank_master_id]', selectedBankId || '');
-            formData.append('lock_account_invoice[terms_and_conditions]', termsAndConditions);
-            formData.append('lock_account_invoice[subject]', subject);
-            formData.append('lock_account_invoice[status]', saveAsDraft ? 'draft' : 'sent');
-            formData.append('lock_account_invoice[total_amount]', String(totalAmount2));
-
-            if (discountTypeOnTotal === 'percentage') {
-                formData.append('lock_account_invoice[discount_per]', String(discountOnTotal));
-                formData.append('lock_account_invoice[discount_amount]', String(totalDiscount));
-            } else {
-                formData.append('lock_account_invoice[discount_amount]', String(discountOnTotal));
-            }
-
-            formData.append('lock_account_invoice[charge_amount]', String(adjustment));
-            formData.append('lock_account_invoice[charge_name]', adjustmentLabel);
-            formData.append('lock_account_invoice[charge_type]', (Number(adjustment) || 0) >= 0 ? 'plus' : 'minus');
-            formData.append('lock_account_invoice[tax_type]', taxType.toLowerCase());
-
-            const foundTax = taxOptions.find(t => t.id === selectedTax || t.name === selectedTax);
-            formData.append('lock_account_invoice[lock_account_tax_id]', (foundTax && foundTax.id ? foundTax.id : selectedTax || ''));
-            formData.append('lock_account_invoice[place_of_supply]', placeOfSupply);
-
-            const selectedOrFirstBillingId = selectedBillingAddressId ?? billingAddressBook[0]?.id ?? '';
-            const selectedOrFirstShippingId = selectedShippingAddressId ?? shippingAddressBook[0]?.id ?? '';
-            const selectedOrFirstGstDetailId = selectedGstDetailId ?? gstDetails[0]?.id ?? '';
-            const gstPreferenceValue = customerDetail?.gst_preference || customerDetail?.gst_treatment || '';
-
-            formData.append('lock_account_invoice[address_detail_attributes][billing_address_id]', String(selectedOrFirstBillingId));
-            formData.append('lock_account_invoice[address_detail_attributes][shipping_address_id]', String(selectedOrFirstShippingId));
-            formData.append('lock_account_invoice[address_detail_attributes][gst_detail_id]', String(selectedOrFirstGstDetailId));
-            formData.append('lock_account_invoice[address_detail_attributes][gst_preference]', String(gstPreferenceValue));
-
-            // Existing & New line items attributes
-            let itemIndex = 0;
-            items.forEach((item) => {
-                const resolvedProductId = item.item_id || itemOptions.find(opt => opt.name === item.name)?.id;
-                if (item.line_item_id) {
-                    formData.append(`lock_account_invoice[sale_order_items_attributes][${itemIndex}][id]`, String(item.line_item_id));
-                }
-                if (resolvedProductId) {
-                    formData.append(`lock_account_invoice[sale_order_items_attributes][${itemIndex}][lock_account_item_id]`, String(resolvedProductId));
-                } else {
-                    formData.append(`lock_account_invoice[sale_order_items_attributes][${itemIndex}][item_name]`, item.name);
-                }
-                formData.append(`lock_account_invoice[sale_order_items_attributes][${itemIndex}][rate]`, String(item.rate));
-                formData.append(`lock_account_invoice[sale_order_items_attributes][${itemIndex}][quantity]`, String(item.quantity));
-                formData.append(`lock_account_invoice[sale_order_items_attributes][${itemIndex}][total_amount]`, String(item.amount));
-                formData.append(`lock_account_invoice[sale_order_items_attributes][${itemIndex}][description]`, item.description || '');
-                formData.append(`lock_account_invoice[sale_order_items_attributes][${itemIndex}][tax_type]`, String(item.item_tax_type || ''));
-                formData.append(`lock_account_invoice[sale_order_items_attributes][${itemIndex}][tax_group_id]`, String(item.tax_group_id || ''));
-                formData.append(`lock_account_invoice[sale_order_items_attributes][${itemIndex}][tax_exemption_id]`, String(item.tax_exemption_id || ''));
-                itemIndex++;
-            });
-
-            // Deleted line items attributes
-            deletedItemIds.forEach((dbId) => {
-                formData.append(`lock_account_invoice[sale_order_items_attributes][${itemIndex}][id]`, String(dbId));
-                formData.append(`lock_account_invoice[sale_order_items_attributes][${itemIndex}][_destroy]`, 'true');
-                itemIndex++;
-            });
-
-            // Email contact persons
-            selectedContactPersons.forEach((pid, idx) => {
-                formData.append(`lock_account_invoice[email_contact_persons_attributes][${idx}][contact_person_id]`, String(pid));
-            });
-
-            // New Attachments
-            let attIndex = 0;
-            attachments.forEach((file) => {
-                formData.append(`lock_account_invoice[attachments_attributes][${attIndex}][document]`, file);
-                formData.append(`lock_account_invoice[attachments_attributes][${attIndex}][active]`, 'true');
-                attIndex++;
-            });
-
-            // Deleted existing attachments
-            deletedAttachmentIds.forEach((attId) => {
-                formData.append(`lock_account_invoice[attachments_attributes][${attIndex}][id]`, String(attId));
-                formData.append(`lock_account_invoice[attachments_attributes][${attIndex}][_destroy]`, 'true');
-                attIndex++;
-            });
-
-            await axios.put(`https://${baseUrl}/lock_account_invoices/${id}.json?lock_account_id=${lock_account_id}`, formData, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
-
-            toast.success(`Invoice updated successfully!`);
-            navigate('/club-management/invoice');
-        } catch (error) {
-            console.error('Error updating invoice:', error);
-            toast.error('Failed to update invoice');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-screen">
-                <CircularProgress color="error" />
-            </div>
-        );
-    }
-
+    console.log('Tax Options:', taxOptions);
     const states = [
         "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa",
         "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala",
@@ -1304,12 +1866,19 @@ export const InvoiceClubManagementEdit: React.FC = () => {
         "Dadra and Nagar Haveli and Daman and Diu", "Delhi",
         "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry", "Foreign Country"
     ];
+    if (editLoading) {
+        return (
+            <div className="flex items-center justify-center h-screen">
+                <CircularProgress size={60} />
+            </div>
+        );
+    }
 
     return (
-        <div className="p-6 space-y-6 relative bg-gray-50/50 min-h-screen">
+        <div className="p-6 space-y-6 relative">
             {isSubmitting && (
-                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[9999]">
-                    <CircularProgress size={60} color="error" />
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <CircularProgress size={60} />
                 </div>
             )}
 
@@ -1324,88 +1893,158 @@ export const InvoiceClubManagementEdit: React.FC = () => {
             </div>
 
             <header className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold">Edit Invoice</h1>
-                    <p className="text-sm text-gray-500">Invoice Number: {invoiceNumber}</p>
-                </div>
+                <h1 className="text-2xl font-bold">Edit Invoice</h1>
             </header>
 
-            <div className="space-y-8">
-                {/* Customer Information */}
-                <Section title="Customer Information" icon={<PersonAdd className="w-5 h-5" />}>
-                    <div className="space-y-4">
+            <div className="space-y-6">
+                {/* Customer Section */}
+                <Section title="Invoice Information" icon={<Package className="w-5 h-5" />}>
+                    <div className="space-y-6">
+                        <div>
+                            <RadioGroup
+                                row
+                                value={userType}
+                                onChange={(e) => {
+                                    setUserType(e.target.value as 'occupant' | 'guest' | 'fm');
+                                    setSelectedUser('');
+                                }}
+                            >
+                                <FormControlLabel
+                                    value="occupant"
+                                    control={<BrandRadio />}
+                                    label="Members"
+                                />
+                                <FormControlLabel
+                                    value="guest"
+                                    control={<BrandRadio />}
+                                    label="Guest"
+                                />
+                                <FormControlLabel
+                                    value="fm"
+                                    control={<BrandRadio />}
+                                    label="Staff"
+                                />
+                            </RadioGroup>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-sm font-medium mb-2">Customer Name</label>
-                                <FormControl fullWidth>
+                                <label className="block text-sm font-medium mb-2">
+                                    User<span className="text-brand">*</span>
+                                </label>
+                                <FormControl
+                                    fullWidth
+                                    error={userType === 'occupant' ? occupantUsersError : userType === 'guest' ? guestUsersError : fmUsersError}
+                                >
                                     <Select
-                                        value={selectedCustomer?.id || ""}
-                                        onChange={(e) => {
-                                            const cust = customers.find(c => String(c.id) === String(e.target.value));
-                                            if (cust) {
-                                                setSelectedCustomer(cust);
-                                                fetchCustomerDetail(cust.id);
-                                            }
-                                        }}
+                                        value={selectedUser}
+                                        onChange={(e) => setSelectedUser(String(e.target.value))}
                                         displayEmpty
+                                        disabled={userType === 'occupant' ? occupantUsersLoading : userType === 'guest' ? guestUsersLoading : fmUsersLoading}
                                         sx={fieldStyles}
                                     >
-                                        <MenuItem value="" disabled>Select a customer</MenuItem>
-                                        {customers.map((customer) => (
-                                            <MenuItem key={customer.id} value={customer.id}>
-                                                {customer.name}
-                                            </MenuItem>
+                                        <MenuItem value="">Select a user</MenuItem>
+                                        {userType === 'occupant' && occupantUsers.map((user) => (
+                                            <MenuItem key={user.id} value={user.id}>{user.name}</MenuItem>
+                                        ))}
+                                        {userType === 'guest' && guestUsers.map((user) => (
+                                            <MenuItem key={user.id} value={user.id}>{user.name}</MenuItem>
+                                        ))}
+                                        {userType === 'fm' && fmUsers.map((user) => (
+                                            <MenuItem key={user.id} value={user.id}>{user.name}</MenuItem>
                                         ))}
                                     </Select>
                                 </FormControl>
                             </div>
+                        </div>
 
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-sm font-medium mb-2">Currency</label>
+                                <label className="block text-sm font-medium mb-2">
+                                    Place of Supply<span className="text-brand">*</span>
+                                </label>
+
                                 <TextField
+                                    select
                                     fullWidth
-                                    value={selectedCustomer?.currency || 'INR'}
-                                    disabled
+                                    value={placeOfSupply}
+                                    onChange={(e) => setPlaceOfSupply(e.target.value)}
                                     sx={fieldStyles}
-                                />
+                                    SelectProps={{
+                                        displayEmpty: true
+                                    }}
+                                >
+                                    <MenuItem value="">Select Place of Supply</MenuItem>
+                                    {states.map((state) => (
+                                        <MenuItem key={state} value={state}>
+                                            {state}
+                                        </MenuItem>
+                                    ))}
+                                </TextField>
                             </div>
                         </div>
 
-                        {selectedCustomer && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                        <div className="mt-4 rounded-lg border border-gray-200 bg-white p-4 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Billing Address */}
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">Place of Supply</label>
-                                    <TextField
-                                        select
-                                        fullWidth
-                                        value={placeOfSupply}
-                                        onChange={(e) => setPlaceOfSupply(e.target.value)}
-                                        sx={fieldStyles}
-                                        SelectProps={{ displayEmpty: true }}
-                                    >
-                                        <MenuItem value="">Select Place of Supply</MenuItem>
-                                        {states.map((state) => (
-                                            <MenuItem key={state} value={state}>
-                                                {state}
-                                            </MenuItem>
-                                        ))}
-                                    </TextField>
+                                    <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                        Billing Address
+                                        <IconButton size="small" onClick={() => openAddressFormModal(selectedBillingAddress ? 'edit' : 'new', 'billing', selectedBillingAddress || undefined)}>
+                                            <EditOutlined fontSize="small" className="text-brand" />
+                                        </IconButton>
+                                    </div>
+                                    {selectedBillingAddress?.address ? (
+                                        <div className="text-sm text-gray-700 leading-relaxed">
+                                            <div className="font-medium">{selectedBillingAddress.address}</div>
+                                            {selectedBillingAddress.address_line_two && (
+                                                <div>{selectedBillingAddress.address_line_two}</div>
+                                            )}
+                                            <div>
+                                                {[selectedBillingAddress.city, selectedBillingAddress.state]
+                                                    .filter(Boolean)
+                                                    .join(", ")}
+                                                {selectedBillingAddress.pin_code ? ` - ${selectedBillingAddress.pin_code}` : ""}
+                                            </div>
+                                            {selectedBillingAddress.country && (
+                                                <div>{selectedBillingAddress.country}</div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => openAddressFormModal('new', 'billing')}
+                                            className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
+                                        >
+                                            New Address
+                                        </button>
+                                    )}
                                 </div>
-                            </div>
-                        )}
 
-                        {selectedCustomer && customerDetail && (
-                            <div className="mt-6 space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-gray-100 pt-6">
-                                    {/* Billing Address */}
-                                    <div>
-                                        <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
-                                            Billing Address
-                                            <IconButton size="small" onClick={() => openAddressListModal('billing')}>
+                                {/* Shipping Address */}
+                                <div>
+                                    <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                        Shipping Address
+                                        {!sameAsBilling && (
+                                            <IconButton size="small" onClick={() => openAddressFormModal(selectedShippingAddress ? 'edit' : 'new', 'shipping', selectedShippingAddress || undefined)}>
                                                 <EditOutlined fontSize="small" className="text-brand" />
                                             </IconButton>
-                                        </div>
-                                        {selectedBillingAddress?.address ? (
+                                        )}
+                                    </div>
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                size="small"
+                                                checked={sameAsBilling}
+                                                onChange={(e) => setSameAsBilling(e.target.checked)}
+                                                sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
+                                            />
+                                        }
+                                        label={<span className="text-xs text-gray-600">Same as Billing Address</span>}
+                                        className="mb-1 -mt-1"
+                                    />
+                                    {sameAsBilling ? (
+                                        selectedBillingAddress?.address ? (
                                             <div className="text-sm text-gray-700 leading-relaxed">
                                                 <div className="font-medium">{selectedBillingAddress.address}</div>
                                                 {selectedBillingAddress.address_line_two && (
@@ -1422,96 +2061,66 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                                                 )}
                                             </div>
                                         ) : (
-                                            <button
-                                                type="button"
-                                                onClick={() => openAddressFormModal('new', 'billing')}
-                                                className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
-                                            >
-                                                New Address
-                                            </button>
-                                        )}
-                                    </div>
-
-                                    {/* Shipping Address */}
-                                    <div>
-                                        <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
-                                            Shipping Address
-                                            <IconButton size="small" onClick={() => openAddressListModal('shipping')}>
-                                                <EditOutlined fontSize="small" className="text-brand" />
-                                            </IconButton>
-                                        </div>
-                                        {selectedShippingAddress?.address ? (
-                                            <div className="text-sm text-gray-700 leading-relaxed">
-                                                <div className="font-medium">{selectedShippingAddress.address}</div>
-                                                {selectedShippingAddress.address_line_two && (
-                                                    <div>{selectedShippingAddress.address_line_two}</div>
-                                                )}
-                                                <div>
-                                                    {[selectedShippingAddress.city, selectedShippingAddress.state]
-                                                        .filter(Boolean)
-                                                        .join(", ")}
-                                                    {selectedShippingAddress.pin_code ? ` - ${selectedShippingAddress.pin_code}` : ""}
-                                                </div>
-                                                {selectedShippingAddress.country && (
-                                                    <div>{selectedShippingAddress.country}</div>
-                                                )}
+                                            <div className="text-xs text-gray-400 italic">Add a billing address first</div>
+                                        )
+                                    ) : selectedShippingAddress?.address ? (
+                                        <div className="text-sm text-gray-700 leading-relaxed">
+                                            <div className="font-medium">{selectedShippingAddress.address}</div>
+                                            {selectedShippingAddress.address_line_two && (
+                                                <div>{selectedShippingAddress.address_line_two}</div>
+                                            )}
+                                            <div>
+                                                {[selectedShippingAddress.city, selectedShippingAddress.state]
+                                                    .filter(Boolean)
+                                                    .join(", ")}
+                                                {selectedShippingAddress.pin_code ? ` - ${selectedShippingAddress.pin_code}` : ""}
                                             </div>
-                                        ) : (
-                                            <button
-                                                type="button"
-                                                onClick={() => openAddressFormModal('new', 'shipping')}
-                                                className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
-                                            >
-                                                New Address
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* GST Information */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm pt-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-gray-500">GST Treatment:</span>
-                                        <span className="text-gray-800">{getGstTreatmentLabel(customerDetail.gst_preference || customerDetail.gst_treatment)}</span>
-                                        <IconButton size="small" onClick={openGstModal}>
-                                            <EditOutlined fontSize="small" className="text-brand" />
-                                        </IconButton>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-gray-500">GSTIN:</span>
-                                        <span className="text-gray-800 font-medium">{selectedGstDetail?.gstin || customerDetail.gstin || "—"}</span>
-                                        <IconButton size="small" onClick={openGstPickerModal}>
-                                            <EditOutlined fontSize="small" className="text-brand" />
-                                        </IconButton>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-2 pt-2">
-                                    <button
-                                        type="button"
-                                        onClick={openCustomerDrawer}
-                                        className="text-[#DA7756] text-sm font-medium hover:underline flex items-center gap-1"
-                                    >
-                                        View Customer Details <ChevronRight className="w-4 h-4" />
-                                    </button>
+                                            {selectedShippingAddress.country && (
+                                                <div>{selectedShippingAddress.country}</div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => openAddressFormModal('new', 'shipping')}
+                                            className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
+                                        >
+                                            New Address
+                                        </button>
+                                    )}
                                 </div>
                             </div>
-                        )}
-                        {!customerDetail && selectedCustomer && customerDetailLoading && (
-                            <div className="py-4 flex justify-center">
-                                <CircularProgress size={24} color="error" />
-                            </div>
-                        )}
+
+                            {/* GST Information */}
+                            {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm pt-2">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-gray-500">GST Treatment:</span>
+                                    <span className="text-gray-800">{getGstTreatmentLabel(gstTreatment) || "—"}</span>
+                                    <IconButton size="small" onClick={openGstModal}>
+                                        <EditOutlined fontSize="small" className="text-brand" />
+                                    </IconButton>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-gray-500">GSTIN:</span>
+                                    <span className="text-gray-800 font-medium">{selectedGstDetail?.gstin || gstin || "—"}</span>
+                                    <IconButton size="small" onClick={openGstPickerModal}>
+                                        <EditOutlined fontSize="small" className="text-brand" />
+                                    </IconButton>
+                                </div>
+                            </div> */}
+                        </div>
                     </div>
                 </Section>
 
                 {/* Address Section */}
-                <Section title="Address Details" icon={<FileText className="w-5 h-5" />}>
+                {/* <Section title="Address Details" icon={<FileText className="w-5 h-5" />}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm font-medium mb-2">Billing Address</label>
+                            <label className="block text-sm font-medium mb-2">
+                                Billing Address
+                            </label>
                             <textarea
-                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y bg-white"
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
                                 rows={4}
                                 value={billingAddress}
                                 onChange={(e) => {
@@ -1526,9 +2135,11 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-2">Shipping Address</label>
+                            <label className="block text-sm font-medium mb-2">
+                                Shipping Address
+                            </label>
                             <textarea
-                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y bg-white ${sameAsBilling ? 'bg-gray-50' : ''}`}
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y ${sameAsBilling ? 'bg-gray-50' : ''}`}
                                 rows={4}
                                 value={shippingAddress}
                                 onChange={(e) => {
@@ -1543,39 +2154,36 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                             </div>
                         </div>
                     </div>
-                </Section>
+                </Section> */}
 
-                {/* Invoice Details */}
+                {/* Sales Order Details */}
                 <Section title="Invoice Details" icon={<Calendar className="w-5 h-5" />}>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Invoice Number</label>
-                            <TextField
-                                fullWidth
-                                value={invoiceNumber}
-                                disabled
-                                sx={fieldStyles}
-                            />
-                        </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-2">Reference # / Order Number</label>
+                            <label className="block text-sm font-medium mb-2">
+                                Order Number
+                            </label>
                             <TextField
                                 fullWidth
                                 value={referenceNumber}
                                 onChange={(e) => setReferenceNumber(e.target.value)}
-                                placeholder="Enter reference/order number"
+                                placeholder="Enter order number"
                                 sx={fieldStyles}
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-2">Invoice Date<span className="text-brand">*</span></label>
+                            <label className="block text-sm font-medium mb-2">
+                                Invoice Date<span className="text-brand">*</span>
+                            </label>
                             <TextField
                                 fullWidth
                                 type="date"
                                 value={salesOrderDate}
                                 onChange={(e) => setSalesOrderDate(e.target.value)}
+                                error={!!errors.salesOrderDate}
+                                helperText={errors.salesOrderDate}
                                 sx={{
                                     ...fieldStyles,
                                     '& .MuiInputBase-input': {
@@ -1594,12 +2202,16 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-2">Due Date<span className="text-brand">*</span></label>
+                            <label className="block text-sm font-medium mb-2">
+                                Due Date<span className="text-brand">*</span>
+                            </label>
                             <TextField
                                 fullWidth
                                 type="date"
                                 value={expectedShipmentDate}
                                 onChange={(e) => setExpectedShipmentDate(e.target.value)}
+                                error={!!errors.expectedShipmentDate}
+                                helperText={errors.expectedShipmentDate}
                                 sx={{
                                     ...fieldStyles,
                                     '& .MuiInputBase-input': {
@@ -1618,55 +2230,13 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                             />
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Payment Terms<span className="text-brand">*</span></label>
-                            <FormControl fullWidth>
-                                <Select
-                                    value={selectedTerm}
-                                    onChange={(e) => setSelectedTerm(e.target.value)}
-                                    renderValue={(val) => {
-                                        if (!val) {
-                                            return <span className="text-gray-400">Select payment term</span>;
-                                        }
-                                        const found = filteredTerms.find(term => String(term.id) === String(val));
-                                        return found ? found.name : val;
-                                    }}
-                                    displayEmpty
-                                    sx={fieldStyles}
-                                >
-                                    <MenuItem value="">Select payment term</MenuItem>
-                                    {filteredTerms.map((term) => (
-                                        <MenuItem key={term.id || term.name} value={term.id}>
-                                            {term.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Salesperson</label>
-                            <FormControl fullWidth>
-                                <Select
-                                    value={salesperson}
-                                    onChange={(e) => setSalesperson(e.target.value)}
-                                    displayEmpty
-                                    sx={fieldStyles}
-                                >
-                                    <MenuItem value="" disabled>Select salesperson</MenuItem>
-                                    {salespersons.map(person => (
-                                        <MenuItem key={person.id} value={person.id}>{person.name}</MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </div>
-                    </div>
-
-                    <div className="mt-4">
-                        <label className="block text-sm font-medium">Subject</label>
+                    <div>
+                        <label className="block text-sm font-medium ">
+                            Subject
+                        </label>
                         <textarea
-                            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y bg-white"
-                            rows={3}
+                            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
+                            rows={4}
                             value={subject}
                             onChange={(e) => {
                                 if (e.target.value.length <= 500) setSubject(e.target.value);
@@ -1678,548 +2248,489 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                             {(subject?.length || 0)}/500
                         </div>
                     </div>
-                </Section>
 
-                {/* Item Table */}
-                <Section title="Item Table" icon={<Package className="w-5 h-5" />}>
-                    <div className="space-y-4">
-                        <div className="border border-border rounded-lg overflow-hidden">
-                            <table className="w-full">
-                                <thead className="bg-muted/50">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Rate</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Tax</th>
-                                        <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
-                                        <th className="px-4 py-3 text-center text-sm font-medium">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border">
-                                    {items.map((item, index) => (
-                                        <tr key={item.id} className="hover:bg-muted/30 transition-colors">
-                                            <td className="px-4 py-3">
-                                                <FormControl fullWidth sx={{ minWidth: 250 }}>
-                                                    <ItemSearchInput
-                                                        value={item.name}
-                                                        itemOptions={itemOptions}
-                                                        onSelect={(selected) => {
-                                                            const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
-                                                            let taxFields: Partial<Item> = {};
-                                                            if (selected.tax_preference === "non_taxable") {
-                                                                taxFields = { item_tax_type: "non_taxable", tax_exemption_id: selected.tax_exemption_id };
-                                                            } else if (selected.tax_preference === "taxable") {
-                                                                taxFields = { item_tax_type: isSameState ? "tax_group" : "tax_rate", tax_group_id: isSameState ? selected.tax_group_id : selected.inter_state_tax_rate_id };
-                                                            } else if (selected.tax_preference === "out_of_scope") {
-                                                                taxFields = { item_tax_type: "out_of_scope" };
-                                                            } else if (selected.tax_preference === "non_gst_supply") {
-                                                                taxFields = { item_tax_type: "non_gst_supply" };
-                                                            }
-                                                            updateItemFields(index, { item_id: String(selected.id), name: selected.name, rate: selected.rate || 0, description: selected.description || '', ...taxFields });
-                                                        }}
-                                                        onType={(typed) => updateItemFields(index, { item_id: null, name: typed })}
-                                                    />
-                                                </FormControl>
-                                                <TextField
-                                                    fullWidth
-                                                    size="small"
-                                                    placeholder="Description"
-                                                    value={item.description}
-                                                    onChange={(e) => updateItem(index, 'description', e.target.value)}
-                                                    sx={{ mt: 1 }}
-                                                />
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <TextField
-                                                    type="number"
-                                                    size="small"
-                                                    value={item.quantity}
-                                                    onChange={(e) => {
-                                                        const val = parseFloat(e.target.value);
-                                                        if (val < 0) {
-                                                            toast.error('Quantity cannot be negative');
-                                                            updateItem(index, 'quantity', 0);
-                                                        } else {
-                                                            updateItem(index, 'quantity', isNaN(val) ? "" : val);
-                                                        }
-                                                    }}
-                                                    inputProps={{ min: 0, step: 1 }}
-                                                    sx={{ width: 80 }}
-                                                />
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <TextField
-                                                    type="number"
-                                                    size="small"
-                                                    value={item.rate}
-                                                    onChange={(e) => {
-                                                        const val = parseFloat(e.target.value);
-                                                        if (val < 0) {
-                                                            toast.error('Rate cannot be negative');
-                                                            updateItem(index, 'rate', 0);
-                                                        } else {
-                                                            updateItem(index, 'rate', isNaN(val) ? "" : val);
-                                                        }
-                                                    }}
-                                                    inputProps={{ min: 0, step: 0.01 }}
-                                                    sx={{ width: 100 }}
-                                                />
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <FormControl size="small" sx={{ width: 200 }}>
-                                                    <Select
-                                                        value={["tax_group", "tax_rate"].includes(item.item_tax_type || "") ? item.tax_group_id : item.item_tax_type || ""}
-                                                        displayEmpty
-                                                        onChange={(e) => {
-                                                            const value = String(e.target.value);
-                                                            const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
-                                                            if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
-                                                                updateItem(index, "item_tax_type", value);
-                                                                updateItem(index, "tax_group_id", null);
-                                                                if (value === "non_taxable") {
-                                                                    setCurrentItemIndex(index);
-                                                                    setExemptionModalOpen(true);
-                                                                }
-                                                            } else {
-                                                                updateItem(index, "item_tax_type", isSameState ? "tax_group" : "tax_rate");
-                                                                updateItem(index, "tax_group_id", Number(value));
-                                                            }
-                                                        }}
-                                                    >
-                                                        <MenuItem value="">Select Tax</MenuItem>
-                                                        {taxTypeOptions.map((opt) => (
-                                                            <MenuItem key={opt.value} value={opt.value}>
-                                                                {opt.label}
-                                                            </MenuItem>
-                                                        ))}
-                                                        {(() => {
-                                                            const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
-                                                            return isSameState ? (
-                                                                [
-                                                                    <MenuItem key="__divider__" disabled>Tax Groups</MenuItem>,
-                                                                    ...taxGroups.map((group) => (
-                                                                        <MenuItem key={group.id} value={group.id}>{group.name}</MenuItem>
-                                                                    ))
-                                                                ]
-                                                            ) : (
-                                                                [
-                                                                    <MenuItem key="__divider__" disabled>Tax Rates (IGST)</MenuItem>,
-                                                                    ...taxRates.map((rate) => (
-                                                                        <MenuItem key={rate.id} value={rate.id}>{rate.name}</MenuItem>
-                                                                    ))
-                                                                ]
-                                                            );
-                                                        })()}
-                                                    </Select>
-                                                </FormControl>
-                                            </td>
-                                            <td className="px-4 py-3 text-right font-semibold">
-                                                ₹{item.amount.toFixed(2)}
-                                            </td>
-                                            <td className="px-4 py-3 text-center">
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => removeItem(index)}
-                                                    disabled={items.length === 1}
-                                                    color="error"
+
+
+            </div>
+        </Section>
+
+                {/* Item Table */ }
+    <Section title="Item Table" icon={<Package className="w-5 h-5" />}>
+        <div className="space-y-4">
+            {errors.items && (
+                <div className="text-brand text-sm bg-red-50 p-3 rounded-md">{errors.items}</div>
+            )}
+
+            <div className="border border-border rounded-lg overflow-x-auto">
+                <table className="w-full min-w-[900px] item-table-no-hover">
+                    <thead className="bg-muted/50">
+                        <tr>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Item Details<span className="text-brand">*</span></th>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Rate</th>
+                            {/* <th className="px-4 py-3 text-left text-sm font-medium">Discount</th> */}
+                            <th className="px-4 py-3 text-left text-sm font-medium">Tax</th>
+                            <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
+                            <th className="px-4 py-3 text-center text-sm font-medium">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+
+                        {items.map((item, index) => (
+                            <tr key={item.id}>
+                                <td className="px-4 py-3">
+                                    {/* {item.name && (
+                                        <div className="text-sm font-medium">{item.name}</div>
+                                    )} */}
+
+                                    {(() => {
+                                        const rowSource = itemSourceSelection[item.id] || '';
+                                        const sourceOptions: { key: 'facility' | 'membership' | 'event'; lineItemType: 'facility_booking' | 'membership' | 'event'; label: string; options: { id: string; name: string; rate: number }[] }[] = [
+                                            { key: 'facility', lineItemType: 'facility_booking', label: 'Facility Booking', options: facilityBookingOptions },
+                                            { key: 'membership', lineItemType: 'membership', label: 'Membership', options: membershipPlanOptions },
+                                            { key: 'event', lineItemType: 'event', label: 'Event', options: eventOptionsList },
+                                        ];
+                                        const activeSource = sourceOptions.find(s => s.key === rowSource);
+                                        return (
+                                            <div className="mt-2">
+                                                <RadioGroup
+                                                    row
+                                                    value={rowSource}
+                                                    onChange={(e) => setItemSource(item.id, e.target.value as typeof rowSource)}
                                                 >
-                                                    <Delete fontSize="small" />
-                                                </IconButton>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                                    {sourceOptions.map(({ key, label }) => (
+                                                        <FormControlLabel
+                                                            key={key}
+                                                            value={key}
+                                                            control={<BrandRadio />}
+                                                            label={label}
+                                                        />
+                                                    ))}
+                                                    <FormControlLabel
+                                                        value="other"
+                                                        control={<BrandRadio />}
+                                                        label="Other"
+                                                    />
+                                                </RadioGroup>
 
-                        <div className="flex gap-3 pt-4">
-                            <Button
-                                startIcon={<Add />}
-                                onClick={addItem}
-                                variant="outlined"
-                                sx={{ textTransform: 'none' }}
-                            >
-                                Add New Row
-                            </Button>
-                        </div>
-                    </div>
-                </Section>
+                                                {activeSource && (
+                                                    <FormControl size="small" sx={{ minWidth: 200 }}>
+                                                        <Select
+                                                            displayEmpty
+                                                            value={item.line_item_type === activeSource.lineItemType && item.item_id ? item.item_id : ''}
+                                                            onChange={(e) => {
+                                                                const selected = activeSource.options.find(o => o.id === e.target.value);
+                                                                if (selected) applySourceToItem(index, selected.name, selected.rate, selected.id, activeSource.lineItemType);
+                                                            }}
+                                                        >
+                                                            <MenuItem value="" disabled>
+                                                                {activeSource.options.length === 0 ? `No ${activeSource.label.toLowerCase()} records found` : `Select ${activeSource.label.toLowerCase()}`}
+                                                            </MenuItem>
+                                                            {activeSource.options.map(opt => (
+                                                                <MenuItem key={opt.id} value={opt.id}>{opt.name}</MenuItem>
+                                                            ))}
+                                                        </Select>
+                                                    </FormControl>
+                                                )}
 
-                {/* Summary Section */}
-                <Section title="Summary" icon={<ShoppingCart className="w-5 h-5" />}>
-                    <div className="flex justify-end">
-                        <div className="w-full md:w-1/2 space-y-4">
-                            <div className="flex justify-between items-center py-2">
-                                <span className="text-sm font-medium text-muted-foreground">Sub Total</span>
-                                <span className="font-semibold text-base">₹{subTotal.toFixed(2)}</span>
-                            </div>
+                                                {rowSource === 'other' && (
+                                                    <TextField
+                                                        size="small"
+                                                        placeholder="Enter item name"
+                                                        value={otherItemNameDraft[item.id] ?? ''}
+                                                        onChange={(e) => setOtherItemNameDraft(prev => ({ ...prev, [item.id]: e.target.value }))}
+                                                        onBlur={() => {
+                                                            const name = (otherItemNameDraft[item.id] || '').trim();
+                                                            if (name) updateItemFields(index, { item_id: null, name, line_item_type: 'other' });
+                                                        }}
+                                                        sx={{ minWidth: 200 }}
+                                                    />
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
 
-                            <div className="flex justify-between items-center py-2">
-                                <span className="text-sm font-medium text-muted-foreground">Discount</span>
-                                <div className="flex items-center gap-2">
-                                    <Select
+                                    {/* <TextField
+                                        fullWidth
+                                        label="Description"
                                         size="small"
-                                        value={discountTypeOnTotal}
-                                        onChange={e => setDiscountTypeOnTotal(e.target.value as 'percentage' | 'amount')}
-                                        sx={{ width: 100 }}
-                                    >
-                                        <MenuItem value="percentage">%</MenuItem>
-                                        <MenuItem value="amount">Amount</MenuItem>
-                                    </Select>
+                                        placeholder="Description"
+                                        value={item.description}
+                                        onChange={(e) => updateItem(index, 'description', e.target.value)}
+                                        sx={{ mt: 2 }}
+                                        InputLabelProps={{ shrink: true }}
+                                    /> */}
+                                </td>
+                                <td className="px-4 py-3">
                                     <TextField
                                         type="number"
                                         size="small"
-                                        value={discountOnTotal}
+                                        value={item.quantity}
                                         onChange={(e) => {
                                             const val = parseFloat(e.target.value);
                                             if (val < 0) {
-                                                toast.error('Discount cannot be negative');
-                                                setDiscountOnTotal(0);
-                                            } else if (discountTypeOnTotal === 'percentage' && val > 100) {
-                                                toast.error('Discount percentage cannot exceed 100%');
-                                                setDiscountOnTotal(100);
+                                                toast.error('Quantity cannot be negative');
+                                                updateItem(index, 'quantity', 0);
                                             } else {
-                                                setDiscountOnTotal(isNaN(val) ? 0 : val);
+                                                updateItem(index, 'quantity', isNaN(val) ? "" : val);
                                             }
                                         }}
-                                        inputProps={{ min: 0, step: 0.01 }}
+                                        inputProps={{ min: 0, step: 1 }}
                                         sx={{ width: 80 }}
                                     />
-                                    <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
-                                </div>
-                            </div>
-
-                            {taxBreakdown.map((tax, index) => (
-                                <div key={index} className="flex justify-between items-center py-2">
-                                    <span className="text-sm font-medium text-muted-foreground">
-                                        {tax.name} ({tax.rate}%)
-                                    </span>
-                                    <span className="font-semibold text-base">
-                                        ₹{tax.amount.toFixed(2)}
-                                    </span>
-                                </div>
-                            ))}
-                            <Divider />
-
-                            <div className="flex flex-wrap items-center gap-3 py-2">
-                                <RadioGroup
-                                    row
-                                    value={taxType}
-                                    onChange={(e) => setTaxType(e.target.value as 'TDS' | 'TCS')}
-                                >
-                                    <FormControlLabel
-                                        value="TDS"
-                                        control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
-                                        label={<span className="text-sm">TDS</span>}
-                                    />
-                                    <FormControlLabel
-                                        value="TCS"
-                                        control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
-                                        label={<span className="text-sm">TCS</span>}
-                                    />
-                                </RadioGroup>
-                                <FormControl size="small" sx={{ minWidth: 150 }}>
-                                    <Select
-                                        value={selectedTax}
-                                        onChange={(e) => setSelectedTax(e.target.value)}
-                                        displayEmpty
-                                        MenuProps={{
-                                            PaperProps: {
-                                                style: {
-                                                    maxHeight: 224,
-                                                    backgroundColor: 'white',
-                                                    border: '1px solid #e2e8f0',
-                                                    borderRadius: '8px',
-                                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                                                },
-                                            },
-                                            disablePortal: true,
-                                        }}
-                                    >
-                                        <MenuItem value="">Select a Tax</MenuItem>
-                                        {taxOptions.map(tax => (
-                                            <MenuItem key={tax.id || tax.name} value={tax.name}>
-                                                {tax.name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                                <span className="font-semibold text-base text-red-600">-₹{taxAmount2.toFixed(2)}</span>
-                            </div>
-
-                            <div className="flex justify-between items-center py-2">
-                                <div className="flex items-center gap-2">
-                                    <TextField
-                                        size="small"
-                                        value={adjustmentLabel}
-                                        onChange={e => setAdjustmentLabel(e.target.value)}
-                                        sx={{ width: 120 }}
-                                        placeholder="Adjustment Name"
-                                    />
+                                </td>
+                                <td className="px-4 py-3">
                                     <TextField
                                         type="number"
                                         size="small"
-                                        value={adjustment}
-                                        onChange={(e) => setAdjustment(parseFloat(e.target.value) || '')}
-                                        inputProps={{ step: 0.01 }}
+                                        value={item.rate}
+                                        onChange={(e) => {
+                                            const val = parseFloat(e.target.value);
+                                            if (val < 0) {
+                                                toast.error('Rate cannot be negative');
+                                                updateItem(index, 'rate', 0);
+                                            } else {
+                                                updateItem(index, 'rate', isNaN(val) ? "" : val);
+                                            }
+                                        }}
+                                        inputProps={{ min: 0, step: 0.01 }}
                                         sx={{ width: 100 }}
                                     />
-                                </div>
-                            </div>
+                                </td>
+                                {/* <td className="px-4 py-3"> */}
+                                {/* <div className="flex items-center gap-2">
+                                                    <TextField
+                                                        type="number"
+                                                        size="small"
+                                                        value={item.discount}
+                                                        onChange={(e) => updateItem(index, 'discount', parseFloat(e.target.value) || 0)}
+                                                        inputProps={{ min: 0, step: 0.01 }}
+                                                        sx={{ width: 80 }}
+                                                    />
+                                                    <FormControl size="small" sx={{ width: 80 }}>
+                                                        <Select
+                                                            value={item.discountType}
+                                                            onChange={(e) => updateItem(index, 'discountType', e.target.value)}
+                                                        >
+                                                            <MenuItem value="percentage">%</MenuItem>
+                                                            <MenuItem value="amount">₹</MenuItem>
+                                                        </Select>
+                                                    </FormControl>
+                                                </div> */}
+                                {/* </td> */}
+                                <td className="px-4 py-3">
+                                    <FormControl size="small" sx={{ width: 200 }}>
+                                        <Select
+                                            value={item.item_tax_type === "flat_gst" ? `flat_${item.tax_group_id}` : ""}
+                                            displayEmpty
+                                            onChange={(e) => {
+                                                const value = String(e.target.value);
+                                                if (value.startsWith("flat_")) {
+                                                    updateItem(index, "item_tax_type", "flat_gst");
+                                                    updateItem(index, "tax_group_id", Number(value.replace("flat_", "")));
+                                                } else {
+                                                    updateItem(index, "item_tax_type", "");
+                                                    updateItem(index, "tax_group_id", null);
+                                                }
+                                            }}
+                                        >
+                                            <MenuItem value="">Select Tax</MenuItem>
 
-                            <Divider sx={{ my: 2 }} />
-
-                            <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
-                                <span className="font-bold text-base">Total ( ₹ )</span>
-                                <span className="font-bold text-primary text-2xl">₹{totalAmount2.toFixed(2)}</span>
-                            </div>
-                        </div>
-                    </div>
-                </Section>
-
-                {/* Customer Notes */}
-                <Section title="Customer Notes" icon={<FileText className="w-5 h-5" />}>
-                    <textarea
-                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y bg-white"
-                        rows={3}
-                        value={customerNotes}
-                        onChange={(e) => {
-                            if (e.target.value.length <= 500) setCustomerNotes(e.target.value);
-                        }}
-                        placeholder="Enter any notes for the customer (max 500 characters)"
-                        maxLength={500}
-                    />
-                    <div className="text-xs text-gray-400 text-right mt-1">
-                        {(customerNotes?.length || 0)}/500
-                    </div>
-
-                    <div className="mt-4 w-1/2">
-                        <label className="block text-sm font-medium mb-2">
-                            Bank<span className="text-brand">*</span>
-                        </label>
-                        <FormControl fullWidth size="small" error={!!errors.bank}>
-                            <Select
-                                displayEmpty
-                                value={selectedBankId}
-                                onChange={(e) => {
-                                    setSelectedBankId(String(e.target.value));
-                                    if (errors.bank) {
-                                        setErrors((prev) => {
-                                            const next = { ...prev };
-                                            delete next.bank;
-                                            return next;
-                                        });
-                                    }
-                                }}
-                                renderValue={(val) =>
-                                    val
-                                        ? (() => {
-                                            const bank = bankOptions.find(b => String(b.id) === String(val));
-                                            return bank ? `${bank.bankName} - ${bank.accountNo} (${bank.beneficiaryName})` : '';
-                                        })()
-                                        : <span style={{ color: '#aaa' }}>Select Bank</span>
-                                }
-                                sx={fieldStyles}
-                            >
-                                <MenuItem value=""><em>Select Bank</em></MenuItem>
-                                {bankOptions.map((bank) => (
-                                    <MenuItem key={bank.id} value={String(bank.id)}>
-                                        {bank.bankName} - {bank.accountNo} ({bank.beneficiaryName})
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                        {errors.bank && <p className="text-xs text-brand mt-1">{errors.bank}</p>}
-                    </div>
-                </Section>
-
-                {/* Terms & Conditions */}
-                <Section title="Terms & Conditions" icon={<FileText className="w-5 h-5" />}>
-                    <textarea
-                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y bg-white"
-                        rows={4}
-                        value={termsAndConditions}
-                        onChange={(e) => {
-                            if (e.target.value.length <= 500) setTermsAndConditions(e.target.value);
-                        }}
-                        placeholder="Enter terms and conditions (max 500 characters)"
-                        maxLength={500}
-                    />
-                    <div className="text-xs text-gray-400 text-right mt-1">
-                        {(termsAndConditions?.length || 0)}/500
-                    </div>
-                </Section>
-
-                {/* Attachments */}
-                <Section title="Attach Files to Invoice" icon={<AttachFile className="w-5 h-5" />}>
-                    <div className="space-y-4">
-                        {existingAttachments.length > 0 && (
-                            <div className="space-y-2 mb-4">
-                                <Typography variant="body2" className="font-semibold text-gray-500">
-                                    Existing Attachments
-                                </Typography>
-                                {existingAttachments.map((file) => (
-                                    <div key={file.id} className="flex items-center justify-between bg-gray-50 p-3 rounded">
-                                        <div className="flex items-center gap-2">
-                                            <AttachFile fontSize="small" className="text-brand" />
-                                            <a href={file.url} target="_blank" rel="noreferrer" className="text-sm hover:underline text-brand">
-                                                {file.name || 'Attachment'}
-                                            </a>
-                                        </div>
-                                        <IconButton size="small" onClick={() => removeExistingAttachment(file.id)}>
-                                            <Close fontSize="small" />
-                                        </IconButton>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-white">
-                            <input
-                                type="file"
-                                id="file-upload"
-                                multiple
-                                onChange={handleFileUpload}
-                                className="hidden"
-                                accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
-                            />
-                            <label htmlFor="file-upload" className="cursor-pointer">
-                                <CloudUpload className="w-12 h-12 mx-auto text-gray-400 mb-3" />
-                                <Typography variant="body1" className="text-gray-700 font-semibold">
-                                    Upload File
-                                </Typography>
-                                <Typography variant="body2" className="text-gray-500 mt-1">
-                                    You can upload a maximum of 10 files, 5MB each
-                                </Typography>
-                            </label>
-                        </div>
-
-                        {attachments.length > 0 && (
-                            <div className="space-y-2">
-                                {attachments.map((file, index) => (
-                                    <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded">
-                                        <div className="flex items-center gap-2">
-                                            <AttachFile fontSize="small" />
-                                            <span className="text-sm">{file.name}</span>
-                                            <span className="text-xs text-gray-500">
-                                                ({(file.size / 1024).toFixed(2)} KB)
-                                            </span>
-                                        </div>
-                                        <IconButton size="small" onClick={() => removeNewAttachment(index)}>
-                                            <Close fontSize="small" />
-                                        </IconButton>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        <FormControlLabel
-                            control={
-                                <Checkbox
-                                    checked={displayAttachmentsInPortal}
-                                    onChange={(e) => setDisplayAttachmentsInPortal(e.target.checked)}
-                                    sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
-                                />
-                            }
-                            label="Display attachments in customer portal and emails"
-                        />
-                    </div>
-                </Section>
-            </div>
-
-            <div className="flex items-center gap-3 justify-center pt-6 pb-12 border-t border-gray-200 mt-8">
-                <Button
-                    variant="text"
-                    onClick={() => handleSubmit(true)}
-                    disabled={isSubmitting}
-                    className="fm-button-fix fm-button-brand px-8 py-2"
-                    sx={{ textTransform: 'none', fontWeight: 600 }}
-                >
-                    Save as Draft
-                </Button>
-                <Button
-                    variant="text"
-                    onClick={() => handleSubmit(false)}
-                    disabled={isSubmitting}
-                    className="fm-button-fix fm-button-brand px-8 py-2"
-                    sx={{ textTransform: 'none', fontWeight: 600 }}
-                >
-                    {isSubmitting ? 'Updating...' : 'Update Invoice'}
-                </Button>
-                <Button
-                    variant="outlined"
-                    onClick={() => navigate('/club-management/invoice')}
-                    disabled={isSubmitting}
-                    className="fm-button-fix px-8 py-2"
-                    sx={{
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        borderColor: '#DA7756',
-                        color: '#DA7756',
-                        '&:hover': {
-                            borderColor: '#C45F40',
-                            bgcolor: '#F2EEE9',
-                            color: '#C45F40'
-                        }
-                    }}
-                >
-                    Cancel
-                </Button>
-            </div>
-
-            {/* Address pickers and details modals */}
-            <Dialog open={addressListModalOpen} onClose={() => setAddressListModalOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle className="!text-base !font-semibold">
-                    {activeAddressType === 'billing' ? 'Billing Address' : 'Shipping Address'}
-                </DialogTitle>
-                <DialogContent dividers>
-                    <div className="max-h-[420px] overflow-y-auto space-y-3">
-                        {getAddressBookByType(activeAddressType).map((addr) => (
-                            <div
-                                key={addr.id}
-                                className={`border rounded-md p-3 text-sm cursor-pointer transition-colors ${String(activeAddressType === 'billing' ? selectedBillingAddressId : selectedShippingAddressId) === String(addr.id)
-                                    ? 'border-[#DA7756] bg-red-50'
-                                    : 'border-gray-200 hover:border-gray-300'
-                                    }`}
-                                onClick={() => {
-                                    if (activeAddressType === 'billing') setSelectedBillingAddressId(addr.id);
-                                    else setSelectedShippingAddressId(addr.id);
-                                    setAddressListModalOpen(false);
-                                }}
-                            >
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="space-y-0.5 text-gray-700">
-                                        {addr.attention && <div className="font-semibold">{addr.attention}</div>}
-                                        {addr.address && <div>{addr.address}</div>}
-                                        {addr.address_line_two && <div>{addr.address_line_two}</div>}
-                                        <div>{[addr.city, addr.state].filter(Boolean).join(', ')}{addr.pin_code ? ` ${addr.pin_code}` : ''}</div>
-                                        {addr.country && <div>{addr.country}</div>}
-                                    </div>
+                                            {[5, 9, 18].map((percent) => (
+                                                <MenuItem key={`flat_${percent}`} value={`flat_${percent}`}>
+                                                    GST {percent}%
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </td>
+                                <td className="px-4 py-3 text-right font-semibold">
+                                    ₹{item.amount.toFixed(2)}
+                                </td>
+                                <td className="px-4 py-3 text-center">
                                     <IconButton
                                         size="small"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            openAddressFormModal('edit', activeAddressType, addr);
+                                        onClick={() => {
+                                            setDeleteTargetIndex(index);
+                                            setDeleteTargetType('item');
+                                            setDeleteConfirmOpen(true);
                                         }}
+                                        disabled={items.length === 1}
+                                        color="error"
                                     >
-                                        <EditOutlined fontSize="small" className="text-brand" />
+                                        <Delete fontSize="small" />
                                     </IconButton>
-                                </div>
-                            </div>
+                                </td>
+                            </tr>
                         ))}
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+                <Button
+                    startIcon={<Add />}
+                    onClick={addItem}
+                    variant="outlined"
+                    sx={{ textTransform: 'none' }}
+                >
+                    Add New Row
+                </Button>
+                {/* <Button
+                                variant="outlined"
+                                sx={{ textTransform: 'none' }}
+                            >
+                                Add Items in Bulk
+                            </Button> */}
+            </div>
+        </div>
+    </Section>
+
+    {/* Summary Section */ }
+    <Section title="Summary" icon={<ShoppingCart className="w-5 h-5" />}>
+        <div className="flex justify-end">
+            <div className="w-full md:w-1/2 space-y-4">
+                <div className="flex justify-between items-center py-2">
+                    <span className="text-sm font-medium text-muted-foreground">Sub Total</span>
+                    <span className="font-semibold text-base">₹{subTotal.toFixed(2)}</span>
+                </div>
+
+                <div className="flex justify-between items-center py-2">
+                    <span className="text-sm font-medium text-muted-foreground">Discount</span>
+                    <div className="flex items-center gap-2">
+                        <Select
+                            size="small"
+                            value={discountTypeOnTotal}
+                            onChange={e => setDiscountTypeOnTotal(e.target.value as 'percentage' | 'amount')}
+                            sx={{ width: 100 }}
+                        >
+                            <MenuItem value="percentage">%</MenuItem>
+                            <MenuItem value="amount">Amount</MenuItem>
+                        </Select>
+                        <TextField
+                            type="number"
+                            size="small"
+                            value={discountOnTotal}
+                            onChange={(e) => {
+                                const val = parseFloat(e.target.value);
+                                if (val < 0) {
+                                    toast.error('Discount cannot be negative');
+                                    setDiscountOnTotal(0);
+                                } else if (discountTypeOnTotal === 'percentage' && val > 100) {
+                                    toast.error('Discount percentage cannot exceed 100%');
+                                    setDiscountOnTotal(100);
+                                } else {
+                                    setDiscountOnTotal(isNaN(val) ? 0 : val);
+                                }
+                            }}
+                            inputProps={{ min: 0, step: 0.01, max: discountTypeOnTotal === 'percentage' ? 100 : undefined }}
+                            sx={{ width: 80 }}
+                        />
+                        <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
+                    </div>
+                </div>
+                {taxBreakdown.map((tax, index) => (
+                    <div key={index} className="flex justify-between items-center py-2">
+                        <span className="text-sm font-medium text-muted-foreground">
+                            {tax.name} ({tax.rate}%)
+                        </span>
+                        <span className="font-semibold text-base">
+                            ₹{tax.amount.toFixed(2)}
+                        </span>
+                    </div>
+                ))}
+                <Divider sx={{ my: 2 }} />
+
+                <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
+                    <span className="font-bold text-base">Total ( ₹ )</span>
+                    <span className="font-bold text-primary text-2xl">₹{totalAmount2.toFixed(2)}</span>
+                </div>
+            </div>
+        </div>
+    </Section>
+
+    {/* Customer Notes */ }
+    <Section title="Notes" icon={<FileText className="w-5 h-5" />}>
+        <textarea
+            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
+            rows={3}
+            value={customerNotes}
+            onChange={(e) => {
+                if (e.target.value.length <= 500) setCustomerNotes(e.target.value);
+            }}
+            placeholder="Enter any notes for the customer (max 500 characters)"
+            maxLength={500}
+        />
+        <div className="text-xs text-gray-400 text-right mt-1">
+            {(customerNotes?.length || 0)}/500
+        </div>
+
+        <div className="mt-4 w-1/2">
+            <label className="block text-sm font-medium mb-2">
+                Bank
+            </label>
+            <FormControl fullWidth size="small" error={!!errors.bank}>
+                <Select
+                    displayEmpty
+                    value={selectedBankId}
+                    onChange={(e) => {
+                        setSelectedBankId(String(e.target.value));
+                        if (errors.bank) {
+                            setErrors((prev) => {
+                                const next = { ...prev };
+                                delete next.bank;
+                                return next;
+                            });
+                        }
+                    }}
+                    renderValue={(val) =>
+                        val
+                            ? (() => {
+                                const bank = bankOptions.find(b => String(b.id) === String(val));
+                                return bank ? `${bank.bankName} - ${bank.accountNo} (${bank.beneficiaryName})` : '';
+                            })()
+                            : <span style={{ color: '#aaa' }}>Select Bank</span>
+                    }
+                    sx={fieldStyles}
+                >
+                    <MenuItem value=""><em>Select Bank</em></MenuItem>
+                    {bankOptions.map((bank) => (
+                        <MenuItem key={bank.id} value={String(bank.id)}>
+                            {bank.bankName} - {bank.accountNo} ({bank.beneficiaryName})
+                        </MenuItem>
+                    ))}
+                </Select>
+            </FormControl>
+            {errors.bank && <p className="text-xs text-brand mt-1">{errors.bank}</p>}
+        </div>
+    </Section>
+
+    {/* Terms & Conditions */ }
+    <Section title="Terms & Conditions" icon={<FileText className="w-5 h-5" />}>
+        <textarea
+            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
+            rows={4}
+            value={termsAndConditions}
+            onChange={(e) => {
+                if (e.target.value.length <= 500) setTermsAndConditions(e.target.value);
+            }}
+            placeholder="Enter the terms and conditions of your business to be displayed in your transaction (max 500 characters)"
+            maxLength={500}
+        />
+        <div className="text-xs text-gray-400 text-right mt-1">
+            {(termsAndConditions?.length || 0)}/500
+        </div>
+    </Section>
+
+    {/* Attachments */ }
+    <Section title="Attach Files to Invoice" icon={<AttachFile className="w-5 h-5" />}>
+        <div className="space-y-4">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <input
+                    type="file"
+                    id="file-upload"
+                    multiple
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+                />
+                <label htmlFor="file-upload" className="cursor-pointer">
+                    <CloudUpload className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                    <Typography variant="body1" className="text-gray-700 font-semibold">
+                        Upload File
+                    </Typography>
+                    <Typography variant="body2" className="text-gray-500 mt-1">
+                        You can upload a maximum of 10 files, 5MB each
+                    </Typography>
+                </label>
+            </div>
+
+            {attachments.length > 0 && (
+                <div className="space-y-2">
+                    {attachments.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded">
+                            <div className="flex items-center gap-2">
+                                <AttachFile fontSize="small" />
+                                <span className="text-sm">{file.name}</span>
+                                <span className="text-xs text-gray-500">
+                                    ({(file.size / 1024).toFixed(2)} KB)
+                                </span>
+                            </div>
+                            <IconButton size="small" onClick={() => {
+                                setDeleteTargetIndex(index);
+                                setDeleteTargetType('attachment');
+                                setDeleteConfirmOpen(true);
+                            }}>
+                                <Close fontSize="small" />
+                            </IconButton>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+        </div>
+    </Section>
+            </div >
+
+    <div className="flex items-center gap-3 justify-center pt-2">
+        <Button
+            variant="text"
+            onClick={() => handleSubmit()}
+            disabled={isSubmitting}
+            className="fm-button-fix fm-button-brand px-8 py-2"
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+        >
+            {isSubmitting ? 'Updating...' : 'Update'}
+        </Button>
+        <Button
+            variant="outlined"
+            onClick={() => navigate('/club-management/invoice')}
+            disabled={isSubmitting}
+            className="fm-button-fix px-8 py-2"
+            sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                borderColor: '#DA7756',
+                color: '#DA7756',
+                '&:hover': {
+                    borderColor: '#C45F40',
+                    bgcolor: '#F2EEE9',
+                    color: '#C45F40'
+                }
+            }}
+        >
+            Cancel
+        </Button>
+    </div>
+
+
+{/* Add External User Dialog */ }
+            <Dialog open={addUserDialogOpen} onClose={() => setAddUserDialogOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>Add External User</DialogTitle>
+                <DialogContent>
+                    <div className="space-y-4 mt-2">
+                        <TextField
+                            fullWidth
+                            label="Name"
+                            value={newUserName}
+                            onChange={(e) => setNewUserName(e.target.value)}
+                        />
+                        <TextField
+                            fullWidth
+                            label="Email"
+                            type="email"
+                            value={newUserEmail}
+                            onChange={(e) => setNewUserEmail(e.target.value)}
+                        />
                     </div>
                 </DialogContent>
-                <DialogActions className="!justify-between !px-4">
-                    <button
-                        type="button"
-                        className="text-[#DA7756] text-sm font-medium"
-                        onClick={() => openAddressFormModal('new', activeAddressType)}
-                    >
-                        + New address
-                    </button>
-                    <Button onClick={() => setAddressListModalOpen(false)} variant="outlined" size="small" sx={modalSecondaryButtonSx}>Close</Button>
+                <DialogActions>
+                    <Button onClick={() => setAddUserDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={handleAddExternalUser} variant="contained">Add</Button>
                 </DialogActions>
             </Dialog>
+
+
 
             <Dialog open={addressFormModalOpen} onClose={() => setAddressFormModalOpen(false)} maxWidth="sm" fullWidth>
                 <DialogTitle className="!text-base !font-semibold">Additional Address</DialogTitle>
@@ -2227,15 +2738,7 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
                         <TextField label="Attention" fullWidth value={addressForm.attention} onChange={(e) => setAddressForm(prev => ({ ...prev, attention: e.target.value }))} className="md:col-span-2" />
                         <TextField label="Country/Region" select fullWidth value={addressForm.country} onChange={(e) => setAddressForm(prev => ({ ...prev, country: e.target.value }))} className="md:col-span-2">
-                            {addressCountryOptions.map((opt) => (
-                                <MenuItem key={opt.code} value={opt.name}>{opt.name}</MenuItem>
-                            ))}
-                        </TextField>
-                        <TextField label="Tax Information" select fullWidth value={selectedAddressTaxInfoId} onChange={(e) => setSelectedAddressTaxInfoId(String(e.target.value))} className="md:col-span-2">
-                            <MenuItem value="">Select</MenuItem>
-                            {gstDetails.map((gst) => (
-                                <MenuItem key={gst.id} value={String(gst.id)}>{gst.gstin} - {gst.place_of_supply}</MenuItem>
-                            ))}
+                            {addressCountryOptions.map((opt) => (<MenuItem key={opt.code} value={opt.name}>{opt.name}</MenuItem>))}
                         </TextField>
                         <TextField label="Address" placeholder="Street 1" fullWidth value={addressForm.address} onChange={(e) => setAddressForm(prev => ({ ...prev, address: e.target.value }))} className="md:col-span-2" />
                         <TextField placeholder="Street 2" fullWidth value={addressForm.address_line_two} onChange={(e) => setAddressForm(prev => ({ ...prev, address_line_two: e.target.value }))} className="md:col-span-2" />
@@ -2250,8 +2753,8 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                     </div>
                 </DialogContent>
                 <DialogActions className="!justify-start !px-6 !py-3">
-                    <Button variant="contained" onClick={handleSaveAddressForm} sx={modalPrimaryButtonSx}>Save</Button>
-                    <Button variant="outlined" onClick={() => setAddressFormModalOpen(false)} sx={modalSecondaryButtonSx}>Cancel</Button>
+                    <Button variant="contained" onClick={saveAddressFormLocal} sx={{ backgroundColor: '#DA7756', '&:hover': { backgroundColor: '#C45F40' }, textTransform: 'none' }}>Save</Button>
+                    <Button variant="outlined" onClick={() => setAddressFormModalOpen(false)} sx={{ color: '#DA7756', borderColor: '#DA7756', textTransform: 'none' }}>Cancel</Button>
                 </DialogActions>
             </Dialog>
 
@@ -2284,14 +2787,11 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                                         value={newGstForm.gstin}
                                         onChange={(e) => setNewGstForm(prev => ({ ...prev, gstin: e.target.value.toUpperCase() }))}
                                         error={!!newGstForm.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(newGstForm.gstin)}
-                                        helperText={
-                                            newGstForm.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(newGstForm.gstin)
-                                                ? 'Invalid GSTIN format. e.g. 27AAAAA1234A1Z5'
-                                                : ''
-                                        }
+                                        helperText={newGstForm.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(newGstForm.gstin) ? 'Invalid GSTIN format. e.g. 27AAAAA1234A1Z5' : ''}
                                         inputProps={{ maxLength: 15 }}
                                         size="small"
                                     />
+                                    <button type="button" className="text-brand text-sm mt-1">Validate</button>
                                 </div>
                                 <TextField label="Place of Supply*" select fullWidth value={newGstForm.place_of_supply} onChange={(e) => setNewGstForm(prev => ({ ...prev, place_of_supply: e.target.value }))} size="small">
                                     <MenuItem value="">Select</MenuItem>
@@ -2352,23 +2852,33 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={exemptionModalOpen} onClose={() => setExemptionModalOpen(false)} maxWidth="sm" fullWidth>
+            <Dialog open={exemptionModalOpen} onClose={() => setExemptionModalOpen(false)}
+                maxWidth="sm" fullWidth>
                 <DialogTitle>Exemption Reason</DialogTitle>
+
                 <DialogContent>
+
                     <FormControl fullWidth>
+
                         <Select
                             value={selectedExemption}
                             onChange={(e) => setSelectedExemption(e.target.value)}
                         >
+
                             <MenuItem value="">Select Reason</MenuItem>
+
                             {customerExemptions.map(ex => (
                                 <MenuItem key={ex.id} value={ex.id}>
                                     {ex.reason}
                                 </MenuItem>
                             ))}
+
                         </Select>
+
                     </FormControl>
+
                 </DialogContent>
+
                 <DialogActions>
                     <button
                         className="bg-gray-200 px-4 py-2 rounded"
@@ -2382,6 +2892,7 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                             if (currentItemIndex !== null) {
                                 updateItem(currentItemIndex, "tax_exemption_id", selectedExemption);
                             }
+
                             setSelectedExemption("");
                             setCurrentItemIndex(null);
                             setExemptionModalOpen(false);
@@ -2389,160 +2900,52 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                     >
                         Update
                     </button>
+
+                </DialogActions>
+
+            </Dialog>
+            <Dialog
+                open={deleteConfirmOpen}
+                onClose={() => setDeleteConfirmOpen(false)}
+                maxWidth="xs"
+                fullWidth
+            >
+                <DialogTitle>Confirm Delete</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Are you sure about deleting this {deleteTargetType}?
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        onClick={() => setDeleteConfirmOpen(false)}
+                        variant="outlined"
+                        sx={{
+                            color: '#DA7756',
+                            borderColor: '#DA7756',
+                            '&:hover': {
+                                borderColor: '#DA7756',
+                                backgroundColor: 'rgba(218, 119, 86, 0.04)'
+                            }
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleDeleteConfirm}
+                        variant="contained"
+                        sx={{
+                            backgroundColor: '#dc2626',
+                            '&:hover': {
+                                backgroundColor: '#b91c1c'
+                            }
+                        }}
+                    >
+                        Delete
+                    </Button>
                 </DialogActions>
             </Dialog>
 
-            {/* Customer Details Drawer */}
-            {customerDrawerOpen && (
-                <div className="fixed inset-0 z-[9999] flex justify-end">
-                    <div
-                        className="absolute inset-0 bg-black/30 backdrop-blur-[1px] transition-opacity"
-                        onClick={() => setCustomerDrawerOpen(false)}
-                    />
-                    <div className="relative w-full max-w-[450px] bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
-                        <div className="px-5 py-4 flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-10">
-                            <span className="font-semibold text-gray-800 text-lg">Customer details</span>
-                            <button
-                                onClick={() => setCustomerDrawerOpen(false)}
-                                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
-                            >
-                                ✕
-                            </button>
-                        </div>
-
-                        {customerDetail ? (
-                            <div className="flex-1 overflow-y-auto">
-                                <div className="px-5 py-4 flex items-center gap-3 border-b border-gray-100">
-                                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-lg">
-                                        {(customerDetail.company_name || customerDetail.first_name || "?")[0].toUpperCase()}
-                                    </div>
-                                    <div>
-                                        <div className="font-semibold text-gray-800 text-base flex items-center gap-1">
-                                            {customerDetail.company_name ||
-                                                [customerDetail.salutation, customerDetail.first_name, customerDetail.last_name]
-                                                    .filter(Boolean)
-                                                    .join(" ")}
-                                        </div>
-                                        {customerDetail.company_name && (
-                                            <div className="text-sm text-gray-500">{customerDetail.company_name}</div>
-                                        )}
-                                        {customerDetail.email && (
-                                            <div className="text-xs text-brand">{customerDetail.email}</div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="flex border-b border-gray-200 px-4">
-                                    {["Details", "Activity Log"].map((t, i) => (
-                                        <button
-                                            key={t}
-                                            onClick={() => setDrawerActiveTab(i === 0 ? 'details' : 'activity')}
-                                            className={`py-2 px-3 text-sm font-medium border-b-2 transition-colors ${drawerActiveTab === (i === 0 ? 'details' : 'activity')
-                                                ? "border-[#DA7756] text-[#DA7756]"
-                                                : "border-transparent text-gray-500 hover:text-gray-700"
-                                                }`}
-                                        >
-                                            {t}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                {drawerActiveTab === 'details' && (
-                                    <div className="p-4 space-y-4">
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div className="border border-gray-200 rounded-lg p-3 text-center">
-                                                <div className="text-orange-400 text-xl mb-1">⚠</div>
-                                                <div className="text-xs text-gray-500">Outstanding Receivables</div>
-                                                <div className="font-semibold text-gray-800 text-sm mt-1">
-                                                    ₹{(customerDetail.outstanding_receivable_amount ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                                                </div>
-                                            </div>
-                                            <div className="border border-gray-200 rounded-lg p-3 text-center">
-                                                <div className="text-green-500 text-xl mb-1">●</div>
-                                                <div className="text-xs text-gray-500">Unused Credits</div>
-                                                <div className="font-semibold text-gray-800 text-sm mt-1">
-                                                    ₹{(customerDetail.unused_credits_receivable_amount ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-3">
-                                            <div className="border border-gray-100 rounded-lg overflow-hidden">
-                                                <button
-                                                    onClick={() => setAddressExpanded(!addressExpanded)}
-                                                    className="w-full bg-gray-50/50 px-4 py-2.5 flex items-center justify-between text-sm font-medium text-gray-700 border-b border-gray-100"
-                                                >
-                                                    <span>Addresses</span>
-                                                    <span>{addressExpanded ? "▲" : "▼"}</span>
-                                                </button>
-                                                {addressExpanded && (
-                                                    <div className="p-4 space-y-4 bg-white text-xs leading-relaxed text-gray-600">
-                                                        <div>
-                                                            <div className="font-semibold text-gray-700 uppercase tracking-wider mb-1 text-[10px]">Billing Address</div>
-                                                            {customerDetail.billing_address?.address ? (
-                                                                <div>
-                                                                    <div>{customerDetail.billing_address.address}</div>
-                                                                    {customerDetail.billing_address.address_line_two && <div>{customerDetail.billing_address.address_line_two}</div>}
-                                                                    <div>{[customerDetail.billing_address.city, customerDetail.billing_address.state].filter(Boolean).join(", ")}{customerDetail.billing_address.pin_code ? ` - ${customerDetail.billing_address.pin_code}` : ""}</div>
-                                                                    {customerDetail.billing_address.country && <div>{customerDetail.billing_address.country}</div>}
-                                                                </div>
-                                                            ) : "—"}
-                                                        </div>
-                                                        <div className="border-t border-gray-100 pt-3">
-                                                            <div className="font-semibold text-gray-700 uppercase tracking-wider mb-1 text-[10px]">Shipping Address</div>
-                                                            {customerDetail.shipping_address?.address ? (
-                                                                <div>
-                                                                    <div>{customerDetail.shipping_address.address}</div>
-                                                                    {customerDetail.shipping_address.address_line_two && <div>{customerDetail.shipping_address.address_line_two}</div>}
-                                                                    <div>{[customerDetail.shipping_address.city, customerDetail.shipping_address.state].filter(Boolean).join(", ")}{customerDetail.shipping_address.pin_code ? ` - ${customerDetail.shipping_address.pin_code}` : ""}</div>
-                                                                    {customerDetail.shipping_address.country && <div>{customerDetail.shipping_address.country}</div>}
-                                                                </div>
-                                                            ) : "—"}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <div className="border border-gray-100 rounded-lg overflow-hidden">
-                                                <button
-                                                    onClick={() => setContactPersonsExpanded(!contactPersonsExpanded)}
-                                                    className="w-full bg-gray-50/50 px-4 py-2.5 flex items-center justify-between text-sm font-medium text-gray-700 border-b border-gray-100"
-                                                >
-                                                    <span>Contact Persons ({customerDetail.contact_persons?.length || 0})</span>
-                                                    <span>{contactPersonsExpanded ? "▲" : "▼"}</span>
-                                                </button>
-                                                {contactPersonsExpanded && (
-                                                    <div className="divide-y divide-gray-100 bg-white">
-                                                        {customerDetail.contact_persons?.map((person) => (
-                                                            <div key={person.id} className="p-4 text-xs text-gray-600 space-y-1">
-                                                                <div className="font-semibold text-gray-800 text-sm">
-                                                                    {[person.salutation, person.first_name, person.last_name].filter(Boolean).join(" ")}
-                                                                </div>
-                                                                {person.email && <div className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5 text-gray-400" /> {person.email}</div>}
-                                                                {person.work_phone && <div className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-gray-400" /> {person.work_phone}</div>}
-                                                                {person.mobile && <div className="flex items-center gap-1.5"><Smartphone className="w-3.5 h-3.5 text-gray-400" /> {person.mobile}</div>}
-                                                            </div>
-                                                        ))}
-                                                        {(!customerDetail.contact_persons || customerDetail.contact_persons.length === 0) && (
-                                                            <div className="p-4 text-xs text-gray-400 text-center">No contact persons added</div>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {drawerActiveTab === 'activity' && (
-                                    <div className="p-4 text-center text-gray-400 text-sm">No activity logs recorded yet</div>
-                                )}
-                            </div>
-                        ) : null}
-                    </div>
-                </div>
-            )}
-        </div>
+        </div >
     );
 };
-
-export default InvoiceClubManagementEdit;
