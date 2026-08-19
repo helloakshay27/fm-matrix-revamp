@@ -35,40 +35,6 @@ interface TopStuckIssue {
   updated_at: string;
 }
 
-// One entry of `report_data.tasks_issues` inside a daily user journal
-interface JournalTaskIssue {
-  type: "task" | "issue" | "todo" | string;
-  title: string;
-  status: string;
-  source_id: number;
-  start_date?: string;
-  end_date?: string;
-  // set for rows pulled out of a journal's accomplishments – they belong to that
-  // journal's day even when the task itself started earlier
-  closedOn?: string;
-}
-
-// GET /kpis/due_entries.json?date=&journal_type=
-interface DueKpiEntry {
-  actual_value: string | number | null;
-  achievement_percentage: number | null;
-  notes: string | null;
-  submitted: boolean;
-  entry_id: number | null;
-  period_date?: string;
-}
-
-interface DueKpi {
-  kpi_id: number;
-  kpi_name: string;
-  unit: string;
-  frequency_label: string;
-  target_value: string | number;
-  submitted: boolean;
-  entry: DueKpiEntry | null;
-  past_entries?: DueKpiEntry[];
-}
-
 interface BusinessHealthComponents {
   kpi: { percentage: number; count: number };
   issues: { count: number };
@@ -93,6 +59,11 @@ interface DashboardData {
       components: BusinessHealthComponents;
     };
     top_stuck_issues: { total: number; items: TopStuckIssue[] };
+    tasks_overview?: {
+      assigned: number;
+      completed: number;
+      overdue: number;
+    };
     latest_team_chat: { total: number; items: any[] };
     hall_of_fame: { items: any[] };
     counters: {
@@ -128,106 +99,6 @@ interface AiSuggestionsResponse {
 // ── Helpers ────────────────────────────────────────────────────────────────
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-// Local YYYY-MM-DD (toISOString would shift the day for IST users)
-const toDateKey = (date: Date) =>
-  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
-    date.getDate()
-  ).padStart(2, "0")}`;
-
-const journalDateKey = (journal: any): string => {
-  const raw = journal?.start_date || journal?.journal_date || journal?.created_at;
-  if (!raw) return "";
-  if (typeof raw === "string" && /^\d{4}-\d{2}-\d{2}/.test(raw))
-    return raw.slice(0, 10);
-  const d = new Date(raw);
-  return isNaN(d.getTime()) ? "" : toDateKey(d);
-};
-
-const isCompletedStatus = (status?: string) => {
-  const s = (status ?? "").toLowerCase();
-  return s === "completed" || s === "closed" || s === "done";
-};
-
-// Accomplishment rows carry the same task under a different shape
-const normalizeAccomplishment = (
-  item: any,
-  fallbackStatus: string,
-  closedOn: string
-): JournalTaskIssue | null => {
-  if (!item || typeof item === "string") return null;
-  const original = item.originalData ?? {};
-  const title = item.title ?? original.title ?? item.text;
-  if (!title) return null;
-  return {
-    type: item.type ?? item.source_type ?? "task",
-    title,
-    status: original.status ?? item.status ?? fallbackStatus,
-    source_id: item.source_id ?? original.id,
-    start_date: item.start_date ?? original.start_date,
-    end_date: item.end_date ?? original.end_date,
-    closedOn,
-  };
-};
-
-// Which day an entry belongs to
-const taskDateKey = (item: JournalTaskIssue) =>
-  item.closedOn ?? item.start_date?.slice(0, 10) ?? item.end_date?.slice(0, 10) ?? "";
-
-const taskInRange = (item: JournalTaskIssue, from: string, to: string) => {
-  if (item.closedOn) return item.closedOn >= from && item.closedOn <= to;
-  const start = item.start_date?.slice(0, 10);
-  const end = item.end_date?.slice(0, 10);
-  return (
-    (!!start && start >= from && start <= to) ||
-    (!!end && end >= from && end <= to)
-  );
-};
-
-// A journal's work lives in two places: `tasks_issues` (what's still on the plate)
-// and `accomplishments` (what got closed that day) – the overview needs both.
-const extractTasksIssues = (journal: any): JournalTaskIssue[] => {
-  const report = journal?.report_data;
-  const journalDay = journalDateKey(journal);
-  const raw = report?.tasks_issues;
-  const items: JournalTaskIssue[] = Array.isArray(raw)
-    ? raw.filter((t: any) => t && (t.title || t.source_id))
-    : [];
-
-  const rawAcc = report?.accomplishments;
-  const accItems: any[] = Array.isArray(rawAcc)
-    ? rawAcc
-    : Array.isArray(rawAcc?.items)
-      ? rawAcc.items
-      : [];
-  accItems.forEach((it) => {
-    const normalized = normalizeAccomplishment(it, "completed", journalDay);
-    if (normalized) items.push(normalized);
-  });
-
-  const rawPending = report?.non_completed_accomplishments;
-  if (Array.isArray(rawPending)) {
-    rawPending.forEach((it) => {
-      const normalized = normalizeAccomplishment(it, "open", journalDay);
-      if (normalized) items.push(normalized);
-    });
-  }
-
-  return items;
-};
-
-// The same task can repeat across journals of a week – keep one row per item
-const dedupeTasksIssues = (items: JournalTaskIssue[]): JournalTaskIssue[] => {
-  const byKey = new Map<string, JournalTaskIssue>();
-  items.forEach((item) => {
-    const key = `${item.type ?? "task"}-${item.source_id ?? item.title}`;
-    const existing = byKey.get(key);
-    // a completed occurrence wins over an older open one
-    if (!existing || (!isCompletedStatus(existing.status) && isCompletedStatus(item.status))) {
-      byKey.set(key, item);
-    }
-  });
-  return [...byKey.values()];
-};
 
 const AI_SUGGESTION_CATEGORY_STYLE = {
   issues: {
@@ -443,9 +314,6 @@ const BusinessCompassDashboard: React.FC = () => {
     []
   );
   const [todosLoading, setTodosLoading] = useState(false);
-  const [allJournals, setAllJournals] = useState<any[]>([]);
-  const [dueKpis, setDueKpis] = useState<DueKpi[]>([]);
-  const [kpisLoading, setKpisLoading] = useState(false);
 
   // ── Weekly dynamic data ───────────────────────────────────────────────
   const [weeklyAccomplishments, setWeeklyAccomplishments] = useState<string[]>(
@@ -471,74 +339,16 @@ const BusinessCompassDashboard: React.FC = () => {
   const displayTodosHigh = focusMode === "Weekly" ? weeklyTodosHigh : todosHigh;
   const displayLoading =
     focusMode === "Weekly" ? weeklyLoading : todosLoading || dayDataLoading;
-  // Journals sorted newest-first, keyed by their day
-  const journalsByDate = useMemo(() => {
-    const list = allJournals
-      .map((j: any) => ({ date: journalDateKey(j), journal: j }))
-      .filter((j) => !!j.date) as { date: string; journal: any }[];
-    return list.sort((a, b) => b.date.localeCompare(a.date));
-  }, [allJournals]);
 
-  // Daily → the selected day's journal, else the most recent one before it
-  // (today's journal usually isn't filled yet, so a strict match shows nothing)
-  const dayTasksIssues = useMemo(() => {
-    const key = toDateKey(selectedDate);
-    const match =
-      journalsByDate.find((j) => j.date === key) ??
-      journalsByDate.find((j) => j.date <= key);
-    if (!match) return [];
-    // a journal's tasks_issues also carries older, already-closed work – keep
-    // only what actually belongs to that journal's day
-    const scoped = extractTasksIssues(match.journal).filter(
-      (t) => taskDateKey(t) === match.date
-    );
-    return dedupeTasksIssues(scoped);
-  }, [journalsByDate, selectedDate]);
-
-  // Weekly → every journal inside the visible week
-  const weekStartKey = toDateKey(weekDates[0]);
-  const weekEndKey = toDateKey(weekDates[weekDates.length - 1]);
-  const weeklyTasksIssues = useMemo(() => {
-    const start = weekStartKey;
-    const end = weekEndKey;
-    const inWeek = journalsByDate.filter(
-      (j) => j.date >= start && j.date <= end
-    );
-    if (!inWeek.length) return [];
-    const scoped = inWeek
-      .flatMap((j) => extractTasksIssues(j.journal))
-      .filter((t) => taskInRange(t, start, end));
-    return dedupeTasksIssues(scoped);
-  }, [journalsByDate, weekStartKey, weekEndKey]);
-
-  const displayTasksIssues =
-    focusMode === "Weekly" ? weeklyTasksIssues : dayTasksIssues;
-
-  // Tasks Overview – counted off the journal's tasks/issues, not the report counters
+  // Tasks Overview – straight off the dashboard API
   const taskStats = useMemo(() => {
-    const assigned = displayTasksIssues.length;
-    const completed = displayTasksIssues.filter((t) =>
-      isCompletedStatus(t.status)
-    ).length;
-    return { assigned, completed, pending: assigned - completed };
-  }, [displayTasksIssues]);
-
-  // Stuck = issues only (tasks/todos excluded), still open, oldest first
-  const stuckItems = useMemo(
-    () =>
-      displayTasksIssues
-        .filter(
-          (t) =>
-            (t.type ?? "").toLowerCase() === "issue" &&
-            !isCompletedStatus(t.status)
-        )
-        .sort((a, b) => {
-          const da = a.start_date ?? a.end_date ?? "9999-12-31";
-          const db = b.start_date ?? b.end_date ?? "9999-12-31";
-          return da.localeCompare(db);
-        }),
-    [displayTasksIssues]
-  );
+    const overview = dashboardData?.data?.tasks_overview;
+    return {
+      assigned: overview?.assigned ?? 0,
+      completed: overview?.completed ?? 0,
+      overdue: overview?.overdue ?? 0,
+    };
+  }, [dashboardData]);
 
   // ── Fetch data for a specific day ─────────────────────────────────────
   const fetchDayData = async (date: Date) => {
@@ -639,43 +449,6 @@ const BusinessCompassDashboard: React.FC = () => {
     fetchDayData(selectedDate);
   }, [selectedDate]);
 
-  // ── KPI's due for the selected day / week ───────────────────────────────
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const baseUrl = (
-        getBaseUrl() ?? "https://fm-uat-api.lockated.com"
-      ).replace(/\/$/, "");
-      const token = getToken();
-      if (!token) return;
-      setKpisLoading(true);
-      try {
-        const params = new URLSearchParams({
-          date: toDateKey(selectedDate),
-          journal_type: focusMode === "Weekly" ? "weekly" : "daily",
-        });
-        const res = await fetch(`${baseUrl}/kpis/due_entries.json?${params}`, {
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (!res.ok) throw new Error(`due_entries failed: ${res.status}`);
-        const json = await res.json();
-        if (!cancelled) setDueKpis(json?.data?.kpis ?? []);
-      } catch (e) {
-        console.error("KPI due entries error:", e);
-        if (!cancelled) setDueKpis([]);
-      } finally {
-        if (!cancelled) setKpisLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedDate, focusMode]);
-
   // ── Handle day click ────────────────────────────────────────────────────
   const handleDayClick = (date: Date) => {
     const isToday = date.toDateString() === today.toDateString();
@@ -734,7 +507,6 @@ const BusinessCompassDashboard: React.FC = () => {
             })
           );
           setFilledDates(dates);
-          setAllJournals(allJournals);
         }
 
         // Today's journal for accomplishments
@@ -915,27 +687,8 @@ const BusinessCompassDashboard: React.FC = () => {
   const outOf = health?.out_of ?? 100;
   const scoreLabel = health?.label ?? "Needs Attention";
   const scorePct = Math.min((score / outOf) * 100, 100);
-  // KPI cards come from /kpis/due_entries – `entry` is null until it's submitted
-  const kpis: CriticalNumber[] = useMemo(
-    () =>
-      dueKpis.map((k) => {
-        const target = Number(k.target_value) || 0;
-        const current = Number(k.entry?.actual_value ?? 0) || 0;
-        const progress =
-          k.entry?.achievement_percentage ??
-          (target > 0 ? Math.round((current / target) * 100) : 0);
-        return {
-          id: k.kpi_id,
-          name: k.kpi_name,
-          frequency_label: k.frequency_label,
-          current_value: current,
-          target_value: target,
-          unit: k.unit,
-          progress_percentage: Math.round(progress),
-        };
-      }),
-    [dueKpis]
-  );
+  const stuckIssues = d?.top_stuck_issues?.items ?? [];
+  const kpis = d?.critical_numbers?.items ?? [];
   const counters = d?.counters;
   const profileName = useMemo(() => {
     try {
@@ -1129,13 +882,14 @@ const BusinessCompassDashboard: React.FC = () => {
 
   const issueBadgeStyle = (priority: string): React.CSSProperties => {
     const p = (priority ?? "").toLowerCase();
-    if (p === "medium" || p === "in_progress" || p === "in progress")
+    // API sends P1–P4 for issues; older callers pass high/medium/low
+    if (p === "medium" || p === "p3" || p === "in_progress")
       return {
         background: "#fff",
         border: "1px solid #f59e0b",
         color: "#b45309",
       };
-    if (p === "low")
+    if (p === "low" || p === "p4")
       return {
         background: "#fff",
         border: "1px solid #22c55e",
@@ -1274,7 +1028,7 @@ const BusinessCompassDashboard: React.FC = () => {
                       Issues
                     </div>
                     <div className="text-[18px] sm:text-[22px] font-black text-[#1a1a1a]">
-                      {stuckItems.length}
+                      {health?.components?.issues?.count ?? 0}
                     </div>
                   </div>
                   <div
@@ -1724,8 +1478,8 @@ const BusinessCompassDashboard: React.FC = () => {
                       Tasks Overview
                     </p>
                     {(() => {
-                      const { assigned, completed, pending } = taskStats;
-                      const maxVal = Math.max(assigned, 1);
+                      const { assigned, completed, overdue } = taskStats;
+                      const maxVal = Math.max(assigned, completed, overdue, 1);
                       const rings = [
                         {
                           value: assigned,
@@ -1740,10 +1494,10 @@ const BusinessCompassDashboard: React.FC = () => {
                           label: "Completed",
                         },
                         {
-                          value: pending,
+                          value: overdue,
                           color: "#f87171",
                           track: "#fee2e2",
-                          label: "Pending",
+                          label: "Overdue",
                         },
                       ];
                       const r = 30;
@@ -2014,7 +1768,7 @@ const BusinessCompassDashboard: React.FC = () => {
                           ))
                         ) : (
                           <div className="col-span-2 text-center py-6 text-[11px] text-gray-400 italic bg-white rounded-xl border border-gray-200">
-                            {kpisLoading ? "Loading KPI's..." : "No KPIs due"}
+                            {loading ? "Loading KPI's..." : "No KPIs assigned"}
                           </div>
                         )}
                       </div>
@@ -2056,10 +1810,10 @@ const BusinessCompassDashboard: React.FC = () => {
                   </button>
                 </div>
                 <div className="flex flex-col gap-2">
-                  {stuckItems.length > 0 ? (
-                    stuckItems.slice(0, 8).map((issue) => (
+                  {stuckIssues.length > 0 ? (
+                    stuckIssues.slice(0, 8).map((issue) => (
                       <div
-                        key={`${issue.type}-${issue.source_id}`}
+                        key={issue.id}
                         className="flex items-center justify-between gap-2 bg-white rounded-xl px-3 py-2.5"
                       >
                         <span className="text-[11px] text-gray-700 flex-1 line-clamp-2 leading-snug">
@@ -2067,9 +1821,10 @@ const BusinessCompassDashboard: React.FC = () => {
                         </span>
                         <span
                           className="flex-shrink-0 text-[10px] px-2.5 py-0.5 rounded-full font-semibold capitalize"
-                          style={issueBadgeStyle(issue.status)}
+                          style={issueBadgeStyle(issue.priority)}
                         >
-                          {(issue.status ?? "open").replace(/_/g, " ")}
+                          {issue.priority ||
+                            (issue.status ?? "open").replace(/_/g, " ")}
                         </span>
                       </div>
                     ))
@@ -2123,7 +1878,7 @@ const BusinessCompassDashboard: React.FC = () => {
                   <div className="text-center p-3 rounded-xl bg-white border border-gray-200">
                     <p className="text-[9px] text-gray-400 font-semibold leading-tight mb-1">KPI</p>
                     <p className="text-[15px] font-black text-[#1a1a1a]">
-                      {kpis.length}
+                      {counters?.kpis ?? 0}
                     </p>
                   </div>
                   <div className="relative text-center p-3 rounded-xl bg-white border border-gray-200">
