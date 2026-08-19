@@ -530,15 +530,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           userEmail === "jevosak839@cimario.com" ? (
           <EmployeeHeader />
         ) : (
-          // isNewEmpHubRoute ? (
-          //   <TopNavigation
-          //     activeNavMenu={activeNavMenu}
-          //     setActiveNavMenu={setActiveNavMenu}
-          //   /> // 👈 your new header
-          // ) : (
-          // <EmployeeHeader />
-          // )
-          // <EmployeeHeaderStatic />
           <TopNavigation
             activeNavMenu={activeNavMenu}
             setActiveNavMenu={setActiveNavMenu}
