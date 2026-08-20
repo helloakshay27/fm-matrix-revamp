@@ -152,15 +152,18 @@ export const CreditNoteClubDashboard: React.FC = () => {
     const mapCreditNoteRecord = (record: any): CreditNote => {
         // Confirmed: the billed party comes back as "customer", not "user" (see CreditNoteClubDetails).
         const user = record.customer || record.user || {};
+        // Prefer explicit is_staff/is_member/is_guest boolean flags (on the record or the nested user
+        // object) when present; fall back to a user_type string if that's what the API returns instead.
+        const isStaff = record.is_staff ?? user.is_staff ?? (user.user_type === 'fm' || user.user_type === 'staff');
+        const isMember = record.is_member ?? user.is_member ?? (user.user_type === 'occupant' || user.user_type === 'member');
+        const isGuest = record.is_guest ?? user.is_guest ?? (user.user_type === 'guest');
         return {
             id: record.id,
             credit_note_number: record.credit_note_number || record.number || record.order_number || '',
             customer_name: record.customer_name || user.name || '',
-            // NOTE: user.user_type is unconfirmed — real responses seen so far don't include a type
-            // field on customer/user, so these will usually all fall back to '-'.
-            guest_name: record.guest_name || (user.user_type === 'guest' ? user.name : undefined),
-            member_name: record.member_name || (user.user_type === 'occupant' || user.user_type === 'member' ? user.name : undefined),
-            staff_name: record.staff_name || (user.user_type === 'fm' || user.user_type === 'staff' ? user.name : undefined),
+            guest_name: record.guest_name || (isGuest ? user.name : undefined),
+            member_name: record.member_name || (isMember ? user.name : undefined),
+            staff_name: record.staff_name || (isStaff ? user.name : undefined),
             date: record.date || record.bill_date || record.created_at || '',
             reference_number: record.reference_number || record.order_number || '',
             invoice_number: record.invoice_number || '',
@@ -183,10 +186,15 @@ export const CreditNoteClubDashboard: React.FC = () => {
         const lock_account_id = localStorage.getItem('lock_account_id');
 
         try {
+            // Confirmed: GET /credit_notes.json?search=...&status=...
+            const params: Record<string, string | number> = { page, per_page };
+            if (search) params.search = search;
+            if (filters.status) params.status = filters.status;
+
             const response = await axios.get(
                 `https://${baseUrl}/lock_accounts/${lock_account_id}/credit_notes.json`,
                 {
-                    params: { page, per_page },
+                    params,
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },

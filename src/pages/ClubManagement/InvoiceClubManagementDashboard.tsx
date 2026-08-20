@@ -188,15 +188,18 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
     // Maps a raw bill_booking record (shape unconfirmed) to the SalesOrder shape this table renders
     const mapBillBookingToSalesOrder = (bb: any): SalesOrder => {
         const user = bb.user || {};
+        // Prefer explicit is_staff/is_member/is_guest boolean flags (on the record or the nested user
+        // object) when present; fall back to a user_type string if that's what the API returns instead.
+        const isStaff = bb.is_staff ?? user.is_staff ?? (user.user_type === 'fm' || user.user_type === 'staff');
+        const isMember = bb.is_member ?? user.is_member ?? (user.user_type === 'occupant' || user.user_type === 'member');
+        const isGuest = bb.is_guest ?? user.is_guest ?? (user.user_type === 'guest');
         return {
             id: bb.id,
             sale_order_number: bb.order_number || bb.sale_order_number || '',
             customer_name: bb.customer_name || user.name || '',
-            // NOTE: user.user_type is unconfirmed — the real bill_bookings/credit_notes responses seen so
-            // far don't include a type field on user/customer, so these will usually all fall back to '-'.
-            guest_name: bb.guest_name || (user.user_type === 'guest' ? user.name : undefined),
-            member_name: bb.member_name || (user.user_type === 'occupant' || user.user_type === 'member' ? user.name : undefined),
-            staff_name: bb.staff_name || (user.user_type === 'fm' || user.user_type === 'staff' ? user.name : undefined),
+            guest_name: bb.guest_name || (isGuest ? user.name : undefined),
+            member_name: bb.member_name || (isMember ? user.name : undefined),
+            staff_name: bb.staff_name || (isStaff ? user.name : undefined),
             date: bb.bill_date || bb.date || '',
             shipment_date: bb.shipment_date || '',
             total_amount: Number(bb.total_amount ?? bb.amount ?? 0),
@@ -225,15 +228,15 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
             const lock_account_id = localStorage.getItem('lock_account_id');
+            // Confirmed: GET /bill_bookings.json?search=...&status=...&from_date=...&to_date=...
             const params = new URLSearchParams({
                 page: String(page),
                 per_page: String(per_page),
             });
-            if (search) params.append('q[invoice_number_or_customer_name_cont]', search);
-            if (filters.status) params.append('q[status_eq]', filters.status);
-            if (filters.customerId) params.append('q[lock_account_customer_id_eq]', String(filters.customerId));
-            if (filters.dateFrom) params.append('q[date_gteq]', filters.dateFrom);
-            if (filters.dateTo) params.append('q[date_lteq]', filters.dateTo);
+            if (search) params.append('search', search);
+            if (filters.status) params.append('status', filters.status);
+            if (filters.dateFrom) params.append('from_date', filters.dateFrom);
+            if (filters.dateTo) params.append('to_date', filters.dateTo);
 
             const response = await fetch(`https://${baseUrl}/lock_accounts/${lock_account_id}/bill_bookings.json?${params.toString()}`, {
                 headers: {

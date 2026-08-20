@@ -1022,6 +1022,9 @@ export const InvoiceClubManagementEdit: React.FC = () => {
 
     // --- Edit mode: fetch the existing bill_booking and prefill the whole form ---
     const [editLoading, setEditLoading] = useState(true);
+    // Attachments already saved on this invoice (from GET), and ones the user has marked for removal
+    const [existingAttachments, setExistingAttachments] = useState<{ id: number; document_file_name: string; document_file_size?: number; attachment_url?: string }[]>([]);
+    const [removedAttachmentIds, setRemovedAttachmentIds] = useState<number[]>([]);
 
     // Best-effort: the details response doesn't say whether the billed user is a
     // Member/Guest/Staff, so probe each list and match by id. Defaults to 'occupant'.
@@ -1169,6 +1172,8 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                     setUserType(type);
                     setSelectedUser(uid);
                 }
+
+                setExistingAttachments(Array.isArray(data.attachments) ? data.attachments : []);
             } catch (error) {
                 console.error('Error fetching invoice for edit:', error);
                 toast.error('Failed to load invoice details');
@@ -1461,9 +1466,11 @@ export const InvoiceClubManagementEdit: React.FC = () => {
 
     // Calculate totals
     const subTotal = items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
+    // discountOnTotal can be '' while the user is clearing the field — coerce or totalDiscount becomes
+    // a string (e.g. number + '' via + concatenation) and every .toFixed(2) call downstream crashes.
     const totalDiscount = discountTypeOnTotal === 'percentage'
-        ? (subTotal * discountOnTotal) / 100
-        : discountOnTotal;
+        ? (subTotal * Number(discountOnTotal || 0)) / 100
+        : Number(discountOnTotal || 0);
     const afterDiscount = subTotal - totalDiscount;
     const taxAmount = items.reduce((sum, item) => {
         const itemSubtotal = item.quantity * item.rate;
@@ -1499,6 +1506,12 @@ export const InvoiceClubManagementEdit: React.FC = () => {
     // Remove attachment
     const removeAttachment = (index: number) => {
         setAttachments(prev => prev.filter((_, i) => i !== index));
+    };
+
+    // Mark a previously-saved attachment for removal (sent as _destroy on submit)
+    const removeExistingAttachment = (attachmentId: number) => {
+        setExistingAttachments(prev => prev.filter(a => a.id !== attachmentId));
+        setRemovedAttachmentIds(prev => [...prev, attachmentId]);
     };
 
     // Add external user
@@ -1732,9 +1745,17 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                 formData.append(`line_items[${idx}][gst_rate]`, String(gstRate));
             });
 
-            // Attachments — param name unconfirmed, sample payload has no attachments key
+            // Confirmed: bill_booking[attachments_attributes][idx][document] for new files, and
+            // [id] + [_destroy]=true (no document) to remove a previously-saved one.
+            let attachmentIdx = 0;
             attachments.forEach((file) => {
-                formData.append('bill_booking[attachments][]', file);
+                formData.append(`bill_booking[attachments_attributes][${attachmentIdx}][document]`, file);
+                attachmentIdx += 1;
+            });
+            removedAttachmentIds.forEach((attachmentId) => {
+                formData.append(`bill_booking[attachments_attributes][${attachmentIdx}][id]`, String(attachmentId));
+                formData.append(`bill_booking[attachments_attributes][${attachmentIdx}][_destroy]`, 'true');
+                attachmentIdx += 1;
             });
 
             await fetch(`https://${baseUrl}/lock_accounts/${lock_account_id}/bill_bookings/${id}.json`, {
@@ -2625,6 +2646,41 @@ export const InvoiceClubManagementEdit: React.FC = () => {
     {/* Attachments */ }
     <Section title="Attach Files to Invoice" icon={<AttachFile className="w-5 h-5" />}>
         <div className="space-y-4">
+            {existingAttachments.length > 0 && (
+                <div className="space-y-2">
+                    <Typography variant="body2" className="text-gray-700 font-semibold">
+                        Existing Attachments
+                    </Typography>
+                    {existingAttachments.map((file) => (
+                        <div key={file.id} className="flex items-center justify-between bg-gray-50 p-3 rounded">
+                            <div className="flex items-center gap-2">
+                                <AttachFile fontSize="small" />
+                                {file.attachment_url ? (
+                                    <a
+                                        href={file.attachment_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-sm text-brand hover:underline"
+                                    >
+                                        {file.document_file_name}
+                                    </a>
+                                ) : (
+                                    <span className="text-sm">{file.document_file_name}</span>
+                                )}
+                                {file.document_file_size != null && (
+                                    <span className="text-xs text-gray-500">
+                                        ({(file.document_file_size / 1024).toFixed(2)} KB)
+                                    </span>
+                                )}
+                            </div>
+                            <IconButton size="small" onClick={() => removeExistingAttachment(file.id)}>
+                                <Close fontSize="small" />
+                            </IconButton>
+                        </div>
+                    ))}
+                </div>
+            )}
+
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                 <input
                     type="file"
