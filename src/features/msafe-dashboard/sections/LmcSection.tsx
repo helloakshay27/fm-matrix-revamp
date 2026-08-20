@@ -140,15 +140,15 @@ function colorForWeekPct(pct: number): string {
   return C.warn;
 }
 
-function normalizeWeeklyCompletion(payload: unknown): WeekRow[] {
-  const list = unwrapList(payload, ['data', 'result', 'week', 'days']);
-  const rows = list
+type WeeklyDayRecord = { label: string; actual: number; target: number | null; explicitPct: number | null };
+
+/** Reads one circle's `records` array (each `{ date, day_name, actual_lmc_completion, ... }`)
+ *  into flat day rows carrying a unique day_name+date label. */
+function readCircleWeeklyRecords(records: unknown[]): WeeklyDayRecord[] {
+  return records
     .map((item) => {
       if (!item || typeof item !== 'object') return null;
       const record = item as Record<string, unknown>;
-      // The response spans more than a single week, so multiple rows can share
-      // the same day name (e.g. three "Thursday"s) — combine day name + date so
-      // each row's label is unique instead of colliding on just the day name.
       const dayName = getString(record, ['day_name', 'day']);
       const date = getString(record, ['date']);
       const label = dayName && date ? `${dayName} · ${date}` : dayName ?? date ?? getString(record, ['label']);
@@ -171,10 +171,38 @@ function normalizeWeeklyCompletion(payload: unknown): WeekRow[] {
       const explicitPct = getNumber(record, ['pct', 'percentage', 'completion_percentage', 'percent']);
       return { label, actual, target, explicitPct };
     })
-    .filter((item): item is { label: string; actual: number; target: number | null; explicitPct: number | null } =>
-      Boolean(item),
-    );
+    .filter((item): item is WeeklyDayRecord => Boolean(item));
+}
 
+// The response is now grouped per circle — { data: [ { circle_name, records: [...] }, ... ] } —
+// with each circle contributing its own day_name+date rows. Sum actual_lmc_completion (and any
+// explicit target/pct) across every circle for the same date so each day appears once overall,
+// instead of once per circle.
+function normalizeWeeklyCompletion(payload: unknown): WeekRow[] {
+  const circles = unwrapList(payload, ['data', 'result', 'circles']);
+
+  const perCircleRows: WeeklyDayRecord[] = circles.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const record = item as Record<string, unknown>;
+    const records = record.records;
+    if (Array.isArray(records)) return readCircleWeeklyRecords(records);
+    // Fall back to treating this entry itself as a flat day row, for a plain (non-circle-wise) shape.
+    return readCircleWeeklyRecords([item]);
+  });
+
+  const order: string[] = [];
+  const totals = new Map<string, { actual: number; target: number | null; explicitPct: number | null }>();
+  for (const r of perCircleRows) {
+    if (!totals.has(r.label)) {
+      order.push(r.label);
+      totals.set(r.label, { actual: 0, target: null, explicitPct: null });
+    }
+    const acc = totals.get(r.label)!;
+    acc.actual += r.actual;
+    if (r.target !== null) acc.target = (acc.target ?? 0) + r.target;
+  }
+
+  const rows = order.map((label) => ({ label, ...totals.get(label)! }));
   const maxActual = Math.max(1, ...rows.map((r) => r.actual));
   return rows.map((r) => {
     const pct =
@@ -194,9 +222,17 @@ function normalizeManagers(payload: unknown): ManagerRow[] {
       const record = item as Record<string, unknown>;
       const name = getString(record, ['manager_name', 'name', 'employee_name']);
       if (!name) return null;
-      const department = getString(record, ['department', 'function', 'func']) ?? '—';
+      const department = getString(record, ['department_name', 'department', 'function', 'func']) ?? '—';
       const circle = getString(record, ['circle', 'circle_name']) ?? '—';
-      const count = getNumber(record, ['total_lmc_signed', 'count', 'value', 'sign_offs', 'lmc_count', 'total']);
+      const count = getNumber(record, [
+        'total_lmc_created',
+        'total_lmc_signed',
+        'count',
+        'value',
+        'sign_offs',
+        'lmc_count',
+        'total',
+      ]);
       if (count === null) return null;
       return { name, department, circle, count };
     })
@@ -295,19 +331,46 @@ function normalizeLmcStatus(payload: unknown): WeekRow[] {
   }));
 }
 
-function normalizeMonthlyTrend(payload: unknown): TrendRow[] {
+type TrendCircleRow = { month: string; circle: string; volume: number };
+
+// Raw per-record shape from the API: one row per (circle, month) combination —
+// { circle_name, month, lmc_volume }. Kept separate from the aggregated trend
+// data so the hover tooltip can show the full circle-wise breakdown per month.
+function normalizeMonthlyTrendByCircle(payload: unknown): TrendCircleRow[] {
   const list = unwrapList(payload, ['data', 'result', 'months', 'trend']);
   return list
     .map((item) => {
       if (!item || typeof item !== 'object') return null;
       const record = item as Record<string, unknown>;
-      const m = getString(record, ['month', 'month_name', 'm', 'label', 'name']);
-      if (!m) return null;
-      const n = getNumber(record, ['total_lmc_signoff_volume', 'count', 'value', 'n', 'total', 'sign_offs']);
-      if (n === null) return null;
-      return { m, n };
+      const month = getString(record, ['month', 'month_name', 'm', 'label', 'name']);
+      if (!month) return null;
+      const volume = getNumber(record, [
+        'lmc_volume',
+        'total_lmc_signoff_volume',
+        'count',
+        'value',
+        'n',
+        'total',
+        'sign_offs',
+      ]);
+      if (volume === null) return null;
+      const circle = getString(record, ['circle_name', 'circle']) ?? '—';
+      return { month, circle, volume };
     })
-    .filter((item): item is TrendRow => Boolean(item));
+    .filter((item): item is TrendCircleRow => Boolean(item));
+}
+
+// The response is one row per (circle, month) — { circle_name, month, lmc_volume } — so
+// volumes are summed across every circle for the same month, same approach as the daily
+// volume and weekly completion normalizers above.
+function normalizeMonthlyTrend(rows: TrendCircleRow[]): TrendRow[] {
+  const order: string[] = [];
+  const totals = new Map<string, number>();
+  for (const r of rows) {
+    if (!totals.has(r.month)) order.push(r.month);
+    totals.set(r.month, (totals.get(r.month) ?? 0) + r.volume);
+  }
+  return order.map((m) => ({ m, n: totals.get(m) ?? 0 }));
 }
 
 function DataState({ loading, empty, label }: { loading: boolean; empty: boolean; label: string }) {
@@ -323,6 +386,7 @@ export function LmcSection() {
   const { openDrill, persona, appliedFilters } = useMsafeDashboard();
   const [dailyMode, setDailyMode] = useState('line');
   const [funcMode, setFuncMode] = useState('donut');
+  const [funcTab, setFuncTab] = useState<'function' | 'circle'>('function');
   const [trendMode, setTrendMode] = useState('line');
   const [dailyData, setDailyData] = useState<DailyRow[]>([]);
   const [dailyCircleData, setDailyCircleData] = useState<DailyCircleRow[]>([]);
@@ -336,6 +400,7 @@ export function LmcSection() {
   const [statusData, setStatusData] = useState<WeekRow[]>([]);
   const [statusLoading, setStatusLoading] = useState(true);
   const [trendData, setTrendData] = useState<TrendRow[]>([]);
+  const [trendCircleData, setTrendCircleData] = useState<TrendCircleRow[]>([]);
   const [trendLoading, setTrendLoading] = useState(true);
 
   useEffect(() => {
@@ -410,7 +475,7 @@ export function LmcSection() {
       try {
         const payload = await fetchMsafeLmcJson(
           'lmc_signoffs_by_function.json',
-          buildFilterParams(persona, appliedFilters),
+          { type: funcTab, ...buildFilterParams(persona, appliedFilters) },
           controller.signal,
         );
         if (!controller.signal.aborted) setFuncData(normalizeByFunction(payload));
@@ -421,7 +486,7 @@ export function LmcSection() {
       }
     })();
     return () => controller.abort();
-  }, [appliedFilters, persona]);
+  }, [appliedFilters, persona, funcTab]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -448,12 +513,21 @@ export function LmcSection() {
     setTrendLoading(true);
     (async () => {
       try {
+        // This card is a fixed trailing-12-months view, not scoped to whatever date
+        // range is currently applied elsewhere — sending from_date/to_date here would
+        // clip it down to just the applied range (e.g. only 1-2 months), contradicting
+        // its own "Last 12 Months" title. Drop the date range, keep every other filter.
+        const { from_date, to_date, ...trendParams } = buildFilterParams(persona, appliedFilters);
         const payload = await fetchMsafeLmcJson(
           'monthly_lmc_signoff_volume.json',
-          buildFilterParams(persona, appliedFilters),
+          trendParams,
           controller.signal,
         );
-        if (!controller.signal.aborted) setTrendData(normalizeMonthlyTrend(payload));
+        const circleRows = normalizeMonthlyTrendByCircle(payload);
+        if (!controller.signal.aborted) {
+          setTrendCircleData(circleRows);
+          setTrendData(normalizeMonthlyTrend(circleRows));
+        }
       } catch (err) {
         if ((err as Error).name !== 'AbortError') console.warn('M-Safe monthly-lmc-signoff-volume API failed.', err);
       } finally {
@@ -488,13 +562,37 @@ export function LmcSection() {
     );
   };
 
+  // "LMC Completion Trend" points are totals summed across every circle for that
+  // month — this looks up the per-circle breakdown for the hovered month so the
+  // tooltip can list each circle's sign-off volume, not just the month total.
+  const renderTrendTooltip = ({ active, label }: { active?: boolean; label?: string }) => {
+    if (!active || !label) return null;
+    const circleRows = trendCircleData.filter((r) => r.month === label);
+    const total = circleRows.reduce((sum, r) => sum + r.volume, 0);
+    return (
+      <div className="msafe-chart-tip">
+        <div className="msafe-chart-tip-title">{label}</div>
+        {circleRows.map((r) => (
+          <div key={r.circle} className="msafe-chart-tip-row">
+            <span className="msafe-chart-tip-sw" style={{ background: C.sage }} />
+            <span>
+              {r.circle}: {r.volume.toLocaleString('en-IN')}
+            </span>
+          </div>
+        ))}
+        <div className="msafe-chart-tip-row" style={{ fontWeight: 600 }}>
+          <span>Total: {total.toLocaleString('en-IN')}</span>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <AccordionShell
       title="LMC — Line Manager Check Activity"
       sub="Daily sign-off volume and manager engagement"
       excelLabel="LMC"
     >
-      <div className="g g-2-1" style={{ alignItems: 'start' }}>
       <ChartCard
         title="Daily LMC Volume — Last 30 Days"
         sub="Number of LMC sign-offs recorded per day"
@@ -561,63 +659,44 @@ export function LmcSection() {
         )}
       </ChartCard>
 
-      <ChartCard
-        title="LMC Completion — This Week"
-        sub="Daily target vs actual"
-        infoKey="lmc-week"
-      >
-        {weekLoading || weekData.length === 0 ? (
-          <DataState loading={weekLoading} empty={weekData.length === 0} label="weekly completion data" />
-        ) : (
-          <div style={{ maxHeight: 420, overflowY: 'auto' }}>
-            <ProgressRows
-              rows={weekData.map((r) => ({
-                ...r,
-                onClick: () => openDrill(`lmc-${r.label.toLowerCase()}`, `LMC · ${r.label}`),
-              }))}
-            />
-          </div>
-        )}
-      </ChartCard>
-      </div>
-
-      <div className="g g3" style={{ marginTop: 16 }}>
+      <div className="g g3" style={{ marginTop: 16, alignItems: 'start' }}>
         <ChartCard title="Top LMC Managers — Last 30 Days" sub="Most active line managers" infoKey="lmc-managers">
           {managerLoading || managerData.length === 0 ? (
             <DataState loading={managerLoading} empty={managerData.length === 0} label="manager data" />
           ) : (
-            <Leaderboard
-              items={managerData.map((m) => ({
-                name: m.name,
-                meta: `${m.department} · ${m.circle}`,
-                value: m.count,
-                onClick: () => openDrill('user-detail', m.name),
-              }))}
-            />
+            <div style={{ minHeight: 420, maxHeight: 420, overflowY: 'auto' }}>
+              <Leaderboard
+                items={managerData.map((m) => ({
+                  name: m.name,
+                  meta: `${m.department} · ${m.circle}`,
+                  value: m.count,
+                  onClick: () => openDrill('user-detail', m.name),
+                }))}
+              />
+            </div>
           )}
         </ChartCard>
 
-        <ChartCard
-          title="LMC by Function"
-          sub="Which function's managers are most active"
-          infoKey="lmc-func"
-          chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={funcMode} onChange={setFuncMode} />}
-        >
-          {funcLoading || funcData.length === 0 ? (
-            <DataState loading={funcLoading} empty={funcData.length === 0} label="function data" />
+        <ChartCard title="LMC Completion" sub="Daily target vs actual" infoKey="lmc-week">
+          {weekLoading || weekData.length === 0 ? (
+            <DataState loading={weekLoading} empty={weekData.length === 0} label="weekly completion data" />
           ) : (
-            <>
-              {funcMode === 'donut' && <DonutChart data={funcData} />}
-              {funcMode === 'bar' && <SliceBarChart data={funcData} />}
-              {funcMode === 'table' && <ChartTable data={funcData} valueLabel="LMC %" />}
-            </>
+            <div style={{ minHeight: 420, maxHeight: 420, overflowY: 'auto' }}>
+              <ProgressRows
+                rows={weekData.map((r) => ({
+                  ...r,
+                  onClick: () => openDrill(`lmc-${r.label.toLowerCase()}`, `LMC · ${r.label}`),
+                }))}
+              />
+            </div>
           )}
         </ChartCard>
 
-        <ChartCard title="LMC Status Breakdown" sub="All LMCs · this month" infoKey="lmc-status">
+        <ChartCard title="LMC Status Breakdown" sub="All LMCs " infoKey="lmc-status">
           {statusLoading || statusData.length === 0 ? (
             <DataState loading={statusLoading} empty={statusData.length === 0} label="status data" />
           ) : (
+            <div style={{ minHeight: 420 }}>
             <ProgressRows
               rows={statusData.map((r) => ({
                 ...r,
@@ -625,9 +704,46 @@ export function LmcSection() {
                   openDrill(`lmc-${r.label.toLowerCase().replace(/\s/g, '')}`, r.label),
               }))}
             />
+            </div>
           )}
         </ChartCard>
       </div>
+
+      {/* Full-width, not a 3-column grid slot — the Circle tab can have 20+ circles,
+          which was getting squeezed into a third of the row's width and rendering badly. */}
+      <ChartCard
+        title={funcTab === 'circle' ? 'LMC by Circle' : 'LMC by Function'}
+        sub={
+          funcTab === 'circle'
+            ? "Which circle's managers are most active"
+            : "Which function's managers are most active"
+        }
+        infoKey="lmc-func"
+        style={{ marginTop: 16 }}
+        tag={<ChartSwitch modes={['function', 'circle']} value={funcTab} onChange={(v) => setFuncTab(v as 'function' | 'circle')} />}
+        chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={funcMode} onChange={setFuncMode} />}
+      >
+        {funcLoading || funcData.length === 0 ? (
+          <DataState loading={funcLoading} empty={funcData.length === 0} label="function data" />
+        ) : (
+          <>
+            {funcMode === 'donut' && (
+              <DonutChart
+                data={funcData}
+                height={Math.min(420, Math.max(220, Math.ceil(funcData.length / 2) * 26))}
+              />
+            )}
+            {funcMode === 'bar' && (
+              <div style={{ overflowX: 'auto' }}>
+                <div style={{ minWidth: Math.max(700, funcData.length * 55) }}>
+                  <SliceBarChart data={funcData} height={420} />
+                </div>
+              </div>
+            )}
+            {funcMode === 'table' && <ChartTable data={funcData} valueLabel="LMC %" />}
+          </>
+        )}
+      </ChartCard>
 
       <ChartCard
         title="LMC Completion Trend — Last 12 Months"
@@ -668,7 +784,7 @@ export function LmcSection() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
                   <XAxis dataKey="m" tick={{ fontSize: 10, fill: C.sage }} />
                   <YAxis tick={{ fontSize: 10, fill: C.sage }} />
-                  <Tooltip />
+                  <Tooltip content={renderTrendTooltip} />
                   <Area
                     type="monotone"
                     dataKey="n"
@@ -683,7 +799,7 @@ export function LmcSection() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
                   <XAxis dataKey="m" tick={{ fontSize: 10, fill: C.sage }} />
                   <YAxis tick={{ fontSize: 10, fill: C.sage }} />
-                  <Tooltip />
+                  <Tooltip content={renderTrendTooltip} />
                   <Bar dataKey="n" fill={C.sage} radius={[5, 5, 0, 0]} name="LMC Sign-offs" />
                 </BarChart>
               )}
