@@ -1619,6 +1619,10 @@ export function JobsProvider({ children }) {
     setUnitsSaving(true);
     try {
       await saveKpiUnits(nextUnits);
+      // Re-read the group so the list reflects what actually survived on the
+      // server (bulk_upsert can leave rows behind; the API layer prunes them).
+      const saved = await fetchKpiUnits().catch(() => null);
+      if (saved) setCustomUnits(saved);
       showToast(successMsg);
     } catch (err) {
       setCustomUnits(previousUnits);
