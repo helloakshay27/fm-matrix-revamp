@@ -143,7 +143,7 @@ export const DebitNoteClubDetails = () => {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
+    if (!dateString) return "-";
     return new Date(dateString).toLocaleDateString("en-IN");
   };
 
@@ -254,12 +254,12 @@ export const DebitNoteClubDetails = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Debit Note Number</p>
-                <p className="text-base font-semibold mt-1">{debitNoteData.note_number || "N/A"}</p>
+                <p className="text-base font-semibold mt-1">{debitNoteData.note_number || "-"}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">User</p>
                 <p className="text-base font-semibold mt-1">
-                  {user.name || debitNoteData.user_name || "N/A"}
+                  {user.name || debitNoteData.user_name || "-"}
                 </p>
               </div>
               <div>
@@ -276,12 +276,12 @@ export const DebitNoteClubDetails = () => {
               </div> */}
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Place of Supply</p>
-                <p className="text-base font-semibold mt-1">{debitNoteData.place_of_supply || "N/A"}</p>
+                <p className="text-base font-semibold mt-1">{debitNoteData.place_of_supply || "-"}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Linked Invoice</p>
                 <p className="text-base font-semibold mt-1">
-                  {debitNoteData.invoice_number || debitNoteData.lock_account_invoice_id || "N/A"}
+                  {debitNoteData.invoice_number || debitNoteData.lock_account_invoice_id || "-"}
                 </p>
               </div>
               <div>
@@ -344,10 +344,10 @@ export const DebitNoteClubDetails = () => {
                       {lineItems.map((item, index) => (
                         <TableRow key={index}>
                           <TableCell>
-                            {LINE_ITEM_TYPE_LABELS[item.line_item_type] || item.line_item_type || "N/A"}
+                            {LINE_ITEM_TYPE_LABELS[item.line_item_type] || item.line_item_type || "-"}
                           </TableCell>
                           {/* Confirmed: debit_note line_items use "item_name", not "name" */}
-                          <TableCell className="font-semibold">{item.item_name || item.name || "N/A"}</TableCell>
+                          <TableCell className="font-semibold">{item.item_name || item.name || "-"}</TableCell>
                           <TableCell className="text-right">{item.quantity ?? 0}</TableCell>
                           <TableCell className="text-right">{formatCurrency(item.rate)}</TableCell>
                           {/* <TableCell className="text-right">{formatCurrency(item.discount)}</TableCell> */}
@@ -383,7 +383,8 @@ export const DebitNoteClubDetails = () => {
                       <span className="text-sm font-medium text-muted-foreground">GST</span>
                       <span className="font-semibold text-base">{formatCurrency(totalGst)}</span>
                     </div>
-                    <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
+                    {/* <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg"> */}
+                    <div className="flex justify-between items-center py-2 border-t pt-3">
                       <span className="font-bold text-base">Total</span>
                       <span className="font-bold text-primary text-2xl">{formatCurrency(grandTotal)}</span>
                     </div>

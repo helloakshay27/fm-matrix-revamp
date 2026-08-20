@@ -177,7 +177,7 @@ export const InvoiceClubManagementDetails = () => {
     };
 
     const formatDate = (dateString) => {
-        if (!dateString) return "N/A";
+        if (!dateString) return "-";
         try {
             return format(new Date(dateString), "dd/MM/yyyy");
         } catch {
@@ -303,12 +303,12 @@ export const InvoiceClubManagementDetails = () => {
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Invoice To</p>
                                 <p className="text-base font-semibold mt-1">
-                                    {user.name || invoiceData.user_name || "N/A"}
+                                    {user.name || invoiceData.user_name || "-"}
                                 </p>
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Order Number</p>
-                                <p className="text-base font-semibold mt-1">{invoiceData.order_number || "N/A"}</p>
+                                <p className="text-base font-semibold mt-1">{invoiceData.order_number || "-"}</p>
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Invoice Date</p>
@@ -320,7 +320,13 @@ export const InvoiceClubManagementDetails = () => {
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Subject</p>
-                                <p className="text-base font-semibold mt-1 break-all">{invoiceData.subject || "N/A"}</p>
+                                <p className="text-base font-semibold mt-1 break-all">{invoiceData.subject || "-"}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground">Status</p>
+                                <p className="text-base font-semibold mt-1">
+                                    {invoiceData.status ? String(invoiceData.status).replace(/_/g, " ").toUpperCase() : "-"}
+                                </p>
                             </div>
                             {/* <div>
                 <p className="text-sm font-medium text-muted-foreground">Discount %</p>
@@ -328,15 +334,15 @@ export const InvoiceClubManagementDetails = () => {
               </div> */}
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Place of Supply</p>
-                                <p className="text-base font-semibold mt-1">{invoiceData.source_of_supply || "N/A"}</p>
+                                <p className="text-base font-semibold mt-1">{invoiceData.source_of_supply || "-"}</p>
                             </div>
                             {/* <div>
                 <p className="text-sm font-medium text-muted-foreground">Destination of Supply</p>
-                <p className="text-base font-semibold mt-1">{invoiceData.destination_of_supply || "N/A"}</p>
+                <p className="text-base font-semibold mt-1">{invoiceData.destination_of_supply || "-"}</p>
               </div> */}
                             {/* <div>
                 <p className="text-sm font-medium text-muted-foreground">Billing GSTIN</p>
-                <p className="text-base font-semibold mt-1">{invoiceData.billing_gstin || "N/A"}</p>
+                <p className="text-base font-semibold mt-1">{invoiceData.billing_gstin || "-"}</p>
               </div> */}
                         </div>
 
@@ -480,9 +486,9 @@ export const InvoiceClubManagementDetails = () => {
                                             {lineItems.map((item, index) => (
                                                 <TableRow key={index}>
                                                     <TableCell>
-                                                        {LINE_ITEM_TYPE_LABELS[item.line_item_type] || item.line_item_type || "N/A"}
+                                                        {LINE_ITEM_TYPE_LABELS[item.line_item_type] || item.line_item_type || "-"}
                                                     </TableCell>
-                                                    <TableCell className="font-semibold">{item.name || "N/A"}</TableCell>
+                                                    <TableCell className="font-semibold">{item.name || "-"}</TableCell>
                                                     <TableCell className="text-right">{item.quantity ?? 0}</TableCell>
                                                     <TableCell className="text-right">{formatCurrency(item.rate)}</TableCell>
                                                     {/* <TableCell className="text-right">{formatCurrency(item.discount)}</TableCell> */}
