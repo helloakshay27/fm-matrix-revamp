@@ -1461,9 +1461,11 @@ export const InvoiceClubManagementEdit: React.FC = () => {
 
     // Calculate totals
     const subTotal = items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
+    // discountOnTotal can be '' while the user is clearing the field — coerce or totalDiscount becomes
+    // a string (e.g. number + '' via + concatenation) and every .toFixed(2) call downstream crashes.
     const totalDiscount = discountTypeOnTotal === 'percentage'
-        ? (subTotal * discountOnTotal) / 100
-        : discountOnTotal;
+        ? (subTotal * Number(discountOnTotal || 0)) / 100
+        : Number(discountOnTotal || 0);
     const afterDiscount = subTotal - totalDiscount;
     const taxAmount = items.reduce((sum, item) => {
         const itemSubtotal = item.quantity * item.rate;
