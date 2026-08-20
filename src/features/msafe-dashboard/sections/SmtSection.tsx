@@ -300,25 +300,26 @@ export function SmtSection() {
     return () => controller.abort();
   }, [appliedFilters, persona]);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    setProgressLoading(true);
-    (async () => {
-      try {
-        const payload = await fetchMsafeSmtJson(
-          'smt_visit_progress_by_circle.json',
-          buildFilterParams(persona, appliedFilters),
-          controller.signal,
-        );
-        if (!controller.signal.aborted) setProgressData(normalizeVisitProgress(payload));
-      } catch (err) {
-        if ((err as Error).name !== 'AbortError') console.warn('M-Safe smt-visit-progress-by-circle API failed.', err);
-      } finally {
-        if (!controller.signal.aborted) setProgressLoading(false);
-      }
-    })();
-    return () => controller.abort();
-  }, [appliedFilters, persona]);
+  // "SMT Visit Progress by Circle" card hidden per request — API call disabled too.
+  // useEffect(() => {
+  //   const controller = new AbortController();
+  //   setProgressLoading(true);
+  //   (async () => {
+  //     try {
+  //       const payload = await fetchMsafeSmtJson(
+  //         'smt_visit_progress_by_circle.json',
+  //         buildFilterParams(persona, appliedFilters),
+  //         controller.signal,
+  //       );
+  //       if (!controller.signal.aborted) setProgressData(normalizeVisitProgress(payload));
+  //     } catch (err) {
+  //       if ((err as Error).name !== 'AbortError') console.warn('M-Safe smt-visit-progress-by-circle API failed.', err);
+  //     } finally {
+  //       if (!controller.signal.aborted) setProgressLoading(false);
+  //     }
+  //   })();
+  //   return () => controller.abort();
+  // }, [appliedFilters, persona]);
 
   // "Visit Frequency" card hidden per request — API call disabled too.
   // useEffect(() => {
@@ -410,11 +411,6 @@ export function SmtSection() {
           )}
         </ChartCard>
 
-        {/* "Visit Frequency" card hidden per request — see the commented-out
-            fetch effect above for the disabled API call. */}
-      </div>
-
-      <div className="g g-2-1" style={{ marginTop: 16 }}>
         <ChartCard
           title="Recent SMT Visits"
           sub="Latest field verifications logged"
@@ -451,22 +447,9 @@ export function SmtSection() {
           )}
         </ChartCard>
 
-        <ChartCard
-          title="SMT Visit Progress by Circle"
-          sub="Circles currently working toward the 20 visits/month target"
-          infoKey="smt-progress"
-        >
-          {progressLoading || progressData.length === 0 ? (
-            <DataState loading={progressLoading} empty={progressData.length === 0} label="progress data" />
-          ) : (
-            <ProgressRows
-              rows={progressData.map((r) => ({
-                ...r,
-                onClick: () => openDrill('smt-below', r.label),
-              }))}
-            />
-          )}
-        </ChartCard>
+        {/* "Visit Frequency" and "SMT Visit Progress by Circle" cards hidden per
+            request — see the commented-out fetch effects above for the disabled
+            API calls. */}
       </div>
     </AccordionShell>
   );
