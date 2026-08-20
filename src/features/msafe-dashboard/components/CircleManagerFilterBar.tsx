@@ -90,7 +90,9 @@ export function CircleManagerFilterBar() {
 
   const [funcOpen, setFuncOpen] = useState(false);
 
-  if (persona !== 'circle') return null;
+  // Pan India ('admin') gets the exact same filter bar as Circle Manager —
+  // Circle, Function, Employee Type, and Date range all apply for either persona.
+  if (persona !== 'circle' && persona !== 'admin') return null;
 
   const functionSummary =
     functions.length === 0
@@ -101,36 +103,38 @@ export function CircleManagerFilterBar() {
 
   return (
     <div className="cm-filter-bar" style={{ display: 'flex' }}>
-      <FormControl
-        variant="outlined"
-        size="small"
-        sx={{ minWidth: 160, flex: '1 1 160px', maxWidth: 220 }}
-      >
-        <InputLabel shrink>
-          Circle <span style={{ color: '#EE2737' }}>*</span>
-        </InputLabel>
-        <MuiSelect
-          label="Circle *"
-          notched
-          displayEmpty
-          value={circle}
-          onChange={(e) => {
-            const v = String(e.target.value);
-            setCircle(v);
-            setCircleId(circleOptions.find((o) => o.name === v)?.id ?? '');
-            setPageTitle(`M-Safe · ${v} Circle`);
-          }}
-          sx={fieldStyles}
-          MenuProps={selectMenuProps}
-          disabled={loadingFilterOptions}
+      {persona === 'circle' && (
+        <FormControl
+          variant="outlined"
+          size="small"
+          sx={{ minWidth: 160, flex: '1 1 160px', maxWidth: 220 }}
         >
-          {circleOptions.map((c) => (
-            <MenuItem key={c.id} value={c.name}>
-              {c.name}
-            </MenuItem>
-          ))}
-        </MuiSelect>
-      </FormControl>
+          <InputLabel shrink>
+            Circle <span style={{ color: '#EE2737' }}>*</span>
+          </InputLabel>
+          <MuiSelect
+            label="Circle *"
+            notched
+            displayEmpty
+            value={circle}
+            onChange={(e) => {
+              const v = String(e.target.value);
+              setCircle(v);
+              setCircleId(circleOptions.find((o) => o.name === v)?.id ?? '');
+              setPageTitle(`M-Safe · ${v} Circle`);
+            }}
+            sx={fieldStyles}
+            MenuProps={selectMenuProps}
+            disabled={loadingFilterOptions}
+          >
+            {circleOptions.map((c) => (
+              <MenuItem key={c.id} value={c.name}>
+                {c.name}
+              </MenuItem>
+            ))}
+          </MuiSelect>
+        </FormControl>
+      )}
 
       <FormControl
         variant="outlined"

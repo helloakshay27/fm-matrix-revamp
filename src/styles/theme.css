@@ -487,6 +487,19 @@ select:focus {
   border-color: var(--color-primary) !important;
 }
 
+/* MUI Loaders — CircularProgress/LinearProgress default to theme blue; force brand orange everywhere */
+[class*="MuiCircularProgress-root"] {
+  color: var(--color-primary) !important;
+}
+
+[class*="MuiLinearProgress-root"] {
+  background-color: var(--color-primary-light) !important;
+}
+
+[class*="MuiLinearProgress-bar"] {
+  background-color: var(--color-primary) !important;
+}
+
 [class*="MuiInputLabel-root"].Mui-focused {
   color: var(--color-primary) !important;
 }

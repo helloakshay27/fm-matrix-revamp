@@ -1,7 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,26 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  ArrowLeft,
-  FileText,
-  Package,
-  Calendar,
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Edit,
-  Trash2,
-  Download,
-  Printer,
-  Send,
-  Copy,
-  Share2,
-  ShoppingCart,
-  Settings2,
-} from "lucide-react";
+import { ArrowLeft, FileText, Package, User, Edit, Trash2, ShoppingCart, Paperclip, Download } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -41,333 +20,127 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { toast as sonnerToast } from "sonner";
-import {
-  TextField,
-  FormControl,
-  InputLabel,
-  Select as MuiSelect,
-  MenuItem,
-} from "@mui/material";
 import axios from "axios";
-import AccountingDocumentPdf from "@/components/accounting/AccountingDocumentPdf";
-// Types
-interface SalesOrderItem {
-  id: number;
-  name: string;
-  description: string;
-  quantity: number;
-  rate: number;
-  discount: number;
-  discountType: string;
-  tax: string;
-  taxRate: number;
-  amount: number;
-}
 
-interface SalesOrderAttachment {
-  name: string;
-  size: number;
-}
-
-// interface SalesOrder {
-//     id: string;
-//     customer: {
-//         name: string;
-//         email: string;
-//         phone: string;
-//         billingAddress: string;
-//         shippingAddress: string;
-//     };
-//     orderDetails: {
-//         orderNumber: string;
-//         referenceNumber: string;
-//         orderDate: string;
-//         expectedShipmentDate: string;
-//         paymentTerms: string;
-//         deliveryMethod: string;
-//         salesperson: string;
-//         status: string;
-//     };
-//     items: SalesOrderItem[];
-//     pricing: {
-//         subTotal: number;
-//         discount: number;
-//         taxAmount: number;
-//         adjustment: number;
-//         total: number;
-//     };
-//     customerNotes: string;
-//     termsAndConditions: string;
-//     attachments: SalesOrderAttachment[];
-//     createdAt: string;
-//     updatedAt: string;
-// }
-
-interface SalesOrder {
-  id: number;
-  sale_order_number: string;
-  reference_number: string;
-  date: string;
-  shipment_date: string;
-  delivery_method: string;
-  sales_person_name: string;
-  customer_name: string;
-  total_amount: number;
-  discount_per: number | null;
-  discount_amount: number | null;
-  charge_amount: number;
-  charge_type: string;
-  tax_type: string;
-  status: string;
-  customer_notes: string;
-  terms_and_conditions: string;
-  credit_note_number?: string;
-  credit_note_date?: string;
-  invoice_number?: string;
-  invoice_type?: string;
-  reason?: string;
-  place_of_supply?: string;
-  subject?: string;
-  sub_total_amount?: number;
-  lock_account_tax_amount?: number;
-  charge_name?: string;
-  reference_number?: string;
-  created_at: string;
-  updated_at: string;
-  item_details: {
-    id: number;
-    item_name: string;
-    description: string;
-    quantity: number;
-    rate: number;
-    total_amount: number;
-    item_unit: string;
-    account?: string;
-    tax_type?: string;
-    tax_group?: { name?: string; rate?: number; tax_rates?: { name: string; rate: number }[] };
-  }[];
-  attachments: any[];
-}
-
-// Mock sales order data
-const mockSalesOrder = {
-  id: "SO-00001",
-  customer: {
-    name: "Acme Corporation",
-    email: "contact@acme.com",
-    phone: "+91 98765 43210",
-    billingAddress: "123 Business Park, Sector 15, Noida, UP 201301",
-    shippingAddress: "123 Business Park, Sector 15, Noida, UP 201301",
-  },
-  orderDetails: {
-    orderNumber: "SO-00001",
-    referenceNumber: "REF-2024-001",
-    orderDate: "2024-01-15",
-    expectedShipmentDate: "2024-01-20",
-    paymentTerms: "Net 30",
-    deliveryMethod: "Standard Shipping",
-    salesperson: "John Doe",
-    status: "confirmed",
-  },
-  items: [
-    {
-      id: 1,
-      name: "Product A",
-      description: "High quality product",
-      quantity: 10,
-      rate: 500,
-      discount: 10,
-      discountType: "percentage",
-      tax: "GST 18%",
-      taxRate: 18,
-      amount: 5310,
-    },
-    {
-      id: 2,
-      name: "Product B",
-      description: "Premium quality",
-      quantity: 5,
-      rate: 1000,
-      discount: 500,
-      discountType: "amount",
-      tax: "GST 18%",
-      taxRate: 18,
-      amount: 5310,
-    },
-  ],
-  pricing: {
-    subTotal: 9500,
-    discount: 450,
-    taxAmount: 1629,
-    adjustment: 0,
-    total: 10679,
-  },
-  customerNotes: "Please ensure timely delivery",
-  termsAndConditions: "Payment due within 30 days",
-  attachments: [
-    { name: "Purchase Order.pdf", size: 245000 },
-    { name: "Specifications.pdf", size: 128000 },
-  ],
-  createdAt: "2024-01-15T10:30:00",
-  updatedAt: "2024-01-15T14:45:00",
+// Mirrors the line_item_type values sent by the Credit Note Add page
+const LINE_ITEM_TYPE_LABELS = {
+  facility_booking: "Facility Booking",
+  membership: "Membership",
+  event: "Event",
+  other: "Other",
 };
 
 export const CreditNoteClubDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
 
-  const [salesOrder, setSalesOrder] = useState<SalesOrder>(mockSalesOrder);
-  const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState((location.state as any)?.tab === "pdf" ? "pdf" : "order-details");
+  const [creditNoteData, setCreditNoteData] = useState(null);
+  const [lineItems, setLineItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [pdfGenerating, setPdfGenerating] = useState(false);
-  const [renderDownloadPdf, setRenderDownloadPdf] = useState(false);
-  const creditNotePdfRef = useRef<HTMLDivElement | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
+  const lock_account_id = localStorage.getItem("lock_account_id");
+
   useEffect(() => {
-    const fetchSalesOrder = async () => {
+    if (id && baseUrl && token) {
+      fetchCreditNoteDetails();
+    }
+  }, [id, baseUrl, token]);
+
+  const fetchCreditNoteDetails = async () => {
+    try {
       setLoading(true);
-      try {
-        const baseUrl = localStorage.getItem("baseUrl");
-        const token = localStorage.getItem("token");
-        const lock_account_id = localStorage.getItem("lock_account_id");
-        const apiUrl = `https://${baseUrl}/lock_account_credit_notes/${id}.json?lock_account_id=${lock_account_id}&show=true`;
-        const response = await axios.get(apiUrl, {
+      const response = await axios.get(
+        `https://${baseUrl}/lock_accounts/${lock_account_id}/credit_notes/${id}.json`,
+        {
           headers: {
-            Authorization: token ? `Bearer ${token}` : undefined,
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
-        });
-        setSalesOrder(response.data);
-      } catch (error) {
-        sonnerToast.error("Failed to fetch credit note details");
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (id) fetchSalesOrder();
-  }, [id]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading credit note...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!salesOrder) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center text-muted-foreground">
-          Sales order not found.
-        </div>
-      </div>
-    );
-  }
-
-  const selectMenuProps = {
-    PaperProps: {
-      style: {
-        maxHeight: 224,
-        backgroundColor: "white",
-        border: "1px solid #e2e8f0",
-        borderRadius: "8px",
-        boxShadow:
-          "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-        zIndex: 9999,
-      },
-    },
-    disablePortal: true,
-    container: document.body,
-  };
-
-  const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    "& .MuiInputBase-input, & .MuiSelect-select": {
-      padding: { xs: "8px", sm: "10px", md: "12px" },
-    },
-  };
-
-  const getStatusColor = (status: string) => {
-    return "bg-gray-100 text-gray-800 border-gray-200";
+        }
+      );
+      // NOTE: response shape is unconfirmed — handle both a nested { credit_note, line_items }
+      // shape and a flat credit_note object with an embedded line_items array.
+      const data = response.data || {};
+      const note = data.credit_note || data;
+      setCreditNoteData(note);
+      setLineItems(data.line_items || note.line_items || []);
+    } catch (error) {
+      console.error("Error fetching credit note details:", error);
+      sonnerToast.error("Failed to fetch credit note details");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEdit = () => {
-    navigate(`/accounting/sales-order/edit/${id}`);
+    navigate(`/club-management/credit-note/edit/${id}`);
   };
 
   const handleDelete = async () => {
     try {
-      // API call to delete sales order
-      sonnerToast.success("Sales order deleted successfully");
+      setDeleteLoading(true);
+      await axios.delete(
+        `https://${baseUrl}/lock_accounts/${lock_account_id}/credit_notes/${id}.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      sonnerToast.success("Credit note deleted successfully");
       navigate("/club-management/credit-note");
     } catch (error) {
+      console.error("Error deleting credit note:", error);
       sonnerToast.error("Failed to delete credit note");
+    } finally {
+      setDeleteLoading(false);
+      setShowDeleteDialog(false);
     }
   };
 
-  const handlePrint = () => {
-    setActiveTab("pdf");
-    setTimeout(() => window.print(), 0);
-  };
-
-  const handleDownload = async () => {
+  const handleDownloadPdf = async () => {
+    const loadingToast = sonnerToast.loading("Downloading credit note PDF...");
     try {
-      setPdfGenerating(true);
-      setRenderDownloadPdf(true);
-      await new Promise((resolve) => requestAnimationFrame(resolve));
+      const response = await axios.get(
+        `https://${baseUrl}/lock_accounts/${lock_account_id}/credit_notes/${id}/pdf.json`,
+        {
+          params: { access_token: token },
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: "blob",
+        }
+      );
 
-      if (!creditNotePdfRef.current) {
-        throw new Error("PDF preview is not ready yet");
-      }
-
-      const canvas = await html2canvas(creditNotePdfRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        logging: false,
-      });
-
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const imgHeight = (canvas.height * pageWidth) / canvas.width;
-
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
-      pdf.save(`CreditNote-${salesOrder?.credit_note_number || id || "download"}.pdf`);
-      sonnerToast.success("Credit note PDF downloaded successfully");
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `CreditNote-${creditNoteData?.credit_note_number || id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      sonnerToast.success("Credit note PDF downloaded");
     } catch (error) {
-      console.error("Error generating credit note PDF:", error);
+      console.error("Error downloading credit note PDF:", error);
       sonnerToast.error("Failed to download credit note PDF");
     } finally {
-      setPdfGenerating(false);
-      setRenderDownloadPdf(false);
+      sonnerToast.dismiss(loadingToast);
     }
   };
 
-  const handleSendEmail = () => {
-    sonnerToast.success("Email sent successfully");
+  const formatCurrency = (amount) => {
+    const currencySymbol = localStorage.getItem("currencySymbol") || "₹";
+    return `${currencySymbol}${Number(amount || 0).toFixed(2)}`;
   };
 
-  const handleClone = () => {
-    sonnerToast.success("Sales order cloned successfully");
-    navigate("/accounting/sales-order/create");
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-IN");
   };
 
   if (loading) {
@@ -381,45 +154,41 @@ export const CreditNoteClubDetails = () => {
     );
   }
 
-  const taxBreakdown: Record<string, { rate: number; amount: number }> = {};
-  salesOrder?.item_details?.forEach((item) => {
-    if (item.tax_type === "tax_group" && item.tax_group?.tax_rates) {
-      item.tax_group.tax_rates.forEach((tax) => {
-        const taxAmount = (item.total_amount * tax.rate) / 100;
-        if (!taxBreakdown[tax.name]) {
-          taxBreakdown[tax.name] = { rate: tax.rate, amount: 0 };
-        }
-        taxBreakdown[tax.name].amount += taxAmount;
-      });
-    }else if (item.tax_type === "tax_rate" && item.tax_group) {
-      // Non-Maharashtra: tax_group is actually a single tax rate object
-      const rate = item.tax_group.rate ?? 0;
-      const name = item.tax_group.name ?? "Tax";
-      const taxAmount = (item.total_amount * rate) / 100;
-      if (!taxBreakdown[name]) {
-        taxBreakdown[name] = { rate, amount: 0 };
-      }
-      taxBreakdown[name].amount += taxAmount;
-    }
-  });
-  const taxRows = Object.entries(taxBreakdown);
-  const creditNoteItems = Array.isArray(salesOrder?.item_details)
-    ? salesOrder.item_details
-    : [];
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("en-IN");
-  };
-  const formatCurrency = (amount: number) => {
-    const currencySymbol = localStorage.getItem("currencySymbol") || "₹";
-    return `${currencySymbol}${Number(amount || 0).toFixed(2)}`;
-  };
+  if (!creditNoteData) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <p className="text-lg text-muted-foreground">Credit note not found</p>
+          <Button
+            variant="ghost"
+            className="mt-4"
+            onClick={() => navigate("/club-management/credit-note")}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Credit Notes
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Confirmed response names the billed user "customer" (not "user" like bill_bookings)
+  const user = creditNoteData.customer || creditNoteData.user || {};
+
+  // NOTE: response is assumed to mirror the bill_bookings details shape (per-item cgst_rate/sgst_rate,
+  // and a top-level totals object) since credit_notes share the same backend — unconfirmed for this endpoint.
+  const totals = creditNoteData.totals || {};
+  const subTotal = totals.subtotal ?? lineItems.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const totalDiscount = totals.discount ?? (creditNoteData.discount_amount ?? lineItems.reduce((sum, item) => sum + Number(item.discount || 0), 0));
+  const totalGst = (totals.cgst_total ?? 0) + (totals.sgst_total ?? 0)
+    || lineItems.reduce((sum, item) => sum + Number(item.cgst_amount || 0) + Number(item.sgst_amount || 0), 0);
+  const grandTotal = totals.grand_total ?? (creditNoteData.total_amount ?? (subTotal - totalDiscount + totalGst));
 
   return (
     <div className="min-h-screen bg-background p-6">
-      <div className="w-full mx-auto space-y-6 px-2">
+      <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -431,642 +200,188 @@ export const CreditNoteClubDetails = () => {
             <div>
               <h1 className="text-2xl font-bold flex items-center gap-3">
                 <ShoppingCart className="h-6 w-6 text-primary" />
-                Credit Note #{salesOrder?.credit_note_number}
-                {/* Created on {new Date(salesOrder.created_at).toLocaleDateString()} */}
+                Credit Note {creditNoteData.credit_note_number ? `#${creditNoteData.credit_note_number}` : `#${id}`}
               </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Created on{" "}
-                {new Date(salesOrder.created_at).toLocaleDateString("en-IN")}
-              </p>
+              {creditNoteData.created_at && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Created on {formatDate(creditNoteData.created_at)}
+                </p>
+              )}
             </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
-            <Badge className={`${getStatusColor(salesOrder.status)} border`}>
-              {salesOrder.status?.replace(/_/g, " ").toUpperCase()}
-            </Badge>
-
+          {/* <div className="flex items-center gap-2 flex-wrap">
+            {creditNoteData.status && (
+              <Badge className="bg-gray-100 text-gray-800 border-gray-200 border">
+                {String(creditNoteData.status).replace(/_/g, " ").toUpperCase()}
+              </Badge>
+            )}
+            <Button size="sm" variant="outline" onClick={handleEdit} className="gap-2">
+              <Edit className="h-4 w-4" />
+              Edit
+            </Button>
             <Button
               size="sm"
-              variant="outline"
-              onClick={() => setActiveTab("pdf")}
+              variant="destructive"
+              onClick={() => setShowDeleteDialog(true)}
               className="gap-2"
             >
-              <FileText className="h-4 w-4" />
-              PDF
+              <Trash2 className="h-4 w-4" />
+              Delete
             </Button>
-
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => navigate("/accounting/credit-note/template", { state: { recordId: id } })}
-              className="gap-2"
-            >
-              <Settings2 className="h-4 w-4" />
-              Template Edit
-            </Button>
-
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleDownload}
-              disabled={pdfGenerating}
-              className="gap-2"
-            >
-              <Download className="h-4 w-4" />
-              {pdfGenerating ? "Downloading..." : "Download PDF"}
-            </Button>
-          </div>
+          </div> */}
         </div>
 
-        {/* Action Buttons */}
-        {/* <Card>
-                    <CardContent className="p-4">
-                        <div className="flex flex-wrap gap-2">
-                            <Button variant="default" onClick={handleEdit}>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit
-                            </Button>
-                            <Button variant="outline" onClick={handlePrint}>
-                                <Printer className="h-4 w-4 mr-2" />
-                                Print
-                            </Button>
-                            <Button variant="outline" onClick={handleDownload}>
-                                <Download className="h-4 w-4 mr-2" />
-                                Download PDF
-                            </Button>
-                            <Button variant="outline" onClick={handleSendEmail}>
-                                <Send className="h-4 w-4 mr-2" />
-                                Send Email
-                            </Button>
-                            <Button variant="outline" onClick={handleClone}>
-                                <Copy className="h-4 w-4 mr-2" />
-                                Clone
-                            </Button>
-                            <Button variant="outline">
-                                <Share2 className="h-4 w-4 mr-2" />
-                                Share
-                            </Button>
-                            <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card> */}
-
-        {/* Tabs */}
-        <div
-          className="rounded-lg border-r border-b border-gray-200 shadow-sm"
-          style={{
-            borderTop: "none",
-            borderLeft: "none",
-            backgroundColor: "rgba(250, 250, 250, 1)",
-          }}
-        >
-          <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="w-full"
-          >
-            <TabsList
-              className="flex flex-wrap w-full max-w-3xl justify-start"
-            >
-              {[
-                { label: "Credit Note Details", value: "order-details" },
-                { label: "Customer Info", value: "customer-info" },
-                { label: "History", value: "history" },
-                { label: "PDF", value: "pdf" },
-              ].map((tab) => (
-                <TabsTrigger
-                  key={tab.value}
-                  value={tab.value}
-                  className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand"
-                >
-                  {tab.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-
-            {/* Order Details Tab */}
-            <TabsContent
-              value="order-details"
-              className="p-3 sm:p-6 space-y-6"
-              style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
-            >
-              {/* Order Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-primary" />
-                    Credit Note Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Customer Name
-                      </p>
-                      <p className="text-base font-semibold mt-1">
-                        {salesOrder?.customer_name}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Place of Supply
-                      </p>
-                      <p className="text-base font-semibold mt-1">
-                        {salesOrder?.place_of_supply}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Invoice#
-                      </p>
-                      <p className="text-base font-semibold mt-1">
-                        {salesOrder?.invoice_number || "-"}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Invoice Type
-                      </p>
-                      <p className="text-base font-semibold mt-1">
-                        {salesOrder?.invoice_type}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Reason
-                      </p>
-                      <p className="text-base font-semibold mt-1">
-                        {salesOrder?.reason}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Credit Note Number
-                      </p>
-                      <p className="text-base font-semibold mt-1">
-                        {salesOrder?.credit_note_number}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Reference
-                      </p>
-                      <p className="text-base font-semibold mt-1">
-                        {salesOrder?.reference_number}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Credit Note Date
-                      </p>
-                      <p className="text-base font-semibold mt-1">
-                        {/* {new Date(salesOrder?.date).toLocaleDateString("en-IN") || "-"} */}
-                        {salesOrder?.date
-                          ? new Date(salesOrder.date).toLocaleDateString("en-IN")
-                          : "-"}
-                      </p>
-                    </div>
-                    {/* <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Due Date
-                      </p>
-                      <p className="text-base font-semibold mt-1">
-                        {new Date(salesOrder?.due_date).toLocaleDateString(
-                          "en-IN"
-                        )}
-                      </p>
-                    </div> */}
-                    {/* <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Payment Terms</p>
-                                        <p className="text-base font-semibold mt-1">{salesOrder?.payment_term}</p>
-                                    </div> */}
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Salesperson
-                      </p>
-                      <p className="text-base font-semibold mt-1">
-                        {salesOrder?.sales_person_name || "-"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Subject
-                      </p>
-                      <p className="text-base font-semibold mt-1">
-                        {salesOrder?.subject}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Items Table */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Package className="h-5 w-5 text-primary" />
-                    Item Table
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="border border-border rounded-lg overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-muted/50">
-                          <TableHead>Item Details</TableHead>
-                          <TableHead className="text-right">Account</TableHead>
-                          <TableHead className="text-right">Quantity</TableHead>
-                          <TableHead className="text-right">Rate</TableHead>
-                          <TableHead className="text-right">Tax</TableHead>
-                          <TableHead className="text-right">Amount</TableHead>
-                        </TableRow>
-                      </TableHeader>
-
-                      <TableBody>
-                        {salesOrder?.item_details?.map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell>
-                              <div>
-                                <p className="font-semibold">
-                                  {item.item_name}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  {item.description}
-                                </p>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {item.account || "-"}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {item.quantity} {item.item_unit}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              ₹{Number(item.rate).toFixed(2)}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {(item.tax_type === "tax_group" || item.tax_type === "tax_rate")
-                              
-                              // item.tax_type === "tax_group" 
-                                ? item.tax_group?.name
-                                : item.tax_type === "non_taxable"
-                                  ? "Non Taxable"
-                                  : item.tax_type === "out_of_scope"
-                                    ? "Out of Scope"
-                                    : item.tax_type === "non_gst_supply"
-                                      ? "Non GST Supply"
-                                      : "-"}
-                            </TableCell>
-                            <TableCell className="text-right font-semibold">
-                              ₹{Number(item.total_amount).toFixed(2)}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-
-                  {/* Pricing Summary */}
-                  <div className="mt-6 flex justify-end">
-                    <div className="w-full max-w-md space-y-3 bg-muted/30 p-4 rounded-lg">
-                      <div className="flex justify-between items-center py-2">
-                        <span className="text-sm font-medium text-muted-foreground">
-                          Sub Total
-                        </span>
-                        <span className="font-semibold text-base">
-                          ₹{salesOrder?.sub_total_amount?.toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center py-2">
-                        <span className="text-sm font-medium text-muted-foreground">
-                          Discount ({salesOrder?.discount_per}%)
-                        </span>
-                        <span className="font-semibold text-base text-red-600">
-                          -₹{salesOrder?.discount_amount?.toFixed(2)}
-                        </span>
-                      </div>
-                      {taxRows.map(([name, tax], index) => (
-                        <div
-                          key={index}
-                          className="flex justify-between items-center py-2"
-                        >
-                          <span className="text-sm font-medium text-muted-foreground">
-                            {name} ({tax.rate}%)
-                          </span>
-                          <span className="font-semibold text-base">
-                            ₹{tax.amount.toFixed(2)}
-                          </span>
-                        </div>
-                      ))}
-                      <div className="flex justify-between items-center py-2">
-                        <span className="text-sm font-medium text-muted-foreground">
-                          {salesOrder?.tax_type?.toUpperCase()}
-                        </span>
-                        <span className="font-semibold text-base text-red-600">
-                          -₹{salesOrder?.lock_account_tax_amount?.toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center py-2">
-                        <span className="text-sm font-medium text-muted-foreground">
-                          {salesOrder?.charge_name || "Adjustment"}
-                        </span>
-                        <span className="font-semibold text-base">
-                          ₹{salesOrder?.charge_amount?.toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
-                        <span className="font-bold text-base">Total ( ₹ )</span>
-                        <span className="font-bold text-primary text-2xl">
-                          ₹{salesOrder?.total_amount?.toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Notes and Terms */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {salesOrder.customerNotes && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base"> Notes</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground">
-                        {salesOrder.customerNotes}
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {salesOrder.termsAndConditions && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">
-                        Terms & Conditions
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground">
-                        {salesOrder.termsAndConditions}
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
+        {/* Credit Note Information — mirrors the credit_note fields sent on creation */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              Credit Note Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Credit Note Number</p>
+                <p className="text-base font-semibold mt-1">{creditNoteData.credit_note_number || "N/A"}</p>
               </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">User</p>
+                <p className="text-base font-semibold mt-1">
+                  {user.name || creditNoteData.user_name || "N/A"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Reference Number</p>
+                <p className="text-base font-semibold mt-1">{creditNoteData.reference_number || "N/A"}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Credit Note Date</p>
+                <p className="text-base font-semibold mt-1">{formatDate(creditNoteData.date)}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Reason</p>
+                <p className="text-base font-semibold mt-1">{creditNoteData.reason || "-"}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Place of Supply</p>
+                <p className="text-base font-semibold mt-1">{creditNoteData.place_of_supply || "N/A"}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Linked Invoice</p>
+                <p className="text-base font-semibold mt-1">
+                  {creditNoteData.invoice_number || creditNoteData.lock_account_invoice_id || "N/A"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Status</p>
+                <p className="text-base font-semibold mt-1">
+                  {creditNoteData.status ? String(creditNoteData.status).replace(/_/g, " ").toUpperCase() : "N/A"}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-              {/* Attachments */}
-              {salesOrder.attachments && salesOrder.attachments.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Attachments</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {salesOrder.attachments.map(
-                        (file: SalesOrderAttachment, index: number) => (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
-                          >
-                            <div className="flex items-center gap-3">
-                              <FileText className="h-5 w-5 text-muted-foreground" />
-                              <div>
-                                <p className="text-sm font-medium">
-                                  {file?.document_file_name}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {(file?.document_file_size / 1024).toFixed(2)}{" "}
-                                  KB
-                                </p>
-                              </div>
-                            </div>
-                            <Button variant="ghost" size="sm">
-                              <Download className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )
-                      )}
+        {/* Line Items — mirrors the line_items array sent on creation */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-primary" />
+              Line Items
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {lineItems.length > 0 ? (
+              <>
+                <div className="border border-border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50">
+                        <TableHead>Type</TableHead>
+                        <TableHead>Item</TableHead>
+                        <TableHead className="text-right">Quantity</TableHead>
+                        <TableHead className="text-right">Rate</TableHead>
+                        {/* <TableHead className="text-right">Discount</TableHead> */}
+                        <TableHead className="text-right">GST</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {lineItems.map((item, index) => (
+                        <TableRow key={index}>
+                          <TableCell>
+                            {LINE_ITEM_TYPE_LABELS[item.line_item_type] || item.line_item_type || "N/A"}
+                          </TableCell>
+                          <TableCell className="font-semibold">{item.name || "N/A"}</TableCell>
+                          <TableCell className="text-right">{item.quantity ?? 0}</TableCell>
+                          <TableCell className="text-right">{formatCurrency(item.rate)}</TableCell>
+                          {/* <TableCell className="text-right">{formatCurrency(item.discount)}</TableCell> */}
+                          <TableCell className="text-right">
+                            {(() => {
+                              const gstRate = Number(item.cgst_rate || 0) + Number(item.sgst_rate || 0) || Number(item.gst_rate || 0);
+                              const gstAmount = Number(item.cgst_amount || 0) + Number(item.sgst_amount || 0);
+                              return gstRate ? `${gstRate}%${gstAmount ? ` (${formatCurrency(gstAmount)})` : ''}` : "-";
+                            })()}
+                          </TableCell>
+                          <TableCell className="text-right font-semibold">
+                            {formatCurrency(item.total_amount ?? item.amount)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                <div className="mt-6 flex justify-end">
+                  <div className="w-full max-w-md space-y-3 bg-muted/30 p-4 rounded-lg">
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-sm font-medium text-muted-foreground">Sub Total</span>
+                      <span className="font-semibold text-base">{formatCurrency(subTotal)}</span>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-
-            {/* Customer Info Tab */}
-            <TabsContent
-              value="customer-info"
-              className="p-3 sm:p-6 space-y-6"
-              style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
-            >
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5 text-primary" />
-                    Customer Details
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Customer Name
-                    </p>
-                    <p className="text-base font-semibold mt-1">
-                      {salesOrder?.customer_name}
-                    </p>
-                  </div>
-                  <div>
-                    {/* <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                                        <Mail className="h-4 w-4" />
-                                        Email
-                                    </p> */}
-                    {/* <p className="text-base mt-1">{salesOrder.customer.email}</p> */}
-                  </div>
-                  <div>
-                    {/* <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                                        <Phone className="h-4 w-4" />
-                                        Phone
-                                    </p> */}
-                    {/* <p className="text-base mt-1">{salesOrder.customer.phone}</p> */}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                      {/* <Phone className="h-4 w-4" /> */}
-                      Notes
-                    </p>
-                    <p className="text-base mt-1">
-                      {salesOrder?.customer_notes || "-"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                      <Phone className="h-4 w-4" />
-                      Terms and Conditions
-                    </p>
-                    <p className="text-base mt-1">
-                      {salesOrder?.terms_and_conditions || "-"}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-base flex items-center gap-2">
-                                        <MapPin className="h-4 w-4 text-primary" />
-                                        Billing Address
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-sm text-muted-foreground">{salesOrder.customer.billingAddress}</p>
-                                </CardContent>
-                            </Card>
-
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-base flex items-center gap-2">
-                                        <MapPin className="h-4 w-4 text-primary" />
-                                        Shipping Address
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-sm text-muted-foreground">{salesOrder.customer.shippingAddress}</p>
-                                </CardContent>
-                            </Card>
-                        </div> */}
-            </TabsContent>
-
-            {/* History Tab */}
-            <TabsContent
-              value="history"
-              className="p-3 sm:p-6 space-y-6"
-              style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
-            >
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-primary" />
-                    Credit Note History
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex gap-4 pb-4 border-b">
-                      <div className="flex-shrink-0">
-                        <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
-                      </div>
-                      <div className="flex-grow">
-                        <p className="font-medium">Credit Note Created</p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(salesOrder?.created_at).toLocaleString(
-                            "en-IN"
-                          )}
-                        </p>
-                      </div>
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-sm font-medium text-muted-foreground">Discount</span>
+                      <span className="font-semibold text-base text-red-600">
+                        -{formatCurrency(totalDiscount)}
+                      </span>
                     </div>
-                    <div className="flex gap-4 pb-4 border-b">
-                      <div className="flex-shrink-0">
-                        <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
-                      </div>
-                      <div className="flex-grow">
-                        <p className="font-medium">Credit Note Updated</p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(salesOrder?.updated_at).toLocaleString(
-                            "en-IN"
-                          )}
-                        </p>
-                      </div>
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-sm font-medium text-muted-foreground">GST</span>
+                      <span className="font-semibold text-base">{formatCurrency(totalGst)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
+                      <span className="font-bold text-base">Total</span>
+                      <span className="font-bold text-primary text-2xl">{formatCurrency(grandTotal)}</span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+                </div>
+              </>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">No items found</p>
+            )}
+          </CardContent>
+        </Card>
 
-            <TabsContent
-              value="pdf"
-              className="p-3 sm:p-6 space-y-6"
-              style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
-            >
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between gap-3 flex-wrap">
-                    <CardTitle className="flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-primary" />
-                      Credit Note PDF
-                    </CardTitle>
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={handlePrint}>
-                        <Printer className="h-4 w-4 mr-2" />
-                        Print
-                      </Button>
-                      <Button size="sm" onClick={handleDownload} disabled={pdfGenerating}>
-                        <Download className="h-4 w-4 mr-2" />
-                        {pdfGenerating ? "Downloading..." : "Download PDF"}
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="overflow-auto rounded-lg border bg-muted/30 p-4">
-                    <div className="mx-auto bg-white" ref={activeTab === "pdf" ? creditNotePdfRef : null}>
-                      <AccountingDocumentPdf
-                        documentTitle="CREDIT NOTE"
-                        documentType="credit_note"
-                        documentNumber={salesOrder.credit_note_number}
-                        documentDate={salesOrder.date || salesOrder.credit_note_date}
-                        status={salesOrder.status}
-                        customerName={salesOrder.customer_name}
-                        items={creditNoteItems}
-                        data={salesOrder}
-                        taxRows={taxRows}
-                        formatDate={formatDate}
-                        formatCurrency={formatCurrency}
-                        secondaryDateLabel="Invoice Date"
-                        secondaryDate={(salesOrder as any).invoice_date}
-                        referenceNumber={salesOrder.reference_number || salesOrder.invoice_number}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
+        {/* Attachments */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Paperclip className="h-5 w-5 text-primary" />
+              Attachments
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
+              <FileText className="h-5 w-5 text-muted-foreground" />
+              <p className="text-sm font-medium">Credit Note PDF</p>
+              <Button variant="ghost" size="sm" onClick={handleDownloadPdf}>
+                <Download className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-
-      {renderDownloadPdf && activeTab !== "pdf" && (
-        <div className="fixed left-[-10000px] top-0">
-          <div ref={creditNotePdfRef}>
-            <AccountingDocumentPdf
-              documentTitle="CREDIT NOTE"
-              documentType="credit_note"
-              documentNumber={salesOrder.credit_note_number}
-              documentDate={salesOrder.date || salesOrder.credit_note_date}
-              status={salesOrder.status}
-              customerName={salesOrder.customer_name}
-              items={creditNoteItems}
-              data={salesOrder}
-              taxRows={taxRows}
-              formatDate={formatDate}
-              formatCurrency={formatCurrency}
-              secondaryDateLabel="Invoice Date"
-              secondaryDate={(salesOrder as any).invoice_date}
-              referenceNumber={salesOrder.reference_number || salesOrder.invoice_number}
-            />
-          </div>
-        </div>
-      )}
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
@@ -1074,20 +389,15 @@ export const CreditNoteClubDetails = () => {
           <DialogHeader>
             <DialogTitle>Delete Credit Note</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this credit note? This action
-              cannot be undone.
+              Are you sure you want to delete this credit note? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-3 justify-end mt-4">
-            <Button
-              variant="outline"
-              className="fm-button-fix"
-              onClick={() => setShowDeleteDialog(false)}
-            >
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={deleteLoading}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              Delete
+            <Button className="btn-delete-confirm" onClick={handleDelete} disabled={deleteLoading}>
+              {deleteLoading ? "Deleting..." : "Delete"}
             </Button>
           </div>
         </DialogContent>

@@ -28,14 +28,14 @@ function getMsafeBaseUrl(): string {
 }
 
 /** Circle Manager filter bar values, applied as query params once the user clicks Apply.
- *  Only sent for the 'circle' persona — the admin (pan-India) view stays unfiltered. */
+ *  Pan India now uses the exact same filter bar as Circle Manager, so every field applies
+ *  the same way regardless of persona. */
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
-  if (persona !== 'circle') return {};
   const params: Record<string, string> = {};
   if (f.circleId) params.circle_id = f.circleId;
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
-  if (f.empTypeId) params.employee_type_id = f.empTypeId;
+  if (f.empTypeId) params.employee_type = f.empTypeId;
   if (f.startDate) params.from_date = f.startDate;
   if (f.endDate) params.to_date = f.endDate;
   return params;

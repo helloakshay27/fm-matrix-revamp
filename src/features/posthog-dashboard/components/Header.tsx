@@ -1,7 +1,10 @@
+import { useState, useEffect } from 'react';
 import { useDashboard } from '../context/DashboardContext';
 import type { Tier } from '../data/constants';
 import { Menu, ArrowLeft, Moon, Sun } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
+import { getUser } from '@/utils/auth';
+import { useNavigate } from 'react-router-dom';
 
 const TIER_OPTIONS: { value: Tier; label: string; hint: string }[] = [
   { value: 't1', label: 'Site Manager', hint: 'One or more sites' },
@@ -10,18 +13,51 @@ const TIER_OPTIONS: { value: Tier; label: string; hint: string }[] = [
 ];
 
 export function Header() {
+  const navigate = useNavigate();
   const { vm, setTier, setTheme, setNavCollapsed } = useDashboard();
   const { state } = vm;
-  const { user } = useAuthStore();
+  const { user: storeUser } = useAuthStore();
+  const [currentUser, setCurrentUser] = useState(() => getUser());
+
+  useEffect(() => {
+    setCurrentUser(getUser());
+  }, []);
+
+  const getDisplayName = (): string => {
+    if (currentUser) {
+      const full = `${currentUser.firstname || ''} ${currentUser.lastname || ''}`.trim();
+      if (full) return full;
+      if ((currentUser as any).name) return (currentUser as any).name;
+      if (currentUser.email) return currentUser.email.split('@')[0];
+    }
+    if (storeUser?.name) return storeUser.name;
+    if (storeUser?.email) return storeUser.email.split('@')[0];
+
+    try {
+      const stored = localStorage.getItem('user');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const full = `${parsed.firstname || ''} ${parsed.lastname || ''}`.trim();
+        if (full) return full;
+        if (parsed.name) return parsed.name;
+        if (parsed.email) return parsed.email.split('@')[0];
+      }
+    } catch {
+      // ignore
+    }
+    return '';
+  };
+
+  const displayName = getDisplayName();
 
   const getInitials = (name?: string) => {
-    if (!name) return 'PS';
-    const parts = name.trim().split(' ');
+    if (!name || !name.trim()) return 'U';
+    const parts = name.trim().split(/\s+/);
     if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
-  const initials = getInitials(user?.name);
+  const initials = getInitials(displayName);
 
   const tierAvailable = (t: Tier) => t === 't1' || t === 't3';
 
@@ -35,7 +71,7 @@ export function Header() {
       >
         <Menu size={17} />
       </button>
-      <button className="back" aria-label="Back">
+      <button className="back" aria-label="Back" onClick={() => navigate(-1)}>
         <ArrowLeft size={17} />
       </button>
       <span className="topbar-title">Adoption Analytics</span>
@@ -76,7 +112,7 @@ export function Header() {
         <span className="badge-sample">Wireframe · sample data</span>
       )}
       
-      <div className="avatar" title={user?.name || 'Guest'}>{initials}</div>
+      <div className="avatar" title={displayName || 'User'}>{initials}</div>
     </header>
   );
 }

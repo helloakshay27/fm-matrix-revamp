@@ -213,36 +213,38 @@ export function HeatmapSection() {
   const [growthData, setGrowthData] = useState<GrowthRow[]>([]);
   const [growthLoading, setGrowthLoading] = useState(true);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    setHeatmapLoading(true);
-    (async () => {
-      try {
-        const payload = await fetchMsafeUserDashboardJson(
-          'compliance_by_circle.json',
-          {
-            page: String(heatmapPage),
-            current_page: String(heatmapPage),
-            ...buildFilterParams(persona, appliedFilters),
-          },
-          controller.signal,
-        );
-        if (!controller.signal.aborted) {
-          setHeatmapData(normalizeComplianceByCircle(payload));
-          setHeatmapPagination(extractPagination(payload));
-        }
-      } catch (err) {
-        if ((err as Error).name !== 'AbortError') console.warn('M-Safe compliance-by-circle API failed.', err);
-      } finally {
-        if (!controller.signal.aborted) setHeatmapLoading(false);
-      }
-    })();
-    return () => controller.abort();
-  }, [appliedFilters, persona, heatmapPage]);
+  // "Compliance by Circle × Module" table is hidden (see JSX below) — API call
+  // commented out so it's not fetched.
+  // useEffect(() => {
+  //   const controller = new AbortController();
+  //   setHeatmapLoading(true);
+  //   (async () => {
+  //     try {
+  //       const payload = await fetchMsafeUserDashboardJson(
+  //         'compliance_by_circle.json',
+  //         {
+  //           page: String(heatmapPage),
+  //           current_page: String(heatmapPage),
+  //           ...buildFilterParams(persona, appliedFilters),
+  //         },
+  //         controller.signal,
+  //       );
+  //       if (!controller.signal.aborted) {
+  //         setHeatmapData(normalizeComplianceByCircle(payload));
+  //         setHeatmapPagination(extractPagination(payload));
+  //       }
+  //     } catch (err) {
+  //       if ((err as Error).name !== 'AbortError') console.warn('M-Safe compliance-by-circle API failed.', err);
+  //     } finally {
+  //       if (!controller.signal.aborted) setHeatmapLoading(false);
+  //     }
+  //   })();
+  //   return () => controller.abort();
+  // }, [appliedFilters, persona, heatmapPage]);
 
-  useEffect(() => {
-    setHeatmapPage(1);
-  }, [appliedFilters, persona]);
+  // useEffect(() => {
+  //   setHeatmapPage(1);
+  // }, [appliedFilters, persona]);
 
   // "Circles That Need Growth in Performance" table is hidden (see JSX below) — API call
   // (type=growth) commented out so it's not fetched.
@@ -266,122 +268,8 @@ export function HeatmapSection() {
   //   return () => controller.abort();
   // }, [appliedFilters]);
 
-  return (
-    <div className="sec" id="sec-heatmap">
-      <div className="sec-hd">
-        <div className="sec-lbl">Circle-wise Compliance Heatmap</div>
-        <div className="sec-line" />
-      </div>
-
-      <div className="g g-3-2">
-        <ChartCard
-          title="Compliance by Circle × Module"
-          sub="% cleared per module · click a cell to drill into that circle-module combo"
-          infoKey="heatmap"
-        >
-          {heatmapLoading || heatmapData.length === 0 ? (
-            <DataState loading={heatmapLoading} empty={heatmapData.length === 0} label="compliance data" />
-          ) : (
-            <div className="hm-wrap">
-              <div className="hm-hd">
-                <div>Circle</div>
-                {MODULE_LABELS.map((label) => (
-                  <div key={label}>{label}</div>
-                ))}
-              </div>
-              {heatmapData.map((r) => (
-                <div key={r.circle} className="hm-row">
-                  <div className="hm-label">{r.circle}</div>
-                  {r.values.map((v, i) => (
-                    <div
-                      key={i}
-                      className={`hm-cell ${heatmapClass(v)}`}
-                      onClick={() => openDrill('circle-underperform', r.circle)}
-                      role="button"
-                      tabIndex={0}
-                    >
-                      {v}%
-                    </div>
-                  ))}
-                </div>
-              ))}
-              <div className="hm-scale">
-                <span>Compliance</span>
-                <div className="hm-scale-block">
-                  <span className="c1" style={{ background: 'rgba(238,39,55,.28)' }} title="<70%" />
-                  <span className="c2" style={{ background: 'rgba(237,196,136,.35)' }} title="70–85%" />
-                  <span className="c3" style={{ background: 'rgba(158,200,186,.35)' }} title="85–95%" />
-                  <span className="c4" style={{ background: 'rgba(16,140,114,.22)' }} title=">95%" />
-                </div>
-                <span>&lt;70% → &gt;95%</span>
-              </div>
-            </div>
-          )}
-
-          {!heatmapLoading && heatmapData.length > 0 && heatmapPagination && heatmapPagination.totalPages > 1 ? (
-            <div className="tbl-pagination">
-              <span>
-                {heatmapData.length.toLocaleString()} on this page ·{' '}
-                {heatmapPagination.totalEntries.toLocaleString()} circles total
-              </span>
-              <div className="pg-controls">
-                <button
-                  type="button"
-                  className="pg-btn"
-                  disabled={heatmapPage === 1 || heatmapLoading}
-                  onClick={() => setHeatmapPage((p) => Math.max(1, p - 1))}
-                >
-                  Prev
-                </button>
-                <span className="pg-page">
-                  {heatmapPagination.currentPage} / {heatmapPagination.totalPages}
-                </span>
-                <button
-                  type="button"
-                  className="pg-btn"
-                  disabled={heatmapPage === heatmapPagination.totalPages || heatmapLoading}
-                  onClick={() => setHeatmapPage((p) => Math.min(heatmapPagination.totalPages, p + 1))}
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          ) : null}
-        </ChartCard>
-
-        {/* "Circles That Need Growth in Performance" hidden — kept for reference, API call above is also commented out.
-        <ChartCard
-          title="Circles That Need Growth in Performance"
-          sub="Weighted compliance score across all modules · ranked by opportunity to improve"
-          infoKey="priority-circles"
-          tag={
-            <span
-              className="card-tag"
-              style={{
-                background: 'rgba(237,196,136,.20)',
-                color: '#8A5A00',
-                borderColor: 'rgba(237,196,136,.40)',
-              }}
-            >
-              Support Focus
-            </span>
-          }
-        >
-          {growthLoading || growthData.length === 0 ? (
-            <DataState loading={growthLoading} empty={growthData.length === 0} label="growth data" />
-          ) : (
-            <Leaderboard
-              items={growthData.map((c) => ({
-                name: c.name,
-                meta: c.note,
-                value: `${c.score}%`,
-                onClick: () => openDrill('circle-underperform', c.name),
-              }))}
-            />
-          )}
-        </ChartCard>
-        */}
-      </div>
-    </div>
-  );
+  // Whole section hidden — both "Compliance by Circle × Module" and "Circles
+  // That Need Growth in Performance" (the two cards previously here) are
+  // hidden with their API calls commented out above, so nothing renders.
+  return null;
 }

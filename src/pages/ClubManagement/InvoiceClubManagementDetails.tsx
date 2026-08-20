@@ -221,7 +221,9 @@ export const InvoiceClubManagementDetails = () => {
 
     const totals = invoiceData.totals || {};
     const subTotal = totals.subtotal ?? lineItems.reduce((sum, item) => sum + Number(item.amount || 0), 0);
-    const totalDiscount = totals.discount ?? lineItems.reduce((sum, item) => sum + Number(item.discount || 0), 0);
+    // invoiceData.discount_amount (the invoice-level discount actually saved) takes priority over
+    // totals.discount, which the API can return as 0 even when a real discount_amount exists.
+    const totalDiscount = Number(invoiceData.discount_amount) || Number(totals.discount) || lineItems.reduce((sum, item) => sum + Number(item.discount || 0), 0);
     const totalCgst = totals.cgst_total ?? lineItems.reduce((sum, item) => sum + Number(item.cgst_amount || 0), 0);
     const totalSgst = totals.sgst_total ?? lineItems.reduce((sum, item) => sum + Number(item.sgst_amount || 0), 0);
     const grandTotal = totals.grand_total ?? (invoiceData.total_amount || 0);
@@ -465,7 +467,7 @@ export const InvoiceClubManagementDetails = () => {
                                                 <TableHead>Item</TableHead>
                                                 <TableHead className="text-right">Quantity</TableHead>
                                                 <TableHead className="text-right">Rate</TableHead>
-                                                <TableHead className="text-right">Discount</TableHead>
+                                                {/* <TableHead className="text-right">Discount</TableHead> */}
                                                 <TableHead className="text-right">GST</TableHead>
                                                 <TableHead className="text-right">Amount</TableHead>
                                             </TableRow>
@@ -479,7 +481,7 @@ export const InvoiceClubManagementDetails = () => {
                                                     <TableCell className="font-semibold">{item.name || "N/A"}</TableCell>
                                                     <TableCell className="text-right">{item.quantity ?? 0}</TableCell>
                                                     <TableCell className="text-right">{formatCurrency(item.rate)}</TableCell>
-                                                    <TableCell className="text-right">{formatCurrency(item.discount)}</TableCell>
+                                                    {/* <TableCell className="text-right">{formatCurrency(item.discount)}</TableCell> */}
                                                     <TableCell className="text-right">
                                                         {(() => {
                                                             const gstRate = Number(item.cgst_rate || 0) + Number(item.sgst_rate || 0);
@@ -503,7 +505,9 @@ export const InvoiceClubManagementDetails = () => {
                                             <span className="font-semibold text-base">{formatCurrency(subTotal)}</span>
                                         </div>
                                         <div className="flex justify-between items-center py-2">
-                                            <span className="text-sm font-medium text-muted-foreground">Discount</span>
+                                            <span className="text-sm font-medium text-muted-foreground">
+                                                Discount{invoiceData.discount_per ? ` (${invoiceData.discount_per}%)` : ""}
+                                            </span>
                                             <span className="font-semibold text-base text-red-600">
                                                 -{formatCurrency(totalDiscount)}
                                             </span>
@@ -512,20 +516,23 @@ export const InvoiceClubManagementDetails = () => {
                                             <span className="text-sm font-medium text-muted-foreground">GST</span>
                                             <span className="font-semibold text-base">{formatCurrency(totalCgst + totalSgst)}</span>
                                         </div>
-                                        <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
+                                        {/* <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
                                             <span className="font-bold text-base">Grand Total</span>
                                             <span className="font-bold text-primary text-2xl">{formatCurrency(grandTotal)}</span>
-                                        </div>
+                                        </div> */}
                                         <div className="flex justify-between items-center py-2 border-t pt-3">
-                                            <span className="text-sm font-medium text-muted-foreground">Paid Amount</span>
-                                            <span className="font-semibold text-base">{formatCurrency(invoiceData.paid_amount)}</span>
+
+                                             <span className="font-bold text-base">Grand Total</span>
+                                            <span className="font-bold text-primary text-2xl">{formatCurrency(grandTotal)}</span>
+                                            {/* <span className="text-sm font-medium text-muted-foreground">Paid Amount</span>
+                                            <span className="font-semibold text-base">{formatCurrency(invoiceData.paid_amount)}</span> */}
                                         </div>
-                                        <div className="flex justify-between items-center py-2">
+                                        {/* <div className="flex justify-between items-center py-2">
                                             <span className="text-sm font-medium text-muted-foreground">Balance Due</span>
                                             <span className="font-semibold text-base text-red-600">
                                                 {formatCurrency(invoiceData.balance_due)}
                                             </span>
-                                        </div>
+                                        </div> */}
                                     </div>
                                 </div>
                             </>

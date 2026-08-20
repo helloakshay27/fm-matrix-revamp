@@ -1671,7 +1671,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
         .forEach(item => {
             const rateValue = Number(item.tax_group_id) || 0;
             const taxAmount = (item.amount * rateValue) / 100;
-            const name = `GST (${rateValue}%)`;
+            const name = `GST ${rateValue}%`;
             const existing = taxBreakdown.find(t => t.name === name);
             if (existing) existing.amount += taxAmount;
             else taxBreakdown.push({ name, rate: rateValue, amount: taxAmount });
@@ -1725,7 +1725,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
 
             <div className="space-y-6">
                 {/* Customer Section */}
-                <Section title="Guest & Member Information" icon={<Package className="w-5 h-5" />}>
+                <Section title="Invoice Information" icon={<Package className="w-5 h-5" />}>
                     <div className="space-y-6">
                         <div>
                             <RadioGroup
@@ -2177,7 +2177,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                                         );
                                     })()}
 
-                                    <TextField
+                                    {/* <TextField
                                         fullWidth
                                         label="Description"
                                         size="small"
@@ -2186,7 +2186,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                                         onChange={(e) => updateItem(index, 'description', e.target.value)}
                                         sx={{ mt: 2 }}
                                         InputLabelProps={{ shrink: true }}
-                                    />
+                                    /> */}
                                 </td>
                                 <td className="px-4 py-3">
                                     <TextField

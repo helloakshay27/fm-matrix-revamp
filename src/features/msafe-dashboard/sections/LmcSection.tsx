@@ -34,9 +34,9 @@ function getMsafeBaseUrl(): string {
 }
 
 /** Circle Manager filter bar values, applied as query params once the user clicks Apply.
- *  Only sent for the 'circle' persona — the admin (pan-India) view stays unfiltered. */
+ *  Pan India now uses the exact same filter bar as Circle Manager, so every field applies
+ *  the same way regardless of persona. */
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
-  if (persona !== 'circle') return {};
   const params: Record<string, string> = {};
   if (f.circleId) params.circle_id = f.circleId;
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
@@ -101,19 +101,37 @@ function getString(record: Record<string, unknown>, keys: string[]): string | nu
   return null;
 }
 
-function normalizeDailyVolume(payload: unknown): DailyRow[] {
+// Raw per-record shape from the API: one row per (date, circle) combination,
+// e.g. { circle_name, date, volume }. Kept separate from the aggregated chart
+// data so the "table" view can show the full circle-wise breakdown.
+type DailyCircleRow = { date: string; circle: string; volume: number };
+
+function normalizeDailyVolumeByCircle(payload: unknown): DailyCircleRow[] {
   const list = unwrapList(payload, ['data', 'result', 'daily', 'days', 'records']);
   return list
     .map((item) => {
       if (!item || typeof item !== 'object') return null;
       const record = item as Record<string, unknown>;
-      const d = getString(record, ['day', 'date', 'day_label', 'd', 'label', 'name']);
-      if (!d) return null;
-      const n = getNumber(record, ['volume', 'count', 'value', 'n', 'total', 'lmc_count', 'sign_offs']);
-      if (n === null) return null;
-      return { d, n };
+      const date = getString(record, ['date', 'day', 'day_label', 'd', 'label', 'name']);
+      if (!date) return null;
+      const volume = getNumber(record, ['volume', 'count', 'value', 'n', 'total', 'lmc_count', 'sign_offs']);
+      if (volume === null) return null;
+      const circle = getString(record, ['circle_name', 'circle']) ?? '—';
+      return { date, circle, volume };
     })
-    .filter((item): item is DailyRow => Boolean(item));
+    .filter((item): item is DailyCircleRow => Boolean(item));
+}
+
+// The API returns one row per (date, circle) — the line/bar chart needs one
+// point per day, so volumes are summed across every circle for that date.
+function normalizeDailyVolume(rows: DailyCircleRow[]): DailyRow[] {
+  const totals = new Map<string, number>();
+  const order: string[] = [];
+  for (const row of rows) {
+    if (!totals.has(row.date)) order.push(row.date);
+    totals.set(row.date, (totals.get(row.date) ?? 0) + row.volume);
+  }
+  return order.map((d) => ({ d, n: totals.get(d) ?? 0 }));
 }
 
 function colorForWeekPct(pct: number): string {
@@ -128,7 +146,12 @@ function normalizeWeeklyCompletion(payload: unknown): WeekRow[] {
     .map((item) => {
       if (!item || typeof item !== 'object') return null;
       const record = item as Record<string, unknown>;
-      const label = getString(record, ['day_name', 'day', 'label', 'date']);
+      // The response spans more than a single week, so multiple rows can share
+      // the same day name (e.g. three "Thursday"s) — combine day name + date so
+      // each row's label is unique instead of colliding on just the day name.
+      const dayName = getString(record, ['day_name', 'day']);
+      const date = getString(record, ['date']);
+      const label = dayName && date ? `${dayName} · ${date}` : dayName ?? date ?? getString(record, ['label']);
       if (!label) return null;
       const actual = getNumber(record, [
         'actual_lmc_completion',
@@ -203,7 +226,49 @@ function colorForStatusLabel(label: string): string {
   return C.err;
 }
 
+function humanizeStatusKey(key: string): string {
+  return key
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+// The API returns a flat object of status → count under `data`, e.g.
+// { data: { completed: 46520, pending: 436 } } — the set of statuses is
+// whatever keys the response has, not a fixed list, so build rows dynamically
+// from those keys instead of assuming "completed"/"pending".
 function normalizeLmcStatus(payload: unknown): WeekRow[] {
+  const source =
+    payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : null;
+  const statusObj =
+    source && typeof source.data === 'object' && source.data !== null && !Array.isArray(source.data)
+      ? (source.data as Record<string, unknown>)
+      : source && !Array.isArray(source)
+        ? source
+        : null;
+
+  if (statusObj) {
+    const rows = Object.entries(statusObj)
+      .map(([key, raw]) => {
+        const count =
+          typeof raw === 'number' && Number.isFinite(raw)
+            ? raw
+            : typeof raw === 'string' && raw.trim() && Number.isFinite(Number(raw))
+              ? Number(raw)
+              : null;
+        if (count === null) return null;
+        return { label: humanizeStatusKey(key), count, color: colorForStatusLabel(key) };
+      })
+      .filter((item): item is { label: string; count: number; color: string } => Boolean(item));
+
+    const total = rows.reduce((sum, r) => sum + r.count, 0) || 1;
+    return rows.map((r) => ({
+      label: r.label,
+      val: r.count.toLocaleString('en-IN'),
+      pct: Math.round((r.count / total) * 100),
+      color: r.color,
+    }));
+  }
+
   const list = unwrapList(payload, ['data', 'result', 'status', 'statuses']);
   const rows = list
     .map((item) => {
@@ -260,6 +325,7 @@ export function LmcSection() {
   const [funcMode, setFuncMode] = useState('donut');
   const [trendMode, setTrendMode] = useState('line');
   const [dailyData, setDailyData] = useState<DailyRow[]>([]);
+  const [dailyCircleData, setDailyCircleData] = useState<DailyCircleRow[]>([]);
   const [dailyLoading, setDailyLoading] = useState(true);
   const [weekData, setWeekData] = useState<WeekRow[]>([]);
   const [weekLoading, setWeekLoading] = useState(true);
@@ -282,7 +348,11 @@ export function LmcSection() {
           buildFilterParams(persona, appliedFilters),
           controller.signal,
         );
-        if (!controller.signal.aborted) setDailyData(normalizeDailyVolume(payload));
+        if (!controller.signal.aborted) {
+          const circleRows = normalizeDailyVolumeByCircle(payload);
+          setDailyCircleData(circleRows);
+          setDailyData(normalizeDailyVolume(circleRows));
+        }
       } catch (err) {
         if ((err as Error).name !== 'AbortError') console.warn('M-Safe daily-lmc-volume API failed.', err);
       } finally {
@@ -393,33 +463,80 @@ export function LmcSection() {
     return () => controller.abort();
   }, [appliedFilters, persona]);
 
+  // "Daily LMC Volume" chart points are totals summed across every circle for
+  // that date — this looks up the per-circle breakdown for the hovered date so
+  // the tooltip can list each circle's sign-off count, not just the day total.
+  const renderDailyVolumeTooltip = ({ active, label }: { active?: boolean; label?: string }) => {
+    if (!active || !label) return null;
+    const circleRows = dailyCircleData.filter((r) => r.date === label);
+    const total = circleRows.reduce((sum, r) => sum + r.volume, 0);
+    return (
+      <div className="msafe-chart-tip">
+        <div className="msafe-chart-tip-title">{label}</div>
+        {circleRows.map((r) => (
+          <div key={r.circle} className="msafe-chart-tip-row">
+            <span className="msafe-chart-tip-sw" style={{ background: C.vi }} />
+            <span>
+              {r.circle}: {r.volume.toLocaleString('en-IN')}
+            </span>
+          </div>
+        ))}
+        <div className="msafe-chart-tip-row" style={{ fontWeight: 600 }}>
+          <span>Total: {total.toLocaleString('en-IN')}</span>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <AccordionShell
       title="LMC — Line Manager Check Activity"
       sub="Daily sign-off volume and manager engagement"
       excelLabel="LMC"
     >
-      <div className="g g-2-1">
-        <ChartCard
-          title="Daily LMC Volume — Last 30 Days"
-          sub="Number of LMC sign-offs recorded per day"
-          infoKey="lmc-daily"
-          showPdf
-          pdfLabel="Daily LMC Volume"
-          exportData={dailyData.map((d) => ({ Date: d.d, 'LMC Sign-offs': d.n }))}
-          chartSwitch={<ChartSwitch modes={['line', 'bar']} value={dailyMode} onChange={setDailyMode} />}
-        >
-          {dailyLoading || dailyData.length === 0 ? (
-            <DataState loading={dailyLoading} empty={dailyData.length === 0} label="daily volume data" />
-          ) : (
-            <div className="chart-wrap">
-              <ResponsiveContainer width="100%" height={220}>
+      <div className="g g-2-1" style={{ alignItems: 'start' }}>
+      <ChartCard
+        title="Daily LMC Volume — Last 30 Days"
+        sub="Number of LMC sign-offs recorded per day"
+        infoKey="lmc-daily"
+        showPdf
+        pdfLabel="Daily LMC Volume"
+        exportData={dailyCircleData.map((r) => ({ Date: r.date, Circle: r.circle, 'LMC Sign-offs': r.volume }))}
+        chartSwitch={<ChartSwitch modes={['line', 'bar', 'table']} value={dailyMode} onChange={setDailyMode} />}
+      >
+        {dailyLoading || dailyData.length === 0 ? (
+          <DataState loading={dailyLoading} empty={dailyData.length === 0} label="daily volume data" />
+        ) : dailyMode === 'table' ? (
+          <div className="tbl-scroll" style={{ maxHeight: 420, overflowX: 'auto' }}>
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Circle</th>
+                  <th>LMC Sign-offs</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dailyCircleData.map((r, idx) => (
+                  <tr key={`${r.date}-${r.circle}-${idx}`}>
+                    <td className="cell-strong">{r.date}</td>
+                    <td>{r.circle}</td>
+                    <td>{r.volume.toLocaleString('en-IN')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <div style={{ minWidth: Math.max(700, dailyData.length * 26) }}>
+              <ResponsiveContainer width="100%" height={380}>
                 {dailyMode === 'line' ? (
                   <AreaChart data={dailyData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
                     <XAxis dataKey="d" tick={{ fontSize: 8, fill: C.sage }} interval={4} />
                     <YAxis tick={{ fontSize: 10, fill: C.sage }} />
-                    <Tooltip />
+                    <Tooltip content={renderDailyVolumeTooltip} />
                     <Area
                       type="monotone"
                       dataKey="n"
@@ -434,27 +551,34 @@ export function LmcSection() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
                     <XAxis dataKey="d" tick={{ fontSize: 8, fill: C.sage }} interval={4} />
                     <YAxis tick={{ fontSize: 10, fill: C.sage }} />
-                    <Tooltip />
+                    <Tooltip content={renderDailyVolumeTooltip} />
                     <Bar dataKey="n" fill={C.vi} radius={[5, 5, 0, 0]} name="LMC Sign-offs" />
                   </BarChart>
                 )}
               </ResponsiveContainer>
             </div>
-          )}
-        </ChartCard>
+          </div>
+        )}
+      </ChartCard>
 
-        <ChartCard title="LMC Completion — This Week" sub="Daily target vs actual" infoKey="lmc-week">
-          {weekLoading || weekData.length === 0 ? (
-            <DataState loading={weekLoading} empty={weekData.length === 0} label="weekly completion data" />
-          ) : (
+      <ChartCard
+        title="LMC Completion — This Week"
+        sub="Daily target vs actual"
+        infoKey="lmc-week"
+      >
+        {weekLoading || weekData.length === 0 ? (
+          <DataState loading={weekLoading} empty={weekData.length === 0} label="weekly completion data" />
+        ) : (
+          <div style={{ maxHeight: 420, overflowY: 'auto' }}>
             <ProgressRows
               rows={weekData.map((r) => ({
                 ...r,
                 onClick: () => openDrill(`lmc-${r.label.toLowerCase()}`, `LMC · ${r.label}`),
               }))}
             />
-          )}
-        </ChartCard>
+          </div>
+        )}
+      </ChartCard>
       </div>
 
       <div className="g g3" style={{ marginTop: 16 }}>
