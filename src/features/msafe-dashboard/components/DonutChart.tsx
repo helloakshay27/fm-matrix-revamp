@@ -69,7 +69,10 @@ export function DonutChart({
   tooltipContent?: (props: TooltipProps<ValueType, NameType>) => ReactNode;
 }) {
   const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
-  const outer = 78;
+  // Scales with the card's height instead of a flat 78px, so taller cards (more
+  // slices, more legend rows) get a correspondingly bigger donut instead of a
+  // small ring floating in a lot of empty vertical space.
+  const outer = Math.round(Math.min(140, Math.max(78, height * 0.35)));
   const inner = Math.round(outer * 0.65);
   const legendRows = Math.max(1, Math.ceil(data.length / legendColumns));
 
@@ -232,10 +235,14 @@ export function SliceBarChart({
   data,
   height = 220,
   horizontal = false,
+  tooltipContent,
 }: {
   data: Slice[];
   height?: number;
   horizontal?: boolean;
+  /** Overrides the default name/value tooltip — e.g. to show a fuller per-slice
+   *  breakdown (approved/pending/etc.) instead of just the slice's total. */
+  tooltipContent?: (props: TooltipProps<ValueType, NameType>) => ReactNode;
 }) {
   if (horizontal) {
     return (
@@ -245,7 +252,10 @@ export function SliceBarChart({
             <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
             <XAxis type="number" tick={{ fontSize: 10, fill: C.sage }} />
             <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 10, fill: C.sage }} />
-            <Tooltip cursor={false} content={(props) => <MsafeChartTooltip {...props} />} />
+            <Tooltip
+              cursor={false}
+              content={tooltipContent ?? ((props) => <MsafeChartTooltip {...props} />)}
+            />
             <Bar dataKey="value" radius={[0, 5, 5, 0]}>
               {data.map((d) => (
                 <Cell key={d.name} fill={d.color} />
@@ -266,7 +276,7 @@ export function SliceBarChart({
           <YAxis tick={{ fontSize: 10, fill: C.sage }} />
           <Tooltip
             cursor={{ fill: 'rgba(44,44,44,.04)' }}
-            content={(props) => <MsafeChartTooltip {...props} />}
+            content={tooltipContent ?? ((props) => <MsafeChartTooltip {...props} />)}
           />
           <Bar dataKey="value" radius={[5, 5, 0, 0]}>
             {data.map((d) => (

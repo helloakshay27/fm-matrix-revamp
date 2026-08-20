@@ -698,7 +698,7 @@ export function TrainingSection() {
               />
             )}
             {catMode === 'bar' && (
-              <div className="chart-wrap">
+              <div className="chart-wrap" style={{ height: 'auto', maxHeight: 420, overflow: 'auto' }}>
                 <ResponsiveContainer width="100%" height={Math.max(220, trainCategoryDetails.length * 30)}>
                   <BarChart
                     data={trainCategoryDetails}
