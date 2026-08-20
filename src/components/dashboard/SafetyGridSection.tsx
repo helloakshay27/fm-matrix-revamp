@@ -154,7 +154,7 @@ export function SafetyGridSection({ storageKey, items, static: isStatic, respons
               isResizable
             >
               {items.map((item) => (
-                <div key={item.key} className="h-full overflow-auto">
+                <div key={item.key} chart_id={item.key} className="h-full overflow-auto">
                   {item.content}
                 </div>
               ))}
@@ -180,7 +180,7 @@ export function SafetyGridSection({ storageKey, items, static: isStatic, respons
           isResizable
         >
           {items.map((item) => (
-            <div key={item.key} className="h-full overflow-auto">
+            <div key={item.key} chart_id={item.key} className="h-full overflow-auto">
               {item.content}
             </div>
           ))}

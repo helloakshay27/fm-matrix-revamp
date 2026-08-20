@@ -101,6 +101,15 @@ import {
   type IncidentsTrendData,
   type IncidentsAnalysisData,
   type IncidentsHotspotsData,
+  fetchFinancePendingApprovals,
+  fetchFinanceDraftPrs,
+  fetchFinanceProcurementPipeline,
+  fetchFinancePendingValue,
+  fetchFinancePrSrSplit,
+  fetchFinanceOverdueInvoices,
+  fetchFinanceApprovalQueue,
+  fetchFinanceTopPendingRecords,
+  type FinanceRecord,
 } from "@/services/fmDashboardAPI";
 
 interface UseFmDashboardModuleArgs {
@@ -774,6 +783,100 @@ export function useIncidentsDashboardData({ siteIds, fromDate, toDate, enabled }
       .catch((err: unknown) => {
         if (cancelled) return;
         setError(err instanceof Error ? err.message : "Failed to load incidents dashboard data");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, siteIdsKey, fromDate, toDate]);
+
+  return { data, loading, error };
+}
+
+// ============================================================================
+// Finance
+// ============================================================================
+// See the file-header comment above fetchFinanceValue in fmDashboardAPI.ts —
+// these 8 endpoints are each an independent resource (no shared `_overview`),
+// and site_id is the only confirmed param (from_date/to_date are sent anyway
+// for consistency with every other module, in case the backend accepts them).
+
+export interface FinanceDashboardData {
+  pendingApprovals: FinanceRecord | FinanceRecord[] | null;
+  draftPrs: FinanceRecord | FinanceRecord[] | null;
+  procurementPipeline: FinanceRecord | FinanceRecord[] | null;
+  pendingValue: FinanceRecord | FinanceRecord[] | null;
+  prSrSplit: FinanceRecord | FinanceRecord[] | null;
+  overdueInvoices: FinanceRecord | FinanceRecord[] | null;
+  approvalQueue: FinanceRecord | FinanceRecord[] | null;
+  topPendingRecords: FinanceRecord | FinanceRecord[] | null;
+}
+
+const EMPTY_FINANCE_DATA: FinanceDashboardData = {
+  pendingApprovals: null,
+  draftPrs: null,
+  procurementPipeline: null,
+  pendingValue: null,
+  prSrSplit: null,
+  overdueInvoices: null,
+  approvalQueue: null,
+  topPendingRecords: null,
+};
+
+export function useFinanceDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+  const [data, setData] = useState<FinanceDashboardData>(EMPTY_FINANCE_DATA);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const siteIdsKey = siteIds.join(",");
+
+  useEffect(() => {
+    if (!enabled || siteIds.length === 0) return;
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    const params = { siteIds, fromDate, toDate };
+    Promise.all([
+      fetchFinancePendingApprovals(params),
+      fetchFinanceDraftPrs(params),
+      fetchFinanceProcurementPipeline(params),
+      fetchFinancePendingValue(params),
+      fetchFinancePrSrSplit(params),
+      fetchFinanceOverdueInvoices(params),
+      fetchFinanceApprovalQueue(params),
+      fetchFinanceTopPendingRecords(params),
+    ])
+      .then(
+        ([
+          pendingApprovals,
+          draftPrs,
+          procurementPipeline,
+          pendingValue,
+          prSrSplit,
+          overdueInvoices,
+          approvalQueue,
+          topPendingRecords,
+        ]) => {
+          if (cancelled) return;
+          setData({
+            pendingApprovals,
+            draftPrs,
+            procurementPipeline,
+            pendingValue,
+            prSrSplit,
+            overdueInvoices,
+            approvalQueue,
+            topPendingRecords,
+          });
+        }
+      )
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Failed to load finance dashboard data");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

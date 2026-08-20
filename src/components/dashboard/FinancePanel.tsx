@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   StatHeroCard,
   PieChartCard,
@@ -14,16 +15,148 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SafetyGridSection, type SafetyGridItem } from "@/components/dashboard/SafetyGridSection";
 import { ANALYTICS_PALETTE } from "@/styles/chartPalette";
+import type { FinanceDashboardData } from "@/hooks/useFmDashboardData";
 
-// The Finance module isn't wired to a live dashboard API yet — layout and
-// figures below mirror the fm_matrix_phase10 (Phase 9B) mockup's Finance tab
-// (Overview/Procurement/Invoices/KPIs/GDN/Wallet) as illustrative content
-// until a real endpoint exists. Colors are the same brand tokens already used
-// by Maintenance/Safety charts elsewhere in this app (#DA7756 terra, #B8694A
-// terra-dk, #798C5E sage, #9EC8BA teal, #CECBF6 lavender, #EDC488 warning,
-// #6B9BCC info, #108C72 success) — no new hex values introduced. Red/error
-// tones are intentionally avoided throughout this module; the most-urgent
-// tier uses the deeper terra-dk orange instead of red.
+// 8 of the cards below (Pending Approvals, Overdue Invoices, Draft PRs,
+// Procurement Pipeline, PR vs SR Split, Pending Requisition Value, Invoices
+// over 90 days, Your Approval Queue, Top Pending Financial Records) are now
+// wired to live endpoints — see fmDashboardAPI.ts's Finance section for why
+// their response shape is unconfirmed and read tolerantly here. Everything
+// else in this module (Blocked GRNs, Budget Utilization, Procurement
+// Efficiency Score, Requisitions by Department, PO/WO status, Invoice
+// Ageing, System Health, Financial Risk Score + driver, all of KPIs/GDN/
+// Wallet) has no backing endpoint yet and still mirrors the fm_matrix_phase10
+// mockup as illustrative content. Colors are the same brand tokens already
+// used by Maintenance/Safety charts elsewhere in this app (#DA7756 terra,
+// #B8694A terra-dk, #798C5E sage, #9EC8BA teal, #CECBF6 lavender, #EDC488
+// warning, #6B9BCC info, #108C72 success) — no new hex values introduced.
+// Red/error tones are intentionally avoided throughout this module; the
+// most-urgent tier uses the deeper terra-dk orange instead of red.
+
+/** Small placeholder for a widget whose backing field the finance dashboard API doesn't provide (yet) or returned empty. */
+function EmptyStateCard({
+  title,
+  subtitle,
+  message,
+  className,
+}: {
+  title: string;
+  subtitle?: string;
+  message: string;
+  className?: string;
+}) {
+  return (
+    <Card className={cn("border-brand-border", className)}>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-brand-body-3 font-semibold text-brand-text">{title}</CardTitle>
+        {subtitle && <p className="text-brand-body-5 text-brand-text-light">{subtitle}</p>}
+      </CardHeader>
+      <CardContent>
+        <p className="text-brand-body-5 text-brand-text-light">{message}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+// --- Tolerant readers for the not-yet-confirmed Finance API shape ---
+type FinanceRow = Record<string, unknown>;
+type FinanceValue = FinanceRow | FinanceRow[] | null | undefined;
+
+function financeArray(value: FinanceValue): FinanceRow[] {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === "object") {
+    for (const key of ["items", "data", "records", "invoices", "queue", "rows"]) {
+      const nested = (value as FinanceRow)[key];
+      if (Array.isArray(nested)) return nested as FinanceRow[];
+    }
+  }
+  return [];
+}
+
+function financeNumber(value: FinanceValue, keys: string[]): number | null {
+  if (!value || Array.isArray(value)) return null;
+  for (const key of keys) {
+    const v = (value as FinanceRow)[key];
+    if (typeof v === "number" && Number.isFinite(v)) return v;
+    if (typeof v === "string" && v.trim() !== "" && !Number.isNaN(Number(v))) return Number(v);
+  }
+  return null;
+}
+
+function financeString(row: FinanceRow | undefined, keys: string[]): string | null {
+  if (!row) return null;
+  for (const key of keys) {
+    const v = row[key];
+    if (typeof v === "string" && v.trim() !== "") return v;
+    if (typeof v === "number") return String(v);
+  }
+  return null;
+}
+
+function financeStageRow(value: FinanceValue, stageKeys: string[], label: string) {
+  if (!value || Array.isArray(value)) return null;
+  let stage: FinanceRow | undefined;
+  for (const key of stageKeys) {
+    const v = (value as FinanceRow)[key];
+    if (v && typeof v === "object" && !Array.isArray(v)) {
+      stage = v as FinanceRow;
+      break;
+    }
+  }
+  if (!stage) return null;
+  const requested = financeNumber(stage, ["requested", "total"]);
+  const approved = financeNumber(stage, ["approved"]);
+  const pending = financeNumber(stage, ["pending"]);
+  const rejected = financeNumber(stage, ["rejected"]);
+  if (requested == null && approved == null && pending == null && rejected == null) return null;
+  return { stage: label, Requested: requested ?? 0, Approved: approved ?? 0, Pending: pending ?? 0, Rejected: rejected ?? 0 };
+}
+
+// Heuristic: assume a raw number >= 1,00,000 is plain rupees (convert to Lakhs); anything
+// smaller is assumed to already be expressed in Lakhs. Unconfirmed against a live response.
+function formatFinanceLakhs(value: number | null): string | null {
+  if (value == null) return null;
+  return value >= 100000 ? `₹${(value / 100000).toFixed(1)}L` : `₹${value.toFixed(1)}L`;
+}
+
+function formatFinanceInr(raw: unknown): string {
+  if (raw == null) return "—";
+  const num = typeof raw === "number" ? raw : Number(raw);
+  if (Number.isNaN(num)) return typeof raw === "string" && raw.trim() !== "" ? raw : "—";
+  return `₹${num.toLocaleString("en-IN")}`;
+}
+
+function financeApprovalRow(row: FinanceRow, idx: number): ApprovalQueueRow {
+  const rawType = financeString(row, ["type", "record_type", "category"]) ?? "";
+  const isGrn = /grn/i.test(rawType);
+  const type: ApprovalQueueRow["type"] = isGrn ? "GRN" : "Material PR";
+  const rawId = financeString(row, ["id", "reference", "ref_no", "pr_no", "grn_no"]) ?? String(idx + 1);
+  const id = /^(id|pr|grn)\s/i.test(rawId) ? rawId : `${isGrn ? "ID" : "PR"} ${rawId}`;
+  const supplier = financeString(row, ["supplier", "vendor_name", "supplier_name"]) ?? "—";
+  return { id, type, supplier };
+}
+
+function financeTopPendingRow(row: FinanceRow, idx: number): PendingFinancialRecordRow {
+  return {
+    id: financeString(row, ["id"]) ?? String(idx + 1),
+    prNo: financeString(row, ["pr_no", "pr_number"]) ?? "—",
+    refNo: financeString(row, ["ref_no", "reference_no", "reference"]) ?? "—",
+    supplier: financeString(row, ["supplier", "vendor_name", "supplier_name"]) ?? "—",
+    pendingWith: financeString(row, ["pending_with", "assigned_to"]) ?? "—",
+    raisedOn: financeString(row, ["raised_on", "created_at", "raised_date"]) ?? "—",
+    amount: formatFinanceInr(row["amount"] ?? row["value"]),
+  };
+}
+
+function financeOverdueInvoiceRow(row: FinanceRow) {
+  const vendor = financeString(row, ["vendor_name", "supplier_name", "supplier"]) ?? "Unknown vendor";
+  const invoiceRef = financeString(row, ["invoice_number", "invoice_id", "reference"]);
+  const days = financeNumber(row, ["days_overdue", "days", "age_days"]);
+  return {
+    label: invoiceRef ? `${vendor} · Invoice ${invoiceRef}` : vendor,
+    badge: { tone: "terra" as const, label: typeof days === "number" ? `${days} days` : "Overdue" },
+  };
+}
 
 const FINANCE_ALERTS = ["~950 Utility Bills Pending", "2 Invoices >90 Days", "WO / Service PR API Errors"];
 
@@ -56,14 +189,6 @@ interface ApprovalQueueRow {
   supplier: string;
 }
 
-const APPROVAL_QUEUE_ROWS: ApprovalQueueRow[] = [
-  { id: "ID 6172", type: "GRN", supplier: "PowerTech Metering Solutions" },
-  { id: "ID 6171", type: "GRN", supplier: "PowerTech Metering Solutions" },
-  { id: "PR 123547", type: "Material PR", supplier: "PowerTech Metering · Technical" },
-  { id: "PR 123546", type: "Material PR", supplier: "PowerTech Metering · Technical" },
-  { id: "PR 123545", type: "Material PR", supplier: "PowerTech Metering · Technical" },
-];
-
 const APPROVAL_TYPE_STYLE: Record<ApprovalQueueRow["type"], React.CSSProperties> = {
   GRN: { backgroundColor: "#6B9BCC20", color: "#2a5f8f" },
   "Material PR": { backgroundColor: "#798C5E20", color: "#798C5E" },
@@ -79,11 +204,6 @@ interface PendingFinancialRecordRow {
   amount: string;
 }
 
-const PENDING_FINANCIAL_RECORD_ROWS: PendingFinancialRecordRow[] = [
-  { id: "10251", prNo: "100117", refNo: "123553", supplier: "PowerTech Metering Solutions", pendingWith: "Abhishek Sharma", raisedOn: "17-03-2026", amount: "₹2,750" },
-  { id: "10257", prNo: "100119", refNo: "123555", supplier: "PowerTech Metering Solutions", pendingWith: "—", raisedOn: "11-05-2026", amount: "₹1,100" },
-];
-
 const PENDING_FINANCIAL_RECORD_COLUMNS: DataTableColumn<PendingFinancialRecordRow>[] = [
   { key: "id", header: "ID", render: (row) => <span className="font-semibold text-brand-text">{row.id}</span> },
   { key: "prNo", header: "PR No.", render: (row) => row.prNo },
@@ -97,9 +217,12 @@ const PENDING_FINANCIAL_RECORD_COLUMNS: DataTableColumn<PendingFinancialRecordRo
 
 interface FinancePanelProps {
   activeSection: string;
+  /** Live data for the 8 confirmed Finance endpoints — null until loaded or if the dashboard's site scope isn't resolved yet. */
+  data?: FinanceDashboardData | null;
+  loading?: boolean;
 }
 
-export function FinancePanel({ activeSection }: FinancePanelProps) {
+export function FinancePanel({ activeSection, data, loading = false }: FinancePanelProps) {
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
@@ -111,6 +234,45 @@ export function FinancePanel({ activeSection }: FinancePanelProps) {
     sectionRefs.current[key] = el;
   };
 
+  const loadingLabel = loading ? "Loading…" : "—";
+
+  // --- Live Finance data, read tolerantly (see fmDashboardAPI.ts's Finance section) ---
+  const pendingApprovalsCount = financeNumber(data?.pendingApprovals, [
+    "total",
+    "count",
+    "pending_approvals_count",
+  ]);
+
+  const draftPrsCount = financeNumber(data?.draftPrs, ["total", "count", "draft_prs_count"]);
+  const draftPrsOldest = financeString(Array.isArray(data?.draftPrs) ? undefined : (data?.draftPrs as FinanceRow | undefined), [
+    "oldest_date",
+    "oldest_created_at",
+    "oldest_pr_date",
+  ]);
+
+  const pendingValueAmount = formatFinanceLakhs(
+    financeNumber(data?.pendingValue, ["total_value", "value", "amount", "pending_value"])
+  );
+
+  const prSrRow = Array.isArray(data?.prSrSplit) ? undefined : (data?.prSrSplit as FinanceRow | undefined);
+  const materialPrCount = financeNumber(prSrRow, ["material_pr_count", "pr_count", "material_pr", "pr"]);
+  const serviceReqCount = financeNumber(prSrRow, ["service_requisition_count", "sr_count", "service_requisition", "sr"]);
+
+  const overdueInvoiceRows = financeArray(data?.overdueInvoices);
+  const overdueInvoicesCount =
+    financeNumber(Array.isArray(data?.overdueInvoices) ? undefined : (data?.overdueInvoices as FinanceRow | undefined), [
+      "count",
+      "total",
+    ]) ?? (overdueInvoiceRows.length || null);
+
+  const approvalQueueLiveRows = financeArray(data?.approvalQueue).map(financeApprovalRow);
+  const topPendingLiveRows = financeArray(data?.topPendingRecords).map(financeTopPendingRow);
+
+  const pipelineLiveData = [
+    financeStageRow(data?.procurementPipeline, ["material_pr_to_po", "material_pr", "pr_to_po"], "Material PR → PO"),
+    financeStageRow(data?.procurementPipeline, ["service_pr_to_wo", "service_pr", "pr_to_wo"], "Service PR → WO"),
+  ].filter((row): row is NonNullable<typeof row> => row !== null);
+
   // --- Overview ---
   const overviewItems: SafetyGridItem[] = [
     {
@@ -120,7 +282,7 @@ export function FinancePanel({ activeSection }: FinancePanelProps) {
         <StatHeroCard
           tone="purple"
           label="Pending Approvals"
-          value="15+"
+          value={pendingApprovalsCount != null ? String(pendingApprovalsCount) : loadingLabel}
           accent="error"
           subtitle="GRN + Material PR · Your queue"
           className="h-full"
@@ -134,7 +296,7 @@ export function FinancePanel({ activeSection }: FinancePanelProps) {
         <StatHeroCard
           tone="teal"
           label="Overdue Invoices"
-          value="2"
+          value={overdueInvoicesCount != null ? String(overdueInvoicesCount) : loadingLabel}
           accent="error"
           subtitle="Over 90 days · Immediate action"
           className="h-full"
@@ -148,9 +310,9 @@ export function FinancePanel({ activeSection }: FinancePanelProps) {
         <StatHeroCard
           tone="peach"
           label="Draft PRs"
-          value="130+"
+          value={draftPrsCount != null ? String(draftPrsCount) : loadingLabel}
           accent="warning"
-          subtitle="Not submitted · Oldest: May 2026"
+          subtitle={draftPrsOldest ? `Not submitted · Oldest: ${draftPrsOldest}` : "Not submitted"}
           className="h-full"
         />
       ),
@@ -180,10 +342,14 @@ export function FinancePanel({ activeSection }: FinancePanelProps) {
         <BarChartCard
           title="Procurement Pipeline"
           subtitle="Material PR → PO  |  Service PR → WO · where is it stuck?"
-          data={[
-            { stage: "Material PR → PO", Requested: 9, Approved: 5, Pending: 3, Rejected: 1 },
-            { stage: "Service PR → WO", Requested: 12, Approved: 4, Pending: 6, Rejected: 2 },
-          ]}
+          data={
+            pipelineLiveData.length
+              ? pipelineLiveData
+              : [
+                  { stage: "Material PR → PO", Requested: 0, Approved: 0, Pending: 0, Rejected: 0 },
+                  { stage: "Service PR → WO", Requested: 0, Approved: 0, Pending: 0, Rejected: 0 },
+                ]
+          }
           categoryKey="stage"
           orientation="horizontal"
           stacked
@@ -223,7 +389,11 @@ export function FinancePanel({ activeSection }: FinancePanelProps) {
         <StatHeroCard
           tone="purple"
           label="PR vs SR Split"
-          value="68 / 77"
+          value={
+            materialPrCount != null && serviceReqCount != null
+              ? `${materialPrCount} / ${serviceReqCount}`
+              : loadingLabel
+          }
           accent="neutral"
           subtitle="Material PR vs Service Requisition — real split, not one combined funnel"
           className="h-full"
@@ -237,7 +407,7 @@ export function FinancePanel({ activeSection }: FinancePanelProps) {
         <StatHeroCard
           tone="teal"
           label="Pending Requisition Value"
-          value="₹18.4L"
+          value={pendingValueAmount ?? loadingLabel}
           accent="warning"
           subtitle="₹ tied up, not just item counts"
           className="h-full"
@@ -358,15 +528,21 @@ export function FinancePanel({ activeSection }: FinancePanelProps) {
       key: "fin-invoices-over-90",
       layout: { x: 0, y: 6, w: 12, h: 4, minW: 6, minH: 3 },
       content: (
-        <StatListCard
-          title="Invoices over 90 days — named"
-          subtitle='"Escalate" now has a vendor attached, not just a count of 2'
-          rows={[
-            { label: "PowerTech Metering Solutions · Invoice 7741", badge: { tone: "terra", label: "104 days" } },
-            { label: "Connexions Facility Mgmt · Invoice 7702", badge: { tone: "terra", label: "97 days" } },
-          ]}
-          className="h-full"
-        />
+        overdueInvoiceRows.length ? (
+          <StatListCard
+            title="Invoices over 90 days — named"
+            subtitle='"Escalate" now has a vendor attached, not just a count of 2'
+            rows={overdueInvoiceRows.map(financeOverdueInvoiceRow)}
+            className="h-full"
+          />
+        ) : (
+          <EmptyStateCard
+            title="Invoices over 90 days — named"
+            subtitle='"Escalate" now has a vendor attached, not just a count of 2'
+            message={loading ? "Loading…" : "No invoices over 90 days for this period."}
+            className="h-full"
+          />
+        )
       ),
     },
     {
@@ -392,25 +568,31 @@ export function FinancePanel({ activeSection }: FinancePanelProps) {
             <p className="text-brand-body-5 text-brand-text-light">Items at Site Incharge level — act today</p>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {APPROVAL_QUEUE_ROWS.map((row) => (
-                <div
-                  key={row.id}
-                  className="flex items-center gap-3 rounded-lg border border-brand-border px-3 py-2"
-                >
-                  <span
-                    className="flex-shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold"
-                    style={APPROVAL_TYPE_STYLE[row.type]}
+            {approvalQueueLiveRows.length ? (
+              <div className="space-y-2">
+                {approvalQueueLiveRows.map((row, idx) => (
+                  <div
+                    key={`${row.id}-${idx}`}
+                    className="flex items-center gap-3 rounded-lg border border-brand-border px-3 py-2"
                   >
-                    {row.type}
-                  </span>
-                  <div>
-                    <div className="text-brand-body-4 font-semibold text-brand-text">{row.id}</div>
-                    <div className="text-brand-body-5 text-brand-text-light">{row.supplier}</div>
+                    <span
+                      className="flex-shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold"
+                      style={APPROVAL_TYPE_STYLE[row.type]}
+                    >
+                      {row.type}
+                    </span>
+                    <div>
+                      <div className="text-brand-body-4 font-semibold text-brand-text">{row.id}</div>
+                      <div className="text-brand-body-5 text-brand-text-light">{row.supplier}</div>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-brand-body-5 text-brand-text-light">
+                {loading ? "Loading…" : "No items in your approval queue for this period."}
+              </p>
+            )}
           </CardContent>
         </Card>
       ),
@@ -419,14 +601,23 @@ export function FinancePanel({ activeSection }: FinancePanelProps) {
       key: "fin-pending-financial-records",
       layout: { x: 0, y: 19, w: 12, h: 6, minW: 6, minH: 4 },
       content: (
-        <DataTableCard
-          title="Top Pending Financial Records"
-          subtitle="Pending status only · Sorted by oldest first — click row to drill and act"
-          columns={PENDING_FINANCIAL_RECORD_COLUMNS}
-          data={PENDING_FINANCIAL_RECORD_ROWS}
-          getRowKey={(row) => row.id}
-          className="h-full no-drag"
-        />
+        topPendingLiveRows.length ? (
+          <DataTableCard
+            title="Top Pending Financial Records"
+            subtitle="Pending status only · Sorted by oldest first — click row to drill and act"
+            columns={PENDING_FINANCIAL_RECORD_COLUMNS}
+            data={topPendingLiveRows}
+            getRowKey={(row) => row.id}
+            className="h-full no-drag"
+          />
+        ) : (
+          <EmptyStateCard
+            title="Top Pending Financial Records"
+            subtitle="Pending status only · Sorted by oldest first — click row to drill and act"
+            message={loading ? "Loading…" : "No pending financial records for this period."}
+            className="h-full no-drag"
+          />
+        )
       ),
     },
   ];

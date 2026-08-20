@@ -1,14 +1,13 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLayout } from "../contexts/LayoutContext";
+import { useActionLayout } from "../contexts/ActionLayoutContext";
 import {
-  ChevronDown,
   ChevronRight,
   ChevronLeft,
   Target,
   User,
   MessageSquare,
-  Megaphone,
   Trophy,
   Brain,
   HelpCircle,
@@ -20,64 +19,60 @@ import {
   Briefcase,
 } from "lucide-react";
 
-// Module-based navigation structures for Admin Compass
-const adminCompassNavigation: Record<string, any> = {
-  "Business Plan & Goals": {
-    icon: User,
-    href: "/admin-compass/business-plan-goals",
-  },
-  "Daily Meeting": {
-    icon: MessageSquare,
-    href: "/admin-compass/daily-meeting",
-  },
-  // KPI module hidden
-  // KPI: {
-  //   icon: BarChart3,
-  //   href: "/admin-compass/kpi",
-  // },
-  "Weekly Meetings": {
-    icon: Trophy,
-    href: "/admin-compass/weekly-meetings",
-  },
-  "Team Dashboard": {
-    icon: MessageSquare,
-    href: "/admin-compass/team-dashboard",
-  },
-  "FB Dashboard": {
-    icon: LineChart,
-    href: "/admin-compass/feedback-dashboard",
-  },
-  "DISC Report": {
-    icon: Brain,
-    href: "/admin-compass/disc-report",
-  },
-  "Systems & SOPs": {
-    icon: FileText,
-    href: "/admin-compass/systems-sops",
-  },
-  "Team Setup": {
-    icon: Users,
-    href: "/admin-compass/team-setup",
-  },
-  Jobs: {
-    icon: Briefcase,
-    href: "/admin-compass/jobs",
-  },
+// Icon mapping for Admin Compass functions, keyed by action_name — same
+// approach as EmployeeSidebar/BusinessCompassSidebar's functionIconMap.
+const functionIconMap: Record<string, any> = {
+  employee_business_compass_profile: User, // "Business Plan & Goals"
+  employee_business_compass_daily_report: MessageSquare, // "Daily Standup"
+  employee_business_compass_weekly_report: BarChart3, // "KPI"
+  employee_business_compass_tasks: Target, // "Weekly Standup"
+  employee_business_compass_issues: Users, // "Team Dashboard"
+  employee_business_compass_directory_and_chat: LineChart, // "FB Dashboard"
+  employee_business_compass_announcements: Brain, // "DISC Report"
+  employee_business_compass_leaderboard: FileText, // "Systems & SOPs"
+  employee_business_compass_disc: Trophy, // "Leaderboard"
+  employee_business_compass_help_center: HelpCircle, // "DISC"
+  employee_business_compass_bug_reports: Bug, // "Bug Reports"
 };
+
+// Fallback icon
+const getFunctionIcon = (actionName: string) =>
+  functionIconMap[actionName] || Briefcase;
 
 export const AdminCompassSidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isSidebarCollapsed, setIsSidebarCollapsed, isMobileSidebarOpen } =
     useLayout();
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+  const { getModuleFunctions } = useActionLayout();
 
-  const toggleSection = (section: string) => {
-    setOpenSections((prev) => ({
-      ...prev,
-      [section]: !prev[section],
-    }));
-  };
+  // Build the nav list from the "Employee Admin Compass" module — sourced the
+  // same dynamic way ActionSidebar/EmployeeSidebar/BusinessCompassSidebar do,
+  // via the shared ActionLayoutContext, instead of a hardcoded label/href map.
+  // A function shows up if it's active itself, or has an active
+  // descendant/sub-function.
+  const navItems = useMemo(() => {
+    const functions = getModuleFunctions("Employee Admin Compass");
+
+    const hasActiveDescendant = (func: any, allFunctions: any[]): boolean => {
+      if (func.function_active === 1) return true;
+      if (func.sub_functions?.some((sf: any) => sf.sub_function_active === 1)) {
+        return true;
+      }
+      const children = allFunctions.filter(
+        (f) => f.parent_function === func.action_name
+      );
+      return children.some((child) => hasActiveDescendant(child, allFunctions));
+    };
+
+    return functions
+      .filter((func: any) => hasActiveDescendant(func, functions))
+      .map((func: any) => ({
+        name: func.function_name,
+        href: func.react_link,
+        icon: getFunctionIcon(func.action_name),
+      }));
+  }, [getModuleFunctions]);
 
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
@@ -126,91 +121,31 @@ export const AdminCompassSidebar: React.FC = () => {
       {/* Sidebar Content */}
       <div className="h-[calc(100%-120px)] py-1 sm:py-2">
         <nav className="space-y-1 sm:space-y-2 px-1 sm:px-2">
-          {Object.entries(adminCompassNavigation).map(
-            ([key, section]: [string, any]) => {
-              const Icon = section.icon;
-              const hasItems = section.items && section.items.length > 0;
-              const sectionHref = section.href || "";
-              const sectionHasActiveItem = hasItems
-                ? section.items.some((item: { href: string }) =>
-                    isActive(item.href)
-                  )
-                : false;
-              const isSectionOpen = openSections[key] ?? sectionHasActiveItem;
-
-              if (!hasItems && sectionHref) {
-                return (
-                  <button
-                    key={key}
-                    onClick={() => handleNavigation(sectionHref)}
-                    className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors relative ${
-                      isActive(sectionHref)
-                        ? "bg-[#DBC2A9] text-[#1a1a1a]"
-                        : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
-                    }`}
-                    title={isSidebarCollapsed ? key : ""}
-                  >
-                    {isActive(sectionHref) && (
-                      <div className="absolute left-0 top-0 bottom-0 w-0.5 sm:w-1 bg-[#C72030]"></div>
-                    )}
-                    <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                    {!isSidebarCollapsed && (
-                      <span className="text-xs sm:text-sm font-medium truncate">
-                        {key}
-                      </span>
-                    )}
-                  </button>
-                );
-              }
-
-              return (
-                <div key={key} className="space-y-0.5 sm:space-y-1">
-                  <button
-                    onClick={() => toggleSection(key)}
-                    className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-colors relative ${
-                      isSectionOpen ? "bg-[#DBC2A9]" : "hover:bg-[#DBC2A9]"
-                    } text-[#1a1a1a]`}
-                    title={isSidebarCollapsed ? key : ""}
-                  >
-                    <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                    {!isSidebarCollapsed && (
-                      <>
-                        <span className="text-xs sm:text-sm font-bold flex-1 text-left truncate">
-                          {key}
-                        </span>
-                        <ChevronDown
-                          className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform flex-shrink-0 ${
-                            isSectionOpen ? "transform rotate-180" : ""
-                          }`}
-                        />
-                      </>
-                    )}
-                  </button>
-
-                  {!isSidebarCollapsed && isSectionOpen && hasItems && (
-                    <div className="ml-6 sm:ml-8 space-y-0.5 sm:space-y-1">
-                      {section.items.map((item: any) => (
-                        <button
-                          key={item.name}
-                          onClick={() => handleNavigation(item.href)}
-                          className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors relative ${
-                            isActive(item.href)
-                              ? "bg-[#DBC2A9] text-[#1a1a1a]"
-                              : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
-                          }`}
-                        >
-                          {isActive(item.href) && (
-                            <div className="absolute left-0 top-0 bottom-0 w-0.5 sm:w-1 bg-[#C72030]"></div>
-                          )}
-                          <span className="truncate block">{item.name}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            }
-          )}
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.name}
+                onClick={() => handleNavigation(item.href)}
+                className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors relative ${
+                  isActive(item.href)
+                    ? "bg-[#DBC2A9] text-[#1a1a1a]"
+                    : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
+                }`}
+                title={isSidebarCollapsed ? item.name : ""}
+              >
+                {isActive(item.href) && (
+                  <div className="absolute left-0 top-0 bottom-0 w-0.5 sm:w-1 bg-[#C72030]"></div>
+                )}
+                <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                {!isSidebarCollapsed && (
+                  <span className="text-xs sm:text-sm font-medium truncate">
+                    {item.name}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </nav>
       </div>
     </aside>
