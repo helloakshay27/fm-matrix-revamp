@@ -1,15 +1,23 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
-import { Plus, FileText, Eye, Settings, AlertCircle, X, Flag } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { buildReturnToPath } from '@/utils/listBackNavigation';
-import { ServiceBulkUploadModal } from '@/components/ServiceBulkUploadModal';
-import { ImportLocationsModal } from '@/components/ImportLocationsModal';
-import { ServiceFilterModal } from '@/components/ServiceFilterModal';
-import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchServicesData } from '@/store/slices/servicesSlice';
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import {
+  Plus,
+  FileText,
+  Eye,
+  Settings,
+  AlertCircle,
+  X,
+  Flag,
+} from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { buildReturnToPath } from "@/utils/listBackNavigation";
+import { ServiceBulkUploadModal } from "@/components/ServiceBulkUploadModal";
+import { ImportLocationsModal } from "@/components/ImportLocationsModal";
+import { ServiceFilterModal } from "@/components/ServiceFilterModal";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchServicesData } from "@/store/slices/servicesSlice";
 import {
   Pagination,
   PaginationContent,
@@ -18,14 +26,14 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from '@/components/ui/pagination';
-import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
-import { toast } from 'sonner';
-import axios from 'axios';
-import { useDebounce } from '@/hooks/useDebounce';
-import { StatsCard } from '@/components/StatsCard';
+} from "@/components/ui/pagination";
+import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
+import { toast } from "sonner";
+import axios from "axios";
+import { useDebounce } from "@/hooks/useDebounce";
+import { StatsCard } from "@/components/StatsCard";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
-import { PostHogServiceActivity } from '@/components/PostHogServiceActivity';
+import { PostHogServiceActivity } from "@/components/PostHogServiceActivity";
 
 interface ServiceRecord {
   id: number;
@@ -71,26 +79,39 @@ interface ServiceActionPanelProps {
   onQRDownload: (serviceId: string) => void;
 }
 
-const ServiceActionPanel = React.memo(function ServiceActionPanel({ isOpen, onClose, service, onQRDownload }: ServiceActionPanelProps) {
+const ServiceActionPanel = React.memo(function ServiceActionPanel({
+  isOpen,
+  onClose,
+  service,
+  onQRDownload,
+}: ServiceActionPanelProps) {
   if (!isOpen || !service) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Actions for {service.service_name}</h2>
+          <h2 className="text-lg font-semibold">
+            Actions for {service.service_name}
+          </h2>
           <Button variant="ghost" size="sm" onClick={onClose}>
             <X className="w-5 h-5" />
           </Button>
         </div>
         <div className="flex flex-col gap-3">
           <Button
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             onClick={() => onQRDownload(service.id.toString())}
+            disabled={!service.active}
           >
             <FileText className="w-4 h-4 mr-2" />
             Download QR Code
           </Button>
+          {!service.active && (
+            <p className="text-xs text-red-500 text-center">
+              Cannot download QR code for inactive service
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -101,7 +122,7 @@ const initialServiceData: ServiceRecord[] = [];
 
 export const ServiceDashboard = () => {
   const navigate = useNavigate();
-    const { shouldShow } = useDynamicPermissions();
+  const { shouldShow } = useDynamicPermissions();
 
   const location = useLocation();
   const dispatch = useAppDispatch();
@@ -110,72 +131,116 @@ export const ServiceDashboard = () => {
   const loading = servicesState.loading as boolean;
   const error = servicesState.error as string | undefined;
   const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
-  const [showImportLocationsModal, setShowImportLocationsModal] = useState(false);
+  const [showImportLocationsModal, setShowImportLocationsModal] =
+    useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [activeFilter, setActiveFilter] = useState<boolean | undefined>(undefined);
+  const [activeFilter, setActiveFilter] = useState<boolean | undefined>(
+    undefined
+  );
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [showServiceActionPanel, setShowServiceActionPanel] = useState(false);
-  const [selectedService, setSelectedService] = useState<ServiceRecord | null>(null);
+  const [selectedService, setSelectedService] = useState<ServiceRecord | null>(
+    null
+  );
   const [appliedFilters, setAppliedFilters] = useState({});
   const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const [currentPage, setCurrentPage] = useState(() => {
     const params = new URLSearchParams(location.search);
-    return Number(params.get('page')) || 1;
+    return Number(params.get("page")) || 1;
   });
-  const [downloadedQRCodes, setDownloadedQRCodes] = useState<Set<string>>(new Set());
+  const [downloadedQRCodes, setDownloadedQRCodes] = useState<Set<string>>(
+    new Set()
+  );
   const [downloadingQR, setDownloadingQR] = useState(false);
   // Track which summary tile is selected; null => no highlight on initial load
-  const [selectedSummary, setSelectedSummary] = useState<null | 'total' | 'active' | 'inactive'>(null);
+  const [selectedSummary, setSelectedSummary] = useState<
+    null | "total" | "active" | "inactive"
+  >(null);
 
   useEffect(() => {
     const filtersWithSearch = {
       ...appliedFilters,
-      serviceName: (appliedFilters as any).serviceName || debouncedSearchQuery || undefined,
+      serviceName:
+        (appliedFilters as any).serviceName ||
+        debouncedSearchQuery ||
+        undefined,
     };
-    dispatch(fetchServicesData({ active: activeFilter, page: currentPage, filters: filtersWithSearch }));
-  }, [dispatch, activeFilter, currentPage, appliedFilters, debouncedSearchQuery]);
+    dispatch(
+      fetchServicesData({
+        active: activeFilter,
+        page: currentPage,
+        filters: filtersWithSearch,
+      })
+    );
+  }, [
+    dispatch,
+    activeFilter,
+    currentPage,
+    appliedFilters,
+    debouncedSearchQuery,
+  ]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const urlPage = Number(params.get('page')) || 1;
+    const urlPage = Number(params.get("page")) || 1;
     if (urlPage !== currentPage) {
       navigate(`${location.pathname}?page=${currentPage}`, { replace: true });
     }
   }, [currentPage]);
 
   const servicesData = useMemo(
-    () => (apiData && Array.isArray(apiData.pms_services) ? apiData.pms_services : initialServiceData),
+    () =>
+      apiData && Array.isArray(apiData.pms_services)
+        ? apiData.pms_services
+        : initialServiceData,
     [apiData]
   );
   const paginationData: PaginationData = useMemo(
-    () => apiData?.pagination || { current_page: 1, total_count: 0, total_pages: 1 },
+    () =>
+      apiData?.pagination || {
+        current_page: 1,
+        total_count: 0,
+        total_pages: 1,
+      },
     [apiData]
   );
-  const allIds: string[] = useMemo(() => (apiData?.ids || []).map(String), [apiData]);
+  const allIds: string[] = useMemo(
+    () => (apiData?.ids || []).map(String),
+    [apiData]
+  );
 
   // Derived counts to avoid optional chaining on unknown
   const totalServicesCount = apiData?.total_services_count ?? 0;
   const activeServicesCount = apiData?.active_services_count ?? 0;
   const inactiveServicesCount = apiData?.inactive_services_count ?? 0;
 
-  const handleAddClick = useCallback(() => navigate('/maintenance/service/add'), [navigate]);
+  const handleAddClick = useCallback(
+    () => navigate("/maintenance/service/add"),
+    [navigate]
+  );
   const handleAddSchedule = useCallback(() => {
     console.log("selectedItems:----", selectedItems);
 
     if (selectedItems.length > 0) {
       // Pass selected service IDs as a query param
-      navigate(`/maintenance/schedule/add?type=Service&serviceIds=${selectedItems.join(',')}`);
+      navigate(
+        `/maintenance/schedule/add?type=Service&serviceIds=${selectedItems.join(",")}`
+      );
     } else {
-      navigate('/maintenance/schedule/add?type=Service');
+      navigate("/maintenance/schedule/add?type=Service");
     }
-  }, [navigate, selectedItems]); const handleImportClick = useCallback(() => {
+  }, [navigate, selectedItems]);
+  const handleImportClick = useCallback(() => {
     setShowBulkUploadModal(true);
     setShowActionPanel(false);
   }, []);
-  const handleImportLocationsClick = useCallback(() => setShowImportLocationsModal(true), []);
+  const handleImportLocationsClick = useCallback(
+    () => setShowImportLocationsModal(true),
+    []
+  );
   const handleFiltersClick = useCallback(() => {
     setShowFilterModal(true);
     setShowActionPanel(false);
@@ -183,7 +248,7 @@ export const ServiceDashboard = () => {
 
   const handleApplyFilters = useCallback((filters: any) => {
     setAppliedFilters(filters);
-    setSearchQuery('');
+    setSearchQuery("");
     setSelectedSummary(null);
     setCurrentPage(1);
     setShowFilterModal(false);
@@ -201,48 +266,56 @@ export const ServiceDashboard = () => {
   }, []);
 
   const handleSelectItem = useCallback((itemId: string, checked: boolean) => {
-    setSelectedItems((prev) => (checked ? [...prev, itemId] : prev.filter((id) => id !== itemId)));
+    setSelectedItems((prev) =>
+      checked ? [...prev, itemId] : prev.filter((id) => id !== itemId)
+    );
   }, []);
 
-  const handleSelectAll = useCallback((checked: boolean) => {
-    if (checked) {
-      // Prefer full ids list from API if available (select all across pages)
-      if (allIds.length > 0) {
-        setSelectedItems(allIds);
+  const handleSelectAll = useCallback(
+    (checked: boolean) => {
+      if (checked) {
+        // Prefer full ids list from API if available (select all across pages)
+        if (allIds.length > 0) {
+          setSelectedItems(allIds);
+        } else {
+          setSelectedItems(servicesData.map((item) => item.id.toString()));
+        }
       } else {
-        setSelectedItems(servicesData.map((item) => item.id.toString()));
+        setSelectedItems([]);
       }
-    } else {
-      setSelectedItems([]);
-    }
-  }, [servicesData, allIds]);
+    },
+    [servicesData, allIds]
+  );
 
-  const downloadAttachment = async (file: { attachment_id: number; document_name: string }) => {
+  const downloadAttachment = async (file: {
+    attachment_id: number;
+    document_name: string;
+  }) => {
     try {
-      const token = localStorage.getItem('token');
-      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem("token");
+      const baseUrl = localStorage.getItem("baseUrl");
 
       if (!token || !baseUrl) {
-        console.error('Missing token or baseUrl');
-        toast.error('Missing token or baseUrl');
+        console.error("Missing token or baseUrl");
+        toast.error("Missing token or baseUrl");
         return;
       }
 
       const apiUrl = `https://${baseUrl}/attachfiles/${file.attachment_id}?show_file=true`;
 
       const response = await fetch(apiUrl, {
-        method: 'GET',
+        method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
-      if (!response.ok) throw new Error('Download failed');
+      if (!response.ok) throw new Error("Download failed");
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = file.document_name || `document_${file.attachment_id}`;
       document.body.appendChild(link);
@@ -250,8 +323,8 @@ export const ServiceDashboard = () => {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('Error downloading file:', err);
-      toast.error('Error downloading file');
+      console.error("Error downloading file:", err);
+      toast.error("Error downloading file");
     }
   };
 
@@ -406,202 +479,262 @@ export const ServiceDashboard = () => {
   //   }
   // }, [downloadingQR, selectedItems, servicesData, downloadedQRCodes]);
 
-  const handleQRDownload = useCallback(async (serviceId?: string) => {
-    if (downloadingQR) return;
-    setDownloadingQR(true);
+  const handleQRDownload = useCallback(
+    async (serviceId?: string) => {
+      if (downloadingQR) return;
+      setDownloadingQR(true);
 
-    let serviceIds: string[] = [];
-    if (serviceId) {
-      serviceIds = [serviceId];
-    } else {
-      serviceIds = selectedItems;
-    }
+      let serviceIds: string[] = [];
+      if (serviceId) {
+        serviceIds = [serviceId];
+      } else {
+        serviceIds = selectedItems;
+      }
 
-    if (!serviceIds || serviceIds.length === 0) {
-      toast.error('No services selected');
-      setDownloadingQR(false);
-      return;
-    }
+      if (!serviceIds || serviceIds.length === 0) {
+        toast.error("No services selected");
+        setDownloadingQR(false);
+        return;
+      }
 
-    // --- Already-downloaded confirmation for single service ---
-    if (serviceIds.length === 1) {
-      const serviceIdStr = serviceIds[0];
-      if (downloadedQRCodes.has(serviceIdStr)) {
-        const shouldProceed = await new Promise<boolean>((resolve) => {
-          const service = servicesData.find((s) => s.id.toString() === serviceIdStr);
-          toast.custom((t) => (
-            <div className="bg-white p-5 rounded-xl shadow-none w-full max-w-sm border-0 ring-0">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="w-6 h-6 text-yellow-500 mt-1" />
-                <div className="flex-1 text-sm text-gray-800">
-                  <p className="font-semibold mb-1">QR Code Already Downloaded</p>
-                  <p className="text-sm text-gray-800">
-                    QR for <span className="font-medium text-gray-900">"{service?.service_name}"</span> (ID: {serviceIdStr}) already downloaded. Download again?
-                  </p>
+      // Do not allow printing QR if currently filtered by inactive services
+      if (activeFilter === false) {
+        toast.error("Cannot print QR code for inactive services");
+        setDownloadingQR(false);
+        return;
+      }
+
+      // Filter out inactive services from selection
+      const validActiveServiceIds = serviceIds.filter((id) => {
+        const service = servicesData.find((s) => s.id.toString() === id);
+        if (service) {
+          return Boolean(service.active);
+        }
+        return activeFilter !== false;
+      });
+
+      if (validActiveServiceIds.length === 0) {
+        toast.error("Cannot print QR code for inactive service(s)");
+        setDownloadingQR(false);
+        return;
+      }
+
+      if (validActiveServiceIds.length < serviceIds.length) {
+        const skippedCount = serviceIds.length - validActiveServiceIds.length;
+        toast.info(`Skipping ${skippedCount} inactive service(s)`);
+      }
+
+      serviceIds = validActiveServiceIds;
+
+      // --- Already-downloaded confirmation for single service ---
+      if (serviceIds.length === 1) {
+        const serviceIdStr = serviceIds[0];
+        if (downloadedQRCodes.has(serviceIdStr)) {
+          const shouldProceed = await new Promise<boolean>((resolve) => {
+            const service = servicesData.find(
+              (s) => s.id.toString() === serviceIdStr
+            );
+            toast.custom((t) => (
+              <div className="bg-white p-5 rounded-xl shadow-none w-full max-w-sm border-0 ring-0">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-6 h-6 text-yellow-500 mt-1" />
+                  <div className="flex-1 text-sm text-gray-800">
+                    <p className="font-semibold mb-1">
+                      QR Code Already Downloaded
+                    </p>
+                    <p className="text-sm text-gray-800">
+                      QR for{" "}
+                      <span className="font-medium text-gray-900">
+                        "{service?.service_name}"
+                      </span>{" "}
+                      (ID: {serviceIdStr}) already downloaded. Download again?
+                    </p>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-red-600 border-red-500 hover:bg-red-50"
+                    onClick={() => {
+                      toast.dismiss(t);
+                      resolve(false);
+                    }}
+                  >
+                    No
+                  </Button>
+                  <Button
+                    className="bg-primary text-white hover:bg-primary/90"
+                    size="sm"
+                    onClick={() => {
+                      toast.dismiss(t);
+                      resolve(true);
+                    }}
+                  >
+                    Yes
+                  </Button>
                 </div>
               </div>
-              <div className="flex justify-end gap-3 mt-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-red-600 border-red-500 hover:bg-red-50"
-                  onClick={() => { toast.dismiss(t); resolve(false); }}
-                >
-                  No
-                </Button>
-                <Button
-                  className="bg-primary text-white hover:bg-primary/90"
-                  size="sm"
-                  onClick={() => { toast.dismiss(t); resolve(true); }}
-                >
-                  Yes
-                </Button>
-              </div>
-            </div>
-          ));
-        });
+            ));
+          });
 
-        if (!shouldProceed) {
-          setDownloadingQR(false);
-          return;
+          if (!shouldProceed) {
+            setDownloadingQR(false);
+            return;
+          }
         }
       }
-    }
 
-    const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
-    const token = localStorage.getItem('token');
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const baseUrl =
+        localStorage.getItem("baseUrl") || "oig-api.gophygital.work";
+      const token = localStorage.getItem("token");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    try {
-      // Step 1: Trigger QR PDF generation
-      const params = serviceIds.map((id) => `service_ids[]=${encodeURIComponent(id)}`).join('&');
-      const printRes = await fetch(
-        `https://${baseUrl}/pms/services/print_qr_codes?${params}`,
-        { method: 'GET', headers }
-      );
+      try {
+        // Step 1: Trigger QR PDF generation
+        const params = serviceIds
+          .map((id) => `service_ids[]=${encodeURIComponent(id)}`)
+          .join("&");
+        const printRes = await fetch(
+          `https://${baseUrl}/pms/services/print_qr_codes?${params}`,
+          { method: "GET", headers }
+        );
 
-      if (!printRes.ok) throw new Error('Failed to start QR generation');
+        if (!printRes.ok) throw new Error("Failed to start QR generation");
 
-      const { file_name } = await printRes.json();
+        const { file_name } = await printRes.json();
 
-      if (!file_name) throw new Error('No file_name returned from server');
+        if (!file_name) throw new Error("No file_name returned from server");
 
-      // Step 2: Poll download_qr_pdf until file is ready
-      const pollForFile = (): Promise<void> => {
-        return new Promise((resolve, reject) => {
-          const interval = setInterval(async () => {
-            try {
-              const pollRes = await fetch(
-                `https://${baseUrl}/pms/services/download_qr_pdf?file_name=${encodeURIComponent(file_name)}`,
-                { method: 'GET', headers }
-              );
+        // Step 2: Poll download_qr_pdf until file is ready
+        const pollForFile = (): Promise<void> => {
+          return new Promise((resolve, reject) => {
+            const interval = setInterval(async () => {
+              try {
+                const pollRes = await fetch(
+                  `https://${baseUrl}/pms/services/download_qr_pdf?file_name=${encodeURIComponent(file_name)}`,
+                  { method: "GET", headers }
+                );
 
-              if (!pollRes.ok) {
+                if (!pollRes.ok) {
+                  clearInterval(interval);
+                  reject(new Error("Polling request failed"));
+                  return;
+                }
+
+                const contentType = pollRes.headers.get("Content-Type") || "";
+
+                // Still processing — server returned JSON { status: 'processing' }
+                if (contentType.includes("application/json")) {
+                  // keep polling
+                  return;
+                }
+
+                // File is ready — Content-Type will be application/pdf
+                if (contentType.includes("application/pdf")) {
+                  clearInterval(interval);
+                  const blob = await pollRes.blob();
+                  const url = window.URL.createObjectURL(blob);
+                  const link = document.createElement("a");
+                  link.href = url;
+                  link.download = file_name;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                  window.URL.revokeObjectURL(url);
+
+                  // Mark as downloaded
+                  setDownloadedQRCodes((prev) => {
+                    const newSet = new Set(prev);
+                    serviceIds.forEach((sid) => newSet.add(sid));
+                    return newSet;
+                  });
+
+                  resolve();
+                }
+              } catch (err) {
                 clearInterval(interval);
-                reject(new Error('Polling request failed'));
-                return;
+                reject(err);
               }
+            }, 1500); // poll every 1.5 seconds
+          });
+        };
 
-              const contentType = pollRes.headers.get('Content-Type') || '';
-
-              // Still processing — server returned JSON { status: 'processing' }
-              if (contentType.includes('application/json')) {
-                // keep polling
-                return;
-              }
-
-              // File is ready — Content-Type will be application/pdf
-              if (contentType.includes('application/pdf')) {
-                clearInterval(interval);
-                const blob = await pollRes.blob();
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = file_name;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                window.URL.revokeObjectURL(url);
-
-                // Mark as downloaded
-                setDownloadedQRCodes((prev) => {
-                  const newSet = new Set(prev);
-                  serviceIds.forEach((sid) => newSet.add(sid));
-                  return newSet;
-                });
-
-                resolve();
-              }
-            } catch (err) {
-              clearInterval(interval);
-              reject(err);
-            }
-          }, 1500); // poll every 1.5 seconds
-        });
-      };
-
-      await pollForFile();
-
-    } catch (err) {
-      console.error('Error downloading QR PDF:', err);
-      toast.error('Error downloading QR PDF');
-    } finally {
-      setDownloadingQR(false);
-    }
-  }, [downloadingQR, selectedItems, servicesData, downloadedQRCodes]);
+        await pollForFile();
+      } catch (err) {
+        console.error("Error downloading QR PDF:", err);
+        toast.error("Error downloading QR PDF");
+      } finally {
+        setDownloadingQR(false);
+      }
+    },
+    [
+      downloadingQR,
+      selectedItems,
+      servicesData,
+      downloadedQRCodes,
+      activeFilter,
+    ]
+  );
   const handleViewService = useCallback(
     (id: number) =>
       navigate(`/maintenance/service/details/${id}`, {
-        state: { returnTo: buildReturnToPath(location.pathname, `?page=${currentPage}`) },
+        state: {
+          returnTo: buildReturnToPath(
+            location.pathname,
+            `?page=${currentPage}`
+          ),
+        },
       }),
     [navigate, location.pathname, currentPage]
   );
 
   const handleTotalServicesClick = () => {
     setActiveFilter(undefined);
-    setSearchQuery('');
+    setSearchQuery("");
     setAppliedFilters({});
     setCurrentPage(1);
-    setSelectedSummary('total');
+    setSelectedSummary("total");
   };
 
   const handleActiveServicesClick = () => {
     setActiveFilter(true);
-    setSearchQuery('');
+    setSearchQuery("");
     setAppliedFilters({});
     setCurrentPage(1);
-    setSelectedSummary('active');
+    setSelectedSummary("active");
   };
 
   const handleInactiveServicesClick = () => {
     setActiveFilter(false);
-    setSearchQuery('');
+    setSearchQuery("");
     setAppliedFilters({});
     setCurrentPage(1);
-    setSelectedSummary('inactive');
+    setSelectedSummary("inactive");
   };
 
   const handleStatusToggle = async (id: number) => {
     if (togglingIds.has(id)) return;
 
-    const baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
-    const token = localStorage.getItem('token');
+    const baseUrl =
+      localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
+    const token = localStorage.getItem("token");
 
     try {
       if (!token) {
-        toast.error('Authentication token missing. Please log in again.');
-        navigate('/login');
+        toast.error("Authentication token missing. Please log in again.");
+        navigate("/login");
         return;
       }
 
       if (!apiData) {
-        toast.error('No service data available');
+        toast.error("No service data available");
         return;
       }
 
       const service = servicesData.find((item) => item.id === id);
       if (!service) {
-        toast.error('Service record not found');
+        toast.error("Service record not found");
         return;
       }
 
@@ -614,13 +747,16 @@ export const ServiceDashboard = () => {
 
       dispatch(
         fetchServicesData.fulfilled(
-          { ...(apiData as ServicesApiData), pms_services: updatedServicesData } as ServicesApiData,
-          'fetchServicesData',
+          {
+            ...(apiData as ServicesApiData),
+            pms_services: updatedServicesData,
+          } as ServicesApiData,
+          "fetchServicesData",
           { active: activeFilter, page: currentPage, filters: appliedFilters }
         )
       );
       toast.dismiss();
-      toast.success(`Status ${updatedStatus ? 'Active' : 'Inactive'}`);
+      toast.success(`Status ${updatedStatus ? "Active" : "Inactive"}`);
 
       const url = `https://${baseUrl}/pms/services/${id}.json`;
       const response = await axios.put(
@@ -647,32 +783,33 @@ export const ServiceDashboard = () => {
             : (apiData as ServicesApiData).inactive_services_count + 1,
         };
         dispatch(
-          fetchServicesData.fulfilled(
-            updatedApiData,
-            'fetchServicesData',
-            { active: activeFilter, page: currentPage, filters: appliedFilters }
-          )
+          fetchServicesData.fulfilled(updatedApiData, "fetchServicesData", {
+            active: activeFilter,
+            page: currentPage,
+            filters: appliedFilters,
+          })
         );
       } else {
         dispatch(
           fetchServicesData.fulfilled(
             apiData as ServicesApiData,
-            'fetchServicesData',
+            "fetchServicesData",
             { active: activeFilter, page: currentPage, filters: appliedFilters }
           )
         );
-        toast.error('Failed to update service status');
+        toast.error("Failed to update service status");
       }
     } catch (error: any) {
-      console.error('Error updating service status:', error);
+      console.error("Error updating service status:", error);
       dispatch(
         fetchServicesData.fulfilled(
           apiData as ServicesApiData,
-          'fetchServicesData',
+          "fetchServicesData",
           { active: activeFilter, page: currentPage, filters: appliedFilters }
         )
       );
-      const errorMessage = error.response?.data?.message || 'Failed to update service status';
+      const errorMessage =
+        error.response?.data?.message || "Failed to update service status";
       toast.error(errorMessage);
     } finally {
       setTogglingIds((prev) => {
@@ -683,41 +820,48 @@ export const ServiceDashboard = () => {
     }
   };
 
-  const columns = useMemo(() => ([
-    { key: 'actions', label: 'Actions', sortable: false },
-    { key: 'serviceName', label: 'Service Name', sortable: true },
-    { key: 'id', label: 'ID', sortable: true },
-    { key: 'serviceCode', label: 'Service Code', sortable: true },
-    { key: 'executionType', label: 'Execution Type', sortable: true },
-    { key: 'group', label: 'Group', sortable: true },
-    { key: 'subGroup', label: 'Sub Group', sortable: true },
-    { key: 'uom', label: 'UOM', sortable: true },
-    { key: 'building', label: 'Building', sortable: true },
-    { key: 'wing', label: 'Wing', sortable: true },
-    { key: 'area', label: 'Area', sortable: true },
-    { key: 'floor', label: 'Floor', sortable: true },
-    { key: 'room', label: 'Room', sortable: true },
-    { key: 'status', label: 'Status', sortable: true },
-    { key: 'createdOn', label: 'Created On', sortable: true },
-    { key: 'category', label: 'Category', sortable: true },
-  ]), []);
+  const columns = useMemo(
+    () => [
+      { key: "actions", label: "Actions", sortable: false },
+      { key: "serviceName", label: "Service Name", sortable: true },
+      { key: "id", label: "ID", sortable: true },
+      { key: "serviceCode", label: "Service Code", sortable: true },
+      { key: "executionType", label: "Execution Type", sortable: true },
+      { key: "group", label: "Group", sortable: true },
+      { key: "subGroup", label: "Sub Group", sortable: true },
+      { key: "uom", label: "UOM", sortable: true },
+      { key: "building", label: "Building", sortable: true },
+      { key: "wing", label: "Wing", sortable: true },
+      { key: "area", label: "Area", sortable: true },
+      { key: "floor", label: "Floor", sortable: true },
+      { key: "room", label: "Room", sortable: true },
+      { key: "status", label: "Status", sortable: true },
+      { key: "createdOn", label: "Created On", sortable: true },
+      { key: "category", label: "Category", sortable: true },
+    ],
+    []
+  );
 
-  const bulkActions = useMemo(() => ([
-    {
-      label: 'Print QR',
-      icon: FileText,
-      onClick: () => handleQRDownload(),
-      disabled: downloadingQR,
-    },
-  ]), [downloadingQR, handleQRDownload]);
+  const bulkActions = useMemo(
+    () => [
+      {
+        label: "Print QR",
+        icon: FileText,
+        onClick: () => handleQRDownload(),
+        disabled: downloadingQR,
+      },
+    ],
+    [downloadingQR, handleQRDownload]
+  );
 
   const handleSingleAmcFlag = async (serviceItem: ServiceRecord) => {
-    const baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
-    const token = localStorage.getItem('token');
+    const baseUrl =
+      localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
+    const token = localStorage.getItem("token");
 
     try {
       if (!baseUrl || !token) {
-        toast.error('Missing base URL, token, or site ID');
+        toast.error("Missing base URL, token, or site ID");
         return;
       }
 
@@ -738,81 +882,102 @@ export const ServiceDashboard = () => {
       );
 
       if (response.status === 200) {
-        dispatch(fetchServicesData({ active: activeFilter, page: currentPage, filters: appliedFilters }));
+        dispatch(
+          fetchServicesData({
+            active: activeFilter,
+            page: currentPage,
+            filters: appliedFilters,
+          })
+        );
         toast.dismiss();
-        toast.success(`Flag ${updatedFlag ? 'Activated' : 'Deactivated'}`);
+        toast.success(`Flag ${updatedFlag ? "Activated" : "Deactivated"}`);
       } else {
-        toast.error('Failed to update service flag');
+        toast.error("Failed to update service flag");
       }
     } catch (error) {
-      toast.error('Failed to update service flag');
+      toast.error("Failed to update service flag");
     }
   };
 
-  const renderCell = useCallback((item: ServiceRecord, columnKey: string) => {
-    switch (columnKey) {
-      case 'actions':
-        return (
-          <div className="flex items-center gap-2">
-            {shouldShow("Soft Services","show")&&(
-            <Button variant="ghost" size="sm" onClick={() => handleViewService(item.id)}>
-              <Eye className="w-4 h-4" />
-            </Button>)}
-            <div title="Flag Service">
-              <Flag
-                className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${item.is_flagged ? 'text-red-500 fill-red-500' : 'text-gray-600'}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSingleAmcFlag(item);
-                }}
+  const renderCell = useCallback(
+    (item: ServiceRecord, columnKey: string) => {
+      switch (columnKey) {
+        case "actions":
+          return (
+            <div className="flex items-center gap-2">
+              {shouldShow("Soft Services", "show") && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleViewService(item.id)}
+                >
+                  <Eye className="w-4 h-4" />
+                </Button>
+              )}
+              <div title="Flag Service">
+                <Flag
+                  className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${item.is_flagged ? "text-red-500 fill-red-500" : "text-gray-600"}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSingleAmcFlag(item);
+                  }}
+                />
+              </div>
+            </div>
+          );
+        case "serviceName":
+          return <span>{item.service_name || "-"}</span>;
+        case "id":
+          return <span className="font-medium">{item.id}</span>;
+        case "serviceCode":
+          return item.service_code || "-";
+        case "executionType":
+          if (!item.execution_type) return "-";
+          return (
+            item.execution_type.charAt(0).toUpperCase() +
+            item.execution_type.slice(1)
+          );
+        case "group":
+          return item.group_name || "-";
+        case "uom":
+          return item.base_uom || "-";
+        case "building":
+          return item.building || "-";
+        case "wing":
+          return item.wing || "-";
+        case "area":
+          return item.area || "-";
+        case "floor":
+          return item.floor || "-";
+        case "room":
+          return item.room || "-";
+        case "subGroup":
+          return item.sub_group_name || "-";
+        case "status":
+          return (
+            <div className="flex justify-center items-center h-full w-full">
+              <Switch
+                checked={item.active}
+                onCheckedChange={() =>
+                  !togglingIds.has(item.id) && handleStatusToggle(item.id)
+                }
+                disabled={togglingIds.has(item.id)}
+                className="data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756] data-[state=unchecked]:bg-gray-300"
               />
             </div>
-          </div>
-        );
-      case 'serviceName':
-        return <span>{item.service_name || '-'}</span>;
-      case 'id':
-        return <span className="font-medium">{item.id}</span>;
-      case 'serviceCode':
-        return item.service_code || '-';
-      case 'executionType':
-        if (!item.execution_type) return '-';
-        return item.execution_type.charAt(0).toUpperCase() + item.execution_type.slice(1);
-      case 'group':
-        return item.group_name || '-';
-      case 'uom':
-        return item.base_uom || '-';
-      case 'building':
-        return item.building || '-';
-      case 'wing':
-        return item.wing || '-';
-      case 'area':
-        return item.area || '-';
-      case 'floor':
-        return item.floor || '-';
-      case 'room':
-        return item.room || '-';
-      case 'subGroup':
-        return item.sub_group_name || '-';
-      case 'status':
-        return (
-          <div className="flex justify-center items-center h-full w-full">
-            <Switch
-              checked={item.active}
-              onCheckedChange={() => !togglingIds.has(item.id) && handleStatusToggle(item.id)}
-              disabled={togglingIds.has(item.id)}
-              className="data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756] data-[state=unchecked]:bg-gray-300"
-            />
-          </div>
-        );
-      case 'createdOn':
-        return item.created_at ? new Date(item.created_at).toLocaleDateString('en-GB') : '-';
-      case 'category':
-        return item.category || '-';
-      default:
-        return '-';
-    }
-  }, [handleViewService, handleStatusToggle, handleSingleAmcFlag, togglingIds]);
+          );
+        case "createdOn":
+          return item.created_at
+            ? new Date(item.created_at).toLocaleDateString("en-GB")
+            : "-";
+        case "category":
+          return item.category || "-";
+        default:
+          return "-";
+      }
+    },
+    [handleViewService, handleStatusToggle, handleSingleAmcFlag, togglingIds]
+  );
 
   const paginationItems = useMemo(() => {
     const items: React.ReactNode[] = [];
@@ -824,7 +989,11 @@ export const ServiceDashboard = () => {
       // Always show first page
       items.push(
         <PaginationItem key={1}>
-          <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(1)} isActive={current === 1}>
+          <PaginationLink
+            className="cursor-pointer"
+            onClick={() => setCurrentPage(1)}
+            isActive={current === 1}
+          >
             1
           </PaginationLink>
         </PaginationItem>
@@ -835,7 +1004,11 @@ export const ServiceDashboard = () => {
         for (let i = 2; i <= 4 && i < totalPages; i++) {
           items.push(
             <PaginationItem key={i}>
-              <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={current === i}>
+              <PaginationLink
+                className="cursor-pointer"
+                onClick={() => setCurrentPage(i)}
+                isActive={current === i}
+              >
                 {i}
               </PaginationLink>
             </PaginationItem>
@@ -859,7 +1032,11 @@ export const ServiceDashboard = () => {
           if (i > 1) {
             items.push(
               <PaginationItem key={i}>
-                <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={current === i}>
+                <PaginationLink
+                  className="cursor-pointer"
+                  onClick={() => setCurrentPage(i)}
+                  isActive={current === i}
+                >
                   {i}
                 </PaginationLink>
               </PaginationItem>
@@ -876,7 +1053,11 @@ export const ServiceDashboard = () => {
         for (let i = current - 1; i <= current + 1; i++) {
           items.push(
             <PaginationItem key={i}>
-              <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={current === i}>
+              <PaginationLink
+                className="cursor-pointer"
+                onClick={() => setCurrentPage(i)}
+                isActive={current === i}
+              >
                 {i}
               </PaginationLink>
             </PaginationItem>
@@ -893,7 +1074,11 @@ export const ServiceDashboard = () => {
       if (totalPages > 1) {
         items.push(
           <PaginationItem key={totalPages}>
-            <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(totalPages)} isActive={current === totalPages}>
+            <PaginationLink
+              className="cursor-pointer"
+              onClick={() => setCurrentPage(totalPages)}
+              isActive={current === totalPages}
+            >
               {totalPages}
             </PaginationLink>
           </PaginationItem>
@@ -903,7 +1088,11 @@ export const ServiceDashboard = () => {
       for (let i = 1; i <= totalPages; i++) {
         items.push(
           <PaginationItem key={i}>
-            <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={current === i}>
+            <PaginationLink
+              className="cursor-pointer"
+              onClick={() => setCurrentPage(i)}
+              isActive={current === i}
+            >
               {i}
             </PaginationLink>
           </PaginationItem>
@@ -917,77 +1106,101 @@ export const ServiceDashboard = () => {
     setShowActionPanel(true);
   }, []);
 
-  const leftActions = useMemo(() => (
-    <div className="flex flex-wrap gap-3">
-      {shouldShow("Soft Services","create")&&(
-      <Button onClick={handleActionClick} className="fm-button-fix fm-button-brand !h-8 !min-h-8 !px-3 !py-1.5 text-sm">
-        <Plus className="w-4 h-4" /> Action
-      </Button>)}
-      {selectedItems.length > 0 && (
-        <Button
-          className="bg-primary text-primary-foreground hover:bg-primary/90"
-          onClick={() => handleQRDownload()}
-          disabled={downloadingQR}
-        >
-          {downloadingQR ? (
-            <svg className="animate-spin h-4 w-4 mr-2 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-            </svg>
-          ) : (
-            <FileText className="w-4 h-4 mr-2" />
-          )}
-          {downloadingQR ? 'Print QR...' : 'Print QR'}
-        </Button>
-      )}
-    </div>
-  ), [handleActionClick, selectedItems.length, downloadingQR, handleQRDownload]);
+  const leftActions = useMemo(
+    () => (
+      <div className="flex flex-wrap gap-3">
+        {shouldShow("Soft Services", "create") && (
+          <Button
+            onClick={handleActionClick}
+            className="fm-button-fix fm-button-brand !h-8 !min-h-8 !px-3 !py-1.5 text-sm"
+          >
+            <Plus className="w-4 h-4" /> Action
+          </Button>
+        )}
+        {selectedItems.length > 0 && (
+          <Button
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            onClick={() => handleQRDownload()}
+            disabled={downloadingQR}
+          >
+            {downloadingQR ? (
+              <svg
+                className="animate-spin h-4 w-4 mr-2 text-white inline-block"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                ></path>
+              </svg>
+            ) : (
+              <FileText className="w-4 h-4 mr-2" />
+            )}
+            {downloadingQR ? "Print QR..." : "Print QR"}
+          </Button>
+        )}
+      </div>
+    ),
+    [handleActionClick, selectedItems.length, downloadingQR, handleQRDownload]
+  );
 
   const handleExport = async () => {
-    const baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
-    const token = localStorage.getItem('token');
-    const siteId = localStorage.getItem('selectedSiteId');
+    const baseUrl =
+      localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
+    const token = localStorage.getItem("token");
+    const siteId = localStorage.getItem("selectedSiteId");
     try {
       if (!baseUrl || !token) {
-        toast.error('Missing base URL, token, or site ID');
+        toast.error("Missing base URL, token, or site ID");
         return;
       }
       let url = `https://${baseUrl}/pms/services/export.xlsx?site_id=${siteId}`;
 
       // let url = `https://${baseUrl}/pms/services/export.xlsx`;
       if (selectedItems.length > 0) {
-        const ids = selectedItems.join(',');
+        const ids = selectedItems.join(",");
         url += `&ids=${ids}`;
       }
 
       const response = await axios.get(url, {
-        responseType: 'blob',
+        responseType: "blob",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
       if (!response.data || response.data.size === 0) {
-        toast.error('Empty file received from server');
+        toast.error("Empty file received from server");
         return;
       }
 
       const blob = new Blob([response.data], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
 
       const downloadUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = downloadUrl;
-      link.download = 'services.xlsx';
+      link.download = "services.xlsx";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
-      toast.success('Services data exported successfully');
+      toast.success("Services data exported successfully");
     } catch (error) {
-      console.error('Export failed:', error);
-      toast.error('Failed to export Services data');
+      console.error("Export failed:", error);
+      toast.error("Failed to export Services data");
     }
   };
 
@@ -1005,32 +1218,32 @@ export const ServiceDashboard = () => {
           <StatsCard
             title="Total Services"
             value={totalServicesCount}
-            selected={selectedSummary === 'total'}
+            selected={selectedSummary === "total"}
             onClick={handleTotalServicesClick}
-            icon={<Settings className="w-6 h-6" style={{ color: '#C72030' }} />}
+            icon={<Settings className="w-6 h-6" style={{ color: "#C72030" }} />}
           />
 
           <StatsCard
             title="Active Services"
             value={activeServicesCount}
-            selected={selectedSummary === 'active'}
+            selected={selectedSummary === "active"}
             onClick={handleActiveServicesClick}
-            icon={<Settings className="w-6 h-6" style={{ color: '#C72030' }} />}
+            icon={<Settings className="w-6 h-6" style={{ color: "#C72030" }} />}
           />
 
           <StatsCard
             title="Inactive Services"
             value={inactiveServicesCount}
-            selected={selectedSummary === 'inactive'}
+            selected={selectedSummary === "inactive"}
             onClick={handleInactiveServicesClick}
-            icon={<Settings className="w-6 h-6" style={{ color: '#C72030' }} />}
+            icon={<Settings className="w-6 h-6" style={{ color: "#C72030" }} />}
           />
         </div>
 
         {showActionPanel && (
           <SelectionPanel
             actions={[
-              { label: 'Add Schedule', icon: Plus, onClick: handleAddSchedule },
+              { label: "Add Schedule", icon: Plus, onClick: handleAddSchedule },
             ]}
             onAdd={handleAddClick}
             onImport={handleImportClick}
@@ -1078,8 +1291,14 @@ export const ServiceDashboard = () => {
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious
-                  onClick={() => setCurrentPage(Math.max(1, paginationData.current_page - 1))}
-                  className={paginationData.current_page === 1 ? 'pointer-events-none opacity-50' : ''}
+                  onClick={() =>
+                    setCurrentPage(Math.max(1, paginationData.current_page - 1))
+                  }
+                  className={
+                    paginationData.current_page === 1
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
                 />
               </PaginationItem>
 
@@ -1087,17 +1306,38 @@ export const ServiceDashboard = () => {
 
               <PaginationItem>
                 <PaginationNext
-                  onClick={() => setCurrentPage(Math.min(paginationData.total_pages, paginationData.current_page + 1))}
-                  className={paginationData.current_page === paginationData.total_pages ? 'pointer-events-none opacity-50' : ''}
+                  onClick={() =>
+                    setCurrentPage(
+                      Math.min(
+                        paginationData.total_pages,
+                        paginationData.current_page + 1
+                      )
+                    )
+                  }
+                  className={
+                    paginationData.current_page === paginationData.total_pages
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
                 />
               </PaginationItem>
             </PaginationContent>
           </Pagination>
         </div>
       )}
-      <ServiceBulkUploadModal isOpen={showBulkUploadModal} onClose={() => setShowBulkUploadModal(false)} />
-      <ImportLocationsModal isOpen={showImportLocationsModal} onClose={() => setShowImportLocationsModal(false)} />
-      <ServiceFilterModal isOpen={showFilterModal} onClose={handleCloseFilter} onApply={handleApplyFilters} />
+      <ServiceBulkUploadModal
+        isOpen={showBulkUploadModal}
+        onClose={() => setShowBulkUploadModal(false)}
+      />
+      <ImportLocationsModal
+        isOpen={showImportLocationsModal}
+        onClose={() => setShowImportLocationsModal(false)}
+      />
+      <ServiceFilterModal
+        isOpen={showFilterModal}
+        onClose={handleCloseFilter}
+        onApply={handleApplyFilters}
+      />
     </div>
   );
 };
