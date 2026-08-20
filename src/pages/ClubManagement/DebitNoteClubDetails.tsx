@@ -234,6 +234,12 @@ export const DebitNoteClubDetails = () => {
               Delete
             </Button>
           </div> */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button size="sm" variant="outline" onClick={handleDownloadPdf} className="gap-2">
+              <Download className="h-4 w-4" />
+              Download Debit Note
+            </Button>
+          </div>
         </div>
 
         {/* Debit Note Information — mirrors the debit_note fields sent on creation */}
@@ -280,11 +286,11 @@ export const DebitNoteClubDetails = () => {
               </div>
               <div>
                                 <p className="text-sm font-medium text-muted-foreground">Invoice Type</p>
-                                <p className="text-base font-semibold mt-1">{debitNoteData.invoice_types || "-"}</p>
+                                <p className="text-base font-semibold mt-1">{debitNoteData.invoice_type || "-"}</p>
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Reason</p>
-                                <p className="text-base font-semibold mt-1">{debitNoteData.reason || "-"}</p>
+                                <p className="text-base font-semibold mt-1">{debitNoteData.reason || debitNoteData.note || "-"}</p>
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Subject</p>
@@ -391,7 +397,7 @@ export const DebitNoteClubDetails = () => {
         </Card>
 
         {/* Attachments */}
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Paperclip className="h-5 w-5 text-primary" />
@@ -399,15 +405,36 @@ export const DebitNoteClubDetails = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
-              <FileText className="h-5 w-5 text-muted-foreground" />
-              <p className="text-sm font-medium">Debit Note PDF</p>
-              <Button variant="ghost" size="sm" onClick={handleDownloadPdf}>
-                <Download className="h-4 w-4" />
-              </Button>
-            </div>
+            {debitNoteData.attachments?.length > 0 ? (
+              <div className="space-y-2">
+                {debitNoteData.attachments.map((file, idx) => (
+                  <div
+                    key={file.id ?? idx}
+                    className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <FileText className="h-5 w-5 text-muted-foreground" />
+                      <p className="text-sm font-medium">
+                        {file.document_file_name || file.file_name || `Attachment ${idx + 1}`}
+                      </p>
+                    </div>
+                    {(file.attachment_url || file.url) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => window.open(file.attachment_url || file.url, "_blank")}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-4">No attachments</p>
+            )}
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
 
       {/* Delete Confirmation Dialog */}
