@@ -172,6 +172,7 @@ interface Item {
     item_tax_type?: string
     tax_group_id?: number | null
     tax_exemption_id?: number | null
+    locked?: boolean
 }
 
 interface ExternalUser {
@@ -527,9 +528,9 @@ export const DebitNoteClubAddPage: React.FC = () => {
         'Others',
     ];
 
-    // Fetch invoices when customer changes
+    // Fetch invoices (bill_bookings) for the selected user, to link this debit note to one
     useEffect(() => {
-        if (!selectedCustomer) {
+        if (!selectedUser) {
             setInvoiceList([]);
             setSelectedInvoice('');
             return;
@@ -540,17 +541,26 @@ export const DebitNoteClubAddPage: React.FC = () => {
             const lock_account_id = localStorage.getItem('lock_account_id');
             try {
                 const res = await axios.get(
-                    `https://${baseUrl}/lock_account_invoices.json?lock_account_id=${lock_account_id}&q[lock_account_customer_id_eq]=${selectedCustomer.id}`,
-                    { headers: { Authorization: token ? `Bearer ${token}` : undefined } }
+                    `https://${baseUrl}/lock_accounts/${lock_account_id}/bill_bookings.json`,
+                    {
+                        params: { user_id: selectedUser, page: 1, per_page: 20 },
+                        headers: { Authorization: token ? `Bearer ${token}` : undefined }
+                    }
                 );
-                const data = res.data?.data || res.data || [];
-                setInvoiceList(Array.isArray(data) ? data : []);
+                // NOTE: response shape is unconfirmed — best-effort parsing across common shapes.
+                const data = res.data;
+                const list = data?.bill_bookings || data?.data || (Array.isArray(data) ? data : []);
+                setInvoiceList((list || []).map((inv: any) => ({
+                    id: String(inv.id),
+                    invoice_number:  `#${inv.id}`
+                    // inv.bill_number || inv.order_number || inv.invoice_number ||
+                })));
             } catch {
                 setInvoiceList([]);
             }
         };
         fetchInvoices();
-    }, [selectedCustomer]);
+    }, [selectedUser]);
 
     // Dropdowns data
     const [itemOptions, setItemOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
@@ -1015,6 +1025,85 @@ export const DebitNoteClubAddPage: React.FC = () => {
     const [membershipPlanOptions, setMembershipPlanOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
     const [eventOptionsList, setEventOptionsList] = useState<{ id: string; name: string; rate: number }[]>([]);
 
+    // When an invoice is selected, pull its line items in and lock every field except Rate
+    useEffect(() => {
+        if (!selectedInvoice) return;
+        const fetchInvoiceItems = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
+            try {
+                const res = await axios.get(
+                    `https://${baseUrl}/lock_accounts/${lock_account_id}/bill_bookings/${selectedInvoice}.json`,
+                    { headers: { Authorization: token ? `Bearer ${token}` : undefined } }
+                );
+                const data = res.data?.bill_booking || res.data || {};
+                const fetchedLineItems = res.data?.line_items || data.line_items || [];
+                if (!Array.isArray(fetchedLineItems) || fetchedLineItems.length === 0) {
+                    toast.error('Selected invoice has no items');
+                    return;
+                }
+
+                const sourceSel: Record<string, 'facility' | 'membership' | 'event' | 'other' | ''> = {};
+                const entitySel: Record<string, string> = {};
+                const draftNames: Record<string, string> = {};
+
+                const mappedItems: Item[] = fetchedLineItems.map((li: any, idx: number) => {
+                    const gstRate = Number(li.cgst_rate || 0) + Number(li.sgst_rate || 0) || Number(li.gst_rate || 0) || 0;
+                    const itemId = `inv-${li.id ?? idx}-${idx}`;
+
+                    const typeToSourceKey: Record<string, 'facility' | 'membership' | 'event' | 'other'> = {
+                        facility_booking: 'facility',
+                        membership: 'membership',
+                        event: 'event',
+                        other: 'other',
+                    };
+                    sourceSel[itemId] = typeToSourceKey[li.line_item_type] || 'other';
+                    if (li.line_item_reference_id) entitySel[itemId] = String(li.line_item_reference_id);
+                    if (!li.line_item_reference_id) draftNames[itemId] = li.name || '';
+
+                    return {
+                        id: itemId,
+                        name: li.name || '',
+                        item_id: li.line_item_reference_id ? String(li.line_item_reference_id) : null,
+                        description: '',
+                        quantity: Number(li.quantity) || 0,
+                        rate: Number(li.rate) || 0,
+                        discount: Number(li.discount) || 0,
+                        discountType: 'amount',
+                        tax: '',
+                        taxRate: 0,
+                        amount: Number(li.amount) || 0,
+                        account: '',
+                        customer: '',
+                        item_tax_type: gstRate ? 'flat_gst' : '',
+                        tax_group_id: gstRate || null,
+                        tax_exemption_id: null,
+                        locked: true,
+                    };
+                });
+                setItems(mappedItems);
+                setItemSourceSelection(sourceSel);
+                setSelectedEntityByItem(entitySel);
+                setOtherItemNameDraft(draftNames);
+
+                // The invoice's own discount can be applied at the invoice level (discount_per/discount_amount)
+                // rather than per line item — pull that in too, or the Summary silently shows no discount at all.
+                if (data.discount_per) {
+                    setDiscountTypeOnTotal('percentage');
+                    setDiscountOnTotal(Number(data.discount_per) || 0);
+                } else if (data.discount_amount) {
+                    setDiscountTypeOnTotal('amount');
+                    setDiscountOnTotal(Number(data.discount_amount) || 0);
+                }
+            } catch (error) {
+                console.error('Error fetching invoice items:', error);
+                toast.error('Failed to load items from the selected invoice');
+            }
+        };
+        fetchInvoiceItems();
+    }, [selectedInvoice]);
+
     // Extracts an options array regardless of which wrapper key the API used, and
     // normalizes each entity's id/name/rate — exact response shape unconfirmed.
     const parseEntityOptions = (data: any): { id: string; name: string; rate: number }[] => {
@@ -1095,9 +1184,21 @@ export const DebitNoteClubAddPage: React.FC = () => {
     const [totalAmount2, setTotalAmount2] = useState(0);
     // Calculate totals
     const subTotal = items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
-    const totalDiscount = discountTypeOnTotal === 'percentage'
-        ? (subTotal * discountOnTotal) / 100
-        : discountOnTotal;
+    // Per-item discounts (e.g. from a locked invoice line item) were being silently dropped from the
+    // summary — only the manual invoice-level discount field below was ever counted. Add both together.
+    const itemDiscountTotal = items.reduce((sum, item) => {
+        const itemSubtotal = item.quantity * item.rate;
+        const itemDiscount = item.discountType === 'percentage'
+            ? (itemSubtotal * Number(item.discount || 0)) / 100
+            : Number(item.discount || 0);
+        return sum + itemDiscount;
+    }, 0);
+    // discountOnTotal can be '' while the user is clearing the field — coerce or totalDiscount becomes
+    // a string (e.g. number + '' via + concatenation) and every .toFixed(2) call downstream crashes.
+    const invoiceLevelDiscount = discountTypeOnTotal === 'percentage'
+        ? (subTotal * Number(discountOnTotal || 0)) / 100
+        : Number(discountOnTotal || 0);
+    const totalDiscount = itemDiscountTotal + invoiceLevelDiscount;
     const afterDiscount = subTotal - totalDiscount;
     const taxAmount = items.reduce((sum, item) => {
         const itemSubtotal = item.quantity * item.rate;
@@ -1200,6 +1301,12 @@ export const DebitNoteClubAddPage: React.FC = () => {
             return false;
         }
 
+        if (!selectedInvoice) {
+            setErrors(newErrors);
+            toast.error('Invoice# is required');
+            return false;
+        }
+
         // if (expectedShipmentDate && salesOrderDate && new Date(expectedShipmentDate) < new Date(salesOrderDate)) {
         //     toast.error('Due date cannot be earlier than debit note date');
         //     return false;
@@ -1216,57 +1323,22 @@ export const DebitNoteClubAddPage: React.FC = () => {
         return true;
     };
 
-    const saleOrderPayload2 = {
-        sale_order: {
-            lock_account_customer_id: selectedUser,
-            reference_number: referenceNumber,
-            date: salesOrderDate,
-            shipment_date: expectedShipmentDate,
-            payment_term_id: selectedTerm,
-            delivery_method: deliveryMethod,
-            sales_person_id: salespersons.find(sp => sp.name === salesperson)?.id || salesperson,
-            customer_notes: customerNotes,
-            terms_and_conditions: termsAndConditions,
-            status: 'draft',
-            total_amount: totalAmount,
-            discount_per: discountTypeOnTotal === 'percentage' ? discountOnTotal : undefined,
-            discount_amount: discountTypeOnTotal === 'percentage' ? totalDiscount : discountOnTotal,
-            charge_amount: adjustment,
-            charge_name: adjustmentLabel,
-            charge_type: adjustment >= 0 ? 'plus' : 'minus',
-            tax_type: taxType.toLowerCase(),
-            lock_account_tax_id: (() => {
-                const found = taxOptions.find(t => t.id === selectedTax || t.name === selectedTax);
-                return found && found.id ? found.id : selectedTax || '';
-            })(),
-            sale_order_items_attributes: items.map(item => {
-                const resolvedId = item.item_id || itemOptions.find(opt => opt.name === item.name)?.id;
-                return {
-                    ...(resolvedId ? { lock_account_item_id: resolvedId } : { item_name: item.name }),
-                    rate: item.rate,
-                    quantity: item.quantity,
-                    total_amount: item.amount,
-                    description: item.description || ''
-                };
-            }),
-            // email_contact_persons_attributes: externalUsers.map((user, idx) => ({
-            //     contact_person_id: user.id || idx + 1 // Replace with actual contact person id
-            // })),
-            // attachments_attributes: attachments.map(f => ({
-            //     document: '', // Replace with actual document upload logic
-            //     active: true
-            // }))
-            email_contact_persons_attributes: selectedContactPersons.map(id => ({ contact_person_id: id })),
-            attachments_attributes: attachments.map(f => ({
-                document: f,
-                active: true
-            }))
-        }
+    // Maps the item-source radio key to the line_item_type the API expects
+    const SOURCE_KEY_TO_LINE_ITEM_TYPE: Record<string, string> = {
+        facility: 'facility_booking',
+        membership: 'membership',
+        event: 'event',
+        other: 'other',
     };
-    console.log('Sale Order Payload:', saleOrderPayload2);
-    console.log("items:", items)
+    // Maps a line_item_type to the PascalCase resource_type the debit_notes API expects
+    const LINE_ITEM_RESOURCE_TYPE: Record<string, string> = {
+        facility_booking: 'FacilityBooking',
+        membership: 'Membership',
+        event: 'Event',
+    };
+
     // Handle submit
-    const handleSubmit = async (saveAsDraft: boolean = false) => {
+    const handleSubmit = async () => {
         if (!validate()) {
             return;
         }
@@ -1278,95 +1350,77 @@ export const DebitNoteClubAddPage: React.FC = () => {
             const token = localStorage.getItem('token');
             const lock_account_id = localStorage.getItem('lock_account_id');
 
-            // Build FormData for sale order
             const formData = new FormData();
-            const totalGSTAmount = taxBreakdown.reduce(
-                (sum, tax) => sum + Number(tax.amount || 0),
-                0
-            );
 
-            formData.append(
-                'lock_account_debit_note[sub_total_amount]',
-                String(subTotal)
-            );
-
-            formData.append(
-                'lock_account_debit_note[taxable_amount]',
-                String(totalGSTAmount)
-            );
-
-            formData.append(
-                'lock_account_debit_note[lock_account_tax_amount]',
-                String(taxAmount2)
-            );
-            // NOTE: backend contract for billing a guest/member (vs. a lock_account_customer) is unconfirmed;
-            // sending whichever id was picked under the existing customer_id param as a best-effort mapping.
-            formData.append('lock_account_debit_note[lock_account_customer_id]', selectedUser || '');
-            formData.append('lock_account_debit_note[reference_number]', referenceNumber);
-            formData.append('lock_account_debit_note[date]', salesOrderDate);
-            // formData.append('lock_account_debit_note[date]', expectedShipmentDate);
-            // formData.append('lock_account_debit_note[payment_term_id]', selectedTerm);
-            // formData.append('sale_order[delivery_method]', deliveryMethod);
-            formData.append('lock_account_debit_note[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
-            formData.append('lock_account_debit_note[customer_notes]', customerNotes);
-            formData.append('lock_account_debit_note[terms_and_conditions]', termsAndConditions);
-            formData.append('lock_account_debit_note[status]', saveAsDraft ? 'draft' : 'open');
-            formData.append('lock_account_debit_note[subject]', subject || '');
-            formData.append('lock_account_debit_note[total_amount]', String(totalAmount2));
-            if (discountTypeOnTotal === 'percentage') {
-                formData.append('lock_account_debit_note[discount_per]', String(discountOnTotal));
-                formData.append('lock_account_debit_note[discount_amount]', String(totalDiscount));
-            } else {
-                formData.append('lock_account_debit_note[discount_amount]', String(discountOnTotal));
+            formData.append('debit_note[user_id]', String(selectedUser || ''));
+            formData.append('debit_note[date]', salesOrderDate);
+            // NOTE: debit_note has no "reason" field — confirmed payload uses "note" (free text) and a
+            // fixed "note_type". Mapping the existing Reason dropdown value into "note" as best-effort.
+            formData.append('debit_note[note_type]', 'other');
+            formData.append('debit_note[note]', reason || '');
+            formData.append('debit_note[subject]', subject || '');
+            formData.append('debit_note[customer_notes]', customerNotes || '');
+            formData.append('debit_note[terms_and_conditions]', termsAndConditions || '');
+            formData.append('debit_note[place_of_supply]', placeOfSupply || '');
+            formData.append('debit_note[reference_number]', referenceNumber || '');
+            // Confirmed: the debit_note record's top-level discount field is named "discount", not "discount_amount".
+            // totalDiscount is always the final combined amount (item-level + invoice-level discount).
+            formData.append('debit_note[discount]', String(totalDiscount));
+            if (selectedInvoice) {
+                formData.append('debit_note[lock_account_invoice_id]', selectedInvoice);
+                formData.append('debit_note[invoice_type]', 'bill_booking');
             }
-            formData.append('lock_account_debit_note[charge_amount]', String(adjustment));
-            formData.append('lock_account_debit_note[charge_name]', adjustmentLabel);
-            formData.append('lock_account_debit_note[charge_type]', adjustment >= 0 ? 'plus' : 'minus');
-            formData.append('lock_account_debit_note[tax_type]', taxType.toLowerCase());
-            const foundTax = taxOptions.find(t => t.id === selectedTax || t.name === selectedTax);
-            formData.append('lock_account_debit_note[lock_account_tax_id]', (foundTax && foundTax.id ? foundTax.id : selectedTax || ''));
-            formData.append('lock_account_debit_note[place_of_supply]', placeOfSupply);
-            formData.append('lock_account_debit_note[lock_account_invoice_id]', selectedInvoice || '');
-            formData.append('lock_account_debit_note[invoice_type]', invoiceType || '');
-            formData.append('lock_account_debit_note[reason]', reason || '');
-            const selectedOrFirstBillingId = selectedBillingAddressId ?? billingAddressBook[0]?.id ?? '';
-            const selectedOrFirstShippingId = selectedShippingAddressId ?? shippingAddressBook[0]?.id ?? '';
-            const selectedOrFirstGstDetailId = selectedGstDetailId ?? gstDetails[0]?.id ?? '';
-            formData.append('lock_account_debit_note[address_detail_attributes][billing_address_id]', String(selectedOrFirstBillingId));
-            formData.append('lock_account_debit_note[address_detail_attributes][shipping_address_id]', String(selectedOrFirstShippingId));
-            formData.append('lock_account_debit_note[address_detail_attributes][gst_detail_id]', String(selectedOrFirstGstDetailId));
-            formData.append('lock_account_debit_note[address_detail_attributes][gst_preference]', gstTreatment);
-            // Sale order items
+
+            // NOTE: address_detail_attributes isn't in the confirmed debit_notes creation sample —
+            // sent on a best-effort basis, mirroring the confirmed bill_bookings contract.
+            formData.append('debit_note[address_detail_attributes][gst_detail_id]', selectedGstDetail?.id ? String(selectedGstDetail.id) : '');
+            formData.append('debit_note[address_detail_attributes][gst_preference]', gstTreatment || '');
+            if (selectedBillingAddress) {
+                formData.append('debit_note[address_detail_attributes][billing_address_attributes][address]', selectedBillingAddress.address || '');
+                formData.append('debit_note[address_detail_attributes][billing_address_attributes][city]', selectedBillingAddress.city || '');
+                formData.append('debit_note[address_detail_attributes][billing_address_attributes][state]', selectedBillingAddress.state || '');
+                formData.append('debit_note[address_detail_attributes][billing_address_attributes][country]', selectedBillingAddress.country || '');
+                formData.append('debit_note[address_detail_attributes][billing_address_attributes][pin_code]', selectedBillingAddress.pin_code || '');
+                formData.append('debit_note[address_detail_attributes][billing_address_attributes][contact_person]', selectedBillingAddress.attention || '');
+                formData.append('debit_note[address_detail_attributes][billing_address_attributes][mobile]', selectedBillingAddress.mobile || selectedBillingAddress.telephone_number || '');
+            }
+            if (selectedShippingAddress) {
+                formData.append('debit_note[address_detail_attributes][shipping_address_attributes][address]', selectedShippingAddress.address || '');
+                formData.append('debit_note[address_detail_attributes][shipping_address_attributes][city]', selectedShippingAddress.city || '');
+                formData.append('debit_note[address_detail_attributes][shipping_address_attributes][state]', selectedShippingAddress.state || '');
+                formData.append('debit_note[address_detail_attributes][shipping_address_attributes][country]', selectedShippingAddress.country || '');
+                formData.append('debit_note[address_detail_attributes][shipping_address_attributes][pin_code]', selectedShippingAddress.pin_code || '');
+            }
+            formData.append('debit_note[billing_gstin]', selectedGstDetail?.gstin || gstin || '');
+
+            const lineItemTypes = items.map(item => SOURCE_KEY_TO_LINE_ITEM_TYPE[itemSourceSelection[item.id] || ''] || 'other');
+            const resourceIdx = items.findIndex((item, idx) => lineItemTypes[idx] !== 'other' && item.item_id);
+            if (resourceIdx !== -1) {
+                formData.append('debit_note[resource_type]', LINE_ITEM_RESOURCE_TYPE[lineItemTypes[resourceIdx]]);
+                formData.append('debit_note[resource_id]', String(items[resourceIdx].item_id));
+            }
+
             items.forEach((item, idx) => {
-                const resolvedId = item.item_id || itemOptions.find(opt => opt.name === item.name)?.id;
-                if (resolvedId) {
-                    formData.append(`lock_account_debit_note[sale_order_items_attributes][${idx}][lock_account_item_id]`, String(resolvedId));
-                } else {
-                    formData.append(`lock_account_debit_note[sale_order_items_attributes][${idx}][item_name]`, item.name);
+                const baseAmount = Number(item.quantity || 0) * Number(item.rate || 0);
+                const discountAmount = item.discountType === 'percentage'
+                    ? (baseAmount * Number(item.discount || 0)) / 100
+                    : Number(item.discount || 0);
+                const gstRate = item.item_tax_type === 'flat_gst' ? Number(item.tax_group_id) || 0 : 0;
+                const lineItemType = lineItemTypes[idx];
+
+                formData.append(`line_items[${idx}][line_item_type]`, lineItemType);
+                if (lineItemType !== 'other' && item.item_id) {
+                    formData.append(`line_items[${idx}][line_item_reference_id]`, String(item.item_id));
                 }
-                formData.append(`lock_account_debit_note[sale_order_items_attributes][${idx}][rate]`, String(item.rate));
-                formData.append(`lock_account_debit_note[sale_order_items_attributes][${idx}][quantity]`, String(item.quantity));
-                formData.append(`lock_account_debit_note[sale_order_items_attributes][${idx}][total_amount]`, String(item.amount));
-                formData.append(`lock_account_debit_note[sale_order_items_attributes][${idx}][name]`, item.description || '');
-                formData.append(`lock_account_debit_note[sale_order_items_attributes][${idx}][lock_account_ledger_id]`, item.account || '');
-                formData.append(`lock_account_debit_note[sale_order_items_attributes][${idx}][tax_type]`, String(item.item_tax_type));
-                formData.append(`lock_account_debit_note[sale_order_items_attributes][${idx}][tax_group_id]`, String(item.tax_group_id));
-                formData.append(`lock_account_debit_note[sale_order_items_attributes][${idx}][tax_exemption_id]`, String(item.tax_exemption_id));
-                // formData.append(`lock_account_debit_note[sale_order_items_attributes][${idx}][lock_account_customer_id]`, item.customer || '');
+                formData.append(`line_items[${idx}][name]`, item.name);
+                formData.append(`line_items[${idx}][quantity]`, String(item.quantity));
+                formData.append(`line_items[${idx}][rate]`, String(item.rate));
+                formData.append(`line_items[${idx}][amount]`, String(baseAmount));
+                formData.append(`line_items[${idx}][discount]`, String(discountAmount));
+                formData.append(`line_items[${idx}][gst_rate]`, String(gstRate));
             });
 
-            // Email contact persons
-            // selectedContactPersons.forEach((id, idx) => {
-            //     formData.append(`lock_account_debit_note[email_contact_persons_attributes][${idx}][contact_person_id]`, String(id));
-            // });
-
-            // Attachments
-            // attachments.forEach((file, idx) => {
-            //     formData.append(`lock_account_debit_note[attachments_attributes][${idx}][document]`, file);
-            //     formData.append(`lock_account_debit_note[attachments_attributes][${idx}][active]`, 'true');
-            // });
-
-            await fetch(`https://${baseUrl}/lock_account_debit_notes.json?lock_account_id=${lock_account_id}`, {
+            await fetch(`https://${baseUrl}/debit_notes.json?lock_account_id=${lock_account_id}`, {
                 method: 'POST',
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined
@@ -1375,7 +1429,7 @@ export const DebitNoteClubAddPage: React.FC = () => {
                 body: formData
             });
 
-            toast.success(saveAsDraft ? 'Debit note saved as draft!' : 'Debit note saved as open!');
+            toast.success('Debit note created successfully!');
             navigate('/club-management/debit-note');
         } catch (error) {
             console.error('Error submitting debit note:', error);
@@ -1494,7 +1548,7 @@ export const DebitNoteClubAddPage: React.FC = () => {
         .forEach(item => {
             const rateValue = Number(item.tax_group_id) || 0;
             const taxAmount = (item.amount * rateValue) / 100;
-            const name = `GST (${rateValue}%)`;
+            const name = `GST ${rateValue}%`;
             const existing = taxBreakdown.find(t => t.name === name);
             if (existing) {
                 existing.amount += taxAmount;
@@ -1599,7 +1653,7 @@ export const DebitNoteClubAddPage: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-sm font-medium mb-2">
-                                    User
+                                    User <span className="text-red-500">*</span>
                                 </label>
                                 <FormControl
                                     fullWidth
@@ -1658,7 +1712,7 @@ export const DebitNoteClubAddPage: React.FC = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">Invoice#</label>
+                                    <label className="block text-sm font-medium mb-2">Invoice#<span className="text-brand">*</span></label>
                                     <FormControl fullWidth>
                                         <Select
                                             value={selectedInvoice}
@@ -1779,7 +1833,7 @@ export const DebitNoteClubAddPage: React.FC = () => {
                                         )}
                                     </div>
                                 </div>
-                                {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm pt-2">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm pt-2">
                                     <div className="flex items-center gap-2">
                                         <span className="text-gray-500">GST Treatment:</span>
                                         <span className="text-gray-800">{getGstTreatmentLabel(gstTreatment) || '—'}</span>
@@ -1794,56 +1848,10 @@ export const DebitNoteClubAddPage: React.FC = () => {
                                             <EditOutlined fontSize="small" className="text-brand" />
                                         </IconButton>
                                     </div>
-                                </div> */}
+                                </div>
                             </div>
                     </div>
                 </Section>
-
-                {/* Address Section */}
-                {/* <Section title="Address Details" icon={<FileText className="w-5 h-5" />}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-sm font-medium mb-2">
-                                Billing Address
-                            </label>
-                            <textarea
-                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
-                                rows={4}
-                                maxLength={500}
-                                value={billingAddress || ''}
-                                onChange={(e) => { if (e.target.value.length <= 500) setBillingAddress(e.target.value); }}
-                                placeholder="Enter billing address"
-                            />
-                            <p className="text-xs text-gray-400 text-right mt-1">{(billingAddress?.length || 0)}/500</p>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-2">
-                                Shipping Address
-                            </label>
-                            <textarea
-                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y ${sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
-                                rows={4}
-                                maxLength={500}
-                                value={shippingAddress || ''}
-                                onChange={(e) => { if (e.target.value.length <= 500) setShippingAddress(e.target.value); }}
-                                placeholder="Enter shipping address"
-                                disabled={sameAsBilling}
-                            />
-                            {!sameAsBilling && <p className="text-xs text-gray-400 text-right mt-1">{(shippingAddress?.length || 0)}/500</p>}
-                            {/* <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        checked={sameAsBilling}
-                                        onChange={(e) => setSameAsBilling(e.target.checked)}
-                                    />
-                                }
-                                label="Same as Billing Address"
-                                className="mt-2"
-                            /> */}
-                        {/* </div>
-                    </div>
-                </Section> */} 
 
                 {/* Sales Order Details */}
                 <Section title="Debit Note Details" icon={<Calendar className="w-5 h-5" />}>
@@ -1922,103 +1930,120 @@ export const DebitNoteClubAddPage: React.FC = () => {
                                         {items.map((item, index) => (
                                             <tr key={item.id}>
                                                 <td className="px-4 py-3">
-                                                    {item.name && (
-                                                        <div className="text-sm font-medium">{item.name}</div>
-                                                    )}
-
-                                                    {(() => {
-                                                        const rowSource = itemSourceSelection[item.id] || '';
-                                                        const sourceOptions: { key: 'facility' | 'membership' | 'event'; label: string; options: { id: string; name: string; rate: number }[] }[] = [
-                                                            { key: 'facility', label: 'Facility Booking', options: facilityBookingOptions },
-                                                            { key: 'membership', label: 'Membership', options: membershipPlanOptions },
-                                                            { key: 'event', label: 'Event', options: eventOptionsList },
-                                                        ];
-                                                        const activeSource = sourceOptions.find(s => s.key === rowSource);
-                                                        return (
-                                                            <div className="mt-2">
-                                                                <RadioGroup
-                                                                    row
-                                                                    value={rowSource}
-                                                                    onChange={(e) => setItemSource(item.id, e.target.value as typeof rowSource)}
-                                                                >
-                                                                    {sourceOptions.map(({ key, label }) => (
-                                                                        <FormControlLabel
-                                                                            key={key}
-                                                                            value={key}
-                                                                            control={<BrandRadio />}
-                                                                            label={label}
-                                                                        />
-                                                                    ))}
-                                                                    <FormControlLabel
-                                                                        value="other"
-                                                                        control={<BrandRadio />}
-                                                                        label="Other"
-                                                                    />
-                                                                </RadioGroup>
-
-                                                                {activeSource && (
-                                                                    <FormControl size="small" sx={{ minWidth: 200 }}>
-                                                                        <Select
-                                                                            displayEmpty
-                                                                            value={selectedEntityByItem[item.id] || ''}
-                                                                            onChange={(e) => {
-                                                                                const value = String(e.target.value);
-                                                                                const selected = activeSource.options.find(o => o.id === value);
-                                                                                if (selected) {
-                                                                                    setSelectedEntityByItem(prev => ({ ...prev, [item.id]: value }));
-                                                                                    applySourceToItem(index, `${activeSource.label}: ${selected.name}`, selected.rate);
-                                                                                }
-                                                                            }}
-                                                                        >
-                                                                            <MenuItem value="" disabled>
-                                                                                {activeSource.options.length === 0 ? `No ${activeSource.label.toLowerCase()} records found` : `Select ${activeSource.label.toLowerCase()}`}
-                                                                            </MenuItem>
-                                                                            {activeSource.options.map(opt => (
-                                                                                <MenuItem key={opt.id} value={opt.id}>{opt.name}</MenuItem>
-                                                                            ))}
-                                                                        </Select>
-                                                                    </FormControl>
-                                                                )}
-
-                                                                {rowSource === 'other' && (
-                                                                    <TextField
-                                                                        size="small"
-                                                                        placeholder="Enter item name"
-                                                                        value={otherItemNameDraft[item.id] ?? ''}
-                                                                        onChange={(e) => setOtherItemNameDraft(prev => ({ ...prev, [item.id]: e.target.value }))}
-                                                                        onBlur={() => {
-                                                                            const name = (otherItemNameDraft[item.id] || '').trim();
-                                                                            if (name) updateItemFields(index, { item_id: null, name });
-                                                                        }}
-                                                                        sx={{ minWidth: 200 }}
-                                                                    />
-                                                                )}
+                                                    {item.locked ? (
+                                                        <div className="text-sm">
+                                                            <div className="font-medium text-gray-900">{item.name}</div>
+                                                            <div className="text-gray-900 mt-1">
+                                                                {{
+                                                                    facility: 'Facility Booking',
+                                                                    membership: 'Membership',
+                                                                    event: 'Event',
+                                                                    other: 'Other',
+                                                                    '': '',
+                                                                }[itemSourceSelection[item.id] || '']}
                                                             </div>
-                                                        );
-                                                    })()}
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            {(() => {
+                                                                const rowSource = itemSourceSelection[item.id] || '';
+                                                                const sourceOptions: { key: 'facility' | 'membership' | 'event'; label: string; options: { id: string; name: string; rate: number }[] }[] = [
+                                                                    { key: 'facility', label: 'Facility Booking', options: facilityBookingOptions },
+                                                                    { key: 'membership', label: 'Membership', options: membershipPlanOptions },
+                                                                    { key: 'event', label: 'Event', options: eventOptionsList },
+                                                                ];
+                                                                const activeSource = sourceOptions.find(s => s.key === rowSource);
+                                                                return (
+                                                                    <div className="mt-2">
+                                                                        <RadioGroup
+                                                                            row
+                                                                            value={rowSource}
+                                                                            onChange={(e) => setItemSource(item.id, e.target.value as typeof rowSource)}
+                                                                        >
+                                                                            {sourceOptions.map(({ key, label }) => (
+                                                                                <FormControlLabel
+                                                                                    key={key}
+                                                                                    value={key}
+                                                                                    control={<BrandRadio />}
+                                                                                    label={label}
+                                                                                />
+                                                                            ))}
+                                                                            <FormControlLabel
+                                                                                value="other"
+                                                                                control={<BrandRadio />}
+                                                                                label="Other"
+                                                                            />
+                                                                        </RadioGroup>
 
-                                                    <TextField
-                                                        fullWidth
-                                                        label="Item Description"
-                                                        size="small"
-                                                        placeholder="Description"
-                                                        value={item.description}
-                                                        onChange={(e) => updateItem(index, 'description', e.target.value)}
-                                                        sx={{ mt: 2 }}
-                                                        InputLabelProps={{ shrink: true }}
-                                                    />
+                                                                        {activeSource && (
+                                                                            <FormControl size="small" sx={{ minWidth: 200 }}>
+                                                                                <Select
+                                                                                    displayEmpty
+                                                                                    value={selectedEntityByItem[item.id] || ''}
+                                                                                    onChange={(e) => {
+                                                                                        const value = String(e.target.value);
+                                                                                        const selected = activeSource.options.find(o => o.id === value);
+                                                                                        if (selected) {
+                                                                                            setSelectedEntityByItem(prev => ({ ...prev, [item.id]: value }));
+                                                                                            applySourceToItem(index, `${activeSource.label}: ${selected.name}`, selected.rate);
+                                                                                        }
+                                                                                    }}
+                                                                                >
+                                                                                    <MenuItem value="" disabled>
+                                                                                        {activeSource.options.length === 0 ? `No ${activeSource.label.toLowerCase()} records found` : `Select ${activeSource.label.toLowerCase()}`}
+                                                                                    </MenuItem>
+                                                                                    {activeSource.options.map(opt => (
+                                                                                        <MenuItem key={opt.id} value={opt.id}>{opt.name}</MenuItem>
+                                                                                    ))}
+                                                                                </Select>
+                                                                            </FormControl>
+                                                                        )}
+
+                                                                        {rowSource === 'other' && (
+                                                                            <TextField
+                                                                                size="small"
+                                                                                placeholder="Enter item name"
+                                                                                value={otherItemNameDraft[item.id] ?? ''}
+                                                                                onChange={(e) => setOtherItemNameDraft(prev => ({ ...prev, [item.id]: e.target.value }))}
+                                                                                onBlur={() => {
+                                                                                    const name = (otherItemNameDraft[item.id] || '').trim();
+                                                                                    if (name) updateItemFields(index, { item_id: null, name });
+                                                                                }}
+                                                                                sx={{ minWidth: 200 }}
+                                                                            />
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })()}
+
+                                                            <TextField
+                                                                fullWidth
+                                                                label="Item Description"
+                                                                size="small"
+                                                                placeholder="Description"
+                                                                value={item.description}
+                                                                onChange={(e) => updateItem(index, 'description', e.target.value)}
+                                                                sx={{ mt: 2 }}
+                                                                InputLabelProps={{ shrink: true }}
+                                                            />
+                                                        </>
+                                                    )}
                                                 </td>
 
 
                                                 <td className="px-4 py-3">
-                                                    <TextField
-                                                        type="number"
-                                                        size="small"
-                                                        value={item.quantity}
-                                                        onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || '')}
-                                                        inputProps={{ min: 1, step: 1 }}
-                                                        sx={{ width: 80 }}
-                                                    />
+                                                    {item.locked ? (
+                                                        <div className="text-sm text-gray-900">{item.quantity}</div>
+                                                    ) : (
+                                                        <TextField
+                                                            type="number"
+                                                            size="small"
+                                                            value={item.quantity}
+                                                            onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || '')}
+                                                            inputProps={{ min: 1, step: 1 }}
+                                                            sx={{ width: 80 }}
+                                                        />
+                                                    )}
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <TextField
@@ -2053,30 +2078,36 @@ export const DebitNoteClubAddPage: React.FC = () => {
                                                 </div> */}
                                                 {/* </td> */}
                                                 <td className="px-4 py-3">
-                                                    <FormControl size="small" sx={{ width: 200 }}>
-                                                        <Select
-                                                            value={item.item_tax_type === "flat_gst" ? `flat_${item.tax_group_id}` : ""}
-                                                            displayEmpty
-                                                            onChange={(e) => {
-                                                                const value = String(e.target.value);
-                                                                if (value.startsWith("flat_")) {
-                                                                    updateItem(index, "item_tax_type", "flat_gst");
-                                                                    updateItem(index, "tax_group_id", Number(value.replace("flat_", "")));
-                                                                } else {
-                                                                    updateItem(index, "item_tax_type", "");
-                                                                    updateItem(index, "tax_group_id", null);
-                                                                }
-                                                            }}
-                                                        >
-                                                            <MenuItem value="">Select Tax</MenuItem>
+                                                    {item.locked ? (
+                                                        <div className="text-sm text-gray-900">
+                                                            {item.item_tax_type === "flat_gst" && item.tax_group_id ? `GST ${item.tax_group_id}%` : '-'}
+                                                        </div>
+                                                    ) : (
+                                                        <FormControl size="small" sx={{ width: 200 }}>
+                                                            <Select
+                                                                value={item.item_tax_type === "flat_gst" ? `flat_${item.tax_group_id}` : ""}
+                                                                displayEmpty
+                                                                onChange={(e) => {
+                                                                    const value = String(e.target.value);
+                                                                    if (value.startsWith("flat_")) {
+                                                                        updateItem(index, "item_tax_type", "flat_gst");
+                                                                        updateItem(index, "tax_group_id", Number(value.replace("flat_", "")));
+                                                                    } else {
+                                                                        updateItem(index, "item_tax_type", "");
+                                                                        updateItem(index, "tax_group_id", null);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <MenuItem value="">Select Tax</MenuItem>
 
-                                                            {[5, 9, 18].map((percent) => (
-                                                                <MenuItem key={`flat_${percent}`} value={`flat_${percent}`}>
-                                                                    GST {percent}%
-                                                                </MenuItem>
-                                                            ))}
-                                                        </Select>
-                                                    </FormControl>
+                                                                {[5, 9, 18].map((percent) => (
+                                                                    <MenuItem key={`flat_${percent}`} value={`flat_${percent}`}>
+                                                                        GST {percent}%
+                                                                    </MenuItem>
+                                                                ))}
+                                                            </Select>
+                                                        </FormControl>
+                                                    )}
                                                 </td>
                                                 <td className="px-4 py-3 text-right font-semibold">
                                                     ₹{item.amount.toFixed(2)}
@@ -2098,13 +2129,13 @@ export const DebitNoteClubAddPage: React.FC = () => {
                         </div>
 
                         <div className="flex gap-3 pt-4">
-                            <Button
+                            {/* <Button
                                 variant="outline"
                                 onClick={addItem}
                                 className="fm-button-fix px-8 py-2"
                             >
                                 <span className="flex items-center gap-2"><Add fontSize="small" /> Add New Row</span>
-                            </Button>
+                            </Button> */}
                             {/* <Button
                                 variant="outlined"
                                 sx={{ textTransform: 'none' }}
@@ -2151,7 +2182,7 @@ export const DebitNoteClubAddPage: React.FC = () => {
                             {taxBreakdown.map((tax, index) => (
                                 <div key={index} className="flex justify-between items-center py-2">
                                     <span className="text-sm font-medium text-muted-foreground">
-                                        {tax.name} ({tax.rate}%)
+                                        {tax.name.includes('%') ? tax.name : `${tax.name} (${tax.rate}%)`} ({tax.rate}%)
                                     </span>
                                     <span className="font-semibold text-base">
                                         ₹{tax.amount.toFixed(2)}
@@ -2336,7 +2367,7 @@ export const DebitNoteClubAddPage: React.FC = () => {
             <div className="flex items-center gap-3 justify-center pt-2">
 
                 <Button
-                    onClick={() => handleSubmit(false)}
+                    onClick={() => handleSubmit()}
                     disabled={isSubmitting}
                     className="fm-button-fix fm-button-brand px-8 py-2"
                 >

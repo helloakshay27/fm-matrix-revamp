@@ -245,30 +245,23 @@ export const ResponseEscalationTab: React.FC = () => {
     }
   };
 
-  // Handle success/error states
+  // Handle success states
   useEffect(() => {
     if (success) {
-      // Only show toast for create operations, not update (update has its own toast in handleUpdateRule)
       if (!editingRule) {
         toast.success("Response escalation rule created successfully!");
       }
       // Reset form
-      form.reset();
+      form.reset({
+        categoryIds: [],
+        escalationLevels: { e1: [], e2: [], e3: [], e4: [], e5: [] },
+      });
       setSelectedCategories([]);
       setSelectedUsers({ e1: [], e2: [], e3: [], e4: [], e5: [] });
       dispatch(fetchResponseEscalations());
       dispatch(clearState());
     }
-    if (error) {
-      // Ensure error is a string for toast display
-      const errorMessage =
-        typeof error === "string"
-          ? error
-          : "An error occurred while processing your request";
-      toast.error(errorMessage + "!");
-      dispatch(clearState());
-    }
-  }, [success, error, form, dispatch, editingRule]);
+  }, [success, form, dispatch, editingRule]);
 
   // Helper functions
   const getCategoryName = (id: number) => {
@@ -388,7 +381,9 @@ export const ResponseEscalationTab: React.FC = () => {
 
   // Filter rules based on category
   const filteredRules =
-    selectedCategoryFilter === "all"
+    !Array.isArray(escalationRules)
+      ? []
+      : selectedCategoryFilter === "all"
       ? escalationRules
       : escalationRules.filter((rule) => {
           const categoryName = getCategoryName(rule.category_id);
@@ -457,11 +452,11 @@ export const ResponseEscalationTab: React.FC = () => {
           category_id: data.categoryIds[0],
         },
         escalation_matrix: {
-          e1: { name: "E1", escalate_to_users: data.escalationLevels.e1 },
-          e2: { name: "E2", escalate_to_users: data.escalationLevels.e2 },
-          e3: { name: "E3", escalate_to_users: data.escalationLevels.e3 },
-          e4: { name: "E4", escalate_to_users: data.escalationLevels.e4 },
-          e5: { name: "E5", escalate_to_users: data.escalationLevels.e5 },
+          e1: { name: "E1", escalate_to_users: data.escalationLevels.e1 || [] },
+          e2: { name: "E2", escalate_to_users: data.escalationLevels.e2 || [] },
+          e3: { name: "E3", escalate_to_users: data.escalationLevels.e3 || [] },
+          e4: { name: "E4", escalate_to_users: data.escalationLevels.e4 || [] },
+          e5: { name: "E5", escalate_to_users: data.escalationLevels.e5 || [] },
         },
       };
 
@@ -469,17 +464,21 @@ export const ResponseEscalationTab: React.FC = () => {
 
       setIsEditDialogOpen(false);
       setEditingRule(null);
+      form.reset({
+        categoryIds: [],
+        escalationLevels: { e1: [], e2: [], e3: [], e4: [], e5: [] },
+      });
+      setSelectedCategories([]);
+      setSelectedUsers({ e1: [], e2: [], e3: [], e4: [], e5: [] });
       dispatch(fetchResponseEscalations());
-
-      // Show success toast after a small delay to ensure state is updated
-      setTimeout(() => {
-        toast.success("Response escalation rule updated successfully!");
-        dispatch(clearState());
-      }, 100);
+      toast.success("Response escalation rule updated successfully!");
+      dispatch(clearState());
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error
           ? error.message
+          : typeof error === "string"
+          ? error
           : "Failed to update response escalation rule";
       toast.error(errorMessage + "!");
     }
@@ -495,8 +494,19 @@ export const ResponseEscalationTab: React.FC = () => {
       const errorMessage =
         error instanceof Error
           ? error.message
+          : typeof error === "string"
+          ? error
           : "Failed to delete response escalation rule";
       toast.error(errorMessage + "!");
+    }
+  };
+
+  const onInvalid = (errors: any) => {
+    console.error("Form validation errors:", errors);
+    if (errors.categoryIds) {
+      toast.error(errors.categoryIds.message || "Please select at least one category!");
+    } else {
+      toast.error("Please fill in all required fields!");
     }
   };
 
@@ -509,64 +519,35 @@ export const ResponseEscalationTab: React.FC = () => {
         return;
       }
 
-      // Check if any selected category already has an escalation rule
-      const existingCategories = data.categoryIds.filter((categoryId) => {
-        const categoryExists = escalationRules.some(
-          (rule) => rule.category_id === categoryId
-        );
-        console.log(
-          `Checking category ${categoryId} (${getCategoryName(categoryId)}):`,
-          categoryExists
-        );
-        return categoryExists;
-      });
+      // Ensure site ID is available from user account or local storage fallback
+      const siteId =
+        userAccount?.site_id ||
+        Number(localStorage.getItem("site_id")) ||
+        Number(localStorage.getItem("society_id")) ||
+        Number(localStorage.getItem("company_id"));
 
-      console.log("Existing categories found:", existingCategories);
-      console.log("All escalation rules:", escalationRules);
-
-      if (existingCategories.length > 0) {
-        const categoryNames = existingCategories
-          .map((id) => getCategoryName(id))
-          .join(", ");
-        toast.error(
-          "Category name already exists. Please choose a different name!"
-        );
-        return;
-      }
-
-      // Check if at least one escalation level has users
-      // const hasUsers = Object.values(data.escalationLevels).some(users => users.length > 0);
-      // if (!hasUsers) {
-      //   toast.error('Please assign users to at least one escalation level!');
-      //   return;
-      // }
-
-      // Ensure user account is loaded to get site_id
-      if (!userAccount?.site_id) {
+      if (!siteId || isNaN(Number(siteId))) {
         toast.error(
           "Unable to determine site ID from user account. Please refresh and try again!"
         );
         return;
       }
 
-      // Get site_id from user account API response
-      const siteId = userAccount.site_id;
-
       // Transform form data to API payload
       const payload: EscalationMatrixPayload = {
         complaint_worker: {
-          society_id: siteId,
+          society_id: Number(siteId),
           esc_type: "response",
           of_phase: "pms",
           of_atype: "Pms::Site",
         },
         category_ids: data.categoryIds,
         escalation_matrix: {
-          e1: { name: "E1", escalate_to_users: data.escalationLevels.e1 },
-          e2: { name: "E2", escalate_to_users: data.escalationLevels.e2 },
-          e3: { name: "E3", escalate_to_users: data.escalationLevels.e3 },
-          e4: { name: "E4", escalate_to_users: data.escalationLevels.e4 },
-          e5: { name: "E5", escalate_to_users: data.escalationLevels.e5 },
+          e1: { name: "E1", escalate_to_users: (data.escalationLevels?.e1 || []).map(Number) },
+          e2: { name: "E2", escalate_to_users: (data.escalationLevels?.e2 || []).map(Number) },
+          e3: { name: "E3", escalate_to_users: (data.escalationLevels?.e3 || []).map(Number) },
+          e4: { name: "E4", escalate_to_users: (data.escalationLevels?.e4 || []).map(Number) },
+          e5: { name: "E5", escalate_to_users: (data.escalationLevels?.e5 || []).map(Number) },
         },
       };
 
@@ -574,24 +555,18 @@ export const ResponseEscalationTab: React.FC = () => {
         "Response escalation payload:",
         JSON.stringify(payload, null, 2)
       );
-      console.log("Using site ID from user account:", siteId);
 
       await dispatch(createResponseEscalation(payload)).unwrap();
     } catch (error: unknown) {
-      // Handle 422 error specifically for category already taken
       console.log("Full error object:", error);
-      console.log("Error type:", typeof error);
-      console.log("Error stringified:", JSON.stringify(error, null, 2));
 
       let errorMessage =
         "Failed to create response escalation rule. Please try again.";
       let shouldShowCategoryTakenMessage = false;
 
       try {
-        // Try to extract error information from different possible structures
         if (typeof error === "string") {
           errorMessage = error;
-          // Check if string contains 422 or conflict indicators
           shouldShowCategoryTakenMessage =
             error.includes("422") ||
             error.toLowerCase().includes("already") ||
@@ -599,32 +574,13 @@ export const ResponseEscalationTab: React.FC = () => {
             error.toLowerCase().includes("taken") ||
             error.toLowerCase().includes("conflict");
         } else if (error && typeof error === "object") {
-          const errorObj = error as {
-            status?: number;
-            code?: number;
-            message?: string;
-            error?: string;
-            category_id?: string[];
-            response?: {
-              status?: number;
-              data?: {
-                message?: string;
-                category_id?: string[];
-              };
-            };
-            data?: {
-              message?: string;
-              category_id?: string[];
-            };
-          };
+          const errorObj = error as any;
 
-          // Check for 422 status first
           const statusIs422 =
             errorObj.status === 422 ||
             errorObj?.response?.status === 422 ||
             errorObj?.code === 422;
 
-          // Check for specific category_id error format: {category_id: ["has already been taken"]}
           const hasCategoryIdError =
             errorObj?.category_id ||
             errorObj?.response?.data?.category_id ||
@@ -635,7 +591,6 @@ export const ResponseEscalationTab: React.FC = () => {
             Array.isArray(hasCategoryIdError) &&
             hasCategoryIdError.length > 0
           ) {
-            // Extract the actual error message from category_id array
             const categoryError = hasCategoryIdError[0];
             if (
               typeof categoryError === "string" &&
@@ -645,53 +600,25 @@ export const ResponseEscalationTab: React.FC = () => {
             }
           }
 
-          // Fallback checks for other error message formats
           const messageContains422 =
-            (errorObj?.message && errorObj.message.includes("422")) ||
+            (errorObj?.message && String(errorObj.message).includes("422")) ||
             (errorObj?.response?.data?.message &&
-              errorObj.response.data.message.includes("422")) ||
-            (errorObj?.data?.message && errorObj.data.message.includes("422"));
+              String(errorObj.response.data.message).includes("422")) ||
+            (errorObj?.data?.message && String(errorObj.data.message).includes("422"));
 
           const hasConflictMessage =
-            (errorObj?.message &&
-              errorObj.message.toLowerCase().includes("already")) ||
-            (errorObj?.message &&
-              errorObj.message.toLowerCase().includes("exists")) ||
-            (errorObj?.message &&
-              errorObj.message.toLowerCase().includes("taken")) ||
-            (errorObj?.message &&
-              errorObj.message.toLowerCase().includes("conflict")) ||
+            (errorObj?.message && String(errorObj.message).toLowerCase().includes("already")) ||
             (errorObj?.response?.data?.message &&
-              errorObj.response.data.message
-                .toLowerCase()
-                .includes("already")) ||
-            (errorObj?.response?.data?.message &&
-              errorObj.response.data.message
-                .toLowerCase()
-                .includes("exists")) ||
-            (errorObj?.response?.data?.message &&
-              errorObj.response.data.message.toLowerCase().includes("taken")) ||
-            (errorObj?.response?.data?.message &&
-              errorObj.response.data.message
-                .toLowerCase()
-                .includes("conflict")) ||
+              String(errorObj.response.data.message).toLowerCase().includes("already")) ||
             (errorObj?.data?.message &&
-              errorObj.data.message.toLowerCase().includes("already")) ||
-            (errorObj?.data?.message &&
-              errorObj.data.message.toLowerCase().includes("exists")) ||
-            (errorObj?.data?.message &&
-              errorObj.data.message.toLowerCase().includes("taken")) ||
-            (errorObj?.data?.message &&
-              errorObj.data.message.toLowerCase().includes("conflict"));
+              String(errorObj.data.message).toLowerCase().includes("already"));
 
-          // Set flag if any condition matches
           shouldShowCategoryTakenMessage =
             shouldShowCategoryTakenMessage ||
             statusIs422 ||
             messageContains422 ||
             hasConflictMessage;
 
-          // Extract error message from various possible locations
           errorMessage =
             errorObj?.message ||
             errorObj?.response?.data?.message ||
@@ -701,7 +628,6 @@ export const ResponseEscalationTab: React.FC = () => {
         }
       } catch (parseError) {
         console.error("Error parsing error object:", parseError);
-        // Use default error message if parsing fails
       }
 
       if (shouldShowCategoryTakenMessage) {
@@ -709,13 +635,13 @@ export const ResponseEscalationTab: React.FC = () => {
           "Category name already exists. Please choose a different name!"
         );
       } else {
-        // Ensure error message is a string
         const finalErrorMessage =
           typeof errorMessage === "string"
             ? errorMessage
             : "Failed to create response escalation rule. Please try again.";
-        toast.error(finalErrorMessage + "!");
+        toast.error(finalErrorMessage.endsWith("!") ? finalErrorMessage : finalErrorMessage + "!");
       }
+      dispatch(clearState());
     }
   };
 
@@ -778,7 +704,7 @@ export const ResponseEscalationTab: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Form Section */}
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="text-gray-900">Response Escalation Configuration</CardTitle>
@@ -806,7 +732,10 @@ export const ResponseEscalationTab: React.FC = () => {
                     }
 
                     setSelectedCategories(newCategories);
-                    form.setValue("categoryIds", newCategories);
+                    form.setValue("categoryIds", newCategories, {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    });
                   }}
                   renderValue={(selected) =>
                     selected.length > 0
@@ -872,14 +801,17 @@ export const ResponseEscalationTab: React.FC = () => {
                             options={userOptions}
                             onChange={(selected) => {
                               const newUsers = selected
-                                ? selected.map((s) => s.value)
+                                ? selected.map((s) => Number(s.value)).filter((id) => !isNaN(id))
                                 : [];
                               const updatedUsers = {
                                 ...selectedUsers,
                                 [level]: newUsers,
                               };
                               setSelectedUsers(updatedUsers);
-                              form.setValue("escalationLevels", updatedUsers);
+                              form.setValue("escalationLevels", updatedUsers, {
+                                shouldValidate: true,
+                                shouldDirty: true,
+                              });
                             }}
                             value={userOptions.filter((option) =>
                               selectedUsers[level].includes(option.value)
@@ -1217,7 +1149,21 @@ export const ResponseEscalationTab: React.FC = () => {
       </Dialog>
 
       {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog
+        open={isEditDialogOpen}
+        onOpenChange={(open) => {
+          setIsEditDialogOpen(open);
+          if (!open) {
+            setEditingRule(null);
+            form.reset({
+              categoryIds: [],
+              escalationLevels: { e1: [], e2: [], e3: [], e4: [], e5: [] },
+            });
+            setSelectedCategories([]);
+            setSelectedUsers({ e1: [], e2: [], e3: [], e4: [], e5: [] });
+          }
+        }}
+      >
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Response Escalation Rule</DialogTitle>
@@ -1241,7 +1187,10 @@ export const ResponseEscalationTab: React.FC = () => {
                   onChange={(selected) => {
                     const newCategories = selected ? [selected.value] : [];
                     setSelectedCategories(newCategories);
-                    form.setValue("categoryIds", newCategories);
+                    form.setValue("categoryIds", newCategories, {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    });
                   }}
                   className="mt-1"
                   placeholder="Select category..."
@@ -1271,14 +1220,17 @@ export const ResponseEscalationTab: React.FC = () => {
                       )}
                       onChange={(selected) => {
                         const newUsers = selected
-                          ? selected.map((s) => s.value)
+                          ? selected.map((s) => Number(s.value)).filter((id) => !isNaN(id))
                           : [];
                         const updatedUsers = {
                           ...selectedUsers,
                           [level]: newUsers,
                         };
                         setSelectedUsers(updatedUsers);
-                        form.setValue("escalationLevels", updatedUsers);
+                        form.setValue("escalationLevels", updatedUsers, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
                       }}
                       placeholder="Select up to 15 users..."
                       isLoading={loadingUsers}

@@ -86,7 +86,7 @@ export default function AssignPersonModal() {
             hint={
               kpiAssignUsersError
                 ? `Could not load users: ${kpiAssignUsersError}`
-                : "Ek se zyada member chun sakte hain — selection hi final list hai, unselect karne par member hat jayega."
+                : undefined
             }
           >
             <MemberSearchSelect
@@ -113,7 +113,6 @@ export default function AssignPersonModal() {
             marginTop: 20,
           }}
         >
-          <Btn onClick={close}>Cancel</Btn>
           <Btn
             primary
             onClick={isKpiAssign ? assignToKpi : assignToKra}

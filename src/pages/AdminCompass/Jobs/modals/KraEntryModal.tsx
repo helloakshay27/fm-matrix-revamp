@@ -172,7 +172,6 @@ export default function KraEntryModal() {
           </div>
           <Fld
             label="Assignee Person(s)"
-            hint="Ek se zyada member chun sakte hain."
           >
             <MemberSearchSelect
               multiple

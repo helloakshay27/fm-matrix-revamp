@@ -1632,3 +1632,69 @@ export const fetchIncidentsHotspots = (params: FmDashboardParams) =>
   fetchFmDashboardJson<IncidentsHotspotsResponse>(INCIDENTS_ENDPOINTS.HOTSPOTS, params).then(
     (res) => res.incidents_hotspots
   );
+
+// ============================================================================
+// Finance
+// ============================================================================
+// Unlike every module above, these 8 endpoints don't share one `_overview` /
+// `_trends` grouping — each is its own narrow resource, per the
+// `fm matrix dashboards finance/` Bruno collection at the repo root (the
+// source of truth for path/method/params). Field names below are NOT
+// verified against a live response: that collection points at
+// http://localhost:3000, which wasn't running/reachable from this
+// environment, and no backend source for these routes was found on this
+// machine either. Every fetch here therefore returns the raw envelope value
+// as a loosely-typed record (falling back to the whole response body if the
+// guessed envelope key — the endpoint's own name — doesn't match) instead of
+// a strict interface, and FinancePanel.tsx reads it with tolerant,
+// multi-key-candidate lookups. Once a real response is confirmed, tighten
+// these the same way Tickets/Assets/etc. are typed above.
+
+export type FinanceRecord = Record<string, unknown>;
+
+async function fetchFinanceValue(
+  endpoint: string,
+  envelopeKey: string,
+  params: FmDashboardParams
+): Promise<FinanceRecord | FinanceRecord[]> {
+  const res = await fetchFmDashboardJson<FinanceRecord>(endpoint, params);
+  const value = res[envelopeKey];
+  return (value ?? res) as FinanceRecord | FinanceRecord[];
+}
+
+const FINANCE_ENDPOINTS = {
+  PENDING_APPROVALS: "/fm_dashboard/procurement/pending_approvals",
+  DRAFT_PRS: "/fm_dashboard/requisitions/draft_prs",
+  PROCUREMENT_PIPELINE: "/fm_dashboard/procurement/procurement_pipeline",
+  PENDING_VALUE: "/fm_dashboard/requisitions/pending_value",
+  PR_SR_SPLIT: "/fm_dashboard/procurement/pr_sr_split",
+  // No site_id param in the reference collection's capture for this one — called the same
+  // way as the others anyway for consistency; an unrecognized query param should be harmless.
+  OVERDUE_INVOICES: "/fm_dashboard/invoices/overdue_invoices",
+  APPROVAL_QUEUE: "/fm_dashboard/approvals/approval_queue",
+  TOP_PENDING_RECORDS: "/fm_dashboard/approvals/top_pending_records",
+} as const;
+
+export const fetchFinancePendingApprovals = (params: FmDashboardParams) =>
+  fetchFinanceValue(FINANCE_ENDPOINTS.PENDING_APPROVALS, "pending_approvals", params);
+
+export const fetchFinanceDraftPrs = (params: FmDashboardParams) =>
+  fetchFinanceValue(FINANCE_ENDPOINTS.DRAFT_PRS, "draft_prs", params);
+
+export const fetchFinanceProcurementPipeline = (params: FmDashboardParams) =>
+  fetchFinanceValue(FINANCE_ENDPOINTS.PROCUREMENT_PIPELINE, "procurement_pipeline", params);
+
+export const fetchFinancePendingValue = (params: FmDashboardParams) =>
+  fetchFinanceValue(FINANCE_ENDPOINTS.PENDING_VALUE, "pending_value", params);
+
+export const fetchFinancePrSrSplit = (params: FmDashboardParams) =>
+  fetchFinanceValue(FINANCE_ENDPOINTS.PR_SR_SPLIT, "pr_sr_split", params);
+
+export const fetchFinanceOverdueInvoices = (params: FmDashboardParams) =>
+  fetchFinanceValue(FINANCE_ENDPOINTS.OVERDUE_INVOICES, "overdue_invoices", params);
+
+export const fetchFinanceApprovalQueue = (params: FmDashboardParams) =>
+  fetchFinanceValue(FINANCE_ENDPOINTS.APPROVAL_QUEUE, "approval_queue", params);
+
+export const fetchFinanceTopPendingRecords = (params: FmDashboardParams) =>
+  fetchFinanceValue(FINANCE_ENDPOINTS.TOP_PENDING_RECORDS, "top_pending_records", params);

@@ -316,6 +316,34 @@ export function JobsProvider({ children }) {
     }
     return String(value || "");
   };
+  /**
+   * AI errors is shape me aate hain:
+   * errors: [ "Gemini error (503): { error: { message: ... } }" ]
+   * Yahan se provider ka asli human-readable message nikaalte hain taaki toast me
+   * "HTTP 502" ki jagah wahi message dikhe.
+   */
+  const extractAiErrorMessage = (json) => {
+    const entries = Array.isArray(json?.errors)
+      ? json.errors
+      : json?.errors
+        ? [json.errors]
+        : [];
+    for (const entry of entries.filter(Boolean).map(String)) {
+      const braceIdx = entry.indexOf("{");
+      if (braceIdx !== -1) {
+        try {
+          const parsed = JSON.parse(entry.slice(braceIdx));
+          const nested = parsed?.error?.message || parsed?.message;
+          if (nested) return String(nested).trim();
+        } catch {
+          /* embedded part JSON nahi hai — neeche poora entry dikha dete hain */
+        }
+      }
+      if (entry.trim()) return entry.trim();
+    }
+    return String(json?.message || json?.error || "").trim();
+  };
+
   const postJobAi = async (path, payload) => {
     const res = await fetch(buildApiUrl(path), {
       method: "POST",
@@ -324,7 +352,11 @@ export function JobsProvider({ children }) {
     });
     const json = await res.json().catch(() => null);
     if (!res.ok || json?.success === false) {
-      throw new Error(json?.message || `HTTP ${res.status}`);
+      const message = extractAiErrorMessage(json);
+      const err = new Error(message || `HTTP ${res.status}`);
+      // Server ne readable message diya hai to toast me as-is dikhana hai.
+      err.showAsIs = Boolean(message);
+      throw err;
     }
     return json?.data || {};
   };
@@ -353,7 +385,11 @@ export function JobsProvider({ children }) {
       setJdMethod("ai");
       showToast("AI job description generated");
     } catch (err) {
-      toast.error(`Could not generate job description: ${err?.message || "request failed"}`);
+      toast.error(
+        err?.showAsIs
+          ? err.message
+          : `Could not generate job description: ${err?.message || "request failed"}`
+      );
       setAiLoading(false);
     }
   };
@@ -393,7 +429,11 @@ export function JobsProvider({ children }) {
       setKpiAiDone(false);
       showToast("AI KRAs generated");
     } catch (err) {
-      toast.error(`Could not generate KRAs: ${err?.message || "request failed"}`);
+      toast.error(
+        err?.showAsIs
+          ? err.message
+          : `Could not generate KRAs: ${err?.message || "request failed"}`
+      );
       setAiLoading(false);
     }
   };
@@ -443,7 +483,11 @@ export function JobsProvider({ children }) {
       setKpiAiDone(true);
       showToast("AI KPIs generated");
     } catch (err) {
-      toast.error(`Could not generate KPIs: ${err?.message || "request failed"}`);
+      toast.error(
+        err?.showAsIs
+          ? err.message
+          : `Could not generate KPIs: ${err?.message || "request failed"}`
+      );
       setKpiAiLoading(false);
     }
   };
@@ -1619,6 +1663,10 @@ export function JobsProvider({ children }) {
     setUnitsSaving(true);
     try {
       await saveKpiUnits(nextUnits);
+      // Re-read the group so the list reflects what actually survived on the
+      // server (bulk_upsert can leave rows behind; the API layer prunes them).
+      const saved = await fetchKpiUnits().catch(() => null);
+      if (saved) setCustomUnits(saved);
       showToast(successMsg);
     } catch (err) {
       setCustomUnits(previousUnits);
