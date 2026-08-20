@@ -61,7 +61,7 @@ export default function AssignToJdModal() {
           hint={
             error
               ? `Could not load users: ${error.message}`
-              : "Already assigned members pehle se selected hain — hataane ke liye unselect karein."
+              : undefined
           }
         >
           <MemberSearchSelect
@@ -82,7 +82,6 @@ export default function AssignToJdModal() {
             marginTop: 20,
           }}
         >
-          <Btn onClick={() => setAssignModal(null)}>Cancel</Btn>
           <Btn primary onClick={assignUser} disabled={isLoading || jdAssignSaving}>
             {jdAssignSaving ? "Assigning..." : "Assign"}
           </Btn>
