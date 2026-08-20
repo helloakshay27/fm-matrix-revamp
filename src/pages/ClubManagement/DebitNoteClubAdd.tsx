@@ -1837,7 +1837,7 @@ export const DebitNoteClubAddPage: React.FC = () => {
                                         )}
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm pt-2">
+                                {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm pt-2">
                                     <div className="flex items-center gap-2">
                                         <span className="text-gray-500">GST Treatment:</span>
                                         <span className="text-gray-800">{getGstTreatmentLabel(gstTreatment) || '—'}</span>
@@ -1852,7 +1852,7 @@ export const DebitNoteClubAddPage: React.FC = () => {
                                             <EditOutlined fontSize="small" className="text-brand" />
                                         </IconButton>
                                     </div>
-                                </div>
+                                </div> */}
                             </div>
                     </div>
                 </Section>
@@ -2020,7 +2020,7 @@ export const DebitNoteClubAddPage: React.FC = () => {
                                                                 );
                                                             })()}
 
-                                                            <TextField
+                                                            {/* <TextField
                                                                 fullWidth
                                                                 label="Item Description"
                                                                 size="small"
@@ -2029,7 +2029,7 @@ export const DebitNoteClubAddPage: React.FC = () => {
                                                                 onChange={(e) => updateItem(index, 'description', e.target.value)}
                                                                 sx={{ mt: 2 }}
                                                                 InputLabelProps={{ shrink: true }}
-                                                            />
+                                                            /> */}
                                                         </>
                                                     )}
                                                 </td>
