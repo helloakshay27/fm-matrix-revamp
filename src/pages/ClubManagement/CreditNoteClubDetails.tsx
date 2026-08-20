@@ -139,7 +139,7 @@ export const CreditNoteClubDetails = () => {
     };
 
     const formatDate = (dateString) => {
-        if (!dateString) return "N/A";
+        if (!dateString) return "-";
         return new Date(dateString).toLocaleDateString("en-IN");
     };
 
@@ -252,17 +252,17 @@ export const CreditNoteClubDetails = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Credit Note Number</p>
-                                <p className="text-base font-semibold mt-1">{creditNoteData.credit_note_number || "N/A"}</p>
+                                <p className="text-base font-semibold mt-1">{creditNoteData.credit_note_number || "-"}</p>
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">User</p>
                                 <p className="text-base font-semibold mt-1">
-                                    {user.name || creditNoteData.user_name || "N/A"}
+                                    {user.name || creditNoteData.user_name || "-"}
                                 </p>
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Reference Number</p>
-                                <p className="text-base font-semibold mt-1">{creditNoteData.reference_number || "N/A"}</p>
+                                <p className="text-base font-semibold mt-1">{creditNoteData.reference_number || "-"}</p>
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Credit Note Date</p>
@@ -271,12 +271,12 @@ export const CreditNoteClubDetails = () => {
 
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Place of Supply</p>
-                                <p className="text-base font-semibold mt-1">{creditNoteData.place_of_supply || "N/A"}</p>
+                                <p className="text-base font-semibold mt-1">{creditNoteData.place_of_supply || "-"}</p>
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Linked Invoice</p>
                                 <p className="text-base font-semibold mt-1">
-                                    {creditNoteData.invoice_number || creditNoteData.lock_account_invoice_id || "N/A"}
+                                    {creditNoteData.invoice_number || creditNoteData.lock_account_invoice_id || "-"}
                                 </p>
                             </div>
                             <div>
@@ -294,7 +294,7 @@ export const CreditNoteClubDetails = () => {
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Status</p>
                                 <p className="text-base font-semibold mt-1">
-                                    {creditNoteData.status ? String(creditNoteData.status).replace(/_/g, " ").toUpperCase() : "N/A"}
+                                    {creditNoteData.status ? String(creditNoteData.status).replace(/_/g, " ").toUpperCase() : "-"}
                                 </p>
                             </div>
                             <div className="mt-4">
@@ -339,9 +339,9 @@ export const CreditNoteClubDetails = () => {
                                             {lineItems.map((item, index) => (
                                                 <TableRow key={index}>
                                                     <TableCell>
-                                                        {LINE_ITEM_TYPE_LABELS[item.line_item_type] || item.line_item_type || "N/A"}
+                                                        {LINE_ITEM_TYPE_LABELS[item.line_item_type] || item.line_item_type || "-"}
                                                     </TableCell>
-                                                    <TableCell className="font-semibold">{item.item_name || "N/A"}</TableCell>
+                                                    <TableCell className="font-semibold">{item.item_name || "-"}</TableCell>
                                                     <TableCell className="text-right">{item.quantity ?? 0}</TableCell>
                                                     <TableCell className="text-right">{formatCurrency(item.rate)}</TableCell>
                                                     {/* <TableCell className="text-right">{formatCurrency(item.discount)}</TableCell> */}
@@ -377,7 +377,8 @@ export const CreditNoteClubDetails = () => {
                                             <span className="text-sm font-medium text-muted-foreground">GST</span>
                                             <span className="font-semibold text-base">{formatCurrency(totalGst)}</span>
                                         </div>
-                                        <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
+                                        {/* <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg"> */}
+                                        <div className="flex justify-between items-center py-2 border-t pt-3">
                                             <span className="font-bold text-base">Total</span>
                                             <span className="font-bold text-primary text-2xl">{formatCurrency(grandTotal)}</span>
                                         </div>
