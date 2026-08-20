@@ -1091,8 +1091,11 @@ export const CreditNoteClubEditPage: React.FC = () => {
                 setReferenceNumber(data.reference_number || '');
                 setSalesOrderDate(data.date || new Date().toISOString().split('T')[0]);
                 setReason(data.reason || '');
+                setInvoiceType(data.invoice_type || '');
+                setSubject(data.subject || '');
+                setTermsAndConditions(data.terms_and_conditions || '');
                 setPlaceOfSupply(data.place_of_supply || '');
-
+                setCustomerNotes(data.customer_notes || '');
                 // NOTE: the confirmed credit_notes GET sample doesn't include address_detail —
                 // prefill defensively in case the backend adds it later.
                 const addressDetail = data.address_detail || data.address_detail_attributes;
@@ -1568,15 +1571,24 @@ export const CreditNoteClubEditPage: React.FC = () => {
 
             formData.append('credit_note[user_id]', String(selectedUser || ''));
             formData.append('credit_note[date]', salesOrderDate);
+            // "note" has no real column of its own — it's written into "reason" under the hood and the
+            // response echoes the same value back as both "note" and "reason". Only send "reason".
             formData.append('credit_note[reason]', reason || '');
+            formData.append('credit_note[subject]', subject || '');
+            formData.append('credit_note[terms_and_conditions]', termsAndConditions || '');
             formData.append('credit_note[place_of_supply]', placeOfSupply || '');
             formData.append('credit_note[reference_number]', referenceNumber || '');
+            formData.append('credit_note[customer_notes]', customerNotes || '');
             // totalDiscount is always the final combined amount (item-level + invoice-level discount),
             // regardless of whether the invoice-level portion was entered as a percentage or a flat amount.
             formData.append('credit_note[discount_amount]', String(totalDiscount));
             if (selectedInvoice) {
                 formData.append('credit_note[lock_account_invoice_id]', selectedInvoice);
-                formData.append('credit_note[invoice_type]', 'bill_booking');
+            }
+            // Invoice Type dropdown sent as "invoice_type" directly (overrides the earlier "bill_booking"
+            // polymorphic-discriminator assumption per explicit instruction — may affect invoice linkage).
+            if (invoiceType) {
+                formData.append('credit_note[invoice_type]', invoiceType);
             }
 
             // NOTE: address_detail_attributes isn't in the confirmed credit_notes creation sample —

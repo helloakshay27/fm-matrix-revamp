@@ -1090,8 +1090,8 @@ export const DebitNoteClubEditPage: React.FC = () => {
 
                 setReferenceNumber(data.reference_number || '');
                 setSalesOrderDate(data.date || new Date().toISOString().split('T')[0]);
-                // Confirmed: debit_note has no "reason" field — it's "note" (free text) instead
-                setReason(data.note || data.reason || '');
+                setReason(data.reason || data.note || '');
+                setInvoiceType(data.invoice_type || '');
                 setSubject(data.subject || '');
                 setCustomerNotes(data.customer_notes || '');
                 setTermsAndConditions(data.terms_and_conditions || '');
@@ -1573,9 +1573,9 @@ export const DebitNoteClubEditPage: React.FC = () => {
 
             formData.append('debit_note[user_id]', String(selectedUser || ''));
             formData.append('debit_note[date]', salesOrderDate);
-            // NOTE: debit_note has no "reason" field — confirmed payload uses "note" (free text) and a
-            // fixed "note_type". Mapping the existing Reason dropdown value into "note" as best-effort.
             formData.append('debit_note[note_type]', 'other');
+            // Reason dropdown is sent as "reason" directly (not "note").
+            formData.append('debit_note[reason]', reason || '');
             formData.append('debit_note[note]', reason || '');
             formData.append('debit_note[subject]', subject || '');
             formData.append('debit_note[customer_notes]', customerNotes || '');
@@ -1587,7 +1587,11 @@ export const DebitNoteClubEditPage: React.FC = () => {
             formData.append('debit_note[discount]', String(totalDiscount));
             if (selectedInvoice) {
                 formData.append('debit_note[lock_account_invoice_id]', selectedInvoice);
-                formData.append('debit_note[invoice_type]', 'bill_booking');
+            }
+            // Invoice Type dropdown sent as "invoice_type" directly (overrides the earlier "bill_booking"
+            // polymorphic-discriminator assumption per explicit instruction — may affect invoice linkage).
+            if (invoiceType) {
+                formData.append('debit_note[invoice_type]', invoiceType);
             }
 
             // NOTE: address_detail_attributes isn't in the confirmed debit_notes creation sample —

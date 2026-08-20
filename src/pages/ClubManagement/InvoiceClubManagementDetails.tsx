@@ -270,6 +270,10 @@ export const InvoiceClubManagementDetails = () => {
                                 {String(invoiceData.status).replace(/_/g, " ").toUpperCase()}
                             </Badge>
                         )}
+                        <Button size="sm" variant="outline" onClick={handleDownloadPdf} className="gap-2">
+                            <Download className="h-4 w-4" />
+                            Download Invoice 
+                        </Button>
                         {/* <Button size="sm" variant="outline" onClick={handleEdit} className="gap-2">
               <Edit className="h-4 w-4" />
               Edit
@@ -490,7 +494,8 @@ export const InvoiceClubManagementDetails = () => {
                                                         })()}
                                                     </TableCell>
                                                     <TableCell className="text-right font-semibold">
-                                                        {formatCurrency(item.total_amount ?? item.amount)}
+                                                        {/* {formatCurrency(item.total_amount ?? item.amount)} */}
+                                                        {formatCurrency(subTotal)}
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
@@ -551,15 +556,9 @@ export const InvoiceClubManagementDetails = () => {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
-                                <FileText className="h-5 w-5 text-muted-foreground" />
-                                <p className="text-sm font-medium">Invoice PDF</p>
-                                <Button variant="ghost" size="sm" onClick={handleDownloadPdf}>
-                                    <Download className="h-4 w-4" />
-                                </Button>
-                            </div>
-                                {invoiceData.attachments?.map((file, idx) => (
+                        {invoiceData.attachments?.length > 0 ? (
+                            <div className="space-y-2">
+                                {invoiceData.attachments.map((file, idx) => (
                                     <div
                                         key={file.id ?? idx}
                                         className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
@@ -582,7 +581,10 @@ export const InvoiceClubManagementDetails = () => {
                                     </div>
                                 ))}
                             </div>
-                        </CardContent>
+                        ) : (
+                            <p className="text-center text-muted-foreground py-4">No attachments</p>
+                        )}
+                    </CardContent>
                     </Card>
             </div>
 
