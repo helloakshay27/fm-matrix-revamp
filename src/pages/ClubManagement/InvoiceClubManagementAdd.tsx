@@ -1299,9 +1299,11 @@ export const InvoiceClubManagementAdd: React.FC = () => {
 
     // Calculate totals
     const subTotal = items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
+    // discountOnTotal can be '' while the user is clearing the field — coerce or totalDiscount becomes
+    // a string (e.g. number + '' via + concatenation) and every .toFixed(2) call downstream crashes.
     const totalDiscount = discountTypeOnTotal === 'percentage'
-        ? (subTotal * discountOnTotal) / 100
-        : discountOnTotal;
+        ? (subTotal * Number(discountOnTotal || 0)) / 100
+        : Number(discountOnTotal || 0);
     const afterDiscount = subTotal - totalDiscount;
     const taxAmount = items.reduce((sum, item) => {
         const itemSubtotal = item.quantity * item.rate;
@@ -1507,6 +1509,8 @@ export const InvoiceClubManagementAdd: React.FC = () => {
             const formData = new FormData();
 
             formData.append('bill_booking[user_id]', String(selectedUser || ''));
+            // New invoices default to "Pending" status
+            formData.append('bill_booking[status]', 'Pending');
             formData.append('bill_booking[bill_date]', salesOrderDate);
             formData.append('bill_booking[due_date]', expectedShipmentDate);
             formData.append('bill_booking[order_number]', referenceNumber || '');
@@ -1567,9 +1571,9 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                 formData.append(`line_items[${idx}][gst_rate]`, String(gstRate));
             });
 
-            // Attachments — param name unconfirmed, sample payload has no attachments key
-            attachments.forEach((file) => {
-                formData.append('bill_booking[attachments][]', file);
+            // Confirmed: bill_booking[attachments_attributes][idx][document]
+            attachments.forEach((file, idx) => {
+                formData.append(`bill_booking[attachments_attributes][${idx}][document]`, file);
             });
 
             await fetch(`https://${baseUrl}/lock_accounts/${lock_account_id}/bill_bookings.json`, {

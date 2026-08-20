@@ -26,6 +26,7 @@ interface DebitNote {
     customer_name: string;
     guest_name?: string;
     member_name?: string;
+    staff_name?: string;
     date: string;
     reference_number: string;
     invoice_number: string;
@@ -77,6 +78,13 @@ const columns: ColumnConfig[] = [
     {
         key: 'member_name',
         label: 'Member',
+        sortable: true,
+        hideable: true,
+        draggable: true
+    },
+    {
+        key: 'staff_name',
+        label: 'Staff',
         sortable: true,
         hideable: true,
         draggable: true
@@ -140,21 +148,29 @@ export const DebitNoteClubDashboard: React.FC = () => {
         has_prev_page: false
     });
 
-    // Maps a raw debit_note record (shape unconfirmed) to the DebitNote shape this table renders
+    // Maps a raw debit_note record (confirmed shape) to the DebitNote shape this table renders
     const mapDebitNoteRecord = (record: any): DebitNote => {
-        const user = record.user || {};
+        const user = record.user || record.customer || {};
+        // Prefer explicit is_staff/is_member/is_guest boolean flags (on the record or the nested user
+        // object) when present; fall back to a user_type string if that's what the API returns instead.
+        const isStaff = record.is_staff ?? user.is_staff ?? (user.user_type === 'fm' || user.user_type === 'staff');
+        const isMember = record.is_member ?? user.is_member ?? (user.user_type === 'occupant' || user.user_type === 'member');
+        const isGuest = record.is_guest ?? user.is_guest ?? (user.user_type === 'guest');
         return {
             id: record.id,
-            debit_note_number: record.debit_note_number || record.number || record.order_number || '',
+            // Confirmed: the note's display number comes back as "note_number", not "debit_note_number"
+            debit_note_number: record.note_number || record.debit_note_number || record.number || '',
             customer_name: record.customer_name || user.name || '',
-            guest_name: record.guest_name || (user.user_type === 'guest' ? user.name : undefined),
-            member_name: record.member_name || (user.user_type !== 'guest' ? user.name : undefined),
-            date: record.date || record.bill_date || record.created_at || '',
-            reference_number: record.reference_number || record.order_number || '',
+            guest_name: record.guest_name || (isGuest ? user.name : undefined),
+            member_name: record.member_name || (isMember ? user.name : undefined),
+            staff_name: record.staff_name || (isStaff ? user.name : undefined),
+            date: record.date || record.created_at || '',
+            reference_number: record.reference_number || '',
             invoice_number: record.invoice_number || '',
             amount: Number(record.amount ?? record.total_amount ?? 0),
-            balance_due: Number(record.balance_due ?? record.due_amount ?? 0),
-            status: record.status || 'draft',
+            balance_due: Number(record.balance_due ?? 0),
+            // Confirmed: the debit_notes list response has no "status" field at all — don't fabricate one
+            status: record.status || '',
             active: record.active !== undefined ? record.active : true,
             created_at: record.created_at || '',
             updated_at: record.updated_at || '',
@@ -171,10 +187,17 @@ export const DebitNoteClubDashboard: React.FC = () => {
         const lock_account_id = localStorage.getItem('lock_account_id');
 
         try {
+            // Confirmed: GET /debit_notes.json?lock_account_id=...&search=...&from_date=...&to_date=...
+            const params: Record<string, string | number> = { lock_account_id, page, per_page };
+            if (search) params.search = search;
+            if (filters.status) params.status = filters.status;
+            if (filters.dateFrom) params.from_date = filters.dateFrom;
+            if (filters.dateTo) params.to_date = filters.dateTo;
+
             const response = await axios.get(
                 `https://${baseUrl}/debit_notes.json`,
                 {
-                    params: { lock_account_id, page, per_page },
+                    params,
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -222,6 +245,7 @@ export const DebitNoteClubDashboard: React.FC = () => {
     };
 
     const getStatusBadge = (status: string) => {
+        if (!status) return <span className="text-sm text-gray-900">-</span>;
         return (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                 {status.replace(/_/g, " ").toUpperCase()}
@@ -283,14 +307,14 @@ export const DebitNoteClubDashboard: React.FC = () => {
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="View"
                 >
-                    {/* <Eye className="w-4 h-4" /> */}
+                    <Eye className="w-4 h-4" />
                 </button>
                 <button
                     onClick={() => navigate(`/club-management/debit-note/edit/${cn.id}`)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="Edit"
                 >
-                    {/* <Edit className="w-4 h-4" /> */}
+                    <Edit className="w-4 h-4" />
                 </button>
                 <button
                     onClick={() => {
@@ -306,7 +330,7 @@ export const DebitNoteClubDashboard: React.FC = () => {
         ),
         debit_note_number: (
             <div className="font-medium text-brand cursor-pointer" onClick={() => navigate(`/club-management/debit-note/details/${cn.id}`)}>
-                {cn.debit_note_number}
+                {cn.debit_note_number || '-'}
             </div>
         ),
         reference_number: (
@@ -318,12 +342,17 @@ export const DebitNoteClubDashboard: React.FC = () => {
         member_name: (
             <span className="text-sm text-gray-900">{cn.member_name || '-'}</span>
         ),
+        staff_name: (
+            <span className="text-sm text-gray-900">{cn.staff_name || '-'}</span>
+        ),
         invoice_number: (
             <span className="text-sm text-gray-600">{cn.invoice_number || '-'}</span>
         ),
         date: (
             <span className="text-sm text-gray-600">
-                {new Date(cn.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                {cn.date
+                    ? new Date(cn.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                    : '-'}
             </span>
         ),
         status: (
@@ -333,12 +362,16 @@ export const DebitNoteClubDashboard: React.FC = () => {
         ),
         total_amount: (
             <span className="text-sm font-medium text-gray-900">
-                ₹{cn?.total_amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {cn.total_amount != null
+                    ? `₹${cn.total_amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    : '-'}
             </span>
         ),
         balance_due: (
             <span className="text-sm font-medium text-gray-900">
-                {/* ₹{cn.balance_due.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} */}
+                {cn.balance_due != null
+                    ? `₹${cn.balance_due.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    : '-'}
             </span>
         )
     });

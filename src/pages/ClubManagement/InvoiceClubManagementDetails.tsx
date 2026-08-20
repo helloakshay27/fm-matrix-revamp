@@ -177,7 +177,7 @@ export const InvoiceClubManagementDetails = () => {
     };
 
     const formatDate = (dateString) => {
-        if (!dateString) return "N/A";
+        if (!dateString) return "-";
         try {
             return format(new Date(dateString), "dd/MM/yyyy");
         } catch {
@@ -270,6 +270,10 @@ export const InvoiceClubManagementDetails = () => {
                                 {String(invoiceData.status).replace(/_/g, " ").toUpperCase()}
                             </Badge>
                         )}
+                        <Button size="sm" variant="outline" onClick={handleDownloadPdf} className="gap-2">
+                            <Download className="h-4 w-4" />
+                            Download Invoice 
+                        </Button>
                         {/* <Button size="sm" variant="outline" onClick={handleEdit} className="gap-2">
               <Edit className="h-4 w-4" />
               Edit
@@ -299,12 +303,12 @@ export const InvoiceClubManagementDetails = () => {
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Invoice To</p>
                                 <p className="text-base font-semibold mt-1">
-                                    {user.name || invoiceData.user_name || "N/A"}
+                                    {user.name || invoiceData.user_name || "-"}
                                 </p>
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Order Number</p>
-                                <p className="text-base font-semibold mt-1">{invoiceData.order_number || "N/A"}</p>
+                                <p className="text-base font-semibold mt-1">{invoiceData.order_number || "-"}</p>
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Invoice Date</p>
@@ -316,7 +320,13 @@ export const InvoiceClubManagementDetails = () => {
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Subject</p>
-                                <p className="text-base font-semibold mt-1 break-all">{invoiceData.subject || "N/A"}</p>
+                                <p className="text-base font-semibold mt-1 break-all">{invoiceData.subject || "-"}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground">Status</p>
+                                <p className="text-base font-semibold mt-1">
+                                    {invoiceData.status ? String(invoiceData.status).replace(/_/g, " ").toUpperCase() : "-"}
+                                </p>
                             </div>
                             {/* <div>
                 <p className="text-sm font-medium text-muted-foreground">Discount %</p>
@@ -324,15 +334,15 @@ export const InvoiceClubManagementDetails = () => {
               </div> */}
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Place of Supply</p>
-                                <p className="text-base font-semibold mt-1">{invoiceData.source_of_supply || "N/A"}</p>
+                                <p className="text-base font-semibold mt-1">{invoiceData.source_of_supply || "-"}</p>
                             </div>
                             {/* <div>
                 <p className="text-sm font-medium text-muted-foreground">Destination of Supply</p>
-                <p className="text-base font-semibold mt-1">{invoiceData.destination_of_supply || "N/A"}</p>
+                <p className="text-base font-semibold mt-1">{invoiceData.destination_of_supply || "-"}</p>
               </div> */}
                             {/* <div>
                 <p className="text-sm font-medium text-muted-foreground">Billing GSTIN</p>
-                <p className="text-base font-semibold mt-1">{invoiceData.billing_gstin || "N/A"}</p>
+                <p className="text-base font-semibold mt-1">{invoiceData.billing_gstin || "-"}</p>
               </div> */}
                         </div>
 
@@ -476,9 +486,9 @@ export const InvoiceClubManagementDetails = () => {
                                             {lineItems.map((item, index) => (
                                                 <TableRow key={index}>
                                                     <TableCell>
-                                                        {LINE_ITEM_TYPE_LABELS[item.line_item_type] || item.line_item_type || "N/A"}
+                                                        {LINE_ITEM_TYPE_LABELS[item.line_item_type] || item.line_item_type || "-"}
                                                     </TableCell>
-                                                    <TableCell className="font-semibold">{item.name || "N/A"}</TableCell>
+                                                    <TableCell className="font-semibold">{item.name || "-"}</TableCell>
                                                     <TableCell className="text-right">{item.quantity ?? 0}</TableCell>
                                                     <TableCell className="text-right">{formatCurrency(item.rate)}</TableCell>
                                                     {/* <TableCell className="text-right">{formatCurrency(item.discount)}</TableCell> */}
@@ -490,7 +500,8 @@ export const InvoiceClubManagementDetails = () => {
                                                         })()}
                                                     </TableCell>
                                                     <TableCell className="text-right font-semibold">
-                                                        {formatCurrency(item.total_amount ?? item.amount)}
+                                                        {/* {formatCurrency(item.total_amount ?? item.amount)} */}
+                                                        {formatCurrency(subTotal)}
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
@@ -551,15 +562,9 @@ export const InvoiceClubManagementDetails = () => {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
-                                <FileText className="h-5 w-5 text-muted-foreground" />
-                                <p className="text-sm font-medium">Invoice PDF</p>
-                                <Button variant="ghost" size="sm" onClick={handleDownloadPdf}>
-                                    <Download className="h-4 w-4" />
-                                </Button>
-                            </div>
-                                {invoiceData.attachments?.map((file, idx) => (
+                        {invoiceData.attachments?.length > 0 ? (
+                            <div className="space-y-2">
+                                {invoiceData.attachments.map((file, idx) => (
                                     <div
                                         key={file.id ?? idx}
                                         className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
@@ -582,7 +587,10 @@ export const InvoiceClubManagementDetails = () => {
                                     </div>
                                 ))}
                             </div>
-                        </CardContent>
+                        ) : (
+                            <p className="text-center text-muted-foreground py-4">No attachments</p>
+                        )}
+                    </CardContent>
                     </Card>
             </div>
 
