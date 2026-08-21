@@ -44,14 +44,14 @@ import { toast } from "sonner";
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
-    <section className="bg-card rounded-lg border border-border shadow-sm">
-        <div className="px-6 py-4 border-b border-border flex items-center gap-3">
-            <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+    <section className="border border-gray-200 rounded-lg overflow-hidden">
+        <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
+            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
                 {icon}
             </div>
-            <h2 className="text-sm font-semibold tracking-wide uppercase">{title}</h2>
+            <span className="font-semibold text-lg text-gray-800">{title}</span>
         </div>
-        <div className="p-6">{children}</div>
+        <div className="p-6 bg-white">{children}</div>
     </section>
 );
 
@@ -2146,9 +2146,9 @@ export const DebitNoteClubEditPage: React.FC = () => {
                             <div className="text-red-500 text-sm bg-red-50 p-3 rounded-md">{errors.items}</div>
                         )}
 
-                        <div className="border border-border rounded-lg overflow-x-auto">
+                        <div className="border border-gray-200 rounded-lg overflow-x-auto">
                                 <table className="w-full min-w-[900px] item-table-no-hover">
-                                    <thead className="bg-muted/50">
+                                    <thead className="bg-gray-50">
                                         <tr>
                                             <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
                                             <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th>
@@ -2156,10 +2156,10 @@ export const DebitNoteClubEditPage: React.FC = () => {
                                             {/* <th className="px-4 py-3 text-left text-sm font-medium">Discount</th> */}
                                             <th className="px-4 py-3 text-left text-sm font-medium">Tax</th>
                                             <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
-                                            <th className="px-4 py-3 text-center text-sm font-medium">Action</th>
+                                            {/* <th className="px-4 py-3 text-center text-sm font-medium">Action</th> */}
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-border">
+                                    <tbody className="divide-y divide-gray-200">
 
                                         {items.map((item, index) => (
                                             <tr key={item.id}>
@@ -2346,16 +2346,20 @@ export const DebitNoteClubEditPage: React.FC = () => {
                                                 <td className="px-4 py-3 text-right font-semibold">
                                                     ₹{item.amount.toFixed(2)}
                                                 </td>
-                                                <td className="px-4 py-3 text-center">
+                                                {/* <td className="px-4 py-3 text-center">
                                                     <IconButton
                                                         size="small"
                                                         onClick={() => removeItem(index)}
                                                         disabled={items.length === 1}
-                                                        color="error"
+                                                        sx={{
+                                                            color: '#DA7756',
+                                                            '&:hover': { backgroundColor: 'rgba(218, 119, 86, 0.08)' },
+                                                            '&.Mui-disabled': { color: 'rgba(218, 119, 86, 0.4)' },
+                                                        }}
                                                     >
                                                         <Delete fontSize="small" />
                                                     </IconButton>
-                                                </td>
+                                                </td> */}
                                             </tr>
                                         ))}
                                     </tbody>
@@ -2389,7 +2393,7 @@ export const DebitNoteClubEditPage: React.FC = () => {
                                 <span className="font-semibold text-base">₹{subTotal.toFixed(2)}</span>
                             </div>
 
-                            <div className="flex justify-between items-center py-2">
+                            {/* <div className="flex justify-between items-center py-2">
                                 <span className="text-sm font-medium text-muted-foreground">Discount</span>
                                 <div className="flex items-center gap-2">
                                     <Select
@@ -2412,7 +2416,7 @@ export const DebitNoteClubEditPage: React.FC = () => {
 
                                     <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
                                 </div>
-                            </div>
+                            </div> */}
                             {taxBreakdown.map((tax, index) => (
                                 <div key={index} className="flex justify-between items-center py-2">
                                     <span className="text-sm font-medium text-muted-foreground">

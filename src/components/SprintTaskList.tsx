@@ -429,7 +429,7 @@ export default function SprintTaskList({
   const handleUnlinkTask = async (taskId: number) => {
     setUnlinkingTaskId(taskId);
     try {
-      await axios.delete(`https://${baseUrl}/sprints/${sprintId}/unlink`, {
+      await axios.delete(`https://${baseUrl}/sprints/${sprintId}/unlink.json`, {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         data: { task_ids: [taskId] },
       });

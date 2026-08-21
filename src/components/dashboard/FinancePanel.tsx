@@ -220,9 +220,11 @@ interface FinancePanelProps {
   /** Live data for the 8 confirmed Finance endpoints — null until loaded or if the dashboard's site scope isn't resolved yet. */
   data?: FinanceDashboardData | null;
   loading?: boolean;
+  /** When set, renders only the cards the user has saved to My Dashboard, across all sections. */
+  visibleKeys?: Set<string>;
 }
 
-export function FinancePanel({ activeSection, data, loading = false }: FinancePanelProps) {
+export function FinancePanel({ activeSection, data, loading = false, visibleKeys }: FinancePanelProps) {
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
@@ -924,27 +926,63 @@ export function FinancePanel({ activeSection, data, loading = false }: FinancePa
       </div>
 
       <div ref={registerRef("Overview")} className="scroll-mt-24">
-        <SafetyGridSection storageKey="financeOverviewGridLayout" items={overviewItems} />
+        <SafetyGridSection
+          storageKey="financeOverviewGridLayout"
+          items={overviewItems}
+          moduleKey="finance"
+          subTab="Overview"
+          visibleKeys={visibleKeys}
+        />
       </div>
 
       <div ref={registerRef("Procurement")} className="scroll-mt-24">
-        <SafetyGridSection storageKey="financeProcurementGridLayout" items={procurementItems} />
+        <SafetyGridSection
+          storageKey="financeProcurementGridLayout"
+          items={procurementItems}
+          moduleKey="finance"
+          subTab="Procurement"
+          visibleKeys={visibleKeys}
+        />
       </div>
 
       <div ref={registerRef("Invoices")} className="scroll-mt-24">
-        <SafetyGridSection storageKey="financeInvoicesGridLayout" items={invoicesItems} />
+        <SafetyGridSection
+          storageKey="financeInvoicesGridLayout"
+          items={invoicesItems}
+          moduleKey="finance"
+          subTab="Invoices"
+          visibleKeys={visibleKeys}
+        />
       </div>
 
       <div ref={registerRef("KPIs")} className="scroll-mt-24">
-        <SafetyGridSection storageKey="financeKpisGridLayout" items={kpisItems} />
+        <SafetyGridSection
+          storageKey="financeKpisGridLayout"
+          items={kpisItems}
+          moduleKey="finance"
+          subTab="KPIs"
+          visibleKeys={visibleKeys}
+        />
       </div>
 
       <div ref={registerRef("GDN")} className="scroll-mt-24">
-        <SafetyGridSection storageKey="financeGdnGridLayout" items={gdnItems} />
+        <SafetyGridSection
+          storageKey="financeGdnGridLayout"
+          items={gdnItems}
+          moduleKey="finance"
+          subTab="GDN"
+          visibleKeys={visibleKeys}
+        />
       </div>
 
       <div ref={registerRef("Wallet")} className="scroll-mt-24">
-        <SafetyGridSection storageKey="financeWalletGridLayout" items={walletItems} />
+        <SafetyGridSection
+          storageKey="financeWalletGridLayout"
+          items={walletItems}
+          moduleKey="finance"
+          subTab="Wallet"
+          visibleKeys={visibleKeys}
+        />
       </div>
     </div>
   );

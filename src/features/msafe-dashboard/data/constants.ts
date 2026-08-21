@@ -70,6 +70,8 @@ export const INFO_TEXTS: Record<string, string> = {
     'Users who have submitted their KRCC form, regardless of approval outcome · (Total Registered − Not Started).',
   'kpi-krcc':
     'KRCC records with status = "Completed" · shown as count and as a % of total registered users.',
+  'krcc-not-started':
+    'Users registered in M-Safe who have not yet initiated their KRCC form.',
   'kpi-lmc':
     'Distinct LMC records created today (00:00 to now) across all managers. A user counted once even if reviewed by multiple managers.',
   'train-category-kpi':

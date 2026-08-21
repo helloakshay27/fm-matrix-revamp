@@ -927,8 +927,8 @@
   cursor:pointer;font-size:11.5px;
 }
 .msafe-dash .pb-row:hover .pb-label {color:var(--dark)}
-.msafe-dash .pb-label {flex:1;color:var(--sage);font-weight:500}
-.msafe-dash .pb-wrap {width:100px;height:6px;background:var(--div);border-radius:3px;overflow:hidden;flex-shrink:0}
+.msafe-dash .pb-label {flex:0 1 220px;color:var(--sage);font-weight:500}
+.msafe-dash .pb-wrap {flex:1 1 auto;max-width:480px;height:6px;background:var(--div);border-radius:3px;overflow:hidden}
 .msafe-dash .pb-fill {height:6px;border-radius:3px;transition:width .3s}
 .msafe-dash .pb-val {width:38px;text-align:right;font-weight:700;color:var(--dark);font-size:11.5px}
 
