@@ -396,6 +396,16 @@ export const ADMIN_KPIS: KpiDef[] = [
     download: 'KRCC',
   },
   {
+    id: 'krcc-not-started',
+    label: 'KRCC Not Started',
+    value: '1,460',
+    group: 'krcc',
+    color: C.vi,
+    tint: 'rgba(238,39,55,.12)',
+    infoKey: 'krcc-not-started',
+    download: 'KRCC',
+  },
+  {
     id: 'train-cat',
     label: 'Category-wise Training Completed',
     value: '84.6%',
