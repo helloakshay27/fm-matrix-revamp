@@ -2159,7 +2159,7 @@ export const DebitNoteClubAddPage: React.FC = () => {
                                 <span className="font-semibold text-base">₹{subTotal.toFixed(2)}</span>
                             </div>
 
-                            <div className="flex justify-between items-center py-2">
+                            {/* <div className="flex justify-between items-center py-2">
                                 <span className="text-sm font-medium text-muted-foreground">Discount</span>
                                 <div className="flex items-center gap-2">
                                     <Select
@@ -2182,7 +2182,7 @@ export const DebitNoteClubAddPage: React.FC = () => {
 
                                     <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
                                 </div>
-                            </div>
+                            </div> */}
                             {taxBreakdown.map((tax, index) => (
                                 <div key={index} className="flex justify-between items-center py-2">
                                     <span className="text-sm font-medium text-muted-foreground">

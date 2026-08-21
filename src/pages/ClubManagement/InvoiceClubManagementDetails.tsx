@@ -515,14 +515,14 @@ export const InvoiceClubManagementDetails = () => {
                                             <span className="text-sm font-medium text-muted-foreground">Sub Total</span>
                                             <span className="font-semibold text-base">{formatCurrency(subTotal)}</span>
                                         </div>
-                                        <div className="flex justify-between items-center py-2">
+                                        {/* <div className="flex justify-between items-center py-2">
                                             <span className="text-sm font-medium text-muted-foreground">
                                                 Discount{invoiceData.discount_per ? ` (${invoiceData.discount_per}%)` : ""}
                                             </span>
                                             <span className="font-semibold text-base text-red-600">
                                                 -{formatCurrency(totalDiscount)}
                                             </span>
-                                        </div>
+                                        </div> */}
                                         <div className="flex justify-between items-center py-2">
                                             <span className="text-sm font-medium text-muted-foreground">GST</span>
                                             <span className="font-semibold text-base">{formatCurrency(totalCgst + totalSgst)}</span>
