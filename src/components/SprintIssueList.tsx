@@ -270,7 +270,7 @@ export default function SprintIssueList({
   const handleUnlinkIssue = async (issueId: number) => {
     setUnlinkingIssueId(issueId);
     try {
-      await axios.delete(`https://${baseUrl}/sprints/${sprintId}/unlink`, {
+      await axios.delete(`https://${baseUrl}/sprints/${sprintId}/unlink.json`, {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         data: { issue_ids: [issueId] },
       });
