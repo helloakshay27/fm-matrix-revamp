@@ -206,35 +206,46 @@ const UtilityWasteGenerationDashboard = () => {
   // ── API callers ──────────────────────────────────────────────────────────
   const getSiteId = () => localStorage.getItem('selectedSiteId') || '';
 
-  const fetchKpis = async (fromDate: string, toDate: string) => {
+  const fetchKpis = async (fromDate: string, toDate: string, signal?: AbortSignal) => {
     setKpiLoading(true);
     try {
       const siteId = getSiteId();
       const url = `${API_CONFIG.BASE_URL}/utility_dashboard/waste_kpis.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}`;
-      const res = await fetch(url, { headers: { Authorization: getAuthHeader(), 'Content-Type': 'application/json' } });
+      const res = await fetch(url, {
+        headers: { Authorization: getAuthHeader(), 'Content-Type': 'application/json' },
+        signal,
+      });
       if (!res.ok) throw new Error('KPI fetch failed');
       const json = await res.json();
+      // Ignore a response for a filter that's no longer the applied one — without this,
+      // a slower older request could resolve after a newer one and overwrite it with
+      // stale data that doesn't match the currently-selected date range.
+      if (signal?.aborted) return;
       if (json.success && json.response) setKpiData(json.response);
     } catch (e) {
-      console.error(e);
+      if ((e as Error).name !== 'AbortError') console.error(e);
     } finally {
-      setKpiLoading(false);
+      if (!signal?.aborted) setKpiLoading(false);
     }
   };
 
-  const fetchChartData = async (fromDate: string, toDate: string) => {
+  const fetchChartData = async (fromDate: string, toDate: string, signal?: AbortSignal) => {
     setChartLoading(true);
     try {
       const siteId = getSiteId();
       const url = `${API_CONFIG.BASE_URL}/utility_dashboard/site_wise_dry_waste_segregation.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}`;
-      const res = await fetch(url, { headers: { Authorization: getAuthHeader(), 'Content-Type': 'application/json' } });
+      const res = await fetch(url, {
+        headers: { Authorization: getAuthHeader(), 'Content-Type': 'application/json' },
+        signal,
+      });
       if (!res.ok) throw new Error('Chart fetch failed');
       const json = await res.json();
+      if (signal?.aborted) return;
       if (json.success && json.response) setChartRaw(json.response);
     } catch (e) {
-      console.error(e);
+      if ((e as Error).name !== 'AbortError') console.error(e);
     } finally {
-      setChartLoading(false);
+      if (!signal?.aborted) setChartLoading(false);
     }
   };
 
@@ -298,9 +309,14 @@ const UtilityWasteGenerationDashboard = () => {
 useEffect(() => {
   const from = format(analyticsStart, "yyyy-MM-dd");
   const to = format(analyticsEnd, "yyyy-MM-dd");
+  const controller = new AbortController();
 
-  fetchKpis(from, to);
-  fetchChartData(from, to);
+  fetchKpis(from, to, controller.signal);
+  fetchChartData(from, to, controller.signal);
+
+  // Cancel any still-in-flight request for the previous filter so its response
+  // (once it does arrive) can never overwrite the data for the newly applied one.
+  return () => controller.abort();
 }, [analyticsStart, analyticsEnd]);
 
   const loadWasteGenerations = async (page: number = 1, filters?: WasteGenerationFilters) => {
@@ -488,8 +504,8 @@ useEffect(() => {
                 if (key === 'client_name') return item.client_name || item.vendor?.company_name || item.agency_name || '-';
                 if (key === 'user_name') return item.user_name || item.created_by?.full_name || '-';
                 if (key === 'email') return item.created_by?.email || '-';
-                if (key === 'waste_category') return item.category?.category_name || '-';
-                if (key === 'total_bags') return item.bag_counts != null ? item.bag_counts.toString() : '-';
+                if (key === 'waste_category') return item.category_names || item.category?.category_name || '-';
+                if (key === 'total_bags') return (item.total_bag_count ?? item.bag_counts) != null ? String(item.total_bag_count ?? item.bag_counts) : '-';
                 // The API doesn't distinguish Kg vs Ltr — waste_unit is assumed to be
                 // in Kg (matching how this figure is labeled everywhere else in the app).
                 if (key === 'quantity_kg') return item.waste_unit != null ? `${item.waste_unit}` : '-';
@@ -500,7 +516,7 @@ useEffect(() => {
                 }
                 if (key === 'status') return item.status || '-';
                 if (key === 'device_id') return item.device_id != null ? item.device_id.toString() : '-';
-                if (key === 'remarks') return (item as Record<string, unknown>).remarks as string || '-';
+                if (key === 'remarks') return item.remark || '-';
                 return '-';
               }}
               getItemId={(item) => item.id.toString()}
