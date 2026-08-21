@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,44 @@ import {
   verifyForgotPasswordOTPAndResetPassword,
   sendForgotPasswordOTP,
 } from "@/utils/auth";
-import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import {
+  ArrowLeft,
+  Eye,
+  EyeOff,
+  Check,
+  X,
+  ShieldCheck,
+  ShieldAlert,
+} from "lucide-react";
+
+// Password policy per the organization's Information Security policy:
+// >= 8 alphanumeric characters, mixed case, at least one digit, and not a
+// common/dictionary password. Checked live as the user types, and again
+// before submit, so a weak password can never reach the reset request.
+const PASSWORD_REQUIREMENTS: {
+  key: string;
+  label: string;
+  test: (pwd: string) => boolean;
+}[] = [
+    { key: "length", label: "At least 8 characters", test: (p) => p.length >= 8 },
+    { key: "upper", label: "At least one uppercase letter (A-Z)", test: (p) => /[A-Z]/.test(p) },
+    { key: "lower", label: "At least one lowercase letter (a-z)", test: (p) => /[a-z]/.test(p) },
+    { key: "number", label: "At least one number (0-9)", test: (p) => /[0-9]/.test(p) },
+    {
+      key: "notCommon",
+      label: "Not a common or easily guessable password",
+      test: (p) => !COMMON_PASSWORDS.has(p.toLowerCase()),
+    },
+  ];
+
+// A small set of the most common/dictionary passwords — best-effort check for
+// the "must not contain dictionary words" requirement (a full dictionary
+// lookup isn't practical client-side).
+const COMMON_PASSWORDS = new Set([
+  "password", "password1", "password123", "12345678", "123456789",
+  "welcome1", "admin1234", "iloveyou1", "1234567890",
+  "abc123456", "passw0rd", "welcome123",
+]);
 
 export const ForgotPasswordOTPPage = () => {
   const navigate = useNavigate();
@@ -40,50 +77,17 @@ export const ForgotPasswordOTPPage = () => {
     hostname.includes("pulse.panchshil.com") ||
     org_id === "90";
 
-  const validatePassword = (password: string) => {
-    // Password must be at least 8 characters long
-    if (password.length < 8) {
-      return {
-        isValid: false,
-        message: "Password must be at least 8 characters long.",
-      };
-    }
-
-    // Must contain at least one uppercase letter
-    if (!/[A-Z]/.test(password)) {
-      return {
-        isValid: false,
-        message: "Password must contain at least one uppercase letter.",
-      };
-    }
-
-    // Must contain at least one lowercase letter
-    if (!/[a-z]/.test(password)) {
-      return {
-        isValid: false,
-        message: "Password must contain at least one lowercase letter.",
-      };
-    }
-
-    // Must contain at least one number
-    if (!/[0-9]/.test(password)) {
-      return {
-        isValid: false,
-        message: "Password must contain at least one number.",
-      };
-    }
-
-    // Must contain at least one special character
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-      return {
-        isValid: false,
-        message:
-          'Password must contain at least one special character (!@#$%^&*(),.?":{}|<>).',
-      };
-    }
-
-    return { isValid: true, message: "Password is valid." };
-  };
+  const passwordChecks = useMemo(
+    () =>
+      PASSWORD_REQUIREMENTS.map((req) => ({
+        ...req,
+        passed: req.test(newPassword),
+      })),
+    [newPassword]
+  );
+  const isPasswordStrong = passwordChecks.every((check) => check.passed);
+  const passwordsMatch =
+    confirmPassword.length > 0 && newPassword === confirmPassword;
 
   useEffect(() => {
     // Redirect if no email or mobile
@@ -111,14 +115,13 @@ export const ForgotPasswordOTPPage = () => {
       return;
     }
 
-    if (newPassword !== confirmPassword) {
-      toast.error("Passwords do not match.");
+    if (!isPasswordStrong) {
+      toast.error("Please satisfy all password requirements listed below.");
       return;
     }
 
-    const passwordValidation = validatePassword(newPassword);
-    if (!passwordValidation.isValid) {
-      toast.error(passwordValidation.message);
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match.");
       return;
     }
 
@@ -168,7 +171,7 @@ export const ForgotPasswordOTPPage = () => {
       if (responseCode === 429) {
         toast.error(
           responseMessage ||
-            "Too many OTP requests. Please try again after some time."
+          "Too many OTP requests. Please try again after some time."
         );
         setTimeLeft(60);
         return;
@@ -187,7 +190,7 @@ export const ForgotPasswordOTPPage = () => {
       // Success (code: 200 or otp: "Y")
       toast.success(
         responseMessage ||
-          "A new OTP has been sent to your email or mobile number."
+        "A new OTP has been sent to your email or mobile number."
       );
     } catch (error: any) {
       // Handle HTTP errors
@@ -394,34 +397,36 @@ export const ForgotPasswordOTPPage = () => {
               </button>
             </div>
 
-            {/* Password Requirements */}
-            {/* {newPassword && (
+            {/* Password Requirements — live-checked as the user types */}
+            {newPassword && (
               <div className="mt-2 p-3 bg-gray-50 rounded-lg border">
-                <p className="text-gray-700 text-xs font-medium mb-2">Password Requirements:</p>
+                <div
+                  className={`flex items-center gap-2 mb-2 text-xs font-medium ${isPasswordStrong ? "text-green-700" : "text-amber-700"
+                    }`}
+                >
+                  {isPasswordStrong ? (
+                    <ShieldCheck size={14} />
+                  ) : (
+                    <ShieldAlert size={14} />
+                  )}
+                  {isPasswordStrong
+                    ? "Meets password policy"
+                    : "Does not meet password policy yet"}
+                </div>
                 <div className="space-y-1">
-                  <div className={`flex items-center text-xs ${newPassword.length >= 8 ? 'text-green-600' : 'text-gray-400'}`}>
-                    <span className="mr-2">{newPassword.length >= 8 ? '✓' : '○'}</span>
-                    At least 8 characters
-                  </div>
-                  <div className={`flex items-center text-xs ${/[A-Z]/.test(newPassword) ? 'text-green-600' : 'text-gray-400'}`}>
-                    <span className="mr-2">{/[A-Z]/.test(newPassword) ? '✓' : '○'}</span>
-                    One uppercase letter
-                  </div>
-                  <div className={`flex items-center text-xs ${/[a-z]/.test(newPassword) ? 'text-green-600' : 'text-gray-400'}`}>
-                    <span className="mr-2">{/[a-z]/.test(newPassword) ? '✓' : '○'}</span>
-                    One lowercase letter
-                  </div>
-                  <div className={`flex items-center text-xs ${/[0-9]/.test(newPassword) ? 'text-green-600' : 'text-gray-400'}`}>
-                    <span className="mr-2">{/[0-9]/.test(newPassword) ? '✓' : '○'}</span>
-                    One number
-                  </div>
-                  <div className={`flex items-center text-xs ${/[!@#$%^&*(),.?":{}|<>]/.test(newPassword) ? 'text-green-600' : 'text-gray-400'}`}>
-                    <span className="mr-2">{/[!@#$%^&*(),.?":{}|<>]/.test(newPassword) ? '✓' : '○'}</span>
-                    One special character (!@#$%^&*(),.?":{}|&lt;&gt;)
-                  </div>
+                  {passwordChecks.map((check) => (
+                    <div
+                      key={check.key}
+                      className={`flex items-center gap-2 text-xs ${check.passed ? "text-green-600" : "text-gray-400"
+                        }`}
+                    >
+                      {check.passed ? <Check size={12} /> : <X size={12} />}
+                      {check.label}
+                    </div>
+                  ))}
                 </div>
               </div>
-            )} */}
+            )}
           </div>
 
           {/* Confirm Password */}
@@ -446,13 +451,27 @@ export const ForgotPasswordOTPPage = () => {
                 {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
+            {confirmPassword && (
+              <div
+                className={`mt-2 flex items-center gap-2 text-xs ${passwordsMatch ? "text-green-600" : "text-red-500"
+                  }`}
+              >
+                {passwordsMatch ? <Check size={12} /> : <X size={12} />}
+                {passwordsMatch ? "Passwords match" : "Passwords do not match"}
+              </div>
+            )}
           </div>
 
           {/* Reset Password Button */}
           <Button
             onClick={handleResetPassword}
             disabled={
-              isLoading || otp.length !== 5 || !newPassword || !confirmPassword
+              isLoading ||
+              otp.length !== 5 ||
+              !newPassword ||
+              !confirmPassword ||
+              !isPasswordStrong ||
+              !passwordsMatch
             }
             className="w-full h-14 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-base mt-8"
           >
