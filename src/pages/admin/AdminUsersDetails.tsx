@@ -214,7 +214,7 @@ export const AdminUsersDetails = () => {
   const fetchOrganizations = async () => {
     setLoadingOrganizations(true);
     try {
-      const response = await fetch(getFullUrl("/organizations.json"), {
+      const response = await fetch(getFullUrl("/organizations.json?per_page=200"), {
         headers: {
           Authorization: getAuthHeader(),
           "Content-Type": "application/json",
@@ -488,11 +488,10 @@ export const AdminUsersDetails = () => {
                   {user.user_type || "User"}
                 </span>
                 <span
-                  className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                    user.active
+                  className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${user.active
                       ? "bg-green-100 text-green-800"
                       : "bg-red-100 text-red-800"
-                  }`}
+                    }`}
                 >
                   {user.active ? "Active" : "Inactive"}
                 </span>
@@ -507,11 +506,10 @@ export const AdminUsersDetails = () => {
                   setIsEditing(true);
                 }
               }}
-              className={`flex items-center gap-2 px-5 py-2 rounded-md font-medium text-sm transition-colors ${
-                isEditing
+              className={`flex items-center gap-2 px-5 py-2 rounded-md font-medium text-sm transition-colors ${isEditing
                   ? "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                   : "bg-[#C72030] hover:bg-[#A01020] text-white"
-              }`}
+                }`}
             >
               {isEditing ? (
                 <>
@@ -559,13 +557,12 @@ export const AdminUsersDetails = () => {
                     Account Status
                   </label>
                   <span
-                    className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                      user.active === true
+                    className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${user.active === true
                         ? "bg-green-100 text-green-800"
                         : user.active === false
                           ? "bg-red-100 text-red-800"
                           : "bg-yellow-100 text-yellow-800"
-                    }`}
+                      }`}
                   >
                     {user.active === true
                       ? "Active"
