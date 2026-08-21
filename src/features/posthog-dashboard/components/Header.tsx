@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 
 const TIER_OPTIONS: { value: Tier; label: string; hint: string }[] = [
   { value: 't1', label: 'Site Manager', hint: 'One or more sites' },
-  { value: 't2', label: 'Regional', hint: 'One company and all of its sites' },
+  // { value: 't2', label: 'Regional', hint: 'One company and all of its sites' },
   { value: 't3', label: 'Management', hint: 'All sites for the organisation' },
 ];
 
