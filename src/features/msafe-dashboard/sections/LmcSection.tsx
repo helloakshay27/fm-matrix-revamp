@@ -38,7 +38,7 @@ function getMsafeBaseUrl(): string {
  *  the same way regardless of persona. */
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
   const params: Record<string, string> = {};
-  if (f.circleId) params.circle_id = f.circleId;
+  if (f.circleIds.length > 0) params.circle_id = f.circleIds.join(',');
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type = f.empTypeId;
@@ -682,12 +682,7 @@ export function LmcSection() {
             <DataState loading={weekLoading} empty={weekData.length === 0} label="weekly completion data" />
           ) : (
             <div style={{ minHeight: 420, maxHeight: 420, overflowY: 'auto' }}>
-              <ProgressRows
-                rows={weekData.map((r) => ({
-                  ...r,
-                  onClick: () => openDrill(`lmc-${r.label.toLowerCase()}`, `LMC · ${r.label}`),
-                }))}
-              />
+              <ProgressRows rows={weekData} />
             </div>
           )}
         </ChartCard>
@@ -697,13 +692,7 @@ export function LmcSection() {
             <DataState loading={statusLoading} empty={statusData.length === 0} label="status data" />
           ) : (
             <div style={{ minHeight: 420 }}>
-            <ProgressRows
-              rows={statusData.map((r) => ({
-                ...r,
-                onClick: () =>
-                  openDrill(`lmc-${r.label.toLowerCase().replace(/\s/g, '')}`, r.label),
-              }))}
-            />
+            <ProgressRows rows={statusData} />
             </div>
           )}
         </ChartCard>
