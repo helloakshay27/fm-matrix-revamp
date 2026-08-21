@@ -63,9 +63,9 @@ const selectMenuProps = {
 export function CircleManagerFilterBar() {
   const {
     persona,
-    circle,
-    setCircle,
-    setCircleId,
+    circles,
+    setCircles,
+    setCircleIds,
     functions,
     setFunctions,
     setFunctionIds,
@@ -89,6 +89,7 @@ export function CircleManagerFilterBar() {
   } = useMsafeDashboard();
 
   const [funcOpen, setFuncOpen] = useState(false);
+  const [circleOpen, setCircleOpen] = useState(false);
 
   // Pan India ('admin') gets the exact same filter bar as Circle Manager —
   // Circle, Function, Employee Type, and Date range all apply for either persona.
@@ -101,35 +102,72 @@ export function CircleManagerFilterBar() {
         ? functions[0]
         : `${functions.length} Functions Selected`;
 
+  const circleSummary =
+    circles.length === 0
+      ? 'Select Circle'
+      : circles.length === 1
+        ? circles[0]
+        : `${circles.length} Circles Selected`;
+
   return (
     <div className="cm-filter-bar" style={{ display: 'flex' }}>
       {persona === 'circle' && (
         <FormControl
           variant="outlined"
           size="small"
-          sx={{ minWidth: 160, flex: '1 1 160px', maxWidth: 220 }}
+          sx={{ minWidth: 170, flex: '1 1 170px', maxWidth: 240 }}
         >
           <InputLabel shrink>
             Circle <span style={{ color: '#EE2737' }}>*</span>
           </InputLabel>
           <MuiSelect
+            multiple
             label="Circle *"
             notched
             displayEmpty
-            value={circle}
+            open={circleOpen}
+            onOpen={() => setCircleOpen(true)}
+            onClose={() => setCircleOpen(false)}
+            value={circles}
             onChange={(e) => {
-              const v = String(e.target.value);
-              setCircle(v);
-              setCircleId(circleOptions.find((o) => o.name === v)?.id ?? '');
-              setPageTitle(`M-Safe · ${v} Circle`);
+              const v = e.target.value;
+              const names = typeof v === 'string' ? v.split(',') : (v as string[]);
+              setCircles(names);
+              const ids = names
+                .map((n) => circleOptions.find((o) => o.name === n)?.id)
+                .filter((id): id is string => Boolean(id));
+              setCircleIds(ids);
+              setPageTitle(
+                names.length === 0
+                  ? 'M-Safe · Circle Manager'
+                  : names.length === 1
+                    ? `M-Safe · ${names[0]} Circle`
+                    : `M-Safe · ${names.length} Circles`,
+              );
             }}
+            input={<OutlinedInput notched label="Circle *" />}
+            renderValue={() => (
+              <span style={{ color: circles.length ? '#2C2C2C' : '#9ca3af' }}>{circleSummary}</span>
+            )}
             sx={fieldStyles}
             MenuProps={selectMenuProps}
             disabled={loadingFilterOptions}
           >
             {circleOptions.map((c) => (
-              <MenuItem key={c.id} value={c.name}>
-                {c.name}
+              <MenuItem key={c.id} value={c.name} dense>
+                <Checkbox
+                  checked={circles.includes(c.name)}
+                  size="small"
+                  sx={{
+                    color: '#C4B89D',
+                    '&.Mui-checked': { color: VI_FOCUS },
+                    py: 0.25,
+                  }}
+                />
+                <ListItemText
+                  primary={c.name}
+                  primaryTypographyProps={{ fontSize: 13, fontFamily: "'Poppins', sans-serif" }}
+                />
               </MenuItem>
             ))}
           </MuiSelect>
