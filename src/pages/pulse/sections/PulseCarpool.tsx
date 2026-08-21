@@ -633,7 +633,6 @@ export function PulseCarpool({ filters }: Props) {
             <table className="pd-table">
               <thead>
                 <tr>
-                  <th className="pd-num">#</th>
                   {topDriverColumns.map((c) => (
                     <th key={c}>{titleCase(c)}</th>
                   ))}
@@ -642,7 +641,6 @@ export function PulseCarpool({ filters }: Props) {
               <tbody>
                 {topDriverRows.map((row, i) => (
                   <tr key={String(row.id ?? row.driver_id ?? i)}>
-                    <td className="pd-num">{i + 1}</td>
                     {topDriverColumns.map((c) => (
                       <td key={c}>{formatCell(row[c], c)}</td>
                     ))}
