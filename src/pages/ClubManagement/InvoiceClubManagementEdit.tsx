@@ -48,14 +48,14 @@ import {
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
-    <section className="bg-card rounded-lg border border-border shadow-sm">
-        <div className="px-6 py-4 border-b border-border flex items-center gap-3">
-            <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+    <section className="border border-gray-200 rounded-lg overflow-hidden">
+        <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
+            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
                 {icon}
             </div>
-            <h2 className="text-sm font-semibold tracking-wide uppercase">{title}</h2>
+            <span className="font-semibold text-lg text-gray-800">{title}</span>
         </div>
-        <div className="p-6">{children}</div>
+        <div className="p-6 bg-white">{children}</div>
     </section>
 );
 
@@ -2282,9 +2282,9 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                 <div className="text-brand text-sm bg-red-50 p-3 rounded-md">{errors.items}</div>
             )}
 
-            <div className="border border-border rounded-lg overflow-x-auto">
+            <div className="border border-gray-200 rounded-lg overflow-x-auto">
                 <table className="w-full min-w-[900px] item-table-no-hover">
-                    <thead className="bg-muted/50">
+                    <thead className="bg-gray-50">
                         <tr>
                             <th className="px-4 py-3 text-left text-sm font-medium">Item Details<span className="text-brand">*</span></th>
                             <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th>
@@ -2295,7 +2295,7 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                             <th className="px-4 py-3 text-center text-sm font-medium">Action</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-border">
+                    <tbody className="divide-y divide-gray-200">
 
                         {items.map((item, index) => (
                             <tr key={item.id}>
@@ -2477,7 +2477,11 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                                             setDeleteConfirmOpen(true);
                                         }}
                                         disabled={items.length === 1}
-                                        color="error"
+                                        sx={{
+                                            color: '#DA7756',
+                                            '&:hover': { backgroundColor: 'rgba(218, 119, 86, 0.08)' },
+                                            '&.Mui-disabled': { color: 'rgba(218, 119, 86, 0.4)' },
+                                        }}
                                     >
                                         <Delete fontSize="small" />
                                     </IconButton>

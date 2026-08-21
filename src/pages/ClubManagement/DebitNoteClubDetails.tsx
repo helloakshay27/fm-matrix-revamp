@@ -189,7 +189,7 @@ export const DebitNoteClubDetails = () => {
   const grandTotal = totals.grand_total ?? (debitNoteData.total_amount ?? (subTotal - totalDiscount + totalGst));
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen bg-white p-6">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -235,7 +235,7 @@ export const DebitNoteClubDetails = () => {
             </Button>
           </div> */}
           <div className="flex items-center gap-2 flex-wrap">
-            <Button size="sm" variant="outline" onClick={handleDownloadPdf} className="gap-2">
+            <Button size="sm" onClick={handleDownloadPdf} className="gap-2 fm-button-fix fm-button-brand">
               <Download className="h-4 w-4" />
               Download Debit Note
             </Button>
@@ -243,14 +243,16 @@ export const DebitNoteClubDetails = () => {
         </div>
 
         {/* Debit Note Information — mirrors the debit_note fields sent on creation */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary" />
+        <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
+          <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center gap-3 space-y-0 p-4">
+            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
+              <FileText className="h-4 w-4" />
+            </div>
+            <CardTitle className="text-lg font-semibold text-gray-800">
               Debit Note Information
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6 bg-white">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Debit Note Number</p>
@@ -317,20 +319,22 @@ export const DebitNoteClubDetails = () => {
         </Card>
 
         {/* Line Items — mirrors the line_items array sent on creation */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5 text-primary" />
+        <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
+          <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center gap-3 space-y-0 p-4">
+            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
+              <Package className="h-4 w-4" />
+            </div>
+            <CardTitle className="text-lg font-semibold text-gray-800">
               Line Items
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6 bg-white">
             {lineItems.length > 0 ? (
               <>
-                <div className="border border-border rounded-lg overflow-hidden">
+                <div className="border border-gray-200 rounded-lg overflow-hidden">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-muted/50">
+                      <TableRow className="bg-gray-50">
                         <TableHead>Type</TableHead>
                         <TableHead>Item</TableHead>
                         <TableHead className="text-right">Quantity</TableHead>

@@ -94,6 +94,11 @@ export interface WasteGeneration {
   waste_bag_details: WasteBagDetail[];
   // Per-category breakdown for records created with multiple waste entries.
   categories?: WasteGenerationCategoryEntry[];
+  // Comma-joined category/commodity names and the total bag count across every
+  // category entry — sent alongside (not inside) `categories`/`bag_counts`.
+  category_names?: string | null;
+  commodity_names?: string | null;
+  total_bag_count?: number | null;
 }
 
 export interface WasteGenerationCounts {
