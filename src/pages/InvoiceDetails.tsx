@@ -644,7 +644,7 @@ export const InvoiceDetails = () => {
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Adjustment Amount</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.adjustment_amount}</span>
+                        <span className="text-gray-900 font-medium">{formatIndian(invoice.adjustment_amount)}</span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Supplier Name</span>
@@ -654,7 +654,7 @@ export const InvoiceDetails = () => {
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Retention Amount</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.retention_amount}</span>
+                        <span className="text-gray-900 font-medium">{formatIndian(invoice.retention_amount)}</span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Invoice Amount</span>
@@ -754,6 +754,9 @@ export const InvoiceDetails = () => {
                                 return item.expected_date
                                     ? item.expected_date.split("T")[0]
                                     : "-";
+                            }
+                            if (["rate", "tax_amount", "total_amount"].includes(columnKey)) {
+                                return formatIndian(item[columnKey]);
                             }
                             return item[columnKey] ?? "-";
                         }}
@@ -892,6 +895,9 @@ export const InvoiceDetails = () => {
                         renderCell={(item, columnKey) => {
                             if (columnKey === "type") {
                                 return "Debit"
+                            }
+                            if (columnKey === "amount") {
+                                return formatIndian(item[columnKey]);
                             }
                             return item[columnKey] ?? "-";
                         }}
