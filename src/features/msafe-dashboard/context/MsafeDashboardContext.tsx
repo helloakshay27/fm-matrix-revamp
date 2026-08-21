@@ -95,8 +95,8 @@ async function fetchFilterOptions(
 export type DrillState = { id: string; title: string; crumb: string } | null;
 export type ToastItem = { id: number; message: string };
 export type AppliedFilters = {
-  circle: string;
-  circleId: string;
+  circles: string[];
+  circleIds: string[];
   functions: string[];
   functionIds: string[];
   zone: string;
@@ -123,8 +123,8 @@ oneMonthAgo.setDate(today.getDate() - 30);
 // Circle Manager's defaults (Mumbai + last one month) — applied only when the
 // user explicitly switches into the 'circle' persona (see setPersona below).
 export const DEFAULT_FILTERS: AppliedFilters = {
-  circle: 'Mumbai',
-  circleId: '',
+  circles: ['Mumbai'],
+  circleIds: [],
   functions: [],
   functionIds: [],
   zone: 'All Zones',
@@ -141,8 +141,8 @@ export const DEFAULT_FILTERS: AppliedFilters = {
 // Circle Manager. setPersona('admin') only runs on an explicit persona switch,
 // not on mount, so this mirrors that branch's dates directly.
 const INITIAL_FILTERS: AppliedFilters = {
-  circle: '',
-  circleId: '',
+  circles: [],
+  circleIds: [],
   functions: [],
   functionIds: [],
   zone: 'All Zones',
@@ -170,10 +170,10 @@ type Ctx = {
   setKpiLmc: (v: string) => void;
   kpiSmt: string;
   setKpiSmt: (v: string) => void;
-  circle: string;
-  setCircle: (c: string) => void;
-  circleId: string;
-  setCircleId: (id: string) => void;
+  circles: string[];
+  setCircles: (c: string[]) => void;
+  circleIds: string[];
+  setCircleIds: (ids: string[]) => void;
   functions: string[];
   setFunctions: (f: string[]) => void;
   functionIds: string[];
@@ -230,8 +230,8 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
   const [kpiUsers, setKpiUsers] = useState('27,438');
   const [kpiLmc, setKpiLmc] = useState('1,284');
   const [kpiSmt, setKpiSmt] = useState('438');
-  const [circle, setCircle] = useState(INITIAL_FILTERS.circle);
-  const [circleId, setCircleId] = useState(INITIAL_FILTERS.circleId);
+  const [circles, setCircles] = useState<string[]>(INITIAL_FILTERS.circles);
+  const [circleIds, setCircleIds] = useState<string[]>(INITIAL_FILTERS.circleIds);
   const [functions, setFunctions] = useState<string[]>(INITIAL_FILTERS.functions);
   const [functionIds, setFunctionIds] = useState<string[]>(INITIAL_FILTERS.functionIds);
   const [zone, setZone] = useState(INITIAL_FILTERS.zone);
@@ -304,11 +304,13 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
   const circleOptionsRef = useRef(circleOptions);
   circleOptionsRef.current = circleOptions;
 
-  const resolveDefaultCircle = useCallback((): { circle: string; circleId: string } => {
-    const match = circleOptionsRef.current.find((o) =>
-      o.name.toLowerCase().includes(DEFAULT_FILTERS.circle.toLowerCase()),
-    );
-    return { circle: match?.name ?? DEFAULT_FILTERS.circle, circleId: match?.id ?? DEFAULT_FILTERS.circleId };
+  const resolveDefaultCircles = useCallback((): { circles: string[]; circleIds: string[] } => {
+    const defaultName = DEFAULT_FILTERS.circles[0];
+    const match = circleOptionsRef.current.find((o) => o.name.toLowerCase().includes(defaultName.toLowerCase()));
+    return {
+      circles: [match?.name ?? defaultName],
+      circleIds: match ? [match.id] : DEFAULT_FILTERS.circleIds,
+    };
   }, []);
 
   const showToast = useCallback((message: string) => {
@@ -323,8 +325,8 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       // Pan India now shows the exact same filter bar as Circle Manager (Circle, Function,
       // Employee Type, Date range) — defaults to the same last-one-month date range as
       // Circle Manager each time this persona is entered, just without picking a circle.
-      setCircle('');
-      setCircleId('');
+      setCircles([]);
+      setCircleIds([]);
       setFunctions(DEFAULT_FILTERS.functions);
       setFunctionIds(DEFAULT_FILTERS.functionIds);
       setZone(DEFAULT_FILTERS.zone);
@@ -335,8 +337,8 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       setEndDate(DEFAULT_FILTERS.endDate);
       setAppliedFilters({
         ...DEFAULT_FILTERS,
-        circle: '',
-        circleId: '',
+        circles: [],
+        circleIds: [],
       });
       setPageTitle('M-Safe · Pan India View');
       setScopeText('27,438 registered users across 22 circles');
@@ -348,9 +350,9 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       // and applied in this single state update (not a follow-up effect) so every section's
       // fetch effect re-runs exactly once with the right circle_id, instead of once with an
       // empty circle_id and then again a moment later when the id gets resolved.
-      const resolved = resolveDefaultCircle();
-      setCircle(resolved.circle);
-      setCircleId(resolved.circleId);
+      const resolved = resolveDefaultCircles();
+      setCircles(resolved.circles);
+      setCircleIds(resolved.circleIds);
       setFunctions(DEFAULT_FILTERS.functions);
       setFunctionIds(DEFAULT_FILTERS.functionIds);
       setZone(DEFAULT_FILTERS.zone);
@@ -359,14 +361,14 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       setEmpTypeId(DEFAULT_FILTERS.empTypeId);
       setStartDate(DEFAULT_FILTERS.startDate);
       setEndDate(DEFAULT_FILTERS.endDate);
-      setAppliedFilters({ ...DEFAULT_FILTERS, circle: resolved.circle, circleId: resolved.circleId });
-      setPageTitle(`M-Safe · ${resolved.circle} Circle`);
+      setAppliedFilters({ ...DEFAULT_FILTERS, circles: resolved.circles, circleIds: resolved.circleIds });
+      setPageTitle(`M-Safe · ${resolved.circles.join(', ')} Circle`);
       setScopeText('2,148 registered users · 12 clusters · 84 work locations');
       setKpiUsers('2,148');
       setKpiLmc('112');
       setKpiSmt('38');
     }
-  }, [resolveDefaultCircle]);
+  }, [resolveDefaultCircles]);
 
   // HTML v6 behavior: sections stay mounted; KPI click highlights + smooth-scrolls
   const toggleAccordion = useCallback((key: AccordionKey) => {
@@ -398,8 +400,8 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
   const applyFilters = useCallback(
     (overrides?: Partial<AppliedFilters>, opts?: { silent?: boolean }) => {
       const next: AppliedFilters = {
-        circle,
-        circleId,
+        circles,
+        circleIds,
         functions,
         functionIds,
         zone,
@@ -412,13 +414,15 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       };
       setAppliedFilters(next);
       if (persona === 'circle') {
-        setPageTitle(`M-Safe · ${next.circle} Circle`);
+        setPageTitle(`M-Safe · ${next.circles.join(', ')} Circle`);
       } else {
-        setPageTitle(next.circleId ? `M-Safe · ${next.circle} Circle (Pan India)` : 'M-Safe · Pan India View');
+        setPageTitle(
+          next.circleIds.length > 0 ? `M-Safe · ${next.circles.join(', ')} Circle (Pan India)` : 'M-Safe · Pan India View',
+        );
       }
       if (!opts?.silent) showToast('Filter applied');
     },
-    [persona, circle, circleId, functions, functionIds, zone, zoneId, empType, empTypeId, startDate, endDate, showToast],
+    [persona, circles, circleIds, functions, functionIds, zone, zoneId, empType, empTypeId, startDate, endDate, showToast],
   );
 
   // Rare-race fallback: covers the sliver of time where the user switches to Circle Manager
@@ -426,21 +430,22 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
   // resolved to the empty-id default. Once the options land, resolve and push the real id in.
   useEffect(() => {
     if (persona !== 'circle') return;
-    if (circle !== DEFAULT_FILTERS.circle || circleId) return;
-    const match = circleOptions.find((o) => o.name.toLowerCase().includes(DEFAULT_FILTERS.circle.toLowerCase()));
+    const defaultName = DEFAULT_FILTERS.circles[0];
+    if (circles.length !== 1 || circles[0] !== defaultName || circleIds.length > 0) return;
+    const match = circleOptions.find((o) => o.name.toLowerCase().includes(defaultName.toLowerCase()));
     if (!match) return;
-    setCircle(match.name);
-    setCircleId(match.id);
-    applyFilters({ circle: match.name, circleId: match.id }, { silent: true });
-  }, [persona, circle, circleId, circleOptions, applyFilters]);
+    setCircles([match.name]);
+    setCircleIds([match.id]);
+    applyFilters({ circles: [match.name], circleIds: [match.id] }, { silent: true });
+  }, [persona, circles, circleIds, circleOptions, applyFilters]);
 
   // Reset clears the circle and date range entirely — unlike the persona-switch default
   // (Mumbai + last 30 days), "Reset" means no circle_id/from_date/to_date get sent at all,
   // and the Circle/date fields render empty. Function and employee type already default to
   // "no filter" (empty list / "Internal / External"), so those stay as-is.
   const resetFilters = useCallback(() => {
-    setCircle('');
-    setCircleId('');
+    setCircles([]);
+    setCircleIds([]);
     setFunctions(DEFAULT_FILTERS.functions);
     setFunctionIds(DEFAULT_FILTERS.functionIds);
     setZone(DEFAULT_FILTERS.zone);
@@ -451,8 +456,8 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
     setEndDate('');
     setAppliedFilters({
       ...DEFAULT_FILTERS,
-      circle: '',
-      circleId: '',
+      circles: [],
+      circleIds: [],
       startDate: '',
       endDate: '',
     });
@@ -478,10 +483,10 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       setKpiLmc,
       kpiSmt,
       setKpiSmt,
-      circle,
-      setCircle,
-      circleId,
-      setCircleId,
+      circles,
+      setCircles,
+      circleIds,
+      setCircleIds,
       functions,
       setFunctions,
       functionIds,
@@ -526,8 +531,8 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       kpiUsers,
       kpiLmc,
       kpiSmt,
-      circle,
-      circleId,
+      circles,
+      circleIds,
       functions,
       functionIds,
       zone,
