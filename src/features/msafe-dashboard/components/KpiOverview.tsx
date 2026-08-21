@@ -12,6 +12,7 @@ import {
   ClipboardCheck,
   MapPin,
   Download,
+  AlertCircle,
 } from 'lucide-react';
 import type { AccordionKey, Persona } from '../data/constants';
 import { ADMIN_KPIS } from '../data/mockData';
@@ -32,7 +33,7 @@ function getMsafeBaseUrl(): string {
  *  the same way regardless of persona. */
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
   const params: Record<string, string> = {};
-  if (f.circleId) params.circle_id = f.circleId;
+  if (f.circleIds.length > 0) params.circle_id = f.circleIds.join(',');
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type = f.empTypeId;
@@ -78,6 +79,7 @@ const KPI_FIELD_MAP: Record<string, { valueKeys: string[]; valueType: KpiValueTy
     valueType: 'count',
     subKeys: ['krcc_rejected_percentage', 'krcc_rejected_percent'],
   },
+  'krcc-not-started': { valueKeys: ['krcc_not_started', 'krcc_not_started_count'], valueType: 'count' },
   'train-cat': {
     valueKeys: ['average_training_completion_percentage', 'train_category_percentage', 'category_wise_completion'],
     valueType: 'percent',
@@ -145,6 +147,7 @@ const ICONS: Record<string, ReactNode> = {
   'krcc-approved': <CheckCircle2 size={16} />,
   'krcc-pending': <FileText size={16} />,
   'krcc-rejected': <XCircle size={16} />,
+  'krcc-not-started': <AlertCircle size={16} />,
   'train-cat': <GraduationCap size={16} />,
   'train-user': <UserCheck size={16} />,
   'train-int': <ShieldCheck size={16} />,
