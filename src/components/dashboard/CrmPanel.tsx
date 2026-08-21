@@ -99,9 +99,11 @@ const PENDING_TASK_ROWS = [
 
 interface CrmPanelProps {
   activeSection: string;
+  /** When set, renders only the cards the user has saved to My Dashboard, across all sections. */
+  visibleKeys?: Set<string>;
 }
 
-export function CrmPanel({ activeSection }: CrmPanelProps) {
+export function CrmPanel({ activeSection, visibleKeys }: CrmPanelProps) {
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [trendMode, setTrendMode] = useState<"line" | "bar">("line");
   const [selectedDay, setSelectedDay] = useState<number | null>(29);
@@ -478,19 +480,47 @@ export function CrmPanel({ activeSection }: CrmPanelProps) {
   return (
     <div className="space-y-4">
       <div ref={registerRef("Overview")} className="scroll-mt-24">
-        <SafetyGridSection storageKey="crmOverviewGridLayout" items={overviewItems} static />
+        <SafetyGridSection
+          storageKey="crmOverviewGridLayout"
+          items={overviewItems}
+          static
+          moduleKey="crm"
+          subTab="Overview"
+          visibleKeys={visibleKeys}
+        />
       </div>
 
       <div ref={registerRef("My Pipeline")} className="scroll-mt-24">
-        <SafetyGridSection storageKey="crmPipelineGridLayout_v2" items={pipelineItems} static />
+        <SafetyGridSection
+          storageKey="crmPipelineGridLayout_v2"
+          items={pipelineItems}
+          static
+          moduleKey="crm"
+          subTab="My Pipeline"
+          visibleKeys={visibleKeys}
+        />
       </div>
 
       <div ref={registerRef("Calendar")} className="scroll-mt-24">
-        <SafetyGridSection storageKey="crmCalendarGridLayout" items={calendarItems} static />
+        <SafetyGridSection
+          storageKey="crmCalendarGridLayout"
+          items={calendarItems}
+          static
+          moduleKey="crm"
+          subTab="Calendar"
+          visibleKeys={visibleKeys}
+        />
       </div>
 
       <div ref={registerRef("My Tasks")} className="scroll-mt-24">
-        <SafetyGridSection storageKey="crmTasksGridLayout" items={tasksItems} static />
+        <SafetyGridSection
+          storageKey="crmTasksGridLayout"
+          items={tasksItems}
+          static
+          moduleKey="crm"
+          subTab="My Tasks"
+          visibleKeys={visibleKeys}
+        />
       </div>
     </div>
   );
