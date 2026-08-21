@@ -646,7 +646,7 @@ export const PODetailsPage = () => {
     poDetails.payment_details?.map((item, index) => ({
       id: item.grn_id || index,
       grn_id: item.grn_id?.toString() || "-",
-      amount: item.amount?.toString() || "-",
+      amount: formatIndian(item.amount),
       payment_mode: item.payment_mode || "-",
       transaction_number: item.transaction_number || "-",
       status: item.status || "-",
@@ -663,7 +663,7 @@ export const PODetailsPage = () => {
     poDetails.debit_notes?.map((item, index) => ({
       id: item.id || index,
       type: item.note_type || "-",
-      amount: item.amount?.toString() || "-",
+      amount: formatIndian(item.amount),
       description: item.note || "-",
       approved: item.approved,
       approved_on: item.approved_at
@@ -986,7 +986,7 @@ export const PODetailsPage = () => {
                 <span className="text-gray-500 min-w-[140px]">Advance Amount</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
-                  {poDetails.advance_amount ?? "-"}
+                  {formatIndian(poDetails.advance_amount)}
                 </span>
               </div>
               <div className="flex items-start">
@@ -1037,7 +1037,7 @@ export const PODetailsPage = () => {
                     Net Amount (INR):
                   </span>
                   <span className="font-medium">
-                    {poDetails.net_amount_formatted ?? "-"}
+                    {formatIndian(poDetails.net_amount_formatted)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -1045,7 +1045,7 @@ export const PODetailsPage = () => {
                     Total Taxable Value Of PO:
                   </span>
                   <span className="font-medium">
-                    {poDetails.net_amount_formatted ?? "-"}
+                    {formatIndian(poDetails.net_amount_formatted)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -1053,7 +1053,7 @@ export const PODetailsPage = () => {
                     Taxes (INR):
                   </span>
                   <span className="font-medium">
-                    {poDetails.total_taxable_amount ?? "-"}
+                    {formatIndian(poDetails.total_taxable_amount)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -1061,7 +1061,7 @@ export const PODetailsPage = () => {
                     Total PO Value (INR):
                   </span>
                   <span className="font-medium">
-                    {poDetails.total_amount_formatted ?? "-"}
+                    {formatIndian(poDetails.total_amount_formatted)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center pt-4 border-t border-gray-200">

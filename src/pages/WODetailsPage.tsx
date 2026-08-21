@@ -808,7 +808,7 @@ export const WODetailsPage = () => {
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Advance Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{workOrder.work_order?.advance_amount || "-"}</span>
+            <span className="text-gray-900 font-medium">{formatIndian(workOrder.work_order?.advance_amount)}</span>
           </div>
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Description</span>
@@ -1046,6 +1046,10 @@ export const WODetailsPage = () => {
                   </span>
                 );
               }
+              const amountKeys = ["total_amount", "payable_amount", "retention_amount", "tds_amount", "qc_amount"];
+              if (amountKeys.includes(columnKey)) {
+                return formatIndian(item[columnKey]);
+              }
               return item[columnKey] || "-";
             }}
             renderActions={(item) => (
@@ -1082,6 +1086,12 @@ export const WODetailsPage = () => {
           <EnhancedTable
             data={paymentData}
             columns={paymentColumn}
+            renderCell={(item, columnKey) => {
+              if (columnKey === "amount") {
+                return formatIndian(item[columnKey]);
+              }
+              return item[columnKey] || "-";
+            }}
             storageKey="payment-table"
             hideColumnsButton={true}
             hideTableExport={true}
@@ -1107,6 +1117,9 @@ export const WODetailsPage = () => {
             data={debitCreditNote || []}
             columns={debitCreditColumns}
             renderCell={(item, columnKey) => {
+              if (columnKey === "amount") {
+                return formatIndian(item[columnKey]);
+              }
               return item[columnKey] || "-";
             }}
             storageKey="debit-credit-table"
