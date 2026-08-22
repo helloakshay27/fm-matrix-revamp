@@ -89,6 +89,35 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Detect embedded mode - hide sidebar and header when embedded
   const isEmbedded = isEmbeddedMode();
 
+  // Routes belonging to the employee "Project Task" section (per the
+  // Employee Projects Sidebar module's react_links). Pages in this section
+  // set currentSection via a mount-only effect (`useEffect(() => {...},
+  // [setCurrentSection])`), which never re-fires on client-side navigation
+  // that doesn't remount the component (e.g. query-param-only pagination,
+  // or landing here from a page that left currentSection on something
+  // else). That leaves currentSection stale until a full reload. Deriving
+  // this from the URL instead sidesteps that whole class of bug — the
+  // pathname is always correct, unlike the imperative string.
+  const EMPLOYEE_PROJECT_TASK_ROUTE_PREFIXES = [
+    "/vas/projects",
+    "/vas/tasks",
+    "/vas/issues",
+    "/vas/sprint",
+    "/vas/channels",
+    "/vas/mom",
+    "/vas/opportunity",
+    "/vas/todo",
+    "/vas/documents",
+    "/maintenance/documents",
+    "/report-analytics",
+    "/vas/project-dashboard"
+  ];
+  const isProjectTaskRoute = EMPLOYEE_PROJECT_TASK_ROUTE_PREFIXES.some(
+    (prefix) => location.pathname.startsWith(prefix)
+  );
+  const isEmployeeProjectTaskSection =
+    currentSection === "Project Task" || isProjectTaskRoute;
+
   /**
    * EMPLOYEE VIEW DETECTION
    *
@@ -142,6 +171,27 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     userEmail === "besis69240@azeriom.com" ||
     userEmail === "megipow156@aixind.com" ||
     userEmail === "jevosak839@cimario.com";
+
+  // Which accounts/companies get the "dynamic" employee experience
+  // (EmployeeSidebar + EmployeeHeader) vs. the Static fallback pair. Shared
+  // by both renderSidebar() and the header selection below so the two can
+  // never drift out of sync with each other again.
+  const isDynamicEmployeeAccount =
+    selectedCompany?.id === 300 ||
+    selectedCompany?.id === 295 ||
+    selectedCompany?.id === 298 ||
+    selectedCompany?.id === 199 ||
+    org_id === "90" ||
+    org_id === "1" ||
+    org_id === "84" ||
+    userEmail === "ubaid.hashmat@lockated.com" ||
+    userEmail === "besis69240@azeriom.com" ||
+    userEmail === "megipow156@aixind.com" ||
+    userEmail === "jevosak839@cimario.com" ||
+    userEmail === "deveshjain928@gmail.com" ||
+    userEmail === "abdul.ghaffar@lockated.com" ||
+    userEmail === "mailroom2@zs.com" ||
+    userEmail === "abdul.g@gophygital.work";
 
   // Layout behavior:
   // - Company ID 189 (Lockated HO): Default layout (Sidebar + DynamicHeader)
@@ -204,26 +254,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // This prevents employee sidebar from showing in admin view on /vas/projects
     if (isEmployeeUser && isLocalhost && userType === "pms_occupant") {
       // Only render sidebar for Project Task or Business Compass module
-      if (currentSection === "Project Task") {
+      if (isEmployeeProjectTaskSection) {
         // Use EmployeeSidebar for specific companies, otherwise EmployeeSidebarStatic
-        if (
-          selectedCompany?.id === 300 ||
-          selectedCompany?.id === 295 ||
-          selectedCompany?.id === 298 ||
-          selectedCompany?.id === 199 ||
-          org_id === "90" ||
-          org_id === "1" ||
-          org_id === "84" ||
-          org_id === "1" ||
-          userEmail === "ubaid.hashmat@lockated.com" ||
-          userEmail === "besis69240@azeriom.com" ||
-          userEmail === "megipow156@aixind.com" ||
-          userEmail === "jevosak839@cimario.com" ||
-          userEmail === "deveshjain928@gmail.com" ||
-          userEmail === "abdul.ghaffar@lockated.com" ||
-          userEmail === "mailroom2@zs.com" ||
-          userEmail === "abdul.g@gophygital.work"
-        ) {
+        if (isDynamicEmployeeAccount) {
           return <EmployeeSidebar />;
         }
         return <EmployeeSidebarStatic />;
@@ -518,16 +551,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       {/* Conditional Header - Hide in embedded mode, Use EmployeeHeader or EmployeeHeaderStatic for employee users */}
       {isEmbedded ? null : isEmployeeUser && isLocalhost ? (
-        selectedCompany?.id === 300 ||
-          selectedCompany?.id === 295 ||
-          selectedCompany?.id === 298 ||
-          selectedCompany?.id === 199 ||
-          org_id === "90" ||
-          org_id === "1" ||
-          userEmail === "ubaid.hashmat@lockated.com" ||
-          userEmail === "besis69240@azeriom.com" ||
-          userEmail === "megipow156@aixind.com" ||
-          userEmail === "jevosak839@cimario.com" ? (
+        isDynamicEmployeeAccount ? (
           <EmployeeHeader />
         ) : (
           // isNewEmpHubRoute ? (
@@ -568,7 +592,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             ? "ml-0 pt-4"
             : // For employee users, only add left margin if on Project Task module
             isEmployeeUser && isLocalhost
-              ? currentSection === "Project Task" ||
+              ? isEmployeeProjectTaskSection ||
                 currentSection === "Business Compass" ||
                 currentSection === "Admin Compass" ||
                 location.pathname.includes("/business-compass") ||
