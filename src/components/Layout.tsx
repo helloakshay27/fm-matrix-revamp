@@ -42,6 +42,7 @@ import { ZycusSidebarCopy } from "./ZycusSidebarCopy";
 import TopNavigation from "./CompanyHub/TopNavigation";
 import VendorSidebar from "./VendorSidebar";
 import VendorDynamicHeader from "./VendorDynamicHeader";
+import TopNavigationStatic from "./CompanyHub/TopNavigationStatic";
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -215,7 +216,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           org_id === "1" ||
           org_id === "84" ||
           org_id === "1" ||
-          org_id === "13" ||
+          // org_id === "13" ||
           userEmail === "ubaid.hashmat@lockated.com" ||
           userEmail === "besis69240@azeriom.com" ||
           userEmail === "megipow156@aixind.com" ||
@@ -531,7 +532,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           userEmail === "jevosak839@cimario.com" ? (
           <EmployeeHeader />
         ) : (
-          <TopNavigation
+          // <TopNavigation
+          //   activeNavMenu={activeNavMenu}
+          //   setActiveNavMenu={setActiveNavMenu}
+          // />
+          <TopNavigationStatic
             activeNavMenu={activeNavMenu}
             setActiveNavMenu={setActiveNavMenu}
           />

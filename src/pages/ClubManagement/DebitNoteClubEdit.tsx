@@ -1552,7 +1552,7 @@ export const DebitNoteClubEditPage: React.FC = () => {
     // Maps a line_item_type to the PascalCase resource_type the debit_notes API expects
     const LINE_ITEM_RESOURCE_TYPE: Record<string, string> = {
         facility_booking: 'FacilityBooking',
-        membership: 'Membership',
+        membership: 'ClubMemberAllocation',
         event: 'Event',
     };
 

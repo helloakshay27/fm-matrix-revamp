@@ -225,7 +225,7 @@ const navMenuOptions: Record<
     ],
 };
 
-const TopNavigation: React.FC<TopNavigationProps> = ({
+const TopNavigationStatic: React.FC<TopNavigationProps> = ({
     activeNavMenu,
     setActiveNavMenu,
 }) => {
@@ -590,16 +590,16 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
                             >
                                 <span
                                     className={`text-[13px] font-medium tracking-wider transition-colors ${activeNavMenu === item
-                                            ? "text-[#DA7756]"
-                                            : "text-[rgba(16,24,40,1)] group-hover:text-gray-900"
+                                        ? "text-[#DA7756]"
+                                        : "text-[rgba(16,24,40,1)] group-hover:text-gray-900"
                                         }`}
                                 >
                                     {item}
                                 </span>
                                 <ChevronRight
                                     className={`w-3.5 h-3.5 transition-transform ${activeNavMenu === item
-                                            ? "-rotate-90 text-[#DA7756]"
-                                            : "rotate-90 text-[rgba(16,24,40,1)]"
+                                        ? "-rotate-90 text-[#DA7756]"
+                                        : "rotate-90 text-[rgba(16,24,40,1)]"
                                         }`}
                                 />
                             </div>
@@ -839,8 +839,8 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
                                     setIsMobileNavOpen(false);
                                 }}
                                 className={`text-left px-3 py-2.5 text-sm font-medium rounded-lg transition-colors flex items-center justify-between ${activeNavMenu === item
-                                        ? "text-[#DA7756] bg-[#f0ede6]"
-                                        : "text-gray-800 hover:bg-[#f0ede6]"
+                                    ? "text-[#DA7756] bg-[#f0ede6]"
+                                    : "text-gray-800 hover:bg-[#f0ede6]"
                                     }`}
                             >
                                 {item}
@@ -890,4 +890,4 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
     );
 };
 
-export default TopNavigation;
+export default TopNavigationStatic;
