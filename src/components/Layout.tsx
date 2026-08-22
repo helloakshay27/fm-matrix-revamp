@@ -110,8 +110,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     "/vas/mom",
     "/vas/opportunity",
     "/vas/todo",
+    "/vas/documents",
     "/maintenance/documents",
     "/report-analytics",
+    "/vas/project-dashboard"
   ];
   const isProjectTaskRoute = EMPLOYEE_PROJECT_TASK_ROUTE_PREFIXES.some(
     (prefix) => location.pathname.startsWith(prefix)
