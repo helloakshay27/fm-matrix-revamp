@@ -383,6 +383,13 @@ export const Header = () => {
 
   const tempSwitchToEmployee = tempType === "pms_organization_admin";
 
+  // On an actual local dev server (not the shared lockated.gophygital.work /
+  // fm-matrix.lockated.com hosts also covered by isLocalhost), let any
+  // logged-in account reach the Employee View switcher — otherwise it's only
+  // reachable by an account whose role happens to be pms_organization_admin,
+  // which blocks local testing of the employee layout entirely.
+  const isDevBypass = hostname.includes("localhost");
+
   const canShowMsafeForSelectedCompany = localStorage.getItem("org_id") === "34";
   const canShowMSafeDashboard =
     !isRestrictedUser && canShowMsafeForSelectedCompany;
@@ -994,34 +1001,35 @@ export const Header = () => {
               </div>
 
               {/* View Switcher - Only shown for admin users (pms_organization_admin) */}
-              {(canSwitchToEmployee || tempSwitchToEmployee) && isLocalhost && (
-                <div className="px-3 py-3 bg-gray-50 border-b border-gray-200">
-                  <p className="text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">
-                    Switch View
-                  </p>
-                  <button
-                    onClick={() => {
-                      localStorage.setItem("userType", "pms_occupant");
-                      localStorage.setItem("selectedView", "employee");
-                      localStorage.setItem(
-                        "tempType",
-                        "pms_organization_admin"
-                      );
-                      window.location.href = "/vas/projects";
-                    }}
-                    className="fm-button-fix fm-button-brand w-full justify-between px-4 py-2 rounded-lg text-sm font-medium group shadow-sm"
-                  >
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4" />
-                      <span>Employee View</span>
-                    </div>
-                    <ChevronDown className="w-4 h-4 -rotate-90 group-hover:translate-x-0.5 transition-transform" />
-                  </button>
-                  <p className="text-xs text-gray-500 mt-2 px-1">
-                    Access simplified employee interface
-                  </p>
-                </div>
-              )}
+              {(canSwitchToEmployee || tempSwitchToEmployee || isDevBypass) &&
+                isLocalhost && (
+                  <div className="px-3 py-3 bg-gray-50 border-b border-gray-200">
+                    <p className="text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">
+                      Switch View
+                    </p>
+                    <button
+                      onClick={() => {
+                        localStorage.setItem("userType", "pms_occupant");
+                        localStorage.setItem("selectedView", "employee");
+                        localStorage.setItem(
+                          "tempType",
+                          "pms_organization_admin"
+                        );
+                        window.location.href = "/vas/projects";
+                      }}
+                      className="fm-button-fix fm-button-brand w-full justify-between px-4 py-2 rounded-lg text-sm font-medium group shadow-sm"
+                    >
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        <span>Employee View</span>
+                      </div>
+                      <ChevronDown className="w-4 h-4 -rotate-90 group-hover:translate-x-0.5 transition-transform" />
+                    </button>
+                    <p className="text-xs text-gray-500 mt-2 px-1">
+                      Access simplified employee interface
+                    </p>
+                  </div>
+                )}
 
               {/* Menu Items */}
               <div className="py-1">
