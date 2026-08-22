@@ -43,6 +43,8 @@ import TopNavigation from "./CompanyHub/TopNavigation";
 import VendorSidebar from "./VendorSidebar";
 import VendorDynamicHeader from "./VendorDynamicHeader";
 import TopNavigationStatic from "./CompanyHub/TopNavigationStatic";
+import { BusinessCompassSidebarStatic } from "./BusinessCompassSidebarStatic";
+import { AdminCompassSidebarStatic } from "./AdminCompassSidebarStatic";
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -190,14 +192,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       location.pathname.startsWith("/admin-compass") ||
       currentSection === "Admin Compass"
     ) {
-      return <AdminCompassSidebar />;
+      return <AdminCompassSidebarStatic />;
     }
 
     if (
       currentSection === "Business Compass" ||
       location.pathname.startsWith("/business-compass")
     ) {
-      return <BusinessCompassSidebar />;
+      return <BusinessCompassSidebarStatic />;
     }
 
     // Check if user is employee (pms_occupant) - Employee layout takes priority
