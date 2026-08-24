@@ -86,25 +86,52 @@ function getNumberOrPercent(record: Record<string, unknown>, keys: string[]): nu
   return null;
 }
 
-function normalizeTrainPassFail(payload: unknown): { slices: TrainSlice[]; passRate: string | null } {
+function formatPct(n: number | null): string | null {
+  return n !== null ? `${n}%` : null;
+}
+
+/** Reads a `{ count, rate }` sub-object (the current API shape for pass/fail/pending),
+ *  falling back to a flat number/string field directly on the record (older shape). */
+function getGroupCount(record: Record<string, unknown>, key: string, flatKeys: string[]): number | null {
+  const group = record[key];
+  if (group && typeof group === 'object' && !Array.isArray(group)) {
+    const count = getNumberOrPercent(group as Record<string, unknown>, ['count']);
+    if (count !== null) return count;
+  }
+  return getNumberOrPercent(record, flatKeys);
+}
+
+function getGroupRate(record: Record<string, unknown>, key: string): string | null {
+  const group = record[key];
+  if (group && typeof group === 'object' && !Array.isArray(group)) {
+    const rate = getNumberOrPercent(group as Record<string, unknown>, ['rate']);
+    if (rate !== null) return `${rate}%`;
+  }
+  return null;
+}
+
+type TrainPFSlice = TrainSlice & { rate: string | null };
+
+function normalizeTrainPassFail(payload: unknown): { slices: TrainPFSlice[]; passRate: string | null } {
   const record = unwrapRecord(payload, ['overall', 'data', 'result']);
 
-  const pass = getNumberOrPercent(record, ['pass', 'passed', 'total_pass', 'pass_count']);
-  const fail = getNumberOrPercent(record, ['fail', 'failed', 'total_fail', 'fail_count']);
-  const pending = getNumberOrPercent(record, ['pending', 'pending_count', 'total_pending']);
+  const pass = getGroupCount(record, 'pass', ['passed', 'total_pass', 'pass_count']);
+  const fail = getGroupCount(record, 'fail', ['failed', 'total_fail', 'fail_count']);
+  const pending = getGroupCount(record, 'pending', ['pending_count', 'total_pending']);
 
-  const slices: TrainSlice[] = [];
-  if (pass !== null) slices.push({ name: 'Pass', value: pass, color: C.ok });
-  if (fail !== null) slices.push({ name: 'Fail', value: fail, color: C.vi });
-  if (pending !== null) slices.push({ name: 'Pending', value: pending, color: C.warn });
+  const slices: TrainPFSlice[] = [];
+  if (pass !== null) slices.push({ name: 'Pass', value: pass, color: C.ok, rate: getGroupRate(record, 'pass') });
+  if (fail !== null) slices.push({ name: 'Fail', value: fail, color: C.vi, rate: getGroupRate(record, 'fail') });
+  if (pending !== null)
+    slices.push({ name: 'Pending', value: pending, color: C.warn, rate: getGroupRate(record, 'pending') });
 
-  const rawRate = getNumberOrPercent(record, ['pass_rate', 'pass_percentage', 'passing_percentage']);
+  const flatRate = getNumberOrPercent(record, ['pass_rate', 'pass_percentage', 'passing_percentage']);
   const passRate =
-    rawRate !== null
-      ? `${rawRate}%`
-      : pass !== null && fail !== null && pass + fail > 0
-        ? `${((pass / (pass + fail)) * 100).toFixed(1)}%`
-        : null;
+    getGroupRate(record, 'pass') ??
+    (flatRate !== null ? `${flatRate}%` : null) ??
+    (pass !== null && fail !== null && pass + fail > 0
+      ? `${((pass / (pass + fail)) * 100).toFixed(1)}%`
+      : null);
 
   return { slices, passRate };
 }
@@ -120,20 +147,23 @@ function pickNestedRecord(root: Record<string, unknown>, keys: string[]): Record
 }
 
 function extractPassFailGroup(record: Record<string, unknown>, groupLabel: string): PassFailGroup | null {
-  const pass = getNumberOrPercent(record, ['pass', 'passed', 'total_pass', 'pass_count']);
-  const fail = getNumberOrPercent(record, ['fail', 'failed', 'total_fail', 'fail_count']);
-  const pending = getNumberOrPercent(record, ['pending', 'pending_count', 'total_pending']);
+  // Groups now carry pass/fail/pending as { count, rate } sub-objects (same shape
+  // as the overall training_pass_fail_stats.json response) — fall back to flat
+  // number/string fields for the older shape.
+  const pass = getGroupCount(record, 'pass', ['passed', 'total_pass', 'pass_count']);
+  const fail = getGroupCount(record, 'fail', ['failed', 'total_fail', 'fail_count']);
+  const pending = getGroupCount(record, 'pending', ['pending_count', 'total_pending']);
   if (pass === null && fail === null && pending === null) return null;
 
   const total = getNumberOrPercent(record, ['total', 'total_count', 'total_users']);
   const denom = pass !== null && fail !== null ? pass + fail + (pending ?? 0) : total;
 
-  const rawPassRate = getNumberOrPercent(record, ['pass_rate', 'pass_percentage', 'passing_percentage']);
-  const rawFailRate = getNumberOrPercent(record, ['fail_rate', 'fail_percentage', 'failing_percentage']);
-  const rawPendingRate = getNumberOrPercent(record, ['pending_rate', 'pending_percentage']);
-  const passPct = rawPassRate ?? (denom && pass !== null ? Math.round((pass / denom) * 1000) / 10 : 0);
-  const failPct = rawFailRate ?? (denom && fail !== null ? Math.round((fail / denom) * 1000) / 10 : 0);
-  const pendingPct = rawPendingRate ?? (denom && pending !== null ? Math.round((pending / denom) * 1000) / 10 : 0);
+  const rawPassRate = getGroupRate(record, 'pass') ?? formatPct(getNumberOrPercent(record, ['pass_rate', 'pass_percentage', 'passing_percentage']));
+  const rawFailRate = getGroupRate(record, 'fail') ?? formatPct(getNumberOrPercent(record, ['fail_rate', 'fail_percentage', 'failing_percentage']));
+  const rawPendingRate = getGroupRate(record, 'pending') ?? formatPct(getNumberOrPercent(record, ['pending_rate', 'pending_percentage']));
+  const passPct = rawPassRate !== null ? parseFloat(rawPassRate) : denom && pass !== null ? Math.round((pass / denom) * 1000) / 10 : 0;
+  const failPct = rawFailRate !== null ? parseFloat(rawFailRate) : denom && fail !== null ? Math.round((fail / denom) * 1000) / 10 : 0;
+  const pendingPct = rawPendingRate !== null ? parseFloat(rawPendingRate) : denom && pending !== null ? Math.round((pending / denom) * 1000) / 10 : 0;
 
   const label = total !== null ? `${groupLabel} (n=${total.toLocaleString('en-IN')})` : groupLabel;
 
@@ -155,26 +185,76 @@ function normalizeInternalExternalPassFail(payload: unknown): PassFailGroup[] {
   if (internalGroup) groups.push(internalGroup);
   const externalGroup = externalRecord && extractPassFailGroup(externalRecord, 'EXTERNAL NON-FTE');
   if (externalGroup) groups.push(externalGroup);
+
+  // The API doesn't always split by internal/external (it can return the same
+  // overall { pass, fail, pending } shape regardless of type=internal_external) —
+  // show that single overall group rather than rendering nothing.
+  if (groups.length === 0) {
+    const overallGroup = extractPassFailGroup(root, 'ALL USERS');
+    if (overallGroup) groups.push(overallGroup);
+  }
+
   return groups;
 }
 
-const normalizeTrainingCounts = (payload: unknown): TrainSlice[] => {
+// Carries the full pass/fail/pending breakdown directly on each chart slice
+// (rather than a separate array cross-referenced by category name) so the
+// donut/bar tooltip can read it straight off the exact slice being hovered.
+type TrainCategorySlice = TrainSlice & {
+  pass: number;
+  fail: number;
+  pending: number;
+  passPercentage: number | null;
+  failPercentage: number | null;
+  pendingPercentage: number | null;
+  total: number;
+};
+
+function getNum(record: Record<string, unknown>, keys: string[]): number | null {
+  for (const key of keys) {
+    const raw = record[key];
+    if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
+    if (typeof raw === 'string' && raw.trim() && Number.isFinite(Number(raw))) return Number(raw);
+  }
+  return null;
+}
+
+// pass/fail/pending are { count, percentage } sub-objects in the current API
+// shape — fall back to a flat number field directly on the record for older shapes.
+function getGroupCountPct(record: Record<string, unknown>, key: string, flatKeys: string[]): number {
+  const group = record[key];
+  if (group && typeof group === 'object' && !Array.isArray(group)) {
+    const count = getNum(group as Record<string, unknown>, ['count']);
+    if (count !== null) return count;
+  }
+  return getNum(record, flatKeys) ?? 0;
+}
+
+function getGroupPct(record: Record<string, unknown>, key: string): number | null {
+  const group = record[key];
+  if (group && typeof group === 'object' && !Array.isArray(group)) {
+    return getNum(group as Record<string, unknown>, ['percentage', 'pct']);
+  }
+  return null;
+}
+
+function unwrapTrainingList(payload: unknown, extraKeys: string[]): unknown[] {
   const source = Array.isArray(payload)
     ? payload
     : payload && typeof payload === 'object'
       ? (payload as Record<string, unknown>)
       : null;
 
-  let list: unknown[] = Array.isArray(source) ? source : [];
-  if (!Array.isArray(source)) {
-    for (const key of ['data', 'result', 'categories', 'training_categories', 'records']) {
-      const candidate = (source as Record<string, unknown>)?.[key];
-      if (Array.isArray(candidate)) {
-        list = candidate;
-        break;
-      }
-    }
+  if (Array.isArray(source)) return source;
+  for (const key of ['data', 'result', ...extraKeys]) {
+    const candidate = (source as Record<string, unknown>)?.[key];
+    if (Array.isArray(candidate)) return candidate;
   }
+  return [];
+}
+
+const normalizeTrainingCounts = (payload: unknown): TrainCategorySlice[] => {
+  const list = unwrapTrainingList(payload, ['categories', 'training_categories', 'records']);
 
   return list
     .map((item, index) => {
@@ -191,87 +271,104 @@ const normalizeTrainingCounts = (payload: unknown): TrainSlice[] => {
       ].find((value): value is string => typeof value === 'string' && value.trim().length > 0);
       if (!name) return null;
 
-      let value: number | null = null;
-      for (const key of ['count', 'value', 'total', 'total_count', 'completed', 'training_count']) {
-        const raw = record[key];
-        if (typeof raw === 'number' && Number.isFinite(raw)) {
-          value = raw;
-          break;
-        }
-        if (typeof raw === 'string' && raw.trim() && Number.isFinite(Number(raw))) {
-          value = Number(raw);
-          break;
-        }
-      }
-      if (value === null) return null;
+      const pass = getGroupCountPct(record, 'pass', ['passed', 'completed']);
+      const fail = getGroupCountPct(record, 'fail', ['failed']);
+      const pending = getGroupCountPct(record, 'pending', ['pending_assessment']);
+      const total = getNum(record, ['total', 'total_count']) ?? pass + fail + pending;
 
-      return { name, value, color: TRAIN_CHART_PALETTE[index % TRAIN_CHART_PALETTE.length] };
+      // Chart value: prefer an explicit flat count/value field (older shape),
+      // otherwise fall back to the category's total training volume.
+      const value = getNum(record, ['count', 'value']) ?? total;
+
+      return {
+        name,
+        value,
+        color: TRAIN_CHART_PALETTE[index % TRAIN_CHART_PALETTE.length],
+        pass,
+        fail,
+        pending,
+        total,
+        passPercentage: getGroupPct(record, 'pass'),
+        failPercentage: getGroupPct(record, 'fail'),
+        pendingPercentage: getGroupPct(record, 'pending'),
+      };
     })
-    .filter((item): item is TrainSlice => Boolean(item));
+    .filter((item): item is TrainCategorySlice => Boolean(item));
 };
 
-type TrainCategoryDetail = {
-  name: string;
-  completed: number;
-  pending: number;
-  pendingAssessment: number;
-  total: number;
-};
-
-// Same source list as normalizeTrainingCounts, but keeps the full completed/
-// pending/pending_assessment/total_count breakdown instead of collapsing it
-// down to a single chart value — used for the "Category-wise Trainings" table.
-const normalizeTrainingCategoryDetails = (payload: unknown): TrainCategoryDetail[] => {
-  const source = Array.isArray(payload)
-    ? payload
-    : payload && typeof payload === 'object'
-      ? (payload as Record<string, unknown>)
-      : null;
-
-  let list: unknown[] = Array.isArray(source) ? source : [];
-  if (!Array.isArray(source)) {
-    for (const key of ['data', 'result', 'categories', 'training_categories', 'records']) {
-      const candidate = (source as Record<string, unknown>)?.[key];
-      if (Array.isArray(candidate)) {
-        list = candidate;
-        break;
-      }
-    }
-  }
-
-  const getNum = (record: Record<string, unknown>, keys: string[]): number => {
-    for (const key of keys) {
-      const raw = record[key];
-      if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
-      if (typeof raw === 'string' && raw.trim() && Number.isFinite(Number(raw))) return Number(raw);
-    }
-    return 0;
-  };
+// function_wise_training_status.json nests separate internal/external breakdowns
+// per function — pick the requested scope's sub-object for each row.
+function normalizeFunctionTrainingStatus(payload: unknown, scope: 'internal' | 'external'): TrainCategorySlice[] {
+  const list = unwrapTrainingList(payload, ['functions', 'records']);
 
   return list
-    .map((item) => {
+    .map((item, index) => {
       if (!item || typeof item !== 'object') return null;
       const record = item as Record<string, unknown>;
-
-      const name = [
-        record.training_category,
-        record.category_name,
-        record.training_name,
-        record.name,
-        record.label,
-        record.title,
-      ].find((value): value is string => typeof value === 'string' && value.trim().length > 0);
+      const name = [record.function_name, record.name, record.label].find(
+        (value): value is string => typeof value === 'string' && value.trim().length > 0,
+      );
       if (!name) return null;
 
-      const completed = getNum(record, ['completed']);
-      const pending = getNum(record, ['pending']);
-      const pendingAssessment = getNum(record, ['pending_assessment']);
-      const total = getNum(record, ['total_count', 'total']) || completed + pending + pendingAssessment;
+      const scoped = record[scope];
+      if (!scoped || typeof scoped !== 'object' || Array.isArray(scoped)) return null;
+      const s = scoped as Record<string, unknown>;
 
-      return { name, completed, pending, pendingAssessment, total };
+      const pass = getGroupCountPct(s, 'pass', []);
+      const fail = getGroupCountPct(s, 'fail', []);
+      const pending = getGroupCountPct(s, 'pending', []);
+      const total = getNum(s, ['total']) ?? pass + fail + pending;
+
+      return {
+        name,
+        value: total,
+        color: TRAIN_CHART_PALETTE[index % TRAIN_CHART_PALETTE.length],
+        pass,
+        fail,
+        pending,
+        total,
+        passPercentage: getGroupPct(s, 'pass'),
+        failPercentage: getGroupPct(s, 'fail'),
+        pendingPercentage: getGroupPct(s, 'pending'),
+      };
     })
-    .filter((item): item is TrainCategoryDetail => Boolean(item));
-};
+    .filter((item): item is TrainCategorySlice => Boolean(item));
+}
+
+// circle_wise_training_status.json is flat (no internal/external split) — one
+// row per circle with its own pass/fail/pending breakdown.
+function normalizeCircleTrainingStatus(payload: unknown): TrainCategorySlice[] {
+  const list = unwrapTrainingList(payload, ['circles', 'records']);
+
+  return list
+    .map((item, index) => {
+      if (!item || typeof item !== 'object') return null;
+      const record = item as Record<string, unknown>;
+      const name = [record.circle_name, record.name, record.label].find(
+        (value): value is string => typeof value === 'string' && value.trim().length > 0,
+      );
+      if (!name) return null;
+
+      const pass = getGroupCountPct(record, 'pass', []);
+      const fail = getGroupCountPct(record, 'fail', []);
+      const pending = getGroupCountPct(record, 'pending', []);
+      const total = getNum(record, ['total']) ?? pass + fail + pending;
+
+      return {
+        name,
+        value: total,
+        color: TRAIN_CHART_PALETTE[index % TRAIN_CHART_PALETTE.length],
+        pass,
+        fail,
+        pending,
+        total,
+        passPercentage: getGroupPct(record, 'pass'),
+        failPercentage: getGroupPct(record, 'fail'),
+        pendingPercentage: getGroupPct(record, 'pending'),
+      };
+    })
+    .filter((item): item is TrainCategorySlice => Boolean(item));
+}
 
 type ScoreBucket = { bucket: string; n: number; color: string };
 type TrainFailure = { user: string; tr: string; type: 'Internal' | 'External'; date: string; score: string };
@@ -416,14 +513,21 @@ export function TrainingSection() {
   const { openDrill, persona, appliedFilters } = useMsafeDashboard();
   const [pfMode, setPfMode] = useState('donut');
   const [catMode, setCatMode] = useState('donut');
-  const [pfData, setPfData] = useState<TrainSlice[]>([]);
+  const [catTab, setCatTab] = useState<'internal' | 'external'>('internal');
+  const [pfData, setPfData] = useState<TrainPFSlice[]>([]);
   const [pfRate, setPfRate] = useState<string | null>(null);
   const [pfLoading, setPfLoading] = useState(true);
   const [intExtData, setIntExtData] = useState<PassFailGroup[]>([]);
   const [intExtLoading, setIntExtLoading] = useState(true);
   const [trainByNameData, setTrainByNameData] = useState<TrainSlice[]>([]);
-  const [trainCategoryData, setTrainCategoryData] = useState<TrainSlice[]>([]);
-  const [trainCategoryDetails, setTrainCategoryDetails] = useState<TrainCategoryDetail[]>([]);
+  const [trainCategoryData, setTrainCategoryData] = useState<TrainCategorySlice[]>([]);
+  const [funcTrainingMode, setFuncTrainingMode] = useState('donut');
+  const [funcTrainingTab, setFuncTrainingTab] = useState<'internal' | 'external'>('internal');
+  const [funcTrainingData, setFuncTrainingData] = useState<TrainCategorySlice[]>([]);
+  const [funcTrainingLoading, setFuncTrainingLoading] = useState(true);
+  const [circleTrainingMode, setCircleTrainingMode] = useState('donut');
+  const [circleTrainingData, setCircleTrainingData] = useState<TrainCategorySlice[]>([]);
+  const [circleTrainingLoading, setCircleTrainingLoading] = useState(true);
   const [scoreDistribution, setScoreDistribution] = useState<ScoreBucket[]>([]);
   const [trainFailures, setTrainFailures] = useState<TrainFailure[]>([]);
   const [trainCountsLoading, setTrainCountsLoading] = useState(true);
@@ -460,32 +564,33 @@ export function TrainingSection() {
     };
   }, [appliedFilters, persona]);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadIntExtPassFail = async () => {
-      setIntExtLoading(true);
-
-      try {
-        const payload = await fetchMsafeTrainingJson('training_pass_fail_stats.json', {
-          type: 'internal_external',
-          ...buildFilterParams(persona, appliedFilters),
-        });
-        const normalized = normalizeInternalExternalPassFail(payload);
-        if (isMounted) setIntExtData(normalized);
-      } catch (error) {
-        console.warn('M-Safe training-pass-fail-stats (internal_external) API failed.', error);
-      } finally {
-        if (isMounted) setIntExtLoading(false);
-      }
-    };
-
-    loadIntExtPassFail();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [appliedFilters, persona]);
+  // "Internal vs External Pass Rate" card hidden per request — API call disabled too.
+  // useEffect(() => {
+  //   let isMounted = true;
+  //
+  //   const loadIntExtPassFail = async () => {
+  //     setIntExtLoading(true);
+  //
+  //     try {
+  //       const payload = await fetchMsafeTrainingJson('training_pass_fail_stats.json', {
+  //         type: 'internal_external',
+  //         ...buildFilterParams(persona, appliedFilters),
+  //       });
+  //       const normalized = normalizeInternalExternalPassFail(payload);
+  //       if (isMounted) setIntExtData(normalized);
+  //     } catch (error) {
+  //       console.warn('M-Safe training-pass-fail-stats (internal_external) API failed.', error);
+  //     } finally {
+  //       if (isMounted) setIntExtLoading(false);
+  //     }
+  //   };
+  //
+  //   loadIntExtPassFail();
+  //
+  //   return () => {
+  //     isMounted = false;
+  //   };
+  // }, [appliedFilters, persona]);
 
   useEffect(() => {
     let isMounted = true;
@@ -494,15 +599,16 @@ export function TrainingSection() {
       setTrainCountsLoading(true);
 
       try {
-        const payload = await fetchMsafeTrainingJson(
-          'category_wise_training_count.json',
-          buildFilterParams(persona, appliedFilters),
-        );
+        // "External" is a genuinely separate endpoint, not a query param on the
+        // same one — both return the identical { training_category, total, pass:
+        // {count,percentage}, fail:{...}, pending:{...} } shape.
+        const endpoint =
+          catTab === 'external' ? 'external_category_wise_training_count.json' : 'category_wise_training_count.json';
+        const payload = await fetchMsafeTrainingJson(endpoint, buildFilterParams(persona, appliedFilters));
         const normalized = normalizeTrainingCounts(payload);
         if (isMounted) {
           setTrainByNameData(normalized);
           setTrainCategoryData(normalized);
-          setTrainCategoryDetails(normalizeTrainingCategoryDetails(payload));
         }
       } catch (error) {
         console.warn('M-Safe category-wise-training-count API failed.', error);
@@ -512,6 +618,58 @@ export function TrainingSection() {
     };
 
     loadTrainingCounts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [appliedFilters, persona, catTab]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadFunctionTraining = async () => {
+      setFuncTrainingLoading(true);
+      try {
+        const payload = await fetchMsafeTrainingJson(
+          'function_wise_training_status.json',
+          buildFilterParams(persona, appliedFilters),
+        );
+        const normalized = normalizeFunctionTrainingStatus(payload, funcTrainingTab);
+        if (isMounted) setFuncTrainingData(normalized);
+      } catch (error) {
+        console.warn('M-Safe function-wise-training-status API failed.', error);
+      } finally {
+        if (isMounted) setFuncTrainingLoading(false);
+      }
+    };
+
+    loadFunctionTraining();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [appliedFilters, persona, funcTrainingTab]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadCircleTraining = async () => {
+      setCircleTrainingLoading(true);
+      try {
+        const payload = await fetchMsafeTrainingJson(
+          'circle_wise_training_status.json',
+          buildFilterParams(persona, appliedFilters),
+        );
+        const normalized = normalizeCircleTrainingStatus(payload);
+        if (isMounted) setCircleTrainingData(normalized);
+      } catch (error) {
+        console.warn('M-Safe circle-wise-training-status API failed.', error);
+      } finally {
+        if (isMounted) setCircleTrainingLoading(false);
+      }
+    };
+
+    loadCircleTraining();
 
     return () => {
       isMounted = false;
@@ -574,28 +732,49 @@ export function TrainingSection() {
   //   };
   // }, [appliedFilters]);
 
-  // "Category-wise Trainings" donut slices only carry a single total value —
-  // this looks up the full completed/pending/pending-assessment breakdown for
-  // the hovered category so the donut's tooltip matches the bar chart's.
+  // Reads the pass/fail/pending breakdown directly off the hovered slice's own
+  // data (attached by normalizeTrainingCounts) instead of cross-referencing a
+  // second array by name.
   const renderCategoryTooltip = ({ active, payload }: TooltipProps<ValueType, NameType>) => {
     if (!active || !payload?.length) return null;
-    const name = String(payload[0]?.payload?.name ?? payload[0]?.name ?? '');
-    const detail = trainCategoryDetails.find((d) => d.name === name);
-    if (!detail) return null;
+    const slice = payload[0]?.payload as TrainCategorySlice | undefined;
+    if (!slice) return null;
+    const fmt = (count: number, pct: number | null) =>
+      `${count.toLocaleString('en-IN')}${pct !== null ? ` (${pct}%)` : ''}`;
     return (
       <div className="msafe-chart-tip">
-        <div className="msafe-chart-tip-title">{name}</div>
+        <div className="msafe-chart-tip-title">{slice.name}</div>
         <div className="msafe-chart-tip-row">
           <span className="msafe-chart-tip-sw" style={{ background: C.ok }} />
-          <span>Completed : {detail.completed.toLocaleString('en-IN')}</span>
-        </div>
-        <div className="msafe-chart-tip-row">
-          <span className="msafe-chart-tip-sw" style={{ background: C.warn }} />
-          <span>Pending : {detail.pending.toLocaleString('en-IN')}</span>
+          <span>Pass : {fmt(slice.pass, slice.passPercentage)}</span>
         </div>
         <div className="msafe-chart-tip-row">
           <span className="msafe-chart-tip-sw" style={{ background: C.vi }} />
-          <span>Pending Assessment : {detail.pendingAssessment.toLocaleString('en-IN')}</span>
+          <span>Fail : {fmt(slice.fail, slice.failPercentage)}</span>
+        </div>
+        <div className="msafe-chart-tip-row">
+          <span className="msafe-chart-tip-sw" style={{ background: C.warn }} />
+          <span>Pending : {fmt(slice.pending, slice.pendingPercentage)}</span>
+        </div>
+      </div>
+    );
+  };
+
+  // Reads each status's own rate (attached by normalizeTrainPassFail) directly
+  // off the hovered slice, so "Pass Vs Fail Rate" shows e.g. "Pass: 4,246 (55.39%)".
+  const renderPfTooltip = ({ active, payload }: TooltipProps<ValueType, NameType>) => {
+    if (!active || !payload?.length) return null;
+    const slice = payload[0]?.payload as TrainPFSlice | undefined;
+    if (!slice) return null;
+    return (
+      <div className="msafe-chart-tip">
+        <div className="msafe-chart-tip-title">{slice.name}</div>
+        <div className="msafe-chart-tip-row">
+          <span className="msafe-chart-tip-sw" style={{ background: slice.color }} />
+          <span>
+            {slice.value.toLocaleString('en-IN')}
+            {slice.rate ? ` (${slice.rate})` : ''}
+          </span>
         </div>
       </div>
     );
@@ -607,68 +786,34 @@ export function TrainingSection() {
       sub="Pass rates, categories, and who still needs a re-attempt"
       excelLabel="Training"
     >
-      <div className="g g2">
-        <ChartCard
-          title="Pass vs Fail Rate"
-          sub="All training records"
-          infoKey="train-pf"
-          showPdf
-          exportData={pfData.map((d) => ({ Status: d.name, Records: d.value }))}
-          chartSwitch={<ChartSwitch modes={['donut', 'bar']} value={pfMode} onChange={setPfMode} />}
-        >
-          {pfLoading || pfData.length === 0 ? (
-            <DataState loading={pfLoading} empty={pfData.length === 0} label="pass/fail data" />
-          ) : pfMode === 'donut' ? (
-            <SideLegendDonut
-              data={pfData}
-              centerValue={pfRate ?? '—'}
-              centerLabel="Pass Rate"
-              bodyLabel="Records"
-              onRowClick={(name) => openDrill(name === 'Fail' ? 'train-fail' : 'train-pass', name)}
-            />
-          ) : (
-            <SliceBarChart data={pfData} />
-          )}
-        </ChartCard>
-
-        <ChartCard title="Internal vs External Pass Rate" sub="Compared side-by-side" infoKey="train-int-ext">
-          {intExtLoading || intExtData.length === 0 ? (
-            <DataState loading={intExtLoading} empty={intExtData.length === 0} label="internal/external pass rate data" />
-          ) : (
-            <div style={{ padding: '4px 0' }}>
-              {intExtData.map((g) => (
-                <div key={g.group}>
-                  <div
-                    style={{
-                      fontSize: 10.5,
-                      color: 'var(--sage)',
-                      fontWeight: 600,
-                      marginTop: 6,
-                      marginBottom: 2,
-                    }}
-                  >
-                    {g.group}
-                  </div>
-                  {g.rows.map((r) => (
-                    <div key={r.label} className="pb-row">
-                      <span className="pb-label">{r.label}</span>
-                      <div className="pb-wrap">
-                        <div className="pb-fill" style={{ width: `${r.pct}%`, background: r.color }} />
-                      </div>
-                      <span className="pb-val">{r.val}</span>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
-        </ChartCard>
-
-        {/* "Training by Name" card hidden per request. Its data came from the same
-            category_wise_training_count.json call that still feeds "Category-wise
-            Trainings" below, so that fetch can't be disabled without breaking that
-            still-visible card — only the setTrainByNameData assignment is now dead. */}
-      </div>
+      {/* "Internal vs External Pass Rate" and "Training by Name" cards hidden per
+          request — both had their API calls disabled too ("Training by Name"'s
+          fetch is shared with "Category-wise Trainings" below, so only its own
+          assignment is dead, not the fetch itself). Only "Pass vs Fail Rate" is
+          left, now full-width instead of half a two-column row. */}
+      <ChartCard
+        title="Pass vs Fail Rate"
+        sub="All training records"
+        infoKey="train-pf"
+        showPdf
+        exportData={pfData.map((d) => ({ Status: d.name, Records: d.value, Rate: d.rate }))}
+        chartSwitch={<ChartSwitch modes={['donut', 'bar']} value={pfMode} onChange={setPfMode} />}
+      >
+        {pfLoading || pfData.length === 0 ? (
+          <DataState loading={pfLoading} empty={pfData.length === 0} label="pass/fail data" />
+        ) : pfMode === 'donut' ? (
+          <SideLegendDonut
+            data={pfData}
+            centerValue={pfRate ?? '—'}
+            centerLabel="Pass Rate"
+            bodyLabel="Records"
+            tooltipContent={renderPfTooltip}
+            onRowClick={(name) => openDrill(name === 'Fail' ? 'train-fail' : 'train-pass', name)}
+          />
+        ) : (
+          <SliceBarChart data={pfData} tooltipContent={renderPfTooltip} />
+        )}
+      </ChartCard>
 
       <ChartCard
         title="Category-wise Trainings"
@@ -676,14 +821,15 @@ export function TrainingSection() {
         infoKey="train-category"
         showPdf
         pdfLabel="Category-wise Trainings"
-        exportData={trainCategoryDetails.map((d) => ({
+        exportData={trainCategoryData.map((d) => ({
           Category: d.name,
-          Completed: d.completed,
+          Pass: d.pass,
+          Fail: d.fail,
           Pending: d.pending,
-          'Pending Assessment': d.pendingAssessment,
           Total: d.total,
         }))}
         style={{ marginTop: 16 }}
+        tag={<ChartSwitch modes={['internal', 'external']} value={catTab} onChange={(v) => setCatTab(v as 'internal' | 'external')} />}
         chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={catMode} onChange={setCatMode} />}
       >
         {trainCountsLoading || trainCategoryData.length === 0 ? (
@@ -699,9 +845,9 @@ export function TrainingSection() {
             )}
             {catMode === 'bar' && (
               <div className="chart-wrap" style={{ height: 'auto', maxHeight: 420, overflow: 'auto' }}>
-                <ResponsiveContainer width="100%" height={Math.max(220, trainCategoryDetails.length * 30)}>
+                <ResponsiveContainer width="100%" height={Math.max(220, trainCategoryData.length * 30)}>
                   <BarChart
-                    data={trainCategoryDetails}
+                    data={trainCategoryData}
                     layout="vertical"
                     margin={{ top: 4, right: 16, left: 0, bottom: 4 }}
                   >
@@ -716,13 +862,13 @@ export function TrainingSection() {
                     />
                     <Tooltip />
                     <Legend wrapperStyle={{ fontSize: 12 }} />
-                    <Bar dataKey="completed" stackId="training" fill={C.ok} name="Completed" />
-                    <Bar dataKey="pending" stackId="training" fill={C.warn} name="Pending" />
+                    <Bar dataKey="pass" stackId="training" fill={C.ok} name="Pass" />
+                    <Bar dataKey="fail" stackId="training" fill={C.vi} name="Fail" />
                     <Bar
-                      dataKey="pendingAssessment"
+                      dataKey="pending"
                       stackId="training"
-                      fill={C.vi}
-                      name="Pending Assessment"
+                      fill={C.warn}
+                      name="Pending"
                       radius={[0, 5, 5, 0]}
                     />
                   </BarChart>
@@ -735,19 +881,19 @@ export function TrainingSection() {
                   <thead>
                     <tr>
                       <th>Category</th>
-                      <th>Completed</th>
+                      <th>Pass</th>
+                      <th>Fail</th>
                       <th>Pending</th>
-                      <th>Pending Assessment</th>
                       <th>Total</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {trainCategoryDetails.map((d) => (
+                    {trainCategoryData.map((d) => (
                       <tr key={d.name}>
                         <td>{d.name}</td>
-                        <td>{d.completed.toLocaleString('en-IN')}</td>
+                        <td>{d.pass.toLocaleString('en-IN')}</td>
+                        <td>{d.fail.toLocaleString('en-IN')}</td>
                         <td>{d.pending.toLocaleString('en-IN')}</td>
-                        <td>{d.pendingAssessment.toLocaleString('en-IN')}</td>
                         <td>{d.total.toLocaleString('en-IN')}</td>
                       </tr>
                     ))}
@@ -756,6 +902,187 @@ export function TrainingSection() {
               </div>
             )}
           </>
+        )}
+      </ChartCard>
+
+      <ChartCard
+        title="Function-wise Training Status"
+        sub="Pass, fail, and pending training records by function"
+        infoKey="train-function-status"
+        showPdf
+        pdfLabel="Function-wise Training Status"
+        exportData={funcTrainingData.map((d) => ({
+          Function: d.name,
+          Pass: d.pass,
+          Fail: d.fail,
+          Pending: d.pending,
+          Total: d.total,
+        }))}
+        style={{ marginTop: 16 }}
+        tag={
+          <ChartSwitch
+            modes={['internal', 'external']}
+            value={funcTrainingTab}
+            onChange={(v) => setFuncTrainingTab(v as 'internal' | 'external')}
+          />
+        }
+        chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={funcTrainingMode} onChange={setFuncTrainingMode} />}
+      >
+        {funcTrainingLoading || funcTrainingData.length === 0 ? (
+          <DataState loading={funcTrainingLoading} empty={funcTrainingData.length === 0} label="function training data" />
+        ) : (
+          <>
+            {funcTrainingMode === 'donut' && (
+              <DonutChart
+                data={funcTrainingData}
+                height={Math.max(220, funcTrainingData.length * 26)}
+                tooltipContent={renderCategoryTooltip}
+              />
+            )}
+            {funcTrainingMode === 'bar' && (
+              <div className="chart-wrap" style={{ height: 'auto', maxHeight: 420, overflow: 'auto' }}>
+                <ResponsiveContainer width="100%" height={Math.max(220, funcTrainingData.length * 30)}>
+                  <BarChart
+                    data={funcTrainingData}
+                    layout="vertical"
+                    margin={{ top: 4, right: 16, left: 0, bottom: 4 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
+                    <XAxis type="number" tick={{ fontSize: 10, fill: C.sage }} />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      width={150}
+                      interval={0}
+                      tick={{ fontSize: 10, fill: C.sage }}
+                    />
+                    <Tooltip />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    <Bar dataKey="pass" stackId="func-training" fill={C.ok} name="Pass" />
+                    <Bar dataKey="fail" stackId="func-training" fill={C.vi} name="Fail" />
+                    <Bar
+                      dataKey="pending"
+                      stackId="func-training"
+                      fill={C.warn}
+                      name="Pending"
+                      radius={[0, 5, 5, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+            {funcTrainingMode === 'table' && (
+              <div className="chart-as-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Function</th>
+                      <th>Pass</th>
+                      <th>Fail</th>
+                      <th>Pending</th>
+                      <th>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {funcTrainingData.map((d) => (
+                      <tr key={d.name}>
+                        <td>{d.name}</td>
+                        <td>{d.pass.toLocaleString('en-IN')}</td>
+                        <td>{d.fail.toLocaleString('en-IN')}</td>
+                        <td>{d.pending.toLocaleString('en-IN')}</td>
+                        <td>{d.total.toLocaleString('en-IN')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        )}
+      </ChartCard>
+
+      <ChartCard
+        title="Circle-wise Training Status"
+        sub="Pass / Fail / Pending % of training records by circle"
+        infoKey="train-circle-status"
+        showPdf
+        pdfLabel="Circle-wise Training Status"
+        exportData={circleTrainingData.map((d) => ({
+          Circle: d.name,
+          Pass: d.pass,
+          'Pass %': d.passPercentage,
+          Fail: d.fail,
+          'Fail %': d.failPercentage,
+          Pending: d.pending,
+          'Pending %': d.pendingPercentage,
+          Total: d.total,
+        }))}
+        style={{ marginTop: 16 }}
+        chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={circleTrainingMode} onChange={setCircleTrainingMode} />}
+      >
+        {circleTrainingLoading || circleTrainingData.length === 0 ? (
+          <DataState loading={circleTrainingLoading} empty={circleTrainingData.length === 0} label="circle training data" />
+        ) : circleTrainingMode === 'donut' ? (
+          <DonutChart
+            data={circleTrainingData}
+            height={Math.min(420, Math.max(220, Math.ceil(circleTrainingData.length / 2) * 26))}
+            tooltipContent={renderCategoryTooltip}
+          />
+        ) : circleTrainingMode === 'bar' ? (
+          <div style={{ overflowX: 'auto' }}>
+            <div style={{ minWidth: Math.max(700, circleTrainingData.length * 55) }}>
+              <ResponsiveContainer width="100%" height={360}>
+                <BarChart data={circleTrainingData} margin={{ top: 4, right: 16, left: 0, bottom: 70 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
+                  <XAxis
+                    dataKey="name"
+                    interval={0}
+                    angle={-45}
+                    textAnchor="end"
+                    height={90}
+                    tick={{ fontSize: 10, fill: C.sage }}
+                  />
+                  <YAxis domain={[0, 100]} allowDataOverflow tick={{ fontSize: 10, fill: C.sage }} />
+                  <Tooltip content={renderCategoryTooltip} />
+                  <Legend wrapperStyle={{ fontSize: 10.5 }} iconType="square" iconSize={10} />
+                  <Bar dataKey="passPercentage" stackId="circle-training" fill={C.ok} name="Pass %" />
+                  <Bar dataKey="failPercentage" stackId="circle-training" fill={C.vi} name="Fail %" />
+                  <Bar
+                    dataKey="pendingPercentage"
+                    stackId="circle-training"
+                    fill={C.warn}
+                    radius={[5, 5, 0, 0]}
+                    name="Pending %"
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        ) : (
+          <div className="chart-as-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Circle</th>
+                  <th>Pass</th>
+                  <th>Fail</th>
+                  <th>Pending</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {circleTrainingData.map((d) => (
+                  <tr key={d.name}>
+                    <td>{d.name}</td>
+                    <td>{d.pass.toLocaleString('en-IN')}</td>
+                    <td>{d.fail.toLocaleString('en-IN')}</td>
+                    <td>{d.pending.toLocaleString('en-IN')}</td>
+                    <td>{d.total.toLocaleString('en-IN')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </ChartCard>
 

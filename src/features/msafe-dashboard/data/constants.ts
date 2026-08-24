@@ -93,7 +93,7 @@ export const INFO_TEXTS: Record<string, string> = {
   'user-comp':
     'Split of total users by employment type · Internal FTE (Vodafone Idea employees) vs External NON-FTE (contractors, channel partners, vendors).',
   'user-reg':
-    'Users first registered in M-Safe per calendar month · reflects new joiners onboarding into the safety system.',
+    'Users first registered in M-Safe per calendar month · reflects new joiners onboarding into the safety system. Always shows the trailing 12 months — the applied date filter does not affect this chart.',
   'user-circle':
     'Users assigned to each VIL circle · stacked by employment type · top 15 circles by user count.',
   'user-func':
@@ -102,7 +102,7 @@ export const INFO_TEXTS: Record<string, string> = {
   'krcc-status':
     'KRCC clearance status distribution · Cleared = check completed · Pending = initiated but not closed · Not Started = user registered but check not yet begun.',
   'krcc-aging':
-    'How long each pending KRCC has been open · calculated from KRCC initiation date to today.',
+    'How long each pending KRCC has been open · calculated from KRCC initiation date to today. Always a live snapshot as of today — the applied date filter does not affect this chart.',
   'krcc-circle':
     '% KRCC-cleared users per circle · (Cleared ÷ Total Registered in Circle) × 100. Bar color reflects the compliance band.',
   'krcc-category':
@@ -131,6 +131,10 @@ export const INFO_TEXTS: Record<string, string> = {
     'Number of training records per training programme name · top 5 shown.',
   'train-category':
     'Training records rolled up into 5 higher-level categories (Statutory Compliance, Technical Safety, Emergency Response, Behavioral Safety, Induction) · same underlying records as "Training by Name", grouped differently.',
+  'train-function-status':
+    'Pass/Fail/Pending training breakdown by function · toggle Internal/External to switch which cohort each function\'s numbers reflect.',
+  'train-circle-status':
+    'Pass/Fail/Pending % of training records by circle · bars are stacked to 100%.',
   'train-score':
     'Distribution of actual scores where recorded · records with null score excluded (n=15,842 of 27,413).',
   'train-fails':
