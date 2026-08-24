@@ -108,16 +108,16 @@ const PASSWORD_REQUIREMENTS: {
   label: string;
   test: (pwd: string) => boolean;
 }[] = [
-  { key: "length", label: "At least 8 characters", test: (p) => p.length >= 8 },
-  { key: "upper", label: "At least one uppercase letter (A-Z)", test: (p) => /[A-Z]/.test(p) },
-  { key: "lower", label: "At least one lowercase letter (a-z)", test: (p) => /[a-z]/.test(p) },
-  { key: "number", label: "At least one number (0-9)", test: (p) => /[0-9]/.test(p) },
-  {
-    key: "notCommon",
-    label: "Not a common or easily guessable password",
-    test: (p) => !COMMON_PASSWORDS.has(p.toLowerCase()),
-  },
-];
+    { key: "length", label: "At least 8 characters", test: (p) => p.length >= 8 },
+    { key: "upper", label: "At least one uppercase letter (A-Z)", test: (p) => /[A-Z]/.test(p) },
+    { key: "lower", label: "At least one lowercase letter (a-z)", test: (p) => /[a-z]/.test(p) },
+    { key: "number", label: "At least one number (0-9)", test: (p) => /[0-9]/.test(p) },
+    {
+      key: "notCommon",
+      label: "Not a common or easily guessable password",
+      test: (p) => !COMMON_PASSWORDS.has(p.toLowerCase()),
+    },
+  ];
 
 // A small set of the most common/dictionary passwords — best-effort check for
 // the "must not contain dictionary words" requirement (a full dictionary
@@ -293,7 +293,7 @@ export const AdminUsersDetails = () => {
     try {
       const response = await fetch(
         getFullUrl(
-          `/pms/company_setups/company_index.json?q[organization_id_eq]=${organizationId}`
+          `/pms/company_setups/company_index.json?q[organization_id_eq]=${organizationId}&per_page=200`
         ),
         {
           headers: {
@@ -540,8 +540,8 @@ export const AdminUsersDetails = () => {
                 </span>
                 <span
                   className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${user.active
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
                     }`}
                 >
                   {user.active ? "Active" : "Inactive"}
@@ -558,8 +558,8 @@ export const AdminUsersDetails = () => {
                 }
               }}
               className={`flex items-center gap-2 px-5 py-2 rounded-md font-medium text-sm transition-colors ${isEditing
-                  ? "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-                  : "bg-[#C72030] hover:bg-[#A01020] text-white"
+                ? "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                : "bg-[#C72030] hover:bg-[#A01020] text-white"
                 }`}
             >
               {isEditing ? (
@@ -609,10 +609,10 @@ export const AdminUsersDetails = () => {
                   </label>
                   <span
                     className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${user.active === true
-                        ? "bg-green-100 text-green-800"
-                        : user.active === false
-                          ? "bg-red-100 text-red-800"
-                          : "bg-yellow-100 text-yellow-800"
+                      ? "bg-green-100 text-green-800"
+                      : user.active === false
+                        ? "bg-red-100 text-red-800"
+                        : "bg-yellow-100 text-yellow-800"
                       }`}
                   >
                     {user.active === true
@@ -822,9 +822,8 @@ export const AdminUsersDetails = () => {
                   {formData.password && (
                     <div className="mt-2 p-3 bg-gray-50 rounded-lg border">
                       <div
-                        className={`flex items-center gap-2 mb-2 text-xs font-medium ${
-                          isPasswordStrong ? "text-brand-success" : "text-brand-warning"
-                        }`}
+                        className={`flex items-center gap-2 mb-2 text-xs font-medium ${isPasswordStrong ? "text-brand-success" : "text-brand-warning"
+                          }`}
                       >
                         {isPasswordStrong ? (
                           <ShieldCheck size={14} />
@@ -839,9 +838,8 @@ export const AdminUsersDetails = () => {
                         {passwordChecks.map((check) => (
                           <div
                             key={check.key}
-                            className={`flex items-center gap-2 text-xs ${
-                              check.passed ? "text-brand-success" : "text-brand-text-light"
-                            }`}
+                            className={`flex items-center gap-2 text-xs ${check.passed ? "text-brand-success" : "text-brand-text-light"
+                              }`}
                           >
                             {check.passed ? <Check size={12} /> : <X size={12} />}
                             {check.label}
@@ -869,9 +867,8 @@ export const AdminUsersDetails = () => {
 
                   {formData.password_confirmation && (
                     <div
-                      className={`mt-2 flex items-center gap-2 text-xs ${
-                        passwordsMatch ? "text-brand-success" : "text-brand-error"
-                      }`}
+                      className={`mt-2 flex items-center gap-2 text-xs ${passwordsMatch ? "text-brand-success" : "text-brand-error"
+                        }`}
                     >
                       {passwordsMatch ? <Check size={12} /> : <X size={12} />}
                       {passwordsMatch ? "Passwords match" : "Passwords do not match"}

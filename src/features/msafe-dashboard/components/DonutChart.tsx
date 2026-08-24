@@ -159,12 +159,16 @@ export function SideLegendDonut({
   centerLabel,
   onRowClick,
   bodyLabel,
+  tooltipContent,
 }: {
   data: Slice[];
   centerValue: string;
   centerLabel: string;
   onRowClick?: (name: string) => void;
   bodyLabel?: string;
+  /** Overrides the default name/value tooltip — e.g. to show a rate/percentage
+   *  alongside the count instead of just the slice's total. */
+  tooltipContent?: (props: TooltipProps<ValueType, NameType>) => ReactNode;
 }) {
   const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
   const outer = 68;
@@ -200,7 +204,7 @@ export function SideLegendDonut({
               cursor={false}
               allowEscapeViewBox={{ x: true, y: true }}
               wrapperStyle={{ outline: 'none', zIndex: 40, pointerEvents: 'none' }}
-              content={(props) => <MsafeChartTooltip {...props} bodyLabel={bodyLabel} />}
+              content={tooltipContent ?? ((props) => <MsafeChartTooltip {...props} bodyLabel={bodyLabel} />)}
             />
           </PieChart>
         </ResponsiveContainer>

@@ -298,7 +298,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
 
   const fetchOrganizationsDropdown = async () => {
     try {
-      const response = await fetch(getFullUrl("/organizations.json"), {
+      const response = await fetch(getFullUrl("/organizations.json?per_page=200"), {
         headers: {
           Authorization: getAuthHeader(),
           "Content-Type": "application/json",

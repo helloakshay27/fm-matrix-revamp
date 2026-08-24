@@ -877,7 +877,10 @@ export function MyDashboardSection() {
     setUserRegLoading(true);
     (async () => {
       try {
-        const payload = await fetchMsafeUserDashboardJson('new_registrations.json', buildFilterParams(persona, appliedFilters));
+        // Fixed trailing-12-months view — see UsersSection.tsx's same fix — so the
+        // date range is deliberately dropped, keeping every other filter.
+        const { from_date, to_date, ...regParams } = buildFilterParams(persona, appliedFilters);
+        const payload = await fetchMsafeUserDashboardJson('new_registrations.json', regParams);
         if (isMounted) setUserReg(normalizeRegChartData(payload));
       } catch (error) {
         console.warn('My Dashboard new-registrations fetch failed.', error);

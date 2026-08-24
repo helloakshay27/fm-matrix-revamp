@@ -69,6 +69,7 @@ import {
   ShieldCheck,
   Gift,
   HandHeart,
+  Trophy,
 } from "lucide-react";
 
 // Icon mapping based on action_name
@@ -379,6 +380,9 @@ const actionIconMap: Record<string, any> = {
   sos_directory: AlertCircle,
   esr_csr: HandHeart,
   customers: Users,
+  pulse_contests: Target,
+  pulse_rewards: Trophy,
+  notifications: Bell,
 
   // Market Place
   all: Globe,
@@ -427,7 +431,7 @@ export const ActionSidebar = () => {
       })
         .then((r) => r.json())
         .then((data) => { if (typeof data?.count === "number") setPendingApprovalsCount(data.count); })
-        .catch(() => {});
+        .catch(() => { });
       return true;
     };
 
@@ -477,15 +481,15 @@ export const ActionSidebar = () => {
 
     const filteredModuleFunctions = isPanchshilOrg
       ? moduleFunctions.filter((func) => {
-          const panchshilHiddenFunctions = [
-            "M-Safe",
-            "M-safe",
-            "Gate Pass",
-            "Visitor",
-            "Staff",
-          ];
-          return !panchshilHiddenFunctions.includes(func.function_name);
-        })
+        const panchshilHiddenFunctions = [
+          "M-Safe",
+          "M-safe",
+          "Gate Pass",
+          "Visitor",
+          "Staff",
+        ];
+        return !panchshilHiddenFunctions.includes(func.function_name);
+      })
       : moduleFunctions;
 
     const topLevel: any[] = [];
@@ -581,9 +585,8 @@ export const ActionSidebar = () => {
               handleNavigation(func.react_link, func.function_name);
             }
           }}
-          className={`flex items-center justify-between gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
-            isActive ? "bg-[#f0e8dc] text-[#C72030]" : "text-[#1a1a1a]"
-          }`}
+          className={`flex items-center justify-between gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${isActive ? "bg-[#f0e8dc] text-[#C72030]" : "text-[#1a1a1a]"
+            }`}
           style={{ paddingLeft: `${12 + level * 16}px` }}
           title={func.function_name}
         >
@@ -605,9 +608,8 @@ export const ActionSidebar = () => {
           </div>
           {hasChildren && (
             <ChevronDown
-              className={`w-4 h-4 transition-transform ${
-                isExpanded ? "rotate-180" : ""
-              }`}
+              className={`w-4 h-4 transition-transform ${isExpanded ? "rotate-180" : ""
+                }`}
             />
           )}
         </button>
@@ -633,18 +635,16 @@ export const ActionSidebar = () => {
             handleNavigation(func.react_link, func.function_name);
           }
         }}
-        className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
-          isActive ? "bg-[#f0e8dc] shadow-inner" : "hover:bg-[#DBC2A9]"
-        }`}
+        className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActive ? "bg-[#f0e8dc] shadow-inner" : "hover:bg-[#DBC2A9]"
+          }`}
         title={func.function_name}
       >
         {isActive && (
           <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>
         )}
         <Icon
-          className={`w-5 h-5 ${
-            isActive ? "text-[#C72030]" : "text-[#1a1a1a]"
-          }`}
+          className={`w-5 h-5 ${isActive ? "text-[#C72030]" : "text-[#1a1a1a]"
+            }`}
         />
       </button>
     );
@@ -652,11 +652,9 @@ export const ActionSidebar = () => {
 
   return (
     <div
-      className={`${
-        isSidebarCollapsed ? "w-16" : "w-64"
-      } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300 z-40 ${
-        isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
-      } md:translate-x-0`}
+      className={`${isSidebarCollapsed ? "w-16" : "w-64"
+        } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300 z-40 ${isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } md:translate-x-0`}
       style={{ top: "4rem", height: "91vh" }}
     >
       <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
@@ -678,9 +676,8 @@ export const ActionSidebar = () => {
         {currentModule && (
           <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
             <h3
-              className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${
-                isSidebarCollapsed ? "text-center" : "tracking-wide"
-              }`}
+              className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"
+                }`}
             >
               {isSidebarCollapsed ? "" : currentModule}
             </h3>

@@ -167,6 +167,11 @@ const modulesByPackage = {
         // { name: "Occupant Users", href: "/crm/occupant-users" },
       ],
     },
+    {
+      name: "Notification",
+      icon: Bell,
+      href: "/pulse/notifications",
+    },
   ],
 
   Master: [
