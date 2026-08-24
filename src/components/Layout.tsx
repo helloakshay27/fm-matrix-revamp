@@ -175,27 +175,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     userEmail === "megipow156@aixind.com" ||
     userEmail === "jevosak839@cimario.com";
 
-  // Which accounts/companies get the "dynamic" employee experience
-  // (EmployeeSidebar + EmployeeHeader) vs. the Static fallback pair. Shared
-  // by both renderSidebar() and the header selection below so the two can
-  // never drift out of sync with each other again.
-  const isDynamicEmployeeAccount =
-    selectedCompany?.id === 300 ||
-    selectedCompany?.id === 295 ||
-    selectedCompany?.id === 298 ||
-    selectedCompany?.id === 199 ||
-    org_id === "90" ||
-    org_id === "1" ||
-    org_id === "84" ||
-    userEmail === "ubaid.hashmat@lockated.com" ||
-    userEmail === "besis69240@azeriom.com" ||
-    userEmail === "megipow156@aixind.com" ||
-    userEmail === "jevosak839@cimario.com" ||
-    userEmail === "deveshjain928@gmail.com" ||
-    userEmail === "abdul.ghaffar@lockated.com" ||
-    userEmail === "mailroom2@zs.com" ||
-    userEmail === "abdul.g@gophygital.work";
-
   // Layout behavior:
   // - Company ID 189 (Lockated HO): Default layout (Sidebar + DynamicHeader)
   // - Company ID 199 (Customer Support): Default layout (Sidebar + DynamicHeader)
@@ -259,7 +238,25 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       // Only render sidebar for Project Task or Business Compass module
       if (isEmployeeProjectTaskSection) {
         // Use EmployeeSidebar for specific companies, otherwise EmployeeSidebarStatic
-        if (isDynamicEmployeeAccount) {
+        if (
+          selectedCompany?.id === 300 ||
+          selectedCompany?.id === 295 ||
+          selectedCompany?.id === 298 ||
+          selectedCompany?.id === 199 ||
+          org_id === "90" ||
+          org_id === "1" ||
+          org_id === "84" ||
+          org_id === "1" ||
+          // org_id === "13" ||
+          userEmail === "ubaid.hashmat@lockated.com" ||
+          userEmail === "besis69240@azeriom.com" ||
+          userEmail === "megipow156@aixind.com" ||
+          userEmail === "jevosak839@cimario.com" ||
+          userEmail === "deveshjain928@gmail.com" ||
+          userEmail === "abdul.ghaffar@lockated.com" ||
+          userEmail === "mailroom2@zs.com" ||
+          userEmail === "abdul.g@gophygital.work"
+        ) {
           return <EmployeeSidebar />;
         }
         return <EmployeeSidebarStatic />;
@@ -554,7 +551,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       {/* Conditional Header - Hide in embedded mode, Use EmployeeHeader or EmployeeHeaderStatic for employee users */}
       {isEmbedded ? null : isEmployeeUser && isLocalhost ? (
-        isDynamicEmployeeAccount ? (
+        selectedCompany?.id === 300 ||
+          selectedCompany?.id === 295 ||
+          selectedCompany?.id === 298 ||
+          selectedCompany?.id === 199 ||
+          org_id === "90" ||
+          org_id === "1" ||
+          userEmail === "ubaid.hashmat@lockated.com" ||
+          userEmail === "besis69240@azeriom.com" ||
+          userEmail === "megipow156@aixind.com" ||
+          userEmail === "jevosak839@cimario.com" ? (
           <EmployeeHeader />
         ) : (
           // <TopNavigation
