@@ -793,7 +793,7 @@ export function TrainingSection() {
           left, now full-width instead of half a two-column row. */}
       <ChartCard
         title="Pass vs Fail Rate"
-        sub="All training records"
+      
         infoKey="train-pf"
         showPdf
         exportData={pfData.map((d) => ({ Status: d.name, Records: d.value, Rate: d.rate }))}
@@ -844,20 +844,22 @@ export function TrainingSection() {
               />
             )}
             {catMode === 'bar' && (
-              <div className="chart-wrap" style={{ height: 'auto', maxHeight: 420, overflow: 'auto' }}>
-                <ResponsiveContainer width="100%" height={Math.max(220, trainCategoryData.length * 30)}>
-                  <BarChart
-                    data={trainCategoryData}
-                    layout="vertical"
-                    margin={{ top: 4, right: 16, left: 0, bottom: 4 }}
-                  >
+              <div style={{ overflowX: 'auto' }}>
+                <div style={{ minWidth: Math.max(700, trainCategoryData.length * 90) }}>
+                  <ResponsiveContainer width="100%" height={360}>
+                    <BarChart data={trainCategoryData} margin={{ top: 4, right: 16, left: 0, bottom: 70 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
-                    <XAxis type="number" tick={{ fontSize: 10, fill: C.sage }} />
                     <YAxis
+                      type="number"
+                      tick={{ fontSize: 10, fill: C.sage }}
+                    />
+                    <XAxis
                       type="category"
                       dataKey="name"
-                      width={150}
                       interval={0}
+                      angle={-45}
+                      textAnchor="end"
+                      height={90}
                       tick={{ fontSize: 10, fill: C.sage }}
                     />
                     <Tooltip />
@@ -871,8 +873,9 @@ export function TrainingSection() {
                       name="Pending"
                       radius={[0, 5, 5, 0]}
                     />
-                  </BarChart>
-                </ResponsiveContainer>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             )}
             {catMode === 'table' && (
@@ -919,13 +922,7 @@ export function TrainingSection() {
           Total: d.total,
         }))}
         style={{ marginTop: 16 }}
-        tag={
-          <ChartSwitch
-            modes={['internal', 'external']}
-            value={funcTrainingTab}
-            onChange={(v) => setFuncTrainingTab(v as 'internal' | 'external')}
-          />
-        }
+
         chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={funcTrainingMode} onChange={setFuncTrainingMode} />}
       >
         {funcTrainingLoading || funcTrainingData.length === 0 ? (
@@ -940,20 +937,22 @@ export function TrainingSection() {
               />
             )}
             {funcTrainingMode === 'bar' && (
-              <div className="chart-wrap" style={{ height: 'auto', maxHeight: 420, overflow: 'auto' }}>
-                <ResponsiveContainer width="100%" height={Math.max(220, funcTrainingData.length * 30)}>
-                  <BarChart
-                    data={funcTrainingData}
-                    layout="vertical"
-                    margin={{ top: 4, right: 16, left: 0, bottom: 4 }}
-                  >
+              <div style={{ overflowX: 'auto' }}>
+                <div style={{ minWidth: Math.max(700, funcTrainingData.length * 90) }}>
+                  <ResponsiveContainer width="100%" height={360}>
+                    <BarChart data={funcTrainingData} margin={{ top: 4, right: 16, left: 0, bottom: 70 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
-                    <XAxis type="number" tick={{ fontSize: 10, fill: C.sage }} />
                     <YAxis
+                      type="number"
+                      tick={{ fontSize: 10, fill: C.sage }}
+                    />
+                    <XAxis
                       type="category"
                       dataKey="name"
-                      width={150}
                       interval={0}
+                      angle={-45}
+                      textAnchor="end"
+                      height={90}
                       tick={{ fontSize: 10, fill: C.sage }}
                     />
                     <Tooltip />
@@ -967,8 +966,9 @@ export function TrainingSection() {
                       name="Pending"
                       radius={[0, 5, 5, 0]}
                     />
-                  </BarChart>
-                </ResponsiveContainer>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             )}
             {funcTrainingMode === 'table' && (

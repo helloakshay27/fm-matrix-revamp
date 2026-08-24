@@ -417,7 +417,7 @@ export function UsersSection() {
 
         <ChartCard
           title="New Registrations · Last 12 Months"
-          sub="Monthly onboarding trend · always shows the trailing 12 months, not affected by the date filter"
+          // sub="Monthly onboarding trend · always shows the trailing 12 months, not affected by the date filter"
           infoKey="user-reg"
           showPdf
           pdfLabel="New Registrations"
@@ -500,7 +500,7 @@ export function UsersSection() {
 
       <ChartCard
         title="Users per Circle"
-        sub="Distribution across 22 VIL circles"
+        // sub="Distribution across 22 VIL circles"
         infoKey="user-circle"
         showPdf
         pdfLabel="Users per Circle"

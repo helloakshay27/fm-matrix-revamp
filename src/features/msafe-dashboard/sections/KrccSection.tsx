@@ -497,6 +497,27 @@ export function KrccSection() {
     );
   };
 
+  const renderClearanceTooltip = ({ active, payload }: TooltipProps<ValueType, NameType>) => {
+    if (!active || !payload?.length) return null;
+    const circle = payload[0]?.payload as CircleBar | undefined;
+    if (!circle) return null;
+
+    return (
+      <div className="msafe-chart-tip">
+        <div className="msafe-chart-tip-title">{circle.name}</div>
+        <div className="msafe-chart-tip-row">
+          <span>Approved Users: {circle.approvedUsers.toLocaleString('en-IN')}</span>
+        </div>
+        <div className="msafe-chart-tip-row">
+          <span>Total Users: {circle.totalUsers.toLocaleString('en-IN')}</span>
+        </div>
+        <div className="msafe-chart-tip-row">
+          <span>Clearance Percentage: {circle.pct.toFixed(2)}%</span>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <AccordionShell
       title="KRCC — Key Risk Compliance Check"
@@ -596,19 +617,7 @@ export function KrccSection() {
                     tick={{ fontSize: 10, fill: C.sage }}
                   />
                   <YAxis domain={[0, 100]} allowDataOverflow tick={{ fontSize: 10, fill: C.sage }} />
-                  <Tooltip
-                    contentStyle={{
-                      background: C.dark,
-                      border: 'none',
-                      borderRadius: 6,
-                      fontSize: 11,
-                      color: '#fff',
-                    }}
-                    formatter={(_value, _name, item) => {
-                      const d = item.payload as CircleBar;
-                      return [`${d.approvedUsers.toLocaleString('en-IN')} / ${d.totalUsers.toLocaleString('en-IN')} (${d.pct}%)`, 'Approved / Total'];
-                    }}
-                  />
+                  <Tooltip content={renderClearanceTooltip} />
                   <Bar dataKey="pct" name="Clearance %" radius={[5, 5, 0, 0]}>
                     {circlePctData.map((d) => (
                       <Cell key={d.name} fill={d.color} />
