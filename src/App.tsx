@@ -1260,6 +1260,10 @@ import BusinessCompassIssuesPage from "./pages/BusinessCompass/BusinessCompassIs
 import BusinessCompassIssueDetailsPage from "./pages/BusinessCompass/BusinessCompassIssueDetailsPage.tsx";
 import BusinessCompassTodoPage from "./pages/BusinessCompass/BusinessCompassTodoPage.tsx";
 import PatrollingCheckpointHistoryPage from "./pages/PatrollingCheckpointHistoryPage.tsx";
+import PulseNotifications from "./features/pulse_notifications/pages/PulseNotifications.tsx";
+import AddCustomNotificationPage from "./features/pulse_notifications/pages/AddCustomNotificationPage.tsx";
+import EditCustomNotificationPage from "./features/pulse_notifications/pages/EditCustomNotificationPage.tsx";
+import ViewCustomNotificationPage from "./features/pulse_notifications/pages/ViewCustomNotificationPage.tsx";
 const ModulesManagement = lazy(() => import("./pages/settings/ModulesManagement"));
 const InvoiceAdd = lazy(() => import("./pages/ClubManagement/InvoiceAdd").then(m => ({ default: m.InvoiceAdd })));
 const EditInvoicePage = lazy(() => import("./pages/EditInvoicePage").then(m => ({ default: m.EditInvoicePage })));
@@ -5431,7 +5435,7 @@ function App() {
                               path="/security/patrolling/response/details/:id"
                               element={<PatrollingDetailPage />}
                             />
-                              <Route
+                            <Route
                               path="/security/patrolling/checkpoints/:checkpointId/history"
                               element={<PatrollingCheckpointHistoryPage />}
                             />
@@ -6492,6 +6496,22 @@ function App() {
                             <Route
                               path="/pulse/community/document/:id"
                               element={<CommunityDocumentDetails />}
+                            />
+                            <Route
+                              path="/pulse/notifications"
+                              element={<PulseNotifications />}
+                            />
+                            <Route
+                              path="/pulse/notifications/add"
+                              element={<AddCustomNotificationPage />}
+                            />
+                            <Route
+                              path="/pulse/notifications/edit/:id"
+                              element={<EditCustomNotificationPage />}
+                            />
+                            <Route
+                              path="/pulse/notifications/view/:id"
+                              element={<ViewCustomNotificationPage />}
                             />
 
                             <Route
