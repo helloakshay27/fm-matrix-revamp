@@ -1403,6 +1403,8 @@ const BusinessCompassDailyReport = lazy(() => import("./pages/BusinessCompass/Bu
 const BusinessPlanAndGoles = lazy(() => import("./pages/AdminCompass/BusinessPlanAndGoles"));
 const DailyMeeting = lazy(() => import("./pages/AdminCompass/DailyMeeting"));
 const KPI = lazy(() => import("./pages/AdminCompass/KPI"));
+const AdminCompassRuleEngine = lazy(() => import("./pages/AdminCompass/RuleEngine"));
+const AdminCompassRuleEngineDataSource = lazy(() => import("./pages/AdminCompass/RuleEngineDataSource"));
 const AdminCompassJobsLayout = lazy(() => import("./pages/AdminCompass/Jobs/JobsLayout"));
 const AdminCompassJobs = lazy(() => import("./pages/AdminCompass/Jobs"));
 const AdminCompassJobsCreate = lazy(() => import("./pages/AdminCompass/Jobs/JobsCreatePage"));
@@ -2482,6 +2484,23 @@ function App() {
                               element={<DailyMeeting />}
                             />
                             <Route path="/admin-compass/kpi" element={<KPI />} />
+                            <Route
+                              path="/admin-compass/rule-engine"
+                              element={
+                                <Navigate
+                                  to="/admin-compass/rule-engine/rule"
+                                  replace
+                                />
+                              }
+                            />
+                            <Route
+                              path="/admin-compass/rule-engine/data-source"
+                              element={<AdminCompassRuleEngineDataSource />}
+                            />
+                            <Route
+                              path="/admin-compass/rule-engine/rule"
+                              element={<AdminCompassRuleEngine />}
+                            />
                             {/* Dashboard Routes */}
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route

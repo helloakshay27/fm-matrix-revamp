@@ -18,6 +18,7 @@ import {
   BarChart3,
   Users,
   Briefcase,
+  Workflow,
 } from "lucide-react";
 
 // Module-based navigation structures for Admin Compass
@@ -62,6 +63,21 @@ const adminCompassNavigation: Record<string, any> = {
   Jobs: {
     icon: Briefcase,
     href: "/admin-compass/jobs",
+  },
+  // Collapsible section: giving it "items" (instead of a bare "href") routes it
+  // through the expandable branch below, same as any other grouped module.
+  "Rule Engine": {
+    icon: Workflow,
+    items: [
+      {
+        name: "Data Source",
+        href: "/admin-compass/rule-engine/data-source",
+      },
+      {
+        name: "Rule",
+        href: "/admin-compass/rule-engine/rule",
+      },
+    ],
   },
 };
 
@@ -165,14 +181,14 @@ export const AdminCompassSidebarStatic: React.FC = () => {
                 <div key={key} className="space-y-0.5 sm:space-y-1">
                   <button
                     onClick={() => toggleSection(key)}
-                    className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-colors relative ${isSectionOpen ? "bg-[#DBC2A9]" : "hover:bg-[#DBC2A9]"
+                    className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors relative ${isSectionOpen ? "bg-[#DBC2A9]" : "hover:bg-[#DBC2A9]"
                       } text-[#1a1a1a]`}
                     title={isSidebarCollapsed ? key : ""}
                   >
                     <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                     {!isSidebarCollapsed && (
                       <>
-                        <span className="text-xs sm:text-sm font-bold flex-1 text-left truncate">
+                        <span className="text-xs sm:text-sm font-medium flex-1 text-left truncate">
                           {key}
                         </span>
                         <ChevronDown
