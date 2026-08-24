@@ -270,8 +270,8 @@ export const Modals = () => {
     convertTitle,
     baseUrl,
     token,
-    fetchTasks,
-    fetchIssues,
+    refetchTasks,
+    refetchIssues,
     refetchTodos,
     fetchCompletedItemsForDate,
     completeAccomplishmentConversion,
@@ -917,8 +917,8 @@ export const Modals = () => {
               }}
               onSuccess={() => {
                 setIsFromPlan(false);
-                fetchTasks();
-                fetchIssues();
+                refetchTasks();
+                refetchIssues();
                 refetchTodos();
                 fetchCompletedItemsForDate(startDate);
                 completeAccomplishmentConversion();
@@ -945,8 +945,8 @@ export const Modals = () => {
               }}
               onSuccess={() => {
                 setIsFromPlan(false);
-                fetchTasks();
-                fetchIssues();
+                refetchTasks();
+                refetchIssues();
                 refetchTodos();
                 fetchCompletedItemsForDate(startDate);
                 completeAccomplishmentConversion();
@@ -973,8 +973,8 @@ export const Modals = () => {
               }}
               onSuccess={() => {
                 setIsFromPlan(false);
-                fetchTasks();
-                fetchIssues();
+                refetchTasks();
+                refetchIssues();
                 refetchTodos();
                 fetchCompletedItemsForDate(startDate);
                 completeAccomplishmentConversion();
@@ -1002,8 +1002,8 @@ export const Modals = () => {
           setEditTaskData(null);
         }}
         onSuccess={() => {
-          fetchTasks();
-          fetchIssues();
+          refetchTasks();
+          refetchIssues();
           refetchTodos();
           fetchCompletedItemsForDate(startDate);
         }}
@@ -1020,8 +1020,8 @@ export const Modals = () => {
           setEditIssueData(null);
         }}
         onSuccess={() => {
-          fetchTasks();
-          fetchIssues();
+          refetchTasks();
+          refetchIssues();
           refetchTodos();
           fetchCompletedItemsForDate(startDate);
         }}
@@ -1038,8 +1038,8 @@ export const Modals = () => {
           setEditTodoData(null);
         }}
         onSuccess={() => {
-          fetchTasks();
-          fetchIssues();
+          refetchTasks();
+          refetchIssues();
           refetchTodos();
           fetchCompletedItemsForDate(startDate);
         }}
