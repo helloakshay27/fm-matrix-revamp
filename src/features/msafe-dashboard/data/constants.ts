@@ -124,7 +124,8 @@ export const INFO_TEXTS: Record<string, string> = {
     'Monthly LMC sign-off volume over the last 12 months — long-term view vs the 30-day daily chart above.',
   // Training
   'train-pf':
-    'Pass = training record has status "Passed" · Fail = status "Failed" · pending records excluded.',
+    'Pass = training record has status "Passed" · Fail = status "Failed" · pending records excluded. for "Defensive Driving, "Work @ Height" , "Underground", "Electrical" for intrnal training only',
+
   'train-int-ext':
     'Pass rate for internal FTE vs external NON-FTE users · calculated separately over each cohort.',
   'train-name':
