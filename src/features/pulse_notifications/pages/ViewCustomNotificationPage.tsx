@@ -11,6 +11,7 @@ import {
   Send,
   CalendarClock,
   Users,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +24,7 @@ import { useRejectCustomNotificationMutation } from "../hooks/useRejectCustomNot
 import { useSendNowMutation } from "../hooks/useSendNowMutation";
 import { useScheduleNotificationMutation } from "../hooks/useScheduleNotificationMutation";
 import { useCancelNotificationMutation } from "../hooks/useCancelNotificationMutation";
+import { useResendNotificationMutation } from "../hooks/useResendNotificationMutation";
 import { useAudienceSitesQuery } from "../hooks/useAudienceSitesQuery";
 import { useAudienceCommunitiesQuery } from "../hooks/useAudienceCommunitiesQuery";
 import { useAudienceUsersQuery } from "../hooks/useAudienceUsersQuery";
@@ -32,6 +34,7 @@ import { RejectNotificationDialog } from "../components/RejectNotificationDialog
 import { SendNowNotificationDialog } from "../components/SendNowNotificationDialog";
 import { ScheduleNotificationDialog } from "../components/ScheduleNotificationDialog";
 import { CancelNotificationDialog } from "../components/CancelNotificationDialog";
+import { ResendNotificationDialog } from "../components/ResendNotificationDialog";
 import { AudiencePreviewPanel } from "../components/AudiencePreviewPanel";
 import { NotificationRecipientsPanel } from "../components/NotificationRecipientsPanel";
 import { getApiErrorMessage } from "../utils/apiErrorMessage";
@@ -106,6 +109,7 @@ const ViewCustomNotificationPage = () => {
   const sendNow = useSendNowMutation(notificationId);
   const scheduleNotification = useScheduleNotificationMutation(notificationId);
   const cancelNotification = useCancelNotificationMutation(notificationId);
+  const resendNotification = useResendNotificationMutation(notificationId);
 
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
@@ -113,6 +117,7 @@ const ViewCustomNotificationPage = () => {
   const [showSendNowDialog, setShowSendNowDialog] = useState(false);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showResendDialog, setShowResendDialog] = useState(false);
 
   const handleSubmitForApproval = async () => {
     try {
@@ -177,6 +182,16 @@ const ViewCustomNotificationPage = () => {
       toast.success("Notification cancelled");
     } catch (error: unknown) {
       toast.error(getApiErrorMessage(error, "Failed to cancel notification"));
+    }
+  };
+
+  const handleResend = async () => {
+    setShowResendDialog(false);
+    try {
+      await resendNotification.mutateAsync();
+      toast.success("Notification resent");
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, "Failed to resend notification"));
     }
   };
 
@@ -322,6 +337,18 @@ const ViewCustomNotificationPage = () => {
                 {sendNow.isPending ? "Sending..." : "Send Now"}
               </Button>
             </div>
+          )}
+
+          {notification.sent_at && notification.status !== "cancelled" && (
+            <Button
+              variant="outline"
+              onClick={() => setShowResendDialog(true)}
+              disabled={resendNotification.isPending}
+              className="!border-brand !text-brand hover:!bg-brand-selected gap-2"
+            >
+              <RotateCcw className="w-4 h-4" />
+              {resendNotification.isPending ? "Resending..." : "Resend"}
+            </Button>
           )}
 
           {(notification.scheduled_at || notification.sent_at) &&
@@ -652,6 +679,13 @@ const ViewCustomNotificationPage = () => {
         onOpenChange={setShowCancelDialog}
         onConfirm={handleCancel}
         isSubmitting={cancelNotification.isPending}
+      />
+
+      <ResendNotificationDialog
+        open={showResendDialog}
+        onOpenChange={setShowResendDialog}
+        onConfirm={handleResend}
+        isSubmitting={resendNotification.isPending}
       />
     </div>
   );
