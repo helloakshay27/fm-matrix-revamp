@@ -118,6 +118,15 @@ export interface CustomNotificationsResponse {
   meta: CustomNotificationsMeta;
 }
 
+export interface NotificationTypeOption {
+  value: string;
+  label: string;
+}
+
+export interface NotificationTypesResponse {
+  module_types: NotificationTypeOption[];
+}
+
 export interface CustomNotificationsQueryParams {
   status?: NotificationStatus | string;
   page?: number;
@@ -163,4 +172,27 @@ export interface NotificationRecipientsMeta {
 export interface NotificationRecipientsResponse {
   recipients: NotificationRecipient[];
   meta: NotificationRecipientsMeta;
+}
+
+// GET /custom_notification_approvers.json?pms_site_id= — confirmed via curl.
+export interface CustomNotificationApprover {
+  id: number;
+  pms_site_id: number;
+  user_id: number;
+  user_name: string;
+}
+
+export interface CustomNotificationApproversResponse {
+  pms_site_id: string;
+  site_specific_approvers: CustomNotificationApprover[];
+  effective_approver_ids: number[];
+  using_global_default: boolean;
+}
+
+// POST /custom_notification_approvers.json — request confirmed via curl; the
+// response shape has not been confirmed, so it's assumed to be the created
+// approver row (same shape as one entry of site_specific_approvers).
+export interface CreateCustomNotificationApproverPayload {
+  pms_site_id: number;
+  user_id: number;
 }

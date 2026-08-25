@@ -3,12 +3,16 @@ import { API_CONFIG } from "@/config/apiConfig";
 import type {
   AudiencePreviewPayload,
   AudiencePreviewResponse,
+  CreateCustomNotificationApproverPayload,
   CreateCustomNotificationPayload,
   CreateCustomNotificationResponse,
+  CustomNotificationApprover,
+  CustomNotificationApproversResponse,
   CustomNotificationDetail,
   CustomNotificationsQueryParams,
   CustomNotificationsResponse,
   NotificationRecipientsResponse,
+  NotificationTypesResponse,
 } from "../types/customNotification";
 
 const PULSE_BASE_URL = `https://${localStorage.getItem("baseUrl")}`;
@@ -23,6 +27,41 @@ pulseNotificationsClient.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Confirmed via curl — no .json suffix.
+export const fetchNotificationTypes = async (): Promise<NotificationTypesResponse> => {
+  const { data } = await pulseNotificationsClient.get<NotificationTypesResponse>(
+    "/custom_notifications/ntypes.json"
+  );
+  return data;
+};
+
+// Confirmed via curl — .json suffix included.
+export const fetchCustomNotificationApprovers = async (
+  pmsSiteId: number
+): Promise<CustomNotificationApproversResponse> => {
+  const { data } = await pulseNotificationsClient.get<CustomNotificationApproversResponse>(
+    "/custom_notification_approvers.json",
+    { params: { pms_site_id: pmsSiteId } }
+  );
+  return data;
+};
+
+// Confirmed via curl (request body only — response shape unconfirmed).
+export const createCustomNotificationApprover = async (
+  payload: CreateCustomNotificationApproverPayload
+): Promise<CustomNotificationApprover> => {
+  const { data } = await pulseNotificationsClient.post<CustomNotificationApprover>(
+    "/custom_notification_approvers.json",
+    payload
+  );
+  return data;
+};
+
+// Confirmed via curl.
+export const deleteCustomNotificationApprover = async (id: number): Promise<void> => {
+  await pulseNotificationsClient.delete(`/custom_notification_approvers/${id}.json`);
+};
 
 export const fetchCustomNotifications = async (
   params: CustomNotificationsQueryParams
@@ -102,6 +141,16 @@ export const sendCustomNotificationNow = async (
 ): Promise<CustomNotificationDetail> => {
   const { data } = await pulseNotificationsClient.post<CustomNotificationDetail>(
     `/custom_notifications/${id}/send_now.json`
+  );
+  return data;
+};
+
+// Confirmed via curl — .json suffix included.
+export const resendCustomNotification = async (
+  id: number
+): Promise<CustomNotificationDetail> => {
+  const { data } = await pulseNotificationsClient.post<CustomNotificationDetail>(
+    `/custom_notifications/${id}/resend.json`
   );
   return data;
 };
