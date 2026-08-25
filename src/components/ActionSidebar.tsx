@@ -383,6 +383,7 @@ const actionIconMap: Record<string, any> = {
   pulse_contests: Target,
   pulse_rewards: Trophy,
   notifications: Bell,
+  notification_approvers: Settings,
 
   // Market Place
   all: Globe,
