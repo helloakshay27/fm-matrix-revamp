@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
 import * as XLSX from 'xlsx';
-import { FileSpreadsheet, Download } from 'lucide-react';
+import { FileSpreadsheet } from 'lucide-react';
 import { InfoButton } from './InfoButton';
 import { useMsafeDashboard } from '../context/MsafeDashboardContext';
 
@@ -80,31 +80,22 @@ export function ChartCard({
 export function AccordionShell({
   title,
   sub,
-  excelLabel,
   children,
 }: {
   title: string;
   sub: string;
-  excelLabel: string;
+  // No longer rendered — the section-level "Excel" export button was removed
+  // from every section (see AccordionShell below). Kept optional so existing
+  // callers don't need to drop the prop.
+  excelLabel?: string;
   children: ReactNode;
 }) {
-  const { showToast } = useMsafeDashboard();
   return (
     <div className="accordion-panel open">
       <div className="acc-hd">
         <div>
           <div className="acc-title">{title}</div>
           <div className="acc-sub">{sub}</div>
-        </div>
-        <div className="acc-hd-actions">
-          <button
-            type="button"
-            className="acc-dl-btn"
-            onClick={() => showToast(`Excel export started · ${excelLabel}`)}
-          >
-            <Download size={14} />
-            Excel
-          </button>
         </div>
       </div>
       {children}

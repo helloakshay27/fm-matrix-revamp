@@ -7,7 +7,10 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Cell,
 } from 'recharts';
+import type { TooltipProps } from 'recharts';
+import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 import { AccordionShell, ChartCard } from '../components/ChartCard';
 import { ChartSwitch } from '../components/ChartSwitch';
 import { DonutChart } from '../components/DonutChart';
@@ -217,6 +220,126 @@ function normalizeVisitFrequency(payload: unknown): ProgressRow[] {
   }));
 }
 
+// Raw per-record shape: one row per (circle, role) record as returned by the
+// API, carrying its own monthly_data array — kept separate from the grouped
+// chart rows so duplicate (circle_id, role_id) records can be summed
+// month-by-month before the chart ever sees them. circleId/roleId are the
+// true uniqueness keys — circle/role are just the display names, which can
+// coincidentally repeat across different circles/roles.
+type RawRoleMonthlyRecord = {
+  circleId: string;
+  circle: string;
+  roleId: string;
+  role: string;
+  monthly: { month: string; visits: number }[];
+};
+
+function normalizeSmtRoleWiseRaw(payload: unknown): RawRoleMonthlyRecord[] {
+  const circles = unwrapList(payload, ['data', 'result']);
+  const rows: RawRoleMonthlyRecord[] = [];
+
+  for (const circleItem of circles) {
+    if (!circleItem || typeof circleItem !== 'object') continue;
+    const circleRecord = circleItem as Record<string, unknown>;
+    const circle = getString(circleRecord, ['circle_name', 'circle']) ?? '—';
+    const circleIdNum = getNumber(circleRecord, ['circle_id']);
+    const circleId = circleIdNum !== null ? String(circleIdNum) : circle;
+    const records = circleRecord.records;
+    if (!Array.isArray(records)) continue;
+
+    for (const item of records) {
+      if (!item || typeof item !== 'object') continue;
+      const record = item as Record<string, unknown>;
+      const role = getString(record, ['role_name']);
+      if (!role) continue;
+      const roleIdNum = getNumber(record, ['role_id']);
+      const roleId = roleIdNum !== null ? String(roleIdNum) : role;
+      const monthlyData = record.monthly_data;
+      if (!Array.isArray(monthlyData)) continue;
+
+      const monthly: { month: string; visits: number }[] = [];
+      for (const entry of monthlyData) {
+        if (!entry || typeof entry !== 'object') continue;
+        const monthRecord = entry as Record<string, unknown>;
+        const month = getString(monthRecord, ['month']);
+        const visits = getNumber(monthRecord, ['smt_visits', 'visits', 'count']);
+        if (!month || visits === null) continue;
+        monthly.push({ month, visits });
+      }
+      if (monthly.length > 0) rows.push({ circleId, circle, roleId, role, monthly });
+    }
+  }
+
+  return rows;
+}
+
+// "Apr 2026" -> a comparable number (year * 12 + month index), so months sort
+// chronologically regardless of what order the API returns them in.
+const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function monthSortKey(month: string): number {
+  const [abbr, yearStr] = month.split(' ');
+  const monthIndex = MONTH_ABBR.indexOf(abbr);
+  const year = Number(yearStr);
+  if (monthIndex === -1 || !Number.isFinite(year)) return Number.MAX_SAFE_INTEGER;
+  return year * 12 + monthIndex;
+}
+
+type CircleOption = { id: string; name: string };
+type RoleOption = { id: string; name: string };
+
+// A single circle+role+month lookup, built once per API response — the chart
+// then just reads out of it for whichever circle/month is currently
+// selected, instead of re-deriving anything. Keying by circle_id + role_id
+// (not names) means the same role_name under two different circles, or two
+// different role_ids sharing a name, is never mixed up. `roles` carries every
+// unique role_id seen across ALL circles, in a fixed order, so the X-axis
+// stays identical (11 roles) no matter which circle is selected — a circle
+// missing a given role simply has no lookup entry, which reads back as 0.
+type RoleCircleMonthlyIndex = {
+  circles: CircleOption[];
+  roles: RoleOption[];
+  months: string[];
+  lookup: Map<string, number>; // key: `${circleId}||${roleId}||${month}`
+};
+
+const EMPTY_ROLE_INDEX: RoleCircleMonthlyIndex = { circles: [], roles: [], months: [], lookup: new Map() };
+
+function buildRoleCircleMonthlyIndex(raw: RawRoleMonthlyRecord[]): RoleCircleMonthlyIndex {
+  const circleOrder: string[] = [];
+  const circleNames = new Map<string, string>();
+  const roleOrder: string[] = [];
+  const roleNames = new Map<string, string>();
+  const monthSet = new Set<string>();
+  const lookup = new Map<string, number>();
+
+  for (const record of raw) {
+    if (!circleNames.has(record.circleId)) {
+      circleOrder.push(record.circleId);
+      circleNames.set(record.circleId, record.circle);
+    }
+    if (!roleNames.has(record.roleId)) {
+      roleOrder.push(record.roleId);
+      roleNames.set(record.roleId, record.role);
+    }
+    for (const { month, visits } of record.monthly) {
+      monthSet.add(month);
+      const key = `${record.circleId}||${record.roleId}||${month}`;
+      lookup.set(key, (lookup.get(key) ?? 0) + visits);
+    }
+  }
+
+  return {
+    circles: circleOrder.map((id) => ({ id, name: circleNames.get(id)! })),
+    // Sort roles consistently, alphabetically by display name, so the X-axis
+    // order never shuffles as the user navigates between circles.
+    roles: [...roleOrder]
+      .sort((a, b) => roleNames.get(a)!.localeCompare(roleNames.get(b)!))
+      .map((id) => ({ id, name: roleNames.get(id)! })),
+    months: Array.from(monthSet).sort((a, b) => monthSortKey(a) - monthSortKey(b)),
+    lookup,
+  };
+}
+
 function DataState({ loading, empty, label }: { loading: boolean; empty: boolean; label: string }) {
   if (!loading && !empty) return null;
   return (
@@ -239,6 +362,10 @@ export function SmtSection() {
   const [progressLoading, setProgressLoading] = useState(true);
   const [freqData, setFreqData] = useState<ProgressRow[]>([]);
   const [freqLoading, setFreqLoading] = useState(true);
+  const [roleWiseMode, setRoleWiseMode] = useState('bar');
+  const [roleIndex, setRoleIndex] = useState<RoleCircleMonthlyIndex>(EMPTY_ROLE_INDEX);
+  const [selectedCircleIdx, setSelectedCircleIdx] = useState(0);
+  const [roleWiseLoading, setRoleWiseLoading] = useState(true);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -275,6 +402,33 @@ export function SmtSection() {
         if ((err as Error).name !== 'AbortError') console.warn('M-Safe visits-per-department API failed.', err);
       } finally {
         if (!controller.signal.aborted) setFuncLoading(false);
+      }
+    })();
+    return () => controller.abort();
+  }, [appliedFilters, persona]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setRoleWiseLoading(true);
+    (async () => {
+      try {
+        const payload = await fetchMsafeSmtJson(
+          'smt_monthly_role_wise.json',
+          buildFilterParams(persona, appliedFilters),
+          controller.signal,
+        );
+        if (!controller.signal.aborted) {
+          const raw = normalizeSmtRoleWiseRaw(payload);
+          const index = buildRoleCircleMonthlyIndex(raw);
+          setRoleIndex(index);
+          // Reset to the first circle whenever fresh data comes in (filters
+          // changed) — mirrors "initially display the first circle".
+          setSelectedCircleIdx(0);
+        }
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') console.warn('M-Safe smt-monthly-role-wise API failed.', err);
+      } finally {
+        if (!controller.signal.aborted) setRoleWiseLoading(false);
       }
     })();
     return () => controller.abort();
@@ -342,6 +496,57 @@ export function SmtSection() {
   //   return () => controller.abort();
   // }, [appliedFilters, persona]);
 
+  // Derived from the lookup for whichever circle is currently selected — the
+  // 11 roles never change. Each role is a SINGLE bar (value = that role's
+  // visits summed across every month for this circle); the full month-by-
+  // month breakdown is kept on the row (`monthly`) purely for the tooltip.
+  const selectedCircle = roleIndex.circles[selectedCircleIdx];
+  const roleChartRows = roleIndex.roles.map((role, index) => {
+    const monthly = roleIndex.months.map((month) => ({
+      month,
+      visits: selectedCircle ? roleIndex.lookup.get(`${selectedCircle.id}||${role.id}||${month}`) ?? 0 : 0,
+    }));
+    return {
+      name: role.name,
+      value: monthly.reduce((sum, m) => sum + m.visits, 0),
+      color: SLICE_PALETTE[index % SLICE_PALETTE.length],
+      monthly,
+    };
+  });
+  const canGoPrevCircle = selectedCircleIdx > 0;
+  const canGoNextCircle = selectedCircleIdx < roleIndex.circles.length - 1;
+
+  // Circle is fixed by the navigation above the chart; hovering a role's
+  // single bar shows that role's full month-by-month breakdown (attached to
+  // the row above) rather than just the bar's total.
+  const renderRoleWiseTooltip = ({ active, payload }: TooltipProps<ValueType, NameType>) => {
+    if (!active || !payload?.length) return null;
+    const row = payload[0]?.payload as (typeof roleChartRows)[number] | undefined;
+    if (!row) return null;
+
+    return (
+      <div className="msafe-chart-tip" style={{ maxHeight: 320, overflowY: 'auto' }}>
+        <div className="msafe-chart-tip-row">
+          <span>Circle: {selectedCircle?.name ?? '—'}</span>
+        </div>
+        <div className="msafe-chart-tip-row">
+          <span>Role: {row.name}</span>
+        </div>
+        <div className="msafe-chart-tip-row" style={{ fontWeight: 600, marginTop: 2 }}>
+          <span>Total SMT Visits: {row.value.toLocaleString('en-IN')}</span>
+        </div>
+        {row.monthly.map((m) => (
+          <div key={m.month} className="msafe-chart-tip-row">
+            <span className="msafe-chart-tip-sw" style={{ background: row.color }} />
+            <span>
+              {m.month}: {m.visits.toLocaleString('en-IN')}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <AccordionShell
       title="SMT — Senior Management Tour Field Visits"
@@ -399,6 +604,125 @@ export function SmtSection() {
               </BarChart>
             </ResponsiveContainer>
           </div>
+        )}
+      </ChartCard>
+
+      <ChartCard
+        title="SMT Visits – Role-wise Trend"
+        sub="One circle at a time · same 11 roles on every screen · hover a bar for its full month-by-month breakdown"
+        infoKey="smt-role-wise"
+        showPdf
+        pdfLabel="SMT Role-wise Trend"
+        exportData={roleChartRows.map((row) => {
+          const record: Record<string, unknown> = {
+            Circle: selectedCircle?.name ?? '',
+            Role: row.name,
+            'Total SMT Visits': row.value,
+          };
+          row.monthly.forEach((m) => { record[m.month] = m.visits; });
+          return record;
+        })}
+        style={{ marginTop: 16 }}
+        chartSwitch={<ChartSwitch modes={['bar', 'table']} value={roleWiseMode} onChange={setRoleWiseMode} />}
+      >
+        {roleWiseLoading || roleIndex.circles.length === 0 ? (
+          <DataState loading={roleWiseLoading} empty={roleIndex.circles.length === 0} label="role-wise visit data" />
+        ) : (
+          <>
+            {/* Circle navigation */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 10 }}>
+              <button
+                type="button"
+                onClick={() => setSelectedCircleIdx((i) => Math.max(0, i - 1))}
+                disabled={!canGoPrevCircle}
+                style={{
+                  border: `1px solid ${C.border}`,
+                  background: canGoPrevCircle ? '#fff' : '#F2EEE4',
+                  color: canGoPrevCircle ? C.terra : '#B9B2A0',
+                  borderRadius: 6,
+                  padding: '5px 12px',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: canGoPrevCircle ? 'pointer' : 'not-allowed',
+                }}
+              >
+                ← Previous
+              </button>
+              <span style={{ fontSize: 14, fontWeight: 700, color: C.dark, minWidth: 160, textAlign: 'center' }}>
+                {selectedCircle?.name ?? '—'}
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedCircleIdx((i) => Math.min(roleIndex.circles.length - 1, i + 1))}
+                disabled={!canGoNextCircle}
+                style={{
+                  border: `1px solid ${C.border}`,
+                  background: canGoNextCircle ? '#fff' : '#F2EEE4',
+                  color: canGoNextCircle ? C.terra : '#B9B2A0',
+                  borderRadius: 6,
+                  padding: '5px 12px',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: canGoNextCircle ? 'pointer' : 'not-allowed',
+                }}
+              >
+                Next →
+              </button>
+            </div>
+
+            {roleWiseMode === 'table' ? (
+              <div className="tbl-scroll" style={{ maxHeight: 420, overflowX: 'auto' }}>
+                <table className="tbl">
+                  <thead>
+                    <tr>
+                      <th>Role</th>
+                      <th>Total SMT Visits</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {roleChartRows.map((row) => (
+                      <tr key={row.name}>
+                        <td className="cell-strong">{row.name}</td>
+                        <td>{row.value.toLocaleString('en-IN')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <div style={{ minWidth: Math.max(700, roleChartRows.length * 90) }}>
+                  <ResponsiveContainer width="100%" height={380}>
+                    <BarChart data={roleChartRows} margin={{ top: 4, right: 16, left: 0, bottom: 110 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
+                      <XAxis
+                        type="category"
+                        dataKey="name"
+                        interval={0}
+                        angle={-45}
+                        textAnchor="end"
+                        height={130}
+                        tick={{ fontSize: 10, fill: C.sage }}
+                        label={{ value: 'Role', position: 'insideBottom', offset: -125, fontSize: 11, fill: C.dark }}
+                      />
+                      <YAxis
+                        type="number"
+                        allowDecimals={false}
+                        tick={{ fontSize: 10, fill: C.sage }}
+                        label={{ value: 'SMT Visits', angle: -90, position: 'insideLeft', fontSize: 11, fill: C.dark }}
+                      />
+                      <Tooltip content={renderRoleWiseTooltip} />
+                      <Bar dataKey="value" name="SMT Visits" radius={[5, 5, 0, 0]}>
+                        {roleChartRows.map((row) => (
+                          <Cell key={row.name} fill={row.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </ChartCard>
 
