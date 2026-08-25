@@ -7,7 +7,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   Cell,
 } from 'recharts';
 import type { TooltipProps } from 'recharts';
@@ -197,43 +196,11 @@ function normalizeInternalExternalPassFail(payload: unknown): PassFailGroup[] {
   return groups;
 }
 
-// Carries the full pass/fail/pending breakdown directly on each chart slice
-// (rather than a separate array cross-referenced by category name) so the
-// donut/bar tooltip can read it straight off the exact slice being hovered.
-type TrainCategorySlice = TrainSlice & {
-  pass: number;
-  fail: number;
-  pending: number;
-  passPercentage: number | null;
-  failPercentage: number | null;
-  pendingPercentage: number | null;
-  total: number;
-};
-
 function getNum(record: Record<string, unknown>, keys: string[]): number | null {
   for (const key of keys) {
     const raw = record[key];
     if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
     if (typeof raw === 'string' && raw.trim() && Number.isFinite(Number(raw))) return Number(raw);
-  }
-  return null;
-}
-
-// pass/fail/pending are { count, percentage } sub-objects in the current API
-// shape — fall back to a flat number field directly on the record for older shapes.
-function getGroupCountPct(record: Record<string, unknown>, key: string, flatKeys: string[]): number {
-  const group = record[key];
-  if (group && typeof group === 'object' && !Array.isArray(group)) {
-    const count = getNum(group as Record<string, unknown>, ['count']);
-    if (count !== null) return count;
-  }
-  return getNum(record, flatKeys) ?? 0;
-}
-
-function getGroupPct(record: Record<string, unknown>, key: string): number | null {
-  const group = record[key];
-  if (group && typeof group === 'object' && !Array.isArray(group)) {
-    return getNum(group as Record<string, unknown>, ['percentage', 'pct']);
   }
   return null;
 }
@@ -253,7 +220,13 @@ function unwrapTrainingList(payload: unknown, extraKeys: string[]): unknown[] {
   return [];
 }
 
-const normalizeTrainingCounts = (payload: unknown): TrainCategorySlice[] => {
+// category_wise_training_count.json only reports a completed count and a
+// completion percentage per category — no fail/pending breakdown — so this
+// carries just those two, rather than forcing them into the fuller pass/fail/
+// pending shape used by Function-wise/Circle-wise Training Status.
+type CategoryTrainingSlice = TrainSlice & { completed: number; completionPercentage: number | null };
+
+const normalizeTrainingCounts = (payload: unknown): CategoryTrainingSlice[] => {
   const list = unwrapTrainingList(payload, ['categories', 'training_categories', 'records']);
 
   return list
@@ -271,103 +244,98 @@ const normalizeTrainingCounts = (payload: unknown): TrainCategorySlice[] => {
       ].find((value): value is string => typeof value === 'string' && value.trim().length > 0);
       if (!name) return null;
 
-      const pass = getGroupCountPct(record, 'pass', ['passed', 'completed']);
-      const fail = getGroupCountPct(record, 'fail', ['failed']);
-      const pending = getGroupCountPct(record, 'pending', ['pending_assessment']);
-      const total = getNum(record, ['total', 'total_count']) ?? pass + fail + pending;
-
-      // Chart value: prefer an explicit flat count/value field (older shape),
-      // otherwise fall back to the category's total training volume.
-      const value = getNum(record, ['count', 'value']) ?? total;
+      const completed = getNum(record, ['completed_training_count', 'completed', 'passed', 'count', 'value']);
+      if (completed === null) return null;
+      const completionPercentage = getNum(record, ['completion_percentage', 'percentage', 'pct']);
 
       return {
         name,
-        value,
+        value: completed,
         color: TRAIN_CHART_PALETTE[index % TRAIN_CHART_PALETTE.length],
-        pass,
-        fail,
-        pending,
-        total,
-        passPercentage: getGroupPct(record, 'pass'),
-        failPercentage: getGroupPct(record, 'fail'),
-        pendingPercentage: getGroupPct(record, 'pending'),
+        completed,
+        completionPercentage,
       };
     })
-    .filter((item): item is TrainCategorySlice => Boolean(item));
+    .filter((item): item is CategoryTrainingSlice => Boolean(item));
 };
 
-// function_wise_training_status.json nests separate internal/external breakdowns
-// per function — pick the requested scope's sub-object for each row.
-function normalizeFunctionTrainingStatus(payload: unknown, scope: 'internal' | 'external'): TrainCategorySlice[] {
-  const list = unwrapTrainingList(payload, ['functions', 'records']);
+// Shared shape behind both function_wise_training_status.json and
+// circle_wise_training_status.json: a list of groups (functions or circles),
+// each carrying a `records` array of per-training-category rows (completed
+// count + completion % only — no pass/fail/pending). The chart shows one
+// slice per group (total completed across its categories, with an overall
+// completion % derived from summed counts); the per-category breakdown is
+// kept on the slice for the tooltip.
+type TrainingCategoryBreakdown = { name: string; completed: number; completionPercentage: number | null };
+type GroupTrainingSlice = Slice & {
+  completed: number;
+  completionPercentage: number | null;
+  categories: TrainingCategoryBreakdown[];
+};
+
+function normalizeGroupedTrainingStatus(
+  payload: unknown,
+  unwrapKeys: string[],
+  nameOf: (record: Record<string, unknown>) => string | null,
+): GroupTrainingSlice[] {
+  const list = unwrapTrainingList(payload, unwrapKeys);
 
   return list
     .map((item, index) => {
       if (!item || typeof item !== 'object') return null;
       const record = item as Record<string, unknown>;
-      const name = [record.function_name, record.name, record.label].find(
-        (value): value is string => typeof value === 'string' && value.trim().length > 0,
-      );
+
+      const name = nameOf(record);
       if (!name) return null;
 
-      const scoped = record[scope];
-      if (!scoped || typeof scoped !== 'object' || Array.isArray(scoped)) return null;
-      const s = scoped as Record<string, unknown>;
+      const categoryRecords = Array.isArray(record.records) ? record.records : [];
+      const categories: TrainingCategoryBreakdown[] = [];
+      let totalCompleted = 0;
+      let totalUsers = 0;
 
-      const pass = getGroupCountPct(s, 'pass', []);
-      const fail = getGroupCountPct(s, 'fail', []);
-      const pending = getGroupCountPct(s, 'pending', []);
-      const total = getNum(s, ['total']) ?? pass + fail + pending;
+      for (const cat of categoryRecords) {
+        if (!cat || typeof cat !== 'object') continue;
+        const catRecord = cat as Record<string, unknown>;
+        const catName = typeof catRecord.training_category === 'string' ? catRecord.training_category : null;
+        const completed = getNum(catRecord, ['completed_training_count', 'completed']);
+        if (!catName || completed === null) continue;
+        const percentage = getNum(catRecord, ['completion_percentage', 'percentage']);
+        totalUsers += getNum(catRecord, ['krcc_user_count', 'total']) ?? 0;
+        totalCompleted += completed;
+        categories.push({ name: catName, completed, completionPercentage: percentage });
+      }
+
+      const completionPercentage =
+        totalUsers > 0 ? Math.round((totalCompleted / totalUsers) * 10000) / 100 : null;
 
       return {
         name,
-        value: total,
+        value: totalCompleted,
         color: TRAIN_CHART_PALETTE[index % TRAIN_CHART_PALETTE.length],
-        pass,
-        fail,
-        pending,
-        total,
-        passPercentage: getGroupPct(s, 'pass'),
-        failPercentage: getGroupPct(s, 'fail'),
-        pendingPercentage: getGroupPct(s, 'pending'),
+        completed: totalCompleted,
+        completionPercentage,
+        categories,
       };
     })
-    .filter((item): item is TrainCategorySlice => Boolean(item));
+    .filter((item): item is GroupTrainingSlice => Boolean(item));
 }
 
-// circle_wise_training_status.json is flat (no internal/external split) — one
-// row per circle with its own pass/fail/pending breakdown.
-function normalizeCircleTrainingStatus(payload: unknown): TrainCategorySlice[] {
-  const list = unwrapTrainingList(payload, ['circles', 'records']);
+function normalizeFunctionTrainingStatus(payload: unknown): GroupTrainingSlice[] {
+  return normalizeGroupedTrainingStatus(payload, ['functions', 'records'], (record) => {
+    const rawName = typeof record.function_name === 'string' ? record.function_name.trim() : '';
+    return rawName || (typeof record.function_id === 'number' ? `Function ${record.function_id}` : null);
+  });
+}
 
-  return list
-    .map((item, index) => {
-      if (!item || typeof item !== 'object') return null;
-      const record = item as Record<string, unknown>;
-      const name = [record.circle_name, record.name, record.label].find(
-        (value): value is string => typeof value === 'string' && value.trim().length > 0,
-      );
-      if (!name) return null;
-
-      const pass = getGroupCountPct(record, 'pass', []);
-      const fail = getGroupCountPct(record, 'fail', []);
-      const pending = getGroupCountPct(record, 'pending', []);
-      const total = getNum(record, ['total']) ?? pass + fail + pending;
-
-      return {
-        name,
-        value: total,
-        color: TRAIN_CHART_PALETTE[index % TRAIN_CHART_PALETTE.length],
-        pass,
-        fail,
-        pending,
-        total,
-        passPercentage: getGroupPct(record, 'pass'),
-        failPercentage: getGroupPct(record, 'fail'),
-        pendingPercentage: getGroupPct(record, 'pending'),
-      };
-    })
-    .filter((item): item is TrainCategorySlice => Boolean(item));
+// circle_wise_training_status.json now returns the same per-category
+// records shape as function_wise_training_status.json (see
+// normalizeGroupedTrainingStatus above) — one group per circle instead of
+// per function.
+function normalizeCircleTrainingStatus(payload: unknown): GroupTrainingSlice[] {
+  return normalizeGroupedTrainingStatus(payload, ['circles', 'records'], (record) => {
+    const rawName = typeof record.circle_name === 'string' ? record.circle_name.trim() : '';
+    return rawName || (typeof record.circle_id === 'number' ? `Circle ${record.circle_id}` : null);
+  });
 }
 
 type ScoreBucket = { bucket: string; n: number; color: string };
@@ -513,20 +481,18 @@ export function TrainingSection() {
   const { openDrill, persona, appliedFilters } = useMsafeDashboard();
   const [pfMode, setPfMode] = useState('donut');
   const [catMode, setCatMode] = useState('donut');
-  const [catTab, setCatTab] = useState<'internal' | 'external'>('internal');
   const [pfData, setPfData] = useState<TrainPFSlice[]>([]);
   const [pfRate, setPfRate] = useState<string | null>(null);
   const [pfLoading, setPfLoading] = useState(true);
   const [intExtData, setIntExtData] = useState<PassFailGroup[]>([]);
   const [intExtLoading, setIntExtLoading] = useState(true);
   const [trainByNameData, setTrainByNameData] = useState<TrainSlice[]>([]);
-  const [trainCategoryData, setTrainCategoryData] = useState<TrainCategorySlice[]>([]);
+  const [trainCategoryData, setTrainCategoryData] = useState<CategoryTrainingSlice[]>([]);
   const [funcTrainingMode, setFuncTrainingMode] = useState('donut');
-  const [funcTrainingTab, setFuncTrainingTab] = useState<'internal' | 'external'>('internal');
-  const [funcTrainingData, setFuncTrainingData] = useState<TrainCategorySlice[]>([]);
+  const [funcTrainingData, setFuncTrainingData] = useState<GroupTrainingSlice[]>([]);
   const [funcTrainingLoading, setFuncTrainingLoading] = useState(true);
   const [circleTrainingMode, setCircleTrainingMode] = useState('donut');
-  const [circleTrainingData, setCircleTrainingData] = useState<TrainCategorySlice[]>([]);
+  const [circleTrainingData, setCircleTrainingData] = useState<GroupTrainingSlice[]>([]);
   const [circleTrainingLoading, setCircleTrainingLoading] = useState(true);
   const [scoreDistribution, setScoreDistribution] = useState<ScoreBucket[]>([]);
   const [trainFailures, setTrainFailures] = useState<TrainFailure[]>([]);
@@ -599,12 +565,10 @@ export function TrainingSection() {
       setTrainCountsLoading(true);
 
       try {
-        // "External" is a genuinely separate endpoint, not a query param on the
-        // same one — both return the identical { training_category, total, pass:
-        // {count,percentage}, fail:{...}, pending:{...} } shape.
-        const endpoint =
-          catTab === 'external' ? 'external_category_wise_training_count.json' : 'category_wise_training_count.json';
-        const payload = await fetchMsafeTrainingJson(endpoint, buildFilterParams(persona, appliedFilters));
+        const payload = await fetchMsafeTrainingJson(
+          'category_wise_training_count.json',
+          buildFilterParams(persona, appliedFilters),
+        );
         const normalized = normalizeTrainingCounts(payload);
         if (isMounted) {
           setTrainByNameData(normalized);
@@ -622,7 +586,7 @@ export function TrainingSection() {
     return () => {
       isMounted = false;
     };
-  }, [appliedFilters, persona, catTab]);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     let isMounted = true;
@@ -634,7 +598,7 @@ export function TrainingSection() {
           'function_wise_training_status.json',
           buildFilterParams(persona, appliedFilters),
         );
-        const normalized = normalizeFunctionTrainingStatus(payload, funcTrainingTab);
+        const normalized = normalizeFunctionTrainingStatus(payload);
         if (isMounted) setFuncTrainingData(normalized);
       } catch (error) {
         console.warn('M-Safe function-wise-training-status API failed.', error);
@@ -648,7 +612,7 @@ export function TrainingSection() {
     return () => {
       isMounted = false;
     };
-  }, [appliedFilters, persona, funcTrainingTab]);
+  }, [appliedFilters, persona]);
 
   useEffect(() => {
     let isMounted = true;
@@ -732,30 +696,53 @@ export function TrainingSection() {
   //   };
   // }, [appliedFilters]);
 
-  // Reads the pass/fail/pending breakdown directly off the hovered slice's own
-  // data (attached by normalizeTrainingCounts) instead of cross-referencing a
-  // second array by name.
-  const renderCategoryTooltip = ({ active, payload }: TooltipProps<ValueType, NameType>) => {
+  // "Category-wise Trainings" only has a completed count + completion % per
+  // category (no fail/pending data) — a dedicated, simpler tooltip instead of
+  // reusing renderCategoryTooltip's pass/fail/pending rows.
+  const renderCompletionTooltip = ({ active, payload }: TooltipProps<ValueType, NameType>) => {
     if (!active || !payload?.length) return null;
-    const slice = payload[0]?.payload as TrainCategorySlice | undefined;
+    const slice = payload[0]?.payload as CategoryTrainingSlice | undefined;
     if (!slice) return null;
-    const fmt = (count: number, pct: number | null) =>
-      `${count.toLocaleString('en-IN')}${pct !== null ? ` (${pct}%)` : ''}`;
     return (
       <div className="msafe-chart-tip">
         <div className="msafe-chart-tip-title">{slice.name}</div>
         <div className="msafe-chart-tip-row">
           <span className="msafe-chart-tip-sw" style={{ background: C.ok }} />
-          <span>Pass : {fmt(slice.pass, slice.passPercentage)}</span>
+          <span>
+            Completed : {slice.completed.toLocaleString('en-IN')}
+            {slice.completionPercentage !== null ? ` (${slice.completionPercentage}%)` : ''}
+          </span>
         </div>
-        <div className="msafe-chart-tip-row">
-          <span className="msafe-chart-tip-sw" style={{ background: C.vi }} />
-          <span>Fail : {fmt(slice.fail, slice.failPercentage)}</span>
+      </div>
+    );
+  };
+
+  // Shared by "Function-wise Training Status" and "Circle-wise Training
+  // Status" — the hovered group's overall Completed/% (summed across its
+  // training categories), followed by the per-category breakdown attached to
+  // the slice by normalizeGroupedTrainingStatus.
+  const renderGroupTrainingTooltip = ({ active, payload }: TooltipProps<ValueType, NameType>) => {
+    if (!active || !payload?.length) return null;
+    const slice = payload[0]?.payload as GroupTrainingSlice | undefined;
+    if (!slice) return null;
+    return (
+      <div className="msafe-chart-tip">
+        <div className="msafe-chart-tip-title">{slice.name}</div>
+        <div className="msafe-chart-tip-row" style={{ fontWeight: 600 }}>
+          <span>
+            Completed : {slice.completed.toLocaleString('en-IN')}
+            {slice.completionPercentage !== null ? ` (${slice.completionPercentage}%)` : ''}
+          </span>
         </div>
-        <div className="msafe-chart-tip-row">
-          <span className="msafe-chart-tip-sw" style={{ background: C.warn }} />
-          <span>Pending : {fmt(slice.pending, slice.pendingPercentage)}</span>
-        </div>
+        {slice.categories.map((cat) => (
+          <div key={cat.name} className="msafe-chart-tip-row">
+            <span className="msafe-chart-tip-sw" style={{ background: C.ok }} />
+            <span>
+              {cat.name}: {cat.completed.toLocaleString('en-IN')}
+              {cat.completionPercentage !== null ? ` (${cat.completionPercentage}%)` : ''}
+            </span>
+          </div>
+        ))}
       </div>
     );
   };
@@ -823,13 +810,10 @@ export function TrainingSection() {
         pdfLabel="Category-wise Trainings"
         exportData={trainCategoryData.map((d) => ({
           Category: d.name,
-          Pass: d.pass,
-          Fail: d.fail,
-          Pending: d.pending,
-          Total: d.total,
+          Completed: d.completed,
+          'Completion %': d.completionPercentage,
         }))}
         style={{ marginTop: 16 }}
-        tag={<ChartSwitch modes={['internal', 'external']} value={catTab} onChange={(v) => setCatTab(v as 'internal' | 'external')} />}
         chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={catMode} onChange={setCatMode} />}
       >
         {trainCountsLoading || trainCategoryData.length === 0 ? (
@@ -840,7 +824,7 @@ export function TrainingSection() {
               <DonutChart
                 data={trainCategoryData}
                 height={Math.max(220, trainCategoryData.length * 26)}
-                tooltipContent={renderCategoryTooltip}
+                tooltipContent={renderCompletionTooltip}
               />
             )}
             {catMode === 'bar' && (
@@ -862,17 +846,12 @@ export function TrainingSection() {
                       height={90}
                       tick={{ fontSize: 10, fill: C.sage }}
                     />
-                    <Tooltip />
-                    <Legend wrapperStyle={{ fontSize: 12 }} />
-                    <Bar dataKey="pass" stackId="training" fill={C.ok} name="Pass" />
-                    <Bar dataKey="fail" stackId="training" fill={C.vi} name="Fail" />
-                    <Bar
-                      dataKey="pending"
-                      stackId="training"
-                      fill={C.warn}
-                      name="Pending"
-                      radius={[0, 5, 5, 0]}
-                    />
+                    <Tooltip content={renderCompletionTooltip} />
+                    <Bar dataKey="completed" name="Completed" radius={[5, 5, 0, 0]}>
+                      {trainCategoryData.map((d) => (
+                        <Cell key={d.name} fill={d.color} />
+                      ))}
+                    </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -884,20 +863,16 @@ export function TrainingSection() {
                   <thead>
                     <tr>
                       <th>Category</th>
-                      <th>Pass</th>
-                      <th>Fail</th>
-                      <th>Pending</th>
-                      <th>Total</th>
+                      <th>Completed</th>
+                      <th>Completion %</th>
                     </tr>
                   </thead>
                   <tbody>
                     {trainCategoryData.map((d) => (
                       <tr key={d.name}>
                         <td>{d.name}</td>
-                        <td>{d.pass.toLocaleString('en-IN')}</td>
-                        <td>{d.fail.toLocaleString('en-IN')}</td>
-                        <td>{d.pending.toLocaleString('en-IN')}</td>
-                        <td>{d.total.toLocaleString('en-IN')}</td>
+                        <td>{d.completed.toLocaleString('en-IN')}</td>
+                        <td>{d.completionPercentage !== null ? `${d.completionPercentage}%` : '-'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -910,16 +885,14 @@ export function TrainingSection() {
 
       <ChartCard
         title="Function-wise Training Status"
-        sub="Pass, fail, and pending training records by function"
+        sub="Completed training count and completion % by function"
         infoKey="train-function-status"
         showPdf
         pdfLabel="Function-wise Training Status"
         exportData={funcTrainingData.map((d) => ({
           Function: d.name,
-          Pass: d.pass,
-          Fail: d.fail,
-          Pending: d.pending,
-          Total: d.total,
+          Completed: d.completed,
+          'Completion %': d.completionPercentage !== null ? `${d.completionPercentage}%` : '-',
         }))}
         style={{ marginTop: 16 }}
 
@@ -930,11 +903,13 @@ export function TrainingSection() {
         ) : (
           <>
             {funcTrainingMode === 'donut' && (
-              <DonutChart
-                data={funcTrainingData}
-                height={Math.max(220, funcTrainingData.length * 26)}
-                tooltipContent={renderCategoryTooltip}
-              />
+              <div style={{ overflowX: 'auto' }}>
+                <DonutChart
+                  data={funcTrainingData}
+                  height={Math.min(420, Math.max(220, Math.ceil(funcTrainingData.length / 2) * 26))}
+                  tooltipContent={renderGroupTrainingTooltip}
+                />
+              </div>
             )}
             {funcTrainingMode === 'bar' && (
               <div style={{ overflowX: 'auto' }}>
@@ -955,17 +930,12 @@ export function TrainingSection() {
                       height={90}
                       tick={{ fontSize: 10, fill: C.sage }}
                     />
-                    <Tooltip />
-                    <Legend wrapperStyle={{ fontSize: 12 }} />
-                    <Bar dataKey="pass" stackId="func-training" fill={C.ok} name="Pass" />
-                    <Bar dataKey="fail" stackId="func-training" fill={C.vi} name="Fail" />
-                    <Bar
-                      dataKey="pending"
-                      stackId="func-training"
-                      fill={C.warn}
-                      name="Pending"
-                      radius={[0, 5, 5, 0]}
-                    />
+                    <Tooltip content={renderGroupTrainingTooltip} />
+                    <Bar dataKey="completed" fill={C.ok} name="Completed" radius={[5, 5, 0, 0]}>
+                      {funcTrainingData.map((d) => (
+                        <Cell key={d.name} fill={d.color} />
+                      ))}
+                    </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -977,20 +947,16 @@ export function TrainingSection() {
                   <thead>
                     <tr>
                       <th>Function</th>
-                      <th>Pass</th>
-                      <th>Fail</th>
-                      <th>Pending</th>
-                      <th>Total</th>
+                      <th>Completed</th>
+                      <th>Completion %</th>
                     </tr>
                   </thead>
                   <tbody>
                     {funcTrainingData.map((d) => (
                       <tr key={d.name}>
                         <td>{d.name}</td>
-                        <td>{d.pass.toLocaleString('en-IN')}</td>
-                        <td>{d.fail.toLocaleString('en-IN')}</td>
-                        <td>{d.pending.toLocaleString('en-IN')}</td>
-                        <td>{d.total.toLocaleString('en-IN')}</td>
+                        <td>{d.completed.toLocaleString('en-IN')}</td>
+                        <td>{d.completionPercentage !== null ? `${d.completionPercentage}%` : '-'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1003,19 +969,14 @@ export function TrainingSection() {
 
       <ChartCard
         title="Circle-wise Training Status"
-        sub="Pass / Fail / Pending % of training records by circle"
+        sub="Completed training count and completion % by circle"
         infoKey="train-circle-status"
         showPdf
         pdfLabel="Circle-wise Training Status"
         exportData={circleTrainingData.map((d) => ({
           Circle: d.name,
-          Pass: d.pass,
-          'Pass %': d.passPercentage,
-          Fail: d.fail,
-          'Fail %': d.failPercentage,
-          Pending: d.pending,
-          'Pending %': d.pendingPercentage,
-          Total: d.total,
+          Completed: d.completed,
+          'Completion %': d.completionPercentage !== null ? `${d.completionPercentage}%` : '-',
         }))}
         style={{ marginTop: 16 }}
         chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={circleTrainingMode} onChange={setCircleTrainingMode} />}
@@ -1026,7 +987,7 @@ export function TrainingSection() {
           <DonutChart
             data={circleTrainingData}
             height={Math.min(420, Math.max(220, Math.ceil(circleTrainingData.length / 2) * 26))}
-            tooltipContent={renderCategoryTooltip}
+            tooltipContent={renderGroupTrainingTooltip}
           />
         ) : circleTrainingMode === 'bar' ? (
           <div style={{ overflowX: 'auto' }}>
@@ -1042,18 +1003,13 @@ export function TrainingSection() {
                     height={90}
                     tick={{ fontSize: 10, fill: C.sage }}
                   />
-                  <YAxis domain={[0, 100]} allowDataOverflow tick={{ fontSize: 10, fill: C.sage }} />
-                  <Tooltip content={renderCategoryTooltip} />
-                  <Legend wrapperStyle={{ fontSize: 10.5 }} iconType="square" iconSize={10} />
-                  <Bar dataKey="passPercentage" stackId="circle-training" fill={C.ok} name="Pass %" />
-                  <Bar dataKey="failPercentage" stackId="circle-training" fill={C.vi} name="Fail %" />
-                  <Bar
-                    dataKey="pendingPercentage"
-                    stackId="circle-training"
-                    fill={C.warn}
-                    radius={[5, 5, 0, 0]}
-                    name="Pending %"
-                  />
+                  <YAxis tick={{ fontSize: 10, fill: C.sage }} />
+                  <Tooltip content={renderGroupTrainingTooltip} />
+                  <Bar dataKey="completed" fill={C.ok} name="Completed" radius={[5, 5, 0, 0]}>
+                    {circleTrainingData.map((d) => (
+                      <Cell key={d.name} fill={d.color} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -1064,20 +1020,16 @@ export function TrainingSection() {
               <thead>
                 <tr>
                   <th>Circle</th>
-                  <th>Pass</th>
-                  <th>Fail</th>
-                  <th>Pending</th>
-                  <th>Total</th>
+                  <th>Completed</th>
+                  <th>Completion %</th>
                 </tr>
               </thead>
               <tbody>
                 {circleTrainingData.map((d) => (
                   <tr key={d.name}>
                     <td>{d.name}</td>
-                    <td>{d.pass.toLocaleString('en-IN')}</td>
-                    <td>{d.fail.toLocaleString('en-IN')}</td>
-                    <td>{d.pending.toLocaleString('en-IN')}</td>
-                    <td>{d.total.toLocaleString('en-IN')}</td>
+                    <td>{d.completed.toLocaleString('en-IN')}</td>
+                    <td>{d.completionPercentage !== null ? `${d.completionPercentage}%` : '-'}</td>
                   </tr>
                 ))}
               </tbody>
