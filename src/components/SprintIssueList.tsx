@@ -408,15 +408,6 @@ export default function SprintIssueList({
     return item[columnKey];
   };
 
-  if (loadingIssues && !issues.length) {
-    return (
-      <div className="flex items-center justify-center py-8 gap-2 text-gray-400">
-        <Loader2 size={20} className="animate-spin" />
-        <span className="text-sm">Loading sprint issues</span>
-      </div>
-    );
-  }
-
   return (
     <>
       <EnhancedTable
@@ -427,6 +418,7 @@ export default function SprintIssueList({
         searchValue={issueTempSearch}
         onSearchChange={(val: string) => setIssueTempSearch(val)}
         onFilterClick={() => setIsFilterModalOpen(true)}
+        emptyMessage="No issues found"
         leftActions={
           <div className="flex items-center gap-2 px-4 py-1 bg-gray-50 rounded-lg border border-gray-200">
             <span className="text-gray-700 font-medium text-sm">Total Issues:</span>

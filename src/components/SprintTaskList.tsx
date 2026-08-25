@@ -40,6 +40,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { SlideTransition } from "@/components/SprintMemberModal";
+import { renderGroupedUserCheckboxList } from "@/components/GroupedUserCheckboxList";
 
 const SprintTaskPauseModal = ({ isOpen, onClose, onSubmit, onEndTask, isLoading, taskId }: any) => {
   const [reason, setReason] = useState("");
@@ -681,23 +682,6 @@ export default function SprintTaskList({
     );
   };
 
-  if (loadingTasks) {
-    return (
-      <div className="flex items-center justify-center py-8 gap-2 text-gray-400">
-        <Loader2 size={20} className="animate-spin" />
-        <span className="text-sm">Loading sprint tasks</span>
-      </div>
-    );
-  }
-
-  if (!sprintTasks.length) {
-    return (
-      <div className="text-center py-8 text-gray-500 text-sm">
-        No tasks found for this sprint
-      </div>
-    );
-  }
-
   return (
     <>
       <EnhancedTable
@@ -710,6 +694,8 @@ export default function SprintTaskList({
         collapsible={true}
         getChildrenKey={() => "sub_tasks_managements"}
         renderChildrenRows={renderChildrenRows}
+        emptyMessage="No tasks found for this sprint"
+        loading={loadingTasks}
         leftActions={
           <div className="flex items-center gap-2 px-4 py-1 bg-gray-50 rounded-lg border border-gray-200">
             <span className="text-gray-700 font-medium text-sm">Total Tasks:</span>
@@ -856,7 +842,7 @@ export default function SprintTaskList({
                     <input type="text" placeholder="Filter responsible person..." className="w-full pl-8 pr-4 py-2 text-sm border focus:outline-none"
                       value={searchTerms.responsiblePerson} onChange={e => setSearchTerms({ ...searchTerms, responsiblePerson: e.target.value })} />
                   </div>
-                  {renderCheckboxList(users.map((u: any) => ({ label: u.full_name, value: u.id })), selectedResponsible, setSelectedResponsible, searchTerms.responsiblePerson)}
+                  {renderGroupedUserCheckboxList(users, selectedResponsible, setSelectedResponsible, searchTerms.responsiblePerson)}
                 </div>
               )}
             </div>
@@ -873,7 +859,7 @@ export default function SprintTaskList({
                     <input type="text" placeholder="Filter created by..." className="w-full pl-8 pr-4 py-2 text-sm border focus:outline-none"
                       value={searchTerms.createdBy} onChange={e => setSearchTerms({ ...searchTerms, createdBy: e.target.value })} />
                   </div>
-                  {renderCheckboxList(users.map((u: any) => ({ label: u.full_name, value: u.id })), selectedCreators, setSelectedCreators, searchTerms.createdBy)}
+                  {renderGroupedUserCheckboxList(users, selectedCreators, setSelectedCreators, searchTerms.createdBy)}
                 </div>
               )}
             </div>
