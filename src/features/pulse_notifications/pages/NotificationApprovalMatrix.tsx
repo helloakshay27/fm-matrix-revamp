@@ -128,19 +128,6 @@ const NotificationApprovalMatrix = () => {
 
     return (
         <div className="p-6 bg-gray-50 min-h-screen space-y-4">
-            {!pmsSiteId ? (
-                <div className="rounded-lg border border-brand-warning/30 bg-brand-warning/10 px-4 py-3 text-sm text-brand-warning">
-                    No site selected — select a site to view its approval matrix.
-                </div>
-            ) : (
-                data?.using_global_default && (
-                    <div className="rounded-lg border border-brand/30 bg-brand-selected px-4 py-3 text-sm text-brand">
-                        This site has no site-specific approvers configured — using the global default
-                        approvers.
-                    </div>
-                )
-            )}
-
             <EnhancedTable
                 data={approvers}
                 columns={columns}
