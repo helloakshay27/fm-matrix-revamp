@@ -276,14 +276,16 @@ export function JobsProvider({ children }) {
     (s, k) => s + (Number(k.weightage) || 0),
     0
   );
+  // Kisi ek KRA ke KPIs ne kitni weightage use ki hai.
+  const kraKpiWeight = (kraIdx) =>
+    formKpis
+      .filter((kpi) => kpi.kraIdx === kraIdx)
+      .reduce((sum, kpi) => sum + (Number(kpi.weightage) || 0), 0);
+  // KRA ke 100% rule jaisa hi — har KRA ki KPIs uski poori weightage cover karein.
   const formKpisFitKraWeightage = () =>
-    formKras.every((kra, kraIdx) => {
-      const limit = Number(kra.weightage) || 0;
-      const used = formKpis
-        .filter((kpi) => kpi.kraIdx === kraIdx)
-        .reduce((sum, kpi) => sum + (Number(kpi.weightage) || 0), 0);
-      return used <= limit;
-    });
+    formKras.every(
+      (kra, kraIdx) => kraKpiWeight(kraIdx) === (Number(kra.weightage) || 0)
+    );
   const apiExperienceLevel = (level) =>
     ({
       "Entry Level": "entry",
@@ -543,53 +545,107 @@ export function JobsProvider({ children }) {
     setFormKpis((ps) => ps.map((p) => (p.id === id ? { ...p, [f]: v } : p)));
   const remFormKpi = (id) => setFormKpis((ps) => ps.filter((p) => p.id !== id));
 
-  const canNext = () => {
-    if (step === 0)
-      return jobForm.title && jobForm.dept && jobForm.type && jobForm.level;
-    if (step === 1) return jobForm.summary && jobForm.responsibilities;
-    if (step === 2)
-      return (
-        formKras.length > 0 &&
-        formKras.every((k) => k.title) &&
-        totalKraWeight <= 100
-      );
-    if (step === 3)
-      return (
-        formKpis.length > 0 &&
-        formKpis.every((k) => k.name && k.target) &&
-        formKpisFitKraWeightage()
-      );
-    return true;
-  };
-
-  // Continue dabane par user ko exact wajah toast me batate hain — khaas kar
-  // kaunsi KRA ki KPIs uski weightage cross kar rahi hain.
-  const nextBlockReason = () => {
-    if (step === 2) {
-      if (!formKras.length) return "Add at least one KRA to continue";
-      if (!formKras.every((k) => k.title)) return "Every KRA needs a name";
-      if (totalKraWeight > 100)
-        return `Total KRA weightage is ${totalKraWeight}% — it cannot exceed 100%`;
+  /* ── Step validation ──────────────────────────────────────────────
+     Ek hi jagah se saare steps ka reason nikalta hai — Continue button
+     ka disabled state, tooltip aur toast message teeno isi se aate hain,
+     isliye kabhi out of sync nahi hote. */
+  const stepBlockReason = (s = step) => {
+    if (s === 0) {
+      if (!jobForm.title || !jobForm.title.trim()) return "Job Title is required";
+      if (!jobForm.dept) return "Department is required";
+      if (!jobForm.type) return "Employment Type is required";
+      if (!jobForm.level) return "Experience Level is required";
       return null;
     }
-    if (step === 3) {
-      if (!formKpis.length) return "Add at least one KPI to continue";
-      if (!formKpis.every((k) => k.name && k.target))
-        return "Every KPI needs a name and a target value";
-      const offending = formKras
+    if (s === 1) {
+      if (!jdMethod)
+        return "Choose Create with AI or Write Manually to build the job description";
+      if (!jobForm.summary || !jobForm.summary.trim())
+        return "Role Summary is required";
+      if (!jobForm.responsibilities || !jobForm.responsibilities.trim())
+        return "Key Responsibilities are required";
+      if (!jobForm.qualifications || !jobForm.qualifications.trim())
+        return "Required Qualifications are required";
+      if (!jobForm.skills || !jobForm.skills.trim())
+        return "Required Skills are required";
+      if (!jobForm.niceToHave || !jobForm.niceToHave.trim())
+        return "Nice to Have Skills are required";
+      return null;
+    }
+    if (s === 2) {
+      if (!formKras.length) return "Add at least one KRA to continue";
+      const missingTitle = formKras.findIndex((k) => !k.title || k.title.trim() === "");
+      if (missingTitle !== -1) return `KRA ${missingTitle + 1} is missing a name — fill in the KRA Name field`;
+      const missingWeight = formKras.findIndex((k) => k.weightage === "" || Number(k.weightage) <= 0);
+      if (missingWeight !== -1) return `KRA ${missingWeight + 1} (${formKras[missingWeight].title || "Untitled"}) needs a weightage greater than 0%`;
+      const missingDesc = formKras.findIndex((k) => !k.desc || k.desc.trim() === "");
+      if (missingDesc !== -1) return `KRA ${missingDesc + 1} (${formKras[missingDesc].title || "Untitled"}) is missing a description`;
+      if (totalKraWeight > 100)
+        return `Total KRA weightage is ${totalKraWeight}% — it cannot exceed 100%`;
+      if (totalKraWeight < 100)
+        return `Total KRA weightage is ${totalKraWeight}% — it must add up to exactly 100% before continuing`;
+      return null;
+    }
+    if (s === 3) {
+      if (!formKpis.length)
+        return "Generate KPIs with AI or add them manually to continue";
+      const kraWithoutKpi = formKras.findIndex(
+        (kra, kraIdx) => !formKpis.some((kpi) => kpi.kraIdx === kraIdx)
+      );
+      if (kraWithoutKpi !== -1)
+        return `KRA ${kraWithoutKpi + 1} (${formKras[kraWithoutKpi].title || "Untitled"}) has no KPI yet — every KRA needs at least one KPI`;
+      const missingName = formKpis.findIndex((k) => !k.name || !k.target);
+      if (missingName !== -1) return `KPI ${missingName + 1} (${formKpis[missingName].name || "Untitled"}) needs a name and a target value`;
+      const missingUnit = formKpis.findIndex((k) => !k.unit);
+      if (missingUnit !== -1) return `KPI ${missingUnit + 1} (${formKpis[missingUnit].name || "Untitled"}) needs a unit`;
+      const missingFreq = formKpis.findIndex((k) => !k.freq);
+      if (missingFreq !== -1) return `KPI ${missingFreq + 1} (${formKpis[missingFreq].name || "Untitled"}) needs a target frequency`;
+      const missingKpiWeight = formKpis.findIndex((k) => k.weightage === "" || Number(k.weightage) <= 0);
+      if (missingKpiWeight !== -1) return `KPI ${missingKpiWeight + 1} (${formKpis[missingKpiWeight].name || "Untitled"}) needs a weightage greater than 0%`;
+      const missingUpdateType = formKpis.findIndex((k) => !k.updateType);
+      if (missingUpdateType !== -1) return `KPI ${missingUpdateType + 1} (${formKpis[missingUpdateType].name || "Untitled"}) needs an update type`;
+      const missingDataSource = formKpis.findIndex((k) => k.updateType === "automatic" && !k.dataSource);
+      if (missingDataSource !== -1) return `KPI ${missingDataSource + 1} (${formKpis[missingDataSource].name || "Untitled"}) is set to Automatic — select a Data Source`;
+      const missingModule = formKpis.findIndex((k) => k.updateType === "automatic" && k.dataSource && !k.module);
+      if (missingModule !== -1) return `KPI ${missingModule + 1} (${formKpis[missingModule].name || "Untitled"}) needs a Module selected`;
+      const over = formKras
         .map((kra, kraIdx) => {
           const limit = Number(kra.weightage) || 0;
-          const used = formKpis
-            .filter((kpi) => kpi.kraIdx === kraIdx)
-            .reduce((sum, kpi) => sum + (Number(kpi.weightage) || 0), 0);
+          const used = kraKpiWeight(kraIdx);
           return used > limit
             ? `KRA ${kraIdx + 1} (${kra.title || "Untitled"}): KPIs total ${used}% vs ${limit}% allowed`
             : null;
         })
         .filter(Boolean);
-      if (offending.length)
-        return `KPI weightage exceeds KRA weightage — ${offending.join("; ")}`;
+      if (over.length)
+        return `KPI weightage exceeds KRA weightage — ${over.join("; ")}`;
+      const under = formKras
+        .map((kra, kraIdx) => {
+          const limit = Number(kra.weightage) || 0;
+          const used = kraKpiWeight(kraIdx);
+          return used < limit
+            ? `KRA ${kraIdx + 1} (${kra.title || "Untitled"}): KPIs total ${used}% of ${limit}%, ${limit - used}% left`
+            : null;
+        })
+        .filter(Boolean);
+      if (under.length)
+        return `Every KRA's KPIs must add up to its full weightage — ${under.join("; ")}`;
       return null;
+    }
+    return null;
+  };
+
+  const canNext = () => !stepBlockReason(step);
+
+  // Continue dabane par user ko exact wajah toast me batate hain.
+  const nextBlockReason = () => stepBlockReason(step);
+
+  // Save button ke liye — review step par saare steps ek saath check hote hain.
+  const createBlockReason = () => {
+    const labels = ["Job Details", "Job Description", "KRAs", "KPIs"];
+    for (let s = 0; s < labels.length; s += 1) {
+      const reason = stepBlockReason(s);
+      if (reason) return `${labels[s]}: ${reason}`;
     }
     return null;
   };
@@ -1668,11 +1724,13 @@ export function JobsProvider({ children }) {
       const saved = await fetchKpiUnits().catch(() => null);
       if (saved) setCustomUnits(saved);
       showToast(successMsg);
+      return true;
     } catch (err) {
       setCustomUnits(previousUnits);
       toast.error(
         `Could not save KPI units: ${err?.message || "request failed"}`
       );
+      return false;
     } finally {
       setUnitsSaving(false);
     }
@@ -1692,6 +1750,29 @@ export function JobsProvider({ children }) {
       [...customUnits, { name: trimmed, isDefault: false }],
       "Unit added successfully"
     );
+  };
+
+  // KPI form ke andar se seedha naya unit banane ke liye — settings par jaane ki
+  // zaroorat nahi. Save hone par unit ka naam return karta hai taaki caller use
+  // turant select kar sake.
+  const createCustomUnit = async (name) => {
+    const trimmed = String(name || "").trim();
+    if (!trimmed) {
+      toast.error("Enter a unit name");
+      return null;
+    }
+    const existing = customUnits.find(
+      (u) => u.name.toLowerCase() === trimmed.toLowerCase()
+    );
+    if (existing) {
+      toast.error("That unit already exists.");
+      return existing.name;
+    }
+    const ok = await persistUnits(
+      [...customUnits, { name: trimmed, isDefault: false }],
+      "Unit added successfully"
+    );
+    return ok ? trimmed : null;
   };
 
   const removeCustomUnit = (unit) => {
@@ -2167,8 +2248,11 @@ export function JobsProvider({ children }) {
     addFormKpi,
     updFormKpi,
     remFormKpi,
+    kraKpiWeight,
     canNext,
     nextBlockReason,
+    stepBlockReason,
+    createBlockReason,
     saveJd,
     publishJd,
     startEditJd,
@@ -2188,6 +2272,7 @@ export function JobsProvider({ children }) {
     assignToKra,
     assignToKpi,
     addCustomUnit,
+    createCustomUnit,
     removeCustomUnit,
     handleLogoUpload,
     openDeptModal,

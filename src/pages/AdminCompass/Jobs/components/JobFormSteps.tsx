@@ -1,12 +1,14 @@
 // @ts-nocheck
+import { useState } from "react";
 import { toast } from "sonner";
 import { useJobs } from "../JobsContext";
 import { ico } from "../icons";
 import {
-  SH, FI, FS, FT, Fld, Btn, Loader, AiBar, StatusPill,
+  SH, FI, FS, FT, Fld, Btn, Loader, AiBar, StatusPill, ConfirmDialog,
   card, g2, g3, COLORS, aBtn, smBtn, dashedBtn, gBtn,
 } from "../components/UI";
 import MemberSearchSelect from "../components/MemberSearchSelect";
+import UnitField from "../components/UnitField";
 import { useDepartments } from "../hooks/useDepartments";
 import {
   T, EMP_TYPES, EXP_LEVELS,
@@ -303,14 +305,14 @@ export function StepDesc() {
               />
             </Fld>
             <div style={g2}>
-              <Fld label="Required Qualifications">
+              <Fld label="Required Qualifications *">
                 <FT
                   placeholder="• Education, experience..."
                   value={jobForm.qualifications}
                   onChange={(e) => sf("qualifications", e.target.value)}
                 />
               </Fld>
-              <Fld label="Required Skills">
+              <Fld label="Required Skills *">
                 <FT
                   placeholder="• Technical and soft skills..."
                   value={jobForm.skills}
@@ -318,7 +320,7 @@ export function StepDesc() {
                 />
               </Fld>
             </div>
-            <Fld label="Nice to Have">
+            <Fld label="Nice to Have Skills *">
               <FT
                 placeholder="• Additional desirable qualifications..."
                 value={jobForm.niceToHave}
@@ -340,13 +342,43 @@ export function StepKra() {
   } = useJobs();
 
   // Baaki KRAs ne kitna weightage le liya hai — usi se is row ka max nikalta hai.
+  // Delete se pehle confirm — galti se KRA (aur uske KPIs) na ud jaayein.
+  const [kraToDelete, setKraToDelete] = useState(null);
+
   const usedByOthers = (kraId) =>
     formKras
       .filter((k) => k.id !== kraId)
       .reduce((sum, k) => sum + (Number(k.weightage) || 0), 0);
   const overLimit = totalKraWeight > 100;
+  const atLimit = totalKraWeight === 100;
+  const underLimit = totalKraWeight < 100 && totalKraWeight > 0;
   // Hint sabhi rows me same dikhta hai — kitna weightage abhi bacha hua hai.
   const weightLeft = Math.max(0, 100 - totalKraWeight);
+
+  const bannerBg = overLimit
+    ? "rgba(231,132,142,.15)"
+    : atLimit
+      ? "rgba(16,140,114,.1)"
+      : T.orangeSoft;
+  const bannerColor = overLimit
+    ? T.danger
+    : atLimit
+      ? T.growth
+      : T.inkSoft;
+
+  // Har KRA me kya-kya missing hai — banner me ek line me dikhate hain.
+  const incompleteKras = formKras
+    .map((kra, i) => {
+      const missing = [];
+      if (!kra.title || !kra.title.trim()) missing.push("name");
+      if (kra.weightage === "" || Number(kra.weightage) <= 0)
+        missing.push("weightage");
+      if (!kra.desc || !kra.desc.trim()) missing.push("description");
+      return missing.length
+        ? `KRA ${i + 1} (${kra.title || "Untitled"}): ${missing.join(", ")}`
+        : null;
+    })
+    .filter(Boolean);
 
   return (
     <div>
@@ -361,14 +393,17 @@ export function StepKra() {
           borderRadius: 10,
           fontSize: 12.5,
           fontWeight: 600,
-          background: overLimit ? "rgba(231,132,142,.15)" : T.orangeSoft,
-          color: overLimit ? T.danger : T.inkSoft,
+          background: bannerBg,
+          color: bannerColor,
         }}
       >
         <span>Total KRA Weightage</span>
         <span>
           {totalKraWeight}% / 100%
           {overLimit ? " — exceeds 100%, adjust before continuing" : ""}
+          {atLimit ? " ✓ Ready to continue" : ""}
+          {underLimit ? ` — ${weightLeft}% remaining to reach 100%` : ""}
+          {totalKraWeight === 0 && formKras.length > 0 ? " — add weightage to each KRA" : ""}
         </span>
       </div>
       {!kraAiDone && !aiLoading && (
@@ -380,6 +415,39 @@ export function StepKra() {
         />
       )}
       {aiLoading && <Loader text="Analysing role and generating KRAs…" />}
+
+      {/* KRA step ki validation user ko inline dikhti hai — Continue tabhi khulta hai. */}
+      {!aiLoading && formKras.length === 0 && (
+        <div
+          style={{
+            padding: "12px 18px",
+            marginBottom: 16,
+            borderRadius: 10,
+            fontSize: 12.5,
+            fontWeight: 600,
+            background: "rgba(231,132,142,.15)",
+            color: T.danger,
+          }}
+        >
+          No KRAs yet — generate them with AI or add one manually. Continue stays
+          disabled until every KRA is complete and the total weightage is 100%.
+        </div>
+      )}
+      {!aiLoading && formKras.length > 0 && incompleteKras.length > 0 && (
+        <div
+          style={{
+            padding: "12px 18px",
+            marginBottom: 16,
+            borderRadius: 10,
+            fontSize: 12.5,
+            fontWeight: 600,
+            background: T.orangeSoft,
+            color: T.inkSoft,
+          }}
+        >
+          Incomplete KRAs — {incompleteKras.join("; ")}
+        </div>
+      )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {formKras.map((kra, i) => (
@@ -425,7 +493,7 @@ export function StepKra() {
                     />
                   </Fld>
                   <Fld
-                    label="KRA Weightage (%)"
+                    label="KRA Weightage (%) *"
                     hint={`${weightLeft}% left of 100%`}
                   >
                     <FI
@@ -473,7 +541,7 @@ export function StepKra() {
                   </Fld>
                 </div>
                 <div style={{ marginBottom: 18 }}>
-                  <Fld label="KRA Description">
+                  <Fld label="KRA Description *">
                     <FT
                       placeholder="Describe what this KRA measures and its expected outcomes..."
                       value={kra.desc}
@@ -507,7 +575,7 @@ export function StepKra() {
               </div>
               <button
                 style={{ ...gBtn, marginTop: 2 }}
-                onClick={() => remFormKra(kra.id)}
+                onClick={() => setKraToDelete({ ...kra, index: i })}
                 onMouseOver={(e) => {
                   e.currentTarget.style.color = T.danger;
                 }}
@@ -545,6 +613,19 @@ export function StepKra() {
       >
         {ico.plus} Add KRA Manually
       </button>
+
+      <ConfirmDialog
+        open={!!kraToDelete}
+        title="Delete this KRA?"
+        message={`"${kraToDelete?.title || `KRA ${(kraToDelete?.index ?? 0) + 1}`}" and all KPIs linked to it will be removed. This can't be undone.`}
+        confirmLabel="Delete KRA"
+        onCancel={() => setKraToDelete(null)}
+        onConfirm={() => {
+          remFormKra(kraToDelete.id);
+          setKraToDelete(null);
+          toast.success("KRA removed");
+        }}
+      />
     </div>
   );
 }
@@ -553,7 +634,11 @@ export function StepKpi() {
   const {
     kpiAiDone, kpiAiLoading, formKras, formKpis, totalKpiWeight,
     addFormKpi, updFormKpi, remFormKpi, simulateAiKpis, customUnits,
+    kraKpiWeight,
   } = useJobs();
+
+  // KPI delete karne se pehle bhi wahi confirm popup dikhta hai.
+  const [kpiToDelete, setKpiToDelete] = useState(null);
 
   const totalKraWeightage = formKras.reduce(
     (sum, kra) => sum + (Number(kra.weightage) || 0),
@@ -572,6 +657,26 @@ export function StepKpi() {
         ) === index
     );
 
+  // Jin KRAs ke paas abhi tak koi KPI nahi hai — banner me inhe list karte hain.
+  const missingKpiKras = formKras
+    .map((kra, kraIdx) =>
+      formKpis.some((kpi) => kpi.kraIdx === kraIdx)
+        ? null
+        : `KRA ${kraIdx + 1} (${kra.title || "Untitled"})`
+    )
+    .filter(Boolean);
+
+  // Jin KRAs ki KPIs unki poori weightage cover nahi karti — Continue tabhi khulta hai.
+  const unbalancedKras = formKras
+    .map((kra, kraIdx) => {
+      const limit = Number(kra.weightage) || 0;
+      const used = kraKpiWeight(kraIdx);
+      if (!formKpis.some((kpi) => kpi.kraIdx === kraIdx) || used === limit)
+        return null;
+      return `KRA ${kraIdx + 1} (${kra.title || "Untitled"}): ${used}% of ${limit}%${used < limit ? `, ${limit - used}% left` : " — over limit"}`;
+    })
+    .filter(Boolean);
+
   return (
     <div>
       {!kpiAiDone && !kpiAiLoading && (
@@ -583,6 +688,55 @@ export function StepKpi() {
         />
       )}
       {kpiAiLoading && <Loader text="Mapping KPIs to your KRAs…" />}
+
+      {/* Jab tak KPIs generate ya add nahi hote, Continue kyun band hai ye clearly dikhate hain. */}
+      {!kpiAiLoading && formKpis.length === 0 && (
+        <div
+          style={{
+            padding: "12px 18px",
+            marginBottom: 16,
+            borderRadius: 10,
+            fontSize: 12.5,
+            fontWeight: 600,
+            background: "rgba(231,132,142,.15)",
+            color: T.danger,
+          }}
+        >
+          No KPIs yet — generate them with AI or add them manually. Continue stays
+          disabled until every KRA has at least one complete KPI.
+        </div>
+      )}
+      {!kpiAiLoading && formKpis.length > 0 && missingKpiKras.length > 0 && (
+        <div
+          style={{
+            padding: "12px 18px",
+            marginBottom: 16,
+            borderRadius: 10,
+            fontSize: 12.5,
+            fontWeight: 600,
+            background: T.orangeSoft,
+            color: T.inkSoft,
+          }}
+        >
+          {missingKpiKras.join(", ")} — add at least one KPI to continue.
+        </div>
+      )}
+      {!kpiAiLoading && unbalancedKras.length > 0 && (
+        <div
+          style={{
+            padding: "12px 18px",
+            marginBottom: 16,
+            borderRadius: 10,
+            fontSize: 12.5,
+            fontWeight: 600,
+            background: T.orangeSoft,
+            color: T.inkSoft,
+          }}
+        >
+          Every KRA's KPIs must add up to its full weightage —{" "}
+          {unbalancedKras.join("; ")}
+        </div>
+      )}
 
       {formKpis.length > 0 && (
         <div style={{ ...card, marginBottom: 16, padding: "16px 24px" }}>
@@ -610,6 +764,11 @@ export function StepKpi() {
               }}
             >
               {totalKpiWeight}% / {totalKraWeightage}%
+              {totalKpiWeight === totalKraWeightage
+                ? " ✓ Ready to continue"
+                : totalKpiWeight > totalKraWeightage
+                  ? " — exceeds KRA weightage"
+                  : ` — ${totalKraWeightage - totalKpiWeight}% left to allocate`}
             </span>
           </div>
           <div
@@ -721,7 +880,7 @@ export function StepKpi() {
                     </span>
                     <button
                       style={gBtn}
-                      onClick={() => remFormKpi(kpi.id)}
+                      onClick={() => setKpiToDelete(kpi)}
                       onMouseOver={(e) => {
                         e.currentTarget.style.color = T.danger;
                       }}
@@ -742,23 +901,13 @@ export function StepKpi() {
                         }
                       />
                     </Fld>
-                    <Fld label="KPI Unit">
-                      <FS
-                        value={kpi.unit}
-                        onChange={(e) =>
-                          updFormKpi(kpi.id, "unit", e.target.value)
-                        }
-                      >
-                        <option value="">Select unit</option>
-                        {unitOptions.map((unit) => (
-                          <option key={unit} value={unit}>
-                            {unit}
-                          </option>
-                        ))}
-                      </FS>
-                    </Fld>
+                    <UnitField
+                      value={kpi.unit}
+                      onChange={(unit) => updFormKpi(kpi.id, "unit", unit)}
+                      extraOptions={unitOptions}
+                    />
                     <Fld
-                      label="KPI Weightage (%)"
+                      label="KPI Weightage (%) *"
                       hint={`${kraKpiTotal}% used, ${Math.max(0, kraLimit - kraKpiTotal)}% left of ${kraLimit}% KRA weightage`}
                     >
                       <FI
@@ -811,7 +960,7 @@ export function StepKpi() {
                         }
                       />
                     </Fld>
-                    <Fld label="Target Frequency">
+                    <Fld label="Target Frequency *">
                       <FS
                         value={kpi.freq}
                         onChange={(e) =>
@@ -824,7 +973,7 @@ export function StepKpi() {
                         ))}
                       </FS>
                     </Fld>
-                    <Fld label="Update Type">
+                    <Fld label="Update Type *">
                       <FS
                         value={kpi.updateType}
                         onChange={(e) =>
@@ -863,7 +1012,7 @@ export function StepKpi() {
                         marginTop: 4,
                       }}
                     >
-                      <Fld label="Data Source">
+                      <Fld label="Data Source *">
                         <FS
                           value={kpi.dataSource}
                           onChange={(e) => {
@@ -878,7 +1027,7 @@ export function StepKpi() {
                         </FS>
                       </Fld>
                       {kpi.dataSource && (
-                        <Fld label="Module">
+                        <Fld label="Module *">
                           <FS
                             value={kpi.module}
                             onChange={(e) =>
@@ -929,6 +1078,19 @@ export function StepKpi() {
           </div>
         );
       })}
+
+      <ConfirmDialog
+        open={!!kpiToDelete}
+        title="Delete this KPI?"
+        message={`"${kpiToDelete?.name || "This KPI"}" will be removed from its KRA. This can't be undone.`}
+        confirmLabel="Delete KPI"
+        onCancel={() => setKpiToDelete(null)}
+        onConfirm={() => {
+          remFormKpi(kpiToDelete.id);
+          setKpiToDelete(null);
+          toast.success("KPI removed");
+        }}
+      />
     </div>
   );
 }

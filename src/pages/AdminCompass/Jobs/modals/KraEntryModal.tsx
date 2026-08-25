@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { useEffect } from "react";
+import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useJobs } from "../JobsContext";
 import { T } from "../constants";
@@ -54,6 +55,23 @@ export default function KraEntryModal() {
   const handleSave = async () => {
     await saveNewKra();
     queryClient.invalidateQueries({ queryKey: ["kras-list"] });
+  };
+
+  // Returns the first validation error message, or null if everything is filled.
+  const getKraError = () => {
+    if (!newKra.jdId) return "Job Description is required";
+    if (!newKra.title?.trim()) return "KRA Name is required";
+    if (!newKra.weightage || Number(newKra.weightage) <= 0) return "KRA Weightage must be greater than 0%";
+    if (overLimit)
+      return `KRA Weightage exceeds the remaining ${remainingForMember}% available for ${primaryAssigneeName} — reduce it before submitting`;
+    if (!newKra.desc?.trim()) return "Description is required";
+    return null;
+  };
+
+  const handleSubmit = async () => {
+    const err = getKraError();
+    if (err) { toast.error(err); return; }
+    await handleSave();
   };
   return (
     <div
@@ -144,7 +162,7 @@ export default function KraEntryModal() {
               />
             </Fld>
             <Fld
-              label="KRA Weightage (%)"
+              label="KRA Weightage (%) *"
               hint={
                 primaryAssigneeId
                   ? assigneeKraUsage.loading
@@ -188,7 +206,7 @@ export default function KraEntryModal() {
               disabled={krasSaving}
             />
           </Fld>
-          <Fld label="Description">
+          <Fld label="Description *">
             <FT
               placeholder="What does this KRA measure?"
               value={newKra.desc}
@@ -237,7 +255,12 @@ export default function KraEntryModal() {
           }}
         >
           <Btn onClick={() => setShowAddKra(false)}>Cancel</Btn>
-          <Btn primary onClick={handleSave} disabled={krasSaving}>
+          <Btn
+            primary
+            onClick={handleSubmit}
+            disabled={krasSaving}
+            softDisabled={!!getKraError()}
+          >
             {krasSaving ? "Saving…" : "Submit"}
           </Btn>
         </div>
