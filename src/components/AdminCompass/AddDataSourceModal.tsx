@@ -26,6 +26,8 @@ const T = {
 export interface DataSourcePayload {
   datasource_name: string;
   connecter: string;
+  /** "internal" | "external" — see DATASOURCE_TYPES. */
+  type: string;
   host: string;
   port: number;
   database_name: string;
@@ -40,6 +42,7 @@ type FormState = Omit<DataSourcePayload, "port"> & { port: string };
 const EMPTY_FORM: FormState = {
   datasource_name: "",
   connecter: "mysql",
+  type: "external",
   host: "",
   port: "",
   database_name: "",
@@ -52,6 +55,17 @@ const EMPTY_FORM: FormState = {
 const CONNECTERS = [
   { value: "mysql", label: "MySQL" },
   { value: "postgresql", label: "PostgreSQL" },
+];
+
+/**
+ * Labels are title-case for the UI; the values are what the API stores and what
+ * RuleEngine::AvailableModel::TYPES validates against, so they stay lowercase.
+ * This value rides along into the pull_schema payload's "type" — every model
+ * catalogued from this source is tagged with it.
+ */
+export const DATASOURCE_TYPES = [
+  { value: "external", label: "External" },
+  { value: "internal", label: "Internal" },
 ];
 
 interface ProjectOption {
@@ -69,6 +83,7 @@ export interface EditableDataSource {
   id: number;
   datasource_name?: string | null;
   connecter?: string | null;
+  type?: string | null;
   host?: string | null;
   port?: number | string | null;
   database_name?: string | null;
@@ -139,6 +154,9 @@ export const AddDataSourceModal = ({
         ? {
             datasource_name: dataSource.datasource_name ?? "",
             connecter: dataSource.connecter ?? "mysql",
+            // Records created before this field existed come back with no type;
+            // they are external connections, which is the default here too.
+            type: dataSource.type || "external",
             host: dataSource.host ?? "",
             port:
               dataSource.port === null || dataSource.port === undefined
@@ -179,7 +197,7 @@ export const AddDataSourceModal = ({
         }
 
         const body = await response.json();
-        const list: any[] = Array.isArray(body) ? body : body?.data ?? [];
+        const list: any[] = Array.isArray(body) ? body : (body?.data ?? []);
         if (cancelled) return;
 
         // Rows repeat: the same title can appear several times, sometimes with
@@ -282,6 +300,7 @@ export const AddDataSourceModal = ({
     const payload: Partial<DataSourcePayload> = {
       datasource_name: form.datasource_name.trim(),
       connecter: form.connecter.trim(),
+      type: form.type,
       host: form.host.trim(),
       port: Number(form.port),
       database_name: form.database_name.trim(),
@@ -414,6 +433,21 @@ export const AddDataSourceModal = ({
             </select>
           </Field>
 
+          <Field label="Type" required error={errors.type}>
+            <select
+              value={form.type}
+              onChange={(e) => setField("type", e.target.value)}
+              className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
+              style={inputStyle}
+            >
+              {DATASOURCE_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+
           <Field label="Host" required error={errors.host}>
             <input
               value={form.host}
@@ -436,11 +470,7 @@ export const AddDataSourceModal = ({
           </Field>
 
           <div className="sm:col-span-2">
-            <Field
-              label="Database name"
-              required
-              error={errors.database_name}
-            >
+            <Field label="Database name" required error={errors.database_name}>
               <input
                 value={form.database_name}
                 onChange={(e) => setField("database_name", e.target.value)}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -7,38 +7,60 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-} from 'recharts';
-import { AccordionShell, ChartCard } from '../components/ChartCard';
-import { ChartSwitch } from '../components/ChartSwitch';
-import { DonutChart } from '../components/DonutChart';
-import { MsafeChartTooltip } from '../components/MsafeChartTooltip';
-import { ProgressRows } from '../components/ProgressRows';
-import { C } from '../data/constants';
-import type { Persona } from '../data/constants';
-import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
+} from "recharts";
+import { AccordionShell, ChartCard } from "../components/ChartCard";
+import { ChartSwitch } from "../components/ChartSwitch";
+import { DonutChart } from "../components/DonutChart";
+import { MsafeChartTooltip } from "../components/MsafeChartTooltip";
+import { ProgressRows } from "../components/ProgressRows";
+import { C } from "../data/constants";
+import type { Persona } from "../data/constants";
+import {
+  useMsafeDashboard,
+  type AppliedFilters,
+} from "../context/MsafeDashboardContext";
 
 type CircleRow = { name: string; n: number };
 type Slice = { name: string; value: number; color: string };
-type RecentVisit = { name: string; func: string; circle: string; area: string; date: string };
+type RecentVisit = {
+  name: string;
+  func: string;
+  circle: string;
+  area: string;
+  date: string;
+};
 type ProgressRow = { label: string; pct: number; val: string; color: string };
 
-const SLICE_PALETTE = [C.sage, C.terra, C.blue, C.teal, C.warn, C.lav, C.err, C.ok, '#B4A38A'];
+const SLICE_PALETTE = [
+  C.sage,
+  C.terra,
+  C.blue,
+  C.teal,
+  C.warn,
+  C.lav,
+  C.err,
+  C.ok,
+  "#B4A38A",
+];
 
 function getMsafeBaseUrl(): string {
-  const fromLS = localStorage.getItem('baseUrl') || '';
-  const host = fromLS.replace(/^https?:\/\//, '').replace(/\/$/, '');
-  return host ? `https://${host}` : 'https://live-api.gophygital.work';
+  const fromLS = localStorage.getItem("baseUrl") || "";
+  const host = fromLS.replace(/^https?:\/\//, "").replace(/\/$/, "");
+  return host ? `https://${host}` : "https://live-api.gophygital.work";
 }
 
 /** Circle Manager filter bar values, applied as query params once the user clicks Apply.
  *  Pan India now uses the exact same filter bar as Circle Manager, so every field applies
  *  the same way regardless of persona. */
-function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
+function buildFilterParams(
+  persona: Persona,
+  f: AppliedFilters
+): Record<string, string> {
   const params: Record<string, string> = {};
-  if (f.circleIds.length > 0) params.circle_id = f.circleIds.join(',');
-  if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
+  if (f.circleIds.length > 0) params.circle_id = f.circleIds.join(",");
+  if (f.functionIds.length > 0) params.function_id = f.functionIds.join(",");
   if (f.zoneId) params.zone_id = f.zoneId;
-  if (f.empTypeId) params.employee_type= f.empTypeId;
+  if (f.empTypeId) params.employee_type = f.empTypeId;
   if (f.startDate) params.from_date = f.startDate;
   if (f.endDate) params.to_date = f.endDate;
   return params;
@@ -47,15 +69,17 @@ function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, 
 async function fetchMsafeSmtJson(
   endpoint: string,
   extraParams?: Record<string, string>,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<unknown> {
-  const token = localStorage.getItem('token') || '';
+  const token = localStorage.getItem("token") || "";
   const companyId =
-    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '';
+    localStorage.getItem("selectedCompanyId") ||
+    localStorage.getItem("company_id") ||
+    "";
   const params = new URLSearchParams({ company_id: companyId, ...extraParams });
   if (token) {
-    params.set('access_token', token);
-    params.set('token', token);
+    params.set("access_token", token);
+    params.set("token", token);
   }
   const url = `${getMsafeBaseUrl()}/msafe_smt_visit_dashboard/${endpoint}?${params.toString()}`;
   const headers: Record<string, string> = {};
@@ -69,7 +93,7 @@ async function fetchMsafeSmtJson(
 function unwrapList(payload: unknown, arrayKeys: string[]): unknown[] {
   const source = Array.isArray(payload)
     ? payload
-    : payload && typeof payload === 'object'
+    : payload && typeof payload === "object"
       ? (payload as Record<string, unknown>)
       : null;
 
@@ -81,32 +105,51 @@ function unwrapList(payload: unknown, arrayKeys: string[]): unknown[] {
   return [];
 }
 
-function getNumber(record: Record<string, unknown>, keys: string[]): number | null {
+function getNumber(
+  record: Record<string, unknown>,
+  keys: string[]
+): number | null {
   for (const key of keys) {
     const raw = record[key];
-    if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
-    if (typeof raw === 'string' && raw.trim() && Number.isFinite(Number(raw))) return Number(raw);
+    if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+    if (typeof raw === "string" && raw.trim() && Number.isFinite(Number(raw)))
+      return Number(raw);
   }
   return null;
 }
 
-function getString(record: Record<string, unknown>, keys: string[]): string | null {
+function getString(
+  record: Record<string, unknown>,
+  keys: string[]
+): string | null {
   for (const key of keys) {
     const value = record[key];
-    if (typeof value === 'string' && value.trim()) return value.trim();
+    if (typeof value === "string" && value.trim()) return value.trim();
   }
   return null;
 }
 
 function normalizeVisitsPerCircle(payload: unknown): CircleRow[] {
-  const list = unwrapList(payload, ['data', 'result', 'circles']);
+  const list = unwrapList(payload, ["data", "result", "circles"]);
   return list
     .map((item) => {
-      if (!item || typeof item !== 'object') return null;
+      if (!item || typeof item !== "object") return null;
       const record = item as Record<string, unknown>;
-      const name = getString(record, ['circle_name', 'circle', 'name', 'label']);
+      const name = getString(record, [
+        "circle_name",
+        "circle",
+        "name",
+        "label",
+      ]);
       if (!name) return null;
-      const n = getNumber(record, ['total_visits', 'count', 'value', 'n', 'total', 'visits']);
+      const n = getNumber(record, [
+        "total_visits",
+        "count",
+        "value",
+        "n",
+        "total",
+        "visits",
+      ]);
       if (n === null) return null;
       return { name, n };
     })
@@ -114,68 +157,117 @@ function normalizeVisitsPerCircle(payload: unknown): CircleRow[] {
 }
 
 function normalizeVisitsPerDepartment(payload: unknown): Slice[] {
-  const list = unwrapList(payload, ['data', 'result', 'departments', 'functions']);
+  const list = unwrapList(payload, [
+    "data",
+    "result",
+    "departments",
+    "functions",
+  ]);
   return list
     .map((item, index) => {
-      if (!item || typeof item !== 'object') return null;
+      if (!item || typeof item !== "object") return null;
       const record = item as Record<string, unknown>;
       const name = getString(record, [
-        'department_name',
-        'department',
-        'function_name',
-        'function',
-        'name',
-        'label',
+        "department_name",
+        "department",
+        "function_name",
+        "function",
+        "name",
+        "label",
       ]);
       if (!name) return null;
-      const value = getNumber(record, ['total_visits', 'count', 'value', 'total', 'visits']);
+      const value = getNumber(record, [
+        "total_visits",
+        "count",
+        "value",
+        "total",
+        "visits",
+      ]);
       if (value === null) return null;
-      return { name, value, color: SLICE_PALETTE[index % SLICE_PALETTE.length] };
+      return {
+        name,
+        value,
+        color: SLICE_PALETTE[index % SLICE_PALETTE.length],
+      };
     })
     .filter((item): item is Slice => Boolean(item));
 }
 
 function normalizeRecentVisits(payload: unknown): RecentVisit[] {
-  const list = unwrapList(payload, ['data', 'result', 'visits', 'records']);
+  const list = unwrapList(payload, ["data", "result", "visits", "records"]);
   return list
     .map((item) => {
-      if (!item || typeof item !== 'object') return null;
+      if (!item || typeof item !== "object") return null;
       const record = item as Record<string, unknown>;
-      const name = getString(record, ['done_by', 'user_name', 'employee_name', 'name']);
+      const name = getString(record, [
+        "done_by",
+        "user_name",
+        "employee_name",
+        "name",
+      ]);
       if (!name) return null;
-      const func = getString(record, ['function_name', 'function', 'func', 'department']) ?? '—';
-      const circle = getString(record, ['circle_name', 'circle']) ?? '—';
-      const area = getString(record, ['area_visited', 'area', 'location', 'site']) ?? '—';
-      const date = getString(record, ['visit_date', 'date', 'created_at']) ?? '—';
+      const func =
+        getString(record, [
+          "function_name",
+          "function",
+          "func",
+          "department",
+        ]) ?? "—";
+      const circle = getString(record, ["circle_name", "circle"]) ?? "—";
+      const area =
+        getString(record, ["area_visited", "area", "location", "site"]) ?? "—";
+      const date =
+        getString(record, ["visit_date", "date", "created_at"]) ?? "—";
       return { name, func, circle, area, date };
     })
     .filter((item): item is RecentVisit => Boolean(item));
 }
 
 function normalizeVisitProgress(payload: unknown): ProgressRow[] {
-  const list = unwrapList(payload, ['data', 'result', 'circles']);
+  const list = unwrapList(payload, ["data", "result", "circles"]);
   return list
     .map((item) => {
-      if (!item || typeof item !== 'object') return null;
+      if (!item || typeof item !== "object") return null;
       const record = item as Record<string, unknown>;
-      const label = getString(record, ['circle_name', 'circle', 'name', 'label']);
+      const label = getString(record, [
+        "circle_name",
+        "circle",
+        "name",
+        "label",
+      ]);
       if (!label) return null;
 
-      const progressStr = getString(record, ['visit_progress', 'progress']);
+      const progressStr = getString(record, ["visit_progress", "progress"]);
       const match = progressStr?.match(/(\d+)\s*\/\s*(\d+)/);
       if (match) {
         const visits = Number(match[1]);
         const target = Number(match[2]);
         const pct = target > 0 ? Math.round((visits / target) * 100) : 0;
-        return { label, pct, val: `${visits}/${target}`, color: pct < 60 ? C.vi : C.warn };
+        return {
+          label,
+          pct,
+          val: `${visits}/${target}`,
+          color: pct < 60 ? C.vi : C.warn,
+        };
       }
 
-      const visits = getNumber(record, ['visits', 'count', 'value', 'completed']);
+      const visits = getNumber(record, [
+        "visits",
+        "count",
+        "value",
+        "completed",
+      ]);
       if (visits === null) return null;
-      const target = getNumber(record, ['target', 'target_visits', 'goal']) ?? 20;
-      const explicitPct = getNumber(record, ['pct', 'percentage', 'percent']);
+      const target =
+        getNumber(record, ["target", "target_visits", "goal"]) ?? 20;
+      const explicitPct = getNumber(record, ["pct", "percentage", "percent"]);
       const pct = explicitPct ?? Math.round((visits / target) * 100);
-      return { label, pct, val: `${visits}/${target}`, color: pct < 60 ? C.vi : C.warn };
+      return {
+        label,
+        pct,
+        val: `${visits}/${target}`,
+        color: pct < 60 ? C.vi : C.warn,
+      };
     })
     .filter((item): item is ProgressRow => Boolean(item));
 }
@@ -191,44 +283,84 @@ function colorForFrequencyLabel(label: string): string {
 }
 
 function normalizeVisitFrequency(payload: unknown): ProgressRow[] {
-  const list = unwrapList(payload, ['data', 'result', 'buckets', 'frequency']);
+  const list = unwrapList(payload, ["data", "result", "buckets", "frequency"]);
   const rows = list
     .map((item) => {
-      if (!item || typeof item !== 'object') return null;
+      if (!item || typeof item !== "object") return null;
       const record = item as Record<string, unknown>;
-      const label = getString(record, ['visit_frequency', 'bucket', 'frequency_range', 'range', 'label', 'name']);
+      const label = getString(record, [
+        "visit_frequency",
+        "bucket",
+        "frequency_range",
+        "range",
+        "label",
+        "name",
+      ]);
       if (!label) return null;
-      const count = getNumber(record, ['total_sites', 'count', 'value', 'val', 'total', 'sites']);
+      const count = getNumber(record, [
+        "total_sites",
+        "count",
+        "value",
+        "val",
+        "total",
+        "sites",
+      ]);
       if (count === null) return null;
-      const explicitPct = getNumber(record, ['pct', 'percentage', 'percent']);
-      return { label, count, explicitPct, color: colorForFrequencyLabel(label) };
+      const explicitPct = getNumber(record, ["pct", "percentage", "percent"]);
+      return {
+        label,
+        count,
+        explicitPct,
+        color: colorForFrequencyLabel(label),
+      };
     })
     .filter(
-      (item): item is { label: string; count: number; explicitPct: number | null; color: string } =>
-        Boolean(item),
+      (
+        item
+      ): item is {
+        label: string;
+        count: number;
+        explicitPct: number | null;
+        color: string;
+      } => Boolean(item)
     );
 
   const maxCount = Math.max(1, ...rows.map((r) => r.count));
   return rows.map((r) => ({
     label: r.label,
-    val: r.count.toLocaleString('en-IN'),
+    val: r.count.toLocaleString("en-IN"),
     pct: r.explicitPct ?? Math.round((r.count / maxCount) * 100),
     color: r.color,
   }));
 }
 
-function DataState({ loading, empty, label }: { loading: boolean; empty: boolean; label: string }) {
+function DataState({
+  loading,
+  empty,
+  label,
+}: {
+  loading: boolean;
+  empty: boolean;
+  label: string;
+}) {
   if (!loading && !empty) return null;
   return (
-    <div style={{ fontSize: 12, color: C.sage, padding: '24px 0', textAlign: 'center' }}>
-      {loading ? 'Loading…' : `No ${label} available`}
+    <div
+      style={{
+        fontSize: 12,
+        color: C.sage,
+        padding: "24px 0",
+        textAlign: "center",
+      }}
+    >
+      {loading ? "Loading…" : `No ${label} available`}
     </div>
   );
 }
 
 export function SmtSection() {
   const { openDrill, persona, appliedFilters } = useMsafeDashboard();
-  const [circleMode, setCircleMode] = useState('bar');
+  const [circleMode, setCircleMode] = useState("bar");
   const [circleData, setCircleData] = useState<CircleRow[]>([]);
   const [circleLoading, setCircleLoading] = useState(true);
   const [funcData, setFuncData] = useState<Slice[]>([]);
@@ -246,13 +378,15 @@ export function SmtSection() {
     (async () => {
       try {
         const payload = await fetchMsafeSmtJson(
-          'visits_per_circle.json',
+          "visits_per_circle.json",
           buildFilterParams(persona, appliedFilters),
-          controller.signal,
+          controller.signal
         );
-        if (!controller.signal.aborted) setCircleData(normalizeVisitsPerCircle(payload));
+        if (!controller.signal.aborted)
+          setCircleData(normalizeVisitsPerCircle(payload));
       } catch (err) {
-        if ((err as Error).name !== 'AbortError') console.warn('M-Safe visits-per-circle API failed.', err);
+        if ((err as Error).name !== "AbortError")
+          console.warn("M-Safe visits-per-circle API failed.", err);
       } finally {
         if (!controller.signal.aborted) setCircleLoading(false);
       }
@@ -266,13 +400,15 @@ export function SmtSection() {
     (async () => {
       try {
         const payload = await fetchMsafeSmtJson(
-          'visits_per_department.json',
+          "visits_per_department.json",
           buildFilterParams(persona, appliedFilters),
-          controller.signal,
+          controller.signal
         );
-        if (!controller.signal.aborted) setFuncData(normalizeVisitsPerDepartment(payload));
+        if (!controller.signal.aborted)
+          setFuncData(normalizeVisitsPerDepartment(payload));
       } catch (err) {
-        if ((err as Error).name !== 'AbortError') console.warn('M-Safe visits-per-department API failed.', err);
+        if ((err as Error).name !== "AbortError")
+          console.warn("M-Safe visits-per-department API failed.", err);
       } finally {
         if (!controller.signal.aborted) setFuncLoading(false);
       }
@@ -286,13 +422,15 @@ export function SmtSection() {
     (async () => {
       try {
         const payload = await fetchMsafeSmtJson(
-          'recent_smt_visits.json',
-          { ...buildFilterParams(persona, appliedFilters), type: 'department' },
-          controller.signal,
+          "recent_smt_visits.json",
+          { ...buildFilterParams(persona, appliedFilters), type: "department" },
+          controller.signal
         );
-        if (!controller.signal.aborted) setRecentVisits(normalizeRecentVisits(payload));
+        if (!controller.signal.aborted)
+          setRecentVisits(normalizeRecentVisits(payload));
       } catch (err) {
-        if ((err as Error).name !== 'AbortError') console.warn('M-Safe recent-smt-visits API failed.', err);
+        if ((err as Error).name !== "AbortError")
+          console.warn("M-Safe recent-smt-visits API failed.", err);
       } finally {
         if (!controller.signal.aborted) setRecentLoading(false);
       }
@@ -349,18 +487,27 @@ export function SmtSection() {
       excelLabel="SMT Visits"
     >
       <ChartCard
-        title="Visits per Circle "
+        title="Visits per Circle"
         sub="Ranked by SMT field visit count"
         infoKey="smt-circle"
         showPdf
-        
         pdfLabel="Visits per Circle"
         exportData={circleData.map((d) => ({ Circle: d.name, Visits: d.n }))}
-        chartSwitch={<ChartSwitch modes={['bar', 'table']} value={circleMode} onChange={setCircleMode} />}
+        chartSwitch={
+          <ChartSwitch
+            modes={["bar", "table"]}
+            value={circleMode}
+            onChange={setCircleMode}
+          />
+        }
       >
         {circleLoading || circleData.length === 0 ? (
-          <DataState loading={circleLoading} empty={circleData.length === 0} label="circle visit data" />
-        ) : circleMode === 'table' ? (
+          <DataState
+            loading={circleLoading}
+            empty={circleData.length === 0}
+            label="circle visit data"
+          />
+        ) : circleMode === "table" ? (
           <div className="chart-as-table" style={{ maxHeight: 420 }}>
             <table>
               <thead>
@@ -380,9 +527,16 @@ export function SmtSection() {
             </table>
           </div>
         ) : (
-          <div style={{ maxHeight: 560, overflowY: 'auto' }}>
-            <ResponsiveContainer width="100%" height={Math.max(320, circleData.length * 22)}>
-              <BarChart data={circleData} layout="vertical" margin={{ top: 4, right: 32, left: 0, bottom: 4 }}>
+          <div style={{ maxHeight: 560, overflowY: "auto" }}>
+            <ResponsiveContainer
+              width="100%"
+              height={Math.max(320, circleData.length * 22)}
+            >
+              <BarChart
+                data={circleData}
+                layout="vertical"
+                margin={{ top: 4, right: 32, left: 0, bottom: 4 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
                 <XAxis type="number" tick={{ fontSize: 10, fill: C.sage }} />
                 <YAxis
@@ -393,10 +547,17 @@ export function SmtSection() {
                   tick={{ fontSize: 10, fill: C.sage }}
                 />
                 <Tooltip
-                  cursor={{ fill: 'rgba(44,44,44,.04)' }}
-                  content={(props) => <MsafeChartTooltip {...props} bodyLabel="Visits" />}
+                  cursor={{ fill: "rgba(44,44,44,.04)" }}
+                  content={(props) => (
+                    <MsafeChartTooltip {...props} bodyLabel="Visits" />
+                  )}
                 />
-                <Bar dataKey="n" fill={C.lav} radius={[0, 5, 5, 0]} name="Visits" />
+                <Bar
+                  dataKey="n"
+                  fill={C.lav}
+                  radius={[0, 5, 5, 0]}
+                  name="Visits"
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -404,11 +565,23 @@ export function SmtSection() {
       </ChartCard>
 
       <div className="g g2" style={{ marginTop: 16 }}>
-        <ChartCard title="SMT by Function" sub="Which functions are doing the visits" infoKey="smt-func">
+        <ChartCard
+          title="SMT by Function"
+          sub="Which functions are doing the visits"
+          infoKey="smt-func"
+        >
           {funcLoading || funcData.length === 0 ? (
-            <DataState loading={funcLoading} empty={funcData.length === 0} label="function visit data" />
+            <DataState
+              loading={funcLoading}
+              empty={funcData.length === 0}
+              label="function visit data"
+            />
           ) : (
-            <DonutChart data={funcData} bodyLabel="Visits" height={Math.max(220, funcData.length * 26)} />
+            <DonutChart
+              data={funcData}
+              bodyLabel="Visits"
+              height={Math.max(220, funcData.length * 26)}
+            />
           )}
         </ChartCard>
 
@@ -419,7 +592,11 @@ export function SmtSection() {
           tag={<span className="card-tag">Last 20</span>}
         >
           {recentLoading || recentVisits.length === 0 ? (
-            <DataState loading={recentLoading} empty={recentVisits.length === 0} label="recent visits" />
+            <DataState
+              loading={recentLoading}
+              empty={recentVisits.length === 0}
+              label="recent visits"
+            />
           ) : (
             <div className="tbl-scroll">
               <table className="tbl">
@@ -434,7 +611,10 @@ export function SmtSection() {
                 </thead>
                 <tbody>
                   {recentVisits.map((s) => (
-                    <tr key={s.name + s.date} onClick={() => openDrill('smt-visit', s.name)}>
+                    <tr
+                      key={s.name + s.date}
+                      onClick={() => openDrill("smt-visit", s.name)}
+                    >
                       <td className="cell-strong">{s.name}</td>
                       <td>{s.func}</td>
                       <td>{s.circle}</td>

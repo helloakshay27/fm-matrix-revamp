@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Plus,
   Search,
@@ -8,7 +8,18 @@ import {
   Workflow,
   Settings2,
   ListChecks,
+  Loader2,
+  RefreshCw,
 } from "lucide-react";
+import { toast } from "sonner";
+import RuleCanvas from "@/components/AdminCompass/RuleCanvas";
+import {
+  deleteRule as deleteRuleApi,
+  fetchRules,
+  operatorSymbol,
+  updateRule,
+  type Rule,
+} from "@/services/ruleEngineAPI";
 
 // Admin Compass design tokens — kept identical to TeamDashboard/Jobs so this
 // page reads as part of the module rather than a bolt-on.
@@ -26,15 +37,6 @@ const T = {
   font: "'Poppins', sans-serif",
 };
 
-export interface Rule {
-  id: number;
-  name: string;
-  trigger: string;
-  condition: string;
-  action: string;
-  active: boolean;
-}
-
 export interface RuleEngineConfig {
   enabled: boolean;
   evaluationMode: "all" | "first";
@@ -44,10 +46,8 @@ export interface RuleEngineConfig {
   logRetentionDays: number;
 }
 
-// No Admin Compass rule-engine endpoint exists yet, so the list and the config
-// start from local defaults. Swap these for the API once it is available.
-const INITIAL_RULES: Rule[] = [];
-
+// The Configuration tab has no endpoint behind it yet, so it still starts from
+// local defaults. The Rules tab is fully API-backed.
 const DEFAULT_CONFIG: RuleEngineConfig = {
   enabled: true,
   evaluationMode: "all",
@@ -102,30 +102,87 @@ const ConfigRow = ({
   </div>
 );
 
+/** One-line summary of a rule's conditions, e.g. `status = open AND priority > 2`. */
+const summariseConditions = (rule: Rule) =>
+  rule.conditions
+    .map(
+      (c) =>
+        `${c.conditionAttribute || "?"} ${operatorSymbol(c.operator)} ${c.compareValue || "?"}`
+    )
+    .join(" · ") || "—";
+
+const summariseActions = (rule: Rule) =>
+  rule.actions.map((a) => a.actionMethod || "?").join(" · ") || "—";
+
 const RuleEngine = () => {
   const [activeTab, setActiveTab] = useState<TabKey>("rules");
-  const [rules, setRules] = useState<Rule[]>(INITIAL_RULES);
+  const [rules, setRules] = useState<Rule[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [config, setConfig] = useState<RuleEngineConfig>(DEFAULT_CONFIG);
+  const [togglingId, setTogglingId] = useState<number | null>(null);
+
+  // null = list view; undefined id = new rule; a number = edit that rule.
+  const [editing, setEditing] = useState<{ id: number | null } | null>(null);
+
+  const loadRules = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setRules(await fetchRules());
+    } catch (e: any) {
+      setError(e?.message || "Failed to load rules");
+      setRules([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadRules();
+  }, [loadRules]);
 
   const filteredRules = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
     if (!q) return rules;
     return rules.filter((r) =>
-      [r.name, r.trigger, r.condition, r.action].some((f) =>
-        f.toLowerCase().includes(q)
+      [r.name, r.description, summariseConditions(r), summariseActions(r)].some(
+        (f) => f.toLowerCase().includes(q)
       )
     );
   }, [rules, searchTerm]);
 
-  const toggleActive = (id: number) => {
-    setRules((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, active: !r.active } : r))
-    );
+  // The whole rule goes back on the wire — the nested rows all carry ids, so
+  // they update in place rather than being recreated.
+  const toggleActive = async (rule: Rule) => {
+    setTogglingId(rule.id);
+    try {
+      const updated = await updateRule(rule.id, {
+        name: rule.name,
+        description: rule.description,
+        active: !rule.active,
+        modelId: rule.modelId,
+        conditions: rule.conditions,
+        actions: rule.actions,
+      });
+      setRules((prev) => prev.map((r) => (r.id === rule.id ? updated : r)));
+      toast.success(updated.active ? "Rule activated" : "Rule deactivated");
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to update rule");
+    } finally {
+      setTogglingId(null);
+    }
   };
 
-  const deleteRule = (id: number) => {
-    setRules((prev) => prev.filter((r) => r.id !== id));
+  const removeRule = async (rule: Rule) => {
+    try {
+      await deleteRuleApi(rule.id);
+      setRules((prev) => prev.filter((r) => r.id !== rule.id));
+      toast.success("Rule deleted");
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to delete rule");
+    }
   };
 
   const setField = <K extends keyof RuleEngineConfig>(
@@ -212,14 +269,38 @@ const RuleEngine = () => {
           })}
         </div>
 
-        {/* ── Rules tab ── */}
-        {activeTab === "rules" && (
+        {/* ── Rules tab: canvas editor, or the list ── */}
+        {activeTab === "rules" && editing && (
+          <div
+            className="rounded-[20px] border p-4 shadow-sm sm:p-6"
+            style={cardStyle}
+          >
+            <RuleCanvas
+              ruleId={editing.id}
+              onBack={() => {
+                setEditing(null);
+                loadRules();
+              }}
+              onSaved={(saved) =>
+                setRules((prev) => {
+                  const exists = prev.some((r) => r.id === saved.id);
+                  return exists
+                    ? prev.map((r) => (r.id === saved.id ? saved : r))
+                    : [saved, ...prev];
+                })
+              }
+            />
+          </div>
+        )}
+
+        {activeTab === "rules" && !editing && (
           <div
             className="rounded-[20px] border p-4 shadow-sm sm:p-6"
             style={cardStyle}
           >
             <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <button
+                onClick={() => setEditing({ id: null })}
                 className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white transition-colors sm:w-fit"
                 style={{ background: T.primary }}
                 onMouseEnter={(e) => {
@@ -248,6 +329,18 @@ const RuleEngine = () => {
                   />
                 </div>
                 <button
+                  onClick={loadRules}
+                  disabled={loading}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-colors disabled:opacity-60"
+                  style={{ borderColor: T.primary, color: T.primary }}
+                  title="Refresh"
+                  aria-label="Refresh rules"
+                >
+                  <RefreshCw
+                    className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+                  />
+                </button>
+                <button
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-colors"
                   style={{ borderColor: T.primary, color: T.primary }}
                   title="Filter"
@@ -258,7 +351,31 @@ const RuleEngine = () => {
               </div>
             </div>
 
-            {filteredRules.length === 0 ? (
+            {loading ? (
+              <div className="flex flex-col items-center justify-center gap-2 py-12">
+                <Loader2
+                  className="h-6 w-6 animate-spin"
+                  style={{ color: T.primary }}
+                />
+                <p className="text-xs" style={{ color: T.textMuted }}>
+                  Loading rules...
+                </p>
+              </div>
+            ) : error ? (
+              <div
+                className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-12 text-center"
+                style={{ borderColor: T.primaryBord }}
+              >
+                <p className="text-sm font-medium text-red-600">{error}</p>
+                <button
+                  onClick={loadRules}
+                  className="mt-1 rounded-xl px-4 py-2 text-sm font-medium text-white"
+                  style={{ background: T.primary }}
+                >
+                  Try again
+                </button>
+              </div>
+            ) : filteredRules.length === 0 ? (
               <div
                 className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-12 text-center"
                 style={{ borderColor: T.primaryBord }}
@@ -267,7 +384,10 @@ const RuleEngine = () => {
                   className="h-8 w-8"
                   style={{ color: T.primaryBord }}
                 />
-                <p className="text-sm font-medium" style={{ color: T.textMain }}>
+                <p
+                  className="text-sm font-medium"
+                  style={{ color: T.textMain }}
+                >
                   {rules.length === 0 ? "No rules yet" : "No matching rules"}
                 </p>
                 <p className="text-xs" style={{ color: T.textMuted }}>
@@ -286,8 +406,8 @@ const RuleEngine = () => {
                       {[
                         "Rule",
                         "Trigger",
-                        "Condition",
-                        "Action",
+                        "Conditions",
+                        "Actions",
                         "Status",
                         "",
                       ].map((h, i) => (
@@ -312,43 +432,66 @@ const RuleEngine = () => {
                           className="px-4 py-3 text-sm font-medium"
                           style={{ color: T.textMain }}
                         >
-                          {rule.name}
+                          <button
+                            onClick={() => setEditing({ id: rule.id })}
+                            className="text-left hover:underline"
+                          >
+                            {rule.name || `Rule #${rule.id}`}
+                          </button>
+                          {rule.description && (
+                            <span
+                              className="block truncate text-xs"
+                              style={{ color: T.textMuted }}
+                            >
+                              {rule.description}
+                            </span>
+                          )}
                         </td>
                         <td
                           className="px-4 py-3 text-sm"
                           style={{ color: T.textMuted }}
                         >
-                          {rule.trigger}
+                          {rule.conditions[0]?.modelName ||
+                            rule.conditions[0]?.actionType ||
+                            "—"}
                         </td>
                         <td
-                          className="px-4 py-3 text-sm"
+                          className="max-w-[240px] truncate px-4 py-3 text-sm"
                           style={{ color: T.textMuted }}
+                          title={summariseConditions(rule)}
                         >
-                          {rule.condition}
+                          {summariseConditions(rule)}
                         </td>
                         <td
-                          className="px-4 py-3 text-sm"
+                          className="max-w-[200px] truncate px-4 py-3 text-sm"
                           style={{ color: T.textMuted }}
+                          title={summariseActions(rule)}
                         >
-                          {rule.action}
+                          {summariseActions(rule)}
                         </td>
                         <td className="px-4 py-3">
                           <button
-                            onClick={() => toggleActive(rule.id)}
-                            className={`rounded-full px-3 py-1 text-xs font-medium ${
+                            onClick={() => toggleActive(rule)}
+                            disabled={togglingId === rule.id}
+                            className={`rounded-full px-3 py-1 text-xs font-medium disabled:opacity-60 ${
                               rule.active
                                 ? "bg-emerald-100 text-emerald-700"
                                 : "bg-gray-100 text-gray-600"
                             }`}
                           >
-                            {rule.active ? "Active" : "Inactive"}
+                            {togglingId === rule.id
+                              ? "Saving..."
+                              : rule.active
+                                ? "Active"
+                                : "Inactive"}
                           </button>
                         </td>
                         <td className="whitespace-nowrap px-4 py-3">
                           <div className="flex items-center gap-1">
                             <button
+                              onClick={() => setEditing({ id: rule.id })}
                               className="rounded-lg p-1.5 transition-colors hover:bg-[#f6f4ee]"
-                              title="Edit rule"
+                              title="Open in canvas"
                               aria-label={`Edit ${rule.name}`}
                             >
                               <Pencil
@@ -357,7 +500,7 @@ const RuleEngine = () => {
                               />
                             </button>
                             <button
-                              onClick={() => deleteRule(rule.id)}
+                              onClick={() => removeRule(rule)}
                               className="rounded-lg p-1.5 transition-colors hover:bg-[#f6f4ee]"
                               title="Delete rule"
                               aria-label={`Delete ${rule.name}`}
@@ -391,7 +534,10 @@ const RuleEngine = () => {
               >
                 Engine Configuration
               </h2>
-              <p className="mt-0.5 text-xs sm:text-sm" style={{ color: T.textMuted }}>
+              <p
+                className="mt-0.5 text-xs sm:text-sm"
+                style={{ color: T.textMuted }}
+              >
                 Controls how every rule in this module is evaluated and logged
               </p>
             </div>
@@ -445,7 +591,10 @@ const RuleEngine = () => {
                 <select
                   value={config.runOn}
                   onChange={(e) =>
-                    setField("runOn", e.target.value as RuleEngineConfig["runOn"])
+                    setField(
+                      "runOn",
+                      e.target.value as RuleEngineConfig["runOn"]
+                    )
                   }
                   className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
                   style={inputStyle}
