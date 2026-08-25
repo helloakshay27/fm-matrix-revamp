@@ -15,6 +15,29 @@ import posthog from "posthog-js";
 // Register service worker for PWA
 // registerServiceWorker();
 
+// Every page in this app is lazy-loaded, and Vite fingerprints each chunk
+// with a content hash that changes on every deploy. A tab left open across a
+// deploy still holds the old chunk URLs, so navigating to a route not yet
+// loaded this session requests a chunk that no longer exists on the server —
+// the import rejects and, with nothing to catch it, React unmounts to a
+// blank page. Vite dispatches this event specifically for that case; reload
+// once to pick up the new build. The session flag stops a reload loop if the
+// server is actually down rather than just serving a newer build, and clears
+// itself after the app has been running a while so a later real deploy can
+// still trigger a reload.
+const RELOAD_ONCE_KEY = "vite-preload-error-reloaded";
+window.addEventListener("vite:preloadError", () => {
+  if (sessionStorage.getItem(RELOAD_ONCE_KEY)) {
+    console.error(
+      "[vite] Dynamic import failed again after a reload — not reloading again."
+    );
+    return;
+  }
+  sessionStorage.setItem(RELOAD_ONCE_KEY, "1");
+  window.location.reload();
+});
+setTimeout(() => sessionStorage.removeItem(RELOAD_ONCE_KEY), 10_000);
+
 // Apply Lockated Brand Theme and color patch on live and local environments
 // if (
 //   window.location.hostname === "fm-matrix.lockated.com" ||
