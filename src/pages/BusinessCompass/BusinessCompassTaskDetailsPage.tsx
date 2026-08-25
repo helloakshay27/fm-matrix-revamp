@@ -570,14 +570,14 @@ const Comments = ({
                     <div key={cmt.id} className="relative flex justify-start m-2 gap-5">
                         <div className="bg-[#01569E] h-[36px] w-[36px] rounded-full text-white text-center p-1.5">
                             <span>
-                                {cmt?.commentor_full_name
+                                {cmt?.commentor_name
                                     ?.split(" ")
                                     .map((n: string) => n.charAt(0))
                                     .join("")}
                             </span>
                         </div>
                         <div className="flex flex-col gap-2 w-full border-b-[2px] pb-3 border-[rgba(190, 190, 190, 1)]">
-                            <h1 className="font-bold">{cmt.commentor_full_name}</h1>
+                            <h1 className="font-bold">{cmt.commentor_name}</h1>
 
                             {isEditing ? (
                                 <div className="relative w-full">
