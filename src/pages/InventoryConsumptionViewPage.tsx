@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, X, PlusCircle, Download } from 'lucide-react';
+import { ArrowLeft, X, PlusCircle, Download, MapPin } from 'lucide-react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { RootState, AppDispatch } from '@/store/store';
 import { fetchInventoryConsumptionDetails } from '@/store/slices/inventoryConsumptionDetailsSlice';
@@ -18,10 +18,22 @@ import {
   DialogContent,
   IconButton,
   CircularProgress,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
 } from '@mui/material';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useLocationData } from '@/hooks/useLocationData';
+import { getAuthHeader } from '@/config/apiConfig';
+
+const BRAND = '#DA7756';
+
+interface HandoverUser {
+  id: number;
+  full_name: string;
+}
 
 const InventoryConsumptionViewPage = () => {
   const { id } = useParams();
@@ -43,11 +55,79 @@ const InventoryConsumptionViewPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [formData, setFormData] = useState({
+    type: 'Add', // Add | Consume | Dispose — placeholder move_type mapping, pending backend confirmation
     quantity: '',
     moveType: '',
     comments: '',
   });
   const [errors, setErrors] = useState<{ quantity: string; moveType: string }>({ quantity: '', moveType: '' });
+
+  // Handover Details
+  const [handoverTo, setHandoverTo] = useState('');
+  const [handoverUsers, setHandoverUsers] = useState<HandoverUser[]>([]);
+  const [buildingId, setBuildingId] = useState<number | ''>('');
+  const [wingId, setWingId] = useState<number | ''>('');
+  const [floorId, setFloorId] = useState<number | ''>('');
+  const [areaId, setAreaId] = useState<number | ''>('');
+
+  const {
+    buildings,
+    wings,
+    areas,
+    floors,
+    loading: locationLoading,
+    fetchBuildings,
+    fetchWings,
+    fetchAreas,
+    fetchFloors,
+  } = useLocationData();
+
+  // Resolve the current site the same way MovementToSection does — there's no
+  // per-page site selector here, so fall back to the globally selected site.
+  const currentSiteId = useMemo(() => {
+    const raw = localStorage.getItem('selectedSiteId');
+    if (!raw) return null;
+    const match = raw.match(/-?\d+/);
+    return match ? Number(match[0]) : null;
+  }, []);
+
+  useEffect(() => {
+    if (isModalOpen && currentSiteId) {
+      fetchBuildings(currentSiteId);
+    }
+  }, [isModalOpen, currentSiteId]);
+
+  useEffect(() => {
+    if (buildingId) {
+      fetchWings(Number(buildingId));
+      fetchAreas(0, Number(buildingId));
+      fetchFloors(0, Number(buildingId));
+      setWingId('');
+      setAreaId('');
+      setFloorId('');
+    }
+  }, [buildingId]);
+
+  useEffect(() => {
+    if (wingId && buildingId) {
+      fetchAreas(Number(wingId), Number(buildingId));
+      fetchFloors(0, Number(buildingId), Number(wingId));
+      setAreaId('');
+      setFloorId('');
+    }
+  }, [wingId]);
+
+  // Fetch the "Handover To" users list once, when the modal first opens.
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const baseUrl = localStorage.getItem('baseUrl');
+    axios
+      .get(`https://${baseUrl}/pms/users/get_escalate_to_users.json`, {
+        headers: { Authorization: getAuthHeader() },
+      })
+      .then((res) => setHandoverUsers(res.data?.users || []))
+      .catch((err) => console.error('Error fetching handover users', err));
+  }, [isModalOpen]);
 
   // Map backend error verbiage to friendly messages
   const mapBackendError = (raw: any): string => {
@@ -133,6 +213,11 @@ const InventoryConsumptionViewPage = () => {
       { key: 'add_or_consume', label: 'Add / Consume', sortable: true },
       { key: 'closing', label: 'Closing', sortable: true },
       { key: 'consumption_type', label: 'Consumption Type', sortable: true },
+      { key: 'building', label: 'Building', sortable: true },
+      { key: 'wing', label: 'Wing', sortable: true },
+      { key: 'floor', label: 'Floor', sortable: true },
+      { key: 'area', label: 'Area', sortable: true },
+      { key: 'handover_to', label: 'Handover To', sortable: true },
       { key: 'comments', label: 'Comments', sortable: false },
       { key: 'consumed_by', label: 'Consumed By', sortable: true },
     ],
@@ -181,9 +266,14 @@ const InventoryConsumptionViewPage = () => {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setFormData({ quantity: '', moveType: '', comments: '' });
+    setFormData({ type: 'Add', quantity: '', moveType: '', comments: '' });
     setIsSubmitting(false);
-  setErrors({ quantity: '', moveType: '' });
+    setErrors({ quantity: '', moveType: '' });
+    setHandoverTo('');
+    setBuildingId('');
+    setWingId('');
+    setFloorId('');
+    setAreaId('');
   };
 
   const handleFormSubmit = async () => {
@@ -219,12 +309,17 @@ const InventoryConsumptionViewPage = () => {
       return;
     }
 
-    const payload = {
-      resource_id: String(id),
+    const payload: Record<string, unknown> = {
+      resource_id: Number(id),
+      quantity: qtyInt,
       move_type: String(formData.moveType),
-      quantity: String(qtyInt),
       comments: formData.comments,
     };
+    if (buildingId !== '') payload.building_id = Number(buildingId);
+    if (wingId !== '') payload.wing_id = Number(wingId);
+    if (floorId !== '') payload.floor_id = Number(floorId);
+    if (areaId !== '') payload.area_id = Number(areaId);
+    if (handoverTo !== '') payload.handover_to_id = Number(handoverTo);
 
     console.log('Payload (POST direct):', payload);
 
@@ -302,6 +397,19 @@ const InventoryConsumptionViewPage = () => {
     navigate('/maintenance/inventory-consumption');
   };
 
+  // Building/Wing/Floor/Area/Handover To can come back as a plain string,
+  // a nested { id, name } object, or be absent entirely — normalize all
+  // three to a renderable string instead of handing React a raw object.
+  const displayName = (value: unknown): string => {
+    if (value === null || value === undefined || value === '') return '';
+    if (typeof value === 'string' || typeof value === 'number') return String(value);
+    if (typeof value === 'object' && 'name' in (value as Record<string, unknown>)) {
+      const name = (value as Record<string, unknown>).name;
+      if (typeof name === 'string' || typeof name === 'number') return String(name);
+    }
+    return '';
+  };
+
   // Render cell content for EnhancedTable
   const renderCell = useCallback(
     (item: any, columnKey: string) => {
@@ -323,6 +431,16 @@ const InventoryConsumptionViewPage = () => {
           return item?.closing ?? '-';
         case 'consumption_type':
           return item?.consumption_type || '-';
+        case 'building':
+          return displayName(item?.location?.building) || '-';
+        case 'wing':
+          return displayName(item?.location?.wing) || '-';
+        case 'floor':
+          return displayName(item?.location?.floor) || '-';
+        case 'area':
+          return displayName(item?.location?.area) || '-';
+        case 'handover_to':
+          return displayName(item?.handover_to) || '-';
         case 'comments':
           return item?.comments || '-';
         case 'consumed_by':
@@ -424,6 +542,31 @@ const InventoryConsumptionViewPage = () => {
           </DialogTitle>
           <DialogContent sx={{ pt: 1, minHeight: '400px', pb: 4 }}>
             <div className="space-y-4 py-4">
+              <div className="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-100">
+                <div className="border-l-4 border-l-brand p-4 bg-white">
+                  <div className="flex items-center gap-2 text-brand text-sm font-semibold mb-2">
+                    <span className="bg-brand text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                      <PlusCircle className="w-3 h-3" />
+                    </span>
+                    TYPE <span className="text-brand">*</span>
+                  </div>
+                  <RadioGroup
+                    row
+                    value={formData.type}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, type: e.target.value }))}
+                  >
+                    {['Add', 'Consume', 'Dispose'].map((opt) => (
+                      <FormControlLabel
+                        key={opt}
+                        value={opt}
+                        control={<Radio sx={{ '&.Mui-checked': { color: BRAND }, color: '#9CA3AF' }} />}
+                        label={opt}
+                      />
+                    ))}
+                  </RadioGroup>
+                </div>
+              </div>
+
               <TextField
                 label="Enter Quantity"
                 placeholder="Enter Quantity"
@@ -544,6 +687,132 @@ const InventoryConsumptionViewPage = () => {
                   },
                 }}
               />
+
+              <div className="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-100">
+                <div className="border-l-4 border-l-brand p-4 sm:p-6 bg-white">
+                  <div className="flex items-center gap-2 text-brand text-sm sm:text-base font-semibold mb-4">
+                    <span className="bg-brand text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                      <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
+                    </span>
+                    HANDOVER DETAILS
+                  </div>
+
+                <div className="space-y-4">
+                  <FormControl fullWidth size="small" variant="outlined" required>
+                    <InputLabel shrink sx={{ '& .MuiFormLabel-asterisk': { color: BRAND } }}>
+                      Handover To
+                    </InputLabel>
+                    <Select
+                      value={handoverTo}
+                      onChange={(e) => setHandoverTo(e.target.value as string)}
+                      label="Handover To"
+                      displayEmpty
+                      renderValue={(selected) => {
+                        if (!selected) return <span style={{ color: '#9CA3AF' }}>Select Handover To</span>;
+                        return handoverUsers.find((u) => String(u.id) === String(selected))?.full_name || '';
+                      }}
+                    >
+                      <MenuItem value="">Select Handover To</MenuItem>
+                      {handoverUsers.map((u) => (
+                        <MenuItem key={u.id} value={u.id}>
+                          {u.full_name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <FormControl fullWidth size="small" variant="outlined" required>
+                      <InputLabel shrink>Building</InputLabel>
+                      <Select
+                        value={buildingId}
+                        onChange={(e) => setBuildingId(e.target.value ? Number(e.target.value) : '')}
+                        label="Building"
+                        displayEmpty
+                        disabled={!currentSiteId || locationLoading.buildings}
+                        renderValue={(selected) => {
+                          if (!selected) return <span style={{ color: '#9CA3AF' }}>Select Building</span>;
+                          return buildings.find((b) => b.id === Number(selected))?.name || '';
+                        }}
+                      >
+                        <MenuItem value="">Select Building</MenuItem>
+                        {buildings.map((b) => (
+                          <MenuItem key={b.id} value={b.id}>
+                            {b.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    <FormControl fullWidth size="small" variant="outlined" required>
+                      <InputLabel shrink>Wing</InputLabel>
+                      <Select
+                        value={wingId}
+                        onChange={(e) => setWingId(e.target.value ? Number(e.target.value) : '')}
+                        label="Wing"
+                        displayEmpty
+                        disabled={!buildingId || locationLoading.wings}
+                        renderValue={(selected) => {
+                          if (!selected) return <span style={{ color: '#9CA3AF' }}>Select Wing</span>;
+                          return wings.find((w) => w.id === Number(selected))?.name || '';
+                        }}
+                      >
+                        <MenuItem value="">Select Wing</MenuItem>
+                        {wings.map((w) => (
+                          <MenuItem key={w.id} value={w.id}>
+                            {w.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    <FormControl fullWidth size="small" variant="outlined" required>
+                      <InputLabel shrink>Floor</InputLabel>
+                      <Select
+                        value={floorId}
+                        onChange={(e) => setFloorId(e.target.value ? Number(e.target.value) : '')}
+                        label="Floor"
+                        displayEmpty
+                        disabled={!buildingId || locationLoading.floors}
+                        renderValue={(selected) => {
+                          if (!selected) return <span style={{ color: '#9CA3AF' }}>Select Floor</span>;
+                          return floors.find((f) => f.id === Number(selected))?.name || '';
+                        }}
+                      >
+                        <MenuItem value="">Select Floor</MenuItem>
+                        {floors.map((f) => (
+                          <MenuItem key={f.id} value={f.id}>
+                            {f.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </div>
+
+                  <FormControl fullWidth size="small" variant="outlined" required>
+                    <InputLabel shrink>Area</InputLabel>
+                    <Select
+                      value={areaId}
+                      onChange={(e) => setAreaId(e.target.value ? Number(e.target.value) : '')}
+                      label="Area"
+                      displayEmpty
+                      disabled={!buildingId || locationLoading.areas}
+                      renderValue={(selected) => {
+                        if (!selected) return <span style={{ color: '#9CA3AF' }}>Select Area</span>;
+                        return areas.find((a) => a.id === Number(selected))?.name || '';
+                      }}
+                    >
+                      <MenuItem value="">Select Area</MenuItem>
+                      {areas.map((a) => (
+                        <MenuItem key={a.id} value={a.id}>
+                          {a.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
+                </div>
+              </div>
 
               <div className="flex justify-end pt-4">
                 <Button
