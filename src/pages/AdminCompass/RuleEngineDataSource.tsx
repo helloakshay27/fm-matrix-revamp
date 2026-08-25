@@ -25,7 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import AddDataSourceModal from "@/components/AdminCompass/AddDataSourceModal";
-import DataSourceConfigurationTab from "@/components/AdminCompass/DataSourceConfigurationTab";
+import DataSourceModelsTab from "@/components/AdminCompass/DataSourceModelsTab";
 import { getFullUrl, getAuthHeader } from "@/config/apiConfig";
 
 // Admin Compass design tokens — kept identical to RuleEngine/TeamDashboard/Jobs
@@ -61,9 +61,9 @@ export interface DataSource {
   database_name: string | null;
   username: string | null;
   /**
-   * "internal" | "external". Set on the data source form and fed straight into
-   * the pull_schema payload's "type" by the Configuration tab. Records created
-   * before the field existed come back null and are treated as external.
+   * Feeds the pull_schema payload's "type" in the Models tab. Not sent by the
+   * API yet — stays null until the key is added, and the Models tab falls back
+   * to "external" meanwhile.
    */
   type: string | null;
 }
@@ -83,7 +83,6 @@ const inputStyle = {
 const COLUMNS = [
   "Data Source Name",
   "Connecter",
-  "Type",
   "Status",
   "Project Code",
   "Created By",
@@ -94,7 +93,7 @@ const COLUMNS = [
 
 const TABS = [
   { key: "sources", label: "Data Source", icon: Server },
-  { key: "configuration", label: "Configuration", icon: Table2 },
+  { key: "models", label: "Models", icon: Table2 },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -151,7 +150,7 @@ const RuleEngineDataSource = () => {
       const body = await response.json();
       const list: any[] = Array.isArray(body)
         ? body
-        : (body?.datasources ?? body?.data ?? []);
+        : body?.datasources ?? body?.data ?? [];
 
       setSources(
         list.map((item: any) => ({
@@ -240,8 +239,7 @@ const RuleEngineDataSource = () => {
         let message = `Failed to delete data source (${response.status})`;
         try {
           const body = await response.json();
-          if (body?.message || body?.error)
-            message = body.message || body.error;
+          if (body?.message || body?.error) message = body.message || body.error;
         } catch {
           // Not JSON — keep the status-based message.
         }
@@ -262,9 +260,12 @@ const RuleEngineDataSource = () => {
     const q = searchTerm.trim().toLowerCase();
     if (!q) return sources;
     return sources.filter((s) =>
-      [s.datasource_name, s.connecter, s.project_code, s.created_by_name].some(
-        (f) => (f ?? "").toLowerCase().includes(q)
-      )
+      [
+        s.datasource_name,
+        s.connecter,
+        s.project_code,
+        s.created_by_name,
+      ].some((f) => (f ?? "").toLowerCase().includes(q))
     );
   }, [sources, searchTerm]);
 
@@ -345,263 +346,245 @@ const RuleEngineDataSource = () => {
           })}
         </div>
 
-        {/* ── Configuration tab ── */}
-        {activeTab === "configuration" && (
+        {/* ── Models tab ── */}
+        {activeTab === "models" && (
           <div
             className="rounded-[20px] border p-4 shadow-sm sm:p-6"
             style={cardStyle}
           >
-            <DataSourceConfigurationTab
-              sources={sources}
-              sourcesLoading={loading}
-            />
+            <DataSourceModelsTab sources={sources} sourcesLoading={loading} />
           </div>
         )}
 
         {/* ── Data Source tab: toolbar + list ── */}
         {activeTab === "sources" && (
-          <div
-            className="rounded-[20px] border p-4 shadow-sm sm:p-6"
-            style={cardStyle}
-          >
-            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <button
-                onClick={() => {
-                  setEditing(null);
-                  setIsAddOpen(true);
-                }}
-                className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white transition-colors sm:w-fit"
-                style={{ background: T.primary }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = T.primaryHov;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = T.primary;
-                }}
-              >
-                <Plus className="h-4 w-4" />
-                New Data Source
-              </button>
+        <div
+          className="rounded-[20px] border p-4 shadow-sm sm:p-6"
+          style={cardStyle}
+        >
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <button
+              onClick={() => {
+                setEditing(null);
+                setIsAddOpen(true);
+              }}
+              className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white transition-colors sm:w-fit"
+              style={{ background: T.primary }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = T.primaryHov;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = T.primary;
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              New Data Source
+            </button>
 
-              <div className="flex w-full items-center gap-2 sm:w-auto">
-                <div className="relative flex-1 sm:w-64 sm:flex-none">
-                  <Search
-                    className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
-                    style={{ color: T.textMuted }}
-                  />
-                  <input
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search data sources..."
-                    className="w-full rounded-xl border py-2 pl-10 pr-3 text-sm outline-none"
-                    style={inputStyle}
-                  />
-                </div>
-                <button
-                  onClick={loadSources}
-                  disabled={loading}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-colors disabled:opacity-60"
-                  style={{ borderColor: T.primary, color: T.primary }}
-                  title="Refresh"
-                  aria-label="Refresh data sources"
-                >
-                  <RefreshCw
-                    className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
-                  />
-                </button>
-                <button
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-colors"
-                  style={{ borderColor: T.primary, color: T.primary }}
-                  title="Filter"
-                  aria-label="Filter data sources"
-                >
-                  <Filter className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-
-            {loading ? (
-              <div className="flex flex-col items-center justify-center gap-2 py-12">
-                <Loader2
-                  className="h-6 w-6 animate-spin"
-                  style={{ color: T.primary }}
+            <div className="flex w-full items-center gap-2 sm:w-auto">
+              <div className="relative flex-1 sm:w-64 sm:flex-none">
+                <Search
+                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+                  style={{ color: T.textMuted }}
                 />
-                <p className="text-xs" style={{ color: T.textMuted }}>
-                  Loading data sources...
-                </p>
+                <input
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search data sources..."
+                  className="w-full rounded-xl border py-2 pl-10 pr-3 text-sm outline-none"
+                  style={inputStyle}
+                />
               </div>
-            ) : error ? (
-              <div
-                className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-12 text-center"
-                style={{ borderColor: T.primaryBord }}
+              <button
+                onClick={loadSources}
+                disabled={loading}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-colors disabled:opacity-60"
+                style={{ borderColor: T.primary, color: T.primary }}
+                title="Refresh"
+                aria-label="Refresh data sources"
               >
-                <p className="text-sm font-medium text-red-600">{error}</p>
-                <button
-                  onClick={loadSources}
-                  className="mt-1 rounded-xl px-4 py-2 text-sm font-medium text-white"
-                  style={{ background: T.primary }}
-                >
-                  Try again
-                </button>
-              </div>
-            ) : filteredSources.length === 0 ? (
-              <div
-                className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-12 text-center"
-                style={{ borderColor: T.primaryBord }}
+                <RefreshCw
+                  className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+                />
+              </button>
+              <button
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-colors"
+                style={{ borderColor: T.primary, color: T.primary }}
+                title="Filter"
+                aria-label="Filter data sources"
               >
-                <Plug className="h-8 w-8" style={{ color: T.primaryBord }} />
-                <p
-                  className="text-sm font-medium"
-                  style={{ color: T.textMain }}
-                >
-                  {sources.length === 0
-                    ? "No data sources yet"
-                    : "No matching data sources"}
-                </p>
-                <p className="text-xs" style={{ color: T.textMuted }}>
-                  {sources.length === 0
-                    ? 'Connect your first source with "New Data Source".'
-                    : "Try a different search term."}
-                </p>
-              </div>
-            ) : (
-              /* Wide table scrolls inside its own container so the page never
-               scrolls horizontally on mobile. */
-              <div className="-mx-4 overflow-x-auto sm:mx-0">
-                <table className="w-full min-w-[980px] border-collapse text-left">
-                  <thead>
-                    <tr style={{ background: T.primaryBg }}>
-                      {COLUMNS.map((h) => (
-                        <th
-                          key={h}
-                          className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wide"
-                          style={{ color: T.textMuted }}
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredSources.map((source) => (
-                      <tr
-                        key={source.id}
-                        className="border-t"
-                        style={{ borderColor: T.borderLgt }}
-                      >
-                        <td
-                          className="px-4 py-3 text-sm font-medium"
-                          style={{ color: T.textMain }}
-                        >
-                          {dash(source.datasource_name)}
-                        </td>
-                        <td
-                          className="px-4 py-3 text-sm"
-                          style={{ color: T.textMuted }}
-                        >
-                          {dash(source.connecter)}
-                        </td>
-                        <td className="px-4 py-3">
-                          {/* Legacy rows predate the field — they are external. */}
-                          <span
-                            className="rounded-full px-3 py-1 text-xs font-medium capitalize"
-                            style={{
-                              background: T.primaryBg,
-                              color: T.primary,
-                            }}
-                          >
-                            {source.type || "external"}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-medium ${
-                              source.active
-                                ? "bg-emerald-100 text-emerald-700"
-                                : "bg-gray-100 text-gray-600"
-                            }`}
-                          >
-                            {source.active ? "Active" : "Inactive"}
-                          </span>
-                        </td>
-                        <td
-                          className="px-4 py-3 text-sm"
-                          style={{ color: T.textMuted }}
-                        >
-                          {dash(source.project_code)}
-                        </td>
-                        <td
-                          className="px-4 py-3 text-sm"
-                          style={{ color: T.textMuted }}
-                        >
-                          {dash(source.created_by_name)}
-                        </td>
-                        <td
-                          className="whitespace-nowrap px-4 py-3 text-sm"
-                          style={{ color: T.textMuted }}
-                        >
-                          {formatCreatedAt(source.created_at)}
-                        </td>
-                        <td className="whitespace-nowrap px-4 py-3">
-                          <button
-                            onClick={() => testConnection(source.id)}
-                            disabled={testingId === source.id}
-                            className="flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60"
-                            style={{
-                              borderColor: T.primary,
-                              color: T.primary,
-                            }}
-                            title="Test connection"
-                          >
-                            {testingId === source.id ? (
-                              <>
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                Testing...
-                              </>
-                            ) : (
-                              <>
-                                <Zap className="h-3.5 w-3.5" />
-                                Test Connection
-                              </>
-                            )}
-                          </button>
-                        </td>
-                        <td className="whitespace-nowrap px-4 py-3">
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => {
-                                setEditing(source);
-                                setIsAddOpen(true);
-                              }}
-                              className="rounded-lg p-1.5 transition-colors hover:bg-[#f6f4ee]"
-                              title="Edit data source"
-                              aria-label={`Edit ${source.datasource_name ?? "data source"}`}
-                            >
-                              <Pencil
-                                className="h-4 w-4"
-                                style={{ color: T.textMuted }}
-                              />
-                            </button>
-                            <button
-                              onClick={() => setPendingDelete(source)}
-                              className="rounded-lg p-1.5 transition-colors hover:bg-[#f6f4ee]"
-                              title="Delete data source"
-                              aria-label={`Delete ${source.datasource_name ?? "data source"}`}
-                            >
-                              <Trash2
-                                className="h-4 w-4"
-                                style={{ color: T.primary }}
-                              />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                <Filter className="h-4 w-4" />
+              </button>
+            </div>
           </div>
+
+          {loading ? (
+            <div className="flex flex-col items-center justify-center gap-2 py-12">
+              <Loader2
+                className="h-6 w-6 animate-spin"
+                style={{ color: T.primary }}
+              />
+              <p className="text-xs" style={{ color: T.textMuted }}>
+                Loading data sources...
+              </p>
+            </div>
+          ) : error ? (
+            <div
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-12 text-center"
+              style={{ borderColor: T.primaryBord }}
+            >
+              <p className="text-sm font-medium text-red-600">{error}</p>
+              <button
+                onClick={loadSources}
+                className="mt-1 rounded-xl px-4 py-2 text-sm font-medium text-white"
+                style={{ background: T.primary }}
+              >
+                Try again
+              </button>
+            </div>
+          ) : filteredSources.length === 0 ? (
+            <div
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-12 text-center"
+              style={{ borderColor: T.primaryBord }}
+            >
+              <Plug className="h-8 w-8" style={{ color: T.primaryBord }} />
+              <p className="text-sm font-medium" style={{ color: T.textMain }}>
+                {sources.length === 0
+                  ? "No data sources yet"
+                  : "No matching data sources"}
+              </p>
+              <p className="text-xs" style={{ color: T.textMuted }}>
+                {sources.length === 0
+                  ? 'Connect your first source with "New Data Source".'
+                  : "Try a different search term."}
+              </p>
+            </div>
+          ) : (
+            /* Wide table scrolls inside its own container so the page never
+               scrolls horizontally on mobile. */
+            <div className="-mx-4 overflow-x-auto sm:mx-0">
+              <table className="w-full min-w-[980px] border-collapse text-left">
+                <thead>
+                  <tr style={{ background: T.primaryBg }}>
+                    {COLUMNS.map((h) => (
+                      <th
+                        key={h}
+                        className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wide"
+                        style={{ color: T.textMuted }}
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredSources.map((source) => (
+                    <tr
+                      key={source.id}
+                      className="border-t"
+                      style={{ borderColor: T.borderLgt }}
+                    >
+                      <td
+                        className="px-4 py-3 text-sm font-medium"
+                        style={{ color: T.textMain }}
+                      >
+                        {dash(source.datasource_name)}
+                      </td>
+                      <td
+                        className="px-4 py-3 text-sm"
+                        style={{ color: T.textMuted }}
+                      >
+                        {dash(source.connecter)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-medium ${
+                            source.active
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {source.active ? "Active" : "Inactive"}
+                        </span>
+                      </td>
+                      <td
+                        className="px-4 py-3 text-sm"
+                        style={{ color: T.textMuted }}
+                      >
+                        {dash(source.project_code)}
+                      </td>
+                      <td
+                        className="px-4 py-3 text-sm"
+                        style={{ color: T.textMuted }}
+                      >
+                        {dash(source.created_by_name)}
+                      </td>
+                      <td
+                        className="whitespace-nowrap px-4 py-3 text-sm"
+                        style={{ color: T.textMuted }}
+                      >
+                        {formatCreatedAt(source.created_at)}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3">
+                        <button
+                          onClick={() => testConnection(source.id)}
+                          disabled={testingId === source.id}
+                          className="flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60"
+                          style={{
+                            borderColor: T.primary,
+                            color: T.primary,
+                          }}
+                          title="Test connection"
+                        >
+                          {testingId === source.id ? (
+                            <>
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              Testing...
+                            </>
+                          ) : (
+                            <>
+                              <Zap className="h-3.5 w-3.5" />
+                              Test Connection
+                            </>
+                          )}
+                        </button>
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3">
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => {
+                              setEditing(source);
+                              setIsAddOpen(true);
+                            }}
+                            className="rounded-lg p-1.5 transition-colors hover:bg-[#f6f4ee]"
+                            title="Edit data source"
+                            aria-label={`Edit ${source.datasource_name ?? "data source"}`}
+                          >
+                            <Pencil
+                              className="h-4 w-4"
+                              style={{ color: T.textMuted }}
+                            />
+                          </button>
+                          <button
+                            onClick={() => setPendingDelete(source)}
+                            className="rounded-lg p-1.5 transition-colors hover:bg-[#f6f4ee]"
+                            title="Delete data source"
+                            aria-label={`Delete ${source.datasource_name ?? "data source"}`}
+                          >
+                            <Trash2
+                              className="h-4 w-4"
+                              style={{ color: T.primary }}
+                            />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
         )}
       </div>
 

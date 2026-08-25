@@ -1264,6 +1264,7 @@ import PulseNotifications from "./features/pulse_notifications/pages/PulseNotifi
 import AddCustomNotificationPage from "./features/pulse_notifications/pages/AddCustomNotificationPage.tsx";
 import EditCustomNotificationPage from "./features/pulse_notifications/pages/EditCustomNotificationPage.tsx";
 import ViewCustomNotificationPage from "./features/pulse_notifications/pages/ViewCustomNotificationPage.tsx";
+import NotificationApprovalMatrix from "./features/pulse_notifications/pages/NotificationApprovalMatrix.tsx";
 const ModulesManagement = lazy(() => import("./pages/settings/ModulesManagement"));
 const InvoiceAdd = lazy(() => import("./pages/ClubManagement/InvoiceAdd").then(m => ({ default: m.InvoiceAdd })));
 const EditInvoicePage = lazy(() => import("./pages/EditInvoicePage").then(m => ({ default: m.EditInvoicePage })));
@@ -6531,6 +6532,10 @@ function App() {
                             <Route
                               path="/pulse/notifications/view/:id"
                               element={<ViewCustomNotificationPage />}
+                            />
+                            <Route
+                              path="/pulse/notification-approval-matrix"
+                              element={<NotificationApprovalMatrix />}
                             />
 
                             <Route

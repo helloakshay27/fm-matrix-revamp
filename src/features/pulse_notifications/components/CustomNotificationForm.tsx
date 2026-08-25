@@ -27,6 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { NotificationSiteInlineList } from "./NotificationSiteInlineList";
 import { NotificationCommunityInlineList } from "./NotificationCommunityInlineList";
 import { NotificationUserInlineList } from "./NotificationUserInlineList";
+import { useNotificationTypesQuery } from "../hooks/useNotificationTypesQuery";
 import type {
   AudienceScope,
   CustomNotificationFormPayload,
@@ -182,6 +183,12 @@ export function CustomNotificationForm({
   );
 
   const [expandedPanel, setExpandedPanel] = useState<AudienceKey | null>(null);
+
+  const { data: notificationTypesData, isLoading: isNotificationTypesLoading } =
+    useNotificationTypesQuery();
+  const notificationTypeOptions = notificationTypesData?.module_types ?? [];
+  const hasUnknownNtype =
+    ntype !== "" && !notificationTypeOptions.some((option) => option.value === ntype);
 
   const toggleInSelection = (
     setter: React.Dispatch<React.SetStateAction<NotificationTargetSelection[]>>,
@@ -344,16 +351,28 @@ export function CustomNotificationForm({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <TextField
-                label={<>Notification Type <Required /></>}
-                placeholder="e.g. Road Block, Traffic Alert, Animation"
-                value={ntype}
-                onChange={(e) => setNtype(e.target.value)}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                sx={singleLineFieldStyles}
-              />
+              <FormControl fullWidth>
+                <InputLabel id="notification-type-label" shrink>
+                  Notification Type <Required />
+                </InputLabel>
+                <MuiSelect
+                  labelId="notification-type-label"
+                  value={ntype}
+                  onChange={(e: SelectChangeEvent) => setNtype(e.target.value)}
+                  displayEmpty
+                  disabled={isNotificationTypesLoading}
+                  sx={singleLineFieldStyles}
+                >
+                  <MenuItem value="" disabled>
+                    {isNotificationTypesLoading ? "Loading..." : "Select notification type"}
+                  </MenuItem>
+                  {notificationTypeOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
 
               <FormControl fullWidth>
                 <InputLabel id="notification-priority-label" shrink>

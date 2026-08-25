@@ -292,8 +292,8 @@ function normalizeTurnaround(payload: unknown): CircleDays[] {
 }
 
 function colorForClearancePct(pct: number): string {
-  if (pct >= 100) return C.ok;
-  if (pct >= 75) return C.warn;
+  if (pct >= 98) return C.ok;
+  if (pct >= 95) return C.warn;
   return C.err;
 }
 
@@ -588,7 +588,7 @@ export function KrccSection() {
 
       <ChartCard
         title="KRCC Clearance % by Circle"
-        sub="Green = 100% · Amber = 75–99% · Red = <75%"
+        sub="Green ≥98% · Amber 95–<98% · Red <95%"
         infoKey="krcc-circle"
         showPdf
         pdfLabel="KRCC by Circle"
