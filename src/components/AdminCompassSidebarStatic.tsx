@@ -81,6 +81,10 @@ const adminCompassNavigation: Record<string, any> = {
   },
 };
 
+// Sirf sidebar se chhupaya hai — routes aur pages waise ke waise hain.
+// Wapas dikhane ke liye is list se naam hata dein (ya array khaali kar dein).
+const HIDDEN_NAV_ITEMS = ["Rule Engine"];
+
 export const AdminCompassSidebarStatic: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -141,7 +145,9 @@ export const AdminCompassSidebarStatic: React.FC = () => {
       {/* Sidebar Content */}
       <div className="h-[calc(100%-120px)] py-1 sm:py-2">
         <nav className="space-y-1 sm:space-y-2 px-1 sm:px-2">
-          {Object.entries(adminCompassNavigation).map(
+          {Object.entries(adminCompassNavigation)
+            .filter(([key]) => !HIDDEN_NAV_ITEMS.includes(key))
+            .map(
             ([key, section]: [string, any]) => {
               const Icon = section.icon;
               const hasItems = section.items && section.items.length > 0;

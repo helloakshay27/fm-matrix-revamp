@@ -104,7 +104,7 @@ export const INFO_TEXTS: Record<string, string> = {
   'krcc-aging':
     'How long each pending KRCC has been open · calculated from KRCC initiation date to today. Always a live snapshot as of today — the applied date filter does not affect this chart.',
   'krcc-circle':
-    '% KRCC-cleared users per circle · (Cleared ÷ Total Registered in Circle) × 100. Bar color reflects the compliance band.',
+    '% KRCC-cleared users per circle · (Cleared ÷ Total Registered in Circle) × 100. Bar color reflects the compliance band: green ≥98%, amber 95%–<98%, red <95%.',
   'krcc-category':
     'Cleared KRCC records grouped by check category (Electrical Safety, PPE Compliance, Fire Safety, Working at Height, General Safety, Vehicle Safety).',
   'krcc-turnaround':
@@ -151,6 +151,8 @@ export const INFO_TEXTS: Record<string, string> = {
     'Most recent SMT visit records · newest first.',
   'smt-progress':
     'Circles working toward the 20-visits/month target · shows current visit count vs target.',
+  'smt-role-wise':
+    'Same 11 roles on the X-axis for every circle · use Previous/Next Circle to switch circles — each role shows a grouped bar per month (Apr–Mar) from monthly_data, not total_smt_visits · hover a bar for its exact circle/role/month value.',
   // Directory
   directory:
     'Every M-Safe user with real-time status across all three checks (Training, KRCC, LMC). Click any row for full drill-down.',
