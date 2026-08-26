@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, FileText, Download, User, BadgeCheck, CalendarCheck2, Loader2, CheckCircle2, XCircle, Maximize2, X, ChevronLeft, ChevronRight, Image as ImageIcon, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import html2pdf from 'html2pdf.js';
 
 // ----------------- Types -----------------
 interface IUserInfo {
@@ -529,20 +530,26 @@ export const KRCCFormDetail: React.FC = () => {
   const mhe = mergedCategories?.mhe;
   const noneOfTheAbove = mergedCategories?.none_of_the_above;
 
-  const exportToExcel = useCallback(() => {
-    if (!data) return;
-    // Simple JSON export (placeholder). Could be replaced by server export endpoint.
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const exportToExcel = useCallback(async () => {
+    if (!data || !contentRef.current) return;
+    setIsExporting(true);
     try {
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `krcc_form_${data.id}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
+      const opt = {
+        margin: 0.3,
+        filename: `krcc_form_${data.id}.pdf`,
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' as const },
+      };
+      await html2pdf().from(contentRef.current).set(opt).save();
       toast.success('Exported');
     } catch {
       toast.error('Export failed');
+    } finally {
+      setIsExporting(false);
     }
   }, [data]);
 
@@ -637,13 +644,19 @@ export const KRCCFormDetail: React.FC = () => {
           </button>
           <h1 className="text-2xl font-bold text-[#1a1a1a] truncate">KRCC FORM DETAILS</h1>
         </div>
-        {/* <div className="flex gap-2 flex-wrap">
-          <Button onClick={exportToExcel} className="bg-[#C72030] text-white hover:bg-[#C72030]/90 flex items-center gap-2">
-            <Download className="w-4 h-4" /> Export
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            onClick={exportToExcel}
+            disabled={isExporting}
+            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 flex items-center gap-2 disabled:opacity-60"
+          >
+            {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            {isExporting ? 'Exporting...' : 'Export'}
           </Button>
-        </div> */}
+        </div>
       </div>
 
+      <div ref={contentRef} className="flex flex-col gap-6">
       {/* PERSONAL DETAILS */}
       <div className="bg-white rounded-lg border text-[15px]">
         <div className="flex p-4 items-center">
@@ -866,6 +879,7 @@ export const KRCCFormDetail: React.FC = () => {
           </div>
         </div>
       )}
+      </div>
 
       {/* Lightbox Preview Modal */}
       {previewOpen && previewItems.length > 0 && (

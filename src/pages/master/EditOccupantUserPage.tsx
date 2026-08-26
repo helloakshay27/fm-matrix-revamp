@@ -246,7 +246,14 @@ export const EditOccupantUserPage: React.FC = () => {
   });
 
   const handleInputChange = (field: string, value: string | string[]) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    // Allow only letters, numbers and spaces for firstName and lastName
+    if (field === 'firstName' || field === 'lastName') {
+      const stringValue = typeof value === 'string' ? value : '';
+      const alphabeticValue = stringValue.replace(/[^A-Za-z0-9\s]/g, '');
+      setFormData((prev) => ({ ...prev, [field]: alphabeticValue }));
+    } else {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+    }
   };
 
   const handleFileChange = (e, fieldName) => {

@@ -1948,6 +1948,8 @@ export const CreditNoteClubAddPage: React.FC = () => {
                                                         </div>
                                                     ) : (
                                                         <>
+                                                            {/* Facility Booking / Membership / Event / Other picker — commented out per request,
+                                                                every row now goes straight to a plain "Other" item-name input below.
                                                             {(() => {
                                                                 const rowSource = itemSourceSelection[item.id] || '';
                                                                 const sourceOptions: { key: 'facility' | 'membership' | 'event'; label: string; options: { id: string; name: string; rate: number }[] }[] = [
@@ -2018,6 +2020,20 @@ export const CreditNoteClubAddPage: React.FC = () => {
                                                                     </div>
                                                                 );
                                                             })()}
+                                                            */}
+                                                            <div className="mt-2">
+                                                                <TextField
+                                                                    size="small"
+                                                                    placeholder="Enter item name"
+                                                                    value={otherItemNameDraft[item.id] ?? item.name ?? ''}
+                                                                    onChange={(e) => setOtherItemNameDraft(prev => ({ ...prev, [item.id]: e.target.value }))}
+                                                                    onBlur={() => {
+                                                                        const name = (otherItemNameDraft[item.id] ?? item.name ?? '').trim();
+                                                                        updateItemFields(index, { item_id: null, name });
+                                                                    }}
+                                                                    sx={{ minWidth: 200 }}
+                                                                />
+                                                            </div>
 
                                                             {/* <TextField
                                                                 fullWidth

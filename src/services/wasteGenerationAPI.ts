@@ -212,12 +212,13 @@ export interface WasteGenerationFilters {
   commodity_id_eq?: string;
   category_id_eq?: string;
   operational_landlord_id_in?: string;
-  date_range?: string;
-  created_by_firstname_or_lastname_cont?: string;
+  wg_date_gteq?: string;
+  wg_date_lteq?: string;
+  user_name?: string;
   entity_id_eq?: string;
-  resource_type_eq?: string;
-  status_eq?: string;
-  devise_id_cont?: string;
+  user_type?: string;
+  status_cont?: string;
+  device_id_cont?: string;
 }
 
 // API function to fetch waste generations with filters
@@ -237,23 +238,26 @@ export const fetchWasteGenerations = async (page: number = 1, filters?: WasteGen
       if (filters.operational_landlord_id_in) {
         queryParts.push(`q[operational_landlord_id_in]=${encodeURIComponent(filters.operational_landlord_id_in)}`);
       }
-      if (filters.date_range) {
-        queryParts.push(`q[date_range]=${encodeURIComponent(filters.date_range)}`);
+      if (filters.wg_date_gteq) {
+        queryParts.push(`q[wg_date_gteq]=${encodeURIComponent(filters.wg_date_gteq)}`);
       }
-      if (filters.created_by_firstname_or_lastname_cont) {
-        queryParts.push(`q[created_by_firstname_or_lastname_cont]=${encodeURIComponent(filters.created_by_firstname_or_lastname_cont)}`);
+      if (filters.wg_date_lteq) {
+        queryParts.push(`q[wg_date_lteq]=${encodeURIComponent(filters.wg_date_lteq)}`);
+      }
+      if (filters.user_name) {
+        queryParts.push(`q[user_name]=${encodeURIComponent(filters.user_name)}`);
       }
       if (filters.entity_id_eq) {
         queryParts.push(`q[entity_id_eq]=${encodeURIComponent(filters.entity_id_eq)}`);
       }
-      if (filters.resource_type_eq) {
-        queryParts.push(`q[resource_type_eq]=${encodeURIComponent(filters.resource_type_eq)}`);
+      if (filters.user_type) {
+        queryParts.push(`q[user_type]=${encodeURIComponent(filters.user_type)}`);
       }
-      if (filters.status_eq) {
-        queryParts.push(`q[status_eq]=${encodeURIComponent(filters.status_eq)}`);
+      if (filters.status_cont) {
+        queryParts.push(`q[status_cont]=${encodeURIComponent(filters.status_cont)}`);
       }
-      if (filters.devise_id_cont) {
-        queryParts.push(`q[devise_id_cont]=${encodeURIComponent(filters.devise_id_cont)}`);
+      if (filters.device_id_cont) {
+        queryParts.push(`q[device_id_cont]=${encodeURIComponent(filters.device_id_cont)}`);
       }
     }
     
