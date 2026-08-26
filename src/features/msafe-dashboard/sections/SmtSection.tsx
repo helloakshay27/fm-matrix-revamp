@@ -739,6 +739,15 @@ export function SmtSection() {
           title="Recent SMT Visits"
           sub="Latest field verifications logged"
           infoKey="smt-recent"
+          showPdf
+          pdfLabel="Recent SMT Visits"
+          exportData={recentVisits.map((s) => ({
+            'Done By': s.name,
+            Function: s.func,
+            Circle: s.circle,
+            'Area Visited': s.area,
+            Date: s.date,
+          }))}
           tag={<span className="card-tag">Last 20</span>}
         >
           {recentLoading || recentVisits.length === 0 ? (

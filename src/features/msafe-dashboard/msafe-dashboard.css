@@ -230,6 +230,21 @@
   color: #fff !important;
   stroke: #fff !important;
 }
+.msafe-dash .kpi-dl-btn:disabled,
+.msafe-dash .kpi-dl-btn:disabled:hover {
+  background: #fff !important;
+  color: #798C5E !important;
+  border-color: #E8E2D5 !important;
+  cursor: not-allowed !important;
+  opacity: .6;
+}
+.msafe-dash .kpi-dl-btn:disabled svg,
+.msafe-dash .kpi-dl-btn:disabled:hover svg,
+.msafe-dash .kpi-dl-btn:disabled .lucide,
+.msafe-dash .kpi-dl-btn:disabled:hover .lucide {
+  color: #798C5E !important;
+  stroke: #798C5E !important;
+}
 .msafe-dash .chart-pdf-btn {
   background: #F6F4EE !important;
   border: 1px solid #E8E2D5 !important;
@@ -756,6 +771,8 @@
 }
 .msafe-dash .kpi-dl-btn svg {width:12px;height:12px}
 .msafe-dash .kpi-dl-btn:hover {background:var(--ok);color:#fff;border-color:var(--ok)}
+.msafe-dash .kpi-dl-btn:disabled {cursor:not-allowed;opacity:.6}
+.msafe-dash .kpi-dl-btn:disabled:hover {background:var(--surface);color:var(--sage);border-color:var(--div)}
 
 /* ═══════════════════════════════════════════════════════════════
    ACCORDION PANELS — expand-in-place section content
