@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { useParams, useNavigate } from "react-router-dom";
+import { TextField, MenuItem, InputAdornment } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
     Table,
     TableBody,
@@ -22,6 +27,7 @@ import {
     Trash2,
     Download,
     Receipt,
+    CreditCard,
 } from "lucide-react";
 import {
     Dialog,
@@ -29,6 +35,7 @@ import {
     DialogHeader,
     DialogTitle,
     DialogDescription,
+    DialogFooter,
 } from "@/components/ui/dialog";
 import { toast as sonnerToast } from "sonner";
 import axios from "axios";
@@ -56,9 +63,25 @@ export const InvoiceClubManagementDetails = () => {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [bankDetail, setBankDetail] = useState(null);
 
+    // Payment modal state
+    const [openPaymentModal, setOpenPaymentModal] = useState(false);
+    const [paymentMode, setPaymentMode] = useState("online");
+    const [paymentMethod, setPaymentMethod] = useState("");
+    const [paymentDate, setPaymentDate] = useState(() => format(new Date(), "yyyy-MM-dd"));
+    const [paymentNote, setPaymentNote] = useState("");
+    const [paymentLoading, setPaymentLoading] = useState(false);
+
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
     const lock_account_id = localStorage.getItem("lock_account_id");
+
+    // Matches the field styling used on the Invoice Add page's MUI inputs
+    const fieldStyles = {
+        height: { xs: 28, sm: 36, md: 45 },
+        '& .MuiInputBase-input, & .MuiSelect-select': {
+            padding: { xs: '8px', sm: '10px', md: '12px' },
+        },
+    };
 
     useEffect(() => {
         if (id && baseUrl && token) {
@@ -171,6 +194,55 @@ export const InvoiceClubManagementDetails = () => {
         }
     };
 
+    // Confirmed: POST {baseUrl}/lock_accounts/{lock_account_id}/bill_bookings/{id}/add_payment.json
+    // body: { lock_payment: { paid_amount, total_amount, payment_method, payment_date, notes } }
+    const handlePayment = async () => {
+        if (!paymentMethod) {
+            sonnerToast.error("Please select a payment method");
+            return;
+        }
+        if (!paymentDate) {
+            sonnerToast.error("Please select a payment date");
+            return;
+        }
+        setPaymentLoading(true);
+        try {
+            const totals = invoiceData?.totals || {};
+            const totalAmount = totals.grand_total ?? (invoiceData?.total_amount || 0);
+            const paidAmount = invoiceData?.balance_due ?? totalAmount;
+
+            await axios.post(
+                `https://${baseUrl}/lock_accounts/${lock_account_id}/bill_bookings/${id}/add_payment.json`,
+                {
+                    lock_payment: {
+                        paid_amount: paidAmount,
+                        total_amount: totalAmount,
+                        payment_method: paymentMethod,
+                        payment_date: paymentDate,
+                        notes: paymentNote,
+                    },
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+
+            sonnerToast.success("Payment recorded successfully");
+            setOpenPaymentModal(false);
+            setPaymentMethod("");
+            setPaymentNote("");
+            fetchInvoiceDetails();
+        } catch (error) {
+            console.error("Error recording payment:", error);
+            sonnerToast.error("Failed to record payment");
+        } finally {
+            setPaymentLoading(false);
+        }
+    };
+
     const formatCurrency = (amount) => {
         const currencySymbol = localStorage.getItem("currencySymbol") || "₹";
         return `${currencySymbol}${Number(amount || 0).toFixed(2)}`;
@@ -269,6 +341,12 @@ export const InvoiceClubManagementDetails = () => {
                             <Badge className="bg-gray-100 text-gray-800 border-gray-200 border">
                                 {String(invoiceData.status).replace(/_/g, " ").toUpperCase()}
                             </Badge>
+                        )}
+                        {invoiceData.status && String(invoiceData.status).toLowerCase() !== "paid" && (
+                            <Button size="sm" variant="outline" onClick={() => setOpenPaymentModal(true)} className="gap-2">
+                                <CreditCard className="h-4 w-4" />
+                                Payment
+                            </Button>
                         )}
                         <Button size="sm" onClick={handleDownloadPdf} className="gap-2 fm-button-fix fm-button-brand">
                             <Download className="h-4 w-4" />
@@ -603,6 +681,113 @@ export const InvoiceClubManagementDetails = () => {
                     </CardContent>
                     </Card>
             </div>
+
+            {/* Payment Modal */}
+            <Dialog open={openPaymentModal} onOpenChange={(open) => {
+                setOpenPaymentModal(open);
+                if (!open) {
+                    setPaymentMethod("");
+                    setPaymentNote("");
+                }
+            }}>
+                <DialogContent className="sm:max-w-[500px] w-[95vw] bg-white">
+                    <DialogHeader>
+                        <DialogTitle>Make Payment</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        {/* <div className="w-full">
+                            <Label htmlFor="payment_mode">Payment Mode</Label>
+                            <Select
+                                value={paymentMode}
+                                onValueChange={(val) => {
+                                    setPaymentMode(val);
+                                    setPaymentMethod("");
+                                }}
+                                disabled={paymentLoading}
+                            >
+                                <SelectTrigger className="w-full mt-1" id="payment_mode">
+                                    <SelectValue placeholder="Select Payment Mode" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="online">Online</SelectItem>
+                                    <SelectItem value="offline">Offline</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div> */}
+                        <div className="w-full">
+                            <label className="block text-sm font-medium mb-2">
+                                Payment Method
+                            </label>
+                            {/* MUI's Select/Popover computes its position assuming a static document.body,
+                                but the Radix Dialog this modal is built on transforms/scroll-locks the page,
+                                which throws that math off no matter what MenuProps are passed — it always
+                                rendered off in a corner. Radix's own Select doesn't have that conflict (same
+                                portal/positioning primitives as the Dialog itself), so use it here and just
+                                match the Add page's field height/label styling. */}
+                            <Select
+                                value={paymentMethod}
+                                onValueChange={setPaymentMethod}
+                                disabled={paymentLoading}
+                            >
+                                <SelectTrigger className="w-full h-[45px]" id="payment_method">
+                                    <SelectValue placeholder="Select Payment Method" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="UPI">UPI</SelectItem>
+                                    <SelectItem value="Credit Card">Credit Card</SelectItem>
+                                    <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                                    <SelectItem value="Bank Remittance">Bank Remittance</SelectItem>
+                                    <SelectItem value="Cash">Cash</SelectItem>
+                                    <SelectItem value="Cheque">Cheque</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="w-full">
+                            <label className="block text-sm font-medium mb-2">
+                                Payment Date
+                            </label>
+                            <TextField
+                                fullWidth
+                                type="date"
+                                value={paymentDate}
+                                onChange={(e) => setPaymentDate(e.target.value)}
+                                disabled={paymentLoading}
+                                sx={{
+                                    ...fieldStyles,
+                                    '& .MuiInputBase-input': {
+                                        color: paymentDate ? 'transparent' : 'inherit',
+                                    }
+                                }}
+                                InputLabelProps={{ shrink: true }}
+                                InputProps={{
+                                    startAdornment: paymentDate ? (
+                                        <InputAdornment position="start" sx={{ position: 'absolute', pointerEvents: 'none', left: '10px', backgroundColor: 'white', pr: 1, zIndex: 1 }}>
+                                            {format(parseISO(paymentDate), 'dd/MM/yyyy')}
+                                        </InputAdornment>
+                                    ) : null
+                                }}
+                            />
+                        </div>
+                        <div className="w-full">
+                            <Label htmlFor="payment_note">Note</Label>
+                            <Textarea
+                                id="payment_note"
+                                placeholder="Enter a note (optional)"
+                                value={paymentNote}
+                                onChange={(e) => setPaymentNote(e.target.value)}
+                                disabled={paymentLoading}
+                                className="w-full mt-1"
+                                rows={3}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={handlePayment} disabled={paymentLoading} className="w-full fm-button-fix fm-button-brand">
+                            {paymentLoading ? "Processing..." : "Submit Payment"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
