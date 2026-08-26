@@ -62,6 +62,10 @@ export function LineChart({ cur, prev, showPrev = true, labels }: LineChartProps
     const rect = svg.getBoundingClientRect();
     const scaleX = W / rect.width;
     const mouseX = (e.clientX - rect.left) * scaleX;
+    if (mouseX < pl - 10 || mouseX > W - pr + 10) {
+      setTip(null);
+      return;
+    }
     const idx = Math.min(n - 1, Math.max(0, Math.round((mouseX - pl) / xw)));
     setTip({
       x: X(idx),
@@ -74,8 +78,9 @@ export function LineChart({ cur, prev, showPrev = true, labels }: LineChartProps
   };
 
   const TIP_W = 132, TIP_H = usePrev ? 66 : 48;
-  const tipX = tip ? Math.min(tip.x + 10, W - TIP_W - 4) : 0;
-  const tipY = tip ? Math.max(pt, tip.y - TIP_H / 2) : 0;
+  const rawTipX = tip ? (tip.idx >= Math.floor(n / 2) ? tip.x - TIP_W - 10 : tip.x + 10) : 0;
+  const tipX = Math.max(pl, Math.min(rawTipX, W - pr - TIP_W));
+  const tipY = tip ? Math.max(pt, Math.min(tip.y - TIP_H / 2, H - pb - TIP_H)) : 0;
 
   const axisFont = 'Inter,-apple-system,Segoe UI,sans-serif';
 
@@ -87,7 +92,7 @@ export function LineChart({ cur, prev, showPrev = true, labels }: LineChartProps
       preserveAspectRatio="xMidYMid meet"
       onMouseMove={handleMouseMove}
       onMouseLeave={() => setTip(null)}
-      style={{ cursor: 'crosshair' }}
+      style={{ cursor: 'crosshair', overflow: 'hidden' }}
     >
       {/* vertical dashed gridlines + x labels */}
       {ticks.map((i) => (
@@ -122,7 +127,7 @@ export function LineChart({ cur, prev, showPrev = true, labels }: LineChartProps
 
       {/* Hover crosshair + tooltip */}
       {tip && (
-        <g>
+        <g style={{ pointerEvents: 'none' }}>
           <line
             x1={tip.x} y1={pt} x2={tip.x} y2={base}
             stroke="var(--chart-line)" strokeWidth={1} strokeDasharray="3 3"

@@ -6,7 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useIsFetching } from "@tanstack/react-query";
 import {
   DEFAULT_STATE,
   normalizeScope,
@@ -115,6 +115,7 @@ interface DashboardContextValue {
   setNavCollapsed: (collapsed: boolean) => void;
   togglePrev: () => void;
   refreshAll: () => void;
+  isRefreshing: boolean;
   benchmarks: Record<string, number | null>;
   getBenchmark: (id: string) => number | null;
   setBenchmark: (id: string, value: number | null) => void;
@@ -386,6 +387,25 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   );
 
   const queryClient = useQueryClient();
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const isFetchingAdoption = useIsFetching({ queryKey: ["fm-adoption"] }) > 0;
+  const isRefreshing = isManualRefreshing || isFetchingAdoption;
+
+  const refreshAll = async () => {
+    setIsManualRefreshing(true);
+    const minDelay = new Promise((resolve) => setTimeout(resolve, 650));
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["fm-adoption"], refetchType: "all" }),
+        queryClient.refetchQueries({ queryKey: ["fm-adoption"], type: "active" }),
+        minDelay,
+      ]);
+    } catch {
+      // ignore fetch errors handled by query observers
+    } finally {
+      setIsManualRefreshing(false);
+    }
+  };
 
   const value: DashboardContextValue = {
     vm,
@@ -402,7 +422,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     setTheme: (theme) => setState((s) => ({ ...s, theme })),
     setNavCollapsed: (navCollapsed) => setState((s) => ({ ...s, navCollapsed })),
     togglePrev: () => setState((s) => ({ ...s, prev: !s.prev })),
-    refreshAll: () => queryClient.invalidateQueries({ queryKey: ["fm-adoption"] }),
+    refreshAll,
+    isRefreshing,
     benchmarks,
     getBenchmark: (id) =>
       id in benchmarks
