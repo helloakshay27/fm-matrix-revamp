@@ -207,7 +207,7 @@ const DraggablePriorityTodoItem = ({
                 </div>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1">
-                        <span className="text-xs text-muted-foreground">{todo.user}</span>
+                        <span className="text-xs text-muted-foreground">{todo.user || todo.responsible_person}</span>
                         {todo.target_date && (
                             <>
                                 <span className="text-xs text-muted-foreground">•</span>
