@@ -132,13 +132,6 @@ const columns: ColumnConfig[] = [
         defaultVisible: true,
     },
     {
-        key: "effort_duration",
-        label: "Efforts Duration",
-        sortable: true,
-        draggable: true,
-        defaultVisible: true,
-    },
-    {
         key: "comment",
         label: "Comment",
         sortable: true,
@@ -306,6 +299,10 @@ const BusinessCompassIssuesPage = () => {
     const initSearch = searchParams.get("search") || "";
     const initFilters = searchParams.get("filters") || "";
     const initMyIssues = searchParams.get("myIssues") !== "false";
+    const initPage = (() => {
+        const urlPage = Number(searchParams.get("page"));
+        return urlPage > 0 ? urlPage : 1;
+    })();
 
     useEffect(() => {
         setCurrentSection("Business Compass");
@@ -331,7 +328,7 @@ const BusinessCompassIssuesPage = () => {
         [searchParams, setSearchParams]
     );
 
-    const [currentPage, setCurrentPage] = useState(1);
+    const [currentPage, setCurrentPage] = useState(initPage);
     const [searchQuery, setSearchQuery] = useState(initSearch);
     const [tempSearchQuery, setTempSearchQuery] = useState(initSearch);
     const [appliedFilters, setAppliedFilters] = useState(initFilters);
@@ -369,6 +366,16 @@ const BusinessCompassIssuesPage = () => {
             true
         );
     }, [showMyIssuesOnly, updateQueryParams]);
+
+    // Reset to page 1 whenever the My/All scope changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [showMyIssuesOnly]);
+
+    // Sync currentPage to URL
+    useEffect(() => {
+        updateQueryParams({ page: currentPage }, true);
+    }, [currentPage, updateQueryParams]);
 
     // Sync URL changes to component state (browser back/forward/pasted URL)
     useEffect(() => {
@@ -414,21 +421,8 @@ const BusinessCompassIssuesPage = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tempSearchQuery]);
 
-    // Build filter string based on current state
-    let filterString = "";
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    const myIssuesFilter = user.id
-        ? `q[responsible_person_id_eq]=${user.id.toString()}`
-        : "";
 
-    if (appliedFilters !== "") {
-        filterString = appliedFilters;
-        if (showMyIssuesOnly && myIssuesFilter) {
-            filterString = `${filterString}&${myIssuesFilter}`;
-        }
-    } else if (showMyIssuesOnly) {
-        filterString = myIssuesFilter;
-    }
+    const filterString = appliedFilters;
 
     // TanStack Query hook for fetching Business Compass issues
     const {
@@ -440,22 +434,28 @@ const BusinessCompassIssuesPage = () => {
         page: currentPage,
         filters: filterString,
         enabled: !!token,
+        my: showMyIssuesOnly,
     });
 
     const rawIssues = issuesData?.issues || [];
+
+    // Normalize pagination shape — the API returns `meta: { total, page, per_page }`
+    // (no total_pages/total_count), so derive the fields the rest of the page expects.
+    const rawPagination = issuesData?.meta || issuesData?.pagination;
     const pagination = {
         current_page:
-            issuesData?.meta?.current_page ||
-            issuesData?.pagination?.current_page ||
-            1,
-        total_count:
-            issuesData?.meta?.total_count ||
-            issuesData?.pagination?.total_count ||
-            0,
+            rawPagination?.current_page ?? rawPagination?.page ?? currentPage,
+        total_count: rawPagination?.total_count ?? rawPagination?.total ?? 0,
+        per_page: rawPagination?.per_page ?? 20,
         total_pages:
-            issuesData?.meta?.total_pages ||
-            issuesData?.pagination?.total_pages ||
-            0,
+            rawPagination?.total_pages ??
+            Math.max(
+                1,
+                Math.ceil(
+                    (rawPagination?.total_count ?? rawPagination?.total ?? 0) /
+                    (rawPagination?.per_page ?? 20)
+                )
+            ),
     };
 
     // Mutations
@@ -826,38 +826,51 @@ const BusinessCompassIssuesPage = () => {
                 item.status === "completed" || item.status === "closed";
             const isStarted = item.is_started;
             return (
-                <div className="flex items-center gap-2 w-[20rem]">
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <span className="w-full truncate">{item.title}</span>
-                            </TooltipTrigger>
-                            <TooltipContent className="rounded-[5px]">
-                                <p>{item.title}</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                    {!isCompleted &&
-                        (isStarted ? (
-                            <button
-                                onClick={() => {
-                                    setPauseIssueId(Number(item.id));
-                                    setIsPauseModalOpen(true);
-                                }}
-                                className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
-                                title="Pause issue"
-                            >
-                                <Pause size={13} className="text-orange-500" />
-                            </button>
-                        ) : (
-                            <button
-                                onClick={() => handlePlayIssue(Number(item.id))}
-                                className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
-                                title="Start issue"
-                            >
-                                <Play size={13} className="text-green-500" />
-                            </button>
-                        ))}
+                <div className="flex flex-col gap-1 w-[20rem]">
+                    <div className="flex items-center gap-2">
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <span className="w-full truncate">{item.title}</span>
+                                </TooltipTrigger>
+                                <TooltipContent className="rounded-[5px]">
+                                    <p>{item.title}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                        {!isCompleted &&
+                            (isStarted ? (
+                                <button
+                                    onClick={() => {
+                                        setPauseIssueId(Number(item.id));
+                                        setIsPauseModalOpen(true);
+                                    }}
+                                    className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
+                                    title="Pause issue"
+                                >
+                                    <Pause size={13} className="text-orange-500" />
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => handlePlayIssue(Number(item.id))}
+                                    className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
+                                    title="Start issue"
+                                >
+                                    <Play size={13} className="text-green-500" />
+                                </button>
+                            ))}
+                    </div>
+                    <div className="flex items-center gap-3 text-[11px] text-gray-500 font-medium">
+                        <span className="flex items-center gap-1">
+                            Effort taken:
+                            <ActiveTimer
+                                activeTimeTillNow={item?.active_time_till_now}
+                                isStarted={item?.is_started}
+                            />
+                        </span>
+                        <span>•</span>
+                        <span>Duration: {item.effort_duration || "-"}</span>
+                    </div>
                 </div>
             );
         }
@@ -1029,7 +1042,7 @@ const BusinessCompassIssuesPage = () => {
                     Total:
                 </span>
                 <span className="text-sm font-bold text-[#C72030]">
-                    {pagination?.total_count || 0}
+                    {pagination?.total_count || issues.length || 0}
                 </span>
             </div>
 
@@ -1059,9 +1072,9 @@ const BusinessCompassIssuesPage = () => {
     const handlePageChange = (page: number) => {
         if (
             page < 1 ||
-            page > pagination.total_pages ||
-            page === pagination.current_page ||
-            isLoading
+            page > (pagination?.total_pages || 1) ||
+            page === currentPage ||
+            isFetching
         ) {
             return;
         }
@@ -1069,49 +1082,127 @@ const BusinessCompassIssuesPage = () => {
     };
 
     const renderPaginationItems = () => {
-        if (!pagination.total_pages || pagination.total_pages <= 0) {
+        if (!pagination?.total_pages || pagination.total_pages <= 0) {
             return null;
         }
         const items = [];
         const totalPages = pagination.total_pages;
-        const currentPageNum = pagination.current_page;
-        const pagesToShow = new Set<number>();
+        const paginationCurrentPage = pagination.current_page;
+        const showEllipsis = totalPages > 7;
 
-        pagesToShow.add(1);
-        pagesToShow.add(totalPages);
-        pagesToShow.add(currentPageNum);
-        if (currentPageNum > 1) pagesToShow.add(currentPageNum - 1);
-        if (currentPageNum < totalPages) pagesToShow.add(currentPageNum + 1);
-
-        if (totalPages > 7) {
-            pagesToShow.add(2);
-            pagesToShow.add(totalPages - 1);
-        }
-
-        const sortedPages = Array.from(pagesToShow).sort((a, b) => a - b);
-
-        sortedPages.forEach((page, index) => {
-            if (index > 0 && sortedPages[index - 1] < page - 1) {
-                items.push(
-                    <PaginationItem key={`ellipsis-${sortedPages[index - 1]}`}>
-                        <PaginationEllipsis />
-                    </PaginationItem>
-                );
-            }
-
+        if (showEllipsis) {
             items.push(
-                <PaginationItem key={page} className="cursor-pointer">
+                <PaginationItem key={1} className="cursor-pointer">
                     <PaginationLink
-                        onClick={() => handlePageChange(page)}
-                        isActive={currentPageNum === page}
+                        onClick={() => handlePageChange(1)}
+                        isActive={paginationCurrentPage === 1}
                         aria-disabled={isFetching}
                         className={isFetching ? "pointer-events-none opacity-50" : ""}
                     >
-                        {page}
+                        1
                     </PaginationLink>
                 </PaginationItem>
             );
-        });
+
+            if (paginationCurrentPage > 4) {
+                items.push(
+                    <PaginationItem key="ellipsis1">
+                        <PaginationEllipsis />
+                    </PaginationItem>
+                );
+            } else {
+                for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
+                    items.push(
+                        <PaginationItem key={i} className="cursor-pointer">
+                            <PaginationLink
+                                onClick={() => handlePageChange(i)}
+                                isActive={paginationCurrentPage === i}
+                                aria-disabled={isFetching}
+                                className={isFetching ? "pointer-events-none opacity-50" : ""}
+                            >
+                                {i}
+                            </PaginationLink>
+                        </PaginationItem>
+                    );
+                }
+            }
+
+            if (paginationCurrentPage > 3 && paginationCurrentPage < totalPages - 2) {
+                for (
+                    let i = paginationCurrentPage - 1;
+                    i <= paginationCurrentPage + 1;
+                    i++
+                ) {
+                    items.push(
+                        <PaginationItem key={i} className="cursor-pointer">
+                            <PaginationLink
+                                onClick={() => handlePageChange(i)}
+                                isActive={paginationCurrentPage === i}
+                                aria-disabled={isFetching}
+                                className={isFetching ? "pointer-events-none opacity-50" : ""}
+                            >
+                                {i}
+                            </PaginationLink>
+                        </PaginationItem>
+                    );
+                }
+            }
+
+            if (paginationCurrentPage < totalPages - 3) {
+                items.push(
+                    <PaginationItem key="ellipsis2">
+                        <PaginationEllipsis />
+                    </PaginationItem>
+                );
+            } else {
+                for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
+                    if (!items.find((item: any) => item.key === i.toString())) {
+                        items.push(
+                            <PaginationItem key={i} className="cursor-pointer">
+                                <PaginationLink
+                                    onClick={() => handlePageChange(i)}
+                                    isActive={paginationCurrentPage === i}
+                                    aria-disabled={isFetching}
+                                    className={isFetching ? "pointer-events-none opacity-50" : ""}
+                                >
+                                    {i}
+                                </PaginationLink>
+                            </PaginationItem>
+                        );
+                    }
+                }
+            }
+
+            if (totalPages > 1) {
+                items.push(
+                    <PaginationItem key={totalPages} className="cursor-pointer">
+                        <PaginationLink
+                            onClick={() => handlePageChange(totalPages)}
+                            isActive={paginationCurrentPage === totalPages}
+                            aria-disabled={isFetching}
+                            className={isFetching ? "pointer-events-none opacity-50" : ""}
+                        >
+                            {totalPages}
+                        </PaginationLink>
+                    </PaginationItem>
+                );
+            }
+        } else {
+            for (let i = 1; i <= totalPages; i++) {
+                items.push(
+                    <PaginationItem key={i} className="cursor-pointer">
+                        <PaginationLink
+                            onClick={() => handlePageChange(i)}
+                            isActive={paginationCurrentPage === i}
+                            aria-disabled={isFetching}
+                            className={isFetching ? "pointer-events-none opacity-50" : ""}
+                        >
+                            {i}
+                        </PaginationLink>
+                    </PaginationItem>
+                );
+            }
+        }
 
         return items;
     };
@@ -1266,40 +1357,42 @@ const BusinessCompassIssuesPage = () => {
                 </DialogContent>
             </Dialog>
 
-            <div className="flex justify-center mt-4 sm:mt-6 overflow-x-auto pb-2">
-                <Pagination>
-                    <PaginationContent>
-                        <PaginationItem>
-                            <PaginationPrevious
-                                onClick={() =>
-                                    handlePageChange(Math.max(1, pagination.current_page - 1))
-                                }
-                                className={
-                                    pagination.current_page === 1 || isFetching
-                                        ? "pointer-events-none opacity-50"
-                                        : "cursor-pointer"
-                                }
-                            />
-                        </PaginationItem>
-                        {renderPaginationItems()}
-                        <PaginationItem>
-                            <PaginationNext
-                                onClick={() =>
-                                    handlePageChange(
-                                        Math.min(pagination.total_pages, pagination.current_page + 1)
-                                    )
-                                }
-                                className={
-                                    pagination.current_page === pagination.total_pages ||
-                                        isFetching
-                                        ? "pointer-events-none opacity-50"
-                                        : "cursor-pointer"
-                                }
-                            />
-                        </PaginationItem>
-                    </PaginationContent>
-                </Pagination>
-            </div>
+            {pagination && pagination.total_pages > 1 && (
+                <div className="flex justify-center mt-4 sm:mt-6 overflow-x-auto pb-2">
+                    <Pagination>
+                        <PaginationContent>
+                            <PaginationItem>
+                                <PaginationPrevious
+                                    onClick={() =>
+                                        handlePageChange(Math.max(1, pagination.current_page - 1))
+                                    }
+                                    className={
+                                        pagination.current_page === 1 || isFetching
+                                            ? "pointer-events-none opacity-50"
+                                            : "cursor-pointer"
+                                    }
+                                />
+                            </PaginationItem>
+                            {renderPaginationItems()}
+                            <PaginationItem>
+                                <PaginationNext
+                                    onClick={() =>
+                                        handlePageChange(
+                                            Math.min(pagination.total_pages, pagination.current_page + 1)
+                                        )
+                                    }
+                                    className={
+                                        pagination.current_page === pagination.total_pages ||
+                                            isFetching
+                                            ? "pointer-events-none opacity-50"
+                                            : "cursor-pointer"
+                                    }
+                                />
+                            </PaginationItem>
+                        </PaginationContent>
+                    </Pagination>
+                </div>
+            )}
 
             {/* Pause / End Issue Modal */}
             {isPauseModalOpen && (
