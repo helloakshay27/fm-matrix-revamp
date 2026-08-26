@@ -2865,9 +2865,37 @@ export const CreditNoteClubEditPage: React.FC = () => {
                             <MenuItem value="">Select</MenuItem>
                             {states.map((state) => (<MenuItem key={state} value={state}>{state}</MenuItem>))}
                         </TextField>
-                        <TextField label="Pin Code" fullWidth value={addressForm.pin_code} onChange={(e) => setAddressForm((prev) => ({ ...prev, pin_code: e.target.value }))} />
-                        <TextField label="Phone" fullWidth value={addressForm.telephone_number} onChange={(e) => setAddressForm((prev) => ({ ...prev, telephone_number: e.target.value }))} InputProps={{ startAdornment: <InputAdornment position="start">+91</InputAdornment> }} />
-                        <TextField label="Fax Number" fullWidth value={addressForm.fax_number} onChange={(e) => setAddressForm((prev) => ({ ...prev, fax_number: e.target.value }))} />
+                        <TextField
+                            label="Pin Code"
+                            fullWidth
+                            value={addressForm.pin_code}
+                            onChange={(e) => {
+                                const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                setAddressForm((prev) => ({ ...prev, pin_code: digitsOnly }));
+                            }}
+                            inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 6 }}
+                        />
+                        <TextField
+                            label="Phone"
+                            fullWidth
+                            value={addressForm.telephone_number}
+                            onChange={(e) => {
+                                const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                setAddressForm((prev) => ({ ...prev, telephone_number: digitsOnly }));
+                            }}
+                            inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 10 }}
+                            InputProps={{ startAdornment: <InputAdornment position="start">+91</InputAdornment> }}
+                        />
+                        <TextField
+                            label="Fax Number"
+                            fullWidth
+                            value={addressForm.fax_number}
+                            onChange={(e) => {
+                                const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 15);
+                                setAddressForm((prev) => ({ ...prev, fax_number: digitsOnly }));
+                            }}
+                            inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 15 }}
+                        />
                     </div>
                 </DialogContent>
                 <DialogActions className="!justify-start !px-6 !py-3">
