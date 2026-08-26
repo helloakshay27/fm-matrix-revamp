@@ -13,7 +13,10 @@ import { buildJobPayload } from "./api/jobsApi";
 
 export default function JobsCreatePage() {
   const navigate = useNavigate();
-  const { step, setStep, canNext, nextBlockReason, jobForm, formKras, formKpis, resetCreate } = useJobs();
+  const {
+    step, setStep, nextBlockReason, createBlockReason,
+    jobForm, formKras, formKpis, resetCreate,
+  } = useJobs();
   const createJob = useCreateJob({
     onSuccess: () => {
       toast.success("Job description created successfully");
@@ -35,6 +38,11 @@ export default function JobsCreatePage() {
     const payload = buildJobPayload(jobForm, formKras, formKpis, departments ?? []);
     createJob.mutate(payload);
   };
+
+  // Saare steps ka mandatory data poora hone par hi Save enable hota hai.
+  const continueBlockReason = nextBlockReason();
+  const saveBlockReason = createBlockReason();
+  const isFormComplete = !saveBlockReason;
 
   return (
     <div>
@@ -90,21 +98,32 @@ export default function JobsCreatePage() {
           {step < 4 ? (
             <Btn
               primary
-              disabled={!canNext() && !nextBlockReason()}
+              softDisabled={!!continueBlockReason}
               onClick={() => {
-                const reason = nextBlockReason();
-                if (reason) {
-                  toast.error(reason);
+                if (continueBlockReason) {
+                  toast.error(continueBlockReason);
                   return;
                 }
-                if (!canNext()) return;
                 setStep((s) => s + 1);
               }}
+              title={continueBlockReason || undefined}
             >
               Continue <I d="M9 18l6-6-6-6" size={14} stroke="#fff" />
             </Btn>
           ) : (
-            <Btn primary disabled={createJob.isPending} onClick={handleSave}>
+            <Btn
+              primary
+              disabled={createJob.isPending}
+              softDisabled={!isFormComplete}
+              onClick={() => {
+                if (saveBlockReason) {
+                  toast.error(saveBlockReason);
+                  return;
+                }
+                handleSave();
+              }}
+              title={saveBlockReason || undefined}
+            >
               <I d="M20 6L9 17l-5-5" size={14} stroke="#fff" /> {createJob.isPending ? "Saving..." : "Save"}
             </Btn>
           )}

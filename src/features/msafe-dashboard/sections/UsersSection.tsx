@@ -307,10 +307,13 @@ export function UsersSection() {
       setRegLoading(true);
 
       try {
-        const payload = await fetchMsafeUserDashboardJson(
-          'new_registrations.json',
-          buildFilterParams(persona, appliedFilters),
-        );
+        // "New Registrations — Last 12 Months" is a fixed trailing-12-months view,
+        // not scoped to whatever date range is currently applied elsewhere — sending
+        // from_date/to_date here would clip it down to just the applied range,
+        // contradicting its own "Last 12 Months" title. Drop the date range, keep
+        // every other filter (matches "LMC Completion Trend"'s same fix).
+        const { from_date, to_date, ...regParams } = buildFilterParams(persona, appliedFilters);
+        const payload = await fetchMsafeUserDashboardJson('new_registrations.json', regParams);
         const normalized = normalizeRegChartData(payload);
         if (isMounted) setRegChartData(normalized);
       } catch (error) {
@@ -414,7 +417,7 @@ export function UsersSection() {
 
         <ChartCard
           title="New Registrations · Last 12 Months"
-          sub="Monthly onboarding trend"
+          // sub="Monthly onboarding trend · always shows the trailing 12 months, not affected by the date filter"
           infoKey="user-reg"
           showPdf
           pdfLabel="New Registrations"
@@ -495,35 +498,36 @@ export function UsersSection() {
         </ChartCard>
       </div>
 
-      <div className="g g-2-1" style={{ marginTop: 16 }}>
-        <ChartCard
-          title="Users per Circle"
-          sub="Distribution across 22 VIL circles"
-          infoKey="user-circle"
-          showPdf
-          pdfLabel="Users per Circle"
-          exportData={circleChartData.map((d) => ({
-            Circle: d.name,
-            Internal: d.Internal,
-            External: d.External,
-            Total: d.Internal + d.External,
-          }))}
-          chartSwitch={<ChartSwitch modes={['bar', 'table']} value={circleMode} onChange={setCircleMode} />}
-        >
-          {circleLoading || circleChartData.length === 0 ? (
-            <DataState loading={circleLoading} empty={circleChartData.length === 0} label="circle data" />
-          ) : circleMode === 'bar' ? (
-            <div className="chart-wrap tall">
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={circleChartData} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+      <ChartCard
+        title="Users per Circle"
+        // sub="Distribution across 22 VIL circles"
+        infoKey="user-circle"
+        showPdf
+        pdfLabel="Users per Circle"
+        exportData={circleChartData.map((d) => ({
+          Circle: d.name,
+          Internal: d.Internal,
+          External: d.External,
+          Total: d.Internal + d.External,
+        }))}
+        style={{ marginTop: 16 }}
+        chartSwitch={<ChartSwitch modes={['bar', 'table']} value={circleMode} onChange={setCircleMode} />}
+      >
+        {circleLoading || circleChartData.length === 0 ? (
+          <DataState loading={circleLoading} empty={circleChartData.length === 0} label="circle data" />
+        ) : circleMode === 'bar' ? (
+          <div style={{ overflowX: 'auto' }}>
+            <div style={{ minWidth: Math.max(700, circleChartData.length * 55) }}>
+              <ResponsiveContainer width="100%" height={360}>
+                <BarChart data={circleChartData} margin={{ top: 4, right: 8, left: 0, bottom: 70 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
                   <XAxis
                     dataKey="name"
                     tick={{ fontSize: 9, fill: C.sage }}
                     interval={0}
-                    angle={-35}
+                    angle={-45}
                     textAnchor="end"
-                    height={70}
+                    height={90}
                   />
                   <YAxis tick={{ fontSize: 10, fill: C.sage }} />
                   <Tooltip />
@@ -533,52 +537,58 @@ export function UsersSection() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          ) : (
-            <div className="chart-as-table" style={{ maxHeight: 280 }}>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Circle</th>
-                    <th>Internal</th>
-                    <th>External</th>
-                    <th>Total</th>
+          </div>
+        ) : (
+          <div className="chart-as-table" style={{ maxHeight: 420 }}>
+            <table>
+              <thead>
+                <tr>
+                  <th>Circle</th>
+                  <th>Internal</th>
+                  <th>External</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {circleChartData.map((r) => (
+                  <tr key={r.name}>
+                    <td>{r.name}</td>
+                    <td className="num">{r.Internal.toLocaleString()}</td>
+                    <td className="num">{r.External.toLocaleString()}</td>
+                    <td className="num">{(r.Internal + r.External).toLocaleString()}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {circleChartData.map((r) => (
-                    <tr key={r.name}>
-                      <td>{r.name}</td>
-                      <td className="num">{r.Internal.toLocaleString()}</td>
-                      <td className="num">{r.External.toLocaleString()}</td>
-                      <td className="num">{(r.Internal + r.External).toLocaleString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </ChartCard>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </ChartCard>
 
-        <ChartCard
-          title="Users by Department / Function"
-          sub="Sales, S&D, Technology, HR, Marketing, Ops, etc."
-          infoKey="user-func"
-          showPdf
-          pdfLabel="Users by Department"
-          exportData={funcChartData.map((d) => ({ Department: d.name, Users: d.value }))}
-          chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={funcMode} onChange={setFuncMode} />}
-        >
-          {funcLoading || funcChartData.length === 0 ? (
-            <DataState loading={funcLoading} empty={funcChartData.length === 0} label="department data" />
-          ) : (
-            <>
-              {funcMode === 'donut' && <DonutChart data={funcChartData} height={280} />}
-              {funcMode === 'bar' && <SliceBarChart data={funcChartData} height={280} horizontal />}
-              {funcMode === 'table' && <ChartTable data={funcChartData} valueLabel="Users" />}
-            </>
-          )}
-        </ChartCard>
-      </div>
+      <ChartCard
+        title="Users by Department / Function"
+        sub="Sales, S&D, Technology, HR, Marketing, Ops, etc."
+        infoKey="user-func"
+        showPdf
+        pdfLabel="Users by Department"
+        exportData={funcChartData.map((d) => ({ Department: d.name, Users: d.value }))}
+        style={{ marginTop: 16 }}
+        chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={funcMode} onChange={setFuncMode} />}
+      >
+        {funcLoading || funcChartData.length === 0 ? (
+          <DataState loading={funcLoading} empty={funcChartData.length === 0} label="department data" />
+        ) : (
+          <>
+            {funcMode === 'donut' && (
+              <DonutChart
+                data={funcChartData}
+                height={Math.min(420, Math.max(280, Math.ceil(funcChartData.length / 2) * 26))}
+              />
+            )}
+            {funcMode === 'bar' && <SliceBarChart data={funcChartData} height={420} horizontal />}
+            {funcMode === 'table' && <ChartTable data={funcChartData} valueLabel="Users" />}
+          </>
+        )}
+      </ChartCard>
 
       <UserDirectoryCard style={{ marginTop: 16 }} hideStatusColumn />
     </AccordionShell>

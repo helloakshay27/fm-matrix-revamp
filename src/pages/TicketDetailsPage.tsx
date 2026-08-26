@@ -9040,6 +9040,13 @@ export const TicketDetailsPage = () => {
 
             {/* Parent Complaint Card - Only show if data exists */}
             {ticketData?.parent_complaint && (
+              ticketData.parent_complaint.id ||
+              ticketData.parent_complaint.desc ||
+              ticketData.parent_complaint.category_type ||
+              ticketData.parent_complaint.sub_category_type ||
+              ticketData.parent_complaint.created_by ||
+              ticketData.parent_complaint.assigned_to
+            ) && (
               <Card className="w-full bg-white rounded-lg shadow-sm border">
                 <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
@@ -9059,6 +9066,9 @@ export const TicketDetailsPage = () => {
                         <TableHead>Sub Category</TableHead>
                         <TableHead>Created By</TableHead>
                         <TableHead>Assigned To</TableHead>
+                         <TableHead>Created Date</TableHead>
+                          <TableHead>Created Time</TableHead>
+                           <TableHead>Status</TableHead>
                         <TableHead className="text-center">Action</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -9072,6 +9082,13 @@ export const TicketDetailsPage = () => {
                         <TableCell>{ticketData.parent_complaint.sub_category_type || '-'}</TableCell>
                         <TableCell>{ticketData.parent_complaint.created_by || '-'}</TableCell>
                         <TableCell>{ticketData.parent_complaint.assigned_to || '-'}</TableCell>
+                         <TableCell>{formatDateToDDMMYYYY(ticketData.parent_complaint.created_at)}</TableCell>
+                         <TableCell>
+                           {ticketData.parent_complaint.created_at
+                             ? new Date(ticketData.parent_complaint.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
+                             : '-'}
+                         </TableCell>
+                         <TableCell>{ticketData.parent_complaint.status || '-'}</TableCell>
                         <TableCell className="text-center">
                           <button
                             type="button"

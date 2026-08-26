@@ -93,7 +93,7 @@ export const INFO_TEXTS: Record<string, string> = {
   'user-comp':
     'Split of total users by employment type · Internal FTE (Vodafone Idea employees) vs External NON-FTE (contractors, channel partners, vendors).',
   'user-reg':
-    'Users first registered in M-Safe per calendar month · reflects new joiners onboarding into the safety system.',
+    'Users first registered in M-Safe per calendar month · reflects new joiners onboarding into the safety system. Always shows the trailing 12 months — the applied date filter does not affect this chart.',
   'user-circle':
     'Users assigned to each VIL circle · stacked by employment type · top 15 circles by user count.',
   'user-func':
@@ -102,9 +102,9 @@ export const INFO_TEXTS: Record<string, string> = {
   'krcc-status':
     'KRCC clearance status distribution · Cleared = check completed · Pending = initiated but not closed · Not Started = user registered but check not yet begun.',
   'krcc-aging':
-    'How long each pending KRCC has been open · calculated from KRCC initiation date to today.',
+    'How long each pending KRCC has been open · calculated from KRCC initiation date to today. Always a live snapshot as of today — the applied date filter does not affect this chart.',
   'krcc-circle':
-    '% KRCC-cleared users per circle · (Cleared ÷ Total Registered in Circle) × 100. Bar color reflects the compliance band.',
+    '% KRCC-cleared users per circle · (Cleared ÷ Total Registered in Circle) × 100. Bar color reflects the compliance band: green ≥98%, amber 95%–<98%, red <95%.',
   'krcc-category':
     'Cleared KRCC records grouped by check category (Electrical Safety, PPE Compliance, Fire Safety, Working at Height, General Safety, Vehicle Safety).',
   'krcc-turnaround':
@@ -124,13 +124,18 @@ export const INFO_TEXTS: Record<string, string> = {
     'Monthly LMC sign-off volume over the last 12 months — long-term view vs the 30-day daily chart above.',
   // Training
   'train-pf':
-    'Pass = training record has status "Passed" · Fail = status "Failed" · pending records excluded.',
+    'Pass = training record has status "Passed" · Fail = status "Failed" · pending records excluded. for "Defensive Driving, "Work @ Height" , "Underground", "Electrical" for intrnal training only',
+
   'train-int-ext':
     'Pass rate for internal FTE vs external NON-FTE users · calculated separately over each cohort.',
   'train-name':
     'Number of training records per training programme name · top 5 shown.',
   'train-category':
     'Training records rolled up into 5 higher-level categories (Statutory Compliance, Technical Safety, Emergency Response, Behavioral Safety, Induction) · same underlying records as "Training by Name", grouped differently.',
+  'train-function-status':
+    'Pass/Fail/Pending training breakdown by function · toggle Internal/External to switch which cohort each function\'s numbers reflect.',
+  'train-circle-status':
+    'Pass/Fail/Pending % of training records by circle · bars are stacked to 100%.',
   'train-score':
     'Distribution of actual scores where recorded · records with null score excluded (n=15,842 of 27,413).',
   'train-fails':
@@ -146,6 +151,8 @@ export const INFO_TEXTS: Record<string, string> = {
     'Most recent SMT visit records · newest first.',
   'smt-progress':
     'Circles working toward the 20-visits/month target · shows current visit count vs target.',
+  'smt-role-wise':
+    'Same 11 roles on the X-axis for every circle · use Previous/Next Circle to switch circles — each role shows a grouped bar per month (Apr–Mar) from monthly_data, not total_smt_visits · hover a bar for its exact circle/role/month value.',
   // Directory
   directory:
     'Every M-Safe user with real-time status across all three checks (Training, KRCC, LMC). Click any row for full drill-down.',

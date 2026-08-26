@@ -18,6 +18,7 @@ import {
   BarChart3,
   Users,
   Briefcase,
+  Workflow,
 } from "lucide-react";
 
 // Module-based navigation structures for Admin Compass
@@ -63,9 +64,28 @@ const adminCompassNavigation: Record<string, any> = {
     icon: Briefcase,
     href: "/admin-compass/jobs",
   },
+  // Collapsible section: giving it "items" (instead of a bare "href") routes it
+  // through the expandable branch below, same as any other grouped module.
+  "Rule Engine": {
+    icon: Workflow,
+    items: [
+      {
+        name: "Data Source",
+        href: "/admin-compass/rule-engine/data-source",
+      },
+      {
+        name: "Rule",
+        href: "/admin-compass/rule-engine/rule",
+      },
+    ],
+  },
 };
 
-export const AdminCompassSidebar: React.FC = () => {
+// Sirf sidebar se chhupaya hai — routes aur pages waise ke waise hain.
+// Wapas dikhane ke liye is list se naam hata dein (ya array khaali kar dein).
+const HIDDEN_NAV_ITEMS = ["Rule Engine"];
+
+export const AdminCompassSidebarStatic: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isSidebarCollapsed, setIsSidebarCollapsed, isMobileSidebarOpen } =
@@ -125,7 +145,9 @@ export const AdminCompassSidebar: React.FC = () => {
       {/* Sidebar Content */}
       <div className="h-[calc(100%-120px)] py-1 sm:py-2">
         <nav className="space-y-1 sm:space-y-2 px-1 sm:px-2">
-          {Object.entries(adminCompassNavigation).map(
+          {Object.entries(adminCompassNavigation)
+            .filter(([key]) => !HIDDEN_NAV_ITEMS.includes(key))
+            .map(
             ([key, section]: [string, any]) => {
               const Icon = section.icon;
               const hasItems = section.items && section.items.length > 0;
@@ -143,8 +165,8 @@ export const AdminCompassSidebar: React.FC = () => {
                     key={key}
                     onClick={() => handleNavigation(sectionHref)}
                     className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors relative ${isActive(sectionHref)
-                        ? "bg-[#DBC2A9] text-[#1a1a1a]"
-                        : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
+                      ? "bg-[#DBC2A9] text-[#1a1a1a]"
+                      : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
                       }`}
                     title={isSidebarCollapsed ? key : ""}
                   >
@@ -165,14 +187,14 @@ export const AdminCompassSidebar: React.FC = () => {
                 <div key={key} className="space-y-0.5 sm:space-y-1">
                   <button
                     onClick={() => toggleSection(key)}
-                    className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-colors relative ${isSectionOpen ? "bg-[#DBC2A9]" : "hover:bg-[#DBC2A9]"
+                    className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors relative ${isSectionOpen ? "bg-[#DBC2A9]" : "hover:bg-[#DBC2A9]"
                       } text-[#1a1a1a]`}
                     title={isSidebarCollapsed ? key : ""}
                   >
                     <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                     {!isSidebarCollapsed && (
                       <>
-                        <span className="text-xs sm:text-sm font-bold flex-1 text-left truncate">
+                        <span className="text-xs sm:text-sm font-medium flex-1 text-left truncate">
                           {key}
                         </span>
                         <ChevronDown
@@ -190,8 +212,8 @@ export const AdminCompassSidebar: React.FC = () => {
                           key={item.name}
                           onClick={() => handleNavigation(item.href)}
                           className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors relative ${isActive(item.href)
-                              ? "bg-[#DBC2A9] text-[#1a1a1a]"
-                              : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
+                            ? "bg-[#DBC2A9] text-[#1a1a1a]"
+                            : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
                             }`}
                         >
                           {isActive(item.href) && (

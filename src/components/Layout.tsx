@@ -42,6 +42,9 @@ import { ZycusSidebarCopy } from "./ZycusSidebarCopy";
 import TopNavigation from "./CompanyHub/TopNavigation";
 import VendorSidebar from "./VendorSidebar";
 import VendorDynamicHeader from "./VendorDynamicHeader";
+import TopNavigationStatic from "./CompanyHub/TopNavigationStatic";
+import { BusinessCompassSidebarStatic } from "./BusinessCompassSidebarStatic";
+import { AdminCompassSidebarStatic } from "./AdminCompassSidebarStatic";
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -88,6 +91,35 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Detect embedded mode - hide sidebar and header when embedded
   const isEmbedded = isEmbeddedMode();
+
+  // Routes belonging to the employee "Project Task" section (per the
+  // Employee Projects Sidebar module's react_links). Pages in this section
+  // set currentSection via a mount-only effect (`useEffect(() => {...},
+  // [setCurrentSection])`), which never re-fires on client-side navigation
+  // that doesn't remount the component (e.g. query-param-only pagination,
+  // or landing here from a page that left currentSection on something
+  // else). That leaves currentSection stale until a full reload. Deriving
+  // this from the URL instead sidesteps that whole class of bug — the
+  // pathname is always correct, unlike the imperative string.
+  const EMPLOYEE_PROJECT_TASK_ROUTE_PREFIXES = [
+    "/vas/projects",
+    "/vas/tasks",
+    "/vas/issues",
+    "/vas/sprint",
+    "/vas/channels",
+    "/vas/mom",
+    "/vas/opportunity",
+    "/vas/todo",
+    "/vas/documents",
+    "/maintenance/documents",
+    "/report-analytics",
+    "/vas/project-dashboard"
+  ];
+  const isProjectTaskRoute = EMPLOYEE_PROJECT_TASK_ROUTE_PREFIXES.some(
+    (prefix) => location.pathname.startsWith(prefix)
+  );
+  const isEmployeeProjectTaskSection =
+    currentSection === "Project Task" || isProjectTaskRoute;
 
   /**
    * EMPLOYEE VIEW DETECTION
@@ -189,14 +221,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       location.pathname.startsWith("/admin-compass") ||
       currentSection === "Admin Compass"
     ) {
-      return <AdminCompassSidebar />;
+      return <AdminCompassSidebarStatic />;
     }
 
     if (
       currentSection === "Business Compass" ||
       location.pathname.startsWith("/business-compass")
     ) {
-      return <BusinessCompassSidebar />;
+      return <BusinessCompassSidebarStatic />;
     }
 
     // Check if user is employee (pms_occupant) - Employee layout takes priority
@@ -204,7 +236,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // This prevents employee sidebar from showing in admin view on /vas/projects
     if (isEmployeeUser && isLocalhost && userType === "pms_occupant") {
       // Only render sidebar for Project Task or Business Compass module
-      if (currentSection === "Project Task") {
+      if (isEmployeeProjectTaskSection) {
         // Use EmployeeSidebar for specific companies, otherwise EmployeeSidebarStatic
         if (
           selectedCompany?.id === 300 ||
@@ -215,7 +247,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           org_id === "1" ||
           org_id === "84" ||
           org_id === "1" ||
-          org_id === "13" ||
+          // org_id === "13" ||
           userEmail === "ubaid.hashmat@lockated.com" ||
           userEmail === "besis69240@azeriom.com" ||
           userEmail === "megipow156@aixind.com" ||
@@ -531,7 +563,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           userEmail === "jevosak839@cimario.com" ? (
           <EmployeeHeader />
         ) : (
-          <TopNavigation
+          // <TopNavigation
+          //   activeNavMenu={activeNavMenu}
+          //   setActiveNavMenu={setActiveNavMenu}
+          // />
+          <TopNavigationStatic
             activeNavMenu={activeNavMenu}
             setActiveNavMenu={setActiveNavMenu}
           />
@@ -560,7 +596,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             ? "ml-0 pt-4"
             : // For employee users, only add left margin if on Project Task module
             isEmployeeUser && isLocalhost
-              ? currentSection === "Project Task" ||
+              ? isEmployeeProjectTaskSection ||
                 currentSection === "Business Compass" ||
                 currentSection === "Admin Compass" ||
                 location.pathname.includes("/business-compass") ||

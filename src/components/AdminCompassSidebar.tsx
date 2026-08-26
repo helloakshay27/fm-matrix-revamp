@@ -17,6 +17,7 @@ import {
   BarChart3,
   Users,
   Briefcase,
+  Workflow,
 } from "lucide-react";
 
 // Icon mapping for Admin Compass functions, keyed by action_name — same
@@ -33,6 +34,7 @@ const functionIconMap: Record<string, any> = {
   employee_business_compass_disc: Trophy, // "Leaderboard"
   employee_business_compass_help_center: HelpCircle, // "DISC"
   employee_business_compass_bug_reports: Bug, // "Bug Reports"
+  employee_admin_compass_rule_engine: Workflow, // "Rule Engine"
 };
 
 // Fallback icon
@@ -65,13 +67,43 @@ export const AdminCompassSidebar: React.FC = () => {
       return children.some((child) => hasActiveDescendant(child, allFunctions));
     };
 
-    return functions
+    const apiItems = functions
       .filter((func: any) => hasActiveDescendant(func, functions))
       .map((func: any) => ({
         name: func.function_name,
         href: func.react_link,
         icon: getFunctionIcon(func.action_name),
       }));
+
+    // ── Rule Engine ──────────────────────────────────────────────────────────
+    // Added client-side because the role API does not return a Rule Engine
+    // function for the "Employee Admin Compass" module yet. Unlike every other
+    // item here it is NOT role-gated. Once the backend serves it (action_name
+    // "employee_admin_compass_rule_engine", already in functionIconMap above),
+    // delete this block and the item will flow in from the API like the rest.
+    const RULE_ENGINE = {
+      name: "Rule Engine",
+      href: "/admin-compass/rule-engine",
+      icon: Workflow,
+    };
+
+    if (apiItems.some((item: any) => item.href === RULE_ENGINE.href)) {
+      return apiItems;
+    }
+
+    // Sits directly after Jobs; falls back to the end if Jobs is not present
+    // for this role.
+    const jobsIndex = apiItems.findIndex(
+      (item: any) => item.href === "/admin-compass/jobs"
+    );
+    if (jobsIndex === -1) {
+      return [...apiItems, RULE_ENGINE];
+    }
+    return [
+      ...apiItems.slice(0, jobsIndex + 1),
+      RULE_ENGINE,
+      ...apiItems.slice(jobsIndex + 1),
+    ];
   }, [getModuleFunctions]);
 
   const toggleSidebar = () => {

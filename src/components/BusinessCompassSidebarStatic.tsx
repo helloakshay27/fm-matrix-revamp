@@ -85,7 +85,7 @@ const businessCompassNavigation: Record<string, any> = {
   },
 };
 
-export const BusinessCompassSidebar: React.FC = () => {
+export const BusinessCompassSidebarStatic: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isSidebarCollapsed, setIsSidebarCollapsed, isMobileSidebarOpen } =
@@ -163,8 +163,8 @@ export const BusinessCompassSidebar: React.FC = () => {
                     key={key}
                     onClick={() => handleNavigation(sectionHref)}
                     className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors relative ${isActive(sectionHref)
-                        ? "bg-[#DBC2A9] text-[#1a1a1a]"
-                        : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
+                      ? "bg-[#DBC2A9] text-[#1a1a1a]"
+                      : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
                       }`}
                     title={isSidebarCollapsed ? key : ""}
                   >
@@ -210,8 +210,8 @@ export const BusinessCompassSidebar: React.FC = () => {
                           key={item.name}
                           onClick={() => handleNavigation(item.href)}
                           className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors relative ${isActive(item.href)
-                              ? "bg-[#DBC2A9] text-[#1a1a1a]"
-                              : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
+                            ? "bg-[#DBC2A9] text-[#1a1a1a]"
+                            : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
                             }`}
                         >
                           {isActive(item.href) && (

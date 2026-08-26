@@ -291,7 +291,13 @@ export function PulseCarpool({ filters }: Props) {
   }
 
   const topDriverRows = firstArray(topDrivers, "drivers").slice(0, 10);
-  const topDriverColumns = deriveColumns(topDriverRows);
+  const topDriverColumns = (() => {
+    const cols = deriveColumns(topDriverRows);
+    const nameIdx = cols.indexOf("name");
+    const insertAt = nameIdx === -1 ? 0 : nameIdx + 1;
+    return [...cols.slice(0, insertAt), "company", ...cols.slice(insertAt)];
+  })();
+  const selectedCompanyName = localStorage.getItem("selectedCompany") ?? "—";
 
   const rideRows = firstArray(rides, "rides");
   const rideColumns = deriveColumns(rideRows);
@@ -642,7 +648,9 @@ export function PulseCarpool({ filters }: Props) {
                 {topDriverRows.map((row, i) => (
                   <tr key={String(row.id ?? row.driver_id ?? i)}>
                     {topDriverColumns.map((c) => (
-                      <td key={c}>{formatCell(row[c], c)}</td>
+                      <td key={c}>
+                        {c === "company" ? selectedCompanyName : formatCell(row[c], c)}
+                      </td>
                     ))}
                   </tr>
                 ))}

@@ -167,6 +167,11 @@ const modulesByPackage = {
         // { name: "Occupant Users", href: "/crm/occupant-users" },
       ],
     },
+    {
+      name: "Notification",
+      icon: Bell,
+      href: "/pulse/notifications",
+    },
   ],
 
   Master: [
@@ -388,11 +393,11 @@ const modulesByPackage = {
       icon: Settings,
       href: "/pulse/gre-site-assignment-setup",
     },
-    // {
-    //   name: 'Currency',
-    //   icon: Currency,
-    //   href: '/settings/currency',
-    // }
+    {
+      name: 'Notification Approvers',
+      icon: Settings,
+      href: '/pulse/notification-approval-matrix',
+    }
   ],
 };
 
