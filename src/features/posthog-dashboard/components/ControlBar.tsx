@@ -136,7 +136,7 @@ function SiteMultiSelect({
 }
 
 export function ControlBar() {
-  const { vm, setScope, setDate, setDev, togglePrev, refreshAll } = useDashboard();
+  const { vm, setScope, setDate, setDev, togglePrev, refreshAll, isRefreshing } = useDashboard();
   const { state, sites, groups, sitesLoading, traffic } = vm;
 
   const selectedSiteIds = state.tier === 't1' && state.scope !== 'all'
@@ -205,8 +205,22 @@ export function ControlBar() {
         <span className="ic">↺</span> Previous period {state.prev ? '✓' : ''}
       </label>
 
-      <button className="ctrl" onClick={refreshAll} title="Refetch every metric">
-        <span className="ic">⟳</span> Refresh
+      <button
+        className={`ctrl ${isRefreshing ? 'is-refreshing' : ''}`}
+        onClick={refreshAll}
+        disabled={isRefreshing}
+        aria-busy={isRefreshing}
+        title={isRefreshing ? "Refreshing metrics…" : "Refetch every metric"}
+      >
+        {isRefreshing ? (
+          <>
+            <span className="spin" aria-hidden="true" /> Refreshing…
+          </>
+        ) : (
+          <>
+            <span className="ic">⟳</span> Refresh
+          </>
+        )}
       </button>
 
       <div className="spacer" />

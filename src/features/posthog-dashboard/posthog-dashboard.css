@@ -295,8 +295,19 @@ html.nav-collapsed .nav-item:hover::after{
   padding:6px 11px;cursor:pointer;white-space:nowrap;
   transition:background .12s,border-color .12s;
 }
-.ctrl:hover{background:var(--surface-2)}
+.ctrl:hover:not(:disabled){background:var(--surface-2)}
+.ctrl:disabled{opacity:0.7;cursor:not-allowed}
 .ctrl .ic{color:var(--faint);font-size:12px}
+.ctrl .spin{
+  width:12px;
+  height:12px;
+  flex:none;
+  border-radius:50%;
+  border:1.8px solid var(--border-2);
+  border-top-color:var(--ink);
+  animation:phg-spin .7s linear infinite;
+  display:inline-block;
+}
 .ctrl .chev{color:var(--faint);font-size:10px;margin-left:1px}
 .ctrl select{
   font:inherit;font-size:13px;font-weight:400;border:none;background:none;
@@ -417,7 +428,7 @@ input.bmin:focus{outline:none;border-color:var(--blue);box-shadow:var(--focus-ri
 @media(max-width:1100px){.two,.two-32{grid-template-columns:1fr}}
 .charthead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px}
 .charthead .gb{font-size:12.5px;color:var(--faint)}
-svg.chart{width:100%;height:auto;display:block}
+svg.chart{width:100%;height:auto;display:block;overflow:hidden}
 
 .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:12px}
 .legend span{display:inline-flex;align-items:center;gap:7px}
