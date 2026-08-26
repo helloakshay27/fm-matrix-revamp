@@ -195,7 +195,7 @@ export const VisitorsDashboard = () => {
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [exportFromDate, setExportFromDate] = useState('');
   const [exportToDate, setExportToDate] = useState('');
-  const EXPORT_MAX_RANGE_DAYS = 5;
+  const EXPORT_MAX_RANGE_DAYS = 10;
 
   // exportFromDate/exportToDate are DD/MM/YYYY strings from MaterialDatePicker
   const parseDDMMYYYY = (value: string): Date | null => {
