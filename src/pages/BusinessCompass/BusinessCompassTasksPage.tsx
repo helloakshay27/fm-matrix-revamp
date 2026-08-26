@@ -24,7 +24,7 @@ import {
     Pause,
 } from "lucide-react";
 import { useEffect, useState, useRef, forwardRef, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import {
     Dialog,
     DialogContent,
@@ -32,6 +32,7 @@ import {
     Select,
     Slide,
     FormControl,
+    Switch,
 } from "@mui/material";
 import { toast } from "sonner";
 import BCTaskCreateModal from "@/components/BusinessCompass/BCTaskCreateModal";
@@ -110,22 +111,8 @@ const columns: ColumnConfig[] = [
         defaultVisible: true,
     },
     {
-        key: "started_time",
-        label: "Actual Efforts Taken",
-        sortable: false,
-        draggable: true,
-        defaultVisible: true,
-    },
-    {
         key: "duration",
         label: "Time Left",
-        sortable: true,
-        draggable: true,
-        defaultVisible: true,
-    },
-    {
-        key: "efforts_duration",
-        label: "Efforts Duration",
         sortable: true,
         draggable: true,
         defaultVisible: true,
@@ -165,7 +152,6 @@ const COLUMN_TO_BACKEND_MAP: Record<string, string> = {
     start_date: "start_date",
     due_date: "due_date",
     duration: "due_date",
-    efforts_duration: "effort_duration",
     priority: "priority",
 };
 
@@ -484,6 +470,7 @@ const BusinessCompassTasksPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const dispatch = useAppDispatch();
+    const [searchParams, setSearchParams] = useSearchParams();
 
     const token =
         sessionStorage.getItem("mobile_token") || localStorage.getItem("token");
@@ -497,7 +484,16 @@ const BusinessCompassTasksPage = () => {
     const [openTaskModal, setOpenTaskModal] = useState(false);
     const [openStatusOptions, setOpenStatusOptions] = useState(false);
     const [selectedFilterOption, setSelectedFilterOption] = useState("all");
-    const [currentPage, setCurrentPage] = useState(1);
+    const [taskType, setTaskType] = useState<"all" | "my">(() => {
+        const urlTaskType = searchParams.get("task_type");
+        return urlTaskType === "all" || urlTaskType === "my"
+            ? urlTaskType
+            : "my";
+    });
+    const [currentPage, setCurrentPage] = useState(() => {
+        const urlPage = Number(searchParams.get("page"));
+        return urlPage > 0 ? urlPage : 1;
+    });
     const [searchTerm, setSearchTerm] = useState<string>("");
     const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
@@ -565,6 +561,27 @@ const BusinessCompassTasksPage = () => {
     } | null>(null);
 
     const statusDropdownRef = useRef<HTMLDivElement>(null);
+
+    /**
+     * Helper function to update URL query parameters
+     * Deletes params if value is null/undefined/empty
+     */
+    const updateQueryParams = useCallback(
+        (updates: Record<string, any>, replace = false) => {
+            const params = new URLSearchParams(searchParams);
+
+            Object.entries(updates).forEach(([key, value]) => {
+                if (value === undefined || value === null || value === "") {
+                    params.delete(key);
+                } else {
+                    params.set(key, String(value));
+                }
+            });
+
+            setSearchParams(params, { replace });
+        },
+        [searchParams, setSearchParams]
+    );
 
     // Fetch tags from API
     useEffect(() => {
@@ -764,6 +781,21 @@ const BusinessCompassTasksPage = () => {
         return filters;
     };
 
+    // Reset to page 1 whenever the My/All scope changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [taskType]);
+
+    // Sync taskType to URL
+    useEffect(() => {
+        updateQueryParams({ task_type: taskType }, true);
+    }, [taskType, updateQueryParams]);
+
+    // Sync currentPage to URL
+    useEffect(() => {
+        updateQueryParams({ page: currentPage }, true);
+    }, [currentPage, updateQueryParams]);
+
     // TanStack Query hook for fetching Business Compass tasks
     const filters = buildFilters();
     const {
@@ -773,12 +805,33 @@ const BusinessCompassTasksPage = () => {
     } = useBusinessCompassTasks({
         page: currentPage,
         filters,
+        my: taskType === "my",
     });
 
     // Extract tasks and pagination from response
     const tasks = tasksData?.tasks || tasksData?.data?.tasks || [];
-    const paginationData =
+
+    // Normalize pagination shape — the API returns `meta: { total, page, per_page }`
+    // (no total_pages/total_count), so derive the fields the rest of the page expects.
+    const rawPagination =
         tasksData?.meta || tasksData?.pagination || tasksData?.data?.pagination;
+    const paginationData = rawPagination
+        ? {
+            total_count: rawPagination.total_count ?? rawPagination.total ?? 0,
+            current_page:
+                rawPagination.current_page ?? rawPagination.page ?? currentPage,
+            per_page: rawPagination.per_page ?? 20,
+            total_pages:
+                rawPagination.total_pages ??
+                Math.max(
+                    1,
+                    Math.ceil(
+                        (rawPagination.total_count ?? rawPagination.total ?? 0) /
+                        (rawPagination.per_page ?? 20)
+                    )
+                ),
+        }
+        : undefined;
 
     // Mutations
     const importMutation = useImportTasks();
@@ -1313,40 +1366,53 @@ const BusinessCompassTasksPage = () => {
                 const isTaskStarted = item.is_started;
 
                 return (
-                    <div className="flex items-center gap-2 w-[20rem]">
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <span className="w-full truncate">{item.title}</span>
-                                </TooltipTrigger>
-                                <TooltipContent className="rounded-[5px]">
-                                    <p>{item.title}</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                        {!isCompleted &&
-                            (isTaskStarted ? (
-                                <button
-                                    onClick={() => {
-                                        setPauseTaskId(item.id);
-                                        setIsPauseModalOpen(true);
-                                    }}
-                                    disabled={isCompleted}
-                                    className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
-                                    title="Pause task"
-                                >
-                                    <Pause size={13} className="text-orange-500" />
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={() => handlePlayTask(item.id)}
-                                    disabled={isCompleted}
-                                    className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
-                                    title="Play task"
-                                >
-                                    <Play size={13} color="#22c55e" />
-                                </button>
-                            ))}
+                    <div className="flex flex-col gap-1 w-[20rem]">
+                        <div className="flex items-center gap-2">
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <span className="w-full truncate">{item.title}</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="rounded-[5px]">
+                                        <p>{item.title}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                            {!isCompleted &&
+                                (isTaskStarted ? (
+                                    <button
+                                        onClick={() => {
+                                            setPauseTaskId(item.id);
+                                            setIsPauseModalOpen(true);
+                                        }}
+                                        disabled={isCompleted}
+                                        className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
+                                        title="Pause task"
+                                    >
+                                        <Pause size={13} className="text-orange-500" />
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => handlePlayTask(item.id)}
+                                        disabled={isCompleted}
+                                        className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
+                                        title="Play task"
+                                    >
+                                        <Play size={13} color="#22c55e" />
+                                    </button>
+                                ))}
+                        </div>
+                        <div className="flex items-center gap-3 text-[11px] text-gray-500 font-medium">
+                            <span className="flex items-center gap-1">
+                                Effort taken:
+                                <ActiveTimer
+                                    activeTimeTillNow={item?.active_time_till_now}
+                                    isStarted={item?.is_started}
+                                />
+                            </span>
+                            <span>•</span>
+                            <span>Duration: {item.effort_duration || "-"}</span>
+                        </div>
                     </div>
                 );
             }
@@ -1447,21 +1513,10 @@ const BusinessCompassTasksPage = () => {
                     />
                 );
             }
-            case "efforts_duration": {
-                return item.effort_duration || "-";
-            }
             case "priority": {
                 return item.priority
                     ? item.priority.charAt(0).toUpperCase() + item.priority.slice(1)
                     : "-";
-            }
-            case "started_time": {
-                return (
-                    <ActiveTimer
-                        activeTimeTillNow={item?.active_time_till_now}
-                        isStarted={item?.is_started}
-                    />
-                );
             }
             default:
                 return item[columnKey] || "-";
@@ -1488,6 +1543,30 @@ const BusinessCompassTasksPage = () => {
                 </span>
                 <span className="text-sm font-bold text-[#C72030]">
                     {paginationData?.total_count || tasks.length || 0}
+                </span>
+            </div>
+
+            {/* Task Type Toggle */}
+            <div className="flex items-center gap-0.5 sm:gap-1 px-1 sm:px-2 py-1">
+                <span className="text-gray-700 font-medium text-xs whitespace-nowrap">
+                    My
+                </span>
+                <Switch
+                    checked={taskType === "all"}
+                    onChange={() => setTaskType(taskType === "all" ? "my" : "all")}
+                    sx={{
+                        "& .MuiSwitch-switchBase.Mui-checked": {
+                            color: "#C72030",
+                        },
+                        "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                            backgroundColor: "#C72030",
+                        },
+                        transform: "scale(0.8)",
+                        margin: "-4px",
+                    }}
+                />
+                <span className="text-gray-700 font-medium text-xs whitespace-nowrap">
+                    All
                 </span>
             </div>
 
