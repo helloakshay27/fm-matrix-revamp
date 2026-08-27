@@ -557,8 +557,9 @@ export function SmtSection() {
         title="Visits per Circle "
         sub="Ranked by SMT field visit count"
         infoKey="smt-circle"
-
+        showPdf
         pdfLabel="Visits per Circle"
+        reportPath="msafe_dashboard_report/smt_details"
         exportData={circleData.map((d) => ({ Circle: d.name, Visits: d.n }))}
         chartSwitch={<ChartSwitch modes={['bar', 'table']} value={circleMode} onChange={setCircleMode} />}
       >
@@ -611,7 +612,9 @@ export function SmtSection() {
         title="SMT Visits – Role-wise Trend"
         sub="One circle at a time · same 11 roles on every screen · hover a bar for its full month-by-month breakdown"
         infoKey="smt-role-wise"
+        showPdf
         pdfLabel="SMT Role-wise Trend"
+        reportPath="msafe_dashboard_report/smt_summary"
         exportData={roleChartRows.map((row) => {
           const record: Record<string, unknown> = {
             Circle: selectedCircle?.name ?? '',
@@ -726,7 +729,14 @@ export function SmtSection() {
       </ChartCard>
 
       <div className="g g2" style={{ marginTop: 16 }}>
-        <ChartCard title="SMT by Function" sub="Which functions are doing the visits" infoKey="smt-func">
+        <ChartCard
+          title="SMT by Function"
+          sub="Which functions are doing the visits"
+          infoKey="smt-func"
+          showPdf
+          pdfLabel="SMT by Function"
+          reportPath="msafe_dashboard_report/smt_details"
+        >
           {funcLoading || funcData.length === 0 ? (
             <DataState loading={funcLoading} empty={funcData.length === 0} label="function visit data" />
           ) : (

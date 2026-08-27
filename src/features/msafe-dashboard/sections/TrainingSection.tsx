@@ -780,8 +780,10 @@ export function TrainingSection() {
           left, now full-width instead of half a two-column row. */}
       <ChartCard
         title="Pass vs Fail Rate"
-      
         infoKey="train-pf"
+        showPdf
+        pdfLabel="Pass vs Fail Rate"
+        reportPath="msafe_dashboard_report/training_pass_rate"
         exportData={pfData.map((d) => ({ Status: d.name, Records: d.value, Rate: d.rate }))}
         chartSwitch={<ChartSwitch modes={['donut', 'bar']} value={pfMode} onChange={setPfMode} />}
       >
@@ -805,7 +807,9 @@ export function TrainingSection() {
         title="Category-wise Trainings"
         sub="Training volume rolled up by category — Statutory Compliance, Technical Safety, Behavioral Safety, Emergency Response, Induction"
         infoKey="train-category"
+        showPdf
         pdfLabel="Category-wise Trainings"
+        reportPath="msafe_dashboard_report/training_category_summary"
         exportData={trainCategoryData.map((d) => ({
           Category: d.name,
           Completed: d.completed,
@@ -885,7 +889,9 @@ export function TrainingSection() {
         title="Function-wise Training Status"
         sub="Completed training count and completion % by function"
         infoKey="train-function-status"
+        showPdf
         pdfLabel="Function-wise Training Status"
+        reportPath="msafe_dashboard_report/training_function_wise"
         exportData={funcTrainingData.map((d) => ({
           Function: d.name,
           Completed: d.completed,
@@ -968,7 +974,9 @@ export function TrainingSection() {
         title="Circle-wise Training Status"
         sub="Completed training count and completion % by circle"
         infoKey="train-circle-status"
+        showPdf
         pdfLabel="Circle-wise Training Status"
+        reportPath="msafe_dashboard_report/training_circle_wise"
         exportData={circleTrainingData.map((d) => ({
           Circle: d.name,
           Completed: d.completed,
