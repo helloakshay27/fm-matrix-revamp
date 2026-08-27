@@ -543,7 +543,7 @@ export const CreditNoteClubAddPage: React.FC = () => {
                 const res = await axios.get(
                     `https://${baseUrl}/lock_accounts/${lock_account_id}/bill_bookings.json`,
                     {
-                        params: { user_id: selectedUser, page: 1, per_page: 20 },
+                        params: { user_id: selectedUser, page: 1, per_page: 20, paid: true },
                         headers: { Authorization: token ? `Bearer ${token}` : undefined }
                     }
                 );
@@ -552,8 +552,8 @@ export const CreditNoteClubAddPage: React.FC = () => {
                 const list = data?.bill_bookings || data?.data || (Array.isArray(data) ? data : []);
                 setInvoiceList((list || []).map((inv: any) => ({
                     id: String(inv.id),
-                    invoice_number:  `#${inv.id}`
-                    // inv.bill_number || inv.order_number || inv.invoice_number ||
+                    invoice_number:  inv.bill_number 
+                    // `#${inv.id}` || || inv.order_number || inv.invoice_number ||
                 })));
             } catch {
                 setInvoiceList([]);
@@ -1289,11 +1289,6 @@ export const CreditNoteClubAddPage: React.FC = () => {
             return false;
         }
 
-        if (!placeOfSupply) {
-            setErrors(newErrors);
-            toast.error('Place of Supply is required');
-            return false;
-        }
 
         if (!salesOrderDate) {
             setErrors(newErrors);
@@ -1686,7 +1681,7 @@ export const CreditNoteClubAddPage: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-2">
-                                        Place of Supply<span className="text-red-500">*</span>
+                                        Place of Supply
                                     </label>
                                     <TextField
                                         select
@@ -1920,7 +1915,7 @@ export const CreditNoteClubAddPage: React.FC = () => {
                                     <thead className="bg-gray-50">
                                         <tr>
                                             <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
-                                            <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th>
+                                            {/* <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th> */}
                                             <th className="px-4 py-3 text-left text-sm font-medium">Rate</th>
                                             {/* <th className="px-4 py-3 text-left text-sm font-medium">Discount</th> */}
                                             <th className="px-4 py-3 text-left text-sm font-medium">Tax</th>
@@ -2050,7 +2045,7 @@ export const CreditNoteClubAddPage: React.FC = () => {
                                                 </td>
 
 
-                                                <td className="px-4 py-3">
+                                                {/* <td className="px-4 py-3">
                                                     {item.locked ? (
                                                         <div className="text-sm text-gray-900">{item.quantity}</div>
                                                     ) : (
@@ -2063,7 +2058,7 @@ export const CreditNoteClubAddPage: React.FC = () => {
                                                             sx={{ width: 80 }}
                                                         />
                                                     )}
-                                                </td>
+                                                </td> */}
                                                 <td className="px-4 py-3">
                                                     <TextField
                                                         type="number"

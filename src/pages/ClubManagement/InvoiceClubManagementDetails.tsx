@@ -422,12 +422,11 @@ export const InvoiceClubManagementDetails = () => {
               </div> */}
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Place of Supply</p>
-                                <p className="text-base font-semibold mt-1">{invoiceData.source_of_supply || "-"}</p>
+                                {/* Confirmed: bill_booking[destination_of_supply] is what the Add/Edit page's
+                                    "Place of Supply" dropdown actually sends — source_of_supply is the
+                                    organization's own (fixed) state, not the customer's place of supply. */}
+                                <p className="text-base font-semibold mt-1">{invoiceData.destination_of_supply || "-"}</p>
                             </div>
-                            {/* <div>
-                <p className="text-sm font-medium text-muted-foreground">Destination of Supply</p>
-                <p className="text-base font-semibold mt-1">{invoiceData.destination_of_supply || "-"}</p>
-              </div> */}
                             {/* <div>
                 <p className="text-sm font-medium text-muted-foreground">Billing GSTIN</p>
                 <p className="text-base font-semibold mt-1">{invoiceData.billing_gstin || "-"}</p>
@@ -569,7 +568,7 @@ export const InvoiceClubManagementDetails = () => {
                                             <TableRow className="bg-gray-50">
                                                 <TableHead>Type</TableHead>
                                                 <TableHead>Item</TableHead>
-                                                <TableHead className="text-right">Quantity</TableHead>
+                                                {/* <TableHead className="text-right">Quantity</TableHead> */}
                                                 <TableHead className="text-right">Rate</TableHead>
                                                 {/* <TableHead className="text-right">Discount</TableHead> */}
                                                 <TableHead className="text-right">GST</TableHead>
@@ -583,7 +582,7 @@ export const InvoiceClubManagementDetails = () => {
                                                         {LINE_ITEM_TYPE_LABELS[item.line_item_type] || item.line_item_type || "-"}
                                                     </TableCell>
                                                     <TableCell className="font-semibold">{item.name || "-"}</TableCell>
-                                                    <TableCell className="text-right">{item.quantity ?? 0}</TableCell>
+                                                    {/* <TableCell className="text-right">{item.quantity ?? 0}</TableCell> */}
                                                     <TableCell className="text-right">{formatCurrency(item.rate)}</TableCell>
                                                     {/* <TableCell className="text-right">{formatCurrency(item.discount)}</TableCell> */}
                                                     <TableCell className="text-right">

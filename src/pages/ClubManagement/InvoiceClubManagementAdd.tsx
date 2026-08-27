@@ -1465,12 +1465,6 @@ export const InvoiceClubManagementAdd: React.FC = () => {
             return false;
         }
 
-        if (!placeOfSupply) {
-            setErrors(newErrors);
-            toast.error('Place of Supply is required');
-            return false;
-        }
-
         const hasValidItems = items.some(
             item => item.name && item.quantity > 0 && item.rate > 0
         );
@@ -1792,7 +1786,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-sm font-medium mb-2">
-                                    Place of Supply<span className="text-brand">*</span>
+                                    Place of Supply
                                 </label>
 
                                 <TextField
@@ -2097,7 +2091,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                     <thead className="bg-gray-50">
                         <tr>
                             <th className="px-4 py-3 text-left text-sm font-medium">Item Details<span className="text-brand">*</span></th>
-                            <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th>
+                            {/* <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th> */}
                             <th className="px-4 py-3 text-left text-sm font-medium">Rate</th>
                             {/* <th className="px-4 py-3 text-left text-sm font-medium">Discount</th> */}
                             <th className="px-4 py-3 text-left text-sm font-medium">Tax</th>
@@ -2208,7 +2202,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                                         InputLabelProps={{ shrink: true }}
                                     /> */}
                                 </td>
-                                <td className="px-4 py-3">
+                                {/* <td className="px-4 py-3">
                                     <TextField
                                         type="number"
                                         size="small"
@@ -2225,7 +2219,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                                         inputProps={{ min: 0, step: 1 }}
                                         sx={{ width: 80 }}
                                     />
-                                </td>
+                                </td> */}
                                 <td className="px-4 py-3">
                                     <TextField
                                         type="number"
