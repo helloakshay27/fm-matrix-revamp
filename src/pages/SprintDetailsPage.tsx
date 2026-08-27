@@ -6,6 +6,7 @@ import {
   useCallback,
 } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { isMobileUiSite } from "@/utils/mobileUiSites";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -159,13 +160,13 @@ export const SprintDetailsPage = () => {
   };
 
   return (
-    <div className="m-4">
+    <div className={isMobileUiSite() ? "m-2 md:m-4" : "m-4"}>
       <Button variant="ghost" onClick={() => navigate(-1)} className="py-0">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
 
-      <div className="px-4 pt-1">
+      <div className={isMobileUiSite() ? "px-1 pt-1 md:px-4" : "px-4 pt-1"}>
         {loading ? (
           <>
             {/* Title skeleton */}
@@ -184,7 +185,7 @@ export const SprintDetailsPage = () => {
             <div className="border-b-[3px] border-grey my-3"></div>
 
             {/* Details card skeleton */}
-            <div className="border rounded-[10px] shadow-md p-5 mb-4">
+            <div className={isMobileUiSite() ? "border rounded-[10px] shadow-md p-3 mb-4 md:p-5" : "border rounded-[10px] shadow-md p-5 mb-4"}>
               <div className="flex items-center gap-4 mb-4">
                 <Skeleton className="h-7 w-7 rounded-full" />
                 <Skeleton className="h-5 w-20" />
@@ -327,15 +328,15 @@ export const SprintDetailsPage = () => {
             <div className="border-b-[3px] border-grey my-3"></div>
 
             {/* Details Section */}
-            <div className="border rounded-[10px] shadow-md p-5 mb-4">
+            <div className={isMobileUiSite() ? "border rounded-[10px] shadow-md p-3 mb-4 md:p-5" : "border rounded-[10px] shadow-md p-5 mb-4"}>
               <div className="font-[600] text-[16px] flex items-center gap-4">
                 <ChevronDownCircle color="#E95420" size={30} />
                 Details
               </div>
               <div className="mt-3 flex flex-col">
                 {/* Row 1 */}
-                <div className="flex items-center ml-16">
-                  <div className="w-1/2 flex items-center justify-start gap-3">
+                <div className={isMobileUiSite() ? "flex flex-col gap-2 md:flex-row md:items-center md:ml-16" : "flex items-center ml-16"}>
+                  <div className={isMobileUiSite() ? "w-full flex items-center justify-start gap-3 md:w-1/2" : "w-1/2 flex items-center justify-start gap-3"}>
                     <div className="text-right text-[14px] font-[500]">
                       Responsible Person :
                     </div>
@@ -343,7 +344,7 @@ export const SprintDetailsPage = () => {
                       {sprintDetails.responsible_person || "-"}
                     </div>
                   </div>
-                  <div className="w-1/2 flex items-center justify-start gap-3">
+                  <div className={isMobileUiSite() ? "w-full flex items-center justify-start gap-3 md:w-1/2" : "w-1/2 flex items-center justify-start gap-3"}>
                     <div className="text-right text-[14px] font-[500]">
                       Priority :
                     </div>
@@ -354,8 +355,8 @@ export const SprintDetailsPage = () => {
                 </div>
                 <span className="border h-[1px] inline-block w-full my-4"></span>
                 {/* Row 2 */}
-                <div className="flex items-center ml-16">
-                  <div className="w-1/2 flex items-center justify-start gap-3">
+                <div className={isMobileUiSite() ? "flex flex-col gap-2 md:flex-row md:items-center md:ml-16" : "flex items-center ml-16"}>
+                  <div className={isMobileUiSite() ? "w-full flex items-center justify-start gap-3 md:w-1/2" : "w-1/2 flex items-center justify-start gap-3"}>
                     <div className="text-right text-[14px] font-[500]">
                       Start Date :
                     </div>
@@ -363,7 +364,7 @@ export const SprintDetailsPage = () => {
                       {sprintDetails.start_date || "-"}
                     </div>
                   </div>
-                  <div className="w-1/2 flex items-center justify-start gap-3">
+                  <div className={isMobileUiSite() ? "w-full flex items-center justify-start gap-3 md:w-1/2" : "w-1/2 flex items-center justify-start gap-3"}>
                     <div className="text-right text-[14px] font-[500]">
                       End Date :
                     </div>
@@ -374,8 +375,8 @@ export const SprintDetailsPage = () => {
                 </div>
                 <span className="border h-[1px] inline-block w-full my-4"></span>
                 {/* Row 3 */}
-                <div className="flex items-center ml-16">
-                  <div className="w-1/2 flex items-center justify-start gap-3">
+                <div className={isMobileUiSite() ? "flex flex-col gap-2 md:flex-row md:items-center md:ml-16" : "flex items-center ml-16"}>
+                  <div className={isMobileUiSite() ? "w-full flex items-center justify-start gap-3 md:w-1/2" : "w-1/2 flex items-center justify-start gap-3"}>
                     <div className="text-right text-[14px] font-[500]">
                       Total Tasks :
                     </div>
@@ -383,7 +384,7 @@ export const SprintDetailsPage = () => {
                       {sprintDetails?.total_tasks ?? "-"}
                     </div>
                   </div>
-                  <div className="w-1/2 flex items-center justify-start gap-3">
+                  <div className={isMobileUiSite() ? "w-full flex items-center justify-start gap-3 md:w-1/2" : "w-1/2 flex items-center justify-start gap-3"}>
                     <div className="text-right text-[14px] font-[500]">
                       Total Issues :
                     </div>
@@ -394,8 +395,8 @@ export const SprintDetailsPage = () => {
                 </div>
                 <span className="border h-[1px] inline-block w-full my-4"></span>
                 {/* Row 4 */}
-                <div className="flex items-center ml-16">
-                  <div className="w-1/2 flex items-center justify-start gap-3">
+                <div className={isMobileUiSite() ? "flex flex-col gap-2 md:flex-row md:items-center md:ml-16" : "flex items-center ml-16"}>
+                  <div className={isMobileUiSite() ? "w-full flex items-center justify-start gap-3 md:w-1/2" : "w-1/2 flex items-center justify-start gap-3"}>
                     <div className="text-right text-[14px] font-[500]">
                       Effective Hours :
                     </div>
@@ -403,7 +404,7 @@ export const SprintDetailsPage = () => {
                       {fmtMinutes(sprintDetails?.total_effective_minutes)}
                     </div>
                   </div>
-                  <div className="w-1/2 flex items-center justify-start gap-3">
+                  <div className={isMobileUiSite() ? "w-full flex items-center justify-start gap-3 md:w-1/2" : "w-1/2 flex items-center justify-start gap-3"}>
                     <div className="text-right text-[14px] font-[500]">
                       Actual Hours :
                     </div>
@@ -429,7 +430,7 @@ export const SprintDetailsPage = () => {
                   <button
                     key={tab.key}
                     onClick={() => setActiveTab(tab.key)}
-                    className={`relative px-5 py-2 text-[14px] font-[500] capitalize transition-colors focus:outline-none ${activeTab === tab.key
+                    className={`relative py-2 text-[14px] font-[500] capitalize transition-colors focus:outline-none ${isMobileUiSite() ? "px-3 md:px-5" : "px-5"} ${activeTab === tab.key
                       ? "text-[#E95420]"
                       : "text-[#323232] hover:text-[#E95420]"
                       }`}

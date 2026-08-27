@@ -332,7 +332,7 @@ export const CreditNoteClubDetails = () => {
                                             <TableRow className="bg-gray-50">
                                                 <TableHead>Type</TableHead>
                                                 <TableHead>Item</TableHead>
-                                                <TableHead className="text-right">Quantity</TableHead>
+                                                {/* <TableHead className="text-right">Quantity</TableHead> */}
                                                 <TableHead className="text-right">Rate</TableHead>
                                                 {/* <TableHead className="text-right">Discount</TableHead> */}
                                                 <TableHead className="text-right">GST</TableHead>
@@ -346,7 +346,7 @@ export const CreditNoteClubDetails = () => {
                                                         {LINE_ITEM_TYPE_LABELS[item.line_item_type] || item.line_item_type || "-"}
                                                     </TableCell>
                                                     <TableCell className="font-semibold">{item.item_name || "-"}</TableCell>
-                                                    <TableCell className="text-right">{item.quantity ?? 0}</TableCell>
+                                                    {/* <TableCell className="text-right">{item.quantity ?? 0}</TableCell> */}
                                                     <TableCell className="text-right">{formatCurrency(item.rate)}</TableCell>
                                                     {/* <TableCell className="text-right">{formatCurrency(item.discount)}</TableCell> */}
                                                     <TableCell className="text-right">

@@ -1465,12 +1465,6 @@ export const InvoiceClubManagementAdd: React.FC = () => {
             return false;
         }
 
-        if (!placeOfSupply) {
-            setErrors(newErrors);
-            toast.error('Place of Supply is required');
-            return false;
-        }
-
         const hasValidItems = items.some(
             item => item.name && item.quantity > 0 && item.rate > 0
         );
@@ -1792,7 +1786,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-sm font-medium mb-2">
-                                    Place of Supply<span className="text-brand">*</span>
+                                    Place of Supply
                                 </label>
 
                                 <TextField
@@ -2097,7 +2091,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                     <thead className="bg-gray-50">
                         <tr>
                             <th className="px-4 py-3 text-left text-sm font-medium">Item Details<span className="text-brand">*</span></th>
-                            <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th>
+                            {/* <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th> */}
                             <th className="px-4 py-3 text-left text-sm font-medium">Rate</th>
                             {/* <th className="px-4 py-3 text-left text-sm font-medium">Discount</th> */}
                             <th className="px-4 py-3 text-left text-sm font-medium">Tax</th>
@@ -2208,7 +2202,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                                         InputLabelProps={{ shrink: true }}
                                     /> */}
                                 </td>
-                                <td className="px-4 py-3">
+                                {/* <td className="px-4 py-3">
                                     <TextField
                                         type="number"
                                         size="small"
@@ -2225,7 +2219,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                                         inputProps={{ min: 0, step: 1 }}
                                         sx={{ width: 80 }}
                                     />
-                                </td>
+                                </td> */}
                                 <td className="px-4 py-3">
                                     <TextField
                                         type="number"
@@ -2416,7 +2410,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
             {(customerNotes?.length || 0)}/500
         </div>
 
-        <div className="mt-4 w-1/2">
+        {/* <div className="mt-4 w-1/2">
             <label className="block text-sm font-medium mb-2">
                 Bank
             </label>
@@ -2453,7 +2447,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                 </Select>
             </FormControl>
             {errors.bank && <p className="text-xs text-brand mt-1">{errors.bank}</p>}
-        </div>
+        </div> */}
     </Section>
 
     {/* Terms & Conditions */ }
@@ -2587,19 +2581,38 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                 <DialogTitle className="!text-base !font-semibold">Additional Address</DialogTitle>
                 <DialogContent dividers>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-                        <TextField label="Attention" fullWidth value={addressForm.attention} onChange={(e) => setAddressForm(prev => ({ ...prev, attention: e.target.value }))} className="md:col-span-2" />
+                        <TextField label="Attention" placeholder="Enter contact person name" InputLabelProps={{ shrink: true }} fullWidth value={addressForm.attention} onChange={(e) => setAddressForm(prev => ({ ...prev, attention: e.target.value }))} className="md:col-span-2" />
                         <TextField label="Country/Region" select fullWidth value={addressForm.country} onChange={(e) => setAddressForm(prev => ({ ...prev, country: e.target.value }))} className="md:col-span-2">
                             {addressCountryOptions.map((opt) => (<MenuItem key={opt.code} value={opt.name}>{opt.name}</MenuItem>))}
                         </TextField>
-                        <TextField label="Address" placeholder="Street 1" fullWidth value={addressForm.address} onChange={(e) => setAddressForm(prev => ({ ...prev, address: e.target.value }))} className="md:col-span-2" />
+                        <TextField label="Address" placeholder="Street 1" InputLabelProps={{ shrink: true }} fullWidth value={addressForm.address} onChange={(e) => setAddressForm(prev => ({ ...prev, address: e.target.value }))} className="md:col-span-2" />
                         <TextField placeholder="Street 2" fullWidth value={addressForm.address_line_two} onChange={(e) => setAddressForm(prev => ({ ...prev, address_line_two: e.target.value }))} className="md:col-span-2" />
-                        <TextField label="City" fullWidth value={addressForm.city} onChange={(e) => setAddressForm(prev => ({ ...prev, city: e.target.value }))} className="md:col-span-2" />
-                        <TextField label="State" select fullWidth value={addressForm.state} onChange={(e) => setAddressForm(prev => ({ ...prev, state: e.target.value }))}>
-                            <MenuItem value="">Select</MenuItem>
+                        <TextField label="City" placeholder="Enter city" InputLabelProps={{ shrink: true }} fullWidth value={addressForm.city} onChange={(e) => setAddressForm(prev => ({ ...prev, city: e.target.value }))} className="md:col-span-2" />
+                        <TextField
+                            label="State"
+                            select
+                            fullWidth
+                            value={addressForm.state}
+                            onChange={(e) => setAddressForm(prev => ({ ...prev, state: e.target.value }))}
+                            SelectProps={{
+                                displayEmpty: true,
+                                MenuProps: {
+                                    PaperProps: {
+                                        sx: {
+                                            maxHeight: 300,
+                                            '& .MuiMenuItem-root': { fontSize: '14px !important', minHeight: 'auto !important', padding: '8px 12px !important' },
+                                        },
+                                    },
+                                },
+                            }}
+                        >
+                            <MenuItem value="" disabled>Select State</MenuItem>
                             {states.map((state) => (<MenuItem key={state} value={state}>{state}</MenuItem>))}
                         </TextField>
                         <TextField
                             label="Pin Code"
+                            placeholder="Enter 6-digit pin code"
+                            InputLabelProps={{ shrink: true }}
                             fullWidth
                             value={addressForm.pin_code}
                             onChange={(e) => {
@@ -2610,6 +2623,8 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                         />
                         <TextField
                             label="Phone"
+                            placeholder="Enter phone number"
+                            InputLabelProps={{ shrink: true }}
                             fullWidth
                             value={addressForm.telephone_number}
                             onChange={(e) => {
@@ -2621,6 +2636,8 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                         />
                         <TextField
                             label="Fax Number"
+                            placeholder="Enter fax number"
+                            InputLabelProps={{ shrink: true }}
                             fullWidth
                             value={addressForm.fax_number}
                             onChange={(e) => {
@@ -2631,9 +2648,26 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                         />
                     </div>
                 </DialogContent>
-                <DialogActions className="!justify-start !px-6 !py-3">
-                    <Button variant="contained" onClick={saveAddressFormLocal} sx={{ backgroundColor: '#DA7756', '&:hover': { backgroundColor: '#C45F40' }, textTransform: 'none' }}>Save</Button>
-                    <Button variant="outlined" onClick={() => setAddressFormModalOpen(false)} sx={{ color: '#DA7756', borderColor: '#DA7756', textTransform: 'none' }}>Cancel</Button>
+                <DialogActions className="!justify-center !px-6 !py-3">
+                    <Button variant="text" onClick={saveAddressFormLocal} className="fm-button-fix fm-button-brand px-8 py-2" sx={{ textTransform: 'none', fontWeight: 600 }}>Save</Button>
+                    <Button
+                        variant="outlined"
+                        onClick={() => setAddressFormModalOpen(false)}
+                        className="fm-button-fix px-8 py-2"
+                        sx={{
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            borderColor: '#DA7756',
+                            color: '#DA7756',
+                            '&:hover': {
+                                borderColor: '#C45F40',
+                                bgcolor: '#F2EEE9',
+                                color: '#C45F40'
+                            }
+                        }}
+                    >
+                        Cancel
+                    </Button>
                 </DialogActions>
             </Dialog>
 

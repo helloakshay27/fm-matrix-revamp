@@ -21,8 +21,12 @@ import {
   Car,
   Wallet,
   Compass,
+  Menu,
 } from "lucide-react";
 import { RecessClubLogo } from "./RecessClubLogo";
+import { useIsMobile } from "../hooks/use-mobile";
+import mobileLogo from "../assets/logo-mobile.png";
+import { isMobileUiSite } from "../utils/mobileUiSites";
 
 import { useNavigate } from "react-router-dom";
 import {
@@ -155,7 +159,17 @@ export const EmployeeHeader: React.FC = () => {
     markAllAsRead,
     handleNotificationClick: handleNotificationClickContext,
   } = useNotification();
-  const { currentSection, setCurrentSection, isSidebarCollapsed } = useLayout();
+  const {
+    currentSection,
+    setCurrentSection,
+    isSidebarCollapsed,
+    isMobileSidebarOpen,
+    setIsMobileSidebarOpen,
+  } = useLayout();
+  const isMobile = useIsMobile();
+  // Mobile-only changes (sidebar hamburger + logo) sirf goPhygital site par.
+  const isGoPhygital = isMobileUiSite();
+  const goPhygitalMobile = isMobile && isGoPhygital;
   const [userRoleName, setUserRoleName] = useState<string | null>(null);
   const [availableBalance, setAvailableBalance] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -512,7 +526,26 @@ export const EmployeeHeader: React.FC = () => {
     <header className="fixed top-0 left-0 right-0 h-14 sm:h-16 bg-white border-b border-gray-200 z-[100] shadow-sm">
       <div className="flex items-center justify-between h-full px-2 sm:px-4 lg:px-6 max-w-[1920px] mx-auto">
         {/* Left Section - Logo & Company Info */}
-        <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-shrink-0">
+        <div
+          className={`flex items-center gap-2 sm:gap-3 lg:gap-4 flex-shrink-0 ${isGoPhygital ? "max-md:gap-1.5 max-md:max-w-[96px] max-md:[&>svg]:h-auto max-md:[&>svg]:w-full max-md:[&_img]:h-auto max-md:[&_img]:max-w-full" : ""
+            }`}
+        >
+          {/* Hamburger — mobile par sidebar kholne ka ekmatra rasta, logo ke
+                left me (Header.tsx me pehle se hai). Ye header render hone par
+                isMobileSidebarOpen ko koi set nahi karta tha, isliye Admin
+                Compass / Business Compass ka sidebar mobile par -translate-x-full
+                par atka rehta tha — accessible hi nahi hota tha.
+                md:hidden hai, to desktop par kuch nahi badalta. */}
+          {isGoPhygital && (
+            <button
+              className="md:hidden flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-[#f6f4ee]"
+              onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+              aria-label="Toggle sidebar"
+              aria-expanded={isMobileSidebarOpen}
+            >
+              <Menu className="w-5 h-5 text-[#1a1a1a]" />
+            </button>
+          )}
           {isOmanSite ? (
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -597,8 +630,15 @@ export const EmployeeHeader: React.FC = () => {
               alt="Pulse Logo"
               style={{ height: 60, width: "auto", objectFit: "contain" }}
             />
+          ) : goPhygitalMobile ? (
+            <img
+              src={mobileLogo}
+              alt="goPhygital.work"
+              className="h-auto w-[96px] max-w-full object-contain"
+            />
           ) : (
             <svg
+              className={isGoPhygital ? "max-md:hidden" : undefined}
               width="173"
               height="31"
               viewBox="0 0 173 31"
@@ -755,7 +795,7 @@ export const EmployeeHeader: React.FC = () => {
         </div>
 
         {/* Right Section - Actions */}
-        <div className="flex items-center gap-1 sm:gap-2 lg:gap-3 flex-shrink-0">
+        <div className={`flex items-center gap-1 sm:gap-2 lg:gap-3 flex-shrink-0 ${isGoPhygital ? "max-md:gap-0.5" : ""}`}>
           <button
             className="flex items-center gap-2"
             onClick={() => navigate("/employee-wallet")}

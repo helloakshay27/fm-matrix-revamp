@@ -35,6 +35,7 @@ import {
     Switch,
 } from "@mui/material";
 import { toast } from "sonner";
+import { isMobileUiSite } from "@/utils/mobileUiSites";
 import BCTaskCreateModal from "@/components/BusinessCompass/BCTaskCreateModal";
 import {
     Pagination,
@@ -1526,11 +1527,18 @@ const BusinessCompassTasksPage = () => {
     const leftActions = (
         <>
             <Button
-                className="bg-[#C72030] hover:bg-[#A01020] text-white px-2 sm:px-4"
+                className={`bg-[#C72030] hover:bg-[#A01020] text-white px-2 sm:px-4 ${isMobileUiSite()
+                    ? "max-sm:h-9 max-sm:gap-1.5 max-sm:rounded-lg max-sm:px-4 max-sm:text-[13px] max-sm:font-semibold max-sm:tracking-normal max-sm:shadow-sm"
+                    : ""
+                    }`}
                 onClick={() => setShowActionPanel(true)}
             >
                 <Plus className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Action</span>
+                {isMobileUiSite() ? (
+                    "Action"
+                ) : (
+                    <span className="hidden sm:inline">Action</span>
+                )}
             </Button>
         </>
     );

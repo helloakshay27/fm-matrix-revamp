@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useLayout } from "@/contexts/LayoutContext";
 import BCTaskEditModal from "@/components/BusinessCompass/BCTaskEditModal";
+import { isMobileUiSite } from "@/utils/mobileUiSites";
 
 // Helper to get initials from name
 const getInitials = (name: string): string => {
@@ -465,7 +466,7 @@ const Comments = ({
                         {`${currentUser?.firstname?.charAt(0) || ""}${currentUser?.lastname?.charAt(0) || ""}`}
                     </span>
                 </div>
-                <div className="relative w-[95%]">
+                <div className={isMobileUiSite() ? "relative min-w-0 flex-1 md:w-[95%] md:flex-none" : "relative w-[95%]"}>
                     <MentionsInput
                         inputRef={textareaRef}
                         value={comment}
@@ -766,7 +767,7 @@ const Attachments = ({
     };
 
     return (
-        <div className="flex flex-col gap-3 p-5">
+        <div className={isMobileUiSite() ? "flex flex-col gap-3 p-3 md:p-5" : "flex flex-col gap-3 p-5"}>
             {files.length > 0 ? (
                 <>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4 mt-4">
@@ -831,7 +832,8 @@ const Attachments = ({
                     </div>
 
                     <button
-                        className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4 disabled:opacity-50"
+                        className={`bg-[#C72030] h-[40px] text-white px-5 mt-4 disabled:opacity-50 ${isMobileUiSite() ? "w-full md:w-[240px]" : "w-[240px]"
+                            }`}
                         onClick={handleAttachFile}
                         disabled={isSubmitting}
                     >
@@ -846,7 +848,8 @@ const Attachments = ({
                         Drop or attach relevant documents here
                     </div>
                     <button
-                        className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4 disabled:opacity-50"
+                        className={`bg-[#C72030] h-[40px] text-white px-5 mt-4 disabled:opacity-50 ${isMobileUiSite() ? "w-full md:w-[240px]" : "w-[240px]"
+                            }`}
                         onClick={handleAttachFile}
                         disabled={isSubmitting}
                     >
@@ -1349,7 +1352,7 @@ const BusinessCompassTaskDetailsPage = () => {
         .filter(Boolean);
 
     return (
-        <div className="my-4 m-8">
+        <div className={isMobileUiSite() ? "my-3 mx-3 md:my-4 md:m-8" : "my-4 m-8"}>
             <Button variant="ghost" onClick={() => navigate(-1)} className="p-0">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
@@ -1369,7 +1372,8 @@ const BusinessCompassTaskDetailsPage = () => {
                         </div>
                         <Skeleton className="h-[3px] w-full mb-4" />
 
-                        <div className="bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 p-6 mt-4">
+                        <div className={`bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 mt-4 ${isMobileUiSite() ? "p-4 md:p-6" : "p-6"
+                            }`}>
                             <Skeleton className="h-[30px] w-1/4 mb-4" />
                             <div className="space-y-3">
                                 <Skeleton className="h-[20px] w-full" />
@@ -1378,9 +1382,13 @@ const BusinessCompassTaskDetailsPage = () => {
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 p-6">
+                        <div className={`bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 ${isMobileUiSite() ? "p-4 md:p-6" : "p-6"
+                            }`}>
                             <Skeleton className="h-[30px] w-1/4 mb-6" />
-                            <div className="grid grid-cols-2 gap-6">
+                            <div className={`grid gap-6 ${isMobileUiSite()
+                                        ? "grid-cols-1 gap-3 md:grid-cols-2 md:gap-6"
+                                        : "grid-cols-2"
+                                        }`}>
                                 {Array(8)
                                     .fill(0)
                                     .map((_, i) => (
@@ -1483,7 +1491,8 @@ const BusinessCompassTaskDetailsPage = () => {
                         <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
 
                         {/* Description Section */}
-                        <div className="bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 p-6 mt-4">
+                        <div className={`bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 mt-4 ${isMobileUiSite() ? "p-4 md:p-6" : "p-6"
+                            }`}>
                             <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
                                 <ChevronDownCircle
                                     color="#E95420"
@@ -1509,7 +1518,8 @@ const BusinessCompassTaskDetailsPage = () => {
                         </div>
 
                         {/* Details Section */}
-                        <div className="bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 p-6">
+                        <div className={`bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 ${isMobileUiSite() ? "p-4 md:p-6" : "p-6"
+                            }`}>
                             <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
                                 <ChevronDownCircle
                                     color="#E95420"
@@ -1562,9 +1572,12 @@ const BusinessCompassTaskDetailsPage = () => {
                                 ref={secondContentRef}
                             >
                                 <div className="flex flex-col space-y-4">
-                                    <div className="grid grid-cols-2 gap-6">
-                                        <div className="flex items-start">
-                                            <div className="min-w-[200px]">
+                                    <div className={`grid gap-6 ${isMobileUiSite()
+                                        ? "grid-cols-1 gap-3 md:grid-cols-2 md:gap-6"
+                                        : "grid-cols-2"
+                                        }`}>
+                                        <div className={isMobileUiSite() ? "flex items-start gap-2 md:gap-0" : "flex items-start"}>
+                                            <div className={isMobileUiSite() ? "min-w-[130px] md:min-w-[200px]" : "min-w-[200px]"}>
                                                 <p className="text-sm font-medium text-gray-600">
                                                     Responsible Person:
                                                 </p>
@@ -1576,8 +1589,8 @@ const BusinessCompassTaskDetailsPage = () => {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-start">
-                                            <div className="min-w-[200px]">
+                                        <div className={isMobileUiSite() ? "flex items-start gap-2 md:gap-0" : "flex items-start"}>
+                                            <div className={isMobileUiSite() ? "min-w-[130px] md:min-w-[200px]" : "min-w-[200px]"}>
                                                 <p className="text-sm font-medium text-gray-600">
                                                     Start Date:
                                                 </p>
@@ -1589,8 +1602,8 @@ const BusinessCompassTaskDetailsPage = () => {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-start">
-                                            <div className="min-w-[200px]">
+                                        <div className={isMobileUiSite() ? "flex items-start gap-2 md:gap-0" : "flex items-start"}>
+                                            <div className={isMobileUiSite() ? "min-w-[130px] md:min-w-[200px]" : "min-w-[200px]"}>
                                                 <p className="text-sm font-medium text-gray-600">
                                                     End Date:
                                                 </p>
@@ -1602,8 +1615,8 @@ const BusinessCompassTaskDetailsPage = () => {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-start">
-                                            <div className="min-w-[200px]">
+                                        <div className={isMobileUiSite() ? "flex items-start gap-2 md:gap-0" : "flex items-start"}>
+                                            <div className={isMobileUiSite() ? "min-w-[130px] md:min-w-[200px]" : "min-w-[200px]"}>
                                                 <p className="text-sm font-medium text-gray-600">
                                                     Tags:
                                                 </p>
@@ -1626,8 +1639,8 @@ const BusinessCompassTaskDetailsPage = () => {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-start">
-                                            <div className="min-w-[200px]">
+                                        <div className={isMobileUiSite() ? "flex items-start gap-2 md:gap-0" : "flex items-start"}>
+                                            <div className={isMobileUiSite() ? "min-w-[130px] md:min-w-[200px]" : "min-w-[200px]"}>
                                                 <p className="text-sm font-medium text-gray-600">
                                                     Efforts Duration:
                                                 </p>
@@ -1639,8 +1652,8 @@ const BusinessCompassTaskDetailsPage = () => {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-start">
-                                            <div className="min-w-[200px]">
+                                        <div className={isMobileUiSite() ? "flex items-start gap-2 md:gap-0" : "flex items-start"}>
+                                            <div className={isMobileUiSite() ? "min-w-[130px] md:min-w-[200px]" : "min-w-[200px]"}>
                                                 <p className="text-sm font-medium text-gray-600">
                                                     Observer:
                                                 </p>
@@ -1672,8 +1685,8 @@ const BusinessCompassTaskDetailsPage = () => {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-start">
-                                            <div className="min-w-[200px]">
+                                        <div className={isMobileUiSite() ? "flex items-start gap-2 md:gap-0" : "flex items-start"}>
+                                            <div className={isMobileUiSite() ? "min-w-[130px] md:min-w-[200px]" : "min-w-[200px]"}>
                                                 <p className="text-sm font-medium text-gray-600">
                                                     Actual Efforts Taken:
                                                 </p>
@@ -1686,8 +1699,8 @@ const BusinessCompassTaskDetailsPage = () => {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-start">
-                                            <div className="min-w-[200px]">
+                                        <div className={isMobileUiSite() ? "flex items-start gap-2 md:gap-0" : "flex items-start"}>
+                                            <div className={isMobileUiSite() ? "min-w-[130px] md:min-w-[200px]" : "min-w-[200px]"}>
                                                 <p className="text-sm font-medium text-gray-600">
                                                     {calculateDuration(
                                                         taskDetails.start_date,
@@ -1705,8 +1718,8 @@ const BusinessCompassTaskDetailsPage = () => {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-start">
-                                            <div className="min-w-[200px]">
+                                        <div className={isMobileUiSite() ? "flex items-start gap-2 md:gap-0" : "flex items-start"}>
+                                            <div className={isMobileUiSite() ? "min-w-[130px] md:min-w-[200px]" : "min-w-[200px]"}>
                                                 <p className="text-sm font-medium text-gray-600">
                                                     Priority:
                                                 </p>
@@ -1733,7 +1746,7 @@ const BusinessCompassTaskDetailsPage = () => {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`px-6 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${activeTab === tab.id
+                                className={`py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${isMobileUiSite() ? "px-4 md:px-6" : "px-6"} ${activeTab === tab.id
                                     ? "border-[#C72030] text-[#C72030]"
                                     : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
                                     }`}
@@ -1744,7 +1757,7 @@ const BusinessCompassTaskDetailsPage = () => {
                     </div>
                 </div>
 
-                <div className="px-6 pb-6">
+                <div className={isMobileUiSite() ? "px-3 pb-4 md:px-6 md:pb-6" : "px-6 pb-6"}>
                     {/* Comments Tab */}
                     {activeTab === "comments" && (
                         <Comments
