@@ -554,10 +554,11 @@ export function SmtSection() {
       excelLabel="SMT Visits"
     >
       <ChartCard
-        title="Visits per Circle · This Month"
+        title="Visits per Circle "
         sub="Ranked by SMT field visit count"
         infoKey="smt-circle"
         showPdf
+        
         pdfLabel="Visits per Circle"
         exportData={circleData.map((d) => ({ Circle: d.name, Visits: d.n }))}
         chartSwitch={<ChartSwitch modes={['bar', 'table']} value={circleMode} onChange={setCircleMode} />}
