@@ -493,8 +493,8 @@ export const AddFMUserPage = () => {
                     value={formData.firstName}
                     onChange={(e) => {
                       const value = e.target.value;
-                      // Only allow letters and spaces
-                      if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
+                      // Only allow letters, numbers and spaces
+                      if (value === '' || /^[a-zA-Z0-9\s]*$/.test(value)) {
                         handleInputChange('firstName', value);
                       }
                     }}
@@ -515,8 +515,8 @@ export const AddFMUserPage = () => {
                     value={formData.lastName}
                     onChange={(e) => {
                       const value = e.target.value;
-                      // Only allow letters and spaces
-                      if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
+                      // Only allow letters, numbers and spaces
+                      if (value === '' || /^[a-zA-Z0-9\s]*$/.test(value)) {
                         handleInputChange('lastName', value);
                       }
                     }}

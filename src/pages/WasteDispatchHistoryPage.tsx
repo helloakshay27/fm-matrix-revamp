@@ -8,6 +8,40 @@ import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { fetchWasteDispatches, WasteDispatch } from '@/services/wasteDispatchAPI';
 import { DispatchRecord } from '@/data/wasteDispatchDummyData';
+import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
+
+type ExistingAttachment = { id: number; url: string; name: string };
+
+// Same normalization WasteDispatchDetailPage.tsx uses: the API returns
+// { id, document: "<url-encoded, protocol-relative S3 URL>", active } — no
+// separate filename field, so the display name is derived from the URL's
+// last path segment.
+const normalizeAttachment = (raw: unknown): ExistingAttachment | null => {
+  if (!raw || typeof raw !== 'object') return null;
+  const record = raw as Record<string, unknown>;
+
+  const rawUrl = [record.document, record.url, record.document_url, record.file_url].find(
+    (v): v is string => typeof v === 'string' && v.trim().length > 0
+  );
+  if (!rawUrl) return null;
+
+  let decoded = rawUrl;
+  try {
+    decoded = decodeURIComponent(rawUrl);
+  } catch {
+    // Not actually URL-encoded — use as-is.
+  }
+  const url = decoded.startsWith('//') ? `https:${decoded}` : decoded;
+
+  const explicitName = [record.document_name, record.document_file_name, record.name, record.file_name].find(
+    (v): v is string => typeof v === 'string' && v.trim().length > 0
+  );
+  const name = explicitName ?? (url.split('/').pop() || 'Attachment').split('?')[0];
+
+  const id = typeof record.id === 'number' ? record.id : Number(record.id) || 0;
+
+  return { id, url, name };
+};
 
 // Table 2 — Waste Dispatch List columns. "Checkbox" isn't listed here since
 // EnhancedTable renders its own selection column via the `selectable` prop.
@@ -113,6 +147,13 @@ const WasteDispatchHistoryPage: React.FC = () => {
 
   const [dispatchRecords, setDispatchRecords] = useState<WasteDispatch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<{
+    id: number;
+    document_name?: string;
+    document_file_name?: string;
+    url: string;
+  } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
@@ -236,6 +277,31 @@ const WasteDispatchHistoryPage: React.FC = () => {
               </Button>
             ) : null;
           }
+          if (key === 'supporting_documents') {
+            const docs = (item.attachments || [])
+              .map(normalizeAttachment)
+              .filter((a): a is ExistingAttachment => Boolean(a));
+            if (docs.length === 0) return '-';
+            return (
+              <div className="flex flex-col gap-1">
+                {docs.map((doc) => (
+                  <button
+                    key={doc.id}
+                    type="button"
+                    title={`View ${doc.name}`}
+                    className="flex items-center gap-1.5 text-gray-700 hover:text-[#C72030] max-w-[220px]"
+                    onClick={() => {
+                      setSelectedDoc({ id: doc.id, document_name: doc.name, url: doc.url });
+                      setIsPreviewOpen(true);
+                    }}
+                  >
+                    <Eye className="h-4 w-4 shrink-0" />
+                    <span className="text-xs truncate">{doc.name}</span>
+                  </button>
+                ))}
+              </div>
+            );
+          }
           return renderDispatchCell(item, key);
         }}
         getItemId={(item) => item.id.toString()}
@@ -260,6 +326,13 @@ const WasteDispatchHistoryPage: React.FC = () => {
           onClearSelection={() => setSelectedItems([])}
         />
       )}
+
+      <AttachmentPreviewModal
+        isModalOpen={isPreviewOpen}
+        setIsModalOpen={setIsPreviewOpen}
+        selectedDoc={selectedDoc}
+        setSelectedDoc={setSelectedDoc}
+      />
     </div>
   );
 };

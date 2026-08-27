@@ -347,12 +347,12 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
             </div>
 
             <div>
-              <div className="text-xs text-gray-500">Visit Date:</div>
+              <div className="text-xs text-gray-500">Expected Date:</div>
               <div className="font-medium text-[12px]">{visitDate}</div>
             </div>
 
             <div>
-              <div className="text-xs text-gray-500">Visit Time:</div>
+              <div className="text-xs text-gray-500">Expected Time:</div>
               <div className="font-medium text-[12px]">{timeSlot}</div>
             </div>
 

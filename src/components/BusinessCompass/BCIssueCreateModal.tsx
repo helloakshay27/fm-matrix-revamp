@@ -282,12 +282,13 @@ const SimpleIssueForm = ({
   prefilledTitle?: string;
   dateResetKey?: number;
 }) => {
+  const currentUserId = JSON.parse(localStorage.getItem("user") || "{}")?.id || "";
   const [users, setUsers] = useState<any[]>([]);
   const [issueTypes, setIssueTypes] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     issueTitle: prefilledTitle || "",
     description: "",
-    responsiblePerson: "",
+    responsiblePerson: currentUserId,
     issueType: "",
     priority: "",
   });

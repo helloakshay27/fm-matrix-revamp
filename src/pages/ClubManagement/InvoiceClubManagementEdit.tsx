@@ -2304,6 +2304,8 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                                         <div className="text-sm font-medium">{item.name}</div>
                                     )} */}
 
+                                    {/* Facility Booking / Membership / Event / Other picker — commented out per request,
+                                        every row now goes straight to a plain "Other" item-name input below.
                                     {(() => {
                                         const rowSource = itemSourceSelection[item.id] || '';
                                         const sourceOptions: { key: 'facility' | 'membership' | 'event'; lineItemType: 'facility_booking' | 'membership' | 'event'; label: string; options: { id: string; name: string; rate: number }[] }[] = [
@@ -2370,6 +2372,20 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                                             </div>
                                         );
                                     })()}
+                                    */}
+                                    <div className="mt-2">
+                                        <TextField
+                                            size="small"
+                                            placeholder="Enter item name"
+                                            value={otherItemNameDraft[item.id] ?? item.name ?? ''}
+                                            onChange={(e) => setOtherItemNameDraft(prev => ({ ...prev, [item.id]: e.target.value }))}
+                                            onBlur={() => {
+                                                const name = (otherItemNameDraft[item.id] ?? item.name ?? '').trim();
+                                                updateItemFields(index, { item_id: null, name, line_item_type: 'other' });
+                                            }}
+                                            sx={{ minWidth: 200 }}
+                                        />
+                                    </div>
 
                                     {/* <TextField
                                         fullWidth
@@ -2807,9 +2823,37 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                             <MenuItem value="">Select</MenuItem>
                             {states.map((state) => (<MenuItem key={state} value={state}>{state}</MenuItem>))}
                         </TextField>
-                        <TextField label="Pin Code" fullWidth value={addressForm.pin_code} onChange={(e) => setAddressForm(prev => ({ ...prev, pin_code: e.target.value }))} />
-                        <TextField label="Phone" fullWidth value={addressForm.telephone_number} onChange={(e) => setAddressForm(prev => ({ ...prev, telephone_number: e.target.value }))} InputProps={{ startAdornment: <InputAdornment position="start">+91</InputAdornment> }} />
-                        <TextField label="Fax Number" fullWidth value={addressForm.fax_number} onChange={(e) => setAddressForm(prev => ({ ...prev, fax_number: e.target.value }))} />
+                        <TextField
+                            label="Pin Code"
+                            fullWidth
+                            value={addressForm.pin_code}
+                            onChange={(e) => {
+                                const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                setAddressForm(prev => ({ ...prev, pin_code: digitsOnly }));
+                            }}
+                            inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 6 }}
+                        />
+                        <TextField
+                            label="Phone"
+                            fullWidth
+                            value={addressForm.telephone_number}
+                            onChange={(e) => {
+                                const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                setAddressForm(prev => ({ ...prev, telephone_number: digitsOnly }));
+                            }}
+                            inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 10 }}
+                            InputProps={{ startAdornment: <InputAdornment position="start">+91</InputAdornment> }}
+                        />
+                        <TextField
+                            label="Fax Number"
+                            fullWidth
+                            value={addressForm.fax_number}
+                            onChange={(e) => {
+                                const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 15);
+                                setAddressForm(prev => ({ ...prev, fax_number: digitsOnly }));
+                            }}
+                            inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 15 }}
+                        />
                     </div>
                 </DialogContent>
                 <DialogActions className="!justify-start !px-6 !py-3">
