@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { useState } from 'react';
 import * as XLSX from 'xlsx';
-import { FileSpreadsheet, Download, Loader2 } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
 import { InfoButton } from './InfoButton';
 import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import type { Persona } from '../data/constants';
@@ -19,8 +19,17 @@ type Props = {
   /** When set, the download button hits `msafe_dashboard_report/report_template?export_for=<reportExportFor>`
    *  for a server-generated Excel report (carrying the current circle/function/zone/employee-type/date-range
    *  filters) instead of exporting `exportData` client-side — and switches to the same Download/loader icon
-   *  used on the KPI overview cards. */
+   *  used on the KPI overview cards. Shorthand for `reportParams={{ export_for: reportExportFor }}` on the
+   *  default `reportPath`. */
   reportExportFor?: string;
+  /** Overrides the report endpoint path (relative to the base URL) — defaults to
+   *  `msafe_dashboard_report/report_template`. Use for cards backed by a different report
+   *  endpoint, e.g. `msafe_dashboard_report/lmc_status`. Setting this (or `reportExportFor`)
+   *  puts the download button in "report mode" (API-backed, Download/loader icon). */
+  reportPath?: string;
+  /** Extra static query params merged into the report request alongside company_id and the
+   *  applied filters — e.g. `{ skip_date: 'true' }` or `{ status: 'Completed' }`. */
+  reportParams?: Record<string, string>;
   /** Drop from_date/to_date from the report request — for cards whose chart is a fixed
    *  trailing window (e.g. "Last 12 Months") that the applied date-range filter doesn't clip. */
   reportExcludeDateRange?: boolean;
@@ -54,8 +63,9 @@ function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, 
   return params;
 }
 
-async function downloadReportTemplate(
-  exportFor: string,
+async function downloadReport(
+  reportPath: string,
+  extraParams: Record<string, string> | undefined,
   filenameLabel: string,
   persona: Persona,
   appliedFilters: AppliedFilters,
@@ -71,14 +81,14 @@ async function downloadReportTemplate(
   }
   const params = new URLSearchParams({
     company_id: companyId,
-    export_for: exportFor,
+    ...extraParams,
     ...filterParams,
   });
   if (token) {
     params.set('access_token', token);
     params.set('token', token);
   }
-  const url = `${getMsafeBaseUrl()}/msafe_dashboard_report/report_template?${params.toString()}`;
+  const url = `${getMsafeBaseUrl()}/${reportPath}?${params.toString()}`;
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
 
@@ -107,6 +117,8 @@ export function ChartCard({
   pdfLabel,
   exportData,
   reportExportFor,
+  reportPath,
+  reportParams,
   reportExcludeDateRange,
   tag,
   className,
@@ -114,17 +126,20 @@ export function ChartCard({
 }: Props) {
   const { showToast, persona, appliedFilters } = useMsafeDashboard();
   const [exportingReport, setExportingReport] = useState(false);
+  const isReportMode = Boolean(reportExportFor || reportPath);
 
   const handleExport = async () => {
     const label = pdfLabel || title;
 
-    if (reportExportFor) {
+    if (isReportMode) {
+      const resolvedPath = reportPath || 'msafe_dashboard_report/report_template';
+      const resolvedParams = { ...(reportExportFor ? { export_for: reportExportFor } : {}), ...reportParams };
       setExportingReport(true);
       try {
-        await downloadReportTemplate(reportExportFor, label, persona, appliedFilters, reportExcludeDateRange);
+        await downloadReport(resolvedPath, resolvedParams, label, persona, appliedFilters, reportExcludeDateRange);
         showToast(`Excel downloaded · ${label}`);
       } catch (err) {
-        console.warn(`Failed to download report for "${reportExportFor}".`, err);
+        console.warn(`Failed to download report from "${resolvedPath}".`, err);
         showToast(`Export failed · ${label}`);
       } finally {
         setExportingReport(false);
@@ -161,11 +176,7 @@ export function ChartCard({
               disabled={exportingReport}
               onClick={handleExport}
             >
-              {reportExportFor ? (
-                exportingReport ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />
-              ) : (
-                <FileSpreadsheet size={14} />
-              )}
+              {exportingReport ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
             </button>
           ) : null}
         </div>
