@@ -2853,23 +2853,42 @@ export const DebitNoteClubEditPage: React.FC = () => {
                 <DialogTitle className="!text-base !font-semibold">Additional Address</DialogTitle>
                 <DialogContent dividers>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-                        <TextField label="Attention" fullWidth value={addressForm.attention} onChange={(e) => setAddressForm((prev) => ({ ...prev, attention: e.target.value }))} className="md:col-span-2" />
+                        <TextField label="Attention" placeholder="Enter contact person name" InputLabelProps={{ shrink: true }} fullWidth value={addressForm.attention} onChange={(e) => setAddressForm((prev) => ({ ...prev, attention: e.target.value }))} className="md:col-span-2" />
                         <TextField label="Country/Region" select fullWidth value={addressForm.country} onChange={(e) => setAddressForm((prev) => ({ ...prev, country: e.target.value }))} className="md:col-span-2">
                             {addressCountryOptions.map((opt) => (<MenuItem key={opt.code} value={opt.name}>{opt.name}</MenuItem>))}
                         </TextField>
-                        <TextField label="Tax Information" select fullWidth value={selectedAddressTaxInfoId} onChange={(e) => setSelectedAddressTaxInfoId(String(e.target.value))} className="md:col-span-2">
+                        {/* <TextField label="Tax Information" select fullWidth value={selectedAddressTaxInfoId} onChange={(e) => setSelectedAddressTaxInfoId(String(e.target.value))} className="md:col-span-2">
                             <MenuItem value="">Select</MenuItem>
                             {gstDetails.map((gst) => (<MenuItem key={gst.id} value={String(gst.id)}>{gst.gstin} - {gst.place_of_supply}</MenuItem>))}
-                        </TextField>
-                        <TextField label="Address" placeholder="Street 1" fullWidth value={addressForm.address} onChange={(e) => setAddressForm((prev) => ({ ...prev, address: e.target.value }))} className="md:col-span-2" />
+                        </TextField> */}
+                        <TextField label="Address" placeholder="Street 1" InputLabelProps={{ shrink: true }} fullWidth value={addressForm.address} onChange={(e) => setAddressForm((prev) => ({ ...prev, address: e.target.value }))} className="md:col-span-2" />
                         <TextField placeholder="Street 2" fullWidth value={addressForm.address_line_two} onChange={(e) => setAddressForm((prev) => ({ ...prev, address_line_two: e.target.value }))} className="md:col-span-2" />
-                        <TextField label="City" fullWidth value={addressForm.city} onChange={(e) => setAddressForm((prev) => ({ ...prev, city: e.target.value }))} className="md:col-span-2" />
-                        <TextField label="State" select fullWidth value={addressForm.state} onChange={(e) => setAddressForm((prev) => ({ ...prev, state: e.target.value }))}>
-                            <MenuItem value="">Select</MenuItem>
+                        <TextField label="City" placeholder="Enter city" InputLabelProps={{ shrink: true }} fullWidth value={addressForm.city} onChange={(e) => setAddressForm((prev) => ({ ...prev, city: e.target.value }))} className="md:col-span-2" />
+                        <TextField
+                            label="State"
+                            select
+                            fullWidth
+                            value={addressForm.state}
+                            onChange={(e) => setAddressForm((prev) => ({ ...prev, state: e.target.value }))}
+                            SelectProps={{
+                                displayEmpty: true,
+                                MenuProps: {
+                                    PaperProps: {
+                                        sx: {
+                                            maxHeight: 300,
+                                            '& .MuiMenuItem-root': { fontSize: '14px !important', minHeight: 'auto !important', padding: '8px 12px !important' },
+                                        },
+                                    },
+                                },
+                            }}
+                        >
+                            <MenuItem value="" disabled>Select State</MenuItem>
                             {states.map((state) => (<MenuItem key={state} value={state}>{state}</MenuItem>))}
                         </TextField>
                         <TextField
                             label="Pin Code"
+                            placeholder="Enter 6-digit pin code"
+                            InputLabelProps={{ shrink: true }}
                             fullWidth
                             value={addressForm.pin_code}
                             onChange={(e) => {
@@ -2880,6 +2899,8 @@ export const DebitNoteClubEditPage: React.FC = () => {
                         />
                         <TextField
                             label="Phone"
+                            placeholder="Enter phone number"
+                            InputLabelProps={{ shrink: true }}
                             fullWidth
                             value={addressForm.telephone_number}
                             onChange={(e) => {
@@ -2891,6 +2912,8 @@ export const DebitNoteClubEditPage: React.FC = () => {
                         />
                         <TextField
                             label="Fax Number"
+                            placeholder="Enter fax number"
+                            InputLabelProps={{ shrink: true }}
                             fullWidth
                             value={addressForm.fax_number}
                             onChange={(e) => {
@@ -2901,9 +2924,15 @@ export const DebitNoteClubEditPage: React.FC = () => {
                         />
                     </div>
                 </DialogContent>
-                <DialogActions className="!justify-start !px-6 !py-3">
-                    <button type="button" onClick={handleSaveAddressForm} className="px-4 py-2 rounded border border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756] hover:text-white text-sm">Save</button>
-                    <button type="button" onClick={() => setAddressFormModalOpen(false)} className="px-4 py-2 rounded border border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756] hover:text-white text-sm">Cancel</button>
+                <DialogActions className="!justify-center !px-6 !py-3">
+                    <button type="button" onClick={handleSaveAddressForm} className="fm-button-fix fm-button-brand px-8 py-2">Save</button>
+                    <button
+                        type="button"
+                        onClick={() => setAddressFormModalOpen(false)}
+                        className="fm-button-fix px-8 py-2 border border-[#DA7756] text-[#DA7756] bg-transparent hover:border-[#C45F40] hover:bg-[#F2EEE9] hover:text-[#C45F40]"
+                    >
+                        Cancel
+                    </button>
                 </DialogActions>
             </Dialog>
 

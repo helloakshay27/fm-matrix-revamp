@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
 import { useParams, useNavigate } from "react-router-dom";
-import { TextField, MenuItem, InputAdornment } from "@mui/material";
+import {
+    TextField,
+    MenuItem,
+    InputAdornment,
+    FormControl,
+    Select as MuiSelect,
+    Dialog as MuiDialog,
+    DialogContent as MuiDialogContent,
+} from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +36,7 @@ import {
     Download,
     Receipt,
     CreditCard,
+    X,
 } from "lucide-react";
 import {
     Dialog,
@@ -35,7 +44,6 @@ import {
     DialogHeader,
     DialogTitle,
     DialogDescription,
-    DialogFooter,
 } from "@/components/ui/dialog";
 import { toast as sonnerToast } from "sonner";
 import axios from "axios";
@@ -501,7 +509,7 @@ export const InvoiceClubManagementDetails = () => {
                 </Card>
 
                 {/* Bank Details */}
-                {bankDetail && (
+                {/* {bankDetail && (
                     <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
                         <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center gap-3 space-y-0 p-4">
                             <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
@@ -540,7 +548,7 @@ export const InvoiceClubManagementDetails = () => {
                             </div>
                         </CardContent>
                     </Card>
-                )}
+                )} */}
 
                 {/* Line Items — mirrors the line_items array sent on creation */}
                 <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
@@ -682,65 +690,58 @@ export const InvoiceClubManagementDetails = () => {
                     </Card>
             </div>
 
-            {/* Payment Modal */}
-            <Dialog open={openPaymentModal} onOpenChange={(open) => {
-                setOpenPaymentModal(open);
-                if (!open) {
-                    setPaymentMethod("");
-                    setPaymentNote("");
-                }
-            }}>
-                <DialogContent className="sm:max-w-[500px] w-[95vw] bg-white">
-                    <DialogHeader>
-                        <DialogTitle>Make Payment</DialogTitle>
-                    </DialogHeader>
+            {/* Payment Modal — uses MUI's own Dialog (like AddChartofAccountModal), not the Radix
+                Dialog the rest of this page uses. MUI's Select computes its popup position against
+                the Modal/Portal foundation it shares with MUI Dialog; nested inside the Radix Dialog
+                (transform-based centering + its own scroll lock) that math broke no matter what
+                Select props were set, so the whole modal now matches AddChartofAccountModal's shell. */}
+            <MuiDialog open={openPaymentModal} onClose={() => {
+                setOpenPaymentModal(false);
+                setPaymentMethod("");
+                setPaymentNote("");
+            }} fullWidth>
+                <div className="flex items-center justify-between px-6 pt-6">
+                    <h5 className="text-lg font-semibold">Make Payment</h5>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setOpenPaymentModal(false)}
+                        className="h-6 w-6 p-0"
+                    >
+                        <X className="h-4 w-4" />
+                    </Button>
+                </div>
+                <MuiDialogContent>
                     <div className="space-y-4">
-                        {/* <div className="w-full">
-                            <Label htmlFor="payment_mode">Payment Mode</Label>
-                            <Select
-                                value={paymentMode}
-                                onValueChange={(val) => {
-                                    setPaymentMode(val);
-                                    setPaymentMethod("");
-                                }}
-                                disabled={paymentLoading}
-                            >
-                                <SelectTrigger className="w-full mt-1" id="payment_mode">
-                                    <SelectValue placeholder="Select Payment Mode" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="online">Online</SelectItem>
-                                    <SelectItem value="offline">Offline</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div> */}
                         <div className="w-full">
                             <label className="block text-sm font-medium mb-2">
-                                Payment Method
+                                Payment Method<span className="text-brand">*</span>
                             </label>
-                            {/* MUI's Select/Popover computes its position assuming a static document.body,
-                                but the Radix Dialog this modal is built on transforms/scroll-locks the page,
-                                which throws that math off no matter what MenuProps are passed — it always
-                                rendered off in a corner. Radix's own Select doesn't have that conflict (same
-                                portal/positioning primitives as the Dialog itself), so use it here and just
-                                match the Add page's field height/label styling. */}
-                            <Select
-                                value={paymentMethod}
-                                onValueChange={setPaymentMethod}
-                                disabled={paymentLoading}
-                            >
-                                <SelectTrigger className="w-full h-[45px]" id="payment_method">
-                                    <SelectValue placeholder="Select Payment Method" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="UPI">UPI</SelectItem>
-                                    <SelectItem value="Credit Card">Credit Card</SelectItem>
-                                    <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
-                                    <SelectItem value="Bank Remittance">Bank Remittance</SelectItem>
-                                    <SelectItem value="Cash">Cash</SelectItem>
-                                    <SelectItem value="Cheque">Cheque</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <FormControl fullWidth>
+                                <MuiSelect
+                                    value={paymentMethod}
+                                    onChange={(e) => setPaymentMethod(e.target.value)}
+                                    disabled={paymentLoading}
+                                    displayEmpty
+                                    MenuProps={{
+                                        PaperProps: {
+                                            style: {
+                                                maxHeight: 300,
+                                            },
+                                        },
+                                    }}
+                                >
+                                    <MenuItem value="" disabled>
+                                        Select Payment Method
+                                    </MenuItem>
+                                    <MenuItem value="UPI">UPI</MenuItem>
+                                    <MenuItem value="Credit Card">Credit Card</MenuItem>
+                                    <MenuItem value="Bank Transfer">Bank Transfer</MenuItem>
+                                    <MenuItem value="Bank Remittance">Bank Remittance</MenuItem>
+                                    <MenuItem value="Cash">Cash</MenuItem>
+                                    <MenuItem value="Cheque">Cheque</MenuItem>
+                                </MuiSelect>
+                            </FormControl>
                         </div>
                         <div className="w-full">
                             <label className="block text-sm font-medium mb-2">
@@ -781,13 +782,13 @@ export const InvoiceClubManagementDetails = () => {
                             />
                         </div>
                     </div>
-                    <DialogFooter>
+                    <div className="mt-4 pt-2 flex justify-center gap-3">
                         <Button onClick={handlePayment} disabled={paymentLoading} className="w-full fm-button-fix fm-button-brand">
                             {paymentLoading ? "Processing..." : "Submit Payment"}
                         </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                    </div>
+                </MuiDialogContent>
+            </MuiDialog>
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
