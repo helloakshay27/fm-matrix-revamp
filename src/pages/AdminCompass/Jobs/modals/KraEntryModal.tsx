@@ -65,6 +65,10 @@ export default function KraEntryModal() {
     if (overLimit)
       return `KRA Weightage exceeds the remaining ${remainingForMember}% available for ${primaryAssigneeName} — reduce it before submitting`;
     if (!newKra.desc?.trim()) return "Description is required";
+    if (!newKra.effectiveFrom) return "Effective From date is required";
+    if (!newKra.effectiveTo) return "Effective To date is required";
+    if (newKra.effectiveTo < newKra.effectiveFrom)
+      return "Effective To cannot be earlier than Effective From";
     return null;
   };
 
@@ -223,9 +227,10 @@ export default function KraEntryModal() {
               gap: 16,
             }}
           >
-            <Fld label="Effective From">
+            <Fld label="Effective From *">
               <FI
                 type="date"
+                max={newKra.effectiveTo || undefined}
                 value={newKra.effectiveFrom}
                 onChange={(e) =>
                   setNewKra((f) => ({
@@ -235,14 +240,22 @@ export default function KraEntryModal() {
                 }
               />
             </Fld>
-            <Fld label="Effective To">
+            <Fld label="Effective To *">
               <FI
                 type="date"
+                min={newKra.effectiveFrom || undefined}
                 value={newKra.effectiveTo}
                 onChange={(e) =>
                   setNewKra((f) => ({ ...f, effectiveTo: e.target.value }))
                 }
               />
+              {newKra.effectiveFrom &&
+                newKra.effectiveTo &&
+                newKra.effectiveTo < newKra.effectiveFrom && (
+                  <span style={{ fontSize: 11, color: T.danger }}>
+                    Effective To cannot be earlier than Effective From
+                  </span>
+                )}
             </Fld>
           </div>
         </div>

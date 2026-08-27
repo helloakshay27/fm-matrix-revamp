@@ -374,6 +374,10 @@ export function StepKra() {
       if (kra.weightage === "" || Number(kra.weightage) <= 0)
         missing.push("weightage");
       if (!kra.desc || !kra.desc.trim()) missing.push("description");
+      if (!kra.effectiveFrom) missing.push("effective from date");
+      if (!kra.effectiveTo) missing.push("effective to date");
+      if (kra.effectiveFrom && kra.effectiveTo && kra.effectiveTo < kra.effectiveFrom)
+        missing.push("a valid date range (Effective To must be on or after Effective From)");
       return missing.length
         ? `KRA ${i + 1} (${kra.title || "Untitled"}): ${missing.join(", ")}`
         : null;
@@ -553,23 +557,39 @@ export function StepKra() {
                   </Fld>
                 </div>
                 <div style={g2}>
-                  <Fld label="Effective From">
+                  <Fld label="Effective From *">
                     <FI
                       type="date"
+                      max={kra.effectiveTo || undefined}
                       value={kra.effectiveFrom}
                       onChange={(e) =>
                         updFormKra(kra.id, "effectiveFrom", e.target.value)
                       }
                     />
                   </Fld>
-                  <Fld label="Effective To">
+                  <Fld label="Effective To *">
                     <FI
                       type="date"
+                      min={kra.effectiveFrom || undefined}
                       value={kra.effectiveTo}
-                      onChange={(e) =>
-                        updFormKra(kra.id, "effectiveTo", e.target.value)
-                      }
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        // From se pehle ki date chunne par turant bata dete hain.
+                        if (val && kra.effectiveFrom && val < kra.effectiveFrom) {
+                          toast.error(
+                            `KRA ${i + 1} (${kra.title || "Untitled"}): Effective To cannot be earlier than Effective From`
+                          );
+                        }
+                        updFormKra(kra.id, "effectiveTo", val);
+                      }}
                     />
+                    {kra.effectiveFrom &&
+                      kra.effectiveTo &&
+                      kra.effectiveTo < kra.effectiveFrom && (
+                        <span style={{ fontSize: 11, color: T.danger }}>
+                          Effective To cannot be earlier than Effective From
+                        </span>
+                      )}
                   </Fld>
                 </div>
               </div>

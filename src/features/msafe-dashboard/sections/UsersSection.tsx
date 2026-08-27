@@ -401,6 +401,7 @@ export function UsersSection() {
           infoKey="user-comp"
           showPdf
           pdfLabel="User Composition"
+          reportExportFor="user_composition"
           exportData={compChartData.map((d) => ({ Department: d.name, Users: d.value }))}
           chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={compMode} onChange={setCompMode} />}
         >
@@ -421,6 +422,8 @@ export function UsersSection() {
           infoKey="user-reg"
           showPdf
           pdfLabel="New Registrations"
+          reportExportFor="new_registration"
+          reportExcludeDateRange
           exportData={regChartData.map((d) => ({
             Month: d.m,
             'Internal Users': d.internal,
@@ -504,6 +507,7 @@ export function UsersSection() {
         infoKey="user-circle"
         showPdf
         pdfLabel="Users per Circle"
+        reportExportFor="users_by_circle"
         exportData={circleChartData.map((d) => ({
           Circle: d.name,
           Internal: d.Internal,
@@ -570,6 +574,7 @@ export function UsersSection() {
         infoKey="user-func"
         showPdf
         pdfLabel="Users by Department"
+        reportExportFor="users_by_department"
         exportData={funcChartData.map((d) => ({ Department: d.name, Users: d.value }))}
         style={{ marginTop: 16 }}
         chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={funcMode} onChange={setFuncMode} />}

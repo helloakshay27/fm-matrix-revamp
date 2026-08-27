@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Upload, Camera, Edit, User, FileText } from "lucide-react";
+import { ArrowLeft, Upload, Camera, Edit, User, FileText, X } from "lucide-react";
 import { toast as sonnerToast } from "sonner";
 import { taskService, TaskOccurrence } from "@/services/taskService";
 import { TaskSubmissionSuccessModal } from "@/components/TaskSubmissionSuccessModal";
@@ -41,25 +41,47 @@ const isImageFile = (file: File) => file.type.startsWith("image/");
 const AttachmentThumb = ({
   file,
   className,
+  onRemove,
 }: {
   file: File;
   className?: string;
+  onRemove?: () => void;
 }) => {
+  const removeButton = onRemove ? (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onRemove();
+      }}
+      className="absolute -top-2 -right-2 bg-white rounded-full border border-gray-300 shadow p-0.5 hover:bg-red-50"
+      aria-label="Remove attachment"
+    >
+      <X className="w-3 h-3 text-gray-600" />
+    </button>
+  ) : null;
+
   if (isImageFile(file)) {
     return (
-      <img
-        src={URL.createObjectURL(file)}
-        alt={file.name}
-        className={className}
-      />
+      <div className="relative inline-block">
+        <img
+          src={URL.createObjectURL(file)}
+          alt={file.name}
+          className={className}
+        />
+        {removeButton}
+      </div>
     );
   }
   return (
-    <div
-      className={`${className || ""} flex items-center justify-center bg-gray-100 border rounded`}
-      title={file.name}
-    >
-      <FileText className="w-6 h-6 text-gray-500" />
+    <div className="relative inline-block">
+      <div
+        className={`${className || ""} flex items-center justify-center bg-gray-100 border rounded`}
+        title={file.name}
+      >
+        <FileText className="w-6 h-6 text-gray-500" />
+      </div>
+      {removeButton}
     </div>
   );
 };
@@ -1437,6 +1459,9 @@ export const TaskSubmissionPage: React.FC = () => {
                                       <AttachmentThumb
                                         file={formData.checklist[item.id].attachment}
                                         className="w-16 h-16 object-cover rounded border"
+                                        onRemove={() =>
+                                          handleChecklistChange(item.id, "attachment", null)
+                                        }
                                       />
                                       <Typography
                                         variant="body2"
@@ -1750,6 +1775,7 @@ export const TaskSubmissionPage: React.FC = () => {
                               <AttachmentThumb
                                 file={formData.beforePhoto}
                                 className="w-24 h-24 object-cover rounded border border-gray-200"
+                                onRemove={() => handleFileUpload("before", null)}
                               />
                               <div className="flex-1">
                                 <FormControl
@@ -2155,6 +2181,9 @@ export const TaskSubmissionPage: React.FC = () => {
                                       <AttachmentThumb
                                         file={formData.checklist[item.id].attachment}
                                         className="w-16 h-16 object-cover rounded border"
+                                        onRemove={() =>
+                                          handleChecklistChange(item.id, "attachment", null)
+                                        }
                                       />
                                       <Typography
                                         variant="body2"
@@ -2418,6 +2447,9 @@ export const TaskSubmissionPage: React.FC = () => {
                                 <AttachmentThumb
                                   file={formData.checklist[item.id].attachment}
                                   className="w-16 h-16 object-cover rounded border"
+                                  onRemove={() =>
+                                    handleChecklistChange(item.id, "attachment", null)
+                                  }
                                 />
                                 <Typography
                                   variant="body2"
@@ -2909,6 +2941,7 @@ export const TaskSubmissionPage: React.FC = () => {
                               <AttachmentThumb
                                 file={formData.afterPhoto}
                                 className="w-24 h-24 object-cover rounded border border-gray-200"
+                                onRemove={() => handleFileUpload("after", null)}
                               />
                               <div className="flex-1">
                                 <FormControl
