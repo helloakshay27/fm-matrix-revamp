@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLayout } from "../contexts/LayoutContext";
+import { useIsMobile } from "../hooks/use-mobile";
+import { isMobileUiSite } from "../utils/mobileUiSites";
 import {
   Home,
   Ticket,
@@ -407,11 +409,21 @@ export const EmployeeSidebarStatic: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const {
-    isSidebarCollapsed,
+    isSidebarCollapsed: isSidebarCollapsedSetting,
     setIsSidebarCollapsed,
     currentSection,
     isMobileSidebarOpen,
   } = useLayout();
+  // Mobile par sidebar ek drawer hai — wahan collapse ka koi matlab nahi
+  // (collapse toggle bhi max-md:hidden hai). Isliye <768px par hamesha expanded
+  // render karte hain, chahe desktop par collapsed chhoda gaya ho — warna
+  // drawer sirf icons dikhata tha, labels ke bina.
+  const isMobile = useIsMobile();
+  // Ye behaviour sirf goPhygital site par — baaki tenants par sidebar mobile
+  // par bhi pehle ki tarah collapsible rehta hai.
+  const isGoPhygital = isMobileUiSite();
+  const isSidebarCollapsed =
+    isSidebarCollapsedSetting && !(isMobile && isGoPhygital);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
 
   // Get navigation structure based on current module
@@ -490,7 +502,7 @@ export const EmployeeSidebarStatic: React.FC = () => {
       {/* Toggle Button */}
       <button
         onClick={toggleSidebar}
-        className="absolute right-1 sm:right-2 top-1 sm:top-2 p-0.5 sm:p-1 rounded-md hover:bg-[#DBC2A9] z-10"
+        className={`${isGoPhygital ? "max-md:hidden " : ""}absolute right-1 sm:right-2 top-1 sm:top-2 p-0.5 sm:p-1 rounded-md hover:bg-[#DBC2A9] z-10`}
         aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
         {isSidebarCollapsed ? (
