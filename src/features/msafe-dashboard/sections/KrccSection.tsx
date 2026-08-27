@@ -530,6 +530,11 @@ export function KrccSection() {
           title="KRCC Ageing — Pending Requests"
           sub="How long pending KRCCs have been waiting · always as of today, not affected by the date filter"
           infoKey="krcc-ageing"
+          showPdf
+          pdfLabel="KRCC Ageing - Pending Requests"
+          reportExportFor="krcc_pending"
+          reportExcludeDateRange
+          exportData={agingData.map((d) => ({ 'Ageing Bucket': d.label, Value: d.val }))}
         >
           {agingLoading || agingData.length === 0 ? (
             <DataState loading={agingLoading} empty={agingData.length === 0} label="aging data" />
@@ -546,6 +551,7 @@ export function KrccSection() {
           infoKey="krcc-category"
           showPdf
           pdfLabel="KRCC by Category"
+          reportPath="msafe_dashboard_report/krcc_cleared_by_category"
           exportData={categoryData.map((d) => ({
             Category: d.name,
             Approved: d.value,
@@ -592,6 +598,7 @@ export function KrccSection() {
         infoKey="krcc-circle"
         showPdf
         pdfLabel="KRCC by Circle"
+        reportExportFor="circle_clearance"
         exportData={circlePctData.map((d) => ({
           Circle: d.name,
           'Approved Users': d.approvedUsers,

@@ -580,6 +580,13 @@ export function JobsProvider({ children }) {
       if (missingWeight !== -1) return `KRA ${missingWeight + 1} (${formKras[missingWeight].title || "Untitled"}) needs a weightage greater than 0%`;
       const missingDesc = formKras.findIndex((k) => !k.desc || k.desc.trim() === "");
       if (missingDesc !== -1) return `KRA ${missingDesc + 1} (${formKras[missingDesc].title || "Untitled"}) is missing a description`;
+      const missingFrom = formKras.findIndex((k) => !k.effectiveFrom);
+      if (missingFrom !== -1) return `KRA ${missingFrom + 1} (${formKras[missingFrom].title || "Untitled"}) needs an Effective From date`;
+      const missingTo = formKras.findIndex((k) => !k.effectiveTo);
+      if (missingTo !== -1) return `KRA ${missingTo + 1} (${formKras[missingTo].title || "Untitled"}) needs an Effective To date`;
+      // Effective To kabhi Effective From se pehle nahi ho sakti.
+      const badRange = formKras.findIndex((k) => k.effectiveFrom && k.effectiveTo && k.effectiveTo < k.effectiveFrom);
+      if (badRange !== -1) return `KRA ${badRange + 1} (${formKras[badRange].title || "Untitled"}): Effective To cannot be earlier than Effective From`;
       if (totalKraWeight > 100)
         return `Total KRA weightage is ${totalKraWeight}% — it cannot exceed 100%`;
       if (totalKraWeight < 100)

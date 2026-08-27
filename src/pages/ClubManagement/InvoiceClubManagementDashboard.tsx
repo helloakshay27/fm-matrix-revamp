@@ -362,7 +362,7 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
                 >
                     <Edit className="w-4 h-4" />
                 </button>
-                <button
+                {/* <button
                     onClick={() => {
                         setSelectedDeleteId(order.id);
                         setDeleteDialogOpen(true);
@@ -371,7 +371,7 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
                     title="Delete"
                 >
                     <Trash2 className="w-4 h-4" />
-                </button>
+                </button> */}
             </div>
         ),
         invoice_number: (

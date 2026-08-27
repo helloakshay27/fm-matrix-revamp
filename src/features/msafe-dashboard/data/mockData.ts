@@ -338,6 +338,10 @@ export type KpiDef = {
   tint?: string;
   infoKey: string;
   download: string;
+  /** When set, the KPI card's download button hits
+   *  `msafe_dashboard_report/report_template?export_for=<exportFor>` for a server-generated
+   *  Excel report instead of exporting the single on-screen value/sub client-side. */
+  exportFor?: string;
   /** Hidden from the KPI Overview grid, but kept here in case it's needed again. */
   hidden?: boolean;
 };
@@ -352,6 +356,7 @@ export const ADMIN_KPIS: KpiDef[] = [
     tint: 'rgba(218,119,86,.12)',
     infoKey: 'kpi-users',
     download: 'Users',
+    exportFor: 'total_users',
   },
   {
     id: 'krcc-filled',
@@ -362,6 +367,7 @@ export const ADMIN_KPIS: KpiDef[] = [
     tint: 'rgba(237,196,136,.22)',
     infoKey: 'krcc-filled',
     download: 'KRCC',
+    exportFor: 'krcc_filled',
   },
   {
     id: 'krcc-approved',
@@ -373,6 +379,7 @@ export const ADMIN_KPIS: KpiDef[] = [
     tint: 'rgba(16,140,114,.14)',
     infoKey: 'kpi-krcc',
     download: 'KRCC',
+    exportFor: 'krcc_approved',
   },
   {
     id: 'krcc-pending',
@@ -383,6 +390,7 @@ export const ADMIN_KPIS: KpiDef[] = [
     tint: 'rgba(237,196,136,.22)',
     infoKey: 'krcc-pending',
     download: 'KRCC',
+    exportFor: 'krcc_pending',
   },
   {
     id: 'krcc-rejected',
@@ -394,6 +402,7 @@ export const ADMIN_KPIS: KpiDef[] = [
     tint: 'rgba(231,132,142,.15)',
     infoKey: 'krcc-rejected',
     download: 'KRCC',
+    exportFor: 'krcc_rejected',
   },
   {
     id: 'krcc-not-started',
@@ -404,6 +413,7 @@ export const ADMIN_KPIS: KpiDef[] = [
     tint: 'rgba(238,39,55,.12)',
     infoKey: 'krcc-not-started',
     download: 'KRCC',
+    exportFor: 'krcc_not_started',
   },
   {
     id: 'train-cat',

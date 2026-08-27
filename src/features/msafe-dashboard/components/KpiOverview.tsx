@@ -13,6 +13,7 @@ import {
   MapPin,
   Download,
   AlertCircle,
+  Loader2,
 } from 'lucide-react';
 import type { AccordionKey, Persona } from '../data/constants';
 import { ADMIN_KPIS } from '../data/mockData';
@@ -164,6 +165,48 @@ function downloadExcel(label: string, rows: Record<string, unknown>[]) {
   XLSX.writeFile(workbook, filename);
 }
 
+/** Server-generated Excel report — used by KPI cards that set `exportFor`
+ *  (e.g. KRCC Rejected) instead of exporting the on-screen value client-side.
+ *  Carries the same circle/function/zone/employee-type/date-range filters the KPI
+ *  overview itself is currently filtered by (appliedFilters.startDate/endDate already
+ *  default to "one month ago → today" when the user hasn't touched the filter bar). */
+async function downloadKpiReportTemplate(
+  exportFor: string,
+  filenameLabel: string,
+  persona: Persona,
+  appliedFilters: AppliedFilters,
+): Promise<void> {
+  const token = localStorage.getItem('token') || '';
+  const companyId =
+    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145';
+  const params = new URLSearchParams({
+    company_id: companyId,
+    export_for: exportFor,
+    ...buildFilterParams(persona, appliedFilters),
+  });
+  if (token) {
+    params.set('access_token', token);
+    params.set('token', token);
+  }
+  const url = `${getMsafeBaseUrl()}/msafe_dashboard_report/report_template?${params.toString()}`;
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(url, { headers });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const blob = await res.blob();
+
+  const filename = `${filenameLabel.replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '') || 'report'}.xlsx`;
+  const downloadUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = downloadUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(downloadUrl);
+}
+
 const HINT: Record<string, string> = {
   users: 'Users',
   krcc: 'KRCC',
@@ -176,6 +219,7 @@ export function KpiOverview() {
   const { openAcc, toggleAccordion, showToast, persona, appliedFilters } = useMsafeDashboard();
   const [kpiApiData, setKpiApiData] = useState<Record<string, KpiApiValue>>({});
   const [kpiLoading, setKpiLoading] = useState(true);
+  const [exportingId, setExportingId] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -251,9 +295,25 @@ export function KpiOverview() {
                 type="button"
                 className="kpi-dl-btn"
                 title="Download Excel"
-                onClick={(e) => {
+                disabled={exportingId === k.id}
+                onClick={async (e) => {
                   e.stopPropagation();
                   const label = k.download || k.label;
+
+                  if (k.exportFor) {
+                    setExportingId(k.id);
+                    try {
+                      await downloadKpiReportTemplate(k.exportFor, k.label, persona, appliedFilters);
+                      showToast(`Excel downloaded · ${label}`);
+                    } catch (err) {
+                      console.warn(`Failed to download report for KPI "${k.id}".`, err);
+                      showToast(`Export failed · ${label}`);
+                    } finally {
+                      setExportingId(null);
+                    }
+                    return;
+                  }
+
                   const api = kpiApiData[k.id];
                   if (kpiLoading || !api) {
                     showToast(`No data to export yet · ${label}`);
@@ -265,7 +325,11 @@ export function KpiOverview() {
                   showToast(`Excel downloaded · ${label}`);
                 }}
               >
-                <Download size={14} />
+                {exportingId === k.id ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Download size={14} />
+                )}
               </button>
               <div className="kpi-top">
                 <div className="kpi-lbl">

@@ -557,8 +557,7 @@ export function SmtSection() {
         title="Visits per Circle "
         sub="Ranked by SMT field visit count"
         infoKey="smt-circle"
-        showPdf
-        
+
         pdfLabel="Visits per Circle"
         exportData={circleData.map((d) => ({ Circle: d.name, Visits: d.n }))}
         chartSwitch={<ChartSwitch modes={['bar', 'table']} value={circleMode} onChange={setCircleMode} />}
@@ -612,7 +611,6 @@ export function SmtSection() {
         title="SMT Visits – Role-wise Trend"
         sub="One circle at a time · same 11 roles on every screen · hover a bar for its full month-by-month breakdown"
         infoKey="smt-role-wise"
-        showPdf
         pdfLabel="SMT Role-wise Trend"
         exportData={roleChartRows.map((row) => {
           const record: Record<string, unknown> = {
@@ -740,6 +738,15 @@ export function SmtSection() {
           title="Recent SMT Visits"
           sub="Latest field verifications logged"
           infoKey="smt-recent"
+          showPdf
+          pdfLabel="Recent SMT Visits"
+          exportData={recentVisits.map((s) => ({
+            'Done By': s.name,
+            Function: s.func,
+            Circle: s.circle,
+            'Area Visited': s.area,
+            Date: s.date,
+          }))}
           tag={<span className="card-tag">Last 20</span>}
         >
           {recentLoading || recentVisits.length === 0 ? (

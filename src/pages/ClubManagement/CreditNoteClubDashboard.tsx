@@ -313,7 +313,7 @@ export const CreditNoteClubDashboard: React.FC = () => {
                 >
                     <Edit className="w-4 h-4" />
                 </button>
-                <button
+                {/* <button
                     onClick={() => {
                         setDeleteTarget(cn);
                         setShowDeleteModal(true);
@@ -322,7 +322,7 @@ export const CreditNoteClubDashboard: React.FC = () => {
                     title="Delete"
                 >
                     <Trash2 className="w-4 h-4" />
-                </button>
+                </button> */}
             </div>
         ),
         credit_note_number: (

@@ -14,6 +14,7 @@ import { Dialog, DialogContent } from "@mui/material";
 import { Card, CardContent } from "@/components/ui/card";
 import EisenhowerMatrix from "@/components/EisenhowerMatrix";
 import PriorityTodo from "@/components/PriorityTodo";
+import MuiMultiSelect from "@/components/MuiMultiSelect";
 import { useBusinessCompassTodos } from "@/hooks/useBusinessCompassTodos";
 import { DndContext, DragEndEvent, useDraggable, useDroppable, DragOverlay } from "@dnd-kit/core";
 
@@ -554,7 +555,7 @@ const TodoItem = ({
                 </div>
                 <div className="flex items-center justify-between">
                     <div className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5">
-                        <span className="text-xs text-muted-foreground">{todo.user}</span>
+                        <span className="text-xs text-muted-foreground">{todo.responsible_person}</span>
                         {todo.target_date && (
                             <>
                                 <span className="text-xs text-muted-foreground">•</span>
@@ -676,22 +677,6 @@ const CompletedTodoItem = ({ todo, toggleTodo, handleViewTodo }: any) => {
                     </span>
                 </div>
             )}
-            <div className="flex w-full items-center gap-0.5 sm:hidden">
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        if (linkedTask?.id) {
-                            handleTaskClick();
-                        } else {
-                            handleViewTodo(todo);
-                        }
-                    }}
-                    className="flex-shrink-0 p-1 text-gray-600 hover:text-primary transition-colors"
-                    title="View todo"
-                >
-                    <Eye size={14} />
-                </button>
-            </div>
             <div className="flex w-full flex-col min-w-0 sm:flex-1">
                 <div className="flex items-center gap-2">
                     <span className="text-sm text-foreground cursor-pointer break-words leading-snug">
@@ -707,24 +692,10 @@ const CompletedTodoItem = ({ todo, toggleTodo, handleViewTodo }: any) => {
                             </span>
                         )} {todo.title}
                     </span>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            if (linkedTask?.id) {
-                                handleTaskClick();
-                            } else {
-                                handleViewTodo(todo);
-                            }
-                        }}
-                        className="hidden sm:inline-flex flex-shrink-0 p-1 text-gray-600 hover:text-primary transition-colors"
-                        title="View todo"
-                    >
-                        <Eye size={14} />
-                    </button>
                 </div>
                 <div className="flex items-center justify-between gap-1">
                     <div className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5">
-                        <span className="text-xs text-muted-foreground">{todo.user}</span>
+                        <span className="text-xs text-muted-foreground">{todo.responsible_person}</span>
                         {todo.target_date && (
                             <>
                                 <span className="text-xs text-muted-foreground">•</span>
@@ -790,6 +761,8 @@ const BusinessCompassTodoPage = () => {
     const currentUserId = JSON.parse(localStorage.getItem("user") || "{}")?.id;
 
     const [taskType, setTaskType] = useState<"all" | "my">("my");
+    const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
+    const [users, setUsers] = useState<any[]>([]);
     const [selectedQuadrant, setSelectedQuadrant] = useState<string | null>("P1");
     const [currentPage, setCurrentPage] = useState(1);
     const [accumulatedTodos, setAccumulatedTodos] = useState<any[]>([]);
@@ -811,11 +784,39 @@ const BusinessCompassTodoPage = () => {
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [selectedTodo, setSelectedTodo] = useState<any>(null);
 
+    const getUsers = async () => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            const validUsers = (response.data.users || []).filter((user: any) => user && user.id);
+            setUsers(validUsers);
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    useEffect(() => {
+        getUsers();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const buildFilters = () => {
         const filters: Record<string, string> = {};
-        if (taskType === "my" && currentUserId) {
-            filters["q[user_id_eq]"] = String(currentUserId);
+        const memberIds = selectedUsers.map((u) => u.value);
+
+        if (taskType === "my") {
+            if (currentUserId) filters["q[user_id_eq]"] = String(currentUserId);
+        } else if (taskType === "all" && memberIds.length === 0) {
+            if (currentUserId) filters["q[user_id_or_created_by_id_eq]"] = String(currentUserId);
+        } else if (taskType === "all" && memberIds.length > 0) {
+            memberIds.forEach((id, i) => {
+                filters[`q[user_id_in][${i}]`] = String(id);
+            });
+            if (currentUserId) filters["q[created_by_id_eq]"] = String(currentUserId);
         }
+
         if (selectedPriorities.length > 0) {
             selectedPriorities.forEach((p, i) => {
                 filters[`q[priority_in][${i}]`] = p;
@@ -862,7 +863,7 @@ const BusinessCompassTodoPage = () => {
     // Reset accumulation when scope/filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [taskType, selectedPriorities, dates.startDate, dates.endDate]);
+    }, [taskType, selectedUsers, selectedPriorities, dates.startDate, dates.endDate]);
 
     const todosById = useMemo(() => {
         const map: Record<string, any> = {};
@@ -1203,12 +1204,34 @@ const BusinessCompassTodoPage = () => {
                         </div>
 
                         <div className="flex items-center gap-3">
+                            {taskType === "all" && (
+                                <div className="w-full sm:w-96">
+                                    <MuiMultiSelect
+                                        label="Members"
+                                        options={users
+                                            ?.filter(Boolean)
+                                            .map((user: any) => ({
+                                                label: user.name || user?.full_name || "Unknown",
+                                                value: user?.id,
+                                                id: user?.id,
+                                            }))}
+                                        placeholder="Select Members"
+                                        value={selectedUsers}
+                                        onChange={(values: any) => setSelectedUsers(values)}
+                                        maxHeight="36px"
+                                    />
+                                </div>
+                            )}
                             <div className="flex items-center px-4 py-2">
                                 <span className="text-gray-700 font-medium text-sm">My Todos</span>
                                 <Switch
                                     checked={taskType === "all"}
                                     onChange={() => {
-                                        setTaskType(taskType === "all" ? "my" : "all");
+                                        const newTaskType = taskType === "all" ? "my" : "all";
+                                        setTaskType(newTaskType);
+                                        if (newTaskType === "my") {
+                                            setSelectedUsers([]);
+                                        }
                                     }}
                                     sx={{
                                         "& .MuiSwitch-switchBase.Mui-checked": { color: "#C72030" },
