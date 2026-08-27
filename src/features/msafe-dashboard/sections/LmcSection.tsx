@@ -646,7 +646,15 @@ export function LmcSection() {
           )}
         </ChartCard>
 
-        <ChartCard title="LMC Status Breakdown" sub="All LMCs " infoKey="lmc-status">
+        <ChartCard
+          title="LMC Status Breakdown"
+          sub="All LMCs "
+          infoKey="lmc-status"
+          showPdf
+          pdfLabel="LMC Status Breakdown"
+          reportPath="msafe_dashboard_report/lmc_status"
+          exportData={statusData.map((d) => ({ Status: d.label, Value: d.val }))}
+        >
           {statusLoading || statusData.length === 0 ? (
             <DataState loading={statusLoading} empty={statusData.length === 0} label="status data" />
           ) : (
@@ -668,6 +676,11 @@ export function LmcSection() {
         }
         infoKey="lmc-func"
         style={{ marginTop: 16 }}
+        showPdf
+        pdfLabel={funcTab === 'circle' ? 'LMC by Circle' : 'LMC by Function'}
+        reportPath="msafe_dashboard_report/lmc_status"
+        reportParams={{ status: 'Completed' }}
+        exportData={funcData.map((d) => ({ Name: d.name, 'LMC Count': d.count, Percentage: d.percentage ?? '' }))}
         tag={<ChartSwitch modes={['function', 'circle']} value={funcTab} onChange={(v) => setFuncTab(v as 'function' | 'circle')} />}
         chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={funcMode} onChange={setFuncMode} />}
       >
@@ -700,6 +713,8 @@ export function LmcSection() {
         infoKey="lmc-trend-12mo"
         showPdf
         pdfLabel="LMC Completion Trend"
+        reportPath="msafe_dashboard_report/lmc_status"
+        reportParams={{ skip_date: 'true' }}
         exportData={trendData.map((d) => ({ Month: d.m, 'Sign-offs': d.n }))}
         style={{ marginTop: 16 }}
         chartSwitch={<ChartSwitch modes={['line', 'bar', 'table']} value={trendMode} onChange={setTrendMode} />}

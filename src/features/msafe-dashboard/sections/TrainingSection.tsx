@@ -782,7 +782,6 @@ export function TrainingSection() {
         title="Pass vs Fail Rate"
       
         infoKey="train-pf"
-        showPdf
         exportData={pfData.map((d) => ({ Status: d.name, Records: d.value, Rate: d.rate }))}
         chartSwitch={<ChartSwitch modes={['donut', 'bar']} value={pfMode} onChange={setPfMode} />}
       >
@@ -806,7 +805,6 @@ export function TrainingSection() {
         title="Category-wise Trainings"
         sub="Training volume rolled up by category — Statutory Compliance, Technical Safety, Behavioral Safety, Emergency Response, Induction"
         infoKey="train-category"
-        showPdf
         pdfLabel="Category-wise Trainings"
         exportData={trainCategoryData.map((d) => ({
           Category: d.name,
@@ -887,7 +885,6 @@ export function TrainingSection() {
         title="Function-wise Training Status"
         sub="Completed training count and completion % by function"
         infoKey="train-function-status"
-        showPdf
         pdfLabel="Function-wise Training Status"
         exportData={funcTrainingData.map((d) => ({
           Function: d.name,
@@ -971,7 +968,6 @@ export function TrainingSection() {
         title="Circle-wise Training Status"
         sub="Completed training count and completion % by circle"
         infoKey="train-circle-status"
-        showPdf
         pdfLabel="Circle-wise Training Status"
         exportData={circleTrainingData.map((d) => ({
           Circle: d.name,
