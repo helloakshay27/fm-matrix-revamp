@@ -337,7 +337,7 @@ export const DebitNoteClubDetails = () => {
                       <TableRow className="bg-gray-50">
                         <TableHead>Type</TableHead>
                         <TableHead>Item</TableHead>
-                        <TableHead className="text-right">Quantity</TableHead>
+                        {/* <TableHead className="text-right">Quantity</TableHead> */}
                         <TableHead className="text-right">Rate</TableHead>
                         {/* <TableHead className="text-right">Discount</TableHead> */}
                         <TableHead className="text-right">GST</TableHead>
@@ -352,7 +352,7 @@ export const DebitNoteClubDetails = () => {
                           </TableCell>
                           {/* Confirmed: debit_note line_items use "item_name", not "name" */}
                           <TableCell className="font-semibold">{item.item_name || item.name || "-"}</TableCell>
-                          <TableCell className="text-right">{item.quantity ?? 0}</TableCell>
+                          {/* <TableCell className="text-right">{item.quantity ?? 0}</TableCell> */}
                           <TableCell className="text-right">{formatCurrency(item.rate)}</TableCell>
                           {/* <TableCell className="text-right">{formatCurrency(item.discount)}</TableCell> */}
                           <TableCell className="text-right">
