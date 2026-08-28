@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Plus,
   Search,
-  Filter,
   Pencil,
   Trash2,
   Workflow,
@@ -185,32 +184,6 @@ const RuleEngine = () => {
           </div>
         </div>
 
-        {/* Tabs — same pill pattern as the Jobs page */}
-        <div
-          className="flex w-full items-center gap-1 overflow-x-auto rounded-xl border p-1 sm:w-fit"
-          style={{ background: T.raised, borderColor: T.primaryBord }}
-        >
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            const active = activeTab === tab.key;
-            return (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className="flex flex-1 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-xs font-semibold transition-all sm:flex-none sm:text-[13px]"
-                style={{
-                  background: active ? T.primary : "transparent",
-                  color: active ? "#ffffff" : T.textMuted,
-                }}
-                aria-current={active ? "page" : undefined}
-              >
-                <Icon className="h-4 w-4" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
         {/* ── Rules tab: canvas editor, or the list ── */}
         {activeTab === "rules" && editing && (
           <div
@@ -281,14 +254,6 @@ const RuleEngine = () => {
                   <RefreshCw
                     className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
                   />
-                </button>
-                <button
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-colors"
-                  style={{ borderColor: T.primary, color: T.primary }}
-                  title="Filter"
-                  aria-label="Filter rules"
-                >
-                  <Filter className="h-4 w-4" />
                 </button>
               </div>
             </div>

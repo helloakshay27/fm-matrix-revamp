@@ -33,9 +33,12 @@ import {
 import { getFullUrl, getAuthHeader } from "@/config/apiConfig";
 
 const T = {
-  primary: "#C4B89D",
-  primaryBg: "#f6f4ee",
-  primaryBord: "#e6e2d8",
+  // Baaki Rule Engine tabs (Data Source, Configuration, Rules) #DA7756 use
+  // karte hain. Yahan #C4B89D (sidebar ka sand color) tha — uspar white text
+  // ka contrast itna kam hai ki har primary button disabled jaisa dikhta tha.
+  primary: "#DA7756",
+  primaryBg: "#fdf9f7",
+  primaryBord: "#e8e3de",
   textMain: "#1a1a1a",
   textMuted: "#6b7280",
   borderLgt: "#eceae4",

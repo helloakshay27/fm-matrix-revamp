@@ -1004,13 +1004,14 @@ export const DataSourceConfigurationTab = ({
   // and Applicable enabled them. Done closes the wizard out; it has nothing
   // left to write.
   const finish = () => {
-    const attributeCount = preview.reduce(
+    const rows = previewRows;
+    const attributeCount = rows.reduce(
       (total, row) => total + row.attributes.length,
       0
     );
     setCompleted(true);
     toast.success(
-      `Configuration complete — ${preview.length} model(s), ${attributeCount} attribute(s) ready for rules`
+      `Configuration complete — ${rows.length} model(s), ${attributeCount} attribute(s) ready for rules`
     );
   };
 
@@ -1185,6 +1186,11 @@ export const DataSourceConfigurationTab = ({
       );
       return next;
     });
+
+  const previewRows =
+    mode === "module"
+      ? bucketPreview.flatMap((bucket) => bucket.models)
+      : preview;
 
   const canGoNext =
     stepKey === "source" ? Boolean(selectedId) : step < STEPS.length - 1;
@@ -2178,33 +2184,41 @@ export const DataSourceConfigurationTab = ({
         className="flex items-center justify-between gap-2 border-t pt-4"
         style={{ borderColor: T.primaryBord }}
       >
-        <button
-          type="button"
-          onClick={() => setStep((s) => Math.max(0, s - 1))}
-          disabled={stepKey === "source" || busy}
-          className="flex items-center gap-1.5 rounded-xl border px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
-          style={{ borderColor: T.primaryBord, color: T.textMuted }}
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Back
-        </button>
+        {/* Pehle step ("Data Source") par peeche jaane ki jagah hi nahi hai —
+            wahan disabled Back dikhane ke bajaye button render hi nahi karte.
+            Khaali span sirf isliye hai ki justify-between Next/Done ko right
+            me rakhe. */}
+        {stepKey === "source" ? (
+          <span aria-hidden />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setStep((s) => Math.max(0, s - 1))}
+            disabled={busy}
+            className="flex items-center gap-1.5 rounded-xl border px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+            style={{ borderColor: T.primaryBord, color: T.textMuted }}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Back
+          </button>
+        )}
 
         {step === STEPS.length - 1 ? (
           <button
             type="button"
             onClick={finish}
             disabled={
-              busy || previewLoading || preview.length === 0 || completed
+              busy || previewLoading || previewRows.length === 0 || completed
             }
             title={
-              preview.length === 0
+              previewRows.length === 0
                 ? "Mark at least one model applicable first"
                 : undefined
             }
             className="flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
             style={{ background: completed ? T.done : T.primary }}
             onMouseEnter={(e) => {
-              if (!busy && !completed && preview.length > 0) {
+              if (!busy && !completed && previewRows.length > 0) {
                 e.currentTarget.style.background = T.primaryHov;
               }
             }}

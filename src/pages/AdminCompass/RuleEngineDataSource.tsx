@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Plus,
   Search,
-  Filter,
   Database,
   Plug,
   Loader2,
@@ -425,14 +424,6 @@ const RuleEngineDataSource = () => {
                   <RefreshCw
                     className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
                   />
-                </button>
-                <button
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-colors"
-                  style={{ borderColor: T.primary, color: T.primary }}
-                  title="Filter"
-                  aria-label="Filter data sources"
-                >
-                  <Filter className="h-4 w-4" />
                 </button>
               </div>
             </div>
