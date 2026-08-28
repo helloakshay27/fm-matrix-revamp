@@ -29,25 +29,18 @@ import {
   fetchBucket,
   type TenantBucket,
 } from "@/services/ruleEngineAPI";
-
-// Admin Compass design tokens — matches the Rule Engine / Data Source pages.
-const T = {
-  primary: "#DA7756",
-  primaryHov: "#c9673f",
-  primaryBg: "#fdf9f7",
-  primaryBord: "#e8e3de",
-  cardBg: "#ffffff",
-  textMain: "#1a1a1a",
-  textMuted: "#6b7280",
-  borderLgt: "#ebebeb",
-  done: "#108c72",
-};
-
-const inputStyle = {
-  borderColor: T.primaryBord,
-  color: T.textMain,
-  background: T.cardBg,
-};
+import { T, inputStyle } from "@/components/AdminCompass/ruleEngineTheme";
+import { SelectShell, selectClass } from "@/components/AdminCompass/ruleEngineUi";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Buckets sits between the source and its models because that is the order the
 // product-segregation flow runs in: pick a source, define the product modules,
@@ -231,6 +224,8 @@ export const DataSourceConfigurationTab = ({
   const [bucketsFor, setBucketsFor] = useState<string | null>(null);
   const [newBucketName, setNewBucketName] = useState("");
   const [bucketBusy, setBucketBusy] = useState(false);
+  // Delete confirm dialog — trash icon seedhe delete nahi karta.
+  const [pendingDelete, setPendingDelete] = useState<BucketRow | null>(null);
   const [appliedBucketIds, setAppliedBucketIds] = useState<Set<number>>(
     new Set()
   );
@@ -411,7 +406,9 @@ export const DataSourceConfigurationTab = ({
     }
   };
 
-  const removeBucket = async (bucket: BucketRow) => {
+  const removeBucket = async () => {
+    const bucket = pendingDelete;
+    if (!bucket) return;
     setBucketBusy(true);
     try {
       await deleteBucket(bucket.id);
@@ -419,6 +416,7 @@ export const DataSourceConfigurationTab = ({
       toast.success(
         `Bucket "${bucket.name}" deleted — its models stay catalogued`
       );
+      setPendingDelete(null);
       // Models were unfiled, so both later steps are stale.
       setModelsFor(null);
       setPreviewFor(null);
@@ -1268,26 +1266,28 @@ export const DataSourceConfigurationTab = ({
             >
               Data Source
             </label>
-            <select
-              value={selectedId}
-              onChange={(e) => setSelectedId(e.target.value)}
-              disabled={sourcesLoading}
-              className="w-full rounded-xl border px-3 py-2 text-sm outline-none disabled:opacity-60"
-              style={inputStyle}
-            >
-              <option value="">
-                {sourcesLoading
-                  ? "Loading data sources..."
-                  : sources.length === 0
-                    ? "No data sources available"
-                    : "Select a data source"}
-              </option>
-              {sources.map((source) => (
-                <option key={source.id} value={String(source.id)}>
-                  {source.datasource_name || `Data source #${source.id}`}
+            <SelectShell>
+              <select
+                value={selectedId}
+                onChange={(e) => setSelectedId(e.target.value)}
+                disabled={sourcesLoading}
+                className={selectClass}
+                style={inputStyle}
+              >
+                <option value="">
+                  {sourcesLoading
+                    ? "Loading data sources..."
+                    : sources.length === 0
+                      ? "No data sources available"
+                      : "Select a data source"}
                 </option>
-              ))}
-            </select>
+                {sources.map((source) => (
+                  <option key={source.id} value={String(source.id)}>
+                    {source.datasource_name || `Data source #${source.id}`}
+                  </option>
+                ))}
+              </select>
+            </SelectShell>
           </div>
 
           {/* ── Segregation mode ── the fork in the road, right under the
@@ -1467,7 +1467,7 @@ export const DataSourceConfigurationTab = ({
               }}
               placeholder="New bucket name, e.g. Maintenance"
               disabled={bucketBusy}
-              className="h-9 flex-1 rounded-lg border px-3 text-[13px] outline-none sm:max-w-xs"
+              className="h-9 flex-1 rounded-lg border px-3 text-[13px] outline-none focus:ring-2 focus:ring-[#DA7756]/30 sm:max-w-xs"
               style={inputStyle}
             />
             <button
@@ -1557,7 +1557,7 @@ export const DataSourceConfigurationTab = ({
                     </div>
                     <button
                       type="button"
-                      onClick={() => removeBucket(bucket)}
+                      onClick={() => setPendingDelete(bucket)}
                       disabled={bucketBusy}
                       title="Delete bucket (its models stay catalogued)"
                       className="shrink-0 rounded-md p-1.5 disabled:opacity-40"
@@ -2249,6 +2249,37 @@ export const DataSourceConfigurationTab = ({
           </button>
         )}
       </div>
+
+      <AlertDialog
+        open={Boolean(pendingDelete)}
+        onOpenChange={(next) => {
+          if (!next && !bucketBusy) setPendingDelete(null);
+        }}
+      >
+        <AlertDialogContent style={{ fontFamily: T.font }}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete bucket?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete?.name
+                ? `"${pendingDelete.name}" will be removed. Its models stay catalogued — only the grouping goes away.`
+                : "This bucket will be removed. Its models stay catalogued."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bucketBusy}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                removeBucket();
+              }}
+              disabled={bucketBusy}
+              style={{ background: T.primary }}
+            >
+              {bucketBusy ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
@@ -2407,7 +2438,7 @@ const StepPanel = ({
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder={searchPlaceholder}
-              className="w-full rounded-xl border py-2 pl-10 pr-3 text-sm outline-none"
+              className="w-full rounded-xl border py-2 pl-10 pr-3 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30"
               style={inputStyle}
             />
           </div>

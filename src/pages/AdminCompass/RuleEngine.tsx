@@ -18,22 +18,17 @@ import {
   updateRule,
   type Rule,
 } from "@/services/ruleEngineAPI";
-
-// Admin Compass design tokens — kept identical to TeamDashboard/Jobs so this
-// page reads as part of the module rather than a bolt-on.
-const T = {
-  primary: "#DA7756",
-  primaryHov: "#c9673f",
-  primaryBg: "#fdf9f7",
-  primaryBord: "#e8e3de",
-  pageBg: "#f6f4ee",
-  cardBg: "#ffffff",
-  textMain: "#1a1a1a",
-  textMuted: "#6b7280",
-  borderLgt: "#ebebeb",
-  raised: "#f6f4ee",
-  font: "'Poppins', sans-serif",
-};
+import { T, inputStyle } from "@/components/AdminCompass/ruleEngineTheme";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const TABS = [{ key: "rules", label: "Rules", icon: ListChecks }] as const;
 
@@ -43,12 +38,6 @@ const cardStyle = {
   background: T.cardBg,
   borderColor: T.primaryBord,
   boxShadow: "0 10px 24px rgba(26,26,26,0.05)",
-};
-
-const inputStyle = {
-  borderColor: T.primaryBord,
-  color: T.textMain,
-  background: T.cardBg,
 };
 
 /** One-line summary of a rule's conditions, e.g. `status = open AND priority > 2`. */
@@ -70,6 +59,9 @@ const RuleEngine = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [togglingId, setTogglingId] = useState<number | null>(null);
+  // Delete confirm dialog — trash icon seedhe delete nahi karta.
+  const [pendingDelete, setPendingDelete] = useState<Rule | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // null = list view; undefined id = new rule; a number = edit that rule.
   const [editing, setEditing] = useState<{ id: number | null } | null>(null);
@@ -123,13 +115,19 @@ const RuleEngine = () => {
     }
   };
 
-  const removeRule = async (rule: Rule) => {
+  const removeRule = async () => {
+    const rule = pendingDelete;
+    if (!rule) return;
+    setDeleting(true);
     try {
       await deleteRuleApi(rule.id);
       setRules((prev) => prev.filter((r) => r.id !== rule.id));
       toast.success("Rule deleted");
+      setPendingDelete(null);
     } catch (e: any) {
       toast.error(e?.message || "Failed to delete rule");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -239,7 +237,7 @@ const RuleEngine = () => {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search rules..."
-                    className="w-full rounded-xl border py-2 pl-10 pr-3 text-sm outline-none"
+                    className="w-full rounded-xl border py-2 pl-10 pr-3 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30"
                     style={inputStyle}
                   />
                 </div>
@@ -407,7 +405,7 @@ const RuleEngine = () => {
                               />
                             </button>
                             <button
-                              onClick={() => removeRule(rule)}
+                              onClick={() => setPendingDelete(rule)}
                               className="rounded-lg p-1.5 transition-colors hover:bg-[#f6f4ee]"
                               title="Delete rule"
                               aria-label={`Delete ${rule.name}`}
@@ -428,6 +426,37 @@ const RuleEngine = () => {
           </div>
         )}
       </div>
+
+      <AlertDialog
+        open={Boolean(pendingDelete)}
+        onOpenChange={(next) => {
+          if (!next && !deleting) setPendingDelete(null);
+        }}
+      >
+        <AlertDialogContent style={{ fontFamily: T.font }}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete rule?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete?.name
+                ? `"${pendingDelete.name}" will be removed permanently and will stop triggering.`
+                : "This rule will be removed permanently."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                removeRule();
+              }}
+              disabled={deleting}
+              style={{ background: T.primary }}
+            >
+              {deleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
