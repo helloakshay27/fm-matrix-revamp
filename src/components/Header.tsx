@@ -23,6 +23,7 @@ import {
   ChartAreaIcon,
   Shield,
   Menu,
+  X,
   Activity,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -420,10 +421,14 @@ export const Header = () => {
           <button
             className="md:hidden flex h-16 w-10 flex-shrink-0 items-center justify-center rounded-r-lg hover:bg-[#f6f4ee] transition-colors"
             onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-            aria-label="Toggle sidebar"
+            aria-label={isMobileSidebarOpen ? "Close sidebar" : "Open sidebar"}
             aria-expanded={isMobileSidebarOpen}
           >
-            <Menu className="w-5 h-5 text-[#1a1a1a]" />
+            {isMobileSidebarOpen ? (
+              <X className="w-5 h-5 text-[#1a1a1a]" />
+            ) : (
+              <Menu className="w-5 h-5 text-[#1a1a1a]" />
+            )}
           </button>
           <div
             className={`flex h-full flex-shrink-0 items-center overflow-hidden sm:w-28 md:w-40 lg:w-44 ${isMobileUiSite()
