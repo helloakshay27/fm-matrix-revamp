@@ -22,6 +22,7 @@ import {
   Wallet,
   Compass,
   Menu,
+  X,
 } from "lucide-react";
 import { RecessClubLogo } from "./RecessClubLogo";
 import { useIsMobile } from "../hooks/use-mobile";
@@ -540,10 +541,14 @@ export const EmployeeHeader: React.FC = () => {
             <button
               className="md:hidden flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-[#f6f4ee]"
               onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-              aria-label="Toggle sidebar"
+              aria-label={isMobileSidebarOpen ? "Close sidebar" : "Open sidebar"}
               aria-expanded={isMobileSidebarOpen}
             >
-              <Menu className="w-5 h-5 text-[#1a1a1a]" />
+              {isMobileSidebarOpen ? (
+                <X className="w-5 h-5 text-[#1a1a1a]" />
+              ) : (
+                <Menu className="w-5 h-5 text-[#1a1a1a]" />
+              )}
             </button>
           )}
           {isOmanSite ? (

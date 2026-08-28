@@ -422,7 +422,7 @@ const TopNavigationStatic: React.FC<TopNavigationProps> = ({
         <>
             {/* --- TOP NAV BAR --- */}
             <div
-                className={`flex items-center justify-between px-3 sm:px-6 lg:px-8 py-3 sm:py-4 bg-[#FAF9F6]/80 backdrop-blur-md fixed top-0 left-0 right-0 z-50 border-b border-[rgba(211,209,199,1)] ${isGoPhygital ? "max-md:px-1 max-md:py-2" : ""
+                className={`flex items-center justify-between px-3 sm:px-6 lg:px-8 py-3 sm:py-4 bg-[#FAF9F6]/80 backdrop-blur-md fixed top-0 left-0 right-0 z-50 border-b border-[rgba(211,209,199,1)] ${isGoPhygital ? "max-md:h-14 sm:max-md:h-16 max-md:px-1 max-md:py-2" : ""
                     }`}
             >
                 <div className={`flex items-center gap-3 sm:gap-6 lg:gap-12 ${isGoPhygital ? "max-md:gap-1.5" : ""}`}>
@@ -436,10 +436,14 @@ const TopNavigationStatic: React.FC<TopNavigationProps> = ({
                         <button
                             className="md:hidden -ml-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-[#f6f4ee] active:bg-[#f0ede6]"
                             onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-                            aria-label="Toggle sidebar"
+                            aria-label={isMobileSidebarOpen ? "Close sidebar" : "Open sidebar"}
                             aria-expanded={isMobileSidebarOpen}
                         >
-                            <Menu className="w-5 h-5 text-[#1a1a1a]" />
+                            {isMobileSidebarOpen ? (
+                                <X className="w-5 h-5 text-[#1a1a1a]" />
+                            ) : (
+                                <Menu className="w-5 h-5 text-[#1a1a1a]" />
+                            )}
                         </button>
                     )}
                     <div
