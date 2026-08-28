@@ -365,7 +365,7 @@ export function UserDirectoryCard({
             onClick={() => setFilter(c.id)}
             title="Count reflects the current page only"
           >
-            {c.label} ({directory.filter(c.match).length.toLocaleString()})
+            {c.label}
           </button>
         ))}
       </div>
@@ -403,7 +403,10 @@ export function UserDirectoryCard({
               data.map((u) => {
                 const st = overallStatus(u);
                 return (
-                  <tr key={u.emp + u.name} onClick={() => openDrill('user-detail', u.name)}>
+                  <tr
+                    key={u.emp + u.name}
+                  // onClick={() => openDrill('user-detail', u.name)}
+                  >
                     <td className="cell-strong">{u.name}</td>
                     <td className="cell-mono">{u.emp}</td>
                     <td>{u.email ?? '—'}</td>

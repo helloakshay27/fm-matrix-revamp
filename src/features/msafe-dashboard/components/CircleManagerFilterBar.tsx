@@ -209,8 +209,15 @@ export function CircleManagerFilterBar() {
           )}
           sx={fieldStyles}
           MenuProps={selectMenuProps}
-          disabled={loadingFilterOptions}
+        // disabled={loadingFilterOptions}
         >
+          {
+            loadingFilterOptions && (
+              <MenuItem disabled dense>
+                Loading...
+              </MenuItem>
+            )
+          }
           {functionOptions.map((fn) => (
             <MenuItem key={fn.id} value={fn.name} dense>
               <Checkbox
@@ -284,8 +291,15 @@ export function CircleManagerFilterBar() {
           }}
           sx={fieldStyles}
           MenuProps={selectMenuProps}
-          disabled={loadingFilterOptions}
+        // disabled={loadingFilterOptions}
         >
+          {
+            loadingFilterOptions && (
+              <MenuItem disabled dense>
+                Loading...
+              </MenuItem>
+            )
+          }
           {empTypeOptions.map((t) => (
             <MenuItem key={t.id || t.name} value={t.name}>
               {t.name}

@@ -10,6 +10,7 @@ import {
   Area,
   AreaChart,
   Legend,
+  LabelList,
 } from 'recharts';
 import { AccordionShell, ChartCard } from '../components/ChartCard';
 import { ChartSwitch } from '../components/ChartSwitch';
@@ -208,7 +209,7 @@ function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, 
   if (f.circleIds.length > 0) params.circle_id = f.circleIds.join(',');
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
-  if (f.empTypeId) params.employee_type= f.empTypeId;
+  if (f.empTypeId) params.employee_type = f.empTypeId;
   if (f.startDate) params.from_date = f.startDate;
   if (f.endDate) params.to_date = f.endDate;
   return params;
@@ -463,7 +464,14 @@ export function UsersSection() {
                 {regMode === 'line' ? (
                   <AreaChart data={regChartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
-                    <XAxis dataKey="m" tick={{ fontSize: 10, fill: C.sage }} />
+                    <XAxis
+                      dataKey="m"
+                      tick={{ fontSize: 10, fill: C.sage }}
+                      interval={0}
+                      angle={-35}
+                      textAnchor="end"
+                      height={56}
+                    />
                     <YAxis tick={{ fontSize: 10, fill: C.sage }} />
                     <Tooltip />
                     <Legend wrapperStyle={{ fontSize: 12 }} />
@@ -474,7 +482,9 @@ export function UsersSection() {
                       fill="rgba(218,119,86,.14)"
                       strokeWidth={2.5}
                       name="Internal Users"
-                    />
+                    >
+                      <LabelList dataKey="internal" position="top" style={{ fontSize: 9, fill: C.terra, fontWeight: 600 }} />
+                    </Area>
                     <Area
                       type="monotone"
                       dataKey="external"
@@ -482,17 +492,30 @@ export function UsersSection() {
                       fill="rgba(107,155,204,.14)"
                       strokeWidth={2.5}
                       name="External Users"
-                    />
+                    >
+                      <LabelList dataKey="external" position="top" style={{ fontSize: 9, fill: C.blue, fontWeight: 600 }} />
+                    </Area>
                   </AreaChart>
                 ) : (
                   <BarChart data={regChartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
-                    <XAxis dataKey="m" tick={{ fontSize: 10, fill: C.sage }} />
+                    <XAxis
+                      dataKey="m"
+                      tick={{ fontSize: 10, fill: C.sage }}
+                      interval={0}
+                      angle={-35}
+                      textAnchor="end"
+                      height={56}
+                    />
                     <YAxis tick={{ fontSize: 10, fill: C.sage }} />
                     <Tooltip />
                     <Legend wrapperStyle={{ fontSize: 12 }} />
-                    <Bar dataKey="internal" fill={C.terra} radius={[5, 5, 0, 0]} name="Internal Users" />
-                    <Bar dataKey="external" fill={C.blue} radius={[5, 5, 0, 0]} name="External Users" />
+                    <Bar dataKey="internal" fill={C.terra} radius={[5, 5, 0, 0]} name="Internal Users">
+                      <LabelList dataKey="internal" position="top" style={{ fontSize: 9, fill: C.dark, fontWeight: 600 }} />
+                    </Bar>
+                    <Bar dataKey="external" fill={C.blue} radius={[5, 5, 0, 0]} name="External Users">
+                      <LabelList dataKey="external" position="top" style={{ fontSize: 9, fill: C.dark, fontWeight: 600 }} />
+                    </Bar>
                   </BarChart>
                 )}
               </ResponsiveContainer>
@@ -503,7 +526,7 @@ export function UsersSection() {
 
       <ChartCard
         title="Users per Circle"
-        // sub="Distribution across 22 VIL circles"
+        sub="Distribution across 22 VIL circles"
         infoKey="user-circle"
         showPdf
         pdfLabel="Users per Circle"
@@ -536,8 +559,12 @@ export function UsersSection() {
                   <YAxis tick={{ fontSize: 10, fill: C.sage }} />
                   <Tooltip />
                   <Legend wrapperStyle={{ fontSize: 10.5 }} iconType="square" iconSize={10} />
-                  <Bar dataKey="Internal" stackId="a" fill={C.blue} radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="External" stackId="a" fill={C.terra} radius={[5, 5, 0, 0]} />
+                  <Bar dataKey="Internal" stackId="a" fill={C.blue} radius={[0, 0, 0, 0]}>
+                    <LabelList dataKey="Internal" position="top" style={{ fontSize: 8, fill: '#fff', fontWeight: 600 }} />
+                  </Bar>
+                  <Bar dataKey="External" stackId="a" fill={C.terra} radius={[5, 5, 0, 0]}>
+                    <LabelList dataKey="External" position="top" style={{ fontSize: 8, fill: '#fff', fontWeight: 600 }} />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>

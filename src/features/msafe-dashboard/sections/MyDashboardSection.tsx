@@ -11,6 +11,7 @@ import {
   CartesianGrid,
   Tooltip,
   Cell,
+  LabelList,
 } from 'recharts';
 import { C } from '../data/constants';
 import type { Persona } from '../data/constants';
@@ -349,9 +350,10 @@ async function fetchMsafeKrccJson(
   return res.json();
 }
 
+// RAG thresholds standardized across the dashboard: Green >=98%, Amber 95-98%, Red <95%.
 function colorForClearancePct(pct: number): string {
-  if (pct >= 90) return C.ok;
-  if (pct >= 75) return C.warn;
+  if (pct >= 98) return C.ok;
+  if (pct >= 95) return C.warn;
   return C.err;
 }
 
@@ -717,7 +719,9 @@ function ChartById({ id, data }: { id: string; data: ChartData }) {
           <XAxis dataKey="m" tick={{ fontSize: 9 }} />
           <YAxis tick={{ fontSize: 9 }} />
           <Tooltip />
-          <Line type="monotone" dataKey="n" stroke={C.terra} strokeWidth={2} dot={false} />
+          <Line type="monotone" dataKey="n" stroke={C.terra} strokeWidth={2} dot={false}>
+            <LabelList dataKey="n" position="top" style={{ fontSize: 8, fill: C.terra, fontWeight: 600 }} />
+          </Line>
         </LineChart>
       </ResponsiveContainer>
     );
@@ -747,7 +751,9 @@ function ChartById({ id, data }: { id: string; data: ChartData }) {
           <XAxis dataKey="m" tick={{ fontSize: 9 }} />
           <YAxis tick={{ fontSize: 9 }} />
           <Tooltip />
-          <Line type="monotone" dataKey="n" stroke={C.sage} strokeWidth={2} dot={false} />
+          <Line type="monotone" dataKey="n" stroke={C.sage} strokeWidth={2} dot={false}>
+            <LabelList dataKey="n" position="top" style={{ fontSize: 8, fill: C.sage, fontWeight: 600 }} />
+          </Line>
         </LineChart>
       </ResponsiveContainer>
     );
@@ -762,8 +768,12 @@ function ChartById({ id, data }: { id: string; data: ChartData }) {
           <XAxis dataKey="name" tick={{ fontSize: 8 }} interval={0} angle={-35} textAnchor="end" height={56} />
           <YAxis tick={{ fontSize: 9 }} />
           <Tooltip />
-          <Bar dataKey="Internal" stackId="a" fill={C.blue} />
-          <Bar dataKey="External" stackId="a" fill={C.terra} />
+          <Bar dataKey="Internal" stackId="a" fill={C.blue}>
+            <LabelList dataKey="Internal" position="insideTop" style={{ fontSize: 7, fill: '#fff', fontWeight: 600 }} />
+          </Bar>
+          <Bar dataKey="External" stackId="a" fill={C.terra}>
+            <LabelList dataKey="External" position="insideTop" style={{ fontSize: 7, fill: '#fff', fontWeight: 600 }} />
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     );
@@ -782,6 +792,7 @@ function ChartById({ id, data }: { id: string; data: ChartData }) {
             {data.krccCircle.map((d) => (
               <Cell key={d.name} fill={d.color} />
             ))}
+            <LabelList dataKey="pct" position="top" style={{ fontSize: 8, fill: C.dark, fontWeight: 600 }} formatter={(v: number) => `${v}%`} />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
@@ -797,7 +808,9 @@ function ChartById({ id, data }: { id: string; data: ChartData }) {
           <XAxis dataKey="name" tick={{ fontSize: 8 }} interval={0} angle={-25} textAnchor="end" height={50} />
           <YAxis tick={{ fontSize: 9 }} />
           <Tooltip />
-          <Bar dataKey="n" fill={C.lav} radius={[4, 4, 0, 0]} />
+          <Bar dataKey="n" fill={C.lav} radius={[4, 4, 0, 0]}>
+            <LabelList dataKey="n" position="top" style={{ fontSize: 8, fill: C.dark, fontWeight: 600 }} />
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     );
