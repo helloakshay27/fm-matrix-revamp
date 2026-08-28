@@ -58,6 +58,7 @@ export function Header() {
   };
 
   const initials = getInitials(displayName);
+  const hasFmData = Object.values(vm.fm).some((query) => query.data);
 
   const tierAvailable = (t: Tier) => t === 't1' || t === 't3';
 
@@ -104,12 +105,14 @@ export function Header() {
         {state.theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
       </button>
       
-      {vm.generatedAt ? (
+      {vm.generatedAt || hasFmData ? (
         <span className="badge-sample" title={`generated_at: ${vm.generatedAt}`}>
-          Live · sample data
+          Live API
         </span>
+      ) : vm.fmStatus.loading ? (
+        <span className="badge-sample">Loading API</span>
       ) : (
-        <span className="badge-sample">Wireframe · sample data</span>
+        <span className="badge-sample">Awaiting API data</span>
       )}
       
       <div className="avatar" title={displayName || 'User'}>{initials}</div>
