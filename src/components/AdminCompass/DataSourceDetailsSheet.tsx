@@ -18,17 +18,7 @@ import {
   type DatasourceStructure,
   type StructureModel,
 } from "@/services/ruleEngineAPI";
-
-const T = {
-  primary: "#C4B89D",
-  primaryBg: "#f6f4ee",
-  primaryBord: "#e6e2d8",
-  textMain: "#1a1a1a",
-  textMuted: "#6b7280",
-  borderLgt: "#eceae4",
-  cardBg: "#ffffff",
-  done: "#16a34a",
-};
+import { T } from "@/components/AdminCompass/ruleEngineTheme";
 
 interface Props {
   datasourceId: number | null;

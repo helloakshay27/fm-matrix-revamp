@@ -85,7 +85,7 @@ const adminCompassNavigation: Record<string, any> = {
 
 // Sirf sidebar se chhupaya hai — routes aur pages waise ke waise hain.
 // Wapas dikhane ke liye is list se naam hata dein (ya array khaali kar dein).
-const HIDDEN_NAV_ITEMS: string[] = ["Rule Engine"];
+const HIDDEN_NAV_ITEMS: string[] = [];
 
 export const AdminCompassSidebarStatic: React.FC = () => {
   const navigate = useNavigate();

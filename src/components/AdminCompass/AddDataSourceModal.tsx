@@ -10,17 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { getFullUrl, getAuthHeader } from "@/config/apiConfig";
-
-// Admin Compass design tokens — matches the Rule Engine / Data Source pages.
-const T = {
-  primary: "#DA7756",
-  primaryHov: "#c9673f",
-  primaryBord: "#e8e3de",
-  textMain: "#1a1a1a",
-  textMuted: "#6b7280",
-  cardBg: "#ffffff",
-  font: "'Poppins', sans-serif",
-};
+import { T, inputStyle } from "@/components/AdminCompass/ruleEngineTheme";
 
 /** Payload shape expected by POST /datasources.json */
 export interface DataSourcePayload {
@@ -100,12 +90,6 @@ interface AddDataSourceModalProps {
   /** Pass a record to edit it; omit to create a new one. */
   dataSource?: EditableDataSource | null;
 }
-
-const inputStyle = {
-  borderColor: T.primaryBord,
-  color: T.textMain,
-  background: T.cardBg,
-};
 
 const Field = ({
   label,
@@ -399,7 +383,7 @@ export const AddDataSourceModal = ({
                   setField("project_code", picked?.code ?? "");
                 }}
                 disabled={projectsLoading}
-                className="w-full rounded-xl border px-3 py-2 text-sm outline-none disabled:opacity-60"
+                className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30 disabled:opacity-60"
                 style={inputStyle}
               >
                 <option value="">
@@ -422,7 +406,7 @@ export const AddDataSourceModal = ({
             <select
               value={form.connecter}
               onChange={(e) => setField("connecter", e.target.value)}
-              className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
+              className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30"
               style={inputStyle}
             >
               {CONNECTERS.map((c) => (
@@ -437,7 +421,7 @@ export const AddDataSourceModal = ({
             <select
               value={form.type}
               onChange={(e) => setField("type", e.target.value)}
-              className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
+              className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30"
               style={inputStyle}
             >
               {DATASOURCE_TYPES.map((t) => (
@@ -452,7 +436,7 @@ export const AddDataSourceModal = ({
             <input
               value={form.host}
               onChange={(e) => setField("host", e.target.value)}
-              className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
+              className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30"
               style={inputStyle}
             />
           </Field>
@@ -464,7 +448,7 @@ export const AddDataSourceModal = ({
               max={65535}
               value={form.port}
               onChange={(e) => setField("port", e.target.value)}
-              className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
+              className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30"
               style={inputStyle}
             />
           </Field>
@@ -474,7 +458,7 @@ export const AddDataSourceModal = ({
               <input
                 value={form.database_name}
                 onChange={(e) => setField("database_name", e.target.value)}
-                className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
+                className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30"
                 style={inputStyle}
               />
             </Field>
@@ -485,7 +469,7 @@ export const AddDataSourceModal = ({
               value={form.username}
               onChange={(e) => setField("username", e.target.value)}
               autoComplete="off"
-              className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
+              className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30"
               style={inputStyle}
             />
           </Field>
@@ -497,7 +481,7 @@ export const AddDataSourceModal = ({
                 value={form.password}
                 onChange={(e) => setField("password", e.target.value)}
                 autoComplete="new-password"
-                className="w-full rounded-xl border px-3 py-2 pr-10 text-sm outline-none"
+                className="w-full rounded-xl border px-3 py-2 pr-10 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30"
                 style={inputStyle}
               />
               <button

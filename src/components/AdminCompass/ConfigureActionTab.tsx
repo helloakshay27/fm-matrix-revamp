@@ -31,25 +31,18 @@ import {
   type Bucket,
 } from "@/services/ruleEngineAPI";
 import { getFullUrl, getAuthHeader } from "@/config/apiConfig";
-
-const T = {
-  primary: "#C4B89D",
-  primaryBg: "#f6f4ee",
-  primaryBord: "#e6e2d8",
-  textMain: "#1a1a1a",
-  textMuted: "#6b7280",
-  borderLgt: "#eceae4",
-  cardBg: "#ffffff",
-  done: "#16a34a",
-  warn: "#b45309",
-  danger: "#b91c1c",
-};
-
-const inputStyle = {
-  borderColor: T.primaryBord,
-  background: T.cardBg,
-  color: T.textMain,
-} as const;
+import { T, inputStyle } from "@/components/AdminCompass/ruleEngineTheme";
+import { SelectShell, selectClass } from "@/components/AdminCompass/ruleEngineUi";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface DataSourceOption {
   id: number;
@@ -98,6 +91,8 @@ const ConfigureActionTab = ({ sources, sourcesLoading }: Props) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Delete confirm dialog — trash icon seedhe delete nahi karta.
+  const [pendingDelete, setPendingDelete] = useState<CustomAction | null>(null);
 
   // ── New custom action form ───────────────────────────────────────────────
   const [name, setName] = useState("");
@@ -311,11 +306,14 @@ const ConfigureActionTab = ({ sources, sourcesLoading }: Props) => {
     }
   };
 
-  const remove = async (action: CustomAction) => {
+  const remove = async () => {
+    const action = pendingDelete;
+    if (!action) return;
     setBusy(true);
     try {
       await deleteCustomAction(action.id);
       toast.success(`"${action.name}" deleted`);
+      setPendingDelete(null);
       await load(selectedId);
     } catch (e: any) {
       toast.error(e?.message || "Failed to delete");
@@ -358,22 +356,24 @@ const ConfigureActionTab = ({ sources, sourcesLoading }: Props) => {
           What a rule can DO. Register an existing method, or build a custom
           action from configuration — no deploy.
         </p>
-        <select
-          value={selectedId}
-          onChange={(e) => setSelectedId(e.target.value)}
-          disabled={sourcesLoading}
-          className="w-full rounded-xl border px-3 py-2 text-sm outline-none disabled:opacity-60"
-          style={inputStyle}
-        >
-          <option value="">
-            {sourcesLoading ? "Loading..." : "Select a data source"}
-          </option>
-          {sources.map((source) => (
-            <option key={source.id} value={String(source.id)}>
-              {source.datasource_name || `Data source #${source.id}`}
+        <SelectShell className="w-full sm:max-w-sm">
+          <select
+            value={selectedId}
+            onChange={(e) => setSelectedId(e.target.value)}
+            disabled={sourcesLoading}
+            className={selectClass}
+            style={inputStyle}
+          >
+            <option value="">
+              {sourcesLoading ? "Loading..." : "Select a data source"}
             </option>
-          ))}
-        </select>
+            {sources.map((source) => (
+              <option key={source.id} value={String(source.id)}>
+                {source.datasource_name || `Data source #${source.id}`}
+              </option>
+            ))}
+          </select>
+        </SelectShell>
       </div>
 
       {!selectedId && (
@@ -427,7 +427,7 @@ const ConfigureActionTab = ({ sources, sourcesLoading }: Props) => {
                 key={key}
                 type="button"
                 onClick={() => setTab(key)}
-                className="inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[12.5px] font-semibold"
+                className="inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[12.5px] font-semibold transition enabled:hover:brightness-95"
                 style={{
                   borderColor: tab === key ? T.primary : T.primaryBord,
                   background: tab === key ? T.primary : T.cardBg,
@@ -472,14 +472,14 @@ const ConfigureActionTab = ({ sources, sourcesLoading }: Props) => {
                       if (e.key === "Enter" && !aiBusy) askAi();
                     }}
                     placeholder="credit 10 points to the wallet belonging to that user"
-                    className="min-w-0 flex-1 rounded-xl border px-3 py-2 text-sm outline-none"
+                    className="min-w-0 flex-1 rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30"
                     style={inputStyle}
                   />
                   <button
                     type="button"
                     onClick={askAi}
                     disabled={aiBusy || !aiPrompt.trim() || !selectedId}
-                    className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl px-4 text-[13px] font-semibold text-white disabled:opacity-40"
+                    className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl px-4 text-[13px] font-semibold text-white disabled:opacity-40 transition enabled:hover:brightness-95"
                     style={{ background: T.primary }}
                   >
                     {aiBusy ? (
@@ -577,7 +577,7 @@ const ConfigureActionTab = ({ sources, sourcesLoading }: Props) => {
                       <button
                         type="button"
                         onClick={applyAiProposal}
-                        className="mt-3 inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12px] font-semibold text-white"
+                        className="mt-3 inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12px] font-semibold text-white transition enabled:hover:brightness-95"
                         style={{ background: T.done }}
                       >
                         <Check className="h-3.5 w-3.5" />
@@ -611,7 +611,7 @@ const ConfigureActionTab = ({ sources, sourcesLoading }: Props) => {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Credit 10 points"
-                      className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
+                      className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30"
                       style={inputStyle}
                     />
                   </label>
@@ -623,21 +623,23 @@ const ConfigureActionTab = ({ sources, sourcesLoading }: Props) => {
                     >
                       Kind
                     </span>
-                    <select
-                      value={kind}
-                      onChange={(e) => {
-                        setKind(e.target.value);
-                        setConfig({});
-                      }}
-                      className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
-                      style={inputStyle}
-                    >
-                      {kinds.map((k) => (
-                        <option key={k.kind} value={k.kind}>
-                          {k.kind}
-                        </option>
-                      ))}
-                    </select>
+                    <SelectShell>
+                      <select
+                        value={kind}
+                        onChange={(e) => {
+                          setKind(e.target.value);
+                          setConfig({});
+                        }}
+                        className={selectClass}
+                        style={inputStyle}
+                      >
+                        {kinds.map((k) => (
+                          <option key={k.kind} value={k.kind}>
+                            {k.kind}
+                          </option>
+                        ))}
+                      </select>
+                    </SelectShell>
                   </label>
 
                   <label className="block">
@@ -647,19 +649,21 @@ const ConfigureActionTab = ({ sources, sourcesLoading }: Props) => {
                     >
                       Bucket (optional)
                     </span>
-                    <select
-                      value={bucketId}
-                      onChange={(e) => setBucketId(e.target.value)}
-                      className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
-                      style={inputStyle}
-                    >
-                      <option value="">Whole data source</option>
-                      {buckets.map((b) => (
-                        <option key={b.id} value={String(b.id)}>
-                          {b.name}
-                        </option>
-                      ))}
-                    </select>
+                    <SelectShell>
+                      <select
+                        value={bucketId}
+                        onChange={(e) => setBucketId(e.target.value)}
+                        className={selectClass}
+                        style={inputStyle}
+                      >
+                        <option value="">Whole data source</option>
+                        {buckets.map((b) => (
+                          <option key={b.id} value={String(b.id)}>
+                            {b.name}
+                          </option>
+                        ))}
+                      </select>
+                    </SelectShell>
                   </label>
 
                   <label className="block">
@@ -669,19 +673,21 @@ const ConfigureActionTab = ({ sources, sourcesLoading }: Props) => {
                     >
                       Tie to model (optional)
                     </span>
-                    <select
-                      value={modelId}
-                      onChange={(e) => setModelId(e.target.value)}
-                      className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
-                      style={inputStyle}
-                    >
-                      <option value="">Any model in scope</option>
-                      {models.map((m) => (
-                        <option key={m.id} value={String(m.id)}>
-                          {m.displayName}
-                        </option>
-                      ))}
-                    </select>
+                    <SelectShell>
+                      <select
+                        value={modelId}
+                        onChange={(e) => setModelId(e.target.value)}
+                        className={selectClass}
+                        style={inputStyle}
+                      >
+                        <option value="">Any model in scope</option>
+                        {models.map((m) => (
+                          <option key={m.id} value={String(m.id)}>
+                            {m.displayName}
+                          </option>
+                        ))}
+                      </select>
+                    </SelectShell>
                   </label>
                 </div>
 
@@ -721,7 +727,7 @@ const ConfigureActionTab = ({ sources, sourcesLoading }: Props) => {
                               }))
                             }
                             placeholder={PLACEHOLDERS[key] ?? ""}
-                            className="w-full rounded-xl border px-3 py-2 font-mono text-[12.5px] outline-none"
+                            className="w-full rounded-xl border px-3 py-2 font-mono text-[12.5px] outline-none focus:ring-2 focus:ring-[#DA7756]/30"
                             style={inputStyle}
                           />
                         </label>
@@ -742,7 +748,7 @@ const ConfigureActionTab = ({ sources, sourcesLoading }: Props) => {
                             }))
                           }
                           placeholder="user_id={{user_id}}"
-                          className="w-full rounded-xl border px-3 py-2 font-mono text-[12.5px] outline-none"
+                          className="w-full rounded-xl border px-3 py-2 font-mono text-[12.5px] outline-none focus:ring-2 focus:ring-[#DA7756]/30"
                           style={inputStyle}
                         />
                       </label>
@@ -764,7 +770,7 @@ const ConfigureActionTab = ({ sources, sourcesLoading }: Props) => {
                   type="button"
                   onClick={submitCustomAction}
                   disabled={busy || !name.trim()}
-                  className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-xl px-4 text-[13px] font-semibold text-white disabled:opacity-40"
+                  className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-xl px-4 text-[13px] font-semibold text-white disabled:opacity-40 transition enabled:hover:brightness-95"
                   style={{ background: T.primary }}
                 >
                   {busy ? (
@@ -840,7 +846,7 @@ const ConfigureActionTab = ({ sources, sourcesLoading }: Props) => {
                             type="button"
                             onClick={() => publish(action)}
                             disabled={busy}
-                            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg px-3 text-[12px] font-semibold text-white disabled:opacity-40"
+                            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg px-3 text-[12px] font-semibold text-white disabled:opacity-40 transition enabled:hover:brightness-95"
                             style={{ background: T.primary }}
                           >
                             Register
@@ -848,7 +854,7 @@ const ConfigureActionTab = ({ sources, sourcesLoading }: Props) => {
                         )}
                         <button
                           type="button"
-                          onClick={() => remove(action)}
+                          onClick={() => setPendingDelete(action)}
                           disabled={busy}
                           className="rounded-lg p-1.5 hover:bg-[#f6f4ee]"
                           aria-label={`Delete ${action.name}`}
@@ -891,36 +897,38 @@ const ConfigureActionTab = ({ sources, sourcesLoading }: Props) => {
                 )}
               </p>
 
-              <select
-                value={methodModelId}
-                onChange={(e) => {
-                  setMethodModelId(e.target.value);
-                  if (e.target.value) loadMethods(e.target.value);
-                  else setMethods([]);
-                }}
-                className="mb-3 w-full rounded-xl border px-3 py-2 text-sm outline-none"
-                style={inputStyle}
-              >
-                <option value="">
-                  {internalModels.length === 0
-                    ? "No internal models on this data source"
-                    : "Select a model"}
-                </option>
-                {internalModels.map((m) => (
-                  <option
-                    key={m.id}
-                    value={String(m.id)}
-                    disabled={!m.resolvable}
-                  >
-                    {m.displayName} ({m.lockModelName})
-                    {m.resolvable
-                      ? m.modelClassName && m.modelClassName !== m.lockModelName
-                        ? ` → ${m.modelClassName}`
-                        : ""
-                      : " — no Ruby class"}
+              <SelectShell className="mb-3 w-full sm:max-w-md">
+                <select
+                  value={methodModelId}
+                  onChange={(e) => {
+                    setMethodModelId(e.target.value);
+                    if (e.target.value) loadMethods(e.target.value);
+                    else setMethods([]);
+                  }}
+                  className={selectClass}
+                  style={inputStyle}
+                >
+                  <option value="">
+                    {internalModels.length === 0
+                      ? "No internal models on this data source"
+                      : "Select a model"}
                   </option>
-                ))}
-              </select>
+                  {internalModels.map((m) => (
+                    <option
+                      key={m.id}
+                      value={String(m.id)}
+                      disabled={!m.resolvable}
+                    >
+                      {m.displayName} ({m.lockModelName})
+                      {m.resolvable
+                        ? m.modelClassName && m.modelClassName !== m.lockModelName
+                          ? ` → ${m.modelClassName}`
+                          : ""
+                        : " — no Ruby class"}
+                    </option>
+                  ))}
+                </select>
+              </SelectShell>
 
               {methodsLoading && (
                 <div
@@ -988,7 +996,7 @@ const ConfigureActionTab = ({ sources, sourcesLoading }: Props) => {
                           type="button"
                           onClick={() => registerMethod(method)}
                           disabled={busy}
-                          className="shrink-0 rounded-lg px-2.5 py-1 text-[11.5px] font-semibold text-white disabled:opacity-40"
+                          className="shrink-0 rounded-lg px-2.5 py-1 text-[11.5px] font-semibold text-white disabled:opacity-40 transition enabled:hover:brightness-95"
                           style={{ background: T.primary }}
                         >
                           Register
@@ -1002,6 +1010,37 @@ const ConfigureActionTab = ({ sources, sourcesLoading }: Props) => {
           )}
         </>
       )}
+
+      <AlertDialog
+        open={Boolean(pendingDelete)}
+        onOpenChange={(next) => {
+          if (!next && !busy) setPendingDelete(null);
+        }}
+      >
+        <AlertDialogContent style={{ fontFamily: T.font }}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete custom action?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete?.name
+                ? `"${pendingDelete.name}" will be removed permanently. Rules using it will stop working.`
+                : "This action will be removed permanently."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                remove();
+              }}
+              disabled={busy}
+              style={{ background: T.primary }}
+            >
+              {busy ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

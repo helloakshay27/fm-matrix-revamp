@@ -41,29 +41,7 @@ import {
   type RuleAction,
   type RuleCondition,
 } from "@/services/ruleEngineAPI";
-
-// Admin Compass design tokens — matches the Rule Engine / Data Source pages.
-const T = {
-  primary: "#DA7756",
-  primaryHov: "#c9673f",
-  primaryBg: "#fdf9f7",
-  primaryBord: "#e8e3de",
-  pageBg: "#f6f4ee",
-  cardBg: "#ffffff",
-  textMain: "#1a1a1a",
-  textMuted: "#6b7280",
-  borderLgt: "#ebebeb",
-  trigger: "#6b9bcc",
-  condition: "#edc488",
-  action: "#798c5e",
-  danger: "#e7848e",
-};
-
-const inputStyle = {
-  borderColor: T.primaryBord,
-  color: T.textMain,
-  background: T.cardBg,
-};
+import { T, inputStyle } from "@/components/AdminCompass/ruleEngineTheme";
 
 // ── Canvas geometry ───────────────────────────────────────────────────────
 // Nodes are laid out deterministically: the trigger on the left, conditions in
@@ -804,7 +782,7 @@ export const RuleCanvas = ({ ruleId, onBack, onSaved }: RuleCanvasProps) => {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Rule name"
-          className="min-w-0 flex-1 rounded-xl border px-3 py-2 text-sm font-medium outline-none sm:max-w-xs"
+          className="min-w-0 flex-1 rounded-xl border px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-[#DA7756]/30 sm:max-w-xs"
           style={inputStyle}
         />
 
@@ -1321,7 +1299,7 @@ const TriggerInspector = ({
           }}
           placeholder="when a user is created, run test_user"
           disabled={!datasourceId}
-          className="min-w-0 flex-1 rounded-xl border px-2.5 py-1.5 text-[12.5px] outline-none disabled:opacity-60"
+          className="min-w-0 flex-1 rounded-xl border px-2.5 py-1.5 text-[12.5px] outline-none focus:ring-2 focus:ring-[#DA7756]/30 disabled:opacity-60"
           style={inputStyle}
         />
         <button
@@ -1352,7 +1330,7 @@ const TriggerInspector = ({
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
-        className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
+        className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30"
         style={inputStyle}
       />
     </Field>
@@ -1362,7 +1340,7 @@ const TriggerInspector = ({
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         rows={2}
-        className="w-full resize-none rounded-xl border px-3 py-2 text-sm outline-none"
+        className="w-full resize-none rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30"
         style={inputStyle}
       />
     </Field>
@@ -1372,7 +1350,7 @@ const TriggerInspector = ({
         value={datasourceId}
         onChange={(e) => onDatasourceChange(e.target.value)}
         disabled={datasourcesLoading}
-        className="w-full rounded-xl border px-3 py-2 text-sm outline-none disabled:opacity-60"
+        className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30 disabled:opacity-60"
         style={inputStyle}
       >
         <option value="">
@@ -1404,7 +1382,7 @@ const TriggerInspector = ({
             onBucketChange(e.target.value ? Number(e.target.value) : null)
           }
           disabled={bucketsLoading}
-          className="w-full rounded-xl border px-3 py-2 text-sm outline-none disabled:opacity-60"
+          className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30 disabled:opacity-60"
           style={inputStyle}
         >
           <option value="">
@@ -1431,7 +1409,7 @@ const TriggerInspector = ({
           onModelChange(e.target.value ? Number(e.target.value) : null)
         }
         disabled={!datasourceId || modelsLoading || (isModuleWise && !bucketId)}
-        className="w-full rounded-xl border px-3 py-2 text-sm outline-none disabled:opacity-60"
+        className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30 disabled:opacity-60"
         style={inputStyle}
       >
         <option value="">
@@ -1459,7 +1437,7 @@ const TriggerInspector = ({
       <select
         value={actionType}
         onChange={(e) => onActionTypeChange(e.target.value)}
-        className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
+        className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30"
         style={inputStyle}
       >
         {ACTION_TYPES.map((t) => (
@@ -1517,7 +1495,7 @@ const ConditionInspector = ({
         <input
           value={model?.displayName ?? "—"}
           readOnly
-          className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
+          className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30"
           style={{ ...inputStyle, background: T.pageBg, color: T.textMuted }}
         />
       </Field>
@@ -1529,7 +1507,7 @@ const ConditionInspector = ({
             onChange(index, { conditionAttribute: e.target.value })
           }
           disabled={attributesLoading || attributes.length === 0}
-          className="w-full rounded-xl border px-3 py-2 text-sm outline-none disabled:opacity-60"
+          className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30 disabled:opacity-60"
           style={inputStyle}
         >
           <option value="">
@@ -1553,7 +1531,7 @@ const ConditionInspector = ({
         <select
           value={condition.operator}
           onChange={(e) => onChange(index, { operator: e.target.value })}
-          className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
+          className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30"
           style={inputStyle}
         >
           {OPERATORS.map((operator) => (
@@ -1571,7 +1549,7 @@ const ConditionInspector = ({
         <input
           value={condition.compareValue}
           onChange={(e) => onChange(index, { compareValue: e.target.value })}
-          className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
+          className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30"
           style={inputStyle}
         />
       </Field>
@@ -1583,7 +1561,7 @@ const ConditionInspector = ({
         <select
           value={condition.conditionType}
           onChange={(e) => onChange(index, { conditionType: e.target.value })}
-          className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
+          className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30"
           style={inputStyle}
         >
           {CONDITION_TYPES.map((type) => (
@@ -1638,7 +1616,7 @@ const ActionInspector = ({
         <input
           value={model?.displayName ?? "—"}
           readOnly
-          className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
+          className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30"
           style={{ ...inputStyle, background: T.pageBg, color: T.textMuted }}
         />
       </Field>
@@ -1677,7 +1655,7 @@ const ActionInspector = ({
             });
           }}
           disabled={functionsLoading || functions.length === 0}
-          className="w-full rounded-xl border px-3 py-2 text-sm outline-none disabled:opacity-60"
+          className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30 disabled:opacity-60"
           style={inputStyle}
         >
           <option value="">
@@ -1716,7 +1694,7 @@ const ActionInspector = ({
               <input
                 value={parameter}
                 onChange={(e) => setParameter(i, e.target.value)}
-                className="min-w-0 flex-1 rounded-xl border px-3 py-2 text-sm outline-none"
+                className="min-w-0 flex-1 rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30"
                 style={inputStyle}
               />
               <button
