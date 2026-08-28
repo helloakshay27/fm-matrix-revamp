@@ -182,7 +182,7 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }: any)
 const ToggleTodoConfirmModal = ({ isOpen, onClose, onConfirm, isLoading, todo }: any) => {
     if (!isOpen || !todo) return null;
 
-    const isCompleting = todo?.status === "open";
+    const isCompleting = todo?.status !== "completed";
     const title = isCompleting ? "Complete Todo" : "Reopen Todo";
     const message = isCompleting
         ? `Are you sure you want to mark "${todo?.title}" as completed?`
@@ -927,7 +927,7 @@ const BusinessCompassTodoPage = () => {
 
         setToggleLoading(true);
         try {
-            const isCompleting = todoToToggle?.status === "open";
+            const isCompleting = todoToToggle?.status !== "completed";
             await axios.put(
                 `https://${baseUrl}/business_compass/todos/${todoToToggle.id}.json`,
                 { todo: { status: isCompleting ? "completed" : "open" } },
