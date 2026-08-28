@@ -33,6 +33,7 @@ import {
 } from "../data/constants";
 import type { DateRange, Device, Tier } from "../data/constants";
 import type { DeviceType } from "../api/adoptionApi";
+import { getToken, saveToken } from '@/utils/auth';
 import {
   dateRangeFor,
   useAllSites,
@@ -48,6 +49,7 @@ import {
   useTrafficSession,
   useUsageAndDistribution,
   useWorkflowUsage,
+  useFmDashboardQueries,
   type QueryFilters,
 } from "../api/queries";
 
@@ -64,6 +66,7 @@ export interface SectionStatus {
 
 export interface ViewModel {
   state: DashboardState;
+  token: string;
   scopeLabel: string;
   traffic: TrafficData;
   adopt: AdoptData;
@@ -90,6 +93,8 @@ export interface ViewModel {
   /** `generated_at` of the Layer-1 response — the freshness stamp shown in the header. */
   generatedAt: string | null;
   range: { from: string; to: string };
+  fm: ReturnType<typeof useFmDashboardQueries>;
+  fmStatus: SectionStatus;
 }
 
 interface InfoPopoverState {
@@ -105,6 +110,7 @@ interface DashboardContextValue {
   setTier: (tier: Tier) => void;
   setScope: (scope: string) => void;
   setDate: (date: DateRange) => void;
+  setToken: (token: string) => void;
   setDev: (dev: Device) => void;
   setModule: (module: string) => void;
   setSubModule: (subModule: string) => void;
@@ -131,6 +137,7 @@ const DashboardContext = createContext<DashboardContextValue | null>(null);
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<DashboardState>(DEFAULT_STATE);
+  const [token, setTokenState] = useState(() => getToken() ?? '');
   const [benchmarks, setBenchmarks] = useState<Record<string, number | null>>(
     {}
   );
@@ -231,8 +238,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       licensedSeats: state.licensedSeats,
       module: state.module,
       subModule: state.subModule,
+      token,
     }),
-    [sitesSettled, from, to, siteIds, state.dev, state.licensedSeats, state.module, state.subModule]
+    [sitesSettled, from, to, siteIds, state.dev, state.licensedSeats, state.module, state.subModule, token]
   );
 
   /** A disabled query reports isLoading=false, so treat "not started yet" as loading too. */
@@ -250,6 +258,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const moduleTreeQ = useModuleTree(filters);
   const subModuleTreeQ = useSubModuleTree(filters);
   const workflowQ = useWorkflowUsage(filters);
+  const fm = useFmDashboardQueries(filters);
 
   const league = useSiteLeague(filters, leagueSiteIds, scopedSites.length > 1);
 
@@ -281,6 +290,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const vm = useMemo<ViewModel>(
     () => ({
       state,
+      token,
       scopeLabel: computeScopeLabel(state, sites, groups),
       traffic: buildTraffic(state, from, to, trafficQ.data, usageQ.data),
       adopt: buildAdopt(
@@ -339,6 +349,11 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       },
       generatedAt: trafficQ.data?.meta.generated_at ?? null,
       range: { from, to },
+      fm,
+      fmStatus: {
+        loading: pending || Object.values(fm).some((query) => query.isLoading),
+        error: (Object.values(fm).find((query) => query.error)?.error ?? null) as Error | null,
+      },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -378,6 +393,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       workflowQ.data,
       workflowQ.isLoading,
       workflowQ.error,
+      fm,
       league.entries,
       league.isLoading,
       league.loaded,
@@ -413,6 +429,10 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       setState((s) => ({ ...s, tier, scope: normalizeScope(tier, s.scope, sites, groups) })),
     setScope: (scope) => setState((s) => ({ ...s, scope })),
     setDate: (date) => setState((s) => ({ ...s, date })),
+    setToken: (nextToken) => {
+      setTokenState(nextToken);
+      saveToken(nextToken);
+    },
     setDev: (dev) => setState((s) => ({ ...s, dev })),
     setModule: (module) => setState((s) => ({ ...s, module, subModule: null })),
     setSubModule: (subModule) => setState((s) => ({ ...s, subModule })),
