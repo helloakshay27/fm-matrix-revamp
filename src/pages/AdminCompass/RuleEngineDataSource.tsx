@@ -10,6 +10,7 @@ import {
   Zap,
   Pencil,
   Trash2,
+  Eye,
   Table2,
   Server,
 } from "lucide-react";
@@ -26,6 +27,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import AddDataSourceModal from "@/components/AdminCompass/AddDataSourceModal";
 import DataSourceConfigurationTab from "@/components/AdminCompass/DataSourceConfigurationTab";
+import DataSourceDetailsSheet from "@/components/AdminCompass/DataSourceDetailsSheet";
+import ConfigureActionTab from "@/components/AdminCompass/ConfigureActionTab";
 import { getFullUrl, getAuthHeader } from "@/config/apiConfig";
 
 // Admin Compass design tokens — kept identical to RuleEngine/TeamDashboard/Jobs
@@ -95,6 +98,8 @@ const COLUMNS = [
 const TABS = [
   { key: "sources", label: "Data Source", icon: Server },
   { key: "configuration", label: "Configuration", icon: Table2 },
+  // What a rule can DO, as opposed to what it can read.
+  { key: "actions", label: "Configure Action", icon: Zap },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -128,6 +133,8 @@ const RuleEngineDataSource = () => {
   const [testingId, setTestingId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>("sources");
   const [editing, setEditing] = useState<DataSource | null>(null);
+  // Read-only detail view: which data source's structure is on screen.
+  const [viewingId, setViewingId] = useState<number | null>(null);
   const [pendingDelete, setPendingDelete] = useState<DataSource | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -358,6 +365,16 @@ const RuleEngineDataSource = () => {
           </div>
         )}
 
+        {/* ── Configure Action tab ── */}
+        {activeTab === "actions" && (
+          <div
+            className="rounded-[20px] border p-4 shadow-sm sm:p-6"
+            style={cardStyle}
+          >
+            <ConfigureActionTab sources={sources} sourcesLoading={loading} />
+          </div>
+        )}
+
         {/* ── Data Source tab: toolbar + list ── */}
         {activeTab === "sources" && (
           <div
@@ -569,6 +586,17 @@ const RuleEngineDataSource = () => {
                         <td className="whitespace-nowrap px-4 py-3">
                           <div className="flex items-center gap-1">
                             <button
+                              onClick={() => setViewingId(source.id)}
+                              className="rounded-lg p-1.5 transition-colors hover:bg-[#f6f4ee]"
+                              title="View data source"
+                              aria-label={`View ${source.datasource_name ?? "data source"}`}
+                            >
+                              <Eye
+                                className="h-4 w-4"
+                                style={{ color: T.textMuted }}
+                              />
+                            </button>
+                            <button
                               onClick={() => {
                                 setEditing(source);
                                 setIsAddOpen(true);
@@ -645,6 +673,11 @@ const RuleEngineDataSource = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <DataSourceDetailsSheet
+        datasourceId={viewingId}
+        onClose={() => setViewingId(null)}
+      />
     </div>
   );
 };
