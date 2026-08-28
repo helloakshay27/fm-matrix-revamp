@@ -25,9 +25,9 @@ import {
   X,
 } from "lucide-react";
 import { RecessClubLogo } from "./RecessClubLogo";
-import { useIsMobile } from "../hooks/use-mobile";
-import mobileLogo from "../assets/logo-mobile.png";
 import { isMobileUiSite } from "../utils/mobileUiSites";
+import { useIsMobile } from "../hooks/use-mobile";
+import mobileLogo from "../assets/logo-2.png";
 
 import { useNavigate } from "react-router-dom";
 import {
@@ -167,9 +167,9 @@ export const EmployeeHeader: React.FC = () => {
     isMobileSidebarOpen,
     setIsMobileSidebarOpen,
   } = useLayout();
-  const isMobile = useIsMobile();
   // Mobile-only changes (sidebar hamburger + logo) sirf goPhygital site par.
   const isGoPhygital = isMobileUiSite();
+  const isMobile = useIsMobile();
   const goPhygitalMobile = isMobile && isGoPhygital;
   const [userRoleName, setUserRoleName] = useState<string | null>(null);
   const [availableBalance, setAvailableBalance] = useState(0);
@@ -528,7 +528,7 @@ export const EmployeeHeader: React.FC = () => {
       <div className="flex items-center justify-between h-full px-2 sm:px-4 lg:px-6 max-w-[1920px] mx-auto">
         {/* Left Section - Logo & Company Info */}
         <div
-          className={`flex items-center gap-2 sm:gap-3 lg:gap-4 flex-shrink-0 ${isGoPhygital ? "max-md:gap-1.5 max-md:max-w-[96px] max-md:[&>svg]:h-auto max-md:[&>svg]:w-full max-md:[&_img]:h-auto max-md:[&_img]:max-w-full" : ""
+          className={`flex items-center gap-2 sm:gap-3 lg:gap-4 flex-shrink-0 ${isGoPhygital ? "max-md:gap-1.5 max-md:max-w-[120px] max-md:[&>svg]:h-auto max-md:[&>svg]:w-full max-md:[&_img]:h-auto max-md:[&_img]:max-w-full" : ""
             }`}
         >
           {/* Hamburger — mobile par sidebar kholne ka ekmatra rasta, logo ke
@@ -639,11 +639,10 @@ export const EmployeeHeader: React.FC = () => {
             <img
               src={mobileLogo}
               alt="goPhygital.work"
-              className="h-auto w-[96px] max-w-full object-contain"
+              className="!h-10 w-auto max-w-full object-contain"
             />
           ) : (
             <svg
-              className={isGoPhygital ? "max-md:hidden" : undefined}
               width="173"
               height="31"
               viewBox="0 0 173 31"
