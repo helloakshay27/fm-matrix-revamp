@@ -9,6 +9,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  LabelList,
 } from 'recharts';
 import type { TooltipProps } from 'recharts';
 import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
@@ -136,10 +137,11 @@ function normalizeDailyVolume(rows: DailyCircleRow[]): DailyRow[] {
   return order.map((d) => ({ d, n: totals.get(d) ?? 0 }));
 }
 
+// RAG thresholds standardized across the dashboard: Green >=98%, Amber 95-98%, Red <95%.
 function colorForWeekPct(pct: number): string {
-  if (pct >= 90) return C.ok;
-  if (pct >= 70) return C.teal;
-  return C.warn;
+  if (pct >= 98) return C.ok;
+  if (pct >= 95) return C.warn;
+  return C.err;
 }
 
 type WeeklyDayRecord = { label: string; actual: number; target: number | null; explicitPct: number | null };
@@ -382,6 +384,15 @@ function normalizeMonthlyTrend(rows: TrendCircleRow[]): TrendRow[] {
   return order.map((m) => ({ m, n: totals.get(m) ?? 0 }));
 }
 
+function formatMonthLabel(raw: string): string {
+  const match = /^(\d{4})-(\d{2})$/.exec(raw);
+  if (!match) return raw;
+  const [, year, month] = match;
+  const date = new Date(Number(year), Number(month) - 1, 1);
+  if (Number.isNaN(date.getTime())) return raw;
+  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+}
+
 function DataState({ loading, empty, label }: { loading: boolean; empty: boolean; label: string }) {
   if (!loading && !empty) return null;
   return (
@@ -582,7 +593,7 @@ export function LmcSection() {
     const total = circleRows.reduce((sum, r) => sum + r.volume, 0);
     return (
       <div className="msafe-chart-tip">
-        <div className="msafe-chart-tip-title">{label}</div>
+        <div className="msafe-chart-tip-title">{formatMonthLabel(label)}</div>
         {circleRows.map((r) => (
           <div key={r.circle} className="msafe-chart-tip-row">
             <span className="msafe-chart-tip-sw" style={{ background: C.sage }} />
@@ -659,7 +670,7 @@ export function LmcSection() {
             <DataState loading={statusLoading} empty={statusData.length === 0} label="status data" />
           ) : (
             <div style={{ minHeight: 420 }}>
-            <ProgressRows rows={statusData} />
+              <ProgressRows rows={statusData} />
             </div>
           )}
         </ChartCard>
@@ -715,7 +726,7 @@ export function LmcSection() {
         pdfLabel="LMC Completion Trend"
         reportPath="msafe_dashboard_report/lmc_status"
         reportParams={{ skip_date: 'true' }}
-        exportData={trendData.map((d) => ({ Month: d.m, 'Sign-offs': d.n }))}
+        exportData={trendData.map((d) => ({ Month: formatMonthLabel(d.m), 'Sign-offs': d.n }))}
         style={{ marginTop: 16 }}
         chartSwitch={<ChartSwitch modes={['line', 'bar', 'table']} value={trendMode} onChange={setTrendMode} />}
       >
@@ -733,7 +744,7 @@ export function LmcSection() {
               <tbody>
                 {trendData.map((r) => (
                   <tr key={r.m}>
-                    <td>{r.m}</td>
+                    <td>{formatMonthLabel(r.m)}</td>
                     <td className="num">{r.n.toLocaleString()}</td>
                   </tr>
                 ))}
@@ -746,7 +757,7 @@ export function LmcSection() {
               {trendMode === 'line' ? (
                 <AreaChart data={trendData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
-                  <XAxis dataKey="m" tick={{ fontSize: 10, fill: C.sage }} />
+                  <XAxis dataKey="m" tick={{ fontSize: 10, fill: C.sage }} tickFormatter={formatMonthLabel} />
                   <YAxis tick={{ fontSize: 10, fill: C.sage }} />
                   <Tooltip content={renderTrendTooltip} />
                   <Area
@@ -756,15 +767,27 @@ export function LmcSection() {
                     fill="rgba(121,140,94,.10)"
                     strokeWidth={2.5}
                     name="LMC Sign-offs"
-                  />
+                  >
+                    <LabelList
+                      dataKey="n"
+                      position="top"
+                      style={{ fontSize: 9, fill: C.sage, fontWeight: 600 }}
+                    />
+                  </Area>
                 </AreaChart>
               ) : (
                 <BarChart data={trendData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
-                  <XAxis dataKey="m" tick={{ fontSize: 10, fill: C.sage }} />
+                  <XAxis dataKey="m" tick={{ fontSize: 10, fill: C.sage }} tickFormatter={formatMonthLabel} />
                   <YAxis tick={{ fontSize: 10, fill: C.sage }} />
                   <Tooltip content={renderTrendTooltip} />
-                  <Bar dataKey="n" fill={C.sage} radius={[5, 5, 0, 0]} name="LMC Sign-offs" />
+                  <Bar dataKey="n" fill={C.sage} radius={[5, 5, 0, 0]} name="LMC Sign-offs">
+                    <LabelList
+                      dataKey="n"
+                      position="top"
+                      style={{ fontSize: 10, fill: C.dark, fontWeight: 600 }}
+                    />
+                  </Bar>
                 </BarChart>
               )}
             </ResponsiveContainer>

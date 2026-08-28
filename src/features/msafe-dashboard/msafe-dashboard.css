@@ -875,12 +875,12 @@
 
 .msafe-dash .card-actions {display:flex;gap:6px;align-items:center}
 .msafe-dash .chart-switch {
-  display:flex;gap:1px;background:var(--bg);border-radius:5px;padding:2px;
+  display:flex;gap:2px;background:var(--bg);border-radius:7px;padding:3px;
 }
 .msafe-dash .chart-switch button {
   background:transparent;border:none;
-  padding:3px 8px;border-radius:4px;
-  font-size:10px;font-weight:600;color:var(--sage);
+  padding:6px 14px;border-radius:5px;
+  font-size:12px;font-weight:600;color:var(--sage);
   cursor:pointer;font-family:inherit;
 }
 .msafe-dash .chart-switch button.active {background:var(--surface);color:var(--dark);box-shadow:0 1px 2px rgba(0,0,0,.06)}
@@ -975,6 +975,26 @@
 .msafe-dash .tbl-scroll {max-height:340px;overflow-y:auto;border:1px solid var(--div);border-radius:8px}
 .msafe-dash .tbl .cell-strong {font-weight:600;color:var(--dark)}
 .msafe-dash .tbl .cell-mono {font-family:'SF Mono',Menlo,monospace;font-size:10.5px}
+
+/* Recent SMT Visits — fixed, narrower columns so the whole table fits
+   without horizontal scrolling; long cell text ellipsizes (see title attr). */
+.msafe-dash .tbl--recent-visits {table-layout:fixed}
+.msafe-dash .tbl--recent-visits th,
+.msafe-dash .tbl--recent-visits td {
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.msafe-dash .tbl--recent-visits th:nth-child(1),
+.msafe-dash .tbl--recent-visits td:nth-child(1) {width:20%}
+.msafe-dash .tbl--recent-visits th:nth-child(2),
+.msafe-dash .tbl--recent-visits td:nth-child(2) {width:16%}
+.msafe-dash .tbl--recent-visits th:nth-child(3),
+.msafe-dash .tbl--recent-visits td:nth-child(3) {width:16%}
+.msafe-dash .tbl--recent-visits th:nth-child(4),
+.msafe-dash .tbl--recent-visits td:nth-child(4) {width:32%}
+.msafe-dash .tbl--recent-visits th:nth-child(5),
+.msafe-dash .tbl--recent-visits td:nth-child(5) {width:16%}
 
 /* Badges */
 .msafe-dash .badge {
