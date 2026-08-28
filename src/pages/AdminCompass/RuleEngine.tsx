@@ -6,7 +6,6 @@ import {
   Pencil,
   Trash2,
   Workflow,
-  Settings2,
   ListChecks,
   Loader2,
   RefreshCw,
@@ -37,30 +36,7 @@ const T = {
   font: "'Poppins', sans-serif",
 };
 
-export interface RuleEngineConfig {
-  enabled: boolean;
-  evaluationMode: "all" | "first";
-  runOn: "create_and_update" | "create" | "schedule";
-  notifyChannel: "in_app" | "email" | "both" | "none";
-  maxRunsPerDay: number;
-  logRetentionDays: number;
-}
-
-// The Configuration tab has no endpoint behind it yet, so it still starts from
-// local defaults. The Rules tab is fully API-backed.
-const DEFAULT_CONFIG: RuleEngineConfig = {
-  enabled: true,
-  evaluationMode: "all",
-  runOn: "create_and_update",
-  notifyChannel: "in_app",
-  maxRunsPerDay: 500,
-  logRetentionDays: 30,
-};
-
-const TABS = [
-  { key: "rules", label: "Rules", icon: ListChecks },
-  { key: "configuration", label: "Configuration", icon: Settings2 },
-] as const;
+const TABS = [{ key: "rules", label: "Rules", icon: ListChecks }] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
 
@@ -75,32 +51,6 @@ const inputStyle = {
   color: T.textMain,
   background: T.cardBg,
 };
-
-/** One labelled row in the Configuration tab. */
-const ConfigRow = ({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint: string;
-  children: React.ReactNode;
-}) => (
-  <div
-    className="flex flex-col gap-2 border-t py-4 first:border-t-0 first:pt-0 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
-    style={{ borderColor: T.borderLgt }}
-  >
-    <div className="min-w-0">
-      <p className="text-sm font-medium" style={{ color: T.textMain }}>
-        {label}
-      </p>
-      <p className="mt-0.5 text-xs" style={{ color: T.textMuted }}>
-        {hint}
-      </p>
-    </div>
-    <div className="w-full shrink-0 sm:w-56">{children}</div>
-  </div>
-);
 
 /** One-line summary of a rule's conditions, e.g. `status = open AND priority > 2`. */
 const summariseConditions = (rule: Rule) =>
@@ -120,7 +70,6 @@ const RuleEngine = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [config, setConfig] = useState<RuleEngineConfig>(DEFAULT_CONFIG);
   const [togglingId, setTogglingId] = useState<number | null>(null);
 
   // null = list view; undefined id = new rule; a number = edit that rule.
@@ -185,11 +134,6 @@ const RuleEngine = () => {
     }
   };
 
-  const setField = <K extends keyof RuleEngineConfig>(
-    key: K,
-    value: RuleEngineConfig[K]
-  ) => setConfig((prev) => ({ ...prev, [key]: value }));
-
   return (
     <div
       className="min-h-[calc(100vh-5rem)] w-full px-3 py-4 sm:px-6 sm:py-6"
@@ -234,12 +178,10 @@ const RuleEngine = () => {
             style={{
               borderColor: T.primaryBord,
               background: T.primaryBg,
-              color: config.enabled ? T.textMuted : "#b91c1c",
+              color: T.textMuted,
             }}
           >
-            {config.enabled
-              ? `${rules.length} ${rules.length === 1 ? "rule" : "rules"}`
-              : "Engine disabled"}
+            {`${rules.length} ${rules.length === 1 ? "rule" : "rules"}`}
           </div>
         </div>
 
@@ -518,172 +460,6 @@ const RuleEngine = () => {
                 </table>
               </div>
             )}
-          </div>
-        )}
-
-        {/* ── Configuration tab ── */}
-        {activeTab === "configuration" && (
-          <div
-            className="rounded-[20px] border p-4 shadow-sm sm:p-6"
-            style={cardStyle}
-          >
-            <div className="mb-2">
-              <h2
-                className="text-base font-semibold sm:text-lg"
-                style={{ color: T.textMain }}
-              >
-                Engine Configuration
-              </h2>
-              <p
-                className="mt-0.5 text-xs sm:text-sm"
-                style={{ color: T.textMuted }}
-              >
-                Controls how every rule in this module is evaluated and logged
-              </p>
-            </div>
-
-            <div className="mt-4">
-              <ConfigRow
-                label="Enable rule engine"
-                hint="Turn off to stop all rules from running without deleting them"
-              >
-                <button
-                  onClick={() => setField("enabled", !config.enabled)}
-                  role="switch"
-                  aria-checked={config.enabled}
-                  aria-label="Enable rule engine"
-                  className="relative h-6 w-11 shrink-0 rounded-full transition-colors"
-                  style={{
-                    background: config.enabled ? T.primary : "#d1d5db",
-                  }}
-                >
-                  <span
-                    className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all"
-                    style={{ left: config.enabled ? 22 : 2 }}
-                  />
-                </button>
-              </ConfigRow>
-
-              <ConfigRow
-                label="Evaluation mode"
-                hint="Run every rule that matches, or stop at the first match"
-              >
-                <select
-                  value={config.evaluationMode}
-                  onChange={(e) =>
-                    setField(
-                      "evaluationMode",
-                      e.target.value as RuleEngineConfig["evaluationMode"]
-                    )
-                  }
-                  className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
-                  style={inputStyle}
-                >
-                  <option value="all">All matching rules</option>
-                  <option value="first">First match only</option>
-                </select>
-              </ConfigRow>
-
-              <ConfigRow
-                label="Run rules on"
-                hint="Which events trigger an evaluation pass"
-              >
-                <select
-                  value={config.runOn}
-                  onChange={(e) =>
-                    setField(
-                      "runOn",
-                      e.target.value as RuleEngineConfig["runOn"]
-                    )
-                  }
-                  className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
-                  style={inputStyle}
-                >
-                  <option value="create_and_update">Create and update</option>
-                  <option value="create">Create only</option>
-                  <option value="schedule">Scheduled run only</option>
-                </select>
-              </ConfigRow>
-
-              <ConfigRow
-                label="Notify on rule action"
-                hint="Where to send a notice when a rule fires"
-              >
-                <select
-                  value={config.notifyChannel}
-                  onChange={(e) =>
-                    setField(
-                      "notifyChannel",
-                      e.target.value as RuleEngineConfig["notifyChannel"]
-                    )
-                  }
-                  className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
-                  style={inputStyle}
-                >
-                  <option value="in_app">In-app only</option>
-                  <option value="email">Email only</option>
-                  <option value="both">In-app and email</option>
-                  <option value="none">No notification</option>
-                </select>
-              </ConfigRow>
-
-              <ConfigRow
-                label="Max runs per day"
-                hint="Safety cap on total rule executions in a 24-hour window"
-              >
-                <input
-                  type="number"
-                  min={1}
-                  value={config.maxRunsPerDay}
-                  onChange={(e) =>
-                    setField("maxRunsPerDay", Number(e.target.value))
-                  }
-                  className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
-                  style={inputStyle}
-                />
-              </ConfigRow>
-
-              <ConfigRow
-                label="Log retention (days)"
-                hint="How long rule execution history is kept before pruning"
-              >
-                <input
-                  type="number"
-                  min={1}
-                  value={config.logRetentionDays}
-                  onChange={(e) =>
-                    setField("logRetentionDays", Number(e.target.value))
-                  }
-                  className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
-                  style={inputStyle}
-                />
-              </ConfigRow>
-            </div>
-
-            <div
-              className="mt-6 flex flex-col gap-2 border-t pt-4 sm:flex-row sm:justify-end"
-              style={{ borderColor: T.borderLgt }}
-            >
-              <button
-                onClick={() => setConfig(DEFAULT_CONFIG)}
-                className="rounded-xl border px-4 py-2 text-sm font-medium transition-colors"
-                style={{ borderColor: T.primaryBord, color: T.textMuted }}
-              >
-                Reset to defaults
-              </button>
-              <button
-                className="rounded-xl px-4 py-2 text-sm font-medium text-white transition-colors"
-                style={{ background: T.primary }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = T.primaryHov;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = T.primary;
-                }}
-              >
-                Save configuration
-              </button>
-            </div>
           </div>
         )}
       </div>

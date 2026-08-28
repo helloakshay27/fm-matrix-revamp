@@ -12,6 +12,7 @@ import {
   ZoomOut,
   Maximize2,
   ChevronLeft,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -21,14 +22,21 @@ import {
   createRule,
   fetchApplicableModels,
   fetchAttributes,
+  fetchFunctions,
+  fetchFunctionsForModel,
+  askRuleAgent,
   fetchAvailableModelDatasource,
   fetchDataSources,
+  fetchTenantBuckets,
   fetchRule,
   operatorSymbol,
   updateRule,
   type ApplicableModel,
   type AttributeOption,
+  type FunctionOption,
+  type RuleFunction,
   type DataSourceOption,
+  type TenantBucket,
   type Rule,
   type RuleAction,
   type RuleCondition,
@@ -103,6 +111,8 @@ const blankCondition = (
 const blankAction = (model: ApplicableModel | null): RuleAction => ({
   lockModelName: model?.lockModelName ?? "",
   actionMethod: "",
+  availableFunctionId: null,
+  customActionId: null,
   actionSelectedModel: model?.availableModelId ?? null,
   applicableModelId: model?.id ?? null,
   parameters: [],
@@ -137,6 +147,14 @@ export const RuleCanvas = ({ ruleId, onBack, onSaved }: RuleCanvasProps) => {
   // "" until a source is picked. Nothing about the data source is stored on the
   // rule — it only scopes which models can be chosen.
   const [datasourceId, setDatasourceId] = useState<string>("");
+
+  // Buckets published to this tenant on the chosen data source. Optional: when
+  // no bucket is picked the model list comes from tenant_models exactly as
+  // before. Picking one narrows the models to that product module, and the rule
+  // records which bucket it was built under.
+  const [buckets, setBuckets] = useState<TenantBucket[]>([]);
+  const [bucketsLoading, setBucketsLoading] = useState(false);
+  const [bucketId, setBucketId] = useState<number | null>(null);
   // An existing rule's data source is resolved from its model exactly once.
   // Guards that from re-running and fighting a manual change.
   const datasourceDerived = useRef(false);
@@ -173,9 +191,129 @@ export const RuleCanvas = ({ ruleId, onBack, onSaved }: RuleCanvasProps) => {
   >(null);
 
   /** The model the rule is written against, resolved from the AvailableModel id. */
+  // With a bucket picked, the models come from inside it. Their `id` is the
+  // BUCKET's applicable-row id -- one row covers the whole bucket -- which is
+  // what a condition must store in condition_selected_model for the executor to
+  // match it.
+  const bucketModels = useMemo(() => {
+    const bucket = buckets.find((b) => b.bucketId === bucketId);
+    if (!bucket) return [];
+    return bucket.models.map((m) => ({
+      id: bucket.id,
+      availableModelId: m.availableModelId,
+      displayName: m.displayName,
+      lockModelName: m.lockModelName,
+      type: m.type,
+      datasourceId: m.datasourceId,
+      active: bucket.active,
+    }));
+  }, [buckets, bucketId]);
+
+  // A data source that has buckets was configured module-wise, so the bucket is
+  // a REQUIRED step here and the model list stays empty until one is picked.
+  // A source with no buckets is whole-source and behaves exactly as before.
+  const isModuleWise = buckets.length > 0;
+
+  // Registered actions for the selected model: its own code methods plus the
+  // custom actions registered against it or its bucket. This is what the Method
+  // field offers -- typing a name by hand only failed at run time, silently,
+  // because an unregistered method is refused inside the executor's rescue.
+  const [functions, setFunctions] = useState<RuleFunction[]>([]);
+  const [functionsLoading, setFunctionsLoading] = useState(false);
+
+  // ── Ask AI ─────────────────────────────────────────────────────────────
+  // Preview only. Creating a rule immediately back-fills across every matching
+  // record, so the agent proposes and the canvas is populated for review; the
+  // existing Save is what actually writes.
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiNote, setAiNote] = useState<string | null>(null);
+
+  const askAi = async () => {
+    if (!aiPrompt.trim()) return toast.error("Describe the rule you want");
+    if (!datasourceId) return toast.error("Pick a data source first");
+    setAiBusy(true);
+    setAiNote(null);
+    try {
+      const result = await askRuleAgent({
+        prompt: aiPrompt.trim(),
+        datasourceId,
+        bucketId: bucketId ? Number(bucketId) : null,
+        persist: false,
+      });
+      if (!result.success || !result.payload) {
+        setAiNote(
+          result.errors.join(" · ") || "The agent could not build that rule"
+        );
+        toast.error(result.errors[0] ?? "Could not build that rule");
+        return;
+      }
+
+      const draft = result.payload;
+      setName(draft.name);
+      if (draft.description) setDescription(draft.description);
+      if (draft.modelId) setModelId(draft.modelId);
+      setConditions(
+        draft.conditions.map((c) => ({
+          conditionAttribute: c.conditionAttribute,
+          operator: c.operator,
+          compareValue: c.compareValue ?? "",
+          conditionSelectedModel: c.conditionSelectedModel,
+          conditionType: c.conditionType,
+          actionType: c.actionType,
+        })) as RuleCondition[]
+      );
+      setActions(
+        draft.actions.map((a) => ({
+          lockModelName: a.lockModelName ?? "",
+          actionMethod: a.actionMethod ?? "",
+          availableFunctionId: a.availableFunctionId,
+          customActionId: a.customActionId,
+          actionSelectedModel: draft.modelId,
+          applicableModelId: a.applicableModelId,
+          parameters: a.parameters,
+        })) as RuleAction[]
+      );
+      setAiNote(
+        `${result.explanation} (${result.confidence} confidence). Nothing saved yet — review and hit Save.`
+      );
+      toast.success("Draft loaded — review it, then Save");
+      setAiPrompt("");
+    } catch (e: any) {
+      setAiNote(e?.message || "Ask AI failed");
+      toast.error(e?.message || "Ask AI failed");
+    } finally {
+      setAiBusy(false);
+    }
+  };
+  const visibleModels = isModuleWise ? bucketModels : models;
+
+  useEffect(() => {
+    const selected = visibleModels.find((m) => m.availableModelId === modelId);
+    if (!selected) {
+      setFunctions([]);
+      return;
+    }
+    let cancelled = false;
+    setFunctionsLoading(true);
+    fetchFunctionsForModel(selected.availableModelId)
+      .then((rows) => {
+        if (!cancelled) setFunctions(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setFunctions([]);
+      })
+      .finally(() => {
+        if (!cancelled) setFunctionsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [modelId, visibleModels]);
+
   const selectedModel = useMemo(
-    () => models.find((m) => m.availableModelId === modelId) ?? null,
-    [models, modelId]
+    () => visibleModels.find((m) => m.availableModelId === modelId) ?? null,
+    [visibleModels, modelId]
   );
 
   // ── Load catalogue + rule ───────────────────────────────────────────────
@@ -215,6 +353,7 @@ export const RuleCanvas = ({ ruleId, onBack, onSaved }: RuleCanvasProps) => {
         setDescription(rule.description);
         setActive(rule.active);
         setModelId(rule.modelId);
+        setBucketId(rule.bucketId ?? null);
         setConditions(rule.conditions);
         setActions(rule.actions);
         setSavedId(rule.id);
@@ -251,6 +390,32 @@ export const RuleCanvas = ({ ruleId, onBack, onSaved }: RuleCanvasProps) => {
       cancelled = true;
     };
   }, [modelId]);
+
+  // Buckets on the chosen data source. Empty is the normal case for a
+  // single-product source, and the picker hides itself when so.
+  useEffect(() => {
+    if (!datasourceId) {
+      setBuckets([]);
+      setBucketsLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setBucketsLoading(true);
+    fetchTenantBuckets(datasourceId)
+      .then((list) => {
+        if (!cancelled) setBuckets(list);
+      })
+      // A source with no buckets is ordinary, not an error worth a toast.
+      .catch(() => {
+        if (!cancelled) setBuckets([]);
+      })
+      .finally(() => {
+        if (!cancelled) setBucketsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [datasourceId]);
 
   // Step 2 — models, scoped to the chosen data source. Never called without
   // one, so the list only ever holds models from that source.
@@ -490,6 +655,15 @@ export const RuleCanvas = ({ ruleId, onBack, onSaved }: RuleCanvasProps) => {
     datasourceDerived.current = true;
     if (nextId === datasourceId) return;
     setDatasourceId(nextId);
+    setBucketId(null);
+    if (modelId) changeModel(null);
+  };
+
+  // The model list is replaced when the bucket changes, so the current model is
+  // cleared for the same reason changing the data source clears it.
+  const changeBucket = (nextId: number | null) => {
+    if (nextId === bucketId) return;
+    setBucketId(nextId);
     if (modelId) changeModel(null);
   };
 
@@ -498,7 +672,8 @@ export const RuleCanvas = ({ ruleId, onBack, onSaved }: RuleCanvasProps) => {
   const changeModel = (availableModelId: number | null) => {
     setModelId(availableModelId);
     const model =
-      models.find((m) => m.availableModelId === availableModelId) ?? null;
+      visibleModels.find((m) => m.availableModelId === availableModelId) ??
+      null;
     setConditions((prev) =>
       prev.map((c) => ({
         ...c,
@@ -520,6 +695,7 @@ export const RuleCanvas = ({ ruleId, onBack, onSaved }: RuleCanvasProps) => {
   const problems = useMemo(() => {
     const list: string[] = [];
     if (!name.trim()) list.push("Rule needs a name");
+    if (isModuleWise && !bucketId) list.push("Rule needs a bucket");
     if (!modelId) list.push("Rule needs a model");
     if (conditions.length === 0) {
       // Executor#conditions_met? returns false for an empty set, so a rule with
@@ -533,10 +709,13 @@ export const RuleCanvas = ({ ruleId, onBack, onSaved }: RuleCanvasProps) => {
         list.push(`Condition ${i + 1}: needs a value`);
     });
     actions.forEach((a, i) => {
-      if (!a.actionMethod.trim()) list.push(`Action ${i + 1}: needs a method`);
+      // A registered action is required: an unregistered method name is refused
+      // by RuleEngine::Action at run time, inside a rescue, so it would fail
+      // silently rather than telling anyone.
+      if (!a.availableFunctionId) list.push(`Action ${i + 1}: needs an action`);
     });
     return list;
-  }, [name, modelId, conditions, actions]);
+  }, [name, modelId, isModuleWise, bucketId, conditions, actions]);
 
   const save = async () => {
     if (problems.length > 0) {
@@ -550,6 +729,7 @@ export const RuleCanvas = ({ ruleId, onBack, onSaved }: RuleCanvasProps) => {
         description: description.trim(),
         active,
         modelId,
+        bucketId,
         conditions,
         actions,
         removedConditionIds,
@@ -867,8 +1047,18 @@ export const RuleCanvas = ({ ruleId, onBack, onSaved }: RuleCanvasProps) => {
               setActive={setActive}
               modelId={modelId}
               onModelChange={changeModel}
-              models={models}
+              models={visibleModels}
               modelsLoading={modelsLoading}
+              buckets={buckets}
+              bucketsLoading={bucketsLoading}
+              isModuleWise={isModuleWise}
+              aiPrompt={aiPrompt}
+              onAiPromptChange={setAiPrompt}
+              onAskAi={askAi}
+              aiBusy={aiBusy}
+              aiNote={aiNote}
+              bucketId={bucketId}
+              onBucketChange={changeBucket}
               datasourceId={datasourceId}
               onDatasourceChange={changeDatasource}
               datasourceOptions={datasources}
@@ -895,6 +1085,8 @@ export const RuleCanvas = ({ ruleId, onBack, onSaved }: RuleCanvasProps) => {
               index={Number(selected.split("-")[1])}
               action={actions[Number(selected.split("-")[1])]}
               model={selectedModel}
+              functions={functions}
+              functionsLoading={functionsLoading}
               onChange={patchAction}
               onRemove={removeAction}
             />
@@ -1060,12 +1252,22 @@ const TriggerInspector = ({
   onModelChange,
   models,
   modelsLoading,
+  buckets,
+  bucketsLoading,
+  isModuleWise,
+  bucketId,
+  onBucketChange,
   datasourceId,
   onDatasourceChange,
   datasourceOptions,
   datasourcesLoading,
   actionType,
   onActionTypeChange,
+  aiPrompt,
+  onAiPromptChange,
+  onAskAi,
+  aiBusy,
+  aiNote,
 }: {
   name: string;
   setName: (v: string) => void;
@@ -1076,6 +1278,11 @@ const TriggerInspector = ({
   modelId: number | null;
   onModelChange: (v: number | null) => void;
   models: ApplicableModel[];
+  buckets: TenantBucket[];
+  bucketsLoading: boolean;
+  isModuleWise: boolean;
+  bucketId: number | null;
+  onBucketChange: (v: number | null) => void;
   modelsLoading: boolean;
   datasourceId: string;
   onDatasourceChange: (v: string) => void;
@@ -1083,8 +1290,62 @@ const TriggerInspector = ({
   datasourcesLoading: boolean;
   actionType: string;
   onActionTypeChange: (v: string) => void;
+  aiPrompt: string;
+  onAiPromptChange: (v: string) => void;
+  onAskAi: () => void;
+  aiBusy: boolean;
+  aiNote: string | null;
 }) => (
   <div>
+    {/* ── Ask AI ── proposes a whole rule from the tenant's catalogue and its
+        REGISTERED actions. Populates the canvas; Save is still what writes. */}
+    <div
+      className="mb-4 rounded-xl border p-3"
+      style={{ borderColor: T.primaryBord, background: T.pageBg }}
+    >
+      <div className="mb-1 flex items-center gap-1.5">
+        <Sparkles className="h-3.5 w-3.5" style={{ color: T.primary }} />
+        <span className="text-[12.5px] font-bold" style={{ color: T.textMain }}>
+          Ask AI
+        </span>
+      </div>
+      <p className="mb-2 text-[11.5px]" style={{ color: T.textMuted }}>
+        Describe the rule. Nothing is saved until you review and hit Save.
+      </p>
+      <div className="flex gap-1.5">
+        <input
+          value={aiPrompt}
+          onChange={(e) => onAiPromptChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !aiBusy) onAskAi();
+          }}
+          placeholder="when a user is created, run test_user"
+          disabled={!datasourceId}
+          className="min-w-0 flex-1 rounded-xl border px-2.5 py-1.5 text-[12.5px] outline-none disabled:opacity-60"
+          style={inputStyle}
+        />
+        <button
+          type="button"
+          onClick={onAskAi}
+          disabled={aiBusy || !aiPrompt.trim() || !datasourceId}
+          className="inline-flex shrink-0 items-center gap-1 rounded-xl px-3 text-[12px] font-semibold text-white disabled:opacity-40"
+          style={{ background: T.primary }}
+        >
+          {aiBusy ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Sparkles className="h-3.5 w-3.5" />
+          )}
+          Ask
+        </button>
+      </div>
+      {aiNote && (
+        <p className="mt-2 text-[11.5px]" style={{ color: T.textMuted }}>
+          {aiNote}
+        </p>
+      )}
+    </div>
+
     <InspectorTitle title="Trigger" />
 
     <Field label="Rule name">
@@ -1129,6 +1390,35 @@ const TriggerInspector = ({
       </select>
     </Field>
 
+    {/* Only shown when the data source actually has buckets published to this
+        tenant. A single-product source has none, and the form stays exactly as
+        it was before buckets existed. */}
+    {datasourceId && (bucketsLoading || isModuleWise) && (
+      <Field
+        label="Bucket"
+        hint="This data source is segregated module-wise — pick the module, then a model inside it."
+      >
+        <select
+          value={bucketId ?? ""}
+          onChange={(e) =>
+            onBucketChange(e.target.value ? Number(e.target.value) : null)
+          }
+          disabled={bucketsLoading}
+          className="w-full rounded-xl border px-3 py-2 text-sm outline-none disabled:opacity-60"
+          style={inputStyle}
+        >
+          <option value="">
+            {bucketsLoading ? "Loading buckets..." : "Select a bucket"}
+          </option>
+          {buckets.map((bucket) => (
+            <option key={bucket.bucketId} value={bucket.bucketId}>
+              {bucket.name} ({bucket.models.length})
+            </option>
+          ))}
+        </select>
+      </Field>
+    )}
+
     {/* Stays disabled until a data source is chosen — the models endpoint is
         not called before then, so there is nothing to offer. */}
     <Field
@@ -1140,18 +1430,22 @@ const TriggerInspector = ({
         onChange={(e) =>
           onModelChange(e.target.value ? Number(e.target.value) : null)
         }
-        disabled={!datasourceId || modelsLoading}
+        disabled={!datasourceId || modelsLoading || (isModuleWise && !bucketId)}
         className="w-full rounded-xl border px-3 py-2 text-sm outline-none disabled:opacity-60"
         style={inputStyle}
       >
         <option value="">
           {!datasourceId
             ? "Select a data source first"
-            : modelsLoading
-              ? "Loading models..."
-              : models.length === 0
-                ? "No applicable models for this data source"
-                : "Select a model"}
+            : isModuleWise && !bucketId
+              ? "Select a bucket first"
+              : modelsLoading
+                ? "Loading models..."
+                : models.length === 0
+                  ? bucketId
+                    ? "No models in this bucket"
+                    : "No applicable models for this data source"
+                  : "Select a model"}
         </option>
         {models.map((model) => (
           <option key={model.id} value={model.availableModelId}>
@@ -1307,16 +1601,23 @@ const ActionInspector = ({
   index,
   action,
   model,
+  functions,
+  functionsLoading,
   onChange,
   onRemove,
 }: {
   index: number;
   action?: RuleAction;
   model: ApplicableModel | null;
+  functions: RuleFunction[];
+  functionsLoading: boolean;
   onChange: (index: number, patch: Partial<RuleAction>) => void;
   onRemove: (index: number) => void;
 }) => {
   if (!action) return null;
+
+  const selectedFunction =
+    functions.find((f) => f.id === action.availableFunctionId) ?? null;
 
   const setParameter = (i: number, value: string) =>
     onChange(index, {
@@ -1344,16 +1645,66 @@ const ActionInspector = ({
 
       <Field
         label="Method"
-        hint={`Called on ${action.lockModelName || "the model"}.`}
+        hint={
+          functionsLoading
+            ? "Loading registered actions..."
+            : functions.length === 0
+              ? "Nothing registered on this model yet — register a method or custom action under Configure Action."
+              : `Only registered actions can run. Called on ${action.lockModelName || "the model"}.`
+        }
       >
-        <input
-          value={action.actionMethod}
-          onChange={(e) => onChange(index, { actionMethod: e.target.value })}
-          placeholder="e.g. notify_owner"
-          className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
+        <select
+          value={action.availableFunctionId ?? ""}
+          onChange={(e) => {
+            const id = e.target.value ? Number(e.target.value) : null;
+            const picked = functions.find((f) => f.id === id) ?? null;
+            onChange(index, {
+              availableFunctionId: id,
+              // action_method still carries the method for a code function; a
+              // custom action's slug is set by the backend, so it is not typed
+              // (or even seen) here.
+              actionMethod:
+                picked && picked.functionType === "code"
+                  ? picked.functionName
+                  : "",
+              customActionId: picked?.customActionId ?? null,
+              // Seed the parameter slots from what the method actually takes,
+              // so the Parameters field stops being a guess.
+              parameters:
+                picked && picked.parametersSpec.length > 0
+                  ? picked.parametersSpec.map(() => "")
+                  : [],
+            });
+          }}
+          disabled={functionsLoading || functions.length === 0}
+          className="w-full rounded-xl border px-3 py-2 text-sm outline-none disabled:opacity-60"
           style={inputStyle}
-        />
+        >
+          <option value="">
+            {functionsLoading
+              ? "Loading..."
+              : functions.length === 0
+                ? "No registered actions"
+                : "Select an action"}
+          </option>
+          {functions.map((fn) => (
+            <option key={fn.id} value={fn.id}>
+              {fn.displayName}
+              {fn.functionType === "custom" ? "  · custom" : ""}
+              {fn.writesData ? "  · writes data" : ""}
+            </option>
+          ))}
+        </select>
       </Field>
+
+      {selectedFunction && selectedFunction.parametersSpec.length > 0 && (
+        <p className="-mt-2 text-[11.5px]" style={{ color: T.textMuted }}>
+          Expects:{" "}
+          {selectedFunction.parametersSpec
+            .map((p) => `${p.name}${p.required ? "" : "?"}`)
+            .join(", ")}
+        </p>
+      )}
 
       <Field
         label="Parameters"
