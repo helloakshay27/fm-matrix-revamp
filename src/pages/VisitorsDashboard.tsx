@@ -1126,6 +1126,8 @@ export const VisitorsDashboard = () => {
       const data = await response.json();
       console.log('✅ Visitor checked out successfully:', data);
 
+      visitorEvents.onVisitorCheckedOut(visitorId);
+
       // Show success toast
       toast.success('Visitor checked out successfully!');
 
