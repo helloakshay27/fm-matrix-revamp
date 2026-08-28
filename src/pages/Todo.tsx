@@ -282,7 +282,7 @@ export default function Todo() {
 
     setToggleLoading(true);
     try {
-      const isCompleted = todoToToggle?.status === "open";
+      const isCompleted = todoToToggle?.status !== "completed";
       await toggleMutation.mutateAsync({
         id: todoToToggle.id,
         completed: isCompleted,
@@ -871,7 +871,7 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
 const ToggleTodoConfirmModal = ({ isOpen, onClose, onConfirm, isLoading, todo }) => {
   if (!isOpen || !todo) return null;
 
-  const isCompleting = todo?.status === "open";
+  const isCompleting = todo?.status !== "completed";
   const title = isCompleting ? "Complete Todo" : "Reopen Todo";
   const message = isCompleting
     ? `Are you sure you want to mark "${todo?.title}" as completed?`
