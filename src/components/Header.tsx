@@ -3,7 +3,7 @@ import posthog from "posthog-js";
 import { RecessClubLogo } from "./RecessClubLogo";
 import recessLogo from "../assets/recess-logo";
 import { useIsMobile } from "../hooks/use-mobile";
-import mobileLogo from "../assets/logo-mobile.png";
+import mobileLogo from "../assets/logo-2.png";
 import { isMobileUiSite } from "../utils/mobileUiSites";
 import {
   Bell,
@@ -81,8 +81,9 @@ export const Header = () => {
 
   const { isMobileSidebarOpen, setIsMobileSidebarOpen } = useLayout();
   const isMobile = useIsMobile();
-  // Mobile-only logo/sizing changes sirf goPhygital site par.
+  // Mobile par alag (bada) logo — sirf goPhygital sites par.
   const goPhygitalMobile = isMobile && isMobileUiSite();
+  // Mobile-only logo/sizing changes sirf goPhygital site par.
 
   // Use Notification Context
   const {
@@ -432,7 +433,7 @@ export const Header = () => {
           </button>
           <div
             className={`flex h-full flex-shrink-0 items-center overflow-hidden sm:w-28 md:w-40 lg:w-44 ${isMobileUiSite()
-              ? "w-[96px] max-md:max-w-[96px] max-md:[&>svg]:h-auto max-md:[&>svg]:w-full max-md:[&_img]:h-auto max-md:[&_img]:max-w-full"
+              ? "w-[120px] max-md:max-w-[120px] max-md:[&>svg]:h-auto max-md:[&>svg]:w-full max-md:[&_img]:h-auto max-md:[&_img]:max-w-full"
               : "w-16"
               }`}
           >
@@ -539,11 +540,10 @@ export const Header = () => {
               <img
                 src={mobileLogo}
                 alt="goPhygital.work"
-                className="h-auto w-[96px] max-w-full object-contain"
+                className="!h-10 w-auto max-w-full object-contain"
               />
             ) : (
               <svg
-                className={isMobileUiSite() ? "max-md:hidden" : undefined}
                 width="173"
                 height="31"
                 viewBox="0 0 173 31"
