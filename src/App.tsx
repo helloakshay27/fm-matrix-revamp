@@ -1265,6 +1265,10 @@ import AddCustomNotificationPage from "./features/pulse_notifications/pages/AddC
 import EditCustomNotificationPage from "./features/pulse_notifications/pages/EditCustomNotificationPage.tsx";
 import ViewCustomNotificationPage from "./features/pulse_notifications/pages/ViewCustomNotificationPage.tsx";
 import NotificationApprovalMatrix from "./features/pulse_notifications/pages/NotificationApprovalMatrix.tsx";
+import PulseSuppliers from "./features/PulseSuppliers/pages/PulseSuppliers.tsx";
+import AddSupplierPage from "./features/PulseSuppliers/pages/AddSupplierPage.tsx";
+import SupplierDetailsPage from "./features/PulseSuppliers/pages/SupplierDetailsPage.tsx";
+import EditSupplierPage from "./features/PulseSuppliers/pages/EditSupplierPage.tsx";
 const ModulesManagement = lazy(() => import("./pages/settings/ModulesManagement"));
 const InvoiceAdd = lazy(() => import("./pages/ClubManagement/InvoiceAdd").then(m => ({ default: m.InvoiceAdd })));
 const EditInvoicePage = lazy(() => import("./pages/EditInvoicePage").then(m => ({ default: m.EditInvoicePage })));
@@ -6541,6 +6545,22 @@ function App() {
                             <Route
                               path="/pulse/notification-approval-matrix"
                               element={<NotificationApprovalMatrix />}
+                            />
+                            <Route
+                              path="/pulse/supplier-setup"
+                              element={<PulseSuppliers />}
+                            />
+                            <Route
+                              path="/pulse/supplier-setup/add"
+                              element={<AddSupplierPage />}
+                            />
+                            <Route
+                              path="/pulse/supplier-setup/view/:id"
+                              element={<SupplierDetailsPage />}
+                            />
+                            <Route
+                              path="/pulse/supplier-setup/edit/:id"
+                              element={<EditSupplierPage />}
                             />
 
                             <Route
