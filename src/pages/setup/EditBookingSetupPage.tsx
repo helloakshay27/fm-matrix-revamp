@@ -88,7 +88,7 @@ export const EditBookingSetupPage = () => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
     const hostname = window.location.hostname;
-    const isPulseSite = hostname === "pulse-uat.panchshil.com" || hostname === "pulse.panchshil.com" || hostname === "localhost";
+    const isPulseSite = hostname === "pulse-uat.panchshil.com" || hostname === "pulse.panchshil.com";
 
     const coverImageRef = useRef(null);
     const bookingImageRef = useRef(null);
