@@ -30,6 +30,8 @@ import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import { QRCodeModal } from "@/components/QRCodeModal";
 import VisitorPassWeb from "@/components/VisitorPassWeb";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
 // Types
 interface DocumentItem {
@@ -63,6 +65,22 @@ interface VisitorIdentity {
   identity_type?: string;
   government_id_number?: string;
   documents?: DocumentItem[];
+}
+
+interface VisitorInOut {
+  id: number;
+  guest_entry_time?: string | null;
+  guest_exit_time?: string | null;
+  entry_gate_id?: number | null;
+  exit_gate_id?: number | null;
+  out_by_id?: number | null;
+  out_by_name?: string | null;
+  master_exit_time?: string | null;
+  master_exit_gate_id?: number | null;
+  master_out_by_id?: number | null;
+  master_out_by_name?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 interface AdditionalVisitor {
@@ -133,7 +151,14 @@ interface VisitorData {
   building_name?: string;
   encrypted_gatekeeper_id?: string;
   item_movements?: ItemMovement[];
+  visitor_in_outs?: VisitorInOut[];
 }
+
+const visitorInOutColumns: ColumnConfig[] = [
+  { key: "guest_entry_time", label: "Check-In Time", sortable: true, hideable: true, defaultVisible: true },
+  { key: "guest_exit_time", label: "Check-Out Time", sortable: true, hideable: true, defaultVisible: true },
+  { key: "out_by_name", label: "Checked Out By", sortable: false, hideable: true, defaultVisible: true },
+];
 
 export const VisitorDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -165,6 +190,19 @@ export const VisitorDetailsPage = () => {
   // Helper function to check if value has data
   const hasData = (value: string | undefined | null): boolean => {
     return value !== null && value !== undefined && value !== "";
+  };
+
+  const formatDateTime = (raw?: string | null): string => {
+    if (!raw) return "-";
+    const d = new Date(raw);
+    if (isNaN(d.getTime())) return raw;
+    return d.toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   useEffect(() => {
@@ -981,6 +1019,44 @@ export const VisitorDetailsPage = () => {
                   </CardContent>
                 </Card>
               )}
+
+            {/* Check-In / Checkout History Card */}
+            {visitorData.visitor_in_outs && visitorData.visitor_in_outs.length > 0 && (
+              <Card className="w-full">
+                <CardHeader className="pb-4 lg:pb-6">
+                  <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <MapPin className="w-6 h-6" style={{ color: '#C72030' }} />
+                    </div>
+                    <span className="uppercase tracking-wide">Check-In / Checkout History</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <EnhancedTable
+                    data={visitorData.visitor_in_outs}
+                    columns={visitorInOutColumns}
+                    pagination={true}
+                    pageSize={10}
+                    hideColumnsButton={true}
+                    hideTableExport={true}
+                    hideTableSearch={true}
+                    emptyMessage="No check-in/check-out history found"
+                    renderCell={(entry: VisitorInOut, columnKey: string) => {
+                      if (columnKey === "guest_entry_time") {
+                        return formatDateTime(entry.guest_entry_time);
+                      }
+                      if (columnKey === "guest_exit_time") {
+                        return formatDateTime(entry.guest_exit_time);
+                      }
+                      if (columnKey === "out_by_name") {
+                        return entry.out_by_name || "-";
+                      }
+                      return "-";
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            )}
 
             {/* Check-in/Check-out Information Card */}
             {/* {(hasData(visitorData.guest_entry_time) ||
