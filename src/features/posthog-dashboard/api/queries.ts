@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import {
   fetchAdoptionEngagement,
   fetchAdoptionTrend,
@@ -27,6 +27,8 @@ export interface QueryFilters {
   licensedSeats: number | null;
   module: string | null;
   subModule: string | null;
+  /** Incremented only by an explicit dashboard load/refresh action. */
+  requestId?: number;
 }
 
 function ymd(d: Date): string {
@@ -51,32 +53,48 @@ const range = (f: QueryFilters): RangeFilters => ({
 });
 
 /** Analytics is read-mostly and each call is a multi-second ClickHouse scan — cache generously. */
-const CACHE = { staleTime: 5 * 60_000, gcTime: 30 * 60_000, refetchOnWindowFocus: false } as const;
+const CACHE = {
+  staleTime: 5 * 60_000,
+  gcTime: 30 * 60_000,
+  refetchOnWindowFocus: false,
+  refetchOnMount: false,
+  retry: false,
+} as const;
 
-const keyBase = (f: QueryFilters) => [f.from, f.to, f.siteIds.join(','), f.devices.join(',')];
+const keyBase = (f: QueryFilters) => [
+  f.from,
+  f.to,
+  f.siteIds.join(','),
+  f.devices.join(','),
+  f.requestId ?? 0,
+];
 
 /** Every site on the tenant — drives the scope dropdown and the site-wise fan-out. */
-export function useAllSites() {
+export function useAllSites(enabled = true) {
   return useQuery({
     queryKey: ['fm-adoption', 'all-sites'],
     queryFn: fetchAllSites,
-    // Every analytics call waits on this one, so fail fast instead of retrying three times.
-    retry: 1,
+    // A user click produces one request. Do not retry implicitly.
+    enabled,
+    retry: false,
     staleTime: 30 * 60_000,
     gcTime: 60 * 60_000,
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 }
 
 /** Company id → name, for labelling the Regional tier. Never blocks: failure yields {}. */
-export function useCompanyNames() {
+export function useCompanyNames(enabled = true) {
   return useQuery({
     queryKey: ['fm-adoption', 'company-names'],
     queryFn: fetchCompanyNames,
-    retry: 1,
+    enabled,
+    retry: false,
     staleTime: 30 * 60_000,
     gcTime: 60 * 60_000,
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 }
 
@@ -109,7 +127,7 @@ export function useAdoptionEngagement(f: QueryFilters) {
 
 export function useAdoptionTrend(f: QueryFilters) {
   return useQuery({
-    queryKey: ['fm-adoption', 'adoption_trend', f.to, f.siteIds.join(','), f.devices.join(',')],
+    queryKey: ['fm-adoption', 'adoption_trend', f.to, f.siteIds.join(','), f.devices.join(','), f.requestId ?? 0],
     queryFn: () =>
       fetchAdoptionTrend({
         to: f.to,
@@ -124,7 +142,7 @@ export function useAdoptionTrend(f: QueryFilters) {
 
 export function useGrowth(f: QueryFilters) {
   return useQuery({
-    queryKey: ['fm-adoption', 'growth', f.to, f.siteIds.join(','), f.devices.join(',')],
+    queryKey: ['fm-adoption', 'growth', f.to, f.siteIds.join(','), f.devices.join(','), f.requestId ?? 0],
     queryFn: () =>
       fetchGrowth({ to: f.to, weeks: GROWTH_WEEKS, siteIds: f.siteIds, devices: f.devices }),
     enabled: f.enabled,
@@ -134,7 +152,7 @@ export function useGrowth(f: QueryFilters) {
 
 export function useRetention(f: QueryFilters) {
   return useQuery({
-    queryKey: ['fm-adoption', 'retention', f.to, f.siteIds.join(','), f.devices.join(',')],
+    queryKey: ['fm-adoption', 'retention', f.to, f.siteIds.join(','), f.devices.join(','), f.requestId ?? 0],
     queryFn: () =>
       fetchRetention({ to: f.to, weeks: RETENTION_WEEKS, siteIds: f.siteIds, devices: f.devices }),
     enabled: f.enabled,
@@ -197,20 +215,25 @@ export interface SiteLeagueEntry {
 }
 
 export function useSiteLeague(f: QueryFilters, siteIds: string[], enabled: boolean) {
-  const query = useQuery({
-    queryKey: ['fm-adoption', 'traffic_session', f.from, f.to, siteIds.join(','), f.devices.join(',')],
-    queryFn: () =>
-      fetchTrafficSession({ from: f.from, to: f.to, siteIds: siteIds, devices: f.devices }),
-    enabled: enabled && f.enabled,
-    ...CACHE,
+  // `traffic_session` aggregates all supplied site ids. Query every site
+  // separately so the league table contains actual per-site values.
+  const queries = useQueries({
+    queries: siteIds.map((siteId) => ({
+      queryKey: ['fm-adoption', 'traffic_session', f.from, f.to, siteId, f.devices.join(','), f.requestId ?? 0],
+      queryFn: () =>
+        fetchTrafficSession({ from: f.from, to: f.to, siteIds: [siteId], devices: f.devices }),
+      enabled: enabled && f.enabled,
+      ...CACHE,
+    })),
   });
 
   return {
-    entries: siteIds.map((siteId) => ({ siteId, data: query.data })) as SiteLeagueEntry[],
-    isLoading: enabled && query.isLoading,
-    isError: query.isError,
-    loaded: query.data !== undefined ? siteIds.length : 0,
-    failed: query.isError ? siteIds.length : 0,
+    entries: siteIds.map((siteId, index) => ({ siteId, data: queries[index]?.data })) as SiteLeagueEntry[],
+    isLoading: enabled && queries.some((query) => query.isLoading),
+    isError: queries.some((query) => query.isError),
+    error: queries.find((query) => query.error)?.error ?? null,
+    loaded: queries.filter((query) => query.data !== undefined).length,
+    failed: queries.filter((query) => query.isError).length,
     total: siteIds.length,
   };
 }

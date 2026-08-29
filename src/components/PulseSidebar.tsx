@@ -19,6 +19,7 @@ import {
   DoorOpen,
   Ticket,
   Trophy,
+  Activity,
 } from "lucide-react";
 import {
   MapPin,
@@ -418,6 +419,33 @@ export const PulseSidebar = () => {
   } = useLayout();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
+  // Domain restriction check for Pulse Usage Analytics
+  const hostname = window.location.hostname;
+  const isPulseSiteDomain = hostname === "pulse.lockated.com";
+  const isPanchshilUatSiteDomain = hostname === "pulse-uat.panchshil.com" || hostname === "localhost";
+  const showPulseUsageAnalytics = isPulseSiteDomain || isPanchshilUatSiteDomain;
+
+  // Dynamically inject Usage Analytics if allowed
+  const dynamicModulesByPackage = React.useMemo(() => {
+    return {
+      ...modulesByPackage,
+      ...(showPulseUsageAnalytics ? {
+        "Usage Analytics": [
+          {
+            name: "Pulse Dashboard",
+            icon: Activity,
+            href: "/pulse",
+            subItems: [
+              { name: "Traffic & Session", href: "/pulse/traffic-session" },
+              { name: "Adoption & Engagement", href: "/pulse/adoption-engagement" },
+              { name: "Workflow Usage", href: "/pulse/workflow-usage" },
+            ]
+          }
+        ]
+      } : {})
+    };
+  }, [showPulseUsageAnalytics]);
+
   // Reset expanded items on page load/refresh
   React.useEffect(() => {
     setExpandedItems([]);
@@ -454,12 +482,24 @@ export const PulseSidebar = () => {
       setCurrentSection("Settings");
     } else if (path === "/pulse/ride_settings" || path.startsWith("/pulse/ride_settings/")) {
       setCurrentSection("Master");
+    } else if (
+      path === "/pulse/traffic-session" ||
+      path === "/pulse/adoption-engagement" ||
+      path === "/pulse/workflow-usage" ||
+      path === "/pulse" ||
+      path === "/pulse/"
+    ) {
+      if (showPulseUsageAnalytics) {
+        setCurrentSection("Usage Analytics");
+      } else {
+        setCurrentSection("Pulse Privilege");
+      }
     } else if (path.startsWith("/pulse") || !currentSection) {
       setCurrentSection("Pulse Privilege");
     }
-  }, [location.pathname, setCurrentSection]);
+  }, [location.pathname, setCurrentSection, showPulseUsageAnalytics, currentSection]);
 
-  const currentModules = modulesByPackage[currentSection] || [];
+  const currentModules = dynamicModulesByPackage[currentSection as keyof typeof dynamicModulesByPackage] || [];
 
   const isActiveRoute = (href: string) => {
     const currentPath = location.pathname;
@@ -469,7 +509,7 @@ export const PulseSidebar = () => {
   // Auto-expand functionality
   React.useEffect(() => {
     const path = location.pathname;
-    const currentSectionItems = modulesByPackage[currentSection];
+    const currentSectionItems = dynamicModulesByPackage[currentSection as keyof typeof dynamicModulesByPackage];
     const itemsToExpand: string[] = [];
 
     if (currentSectionItems) {
@@ -489,7 +529,7 @@ export const PulseSidebar = () => {
 
       setExpandedItems(itemsToExpand);
     }
-  }, [currentSection, location.pathname]);
+  }, [currentSection, location.pathname, dynamicModulesByPackage]);
 
   const renderMenuItem = (item: any, level: number = 0) => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
