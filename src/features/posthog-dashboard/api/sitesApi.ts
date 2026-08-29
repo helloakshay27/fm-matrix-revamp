@@ -72,8 +72,9 @@ export async function fetchAllSites(): Promise<Site[]> {
     const res = await apiClient.get(url);
     return normalise(readList<ApiSite>(res.data, 'sites', 'data'));
   } catch {
-    // Never throw: an empty list just means the dashboard reports tenant-wide numbers.
-    return [];
+    // Do not omit `site_id` after a scope lookup fails: that would turn a
+    // scoped dashboard request into a tenant-wide analytics request.
+    throw new Error('Unable to load the sites permitted for this dashboard.');
   }
 }
 

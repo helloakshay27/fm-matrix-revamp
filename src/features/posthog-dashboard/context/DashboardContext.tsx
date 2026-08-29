@@ -159,7 +159,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
   // Hold the analytics calls until the site list has settled — otherwise every endpoint
   // fires once for the whole tenant and again with the real site_id list.
-  const sitesSettled = !sitesQ.isLoading;
+  // Never issue unscoped analytics calls. Empty access is a valid state; a
+  // failed site lookup is exposed as an error instead of falling back tenant-wide.
+  const sitesSettled = sitesQ.isSuccess && sites.length > 0;
 
   // Keep the current scope valid for the tier once the site/company lists resolve.
   useEffect(() => {
@@ -244,7 +246,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   );
 
   /** A disabled query reports isLoading=false, so treat "not started yet" as loading too. */
-  const pending = !sitesSettled;
+  const pending = sitesQ.isLoading;
 
   /* --------------------------------------------------------- the 9 endpoints */
 
@@ -313,7 +315,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       status: {
         traffic: {
           loading: pending || trafficQ.isLoading || usageQ.isLoading,
-          error: (trafficQ.error ?? usageQ.error) as Error | null,
+          error: (sitesQ.error ?? trafficQ.error ?? usageQ.error) as Error | null,
         },
         adopt: {
           loading:
@@ -323,7 +325,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
             growthQ.isLoading ||
             retentionQ.isLoading ||
             rolesQ.isLoading,
-          error: (engagementQ.error ??
+          error: (sitesQ.error ??
+            engagementQ.error ??
             trendQ.error ??
             growthQ.error ??
             retentionQ.error ??
@@ -337,9 +340,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
             moduleTreeQ.isLoading ||
             workflowQ.isLoading ||
             (!state.module && modules.length > 0),
-          error: (moduleTreeQ.error ?? workflowQ.error) as Error | null,
+          error: (sitesQ.error ?? moduleTreeQ.error ?? workflowQ.error) as Error | null,
         },
-        siteHealth: { loading: pending || league.isLoading, error: null },
+        siteHealth: {
+          loading: pending || league.isLoading,
+          error: (sitesQ.error ?? league.error) as Error | null,
+        },
       },
       siteLeague: {
         loaded: league.loaded,
@@ -362,6 +368,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       scopedSites,
       groups,
       pending,
+      sitesQ.error,
       from,
       to,
       modules,
@@ -396,6 +403,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       fm,
       league.entries,
       league.isLoading,
+      league.error,
       league.loaded,
       league.failed,
       league.total,

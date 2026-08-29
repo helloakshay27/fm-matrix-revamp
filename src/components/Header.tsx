@@ -135,6 +135,13 @@ export const Header = () => {
     hostname.includes("lockated.gophygital.work") ||
     hostname.includes("fm-matrix.lockated.com");
 
+  const isPulseSiteDomain = hostname === "pulse.lockated.com";
+  const isPanchshilUatSiteDomain =
+    hostname === "pulse-uat.panchshil.com" || hostname === "localhost";
+  const showPulseUsageAnalytics = isPulseSiteDomain || isPanchshilUatSiteDomain;
+
+  const showExistingPostHogUsageAnalytics =
+    isLocalhost || isPulseSiteDomain || hostname === "pulse-uat.panchshil.com";
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -177,9 +184,7 @@ export const Header = () => {
   // Club/localhost must NOT hide Dashboard / Executive / MSafe header links
   // (localhost is treated as club for logo only via isClubSite).
   const isRestrictedUser =
-    user?.email === "karan.balsara@zycus.com" ||
-    org_id === "90" ||
-    isPulseSite;
+    user?.email === "karan.balsara@zycus.com" || org_id === "90" || isPulseSite;
 
   const assetSuggestions = [
     "sdcdsc",
@@ -339,8 +344,7 @@ export const Header = () => {
   // Handle site change
   const handleSiteChange = async (siteId: number | "all") => {
     try {
-      const payload =
-        siteId === "all" ? sites.map((site) => site.id) : siteId;
+      const payload = siteId === "all" ? sites.map((site) => site.id) : siteId;
       await dispatch(changeSite(payload)).unwrap();
       if (siteId === "all") {
         localStorage.setItem("isAllSitesSelected", "true");
@@ -398,7 +402,8 @@ export const Header = () => {
   // which blocks local testing of the employee layout entirely.
   const isDevBypass = hostname.includes("localhost");
 
-  const canShowMsafeForSelectedCompany = localStorage.getItem("org_id") === "34";
+  const canShowMsafeForSelectedCompany =
+    localStorage.getItem("org_id") === "34";
   const canShowMSafeDashboard =
     !isRestrictedUser && canShowMsafeForSelectedCompany;
   const hasHeaderDashboardActions = !isRestrictedUser;
@@ -433,8 +438,8 @@ export const Header = () => {
           </button>
           <div
             className={`flex h-full flex-shrink-0 items-center overflow-hidden sm:w-28 md:w-40 lg:w-44 ${isMobileUiSite()
-              ? "w-[120px] max-md:max-w-[120px] max-md:[&>svg]:h-auto max-md:[&>svg]:w-full max-md:[&_img]:h-auto max-md:[&_img]:max-w-full"
-              : "w-16"
+                ? "w-[120px] max-md:max-w-[120px] max-md:[&>svg]:h-auto max-md:[&>svg]:w-full max-md:[&_img]:h-auto max-md:[&_img]:max-w-full"
+                : "w-16"
               }`}
           >
             {isOmanSite ? (
@@ -603,7 +608,6 @@ export const Header = () => {
                   Executive Dashboard
                 </button>
               )}
-
 
               {/* {canShowViMSafeDashboard && (
                 <button
@@ -893,8 +897,8 @@ export const Header = () => {
                         <div className="flex items-start gap-3">
                           <div
                             className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read
-                              ? "bg-[#C72030]"
-                              : "bg-gray-300"
+                                ? "bg-[#C72030]"
+                                : "bg-gray-300"
                               }`}
                           />
                           <div className="flex-1 min-w-0">
@@ -1009,8 +1013,7 @@ export const Header = () => {
                     <span className="truncate">
                       {(isViSite && viAccount
                         ? viAccount.role_name || ""
-                        : userRoleName || user?.lock_role?.name) ||
-                        "No Role"}
+                        : userRoleName || user?.lock_role?.name) || "No Role"}
                     </span>
                   </Badge>
                   {/* <Badge
@@ -1063,15 +1066,28 @@ export const Header = () => {
                   <User className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">My Profile</span>
                 </DropdownMenuItem>
-                {isLocalhost && (
+
+                {showExistingPostHogUsageAnalytics && (
                   <DropdownMenuItem
-                    onClick={() => (window.location.href = "/posthog-dashboard")}
+                    onClick={() =>
+                      (window.location.href = "/posthog-dashboard")
+                    }
                     className="mx-2 my-1 rounded-md"
                   >
                     <Activity className="w-4 h-4 mr-2 text-gray-500" />
                     <span className="font-medium">Usage Analytics</span>
                   </DropdownMenuItem>
                 )}
+                {showPulseUsageAnalytics && (
+                  <DropdownMenuItem
+                    onClick={() => navigate("/pulse")}
+                    className="mx-2 my-1 rounded-md"
+                  >
+                    <Activity className="w-4 h-4 mr-2 text-gray-500" />
+                    <span className="font-medium">Usage Analytics</span>
+                  </DropdownMenuItem>
+                )}
+
                 <DropdownMenuItem
                   onClick={() => navigate("/settings")}
                   className="mx-2 my-1 rounded-md"
