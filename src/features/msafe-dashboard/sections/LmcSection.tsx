@@ -243,10 +243,17 @@ function normalizeManagers(payload: unknown): ManagerRow[] {
     .filter((item): item is ManagerRow => Boolean(item));
 }
 
-// Carries the raw lmc_count and percentage directly on each slice (rather than
-// a separate array cross-referenced by name) so the hover tooltip can read both
-// straight off the exact slice being hovered.
-type FunctionSlice = Slice & { count: number; percentage: number | null };
+// Carries the raw approved count/percentage (plus total_users and the pending
+// counterparts, when the API sends them) directly on each slice — rather than a
+// separate array cross-referenced by name — so the hover tooltip can read
+// everything straight off the exact slice being hovered.
+type FunctionSlice = Slice & {
+  count: number;
+  percentage: number | null;
+  totalUsers: number | null;
+  pendingCount: number | null;
+  pendingPercentage: number | null;
+};
 
 function normalizeByFunction(payload: unknown): FunctionSlice[] {
   const list = unwrapList(payload, ['data', 'result', 'functions']);
@@ -256,11 +263,25 @@ function normalizeByFunction(payload: unknown): FunctionSlice[] {
       const record = item as Record<string, unknown>;
       const name = getString(record, ['function_name', 'function', 'func', 'name', 'label', 'title']);
       if (!name) return null;
-      const count = getNumber(record, ['lmc_count', 'count', 'value', 'sign_offs', 'total']);
-      const percentage = getNumber(record, ['percentage', 'pct']);
+      // `approved_count`/`approved_percentage` are the current API field names
+      // (the old `lmc_count`/`percentage` keys are kept as fallbacks).
+      const count = getNumber(record, ['approved_count', 'lmc_count', 'count', 'value', 'sign_offs', 'total']);
+      const percentage = getNumber(record, ['approved_percentage', 'percentage', 'pct']);
+      const totalUsers = getNumber(record, ['total_users']);
+      const pendingCount = getNumber(record, ['pending_count']);
+      const pendingPercentage = getNumber(record, ['pending_percentage']);
       const value = count ?? percentage;
       if (value === null) return null;
-      return { name, value, color: SLICE_PALETTE[index % SLICE_PALETTE.length], count: count ?? value, percentage };
+      return {
+        name,
+        value,
+        color: SLICE_PALETTE[index % SLICE_PALETTE.length],
+        count: count ?? value,
+        percentage,
+        totalUsers,
+        pendingCount,
+        pendingPercentage,
+      };
     })
     .filter((item): item is FunctionSlice => Boolean(item));
 }
@@ -609,9 +630,12 @@ export function LmcSection() {
     );
   };
 
-  // Reads the lmc_count and percentage directly off the hovered slice's own
-  // data (attached by normalizeByFunction) — works for both the Function and
-  // Circle tabs since they share the same slice shape.
+  // Reads the approved count/percentage (plus total_users/pending, when present)
+  // directly off the hovered slice's own data (attached by normalizeByFunction) —
+  // works for both the Function and Circle tabs since they share the same slice
+  // shape. Each stat gets its own labeled row (rather than one packed line) so
+  // it reads clearly at a glance, matching the pattern used elsewhere in this
+  // dashboard (e.g. TrainingSection's renderGroupTrainingTooltip).
   const renderFuncTooltip = ({ active, payload }: TooltipProps<ValueType, NameType>) => {
     if (!active || !payload?.length) return null;
     const slice = payload[0]?.payload as FunctionSlice | undefined;
@@ -619,13 +643,27 @@ export function LmcSection() {
     return (
       <div className="msafe-chart-tip">
         <div className="msafe-chart-tip-title">{slice.name}</div>
+        {slice.totalUsers !== null && (
+          <div className="msafe-chart-tip-row">
+            <span>Total Users: {slice.totalUsers.toLocaleString('en-IN')}</span>
+          </div>
+        )}
         <div className="msafe-chart-tip-row">
-          <span className="msafe-chart-tip-sw" style={{ background: slice.color }} />
+          <span className="msafe-chart-tip-sw" style={{ background: C.ok }} />
           <span>
-            {slice.count.toLocaleString('en-IN')}
+            Approved: {slice.count.toLocaleString('en-IN')}
             {slice.percentage !== null ? ` (${slice.percentage}%)` : ''}
           </span>
         </div>
+        {slice.pendingCount !== null && (
+          <div className="msafe-chart-tip-row">
+            <span className="msafe-chart-tip-sw" style={{ background: C.warn }} />
+            <span>
+              Pending: {slice.pendingCount.toLocaleString('en-IN')}
+              {slice.pendingPercentage !== null ? ` (${slice.pendingPercentage}%)` : ''}
+            </span>
+          </div>
+        )}
       </div>
     );
   };
@@ -650,7 +688,7 @@ export function LmcSection() {
                   name: m.name,
                   meta: `${m.department} · ${m.circle}`,
                   value: m.count,
-                  onClick: () => openDrill('user-detail', m.name),
+                  // onClick: () => openDrill('user-detail', m.name),
                 }))}
               />
             </div>
@@ -691,7 +729,14 @@ export function LmcSection() {
         pdfLabel={funcTab === 'circle' ? 'LMC by Circle' : 'LMC by Function'}
         reportPath="msafe_dashboard_report/lmc_status"
         reportParams={{ status: 'Completed' }}
-        exportData={funcData.map((d) => ({ Name: d.name, 'LMC Count': d.count, Percentage: d.percentage ?? '' }))}
+        exportData={funcData.map((d) => ({
+          Name: d.name,
+          'Total Users': d.totalUsers ?? '',
+          'Approved Count': d.count,
+          'Approved %': d.percentage ?? '',
+          'Pending Count': d.pendingCount ?? '',
+          'Pending %': d.pendingPercentage ?? '',
+        }))}
         tag={<ChartSwitch modes={['function', 'circle']} value={funcTab} onChange={(v) => setFuncTab(v as 'function' | 'circle')} />}
         chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={funcMode} onChange={setFuncMode} />}
       >
