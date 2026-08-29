@@ -42,7 +42,7 @@ function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, 
   if (f.circleIds.length > 0) params.circle_id = f.circleIds.join(',');
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
-  if (f.empTypeId) params.employee_type= f.empTypeId;
+  if (f.empTypeId) params.employee_type = f.empTypeId;
   if (f.startDate) params.from_date = f.startDate;
   if (f.endDate) params.to_date = f.endDate;
   return params;
@@ -796,7 +796,10 @@ export function SmtSection() {
                 </thead>
                 <tbody>
                   {recentVisits.map((s) => (
-                    <tr key={s.name + s.date} onClick={() => openDrill('smt-visit', s.name)}>
+                    <tr
+                      key={s.name + s.date}
+                    // onClick={() => openDrill('smt-visit', s.name)}
+                    >
                       <td className="cell-strong" title={s.name}>{s.name}</td>
                       <td title={s.func}>{s.func}</td>
                       <td title={s.circle}>{s.circle}</td>

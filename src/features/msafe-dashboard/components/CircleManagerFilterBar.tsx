@@ -12,6 +12,7 @@ import {
 import { useMsafeDashboard } from '../context/MsafeDashboardContext';
 
 const VI_FOCUS = '#C72030';
+const ALL_VALUE = '__all__';
 
 const fieldStyles = {
   height: 40,
@@ -109,6 +110,12 @@ export function CircleManagerFilterBar() {
         ? circles[0]
         : `${circles.length} Circles Selected`;
 
+  const allCircleNames = circleOptions.map((c) => c.name);
+  const isAllCirclesSelected = allCircleNames.length > 0 && circles.length === allCircleNames.length;
+
+  const allFunctionNames = functionOptions.map((fn) => fn.name);
+  const isAllFunctionsSelected = allFunctionNames.length > 0 && functions.length === allFunctionNames.length;
+
   return (
     <div className="cm-filter-bar" style={{ display: 'flex' }}>
       {persona === 'circle' && (
@@ -131,7 +138,8 @@ export function CircleManagerFilterBar() {
             value={circles}
             onChange={(e) => {
               const v = e.target.value;
-              const names = typeof v === 'string' ? v.split(',') : (v as string[]);
+              const raw = typeof v === 'string' ? v.split(',') : (v as string[]);
+              const names = raw.includes(ALL_VALUE) ? (isAllCirclesSelected ? [] : allCircleNames) : raw;
               setCircles(names);
               const ids = names
                 .map((n) => circleOptions.find((o) => o.name === n)?.id)
@@ -153,6 +161,21 @@ export function CircleManagerFilterBar() {
             MenuProps={selectMenuProps}
             disabled={loadingFilterOptions}
           >
+            <MenuItem value={ALL_VALUE} dense>
+              <Checkbox
+                checked={isAllCirclesSelected}
+                size="small"
+                sx={{
+                  color: '#C4B89D',
+                  '&.Mui-checked': { color: VI_FOCUS },
+                  py: 0.25,
+                }}
+              />
+              <ListItemText
+                primary="All"
+                primaryTypographyProps={{ fontSize: 13, fontFamily: "'Poppins', sans-serif" }}
+              />
+            </MenuItem>
             {circleOptions.map((c) => (
               <MenuItem key={c.id} value={c.name} dense>
                 <Checkbox
@@ -193,7 +216,8 @@ export function CircleManagerFilterBar() {
           value={functions}
           onChange={(e) => {
             const v = e.target.value;
-            const names = typeof v === 'string' ? v.split(',') : (v as string[]);
+            const raw = typeof v === 'string' ? v.split(',') : (v as string[]);
+            const names = raw.includes(ALL_VALUE) ? (isAllFunctionsSelected ? [] : allFunctionNames) : raw;
             setFunctions(names);
             setFunctionIds(
               names
@@ -218,6 +242,21 @@ export function CircleManagerFilterBar() {
               </MenuItem>
             )
           }
+          <MenuItem value={ALL_VALUE} dense>
+            <Checkbox
+              checked={isAllFunctionsSelected}
+              size="small"
+              sx={{
+                color: '#C4B89D',
+                '&.Mui-checked': { color: VI_FOCUS },
+                py: 0.25,
+              }}
+            />
+            <ListItemText
+              primary="All"
+              primaryTypographyProps={{ fontSize: 13, fontFamily: "'Poppins', sans-serif" }}
+            />
+          </MenuItem>
           {functionOptions.map((fn) => (
             <MenuItem key={fn.id} value={fn.name} dense>
               <Checkbox
