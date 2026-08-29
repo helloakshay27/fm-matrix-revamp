@@ -1265,6 +1265,10 @@ import AddCustomNotificationPage from "./features/pulse_notifications/pages/AddC
 import EditCustomNotificationPage from "./features/pulse_notifications/pages/EditCustomNotificationPage.tsx";
 import ViewCustomNotificationPage from "./features/pulse_notifications/pages/ViewCustomNotificationPage.tsx";
 import NotificationApprovalMatrix from "./features/pulse_notifications/pages/NotificationApprovalMatrix.tsx";
+import PulseSuppliers from "./features/PulseSuppliers/pages/PulseSuppliers.tsx";
+import AddSupplierPage from "./features/PulseSuppliers/pages/AddSupplierPage.tsx";
+import SupplierDetailsPage from "./features/PulseSuppliers/pages/SupplierDetailsPage.tsx";
+import EditSupplierPage from "./features/PulseSuppliers/pages/EditSupplierPage.tsx";
 const ModulesManagement = lazy(() => import("./pages/settings/ModulesManagement"));
 const InvoiceAdd = lazy(() => import("./pages/ClubManagement/InvoiceAdd").then(m => ({ default: m.InvoiceAdd })));
 const EditInvoicePage = lazy(() => import("./pages/EditInvoicePage").then(m => ({ default: m.EditInvoicePage })));
@@ -1428,6 +1432,7 @@ const PulseContestRewards = lazy(() => import("./pages/PulseContestRewards.tsx")
 const PulseContestRewardsDetails = lazy(() => import("./pages/PulseContestRewardsDetails.tsx"));
 const PulseContestRewardCreate = lazy(() => import("./pages/PulseContestRewardCreate.tsx"));
 const PosthogDashboardPage = lazy(() => import("./features/posthog-dashboard/PosthogDashboardPage").then(m => ({ default: m.PosthogDashboardPage })));
+const SmartSecureDashboardPage = lazy(() => import("./features/smartsecure-dashboard/SmartSecureDashboardPage").then(m => ({ default: m.SmartSecureDashboardPage })));
 const FmAdoptionDashboardPage = lazy(() => import("./features/fm-adoption-dashboard/FmAdoptionDashboardPage").then(m => ({ default: m.FmAdoptionDashboardPage })));
 const RevampDashboardPage = lazy(() => import("./pages/RevampDashboardPage"));
 
@@ -1769,6 +1774,10 @@ function App() {
                           <Route
                             path="/posthog-dashboard"
                             element={<PosthogDashboardPage />}
+                          />
+                          <Route
+                            path="/smartsecure-dashboard"
+                            element={<SmartSecureDashboardPage />}
                           />
                           <Route
                             path="/fm-adoption-dashboard"
@@ -6536,6 +6545,22 @@ function App() {
                             <Route
                               path="/pulse/notification-approval-matrix"
                               element={<NotificationApprovalMatrix />}
+                            />
+                            <Route
+                              path="/pulse/supplier-setup"
+                              element={<PulseSuppliers />}
+                            />
+                            <Route
+                              path="/pulse/supplier-setup/add"
+                              element={<AddSupplierPage />}
+                            />
+                            <Route
+                              path="/pulse/supplier-setup/view/:id"
+                              element={<SupplierDetailsPage />}
+                            />
+                            <Route
+                              path="/pulse/supplier-setup/edit/:id"
+                              element={<EditSupplierPage />}
                             />
 
                             <Route

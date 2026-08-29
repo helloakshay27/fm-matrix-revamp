@@ -971,7 +971,7 @@ const EditIssueModal = ({
             TransitionComponent={Transition}
         >
             <DialogContent
-                className="w-[42rem] fixed right-0 top-0 rounded-none bg-[#fff] text-sm"
+                className="w-screen sm:w-[42rem] fixed right-0 top-0 rounded-none bg-[#fff] text-sm"
                 style={{ margin: 0 }}
                 sx={{
                     padding: "0 !important",
@@ -979,7 +979,7 @@ const EditIssueModal = ({
             >
                 <h3 className="text-[14px] font-medium text-center mt-8">Edit Issue</h3>
                 <X
-                    className="absolute top-[26px] right-8 cursor-pointer"
+                    className="absolute top-[26px] right-4 sm:right-8 cursor-pointer"
                     onClick={handleCloseDialog}
                 />
 
@@ -1019,7 +1019,7 @@ const EditIssueModal = ({
                         </Box>
 
                         {/* Project and Milestone */}
-                        <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+                        <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2, mb: 2 }}>
                             <FormControl fullWidth size="small">
                                 <InputLabel>Project</InputLabel>
                                 <Select
@@ -1058,7 +1058,7 @@ const EditIssueModal = ({
                         </Box>
 
                         {/* Task and Subtask */}
-                        <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+                        <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2, mb: 2 }}>
                             <FormControl fullWidth size="small">
                                 <InputLabel>Task</InputLabel>
                                 <Select
@@ -1181,7 +1181,7 @@ const EditIssueModal = ({
                         </Box>
 
                         {/* Dates Section */}
-                        <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                             <div>
                                 <label className="block text-xs text-gray-700 mb-1">
                                     End Date *
@@ -1387,7 +1387,7 @@ const EditIssueModal = ({
                         </Box>
 
                         {/* Type and Priority */}
-                        <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+                        <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2, mb: 2 }}>
                             <FormControl fullWidth size="small">
                                 <InputLabel>Type</InputLabel>
                                 <Select
@@ -1611,8 +1611,8 @@ const ResponsiblePersonChangeModal = ({ isOpen, onClose, onSubmit }: any) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
-            <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] max-md:p-4">
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-[30rem] max-w-full max-md:max-h-[90vh] max-md:overflow-y-auto">
                 <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Responsible Person Change</h2>
 
                 <div className="mb-6">

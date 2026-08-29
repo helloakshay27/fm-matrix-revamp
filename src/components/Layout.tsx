@@ -579,7 +579,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Mobile overlay backdrop - closes sidebar when tapping outside */}
       {isMobileSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          className={`fixed left-0 right-0 bottom-0 bg-black/50 z-30 md:hidden ${
+            // Employee sidebars top-14/sm:top-16 par hain, admin wale 4rem par.
+            // Backdrop ko exactly wahin se shuru karo warna navbar ke neeche
+            // ek patli dark patti dikhti hai jo gap jaisi lagti hai.
+            isEmployeeUser && isLocalhost ? "top-14 sm:top-16" : "top-16"
+          }`}
           onClick={() => setIsMobileSidebarOpen(false)}
         />
       )}

@@ -136,7 +136,7 @@ function SiteMultiSelect({
 }
 
 export function ControlBar() {
-  const { vm, setScope, setDate, setDev, togglePrev, refreshAll, isRefreshing } = useDashboard();
+  const { vm, setScope, setDate, setToken, setDev, togglePrev, refreshAll, isRefreshing } = useDashboard();
   const { state, sites, groups, sitesLoading, traffic } = vm;
 
   const selectedSiteIds = state.tier === 't1' && state.scope !== 'all'
@@ -179,6 +179,16 @@ export function ControlBar() {
 
   return (
     <div className="filterbar">
+      <label className="ctrl" title="FM Matrix API token">
+        <span className="ic">#</span>
+        <input
+          type="password"
+          value={vm.token}
+          placeholder="Auth token"
+          onChange={(e) => setToken(e.target.value)}
+          style={{ width: 112, border: 0, outline: 0, background: 'transparent', color: 'inherit' }}
+        />
+      </label>
       {renderScopeSelect()}
 
       {/* Date range */}

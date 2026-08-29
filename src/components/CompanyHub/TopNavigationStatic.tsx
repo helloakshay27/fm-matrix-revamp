@@ -26,9 +26,9 @@ import {
     X,
 } from "lucide-react";
 import { RecessClubLogo } from "@/components/RecessClubLogo";
-import { useIsMobile } from "@/hooks/use-mobile";
-import mobileLogo from "@/assets/logo-mobile.png";
 import { isMobileUiSite } from "@/utils/mobileUiSites";
+import { useIsMobile } from "@/hooks/use-mobile";
+import mobileLogo from "@/assets/logo-2.png";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { useNavigate } from "react-router-dom";
@@ -285,10 +285,10 @@ const TopNavigationStatic: React.FC<TopNavigationProps> = ({
     } = useNotification();
     const { setCurrentSection, isMobileSidebarOpen, setIsMobileSidebarOpen } =
         useLayout();
-    const isMobile = useIsMobile();
     // Mobile-only changes (sidebar hamburger, logo, nav toggle icon) sirf
     // goPhygital site par.
     const isGoPhygital = isMobileUiSite();
+    const isMobile = useIsMobile();
     const goPhygitalMobile = isMobile && isGoPhygital;
 
     const [availableBalance, setAvailableBalance] = useState(0);
@@ -422,7 +422,7 @@ const TopNavigationStatic: React.FC<TopNavigationProps> = ({
         <>
             {/* --- TOP NAV BAR --- */}
             <div
-                className={`flex items-center justify-between px-3 sm:px-6 lg:px-8 py-3 sm:py-4 bg-[#FAF9F6]/80 backdrop-blur-md fixed top-0 left-0 right-0 z-50 border-b border-[rgba(211,209,199,1)] ${isGoPhygital ? "max-md:px-1 max-md:py-2" : ""
+                className={`flex items-center justify-between px-3 sm:px-6 lg:px-8 py-3 sm:py-4 bg-[#FAF9F6]/80 backdrop-blur-md fixed top-0 left-0 right-0 z-50 border-b border-[rgba(211,209,199,1)] ${isGoPhygital ? "max-md:h-14 sm:max-md:h-16 max-md:px-1 max-md:py-2" : ""
                     }`}
             >
                 <div className={`flex items-center gap-3 sm:gap-6 lg:gap-12 ${isGoPhygital ? "max-md:gap-1.5" : ""}`}>
@@ -436,14 +436,18 @@ const TopNavigationStatic: React.FC<TopNavigationProps> = ({
                         <button
                             className="md:hidden -ml-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-[#f6f4ee] active:bg-[#f0ede6]"
                             onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-                            aria-label="Toggle sidebar"
+                            aria-label={isMobileSidebarOpen ? "Close sidebar" : "Open sidebar"}
                             aria-expanded={isMobileSidebarOpen}
                         >
-                            <Menu className="w-5 h-5 text-[#1a1a1a]" />
+                            {isMobileSidebarOpen ? (
+                                <X className="w-5 h-5 text-[#1a1a1a]" />
+                            ) : (
+                                <Menu className="w-5 h-5 text-[#1a1a1a]" />
+                            )}
                         </button>
                     )}
                     <div
-                        className={`flex items-center gap-2 sm:gap-3 lg:gap-4 flex-shrink-0 ${isGoPhygital ? "max-md:gap-1.5 max-md:max-w-[96px] max-md:[&>svg]:h-auto max-md:[&>svg]:w-full max-md:[&_img]:h-auto max-md:[&_img]:max-w-full" : ""
+                        className={`flex items-center gap-2 sm:gap-3 lg:gap-4 flex-shrink-0 ${isGoPhygital ? "max-md:gap-1.5 max-md:max-w-[120px] max-md:[&>svg]:h-auto max-md:[&>svg]:w-full max-md:[&_img]:h-auto max-md:[&_img]:max-w-full" : ""
                             }`}
                     >
                         {isOmanSite ? (
@@ -541,13 +545,12 @@ const TopNavigationStatic: React.FC<TopNavigationProps> = ({
                             />
                         ) : goPhygitalMobile ? (
                             <img
-                              src={mobileLogo}
-                              alt="goPhygital.work"
-                              className="h-auto w-[96px] max-w-full object-contain"
+                                src={mobileLogo}
+                                alt="goPhygital.work"
+                                className="!h-10 w-auto max-w-full object-contain"
                             />
                         ) : (
                             <svg
-                                className={isGoPhygital ? "max-md:hidden" : undefined}
                                 width="173"
                                 height="31"
                                 viewBox="0 0 173 31"

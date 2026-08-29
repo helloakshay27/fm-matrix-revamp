@@ -113,6 +113,10 @@ export function useVisitorEvents() {
         error_code: errorCode,
       }),
 
+    // Visitor Checkout
+    onVisitorCheckedOut: (visitorId: string | number) =>
+      capture("Visitor Checked Out", "visitor_list", { visitor_id: visitorId }),
+
     // F5 · Staff Onboarding & Registry Health
     onStaffFormOpened: () => capture("Staff Form Opened", "staff_add"),
 

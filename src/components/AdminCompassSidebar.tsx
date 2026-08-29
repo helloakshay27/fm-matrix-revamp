@@ -91,16 +91,22 @@ export const AdminCompassSidebar: React.FC = () => {
       }));
 
     // ── Rule Engine ──────────────────────────────────────────────────────────
-    // Added client-side because the role API does not return a Rule Engine
-    // function for the "Employee Admin Compass" module yet. Unlike every other
-    // item here it is NOT role-gated. Once the backend serves it (action_name
-    // "employee_admin_compass_rule_engine", already in functionIconMap above),
-    // delete this block and the item will flow in from the API like the rest.
+    // Sidebar se chhupaya hua hai — routes aur pages waise ke waise hain.
+    // Wapas dikhane ke liye SHOW_RULE_ENGINE ko true kar dein.
+    // (Client-side inject isliye hota hai kyunki role API "Employee Admin
+    // Compass" module ke liye Rule Engine function abhi return nahi karti.)
+    const SHOW_RULE_ENGINE = false;
     const RULE_ENGINE = {
       name: "Rule Engine",
       href: "/admin-compass/rule-engine",
       icon: Workflow,
     };
+
+    if (!SHOW_RULE_ENGINE) {
+      return apiItems.filter(
+        (item: any) => !String(item.href || "").startsWith(RULE_ENGINE.href)
+      );
+    }
 
     if (apiItems.some((item: any) => item.href === RULE_ENGINE.href)) {
       return apiItems;

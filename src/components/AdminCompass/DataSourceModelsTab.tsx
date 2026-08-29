@@ -2,24 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Table2, Search, Save, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { getFullUrl, getAuthHeader } from "@/config/apiConfig";
-
-// Admin Compass design tokens — matches the Rule Engine / Data Source pages.
-const T = {
-  primary: "#DA7756",
-  primaryHov: "#c9673f",
-  primaryBg: "#fdf9f7",
-  primaryBord: "#e8e3de",
-  cardBg: "#ffffff",
-  textMain: "#1a1a1a",
-  textMuted: "#6b7280",
-  borderLgt: "#ebebeb",
-};
-
-const inputStyle = {
-  borderColor: T.primaryBord,
-  color: T.textMain,
-  background: T.cardBg,
-};
+import { T, inputStyle } from "@/components/AdminCompass/ruleEngineTheme";
 
 /** The subset of a data source this tab needs. */
 export interface ModelsTabSource {
@@ -343,7 +326,7 @@ export const DataSourceModelsTab = ({
             value={selectedId}
             onChange={(e) => setSelectedId(e.target.value)}
             disabled={sourcesLoading}
-            className="w-full rounded-xl border px-3 py-2 text-sm outline-none disabled:opacity-60"
+            className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30 disabled:opacity-60"
             style={inputStyle}
           >
             <option value="">
@@ -372,7 +355,7 @@ export const DataSourceModelsTab = ({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search tables..."
-                className="w-full rounded-xl border py-2 pl-10 pr-3 text-sm outline-none"
+                className="w-full rounded-xl border py-2 pl-10 pr-3 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30"
                 style={inputStyle}
               />
             </div>

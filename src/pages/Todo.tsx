@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Plus, Check, Play, Pause, Pencil, RefreshCw, ArrowRightLeft, Focus, Calendar, Filter, GripVertical, Eye } from "lucide-react";
 import axios from "axios";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -110,11 +110,26 @@ const TodoSkeleton = () => {
   );
 };
 
+const DEFAULT_TODO_FILTERS: TodoFilters = {
+  fromDate: '',
+  toDate: '',
+  selectedPriorities: [],
+  selectedCreators: [],
+  creatorSearch: '',
+  selectedAssignedTo: [],
+  assignedToSearch: '',
+};
+
 export default function Todo() {
   const { setCurrentSection } = useLayout();
   const { shouldShow } = useDynamicPermissions();
   const view = localStorage.getItem("selectedView");
-  const [taskType, setTaskType] = useState<"all" | "my">("my");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [taskType, setTaskType] = useState<"all" | "my">(() => {
+    const urlTaskType = searchParams.get("task_type");
+    return urlTaskType === "all" || urlTaskType === "my" ? urlTaskType : "my";
+  });
   const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
   const [selectedPriority, setSelectedPriority] = useState<string | null>('P1');
 
@@ -126,7 +141,6 @@ export default function Todo() {
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
-  const [searchParams, setSearchParams] = useSearchParams();
   const [isAddTodoModalOpen, setIsAddTodoModalOpen] = useState(false);
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
   const [pauseTaskId, setPauseTaskId] = useState<number | null>(null);
@@ -142,17 +156,46 @@ export default function Todo() {
   const [todoToToggle, setTodoToToggle] = useState<any>(null);
   const [toggleLoading, setToggleLoading] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [appliedFilters, setAppliedFilters] = useState<TodoFilters>({
-    fromDate: '',
-    toDate: '',
-    selectedPriorities: [],
-    selectedCreators: [],
-    creatorSearch: '',
-    selectedAssignedTo: [],
-    assignedToSearch: '',
-  });
+  const [filterResetKey, setFilterResetKey] = useState(0);
+  const [appliedFilters, setAppliedFilters] = useState<TodoFilters>(() => ({
+    ...DEFAULT_TODO_FILTERS,
+    fromDate: searchParams.get("from_date") || "",
+    toDate: searchParams.get("to_date") || "",
+    selectedPriorities: searchParams.getAll("priority"),
+    selectedCreators: searchParams.getAll("creator"),
+    selectedAssignedTo: searchParams.getAll("assigned_to"),
+  }));
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedTodo, setSelectedTodo] = useState<any>(null);
+
+  /**
+   * Helper function to update URL query parameters
+   * Deletes params if value is null/undefined/empty; supports array values.
+   */
+  const updateQueryParams = useCallback(
+    (updates: Record<string, any>, replace = false) => {
+      const params = new URLSearchParams(searchParams);
+
+      Object.entries(updates).forEach(([key, value]) => {
+        if (
+          value === undefined ||
+          value === null ||
+          value === "" ||
+          (Array.isArray(value) && value.length === 0)
+        ) {
+          params.delete(key);
+        } else if (Array.isArray(value)) {
+          params.delete(key);
+          value.forEach((v) => params.append(key, String(v)));
+        } else {
+          params.set(key, String(value));
+        }
+      });
+
+      setSearchParams(params, { replace });
+    },
+    [searchParams, setSearchParams]
+  );
 
   useEffect(() => {
     const type = searchParams.get("type");
@@ -167,6 +210,46 @@ export default function Todo() {
       setSearchParams(newParams, { replace: true }); // 🔥 important
     }
   }, [searchParams, setSearchParams]);
+
+  // Sync taskType, selected members, and applied filters to the URL.
+  // This MUST be a single effect/setSearchParams call: separate effects each
+  // rebuild from the same `searchParams` snapshot for a given render, so when
+  // multiple pieces of state change together (e.g. the My/All toggle also
+  // resets selectedUsers/appliedFilters), the last effect to run would wipe
+  // out the earlier ones' changes.
+  useEffect(() => {
+    updateQueryParams(
+      {
+        task_type: taskType,
+        member: selectedUsers.map((u) => u.value),
+        from_date: appliedFilters.fromDate || undefined,
+        to_date: appliedFilters.toDate || undefined,
+        priority: appliedFilters.selectedPriorities,
+        creator: appliedFilters.selectedCreators,
+        assigned_to: appliedFilters.selectedAssignedTo,
+      },
+      true
+    );
+  }, [taskType, selectedUsers, appliedFilters, updateQueryParams]);
+
+  // Restore selected members from the URL once the users list has loaded
+  const membersRestoredFromUrl = useRef(false);
+  useEffect(() => {
+    if (membersRestoredFromUrl.current || users.length === 0) return;
+    membersRestoredFromUrl.current = true;
+
+    const memberIds = searchParams.getAll("member");
+    if (memberIds.length === 0) return;
+
+    const matched = (users as any[])
+      .filter((u) => memberIds.includes(String(u.id)))
+      .map((u) => ({ label: u.name || u.full_name || "Unknown", value: u.id, id: u.id }));
+
+    if (matched.length > 0) {
+      setSelectedUsers(matched);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [users]);
 
   // Use React Query hook for infinite pagination
   const userIds = selectedUsers.map(u => u.value);
@@ -282,7 +365,7 @@ export default function Todo() {
 
     setToggleLoading(true);
     try {
-      const isCompleted = todoToToggle?.status === "open";
+      const isCompleted = todoToToggle?.status !== "completed";
       await toggleMutation.mutateAsync({
         id: todoToToggle.id,
         completed: isCompleted,
@@ -606,9 +689,10 @@ export default function Todo() {
                   onChange={() => {
                     const newTaskType = taskType === "all" ? "my" : "all";
                     setTaskType(newTaskType);
-                    if (newTaskType === "my") {
-                      setSelectedUsers([]);
-                    }
+                    setSelectedUsers([]);
+                    setAppliedFilters(DEFAULT_TODO_FILTERS);
+                    localStorage.removeItem("todoFilters");
+                    setFilterResetKey((k) => k + 1);
                   }}
                   sx={{
                     '& .MuiSwitch-switchBase.Mui-checked': {
@@ -757,6 +841,7 @@ export default function Todo() {
 
         {/* Todo Filter Modal */}
         <TodoFilterModal
+          key={filterResetKey}
           isModalOpen={isFilterModalOpen}
           setIsModalOpen={setIsFilterModalOpen}
           onApplyFilters={handleApplyFilters}
@@ -871,7 +956,7 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
 const ToggleTodoConfirmModal = ({ isOpen, onClose, onConfirm, isLoading, todo }) => {
   if (!isOpen || !todo) return null;
 
-  const isCompleting = todo?.status === "open";
+  const isCompleting = todo?.status !== "completed";
   const title = isCompleting ? "Complete Todo" : "Reopen Todo";
   const message = isCompleting
     ? `Are you sure you want to mark "${todo?.title}" as completed?`

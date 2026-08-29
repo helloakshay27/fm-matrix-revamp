@@ -1,16 +1,16 @@
-import { useEffect, useState, useMemo } from "react";
-import { Plus, Check, Play, Pause, Pencil, ArrowRightLeft, Focus, Filter, GripVertical, Eye, ChevronDown, ChevronRight, X } from "lucide-react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { Plus, Check, Play, Pause, Pencil, ArrowRightLeft, Focus, Filter, GripVertical, Eye } from "lucide-react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import BCTodoCreateModal from "@/components/BusinessCompass/BCTodoCreateModal";
 import BCTodoEditModal from "@/components/BusinessCompass/BCTodoEditModal";
 import TodoDetailsModal from "@/components/TodoDetailsModal";
+import TodoFilterModal, { TodoFilters } from "@/components/TodoFilterModal";
 import { Button } from "@/components/ui/button";
 import { useLayout } from "@/contexts/LayoutContext";
 import { toast } from "sonner";
 import { ActiveTimer } from "@/pages/ProjectTaskDetails";
 import { Switch } from "@mui/material";
-import { Dialog, DialogContent } from "@mui/material";
 import { Card, CardContent } from "@/components/ui/card";
 import EisenhowerMatrix from "@/components/EisenhowerMatrix";
 import PriorityTodo from "@/components/PriorityTodo";
@@ -26,6 +26,16 @@ const TODO_PRIORITY_TO_TASK_PRIORITY: Record<string, string> = {
     P2: "medium",
     P3: "medium",
     P4: "low",
+};
+
+const DEFAULT_TODO_FILTERS: TodoFilters = {
+    fromDate: "",
+    toDate: "",
+    selectedPriorities: [],
+    selectedCreators: [],
+    creatorSearch: "",
+    selectedAssignedTo: [],
+    assignedToSearch: "",
 };
 
 // Countdown timer component with real-time updates
@@ -182,7 +192,7 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }: any)
 const ToggleTodoConfirmModal = ({ isOpen, onClose, onConfirm, isLoading, todo }: any) => {
     if (!isOpen || !todo) return null;
 
-    const isCompleting = todo?.status === "open";
+    const isCompleting = todo?.status !== "completed";
     const title = isCompleting ? "Complete Todo" : "Reopen Todo";
     const message = isCompleting
         ? `Are you sure you want to mark "${todo?.title}" as completed?`
@@ -751,6 +761,7 @@ const CompletedTodoItem = ({ todo, toggleTodo, handleViewTodo }: any) => {
 
 const BusinessCompassTodoPage = () => {
     const { setCurrentSection } = useLayout();
+    const [searchParams, setSearchParams] = useSearchParams();
 
     useEffect(() => {
         setCurrentSection("Business Compass");
@@ -760,7 +771,10 @@ const BusinessCompassTodoPage = () => {
     const token = localStorage.getItem("token");
     const currentUserId = JSON.parse(localStorage.getItem("user") || "{}")?.id;
 
-    const [taskType, setTaskType] = useState<"all" | "my">("my");
+    const [taskType, setTaskType] = useState<"all" | "my">(() => {
+        const urlTaskType = searchParams.get("task_type");
+        return urlTaskType === "all" || urlTaskType === "my" ? urlTaskType : "my";
+    });
     const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
     const [users, setUsers] = useState<any[]>([]);
     const [selectedQuadrant, setSelectedQuadrant] = useState<string | null>("P1");
@@ -778,11 +792,86 @@ const BusinessCompassTodoPage = () => {
     const [todoToToggle, setTodoToToggle] = useState<any>(null);
     const [toggleLoading, setToggleLoading] = useState(false);
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-    const [selectedPriorities, setSelectedPriorities] = useState<string[]>([]);
-    const [dates, setDates] = useState({ startDate: "", endDate: "" });
-    const [dropdowns, setDropdowns] = useState({ priority: false, startDate: false, endDate: false });
+    const [filterResetKey, setFilterResetKey] = useState(0);
+    const [appliedFilters, setAppliedFilters] = useState<TodoFilters>(() => ({
+        ...DEFAULT_TODO_FILTERS,
+        fromDate: searchParams.get("from_date") || "",
+        toDate: searchParams.get("to_date") || "",
+        selectedPriorities: searchParams.getAll("priority"),
+        selectedCreators: searchParams.getAll("creator"),
+        selectedAssignedTo: searchParams.getAll("assigned_to"),
+    }));
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [selectedTodo, setSelectedTodo] = useState<any>(null);
+
+    /**
+     * Helper function to update URL query parameters
+     * Deletes params if value is null/undefined/empty; supports array values.
+     */
+    const updateQueryParams = useCallback(
+        (updates: Record<string, any>, replace = false) => {
+            const params = new URLSearchParams(searchParams);
+
+            Object.entries(updates).forEach(([key, value]) => {
+                if (
+                    value === undefined ||
+                    value === null ||
+                    value === "" ||
+                    (Array.isArray(value) && value.length === 0)
+                ) {
+                    params.delete(key);
+                } else if (Array.isArray(value)) {
+                    params.delete(key);
+                    value.forEach((v) => params.append(key, String(v)));
+                } else {
+                    params.set(key, String(value));
+                }
+            });
+
+            setSearchParams(params, { replace });
+        },
+        [searchParams, setSearchParams]
+    );
+
+    // Sync taskType, selected members, and applied filters to the URL.
+    // This MUST be a single effect/setSearchParams call: separate effects each
+    // rebuild from the same `searchParams` snapshot for a given render, so when
+    // multiple pieces of state change together (e.g. the My/All toggle also
+    // resets selectedUsers/appliedFilters), the last effect to run would wipe
+    // out the earlier ones' changes.
+    useEffect(() => {
+        updateQueryParams(
+            {
+                task_type: taskType,
+                member: selectedUsers.map((u) => u.value),
+                from_date: appliedFilters.fromDate || undefined,
+                to_date: appliedFilters.toDate || undefined,
+                priority: appliedFilters.selectedPriorities,
+                creator: appliedFilters.selectedCreators,
+                assigned_to: appliedFilters.selectedAssignedTo,
+            },
+            true
+        );
+    }, [taskType, selectedUsers, appliedFilters, updateQueryParams]);
+
+    // Restore selected members from the URL once the users list has loaded
+    const membersRestoredFromUrl = useRef(false);
+    useEffect(() => {
+        if (membersRestoredFromUrl.current || users.length === 0) return;
+        membersRestoredFromUrl.current = true;
+
+        const memberIds = searchParams.getAll("member");
+        if (memberIds.length === 0) return;
+
+        const matched = (users as any[])
+            .filter((u) => memberIds.includes(String(u.id)))
+            .map((u) => ({ label: u.name || u.full_name || "Unknown", value: u.id, id: u.id }));
+
+        if (matched.length > 0) {
+            setSelectedUsers(matched);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [users]);
 
     const getUsers = async () => {
         try {
@@ -817,16 +906,26 @@ const BusinessCompassTodoPage = () => {
             if (currentUserId) filters["q[created_by_id_eq]"] = String(currentUserId);
         }
 
-        if (selectedPriorities.length > 0) {
-            selectedPriorities.forEach((p, i) => {
+        if (appliedFilters.selectedPriorities.length > 0) {
+            appliedFilters.selectedPriorities.forEach((p, i) => {
                 filters[`q[priority_in][${i}]`] = p;
             });
         }
-        if (dates.startDate) {
-            filters["q[target_date_gteq]"] = dates.startDate;
+        if (appliedFilters.fromDate) {
+            filters["q[target_date_gteq]"] = appliedFilters.fromDate;
         }
-        if (dates.endDate) {
-            filters["q[target_date_lteq]"] = dates.endDate;
+        if (appliedFilters.toDate) {
+            filters["q[target_date_lteq]"] = appliedFilters.toDate;
+        }
+        if (appliedFilters.selectedCreators.length > 0) {
+            appliedFilters.selectedCreators.forEach((id, i) => {
+                filters[`q[created_by_id_in][${i}]`] = String(id);
+            });
+        }
+        if (appliedFilters.selectedAssignedTo.length > 0) {
+            appliedFilters.selectedAssignedTo.forEach((id, i) => {
+                filters[`q[user_id_in][${i}]`] = String(id);
+            });
         }
         return filters;
     };
@@ -863,7 +962,7 @@ const BusinessCompassTodoPage = () => {
     // Reset accumulation when scope/filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [taskType, selectedUsers, selectedPriorities, dates.startDate, dates.endDate]);
+    }, [taskType, selectedUsers, appliedFilters]);
 
     const todosById = useMemo(() => {
         const map: Record<string, any> = {};
@@ -892,27 +991,8 @@ const BusinessCompassTodoPage = () => {
         return counts;
     }, [accumulatedTodos]);
 
-    const toggleDropdown = (key: keyof typeof dropdowns) => {
-        setDropdowns((prev) => {
-            const isAlreadyOpen = prev[key];
-            if (isAlreadyOpen) return { ...prev, [key]: false };
-            return { priority: false, startDate: false, endDate: false, [key]: true };
-        });
-    };
-
-    const togglePriority = (value: string) => {
-        setSelectedPriorities((prev) =>
-            prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
-        );
-    };
-
-    const handleClearFilters = () => {
-        setSelectedPriorities([]);
-        setDates({ startDate: "", endDate: "" });
-    };
-
-    const handleApplyFilters = () => {
-        setIsFilterModalOpen(false);
+    const handleApplyFilters = (filters: TodoFilters) => {
+        setAppliedFilters(filters);
         refetch();
     };
 
@@ -927,7 +1007,7 @@ const BusinessCompassTodoPage = () => {
 
         setToggleLoading(true);
         try {
-            const isCompleting = todoToToggle?.status === "open";
+            const isCompleting = todoToToggle?.status !== "completed";
             await axios.put(
                 `https://${baseUrl}/business_compass/todos/${todoToToggle.id}.json`,
                 { todo: { status: isCompleting ? "completed" : "open" } },
@@ -1229,9 +1309,10 @@ const BusinessCompassTodoPage = () => {
                                     onChange={() => {
                                         const newTaskType = taskType === "all" ? "my" : "all";
                                         setTaskType(newTaskType);
-                                        if (newTaskType === "my") {
-                                            setSelectedUsers([]);
-                                        }
+                                        setSelectedUsers([]);
+                                        setAppliedFilters(DEFAULT_TODO_FILTERS);
+                                        localStorage.removeItem("bcTodoFilters");
+                                        setFilterResetKey((k) => k + 1);
                                     }}
                                     sx={{
                                         "& .MuiSwitch-switchBase.Mui-checked": { color: "#C72030" },
@@ -1363,122 +1444,14 @@ const BusinessCompassTodoPage = () => {
                 />
 
                 {/* Filter Modal */}
-                <Dialog
-                    open={isFilterModalOpen}
-                    onClose={() => setIsFilterModalOpen(false)}
-                    maxWidth={false}
-                >
-                    <DialogContent className="w-full max-w-sm bg-white text-sm" style={{ padding: 0 }}>
-                        <div className="flex items-center justify-between px-6 py-5 border-b">
-                            <h2 className="text-xl font-semibold">Filter</h2>
-                            <X className="cursor-pointer" onClick={() => setIsFilterModalOpen(false)} />
-                        </div>
-
-                        <div className="divide-y">
-                            {/* Priority */}
-                            <div className="p-6 py-3">
-                                <div
-                                    className="flex items-center justify-between cursor-pointer"
-                                    onClick={() => toggleDropdown("priority")}
-                                >
-                                    <span className="font-medium text-sm select-none">Priority</span>
-                                    {dropdowns.priority ? (
-                                        <ChevronDown className="text-gray-400" />
-                                    ) : (
-                                        <ChevronRight className="text-gray-400" />
-                                    )}
-                                </div>
-                                {dropdowns.priority && (
-                                    <div className="mt-4 border p-2">
-                                        {[
-                                            { value: "P1", label: "Q1 - Urgent & Important" },
-                                            { value: "P2", label: "Q2 - Important, Not Urgent" },
-                                            { value: "P3", label: "Q3 - Urgent, Not Important" },
-                                            { value: "P4", label: "Q4 - Not Urgent or Important" },
-                                        ].map((opt) => (
-                                            <label
-                                                key={opt.value}
-                                                className="flex items-center gap-2 py-2 px-2 text-sm cursor-pointer hover:bg-gray-50 rounded"
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedPriorities.includes(opt.value)}
-                                                    onChange={() => togglePriority(opt.value)}
-                                                />
-                                                {opt.label}
-                                            </label>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Start Date */}
-                            <div className="p-6 py-3">
-                                <div
-                                    className="flex items-center justify-between cursor-pointer"
-                                    onClick={() => toggleDropdown("startDate")}
-                                >
-                                    <span className="font-medium text-sm select-none">From Date</span>
-                                    {dropdowns.startDate ? (
-                                        <ChevronDown className="text-gray-400" />
-                                    ) : (
-                                        <ChevronRight className="text-gray-400" />
-                                    )}
-                                </div>
-                                {dropdowns.startDate && (
-                                    <div className="mt-4">
-                                        <input
-                                            type="date"
-                                            value={dates.startDate}
-                                            onChange={(e) => setDates({ ...dates, startDate: e.target.value })}
-                                            className="w-full p-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-red-600"
-                                        />
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* End Date */}
-                            <div className="p-6 py-3">
-                                <div
-                                    className="flex items-center justify-between cursor-pointer"
-                                    onClick={() => toggleDropdown("endDate")}
-                                >
-                                    <span className="font-medium text-sm select-none">To Date</span>
-                                    {dropdowns.endDate ? (
-                                        <ChevronDown className="text-gray-400" />
-                                    ) : (
-                                        <ChevronRight className="text-gray-400" />
-                                    )}
-                                </div>
-                                {dropdowns.endDate && (
-                                    <div className="mt-4">
-                                        <input
-                                            type="date"
-                                            value={dates.endDate}
-                                            onChange={(e) => setDates({ ...dates, endDate: e.target.value })}
-                                            className="w-full p-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-red-600"
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="flex justify-center items-center gap-4 px-6 py-3 border-t">
-                            <button
-                                className="bg-[#C72030] text-white rounded px-10 py-2 text-sm font-semibold hover:bg-[#b71c1c]"
-                                onClick={handleApplyFilters}
-                            >
-                                Apply
-                            </button>
-                            <button
-                                className="border border-[#C72030] text-[#C72030] rounded px-10 py-2 text-sm font-semibold hover:bg-red-50"
-                                onClick={handleClearFilters}
-                            >
-                                Reset
-                            </button>
-                        </div>
-                    </DialogContent>
-                </Dialog>
+                <TodoFilterModal
+                    key={filterResetKey}
+                    isModalOpen={isFilterModalOpen}
+                    setIsModalOpen={setIsFilterModalOpen}
+                    onApplyFilters={handleApplyFilters}
+                    users={users}
+                    storageKey="bcTodoFilters"
+                />
 
                 {/* Drag Overlay - shows preview of dragged item */}
                 <DragOverlay>

@@ -397,7 +397,12 @@ const modulesByPackage = {
       name: 'Notification Approvers',
       icon: Settings,
       href: '/pulse/notification-approval-matrix',
-    }
+    },
+    {
+      name: "Supplier Setup",
+      icon: Bell,
+      href: "/pulse/supplier-setup",
+    },
   ],
 };
 
