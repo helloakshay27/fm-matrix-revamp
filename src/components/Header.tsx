@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 import posthog from "posthog-js";
 import { RecessClubLogo } from "./RecessClubLogo";
+import recessLogo from "../assets/recess-logo";
+import { useIsMobile } from "../hooks/use-mobile";
+import mobileLogo from "../assets/logo-2.png";
+import { isMobileUiSite } from "../utils/mobileUiSites";
 import {
   Bell,
   User,
@@ -19,6 +23,7 @@ import {
   ChartAreaIcon,
   Shield,
   Menu,
+  X,
   Activity,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -42,7 +47,7 @@ import {
   changeSite,
   clearSites,
 } from "@/store/slices/siteSlice";
-import { getUser, clearAuth, fetchLockAccount } from "@/utils/auth";
+import { getUser, clearAuth, fetchLockAccount, logoutUser } from "@/utils/auth";
 import { permissionService } from "@/services/permissionService";
 import { is } from "date-fns/locale";
 import { Dashboard } from "@mui/icons-material";
@@ -75,6 +80,10 @@ export const Header = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   const { isMobileSidebarOpen, setIsMobileSidebarOpen } = useLayout();
+  const isMobile = useIsMobile();
+  // Mobile par alag (bada) logo — sirf goPhygital sites par.
+  const goPhygitalMobile = isMobile && isMobileUiSite();
+  // Mobile-only logo/sizing changes sirf goPhygital site par.
 
   // Use Notification Context
   const {
@@ -135,6 +144,13 @@ export const Header = () => {
     hostname.includes("lockated.gophygital.work") ||
     hostname.includes("fm-matrix.lockated.com");
 
+  const isPulseSiteDomain = hostname === "pulse.lockated.com";
+  const isPanchshilUatSiteDomain =
+    hostname === "pulse-uat.panchshil.com" || hostname === "localhost";
+  const showPulseUsageAnalytics = isPulseSiteDomain || isPanchshilUatSiteDomain;
+
+  const showExistingPostHogUsageAnalytics =
+    isLocalhost || isPulseSiteDomain || hostname === "pulse-uat.panchshil.com";
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -177,9 +193,7 @@ export const Header = () => {
   // Club/localhost must NOT hide Dashboard / Executive / MSafe header links
   // (localhost is treated as club for logo only via isClubSite).
   const isRestrictedUser =
-    user?.email === "karan.balsara@zycus.com" ||
-    org_id === "90" ||
-    isPulseSite;
+    user?.email === "karan.balsara@zycus.com" || org_id === "90" || isPulseSite;
 
   const assetSuggestions = [
     "sdcdsc",
@@ -339,8 +353,7 @@ export const Header = () => {
   // Handle site change
   const handleSiteChange = async (siteId: number | "all") => {
     try {
-      const payload =
-        siteId === "all" ? sites.map((site) => site.id) : siteId;
+      const payload = siteId === "all" ? sites.map((site) => site.id) : siteId;
       await dispatch(changeSite(payload)).unwrap();
       if (siteId === "all") {
         localStorage.setItem("isAllSitesSelected", "true");
@@ -425,10 +438,14 @@ export const Header = () => {
           <button
             className="md:hidden flex h-16 w-10 flex-shrink-0 items-center justify-center rounded-r-lg hover:bg-[#f6f4ee] transition-colors"
             onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-            aria-label="Toggle sidebar"
+            aria-label={isMobileSidebarOpen ? "Close sidebar" : "Open sidebar"}
             aria-expanded={isMobileSidebarOpen}
           >
-            <Menu className="w-5 h-5 text-[#1a1a1a]" />
+            {isMobileSidebarOpen ? (
+              <X className="w-5 h-5 text-[#1a1a1a]" />
+            ) : (
+              <Menu className="w-5 h-5 text-[#1a1a1a]" />
+            )}
           </button>
           <div
             className={`flex h-full flex-shrink-0 items-center overflow-hidden sm:w-28 md:w-40 lg:w-44 ${isMobileUiSite()
@@ -524,12 +541,22 @@ export const Header = () => {
                 alt=""
               />
             ) : isClubSite ? (
-              <RecessClubLogo className={logoClassName} />
+              <img
+                src={recessLogo}
+                alt="Recess Logo"
+                className={logoClassName}
+              />
             ) : isPulseSite ? (
               <img
                 src="https://www.panchshil.com/assets/images/home/logo.png"
                 alt="Pulse Logo"
                 className={logoClassName}
+              />
+            ) : goPhygitalMobile ? (
+              <img
+                src={mobileLogo}
+                alt="goPhygital.work"
+                className="!h-10 w-auto max-w-full object-contain"
               />
             ) : (
               <svg
@@ -797,18 +824,18 @@ export const Header = () => {
                     Executive Dashboard
                   </DropdownMenuItem>
                 )}
-                {canShowMSafeDashboard && (
-                  <DropdownMenuItem onClick={handleMSafeDashboard}>
-                    <Home className="w-4 h-4 mr-2" />
-                    MSafe Dashboard
-                  </DropdownMenuItem>
-                )}
                 {/* {canShowMSafeDashboard && (
+                    <DropdownMenuItem onClick={handleMSafeDashboard}>
+                      <Home className="w-4 h-4 mr-2" />
+                      MSafe Dashboard
+                    </DropdownMenuItem>
+                  )} */}
+                {canShowMSafeDashboard && (
                   <DropdownMenuItem onClick={handleMSafeDashboardRevamp}>
                     <Shield className="w-4 h-4 mr-2" />
                     Msafe Dashboard Revamp
                   </DropdownMenuItem>
-                )} */}
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           )}
@@ -997,8 +1024,7 @@ export const Header = () => {
                     <span className="truncate">
                       {(isViSite && viAccount
                         ? viAccount.role_name || ""
-                        : userRoleName || user?.lock_role?.name) ||
-                        "No Role"}
+                        : userRoleName || user?.lock_role?.name) || "No Role"}
                     </span>
                   </Badge>
                   {/* <Badge
@@ -1012,34 +1038,35 @@ export const Header = () => {
               </div>
 
               {/* View Switcher - Only shown for admin users (pms_organization_admin) */}
-              {(canSwitchToEmployee || tempSwitchToEmployee) && isLocalhost && (
-                <div className="px-3 py-3 bg-gray-50 border-b border-gray-200">
-                  <p className="text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">
-                    Switch View
-                  </p>
-                  <button
-                    onClick={() => {
-                      localStorage.setItem("userType", "pms_occupant");
-                      localStorage.setItem("selectedView", "employee");
-                      localStorage.setItem(
-                        "tempType",
-                        "pms_organization_admin"
-                      );
-                      window.location.href = "/vas/projects";
-                    }}
-                    className="fm-button-fix fm-button-brand w-full justify-between px-4 py-2 rounded-lg text-sm font-medium group shadow-sm"
-                  >
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4" />
-                      <span>Employee View</span>
-                    </div>
-                    <ChevronDown className="w-4 h-4 -rotate-90 group-hover:translate-x-0.5 transition-transform" />
-                  </button>
-                  <p className="text-xs text-gray-500 mt-2 px-1">
-                    Access simplified employee interface
-                  </p>
-                </div>
-              )}
+              {(canSwitchToEmployee || tempSwitchToEmployee || isDevBypass) &&
+                isLocalhost && (
+                  <div className="px-3 py-3 bg-gray-50 border-b border-gray-200">
+                    <p className="text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">
+                      Switch View
+                    </p>
+                    <button
+                      onClick={() => {
+                        localStorage.setItem("userType", "pms_occupant");
+                        localStorage.setItem("selectedView", "employee");
+                        localStorage.setItem(
+                          "tempType",
+                          "pms_organization_admin"
+                        );
+                        window.location.href = "/vas/projects";
+                      }}
+                      className="fm-button-fix fm-button-brand w-full justify-between px-4 py-2 rounded-lg text-sm font-medium group shadow-sm"
+                    >
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        <span>Employee View</span>
+                      </div>
+                      <ChevronDown className="w-4 h-4 -rotate-90 group-hover:translate-x-0.5 transition-transform" />
+                    </button>
+                    <p className="text-xs text-gray-500 mt-2 px-1">
+                      Access simplified employee interface
+                    </p>
+                  </div>
+                )}
 
               {/* Menu Items */}
               <div className="py-1">
@@ -1050,6 +1077,28 @@ export const Header = () => {
                   <User className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">My Profile</span>
                 </DropdownMenuItem>
+
+                {showExistingPostHogUsageAnalytics && (
+                  <DropdownMenuItem
+                    onClick={() =>
+                      (window.location.href = "/posthog-dashboard")
+                    }
+                    className="mx-2 my-1 rounded-md"
+                  >
+                    <Activity className="w-4 h-4 mr-2 text-gray-500" />
+                    <span className="font-medium">Usage Analytics</span>
+                  </DropdownMenuItem>
+                )}
+                {showPulseUsageAnalytics && (
+                  <DropdownMenuItem
+                    onClick={() => navigate("/pulse")}
+                    className="mx-2 my-1 rounded-md"
+                  >
+                    <Activity className="w-4 h-4 mr-2 text-gray-500" />
+                    <span className="font-medium">Usage Analytics</span>
+                  </DropdownMenuItem>
+                )}
+
                 <DropdownMenuItem
                   onClick={() => navigate("/settings")}
                   className="mx-2 my-1 rounded-md"
@@ -1064,7 +1113,8 @@ export const Header = () => {
               {/* Logout Button */}
               <div className="p-2">
                 <DropdownMenuItem
-                  onClick={() => {
+                  onClick={async () => {
+                    await logoutUser();
                     navigate("/login");
                     permissionService.clearUserData();
                     clearAuth();
