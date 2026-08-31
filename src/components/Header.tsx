@@ -101,7 +101,11 @@ export const Header = () => {
   const currentUser = JSON.parse(localStorage.getItem("user")).email
 
   const allowedUsersForDashboard = [
-    "deveshjain928@gmail.com"
+    "deveshjain928@gmail.com",
+    "madhur.khandelwal@vodafoneidea.com",
+    "rosemary.tj@vodafoneidea.com",
+    "deveshjain928@vodafoneidea.com",
+    "testlogin5@yopmail.com"
   ]
 
   // Redux state
