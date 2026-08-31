@@ -89,6 +89,11 @@ export const Header = () => {
 
   const location = useLocation();
   const currentPath = location.pathname;
+  const currentUser = JSON.parse(localStorage.getItem("user")).email
+
+  const allowedUsersForDashboard = [
+    "deveshjain928@gmail.com"
+  ]
 
   // Redux state
   const {
@@ -382,9 +387,19 @@ export const Header = () => {
 
   const tempSwitchToEmployee = tempType === "pms_organization_admin";
 
-  const canShowMsafeForSelectedCompany = localStorage.getItem("org_id") === "34";
-  const canShowMSafeDashboard =
-    !isRestrictedUser && canShowMsafeForSelectedCompany;
+  // On an actual local dev server (not the shared lockated.gophygital.work /
+  // fm-matrix.lockated.com hosts also covered by isLocalhost), let any
+  // logged-in account reach the Employee View switcher — otherwise it's only
+  // reachable by an account whose role happens to be pms_organization_admin,
+  // which blocks local testing of the employee layout entirely.
+  const isDevBypass = hostname.includes("localhost");
+
+  const canShowMsafeForSelectedCompany =
+    localStorage.getItem("org_id") === "34";
+  // const canShowMSafeDashboard =
+  //   !isRestrictedUser && canShowMsafeForSelectedCompany;
+
+  const canShowMSafeDashboard = canShowMsafeForSelectedCompany && allowedUsersForDashboard.includes(currentUser)
   const hasHeaderDashboardActions = !isRestrictedUser;
 
   const handleMSafeDashboard = () => {
@@ -411,7 +426,12 @@ export const Header = () => {
           >
             <Menu className="w-5 h-5 text-[#1a1a1a]" />
           </button>
-          <div className="flex h-full w-16 flex-shrink-0 items-center overflow-hidden sm:w-28 md:w-40 lg:w-44">
+          <div
+            className={`flex h-full flex-shrink-0 items-center overflow-hidden sm:w-28 md:w-40 lg:w-44 ${isMobileUiSite()
+              ? "w-[120px] max-md:max-w-[120px] max-md:[&>svg]:h-auto max-md:[&>svg]:w-full max-md:[&_img]:h-auto max-md:[&_img]:max-w-full"
+              : "w-16"
+              }`}
+          >
             {isOmanSite ? (
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -569,10 +589,9 @@ export const Header = () => {
                 </button>
               )}
 
-
               {canShowMSafeDashboard && (
                 <button
-                  onClick={handleMSafeDashboard}
+                  onClick={handleMSafeDashboardRevamp}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
                   <Home className="w-4 h-4" />
@@ -589,15 +608,6 @@ export const Header = () => {
                   Msafe Dashboard Revamp
                 </button>
               )} */}
-              {isLocalhost && (
-                <button
-                  onClick={() => (window.location.href = "/posthog-dashboard")}
-                  className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
-                >
-                  <Activity className="w-4 h-4" />
-                  Usage Analytics
-                </button>
-              )}
             </div>
           )}
 
