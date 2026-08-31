@@ -47,7 +47,7 @@ import {
   changeSite,
   clearSites,
 } from "@/store/slices/siteSlice";
-import { getUser, clearAuth, fetchLockAccount, logoutUser } from "@/utils/auth";
+import { getUser, clearAuth, fetchLockAccount } from "@/utils/auth";
 import { permissionService } from "@/services/permissionService";
 import { is } from "date-fns/locale";
 import { Dashboard } from "@mui/icons-material";
@@ -1114,7 +1114,7 @@ export const Header = () => {
               <div className="p-2">
                 <DropdownMenuItem
                   onClick={async () => {
-                    await logoutUser();
+                    // await logoutUser();
                     navigate("/login");
                     permissionService.clearUserData();
                     clearAuth();
