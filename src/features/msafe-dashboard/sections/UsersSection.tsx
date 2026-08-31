@@ -21,7 +21,7 @@ import type { Persona } from '../data/constants';
 import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import { getAuthHeader } from '@/config/apiConfig';
 
-type CircleChartRow = { name: string; Internal: number; External: number };
+type CircleChartRow = { name: string; Internal: number; External: number; Total: number };
 type FuncChartRow = { name: string; value: number; color: string };
 type RegChartRow = { m: string; n: number; internal: number; external: number };
 
@@ -102,10 +102,14 @@ const normalizeCircleChartData = (payload: unknown): CircleChartRow[] => {
         return null;
       }
 
+      const finalInternal = normalizedInternal ?? 0;
+      const finalExternal = normalizedExternal ?? 0;
+
       return {
         name,
-        Internal: normalizedInternal ?? 0,
-        External: normalizedExternal ?? 0,
+        Internal: finalInternal,
+        External: finalExternal,
+        Total: finalInternal + finalExternal,
       };
     })
     .filter((item): item is CircleChartRow => Boolean(item));
@@ -246,6 +250,21 @@ async function fetchMsafeUserDashboardJson(
 
 async function fetchUserStatistics(type: string, extraParams?: Record<string, string>): Promise<unknown> {
   return fetchMsafeUserDashboardJson('user_statistics.json', { type, ...extraParams });
+}
+
+/** Hides the first and last point's label — with only ~220px of chart width, the
+ *  first value collides with the Y-axis tick labels and the last collides with
+ *  the line's own endpoint / adjacent series label. */
+function renderAreaEndLabel(color: string, lastIndex: number) {
+  return (props: { x?: number; y?: number; value?: number; index?: number }) => {
+    const { x, y, value, index } = props;
+    if (index === 0 || index === lastIndex || x == null || y == null) return null;
+    return (
+      <text x={x} y={y} dy={-6} textAnchor="middle" fontSize={9} fontWeight={600} fill={color}>
+        {value}
+      </text>
+    );
+  };
 }
 
 function DataState({ loading, empty, label }: { loading: boolean; empty: boolean; label: string }) {
@@ -483,7 +502,7 @@ export function UsersSection() {
                       strokeWidth={2.5}
                       name="Internal Users"
                     >
-                      <LabelList dataKey="internal" position="top" style={{ fontSize: 9, fill: C.terra, fontWeight: 600 }} />
+                      <LabelList dataKey="internal" content={renderAreaEndLabel(C.terra, regChartData.length - 1)} />
                     </Area>
                     <Area
                       type="monotone"
@@ -493,11 +512,11 @@ export function UsersSection() {
                       strokeWidth={2.5}
                       name="External Users"
                     >
-                      <LabelList dataKey="external" position="top" style={{ fontSize: 9, fill: C.blue, fontWeight: 600 }} />
+                      <LabelList dataKey="external" content={renderAreaEndLabel(C.blue, regChartData.length - 1)} />
                     </Area>
                   </AreaChart>
                 ) : (
-                  <BarChart data={regChartData}>
+                  <BarChart data={regChartData} margin={{ top: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
                     <XAxis
                       dataKey="m"
@@ -546,7 +565,7 @@ export function UsersSection() {
           <div style={{ overflowX: 'auto' }}>
             <div style={{ minWidth: Math.max(700, circleChartData.length * 55) }}>
               <ResponsiveContainer width="100%" height={360}>
-                <BarChart data={circleChartData} margin={{ top: 4, right: 8, left: 0, bottom: 70 }}>
+                <BarChart data={circleChartData} margin={{ top: 24, right: 8, left: 0, bottom: 70 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
                   <XAxis
                     dataKey="name"
@@ -559,11 +578,9 @@ export function UsersSection() {
                   <YAxis tick={{ fontSize: 10, fill: C.sage }} />
                   <Tooltip />
                   <Legend wrapperStyle={{ fontSize: 10.5 }} iconType="square" iconSize={10} />
-                  <Bar dataKey="Internal" stackId="a" fill={C.blue} radius={[0, 0, 0, 0]}>
-                    <LabelList dataKey="Internal" position="top" style={{ fontSize: 8, fill: '#fff', fontWeight: 600 }} />
-                  </Bar>
+                  <Bar dataKey="Internal" stackId="a" fill={C.blue} radius={[0, 0, 0, 0]} />
                   <Bar dataKey="External" stackId="a" fill={C.terra} radius={[5, 5, 0, 0]}>
-                    <LabelList dataKey="External" position="top" style={{ fontSize: 8, fill: '#fff', fontWeight: 600 }} />
+                    <LabelList dataKey="Total" position="top" style={{ fontSize: 9, fill: C.dark, fontWeight: 600 }} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>

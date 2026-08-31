@@ -47,7 +47,7 @@ import {
   changeSite,
   clearSites,
 } from "@/store/slices/siteSlice";
-import { getUser, clearAuth, fetchLockAccount } from "@/utils/auth";
+import { getUser, clearAuth, fetchLockAccount, logoutUser } from "@/utils/auth";
 import { permissionService } from "@/services/permissionService";
 import { is } from "date-fns/locale";
 import { Dashboard } from "@mui/icons-material";
@@ -98,6 +98,11 @@ export const Header = () => {
 
   const location = useLocation();
   const currentPath = location.pathname;
+  const currentUser = JSON.parse(localStorage.getItem("user")).email
+
+  const allowedUsersForDashboard = [
+    "deveshjain928@gmail.com"
+  ]
 
   // Redux state
   const {
@@ -135,6 +140,13 @@ export const Header = () => {
     hostname.includes("lockated.gophygital.work") ||
     hostname.includes("fm-matrix.lockated.com");
 
+  const isPulseSiteDomain = hostname === "pulse.lockated.com";
+  const isPanchshilUatSiteDomain =
+    hostname === "pulse-uat.panchshil.com" || hostname === "localhost";
+  const showPulseUsageAnalytics = isPulseSiteDomain || isPanchshilUatSiteDomain;
+
+  const showExistingPostHogUsageAnalytics =
+    isLocalhost || isPulseSiteDomain || hostname === "pulse-uat.panchshil.com";
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -177,9 +189,7 @@ export const Header = () => {
   // Club/localhost must NOT hide Dashboard / Executive / MSafe header links
   // (localhost is treated as club for logo only via isClubSite).
   const isRestrictedUser =
-    user?.email === "karan.balsara@zycus.com" ||
-    org_id === "90" ||
-    isPulseSite;
+    user?.email === "karan.balsara@zycus.com" || org_id === "90" || isPulseSite;
 
   const assetSuggestions = [
     "sdcdsc",
@@ -339,8 +349,7 @@ export const Header = () => {
   // Handle site change
   const handleSiteChange = async (siteId: number | "all") => {
     try {
-      const payload =
-        siteId === "all" ? sites.map((site) => site.id) : siteId;
+      const payload = siteId === "all" ? sites.map((site) => site.id) : siteId;
       await dispatch(changeSite(payload)).unwrap();
       if (siteId === "all") {
         localStorage.setItem("isAllSitesSelected", "true");
@@ -398,9 +407,12 @@ export const Header = () => {
   // which blocks local testing of the employee layout entirely.
   const isDevBypass = hostname.includes("localhost");
 
-  const canShowMsafeForSelectedCompany = localStorage.getItem("org_id") === "34";
-  const canShowMSafeDashboard =
-    !isRestrictedUser && canShowMsafeForSelectedCompany;
+  const canShowMsafeForSelectedCompany =
+    localStorage.getItem("org_id") === "34";
+  // const canShowMSafeDashboard =
+  //   !isRestrictedUser && canShowMsafeForSelectedCompany;
+
+  const canShowMSafeDashboard = canShowMsafeForSelectedCompany && allowedUsersForDashboard.includes(currentUser)
   const hasHeaderDashboardActions = !isRestrictedUser;
 
   const handleMSafeDashboard = () => {
@@ -604,18 +616,17 @@ export const Header = () => {
                 </button>
               )}
 
-
-              {/* {canShowViMSafeDashboard && (
+              {canShowMSafeDashboard && (
                 <button
-                  onClick={handleMSafeDashboard}
+                  onClick={handleMSafeDashboardRevamp}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
                   <Home className="w-4 h-4" />
                   MSafe Dashboard
 
                 </button>
-              )} */}
-              {canShowMSafeDashboard && (
+              )}
+              {/* {canShowMSafeDashboard && (
                 <button
                   onClick={handleMSafeDashboardRevamp}
                   className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
@@ -623,7 +634,7 @@ export const Header = () => {
                   <Shield className="w-4 h-4" />
                   Msafe Dashboard Revamp
                 </button>
-              )}
+              )} */}
             </div>
           )}
 
@@ -1009,8 +1020,7 @@ export const Header = () => {
                     <span className="truncate">
                       {(isViSite && viAccount
                         ? viAccount.role_name || ""
-                        : userRoleName || user?.lock_role?.name) ||
-                        "No Role"}
+                        : userRoleName || user?.lock_role?.name) || "No Role"}
                     </span>
                   </Badge>
                   {/* <Badge
@@ -1063,15 +1073,28 @@ export const Header = () => {
                   <User className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">My Profile</span>
                 </DropdownMenuItem>
-                {isLocalhost && (
+
+                {showExistingPostHogUsageAnalytics && (
                   <DropdownMenuItem
-                    onClick={() => (window.location.href = "/posthog-dashboard")}
+                    onClick={() =>
+                      (window.location.href = "/posthog-dashboard")
+                    }
                     className="mx-2 my-1 rounded-md"
                   >
                     <Activity className="w-4 h-4 mr-2 text-gray-500" />
                     <span className="font-medium">Usage Analytics</span>
                   </DropdownMenuItem>
                 )}
+                {showPulseUsageAnalytics && (
+                  <DropdownMenuItem
+                    onClick={() => navigate("/pulse")}
+                    className="mx-2 my-1 rounded-md"
+                  >
+                    <Activity className="w-4 h-4 mr-2 text-gray-500" />
+                    <span className="font-medium">Usage Analytics</span>
+                  </DropdownMenuItem>
+                )}
+
                 <DropdownMenuItem
                   onClick={() => navigate("/settings")}
                   className="mx-2 my-1 rounded-md"
@@ -1086,7 +1109,8 @@ export const Header = () => {
               {/* Logout Button */}
               <div className="p-2">
                 <DropdownMenuItem
-                  onClick={() => {
+                  onClick={async () => {
+                    await logoutUser();
                     navigate("/login");
                     permissionService.clearUserData();
                     clearAuth();

@@ -47,7 +47,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import { getUser, clearAuth } from "@/utils/auth";
+import { getUser, clearAuth, logoutUser } from "@/utils/auth";
 import { useLayout } from "@/contexts/LayoutContext";
 import { usePermissions } from "@/contexts/PermissionsContext";
 import { useNotification } from "@/contexts/NotificationContext";
@@ -326,7 +326,8 @@ export const EmployeeHeader: React.FC = () => {
     role_name?: string;
   } | null>(null);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await logoutUser();
     clearAuth();
     navigate("/login");
   };
