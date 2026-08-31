@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut, User, Menu, X } from "lucide-react";
-import { clearAuth } from "@/utils/auth";
+import { clearAuth, logoutUser } from "@/utils/auth";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -22,7 +22,8 @@ export const PWAHeader = () => {
   const userLastName = localStorage.getItem("lastname") || "";
   const userEmail = localStorage.getItem("email") || "";
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await logoutUser();
     clearAuth();
     toast.success("Logged out successfully");
     navigate("/login-page?fm_admin_login", { replace: true });

@@ -3,14 +3,15 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { Bell, User, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { getUser, clearAuth } from "../utils/auth";
+import { getUser, clearAuth, logoutUser } from "../utils/auth";
 
 export const EmployeeDynamicHeader: React.FC = () => {
   const navigate = useNavigate();
   const { selectedCompany } = useSelector((state: RootState) => state.project);
   const user = getUser();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await logoutUser();
     clearAuth();
     navigate("/login");
   };
