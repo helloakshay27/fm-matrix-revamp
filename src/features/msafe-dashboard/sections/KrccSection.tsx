@@ -8,6 +8,7 @@ import {
   CartesianGrid,
   Tooltip,
   Cell,
+  LabelList,
 } from 'recharts';
 import type { TooltipProps } from 'recharts';
 import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
@@ -158,7 +159,7 @@ const AGING_FLAT_FIELDS: [string, string][] = [
   ['days_0_3', '0 – 3 days'],
   ['days_4_7', '4 – 7 days'],
   ['days_8_14', '8 – 14 days'],
-  ['days_15_plus', '15+ days · High Priority'],
+  ['days_15_plus', '15+ days'],
 ];
 
 const AGING_BUCKET_LABELS: Record<string, string> = {
@@ -167,13 +168,21 @@ const AGING_BUCKET_LABELS: Record<string, string> = {
   '8-14': '8 – 14 days',
 };
 
+// Youngest-to-oldest display order, regardless of the order the API happens
+// to return buckets/records in.
+const AGING_LABEL_ORDER = AGING_FLAT_FIELDS.map(([, label]) => label);
+function agingSortRank(label: string): number {
+  const idx = AGING_LABEL_ORDER.indexOf(label);
+  return idx === -1 ? AGING_LABEL_ORDER.length : idx;
+}
+
 /** Turns a raw bucket key like "0-3" or "15+" into the same label style as
  *  AGING_FLAT_FIELDS, for buckets not already covered by that fixed list. */
 function humanizeAgingBucket(bucket: string): string {
   if (AGING_BUCKET_LABELS[bucket]) return AGING_BUCKET_LABELS[bucket];
   const [lo, hi] = bucket.split('-');
   if (/\+/.test(bucket) || (lo && !hi && Number(lo) >= 15)) {
-    return `${bucket.replace(/\+$/, '')}+ days · High Priority`;
+    return `${bucket.replace(/\+$/, '')}+ days`;
   }
   return hi ? `${lo} – ${hi} days` : `${bucket} days`;
 }
@@ -197,24 +206,24 @@ function normalizeAging(payload: unknown): AgingRow[] {
     flatRows.length > 0
       ? []
       : unwrapList(payload, ['data', 'result', 'buckets', 'aging', 'ranges'])
-          .map((item) => {
-            if (!item || typeof item !== 'object') return null;
-            const record = item as Record<string, unknown>;
-            // Raw bucket keys ("15+", "0-3") need humanizing into a display label;
-            // an already human-formatted label/name (older shape) is used as-is.
-            const rawBucket = getString(record, ['ageing_bucket', 'aging_bucket', 'bucket', 'range', 'age_range']);
-            const plainLabel = getString(record, ['label', 'name']);
-            const label = rawBucket ? humanizeAgingBucket(rawBucket) : plainLabel;
-            if (!label) return null;
-            const count = getNumber(record, ['pending_krcc_count', 'count', 'value', 'total', 'users_count']);
-            if (count === null) return null;
-            const explicitPct = getNumber(record, ['pct', 'percentage', 'percent']);
-            return { label, count, explicitPct, color: colorForAgingLabel(label) };
-          })
-          .filter(
-            (item): item is { label: string; count: number; explicitPct: number | null; color: string } =>
-              Boolean(item),
-          );
+        .map((item) => {
+          if (!item || typeof item !== 'object') return null;
+          const record = item as Record<string, unknown>;
+          // Raw bucket keys ("15+", "0-3") need humanizing into a display label;
+          // an already human-formatted label/name (older shape) is used as-is.
+          const rawBucket = getString(record, ['ageing_bucket', 'aging_bucket', 'bucket', 'range', 'age_range']);
+          const plainLabel = getString(record, ['label', 'name']);
+          const label = rawBucket ? humanizeAgingBucket(rawBucket) : plainLabel;
+          if (!label) return null;
+          const count = getNumber(record, ['pending_krcc_count', 'count', 'value', 'total', 'users_count']);
+          if (count === null) return null;
+          const explicitPct = getNumber(record, ['pct', 'percentage', 'percent']);
+          return { label, count, explicitPct, color: colorForAgingLabel(label) };
+        })
+        .filter(
+          (item): item is { label: string; count: number; explicitPct: number | null; color: string } =>
+            Boolean(item),
+        );
 
   // The response can also be one row per pending KRCC record — { krcc_id, aging_bucket, ... } —
   // rather than pre-aggregated counts, so tally how many records fall into each aging_bucket.
@@ -236,7 +245,9 @@ function normalizeAging(payload: unknown): AgingRow[] {
     });
   }
 
-  const rows = flatRows.length > 0 ? flatRows : bucketRows.length > 0 ? bucketRows : recordRows;
+  const rows = (flatRows.length > 0 ? flatRows : bucketRows.length > 0 ? bucketRows : recordRows)
+    .slice()
+    .sort((a, b) => agingSortRank(a.label) - agingSortRank(b.label));
 
   const maxCount = Math.max(1, ...rows.map((r) => r.count));
   return rows.map((r) => ({
@@ -291,6 +302,7 @@ function normalizeTurnaround(payload: unknown): CircleDays[] {
     .filter((item): item is CircleDays => Boolean(item));
 }
 
+// RAG thresholds standardized across the dashboard: Green >=98%, Amber 95-98%, Red <95%.
 function colorForClearancePct(pct: number): string {
   if (pct >= 98) return C.ok;
   if (pct >= 95) return C.warn;
@@ -629,6 +641,12 @@ export function KrccSection() {
                     {circlePctData.map((d) => (
                       <Cell key={d.name} fill={d.color} />
                     ))}
+                    <LabelList
+                      dataKey="pct"
+                      position="top"
+                      style={{ fontSize: 10, fill: C.dark, fontWeight: 600 }}
+                      formatter={(v: number) => `${v}%`}
+                    />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -700,6 +718,11 @@ export function KrccSection() {
                   {turnaroundData.map((d) => (
                     <Cell key={d.name} fill={d.color} />
                   ))}
+                  <LabelList
+                    dataKey="days"
+                    position="right"
+                    style={{ fontSize: 10, fill: C.dark, fontWeight: 600 }}
+                  />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>

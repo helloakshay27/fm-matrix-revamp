@@ -8,6 +8,7 @@ import {
   CartesianGrid,
   Tooltip,
   Cell,
+  LabelList,
 } from 'recharts';
 import type { TooltipProps } from 'recharts';
 import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
@@ -111,7 +112,9 @@ function getGroupRate(record: Record<string, unknown>, key: string): string | nu
 
 type TrainPFSlice = TrainSlice & { rate: string | null };
 
-function normalizeTrainPassFail(payload: unknown): { slices: TrainPFSlice[]; passRate: string | null } {
+function normalizeTrainPassFail(
+  payload: unknown,
+): { slices: TrainPFSlice[]; passRate: string | null; total: number | null } {
   const record = unwrapRecord(payload, ['overall', 'data', 'result']);
 
   const pass = getGroupCount(record, 'pass', ['passed', 'total_pass', 'pass_count']);
@@ -132,7 +135,11 @@ function normalizeTrainPassFail(payload: unknown): { slices: TrainPFSlice[]; pas
       ? `${((pass / (pass + fail)) * 100).toFixed(1)}%`
       : null);
 
-  return { slices, passRate };
+  const total =
+    getNumberOrPercent(record, ['total', 'total_count', 'total_users']) ??
+    (pass !== null || fail !== null || pending !== null ? (pass ?? 0) + (fail ?? 0) + (pending ?? 0) : null);
+
+  return { slices, passRate, total };
 }
 
 type PassFailGroup = { group: string; rows: { label: string; pct: number; val: string; color: string }[] };
@@ -224,7 +231,11 @@ function unwrapTrainingList(payload: unknown, extraKeys: string[]): unknown[] {
 // completion percentage per category — no fail/pending breakdown — so this
 // carries just those two, rather than forcing them into the fuller pass/fail/
 // pending shape used by Function-wise/Circle-wise Training Status.
-type CategoryTrainingSlice = TrainSlice & { completed: number; completionPercentage: number | null };
+type CategoryTrainingSlice = TrainSlice & {
+  completed: number;
+  completionPercentage: number | null;
+  total: number | null;
+};
 
 const normalizeTrainingCounts = (payload: unknown): CategoryTrainingSlice[] => {
   const list = unwrapTrainingList(payload, ['categories', 'training_categories', 'records']);
@@ -247,6 +258,7 @@ const normalizeTrainingCounts = (payload: unknown): CategoryTrainingSlice[] => {
       const completed = getNum(record, ['completed_training_count', 'completed', 'passed', 'count', 'value']);
       if (completed === null) return null;
       const completionPercentage = getNum(record, ['completion_percentage', 'percentage', 'pct']);
+      const total = getNum(record, ['krcc_user_count', 'total_users_count', 'total_count', 'total']);
 
       return {
         name,
@@ -254,6 +266,7 @@ const normalizeTrainingCounts = (payload: unknown): CategoryTrainingSlice[] => {
         color: TRAIN_CHART_PALETTE[index % TRAIN_CHART_PALETTE.length],
         completed,
         completionPercentage,
+        total,
       };
     })
     .filter((item): item is CategoryTrainingSlice => Boolean(item));
@@ -483,6 +496,7 @@ export function TrainingSection() {
   const [catMode, setCatMode] = useState('donut');
   const [pfData, setPfData] = useState<TrainPFSlice[]>([]);
   const [pfRate, setPfRate] = useState<string | null>(null);
+  const [pfTotal, setPfTotal] = useState<number | null>(null);
   const [pfLoading, setPfLoading] = useState(true);
   const [intExtData, setIntExtData] = useState<PassFailGroup[]>([]);
   const [intExtLoading, setIntExtLoading] = useState(true);
@@ -511,10 +525,11 @@ export function TrainingSection() {
           type: 'pass_vs_fail',
           ...buildFilterParams(persona, appliedFilters),
         });
-        const { slices, passRate } = normalizeTrainPassFail(payload);
+        const { slices, passRate, total } = normalizeTrainPassFail(payload);
         if (isMounted) {
           setPfData(slices);
           setPfRate(passRate);
+          setPfTotal(total);
         }
       } catch (error) {
         console.warn('M-Safe training-pass-fail-stats API failed.', error);
@@ -707,11 +722,15 @@ export function TrainingSection() {
       <div className="msafe-chart-tip">
         <div className="msafe-chart-tip-title">{slice.name}</div>
         <div className="msafe-chart-tip-row">
-          <span className="msafe-chart-tip-sw" style={{ background: C.ok }} />
+          <span>Completed: {slice.completed.toLocaleString('en-IN')}</span>
+        </div>
+        <div className="msafe-chart-tip-row">
           <span>
-            Completed : {slice.completed.toLocaleString('en-IN')}
-            {slice.completionPercentage !== null ? ` (${slice.completionPercentage}%)` : ''}
+            Completion Percentage: {slice.completionPercentage !== null ? slice.completionPercentage.toFixed(2) : '—'}%
           </span>
+        </div>
+        <div className="msafe-chart-tip-row">
+          <span>Total: {slice.total !== null ? slice.total.toLocaleString('en-IN') : '—'}</span>
         </div>
       </div>
     );
@@ -757,11 +776,13 @@ export function TrainingSection() {
       <div className="msafe-chart-tip">
         <div className="msafe-chart-tip-title">{slice.name}</div>
         <div className="msafe-chart-tip-row">
-          <span className="msafe-chart-tip-sw" style={{ background: slice.color }} />
-          <span>
-            {slice.value.toLocaleString('en-IN')}
-            {slice.rate ? ` (${slice.rate})` : ''}
-          </span>
+          <span>Count: {slice.value.toLocaleString('en-IN')}</span>
+        </div>
+        <div className="msafe-chart-tip-row">
+          <span>Rate: {slice.rate ?? '—'}</span>
+        </div>
+        <div className="msafe-chart-tip-row">
+          <span>Total: {pfTotal !== null ? pfTotal.toLocaleString('en-IN') : '—'}</span>
         </div>
       </div>
     );
@@ -853,6 +874,7 @@ export function TrainingSection() {
                       {trainCategoryData.map((d) => (
                         <Cell key={d.name} fill={d.color} />
                       ))}
+                      <LabelList dataKey="completed" position="top" style={{ fontSize: 10, fill: C.dark, fontWeight: 600 }} />
                     </Bar>
                     </BarChart>
                   </ResponsiveContainer>
@@ -938,6 +960,7 @@ export function TrainingSection() {
                       {funcTrainingData.map((d) => (
                         <Cell key={d.name} fill={d.color} />
                       ))}
+                      <LabelList dataKey="completed" position="top" style={{ fontSize: 10, fill: C.dark, fontWeight: 600 }} />
                     </Bar>
                     </BarChart>
                   </ResponsiveContainer>
@@ -1013,6 +1036,7 @@ export function TrainingSection() {
                     {circleTrainingData.map((d) => (
                       <Cell key={d.name} fill={d.color} />
                     ))}
+                    <LabelList dataKey="completed" position="top" style={{ fontSize: 10, fill: C.dark, fontWeight: 600 }} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>

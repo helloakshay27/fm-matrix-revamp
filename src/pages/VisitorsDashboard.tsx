@@ -69,6 +69,8 @@ const getUnexpectedVisitors = async (siteId: number, page: number = 1, perPage: 
     if (filters?.purpose) urlWithParams.searchParams.append('q[visit_purpose_cont]', filters.purpose);
     if (filters?.visitorType) urlWithParams.searchParams.append('visitor_type', filters.visitorType);
     if (filters?.status) urlWithParams.searchParams.append('status', filters.status);
+    if (filters?.startDate) urlWithParams.searchParams.append('q[created_at_gteq]', filters.startDate);
+    if (filters?.endDate) urlWithParams.searchParams.append('q[created_at_lteq]', filters.endDate);
 
     if (searchTerm?.trim()) {
       urlWithParams.searchParams.append('q[guest_name_or_guest_number_or_guest_from_or_guest_type_or_person_to_meet_firstname_or_person_to_meet_lastname_or_visit_purpose_or_guest_type_cont]', searchTerm.trim());
@@ -98,6 +100,8 @@ const getVisitorHistory = async (siteId: number, page: number = 1, perPage: numb
     if (filters?.purpose) urlWithParams.searchParams.append('q[visit_purpose_cont]', filters.purpose);
     if (filters?.visitorType) urlWithParams.searchParams.append('visitor_type', filters.visitorType);
     if (filters?.status) urlWithParams.searchParams.append('status', filters.status);
+    if (filters?.startDate) urlWithParams.searchParams.append('q[created_at_gteq]', filters.startDate);
+    if (filters?.endDate) urlWithParams.searchParams.append('q[created_at_lteq]', filters.endDate);
 
     if (searchTerm?.trim()) {
       urlWithParams.searchParams.append('q[guest_name_or_guest_number_or_guest_from_or_guest_type_or_person_to_meet_firstname_or_person_to_meet_lastname_or_visit_purpose_or_guest_type_cont]', searchTerm.trim());
@@ -127,6 +131,8 @@ const getExpectedVisitors = async (siteId: number, page: number = 1, perPage: nu
     if (filters?.purpose) urlWithParams.searchParams.append('q[visit_purpose_cont]', filters.purpose);
     if (filters?.visitorType) urlWithParams.searchParams.append('visitor_type', filters.visitorType);
     if (filters?.status) urlWithParams.searchParams.append('status', filters.status);
+    if (filters?.startDate) urlWithParams.searchParams.append('q[created_at_gteq]', filters.startDate);
+    if (filters?.endDate) urlWithParams.searchParams.append('q[created_at_lteq]', filters.endDate);
 
     if (searchTerm?.trim()) {
       urlWithParams.searchParams.append('q[guest_name_or_guest_number_or_guest_from_or_guest_type_or_person_to_meet_firstname_or_person_to_meet_lastname_or_visit_purpose_or_guest_type_cont]', searchTerm.trim());

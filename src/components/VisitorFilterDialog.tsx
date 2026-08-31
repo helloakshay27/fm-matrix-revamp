@@ -28,6 +28,8 @@ export interface VisitorFilters {
     purpose?: string;       // q[visit_purpose_cont]
     visitorType?: string;   // visitor_type: 'Expected' | 'Unexpected'
     status?: string;        // status
+    startDate?: string;     // q[created_at_gteq] — YYYY-MM-DD
+    endDate?: string;       // q[created_at_lteq] — YYYY-MM-DD
 }
 
 export const VisitorFilterDialog: React.FC<VisitorFilterDialogProps> = ({
@@ -180,6 +182,30 @@ export const VisitorFilterDialog: React.FC<VisitorFilterDialogProps> = ({
                                 <SelectItem value="Unexpected">Unexpected</SelectItem>
                             </SelectContent>
                         </Select>
+                    </div>
+
+                    {/* Date Range */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="startDate">From Date</Label>
+                            <Input
+                                id="startDate"
+                                type="date"
+                                value={filters.startDate || ''}
+                                max={filters.endDate || undefined}
+                                onChange={(e) => handleFilterChange('startDate', e.target.value || undefined)}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="endDate">To Date</Label>
+                            <Input
+                                id="endDate"
+                                type="date"
+                                value={filters.endDate || ''}
+                                min={filters.startDate || undefined}
+                                onChange={(e) => handleFilterChange('endDate', e.target.value || undefined)}
+                            />
+                        </div>
                     </div>
 
                     {/* Status */}

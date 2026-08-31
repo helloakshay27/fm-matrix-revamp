@@ -5338,6 +5338,8 @@ export const TicketDetailsPage = () => {
                           ],
                           [
                             { label: 'Customer Name', value: ticketData.entity_name || '-' },
+                            { label: 'Customer Email', value: ticketData.entity_email || '-' },
+                            { label: 'Customer Mobile', value: ticketData.entity_mobile_number || '-' },
                           ],
                         ].map((row, rIdx) => (
                           <div
@@ -8823,6 +8825,8 @@ export const TicketDetailsPage = () => {
                       ],
                       [
                         { label: 'Customer Name', value: ticketData.entity_name || '-' },
+                        { label: 'Customer Email', value: ticketData.entity_email || '-' },
+                        { label: 'Customer Mobile', value: ticketData.entity_mobile_number || '-' },
                       ],
                     ].map((row, rIdx) => (
                       <div
