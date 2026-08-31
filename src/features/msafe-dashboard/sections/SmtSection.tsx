@@ -714,7 +714,7 @@ export function SmtSection() {
               <div style={{ overflowX: 'auto' }}>
                 <div style={{ minWidth: Math.max(700, roleChartRows.length * 90) }}>
                   <ResponsiveContainer width="100%" height={380}>
-                    <BarChart data={roleChartRows} margin={{ top: 4, right: 16, left: 0, bottom: 110 }}>
+                    <BarChart data={roleChartRows} margin={{ top: 20, right: 16, left: 0, bottom: 110 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
                       <XAxis
                         type="category"

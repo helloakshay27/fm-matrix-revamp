@@ -625,7 +625,7 @@ export function KrccSection() {
           <div style={{ overflowX: 'auto' }}>
             <div style={{ minWidth: Math.max(700, circlePctData.length * 55) }}>
               <ResponsiveContainer width="100%" height={360}>
-                <BarChart data={circlePctData} margin={{ top: 4, right: 16, left: 0, bottom: 70 }}>
+                <BarChart data={circlePctData} margin={{ top: 20, right: 16, left: 0, bottom: 70 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
                   <XAxis
                     dataKey="name"

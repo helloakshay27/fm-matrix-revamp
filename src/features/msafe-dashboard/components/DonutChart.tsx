@@ -313,7 +313,7 @@ export function SliceBarChart({
   return (
     <div className="chart-wrap" style={{ height }}>
       <ResponsiveContainer width="100%" height={height}>
-        <BarChart data={data} margin={{ left: 0, right: 8 }}>
+        <BarChart data={data} margin={{ top: 20, left: 0, right: 8 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
           <XAxis dataKey="name" tick={{ fontSize: 10, fill: C.sage }} />
           <YAxis tick={{ fontSize: 10, fill: C.sage }} />

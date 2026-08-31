@@ -34,6 +34,21 @@ function getMsafeBaseUrl(): string {
   return host ? `https://${host}` : 'https://live-api.gophygital.work';
 }
 
+/** Hides the first and last point's label — with only ~180px of widget width, the
+ *  first value collides with the Y-axis tick labels and the last gets clipped by
+ *  the chart's right edge. Matches UsersSection/LmcSection's renderAreaEndLabel. */
+function renderAreaEndLabel(color: string, lastIndex: number) {
+  return (props: { x?: number; y?: number; value?: number; index?: number }) => {
+    const { x, y, value, index } = props;
+    if (index === 0 || index === lastIndex || x == null || y == null) return null;
+    return (
+      <text x={x} y={y} dy={-6} textAnchor="middle" fontSize={8} fontWeight={600} fill={color}>
+        {value}
+      </text>
+    );
+  };
+}
+
 /** Circle Manager filter bar values, applied as query params once the user clicks Apply.
  *  Pan India now uses the exact same filter bar as Circle Manager, so every field applies
  *  the same way regardless of persona. Matches UsersSection/KrccSection/LmcSection/
@@ -714,13 +729,13 @@ function ChartById({ id, data }: { id: string; data: ChartData }) {
       <DataState loading={data.userRegLoading} empty={data.userReg.length === 0} label="registration data" />
     ) : (
       <ResponsiveContainer width="100%" height={180}>
-        <LineChart data={data.userReg}>
+        <LineChart data={data.userReg} margin={{ top: 20 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
           <XAxis dataKey="m" tick={{ fontSize: 9 }} />
           <YAxis tick={{ fontSize: 9 }} />
           <Tooltip />
           <Line type="monotone" dataKey="n" stroke={C.terra} strokeWidth={2} dot={false}>
-            <LabelList dataKey="n" position="top" style={{ fontSize: 8, fill: C.terra, fontWeight: 600 }} />
+            <LabelList dataKey="n" content={renderAreaEndLabel(C.terra, data.userReg.length - 1)} />
           </Line>
         </LineChart>
       </ResponsiveContainer>
@@ -746,13 +761,13 @@ function ChartById({ id, data }: { id: string; data: ChartData }) {
       <DataState loading={data.lmcTrend12moLoading} empty={data.lmcTrend12mo.length === 0} label="trend data" />
     ) : (
       <ResponsiveContainer width="100%" height={180}>
-        <LineChart data={data.lmcTrend12mo}>
+        <LineChart data={data.lmcTrend12mo} margin={{ top: 20 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
           <XAxis dataKey="m" tick={{ fontSize: 9 }} />
           <YAxis tick={{ fontSize: 9 }} />
           <Tooltip />
           <Line type="monotone" dataKey="n" stroke={C.sage} strokeWidth={2} dot={false}>
-            <LabelList dataKey="n" position="top" style={{ fontSize: 8, fill: C.sage, fontWeight: 600 }} />
+            <LabelList dataKey="n" content={renderAreaEndLabel(C.sage, data.lmcTrend12mo.length - 1)} />
           </Line>
         </LineChart>
       </ResponsiveContainer>
@@ -783,7 +798,7 @@ function ChartById({ id, data }: { id: string; data: ChartData }) {
       <DataState loading={data.krccCircleLoading} empty={data.krccCircle.length === 0} label="circle data" />
     ) : (
       <ResponsiveContainer width="100%" height={180}>
-        <BarChart data={data.krccCircle}>
+        <BarChart data={data.krccCircle} margin={{ top: 20 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
           <XAxis dataKey="name" tick={{ fontSize: 9 }} />
           <YAxis tick={{ fontSize: 9 }} domain={[0, 100]} />
@@ -803,7 +818,7 @@ function ChartById({ id, data }: { id: string; data: ChartData }) {
       <DataState loading={data.smtCircleLoading} empty={data.smtCircle.length === 0} label="circle visit data" />
     ) : (
       <ResponsiveContainer width="100%" height={180}>
-        <BarChart data={data.smtCircle}>
+        <BarChart data={data.smtCircle} margin={{ top: 20 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
           <XAxis dataKey="name" tick={{ fontSize: 8 }} interval={0} angle={-25} textAnchor="end" height={50} />
           <YAxis tick={{ fontSize: 9 }} />

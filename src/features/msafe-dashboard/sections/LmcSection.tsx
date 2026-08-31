@@ -30,6 +30,21 @@ type TrendRow = { m: string; n: number };
 
 const SLICE_PALETTE = [C.terra, C.sage, C.blue, C.teal, C.warn, C.err, C.lav, C.ok, '#B4A38A'];
 
+/** Hides the first and last point's label — with only ~220px of chart width, the
+ *  first value collides with the Y-axis tick labels and the last gets clipped by
+ *  the chart's right edge. */
+function renderAreaEndLabel(color: string, lastIndex: number) {
+  return (props: { x?: number; y?: number; value?: number; index?: number }) => {
+    const { x, y, value, index } = props;
+    if (index === 0 || index === lastIndex || x == null || y == null) return null;
+    return (
+      <text x={x} y={y} dy={-6} textAnchor="middle" fontSize={12} fontWeight={600} fill={color}>
+        {value}
+      </text>
+    );
+  };
+}
+
 function getMsafeBaseUrl(): string {
   const fromLS = localStorage.getItem('baseUrl') || '';
   const host = fromLS.replace(/^https?:\/\//, '').replace(/\/$/, '');
@@ -800,7 +815,7 @@ export function LmcSection() {
           <div className="chart-wrap">
             <ResponsiveContainer width="100%" height={220}>
               {trendMode === 'line' ? (
-                <AreaChart data={trendData}>
+                <AreaChart data={trendData} margin={{ top: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
                   <XAxis dataKey="m" tick={{ fontSize: 10, fill: C.sage }} tickFormatter={formatMonthLabel} />
                   <YAxis tick={{ fontSize: 10, fill: C.sage }} />
@@ -813,15 +828,11 @@ export function LmcSection() {
                     strokeWidth={2.5}
                     name="LMC Sign-offs"
                   >
-                    <LabelList
-                      dataKey="n"
-                      position="top"
-                      style={{ fontSize: 9, fill: C.sage, fontWeight: 600 }}
-                    />
+                    <LabelList dataKey="n" content={renderAreaEndLabel(C.sage, trendData.length - 1)} />
                   </Area>
                 </AreaChart>
               ) : (
-                <BarChart data={trendData}>
+                <BarChart data={trendData} margin={{ top: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
                   <XAxis dataKey="m" tick={{ fontSize: 10, fill: C.sage }} tickFormatter={formatMonthLabel} />
                   <YAxis tick={{ fontSize: 10, fill: C.sage }} />

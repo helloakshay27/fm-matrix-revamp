@@ -854,7 +854,7 @@ export function TrainingSection() {
               <div style={{ overflowX: 'auto' }}>
                 <div style={{ minWidth: Math.max(700, trainCategoryData.length * 90) }}>
                   <ResponsiveContainer width="100%" height={360}>
-                    <BarChart data={trainCategoryData} margin={{ top: 4, right: 16, left: 0, bottom: 70 }}>
+                    <BarChart data={trainCategoryData} margin={{ top: 20, right: 16, left: 0, bottom: 70 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
                     <YAxis
                       type="number"
@@ -940,7 +940,7 @@ export function TrainingSection() {
               <div style={{ overflowX: 'auto' }}>
                 <div style={{ minWidth: Math.max(700, funcTrainingData.length * 90) }}>
                   <ResponsiveContainer width="100%" height={360}>
-                    <BarChart data={funcTrainingData} margin={{ top: 4, right: 16, left: 0, bottom: 70 }}>
+                    <BarChart data={funcTrainingData} margin={{ top: 20, right: 16, left: 0, bottom: 70 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
                     <YAxis
                       type="number"
@@ -1020,7 +1020,7 @@ export function TrainingSection() {
           <div style={{ overflowX: 'auto' }}>
             <div style={{ minWidth: Math.max(700, circleTrainingData.length * 55) }}>
               <ResponsiveContainer width="100%" height={360}>
-                <BarChart data={circleTrainingData} margin={{ top: 4, right: 16, left: 0, bottom: 70 }}>
+                <BarChart data={circleTrainingData} margin={{ top: 20, right: 16, left: 0, bottom: 70 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
                   <XAxis
                     dataKey="name"

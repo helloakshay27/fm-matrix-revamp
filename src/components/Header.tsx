@@ -98,6 +98,11 @@ export const Header = () => {
 
   const location = useLocation();
   const currentPath = location.pathname;
+  const currentUser = JSON.parse(localStorage.getItem("user")).email
+
+  const allowedUsersForDashboard = [
+    "deveshjain928@gmail.com"
+  ]
 
   // Redux state
   const {
@@ -404,8 +409,10 @@ export const Header = () => {
 
   const canShowMsafeForSelectedCompany =
     localStorage.getItem("org_id") === "34";
-  const canShowMSafeDashboard =
-    !isRestrictedUser && canShowMsafeForSelectedCompany;
+  // const canShowMSafeDashboard =
+  //   !isRestrictedUser && canShowMsafeForSelectedCompany;
+
+  const canShowMSafeDashboard = canShowMsafeForSelectedCompany && allowedUsersForDashboard.includes(currentUser)
   const hasHeaderDashboardActions = !isRestrictedUser;
 
   const handleMSafeDashboard = () => {
@@ -438,8 +445,8 @@ export const Header = () => {
           </button>
           <div
             className={`flex h-full flex-shrink-0 items-center overflow-hidden sm:w-28 md:w-40 lg:w-44 ${isMobileUiSite()
-                ? "w-[120px] max-md:max-w-[120px] max-md:[&>svg]:h-auto max-md:[&>svg]:w-full max-md:[&_img]:h-auto max-md:[&_img]:max-w-full"
-                : "w-16"
+              ? "w-[120px] max-md:max-w-[120px] max-md:[&>svg]:h-auto max-md:[&>svg]:w-full max-md:[&_img]:h-auto max-md:[&_img]:max-w-full"
+              : "w-16"
               }`}
           >
             {isOmanSite ? (
@@ -609,17 +616,17 @@ export const Header = () => {
                 </button>
               )}
 
-              {/* {canShowViMSafeDashboard && (
+              {canShowMSafeDashboard && (
                 <button
-                  onClick={handleMSafeDashboard}
+                  onClick={handleMSafeDashboardRevamp}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
                   <Home className="w-4 h-4" />
                   MSafe Dashboard
 
                 </button>
-              )} */}
-              {canShowMSafeDashboard && (
+              )}
+              {/* {canShowMSafeDashboard && (
                 <button
                   onClick={handleMSafeDashboardRevamp}
                   className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
@@ -627,7 +634,7 @@ export const Header = () => {
                   <Shield className="w-4 h-4" />
                   Msafe Dashboard Revamp
                 </button>
-              )}
+              )} */}
             </div>
           )}
 
@@ -897,8 +904,8 @@ export const Header = () => {
                         <div className="flex items-start gap-3">
                           <div
                             className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read
-                                ? "bg-[#C72030]"
-                                : "bg-gray-300"
+                              ? "bg-[#C72030]"
+                              : "bg-gray-300"
                               }`}
                           />
                           <div className="flex-1 min-w-0">
