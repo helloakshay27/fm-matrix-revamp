@@ -809,6 +809,7 @@ export interface RideOverviewResponse {
     seats_offered: number;
     seats_filled: number;
     seats_utilization: number;
+    ride_distance_in_km: number;
   };
   rides_trend: {
     growth_percentage: number;
