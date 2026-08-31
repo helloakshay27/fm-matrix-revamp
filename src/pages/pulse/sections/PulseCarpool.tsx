@@ -341,6 +341,7 @@ export function PulseCarpool({ filters }: Props) {
         { label: "Seats Offered", value: rideOverview.kpis.seats_offered.toLocaleString() },
         { label: "Seats Filled", value: rideOverview.kpis.seats_filled.toLocaleString() },
         { label: "Seats Utilization", value: rideOverview.kpis.seats_utilization.toFixed(2) },
+        { label: "Ride Distance (km)", value: rideOverview.kpis.ride_distance_in_km.toLocaleString() },
       ]
       : [];
 
