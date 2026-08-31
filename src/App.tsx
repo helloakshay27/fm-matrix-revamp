@@ -85,6 +85,8 @@ const CostApprovalStandalonePage = lazy(() => import("./pages/CostApprovalPage")
 
 // Import Maintenance pages
 const AssetDashboard = lazy(() => import("./pages/AssetDashboard").then(m => ({ default: m.AssetDashboard })));
+const EquipmentDataDashboard = lazy(() => import("./pages/EquipmentDataDashboard").then(m => ({ default: m.EquipmentDataDashboard })));
+
 const AssetDetailsPage = lazy(() => import("./pages/AssetDetailsPage").then(m => ({ default: m.AssetDetailsPage })));
 const AddAssetPage = lazy(() => import("./pages/AddAssetPage"));
 const InActiveAssetsDashboard = lazy(() => import("./pages/InActiveAssetsDashboard").then(m => ({ default: m.InActiveAssetsDashboard })));
@@ -1940,7 +1942,7 @@ function App() {
 
                           {/* Login Route */}
                           <Route path="/thepdf" element={<AllContent />} />
-                          <Route path="/dailypdf" element={<DailyReport />} />
+                          <Route path="/dailypdf" element={<DailyReport selectedDateId={undefined} setSelectedDateId={undefined} />} />
                           <Route path="/weeklypdf" element={<WeeklyReport />} />
                           <Route
                             path="/visitor/gatepass"
@@ -4746,6 +4748,10 @@ function App() {
                             <Route
                               path="/maintenance/asset"
                               element={<AssetDashboard />}
+                            />
+                            <Route
+                              path="/maintenance/asset/equipment-data"
+                              element={<EquipmentDataDashboard />}
                             />
                             <Route
                               path="/maintenance/documents"
