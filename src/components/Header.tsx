@@ -135,6 +135,11 @@ export const Header = () => {
     hostname.includes("lockated.gophygital.work") ||
     hostname.includes("fm-matrix.lockated.com");
 
+  // Profile menu → Usage Analytics. Single entry, opens the Vi my Workspace adoption
+  // dashboard. The FM Matrix one at /posthog-dashboard is still routed and reachable
+  // directly by URL; it just no longer has a profile-menu entry.
+  const usageAnalyticsPath = "/vi-posthog-dashboard";
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -157,11 +162,18 @@ export const Header = () => {
       }
     ).electron;
     const deviceInfo = electronBridge?.getDeviceInfo?.() ?? {};
+    const u = getUser();
     posthog.identify(String(uid), {
       organization_name: localStorage.getItem("selectedOrg") ?? undefined,
       company_name: localStorage.getItem("selectedCompany") ?? undefined,
       site_name: localStorage.getItem("selectedSiteName") ?? undefined,
-      email: getUser()?.email ?? undefined,
+      email: u?.email ?? undefined,
+      // §6.5 person properties. `designation` and `is_approved` are in the spec but this
+      // app's login response carries neither, so they are omitted rather than faked.
+      user_name: [u?.firstname, u?.lastname].filter(Boolean).join(" ") || undefined,
+      contact_number: u?.mobile ?? u?.phone ?? undefined,
+      role: u?.lock_role?.name ?? undefined,
+      is_logged_in: true,
       ...deviceInfo,
     });
   }, [selectedCompany, selectedSite]);
@@ -1063,9 +1075,11 @@ export const Header = () => {
                   <User className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">My Profile</span>
                 </DropdownMenuItem>
-                {isLocalhost && (
+                {(isViSite || isLocalhost) && (
                   <DropdownMenuItem
-                    onClick={() => (window.location.href = "/posthog-dashboard")}
+                    onClick={() =>
+                      (window.location.href = usageAnalyticsPath)
+                    }
                     className="mx-2 my-1 rounded-md"
                   >
                     <Activity className="w-4 h-4 mr-2 text-gray-500" />
