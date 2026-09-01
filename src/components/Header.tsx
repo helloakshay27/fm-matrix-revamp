@@ -149,6 +149,14 @@ export const Header = () => {
   // directly by URL; it just no longer has a profile-menu entry.
   const usageAnalyticsPath = "/vi-posthog-dashboard";
 
+  // Pulse tenants get their own Usage Analytics entry (the /pulse dashboard) instead of
+  // the Vi adoption dashboard above. This declaration was lost in a merge while the JSX
+  // that reads it survived, which crashed the whole Header with a ReferenceError.
+  // Scoped to isPulseSite (pulse domains + org_id 90) and deliberately NOT localhost —
+  // the entry above already renders there, and two identical "Usage Analytics" rows in
+  // the same profile menu is what the original localhost condition produced.
+  const showPulseUsageAnalytics = isPulseSite;
+
   const navigate = useNavigate();
 
   useEffect(() => {
