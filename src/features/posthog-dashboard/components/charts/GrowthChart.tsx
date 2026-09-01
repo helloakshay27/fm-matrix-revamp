@@ -30,11 +30,22 @@ export function GrowthChart({ weeks }: { weeks: GrowthWeek[] }) {
     if (!svg) return;
     const rect = svg.getBoundingClientRect();
     const scaleX = W / rect.width;
+    const scaleY = H / rect.height;
     const mouseX = (e.clientX - rect.left) * scaleX;
+    const mouseY = (e.clientY - rect.top) * scaleY;
+    
+    // Check X bounds
     if (mouseX < pl || mouseX > W - pr) {
       setTipIdx(null);
       return;
     }
+    
+    // Check Y bounds: only show tooltip when hovering over chart area (bars)
+    if (mouseY < pt || mouseY > H - pb) {
+      setTipIdx(null);
+      return;
+    }
+    
     const idx = Math.floor((mouseX - pl) / gap);
     if (idx >= 0 && idx < n) {
       setTipIdx(idx);

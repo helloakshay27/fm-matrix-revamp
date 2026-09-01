@@ -179,16 +179,6 @@ export function ControlBar() {
 
   return (
     <div className="filterbar">
-      <label className="ctrl" title="FM Matrix API token">
-        <span className="ic">#</span>
-        <input
-          type="password"
-          value={vm.token}
-          placeholder="Auth token"
-          onChange={(e) => setToken(e.target.value)}
-          style={{ width: 112, border: 0, outline: 0, background: 'transparent', color: 'inherit' }}
-        />
-      </label>
       {renderScopeSelect()}
 
       {/* Date range */}

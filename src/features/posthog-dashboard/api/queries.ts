@@ -45,6 +45,8 @@ export interface QueryFilters {
   subModule: string | null;
   /** Incremented only by an explicit dashboard load/refresh action. */
   requestId?: number;
+  /** Auth token for FM API calls */
+  token: string;
 }
 
 function ymd(d: Date): string {
@@ -84,6 +86,25 @@ const keyBase = (f: QueryFilters) => [
   f.devices.join(','),
   f.requestId ?? 0,
 ];
+
+/** Query key components for FM Matrix API calls (token, site_id, date range). */
+const fmKey = (f: QueryFilters) => [
+  f.token,
+  f.siteIds.join(','),
+  f.from,
+  f.to,
+  f.requestId ?? 0,
+];
+
+/** Parameters for FM Matrix API endpoints. */
+function fmParams(f: QueryFilters) {
+  return {
+    token: f.token,
+    site_id: f.siteIds.length === 1 ? f.siteIds[0] : undefined,
+    from_date: f.from,
+    to_date: f.to,
+  };
+}
 
 /** Every site on the tenant — drives the scope dropdown and the site-wise fan-out. */
 export function useAllSites(enabled = true) {

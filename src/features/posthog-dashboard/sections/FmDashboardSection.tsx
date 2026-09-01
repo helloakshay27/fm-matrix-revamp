@@ -36,13 +36,6 @@ const financePanels = [
 ] as const;
 
 export function FmDashboardSection() {
-  const { vm } = useDashboard();
-  const panels = vm.fm as Record<string, QueryResult>;
-  return <section className="page on" id="pgFm"><div className="section">
-    <div className="section-head"><h2>FM Matrix dashboards</h2><span className="layerpill">CRM · Finance</span><span className="sd">Live operational metrics for the selected sites and date range.</span></div>
-    <div className="fm-section-head"><h3>CRM</h3><span>{vm.range.from} to {vm.range.to}</span></div>
-    <div className="fm-grid">{crmPanels.map(([label, key]) => <DashboardPanel key={key} label={label} query={panels[key]} />)}</div>
-    <div className="fm-section-head"><h3>Finance & procurement</h3><span>Token-authenticated live data</span></div>
-    <div className="fm-grid">{financePanels.map(([label, key]) => <DashboardPanel key={key} label={label} query={panels[key]} />)}</div>
-  </div></section>;
+  // FM dashboard has been disabled and removed from the UI
+  return null;
 }

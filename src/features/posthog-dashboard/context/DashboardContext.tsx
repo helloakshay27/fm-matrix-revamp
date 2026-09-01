@@ -49,7 +49,6 @@ import {
   useTrafficSession,
   useUsageAndDistribution,
   useWorkflowUsage,
-  useFmDashboardQueries,
   type QueryFilters,
 } from "../api/queries";
 
@@ -93,8 +92,6 @@ export interface ViewModel {
   /** `generated_at` of the Layer-1 response — the freshness stamp shown in the header. */
   generatedAt: string | null;
   range: { from: string; to: string };
-  fm: ReturnType<typeof useFmDashboardQueries>;
-  fmStatus: SectionStatus;
 }
 
 interface InfoPopoverState {
@@ -260,7 +257,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const moduleTreeQ = useModuleTree(filters);
   const subModuleTreeQ = useSubModuleTree(filters);
   const workflowQ = useWorkflowUsage(filters);
-  const fm = useFmDashboardQueries(filters);
 
   const league = useSiteLeague(filters, leagueSiteIds, scopedSites.length > 1);
 
@@ -355,11 +351,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       },
       generatedAt: trafficQ.data?.meta.generated_at ?? null,
       range: { from, to },
-      fm,
-      fmStatus: {
-        loading: pending || Object.values(fm).some((query) => query.isLoading),
-        error: (Object.values(fm).find((query) => query.error)?.error ?? null) as Error | null,
-      },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -400,7 +391,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       workflowQ.data,
       workflowQ.isLoading,
       workflowQ.error,
-      fm,
       league.entries,
       league.isLoading,
       league.error,
