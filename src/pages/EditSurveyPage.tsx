@@ -2017,24 +2017,25 @@ export const EditSurveyPage = () => {
                                       },
                                     }}
                                   />
-                                  <Select
+                                  <MuiSelect
                                     value={option.type}
-                                    onValueChange={(value: "P" | "N") =>
+                                    onChange={(e) =>
                                       handleAnswerOptionTypeChange(
                                         question.id!,
                                         optionIndex,
-                                        value
+                                        e.target.value as "P" | "N"
                                       )
                                     }
+                                    sx={{
+                                      ...fieldStyles,
+                                      width: "80px",
+                                      minWidth: "80px",
+                                    }}
+                                    MenuProps={selectMenuProps}
                                   >
-                                    <SelectTrigger className="w-20">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="P">P</SelectItem>
-                                      <SelectItem value="N">N</SelectItem>
-                                    </SelectContent>
-                                  </Select>
+                                    <MenuItem value="P">P</MenuItem>
+                                    <MenuItem value="N">N</MenuItem>
+                                  </MuiSelect>
                                   <Button
                                     size="sm"
                                     variant="ghost"
