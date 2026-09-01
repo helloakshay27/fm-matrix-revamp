@@ -447,8 +447,17 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       posthog.identify(response.id?.toString(), {
         email: response.email,
         name: `${response.firstname || ""} ${response.lastname || ""}`.trim(),
+        // §6.5 names this property `user_name`; `name` is kept alongside it so existing
+        // queries and the PostHog person UI keep working.
+        user_name: `${response.firstname || ""} ${response.lastname || ""}`.trim(),
+        contact_number: response.mobile ?? response.phone ?? undefined,
         user_type: response.user_type,
         user_role: response.user_type,
+        is_logged_in: true,
+        // CAUTION: this means "has a @lockated.com address", i.e. Lockated's own staff.
+        // It is NOT the Internal-FTE-vs-External-contractor split that A9 (Adoption by
+        // Employment Type) needs — no employment_type property exists on any event yet.
+        // Do not wire A9 to this.
         is_internal: response.email?.endsWith("@lockated.com") ?? false,
       });
 

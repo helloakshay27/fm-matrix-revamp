@@ -101,7 +101,11 @@ export const Header = () => {
   const currentUser = JSON.parse(localStorage.getItem("user")).email
 
   const allowedUsersForDashboard = [
-    "deveshjain928@gmail.com"
+    "deveshjain928@gmail.com",
+    "madhur.khandelwal@vodafoneidea.com",
+    "rosemary.tj@vodafoneidea.com",
+    "deveshjain928@vodafoneidea.com",
+    "testlogin5@yopmail.com"
   ]
 
   // Redux state
@@ -140,13 +144,19 @@ export const Header = () => {
     hostname.includes("lockated.gophygital.work") ||
     hostname.includes("fm-matrix.lockated.com");
 
-  const isPulseSiteDomain = hostname === "pulse.lockated.com";
-  const isPanchshilUatSiteDomain =
-    hostname === "pulse-uat.panchshil.com" || hostname === "localhost";
-  const showPulseUsageAnalytics = isPulseSiteDomain || isPanchshilUatSiteDomain;
+  // Profile menu → Usage Analytics. Single entry, opens the Vi my Workspace adoption
+  // dashboard. The FM Matrix one at /posthog-dashboard is still routed and reachable
+  // directly by URL; it just no longer has a profile-menu entry.
+  const usageAnalyticsPath = "/vi-posthog-dashboard";
 
-  const showExistingPostHogUsageAnalytics =
-    isLocalhost || isPulseSiteDomain || hostname === "pulse-uat.panchshil.com";
+  // Pulse tenants get their own Usage Analytics entry (the /pulse dashboard) instead of
+  // the Vi adoption dashboard above. This declaration was lost in a merge while the JSX
+  // that reads it survived, which crashed the whole Header with a ReferenceError.
+  // Scoped to isPulseSite (pulse domains + org_id 90) and deliberately NOT localhost —
+  // the entry above already renders there, and two identical "Usage Analytics" rows in
+  // the same profile menu is what the original localhost condition produced.
+  const showPulseUsageAnalytics = isPulseSite;
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -169,11 +179,18 @@ export const Header = () => {
       }
     ).electron;
     const deviceInfo = electronBridge?.getDeviceInfo?.() ?? {};
+    const u = getUser();
     posthog.identify(String(uid), {
       organization_name: localStorage.getItem("selectedOrg") ?? undefined,
       company_name: localStorage.getItem("selectedCompany") ?? undefined,
       site_name: localStorage.getItem("selectedSiteName") ?? undefined,
-      email: getUser()?.email ?? undefined,
+      email: u?.email ?? undefined,
+      // §6.5 person properties. `designation` and `is_approved` are in the spec but this
+      // app's login response carries neither, so they are omitted rather than faked.
+      user_name: [u?.firstname, u?.lastname].filter(Boolean).join(" ") || undefined,
+      contact_number: u?.mobile ?? u?.phone ?? undefined,
+      role: u?.lock_role?.name ?? undefined,
+      is_logged_in: true,
       ...deviceInfo,
     });
   }, [selectedCompany, selectedSite]);
@@ -1073,11 +1090,10 @@ export const Header = () => {
                   <User className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">My Profile</span>
                 </DropdownMenuItem>
-
-                {showExistingPostHogUsageAnalytics && (
+                {(isViSite || isLocalhost) && (
                   <DropdownMenuItem
                     onClick={() =>
-                      (window.location.href = "/posthog-dashboard")
+                      (window.location.href = usageAnalyticsPath)
                     }
                     className="mx-2 my-1 rounded-md"
                   >

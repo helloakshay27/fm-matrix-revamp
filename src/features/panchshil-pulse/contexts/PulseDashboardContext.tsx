@@ -177,21 +177,10 @@ export const PulseDashboardProvider: React.FC<{
     setRequestId((id) => id + 1);
   }, [location.key, activeSection]);
 
-  // Theme state
-  const [theme, setThemeState] = useState<"light" | "dark">(() => {
-    try {
-      const stored = localStorage.getItem("pulse-theme");
-      if (stored === "dark" || stored === "light") return stored;
-    } catch {
-      // localStorage can throw in restrictive contexts — fall through to system preference
-    }
-    if (typeof window !== "undefined" && window.matchMedia) {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
-    }
-    return "light";
-  });
+  // Theme state — always start the dashboard in the app's existing light theme.
+  // Do NOT restore a persisted dark preference or auto-detect the user's system
+  // color scheme, so entering the dashboard never forces dark mode on the app.
+  const [theme, setThemeState] = useState<"light" | "dark">("light");
 
   // Sidebar collapse state
   const [collapsed, setCollapsedState] = useState<boolean>(() => {
@@ -223,11 +212,6 @@ export const PulseDashboardProvider: React.FC<{
 
   const setTheme = (t: "light" | "dark") => {
     setThemeState(t);
-    try {
-      localStorage.setItem("pulse-theme", t);
-    } catch {
-      // non-fatal: theme persistence is best-effort
-    }
   };
 
   const setCollapsed = (c: boolean) => {
@@ -239,9 +223,22 @@ export const PulseDashboardProvider: React.FC<{
     }
   };
 
-  // Sync theme attribute with html element
+  // Sync theme attribute with html element.
+  // This writes a global attribute on <html>, so capture the parent application's
+  // prior state and restore it exactly when the dashboard unmounts — otherwise the
+  // data-theme (and the dark CSS variables it enables) would leak into the rest of
+  // the application after leaving the Pulse dashboard.
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
+    const root = document.documentElement;
+    const previousTheme = root.getAttribute("data-theme");
+    root.setAttribute("data-theme", theme);
+    return () => {
+      if (previousTheme === null) {
+        root.removeAttribute("data-theme");
+      } else {
+        root.setAttribute("data-theme", previousTheme);
+      }
+    };
   }, [theme]);
 
   // Sync collapsed class with html element
