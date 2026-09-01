@@ -362,7 +362,7 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       setStartDate(DEFAULT_FILTERS.startDate);
       setEndDate(DEFAULT_FILTERS.endDate);
       setAppliedFilters({ ...DEFAULT_FILTERS, circles: resolved.circles, circleIds: resolved.circleIds });
-      setPageTitle(`M-Safe · ${resolved.circles.join(', ')} Circle`);
+      setPageTitle('M-Safe · Circle Manager');
       setScopeText('2,148 registered users · 12 clusters · 84 work locations');
       setKpiUsers('2,148');
       setKpiLmc('112');
@@ -413,13 +413,7 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
         ...overrides,
       };
       setAppliedFilters(next);
-      if (persona === 'circle') {
-        setPageTitle(`M-Safe · ${next.circles.join(', ')} Circle`);
-      } else {
-        setPageTitle(
-          next.circleIds.length > 0 ? `M-Safe · ${next.circles.join(', ')} Circle (Pan India)` : 'M-Safe · Pan India View',
-        );
-      }
+      setPageTitle(persona === 'circle' ? 'M-Safe · Circle Manager' : 'M-Safe · Pan India View');
       if (!opts?.silent) showToast('Filter applied');
     },
     [persona, circles, circleIds, functions, functionIds, zone, zoneId, empType, empTypeId, startDate, endDate, showToast],

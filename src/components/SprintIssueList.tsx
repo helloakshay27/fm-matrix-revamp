@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, Play, Pause, Loader2, Trash } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
@@ -132,6 +132,8 @@ export default function SprintIssueList({
   const baseUrl = localStorage.getItem("baseUrl") || "";
   const token = localStorage.getItem("token") || "";
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hasInitializedFromUrl = useRef(false);
 
   const [issues, setIssues] = useState<any[]>([]);
   const [loadingIssues, setLoadingIssues] = useState(false);
@@ -171,6 +173,28 @@ export default function SprintIssueList({
     }
   }, [sprintId, baseUrl, token]);
 
+  /**
+   * Updates the `issue_*`-prefixed URL query params for this tab only, leaving any
+   * `task_*` params (Tasks tab) and `tab` param untouched so the two tabs' filter
+   * state never collides in the URL.
+   */
+  const updateQueryParams = useCallback(
+    (updates: Record<string, any>, replace = false) => {
+      const params = new URLSearchParams(searchParams);
+
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === "") {
+          params.delete(key);
+        } else {
+          params.set(key, String(value));
+        }
+      });
+
+      setSearchParams(params, { replace });
+    },
+    [searchParams, setSearchParams]
+  );
+
   const buildInitialFilterString = () => {
     const parts: string[] = [];
     if (initialMemberId != null) parts.push(`q[responsible_person_id_in][]=${initialMemberId}`);
@@ -179,16 +203,40 @@ export default function SprintIssueList({
     return parts.join("&");
   };
 
+  // Restore issue filters/search/page from the URL on first mount (issue_* params only),
+  // falling back to the initial* props (deep-link from the Member/Project modal), and
+  // finally to an unfiltered fetch. Combined into one effect so there's exactly one
+  // fetch on mount — two separate effects both fetching on mount raced and the later
+  // one (an unfiltered fetch) silently clobbered the URL-restored, filtered result.
   useEffect(() => {
-    if (!sprintId) return;
-    if (initialMemberId != null || initialProjectId != null) {
-      const filterString = buildInitialFilterString();
-      setAppliedFilters(filterString);
-      fetchIssues(filterString, 1, "");
-    } else {
-      fetchIssues("", 1, "");
+    if (!sprintId || hasInitializedFromUrl.current) return;
+    hasInitializedFromUrl.current = true;
+
+    const urlFilters = searchParams.get("issue_filters") || "";
+    const urlSearch = searchParams.get("issue_search") || "";
+    const urlPage = Number(searchParams.get("issue_page")) || 1;
+
+    if (!urlFilters && !urlSearch && urlPage === 1) {
+      if (initialMemberId != null || initialProjectId != null) {
+        const filterString = buildInitialFilterString();
+        setAppliedFilters(filterString);
+        fetchIssues(filterString, 1, "");
+        updateQueryParams({ issue_filters: filterString || undefined, issue_page: 1 }, true);
+      } else {
+        fetchIssues("", 1, "");
+      }
+      return;
     }
-  }, [fetchIssues]);
+
+    setAppliedFilters(urlFilters);
+    setCurrentPage(urlPage);
+    if (urlSearch) {
+      setIssueSearchQuery(urlSearch);
+      setIssueTempSearch(urlSearch);
+    }
+    fetchIssues(urlFilters, urlPage, urlSearch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (isFirstRenderIssue.current) { isFirstRenderIssue.current = false; return; }
@@ -196,6 +244,7 @@ export default function SprintIssueList({
     const filterString = buildInitialFilterString();
     setAppliedFilters(filterString);
     fetchIssues(filterString, 1, "");
+    updateQueryParams({ issue_filters: filterString || undefined, issue_page: 1 }, true);
   }, [initialMemberId, initialProjectId, initialStatus]);
 
   useEffect(() => {
@@ -205,6 +254,7 @@ export default function SprintIssueList({
       setIssueSearchQuery(issueTempSearch);
       setCurrentPage(1);
       fetchIssues(appliedFilters, 1, issueTempSearch);
+      updateQueryParams({ issue_search: issueTempSearch || undefined, issue_page: 1 }, true);
     }, 500);
     return () => { if (debounceTimerIssue.current) clearTimeout(debounceTimerIssue.current); };
   }, [issueTempSearch]);
@@ -248,6 +298,7 @@ export default function SprintIssueList({
     if (paginationData && page > paginationData.total_pages) return;
     setCurrentPage(page);
     fetchIssues(appliedFilters, page, issueSearchQuery);
+    updateQueryParams({ issue_page: page }, true);
   };
 
   const handlePlayIssue = async (id: number) => {
@@ -475,6 +526,7 @@ export default function SprintIssueList({
           setAppliedFilters(filterString);
           setCurrentPage(1);
           fetchIssues(filterString, 1, issueSearchQuery);
+          updateQueryParams({ issue_filters: filterString || undefined, issue_page: 1 }, true);
         }}
         issueTypes={issueTypeOptions}
         users={users}

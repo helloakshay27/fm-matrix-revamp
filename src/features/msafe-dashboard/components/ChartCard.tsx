@@ -163,7 +163,7 @@ export function ChartCard({
             {title}
             {infoKey ? <InfoButton infoKey={infoKey} /> : null}
           </div>
-          {sub ? <div className="card-sub">{sub}</div> : null}
+          {/* {sub ? <div className="card-sub">{sub}</div> : null} */}
         </div>
         <div className="card-actions-row">
           {chartSwitch}

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Eye,
   Play,
@@ -90,6 +90,8 @@ export default function SprintTaskList({
   const baseUrl = localStorage.getItem("baseUrl") || "";
   const token = localStorage.getItem("token") || "";
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hasInitializedFromUrl = useRef(false);
 
   const [sprintTasks, setSprintTasks] = useState<any[]>([]);
   const [loadingTasks, setLoadingTasks] = useState(false);
@@ -150,28 +152,140 @@ export default function SprintTaskList({
     }
   }, [sprintId, baseUrl, token]);
 
+  /**
+   * Updates the `task_*`-prefixed URL query params for this tab only, leaving any
+   * `issue_*` params (Issues tab) and `tab` param untouched so the two tabs' filter
+   * state never collides in the URL.
+   */
+  const updateQueryParams = useCallback(
+    (updates: Record<string, any>, replace = false) => {
+      const params = new URLSearchParams(searchParams);
+
+      Object.entries(updates).forEach(([key, value]) => {
+        if (
+          value === undefined ||
+          value === null ||
+          value === "" ||
+          (Array.isArray(value) && value.length === 0)
+        ) {
+          params.delete(key);
+        } else if (Array.isArray(value)) {
+          for (const [paramKey] of params) {
+            if (paramKey === key) params.delete(paramKey);
+          }
+          value.forEach((val) => {
+            params.append(key, String(val));
+          });
+        } else {
+          params.set(key, String(value));
+        }
+      });
+
+      setSearchParams(params, { replace });
+    },
+    [searchParams, setSearchParams]
+  );
+
+  // Restore task filters/search/page from the URL on first mount (task_* params only),
+  // falling back to the initial* props (deep-link from the Member/Project modal), and
+  // finally to an unfiltered fetch. Combined into one effect — and NOT into the same
+  // effect as the initial* prop-change handler below — so there's exactly one fetch on
+  // mount; two separate effects both fetching on mount raced and the later one (an
+  // unfiltered fetch) silently clobbered the URL-restored, filtered result.
   useEffect(() => {
-    if (!sprintId) return;
-    if (initialMemberId != null || initialProjectId != null) {
-      const params: Record<string, any> = {};
-      if (initialMemberId != null) {
-        params["q[responsible_person_id_in][]"] = [initialMemberId];
-        setSelectedResponsible([initialMemberId]);
+    if (!sprintId || hasInitializedFromUrl.current) return;
+    hasInitializedFromUrl.current = true;
+
+    const urlStatuses = searchParams.getAll("task_status");
+    const urlResponsible = searchParams.getAll("task_responsible");
+    const urlCreators = searchParams.getAll("task_created_by");
+    const urlProjects = searchParams.getAll("task_project");
+    const urlWorkflowStatus = searchParams.getAll("task_workflow_status");
+    const urlTags = searchParams.getAll("task_tags");
+    const urlStartDate = searchParams.get("task_start_date") || "";
+    const urlEndDate = searchParams.get("task_end_date") || "";
+    const urlCompletedAt = searchParams.get("task_completed_at") || "";
+    const urlSearch = searchParams.get("task_search") || "";
+    const urlPage = Number(searchParams.get("task_page")) || 1;
+
+    const hasUrlFilters =
+      urlStatuses.length > 0 ||
+      urlResponsible.length > 0 ||
+      urlCreators.length > 0 ||
+      urlProjects.length > 0 ||
+      urlWorkflowStatus.length > 0 ||
+      urlTags.length > 0 ||
+      !!urlStartDate ||
+      !!urlEndDate ||
+      !!urlCompletedAt;
+
+    if (!hasUrlFilters && !urlSearch && urlPage === 1) {
+      // No URL filters — fall back to the initial* props (deep-link from the
+      // Member/Project modal), or an unfiltered fetch if none of those either.
+      if (initialMemberId != null || initialProjectId != null) {
+        const propParams: Record<string, any> = {};
+        if (initialMemberId != null) {
+          propParams["q[responsible_person_id_in][]"] = [initialMemberId];
+          setSelectedResponsible([initialMemberId]);
+        }
+        if (initialProjectId != null) {
+          propParams["q[project_management_id_eq]"] = initialProjectId;
+          setSelectedProjects([initialProjectId]);
+        }
+        if (initialStatus) {
+          propParams["q[status_eq]"] = initialStatus;
+          setSelectedStatuses([initialStatus]);
+        }
+        setActiveFilters(propParams);
+        fetchTasks(propParams, 1, "");
+        updateQueryParams(
+          {
+            task_responsible: initialMemberId != null ? [initialMemberId] : undefined,
+            task_project: initialProjectId != null ? [initialProjectId] : undefined,
+            task_status: initialStatus ? [initialStatus] : undefined,
+            task_page: 1,
+          },
+          true
+        );
+      } else {
+        fetchTasks({}, 1, "");
       }
-      if (initialProjectId != null) {
-        params["q[project_management_id_eq]"] = initialProjectId;
-        setSelectedProjects([initialProjectId]);
-      }
-      if (initialStatus) {
-        params["q[status_eq]"] = initialStatus;
-        setSelectedStatuses([initialStatus]);
-      }
-      setActiveFilters(params);
-      fetchTasks(params, 1, "");
-    } else {
-      fetchTasks({}, 1, "");
+      return;
     }
-  }, [fetchTasks]);
+
+    if (urlStatuses.length > 0) setSelectedStatuses(urlStatuses);
+    if (urlResponsible.length > 0) setSelectedResponsible(urlResponsible.map(Number));
+    if (urlCreators.length > 0) setSelectedCreators(urlCreators.map(Number));
+    if (urlProjects.length > 0) setSelectedProjects(urlProjects.map(Number));
+    if (urlWorkflowStatus.length > 0) setSelectedWorkflowStatus(urlWorkflowStatus);
+    if (urlTags.length > 0) setSelectedTags(urlTags);
+    if (urlStartDate || urlEndDate || urlCompletedAt) {
+      setDates({ startDate: urlStartDate, endDate: urlEndDate, completedAt: urlCompletedAt });
+    }
+
+    const params: Record<string, any> = {};
+    if (urlStatuses.length > 0) params["q[status_in][]"] = urlStatuses;
+    if (urlWorkflowStatus.length > 0) params["q[project_status_id_in][]"] = urlWorkflowStatus;
+    if (urlResponsible.length > 0) params["q[responsible_person_id_in][]"] = urlResponsible.map(Number);
+    if (urlCreators.length > 0) params["q[created_by_id_in][]"] = urlCreators.map(Number);
+    if (urlProjects.length > 0) params["q[project_management_id_in][]"] = urlProjects.map(Number);
+    if (urlTags.length > 0) params["q[task_tags_company_tag_id_in][]"] = urlTags;
+    if (urlStartDate) params["q[start_date_eq]"] = urlStartDate;
+    if (urlEndDate) params["q[end_date_eq]"] = urlEndDate;
+    if (urlCompletedAt) {
+      params["q[completed_at_gteq]"] = `${urlCompletedAt}T00:00:00`;
+      params["q[completed_at_lteq]"] = `${urlCompletedAt}T23:59:59`;
+    }
+
+    setActiveFilters(params);
+    setCurrentPage(urlPage);
+    if (urlSearch) {
+      setSearchQuery(urlSearch);
+      setTempSearchQuery(urlSearch);
+    }
+    fetchTasks(params, urlPage, urlSearch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (isFirstRenderTask.current) { isFirstRenderTask.current = false; return; }
@@ -197,6 +311,15 @@ export default function SprintTaskList({
     }
     setActiveFilters(params);
     fetchTasks(params, 1, "");
+    updateQueryParams(
+      {
+        task_responsible: initialMemberId != null ? [initialMemberId] : undefined,
+        task_project: initialProjectId != null ? [initialProjectId] : undefined,
+        task_status: initialStatus ? [initialStatus] : undefined,
+        task_page: 1,
+      },
+      true
+    );
   }, [initialMemberId, initialProjectId, initialStatus]);
 
   useEffect(() => {
@@ -206,6 +329,7 @@ export default function SprintTaskList({
       setSearchQuery(tempSearchQuery);
       setCurrentPage(1);
       fetchTasks(activeFilters, 1, tempSearchQuery);
+      updateQueryParams({ task_search: tempSearchQuery || undefined, task_page: 1 }, true);
     }, 500);
     return () => { if (debounceTimerTask.current) clearTimeout(debounceTimerTask.current); };
   }, [tempSearchQuery]);
@@ -321,6 +445,21 @@ export default function SprintTaskList({
     setCurrentPage(1);
     fetchTasks(params, 1, searchQuery);
     setIsFilterModalOpen(false);
+    updateQueryParams(
+      {
+        task_status: selectedStatuses,
+        task_workflow_status: selectedWorkflowStatus,
+        task_responsible: selectedResponsible,
+        task_created_by: selectedCreators,
+        task_project: selectedProjects,
+        task_tags: selectedTags,
+        task_start_date: dates.startDate || undefined,
+        task_end_date: dates.endDate || undefined,
+        task_completed_at: dates.completedAt || undefined,
+        task_page: 1,
+      },
+      true
+    );
   };
 
   const handlePageChange = (page: number) => {
@@ -328,6 +467,7 @@ export default function SprintTaskList({
     if (paginationData && page > paginationData.total_pages) return;
     setCurrentPage(page);
     fetchTasks(activeFilters, page, searchQuery);
+    updateQueryParams({ task_page: page }, true);
   };
 
   const handleClearFilters = () => {
@@ -342,6 +482,22 @@ export default function SprintTaskList({
     setActiveFilters({});
     setCurrentPage(1);
     fetchTasks({}, 1, searchQuery);
+    updateQueryParams(
+      {
+        task_status: undefined,
+        task_workflow_status: undefined,
+        task_responsible: undefined,
+        task_created_by: undefined,
+        task_project: undefined,
+        task_tags: undefined,
+        task_start_date: undefined,
+        task_end_date: undefined,
+        task_completed_at: undefined,
+        task_search: undefined,
+        task_page: undefined,
+      },
+      true
+    );
   };
 
   const STATUS_FILTER_OPTIONS = [
@@ -435,7 +591,7 @@ export default function SprintTaskList({
         data: { task_ids: [taskId] },
       });
       toast.success("Task unlinked from sprint");
-      fetchTasks();
+      fetchTasks(activeFilters, currentPage, searchQuery);
     } catch {
       toast.error("Failed to unlink task");
     } finally {

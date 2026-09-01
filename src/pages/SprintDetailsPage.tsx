@@ -1,11 +1,6 @@
 import axios from "axios";
-import {
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-} from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { isMobileUiSite } from "@/utils/mobileUiSites";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,11 +12,7 @@ import {
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  SprintDetails,
-  ApiSprint,
-  SprintMember,
-} from "@/types/sprint";
+import { SprintDetails, ApiSprint, SprintMember } from "@/types/sprint";
 import {
   formatToDDMMYYYY_AMPM,
   mapStatusToDisplay,
@@ -38,8 +29,12 @@ import {
   fetchSprintById,
   updateSprintStatus,
 } from "@/store/slices/sprintSlice";
-import SprintMemberModal, { MemberSummary } from "@/components/SprintMemberModal";
-import SprintProjectModal, { ProjectSummary } from "@/components/SprintProjectModal";
+import SprintMemberModal, {
+  MemberSummary,
+} from "@/components/SprintMemberModal";
+import SprintProjectModal, {
+  ProjectSummary,
+} from "@/components/SprintProjectModal";
 import SprintTaskList from "@/components/SprintTaskList";
 import SprintIssueList from "@/components/SprintIssueList";
 import SprintActivityLog from "@/components/SprintActivityLog";
@@ -53,6 +48,7 @@ export const SprintDetailsPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { id } = useParams<{ id: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const baseUrl = localStorage.getItem("baseUrl") || "";
   const token = localStorage.getItem("token") || "";
 
@@ -68,18 +64,44 @@ export const SprintDetailsPage = () => {
   const [projectsLoading, setProjectsLoading] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(false);
   const [selectedOption, setSelectedOption] = useState("Open");
-  const [memberTaskFilter, setMemberTaskFilter] = useState<number | undefined>(undefined);
-  const [memberIssueFilter, setMemberIssueFilter] = useState<number | undefined>(undefined);
-  const [memberTaskStatusFilter, setMemberTaskStatusFilter] = useState<string | undefined>(undefined);
-  const [memberIssueStatusFilter, setMemberIssueStatusFilter] = useState<string | undefined>(undefined);
-  const [projectTaskFilter, setProjectTaskFilter] = useState<number | undefined>(undefined);
-  const [projectIssueFilter, setProjectIssueFilter] = useState<number | undefined>(undefined);
-  const [projectTaskStatusFilter, setProjectTaskStatusFilter] = useState<string | undefined>(undefined);
-  const [projectIssueStatusFilter, setProjectIssueStatusFilter] = useState<string | undefined>(undefined);
+  const [memberTaskFilter, setMemberTaskFilter] = useState<number | undefined>(
+    undefined
+  );
+  const [memberIssueFilter, setMemberIssueFilter] = useState<
+    number | undefined
+  >(undefined);
+  const [memberTaskStatusFilter, setMemberTaskStatusFilter] = useState<
+    string | undefined
+  >(undefined);
+  const [memberIssueStatusFilter, setMemberIssueStatusFilter] = useState<
+    string | undefined
+  >(undefined);
+  const [projectTaskFilter, setProjectTaskFilter] = useState<
+    number | undefined
+  >(undefined);
+  const [projectIssueFilter, setProjectIssueFilter] = useState<
+    number | undefined
+  >(undefined);
+  const [projectTaskStatusFilter, setProjectTaskStatusFilter] = useState<
+    string | undefined
+  >(undefined);
+  const [projectIssueStatusFilter, setProjectIssueStatusFilter] = useState<
+    string | undefined
+  >(undefined);
   const [activeTab, setActiveTab] = useState<
     "tasks" | "issues" | "activity_log"
-  >("tasks");
+  >(() => {
+    const urlTab = searchParams.get("tab");
+    return urlTab === "issues" || urlTab === "activity_log" ? urlTab : "tasks";
+  });
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const handleTabChange = (tab: "tasks" | "issues" | "activity_log") => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams);
+    params.set("tab", tab);
+    setSearchParams(params, { replace: true });
+  };
 
   const fetchData = useCallback(async () => {
     if (!id) return;
@@ -185,7 +207,13 @@ export const SprintDetailsPage = () => {
             <div className="border-b-[3px] border-grey my-3"></div>
 
             {/* Details card skeleton */}
-            <div className={isMobileUiSite() ? "border rounded-[10px] shadow-md p-3 mb-4 md:p-5" : "border rounded-[10px] shadow-md p-5 mb-4"}>
+            <div
+              className={
+                isMobileUiSite()
+                  ? "border rounded-[10px] shadow-md p-3 mb-4 md:p-5"
+                  : "border rounded-[10px] shadow-md p-5 mb-4"
+              }
+            >
               <div className="flex items-center gap-4 mb-4">
                 <Skeleton className="h-7 w-7 rounded-full" />
                 <Skeleton className="h-5 w-20" />
@@ -328,15 +356,33 @@ export const SprintDetailsPage = () => {
             <div className="border-b-[3px] border-grey my-3"></div>
 
             {/* Details Section */}
-            <div className={isMobileUiSite() ? "border rounded-[10px] shadow-md p-3 mb-4 md:p-5" : "border rounded-[10px] shadow-md p-5 mb-4"}>
+            <div
+              className={
+                isMobileUiSite()
+                  ? "border rounded-[10px] shadow-md p-3 mb-4 md:p-5"
+                  : "border rounded-[10px] shadow-md p-5 mb-4"
+              }
+            >
               <div className="font-[600] text-[16px] flex items-center gap-4">
                 <ChevronDownCircle color="#E95420" size={30} />
                 Details
               </div>
               <div className="mt-3 flex flex-col">
                 {/* Row 1 */}
-                <div className={isMobileUiSite() ? "flex flex-col gap-2 md:flex-row md:items-center md:ml-16" : "flex items-center ml-16"}>
-                  <div className={isMobileUiSite() ? "w-full flex items-center justify-start gap-3 md:w-1/2" : "w-1/2 flex items-center justify-start gap-3"}>
+                <div
+                  className={
+                    isMobileUiSite()
+                      ? "flex flex-col gap-2 md:flex-row md:items-center md:ml-16"
+                      : "flex items-center ml-16"
+                  }
+                >
+                  <div
+                    className={
+                      isMobileUiSite()
+                        ? "w-full flex items-center justify-start gap-3 md:w-1/2"
+                        : "w-1/2 flex items-center justify-start gap-3"
+                    }
+                  >
                     <div className="text-right text-[14px] font-[500]">
                       Responsible Person :
                     </div>
@@ -344,19 +390,38 @@ export const SprintDetailsPage = () => {
                       {sprintDetails.responsible_person || "-"}
                     </div>
                   </div>
-                  <div className={isMobileUiSite() ? "w-full flex items-center justify-start gap-3 md:w-1/2" : "w-1/2 flex items-center justify-start gap-3"}>
+                  <div
+                    className={
+                      isMobileUiSite()
+                        ? "w-full flex items-center justify-start gap-3 md:w-1/2"
+                        : "w-1/2 flex items-center justify-start gap-3"
+                    }
+                  >
                     <div className="text-right text-[14px] font-[500]">
                       Priority :
                     </div>
                     <div className="text-left text-[14px]">
-                      {sprintDetails.priority?.charAt(0)?.toUpperCase() + sprintDetails.priority?.slice(1) || "-"}
+                      {sprintDetails.priority?.charAt(0)?.toUpperCase() +
+                        sprintDetails.priority?.slice(1) || "-"}
                     </div>
                   </div>
                 </div>
                 <span className="border h-[1px] inline-block w-full my-4"></span>
                 {/* Row 2 */}
-                <div className={isMobileUiSite() ? "flex flex-col gap-2 md:flex-row md:items-center md:ml-16" : "flex items-center ml-16"}>
-                  <div className={isMobileUiSite() ? "w-full flex items-center justify-start gap-3 md:w-1/2" : "w-1/2 flex items-center justify-start gap-3"}>
+                <div
+                  className={
+                    isMobileUiSite()
+                      ? "flex flex-col gap-2 md:flex-row md:items-center md:ml-16"
+                      : "flex items-center ml-16"
+                  }
+                >
+                  <div
+                    className={
+                      isMobileUiSite()
+                        ? "w-full flex items-center justify-start gap-3 md:w-1/2"
+                        : "w-1/2 flex items-center justify-start gap-3"
+                    }
+                  >
                     <div className="text-right text-[14px] font-[500]">
                       Start Date :
                     </div>
@@ -364,7 +429,13 @@ export const SprintDetailsPage = () => {
                       {sprintDetails.start_date || "-"}
                     </div>
                   </div>
-                  <div className={isMobileUiSite() ? "w-full flex items-center justify-start gap-3 md:w-1/2" : "w-1/2 flex items-center justify-start gap-3"}>
+                  <div
+                    className={
+                      isMobileUiSite()
+                        ? "w-full flex items-center justify-start gap-3 md:w-1/2"
+                        : "w-1/2 flex items-center justify-start gap-3"
+                    }
+                  >
                     <div className="text-right text-[14px] font-[500]">
                       End Date :
                     </div>
@@ -375,8 +446,20 @@ export const SprintDetailsPage = () => {
                 </div>
                 <span className="border h-[1px] inline-block w-full my-4"></span>
                 {/* Row 3 */}
-                <div className={isMobileUiSite() ? "flex flex-col gap-2 md:flex-row md:items-center md:ml-16" : "flex items-center ml-16"}>
-                  <div className={isMobileUiSite() ? "w-full flex items-center justify-start gap-3 md:w-1/2" : "w-1/2 flex items-center justify-start gap-3"}>
+                <div
+                  className={
+                    isMobileUiSite()
+                      ? "flex flex-col gap-2 md:flex-row md:items-center md:ml-16"
+                      : "flex items-center ml-16"
+                  }
+                >
+                  <div
+                    className={
+                      isMobileUiSite()
+                        ? "w-full flex items-center justify-start gap-3 md:w-1/2"
+                        : "w-1/2 flex items-center justify-start gap-3"
+                    }
+                  >
                     <div className="text-right text-[14px] font-[500]">
                       Total Tasks :
                     </div>
@@ -384,7 +467,13 @@ export const SprintDetailsPage = () => {
                       {sprintDetails?.total_tasks ?? "-"}
                     </div>
                   </div>
-                  <div className={isMobileUiSite() ? "w-full flex items-center justify-start gap-3 md:w-1/2" : "w-1/2 flex items-center justify-start gap-3"}>
+                  <div
+                    className={
+                      isMobileUiSite()
+                        ? "w-full flex items-center justify-start gap-3 md:w-1/2"
+                        : "w-1/2 flex items-center justify-start gap-3"
+                    }
+                  >
                     <div className="text-right text-[14px] font-[500]">
                       Total Issues :
                     </div>
@@ -395,8 +484,20 @@ export const SprintDetailsPage = () => {
                 </div>
                 <span className="border h-[1px] inline-block w-full my-4"></span>
                 {/* Row 4 */}
-                <div className={isMobileUiSite() ? "flex flex-col gap-2 md:flex-row md:items-center md:ml-16" : "flex items-center ml-16"}>
-                  <div className={isMobileUiSite() ? "w-full flex items-center justify-start gap-3 md:w-1/2" : "w-1/2 flex items-center justify-start gap-3"}>
+                <div
+                  className={
+                    isMobileUiSite()
+                      ? "flex flex-col gap-2 md:flex-row md:items-center md:ml-16"
+                      : "flex items-center ml-16"
+                  }
+                >
+                  <div
+                    className={
+                      isMobileUiSite()
+                        ? "w-full flex items-center justify-start gap-3 md:w-1/2"
+                        : "w-1/2 flex items-center justify-start gap-3"
+                    }
+                  >
                     <div className="text-right text-[14px] font-[500]">
                       Effective Hours :
                     </div>
@@ -404,7 +505,13 @@ export const SprintDetailsPage = () => {
                       {fmtMinutes(sprintDetails?.total_effective_minutes)}
                     </div>
                   </div>
-                  <div className={isMobileUiSite() ? "w-full flex items-center justify-start gap-3 md:w-1/2" : "w-1/2 flex items-center justify-start gap-3"}>
+                  <div
+                    className={
+                      isMobileUiSite()
+                        ? "w-full flex items-center justify-start gap-3 md:w-1/2"
+                        : "w-1/2 flex items-center justify-start gap-3"
+                    }
+                  >
                     <div className="text-right text-[14px] font-[500]">
                       Actual Hours :
                     </div>
@@ -429,7 +536,7 @@ export const SprintDetailsPage = () => {
                 ).map((tab) => (
                   <button
                     key={tab.key}
-                    onClick={() => setActiveTab(tab.key)}
+                    onClick={() => handleTabChange(tab.key)}
                     className={`relative py-2 text-[14px] font-[500] capitalize transition-colors focus:outline-none ${isMobileUiSite() ? "px-3 md:px-5" : "px-5"} ${activeTab === tab.key
                       ? "text-[#E95420]"
                       : "text-[#323232] hover:text-[#E95420]"
@@ -450,7 +557,9 @@ export const SprintDetailsPage = () => {
                     sprintId={String(id)}
                     initialMemberId={memberTaskFilter}
                     initialProjectId={projectTaskFilter}
-                    initialStatus={memberTaskStatusFilter ?? projectTaskStatusFilter}
+                    initialStatus={
+                      memberTaskStatusFilter ?? projectTaskStatusFilter
+                    }
                   />
                 )}
                 {activeTab === "issues" && (
@@ -458,7 +567,9 @@ export const SprintDetailsPage = () => {
                     sprintId={String(id)}
                     initialMemberId={memberIssueFilter}
                     initialProjectId={projectIssueFilter}
-                    initialStatus={memberIssueStatusFilter ?? projectIssueStatusFilter}
+                    initialStatus={
+                      memberIssueStatusFilter ?? projectIssueStatusFilter
+                    }
                   />
                 )}
                 {activeTab === "activity_log" && (
@@ -485,7 +596,7 @@ export const SprintDetailsPage = () => {
           setProjectIssueStatusFilter(undefined);
           setMemberTaskStatusFilter(status);
           setMemberTaskFilter(memberId);
-          setActiveTab("tasks");
+          handleTabChange("tasks");
         }}
         onFilterIssue={(memberId, status) => {
           setIsMembersOpen(false);
@@ -497,7 +608,7 @@ export const SprintDetailsPage = () => {
           setProjectIssueStatusFilter(undefined);
           setMemberIssueStatusFilter(status);
           setMemberIssueFilter(memberId);
-          setActiveTab("issues");
+          handleTabChange("issues");
         }}
       />
       <SprintProjectModal
@@ -515,7 +626,7 @@ export const SprintDetailsPage = () => {
           setProjectIssueStatusFilter(undefined);
           setProjectTaskStatusFilter(status);
           setProjectTaskFilter(projectId);
-          setActiveTab("tasks");
+          handleTabChange("tasks");
         }}
         onFilterIssue={(projectId, status) => {
           setIsProjectsOpen(false);
@@ -527,7 +638,7 @@ export const SprintDetailsPage = () => {
           setProjectTaskStatusFilter(undefined);
           setProjectIssueStatusFilter(status);
           setProjectIssueFilter(projectId);
-          setActiveTab("issues");
+          handleTabChange("issues");
         }}
       />
     </div>

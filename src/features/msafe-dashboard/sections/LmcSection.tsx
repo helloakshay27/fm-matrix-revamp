@@ -9,6 +9,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  LabelList,
 } from 'recharts';
 import type { TooltipProps } from 'recharts';
 import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
@@ -28,6 +29,21 @@ type Slice = { name: string; value: number; color: string };
 type TrendRow = { m: string; n: number };
 
 const SLICE_PALETTE = [C.terra, C.sage, C.blue, C.teal, C.warn, C.err, C.lav, C.ok, '#B4A38A'];
+
+/** Hides the first and last point's label — with only ~220px of chart width, the
+ *  first value collides with the Y-axis tick labels and the last gets clipped by
+ *  the chart's right edge. */
+function renderAreaEndLabel(color: string, lastIndex: number) {
+  return (props: { x?: number; y?: number; value?: number; index?: number }) => {
+    const { x, y, value, index } = props;
+    if (index === 0 || index === lastIndex || x == null || y == null) return null;
+    return (
+      <text x={x} y={y} dy={-6} textAnchor="middle" fontSize={12} fontWeight={600} fill={color}>
+        {value}
+      </text>
+    );
+  };
+}
 
 function getMsafeBaseUrl(): string {
   const fromLS = localStorage.getItem('baseUrl') || '';
@@ -136,10 +152,11 @@ function normalizeDailyVolume(rows: DailyCircleRow[]): DailyRow[] {
   return order.map((d) => ({ d, n: totals.get(d) ?? 0 }));
 }
 
+// RAG thresholds standardized across the dashboard: Green >=98%, Amber 95-98%, Red <95%.
 function colorForWeekPct(pct: number): string {
-  if (pct >= 90) return C.ok;
-  if (pct >= 70) return C.teal;
-  return C.warn;
+  if (pct >= 98) return C.ok;
+  if (pct >= 95) return C.warn;
+  return C.err;
 }
 
 type WeeklyDayRecord = { label: string; actual: number; target: number | null; explicitPct: number | null };
@@ -241,10 +258,17 @@ function normalizeManagers(payload: unknown): ManagerRow[] {
     .filter((item): item is ManagerRow => Boolean(item));
 }
 
-// Carries the raw lmc_count and percentage directly on each slice (rather than
-// a separate array cross-referenced by name) so the hover tooltip can read both
-// straight off the exact slice being hovered.
-type FunctionSlice = Slice & { count: number; percentage: number | null };
+// Carries the raw approved count/percentage (plus total_users and the pending
+// counterparts, when the API sends them) directly on each slice — rather than a
+// separate array cross-referenced by name — so the hover tooltip can read
+// everything straight off the exact slice being hovered.
+type FunctionSlice = Slice & {
+  count: number;
+  percentage: number | null;
+  totalUsers: number | null;
+  pendingCount: number | null;
+  pendingPercentage: number | null;
+};
 
 function normalizeByFunction(payload: unknown): FunctionSlice[] {
   const list = unwrapList(payload, ['data', 'result', 'functions']);
@@ -254,11 +278,25 @@ function normalizeByFunction(payload: unknown): FunctionSlice[] {
       const record = item as Record<string, unknown>;
       const name = getString(record, ['function_name', 'function', 'func', 'name', 'label', 'title']);
       if (!name) return null;
-      const count = getNumber(record, ['lmc_count', 'count', 'value', 'sign_offs', 'total']);
-      const percentage = getNumber(record, ['percentage', 'pct']);
+      // `approved_count`/`approved_percentage` are the current API field names
+      // (the old `lmc_count`/`percentage` keys are kept as fallbacks).
+      const count = getNumber(record, ['approved_count', 'lmc_count', 'count', 'value', 'sign_offs', 'total']);
+      const percentage = getNumber(record, ['approved_percentage', 'percentage', 'pct']);
+      const totalUsers = getNumber(record, ['total_users']);
+      const pendingCount = getNumber(record, ['pending_count']);
+      const pendingPercentage = getNumber(record, ['pending_percentage']);
       const value = count ?? percentage;
       if (value === null) return null;
-      return { name, value, color: SLICE_PALETTE[index % SLICE_PALETTE.length], count: count ?? value, percentage };
+      return {
+        name,
+        value,
+        color: SLICE_PALETTE[index % SLICE_PALETTE.length],
+        count: count ?? value,
+        percentage,
+        totalUsers,
+        pendingCount,
+        pendingPercentage,
+      };
     })
     .filter((item): item is FunctionSlice => Boolean(item));
 }
@@ -380,6 +418,15 @@ function normalizeMonthlyTrend(rows: TrendCircleRow[]): TrendRow[] {
     totals.set(r.month, (totals.get(r.month) ?? 0) + r.volume);
   }
   return order.map((m) => ({ m, n: totals.get(m) ?? 0 }));
+}
+
+function formatMonthLabel(raw: string): string {
+  const match = /^(\d{4})-(\d{2})$/.exec(raw);
+  if (!match) return raw;
+  const [, year, month] = match;
+  const date = new Date(Number(year), Number(month) - 1, 1);
+  if (Number.isNaN(date.getTime())) return raw;
+  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 }
 
 function DataState({ loading, empty, label }: { loading: boolean; empty: boolean; label: string }) {
@@ -582,7 +629,7 @@ export function LmcSection() {
     const total = circleRows.reduce((sum, r) => sum + r.volume, 0);
     return (
       <div className="msafe-chart-tip">
-        <div className="msafe-chart-tip-title">{label}</div>
+        <div className="msafe-chart-tip-title">{formatMonthLabel(label)}</div>
         {circleRows.map((r) => (
           <div key={r.circle} className="msafe-chart-tip-row">
             <span className="msafe-chart-tip-sw" style={{ background: C.sage }} />
@@ -598,9 +645,12 @@ export function LmcSection() {
     );
   };
 
-  // Reads the lmc_count and percentage directly off the hovered slice's own
-  // data (attached by normalizeByFunction) — works for both the Function and
-  // Circle tabs since they share the same slice shape.
+  // Reads the approved count/percentage (plus total_users/pending, when present)
+  // directly off the hovered slice's own data (attached by normalizeByFunction) —
+  // works for both the Function and Circle tabs since they share the same slice
+  // shape. Each stat gets its own labeled row (rather than one packed line) so
+  // it reads clearly at a glance, matching the pattern used elsewhere in this
+  // dashboard (e.g. TrainingSection's renderGroupTrainingTooltip).
   const renderFuncTooltip = ({ active, payload }: TooltipProps<ValueType, NameType>) => {
     if (!active || !payload?.length) return null;
     const slice = payload[0]?.payload as FunctionSlice | undefined;
@@ -608,13 +658,27 @@ export function LmcSection() {
     return (
       <div className="msafe-chart-tip">
         <div className="msafe-chart-tip-title">{slice.name}</div>
+        {slice.totalUsers !== null && (
+          <div className="msafe-chart-tip-row">
+            <span>Total Users: {slice.totalUsers.toLocaleString('en-IN')}</span>
+          </div>
+        )}
         <div className="msafe-chart-tip-row">
-          <span className="msafe-chart-tip-sw" style={{ background: slice.color }} />
+          <span className="msafe-chart-tip-sw" style={{ background: C.ok }} />
           <span>
-            {slice.count.toLocaleString('en-IN')}
+            Approved: {slice.count.toLocaleString('en-IN')}
             {slice.percentage !== null ? ` (${slice.percentage}%)` : ''}
           </span>
         </div>
+        {slice.pendingCount !== null && (
+          <div className="msafe-chart-tip-row">
+            <span className="msafe-chart-tip-sw" style={{ background: C.warn }} />
+            <span>
+              Pending: {slice.pendingCount.toLocaleString('en-IN')}
+              {slice.pendingPercentage !== null ? ` (${slice.pendingPercentage}%)` : ''}
+            </span>
+          </div>
+        )}
       </div>
     );
   };
@@ -639,7 +703,7 @@ export function LmcSection() {
                   name: m.name,
                   meta: `${m.department} · ${m.circle}`,
                   value: m.count,
-                  onClick: () => openDrill('user-detail', m.name),
+                  // onClick: () => openDrill('user-detail', m.name),
                 }))}
               />
             </div>
@@ -659,7 +723,7 @@ export function LmcSection() {
             <DataState loading={statusLoading} empty={statusData.length === 0} label="status data" />
           ) : (
             <div style={{ minHeight: 420 }}>
-            <ProgressRows rows={statusData} />
+              <ProgressRows rows={statusData} />
             </div>
           )}
         </ChartCard>
@@ -680,7 +744,14 @@ export function LmcSection() {
         pdfLabel={funcTab === 'circle' ? 'LMC by Circle' : 'LMC by Function'}
         reportPath="msafe_dashboard_report/lmc_status"
         reportParams={{ status: 'Completed' }}
-        exportData={funcData.map((d) => ({ Name: d.name, 'LMC Count': d.count, Percentage: d.percentage ?? '' }))}
+        exportData={funcData.map((d) => ({
+          Name: d.name,
+          'Total Users': d.totalUsers ?? '',
+          'Approved Count': d.count,
+          'Approved %': d.percentage ?? '',
+          'Pending Count': d.pendingCount ?? '',
+          'Pending %': d.pendingPercentage ?? '',
+        }))}
         tag={<ChartSwitch modes={['function', 'circle']} value={funcTab} onChange={(v) => setFuncTab(v as 'function' | 'circle')} />}
         chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={funcMode} onChange={setFuncMode} />}
       >
@@ -715,7 +786,7 @@ export function LmcSection() {
         pdfLabel="LMC Completion Trend"
         reportPath="msafe_dashboard_report/lmc_status"
         reportParams={{ skip_date: 'true' }}
-        exportData={trendData.map((d) => ({ Month: d.m, 'Sign-offs': d.n }))}
+        exportData={trendData.map((d) => ({ Month: formatMonthLabel(d.m), 'Sign-offs': d.n }))}
         style={{ marginTop: 16 }}
         chartSwitch={<ChartSwitch modes={['line', 'bar', 'table']} value={trendMode} onChange={setTrendMode} />}
       >
@@ -733,7 +804,7 @@ export function LmcSection() {
               <tbody>
                 {trendData.map((r) => (
                   <tr key={r.m}>
-                    <td>{r.m}</td>
+                    <td>{formatMonthLabel(r.m)}</td>
                     <td className="num">{r.n.toLocaleString()}</td>
                   </tr>
                 ))}
@@ -744,9 +815,9 @@ export function LmcSection() {
           <div className="chart-wrap">
             <ResponsiveContainer width="100%" height={220}>
               {trendMode === 'line' ? (
-                <AreaChart data={trendData}>
+                <AreaChart data={trendData} margin={{ top: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
-                  <XAxis dataKey="m" tick={{ fontSize: 10, fill: C.sage }} />
+                  <XAxis dataKey="m" tick={{ fontSize: 10, fill: C.sage }} tickFormatter={formatMonthLabel} />
                   <YAxis tick={{ fontSize: 10, fill: C.sage }} />
                   <Tooltip content={renderTrendTooltip} />
                   <Area
@@ -756,15 +827,23 @@ export function LmcSection() {
                     fill="rgba(121,140,94,.10)"
                     strokeWidth={2.5}
                     name="LMC Sign-offs"
-                  />
+                  >
+                    <LabelList dataKey="n" content={renderAreaEndLabel(C.sage, trendData.length - 1)} />
+                  </Area>
                 </AreaChart>
               ) : (
-                <BarChart data={trendData}>
+                <BarChart data={trendData} margin={{ top: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
-                  <XAxis dataKey="m" tick={{ fontSize: 10, fill: C.sage }} />
+                  <XAxis dataKey="m" tick={{ fontSize: 10, fill: C.sage }} tickFormatter={formatMonthLabel} />
                   <YAxis tick={{ fontSize: 10, fill: C.sage }} />
                   <Tooltip content={renderTrendTooltip} />
-                  <Bar dataKey="n" fill={C.sage} radius={[5, 5, 0, 0]} name="LMC Sign-offs" />
+                  <Bar dataKey="n" fill={C.sage} radius={[5, 5, 0, 0]} name="LMC Sign-offs">
+                    <LabelList
+                      dataKey="n"
+                      position="top"
+                      style={{ fontSize: 10, fill: C.dark, fontWeight: 600 }}
+                    />
+                  </Bar>
                 </BarChart>
               )}
             </ResponsiveContainer>

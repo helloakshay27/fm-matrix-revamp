@@ -12,6 +12,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
+  LabelList,
 } from 'recharts';
 import type { TooltipProps } from 'recharts';
 import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
@@ -29,6 +30,33 @@ type ActiveShapeProps = {
   endAngle?: number;
   fill?: string;
 };
+
+type PieLabelProps = {
+  cx?: number;
+  cy?: number;
+  midAngle?: number;
+  innerRadius?: number;
+  outerRadius?: number;
+  percent?: number;
+  value?: number;
+};
+
+/** Value label drawn inside each slice's own ring (no connector line needed,
+ *  so it doesn't fight the legend for space). Skipped below ~4% share since
+ *  there isn't room to fit the text inside a sliver that thin. */
+function renderDonutValueLabel(props: PieLabelProps) {
+  const { cx = 0, cy = 0, midAngle = 0, innerRadius = 0, outerRadius = 0, percent = 0, value = 0 } = props;
+  if (percent < 0.04) return null;
+  const RADIAN = Math.PI / 180;
+  const radius = innerRadius + (outerRadius - innerRadius) / 2;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  return (
+    <text x={x} y={y} textAnchor="middle" dominantBaseline="central" fontSize={9} fontWeight={700} fill="#fff">
+      {value.toLocaleString()}
+    </text>
+  );
+}
 
 /** Subtle expand on hover — mirrors Chart.js doughnut hoverOffset: 4 */
 function renderActiveShape(props: ActiveShapeProps) {
@@ -94,6 +122,8 @@ export function DonutChart({
               isAnimationActive={false}
               activeIndex={activeIndex}
               activeShape={renderActiveShape}
+              label={renderDonutValueLabel}
+              labelLine={false}
               onMouseEnter={(_, index) => setActiveIndex(index)}
               onMouseLeave={() => setActiveIndex(undefined)}
             >
@@ -143,6 +173,9 @@ export function DonutChart({
                 title={d.name}
               >
                 {d.name}
+              </span>
+              <span style={{ fontSize: 10.5, color: C.dark, fontWeight: 700, flexShrink: 0 }}>
+                {d.value.toLocaleString()}
               </span>
             </div>
           ))}
@@ -264,6 +297,12 @@ export function SliceBarChart({
               {data.map((d) => (
                 <Cell key={d.name} fill={d.color} />
               ))}
+              <LabelList
+                dataKey="value"
+                position="right"
+                style={{ fontSize: 10, fill: C.dark, fontWeight: 600 }}
+                formatter={(v: number) => v.toLocaleString()}
+              />
             </Bar>
           </BarChart>
         </ResponsiveContainer>
@@ -274,7 +313,7 @@ export function SliceBarChart({
   return (
     <div className="chart-wrap" style={{ height }}>
       <ResponsiveContainer width="100%" height={height}>
-        <BarChart data={data} margin={{ left: 0, right: 8 }}>
+        <BarChart data={data} margin={{ top: 20, left: 0, right: 8 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
           <XAxis dataKey="name" tick={{ fontSize: 10, fill: C.sage }} />
           <YAxis tick={{ fontSize: 10, fill: C.sage }} />
@@ -286,6 +325,12 @@ export function SliceBarChart({
             {data.map((d) => (
               <Cell key={d.name} fill={d.color} />
             ))}
+            <LabelList
+              dataKey="value"
+              position="top"
+              style={{ fontSize: 10, fill: C.dark, fontWeight: 600 }}
+              formatter={(v: number) => v.toLocaleString()}
+            />
           </Bar>
         </BarChart>
       </ResponsiveContainer>

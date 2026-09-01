@@ -8,6 +8,7 @@ import {
   CartesianGrid,
   Tooltip,
   Cell,
+  LabelList,
 } from 'recharts';
 import type { TooltipProps } from 'recharts';
 import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
@@ -41,7 +42,7 @@ function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, 
   if (f.circleIds.length > 0) params.circle_id = f.circleIds.join(',');
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
-  if (f.empTypeId) params.employee_type= f.empTypeId;
+  if (f.empTypeId) params.employee_type = f.empTypeId;
   if (f.startDate) params.from_date = f.startDate;
   if (f.endDate) params.to_date = f.endDate;
   return params;
@@ -138,6 +139,15 @@ function normalizeVisitsPerDepartment(payload: unknown): Slice[] {
     .filter((item): item is Slice => Boolean(item));
 }
 
+function formatDateDMY(raw: string): string {
+  if (!raw || raw === '—') return raw;
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return raw;
+  const day = String(parsed.getDate()).padStart(2, '0');
+  const month = String(parsed.getMonth() + 1).padStart(2, '0');
+  return `${day}-${month}-${parsed.getFullYear()}`;
+}
+
 function normalizeRecentVisits(payload: unknown): RecentVisit[] {
   const list = unwrapList(payload, ['data', 'result', 'visits', 'records']);
   return list
@@ -149,10 +159,17 @@ function normalizeRecentVisits(payload: unknown): RecentVisit[] {
       const func = getString(record, ['function_name', 'function', 'func', 'department']) ?? '—';
       const circle = getString(record, ['circle_name', 'circle']) ?? '—';
       const area = getString(record, ['area_visited', 'area', 'location', 'site']) ?? '—';
-      const date = getString(record, ['visit_date', 'date', 'created_at']) ?? '—';
+      const date = formatDateDMY(getString(record, ['visit_date', 'date', 'created_at']) ?? '—');
       return { name, func, circle, area, date };
     })
     .filter((item): item is RecentVisit => Boolean(item));
+}
+
+// RAG thresholds standardized across the dashboard: Green >=98%, Amber 95-98%, Red <95%.
+function colorForVisitProgressPct(pct: number): string {
+  if (pct >= 98) return C.ok;
+  if (pct >= 95) return C.warn;
+  return C.err;
 }
 
 function normalizeVisitProgress(payload: unknown): ProgressRow[] {
@@ -170,7 +187,7 @@ function normalizeVisitProgress(payload: unknown): ProgressRow[] {
         const visits = Number(match[1]);
         const target = Number(match[2]);
         const pct = target > 0 ? Math.round((visits / target) * 100) : 0;
-        return { label, pct, val: `${visits}/${target}`, color: pct < 60 ? C.vi : C.warn };
+        return { label, pct, val: `${visits}/${target}`, color: colorForVisitProgressPct(pct) };
       }
 
       const visits = getNumber(record, ['visits', 'count', 'value', 'completed']);
@@ -178,7 +195,7 @@ function normalizeVisitProgress(payload: unknown): ProgressRow[] {
       const target = getNumber(record, ['target', 'target_visits', 'goal']) ?? 20;
       const explicitPct = getNumber(record, ['pct', 'percentage', 'percent']);
       const pct = explicitPct ?? Math.round((visits / target) * 100);
-      return { label, pct, val: `${visits}/${target}`, color: pct < 60 ? C.vi : C.warn };
+      return { label, pct, val: `${visits}/${target}`, color: colorForVisitProgressPct(pct) };
     })
     .filter((item): item is ProgressRow => Boolean(item));
 }
@@ -601,7 +618,9 @@ export function SmtSection() {
                   cursor={{ fill: 'rgba(44,44,44,.04)' }}
                   content={(props) => <MsafeChartTooltip {...props} bodyLabel="Visits" />}
                 />
-                <Bar dataKey="n" fill={C.lav} radius={[0, 5, 5, 0]} name="Visits" />
+                <Bar dataKey="n" fill={C.lav} radius={[0, 5, 5, 0]} name="Visits">
+                  <LabelList dataKey="n" position="right" style={{ fontSize: 10, fill: C.dark, fontWeight: 600 }} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -695,7 +714,7 @@ export function SmtSection() {
               <div style={{ overflowX: 'auto' }}>
                 <div style={{ minWidth: Math.max(700, roleChartRows.length * 90) }}>
                   <ResponsiveContainer width="100%" height={380}>
-                    <BarChart data={roleChartRows} margin={{ top: 4, right: 16, left: 0, bottom: 110 }}>
+                    <BarChart data={roleChartRows} margin={{ top: 20, right: 16, left: 0, bottom: 110 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
                       <XAxis
                         type="category"
@@ -718,6 +737,7 @@ export function SmtSection() {
                         {roleChartRows.map((row) => (
                           <Cell key={row.name} fill={row.color} />
                         ))}
+                        <LabelList dataKey="value" position="top" style={{ fontSize: 10, fill: C.dark, fontWeight: 600 }} />
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
@@ -763,7 +783,7 @@ export function SmtSection() {
             <DataState loading={recentLoading} empty={recentVisits.length === 0} label="recent visits" />
           ) : (
             <div className="tbl-scroll">
-              <table className="tbl">
+              <table className="tbl tbl--recent-visits">
                 <thead>
                   <tr>
                     <th>Done By</th>
@@ -775,11 +795,14 @@ export function SmtSection() {
                 </thead>
                 <tbody>
                   {recentVisits.map((s) => (
-                    <tr key={s.name + s.date} onClick={() => openDrill('smt-visit', s.name)}>
-                      <td className="cell-strong">{s.name}</td>
-                      <td>{s.func}</td>
-                      <td>{s.circle}</td>
-                      <td>{s.area}</td>
+                    <tr
+                      key={s.name + s.date}
+                    // onClick={() => openDrill('smt-visit', s.name)}
+                    >
+                      <td className="cell-strong" title={s.name}>{s.name}</td>
+                      <td title={s.func}>{s.func}</td>
+                      <td title={s.circle}>{s.circle}</td>
+                      <td title={s.area}>{s.area}</td>
                       <td>{s.date}</td>
                     </tr>
                   ))}

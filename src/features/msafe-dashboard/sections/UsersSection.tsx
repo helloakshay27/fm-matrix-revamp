@@ -10,6 +10,7 @@ import {
   Area,
   AreaChart,
   Legend,
+  LabelList,
 } from 'recharts';
 import { AccordionShell, ChartCard } from '../components/ChartCard';
 import { ChartSwitch } from '../components/ChartSwitch';
@@ -20,7 +21,7 @@ import type { Persona } from '../data/constants';
 import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import { getAuthHeader } from '@/config/apiConfig';
 
-type CircleChartRow = { name: string; Internal: number; External: number };
+type CircleChartRow = { name: string; Internal: number; External: number; Total: number };
 type FuncChartRow = { name: string; value: number; color: string };
 type RegChartRow = { m: string; n: number; internal: number; external: number };
 
@@ -101,10 +102,14 @@ const normalizeCircleChartData = (payload: unknown): CircleChartRow[] => {
         return null;
       }
 
+      const finalInternal = normalizedInternal ?? 0;
+      const finalExternal = normalizedExternal ?? 0;
+
       return {
         name,
-        Internal: normalizedInternal ?? 0,
-        External: normalizedExternal ?? 0,
+        Internal: finalInternal,
+        External: finalExternal,
+        Total: finalInternal + finalExternal,
       };
     })
     .filter((item): item is CircleChartRow => Boolean(item));
@@ -208,7 +213,7 @@ function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, 
   if (f.circleIds.length > 0) params.circle_id = f.circleIds.join(',');
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
-  if (f.empTypeId) params.employee_type= f.empTypeId;
+  if (f.empTypeId) params.employee_type = f.empTypeId;
   if (f.startDate) params.from_date = f.startDate;
   if (f.endDate) params.to_date = f.endDate;
   return params;
@@ -245,6 +250,21 @@ async function fetchMsafeUserDashboardJson(
 
 async function fetchUserStatistics(type: string, extraParams?: Record<string, string>): Promise<unknown> {
   return fetchMsafeUserDashboardJson('user_statistics.json', { type, ...extraParams });
+}
+
+/** Hides the first and last point's label — with only ~220px of chart width, the
+ *  first value collides with the Y-axis tick labels and the last collides with
+ *  the line's own endpoint / adjacent series label. */
+function renderAreaEndLabel(color: string, lastIndex: number) {
+  return (props: { x?: number; y?: number; value?: number; index?: number }) => {
+    const { x, y, value, index } = props;
+    if (index === 0 || index === lastIndex || x == null || y == null) return null;
+    return (
+      <text x={x} y={y} dy={-6} textAnchor="middle" fontSize={9} fontWeight={600} fill={color}>
+        {value}
+      </text>
+    );
+  };
 }
 
 function DataState({ loading, empty, label }: { loading: boolean; empty: boolean; label: string }) {
@@ -463,7 +483,14 @@ export function UsersSection() {
                 {regMode === 'line' ? (
                   <AreaChart data={regChartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
-                    <XAxis dataKey="m" tick={{ fontSize: 10, fill: C.sage }} />
+                    <XAxis
+                      dataKey="m"
+                      tick={{ fontSize: 10, fill: C.sage }}
+                      interval={0}
+                      angle={-35}
+                      textAnchor="end"
+                      height={56}
+                    />
                     <YAxis tick={{ fontSize: 10, fill: C.sage }} />
                     <Tooltip />
                     <Legend wrapperStyle={{ fontSize: 12 }} />
@@ -474,7 +501,9 @@ export function UsersSection() {
                       fill="rgba(218,119,86,.14)"
                       strokeWidth={2.5}
                       name="Internal Users"
-                    />
+                    >
+                      <LabelList dataKey="internal" content={renderAreaEndLabel(C.terra, regChartData.length - 1)} />
+                    </Area>
                     <Area
                       type="monotone"
                       dataKey="external"
@@ -482,17 +511,30 @@ export function UsersSection() {
                       fill="rgba(107,155,204,.14)"
                       strokeWidth={2.5}
                       name="External Users"
-                    />
+                    >
+                      <LabelList dataKey="external" content={renderAreaEndLabel(C.blue, regChartData.length - 1)} />
+                    </Area>
                   </AreaChart>
                 ) : (
-                  <BarChart data={regChartData}>
+                  <BarChart data={regChartData} margin={{ top: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
-                    <XAxis dataKey="m" tick={{ fontSize: 10, fill: C.sage }} />
+                    <XAxis
+                      dataKey="m"
+                      tick={{ fontSize: 10, fill: C.sage }}
+                      interval={0}
+                      angle={-35}
+                      textAnchor="end"
+                      height={56}
+                    />
                     <YAxis tick={{ fontSize: 10, fill: C.sage }} />
                     <Tooltip />
                     <Legend wrapperStyle={{ fontSize: 12 }} />
-                    <Bar dataKey="internal" fill={C.terra} radius={[5, 5, 0, 0]} name="Internal Users" />
-                    <Bar dataKey="external" fill={C.blue} radius={[5, 5, 0, 0]} name="External Users" />
+                    <Bar dataKey="internal" fill={C.terra} radius={[5, 5, 0, 0]} name="Internal Users">
+                      <LabelList dataKey="internal" position="top" style={{ fontSize: 9, fill: C.dark, fontWeight: 600 }} />
+                    </Bar>
+                    <Bar dataKey="external" fill={C.blue} radius={[5, 5, 0, 0]} name="External Users">
+                      <LabelList dataKey="external" position="top" style={{ fontSize: 9, fill: C.dark, fontWeight: 600 }} />
+                    </Bar>
                   </BarChart>
                 )}
               </ResponsiveContainer>
@@ -503,7 +545,7 @@ export function UsersSection() {
 
       <ChartCard
         title="Users per Circle"
-        // sub="Distribution across 22 VIL circles"
+        sub="Distribution across 22 VIL circles"
         infoKey="user-circle"
         showPdf
         pdfLabel="Users per Circle"
@@ -523,7 +565,7 @@ export function UsersSection() {
           <div style={{ overflowX: 'auto' }}>
             <div style={{ minWidth: Math.max(700, circleChartData.length * 55) }}>
               <ResponsiveContainer width="100%" height={360}>
-                <BarChart data={circleChartData} margin={{ top: 4, right: 8, left: 0, bottom: 70 }}>
+                <BarChart data={circleChartData} margin={{ top: 24, right: 8, left: 0, bottom: 70 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
                   <XAxis
                     dataKey="name"
@@ -537,7 +579,9 @@ export function UsersSection() {
                   <Tooltip />
                   <Legend wrapperStyle={{ fontSize: 10.5 }} iconType="square" iconSize={10} />
                   <Bar dataKey="Internal" stackId="a" fill={C.blue} radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="External" stackId="a" fill={C.terra} radius={[5, 5, 0, 0]} />
+                  <Bar dataKey="External" stackId="a" fill={C.terra} radius={[5, 5, 0, 0]}>
+                    <LabelList dataKey="Total" position="top" style={{ fontSize: 9, fill: C.dark, fontWeight: 600 }} />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
