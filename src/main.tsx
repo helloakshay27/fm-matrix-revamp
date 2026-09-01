@@ -9,6 +9,9 @@ import { BrowserRouter as Router } from "react-router-dom";
 import { PostHogProvider } from "@posthog/react";
 import { PostHogPageView } from "./components/PostHogPageView.tsx";
 import posthog from "posthog-js";
+import { getPostHogSuperProperties } from "./utils/posthogContext.ts";
+import { attachPostHogDebugLogger } from "./utils/posthogDebug.ts";
+import { installDownloadTracking } from "./utils/downloadTracking.ts";
 // import { registerServiceWorker } from "./utils/pwa.ts";
 
 // Register service worker for PWA
@@ -31,12 +34,41 @@ initColorPatch();
 // apiKey + options directly in PostHogProvider, posthog.init() is called in a
 // useEffect (after render), so child components that call posthog.capture()
 // during their own mount effects race against init and events get dropped.
-posthog.init(import.meta.env.VITE_POSTHOG_PROJECT_TOKEN, {
-  api_host: import.meta.env.VITE_POSTHOG_HOST,
-  autocapture: false,
-  capture_pageview: false, // handled manually by PostHogPageView
-  disable_session_recording: true,
-});
+const posthogToken = import.meta.env.VITE_POSTHOG_PROJECT_TOKEN;
+const posthogHost = import.meta.env.VITE_POSTHOG_HOST;
+
+// posthog.init(undefined) does not throw — it returns a client that silently
+// drops every capture(). That failure mode is indistinguishable from "the
+// instrumentation is broken", so say so loudly instead of guessing later.
+if (!posthogToken || posthogToken === "phc_replace_me") {
+  console.error(
+    "[PostHog] VITE_POSTHOG_PROJECT_TOKEN is not set — analytics is DISABLED " +
+      "and every event will be dropped. Set it in .env and restart the dev server " +
+      "(Vite inlines VITE_* at build time)."
+  );
+} else {
+  posthog.init(posthogToken, {
+    api_host: posthogHost,
+    autocapture: false,
+    capture_pageview: false, // handled manually by PostHogPageView
+    disable_session_recording: true,
+  });
+
+  // Several apps share this PostHog project — the Vi my Workspace Flutter app, a separate
+  // Resident app, and this web app. `client` and `is_test` are the mandatory filters every
+  // query needs to tell them apart (§6.1/§6.7 of the instrumentation reference); registering
+  // them as super-properties stamps them on $pageview and on every per-module event helper
+  // without each one having to remember. See utils/posthogContext.ts.
+  posthog.register(getPostHogSuperProperties());
+
+  // Logs every captured event to the console on the dev server, or anywhere once
+  // `localStorage.ph_debug = '1'` is set. One listener covers every event module.
+  attachPostHogDebugLogger(posthog);
+
+  // Catch-all for file downloads that no call site reports explicitly - see
+  // utils/downloadTracking.ts for why this is a patch and not 150 edits.
+  installDownloadTracking(posthog);
+}
 
 createRoot(document.getElementById("root")!).render(
   <PostHogProvider client={posthog}>

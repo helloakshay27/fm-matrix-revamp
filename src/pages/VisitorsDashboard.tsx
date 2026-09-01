@@ -28,6 +28,7 @@ import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions, getAuthHeader, EN
 import { toast } from 'sonner';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { useVisitorEvents } from '@/components/PostHogVisitorEvents';
+import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { MaterialDatePicker } from '@/components/ui/material-date-picker';
@@ -185,6 +186,14 @@ const getVisitorsOut = async (siteId: number, page: number = 1, perPage: number 
 export const VisitorsDashboard = () => {
   const { shouldShow } = useDynamicPermissions();
   const visitorEvents = useVisitorEvents();
+  const gaEvents = useGaFunnelEvents();
+
+  // GA parity: the visitor register was opened. Mount-only, so paging and tab
+  // switches inside the page do not each count as a fresh page view.
+  useEffect(() => {
+    gaEvents.onVisitorsPageClicked("admin");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [selectedPerson, setSelectedPerson] = useState('');
   const [isNewVisitorDialogOpen, setIsNewVisitorDialogOpen] = useState(false);
   const [isUpdateNumberDialogOpen, setIsUpdateNumberDialogOpen] = useState(false);
@@ -1152,6 +1161,7 @@ export const VisitorsDashboard = () => {
   };
 
   const handleVisitorDetails = (visitorId: number) => {
+    gaEvents.onVisitorListItemClicked("admin", visitorId);
     console.log('Navigating to visitor details:', visitorId);
     navigate(`/security/visitor/details/${visitorId}`);
   };
