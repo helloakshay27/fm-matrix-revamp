@@ -330,7 +330,6 @@ export const { ENDPOINTS } = API_CONFIG;
 export const BASE_URL = API_CONFIG.BASE_URL;
 export const TOKEN = API_CONFIG.TOKEN;
 
-// Helper to get full URL
 export const getFullUrl = (endpoint: string): string => {
   const baseUrl = API_CONFIG.BASE_URL;
   if (!baseUrl) {
@@ -341,7 +340,9 @@ export const getFullUrl = (endpoint: string): string => {
       "Base URL is not configured. Please check your authentication settings."
     );
   }
-  return `${baseUrl}${endpoint}`;
+  const cleanBase = baseUrl.replace(/\/+$/, "");
+  const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  return `${cleanBase}${cleanEndpoint}`;
 };
 
 // Helper to get authorization header

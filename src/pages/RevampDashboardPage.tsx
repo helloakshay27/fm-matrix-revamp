@@ -78,6 +78,7 @@ import {
   useVendorDashboardData,
   usePermitsDashboardData,
   useIncidentsDashboardData,
+  useCrmDashboardData,
   useFinanceDashboardData,
 } from "@/hooks/useFmDashboardData";
 
@@ -344,24 +345,16 @@ const MODULES: ModuleDefinition[] = [
     key: "transitioning",
     label: "Transitioning",
     icon: RefreshCw,
-    summary: "Snagging, violations and handover-takeover progress across the portfolio.",
+    summary: "Transition and snag data will appear here when the connected source data is available.",
     subTabs: ["HOTO", "Snagging", "Insights", "Fitout"],
-    stats: [
-      { label: "Open Snags", value: "38", tone: "amber" },
-      { label: "Violations", value: "5", tone: "red" },
-      { label: "HOTO Pending", value: "3", tone: "amber" },
-    ],
-    chips: [
-      { label: "38 Open Snags", tone: "amber" },
-      { label: "5 Violations", tone: "red" },
-      { label: "3 HOTO Pending", tone: "amber" },
-    ],
+    stats: [],
+    chips: [],
   },
   {
     key: "maintenance",
     label: "Maintenance",
     icon: Wrench,
-    summary: "AMC coverage, asset uptime and PPM checklist compliance.",
+    summary: "Maintenance analytics and operational KPIs from the selected sites and date range.",
     subTabs: [
       "Tickets",
       "Assets",
@@ -374,56 +367,32 @@ const MODULES: ModuleDefinition[] = [
       "Survey",
       "Vendor",
     ],
-    stats: [
-      { label: "AMC Miss", value: "128", tone: "amber" },
-      { label: "Assets Down", value: "63", tone: "red" },
-      { label: "PPM Overdue", value: "676", tone: "red" },
-    ],
-    chips: [
-      { label: "AMC Miss 128", tone: "amber" },
-      { label: "Assets Down 63", tone: "red" },
-      { label: "676 PPM Overdue", tone: "red" },
-      { label: "Vendor Risk Flagged", tone: "red" },
-    ],
+    stats: [],
+    chips: [],
   },
   {
     key: "safety",
     label: "Safety",
     icon: HardHat,
-    summary: "Incident closure integrity, permit-to-work backlog and emergency readiness.",
+    summary: "Safety metrics will render here once valid source data is loaded.",
     subTabs: ["SOHI", "Incidents", "Permits", "Emergency"],
-    stats: [
-      { label: "No RCA on Closed Incidents", value: "71%", tone: "red" },
-      { label: "Permits Stuck in Draft", value: "52", tone: "red" },
-    ],
-    chips: [
-      { label: "71% No RCA", tone: "red" },
-      { label: "52 Draft Stuck", tone: "red" },
-      { label: "Emergency Prep Gap", tone: "red" },
-    ],
+    stats: [],
+    chips: [],
   },
   {
     key: "finance",
     label: "Finance",
     icon: Wallet,
-    summary: "Invoice ageing, purchase-requisition backlog and wallet adoption.",
+    summary: "Financial portfolio metrics will be shown from the live finance datasets.",
     subTabs: ["Overview", "Procurement", "Invoices", "KPIs", "GDN", "Wallet"],
-    stats: [
-      { label: "Overdue Invoices", value: "2", tone: "red" },
-      { label: "Draft PRs", value: "130", tone: "amber" },
-      { label: "Wallet Active Users", value: "21", tone: "green" },
-    ],
-    chips: [
-      { label: "2 Overdue Invoices", tone: "red" },
-      { label: "130 Draft PRs", tone: "amber" },
-      { label: "Wallet: 21 Users Active", tone: "green" },
-    ],
+    stats: [],
+    chips: [],
   },
   {
     key: "crm",
     label: "CRM",
     icon: Users,
-    summary: "Tenant sentiment, loyalty redemption and engagement adoption.",
+    summary: "CRM and tenant engagement widgets will populate from live CRM data.",
     subTabs: ["Overview", "My Pipeline", "Calendar", "My Tasks", "Campaigns"],
     stats: [],
     chips: [],
@@ -432,7 +401,7 @@ const MODULES: ModuleDefinition[] = [
     key: "utility",
     label: "Utility",
     icon: Zap,
-    summary: "Meter health, billing accuracy and solar generation data freshness.",
+    summary: "Utility data will appear when the utility source feeds are available.",
     subTabs: [
       "Energy",
       "Water",
@@ -443,48 +412,26 @@ const MODULES: ModuleDefinition[] = [
       "EV Consumption",
       "Solar Generator",
     ],
-    stats: [
-      { label: "Billing Risk", value: "High", tone: "red" },
-      { label: "Solar Data Staleness", value: "16mo", tone: "red" },
-    ],
-    chips: [
-      { label: "Billing May Be Inflated", tone: "red" },
-      { label: "Meter Logged Out-of-Order", tone: "red" },
-      { label: "Solar Data 16mo Stale", tone: "red" },
-    ],
+    stats: [],
+    chips: [],
   },
   {
     key: "security",
     label: "Security",
     icon: Lock,
-    summary: "Patrol system health, gate-pass reconciliation and credential expiry.",
+    summary: "Security metrics will render from the live patrol, visitor and access data.",
     subTabs: ["Gate Passes", "Patrol", "Visitors", "Vehicles", "Staff"],
-    stats: [
-      { label: "Vehicle Insurance Expired", value: "6yr", tone: "red" },
-      { label: "Gate Pass Unmatched", value: "18", tone: "amber" },
-    ],
-    chips: [
-      { label: "Vehicle Ins. 6yr Expired", tone: "red" },
-      { label: "Patrol System Error", tone: "red" },
-      { label: "Expired Creds", tone: "amber" },
-      { label: "Gate Pass 18 Unmatched", tone: "amber" },
-    ],
+    stats: [],
+    chips: [],
   },
   {
     key: "vas",
     label: "Value Added Services",
     icon: Star,
-    summary: "Parking utilisation, F&B order flow and amenity booking adoption.",
+    summary: "Service and amenity metrics will populate from the VAS sources.",
     subTabs: ["F&B", "OSR", "Parking", "Booking", "Space Management", "Mailroom"],
-    stats: [
-      { label: "Parking Utilisation", value: "6%", tone: "amber" },
-      { label: "Booking Usage", value: "56pg", tone: "green" },
-    ],
-    chips: [
-      { label: "Parking 6% + 0 Bookings", tone: "amber" },
-      { label: "F&B Order Status", tone: "amber" },
-      { label: "Booking: 56pg Real Usage", tone: "green" },
-    ],
+    stats: [],
+    chips: [],
   },
   // {
   //   key: "marketplace",
@@ -1166,131 +1113,7 @@ interface InsightCategory {
   items: InsightItem[];
 }
 
-const INSIGHT_CATEGORIES: InsightCategory[] = [
-  {
-    key: "critical",
-    title: "Critical",
-    count: 5,
-    summary: "5 items · P1 leadership action required",
-    tone: "err",
-    items: [
-      { priority: "P1", priorityTone: "err", label: "16 Permits Expired", age: "15m", isNew: true, module: "safety", subTab: "Permits" },
-      { priority: "P1", priorityTone: "err", label: "950 Utility Bills Pending", age: "2h", module: "finance", subTab: "Invoices" },
-      { priority: "P1", priorityTone: "err", label: "Patrol Gap Since Jan 2026", age: "Today", module: "security", subTab: "Patrol" },
-      { priority: "P1", priorityTone: "err", label: "27 Asset Audits Overdue", age: "2m", isNew: true, module: "maintenance", subTab: "Audit" },
-      { priority: "P1", priorityTone: "err", label: "2 Invoices > 90 Days", age: "Yesterday", module: "finance", subTab: "Invoices" },
-    ],
-  },
-  {
-    key: "attention",
-    title: "Attention Needed",
-    count: 5,
-    summary: "Human intervention required this week",
-    tone: "warn",
-    items: [
-      { priority: "P2", priorityTone: "warn", label: "128 AMC Visits Missed", age: "Today", module: "maintenance", subTab: "AMC" },
-      { priority: "P2", priorityTone: "warn", label: "73% Washroom Negative", age: "1h", isNew: true, module: "crm", subTab: "Overview" },
-      { priority: "P2", priorityTone: "warn", label: "Solar Feed Stale", age: "2h", module: "utility", subTab: "Solar Generator" },
-      { priority: "P2", priorityTone: "warn", label: "8 Vendor KYC Expiring", age: "Today", module: "maintenance", subTab: "Vendor" },
-      { priority: "P2", priorityTone: "warn", label: "0 Vendor Audits Conducted", age: "Yesterday", module: "maintenance", subTab: "Vendor" },
-    ],
-  },
-  {
-    key: "op-backlog",
-    title: "Operational Backlog",
-    count: 5,
-    summary: "Workflow queues accumulating across modules",
-    tone: "terra",
-    items: [
-      { priority: "P2", priorityTone: "warn", label: "130+ Draft PRs Abandoned", age: "Today", module: "finance", subTab: "Procurement" },
-      { priority: "P2", priorityTone: "warn", label: "55 Permit Drafts Stuck", age: "Today", module: "safety", subTab: "Permits" },
-      { priority: "P2", priorityTone: "warn", label: "15+ Approvals Pending at SI Level", age: "Today", module: "finance", subTab: "Overview" },
-      { priority: "P2", priorityTone: "warn", label: "3 HOTO Pending — 2 Vendor→FM, 1 FM→User", age: "Today", module: "transitioning", subTab: "HOTO" },
-      { priority: "P2", priorityTone: "warn", label: "38 Open Snags — Survey 16, Permit 22", age: "Today", module: "transitioning", subTab: "Snagging" },
-    ],
-  },
-  {
-    key: "data-quality",
-    title: "Data Quality",
-    count: 5,
-    summary: "Data integrity blocking reporting accuracy",
-    tone: "purple",
-    items: [
-      { priority: "P3", priorityTone: "ok", label: "Waste Vendor Field Blank on All Records", age: "Yesterday", module: "maintenance", subTab: "Waste" },
-      { priority: "P3", priorityTone: "ok", label: "Negative Meter Readings × 2", age: "2h", module: "utility", subTab: "Daily Readings" },
-      { priority: "P3", priorityTone: "ok", label: "Vohra × 6 Duplicate Bills", age: "Today", module: "utility", subTab: "Energy" },
-      { priority: "P3", priorityTone: "ok", label: "Events + Broadcast APIs Broken", age: "Today", module: "crm", subTab: "Overview" },
-      { priority: "P3", priorityTone: "ok", label: "Lead Module — Seed Data Only", age: "Today", module: "crm", subTab: "Overview" },
-    ],
-  },
-  {
-    key: "predictions",
-    title: "Predictions",
-    count: 1,
-    summary: "Leading indicators signalling deterioration",
-    tone: "info",
-    items: [
-      { priority: "P2", priorityTone: "warn", label: "AMC Miss (128) + 63 Breakdowns — Link Unconfirmed", age: "Today", module: "maintenance", subTab: "AMC" },
-    ],
-  },
-  {
-    key: "recommendations",
-    title: "Recommendations",
-    count: 5,
-    summary: "Actions expected to improve portfolio health",
-    tone: "sage",
-    items: [
-      { priority: "P2", priorityTone: "warn", label: "Renew Expired Permits", age: "Today", module: "safety", subTab: "Permits" },
-      { priority: "P2", priorityTone: "warn", label: "Start Asset Audit Programme", age: "2h", module: "maintenance", subTab: "Audit" },
-      { priority: "P2", priorityTone: "warn", label: "Resolve Billing Backlog", age: "Yesterday", module: "finance", subTab: "Invoices" },
-      { priority: "P2", priorityTone: "warn", label: "Restore Solar Feed", age: "2h", module: "utility", subTab: "Solar Generator" },
-      { priority: "P2", priorityTone: "warn", label: "Validate Meter Imports", age: "Today", module: "utility", subTab: "Daily Readings" },
-    ],
-  },
-  {
-    key: "positive",
-    title: "Positive Signals",
-    count: 3,
-    summary: "Evidence of effective operational execution",
-    tone: "ok",
-    items: [
-      { priority: "P3", priorityTone: "ok", label: "24 Zero Incident Days", age: "Today", module: "safety", subTab: "Incidents" },
-      { priority: "P3", priorityTone: "ok", label: "LTIR 0.00", age: "Today", module: "safety", subTab: "SOHI" },
-      { priority: "P3", priorityTone: "ok", label: "Waste Recycling 43%", age: "Yesterday", module: "maintenance", subTab: "Waste" },
-    ],
-  },
-  {
-    key: "anomalies",
-    title: "Anomalies",
-    count: 3,
-    summary: "Unusual readings requiring investigation",
-    tone: "warn",
-    items: [
-      { priority: "P2", priorityTone: "warn", label: "Negative Meter Readings × 2", age: "2h", module: "utility", subTab: "Daily Readings" },
-      { priority: "P2", priorityTone: "warn", label: "Common Area Consumption +12%", age: "Today", module: "utility", subTab: "Energy" },
-      { priority: "P2", priorityTone: "warn", label: "0 Patrol Tickets Generated", age: "Today", module: "security", subTab: "Patrol" },
-    ],
-  },
-  {
-    key: "escalations",
-    title: "Escalations",
-    count: 2,
-    summary: "Executive action required — cannot delegate",
-    tone: "err",
-    items: [
-      { priority: "P1", priorityTone: "err", label: "Audit Programme Stalled — Escalate Now", age: "Today", module: "maintenance", subTab: "Audit" },
-      { priority: "P1", priorityTone: "err", label: "Phantom Routes Inflating Patrol — Deactivate Import 12", age: "Today", module: "security", subTab: "Patrol" },
-    ],
-  },
-  {
-    key: "recently-changed",
-    title: "Recently Changed",
-    count: 0,
-    summary: "Audit trail · no recent changes",
-    tone: "purple",
-    items: [],
-  },
-];
+const INSIGHT_CATEGORIES: InsightCategory[] = [];
 
 const INSIGHT_GLOW_TOTAL = INSIGHT_CATEGORIES.slice(0, 5).reduce((sum, cat) => sum + cat.count, 0);
 
@@ -1326,120 +1149,14 @@ interface ModuleInsightDataset {
 }
 
 const MODULE_INSIGHT_DATASETS: Record<string, ModuleInsightDataset> = {
-  maintenance: {
-    title: "Maintenance Intelligence",
-    subtitle: "4 active insights",
-    health: { critical: 2, dueWeek: 2, escalated: 0, badge: "HIGH RISK", badgeTone: "err" },
-    items: {
-      critical: [
-        { priority: "P1", priorityTone: "err", label: "128 AMC Visits Missed", age: "Today", module: "maintenance", subTab: "AMC" },
-        { priority: "P1", priorityTone: "err", label: "676 PPM Overdue", age: "Today", module: "maintenance", subTab: "Checklists" },
-      ],
-      attention: [
-        { priority: "P2", priorityTone: "warn", label: "63 Asset Breakdowns", age: "Today", module: "maintenance", subTab: "Assets" },
-        { priority: "P2", priorityTone: "warn", label: "SLA Breach 28%", age: "Today", module: "maintenance", subTab: "Tickets" },
-      ],
-    },
-  },
-  safety: {
-    title: "Safety Intelligence",
-    subtitle: "4 active insights",
-    health: { critical: 1, dueWeek: 1, escalated: 2, badge: "WATCH", badgeTone: "warn" },
-    items: {
-      critical: [
-        { priority: "P1", priorityTone: "err", label: "16 Permits Expired", age: "Today", module: "safety", subTab: "Permits" },
-      ],
-      attention: [
-        { priority: "P2", priorityTone: "warn", label: "55 Draft Permits Stuck", age: "Today", module: "safety", subTab: "Permits" },
-      ],
-      positive: [
-        { priority: "P3", priorityTone: "ok", label: "24 Zero Incident Days", age: "Today", module: "safety", subTab: "Incidents" },
-        { priority: "P3", priorityTone: "ok", label: "LTIR 0.00", age: "Today", module: "safety", subTab: "SOHI" },
-      ],
-    },
-  },
-  finance: {
-    title: "Financial Intelligence",
-    subtitle: "4 active insights",
-    health: { critical: 2, dueWeek: 2, escalated: 0, badge: "HIGH RISK", badgeTone: "err" },
-    items: {
-      critical: [
-        { priority: "P1", priorityTone: "err", label: "950 Utility Bills Pending", age: "Today", module: "finance", subTab: "Invoices" },
-        { priority: "P1", priorityTone: "err", label: "2 Invoices > 90 Days", age: "Today", module: "finance", subTab: "Invoices" },
-      ],
-      attention: [
-        { priority: "P2", priorityTone: "warn", label: "130 Draft PRs", age: "Today", module: "finance", subTab: "Procurement" },
-        { priority: "P2", priorityTone: "warn", label: "WO API Error", age: "Today", module: "finance", subTab: "Overview" },
-      ],
-    },
-  },
-  utility: {
-    title: "Utility Intelligence",
-    subtitle: "3 active insights",
-    health: { critical: 1, dueWeek: 2, escalated: 0, badge: "WATCH", badgeTone: "warn" },
-    items: {
-      critical: [
-        { priority: "P1", priorityTone: "err", label: "Solar Feed Stale", age: "Today", module: "utility", subTab: "Solar Generator" },
-      ],
-      attention: [
-        { priority: "P2", priorityTone: "warn", label: "Meter Anomalies", age: "Today", module: "utility", subTab: "Daily Readings" },
-        { priority: "P2", priorityTone: "warn", label: "Water Monitoring Gap", age: "Today", module: "utility", subTab: "Water" },
-      ],
-    },
-  },
-  crm: {
-    title: "Tenant Intelligence",
-    subtitle: "2 active insights",
-    health: { critical: 1, dueWeek: 1, escalated: 0, badge: "WATCH", badgeTone: "warn" },
-    items: {
-      critical: [
-        { priority: "P1", priorityTone: "err", label: "73% Washroom Negative", age: "Today", module: "crm", subTab: "Overview" },
-      ],
-      attention: [
-        { priority: "P2", priorityTone: "warn", label: "Loyalty Redemption 0%", age: "Today", module: "crm", subTab: "Overview" },
-      ],
-    },
-  },
-  security: {
-    title: "Security Intelligence",
-    subtitle: "3 active insights",
-    health: { critical: 1, dueWeek: 2, escalated: 0, badge: "HIGH RISK", badgeTone: "err" },
-    items: {
-      critical: [
-        { priority: "P1", priorityTone: "err", label: "Patrol Gap Since Jan 2026", age: "Today", module: "security", subTab: "Patrol" },
-      ],
-      attention: [
-        { priority: "P2", priorityTone: "warn", label: "2 Credentials Expired", age: "Today", module: "security", subTab: "Staff" },
-        { priority: "P2", priorityTone: "warn", label: "0 Patrol Tickets Generated", age: "Today", module: "security", subTab: "Patrol" },
-      ],
-    },
-  },
-  vas: {
-    title: "VAS Intelligence",
-    subtitle: "2 active insights",
-    health: { critical: 1, dueWeek: 1, escalated: 0, badge: "WATCH", badgeTone: "warn" },
-    items: {
-      critical: [
-        { priority: "P1", priorityTone: "err", label: "OSR 15 Months Pending", age: "Today", module: "vas", subTab: "OSR" },
-      ],
-      attention: [
-        { priority: "P2", priorityTone: "warn", label: "Loyalty Unredeemed", age: "Today", module: "vas", subTab: "F&B" },
-      ],
-    },
-  },
-  transitioning: {
-    title: "Transition Intelligence",
-    subtitle: "2 active insights",
-    health: { critical: 1, dueWeek: 1, escalated: 0, badge: "WATCH", badgeTone: "warn" },
-    items: {
-      critical: [
-        { priority: "P1", priorityTone: "err", label: "38 Open Snags", age: "Today", module: "transitioning", subTab: "Snagging" },
-      ],
-      attention: [
-        { priority: "P2", priorityTone: "warn", label: "5 Violations", age: "Today", module: "transitioning", subTab: "Snagging" },
-      ],
-    },
-  },
+  maintenance: { title: "Maintenance Intelligence", subtitle: "No live insights yet", health: { critical: 0, dueWeek: 0, escalated: 0, badge: "NO DATA", badgeTone: "purple" }, items: {} },
+  safety: { title: "Safety Intelligence", subtitle: "No live insights yet", health: { critical: 0, dueWeek: 0, escalated: 0, badge: "NO DATA", badgeTone: "purple" }, items: {} },
+  finance: { title: "Financial Intelligence", subtitle: "No live insights yet", health: { critical: 0, dueWeek: 0, escalated: 0, badge: "NO DATA", badgeTone: "purple" }, items: {} },
+  utility: { title: "Utility Intelligence", subtitle: "No live insights yet", health: { critical: 0, dueWeek: 0, escalated: 0, badge: "NO DATA", badgeTone: "purple" }, items: {} },
+  crm: { title: "Tenant Intelligence", subtitle: "No live insights yet", health: { critical: 0, dueWeek: 0, escalated: 0, badge: "NO DATA", badgeTone: "purple" }, items: {} },
+  security: { title: "Security Intelligence", subtitle: "No live insights yet", health: { critical: 0, dueWeek: 0, escalated: 0, badge: "NO DATA", badgeTone: "purple" }, items: {} },
+  vas: { title: "VAS Intelligence", subtitle: "No live insights yet", health: { critical: 0, dueWeek: 0, escalated: 0, badge: "NO DATA", badgeTone: "purple" }, items: {} },
+  transitioning: { title: "Transition Intelligence", subtitle: "No live insights yet", health: { critical: 0, dueWeek: 0, escalated: 0, badge: "NO DATA", badgeTone: "purple" }, items: {} },
 };
 
 const DEFAULT_INSIGHT_HEALTH: ModuleInsightHealth = { critical: 5, dueWeek: 12, escalated: 2, badge: "HIGH RISK", badgeTone: "err" };
@@ -1532,63 +1249,6 @@ function InsightsRail({ collapsed, onToggle, data, activeCategory, onCategoryCha
         </button>
       </div>
 
-      <div className="m-3 rounded-lg border px-3 py-2.5" style={{ borderColor: "#C4B89D", background: "#F6F4EE" }}>
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-bold" style={{ color: "#2C2C2C" }}>Intelligence Health</span>
-          <span
-            className="rounded-full px-2 py-0.5 text-[9px] font-bold"
-            style={{ background: INSIGHT_CATEGORY_TONE_STYLES[data.health.badgeTone].bg, color: INSIGHT_CATEGORY_TONE_STYLES[data.health.badgeTone].color }}
-          >
-            {data.health.badge}
-          </span>
-        </div>
-        <div className="mt-1 flex items-center gap-1.5 text-[10px]" style={{ color: "#798C5E" }}>
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ background: "#108C72" }} />
-          Monitoring
-        </div>
-        <div className="mt-2 flex items-center gap-5">
-          <div>
-            <div className="text-brand-h2 font-bold" style={{ color: "#DA7756" }}>{data.health.critical}</div>
-            <div className="text-[9px]" style={{ color: "#888780" }}>Critical</div>
-          </div>
-          <div>
-            <div className="text-brand-h2 font-bold" style={{ color: "#EDC488" }}>{data.health.dueWeek}</div>
-            <div className="text-[9px]" style={{ color: "#888780" }}>Due This Week</div>
-          </div>
-          <div>
-            <div className="text-brand-h2 font-bold" style={{ color: "#5A54A8" }}>{data.health.escalated}</div>
-            <div className="text-[9px]" style={{ color: "#888780" }}>Escalated</div>
-          </div>
-        </div>
-        <div className="mt-2 flex items-center justify-between text-[9px]" style={{ color: "#888780" }}>
-          <span>Last Refresh</span>
-          <span className="font-semibold" style={{ color: "#2C2C2C" }}>2 min ago</span>
-        </div>
-      </div>
-
-      <div className="mx-3 mb-3 rounded-lg border px-3 py-2.5" style={{ borderColor: "#C4B89D", background: "#F6F4EE" }}>
-        <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#2C2C2C" }}>Today's Executive Brief</div>
-        <div className="mb-2 text-[10px]" style={{ color: "#798C5E" }}>Auto-generated portfolio summary</div>
-        <div className="flex flex-col gap-1.5 text-[10px] leading-relaxed" style={{ color: "#2C2C2C" }}>
-          <div className="flex gap-1.5">
-            <span className="flex-shrink-0 font-bold" style={{ color: "#DA7756" }}>•</span>
-            <span>Compliance deterioration across permits, audits and vendor accountability now spans multiple workflows.</span>
-          </div>
-          <div className="flex gap-1.5">
-            <span className="flex-shrink-0 font-bold" style={{ color: "#DA7756" }}>•</span>
-            <span>Utility billing at ~950 records is the highest unresolved financial exposure on the portfolio.</span>
-          </div>
-          <div className="flex gap-1.5">
-            <span className="flex-shrink-0 font-bold" style={{ color: "#DA7756" }}>•</span>
-            <span>128 AMC misses and 63 current asset breakdowns are tracked separately — a real trend link isn't confirmed yet, worth watching both together.</span>
-          </div>
-          <div className="flex gap-1.5">
-            <span className="flex-shrink-0 font-bold" style={{ color: "#EDC488" }}>•</span>
-            <span>Two escalations exceed operational thresholds and cannot be resolved without leadership intervention.</span>
-          </div>
-        </div>
-      </div>
-
       <div className="pb-2">
         {data.categories.map((cat) => {
           const isOpen = activeCategory === cat.key;
@@ -1662,7 +1322,7 @@ export default function RevampDashboardPage() {
   const [goldenActive, setGoldenActive] = useState(false);
   const [redFlagActive, setRedFlagActive] = useState(false);
   const [railCollapsed, setRailCollapsed] = useState(false);
-  const [activeInsightCategory, setActiveInsightCategory] = useState("critical");
+  const [activeInsightCategory, setActiveInsightCategory] = useState("");
   const insightRailData = useMemo(() => getInsightRailData(activeModule), [activeModule]);
   useEffect(() => {
     setActiveInsightCategory(insightRailData.categories[0]?.key ?? "");
@@ -2011,7 +1671,7 @@ export default function RevampDashboardPage() {
     siteIds: dashboardSiteIds,
     fromDate: dashboardFromDate,
     toDate: dashboardToDate,
-    enabled: isSafetyView && !sitesLoading && dashboardSiteIds.length > 0,
+    enabled: (isSafetyView || (isMyDashboardModule && savedSafetyKeys.size > 0)) && !sitesLoading && dashboardSiteIds.length > 0,
   });
 
   const {
@@ -2022,8 +1682,35 @@ export default function RevampDashboardPage() {
     siteIds: dashboardSiteIds,
     fromDate: dashboardFromDate,
     toDate: dashboardToDate,
-    enabled: isSafetyView && !sitesLoading && dashboardSiteIds.length > 0,
+    enabled: (isSafetyView || (isMyDashboardModule && savedSafetyKeys.size > 0)) && !sitesLoading && dashboardSiteIds.length > 0,
   });
+
+  const {
+    data: crmApiData,
+    loading: crmLoading,
+    error: crmError,
+  } = useCrmDashboardData({
+    siteIds: dashboardSiteIds,
+    fromDate: dashboardFromDate,
+    toDate: dashboardToDate,
+    enabled: (isCrmView || (isMyDashboardModule && savedCrmKeys.size > 0)) && !sitesLoading && dashboardSiteIds.length > 0,
+  });
+
+  // Debug: log when CRM view changes
+  useEffect(() => {
+    console.log("[RevampDashboard] CRM state:", {
+      isCrmView,
+      isMyDashboardModule,
+      savedCrmKeys_size: savedCrmKeys.size,
+      sitesLoading,
+      dashboardSiteIds_length: dashboardSiteIds.length,
+      crmEnabled: (isCrmView || (isMyDashboardModule && savedCrmKeys.size > 0)) && !sitesLoading && dashboardSiteIds.length > 0,
+      crmLoading,
+      crmError,
+      dashboardFromDate,
+      dashboardToDate,
+    });
+  }, [isCrmView, isMyDashboardModule, savedCrmKeys.size, sitesLoading, dashboardSiteIds.length, crmLoading, crmError, dashboardFromDate, dashboardToDate]);
 
   const {
     data: financeApiData,
@@ -2033,7 +1720,7 @@ export default function RevampDashboardPage() {
     siteIds: dashboardSiteIds,
     fromDate: dashboardFromDate,
     toDate: dashboardToDate,
-    enabled: isFinanceView && !sitesLoading && dashboardSiteIds.length > 0,
+    enabled: (isFinanceView || (isMyDashboardModule && savedFinanceKeys.size > 0)) && !sitesLoading && dashboardSiteIds.length > 0,
   });
 
   // Which section(s) failed to load — each one gets its own toast naming the
@@ -2054,6 +1741,7 @@ export default function RevampDashboardPage() {
         { label: "Vendor", error: vendorError },
         { label: "Permits", error: permitsError },
         { label: "Incidents", error: incidentsError },
+        { label: "CRM", error: crmError },
         { label: "Finance", error: financeError },
       ].filter((s): s is { label: string; error: string } => s.error !== null),
     [
@@ -2070,6 +1758,7 @@ export default function RevampDashboardPage() {
       vendorError,
       permitsError,
       incidentsError,
+      crmError,
       financeError,
     ]
   );
@@ -6150,7 +5839,7 @@ export default function RevampDashboardPage() {
             loading={financeLoading || sitesLoading}
           />
         ) : isCrmView ? (
-          <CrmPanel activeSection={activeSubTab} />
+          <CrmPanel activeSection={activeSubTab} data={crmApiData} loading={crmLoading || sitesLoading} />
         ) : (
           <div className="bg-white border border-brand-border rounded-lg p-6">
             <h2 className="text-brand-body-3 font-bold text-brand-text uppercase tracking-wide mb-1">
@@ -6205,7 +5894,9 @@ export default function RevampDashboardPage() {
                 visibleKeys={savedFinanceKeys}
               />
             )}
-            {savedCrmKeys.size > 0 && <CrmPanel activeSection="" visibleKeys={savedCrmKeys} />}
+            {savedCrmKeys.size > 0 && (
+              <CrmPanel activeSection="" data={crmApiData} loading={crmLoading || sitesLoading} visibleKeys={savedCrmKeys} />
+            )}
             {savedMaintenanceKeys.size === 0 &&
               savedSafetyKeys.size === 0 &&
               savedFinanceKeys.size === 0 &&
