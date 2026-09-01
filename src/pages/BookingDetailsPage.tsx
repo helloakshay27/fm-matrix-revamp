@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { toast } from "sonner";
+import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
 
 const formatCurrency = (value?: number | null) =>
   typeof value === "number" ? `₹${value.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "-";
@@ -57,6 +58,7 @@ const getTaxAmounts = (bookings: FacilityBookingDetails | null) => {
 };
 
 export const BookingDetailsPage = () => {
+  const gaEvents = useGaFunnelEvents();
   const { id } = useParams();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -154,6 +156,7 @@ export const BookingDetailsPage = () => {
   };
 
   const handleCancelBooking = async () => {
+    gaEvents.onMyBookingCancelClicked("employee", id);
     if (!id || !bookings?.user_id) {
       toast.error('User ID not found in booking details. Cannot cancel booking.');
       return;
@@ -197,6 +200,7 @@ export const BookingDetailsPage = () => {
         }
       );
       toast.success('Booking cancelled successfully!');
+      gaEvents.onMyBookingCancelSuccess("employee", id);
       setShowCancelModal(false);
       fetchDetails();
     } catch (error) {
