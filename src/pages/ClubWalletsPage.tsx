@@ -32,21 +32,25 @@ const walletColumns: ColumnConfig[] = [
 const transactionColumns: ColumnConfig[] = [
   { key: "created_at", label: "Date", sortable: true, hideable: true, defaultVisible: true },
   { key: "remarks", label: "Remarks", hideable: true, defaultVisible: true },
-  { key: "point_type", label: "Point Type", hideable: true, defaultVisible: true },
+  { key: "resource_type", label: "Resource Type", hideable: true, defaultVisible: true },
+  { key: "resource_id", label: "Resource ID", hideable: true, defaultVisible: true },
   { key: "transaction_type", label: "Type", hideable: true, defaultVisible: true },
   { key: "amount", label: "Amount", sortable: true, hideable: true, defaultVisible: true },
 ];
 
-const formatCurrency = (n: number) => `₹${n.toLocaleString("en-IN")}`;
+const formatCurrency = (n: number | null | undefined) =>
+  `₹${(n ?? 0).toLocaleString("en-IN")}`;
 
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleString("en-IN", {
+const formatDate = (iso: string | null | undefined) => {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("en-IN", {
     day: "2-digit",
     month: "short",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   });
+};
 
 export const ClubWalletsPage: React.FC = () => {
   const [step, setStep] = useState<FlowStep>("list");
@@ -269,6 +273,10 @@ export const ClubWalletsPage: React.FC = () => {
             {formatCurrency(txn.amount)}
           </span>
         );
+      case "resource_type":
+        return txn.resource_type || "—";
+      case "resource_id":
+        return txn.resource_id ?? "—";
       default:
         return (txn as unknown as Record<string, React.ReactNode>)[key];
     }

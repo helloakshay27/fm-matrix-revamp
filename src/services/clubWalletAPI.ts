@@ -31,20 +31,22 @@ export interface ClubWalletOtpVerifyResponse {
 export interface ClubWalletTransaction {
   id: number;
   transaction_type: "credit" | "debit";
-  remarks: string;
-  created_at: string;
-  amount: number;
+  remarks: string | null;
+  created_at: string | null;
+  amount: number | null;
   expires_at: string | null;
   is_expired: boolean;
-  point_type: string;
+  point_type: string | null;
+  resource_type: string | null;
+  resource_id: string | number | null;
 }
 
 export interface ClubWalletDetailResponse {
   wallet_id: number;
   user: { id: number; name: string; email: string; mobile: string };
-  balance: number;
-  total_credited: number;
-  total_debited: number;
+  balance: number | null;
+  total_credited: number | null;
+  total_debited: number | null;
   wallet_transactions: ClubWalletTransaction[];
   total_pages: number;
   current_page: number;
