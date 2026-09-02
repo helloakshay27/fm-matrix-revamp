@@ -8,6 +8,7 @@ import type { StatusCode, Persona } from '../data/constants';
 import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import { getAuthHeader } from '@/config/apiConfig';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 
 type Filter = 'all' | 'internal' | 'external' | 'pending' | 'cleared';
 
@@ -247,21 +248,43 @@ export function UserDirectoryCard({
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [exportingAll, setExportingAll] = useState(false);
+  const msafeEvents = useMSafeEvents();
 
   const handleDownloadAll = async () => {
     if (exportingAll) return;
     setExportingAll(true);
+    const downloadEvent = {
+      screen: 'msafe_dashboard' as const,
+      source: 'user_directory' as const,
+      label: 'All Users KRCC/LMC Status',
+      file_format: 'xlsx' as const,
+      export_mode: 'client_sheet' as const,
+      persona,
+      filters: appliedFilters,
+    };
     try {
       const rows = await fetchAllDirectoryRows(persona, appliedFilters, debouncedSearch);
       if (rows.length === 0) {
         showToast('No data to export');
+        msafeEvents.onMsafeDownloaded({
+          ...downloadEvent,
+          row_count: 0,
+          succeeded: false,
+          failure_reason: 'no_data',
+        });
         return;
       }
       downloadDirectoryExcel(rows);
       showToast(`Excel downloaded · ${rows.length.toLocaleString()} users`);
+      msafeEvents.onMsafeDownloaded({ ...downloadEvent, row_count: rows.length, succeeded: true });
     } catch (error) {
       console.warn('Failed to export full user directory to Excel.', error);
       showToast('Export failed — please try again');
+      msafeEvents.onMsafeDownloaded({
+        ...downloadEvent,
+        succeeded: false,
+        failure_reason: (error as Error)?.message ?? 'request_failed',
+      });
     } finally {
       setExportingAll(false);
     }

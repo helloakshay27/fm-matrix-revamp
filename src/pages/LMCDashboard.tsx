@@ -450,6 +450,16 @@ const LMCDashboard = () => {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
+        msafeEvents.onMsafeDownloaded({
+            screen: 'msafe_lmc',
+            source: 'list_export',
+            label: 'LMC list',
+            file_format: 'csv',
+            export_mode: 'client_sheet',
+            row_count: filteredData.length,
+            succeeded: filteredData.length > 0,
+            failure_reason: filteredData.length > 0 ? null : 'no_data',
+        });
     };
 
     const handleFilterClick = () => {
@@ -508,6 +518,7 @@ const LMCDashboard = () => {
                     getItemId={(row: LMCTableRow) => row.id.toString()}
                     onFilterClick={handleFilterClick}
                     handleExport={handleExport}
+                    analyticsDownloadHandled
                     exportFileName="lmc-export"
                     emptyMessage={loading ? 'Loading LMCs...' : 'No LMC records found'}
                 />

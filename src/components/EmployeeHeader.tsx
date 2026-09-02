@@ -55,6 +55,7 @@ import { permissionService } from "@/services/permissionService";
 import { Calendar } from "./ui/calendar";
 import axios from "axios";
 import { toast } from "sonner";
+import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
 
 // Icon mapping for employee header modules based on action_name
 const headerIconMap: Record<string, any> = {
@@ -114,6 +115,7 @@ export const EmployeeHeader: React.FC = () => {
   const id = JSON.parse(localStorage.getItem("user") || "{}").id || "";
 
   const navigate = useNavigate();
+  const gaEvents = useGaFunnelEvents();
   const { userRole } = usePermissions();
 
   // Helper function to get first available admin link
@@ -394,6 +396,7 @@ export const EmployeeHeader: React.FC = () => {
         navigate("/vas/projects");
         break;
       case "Ticket":
+        gaEvents.onHomeTopFeaturesTicketsClicked("employee");
         navigate("/maintenance/ticket/employee");
         break;
       case "Visitors":

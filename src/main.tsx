@@ -12,6 +12,7 @@ import { PostHogPageView } from "./components/PostHogPageView.tsx";
 import posthog from "posthog-js";
 import { getPostHogSuperProperties } from "./utils/posthogContext.ts";
 import { attachPostHogDebugLogger } from "./utils/posthogDebug.ts";
+import { installDownloadTracking } from "./utils/downloadTracking.ts";
 // import { registerServiceWorker } from "./utils/pwa.ts";
 
 // Register service worker for PWA
@@ -87,6 +88,10 @@ if (!posthogToken || posthogToken === "phc_replace_me") {
   // Logs every captured event to the console on the dev server, or anywhere once
   // `localStorage.ph_debug = '1'` is set. One listener covers every event module.
   attachPostHogDebugLogger(posthog);
+
+  // Catch-all for file downloads that no call site reports explicitly - see
+  // utils/downloadTracking.ts for why this is a patch and not 150 edits.
+  installDownloadTracking(posthog);
 }
 
 createRoot(document.getElementById("root")!).render(
