@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Receipt } from "lucide-react";
+import { ArrowLeft, Receipt, Printer, Ban, Wallet } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -100,8 +100,22 @@ export const CustomerBillDetailsPage = () => {
       </Button>
 
       {/* Header */}
-      <div className="flex justify-between items-end mb-4">
+      <div className="flex justify-between items-end mb-4 flex-wrap gap-3">
         <h1 className="text-2xl font-semibold text-brand-text">Customer Bill</h1>
+        <div className="flex gap-2 flex-wrap">
+          <Button size="sm" variant="outline" onClick={() => {}}>
+            <Printer className="w-4 h-4 mr-1" />
+            Print Invoice
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => {}}>
+            <Ban className="w-4 h-4 mr-1" />
+            Cancel Invoice
+          </Button>
+          <Button size="sm" className="bg-brand hover:bg-brand-hover text-white" onClick={() => {}}>
+            <Wallet className="w-4 h-4 mr-1" />
+            Receive Payment
+          </Button>
+        </div>
       </div>
 
       {/* Bill Details Section */}
