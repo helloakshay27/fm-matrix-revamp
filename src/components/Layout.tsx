@@ -17,7 +17,7 @@ import { ZxSidebar } from "./ZxSidebar";
 import { ZxDynamicHeader } from "./ZxDynamicHeader";
 import { saveToken, saveUser, saveBaseUrl, getUser } from "../utils/auth";
 import { isEmbeddedMode } from "../utils/embeddedMode";
-import { isViLayoutActive } from "../utils/viSite";
+import { isViNonProdOverride } from "../utils/viSite";
 import { ProtectionLayer } from "./ProtectionLayer";
 import { PrimeSupportSidebar } from "./PrimeSupportSidebar";
 import { PrimeSupportDynamicHeader } from "./PrimeSupportDynamicHeader";
@@ -138,10 +138,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Check if non-employee user needs to select project/site
   const isViSite = hostname.includes("vi-web.gophygital.work");
 
-  // Vi shell on live, UAT and localhost alike - see utils/viSite.ts for why this is the
-  // tenant (org 34) and not the hostname. Header.tsx reads the same helper, so the header
-  // and the sidebar can never disagree about being in the Vi app.
-  const isViLayout = isViLayoutActive(currentUser?.email);
+  // On every deployed host this is exactly the old check - isViSite above and nothing else.
+  // The override only ever adds the Vi shell on UAT / localhost, where the hostname can never
+  // be the Vi domain and the app would otherwise fall through to the admin or employee
+  // branches (see utils/viSite.ts).
+  const isViLayout = isViSite || isViNonProdOverride(currentUser?.email);
 
   // Vi keeps its own shell even when userType is pms_occupant, otherwise the employee
   // branches strip the header and the main-content margin the Vi sidebar needs.

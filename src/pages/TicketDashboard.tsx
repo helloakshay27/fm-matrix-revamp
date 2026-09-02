@@ -123,10 +123,10 @@ export const TicketDashboard = () => {
   const navigate = useNavigate();
   const gaEvents = useGaFunnelEvents();
 
-  // GA parity: the helpdesk ticket list was opened (mount-only, so filters and
+  // GA parity: the ticket list was opened (mount-only, so filters and
   // paging inside the page do not each count as a fresh page view).
   useEffect(() => {
-    gaEvents.onHelpdeskPageClicked("admin");
+    gaEvents.onTicketPageClicked("admin");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   // Initialize permission hook
