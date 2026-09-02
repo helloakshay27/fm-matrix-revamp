@@ -64,6 +64,7 @@ import {
   isColumnFrozen,
   getFrozenColumnConfig,
 } from "./stickyColumnUtils";
+import { useModuleDownloadEvents } from "@/components/PostHogModuleDownloadEvents";
 import "./EnhancedTable.css";
 
 // Excel export utility function
@@ -153,6 +154,10 @@ interface EnhancedTableProps<T> {
   searchPlaceholder?: string;
   enableExport?: boolean;
   exportFileName?: string;
+  /** Set when the page already reports its own download event (e.g. the M-Safe lists,
+   *  which fire `Msafe Download: …` from their own handler). Stops this table from
+   *  reporting a second, generic event for the same click. */
+  analyticsDownloadHandled?: boolean;
   onExport?: () => void;
   bulkActions?: BulkAction<T>[];
   showBulkActions?: boolean;
@@ -223,6 +228,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   searchPlaceholder = "Search...",
   enableExport = false,
   exportFileName = "table-export",
+  analyticsDownloadHandled = false,
   onExport,
   bulkActions = [],
   showBulkActions = false,
@@ -267,6 +273,16 @@ export function EnhancedTable<T extends Record<string, any>>({
   // goPhygital site par. Baaki tenants par table pehle jaisa hi render hota
   // hai (mobile par horizontally scroll hone wala table).
   const mobileView = isMobileUiSite();
+
+  const moduleDownloadEvents = useModuleDownloadEvents();
+  // Names the export in the event ("Maintenance Download: Assets"). storageKey is the
+  // per-table id every page already sets, so it is a stable, low-cardinality label.
+  const exportLabel = (exportFileName && exportFileName !== "table-export"
+    ? exportFileName
+    : storageKey || "Export"
+  )
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 
   const [internalSearchTerm, setInternalSearchTerm] = useState("");
   const [searchInput, setSearchInput] = useState("");
@@ -657,9 +673,13 @@ export function EnhancedTable<T extends Record<string, any>>({
         style={{
           width: columnWidths[column.key]
             ? `${columnWidths[column.key]}px`
+            : column.width
+            ? `${column.width}px`
             : undefined,
           minWidth: columnWidths[column.key]
             ? `${columnWidths[column.key]}px`
+            : column.width
+            ? `${column.width}px`
             : undefined,
           position: "relative",
           ...(frozenConfig?.isFrozen && {
@@ -768,7 +788,8 @@ export function EnhancedTable<T extends Record<string, any>>({
     e.stopPropagation();
     setResizingColumn(columnKey);
     setStartX(e.clientX);
-    setStartWidth(columnWidths[columnKey] || 128); // Default min-w-32 = 128px
+    const configuredWidth = columns.find((c) => c.key === columnKey)?.width;
+    setStartWidth(columnWidths[columnKey] || configuredWidth || 128); // Default min-w-32 = 128px
     document.body.style.cursor = "col-resize";
     document.body.style.userSelect = "none";
   };
@@ -938,16 +959,39 @@ export function EnhancedTable<T extends Record<string, any>>({
 
   // Remove the hardcoded exportTicketRecords function and replace with conditional logic
   const handleExportClick = () => {
+    // Single choke point for every EnhancedTable export in the app, so one capture here
+    // covers every module's list export instead of ~105 pages each remembering to report.
+    // The page-supplied handlers (onExport/handleExport) own their own success/failure, so
+    // this reports the click as succeeded; the built-in CSV path below is checked for real.
+    const reportDownload = (succeeded: boolean, failureReason?: string) => {
+      if (analyticsDownloadHandled) return;
+      moduleDownloadEvents.onModuleDownloaded({
+        label: exportLabel,
+        source: "list_export",
+        file_format: onExport || handleExport ? "xlsx" : "csv",
+        row_count: data.length,
+        succeeded,
+        failure_reason: failureReason ?? null,
+      });
+    };
+
     if (onExport) {
       // Use custom export function if provided
       onExport();
+      reportDownload(true);
     } else if (handleExport) {
       // Use handleExport with column visibility if provided
       handleExport(columnVisibility);
+      reportDownload(true);
     } else {
       // Fallback to CSV export
       const exportColumns = columns.filter(col => col.key !== 'action' && col.key !== 'actions');
+      if (data.length === 0) {
+        // exportToExcel alerts and returns without writing a file in this case.
+        reportDownload(false, "no_data");
+      }
       exportToExcel(data, exportColumns, exportFileName);
+      if (data.length > 0) reportDownload(true);
     }
   };
 
@@ -1895,12 +1939,18 @@ className="flex w-full items-center justify-center gap-1 border-t border-[#f4f0e
                                 style={{
                                   width: columnWidths[column.key]
                                     ? `${columnWidths[column.key]}px`
+                                    : column.width
+                                    ? `${column.width}px`
                                     : undefined,
                                   minWidth: columnWidths[column.key]
                                     ? `${columnWidths[column.key]}px`
+                                    : column.width
+                                    ? `${column.width}px`
                                     : undefined,
                                   maxWidth: columnWidths[column.key]
                                     ? `${columnWidths[column.key]}px`
+                                    : column.width
+                                    ? `${column.width}px`
                                     : undefined,
                                   ...(frozenConfig?.isFrozen && {
                                     position: "sticky" as const,

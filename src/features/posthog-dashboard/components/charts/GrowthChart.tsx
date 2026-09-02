@@ -48,7 +48,18 @@ export function GrowthChart({ weeks }: { weeks: GrowthWeek[] }) {
     
     const idx = Math.floor((mouseX - pl) / gap);
     if (idx >= 0 && idx < n) {
-      setTipIdx(idx);
+      const week = weeks[idx];
+      
+      // Calculate the bar bounds for this week
+      const barTopY = zero - (week.nw + week.ret + week.res) * scaleUp;
+      const barBottomY = zero + week.dorm * scaleDn;
+      
+      // Only show tooltip if mouseY is within the actual bars (above zero OR below zero)
+      if ((mouseY >= barTopY && mouseY <= zero) || (mouseY >= zero && mouseY <= barBottomY)) {
+        setTipIdx(idx);
+      } else {
+        setTipIdx(null);
+      }
     } else {
       setTipIdx(null);
     }

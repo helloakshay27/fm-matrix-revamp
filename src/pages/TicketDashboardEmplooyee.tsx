@@ -35,6 +35,7 @@ import {
 } from '@/components/ticket-analytics';
 import { useDebounce } from '@/hooks/useDebounce';
 import { toast as sonnerToast } from 'sonner';
+import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
 
 // Sortable Chart Item Component
 const SortableChartItem = ({
@@ -116,6 +117,14 @@ const SectionLoader: React.FC<{
 
 export const TicketDashboardEmployee = () => {
   const navigate = useNavigate();
+  const gaEvents = useGaFunnelEvents();
+
+  // GA parity: the helpdesk ticket list was opened (mount-only, so filters and
+  // paging inside the page do not each count as a fresh page view).
+  useEffect(() => {
+    gaEvents.onHelpdeskPageClicked("employee");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // Initialize permission hook
   const { shouldShow } = useDynamicPermissions();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -632,6 +641,7 @@ export const TicketDashboardEmployee = () => {
     setVisibleSections(selectedSections);
   };
   const handleViewDetails = (ticketId: string) => {
+    gaEvents.onTicketListItemClicked("employee", ticketId);
     // Navigate to employee-specific ticket details page
     navigate(`/maintenance/ticket/employee/details/${ticketId}`);
   };

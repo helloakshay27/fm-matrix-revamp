@@ -239,6 +239,14 @@ const EditIssueModal = ({
     const [totalWorkingHours, setTotalWorkingHours] = useState(0);
     const [dateWiseHours, setDateWiseHours] = useState([]);
     const [originalDateWiseHrs, setOriginalDateWiseHrs] = useState([]);
+    // DurationPicker seeds its internal state from whatever dateWiseHours/dates it
+    // receives on its very first render. Since this modal mounts it immediately
+    // (with dateWiseHours still [] and dates still null, before the populate effect
+    // below has run), it was racing its own "new task" 0.5h/day default against the
+    // real data arriving a render later — and losing. Gating its mount on this flag
+    // means it only ever sees the real, fully-populated values, so there's nothing
+    // for that default to race against.
+    const [durationDataReady, setDurationDataReady] = useState(false);
 
     const isSubmittingRef = useRef(false);
     const startDateRef = useRef(null);
@@ -309,28 +317,33 @@ const EditIssueModal = ({
 
     // Populate form data when issueData changes
     useEffect(() => {
+        setDurationDataReady(false);
+
         if (issueData && openDialog) {
             setTitle(issueData.title || "");
             setResponsiblePerson(issueData.responsible_person_id || issueData.assigned_to_id || "");
 
             // Parse dates
+            let parsedStartDate: Date | null = null;
+            let parsedEndDate: Date | null = null;
+
             if (issueData.start_date) {
-                const d = new Date(issueData.start_date);
+                parsedStartDate = new Date(issueData.start_date);
                 setStartDate({
-                    date: d.getDate(),
-                    month: d.getMonth(),
-                    year: d.getFullYear(),
+                    date: parsedStartDate.getDate(),
+                    month: parsedStartDate.getMonth(),
+                    year: parsedStartDate.getFullYear(),
                 });
             } else {
                 setStartDate(null);
             }
 
             if (issueData.end_date) {
-                const d = new Date(issueData.end_date);
+                parsedEndDate = new Date(issueData.end_date);
                 setEndDate({
-                    date: d.getDate(),
-                    month: d.getMonth(),
-                    year: d.getFullYear(),
+                    date: parsedEndDate.getDate(),
+                    month: parsedEndDate.getMonth(),
+                    year: parsedEndDate.getFullYear(),
                 });
             } else {
                 setEndDate(null);
@@ -351,8 +364,13 @@ const EditIssueModal = ({
             if (issueData.milestone_id) setNewIssuesMilestoneId(issueData.milestone_id);
             if (issueData.task_management_id) setNewIssuesTaskId(issueData.task_management_id);
 
-            if (issueData.estimated_hour) {
-                setTotalWorkingHours(issueData.estimated_hour);
+            const resolvedTotalHours: number =
+                issueData.estimated_hour ??
+                issueData.total_allocated_hours ??
+                (issueData.total_effective_minutes ? issueData.total_effective_minutes / 60 : 0);
+
+            if (resolvedTotalHours) {
+                setTotalWorkingHours(resolvedTotalHours);
             }
 
             if (Array.isArray(issueData.issue_allocation_times) && issueData.issue_allocation_times.length > 0) {
@@ -376,9 +394,46 @@ const EditIssueModal = ({
                 );
                 setDateWiseHours(mergedByDate);
                 setOriginalDateWiseHrs(issueData.issue_allocation_times);
+            } else if (resolvedTotalHours && (parsedStartDate || parsedEndDate)) {
+                const rangeStart = parsedStartDate ?? parsedEndDate;
+                const rangeEnd = parsedEndDate ?? parsedStartDate;
+
+                const days: { date: string; isWorking: boolean }[] = [];
+                for (
+                    const d = new Date(rangeStart);
+                    d <= rangeEnd;
+                    d.setDate(d.getDate() + 1)
+                ) {
+                    days.push({
+                        date: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+                            d.getDate()
+                        ).padStart(2, "0")}`,
+                        isWorking: d.getDay() !== 0,
+                    });
+                }
+
+                const workingDaysCount = days.filter((d) => d.isWorking).length || 1;
+                const perDay = resolvedTotalHours / workingDaysCount;
+                const perDayHours = Math.floor(perDay);
+                const perDayMinutes = Math.round((perDay - perDayHours) * 60);
+
+                const synthesizedDateWiseHours = days.map((d) => ({
+                    id: null,
+                    date: d.date,
+                    hours: d.isWorking ? perDayHours : 0,
+                    minutes: d.isWorking ? perDayMinutes : 0,
+                    _destroy: false,
+                }));
+
+                setDateWiseHours(synthesizedDateWiseHours);
+                setOriginalDateWiseHrs([]);
             }
 
             // Tags will be set in fetchMentionTags after fetching all available tags
+
+            // Everything DurationPicker needs (dates, totalWorkingHours, dateWiseHours)
+            // has now been set above in this same batch — safe to mount it.
+            setDurationDataReady(true);
         }
     }, [issueData, openDialog]);
 
@@ -1265,22 +1320,32 @@ const EditIssueModal = ({
                         {/* Efforts Duration */}
                         <Box sx={{ mb: 2 }}>
                             <Box sx={{ fontSize: "12px", mb: 1 }}>Efforts Duration</Box>
-                            <DurationPicker
-                                dateWiseHours={dateWiseHours}
-                                onChange={setIssueDuration}
-                                onDateWiseHoursChange={setDateWiseHours}
-                                startDate={startDate}
-                                endDate={endDate}
-                                resposiblePerson={
-                                    responsiblePerson
-                                        ? users.find((u) => u.id === responsiblePerson)?.full_name
-                                        : ""
-                                }
-                                totalWorkingHours={totalWorkingHours}
-                                setTotalWorkingHours={setTotalWorkingHours}
-                                shift={shift}
-                                isEdit={true}
-                            />
+                            {durationDataReady ? (
+                                <DurationPicker
+                                    dateWiseHours={dateWiseHours}
+                                    onChange={setIssueDuration}
+                                    onDateWiseHoursChange={setDateWiseHours}
+                                    startDate={startDate}
+                                    endDate={endDate}
+                                    resposiblePerson={
+                                        responsiblePerson
+                                            ? users.find((u) => u.id === responsiblePerson)?.full_name
+                                            : ""
+                                    }
+                                    totalWorkingHours={totalWorkingHours}
+                                    setTotalWorkingHours={setTotalWorkingHours}
+                                    shift={shift}
+                                    isEdit={true}
+                                />
+                            ) : (
+                                <Box
+                                    sx={{
+                                        height: 45,
+                                        border: "1px solid rgba(0, 0, 0, 0.23)",
+                                        borderRadius: "4px",
+                                    }}
+                                />
+                            )}
                         </Box>
 
                         {/* Calendar and Date Pickers */}
