@@ -1696,6 +1696,18 @@ const WBSElementDashboard = lazy(() =>
   }))
 );
 
+// Import Customer Bills page
+const CustomerBillsDashboard = lazy(() =>
+  import("./pages/CustomerBillsDashboard").then((m) => ({
+    default: m.CustomerBillsDashboard,
+  }))
+);
+const CustomerBillDetailsPage = lazy(() =>
+  import("./pages/CustomerBillDetailsPage").then((m) => ({
+    default: m.CustomerBillDetailsPage,
+  }))
+);
+
 // Import Work Order pages
 
 // Import Settings pages
@@ -7717,6 +7729,14 @@ function App() {
                             <Route
                               path="/finance/wbs"
                               element={<WBSElementDashboard />}
+                            />
+                            <Route
+                              path="/finance/customer-bills"
+                              element={<CustomerBillsDashboard />}
+                            />
+                            <Route
+                              path="/finance/customer-bills/details/:id"
+                              element={<CustomerBillDetailsPage />}
                             />
                             {/* Accounting Routes */}
                             <Route
