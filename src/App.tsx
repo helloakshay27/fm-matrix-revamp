@@ -136,6 +136,11 @@ const TicketDashboard = lazy(() =>
     default: m.TicketDashboard,
   }))
 );
+const ClubWalletsPage = lazy(() =>
+  import("./pages/ClubWalletsPage").then((m) => ({
+    default: m.ClubWalletsPage,
+  }))
+);
 const AddTicketDashboard = lazy(() =>
   import("./pages/AddTicketDashboard").then((m) => ({
     default: m.AddTicketDashboard,
@@ -6824,6 +6829,11 @@ function App() {
                             <Route
                               path="/club-management/helpdesk/edit/:id"
                               element={<UpdateTicketsPage />}
+                            />
+                            {/* Club Management - Wallets */}
+                            <Route
+                              path="/club-management/wallets"
+                              element={<ClubWalletsPage />}
                             />
                             {/* Club Management - Amenities Booking */}
                             <Route

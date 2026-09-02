@@ -135,6 +135,11 @@ const modulesByPackage = {
       icon: FileText,
       href: "/club-management/debit-note",
     },
+    {
+      name: "Wallet",
+      icon: CircleDollarSign,
+      href: "/club-management/wallets",
+    },
     // {
     //     name: "Accounting",
     //     icon: Calculator,
