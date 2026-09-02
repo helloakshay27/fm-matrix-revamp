@@ -1,9 +1,10 @@
 import React from 'react';
 import { AiInsightBlock } from './AiInsightBlock';
 import { InfoTooltip } from './InfoTooltip';
-import { D, HEAT_COURTS, HEAT_DATA, HEAT_HOURS, CHART_CTX, getInfo } from '../clubDashboardData';
+import { CHART_CTX, getInfo } from '../clubDashboardData';
 import { useDrill } from '../DrillContext';
 import { occupancyHTML } from '../drillTemplates';
+import type { AvailableSlotsByDay, AmenityUtilisationRow } from '@/services/clubDashboardApi';
 
 function heatColor(v: number) {
   if (v === 0) return '#E7848E';
@@ -12,8 +13,11 @@ function heatColor(v: number) {
   return '#108C72';
 }
 
-export const AvailableSlotsHeatmap: React.FC = () => {
+export const AvailableSlotsHeatmap: React.FC<{ data?: AvailableSlotsByDay }> = ({ data }) => {
   const { openDrill } = useDrill();
+  const hours = data?.hours ?? [];
+  const facilities = data?.facilities ?? [];
+
   return (
     <div className="card">
       <div className="card-title">
@@ -21,30 +25,35 @@ export const AvailableSlotsHeatmap: React.FC = () => {
         <InfoTooltip info={getInfo('Available Slots')} />
       </div>
       <div className="chart-sub">0 = fully booked · 1 = last slot · 2-4 = limited · 5+ = open.</div>
-      <div className="heatgrid" style={{ gridTemplateColumns: '78px repeat(12,1fr)' }}>
-        <div />
-        {HEAT_HOURS.map((h) => (
-          <div className="hhead" key={h}>{h}</div>
-        ))}
-        {HEAT_COURTS.map((court, ci) => (
-          <React.Fragment key={court}>
-            <div className="hlabel">{court}</div>
-            {HEAT_HOURS.map((h, hi) => {
-              const v = HEAT_DATA[ci][hi];
-              return (
-                <div
-                  key={h}
-                  className="hcell"
-                  style={{ background: heatColor(v) }}
-                  onClick={() => openDrill(`${court} – ${h}`, v === 0 ? 'Fully booked' : `${v} slot${v > 1 ? 's' : ''} available`, occupancyHTML())}
-                >
-                  {v === 0 ? 'Full' : v}
-                </div>
-              );
-            })}
-          </React.Fragment>
-        ))}
-      </div>
+      {facilities.length > 0 ? (
+        <div className="heatgrid" style={{ gridTemplateColumns: `78px repeat(${hours.length},1fr)` }}>
+          <div />
+          {hours.map((h) => (
+            <div className="hhead" key={h}>{h}</div>
+          ))}
+          {facilities.map((facility) => (
+            <React.Fragment key={facility.facility_id}>
+              <div className="hlabel">{facility.facility_name}</div>
+              {hours.map((h) => {
+                const slot = facility.slots.find((s) => s.hour === h);
+                const v = slot?.available ?? 0;
+                return (
+                  <div
+                    key={h}
+                    className="hcell"
+                    style={{ background: heatColor(v) }}
+                    onClick={() => openDrill(`${facility.facility_name} – ${h}:00`, v === 0 ? 'Fully booked' : `${v} slot${v > 1 ? 's' : ''} available`, occupancyHTML())}
+                  >
+                    {v === 0 ? 'Full' : v}
+                  </div>
+                );
+              })}
+            </React.Fragment>
+          ))}
+        </div>
+      ) : (
+        <div className="chart-sub">No data for this date.</div>
+      )}
       <div className="heatmap-legend">
         <span><span className="leg-dot" style={{ background: '#E7848E' }} />Full</span>
         <span><span className="leg-dot" style={{ background: '#EDC488' }} />Last slot</span>
@@ -56,21 +65,21 @@ export const AvailableSlotsHeatmap: React.FC = () => {
   );
 };
 
-export const CapacityAnalysisCard: React.FC = () => {
+export const CapacityAnalysisCard: React.FC<{ data: AmenityUtilisationRow[] }> = ({ data }) => {
   const { openDrill } = useDrill();
   return (
     <div className="card">
       <div className="card-title">Amenity Utilisation Analysis</div>
-      <div className="chart-sub">Padel near capacity. Chess and Kabaddi chronically underutilised.</div>
+      <div className="chart-sub">Average utilisation per amenity for the selected range.</div>
       <div>
-        {D.amenNames.map((n, i) => {
-          const v = D.capacity[i];
+        {data.map((row) => {
+          const v = Math.round(row.average_utilization_percentage * 10) / 10;
           const color = v > 75 ? '#E7848E' : v > 50 ? '#EDC488' : '#108C72';
           return (
-            <div key={n} className="hbar-row" style={{ cursor: 'pointer' }} onClick={() => openDrill(n, `Avg utilisation ${v}%`, occupancyHTML())}>
-              <div className="hbar-lbl">{n}</div>
+            <div key={row.amenity_name} className="hbar-row" style={{ cursor: 'pointer' }} onClick={() => openDrill(row.amenity_name, `Avg utilisation ${v}%`, occupancyHTML())}>
+              <div className="hbar-lbl">{row.amenity_name}</div>
               <div className="hbar-track">
-                <div className="hbar-fill" style={{ width: `${v}%`, background: color }} />
+                <div className="hbar-fill" style={{ width: `${Math.min(v, 100)}%`, background: color }} />
               </div>
               <div className="hbar-val" style={{ color }}>{v}%</div>
             </div>

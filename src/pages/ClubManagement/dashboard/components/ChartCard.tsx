@@ -52,8 +52,14 @@ export const ChartCard: React.FC<ChartCardProps> = ({ title, subtitle, info, typ
       chartRef.current?.destroy();
       chartRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeType]);
+    // `buildConfig` is intentionally in the deps: each chart component wraps it in its own
+    // useCallback keyed on its live data props, so its identity changes exactly when a
+    // React Query result arrives after first paint. Without this, the chart was only ever
+    // built once from whatever `buildConfig` closed over at mount (usually empty/loading
+    // data), and never rebuilt when the real data showed up - it would sit blank until the
+    // user clicked a Bar/Donut/Table switch button, which changes `activeType` and forces
+    // this effect to re-run anyway.
+  }, [activeType, buildConfig]);
 
   return (
     <div className="card">
