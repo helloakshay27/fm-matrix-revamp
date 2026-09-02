@@ -17,6 +17,7 @@ import { ZxSidebar } from "./ZxSidebar";
 import { ZxDynamicHeader } from "./ZxDynamicHeader";
 import { saveToken, saveUser, saveBaseUrl, getUser } from "../utils/auth";
 import { isEmbeddedMode } from "../utils/embeddedMode";
+import { isViLayoutActive } from "../utils/viSite";
 import { ProtectionLayer } from "./ProtectionLayer";
 import { PrimeSupportSidebar } from "./PrimeSupportSidebar";
 import { PrimeSupportDynamicHeader } from "./PrimeSupportDynamicHeader";
@@ -137,6 +138,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Check if non-employee user needs to select project/site
   const isViSite = hostname.includes("vi-web.gophygital.work");
 
+  // Vi shell on live, UAT and localhost alike - see utils/viSite.ts for why this is the
+  // tenant (org 34) and not the hostname. Header.tsx reads the same helper, so the header
+  // and the sidebar can never disagree about being in the Vi app.
+  const isViLayout = isViLayoutActive(currentUser?.email);
+
+  // Vi keeps its own shell even when userType is pms_occupant, otherwise the employee
+  // branches strip the header and the main-content margin the Vi sidebar needs.
+  const isEmployeeLayout = isEmployeeUser && isLocalhost && !isViLayout;
+
+
   // Removed project selection modal logic - now handled by view selection
 
   // Handle token-based authentication from URL parameters
@@ -197,6 +208,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompanyId: selectedCompany?.id,
       userEmail,
       isViSite,
+      isViLayout,
       isOmanSite,
     });
 
@@ -212,7 +224,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <VendorSidebar />;
     }
 
-    if (isViSite) {
+    if (isViLayout) {
       console.warn("✅ Rendering ViSidebar");
       return <ViSidebar />;
     }
@@ -234,7 +246,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Check if user is employee (pms_occupant) - Employee layout takes priority
     // IMPORTANT: Only show employee sidebar if userType is explicitly pms_occupant
     // This prevents employee sidebar from showing in admin view on /vas/projects
-    if (isEmployeeUser && isLocalhost && userType === "pms_occupant") {
+    if (isEmployeeLayout && userType === "pms_occupant") {
       // Only render sidebar for Project Task or Business Compass module
       if (isEmployeeProjectTaskSection) {
         // Use EmployeeSidebar for specific companies, otherwise EmployeeSidebarStatic
@@ -375,7 +387,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <VendorDynamicHeader />;
     }
 
-    if (isViSite) {
+    if (isViLayout) {
       return <ViDynamicHeader />;
     }
     // Check if user is in Club Management route - render StaticDynamicHeader
@@ -385,7 +397,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     // Check if user is employee (pms_occupant) - Employee layout takes priority
     // Employees don't need dynamic header, they use EmployeeHeader instead
-    if (isEmployeeUser && isLocalhost) {
+    if (isEmployeeLayout) {
       return null; // No dynamic header for employees
     }
 
@@ -550,7 +562,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       />
 
       {/* Conditional Header - Hide in embedded mode, Use EmployeeHeader or EmployeeHeaderStatic for employee users */}
-      {isEmbedded ? null : isEmployeeUser && isLocalhost ? (
+      {isEmbedded ? null : isEmployeeLayout ? (
         selectedCompany?.id === 300 ||
           selectedCompany?.id === 295 ||
           selectedCompany?.id === 298 ||
@@ -583,7 +595,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             // Employee sidebars top-14/sm:top-16 par hain, admin wale 4rem par.
             // Backdrop ko exactly wahin se shuru karo warna navbar ke neeche
             // ek patli dark patti dikhti hai jo gap jaisi lagti hai.
-            isEmployeeUser && isLocalhost ? "top-14 sm:top-16" : "top-16"
+            isEmployeeLayout ? "top-14 sm:top-16" : "top-16"
           }`}
           onClick={() => setIsMobileSidebarOpen(false)}
         />
@@ -600,7 +612,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           isEmbedded
             ? "ml-0 pt-4"
             : // For employee users, only add left margin if on Project Task module
-            isEmployeeUser && isLocalhost
+            isEmployeeLayout
               ? isEmployeeProjectTaskSection ||
                 currentSection === "Business Compass" ||
                 currentSection === "Admin Compass" ||
@@ -616,7 +628,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 : isSidebarCollapsed
                   ? "ml-0 md:ml-16"
                   : "ml-0 md:ml-64"
-          } ${isEmbedded ? "" : isEmployeeUser && isLocalhost ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300 max-w-full overflow-x-hidden`}
+          } ${isEmbedded ? "" : isEmployeeLayout ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300 max-w-full overflow-x-hidden`}
       >
         <Outlet />
       </main>
