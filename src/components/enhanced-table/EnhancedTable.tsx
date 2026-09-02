@@ -673,9 +673,13 @@ export function EnhancedTable<T extends Record<string, any>>({
         style={{
           width: columnWidths[column.key]
             ? `${columnWidths[column.key]}px`
+            : column.width
+            ? `${column.width}px`
             : undefined,
           minWidth: columnWidths[column.key]
             ? `${columnWidths[column.key]}px`
+            : column.width
+            ? `${column.width}px`
             : undefined,
           position: "relative",
           ...(frozenConfig?.isFrozen && {
@@ -784,7 +788,8 @@ export function EnhancedTable<T extends Record<string, any>>({
     e.stopPropagation();
     setResizingColumn(columnKey);
     setStartX(e.clientX);
-    setStartWidth(columnWidths[columnKey] || 128); // Default min-w-32 = 128px
+    const configuredWidth = columns.find((c) => c.key === columnKey)?.width;
+    setStartWidth(columnWidths[columnKey] || configuredWidth || 128); // Default min-w-32 = 128px
     document.body.style.cursor = "col-resize";
     document.body.style.userSelect = "none";
   };
@@ -1934,12 +1939,18 @@ className="flex w-full items-center justify-center gap-1 border-t border-[#f4f0e
                                 style={{
                                   width: columnWidths[column.key]
                                     ? `${columnWidths[column.key]}px`
+                                    : column.width
+                                    ? `${column.width}px`
                                     : undefined,
                                   minWidth: columnWidths[column.key]
                                     ? `${columnWidths[column.key]}px`
+                                    : column.width
+                                    ? `${column.width}px`
                                     : undefined,
                                   maxWidth: columnWidths[column.key]
                                     ? `${columnWidths[column.key]}px`
+                                    : column.width
+                                    ? `${column.width}px`
                                     : undefined,
                                   ...(frozenConfig?.isFrozen && {
                                     position: "sticky" as const,
