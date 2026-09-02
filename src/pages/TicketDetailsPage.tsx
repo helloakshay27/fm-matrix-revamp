@@ -26,7 +26,6 @@ import { min } from 'lodash';
 import { getReturnToFromState } from "@/utils/listBackNavigation";
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { useHelpdeskEvents } from '@/components/PostHogHelpdeskEvents';
-import { useGaFunnelEvents } from '@/components/PostHogGaFunnelEvents';
 
 // Utility function to format date to DD/MM/YYYY
 const formatDateToDDMMYYYY = (dateString: string) => {
@@ -592,8 +591,7 @@ export const TicketDetailsPage = () => {
   const navigate = useNavigate();
   const { shouldShow } = useDynamicPermissions();
   const helpdeskEvents = useHelpdeskEvents();
-  const gaEvents = useGaFunnelEvents();
-   const location = useLocation();
+  const location = useLocation();
   const [ticketData, setTicketData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -1613,7 +1611,6 @@ export const TicketDetailsPage = () => {
   };
 
   const handleFeedbackSubmit = async () => {
-    gaEvents.onTicketAddFeedbackClicked('admin', id);
     if (!feedbackRating) {
       toast.error('Please select a rating');
       return;
@@ -1648,7 +1645,6 @@ export const TicketDetailsPage = () => {
       });
       if (response.ok) {
         toast.success('Feedback submitted successfully!');
-        gaEvents.onTicketAddFeedbackSuccess('admin', id);
         setIsFeedbackModalOpen(false);
         setFeedbackRating(null);
         setFeedbackComment('');
@@ -1656,11 +1652,9 @@ export const TicketDetailsPage = () => {
       } else {
         const err = await response.json().catch(() => null);
         toast.error(err?.message || 'Failed to submit feedback');
-        gaEvents.onTicketAddFeedbackFailure('admin', id, err);
       }
     } catch (error) {
       toast.error('Failed to submit feedback');
-      gaEvents.onTicketAddFeedbackFailure('admin', id, error);
     } finally {
       setIsSubmittingFeedback(false);
     }
@@ -2287,7 +2281,6 @@ export const TicketDetailsPage = () => {
 
   // Submit comment handler
   const handleSubmitComment = async () => {
-    gaEvents.onTicketCommentPostClicked('admin', id);
     if (!id) {
       toast.error('Ticket ID not found');
       return;
@@ -2367,7 +2360,6 @@ export const TicketDetailsPage = () => {
       console.log('Comment submitted successfully:', data);
 
       toast.success('Comment submitted successfully!');
-      gaEvents.onTicketCommentPostSuccess('admin', id);
 
       // Business lifecycle event — Ticket Comment Added (one per channel submitted)
       if (commentText.trim()) {
@@ -2400,7 +2392,6 @@ export const TicketDetailsPage = () => {
     } catch (error) {
       console.error('Error submitting comment:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to submit comment. Please try again.');
-      gaEvents.onTicketCommentPostFailure('admin', id, error);
     } finally {
       setSubmittingComment(false);
     }
@@ -2812,14 +2803,6 @@ export const TicketDetailsPage = () => {
 
   // Handle Ticket Management Form Submit
   const handleTicketMgmtSubmit = async () => {
-    // GA parity: the update the user just committed. `reopen` is not a separate button on
-    // web - it is a status change into a reopen fixed_state - so it is derived from the
-    // selected status here, before the request, and mirrored on success/failure below.
-    const gaIsReopen =
-      complaintStatus.find((st) => st.id.toString() === ticketMgmtFormData.selectedStatus)?.fixed_state ===
-      'reopen';
-    gaEvents.onTicketUpdateClicked('admin', id);
-    if (gaIsReopen) gaEvents.onTicketReopenClicked('admin', id);
     try {
       setSubmittingTicketMgmt(true);
 
@@ -3080,8 +3063,6 @@ export const TicketDetailsPage = () => {
       // }
 
       toast.success(successMessage);
-      gaEvents.onTicketUpdateSuccess('admin', id);
-      if (gaIsReopen) gaEvents.onTicketReopenSuccess('admin', id);
 
       // Exit edit mode
       setIsEditingTicketMgmt(false);
@@ -3089,8 +3070,6 @@ export const TicketDetailsPage = () => {
     } catch (error) {
       console.error('❌ Error updating ticket management:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to update ticket management');
-      gaEvents.onTicketUpdateFailure('admin', id, error);
-      if (gaIsReopen) gaEvents.onTicketReopenFailure('admin', id, error);
     } finally {
       setSubmittingTicketMgmt(false);
     }

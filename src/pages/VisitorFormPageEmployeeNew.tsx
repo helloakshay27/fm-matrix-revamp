@@ -7,11 +7,9 @@ import { useSelector } from 'react-redux';
 import { toast } from "sonner";
 import { createExpectedVisitor, getVisitorByMobile, CreateVisitorFormData } from "@/services/visitorAPI";
 import { ticketManagementAPI } from "@/services/ticketManagementAPI";
-import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
 
 export const VisitorFormPageEmployeeNew = () => {
     const navigate = useNavigate();
-    const gaEvents = useGaFunnelEvents();
     const location = useLocation();
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -202,7 +200,6 @@ export const VisitorFormPageEmployeeNew = () => {
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
-        gaEvents.onVisitorCreateClicked("employee", { visitor_type: "expected" });
         e.preventDefault();
         if (isSubmitting) return;
 
@@ -274,13 +271,11 @@ export const VisitorFormPageEmployeeNew = () => {
             };
 
             await createExpectedVisitor(visitorData, resourceId);
-            gaEvents.onVisitorCreateSuccess("employee", { visitor_type: "expected" });
             toast.success("Visitor created successfully!");
             navigate("/security/visitor");
         } catch (error) {
             console.error("Error creating visitor:", error);
             toast.error("Failed to create visitor. Please try again.");
-            gaEvents.onVisitorCreateFailure("employee", { visitor_type: "expected", error });
         } finally {
             setIsSubmitting(false);
         }

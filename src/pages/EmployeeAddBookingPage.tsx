@@ -12,17 +12,8 @@ import { fetchActiveFacilities } from '@/store/slices/facilitySetupsSlice';
 import { fetchOccupantUsers } from '@/store/slices/occupantUsersSlice';
 import { apiClient } from '@/utils/apiClient';
 import { toast } from 'sonner';
-import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
 
 export const EmployeeAddBookingPage = () => {
-    const gaEvents = useGaFunnelEvents();
-
-    // GA parity: the facility booking screen was opened. Mount-only, so re-renders and
-    // in-page steps are not counted as fresh page views.
-    useEffect(() => {
-      gaEvents.onBookFacilityPageClicked("employee");
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const [searchParams] = useSearchParams();
@@ -188,7 +179,6 @@ export const EmployeeAddBookingPage = () => {
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
-        gaEvents.onBookFacilityClicked("employee", selectedFacility || null);
         e.preventDefault();
 
         try {
@@ -261,7 +251,6 @@ export const EmployeeAddBookingPage = () => {
             if (response.status === 200 || response.status === 201) {
                 console.log('Booking created successfully:', response.data);
                 toast.error('Booking created successfully!');
-                gaEvents.onBookFacilitySuccess("employee", { facility_id: selectedFacility || null });
                 navigate('/vas/booking/list');
             }
         } catch (error: any) {
@@ -271,7 +260,6 @@ export const EmployeeAddBookingPage = () => {
                 console.error('Response status:', error.response.status);
             }
             toast.error('Error creating booking. Please check the console for details.');
-            gaEvents.onBookFacilityFailure("employee", { facility_id: selectedFacility || null, error });
         }
     };
 

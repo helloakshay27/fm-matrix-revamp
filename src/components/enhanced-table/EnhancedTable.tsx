@@ -59,7 +59,6 @@ import {
   isColumnFrozen,
   getFrozenColumnConfig,
 } from "./stickyColumnUtils";
-import { useModuleDownloadEvents } from "@/components/PostHogModuleDownloadEvents";
 import "./EnhancedTable.css";
 
 // Excel export utility function
@@ -149,10 +148,6 @@ interface EnhancedTableProps<T> {
   searchPlaceholder?: string;
   enableExport?: boolean;
   exportFileName?: string;
-  /** Set when the page already reports its own download event (e.g. the M-Safe lists,
-   *  which fire `Msafe Download: …` from their own handler). Stops this table from
-   *  reporting a second, generic event for the same click. */
-  analyticsDownloadHandled?: boolean;
   onExport?: () => void;
   bulkActions?: BulkAction<T>[];
   showBulkActions?: boolean;
@@ -223,7 +218,6 @@ export function EnhancedTable<T extends Record<string, any>>({
   searchPlaceholder = "Search...",
   enableExport = false,
   exportFileName = "table-export",
-  analyticsDownloadHandled = false,
   onExport,
   bulkActions = [],
   showBulkActions = false,
@@ -264,21 +258,6 @@ export function EnhancedTable<T extends Record<string, any>>({
   freezeColumnsCount = 0,
   columnGroups,
 }: EnhancedTableProps<T>) {
-  // Mobile card/list view aur uske saare mobile-only layout tweaks sirf
-  // goPhygital site par. Baaki tenants par table pehle jaisa hi render hota
-  // hai (mobile par horizontally scroll hone wala table).
-  const mobileView = isMobileUiSite();
-
-  const moduleDownloadEvents = useModuleDownloadEvents();
-  // Names the export in the event ("Maintenance Download: Assets"). storageKey is the
-  // per-table id every page already sets, so it is a stable, low-cardinality label.
-  const exportLabel = (exportFileName && exportFileName !== "table-export"
-    ? exportFileName
-    : storageKey || "Export"
-  )
-    .replace(/[-_]+/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-
   const [internalSearchTerm, setInternalSearchTerm] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [internalCurrentPage, setInternalCurrentPage] = useState(1);
@@ -944,422 +923,21 @@ export function EnhancedTable<T extends Record<string, any>>({
 
   // Remove the hardcoded exportTicketRecords function and replace with conditional logic
   const handleExportClick = () => {
-    // Single choke point for every EnhancedTable export in the app, so one capture here
-    // covers every module's list export instead of ~105 pages each remembering to report.
-    // The page-supplied handlers (onExport/handleExport) own their own success/failure, so
-    // this reports the click as succeeded; the built-in CSV path below is checked for real.
-    const reportDownload = (succeeded: boolean, failureReason?: string) => {
-      if (analyticsDownloadHandled) return;
-      moduleDownloadEvents.onModuleDownloaded({
-        label: exportLabel,
-        source: "list_export",
-        file_format: onExport || handleExport ? "xlsx" : "csv",
-        row_count: data.length,
-        succeeded,
-        failure_reason: failureReason ?? null,
-      });
-    };
-
     if (onExport) {
       // Use custom export function if provided
       onExport();
-      reportDownload(true);
     } else if (handleExport) {
       // Use handleExport with column visibility if provided
       handleExport(columnVisibility);
-      reportDownload(true);
     } else {
       // Fallback to CSV export
       const exportColumns = columns.filter(col => col.key !== 'action' && col.key !== 'actions');
-      if (data.length === 0) {
-        // exportToExcel alerts and returns without writing a file in this case.
-        reportDownload(false, "no_data");
-      }
       exportToExcel(data, exportColumns, exportFileName);
-      if (data.length > 0) reportDownload(true);
     }
   };
-
-  const goToPage = (page: number) => {
-    if (page < 1 || page > totalPages) return;
-    if (externalOnPageChange) {
-      externalOnPageChange(page);
-    } else {
-      setInternalCurrentPage(page);
-    }
-  };
-
-  // ── Mobile (<640px) list view ────────────────────────────────────────────
-  // Desktop ka table jaisa hai waisa hi rehta hai. Mobile par wahi data —
-  // same visibleColumns, renderCell/renderRow, renderActions aur selection
-  // handlers — cards ki list me dikhta hai, taaki horizontal scroll na karna pade.
-  const isEmptyCellValue = (value: React.ReactNode) =>
-    value === null || value === undefined || value === "";
-
-  // Table header mobile par hidden hai, isliye sorting ke liye ek compact
-  // control diya hai — wahi handler jo desktop header use karta hai.
-  const triggerSort = (columnKey: string) => {
-    if (onSort) {
-      onSort(columnKey);
-    } else {
-      handleSort(columnKey);
-    }
-  };
-
-  // Bahut se pages actions ko ek normal column ke roop me bhejte hain
-  // (renderActions ke bajaye). Mobile card me wo column ek "field" ban jaata
-  // tha — card ka title hi "ACTIONS" + icon ban raha tha. Isliye aise columns
-  // ko field list se nikaal kar card ke action slot me rakhte hain.
-  const isActionColumn = (column: ColumnConfig) =>
-    /^(actions?|action_?buttons?|view)$/i.test(column.key.trim()) ||
-    /^actions?$/i.test((column.label || "").trim());
-
-  const mobileSortableColumns = visibleColumns.filter(
-    (column) => column.sortable !== false && !isActionColumn(column)
-  );
-
-  const toggleMobileDetails = (itemId: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    setMobileDetailRows((prev) => {
-      const next = new Set(prev);
-      if (next.has(itemId)) {
-        next.delete(itemId);
-      } else {
-        next.add(itemId);
-      }
-      return next;
-    });
-  };
-
-  const renderMobileCard = (item: T, index: number) => {
-    const itemId = getItemId(item);
-    const isSelected = selectedItems.includes(itemId);
-    const rowDisabled = !!isRowDisabled?.(item);
-    const isExpanded = expandedRows.has(itemId);
-    const childrenKey = getChildrenKey ? getChildrenKey(item) : "children";
-    const children = collapsible && item[childrenKey] ? item[childrenKey] : [];
-    const hasChildren = collapsible && children && children.length > 0;
-    const renderedRow = renderRow ? renderRow(item, index) : item;
-    const cellFor = (key: string): React.ReactNode =>
-      renderRow ? renderedRow[key] : renderCell?.(item, key);
-
-    const actionColumns = visibleColumns.filter(isActionColumn);
-    const fieldColumns = visibleColumns.filter(
-      (column) => !isActionColumn(column)
-    );
-    const primaryColumn = fieldColumns[0];
-    // Pehle 4 fields turant dikhte hain, baaki "more fields" ke peeche —
-    // warna 10-column table par har card poori screen kha jaata hai.
-    const summaryColumns = fieldColumns.slice(1, 5);
-    const extraColumns = fieldColumns.slice(5);
-    const detailsOpen = mobileDetailRows.has(itemId);
-    const primaryValue = primaryColumn ? cellFor(primaryColumn.key) : null;
-
-    // Fields ek ke neeche ek (poori width). Collapse waise hi rehta hai —
-    // pehle 4 fields dikhte hain, baaki "+N more fields" ke peeche.
-    const renderFieldGrid = (fieldColumns: ColumnConfig[]) => (
-      <dl className="divide-y divide-[#f4f0e8]">
-        {fieldColumns.map((column) => {
-          const value = cellFor(column.key);
-          return (
-            <div key={column.key} className="min-w-0 px-3 py-2">
-              <dt className="text-[10px] font-medium uppercase tracking-wide text-gray-500">
-                {column.label}
-              </dt>
-              <dd className="mt-0.5 min-w-0 max-w-full overflow-x-auto text-[13px] leading-snug text-gray-800 [overflow-wrap:anywhere] [&_*]:max-w-full [&_img]:h-auto">
-                {isEmptyCellValue(value) ? (
-                  <span className="text-gray-400">-</span>
-                ) : (
-                  value
-                )}
-              </dd>
-            </div>
-          );
-        })}
-      </dl>
-    );
-
-    return (
-      <div
-        key={String(itemId ?? index)}
-        className={cn(
-          "enhanced-mobile-card overflow-hidden rounded-lg border border-[#D5DbDB] bg-white",
-          onRowClick && !rowDisabled && "cursor-pointer active:bg-gray-50",
-          !rowDisabled && isSelected && "border-brand bg-brand-selected",
-          rowDisabled && "opacity-60",
-          rowClassName?.(item)
-        )}
-        onClick={(e) => {
-          if (rowDisabled) return;
-          handleRowClick(item, e);
-        }}
-        aria-disabled={rowDisabled}
-      >
-        <div className="flex items-start gap-2.5 px-3 pb-2.5 pt-3">
-          {selectable && (
-            <div className="pt-0.5" data-checkbox>
-              <Checkbox
-                checked={!rowDisabled && isSelected}
-                disabled={rowDisabled}
-                onCheckedChange={(checked) => {
-                  if (rowDisabled) return;
-                  handleSelectItemChange(itemId, !!checked);
-                }}
-                aria-label={"Select row " + (index + 1)}
-                onClick={(e) => e.stopPropagation()}
-              />
-            </div>
-          )}
-          <div className="min-w-0 flex-1">
-            {primaryColumn && (
-              <>
-                <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
-                  {primaryColumn.label}
-                </div>
-                <div className="mt-0.5 text-[15px] font-semibold leading-snug text-gray-900 [overflow-wrap:anywhere]">
-                  {isEmptyCellValue(primaryValue) ? "-" : primaryValue}
-                </div>
-              </>
-            )}
-          </div>
-          {collapsible && hasChildren && (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-7 w-7 shrink-0 p-0"
-              onClick={(e) => handleToggleExpand(itemId, e)}
-              aria-label={isExpanded ? "Collapse row" : "Expand row"}
-            >
-              {isExpanded ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
-            </Button>
-          )}
-          {(renderActions || actionColumns.length > 0) && (
-            <div
-              className="flex max-w-[45%] shrink-0 flex-wrap items-center justify-end gap-1.5"
-              data-actions
-            >
-              {actionColumns.map((column) => (
-                <React.Fragment key={column.key}>
-                  {cellFor(column.key)}
-                </React.Fragment>
-              ))}
-              {renderActions?.(item)}
-            </div>
-          )}
-        </div>
-
-        {summaryColumns.length > 0 && (
-          <div className="border-t border-[#eee9df]">
-            {renderFieldGrid(summaryColumns)}
-          </div>
-        )}
-
-        {extraColumns.length > 0 && detailsOpen && (
-          <div className="border-t border-[#f0ece3] bg-[#fbfaf7]">
-            {renderFieldGrid(extraColumns)}
-          </div>
-        )}
-
-        {extraColumns.length > 0 && (
-          <button
-            type="button"
-className="flex w-full items-center justify-center gap-1 border-t border-[#f4f0e8] py-1.5 text-[11px] font-medium text-gray-500"
-            onClick={(e) => toggleMobileDetails(itemId, e)}
-            aria-expanded={detailsOpen}
-          >
-            {detailsOpen ? (
-              <>
-                Show less <ChevronUp className="h-3.5 w-3.5" />
-              </>
-            ) : (
-              <>
-                +{extraColumns.length} more{" "}
-                {extraColumns.length === 1 ? "field" : "fields"}
-                <ChevronDown className="h-3.5 w-3.5" />
-              </>
-            )}
-          </button>
-        )}
-
-        {/* Child rows TableRow return karte hain, isliye ek chhote table me wrap kiya hai. */}
-        {collapsible && hasChildren && isExpanded && renderChildrenRows && (
-          <div className="border-t border-[#eee9df] px-1.5 pb-2">
-            <Table className="w-full min-w-max text-xs">
-              <TableBody>{renderChildrenRows(children, itemId)}</TableBody>
-            </Table>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const renderMobileList = () => (
-    <div className="sm:hidden">
-      {mobileSortableColumns.length > 0 && !loading && sortedData.length > 0 && (
-        <div className="mb-2 flex w-full min-w-0 max-w-full items-center gap-2">
-          <span className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-gray-500">
-            Sort by
-          </span>
-          <select
-            className="h-8 min-w-0 flex-1 rounded-md border border-[#D5DbDB] bg-white px-2 text-xs text-gray-800"
-            value={sortState.direction ? sortState.column ?? "" : ""}
-            onChange={(e) => {
-              const key = e.target.value;
-              if (key && key !== sortState.column) triggerSort(key);
-            }}
-            aria-label="Sort by column"
-          >
-            <option value="">Default</option>
-            {mobileSortableColumns.map((column) => (
-              <option key={column.key} value={column.key}>
-                {column.label}
-              </option>
-            ))}
-          </select>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 shrink-0 !rounded-md border border-[#D5DbDB]"
-            disabled={!sortState.column}
-            onClick={() => sortState.column && triggerSort(sortState.column)}
-            title={
-              sortState.direction === "asc"
-                ? "Sorted ascending — tap for descending"
-                : sortState.direction === "desc"
-                  ? "Sorted descending — tap to clear"
-                  : "Change sort direction"
-            }
-            aria-label="Change sort direction"
-          >
-            {sortState.direction === "asc" ? (
-              <ArrowUpNarrowWide className="h-4 w-4" />
-            ) : sortState.direction === "desc" ? (
-              <ArrowDownWideNarrow className="h-4 w-4" />
-            ) : (
-              <ArrowUpDown className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
-      )}
-
-      {selectable && hasSelectableRows && !loading && (
-        <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-[#D5DbDB] bg-[#f6f4ee] px-3 py-2">
-          <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
-            <Checkbox
-              checked={isAllSelected}
-              onCheckedChange={handleSelectAllChange}
-              aria-label={selectAllLabel}
-              {...(isIndeterminate && { "data-state": "indeterminate" })}
-            />
-            {selectAllLabel}
-          </label>
-          {selectedItems.length > 0 && (
-            <span className="text-xs text-gray-600">
-              {selectedItems.length} selected
-            </span>
-          )}
-        </div>
-      )}
-
-      {canAddRow && isAddingRow && (
-        <div className="mb-2 rounded-lg border-2 border-blue-200 bg-blue-50 p-3">
-          <div className="space-y-3">
-            {visibleColumns
-              .filter((column) => !readonlyColumns.includes(column.key))
-              .map((column) => {
-                const customCell = renderEditableCell
-                  ? renderEditableCell(
-                      column.key,
-                      newRowData[column.key],
-                      (value) => handleNewRowDataChange(column.key, value)
-                    )
-                  : null;
-                return (
-                  <div key={column.key}>
-                    <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-gray-500">
-                      {column.label}
-                    </div>
-                    {customCell !== null
-                      ? customCell
-                      : renderDefaultEditableCell(
-                          column.key,
-                          newRowData[column.key],
-                          (value) => handleNewRowDataChange(column.key, value)
-                        )}
-                  </div>
-                );
-              })}
-          </div>
-          <div className="mt-3 flex justify-end gap-2">
-            <Button size="sm" variant="outline" onClick={handleCancelAddRow}>
-              <X className="mr-1 h-4 w-4" /> Cancel
-            </Button>
-            <Button
-              size="sm"
-              className="bg-brand text-white hover:bg-brand-hover"
-              onClick={handleSaveNewRow}
-            >
-              <Check className="mr-1 h-4 w-4" /> Save
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {loading && (
-        <div className="flex items-center justify-center rounded-lg border border-[#D5DbDB] bg-white py-10">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span className="ml-2 text-sm">{loadingMessage}</span>
-        </div>
-      )}
-
-      {!loading && sortedData.length === 0 && (
-        <div className="rounded-lg border border-[#D5DbDB] bg-white px-4 py-10 text-center text-sm text-gray-500">
-          <div>{emptyMessage}</div>
-          {canAddRow && !isAddingRow && (
-            <Button
-              onClick={handleAddRowClick}
-              variant="icon"
-              size="icon"
-              className="mx-auto mt-3 h-8 w-8 !rounded-full bg-brand p-0 text-white hover:bg-brand-hover [&_svg]:text-white"
-              aria-label={newRowPlaceholder}
-              title={newRowPlaceholder}
-            >
-              <Plus className="h-4 w-4" />
-              <span className="sr-only">{newRowPlaceholder}</span>
-            </Button>
-          )}
-        </div>
-      )}
-
-      {!loading && sortedData.length > 0 && (
-        <div className="space-y-3">
-          {sortedData.map((item, index) => renderMobileCard(item, index))}
-        </div>
-      )}
-
-      {canAddRow && !isAddingRow && !loading && sortedData.length > 0 && (
-        <button
-          type="button"
-          className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 bg-white py-3 text-xs font-medium text-gray-500"
-          onClick={handleAddRowClick}
-        >
-          <Plus className="h-4 w-4" /> {newRowPlaceholder}
-        </button>
-      )}
-    </div>
-  );
 
   return (
-    <div
-      className={cn(
-        "space-y-2 sm:space-y-4",
-        mobileView && "max-sm:min-w-0 max-sm:max-w-full"
-      )}
-    >
+    <div className="space-y-2 sm:space-y-4">
       {/* Mobile: Search bar on top row, full width */}
       {!hideTableSearch &&
         (onSearchChange || !externalSearchTerm || enableGlobalSearch) && (

@@ -1,6 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { AccordionKey, ModuleView, Persona } from '../data/constants';
-import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 
 export type FilterOption = { id: string; name: string };
 
@@ -223,12 +222,6 @@ type Ctx = {
 const MsafeDashboardContext = createContext<Ctx | null>(null);
 
 export function MsafeDashboardProvider({ children }: { children: React.ReactNode }) {
-  const msafeEvents = useMSafeEvents();
-  // Held in a ref so applyFilters keeps its original memoisation: the hook returns a
-  // fresh object each render, and putting it in the dep list below would re-create the
-  // callback (and the context value) on every render.
-  const msafeEventsRef = useRef(msafeEvents);
-  msafeEventsRef.current = msafeEvents;
   const [persona, setPersonaState] = useState<Persona>('admin');
   const [module, setModule] = useState<ModuleView>('msafe');
   const [openAcc, setOpenAcc] = useState<AccordionKey>(null);
@@ -248,14 +241,6 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
   const [startDate, setStartDate] = useState(INITIAL_FILTERS.startDate);
   const [endDate, setEndDate] = useState(INITIAL_FILTERS.endDate);
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters>(INITIAL_FILTERS);
-  // Mirrors appliedFilters for the filter-applied event, which needs the previous set
-  // without re-creating applyFilters on every apply. Kept in sync by the effect below so
-  // the persona switch and Reset — which set appliedFilters directly — can't leave it stale.
-  const appliedFiltersRef = useRef<AppliedFilters>(INITIAL_FILTERS);
-
-  useEffect(() => {
-    appliedFiltersRef.current = appliedFilters;
-  }, [appliedFilters]);
   const [drill, setDrill] = useState<DrillState>(null);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [selectedAnalytics, setSelectedAnalytics] = useState<string[]>([]);
@@ -428,34 +413,6 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
         ...overrides,
       };
       setAppliedFilters(next);
-
-      // Report the filter set the user just asked for, and which fields moved. Read the
-      // previous set from a ref rather than a state updater — an updater runs twice under
-      // StrictMode in dev, which would double-fire the event. A silent apply is the
-      // internal re-resolve (persona-switch race fallback), not a user action, so it
-      // stays out of the analytics.
-      if (!opts?.silent) {
-        const prev = appliedFiltersRef.current;
-        const changed = (
-          [
-            ['circle', prev.circleIds.join(',') !== next.circleIds.join(',') || prev.circles.join(',') !== next.circles.join(',')],
-            ['function', prev.functionIds.join(',') !== next.functionIds.join(',') || prev.functions.join(',') !== next.functions.join(',')],
-            ['zone', prev.zoneId !== next.zoneId || prev.zone !== next.zone],
-            ['employee_type', prev.empTypeId !== next.empTypeId || prev.empType !== next.empType],
-            ['start_date', prev.startDate !== next.startDate],
-            ['end_date', prev.endDate !== next.endDate],
-          ] as [string, boolean][]
-        )
-          .filter(([, didChange]) => didChange)
-          .map(([field]) => field);
-        msafeEventsRef.current.onMsafeDashboardFilterApplied({
-          screen: 'msafe_dashboard',
-          persona,
-          filters: next,
-          changed_fields: changed,
-        });
-      }
-      appliedFiltersRef.current = next;
       setPageTitle(persona === 'circle' ? 'M-Safe · Circle Manager' : 'M-Safe · Pan India View');
       if (!opts?.silent) showToast('Filter applied');
     },

@@ -20,7 +20,6 @@ import { TicketJobSheetModal } from '@/components/TicketJobSheetModal';
 import Select, { components } from "react-select";
 import { min } from 'lodash';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
-import { useGaFunnelEvents } from '@/components/PostHogGaFunnelEvents';
 
 // Utility function to format date to DD/MM/YYYY
 const formatDateToDDMMYYYY = (dateString: string) => {
@@ -545,7 +544,6 @@ const getBalanceTATSeconds = (escalationTime: string | null | undefined): number
 };
 
 export const TicketDetailsEmployee = () => {
-  const gaEvents = useGaFunnelEvents();
   const { id } = useParams();
   const navigate = useNavigate();
   const { shouldShow } = useDynamicPermissions();
@@ -2139,7 +2137,6 @@ export const TicketDetailsEmployee = () => {
 
   // Submit comment handler
   const handleSubmitComment = async () => {
-    gaEvents.onTicketCommentPostClicked('employee', id);
     if (!id) {
       toast.error('Ticket ID not found');
       return;
@@ -2219,7 +2216,6 @@ export const TicketDetailsEmployee = () => {
       console.log('Comment submitted successfully:', data);
 
       toast.success('Comment submitted successfully!');
-      gaEvents.onTicketCommentPostSuccess('employee', id);
 
       // Clear form
       setCommentText('');
@@ -2236,7 +2232,6 @@ export const TicketDetailsEmployee = () => {
     } catch (error) {
       console.error('Error submitting comment:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to submit comment. Please try again.');
-      gaEvents.onTicketCommentPostFailure('employee', id, error);
     } finally {
       setSubmittingComment(false);
     }
@@ -2632,12 +2627,6 @@ export const TicketDetailsEmployee = () => {
 
   // Handle Ticket Management Form Submit
   const handleTicketMgmtSubmit = async () => {
-    // GA parity: reopen is a status change into a reopen fixed_state, not its own button.
-    const gaIsReopen =
-      complaintStatus.find((st) => st.id.toString() === ticketMgmtFormData.selectedStatus)?.fixed_state ===
-      'reopen';
-    gaEvents.onTicketUpdateClicked('employee', id);
-    if (gaIsReopen) gaEvents.onTicketReopenClicked('employee', id);
     try {
       setSubmittingTicketMgmt(true);
 
@@ -2776,8 +2765,6 @@ export const TicketDetailsEmployee = () => {
       // }
       
       toast.success(successMessage);
-      gaEvents.onTicketUpdateSuccess('employee', id);
-      if (gaIsReopen) gaEvents.onTicketReopenSuccess('employee', id);
 
       // Refresh ticket data
       const ticketDetails = await employeeTicketAPI.getTicketDetails(id);
@@ -2789,8 +2776,6 @@ export const TicketDetailsEmployee = () => {
     } catch (error) {
       console.error('❌ Error updating ticket management:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to update ticket management');
-      gaEvents.onTicketUpdateFailure('employee', id, error);
-      if (gaIsReopen) gaEvents.onTicketReopenFailure('employee', id, error);
     } finally {
       setSubmittingTicketMgmt(false);
     }

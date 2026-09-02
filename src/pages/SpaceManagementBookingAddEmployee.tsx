@@ -10,7 +10,6 @@ import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
-import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
 
 interface Category {
   id: number;
@@ -79,7 +78,6 @@ const fieldStyles = {
 };
 
 const SpaceManagementBookingAddEmployee = () => {
-  const gaEvents = useGaFunnelEvents();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -386,7 +384,6 @@ const SpaceManagementBookingAddEmployee = () => {
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
-    gaEvents.onSpaceBookConfirmClicked("employee", { seat_count: selectedSeat ? 1 : null });
     e.preventDefault();
 
     // Validation
@@ -474,7 +471,6 @@ const SpaceManagementBookingAddEmployee = () => {
       await response.json();
 
       toast.success('Seat booking created successfully!');
-      gaEvents.onSpaceBookConfirmSuccess("employee", { seat_count: selectedSeat ? 1 : null });
       navigate('/employee/space-management/bookings');
     } catch (error) {
       console.error('Error creating booking:', error);

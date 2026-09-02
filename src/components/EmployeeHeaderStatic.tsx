@@ -45,7 +45,6 @@ import { permissionService } from "@/services/permissionService";
 import { Calendar } from "./ui/calendar";
 import axios from "axios";
 import { toast } from "sonner";
-import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
 
 // Employee modules/packages
 const employeeModules = [
@@ -73,7 +72,6 @@ export const EmployeeHeaderStatic: React.FC = () => {
   const id = JSON.parse(localStorage.getItem("user") || "{}").id || "";
 
   const navigate = useNavigate();
-  const gaEvents = useGaFunnelEvents();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isModuleMenuOpen, setIsModuleMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -280,7 +278,6 @@ export const EmployeeHeaderStatic: React.FC = () => {
         navigate("/vas/projects");
         break;
       case "Ticket":
-        gaEvents.onHomeTopFeaturesTicketsClicked("employee");
         navigate("/maintenance/ticket/employee");
         break;
       case "Visitors":

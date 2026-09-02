@@ -13,7 +13,6 @@ import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import axios from "axios";
 import { toast } from "sonner";
-import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
 
 const formatCurrency = (value?: number | null) =>
   typeof value === "number" ? `₹${value.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "-";
@@ -39,7 +38,6 @@ const getTaxAmounts = (bookings: FacilityBookingDetails | null) => {
 };
 
 export const BookingDetailsPage = () => {
-  const gaEvents = useGaFunnelEvents();
   const { id } = useParams();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -111,88 +109,7 @@ export const BookingDetailsPage = () => {
     }
   };
 
-  const openCancelModal = () => {
-    setCancelMode(bookings?.cancellation_tiers?.length ? 'paid' : 'free');
-    setFreeCancellationReason('');
-    setSelectedTierPercentage(null);
-    setReasonError('');
-    setShowCancelModal(true);
-  };
-
-  const handleCancelBooking = async () => {
-    gaEvents.onMyBookingCancelClicked("employee", id);
-    if (!id || !bookings?.user_id) {
-      toast.error('User ID not found in booking details. Cannot cancel booking.');
-      return;
-    }
-
-    if (cancelMode === 'free' && !freeCancellationReason.trim()) {
-      setReasonError('Reason is required for free cancellation.');
-      reasonInputRef.current?.focus();
-      return;
-    }
-    if (cancelMode === 'paid' && selectedTierPercentage == null) {
-      toast.error('Please select a cancellation tier.');
-      return;
-    }
-
-    const facilityBookingPayload =
-      cancelMode === 'free'
-        ? {
-          canceled_by: 'user',
-          canceler_id: bookings.user_id,
-          cancellation_type: 'free',
-          free_cancellation_reason: freeCancellationReason.trim(),
-        }
-        : {
-          canceled_by: 'user',
-          canceler_id: bookings.user_id,
-          cancellation_type: 'paid',
-          return_percentage: selectedTierPercentage,
-        };
-
-    setIsCancelling(true);
-    try {
-      await axios.patch(
-        `https://${baseUrl}/pms/admin/facility_bookings/${id}.json`,
-        { facility_booking: facilityBookingPayload },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      toast.success('Booking cancelled successfully!');
-      gaEvents.onMyBookingCancelSuccess("employee", id);
-      setShowCancelModal(false);
-      fetchDetails();
-    } catch (error) {
-      const status = error?.response?.status;
-      const message: string =
-        error?.response?.data?.error || error?.response?.data?.message || '';
-
-      if (status === 500 || /can not cancel/i.test(message)) {
-        // Cancellability likely changed underneath us — refresh so the
-        // Cancel button re-hides itself if can_cancel_bool is now false.
-        toast.error(message || 'This booking can no longer be cancelled.');
-        setShowCancelModal(false);
-        fetchDetails();
-      } else if (/reason is required/i.test(message)) {
-        setReasonError(message);
-        reasonInputRef.current?.focus();
-      } else if (/invalid cancellation percentage/i.test(message)) {
-        toast.error(`${message} Please reselect a tier.`);
-        setSelectedTierPercentage(null);
-        fetchDetails();
-      } else {
-        toast.error(message || 'Failed to cancel booking');
-      }
-      console.error('Cancel booking error:', error);
-    } finally {
-      setIsCancelling(false);
-    }
-  };
+  console.log(logs)
 
   const { cgstAmount, sgstAmount } = getTaxAmounts(bookings);
 

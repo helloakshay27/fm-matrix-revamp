@@ -370,15 +370,6 @@ export const KRCCFormListDashboard = () => {
     const token = localStorage.getItem('token');
     if (!baseUrl || !token) {
       toast.error('Missing base URL or token');
-        msafeEvents.onMsafeDownloaded({
-          screen: 'msafe_krcc',
-          source: 'row_pdf',
-          label: 'KRCC Form PDF',
-          file_format: 'pdf',
-          record_id: form.id,
-          succeeded: false,
-          failure_reason: 'missing_credentials',
-        });
       return;
     }
     setDownloading(prev => ({ ...prev, [form.id]: true }));
@@ -871,14 +862,6 @@ export const KRCCFormListDashboard = () => {
 
         document.body.removeChild(container);
         toast.success('PDF generated');
-        msafeEvents.onMsafeDownloaded({
-          screen: 'msafe_krcc',
-          source: 'row_pdf',
-          label: 'KRCC Form PDF',
-          file_format: 'pdf',
-          record_id: form.id,
-          succeeded: true,
-        });
         return; // end normal path early so we don't run old pagination logic below
       } catch (e) {
         console.warn('[KRCC][PDF] html2canvas failed, falling back to text-only sections', e);
@@ -1023,29 +1006,12 @@ export const KRCCFormListDashboard = () => {
 
         document.body.removeChild(container);
         toast.success('PDF generated');
-        msafeEvents.onMsafeDownloaded({
-          screen: 'msafe_krcc',
-          source: 'row_pdf',
-          label: 'KRCC Form PDF',
-          file_format: 'pdf',
-          record_id: form.id,
-          succeeded: true,
-        });
         return;
       }
 
     } catch (e: any) {
       console.error('[KRCC][PDF] Generation error', e);
       toast.error(e?.message || 'Failed to generate PDF');
-        msafeEvents.onMsafeDownloaded({
-          screen: 'msafe_krcc',
-          source: 'row_pdf',
-          label: 'KRCC Form PDF',
-          file_format: 'pdf',
-          record_id: form.id,
-          succeeded: false,
-          failure_reason: e?.message ?? 'pdf_generation_failed',
-        });
     } finally {
       setDownloading(prev => ({ ...prev, [form.id]: false }));
     }

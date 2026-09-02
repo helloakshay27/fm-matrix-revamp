@@ -30,7 +30,6 @@ import { useSelector } from 'react-redux';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { useVisitorEvents } from "@/components/PostHogVisitorEvents";
-import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
 
 interface Building {
   id: number;
@@ -51,7 +50,6 @@ export const VisitorFormPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const visitorEvents = useVisitorEvents();
-  const gaEvents = useGaFunnelEvents();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -519,8 +517,6 @@ export const VisitorFormPage = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    const gaVisitorType = formData.visitorVisit === "unexpected" ? "unexpected" : "expected";
-    gaEvents.onVisitorCreateClicked("admin", { visitor_type: gaVisitorType });
     e.preventDefault();
     if (isSubmitting) return;
     if (!formData.host) {
@@ -753,13 +749,11 @@ export const VisitorFormPage = () => {
         host_id: formData.host ? String(formData.host) : null,
         is_returning: Boolean(visitorInfo),
       });
-      gaEvents.onVisitorCreateSuccess("admin", { visitor_type: gaVisitorType });
       toast.success("Visitor created successfully!");
       navigate("/security/visitor");
     } catch (error) {
       console.error("❌ Error creating visitor:", error);
       toast.error("Failed to create visitor. Please try again.");
-      gaEvents.onVisitorCreateFailure("admin", { visitor_type: gaVisitorType, error });
     } finally {
       setIsSubmitting(false);
     }

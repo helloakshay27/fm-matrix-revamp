@@ -432,28 +432,9 @@ export const ExternalUsersDashboard = () => {
       URL.revokeObjectURL(downloadUrl);
       toast.success('External Users data exported successfully');
       msafeEvents.onMSafeUserListExported('non_fte', selectedItems.length > 0 ? selectedItems.length : pagination.total_count);
-      msafeEvents.onMsafeDownloaded({
-        screen: 'msafe_nonfte_list',
-        source: 'list_export',
-        label: 'External (non-FTE) users',
-        file_format: 'xlsx',
-        export_mode: 'server_report',
-        row_count: selectedItems.length > 0 ? selectedItems.length : pagination.total_count,
-        succeeded: true,
-      });
     } catch (error) {
       console.error('Export failed:', error);
       toast.error('Failed to export External Users data');
-      msafeEvents.onMsafeDownloaded({
-        screen: 'msafe_nonfte_list',
-        source: 'list_export',
-        label: 'External (non-FTE) users',
-        file_format: 'xlsx',
-        export_mode: 'server_report',
-        row_count: selectedItems.length > 0 ? selectedItems.length : pagination.total_count,
-        succeeded: false,
-        failure_reason: (error as Error)?.message ?? 'request_failed',
-      });
     }
   };
 
@@ -689,7 +670,6 @@ export const ExternalUsersDashboard = () => {
             onSearchChange={setSearchTerm}
             searchPlaceholder="Search..."
             handleExport={handleExport}
-            analyticsDownloadHandled
             exportFileName="external-users"
             pagination={false}
             pageSize={pageSize}

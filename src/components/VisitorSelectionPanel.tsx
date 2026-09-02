@@ -32,7 +32,6 @@ import {
   API_CONFIG,
 } from "@/config/apiConfig";
 import { toast } from "sonner";
-import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
 
 interface VisitorObject {
   id: number;
@@ -78,7 +77,6 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
   const [isCheckInLoading, setIsCheckInLoading] = useState(false);
   const [isCheckOutLoading, setIsCheckOutLoading] = useState(false);
   const [isApproveLoading, setIsApproveLoading] = useState(false);
-  const gaEvents = useGaFunnelEvents();
   const [isVerifyOtpLoading, setIsVerifyOtpLoading] = useState(false);
   const [isResendOtpLoading, setIsResendOtpLoading] = useState(false);
   const [isBlacklistLoading, setIsBlacklistLoading] = useState(false);
@@ -130,7 +128,6 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
   };
 
   const handleApprove = async () => {
-    gaEvents.onVisitorApproveClicked("admin", selectedVisitors.length === 1 ? selectedVisitors[0] : null);
     console.log(
       "VisitorSelectionPanel - Bulk approve clicked for visitors:",
       selectedVisitors

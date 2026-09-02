@@ -13,7 +13,6 @@ import { EditBookingDialog } from "@/components/EditBookingDialog";
 import { CancelBookingDialog } from "@/components/CancelBookingDialog";
 import { ColumnVisibilityDropdown } from "@/components/ColumnVisibilityDropdown";
 import { getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
-import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
 
 // API Response Interfaces
 interface SeatBooking {
@@ -48,14 +47,6 @@ interface SeatBookingsApiResponse {
 }
 
 export const SpaceManagementBookingsDashboardEmployee = () => {
-  const gaEvents = useGaFunnelEvents();
-
-  // GA parity: the seat booking screen was opened. Mount-only, so tab switches and
-  // paging inside the page are not counted as fresh page views.
-  useEffect(() => {
-    gaEvents.onBookSeatPageClicked("employee");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
