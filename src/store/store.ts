@@ -57,6 +57,7 @@ import { createServicePRReducer, editServicePRReducer, getServiceFeedsReducer, g
 import { approveDeletionRequestReducer, fetchDeletedPRsReducer, fetchDeletionRequestsReducer, fetchPendingApprovalsReducer } from './slices/pendingApprovalSlice'
 import { createGRNReducer, fetchItemDetailsReducer, fetchSupplierDetailsReducer, getGRNReducer, fetchSingleGRNReducer, approveGRNReducer, rejectGrnReducer, getGRNFeedsReducer, editGRNReducer } from './slices/grnSlice'
 import { createCustomerReducer, editCustomerReducer, getCustomerByIdReducer, getCustomerListReducer } from './slices/cusomerSlice'
+import { getCustomerBillByIdReducer, getCustomerBillsReducer } from './slices/customerBillsSlice'
 import { approveInvoiceReducer, getInvoiceByIdReducer, getInvoiceFeedsReducer, getInvoincesReducer } from './slices/invoicesSlice'
 import { createRuleReducer, fetchCardCountReducer, fetchCustomersReducer, fetchRecurringRulesReducer, fetchTransactionHistoryReducer, fetchWalletDetailsReducer, fetchWalletDetailsTransactionHistoryReducer, fetchWalletListReducer, topupWalletReducer } from './slices/walletListSlice'
 import { createExpiryRuleReducer, editExpiryRuleReducer, fetchLogsReducer, fetchWalletRuleReducer } from './slices/pointExpirySlice'
@@ -223,6 +224,8 @@ export const store = configureStore({
     createMaterialPR: createMaterialPRReducer,
     getMaterialPR: getMaterialPRReducer,
     getMaterialPRById: getMaterialPRByIdReducer,
+    getCustomerBills: getCustomerBillsReducer,
+    getCustomerBillById: getCustomerBillByIdReducer,
     changePlantDetails: changePlantDetailsReducer,
     fetchWBS: fetchWBSReducer,
     getFeeds: getFeedsReducer,
