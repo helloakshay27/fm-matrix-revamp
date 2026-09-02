@@ -613,7 +613,8 @@ export const Header = () => {
           {/* Dashboard Button */}
           {!isRestrictedUser && (
             <div className="hidden lg:flex items-center gap-2">
-              {!isViSite && (
+              {/* Hidden for the Club tenant - only "Club Dashboard" should show there. */}
+              {!isViSite && !isClubSite && (
                 <button
                   onClick={() => (window.location.href = "/dashboard")}
                   className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
@@ -622,7 +623,7 @@ export const Header = () => {
                   Dashboard
                 </button>
               )}
-              {!isViSite && (
+              {!isViSite && !isClubSite && (
                 <button
                   onClick={() =>
                     (window.location.href = "/dashboard-executive")
@@ -831,7 +832,8 @@ export const Header = () => {
                 align="end"
                 className="!w-[calc(100vw-1rem)] max-w-[18rem] bg-white border border-[#D5DbDB] shadow-lg sm:!w-64"
               >
-                {!isViSite && (
+                {/* Hidden for the Club tenant - only "Club Dashboard" should show there. */}
+                {!isViSite && !isClubSite && (
                   <DropdownMenuItem
                     onClick={() => (window.location.href = "/dashboard")}
                   >
@@ -839,7 +841,7 @@ export const Header = () => {
                     Dashboard
                   </DropdownMenuItem>
                 )}
-                {!isViSite && (
+                {!isViSite && !isClubSite && (
                   <DropdownMenuItem
                     onClick={() =>
                       (window.location.href = "/dashboard-executive")
