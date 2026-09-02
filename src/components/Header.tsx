@@ -25,6 +25,7 @@ import {
   Menu,
   X,
   Activity,
+  LayoutDashboard,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -632,6 +633,17 @@ export const Header = () => {
                   Executive Dashboard
                 </button>
               )}
+              {isClubSite && (
+                <button
+                  onClick={() =>
+                    (window.location.href = "/club-management/dashboard")
+                  }
+                  className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  Club Dashboard
+                </button>
+              )}
 
               {canShowMSafeDashboard && (
                 <button
@@ -835,6 +847,16 @@ export const Header = () => {
                   >
                     <ChartAreaIcon className="w-4 h-4 mr-2" />
                     Executive Dashboard
+                  </DropdownMenuItem>
+                )}
+                {isClubSite && (
+                  <DropdownMenuItem
+                    onClick={() =>
+                      (window.location.href = "/club-management/dashboard")
+                    }
+                  >
+                    <LayoutDashboard className="w-4 h-4 mr-2" />
+                    Club Dashboard
                   </DropdownMenuItem>
                 )}
                 {/* {canShowMSafeDashboard && (
