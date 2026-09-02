@@ -7,8 +7,10 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useAppDispatch } from "@/store/hooks";
-import { getCustomerBillById } from "@/store/slices/customerBillsSlice";
+import { cancelCustomerBill, createCustomerBillPayment, getCustomerBillById } from "@/store/slices/customerBillsSlice";
 import { toast } from "sonner";
+import { UpdatePaymentModal, type UpdatePaymentSubmitData } from "@/components/UpdatePaymentModal";
+import { CancelBillModal } from "@/components/CancelBillModal";
 
 interface CustomerBillDetail {
   id: number;
@@ -52,8 +54,12 @@ export const CustomerBillDetailsPage = () => {
 
   const [bill, setBill] = useState<CustomerBillDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
 
-  useEffect(() => {
+  const fetchBill = () => {
     if (!id) {
       setLoading(false);
       return;
@@ -67,7 +73,66 @@ export const CustomerBillDetailsPage = () => {
         toast.error(String(error) || "Failed to fetch customer bill");
       })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchBill();
   }, [dispatch, baseUrl, token, id]);
+
+  const paidSoFar = (bill?.payments || []).reduce(
+    (sum, payment) => sum + (Number((payment as Record<string, unknown>).amount) || 0),
+    0
+  );
+  const pendingAmount = (bill?.total_amount || 0) - paidSoFar;
+
+  const handleSubmitPayment = async (data: UpdatePaymentSubmitData) => {
+    if (!id) return;
+    setIsSubmittingPayment(true);
+    try {
+      await dispatch(
+        createCustomerBillPayment({
+          baseUrl,
+          token,
+          id,
+          data: {
+            lock_payment: {
+              total_amount: data.amountPaid,
+              payment_method: data.paymentMode,
+              payment_mode: data.paymentMode,
+              pg_transaction_id: data.transactionNumber || null,
+              cheque_date: data.paymentDate || null,
+              notes: data.note,
+            },
+            cusdirect: null,
+          },
+        })
+      ).unwrap();
+      toast.success("Payment recorded successfully");
+      setIsPaymentModalOpen(false);
+      fetchBill();
+    } catch (error) {
+      console.error("Error recording payment:", error);
+      toast.error(String(error) || "Failed to record payment");
+    } finally {
+      setIsSubmittingPayment(false);
+    }
+  };
+
+  const handleCancelBill = async (cancelNote: string) => {
+    if (!id) return;
+    setIsSubmittingCancel(true);
+    try {
+      await dispatch(cancelCustomerBill({ baseUrl, token, id, cancelNote })).unwrap();
+      toast.success("Bill cancelled successfully");
+      setIsCancelModalOpen(false);
+      fetchBill();
+    } catch (error) {
+      console.error("Error cancelling bill:", error);
+      toast.error(String(error) || "Failed to cancel bill");
+    } finally {
+      setIsSubmittingCancel(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -107,11 +172,15 @@ export const CustomerBillDetailsPage = () => {
             <Printer className="w-4 h-4 mr-1" />
             Print Invoice
           </Button>
-          <Button size="sm" variant="outline" onClick={() => {}}>
+          <Button size="sm" variant="outline" onClick={() => setIsCancelModalOpen(true)}>
             <Ban className="w-4 h-4 mr-1" />
             Cancel Invoice
           </Button>
-          <Button size="sm" className="bg-brand hover:bg-brand-hover text-white" onClick={() => {}}>
+          <Button
+            size="sm"
+            className="bg-brand hover:bg-brand-hover text-white"
+            onClick={() => setIsPaymentModalOpen(true)}
+          >
             <Wallet className="w-4 h-4 mr-1" />
             Receive Payment
           </Button>
@@ -201,6 +270,21 @@ export const CustomerBillDetailsPage = () => {
           />
         </div>
       </div>
+
+      <UpdatePaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        pendingAmount={pendingAmount}
+        isSubmitting={isSubmittingPayment}
+        onSubmit={handleSubmitPayment}
+      />
+
+      <CancelBillModal
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+        isSubmitting={isSubmittingCancel}
+        onSubmit={handleCancelBill}
+      />
     </div>
   );
 };
