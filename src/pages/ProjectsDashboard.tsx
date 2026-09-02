@@ -66,6 +66,7 @@ const columns: ColumnConfig[] = [
     sortable: true,
     draggable: true,
     defaultVisible: true,
+    width: 250, // shows truncated on first load; user can still drag to resize
   },
   {
     key: "status",
@@ -891,7 +892,7 @@ export const ProjectsDashboard = () => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <div
-                  className="max-w-[250px] truncate cursor-pointer"
+                  className="w-full min-w-0 truncate cursor-pointer"
                   onClick={() =>
                     navigate(`/vas/projects/${item.id}/milestones`)
                   }

@@ -114,6 +114,7 @@ const columns: ColumnConfig[] = [
     sortable: true,
     draggable: true,
     defaultVisible: true,
+    width: 320, // shows truncated on first load; user can still drag to resize
   },
   {
     key: "project_name",
@@ -1100,11 +1101,11 @@ const IssuesListPage = ({
       const isStarted = item.is_started;
       return (
         <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2 w-[20rem]">
+          <div className="flex items-center gap-2 w-full min-w-0">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="w-full truncate">{item.title}</span>
+                  <span className="min-w-0 flex-1 truncate">{item.title}</span>
                 </TooltipTrigger>
                 <TooltipContent className="rounded-[5px]">
                   <p>{item.title}</p>

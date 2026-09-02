@@ -105,17 +105,25 @@ const exportToExcel = <T extends Record<string, any>>(
   URL.revokeObjectURL(url);
 };
 
+export interface ColumnGroup {
+  /** Text shown in the spanning header cell above this group's columns. */
+  label: string;
+  /** Column keys (matching ColumnConfig.key) this group spans — render contiguously in `columns` for a clean colSpan; a drag that breaks contiguity just splits the span gracefully. */
+  columnKeys: string[];
+  className?: string;
+}
+
 interface BulkAction<T> {
   label: string;
   icon?: React.ComponentType<any>;
   onClick: (selectedItems: T[]) => void;
   variant?:
-    | "default"
-    | "destructive"
-    | "outline"
-    | "secondary"
-    | "ghost"
-    | "link";
+  | "default"
+  | "destructive"
+  | "outline"
+  | "secondary"
+  | "ghost"
+  | "link";
 }
 
 interface EnhancedTableProps<T> {
@@ -183,6 +191,7 @@ interface EnhancedTableProps<T> {
   renderChildrenRows?: (children: T[], parentId: string) => React.ReactNode;
   enableFreeze?: boolean;
   freezeColumnsCount?: number;
+  columnGroups?: ColumnGroup[];
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
@@ -246,6 +255,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   renderChildrenRows,
   enableFreeze = false,
   freezeColumnsCount = 0,
+  columnGroups,
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState("");
   const [searchInput, setSearchInput] = useState("");
@@ -559,6 +569,105 @@ export function EnhancedTable<T extends Record<string, any>>({
     .map((col) => col.key)
     .filter((key) => key !== "__checkbox__");
 
+  // Merge visible columns into contiguous runs per columnGroups, in current
+  // column order — a column not covered by any group renders as its own
+  // "single" segment. A drag that breaks a group's contiguity just splits it
+  // into multiple spans next render rather than breaking anything.
+  type HeaderSegment =
+    | { type: "group"; group: ColumnGroup; columns: ColumnConfig[] }
+    | { type: "single"; column: ColumnConfig };
+
+  const headerSegments = useMemo<HeaderSegment[] | null>(() => {
+    if (!columnGroups || columnGroups.length === 0) return null;
+    const groupByKey = new Map<string, ColumnGroup>();
+    columnGroups.forEach((group) => {
+      group.columnKeys.forEach((key) => groupByKey.set(key, group));
+    });
+
+    const segments: HeaderSegment[] = [];
+    visibleColumns.forEach((column) => {
+      const group = groupByKey.get(column.key);
+      const last = segments[segments.length - 1];
+      if (group && last && last.type === "group" && last.group === group) {
+        last.columns.push(column);
+      } else if (group) {
+        segments.push({ type: "group", group, columns: [column] });
+      } else {
+        segments.push({ type: "single", column });
+      }
+    });
+    return segments;
+  }, [columnGroups, visibleColumns]);
+
+  const renderColumnHeaderCell = (
+    column: ColumnConfig,
+    columnIndex: number,
+    rowSpan?: number
+  ) => {
+    const frozenConfig = enableFreeze
+      ? getFrozenColumnConfig(
+        columnIndex,
+        freezeColumnsCount,
+        visibleColumns,
+        columnWidths,
+        true // isStickyHeader = true
+      )
+      : null;
+
+    return (
+      <SortableColumnHeader
+        key={column.key}
+        id={column.key}
+        sortable={column.sortable !== false}
+        draggable={column.draggable}
+        rowSpan={rowSpan}
+        sortDirection={
+          sortState.column === column.key ? sortState.direction : null
+        }
+        onSort={() => {
+          if (column.sortable !== false) {
+            if (onSort) {
+              onSort(column.key);
+            } else {
+              handleSort(column.key);
+            }
+          }
+        }}
+        className={cn(
+          "bg-[#f6f4ee] text-left text-black min-w-32 sticky top-0",
+          frozenConfig?.isFrozen && "frozen-header-cell",
+          frozenConfig?.isLastFrozen && "frozen-last-cell"
+        )}
+        style={{
+          width: columnWidths[column.key]
+            ? `${columnWidths[column.key]}px`
+            : column.width
+              ? `${column.width}px`
+              : undefined,
+          minWidth: columnWidths[column.key]
+            ? `${columnWidths[column.key]}px`
+            : column.width
+              ? `${column.width}px`
+              : undefined,
+          position: "relative",
+          ...(frozenConfig?.isFrozen && {
+            position: "sticky" as const,
+            zIndex: frozenConfig.zIndex,
+          }),
+        }}
+        data-frozen={frozenConfig?.isFrozen}
+        data-frozen-shadow={frozenConfig?.showShadow}
+      >
+        {column.label}
+        <div
+          className="column-resize-handle"
+          onMouseDown={(e) => handleResizeStart(column.key, e)}
+          onClick={(e) => e.stopPropagation()}
+        />
+      </SortableColumnHeader>
+    );
+  };
+
   // Check if all visible items are selected
   const selectableRows = selectable
     ? sortedData.filter((item) => !isRowDisabled?.(item))
@@ -647,7 +756,8 @@ export function EnhancedTable<T extends Record<string, any>>({
     e.stopPropagation();
     setResizingColumn(columnKey);
     setStartX(e.clientX);
-    setStartWidth(columnWidths[columnKey] || 128); // Default min-w-32 = 128px
+    const configuredWidth = columns.find((c) => c.key === columnKey)?.width;
+    setStartWidth(columnWidths[columnKey] || configuredWidth || 128); // Default min-w-32 = 128px
     document.body.style.cursor = "col-resize";
     document.body.style.userSelect = "none";
   };
@@ -1051,12 +1161,12 @@ export function EnhancedTable<T extends Record<string, any>>({
                     {visibleColumns.map((column, columnIndex) => {
                       const frozenConfig = enableFreeze
                         ? getFrozenColumnConfig(
-                            columnIndex,
-                            freezeColumnsCount,
-                            visibleColumns,
-                            columnWidths,
-                            true // isStickyHeader = true
-                          )
+                          columnIndex,
+                          freezeColumnsCount,
+                          visibleColumns,
+                          columnWidths,
+                          true // isStickyHeader = true
+                        )
                         : null;
 
                       return (
@@ -1185,20 +1295,20 @@ export function EnhancedTable<T extends Record<string, any>>({
 
                       const frozenConfig = enableFreeze
                         ? getFrozenColumnConfig(
-                            columnIndex,
-                            freezeColumnsCount,
-                            visibleColumns,
-                            columnWidths,
-                            false // isStickyHeader = false
-                          )
+                          columnIndex,
+                          freezeColumnsCount,
+                          visibleColumns,
+                          columnWidths,
+                          false // isStickyHeader = false
+                        )
                         : null;
 
                       const customCell = renderEditableCell
                         ? renderEditableCell(
-                            column.key,
-                            newRowData[column.key],
-                            (value) => handleNewRowDataChange(column.key, value)
-                          )
+                          column.key,
+                          newRowData[column.key],
+                          (value) => handleNewRowDataChange(column.key, value)
+                        )
                         : null;
 
                       return (
@@ -1222,11 +1332,11 @@ export function EnhancedTable<T extends Record<string, any>>({
                           {customCell !== null
                             ? customCell
                             : renderDefaultEditableCell(
-                                column.key,
-                                newRowData[column.key],
-                                (value) =>
-                                  handleNewRowDataChange(column.key, value)
-                              )}
+                              column.key,
+                              newRowData[column.key],
+                              (value) =>
+                                handleNewRowDataChange(column.key, value)
+                            )}
                         </TableCell>
                       );
                     })}
@@ -1372,12 +1482,12 @@ export function EnhancedTable<T extends Record<string, any>>({
 
                             const frozenConfig = enableFreeze
                               ? getFrozenColumnConfig(
-                                  columnIndex,
-                                  freezeColumnsCount,
-                                  visibleColumns,
-                                  columnWidths,
-                                  false // isStickyHeader = false
-                                )
+                                columnIndex,
+                                freezeColumnsCount,
+                                visibleColumns,
+                                columnWidths,
+                                false // isStickyHeader = false
+                              )
                               : null;
 
                             return (
@@ -1387,18 +1497,24 @@ export function EnhancedTable<T extends Record<string, any>>({
                                   "p-4 text-left min-w-32",
                                   frozenConfig?.isFrozen && "frozen-body-cell",
                                   frozenConfig?.isLastFrozen &&
-                                    "frozen-last-cell"
+                                  "frozen-last-cell"
                                 )}
                                 style={{
                                   width: columnWidths[column.key]
                                     ? `${columnWidths[column.key]}px`
-                                    : undefined,
+                                    : column.width
+                                      ? `${column.width}px`
+                                      : undefined,
                                   minWidth: columnWidths[column.key]
                                     ? `${columnWidths[column.key]}px`
-                                    : undefined,
+                                    : column.width
+                                      ? `${column.width}px`
+                                      : undefined,
                                   maxWidth: columnWidths[column.key]
                                     ? `${columnWidths[column.key]}px`
-                                    : undefined,
+                                    : column.width
+                                      ? `${column.width}px`
+                                      : undefined,
                                   ...(frozenConfig?.isFrozen && {
                                     position: "sticky" as const,
                                     left: `${frozenConfig.leftOffset}px`,
