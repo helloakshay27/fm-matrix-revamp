@@ -17,7 +17,6 @@ import { ZxSidebar } from "./ZxSidebar";
 import { ZxDynamicHeader } from "./ZxDynamicHeader";
 import { saveToken, saveUser, saveBaseUrl, getUser } from "../utils/auth";
 import { isEmbeddedMode } from "../utils/embeddedMode";
-import { isViNonProdOverride } from "../utils/viSite";
 import { ProtectionLayer } from "./ProtectionLayer";
 import { PrimeSupportSidebar } from "./PrimeSupportSidebar";
 import { PrimeSupportDynamicHeader } from "./PrimeSupportDynamicHeader";
@@ -46,6 +45,44 @@ import VendorDynamicHeader from "./VendorDynamicHeader";
 import TopNavigationStatic from "./CompanyHub/TopNavigationStatic";
 import { BusinessCompassSidebarStatic } from "./BusinessCompassSidebarStatic";
 import { AdminCompassSidebarStatic } from "./AdminCompassSidebarStatic";
+
+// Vi shell ko UAT / localhost par force karne ke liye. Production par ye hamesha false
+// return karta hai - wahan sirf niche wala isViSite (hostname) hi decide karta hai, yaani
+// live behaviour bilkul purana. Zarurat sirf testing ki thi: UAT/local par hostname kabhi
+// Vi domain nahi hota, isliye Vi app admin/employee branches me gir jata tha.
+// Org 34 = Vi tenant (wahi id jo Vi ke API payloads decide karti hai - isWebOrg34).
+const VI_ORG_ID = "34";
+const VI_NON_PROD_HOSTS = ["fm-matrix.lockated.com", "fm-uat.gophygital.work"];
+const VI_TEST_ACCOUNTS = ["deveshjain928@gmail.com"];
+
+const isViNonProdOverride = (email?: string | null): boolean => {
+  // window/localStorage kisi bhi domain par throw kar sakte hain (site data blocked,
+  // private window, embedded host) - ye sirf layout chunta hai, page gira nahi sakta.
+  let host = "";
+  try {
+    host = window.location.hostname ?? "";
+  } catch {
+    return false;
+  }
+  const isNonProd =
+    host.includes("localhost") ||
+    host.includes("127.0.0.1") ||
+    VI_NON_PROD_HOSTS.some((nonProdHost) => host.includes(nonProdHost));
+  if (!isNonProd) return false;
+  try {
+    // org id teen keys me likha jata hai; kaunsi bharegi ye login path par depend karta hai.
+    if (
+      ["org_id", "organization_id", "selectedOrgId"].some(
+        (key) => localStorage.getItem(key) === VI_ORG_ID
+      )
+    ) {
+      return true;
+    }
+  } catch {
+    // storage blocked - tenant check chhod do, email fallback bacha hai
+  }
+  return Boolean(email) && VI_TEST_ACCOUNTS.includes(email as string);
+};
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -138,16 +175,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Check if non-employee user needs to select project/site
   const isViSite = hostname.includes("vi-web.gophygital.work");
 
-  // On every deployed host this is exactly the old check - isViSite above and nothing else.
-  // The override only ever adds the Vi shell on UAT / localhost, where the hostname can never
-  // be the Vi domain and the app would otherwise fall through to the admin or employee
-  // branches (see utils/viSite.ts).
-  const isViLayout = isViSite || isViNonProdOverride(currentUser?.email);
-
-  // Vi keeps its own shell even when userType is pms_occupant, otherwise the employee
-  // branches strip the header and the main-content margin the Vi sidebar needs.
-  const isEmployeeLayout = isEmployeeUser && isLocalhost && !isViLayout;
-
 
   // Removed project selection modal logic - now handled by view selection
 
@@ -186,6 +213,19 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     userEmail === "besis69240@azeriom.com" ||
     userEmail === "megipow156@aixind.com" ||
     userEmail === "jevosak839@cimario.com";
+
+  // MUST stay below isLocalhost: isEmployeeLayout reads it, and a const cannot be read
+  // above its own declaration - that threw "Cannot access 'isLocalhost' before
+  // initialization" and took the whole Layout down when these sat higher up.
+  //
+  // On every deployed host isViLayout is exactly the old check - isViSite and nothing else.
+  // The override only ever adds the Vi shell on UAT / localhost, where the hostname can
+  // never be the Vi domain (see isViNonProdOverride above).
+  const isViLayout = isViSite || isViNonProdOverride(currentUser?.email);
+
+  // Vi keeps its own shell even when userType is pms_occupant, otherwise the employee
+  // branches strip the header and the main-content margin the Vi sidebar needs.
+  const isEmployeeLayout = isEmployeeUser && isLocalhost && !isViLayout;
 
   // Layout behavior:
   // - Company ID 189 (Lockated HO): Default layout (Sidebar + DynamicHeader)
