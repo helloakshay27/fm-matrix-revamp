@@ -11,6 +11,7 @@ import {
   TicketCatChart, EventTrendChart,
 } from './charts/BranchCharts';
 import { useDrill } from '../DrillContext';
+import { useStickyHeaderStack } from '../useStickyHeaderStack';
 import { D, getInfo, type MemPeriodKey, type BookPeriodKey, type RefundPeriodKey } from '../clubDashboardData';
 import {
   activeMembersHTML, todayBookingsHTML, collectionsHTML, ticketsHTML, renewalsHTML, renewalRowHTML,
@@ -37,6 +38,7 @@ const COACH_LABELS: Record<'today' | 'tomorrow' | 'week', string> = {
 
 export const BranchManagerDashboard: React.FC<{ onSwitchRole: () => void }> = ({ onSwitchRole }) => {
   const { openDrill } = useDrill();
+  const rootRef = useStickyHeaderStack<HTMLDivElement>();
   const [memPeriod, setMemPeriod] = useState<MemPeriodKey>('month');
   const [bookPeriod, setBookPeriod] = useState<BookPeriodKey>('month');
   const [refundPeriod, setRefundPeriod] = useState<RefundPeriodKey>('day');
@@ -46,7 +48,7 @@ export const BranchManagerDashboard: React.FC<{ onSwitchRole: () => void }> = ({
   const book = D.bookTotals[bookPeriod];
 
   return (
-    <div>
+    <div ref={rootRef}>
       <div className="topnav">
         <div className="brand">
           <div className="logo">RC</div>

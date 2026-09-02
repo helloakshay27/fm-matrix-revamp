@@ -9,6 +9,7 @@ import {
   BookTypeAllChart, RevCatAllChart,
 } from './charts/SuperCharts';
 import { useDrill } from '../DrillContext';
+import { useStickyHeaderStack } from '../useStickyHeaderStack';
 import { getInfo } from '../clubDashboardData';
 import {
   revenueAllHTML, membersAllHTML, occAllHTML, arpuAllHTML, renewConvAllHTML, vendorAllHTML, branchHTML,
@@ -24,9 +25,10 @@ const SECTIONS = [
 
 export const SuperAdminDashboard: React.FC<{ onSwitchRole: () => void }> = ({ onSwitchRole }) => {
   const { openDrill } = useDrill();
+  const rootRef = useStickyHeaderStack<HTMLDivElement>();
 
   return (
-    <div>
+    <div ref={rootRef}>
       <div className="topnav">
         <div className="brand">
           <div className="logo">RC</div>
