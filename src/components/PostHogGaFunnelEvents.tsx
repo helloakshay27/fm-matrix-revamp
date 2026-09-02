@@ -29,7 +29,7 @@ export type GaFunnelEvent =
   | "visitor_reject_button_clicked"
   | "visitor_list_item_cliked" // sic — see the note above
   // ── Tickets / Helpdesk ────────────────────────────────────────────────────
-  | "helpdesk_page_clicked"
+  | "ticket_page_clicked"
   | "home_top_ftres_tickets_page_clicked"
   | "ticket_list_item_clicked"
   | "tickets_update_button_clicked"
@@ -149,7 +149,7 @@ export function useGaFunnelEvents() {
       track("visitor_list_item_cliked", surface, { visitor_id: visitorId ?? null }),
 
     // ── Tickets / Helpdesk ──────────────────────────────────────────────────
-    onHelpdeskPageClicked: (surface: GaSurface) => track("helpdesk_page_clicked", surface),
+    onTicketPageClicked: (surface: GaSurface) => track("ticket_page_clicked", surface),
 
     onHomeTopFeaturesTicketsClicked: (surface: GaSurface) =>
       track("home_top_ftres_tickets_page_clicked", surface),

@@ -28,10 +28,10 @@ const VI_ORG_ID = "34";
 const VI_HOSTS = ["vi-web.gophygital.work"];
 
 /**
- * Dev accounts that get the Vi shell on a local server even before a company/org has been
- * picked (org_id is not in localStorage yet on the first render after login).
+ * Dev/QA accounts that get the Vi shell on non-production environments (localhost and UAT),
+ * even before a company/org has landed in localStorage.
  */
-const VI_LOCAL_TEST_EMAILS = ["deveshjain928@gmail.com"];
+const VI_TEST_ACCOUNTS = ["deveshjain928@gmail.com"];
 
 /** The live Vi domain. */
 export function isViHost(hostname: string = window.location.hostname): boolean {
@@ -51,27 +51,41 @@ export function isNonProdEnvironment(hostname: string = window.location.hostname
   return isLocalHostname(hostname) || hostname.includes("uat");
 }
 
-/** True for the Vi tenant (org 34). */
+/**
+ * True for the Vi tenant (org 34).
+ *
+ * The org id is written under three different keys across this app (`org_id` in 72 places,
+ * `organization_id` in 33, `selectedOrgId` in 21) and which one is populated depends on the
+ * login path taken. All three are read here, otherwise the same account resolves as Vi in one
+ * environment and not in another.
+ */
 export function isViTenant(): boolean {
-  return localStorage.getItem("org_id") === VI_ORG_ID;
+  const ORG_KEYS = ["org_id", "organization_id", "selectedOrgId"];
+  return ORG_KEYS.some((key) => localStorage.getItem(key) === VI_ORG_ID);
 }
 
-/** True when this user's email is one of the local-only Vi dev accounts. */
-export function isViLocalTestUser(email?: string | null): boolean {
-  if (!email || !isLocalHostname()) return false;
-  return VI_LOCAL_TEST_EMAILS.includes(email);
+/**
+ * True when this user's email is one of the Vi dev/QA accounts.
+ *
+ * Scoped to non-production only (localhost and UAT) — never to a production host, so an
+ * account listed here can't flip the layout on live. It covers the case where org_id has not
+ * landed in localStorage yet, or where the QA account sits under a different org on UAT.
+ */
+export function isViTestAccount(email?: string | null): boolean {
+  if (!email || !isNonProdEnvironment()) return false;
+  return VI_TEST_ACCOUNTS.includes(email);
 }
 
 /**
  * The one check components should use.
  *
  * - Production hosts: true only on the Vi domain — identical to the previous behaviour.
- * - UAT / localhost: also true for the Vi tenant (org 34) and the local Vi dev accounts.
+ * - UAT / localhost: also true for the Vi tenant (org 34) and the Vi dev/QA accounts.
  *
- * `email` is optional; pass it so the local dev accounts are covered before org_id is set.
+ * `email` is optional; pass it so the dev/QA accounts are covered before org_id is set.
  */
 export function isViLayoutActive(email?: string | null): boolean {
   if (isViHost()) return true;
   if (!isNonProdEnvironment()) return false;
-  return isViTenant() || isViLocalTestUser(email);
+  return isViTenant() || isViTestAccount(email);
 }
