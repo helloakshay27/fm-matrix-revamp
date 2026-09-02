@@ -3578,6 +3578,9 @@ const ChargeSetupDashboard = lazy(
 const ChartOfAccountsDashboard = lazy(
   () => import("./pages/ClubManagement/ChartOfAccountsDashboard")
 );
+const ClubDashboardV6 = lazy(
+  () => import("./pages/ClubManagement/dashboard/ClubDashboardV6")
+);
 const ClubGroupMembershipDashboard = lazy(
   () => import("./pages/ClubManagement/ClubGroupMembershipDashboard")
 );
@@ -4912,6 +4915,15 @@ function App() {
                             element={
                               <ProtectedRoute>
                                 <Dashboard />
+                              </ProtectedRoute>
+                            }
+                          />
+
+                          <Route
+                            path="/club-management/dashboard"
+                            element={
+                              <ProtectedRoute>
+                                <ClubDashboardV6 />
                               </ProtectedRoute>
                             }
                           />
@@ -7457,11 +7469,11 @@ function App() {
                               element={<SurveyDetailsPage />}
                             />
                             <Route
-                              path="/master/survey/details/:id"
+                              path="/maintenance/survey/details/:id"
                               element={<SurveyDetailsPage />}
                             />
                             <Route
-                              path="/master/survey/edit/:id"
+                              path="/maintenance/survey/edit/:id"
                               element={<EditSurveyPage />}
                             />
                             <Route

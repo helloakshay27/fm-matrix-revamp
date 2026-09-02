@@ -75,7 +75,67 @@ export const getCustomerBillById = createAsyncThunk(
     }
 );
 
+export const createCustomerBillPayment = createAsyncThunk(
+    "createCustomerBillPayment",
+    async (
+        { baseUrl, token, id, data }: { baseUrl: string; token: string; id: string | number; data: any },
+        { rejectWithValue }
+    ) => {
+        try {
+            const queryParams = new URLSearchParams();
+            if (token) queryParams.append("access_token", token);
+
+            const response = await axios.post(
+                `https://${baseUrl}/lock_account_bills/${id}/lock_payments.json?${queryParams.toString()}`,
+                data
+            );
+
+            return response.data;
+        } catch (error) {
+            const message =
+                error.response?.data?.error ||
+                (error as any).message ||
+                "Failed to record payment";
+            return rejectWithValue(message);
+        }
+    }
+);
+
+export const cancelCustomerBill = createAsyncThunk(
+    "cancelCustomerBill",
+    async (
+        { baseUrl, token, id, cancelNote }: { baseUrl: string; token: string; id: string | number; cancelNote: string },
+        { rejectWithValue }
+    ) => {
+        try {
+            const queryParams = new URLSearchParams();
+            if (token) queryParams.append("access_token", token);
+
+            const response = await axios.post(
+                `https://${baseUrl}/lock_accounts/lock_account_bills/${id}/cancel_lock_account_bill.json?${queryParams.toString()}`,
+                {
+                    lock_account_bill: {
+                        cancel_note: cancelNote,
+                    },
+                }
+            );
+
+            return response.data;
+        } catch (error) {
+            const message =
+                error.response?.data?.error ||
+                (error as any).message ||
+                "Failed to cancel bill";
+            return rejectWithValue(message);
+        }
+    }
+);
+
 const getCustomerBillsSlice = createApiSlice("getCustomerBills", getCustomerBills);
 const getCustomerBillByIdSlice = createApiSlice("getCustomerBillById", getCustomerBillById);
+const createCustomerBillPaymentSlice = createApiSlice("createCustomerBillPayment", createCustomerBillPayment);
+const cancelCustomerBillSlice = createApiSlice("cancelCustomerBill", cancelCustomerBill);
 export const getCustomerBillsReducer = getCustomerBillsSlice.reducer;
 export const getCustomerBillByIdReducer = getCustomerBillByIdSlice.reducer;
+export const createCustomerBillPaymentReducer = createCustomerBillPaymentSlice.reducer;
+export const cancelCustomerBillReducer = cancelCustomerBillSlice.reducer;
