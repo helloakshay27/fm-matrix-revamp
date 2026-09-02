@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLayout } from "../contexts/LayoutContext";
+import { useIsMobile } from "../hooks/use-mobile";
+import { isMobileUiSite } from "../utils/mobileUiSites";
 import { useActionLayout } from "../contexts/ActionLayoutContext";
 import {
   ChevronRight,
@@ -44,8 +46,21 @@ const getFunctionIcon = (actionName: string) =>
 export const AdminCompassSidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isSidebarCollapsed, setIsSidebarCollapsed, isMobileSidebarOpen } =
-    useLayout();
+  const {
+    isSidebarCollapsed: isSidebarCollapsedSetting,
+    setIsSidebarCollapsed,
+    isMobileSidebarOpen,
+  } = useLayout();
+  // Mobile par sidebar ek drawer hai — wahan collapse ka koi matlab nahi
+  // (collapse toggle bhi max-md:hidden hai). Isliye <768px par hamesha expanded
+  // render karte hain, chahe desktop par collapsed chhoda gaya ho — warna
+  // drawer sirf icons dikhata tha, labels ke bina.
+  const isMobile = useIsMobile();
+  // Ye behaviour sirf goPhygital site par — baaki tenants par sidebar mobile
+  // par bhi pehle ki tarah collapsible rehta hai.
+  const isGoPhygital = isMobileUiSite();
+  const isSidebarCollapsed =
+    isSidebarCollapsedSetting && !(isMobile && isGoPhygital);
   const { getModuleFunctions } = useActionLayout();
 
   // Build the nav list from the "Employee Admin Compass" module — sourced the
@@ -76,16 +91,22 @@ export const AdminCompassSidebar: React.FC = () => {
       }));
 
     // ── Rule Engine ──────────────────────────────────────────────────────────
-    // Added client-side because the role API does not return a Rule Engine
-    // function for the "Employee Admin Compass" module yet. Unlike every other
-    // item here it is NOT role-gated. Once the backend serves it (action_name
-    // "employee_admin_compass_rule_engine", already in functionIconMap above),
-    // delete this block and the item will flow in from the API like the rest.
+    // Sidebar se chhupaya hua hai — routes aur pages waise ke waise hain.
+    // Wapas dikhane ke liye SHOW_RULE_ENGINE ko true kar dein.
+    // (Client-side inject isliye hota hai kyunki role API "Employee Admin
+    // Compass" module ke liye Rule Engine function abhi return nahi karti.)
+    const SHOW_RULE_ENGINE = false;
     const RULE_ENGINE = {
       name: "Rule Engine",
       href: "/admin-compass/rule-engine",
       icon: Workflow,
     };
+
+    if (!SHOW_RULE_ENGINE) {
+      return apiItems.filter(
+        (item: any) => !String(item.href || "").startsWith(RULE_ENGINE.href)
+      );
+    }
 
     if (apiItems.some((item: any) => item.href === RULE_ENGINE.href)) {
       return apiItems;
@@ -129,7 +150,7 @@ export const AdminCompassSidebar: React.FC = () => {
       {/* Toggle Button */}
       <button
         onClick={toggleSidebar}
-        className="absolute right-1 sm:right-2 top-1 sm:top-2 p-0.5 sm:p-1 rounded-md hover:bg-[#DBC2A9] z-10"
+        className={`${isGoPhygital ? "max-md:hidden " : ""}absolute right-1 sm:right-2 top-1 sm:top-2 p-0.5 sm:p-1 rounded-md hover:bg-[#DBC2A9] z-10`}
         aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
         {isSidebarCollapsed ? (

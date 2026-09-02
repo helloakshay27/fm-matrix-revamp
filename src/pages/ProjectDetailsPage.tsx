@@ -11,11 +11,11 @@ import ProjectEditModal from "@/components/ProjectEditModal";
 
 const Members = ({ allNames, projectOwner }) => {
     return (
-        <div className="flex items-start p-4 bg-[rgba(247, 247, 247, 0.51)] shadow-md rounded-[10px] text-[13px] my-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-start p-3 sm:p-4 bg-[rgba(247, 247, 247, 0.51)] shadow-md rounded-[10px] text-[13px] my-3">
             <div className="left-name-container w-35 flex-shrink-0 pr-4 py-2 my-auto mx-auto">
                 <span className="text-gray-700">{projectOwner}</span>
             </div>
-            <div className="divider w-px bg-[#da7756] self-stretch mx-4"></div>
+            <div className="divider h-px w-full sm:h-auto sm:w-px bg-[#da7756] self-stretch my-3 mx-0 sm:my-0 sm:mx-4"></div>
             <div className="names-grid-container flex-grow overflow-x-auto">
                 <div
                     className="
@@ -168,7 +168,7 @@ const Attachments = ({ attachments, id, getProjectDetails }) => {
     };
 
     return (
-        <div className="flex flex-col gap-3 p-5">
+        <div className="flex flex-col gap-3 p-3 sm:p-5">
             {files && files.length > 0 ? (
                 <>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4 mt-4">
@@ -243,7 +243,7 @@ const Attachments = ({ attachments, id, getProjectDetails }) => {
                     </div>
 
                     <button
-                        className={`bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4 rounded hover:bg-[#a01a24] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
+                        className={`bg-[#C72030] h-[40px] w-full sm:w-[240px] text-white px-5 mt-4 rounded hover:bg-[#a01a24] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
                         onClick={handleAttachFile}
                         disabled={isUploading}
                     >
@@ -264,7 +264,7 @@ const Attachments = ({ attachments, id, getProjectDetails }) => {
                     <span>No Documents Attached</span>
                     <div className="text-[#C2C2C2]">Drop or attach relevant documents here</div>
                     <button
-                        className={`bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4 rounded hover:bg-[#a01a24] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
+                        className={`bg-[#C72030] h-[40px] w-full sm:w-[240px] text-white px-5 mt-4 rounded hover:bg-[#a01a24] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
                         onClick={handleAttachFile}
                         disabled={isUploading}
                     >
@@ -467,7 +467,7 @@ const ProjectDetailsPage = () => {
 
     // Skeleton Component
     const SkeletonLoader = () => (
-        <div className="my-4 m-8 animate-pulse">
+        <div className="my-4 mx-4 sm:mx-8 animate-pulse">
             <div className="h-10 bg-gray-300 rounded w-32 mb-6"></div>
 
             <div className="h-6 bg-gray-300 rounded w-64 mb-4"></div>
@@ -485,7 +485,7 @@ const ProjectDetailsPage = () => {
             <div className="border-b-[3px] border-gray-300 mb-6"></div>
 
             {/* Description section skeleton */}
-            <div className="border rounded-[10px] shadow-md p-5 mb-4">
+            <div className="border rounded-[10px] shadow-md p-3 sm:p-5 mb-4">
                 <div className="h-6 bg-gray-300 rounded w-48 mb-4"></div>
                 <div className="space-y-2">
                     <div className="h-4 bg-gray-300 rounded w-full"></div>
@@ -495,7 +495,7 @@ const ProjectDetailsPage = () => {
             </div>
 
             {/* Details section skeleton */}
-            <div className="border rounded-[10px] shadow-md p-5 mb-4">
+            <div className="border rounded-[10px] shadow-md p-3 sm:p-5 mb-4">
                 <div className="h-6 bg-gray-300 rounded w-48 mb-4"></div>
                 <div className="space-y-3">
                     <div className="h-4 bg-gray-300 rounded w-full"></div>
@@ -535,7 +535,7 @@ const ProjectDetailsPage = () => {
     }
 
     return (
-        <div className="my-4 m-8">
+        <div className="my-4 mx-4 sm:mx-8">
             <Button
                 variant="ghost"
                 onClick={() => navigate(-1)}
@@ -545,14 +545,14 @@ const ProjectDetailsPage = () => {
                 Back
             </Button>
             <div className="pt-1">
-                <h2 className="text-[15px] p-3 px-0">
+                <h2 className="text-[15px] p-3 px-0 max-md:break-words">
                     <span className="mr-3">Project-{project.id}</span>
                     <span>{project.title}</span>
                 </h2>
 
                 <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
                 <div className="flex items-center justify-between my-3 text-[13px]">
-                    <div className="flex items-center gap-3 text-[#323232]">
+                    <div className="flex max-md:flex-wrap items-center gap-3 text-[#323232]">
                         <span>Created By : {project.created_by_name}</span>
                         <span className="h-6 w-[1px] border border-gray-300"></span>
                         <span className="flex items-center gap-3">
@@ -626,13 +626,13 @@ const ProjectDetailsPage = () => {
                 </div>
                 <div className="border-b-[3px] border-grey my-3"></div>
 
-                <div className="border rounded-[10px] shadow-md p-5 mb-4">
-                    <div className="font-[600] text-[16px] flex items-center gap-10">
+                <div className="border rounded-[10px] shadow-md p-3 sm:p-5 mb-4">
+                    <div className="font-[600] text-[16px] flex items-center gap-10 max-md:flex-wrap max-md:gap-y-3">
                         <div className="flex items-center gap-4">
                             <ChevronDownCircle
                                 color="#c72030"
                                 size={30}
-                                className={`${isDescriptionCollapsed ? "rotate-180" : "rotate-0"} cursor-pointer transition-transform`}
+                                className={`${isDescriptionCollapsed ? "rotate-180" : "rotate-0"} cursor-pointer transition-transform max-md:shrink-0`}
                                 onClick={toggleDescriptionCollapse}
                             />
                             Description
@@ -661,19 +661,19 @@ const ProjectDetailsPage = () => {
                     </div>
                 </div>
 
-                <div className="border rounded-[10px] shadow-md p-5 mb-4">
-                    <div className="font-[600] text-[16px] flex items-center gap-10">
+                <div className="border rounded-[10px] shadow-md p-3 sm:p-5 mb-4">
+                    <div className="font-[600] text-[16px] flex items-center gap-10 max-md:flex-wrap max-md:gap-y-3">
                         <div className="flex items-center gap-4">
                             <ChevronDownCircle
                                 color="#c72030"
                                 size={30}
-                                className={`${isSecondCollapsed ? "rotate-180" : "rotate-0"} cursor-pointer transition-transform`}
+                                className={`${isSecondCollapsed ? "rotate-180" : "rotate-0"} cursor-pointer transition-transform max-md:shrink-0`}
                                 onClick={toggleSecondCollapse}
                             />
                             Details
                         </div>
                         {isSecondCollapsed && (
-                            <div className="flex items-center gap-6">
+                            <div className="flex items-center gap-6 max-md:flex-wrap max-md:gap-y-2">
                                 <div className="flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]">
                                         Project Manager:
@@ -709,8 +709,8 @@ const ProjectDetailsPage = () => {
                         }}
                     >
                         <div className="flex flex-col">
-                            <div className="flex items-center ml-36">
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0 ml-0 sm:ml-36">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[13px] font-[500]">
                                         Project Manager :
                                     </div>
@@ -718,7 +718,7 @@ const ProjectDetailsPage = () => {
                                         {project.project_owner_name}
                                     </div>
                                 </div>
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[13px] font-[500]">
                                         Priority :
                                     </div>
@@ -730,8 +730,8 @@ const ProjectDetailsPage = () => {
 
                             <span className="border h-[1px] inline-block w-full my-4"></span>
 
-                            <div className="flex items-center ml-36">
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0 ml-0 sm:ml-36">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[13px] font-[500]">
                                         Project Type:
                                     </div>
@@ -739,7 +739,7 @@ const ProjectDetailsPage = () => {
                                         {project.project_type_name}
                                     </div>
                                 </div>
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <Link to={`/vas/projects/${project.id}/milestones`} className="text-right text-[13px] font-[500] text-[#c72030] hover:text-[#c72030] cursor-pointer">
                                         Milestones :
                                     </Link>
@@ -749,8 +749,8 @@ const ProjectDetailsPage = () => {
 
                             <span className="border h-[1px] inline-block w-full my-4"></span>
 
-                            <div className="flex items-center ml-36">
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0 ml-0 sm:ml-36">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[13px] font-[500]">
                                         Start Date :
                                     </div>
@@ -758,7 +758,7 @@ const ProjectDetailsPage = () => {
                                         {project.start_date}
                                     </div>
                                 </div>
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <Link
                                         to={`/vas/tasks?project=${project.id}`}
                                         className="text-right text-[13px] font-[500] text-[#c72030] hover:text-[#c72030] cursor-pointer"
@@ -771,8 +771,8 @@ const ProjectDetailsPage = () => {
 
                             <span className="border h-[1px] inline-block w-full my-4"></span>
 
-                            <div className="flex items-center ml-36">
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0 ml-0 sm:ml-36">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[13px] font-[500]">
                                         End Date :
                                     </div>
@@ -780,7 +780,7 @@ const ProjectDetailsPage = () => {
                                         {project.end_date}
                                     </div>
                                 </div>
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <Link
                                         to={`/vas/issues?project_id=${project.id}`}
                                         className="text-right text-[13px] font-[500] text-[#c72030] hover:text-[#c72030] cursor-pointer"
@@ -795,11 +795,11 @@ const ProjectDetailsPage = () => {
                 </div>
                 <div>
                     <div className="flex items-center justify-between my-3">
-                        <div className="flex items-center gap-10">
+                        <div className="flex items-center gap-10 max-md:overflow-x-auto">
                             {["Member", "Documents", "Status", "Issues"].map((item, idx) => (
                                 <div
                                     key={item}
-                                    className={`text-[13px] font-[400] ${tab === item ? "selected font-semibold border-b-2 border-[#c72030]" : "cursor-pointer"}`}
+                                    className={`text-[13px] font-[400] max-md:shrink-0 max-md:whitespace-nowrap ${tab === item ? "selected font-semibold border-b-2 border-[#c72030]" : "cursor-pointer"}`}
                                     onClick={() => setTab(item)}
                                 >
                                     {item}

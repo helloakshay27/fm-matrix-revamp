@@ -2,11 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Plus,
   Search,
-  Filter,
   Pencil,
   Trash2,
   Workflow,
-  Settings2,
   ListChecks,
   Loader2,
   RefreshCw,
@@ -20,47 +18,19 @@ import {
   updateRule,
   type Rule,
 } from "@/services/ruleEngineAPI";
+import { T, inputStyle } from "@/components/AdminCompass/ruleEngineTheme";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
-// Admin Compass design tokens — kept identical to TeamDashboard/Jobs so this
-// page reads as part of the module rather than a bolt-on.
-const T = {
-  primary: "#DA7756",
-  primaryHov: "#c9673f",
-  primaryBg: "#fdf9f7",
-  primaryBord: "#e8e3de",
-  pageBg: "#f6f4ee",
-  cardBg: "#ffffff",
-  textMain: "#1a1a1a",
-  textMuted: "#6b7280",
-  borderLgt: "#ebebeb",
-  raised: "#f6f4ee",
-  font: "'Poppins', sans-serif",
-};
-
-export interface RuleEngineConfig {
-  enabled: boolean;
-  evaluationMode: "all" | "first";
-  runOn: "create_and_update" | "create" | "schedule";
-  notifyChannel: "in_app" | "email" | "both" | "none";
-  maxRunsPerDay: number;
-  logRetentionDays: number;
-}
-
-// The Configuration tab has no endpoint behind it yet, so it still starts from
-// local defaults. The Rules tab is fully API-backed.
-const DEFAULT_CONFIG: RuleEngineConfig = {
-  enabled: true,
-  evaluationMode: "all",
-  runOn: "create_and_update",
-  notifyChannel: "in_app",
-  maxRunsPerDay: 500,
-  logRetentionDays: 30,
-};
-
-const TABS = [
-  { key: "rules", label: "Rules", icon: ListChecks },
-  { key: "configuration", label: "Configuration", icon: Settings2 },
-] as const;
+const TABS = [{ key: "rules", label: "Rules", icon: ListChecks }] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
 
@@ -69,38 +39,6 @@ const cardStyle = {
   borderColor: T.primaryBord,
   boxShadow: "0 10px 24px rgba(26,26,26,0.05)",
 };
-
-const inputStyle = {
-  borderColor: T.primaryBord,
-  color: T.textMain,
-  background: T.cardBg,
-};
-
-/** One labelled row in the Configuration tab. */
-const ConfigRow = ({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint: string;
-  children: React.ReactNode;
-}) => (
-  <div
-    className="flex flex-col gap-2 border-t py-4 first:border-t-0 first:pt-0 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
-    style={{ borderColor: T.borderLgt }}
-  >
-    <div className="min-w-0">
-      <p className="text-sm font-medium" style={{ color: T.textMain }}>
-        {label}
-      </p>
-      <p className="mt-0.5 text-xs" style={{ color: T.textMuted }}>
-        {hint}
-      </p>
-    </div>
-    <div className="w-full shrink-0 sm:w-56">{children}</div>
-  </div>
-);
 
 /** One-line summary of a rule's conditions, e.g. `status = open AND priority > 2`. */
 const summariseConditions = (rule: Rule) =>
@@ -120,8 +58,10 @@ const RuleEngine = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [config, setConfig] = useState<RuleEngineConfig>(DEFAULT_CONFIG);
   const [togglingId, setTogglingId] = useState<number | null>(null);
+  // Delete confirm dialog — trash icon seedhe delete nahi karta.
+  const [pendingDelete, setPendingDelete] = useState<Rule | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // null = list view; undefined id = new rule; a number = edit that rule.
   const [editing, setEditing] = useState<{ id: number | null } | null>(null);
@@ -175,20 +115,21 @@ const RuleEngine = () => {
     }
   };
 
-  const removeRule = async (rule: Rule) => {
+  const removeRule = async () => {
+    const rule = pendingDelete;
+    if (!rule) return;
+    setDeleting(true);
     try {
       await deleteRuleApi(rule.id);
       setRules((prev) => prev.filter((r) => r.id !== rule.id));
       toast.success("Rule deleted");
+      setPendingDelete(null);
     } catch (e: any) {
       toast.error(e?.message || "Failed to delete rule");
+    } finally {
+      setDeleting(false);
     }
   };
-
-  const setField = <K extends keyof RuleEngineConfig>(
-    key: K,
-    value: RuleEngineConfig[K]
-  ) => setConfig((prev) => ({ ...prev, [key]: value }));
 
   return (
     <div
@@ -234,39 +175,11 @@ const RuleEngine = () => {
             style={{
               borderColor: T.primaryBord,
               background: T.primaryBg,
-              color: config.enabled ? T.textMuted : "#b91c1c",
+              color: T.textMuted,
             }}
           >
-            {config.enabled
-              ? `${rules.length} ${rules.length === 1 ? "rule" : "rules"}`
-              : "Engine disabled"}
+            {`${rules.length} ${rules.length === 1 ? "rule" : "rules"}`}
           </div>
-        </div>
-
-        {/* Tabs — same pill pattern as the Jobs page */}
-        <div
-          className="flex w-full items-center gap-1 overflow-x-auto rounded-xl border p-1 sm:w-fit"
-          style={{ background: T.raised, borderColor: T.primaryBord }}
-        >
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            const active = activeTab === tab.key;
-            return (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className="flex flex-1 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-xs font-semibold transition-all sm:flex-none sm:text-[13px]"
-                style={{
-                  background: active ? T.primary : "transparent",
-                  color: active ? "#ffffff" : T.textMuted,
-                }}
-                aria-current={active ? "page" : undefined}
-              >
-                <Icon className="h-4 w-4" />
-                {tab.label}
-              </button>
-            );
-          })}
         </div>
 
         {/* ── Rules tab: canvas editor, or the list ── */}
@@ -324,7 +237,7 @@ const RuleEngine = () => {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search rules..."
-                    className="w-full rounded-xl border py-2 pl-10 pr-3 text-sm outline-none"
+                    className="w-full rounded-xl border py-2 pl-10 pr-3 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30"
                     style={inputStyle}
                   />
                 </div>
@@ -339,14 +252,6 @@ const RuleEngine = () => {
                   <RefreshCw
                     className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
                   />
-                </button>
-                <button
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-colors"
-                  style={{ borderColor: T.primary, color: T.primary }}
-                  title="Filter"
-                  aria-label="Filter rules"
-                >
-                  <Filter className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -500,7 +405,7 @@ const RuleEngine = () => {
                               />
                             </button>
                             <button
-                              onClick={() => removeRule(rule)}
+                              onClick={() => setPendingDelete(rule)}
                               className="rounded-lg p-1.5 transition-colors hover:bg-[#f6f4ee]"
                               title="Delete rule"
                               aria-label={`Delete ${rule.name}`}
@@ -520,173 +425,38 @@ const RuleEngine = () => {
             )}
           </div>
         )}
-
-        {/* ── Configuration tab ── */}
-        {activeTab === "configuration" && (
-          <div
-            className="rounded-[20px] border p-4 shadow-sm sm:p-6"
-            style={cardStyle}
-          >
-            <div className="mb-2">
-              <h2
-                className="text-base font-semibold sm:text-lg"
-                style={{ color: T.textMain }}
-              >
-                Engine Configuration
-              </h2>
-              <p
-                className="mt-0.5 text-xs sm:text-sm"
-                style={{ color: T.textMuted }}
-              >
-                Controls how every rule in this module is evaluated and logged
-              </p>
-            </div>
-
-            <div className="mt-4">
-              <ConfigRow
-                label="Enable rule engine"
-                hint="Turn off to stop all rules from running without deleting them"
-              >
-                <button
-                  onClick={() => setField("enabled", !config.enabled)}
-                  role="switch"
-                  aria-checked={config.enabled}
-                  aria-label="Enable rule engine"
-                  className="relative h-6 w-11 shrink-0 rounded-full transition-colors"
-                  style={{
-                    background: config.enabled ? T.primary : "#d1d5db",
-                  }}
-                >
-                  <span
-                    className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all"
-                    style={{ left: config.enabled ? 22 : 2 }}
-                  />
-                </button>
-              </ConfigRow>
-
-              <ConfigRow
-                label="Evaluation mode"
-                hint="Run every rule that matches, or stop at the first match"
-              >
-                <select
-                  value={config.evaluationMode}
-                  onChange={(e) =>
-                    setField(
-                      "evaluationMode",
-                      e.target.value as RuleEngineConfig["evaluationMode"]
-                    )
-                  }
-                  className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
-                  style={inputStyle}
-                >
-                  <option value="all">All matching rules</option>
-                  <option value="first">First match only</option>
-                </select>
-              </ConfigRow>
-
-              <ConfigRow
-                label="Run rules on"
-                hint="Which events trigger an evaluation pass"
-              >
-                <select
-                  value={config.runOn}
-                  onChange={(e) =>
-                    setField(
-                      "runOn",
-                      e.target.value as RuleEngineConfig["runOn"]
-                    )
-                  }
-                  className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
-                  style={inputStyle}
-                >
-                  <option value="create_and_update">Create and update</option>
-                  <option value="create">Create only</option>
-                  <option value="schedule">Scheduled run only</option>
-                </select>
-              </ConfigRow>
-
-              <ConfigRow
-                label="Notify on rule action"
-                hint="Where to send a notice when a rule fires"
-              >
-                <select
-                  value={config.notifyChannel}
-                  onChange={(e) =>
-                    setField(
-                      "notifyChannel",
-                      e.target.value as RuleEngineConfig["notifyChannel"]
-                    )
-                  }
-                  className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
-                  style={inputStyle}
-                >
-                  <option value="in_app">In-app only</option>
-                  <option value="email">Email only</option>
-                  <option value="both">In-app and email</option>
-                  <option value="none">No notification</option>
-                </select>
-              </ConfigRow>
-
-              <ConfigRow
-                label="Max runs per day"
-                hint="Safety cap on total rule executions in a 24-hour window"
-              >
-                <input
-                  type="number"
-                  min={1}
-                  value={config.maxRunsPerDay}
-                  onChange={(e) =>
-                    setField("maxRunsPerDay", Number(e.target.value))
-                  }
-                  className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
-                  style={inputStyle}
-                />
-              </ConfigRow>
-
-              <ConfigRow
-                label="Log retention (days)"
-                hint="How long rule execution history is kept before pruning"
-              >
-                <input
-                  type="number"
-                  min={1}
-                  value={config.logRetentionDays}
-                  onChange={(e) =>
-                    setField("logRetentionDays", Number(e.target.value))
-                  }
-                  className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
-                  style={inputStyle}
-                />
-              </ConfigRow>
-            </div>
-
-            <div
-              className="mt-6 flex flex-col gap-2 border-t pt-4 sm:flex-row sm:justify-end"
-              style={{ borderColor: T.borderLgt }}
-            >
-              <button
-                onClick={() => setConfig(DEFAULT_CONFIG)}
-                className="rounded-xl border px-4 py-2 text-sm font-medium transition-colors"
-                style={{ borderColor: T.primaryBord, color: T.textMuted }}
-              >
-                Reset to defaults
-              </button>
-              <button
-                className="rounded-xl px-4 py-2 text-sm font-medium text-white transition-colors"
-                style={{ background: T.primary }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = T.primaryHov;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = T.primary;
-                }}
-              >
-                Save configuration
-              </button>
-            </div>
-          </div>
-        )}
       </div>
+
+      <AlertDialog
+        open={Boolean(pendingDelete)}
+        onOpenChange={(next) => {
+          if (!next && !deleting) setPendingDelete(null);
+        }}
+      >
+        <AlertDialogContent style={{ fontFamily: T.font }}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete rule?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete?.name
+                ? `"${pendingDelete.name}" will be removed permanently and will stop triggering.`
+                : "This rule will be removed permanently."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                removeRule();
+              }}
+              disabled={deleting}
+              style={{ background: T.primary }}
+            >
+              {deleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

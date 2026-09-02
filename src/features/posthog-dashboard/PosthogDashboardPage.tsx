@@ -10,9 +10,11 @@ import { Footer } from './components/Footer';
 import { TrafficSection } from './sections/TrafficSection';
 import { AdoptionSection } from './sections/AdoptionSection';
 import { WorkflowSection } from './sections/WorkflowSection';
+import { FmDashboardSection } from './sections/FmDashboardSection';
 import type { DashboardState } from './data/metrics';
 
 const PAGES: { key: DashboardState['activePage']; title: string; icon: JSX.Element }[] = [
+  // { key: 'pgFm', title: 'FM Matrix dashboards', icon: <span aria-hidden="true">▦</span> },
   {
     key: 'pgTraffic',
     title: 'Traffic & Session',
@@ -88,6 +90,7 @@ function DashboardLayout() {
           {activePage === 'pgTraffic' && <TrafficSection />}
           {activePage === 'pgAdopt' && <AdoptionSection />}
           {activePage === 'pgFlows' && <WorkflowSection />}
+          {/* {activePage === 'pgFm' && <FmDashboardSection />} */}
 
           <Footer />
         </main>

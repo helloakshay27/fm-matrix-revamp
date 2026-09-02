@@ -46,6 +46,44 @@ import TopNavigationStatic from "./CompanyHub/TopNavigationStatic";
 import { BusinessCompassSidebarStatic } from "./BusinessCompassSidebarStatic";
 import { AdminCompassSidebarStatic } from "./AdminCompassSidebarStatic";
 
+// Vi shell ko UAT / localhost par force karne ke liye. Production par ye hamesha false
+// return karta hai - wahan sirf niche wala isViSite (hostname) hi decide karta hai, yaani
+// live behaviour bilkul purana. Zarurat sirf testing ki thi: UAT/local par hostname kabhi
+// Vi domain nahi hota, isliye Vi app admin/employee branches me gir jata tha.
+// Org 34 = Vi tenant (wahi id jo Vi ke API payloads decide karti hai - isWebOrg34).
+const VI_ORG_ID = "34";
+const VI_NON_PROD_HOSTS = ["fm-matrix.lockated.com", "fm-uat.gophygital.work"];
+const VI_TEST_ACCOUNTS = ["deveshjain928@gmail.com"];
+
+const isViNonProdOverride = (email?: string | null): boolean => {
+  // window/localStorage kisi bhi domain par throw kar sakte hain (site data blocked,
+  // private window, embedded host) - ye sirf layout chunta hai, page gira nahi sakta.
+  let host = "";
+  try {
+    host = window.location.hostname ?? "";
+  } catch {
+    return false;
+  }
+  const isNonProd =
+    host.includes("localhost") ||
+    host.includes("127.0.0.1") ||
+    VI_NON_PROD_HOSTS.some((nonProdHost) => host.includes(nonProdHost));
+  if (!isNonProd) return false;
+  try {
+    // org id teen keys me likha jata hai; kaunsi bharegi ye login path par depend karta hai.
+    if (
+      ["org_id", "organization_id", "selectedOrgId"].some(
+        (key) => localStorage.getItem(key) === VI_ORG_ID
+      )
+    ) {
+      return true;
+    }
+  } catch {
+    // storage blocked - tenant check chhod do, email fallback bacha hai
+  }
+  return Boolean(email) && VI_TEST_ACCOUNTS.includes(email as string);
+};
+
 interface LayoutProps {
   children?: React.ReactNode;
 }
@@ -86,6 +124,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Detect Club Management routes
   const isClubManagementRoute =
     hostname === "club.lockated.com" ||
+    hostname === "localhost" ||
     hostname === "recess-club.panchshil.com" ||
     location.pathname.startsWith("/club-management");
 
@@ -137,6 +176,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Check if non-employee user needs to select project/site
   const isViSite = hostname.includes("vi-web.gophygital.work");
 
+
   // Removed project selection modal logic - now handled by view selection
 
   // Handle token-based authentication from URL parameters
@@ -175,6 +215,19 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     userEmail === "megipow156@aixind.com" ||
     userEmail === "jevosak839@cimario.com";
 
+  // MUST stay below isLocalhost: isEmployeeLayout reads it, and a const cannot be read
+  // above its own declaration - that threw "Cannot access 'isLocalhost' before
+  // initialization" and took the whole Layout down when these sat higher up.
+  //
+  // On every deployed host isViLayout is exactly the old check - isViSite and nothing else.
+  // The override only ever adds the Vi shell on UAT / localhost, where the hostname can
+  // never be the Vi domain (see isViNonProdOverride above).
+  const isViLayout = isViSite || isViNonProdOverride(currentUser?.email);
+
+  // Vi keeps its own shell even when userType is pms_occupant, otherwise the employee
+  // branches strip the header and the main-content margin the Vi sidebar needs.
+  const isEmployeeLayout = isEmployeeUser && isLocalhost && !isViLayout;
+
   // Layout behavior:
   // - Company ID 189 (Lockated HO): Default layout (Sidebar + DynamicHeader)
   // - Company ID 199 (Customer Support): Default layout (Sidebar + DynamicHeader)
@@ -197,6 +250,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompanyId: selectedCompany?.id,
       userEmail,
       isViSite,
+      isViLayout,
       isOmanSite,
     });
 
@@ -212,7 +266,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <VendorSidebar />;
     }
 
-    if (isViSite) {
+    if (isViLayout) {
       console.warn("✅ Rendering ViSidebar");
       return <ViSidebar />;
     }
@@ -234,7 +288,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Check if user is employee (pms_occupant) - Employee layout takes priority
     // IMPORTANT: Only show employee sidebar if userType is explicitly pms_occupant
     // This prevents employee sidebar from showing in admin view on /vas/projects
-    if (isEmployeeUser && isLocalhost && userType === "pms_occupant") {
+    if (isEmployeeLayout && userType === "pms_occupant") {
       // Only render sidebar for Project Task or Business Compass module
       if (isEmployeeProjectTaskSection) {
         // Use EmployeeSidebar for specific companies, otherwise EmployeeSidebarStatic
@@ -375,7 +429,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <VendorDynamicHeader />;
     }
 
-    if (isViSite) {
+    if (isViLayout) {
       return <ViDynamicHeader />;
     }
     // Check if user is in Club Management route - render StaticDynamicHeader
@@ -385,7 +439,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     // Check if user is employee (pms_occupant) - Employee layout takes priority
     // Employees don't need dynamic header, they use EmployeeHeader instead
-    if (isEmployeeUser && isLocalhost) {
+    if (isEmployeeLayout) {
       return null; // No dynamic header for employees
     }
 
@@ -550,7 +604,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       />
 
       {/* Conditional Header - Hide in embedded mode, Use EmployeeHeader or EmployeeHeaderStatic for employee users */}
-      {isEmbedded ? null : isEmployeeUser && isLocalhost ? (
+      {isEmbedded ? null : isEmployeeLayout ? (
         selectedCompany?.id === 300 ||
           selectedCompany?.id === 295 ||
           selectedCompany?.id === 298 ||
@@ -579,7 +633,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Mobile overlay backdrop - closes sidebar when tapping outside */}
       {isMobileSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          className={`fixed left-0 right-0 bottom-0 bg-black/50 z-30 md:hidden ${
+            // Employee sidebars top-14/sm:top-16 par hain, admin wale 4rem par.
+            // Backdrop ko exactly wahin se shuru karo warna navbar ke neeche
+            // ek patli dark patti dikhti hai jo gap jaisi lagti hai.
+            isEmployeeLayout ? "top-14 sm:top-16" : "top-16"
+          }`}
           onClick={() => setIsMobileSidebarOpen(false)}
         />
       )}
@@ -595,7 +654,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           isEmbedded
             ? "ml-0 pt-4"
             : // For employee users, only add left margin if on Project Task module
-            isEmployeeUser && isLocalhost
+            isEmployeeLayout
               ? isEmployeeProjectTaskSection ||
                 currentSection === "Business Compass" ||
                 currentSection === "Admin Compass" ||
@@ -611,7 +670,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 : isSidebarCollapsed
                   ? "ml-0 md:ml-16"
                   : "ml-0 md:ml-64"
-          } ${isEmbedded ? "" : isEmployeeUser && isLocalhost ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300 max-w-full overflow-x-hidden`}
+          } ${isEmbedded ? "" : isEmployeeLayout ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300 max-w-full overflow-x-hidden`}
       >
         <Outlet />
       </main>

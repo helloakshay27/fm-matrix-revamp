@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Plus,
   Search,
-  Filter,
   Database,
   Plug,
   Loader2,
@@ -10,6 +9,7 @@ import {
   Zap,
   Pencil,
   Trash2,
+  Eye,
   Table2,
   Server,
 } from "lucide-react";
@@ -26,22 +26,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import AddDataSourceModal from "@/components/AdminCompass/AddDataSourceModal";
 import DataSourceConfigurationTab from "@/components/AdminCompass/DataSourceConfigurationTab";
+import DataSourceDetailsSheet from "@/components/AdminCompass/DataSourceDetailsSheet";
+import ConfigureActionTab from "@/components/AdminCompass/ConfigureActionTab";
 import { getFullUrl, getAuthHeader } from "@/config/apiConfig";
-
-// Admin Compass design tokens — kept identical to RuleEngine/TeamDashboard/Jobs
-// so this page reads as part of the module rather than a bolt-on.
-const T = {
-  primary: "#DA7756",
-  primaryHov: "#c9673f",
-  primaryBg: "#fdf9f7",
-  primaryBord: "#e8e3de",
-  pageBg: "#f6f4ee",
-  cardBg: "#ffffff",
-  textMain: "#1a1a1a",
-  textMuted: "#6b7280",
-  borderLgt: "#ebebeb",
-  font: "'Poppins', sans-serif",
-};
+import { T, inputStyle } from "@/components/AdminCompass/ruleEngineTheme";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import type { ColumnConfig } from "@/hooks/useEnhancedTable";
 
 /**
  * The fields this screen renders, plus the connection fields the edit form
@@ -74,27 +64,26 @@ const cardStyle = {
   boxShadow: "0 10px 24px rgba(26,26,26,0.05)",
 };
 
-const inputStyle = {
-  borderColor: T.primaryBord,
-  color: T.textMain,
-  background: T.cardBg,
-};
-
-const COLUMNS = [
-  "Data Source Name",
-  "Connecter",
-  "Type",
-  "Status",
-  "Project Code",
-  "Created By",
-  "Created At",
-  "Test Connection",
-  "Actions",
+/**
+ * EnhancedTable columns. "Actions" yahan nahi hai — wo column EnhancedTable
+ * khud renderActions se banata hai.
+ */
+const COLUMNS: ColumnConfig[] = [
+  { key: "datasource_name", label: "Data Source Name", sortable: true, defaultVisible: true, hideable: true },
+  { key: "connecter", label: "Connecter", sortable: true, defaultVisible: true, hideable: true },
+  { key: "type", label: "Type", sortable: true, defaultVisible: true, hideable: true },
+  { key: "active", label: "Status", sortable: true, defaultVisible: true, hideable: true },
+  { key: "project_code", label: "Project Code", sortable: true, defaultVisible: true, hideable: true },
+  { key: "created_by_name", label: "Created By", sortable: true, defaultVisible: true, hideable: true },
+  { key: "created_at", label: "Created At", sortable: true, defaultVisible: true, hideable: true },
+  { key: "test_connection", label: "Test Connection", defaultVisible: true, hideable: true },
 ];
 
 const TABS = [
   { key: "sources", label: "Data Source", icon: Server },
   { key: "configuration", label: "Configuration", icon: Table2 },
+  // What a rule can DO, as opposed to what it can read.
+  { key: "actions", label: "Configure Action", icon: Zap },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -128,6 +117,8 @@ const RuleEngineDataSource = () => {
   const [testingId, setTestingId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>("sources");
   const [editing, setEditing] = useState<DataSource | null>(null);
+  // Read-only detail view: which data source's structure is on screen.
+  const [viewingId, setViewingId] = useState<number | null>(null);
   const [pendingDelete, setPendingDelete] = useState<DataSource | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -268,6 +259,173 @@ const RuleEngineDataSource = () => {
     );
   }, [sources, searchTerm]);
 
+  // Cells wahi hain jo pehle raw <table> me the — sirf ab EnhancedTable ke
+  // renderCell contract se aate hain.
+  const renderCell = (source: DataSource, columnKey: string) => {
+    switch (columnKey) {
+      case "datasource_name":
+        return (
+          <span
+            className="break-words text-sm font-medium"
+            style={{ color: T.textMain }}
+          >
+            {dash(source.datasource_name)}
+          </span>
+        );
+      case "connecter":
+        return (
+          <span className="break-words text-sm" style={{ color: T.textMuted }}>
+            {dash(source.connecter)}
+          </span>
+        );
+      case "type":
+        // Legacy rows predate the field — they are external.
+        return (
+          <span
+            className="inline-block whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium capitalize"
+            style={{ background: T.primaryBg, color: T.primary }}
+          >
+            {source.type || "external"}
+          </span>
+        );
+      case "active":
+        return (
+          <span
+            className={`inline-block whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium ${
+              source.active
+                ? "bg-emerald-100 text-emerald-700"
+                : "bg-gray-100 text-gray-600"
+            }`}
+          >
+            {source.active ? "Active" : "Inactive"}
+          </span>
+        );
+      case "project_code":
+        return (
+          <span className="break-words text-sm" style={{ color: T.textMuted }}>
+            {dash(source.project_code)}
+          </span>
+        );
+      case "created_by_name":
+        return (
+          <span className="break-words text-sm" style={{ color: T.textMuted }}>
+            {dash(source.created_by_name)}
+          </span>
+        );
+      case "created_at":
+        return (
+          <span className="text-sm" style={{ color: T.textMuted }}>
+            {formatCreatedAt(source.created_at)}
+          </span>
+        );
+      case "test_connection":
+        return (
+          <button
+            onClick={() => testConnection(source.id)}
+            disabled={testingId === source.id}
+            className="flex items-center gap-1.5 whitespace-nowrap rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60"
+            style={{ borderColor: T.primary, color: T.primary }}
+            title="Test connection"
+          >
+            {testingId === source.id ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Testing...
+              </>
+            ) : (
+              <>
+                <Zap className="h-3.5 w-3.5" />
+                Test Connection
+              </>
+            )}
+          </button>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const newDataSourceButton = (
+    <button
+      onClick={() => {
+        setEditing(null);
+        setIsAddOpen(true);
+      }}
+      className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white transition-colors sm:w-fit"
+      style={{ background: T.primary }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = T.primaryHov;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = T.primary;
+      }}
+    >
+      <Plus className="h-4 w-4" />
+      New Data Source
+    </button>
+  );
+
+  const searchInput = (
+    <div className="relative w-full sm:w-64">
+      <Search
+        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+        style={{ color: T.textMuted }}
+      />
+      <input
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        placeholder="Search data sources..."
+        className="w-full rounded-xl border py-2 pl-10 pr-3 text-sm outline-none focus:ring-2 focus:ring-[#DA7756]/30"
+        style={inputStyle}
+      />
+    </div>
+  );
+
+  const refreshButton = (
+    <button
+      onClick={loadSources}
+      disabled={loading}
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-colors disabled:opacity-60"
+      style={{ borderColor: T.primary, color: T.primary }}
+      title="Refresh"
+      aria-label="Refresh data sources"
+    >
+      <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+    </button>
+  );
+
+  const renderActions = (source: DataSource) => (
+    <div className="flex items-center gap-1">
+      <button
+        onClick={() => setViewingId(source.id)}
+        className="rounded-lg p-1.5 transition-colors hover:bg-[#f6f4ee]"
+        title="View data source"
+        aria-label={`View ${source.datasource_name ?? "data source"}`}
+      >
+        <Eye className="h-4 w-4" style={{ color: T.textMuted }} />
+      </button>
+      <button
+        onClick={() => {
+          setEditing(source);
+          setIsAddOpen(true);
+        }}
+        className="rounded-lg p-1.5 transition-colors hover:bg-[#f6f4ee]"
+        title="Edit data source"
+        aria-label={`Edit ${source.datasource_name ?? "data source"}`}
+      >
+        <Pencil className="h-4 w-4" style={{ color: T.textMuted }} />
+      </button>
+      <button
+        onClick={() => setPendingDelete(source)}
+        className="rounded-lg p-1.5 transition-colors hover:bg-[#f6f4ee]"
+        title="Delete data source"
+        aria-label={`Delete ${source.datasource_name ?? "data source"}`}
+      >
+        <Trash2 className="h-4 w-4" style={{ color: T.primary }} />
+      </button>
+    </div>
+  );
+
   return (
     <div
       className="min-h-[calc(100vh-5rem)] w-full px-3 py-4 sm:px-6 sm:py-6"
@@ -358,67 +516,36 @@ const RuleEngineDataSource = () => {
           </div>
         )}
 
+        {/* ── Configure Action tab ── */}
+        {activeTab === "actions" && (
+          <div
+            className="rounded-[20px] border p-4 shadow-sm sm:p-6"
+            style={cardStyle}
+          >
+            <ConfigureActionTab sources={sources} sourcesLoading={loading} />
+          </div>
+        )}
+
         {/* ── Data Source tab: toolbar + list ── */}
         {activeTab === "sources" && (
           <div
             className="rounded-[20px] border p-4 shadow-sm sm:p-6"
             style={cardStyle}
           >
-            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <button
-                onClick={() => {
-                  setEditing(null);
-                  setIsAddOpen(true);
-                }}
-                className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white transition-colors sm:w-fit"
-                style={{ background: T.primary }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = T.primaryHov;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = T.primary;
-                }}
-              >
-                <Plus className="h-4 w-4" />
-                New Data Source
-              </button>
-
-              <div className="flex w-full items-center gap-2 sm:w-auto">
-                <div className="relative flex-1 sm:w-64 sm:flex-none">
-                  <Search
-                    className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
-                    style={{ color: T.textMuted }}
-                  />
-                  <input
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search data sources..."
-                    className="w-full rounded-xl border py-2 pl-10 pr-3 text-sm outline-none"
-                    style={inputStyle}
-                  />
+            {/* Table dikhne par ye teeno controls EnhancedTable ke header row
+                me chale jaate hain (New Data Source left, search + refresh +
+                Columns right). Ye toolbar sirf un states ke liye hai jahan
+                table render hi nahi hota — warna user na naya source bana
+                paata, na search clear kar paata. */}
+            {(loading || error || filteredSources.length === 0) && (
+              <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                {newDataSourceButton}
+                <div className="flex w-full items-center gap-2 sm:w-auto">
+                  {searchInput}
+                  {refreshButton}
                 </div>
-                <button
-                  onClick={loadSources}
-                  disabled={loading}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-colors disabled:opacity-60"
-                  style={{ borderColor: T.primary, color: T.primary }}
-                  title="Refresh"
-                  aria-label="Refresh data sources"
-                >
-                  <RefreshCw
-                    className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
-                  />
-                </button>
-                <button
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-colors"
-                  style={{ borderColor: T.primary, color: T.primary }}
-                  title="Filter"
-                  aria-label="Filter data sources"
-                >
-                  <Filter className="h-4 w-4" />
-                </button>
               </div>
-            </div>
+            )}
 
             {loading ? (
               <div className="flex flex-col items-center justify-center gap-2 py-12">
@@ -465,141 +592,26 @@ const RuleEngineDataSource = () => {
                 </p>
               </div>
             ) : (
-              /* Wide table scrolls inside its own container so the page never
-               scrolls horizontally on mobile. */
-              <div className="-mx-4 overflow-x-auto sm:mx-0">
-                <table className="w-full min-w-[980px] border-collapse text-left">
-                  <thead>
-                    <tr style={{ background: T.primaryBg }}>
-                      {COLUMNS.map((h) => (
-                        <th
-                          key={h}
-                          className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wide"
-                          style={{ color: T.textMuted }}
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredSources.map((source) => (
-                      <tr
-                        key={source.id}
-                        className="border-t"
-                        style={{ borderColor: T.borderLgt }}
-                      >
-                        <td
-                          className="px-4 py-3 text-sm font-medium"
-                          style={{ color: T.textMain }}
-                        >
-                          {dash(source.datasource_name)}
-                        </td>
-                        <td
-                          className="px-4 py-3 text-sm"
-                          style={{ color: T.textMuted }}
-                        >
-                          {dash(source.connecter)}
-                        </td>
-                        <td className="px-4 py-3">
-                          {/* Legacy rows predate the field — they are external. */}
-                          <span
-                            className="rounded-full px-3 py-1 text-xs font-medium capitalize"
-                            style={{
-                              background: T.primaryBg,
-                              color: T.primary,
-                            }}
-                          >
-                            {source.type || "external"}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-medium ${
-                              source.active
-                                ? "bg-emerald-100 text-emerald-700"
-                                : "bg-gray-100 text-gray-600"
-                            }`}
-                          >
-                            {source.active ? "Active" : "Inactive"}
-                          </span>
-                        </td>
-                        <td
-                          className="px-4 py-3 text-sm"
-                          style={{ color: T.textMuted }}
-                        >
-                          {dash(source.project_code)}
-                        </td>
-                        <td
-                          className="px-4 py-3 text-sm"
-                          style={{ color: T.textMuted }}
-                        >
-                          {dash(source.created_by_name)}
-                        </td>
-                        <td
-                          className="whitespace-nowrap px-4 py-3 text-sm"
-                          style={{ color: T.textMuted }}
-                        >
-                          {formatCreatedAt(source.created_at)}
-                        </td>
-                        <td className="whitespace-nowrap px-4 py-3">
-                          <button
-                            onClick={() => testConnection(source.id)}
-                            disabled={testingId === source.id}
-                            className="flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60"
-                            style={{
-                              borderColor: T.primary,
-                              color: T.primary,
-                            }}
-                            title="Test connection"
-                          >
-                            {testingId === source.id ? (
-                              <>
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                Testing...
-                              </>
-                            ) : (
-                              <>
-                                <Zap className="h-3.5 w-3.5" />
-                                Test Connection
-                              </>
-                            )}
-                          </button>
-                        </td>
-                        <td className="whitespace-nowrap px-4 py-3">
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => {
-                                setEditing(source);
-                                setIsAddOpen(true);
-                              }}
-                              className="rounded-lg p-1.5 transition-colors hover:bg-[#f6f4ee]"
-                              title="Edit data source"
-                              aria-label={`Edit ${source.datasource_name ?? "data source"}`}
-                            >
-                              <Pencil
-                                className="h-4 w-4"
-                                style={{ color: T.textMuted }}
-                              />
-                            </button>
-                            <button
-                              onClick={() => setPendingDelete(source)}
-                              className="rounded-lg p-1.5 transition-colors hover:bg-[#f6f4ee]"
-                              title="Delete data source"
-                              aria-label={`Delete ${source.datasource_name ?? "data source"}`}
-                            >
-                              <Trash2
-                                className="h-4 w-4"
-                                style={{ color: T.primary }}
-                              />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <EnhancedTable
+                data={filteredSources}
+                columns={COLUMNS}
+                renderCell={renderCell}
+                renderActions={renderActions}
+                getItemId={(source) => String(source.id)}
+                storageKey="rule-engine-data-sources"
+                emptyMessage="No data sources found"
+                pagination
+                pageSize={10}
+                hideTableSearch
+                hideTableExport
+                leftActions={newDataSourceButton}
+                rightActions={
+                  <div className="flex items-center gap-2">
+                    {searchInput}
+                    {refreshButton}
+                  </div>
+                }
+              />
             )}
           </div>
         )}
@@ -645,6 +657,11 @@ const RuleEngineDataSource = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <DataSourceDetailsSheet
+        datasourceId={viewingId}
+        onClose={() => setViewingId(null)}
+      />
     </div>
   );
 };

@@ -193,7 +193,7 @@ export const SurveyListDashboard = () => {
     if (action === 'Edit') {
       navigate(`/master/survey/edit/${item.id}`);
     } else if (action === 'View') {
-      navigate(`/master/survey/details/${item.id}`);
+      navigate(`/maintenance/survey/details/${item.id}`);
     } else {
       toast({
         title: `${action} Action`,
@@ -219,7 +219,7 @@ export const SurveyListDashboard = () => {
     if (action === 'Edit') {
       navigate(`/master/survey/edit/${surveyId}`);
     } else if (action === 'View') {
-      navigate(`/master/survey/details/${surveyId}`);
+      navigate(`/maintenance/survey/details/${surveyId}`);
     } else {
       toast({
         title: `${action} Action`,

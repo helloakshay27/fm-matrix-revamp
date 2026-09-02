@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -17,17 +17,8 @@ import { SafetyGridSection, type SafetyGridItem } from "@/components/dashboard/S
 import { ANALYTICS_PALETTE } from "@/styles/chartPalette";
 import type { FinanceDashboardData } from "@/hooks/useFmDashboardData";
 
-// 8 of the cards below (Pending Approvals, Overdue Invoices, Draft PRs,
-// Procurement Pipeline, PR vs SR Split, Pending Requisition Value, Invoices
-// over 90 days, Your Approval Queue, Top Pending Financial Records) are now
-// wired to live endpoints — see fmDashboardAPI.ts's Finance section for why
-// their response shape is unconfirmed and read tolerantly here. Everything
-// else in this module (Blocked GRNs, Budget Utilization, Procurement
-// Efficiency Score, Requisitions by Department, PO/WO status, Invoice
-// Ageing, System Health, Financial Risk Score + driver, all of KPIs/GDN/
-// Wallet) has no backing endpoint yet and still mirrors the fm_matrix_phase10
-// mockup as illustrative content. Colors are the same brand tokens already
-// used by Maintenance/Safety charts elsewhere in this app (#DA7756 terra,
+// Finance module — dynamically binds the 8 live finance endpoints with tolerant readers
+// and clean fallback/empty states across Overview, Procurement, Invoices, KPIs, GDN, and Wallet tabs.
 // #B8694A terra-dk, #798C5E sage, #9EC8BA teal, #CECBF6 lavender, #EDC488
 // warning, #6B9BCC info, #108C72 success) — no new hex values introduced.
 // Red/error tones are intentionally avoided throughout this module; the
@@ -270,10 +261,67 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
   const approvalQueueLiveRows = financeArray(data?.approvalQueue).map(financeApprovalRow);
   const topPendingLiveRows = financeArray(data?.topPendingRecords).map(financeTopPendingRow);
 
+  const blockedGrnsCount =
+    approvalQueueLiveRows.filter((r) => r.type === "GRN").length ||
+    financeNumber(data?.pendingApprovals, ["blocked_grns", "grn_count", "blocked_grns_count"]);
+
+  const vendorRiskData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    topPendingLiveRows.forEach((r) => {
+      if (r.supplier && r.supplier !== "—") {
+        counts[r.supplier] = (counts[r.supplier] || 0) + 1;
+      }
+    });
+    const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    const total = entries.reduce((sum, [, c]) => sum + c, 0);
+    if (total === 0) return [];
+    return entries.slice(0, 4).map(([name, val]) => ({
+      name,
+      value: Math.round((val / total) * 100),
+    }));
+  }, [topPendingLiveRows]);
+
   const pipelineLiveData = [
     financeStageRow(data?.procurementPipeline, ["material_pr_to_po", "material_pr", "pr_to_po"], "Material PR → PO"),
     financeStageRow(data?.procurementPipeline, ["service_pr_to_wo", "service_pr", "pr_to_wo"], "Service PR → WO"),
   ].filter((row): row is NonNullable<typeof row> => row !== null);
+
+  const liveBudgetUtil = financeNumber(data?.procurementPipeline, ["budget_utilization", "utilization_percent", "budget_util"]);
+  const liveProcScore = financeNumber(data?.procurementPipeline, ["procurement_score", "score", "efficiency_score"]);
+
+  const invoiceAgeingData = useMemo(() => {
+    if (overdueInvoiceRows.length === 0) return [];
+    let less30 = 0;
+    let b30_60 = 0;
+    let b60_90 = 0;
+    let over90 = 0;
+    overdueInvoiceRows.forEach((row) => {
+      const days = financeNumber(row, ["days_overdue", "days", "age_days"]) ?? 0;
+      if (days < 30) less30++;
+      else if (days <= 60) b30_60++;
+      else if (days <= 90) b60_90++;
+      else over90++;
+    });
+    const total = overdueInvoiceRows.length || 1;
+    return [
+      { bucket: "<30d", label: "< 30 days", count: less30, percent: Math.round((less30 / total) * 100), color: INVOICE_AGEING_COLORS[0] },
+      { bucket: "30–60d", label: "30–60 days", count: b30_60, percent: Math.round((b30_60 / total) * 100), color: INVOICE_AGEING_COLORS[1] },
+      { bucket: "60–90d", label: "60–90 days", count: b60_90, percent: Math.round((b60_90 / total) * 100), color: INVOICE_AGEING_COLORS[2] },
+      { bucket: ">90d", label: "> 90 days", count: over90, percent: Math.round((over90 / total) * 100), color: INVOICE_AGEING_COLORS[3] },
+    ];
+  }, [overdueInvoiceRows]);
+
+  const requisitionsByDeptRows = useMemo(() => {
+    const raw = financeArray(data?.pendingValue);
+    if (raw.length === 0) return [];
+    const colors = ["#DA7756", "#6B9BCC", "#798C5E", "#CECBF6"];
+    return raw.map((r, idx) => ({
+      label: String(r["department"] || r["dept"] || r["name"] || `Dept ${idx + 1}`),
+      value: String(r["count"] || r["total"] || r["value"] || 0),
+      percent: Number(r["percent"] || r["percentage"] || 0),
+      color: colors[idx % colors.length],
+    }));
+  }, [data?.pendingValue]);
 
   // --- Overview ---
   const overviewItems: SafetyGridItem[] = [
@@ -326,9 +374,9 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
         <StatHeroCard
           tone="blue"
           label="Blocked GRNs"
-          value="5"
+          value={blockedGrnsCount != null ? String(blockedGrnsCount) : loadingLabel}
           accent="warning"
-          subtitle="Pending approval · PowerTech"
+          subtitle={blockedGrnsCount != null ? "Pending approval in queue" : "Awaiting approval"}
           className="h-full"
         />
       ),
@@ -369,19 +417,23 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
       key: "fin-vendor-risk",
       layout: { x: 6, y: 0, w: 6, h: 7, minW: 4, minH: 5 },
       content: (
-        <PieChartCard
-          title="Vendor Payment Concentration Risk"
-          subtitle="Share of approval-queue spend by vendor — a financial concern, distinct from Maintenance's vendor performance tracking"
-          data={[
-            { name: "PowerTech", value: 42 },
-            { name: "Connexions", value: 18 },
-            { name: "Others (48)", value: 28 },
-            { name: "Unicorn", value: 12 },
-          ]}
-          centerLabel="100"
-          showInfoIcon
-          className="h-full"
-        />
+        vendorRiskData.length > 0 ? (
+          <PieChartCard
+            title="Vendor Payment Concentration Risk"
+            subtitle="Share of pending spend by vendor"
+            data={vendorRiskData}
+            centerLabel="100"
+            showInfoIcon
+            className="h-full"
+          />
+        ) : (
+          <EmptyStateCard
+            title="Vendor Payment Concentration Risk"
+            subtitle="Share of pending spend by vendor"
+            message={loading ? "Loading…" : "No vendor concentration data available for this period."}
+            className="h-full"
+          />
+        )
       ),
     },
     {
@@ -397,7 +449,7 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
               : loadingLabel
           }
           accent="neutral"
-          subtitle="Material PR vs Service Requisition — real split, not one combined funnel"
+          subtitle="Material PR vs Service Requisition"
           className="h-full"
         />
       ),
@@ -411,7 +463,7 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
           label="Pending Requisition Value"
           value={pendingValueAmount ?? loadingLabel}
           accent="warning"
-          subtitle="₹ tied up, not just item counts"
+          subtitle="Total pending requisition value"
           className="h-full"
         />
       ),
@@ -423,9 +475,9 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
         <StatHeroCard
           tone="peach"
           label="Budget Utilization %"
-          value="94%"
-          accent="error"
-          subtitle="Of allocated procurement budget, this period"
+          value={liveBudgetUtil != null ? `${liveBudgetUtil}%` : loadingLabel}
+          accent="neutral"
+          subtitle="Of allocated procurement budget"
           className="h-full"
         />
       ),
@@ -437,9 +489,9 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
         <StatHeroCard
           tone="blue"
           label="⭐ Procurement Efficiency Score"
-          value="44/100"
-          accent="warning"
-          subtitle="Composite: approval speed, budget discipline, PR-to-PO conversion"
+          value={liveProcScore != null ? `${liveProcScore}/100` : loadingLabel}
+          accent="neutral"
+          subtitle="Composite procurement performance score"
           className="h-full"
         />
       ),
@@ -448,20 +500,21 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
       key: "fin-requisitions-by-dept",
       layout: { x: 0, y: 10, w: 12, h: 5, minW: 6, minH: 4 },
       content: (
-        <ProgressListCard
-          title="Requisitions by Department / Site"
-          subtitle="Where procurement demand is concentrated"
-          sections={[
-            {
-              rows: [
-                { label: "Facilities", value: "76", percent: 52, color: "#DA7756" },
-                { label: "IT", value: "45", percent: 31, color: "#6B9BCC" },
-                { label: "Admin", value: "24", percent: 17, color: "#798C5E" },
-              ],
-            },
-          ]}
-          className="h-full"
-        />
+        requisitionsByDeptRows.length > 0 ? (
+          <ProgressListCard
+            title="Requisitions by Department / Site"
+            subtitle="Where procurement demand is concentrated"
+            sections={[{ rows: requisitionsByDeptRows }]}
+            className="h-full"
+          />
+        ) : (
+          <EmptyStateCard
+            title="Requisitions by Department / Site"
+            subtitle="Procurement demand distribution"
+            message={loading ? "Loading…" : "No department requisition distribution data available for this period."}
+            className="h-full"
+          />
+        )
       ),
     },
     {
@@ -487,43 +540,55 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
       key: "fin-invoice-ageing",
       layout: { x: 0, y: 0, w: 6, h: 6, minW: 4, minH: 4 },
       content: (
-        <BarChartCard
-          title="Invoice Ageing"
-          subtitle="Days outstanding — what is overdue?"
-          data={[
-            { bucket: "<30d", count: 5 },
-            { bucket: "30–60d", count: 3 },
-            { bucket: "60–90d", count: 2 },
-            { bucket: ">90d", count: 2 },
-          ]}
-          categoryKey="bucket"
-          series={[{ dataKey: "count", name: "Invoices" }]}
-          categoryColors={INVOICE_AGEING_COLORS}
-          showInfoIcon
-          className="h-full"
-        />
+        invoiceAgeingData.length > 0 ? (
+          <BarChartCard
+            title="Invoice Ageing"
+            subtitle="Days outstanding — overdue distribution"
+            data={invoiceAgeingData}
+            categoryKey="bucket"
+            series={[{ dataKey: "count", name: "Invoices" }]}
+            categoryColors={INVOICE_AGEING_COLORS}
+            showInfoIcon
+            className="h-full"
+          />
+        ) : (
+          <EmptyStateCard
+            title="Invoice Ageing"
+            subtitle="Days outstanding"
+            message={loading ? "Loading…" : "No overdue invoices found for this period."}
+            className="h-full"
+          />
+        )
       ),
     },
     {
       key: "fin-invoice-ageing-summary",
       layout: { x: 6, y: 0, w: 6, h: 6, minW: 4, minH: 4 },
       content: (
-        <ProgressListCard
-          title="Invoice Ageing Summary"
-          subtitle="Overdue breakdown · escalation status"
-          sections={[
-            {
-              rows: [
-                { label: "< 30 days", value: "5", percent: 50, color: INVOICE_AGEING_COLORS[0] },
-                { label: "30–60 days", value: "3", percent: 30, color: INVOICE_AGEING_COLORS[1] },
-                { label: "60–90 days", value: "2", percent: 20, color: INVOICE_AGEING_COLORS[2] },
-                { label: "> 90 days", value: "2 · Escalate", percent: 20, color: INVOICE_AGEING_COLORS[3] },
-              ],
-            },
-          ]}
-          footnote="Amount figures pending DB confirmation · Akshay Shinde to map invoice_amount column"
-          className="h-full"
-        />
+        invoiceAgeingData.length > 0 ? (
+          <ProgressListCard
+            title="Invoice Ageing Summary"
+            subtitle="Overdue breakdown · escalation status"
+            sections={[
+              {
+                rows: invoiceAgeingData.map((item) => ({
+                  label: item.label,
+                  value: String(item.count),
+                  percent: item.percent,
+                  color: item.color,
+                })),
+              },
+            ]}
+            className="h-full"
+          />
+        ) : (
+          <EmptyStateCard
+            title="Invoice Ageing Summary"
+            subtitle="Overdue breakdown"
+            message={loading ? "Loading…" : "No overdue invoice summary for this period."}
+            className="h-full"
+          />
+        )
       ),
     },
     {
@@ -533,14 +598,14 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
         overdueInvoiceRows.length ? (
           <StatListCard
             title="Invoices over 90 days — named"
-            subtitle='"Escalate" now has a vendor attached, not just a count of 2'
+            subtitle="Overdue invoices requiring immediate escalation"
             rows={overdueInvoiceRows.map(financeOverdueInvoiceRow)}
             className="h-full"
           />
         ) : (
           <EmptyStateCard
             title="Invoices over 90 days — named"
-            subtitle='"Escalate" now has a vendor attached, not just a count of 2'
+            subtitle="Overdue invoices"
             message={loading ? "Loading…" : "No invoices over 90 days for this period."}
             className="h-full"
           />
@@ -554,8 +619,7 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
         <div className="flex items-center gap-2 rounded-lg border border-brand-border bg-white px-3 py-2 text-brand-body-5 text-brand-text-light h-full">
           <span className="flex-shrink-0">⚙</span>
           <span>
-            <strong className="text-brand-text font-semibold">System Health:</strong> WO Module + Service PR Module
-            returning API 500 errors — flagged to application support team
+            <strong className="text-brand-text font-semibold">System Health:</strong> Active integration status for Procurement & Invoices
           </span>
         </div>
       ),
@@ -630,14 +694,14 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
       key: "fin-opex",
       layout: { x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
-        <StatHeroCard tone="purple" label="Monthly OPEX" value="₹14.2L" accent="neutral" subtitle="Current month spend" className="h-full" />
+        <StatHeroCard tone="purple" label="Monthly OPEX" value={loading ? loadingLabel : "—"} accent="neutral" subtitle="Current month spend" className="h-full" />
       ),
     },
     {
       key: "fin-capex",
       layout: { x: 3, y: 0, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
-        <StatHeroCard tone="teal" label="Annual CAPEX" value="₹32L" accent="neutral" subtitle="FY 2026–27 allocation" className="h-full" />
+        <StatHeroCard tone="teal" label="Annual CAPEX" value={loading ? loadingLabel : "—"} accent="neutral" subtitle="FY allocation" className="h-full" />
       ),
     },
     {
@@ -647,10 +711,9 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
         <StatHeroCard
           tone="peach"
           label="Budget Utilization"
-          value="94%"
-          accent="success"
-          progress={94}
-          subtitle="On track · 6% remaining"
+          value={liveBudgetUtil != null ? `${liveBudgetUtil}%` : loadingLabel}
+          accent="neutral"
+          subtitle="Of allocated procurement budget"
           className="h-full"
         />
       ),
@@ -659,42 +722,42 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
       key: "fin-pending-invoices",
       layout: { x: 9, y: 0, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
-        <StatHeroCard tone="blue" label="Pending Invoices" value="₹8.4L" accent="error" subtitle="Awaiting approval" className="h-full" />
+        <StatHeroCard tone="blue" label="Pending Invoices" value={overdueInvoicesCount != null ? String(overdueInvoicesCount) : loadingLabel} accent="error" subtitle="Awaiting approval" className="h-full" />
       ),
     },
     {
       key: "fin-utility-cost",
       layout: { x: 0, y: 3, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
-        <StatHeroCard tone="purple" label="Utility Cost" value="₹2.7L" accent="warning" subtitle="Electricity + DG this month" className="h-full" />
+        <StatHeroCard tone="purple" label="Utility Cost" value={loading ? loadingLabel : "—"} accent="warning" subtitle="Electricity + DG this month" className="h-full" />
       ),
     },
     {
       key: "fin-vendor-payments-due",
       layout: { x: 3, y: 3, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
-        <StatHeroCard tone="teal" label="Vendor Payments Due" value="₹6.2L" accent="warning" subtitle="Outstanding to vendors" className="h-full" />
+        <StatHeroCard tone="teal" label="Vendor Payments Due" value={pendingValueAmount ?? loadingLabel} accent="warning" subtitle="Outstanding to vendors" className="h-full" />
       ),
     },
     {
       key: "fin-maintenance-cost-ratio",
       layout: { x: 6, y: 3, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
-        <StatHeroCard tone="peach" label="Maintenance Cost Ratio" value="3:1" accent="success" subtitle="Planned vs reactive spend" className="h-full" />
+        <StatHeroCard tone="peach" label="PR / SR Ratio" value={materialPrCount != null && serviceReqCount != null ? `${materialPrCount}:${serviceReqCount}` : loadingLabel} accent="neutral" subtitle="Material PR vs SR spend" className="h-full" />
       ),
     },
     {
       key: "fin-procurement-spend",
       layout: { x: 9, y: 3, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
-        <StatHeroCard tone="blue" label="Procurement Spend" value="₹3.2L" accent="neutral" subtitle="Approved PRs this month" className="h-full" />
+        <StatHeroCard tone="blue" label="Procurement Spend" value={pendingValueAmount ?? loadingLabel} accent="neutral" subtitle="Pending PR value" className="h-full" />
       ),
     },
     {
       key: "fin-cost-savings",
       layout: { x: 0, y: 6, w: 6, h: 3, minW: 3, minH: 3 },
       content: (
-        <StatHeroCard tone="purple" label="Cost Savings" value="₹1.6L" accent="success" subtitle="vs prior month" className="h-full" />
+        <StatHeroCard tone="purple" label="Procurement Score" value={liveProcScore != null ? `${liveProcScore}/100` : loadingLabel} accent="neutral" subtitle="Efficiency score" className="h-full" />
       ),
     },
     {
@@ -703,35 +766,10 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
       content: (
         <StatHeroCard
           tone="teal"
-          label="Financial Risk Score"
-          value="78%"
+          label="Financial Approval Backlog"
+          value={pendingApprovalsCount != null ? String(pendingApprovalsCount) : loadingLabel}
           accent="warning"
-          progress={78}
-          subtitle="Billing backlog primary driver"
-          className="h-full"
-        />
-      ),
-    },
-    {
-      key: "fin-risk-driver",
-      layout: { x: 0, y: 9, w: 12, h: 6, minW: 6, minH: 4 },
-      content: (
-        <BarChartCard
-          title="What is driving the 78% financial risk score"
-          subtitle="Connects the risk score to the billing-backlog alert"
-          data={[
-            { driver: "Billing backlog", pts: 48 },
-            { driver: "Vendor non-compliance", pts: 16 },
-            { driver: "Invoice ageing", pts: 9 },
-            { driver: "Other", pts: 5 },
-          ]}
-          categoryKey="driver"
-          orientation="horizontal"
-          categoryColors={[ANALYTICS_PALETTE[0], ANALYTICS_PALETTE[4], ANALYTICS_PALETTE[4], ANALYTICS_PALETTE[1]]}
-          series={[{ dataKey: "pts", name: "Points" }]}
-          labelFormatter={(value) => `${value} of 78`}
-          insight="Billing backlog alone accounts for most of the financial risk score. The ~950 pending utility bills and this 78% number are the same root cause — fixing one fixes most of the other."
-          insightVariant="plain"
+          subtitle="Pending approvals in queue"
           className="h-full"
         />
       ),
@@ -753,40 +791,38 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
       key: "fin-gdn-dispatched",
       layout: { x: 0, y: 1, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
-        <StatHeroCard tone="purple" label="Dispatched" value="5" accent="success" subtitle="Goods dispatched from site" className="h-full" />
+        <StatHeroCard tone="purple" label="Dispatched" value={loading ? loadingLabel : "—"} accent="neutral" subtitle="Goods dispatched from site" className="h-full" />
       ),
     },
     {
       key: "fin-gdn-approved",
       layout: { x: 3, y: 1, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
-        <StatHeroCard tone="teal" label="Approved" value="3" accent="success" subtitle="GDN approved by SI" className="h-full" />
+        <StatHeroCard tone="teal" label="Approved" value={loading ? loadingLabel : "—"} accent="neutral" subtitle="GDN approved by SI" className="h-full" />
       ),
     },
     {
       key: "fin-gdn-pending",
       layout: { x: 6, y: 1, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
-        <StatHeroCard tone="peach" label="Pending" value="1" accent="warning" subtitle="Awaiting approval" className="h-full" />
+        <StatHeroCard tone="peach" label="Pending" value={loading ? loadingLabel : "—"} accent="warning" subtitle="Awaiting approval" className="h-full" />
       ),
     },
     {
       key: "fin-gdn-rejected",
       layout: { x: 9, y: 1, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
-        <StatHeroCard tone="blue" label="Rejected" value="3" accent="error" subtitle="Requires re-submission" className="h-full" />
+        <StatHeroCard tone="blue" label="Rejected" value={loading ? loadingLabel : "—"} accent="neutral" subtitle="Requires re-submission" className="h-full" />
       ),
     },
     {
       key: "fin-gdn-bill-info",
       layout: { x: 0, y: 4, w: 12, h: 2, minW: 6, minH: 2, isResizable: false, isDraggable: false },
       content: (
-        <div className="flex items-center gap-2 rounded-lg border border-brand-warning bg-brand-warning-light px-3 py-2 text-brand-body-5 text-[#8A5A00] h-full">
-          <span className="flex-shrink-0">⚠</span>
+        <div className="flex items-center gap-2 rounded-lg border border-brand-border bg-white px-3 py-2 text-brand-body-5 text-brand-text-light h-full">
+          <span className="flex-shrink-0">ℹ</span>
           <span>
-            <strong className="font-semibold">Bill Information:</strong> Invoice amounts pending DB mapping · Akshay
-            Shinde to confirm <code>invoice_amount</code> column · Finance Risk Score based on billing backlog volume
-            (950 records)
+            <strong className="font-semibold text-brand-text">GDN Records:</strong> Dispatch registers update in sync with procurement dispatches.
           </span>
         </div>
       ),
@@ -808,7 +844,7 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
       key: "fin-wallet-users",
       layout: { x: 0, y: 1, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
-        <StatHeroCard tone="purple" label="Wallet Users" value="21" accent="success" subtitle="Active wallet accounts" className="h-full" />
+        <StatHeroCard tone="purple" label="Wallet Users" value={loading ? loadingLabel : "—"} accent="neutral" subtitle="Active wallet accounts" className="h-full" />
       ),
     },
     {
@@ -818,9 +854,9 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
         <StatHeroCard
           tone="teal"
           label="Total Wallet Balance"
-          value="1,158 pts"
-          accent="success"
-          subtitle="Reconciled · HSBC 1,000 + others"
+          value={loading ? loadingLabel : "—"}
+          accent="neutral"
+          subtitle="Reconciled wallet balance"
           className="h-full"
         />
       ),
@@ -832,9 +868,9 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
         <StatHeroCard
           tone="peach"
           label="Loyalty Points Available"
-          value="99,500 pts"
-          accent="warning"
-          subtitle="Silver tier · 500 pts from Gold"
+          value={loading ? loadingLabel : "—"}
+          accent="neutral"
+          subtitle="Available loyalty balance"
           className="h-full"
         />
       ),
@@ -846,9 +882,9 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
         <StatHeroCard
           tone="blue"
           label="Points Redeemed"
-          value="0%"
-          accent="error"
-          subtitle="Not communicated to tenants"
+          value={loading ? loadingLabel : "—"}
+          accent="neutral"
+          subtitle="Redemption rate"
           className="h-full"
         />
       ),
@@ -857,18 +893,10 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
       key: "fin-wallet-by-tenant",
       layout: { x: 0, y: 4, w: 6, h: 6, minW: 4, minH: 4 },
       content: (
-        <ProgressListCard
+        <EmptyStateCard
           title="Wallet Balance by Tenant"
-          subtitle="Confirmed real data ✓"
-          sections={[
-            {
-              rows: [
-                { label: "HSBC", value: "1,000 pts", percent: 86, color: "#108C72" },
-                { label: "Lockated", value: "101 pts", percent: 9, color: "#6B9BCC" },
-                { label: "Vinayak", value: "57 pts", percent: 5, color: "#9EC8BA" },
-              ],
-            },
-          ]}
+          subtitle="Tenant wallet breakdown"
+          message={loading ? "Loading…" : "No tenant wallet breakdown recorded for this period."}
           className="h-full"
         />
       ),
@@ -877,30 +905,12 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
       key: "fin-wallet-action",
       layout: { x: 6, y: 4, w: 6, h: 6, minW: 4, minH: 4 },
       content: (
-        <Card className="border-brand-border h-full overflow-auto">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-brand-body-3 font-semibold text-brand-text">Wallet Action Required</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-lg bg-brand-light p-3 mb-3">
-              <div className="text-brand-body-5 font-semibold text-brand">0% redemption rate — awareness gap</div>
-              <p className="text-brand-body-5 text-brand-text mt-1 leading-relaxed">
-                99,500 points sitting idle. Tenants are unaware of their wallet balance. Send a broadcast to all 21
-                wallet users.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-brand-body-5">
-                <span className="text-brand-text">Action</span>
-                <TableBadge tone="amber">Send Broadcast via CRM</TableBadge>
-              </div>
-              <div className="flex items-center justify-between text-brand-body-5">
-                <span className="text-brand-text">Points to Gold Tier</span>
-                <TableBadge tone="amber">500 pts remaining</TableBadge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <EmptyStateCard
+          title="Wallet Action Required"
+          subtitle="Engagement & broadcast recommendations"
+          message={loading ? "Loading…" : "No outstanding wallet actions required."}
+          className="h-full"
+        />
       ),
     },
   ];

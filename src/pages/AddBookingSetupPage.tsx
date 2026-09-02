@@ -19,6 +19,8 @@ import { toast } from "sonner";
 import axios from "axios";
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
+import { fetchSuppliers } from "@/features/PulseSuppliers/api/suppliersApi";
+import type { Supplier } from "@/features/PulseSuppliers/types/supplier";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -85,6 +87,8 @@ export const AddBookingSetupPage = () => {
   const navigate = useNavigate();
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
+  const hostname = window.location.hostname;
+  const isPulseSite = hostname === "pulse-uat.panchshil.com" || hostname === "pulse.panchshil.com";
 
   const coverImageRef = useRef(null);
   const bookingImageRef = useRef(null);
@@ -109,6 +113,7 @@ export const AddBookingSetupPage = () => {
     location: "",
     active: "1",
     category: "",
+    supplierId: "",
     appKey: "",
     postpaid: false,
     prepaid: false,
@@ -173,6 +178,8 @@ export const AddBookingSetupPage = () => {
   // const [departments, setDepartments] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loadingDepartments, setLoadingDepartments] = useState(false);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [loadingSuppliers, setLoadingSuppliers] = useState(false);
 
   const [cancellationRules, setCancellationRules] = useState([
     {
@@ -261,6 +268,21 @@ export const AddBookingSetupPage = () => {
       setCategories([]);
     } finally {
       setLoadingDepartments(false);
+    }
+  };
+
+  const fetchSuppliersList = async () => {
+    if (suppliers.length > 0) return; // Don't fetch if already loaded
+
+    setLoadingSuppliers(true);
+    try {
+      const response = await fetchSuppliers({ per_page: 100, page: 1 });
+      setSuppliers(response.pms_suppliers);
+    } catch (error) {
+      console.error("Error fetching suppliers:", error);
+      setSuppliers([]);
+    } finally {
+      setLoadingSuppliers(false);
     }
   };
 
@@ -506,6 +528,13 @@ export const AddBookingSetupPage = () => {
         formDataToSend.append(
           "facility_setup[facility_category_id]",
           formData.category
+        );
+      }
+
+      if (isPulseSite && formData.supplierId) {
+        formDataToSend.append(
+          "facility_setup[supplier_id]",
+          formData.supplierId
         );
       }
 
@@ -896,7 +925,7 @@ export const AddBookingSetupPage = () => {
             </div>
 
             <div className="space-y-6 py-2">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <TextField
                   label="Facility Name"
                   placeholder="Enter Facility Name"
@@ -972,6 +1001,34 @@ export const AddBookingSetupPage = () => {
                     shrink: true,
                   }}
                 />
+
+                {isPulseSite && (
+                  <FormControl>
+                    <InputLabel className="bg-[#F6F7F7]">Supplier</InputLabel>
+                    <Select
+                      value={formData.supplierId}
+                      onChange={(e) => {
+                        setFormData({
+                          ...formData,
+                          supplierId: e.target.value,
+                        });
+                      }}
+                      onFocus={fetchSuppliersList}
+                      label="Supplier"
+                      displayEmpty
+                    >
+                      <MenuItem value="">
+                        {loadingSuppliers ? "Loading..." : "Select Supplier"}
+                      </MenuItem>
+                      {Array.isArray(suppliers) &&
+                        suppliers.map((supplier) => (
+                          <MenuItem key={supplier.id} value={String(supplier.id)}>
+                            {supplier.company_name || [supplier.first_name, supplier.last_name].filter(Boolean).join(" ")}
+                          </MenuItem>
+                        ))}
+                    </Select>
+                  </FormControl>
+                )}
               </div>
 
               <div className="flex gap-6 px-1">

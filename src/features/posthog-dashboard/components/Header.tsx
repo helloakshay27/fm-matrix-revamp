@@ -106,10 +106,10 @@ export function Header() {
       
       {vm.generatedAt ? (
         <span className="badge-sample" title={`generated_at: ${vm.generatedAt}`}>
-          Live · sample data
+          Live API
         </span>
       ) : (
-        <span className="badge-sample">Wireframe · sample data</span>
+        <span className="badge-sample">Awaiting API data</span>
       )}
       
       <div className="avatar" title={displayName || 'User'}>{initials}</div>

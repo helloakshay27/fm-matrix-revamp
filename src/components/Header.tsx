@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import posthog from "posthog-js";
 import { RecessClubLogo } from "./RecessClubLogo";
 import recessLogo from "../assets/recess-logo";
+import { useIsMobile } from "../hooks/use-mobile";
+import mobileLogo from "../assets/logo-2.png";
+import { isMobileUiSite } from "../utils/mobileUiSites";
 import {
   Bell,
   User,
@@ -20,7 +23,9 @@ import {
   ChartAreaIcon,
   Shield,
   Menu,
+  X,
   Activity,
+  LayoutDashboard,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -43,7 +48,7 @@ import {
   changeSite,
   clearSites,
 } from "@/store/slices/siteSlice";
-import { getUser, clearAuth, fetchLockAccount } from "@/utils/auth";
+import { getUser, clearAuth, fetchLockAccount, logoutUser } from "@/utils/auth";
 import { permissionService } from "@/services/permissionService";
 import { is } from "date-fns/locale";
 import { Dashboard } from "@mui/icons-material";
@@ -76,6 +81,10 @@ export const Header = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   const { isMobileSidebarOpen, setIsMobileSidebarOpen } = useLayout();
+  const isMobile = useIsMobile();
+  // Mobile par alag (bada) logo — sirf goPhygital sites par.
+  const goPhygitalMobile = isMobile && isMobileUiSite();
+  // Mobile-only logo/sizing changes sirf goPhygital site par.
 
   // Use Notification Context
   const {
@@ -90,6 +99,15 @@ export const Header = () => {
 
   const location = useLocation();
   const currentPath = location.pathname;
+  const currentUser = JSON.parse(localStorage.getItem("user")).email
+
+  const allowedUsersForDashboard = [
+    "deveshjain928@gmail.com",
+    "madhur.khandelwal@vodafoneidea.com",
+    "rosemary.tj@vodafoneidea.com",
+    "deveshjain928@vodafoneidea.com",
+    "testlogin5@yopmail.com"
+  ]
 
   // Redux state
   const {
@@ -127,6 +145,19 @@ export const Header = () => {
     hostname.includes("lockated.gophygital.work") ||
     hostname.includes("fm-matrix.lockated.com");
 
+  // Profile menu → Usage Analytics. Single entry, opens the Vi my Workspace adoption
+  // dashboard. The FM Matrix one at /posthog-dashboard is still routed and reachable
+  // directly by URL; it just no longer has a profile-menu entry.
+  const usageAnalyticsPath = "/vi-posthog-dashboard";
+
+  // Pulse tenants get their own Usage Analytics entry (the /pulse dashboard) instead of
+  // the Vi adoption dashboard above. This declaration was lost in a merge while the JSX
+  // that reads it survived, which crashed the whole Header with a ReferenceError.
+  // Scoped to isPulseSite (pulse domains + org_id 90) and deliberately NOT localhost —
+  // the entry above already renders there, and two identical "Usage Analytics" rows in
+  // the same profile menu is what the original localhost condition produced.
+  const showPulseUsageAnalytics = isPulseSite;
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -149,11 +180,18 @@ export const Header = () => {
       }
     ).electron;
     const deviceInfo = electronBridge?.getDeviceInfo?.() ?? {};
+    const u = getUser();
     posthog.identify(String(uid), {
       organization_name: localStorage.getItem("selectedOrg") ?? undefined,
       company_name: localStorage.getItem("selectedCompany") ?? undefined,
       site_name: localStorage.getItem("selectedSiteName") ?? undefined,
-      email: getUser()?.email ?? undefined,
+      email: u?.email ?? undefined,
+      // §6.5 person properties. `designation` and `is_approved` are in the spec but this
+      // app's login response carries neither, so they are omitted rather than faked.
+      user_name: [u?.firstname, u?.lastname].filter(Boolean).join(" ") || undefined,
+      contact_number: u?.mobile ?? u?.phone ?? undefined,
+      role: u?.lock_role?.name ?? undefined,
+      is_logged_in: true,
       ...deviceInfo,
     });
   }, [selectedCompany, selectedSite]);
@@ -169,9 +207,7 @@ export const Header = () => {
   // Club/localhost must NOT hide Dashboard / Executive / MSafe header links
   // (localhost is treated as club for logo only via isClubSite).
   const isRestrictedUser =
-    user?.email === "karan.balsara@zycus.com" ||
-    org_id === "90" ||
-    isPulseSite;
+    user?.email === "karan.balsara@zycus.com" || org_id === "90" || isPulseSite;
 
   const assetSuggestions = [
     "sdcdsc",
@@ -331,8 +367,7 @@ export const Header = () => {
   // Handle site change
   const handleSiteChange = async (siteId: number | "all") => {
     try {
-      const payload =
-        siteId === "all" ? sites.map((site) => site.id) : siteId;
+      const payload = siteId === "all" ? sites.map((site) => site.id) : siteId;
       await dispatch(changeSite(payload)).unwrap();
       if (siteId === "all") {
         localStorage.setItem("isAllSitesSelected", "true");
@@ -390,9 +425,12 @@ export const Header = () => {
   // which blocks local testing of the employee layout entirely.
   const isDevBypass = hostname.includes("localhost");
 
-  const canShowMsafeForSelectedCompany = localStorage.getItem("org_id") === "34";
-  const canShowMSafeDashboard =
-    !isRestrictedUser && canShowMsafeForSelectedCompany;
+  const canShowMsafeForSelectedCompany =
+    localStorage.getItem("org_id") === "34";
+  // const canShowMSafeDashboard =
+  //   !isRestrictedUser && canShowMsafeForSelectedCompany;
+
+  const canShowMSafeDashboard = canShowMsafeForSelectedCompany && allowedUsersForDashboard.includes(currentUser)
   const hasHeaderDashboardActions = !isRestrictedUser;
 
   const handleMSafeDashboard = () => {
@@ -414,12 +452,21 @@ export const Header = () => {
           <button
             className="md:hidden flex h-16 w-10 flex-shrink-0 items-center justify-center rounded-r-lg hover:bg-[#f6f4ee] transition-colors"
             onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-            aria-label="Toggle sidebar"
+            aria-label={isMobileSidebarOpen ? "Close sidebar" : "Open sidebar"}
             aria-expanded={isMobileSidebarOpen}
           >
-            <Menu className="w-5 h-5 text-[#1a1a1a]" />
+            {isMobileSidebarOpen ? (
+              <X className="w-5 h-5 text-[#1a1a1a]" />
+            ) : (
+              <Menu className="w-5 h-5 text-[#1a1a1a]" />
+            )}
           </button>
-          <div className="flex h-full w-16 flex-shrink-0 items-center overflow-hidden sm:w-28 md:w-40 lg:w-44">
+          <div
+            className={`flex h-full flex-shrink-0 items-center overflow-hidden sm:w-28 md:w-40 lg:w-44 ${isMobileUiSite()
+              ? "w-[120px] max-md:max-w-[120px] max-md:[&>svg]:h-auto max-md:[&>svg]:w-full max-md:[&_img]:h-auto max-md:[&_img]:max-w-full"
+              : "w-16"
+              }`}
+          >
             {isOmanSite ? (
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -519,6 +566,12 @@ export const Header = () => {
                 alt="Pulse Logo"
                 className={logoClassName}
               />
+            ) : goPhygitalMobile ? (
+              <img
+                src={mobileLogo}
+                alt="goPhygital.work"
+                className="!h-10 w-auto max-w-full object-contain"
+              />
             ) : (
               <svg
                 width="173"
@@ -580,19 +633,29 @@ export const Header = () => {
                   Executive Dashboard
                 </button>
               )}
-
-
-              {/* {canShowViMSafeDashboard && (
+              {isClubSite && (
                 <button
-                  onClick={handleMSafeDashboard}
+                  onClick={() =>
+                    (window.location.href = "/club-management/dashboard")
+                  }
+                  className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  Club Dashboard
+                </button>
+              )}
+
+              {canShowMSafeDashboard && (
+                <button
+                  onClick={handleMSafeDashboardRevamp}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
                   <Home className="w-4 h-4" />
                   MSafe Dashboard
 
                 </button>
-              )} */}
-              {canShowMSafeDashboard && (
+              )}
+              {/* {canShowMSafeDashboard && (
                 <button
                   onClick={handleMSafeDashboardRevamp}
                   className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
@@ -600,7 +663,7 @@ export const Header = () => {
                   <Shield className="w-4 h-4" />
                   Msafe Dashboard Revamp
                 </button>
-              )}
+              )} */}
             </div>
           )}
 
@@ -784,6 +847,16 @@ export const Header = () => {
                   >
                     <ChartAreaIcon className="w-4 h-4 mr-2" />
                     Executive Dashboard
+                  </DropdownMenuItem>
+                )}
+                {isClubSite && (
+                  <DropdownMenuItem
+                    onClick={() =>
+                      (window.location.href = "/club-management/dashboard")
+                    }
+                  >
+                    <LayoutDashboard className="w-4 h-4 mr-2" />
+                    Club Dashboard
                   </DropdownMenuItem>
                 )}
                 {/* {canShowMSafeDashboard && (
@@ -986,8 +1059,7 @@ export const Header = () => {
                     <span className="truncate">
                       {(isViSite && viAccount
                         ? viAccount.role_name || ""
-                        : userRoleName || user?.lock_role?.name) ||
-                        "No Role"}
+                        : userRoleName || user?.lock_role?.name) || "No Role"}
                     </span>
                   </Badge>
                   {/* <Badge
@@ -1040,15 +1112,27 @@ export const Header = () => {
                   <User className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">My Profile</span>
                 </DropdownMenuItem>
-                {isLocalhost && (
+                {(isViSite || isLocalhost) && (
                   <DropdownMenuItem
-                    onClick={() => (window.location.href = "/posthog-dashboard")}
+                    onClick={() =>
+                      (window.location.href = usageAnalyticsPath)
+                    }
                     className="mx-2 my-1 rounded-md"
                   >
                     <Activity className="w-4 h-4 mr-2 text-gray-500" />
                     <span className="font-medium">Usage Analytics</span>
                   </DropdownMenuItem>
                 )}
+                {showPulseUsageAnalytics && (
+                  <DropdownMenuItem
+                    onClick={() => navigate("/pulse")}
+                    className="mx-2 my-1 rounded-md"
+                  >
+                    <Activity className="w-4 h-4 mr-2 text-gray-500" />
+                    <span className="font-medium">Usage Analytics</span>
+                  </DropdownMenuItem>
+                )}
+
                 <DropdownMenuItem
                   onClick={() => navigate("/settings")}
                   className="mx-2 my-1 rounded-md"
@@ -1063,7 +1147,8 @@ export const Header = () => {
               {/* Logout Button */}
               <div className="p-2">
                 <DropdownMenuItem
-                  onClick={() => {
+                  onClick={async () => {
+                    await logoutUser();
                     navigate("/login");
                     permissionService.clearUserData();
                     clearAuth();

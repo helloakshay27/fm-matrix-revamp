@@ -28,6 +28,7 @@ import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions, getAuthHeader, EN
 import { toast } from 'sonner';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { useVisitorEvents } from '@/components/PostHogVisitorEvents';
+import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { MaterialDatePicker } from '@/components/ui/material-date-picker';
@@ -69,6 +70,8 @@ const getUnexpectedVisitors = async (siteId: number, page: number = 1, perPage: 
     if (filters?.purpose) urlWithParams.searchParams.append('q[visit_purpose_cont]', filters.purpose);
     if (filters?.visitorType) urlWithParams.searchParams.append('visitor_type', filters.visitorType);
     if (filters?.status) urlWithParams.searchParams.append('status', filters.status);
+    if (filters?.startDate) urlWithParams.searchParams.append('q[created_at_gteq]', filters.startDate);
+    if (filters?.endDate) urlWithParams.searchParams.append('q[created_at_lteq]', filters.endDate);
 
     if (searchTerm?.trim()) {
       urlWithParams.searchParams.append('q[guest_name_or_guest_number_or_guest_from_or_guest_type_or_person_to_meet_firstname_or_person_to_meet_lastname_or_visit_purpose_or_guest_type_cont]', searchTerm.trim());
@@ -98,6 +101,8 @@ const getVisitorHistory = async (siteId: number, page: number = 1, perPage: numb
     if (filters?.purpose) urlWithParams.searchParams.append('q[visit_purpose_cont]', filters.purpose);
     if (filters?.visitorType) urlWithParams.searchParams.append('visitor_type', filters.visitorType);
     if (filters?.status) urlWithParams.searchParams.append('status', filters.status);
+    if (filters?.startDate) urlWithParams.searchParams.append('q[created_at_gteq]', filters.startDate);
+    if (filters?.endDate) urlWithParams.searchParams.append('q[created_at_lteq]', filters.endDate);
 
     if (searchTerm?.trim()) {
       urlWithParams.searchParams.append('q[guest_name_or_guest_number_or_guest_from_or_guest_type_or_person_to_meet_firstname_or_person_to_meet_lastname_or_visit_purpose_or_guest_type_cont]', searchTerm.trim());
@@ -127,6 +132,8 @@ const getExpectedVisitors = async (siteId: number, page: number = 1, perPage: nu
     if (filters?.purpose) urlWithParams.searchParams.append('q[visit_purpose_cont]', filters.purpose);
     if (filters?.visitorType) urlWithParams.searchParams.append('visitor_type', filters.visitorType);
     if (filters?.status) urlWithParams.searchParams.append('status', filters.status);
+    if (filters?.startDate) urlWithParams.searchParams.append('q[created_at_gteq]', filters.startDate);
+    if (filters?.endDate) urlWithParams.searchParams.append('q[created_at_lteq]', filters.endDate);
 
     if (searchTerm?.trim()) {
       urlWithParams.searchParams.append('q[guest_name_or_guest_number_or_guest_from_or_guest_type_or_person_to_meet_firstname_or_person_to_meet_lastname_or_visit_purpose_or_guest_type_cont]', searchTerm.trim());
@@ -179,6 +186,14 @@ const getVisitorsOut = async (siteId: number, page: number = 1, perPage: number 
 export const VisitorsDashboard = () => {
   const { shouldShow } = useDynamicPermissions();
   const visitorEvents = useVisitorEvents();
+  const gaEvents = useGaFunnelEvents();
+
+  // GA parity: the visitor register was opened. Mount-only, so paging and tab
+  // switches inside the page do not each count as a fresh page view.
+  useEffect(() => {
+    gaEvents.onVisitorsPageClicked("admin");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [selectedPerson, setSelectedPerson] = useState('');
   const [isNewVisitorDialogOpen, setIsNewVisitorDialogOpen] = useState(false);
   const [isUpdateNumberDialogOpen, setIsUpdateNumberDialogOpen] = useState(false);
@@ -1126,6 +1141,8 @@ export const VisitorsDashboard = () => {
       const data = await response.json();
       console.log('✅ Visitor checked out successfully:', data);
 
+      visitorEvents.onVisitorCheckedOut(visitorId);
+
       // Show success toast
       toast.success('Visitor checked out successfully!');
 
@@ -1146,6 +1163,7 @@ export const VisitorsDashboard = () => {
   };
 
   const handleVisitorDetails = (visitorId: number) => {
+    gaEvents.onVisitorListItemClicked("admin", visitorId);
     console.log('Navigating to visitor details:', visitorId);
     navigate(`/security/visitor/details/${visitorId}`);
   };

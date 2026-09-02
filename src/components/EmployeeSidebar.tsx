@@ -1,6 +1,9 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLayout } from "../contexts/LayoutContext";
+import { useIsMobile } from "../hooks/use-mobile";
+import { isMobileUiSite } from "../utils/mobileUiSites";
+import { EmployeeSidebarStatic } from "./EmployeeSidebarStatic";
 import { usePermissions } from "../contexts/PermissionsContext";
 import {
   Home,
@@ -94,11 +97,21 @@ export const EmployeeSidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const {
-    isSidebarCollapsed,
+    isSidebarCollapsed: isSidebarCollapsedSetting,
     setIsSidebarCollapsed,
     currentSection,
     isMobileSidebarOpen,
   } = useLayout();
+  // Mobile par sidebar ek drawer hai — wahan collapse ka koi matlab nahi
+  // (collapse toggle bhi max-md:hidden hai). Isliye <768px par hamesha expanded
+  // render karte hain, chahe desktop par collapsed chhoda gaya ho — warna
+  // drawer sirf icons dikhata tha, labels ke bina.
+  const isMobile = useIsMobile();
+  // Ye behaviour sirf goPhygital site par — baaki tenants par sidebar mobile
+  // par bhi pehle ki tarah collapsible rehta hai.
+  const isGoPhygital = isMobileUiSite();
+  const isSidebarCollapsed =
+    isSidebarCollapsedSetting && !(isMobile && isGoPhygital);
   const { userRole } = usePermissions();
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
 
@@ -228,6 +241,20 @@ export const EmployeeSidebar: React.FC = () => {
     );
   };
 
+  // Agar role API me "Employee Projects Sidebar" module na mile (ya uska koi
+  // function active na ho), to navigationStructure {} rehta hai — aur sidebar ka
+  // title alag se render hota hai, is wajah se mobile par drawer khulta tha
+  // jisme sirf "PROJECT TASK" likha hota tha, ek bhi item nahi. Aise case me
+  // static list par gir jaate hain — wahi list jo baaki employees ko dikhti hai.
+  // Sirf mobile + enabled sites par, taaki laptop ka render bilkul waisa hi rahe.
+  if (
+    isMobile &&
+    isGoPhygital &&
+    Object.keys(navigationStructure).length === 0
+  ) {
+    return <EmployeeSidebarStatic />;
+  }
+
   return (
     <aside
       className={`fixed left-0 top-14 sm:top-16 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] bg-[#f6f4ee] border-r border-[#D5DbDB] transition-all duration-300 z-40 overflow-y-auto ${
@@ -237,7 +264,7 @@ export const EmployeeSidebar: React.FC = () => {
       {/* Toggle Button */}
       <button
         onClick={toggleSidebar}
-        className="absolute right-1 sm:right-2 top-1 sm:top-2 p-0.5 sm:p-1 rounded-md hover:bg-[#DBC2A9] z-10"
+        className={`${isGoPhygital ? "max-md:hidden " : ""}absolute right-1 sm:right-2 top-1 sm:top-2 p-0.5 sm:p-1 rounded-md hover:bg-[#DBC2A9] z-10`}
         aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
         {isSidebarCollapsed ? (

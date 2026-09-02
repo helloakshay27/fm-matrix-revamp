@@ -101,6 +101,12 @@ import {
   type IncidentsTrendData,
   type IncidentsAnalysisData,
   type IncidentsHotspotsData,
+  fetchCrmLeaseOverview,
+  fetchCrmEventsOverview,
+  fetchCrmBroadcastOverview,
+  fetchCrmWalletOverview,
+  fetchCrmWalletDistribution,
+  fetchCrmWalletTransactions,
   fetchFinancePendingApprovals,
   fetchFinanceDraftPrs,
   fetchFinanceProcurementPipeline,
@@ -783,6 +789,92 @@ export function useIncidentsDashboardData({ siteIds, fromDate, toDate, enabled }
       .catch((err: unknown) => {
         if (cancelled) return;
         setError(err instanceof Error ? err.message : "Failed to load incidents dashboard data");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, siteIdsKey, fromDate, toDate]);
+
+  return { data, loading, error };
+}
+
+// ============================================================================
+// CRM
+// ============================================================================
+
+export interface CrmDashboardData {
+  leaseOverview: FinanceRecord | FinanceRecord[] | null;
+  eventsOverview: FinanceRecord | FinanceRecord[] | null;
+  broadcastOverview: FinanceRecord | FinanceRecord[] | null;
+  walletOverview: FinanceRecord | FinanceRecord[] | null;
+  walletDistribution: FinanceRecord | FinanceRecord[] | null;
+  walletTransactions: FinanceRecord | FinanceRecord[] | null;
+}
+
+const EMPTY_CRM_DATA: CrmDashboardData = {
+  leaseOverview: null,
+  eventsOverview: null,
+  broadcastOverview: null,
+  walletOverview: null,
+  walletDistribution: null,
+  walletTransactions: null,
+};
+
+export function useCrmDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+  const [data, setData] = useState<CrmDashboardData>(EMPTY_CRM_DATA);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const siteIdsKey = siteIds.join(",");
+
+  useEffect(() => {
+    console.log("[useCrmDashboardData] enabled:", enabled, "siteIds:", siteIds, "fromDate:", fromDate, "toDate:", toDate);
+    if (!enabled || siteIds.length === 0) {
+      console.log("[useCrmDashboardData] Skipping: enabled=", enabled, "siteIds.length=", siteIds.length);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    console.log("[useCrmDashboardData] Starting fetch with params:", { siteIds, fromDate, toDate });
+    const params = { siteIds, fromDate, toDate };
+    Promise.all([
+      fetchCrmLeaseOverview(params),
+      fetchCrmEventsOverview(params),
+      fetchCrmBroadcastOverview(params),
+      fetchCrmWalletOverview(params),
+      fetchCrmWalletDistribution(params),
+      fetchCrmWalletTransactions(params),
+    ])
+      .then(([leaseOverview, eventsOverview, broadcastOverview, walletOverview, walletDistribution, walletTransactions]) => {
+        if (cancelled) return;
+        console.log("[useCrmDashboardData] Data loaded successfully:", {
+          leaseOverview,
+          eventsOverview,
+          broadcastOverview,
+          walletOverview,
+          walletDistribution,
+          walletTransactions,
+        });
+        setData({
+          leaseOverview,
+          eventsOverview,
+          broadcastOverview,
+          walletOverview,
+          walletDistribution,
+          walletTransactions,
+        });
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        const errorMsg = err instanceof Error ? err.message : "Failed to load CRM dashboard data";
+        console.error("[useCrmDashboardData] Error:", errorMsg, err);
+        setError(errorMsg);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

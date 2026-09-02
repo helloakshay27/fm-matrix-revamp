@@ -136,7 +136,7 @@ function SiteMultiSelect({
 }
 
 export function ControlBar() {
-  const { vm, setScope, setDate, setDev, togglePrev, refreshAll, isRefreshing } = useDashboard();
+  const { vm, setScope, setDate, setToken, setDev, togglePrev, refreshAll, isRefreshing } = useDashboard();
   const { state, sites, groups, sitesLoading, traffic } = vm;
 
   const selectedSiteIds = state.tier === 't1' && state.scope !== 'all'

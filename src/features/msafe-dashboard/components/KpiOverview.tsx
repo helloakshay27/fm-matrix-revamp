@@ -18,6 +18,7 @@ import {
 import type { AccordionKey, Persona } from '../data/constants';
 import { ADMIN_KPIS } from '../data/mockData';
 import { InfoButton } from './InfoButton';
+import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -220,6 +221,7 @@ export function KpiOverview() {
   const [kpiApiData, setKpiApiData] = useState<Record<string, KpiApiValue>>({});
   const [kpiLoading, setKpiLoading] = useState(true);
   const [exportingId, setExportingId] = useState<string | null>(null);
+  const msafeEvents = useMSafeEvents();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -300,14 +302,37 @@ export function KpiOverview() {
                   e.stopPropagation();
                   const label = k.download || k.label;
 
+                  const downloadEvent = {
+                    screen: 'msafe_dashboard' as const,
+                    source: 'kpi_card' as const,
+                    label,
+                    file_format: 'xlsx' as const,
+                    record_id: k.id,
+                    persona,
+                    filters: appliedFilters,
+                  };
+
                   if (k.exportFor) {
                     setExportingId(k.id);
                     try {
                       await downloadKpiReportTemplate(k.exportFor, k.label, persona, appliedFilters);
                       showToast(`Excel downloaded · ${label}`);
+                      msafeEvents.onMsafeDownloaded({
+                        ...downloadEvent,
+                        export_mode: 'server_report',
+                        export_for: k.exportFor,
+                        succeeded: true,
+                      });
                     } catch (err) {
                       console.warn(`Failed to download report for KPI "${k.id}".`, err);
                       showToast(`Export failed · ${label}`);
+                      msafeEvents.onMsafeDownloaded({
+                        ...downloadEvent,
+                        export_mode: 'server_report',
+                        export_for: k.exportFor,
+                        succeeded: false,
+                        failure_reason: (err as Error)?.message ?? 'request_failed',
+                      });
                     } finally {
                       setExportingId(null);
                     }
@@ -317,12 +342,25 @@ export function KpiOverview() {
                   const api = kpiApiData[k.id];
                   if (kpiLoading || !api) {
                     showToast(`No data to export yet · ${label}`);
+                    msafeEvents.onMsafeDownloaded({
+                      ...downloadEvent,
+                      export_mode: 'client_sheet',
+                      row_count: 0,
+                      succeeded: false,
+                      failure_reason: kpiLoading ? 'still_loading' : 'no_data',
+                    });
                     return;
                   }
                   const row: Record<string, unknown> = { Metric: k.label, Value: api.value };
                   if (api.sub) row.Detail = api.sub;
                   downloadExcel(label, [row]);
                   showToast(`Excel downloaded · ${label}`);
+                  msafeEvents.onMsafeDownloaded({
+                    ...downloadEvent,
+                    export_mode: 'client_sheet',
+                    row_count: 1,
+                    succeeded: true,
+                  });
                 }}
               >
                 {exportingId === k.id ? (

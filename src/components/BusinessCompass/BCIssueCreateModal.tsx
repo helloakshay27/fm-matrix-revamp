@@ -641,7 +641,7 @@ const SimpleIssueForm = ({
               resposiblePerson={""}
               totalWorkingHours={totalWorkingHours}
               setTotalWorkingHours={setTotalWorkingHours}
-              shift={[]}
+              shift={shift}
             />
           </div>
 

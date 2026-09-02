@@ -39,6 +39,7 @@ import { toast as sonnerToast } from 'sonner';
 import { AIAssistantWidget } from '@/components/AIAssistantWidget';
 import { DashboardAIAssistant } from '@/components/DashboardAIAssistant';
 import { buildReturnToPath } from '@/utils/listBackNavigation';
+import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
 
 // Sortable Chart Item Component
 const SortableChartItem = ({
@@ -120,6 +121,14 @@ const SectionLoader: React.FC<{
 
 export const TicketDashboard = () => {
   const navigate = useNavigate();
+  const gaEvents = useGaFunnelEvents();
+
+  // GA parity: the ticket list was opened (mount-only, so filters and
+  // paging inside the page do not each count as a fresh page view).
+  useEffect(() => {
+    gaEvents.onTicketPageClicked("admin");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // Initialize permission hook
   const { shouldShow } = useDynamicPermissions();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -677,6 +686,7 @@ export const TicketDashboard = () => {
     setVisibleSections(selectedSections);
   };
   const handleViewDetails = (ticketId: string) => {
+    gaEvents.onTicketListItemClicked("admin", ticketId);
     const currentPath = window.location.pathname;
     const returnTo = buildReturnToPath(location.pathname, location.search, location.hash);
 
