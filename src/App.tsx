@@ -7469,11 +7469,11 @@ function App() {
                               element={<SurveyDetailsPage />}
                             />
                             <Route
-                              path="/master/survey/details/:id"
+                              path="/maintenance/survey/details/:id"
                               element={<SurveyDetailsPage />}
                             />
                             <Route
-                              path="/master/survey/edit/:id"
+                              path="/maintenance/survey/edit/:id"
                               element={<EditSurveyPage />}
                             />
                             <Route
