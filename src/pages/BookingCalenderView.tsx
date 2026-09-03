@@ -27,7 +27,13 @@ const BookingCalenderView = () => {
     const [selectedDateForApi, setSelectedDateForApi] = useState(initialApiDate)
     const [dates, setDates] = useState([]);
     const [timeSlots, setTimeSlots] = useState([]);
-    const [facilities, setFacilities] = useState([]);
+    // Pulse-only: both facility types are fetched together and the radio
+    // buttons adapt to which ones actually have data (see effect below).
+    const [bookableFacilities, setBookableFacilities] = useState([]);
+    const [requestFacilities, setRequestFacilities] = useState([]);
+    // Every other path keeps the original behaviour: fetch just the
+    // currently-selected type, refetching whenever the radio changes.
+    const [legacyFacilities, setLegacyFacilities] = useState([]);
     const [bookings, setBookings] = useState({});
     const [loading, setLoading] = useState(true);
     const [currentMonth, setCurrentMonth] = useState(initialMonth);
@@ -37,30 +43,54 @@ const BookingCalenderView = () => {
     const datesContainerRef = useRef<HTMLDivElement | null>(null);
     const dateRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-    const getFacilities = async () => {
+    const facilities = isPulsePath
+        ? (bookingType === "bookable" ? bookableFacilities : requestFacilities)
+        : legacyFacilities;
+    const showBookableRadio = bookableFacilities.length > 0;
+    const showRequestRadio = requestFacilities.length > 0;
+
+    const getFacilitiesForType = async (type: string) => {
         try {
-            const response = await axios.get(`https://${baseUrl}/pms/admin/facility_setups.json?q[fac_type_eq]=${bookingType}&q[active_eq]=1`, {
+            const response = await axios.get(`https://${baseUrl}/pms/admin/facility_setups.json?q[fac_type_eq]=${type}&q[active_eq]=1`, {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
             })
 
-            setFacilities(response.data.facility_setups)
+            return response.data.facility_setups || [];
         } catch (error) {
             console.log(error)
+            return [];
         }
     }
 
-    // Fetch facilities and initial time slots
+    // Pulse only: fetch both facility types once on load, then decide the
+    // default/available booking type from what actually came back (bookable
+    // takes priority).
     useEffect(() => {
+        if (!isPulsePath) return;
         const init = async () => {
-            await getFacilities();
-            if (selectedDate && selectedDateForApi) {
-                fetchTimeSlotsForDate(selectedDateForApi);
-            }
+            const [bookable, request] = await Promise.all([
+                getFacilitiesForType("bookable"),
+                getFacilitiesForType("request"),
+            ]);
+            setBookableFacilities(bookable);
+            setRequestFacilities(request);
+            setBookingType(bookable.length > 0 ? "bookable" : "request");
         };
         init();
-    }, [bookingType]);
+    }, [isPulsePath]);
+
+    // Every other path: original behaviour — fetch the currently-selected
+    // type's facilities, refetching whenever the radio changes.
+    useEffect(() => {
+        if (isPulsePath) return;
+        const init = async () => {
+            const data = await getFacilitiesForType(bookingType);
+            setLegacyFacilities(data);
+        };
+        init();
+    }, [isPulsePath, bookingType]);
 
     // Fetch dates for the calendar
     useEffect(() => {
@@ -316,20 +346,43 @@ const BookingCalenderView = () => {
                             Action
                         </Button>)}
 
-                    <RadioGroup row value={bookingType} onChange={(e) => setBookingType(e.target.value)}>
-                        <FormControlLabel
-                            value="bookable"
-                            control={<Radio size="small" color="error" />}
-                            label="Bookable"
-                            className="text-[14px]"
-                        />
-                        <FormControlLabel
-                            value="request"
-                            control={<Radio size="small" color="error" />}
-                            label="Request"
-                            className="text-[14px]"
-                        />
-                    </RadioGroup>
+                    {isPulsePath ? (
+                        (showBookableRadio || showRequestRadio) && (
+                            <RadioGroup row value={bookingType} onChange={(e) => setBookingType(e.target.value)}>
+                                {showBookableRadio && (
+                                    <FormControlLabel
+                                        value="bookable"
+                                        control={<Radio size="small" color="error" />}
+                                        label="Bookable"
+                                        className="text-[14px]"
+                                    />
+                                )}
+                                {showRequestRadio && (
+                                    <FormControlLabel
+                                        value="request"
+                                        control={<Radio size="small" color="error" />}
+                                        label="Request"
+                                        className="text-[14px]"
+                                    />
+                                )}
+                            </RadioGroup>
+                        )
+                    ) : (
+                        <RadioGroup row value={bookingType} onChange={(e) => setBookingType(e.target.value)}>
+                            <FormControlLabel
+                                value="bookable"
+                                control={<Radio size="small" color="error" />}
+                                label="Bookable"
+                                className="text-[14px]"
+                            />
+                            <FormControlLabel
+                                value="request"
+                                control={<Radio size="small" color="error" />}
+                                label="Request"
+                                className="text-[14px]"
+                            />
+                        </RadioGroup>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-2">
