@@ -56,8 +56,9 @@ export interface GroupMemberships {
   members_count: number;
   groups: GroupMembershipRow[];
 }
-export async function getGroupMemberships(status = "active"): Promise<GroupMemberships> {
-  const res = await apiClient.get(`/club_management_dashboard/group_memberships.json${qs({ status })}`);
+export async function getGroupMemberships(params: DateRangeParams & { status?: string }): Promise<GroupMemberships> {
+  const { status = "active", ...range } = params;
+  const res = await apiClient.get(`/club_management_dashboard/group_memberships.json${qs({ status, ...range })}`);
   return res.data.data;
 }
 

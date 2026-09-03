@@ -15,9 +15,9 @@ import { useDrill } from '../DrillContext';
 import { useStickyHeaderStack } from '../useStickyHeaderStack';
 import { D, getInfo } from '../clubDashboardData';
 import {
-  activeMembersHTML, todayBookingsHTML, collectionsHTML, ticketsHTML, renewalsHTML, renewalRowHTML,
-  noShowHTML, invoiceHTML, eventHTML, groupDrillHTML, groupRowHTML, memberDaysHTML, cancelHTML,
-  pendingHTML, coachDrillHTML, occupancyHTML,
+  tbl, renewalRowHTML,
+  noShowHTML, invoiceHTML, eventHTML, groupsTableHTML, groupRowHTML, memberDaysHTML, cancelHTML,
+  pendingHTML, coachDrillHTML,
 } from '../drillTemplates';
 import {
   defaultDateRange,
@@ -100,6 +100,47 @@ function actionBadgeClass(action: string): string {
   return 'b-ok';
 }
 
+// KPI-strip drill bodies - each built from the same live query already backing that KPI's
+// number, instead of the wireframe's static example rows. None of these should ever fall
+// back to placeholder data: an empty API result shows an explicit "no data" line instead.
+function planBreakdownHTML(plans: { plan: string; count: number; percentage: number }[]): string {
+  if (!plans.length) return '<div class="chart-sub">No plan data for the selected range.</div>';
+  return tbl(['Plan', 'Members', '%'], plans.map((p) => [p.plan, p.count, p.percentage.toFixed(1) + '%']));
+}
+
+function collectionsBreakdownHTML(billing: { collection: number; pending: number; overdue: number } | undefined): string {
+  if (!billing) return '<div class="chart-sub">No billing data for the selected range.</div>';
+  return tbl(['Status', 'Amount'], [
+    ['Paid', formatINR(billing.collection)],
+    ['Pending', formatINR(billing.pending)],
+    ['Overdue', formatINR(billing.overdue)],
+  ]);
+}
+
+function bookingSplitHTML(summary: { member: number; guest: number; staff: number } | undefined): string {
+  if (!summary) return '<div class="chart-sub">No booking data for the selected range.</div>';
+  return tbl(['Type', 'Bookings'], [
+    ['Members', summary.member],
+    ['Guests', summary.guest],
+    ['Staff', summary.staff],
+  ]);
+}
+
+function utilisationBreakdownHTML(rows: { amenity_name: string; average_utilization_percentage: number }[]): string {
+  if (!rows.length) return '<div class="chart-sub">No utilisation data for the selected range.</div>';
+  return tbl(['Amenity', 'Utilisation'], rows.map((r) => [r.amenity_name, (Math.round(r.average_utilization_percentage * 10) / 10) + '%']));
+}
+
+function ticketCategoryBreakdownHTML(rows: { category: string; ticket_count: number }[]): string {
+  if (!rows.length) return '<div class="chart-sub">No open tickets.</div>';
+  return tbl(['Category', 'Open'], rows.map((r) => [r.category, r.ticket_count]));
+}
+
+function upcomingRenewalsBreakdownHTML(rows: { member_name: string; plan: string; expiry: string }[]): string {
+  if (!rows.length) return '<div class="chart-sub">No upcoming renewals for the selected range.</div>';
+  return tbl(['Member', 'Plan', 'Expiry'], rows.map((r) => [r.member_name, r.plan, r.expiry]));
+}
+
 // Membership period pills map to date ranges (the API has no "period" keyword, only from_date/to_date).
 function memberPeriodRange(period: 'month' | 'quarter' | 'year'): DateRangeParams {
   const now = new Date();
@@ -140,7 +181,7 @@ export const BranchManagerDashboard: React.FC<{ onSwitchRole: () => void }> = ({
 
   // ── Branch Overview ──
   const memberOverviewQ = useQuery({ ...Q, queryKey: ['club', 'memberOverview', range], queryFn: () => getMemberOverview(range) });
-  const groupMembershipsQ = useQuery({ ...Q, queryKey: ['club', 'groupMemberships'], queryFn: () => getGroupMemberships('active') });
+  const groupMembershipsQ = useQuery({ ...Q, queryKey: ['club', 'groupMemberships', range], queryFn: () => getGroupMemberships({ ...range, status: 'active' }) });
   const guestOverviewQ = useQuery({ ...Q, queryKey: ['club', 'guestOverview', range], queryFn: () => getGuestOverview(range) });
   const staffOverviewQ = useQuery({ ...Q, queryKey: ['club', 'staffOverview', range], queryFn: () => getStaffOverview(range) });
 
@@ -233,42 +274,42 @@ export const BranchManagerDashboard: React.FC<{ onSwitchRole: () => void }> = ({
             value={activeMembers}
             ctx={latestMonth ? `+${latestMonth.new} joins · –${latestMonth.expired} expiries` : '—'}
             delta={latestMonth ? `Net ${latestMonth.new - latestMonth.expired >= 0 ? '+' : ''}${latestMonth.new - latestMonth.expired} · retention ${memGap.retention}` : memGap.retention}
-            onClick={() => openDrill('Active Memberships', `${activeMembers} active · plan breakdown`, activeMembersHTML())}
+            onClick={() => openDrill('Active Memberships', `${activeMembers} active · plan breakdown`, planBreakdownHTML(planDistributionQ.data ?? []))}
           />
           <KpiCard
             label="Collections (MTD)"
             value={formatINR(billing?.collection)}
             ctx={billing ? `of ${formatINR(billing.billed)} billed · ${billing.billed ? Math.round((billing.collection / billing.billed) * 100) : 0}%` : '—'}
             delta={billing ? `${formatINR(billing.pending)} pending · ${formatINR(billing.overdue)} overdue` : '—'}
-            onClick={() => openDrill('Collections', 'MTD collected vs billed', collectionsHTML())}
+            onClick={() => openDrill('Collections', 'MTD collected vs billed', collectionsBreakdownHTML(billing))}
           />
           <KpiCard
             label="Bookings"
             value={bookingSummary?.total_bookings ?? 0}
             ctx="This Month · Amenities"
             delta="—"
-            onClick={() => openDrill('Bookings', 'Bookings for selected period', todayBookingsHTML())}
+            onClick={() => openDrill('Bookings', 'Bookings for selected period', bookingSplitHTML(bookingSummary))}
           />
           <KpiCard
             label="Amenity Utilisation"
             value={`${avgUtilisation}%`}
             bar={{ width: avgUtilisation }}
             delta={capacityOverview ? `${capacityOverview.available_today} amenities available today` : '—'}
-            onClick={() => openDrill('Amenity Utilisation', 'Avg across active amenities', occupancyHTML())}
+            onClick={() => openDrill('Amenity Utilisation', 'Avg across active amenities', utilisationBreakdownHTML(amenityUtilization))}
           />
           <KpiCard
             label="Open Tickets"
             value={openTicketsCountQ.data ?? 0}
             ctx={<span style={{ color: '#F4A0A8', fontWeight: 600 }}>{agedOver5} aged &gt;5 days</span>}
             delta="Tickets by age →"
-            onClick={() => openDrill('Open Tickets', `${openTicketsCountQ.data ?? 0} open`, ticketsHTML())}
+            onClick={() => openDrill('Open Tickets', `${openTicketsCountQ.data ?? 0} open`, ticketCategoryBreakdownHTML(ticketCategoryQ.data ?? []))}
           />
           <KpiCard
             label="Upcoming Renewals"
             value={upcomingRenewalsCountQ.data ?? 0}
             ctx="Due within a year"
             delta="—"
-            onClick={() => openDrill('Upcoming Renewals', `${upcomingRenewalsCountQ.data ?? 0} due`, renewalsHTML())}
+            onClick={() => openDrill('Upcoming Renewals', `${upcomingRenewalsCountQ.data ?? 0} due`, upcomingRenewalsBreakdownHTML(upcomingRenewalsListQ.data ?? []))}
           />
         </div>
 
@@ -293,7 +334,7 @@ export const BranchManagerDashboard: React.FC<{ onSwitchRole: () => void }> = ({
             <div className="us-row"><span>Inactive</span><span style={{ color: '#888', fontWeight: 700 }}>{staffOverview?.inactive ?? 0}</span></div>
             <div className="us-row"><span>On Duty Today</span><span>{staffOverview?.on_duty_today ?? 0}</span></div>
           </div>
-          <div className="us-card" style={{ cursor: 'pointer' }} onClick={() => openDrill('Group Memberships', `${groupMemberships?.groups_count ?? 0} groups · ${groupMemberships?.members_count ?? 0} members`, groupDrillHTML())}>
+          <div className="us-card" style={{ cursor: 'pointer' }} onClick={() => openDrill('Group Memberships', `${groupMemberships?.groups_count ?? 0} groups · ${groupMemberships?.members_count ?? 0} members`, groupsTableHTML(groupMemberships?.groups ?? []))}>
             <div className="us-title">Group Memberships</div><div className="us-main">{groupMemberships?.groups_count ?? 0}</div>
             {(groupMemberships?.groups ?? []).slice(0, 3).map((g) => (
               <div className="us-row" key={g.group_name}><span>{g.group_name}</span><span>{g.members} members</span></div>

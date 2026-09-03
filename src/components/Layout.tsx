@@ -434,7 +434,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
     // Check if user is in Club Management route - render StaticDynamicHeader
     if (isClubManagementRoute) {
-      return <ClubDynamicHeader />;
+      // Commented out for now - see conversation.
+      // return <ClubDynamicHeader />;
+      return null;
     }
 
     // Check if user is employee (pms_occupant) - Employee layout takes priority

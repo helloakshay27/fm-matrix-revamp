@@ -637,6 +637,17 @@ export const Header = () => {
               {isClubSite && (
                 <button
                   onClick={() =>
+                    (window.location.href = "/club-management/membership")
+                  }
+                  className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                >
+                  <Home className="w-4 h-4" />
+                  Home
+                </button>
+              )}
+              {isClubSite && (
+                <button
+                  onClick={() =>
                     (window.location.href = "/club-management/dashboard")
                   }
                   className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
@@ -850,6 +861,16 @@ export const Header = () => {
                   >
                     <ChartAreaIcon className="w-4 h-4 mr-2" />
                     Executive Dashboard
+                  </DropdownMenuItem>
+                )}
+                {isClubSite && (
+                  <DropdownMenuItem
+                    onClick={() =>
+                      (window.location.href = "/club-management/membership")
+                    }
+                  >
+                    <Home className="w-4 h-4 mr-2" />
+                    Home
                   </DropdownMenuItem>
                 )}
                 {isClubSite && (
@@ -1137,7 +1158,16 @@ export const Header = () => {
                 )}
 
                 <DropdownMenuItem
-                  onClick={() => navigate("/settings")}
+                  onClick={() =>
+                    // "/settings" itself has no content - it's a bare parent route for
+                    // /settings/* pages. For the Club tenant, land on the first page of the
+                    // (now Master-merged) Settings package instead.
+                    navigate(
+                      isClubSite
+                        ? "/settings/vas/booking-club/setup"
+                        : "/settings"
+                    )
+                  }
                   className="mx-2 my-1 rounded-md"
                 >
                   <Settings className="w-4 h-4 mr-2 text-gray-500" />

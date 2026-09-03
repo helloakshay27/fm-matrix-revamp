@@ -1493,7 +1493,13 @@ export const ClubSidebar: React.FC = () => {
           <h3
             className={`text-sm font-medium text-[#C72030] uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"}`}
           >
-            {isSidebarCollapsed ? "" : currentSection || "Club Management"}
+            {/* "Master" is renamed to "Settings" for display only - the underlying section
+                key (modulesByPackage, routing) stays "Master" so nothing else has to change. */}
+            {isSidebarCollapsed
+              ? ""
+              : currentSection === "Master"
+                ? "Settings"
+                : currentSection || "Club Management"}
           </h3>
         </div>
 
