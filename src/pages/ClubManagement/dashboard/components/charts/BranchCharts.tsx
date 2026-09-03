@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import type { ChartConfiguration, ChartType } from 'chart.js/auto';
 import { ChartCard } from '../ChartCard';
 import { D, PALETTE, CHART_CTX, getInfo } from '../../clubDashboardData';
+import { INSIGHT_PATHS, type DateRangeParams } from '@/services/clubDashboardApi';
 import type {
   NewJoinVsExpiryPoint,
   PlanDistributionEntry,
@@ -18,8 +19,9 @@ import type {
 } from '@/services/clubDashboardApi';
 
 const asCfg = (cfg: unknown) => cfg as ChartConfiguration;
+type Range = Required<DateRangeParams>;
 
-export const MemChart: React.FC<{ data: NewJoinVsExpiryPoint[] }> = ({ data }) => {
+export const MemChart: React.FC<{ data: NewJoinVsExpiryPoint[]; range: Range }> = ({ data, range }) => {
   const labels = data.map((d) => d.month);
   const joins = data.map((d) => d.new);
   const expiries = data.map((d) => d.expired);
@@ -53,12 +55,12 @@ export const MemChart: React.FC<{ data: NewJoinVsExpiryPoint[] }> = ({ data }) =
       types={[{ type: 'bar', label: 'Bar' }, { type: 'line', label: 'Line' }]}
       buildConfig={build}
       table={{ headers: ['Month', 'Joins', 'Expiries', 'Net'], rows: data.map((d) => [d.month, d.new, d.expired, d.new - d.expired]) }}
-      ctxText={CHART_CTX.memChart}
+      insightSource={{ path: INSIGHT_PATHS.newJoinVsExpiries, params: range }}
     />
   );
 };
 
-export const PlanChart: React.FC<{ data: PlanDistributionEntry[] }> = ({ data }) => {
+export const PlanChart: React.FC<{ data: PlanDistributionEntry[]; range: Range }> = ({ data, range }) => {
   const labels = data.map((d) => d.plan);
   const counts = data.map((d) => d.count);
   const build = useCallback(
@@ -81,12 +83,12 @@ export const PlanChart: React.FC<{ data: PlanDistributionEntry[] }> = ({ data })
       types={[{ type: 'doughnut', label: 'Donut' }, { type: 'bar', label: 'Bar' }]}
       buildConfig={build}
       table={{ headers: ['Plan', 'Members', 'Share'], rows: data.map((d) => [d.plan, d.count, d.percentage.toFixed(1) + '%']) }}
-      ctxText={CHART_CTX.planChart}
+      insightSource={{ path: INSIGHT_PATHS.planDistribution, params: range }}
     />
   );
 };
 
-export const PayPlanChart: React.FC<{ data: MembershipByPaymentPlan }> = ({ data }) => {
+export const PayPlanChart: React.FC<{ data: MembershipByPaymentPlan; range: Range }> = ({ data, range }) => {
   const labels = ['Yearly', 'Half-Yearly', 'Quarterly', 'Monthly'];
   const counts = [data.yearly, data.half_yearly, data.quarterly, data.monthly];
   const build = useCallback(
@@ -109,7 +111,7 @@ export const PayPlanChart: React.FC<{ data: MembershipByPaymentPlan }> = ({ data
         headers: ['Plan', 'Members', 'Schedule'],
         rows: labels.map((l, i) => [l, counts[i], ['Lump sum', '2 instalments', '3 instalments', 'Monthly'][i]]),
       }}
-      ctxText={CHART_CTX.payPlanChart}
+      insightSource={{ path: INSIGHT_PATHS.membershipByPaymentPlan, params: range }}
     />
   );
 };
@@ -142,7 +144,7 @@ export const RevPlanChart: React.FC = () => {
   );
 };
 
-export const BookTypeChart: React.FC<{ member: number; guest: number; staff: number }> = ({ member, guest, staff }) => {
+export const BookTypeChart: React.FC<{ member: number; guest: number; staff: number; range: Range }> = ({ member, guest, staff, range }) => {
   const build = useCallback(
     (type: ChartType) =>
       asCfg({
@@ -158,7 +160,7 @@ export const BookTypeChart: React.FC<{ member: number; guest: number; staff: num
       subtitle="Members vs guests vs staff, for the selected period."
       types={[{ type: 'doughnut', label: 'Donut' }, { type: 'bar', label: 'Bar' }]}
       buildConfig={build}
-      ctxText={CHART_CTX.bookTypeChart}
+      insightSource={{ path: INSIGHT_PATHS.bookingSummary, params: range }}
     />
   );
 };
@@ -166,7 +168,7 @@ export const BookTypeChart: React.FC<{ member: number; guest: number; staff: num
 const WEEKDAY_ORDER = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const WEEKDAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-export const WeekdayChart: React.FC<{ data: DailyUtilisation[] }> = ({ data }) => {
+export const WeekdayChart: React.FC<{ data: DailyUtilisation[]; range: Range }> = ({ data, range }) => {
   const byDay = new Map(data.map((d) => [d.day, d.average_utilisation]));
   const values = WEEKDAY_ORDER.map((day) => byDay.get(day) ?? 0);
   const build = useCallback(
@@ -186,12 +188,12 @@ export const WeekdayChart: React.FC<{ data: DailyUtilisation[] }> = ({ data }) =
       types={[{ type: 'bar', label: 'Bar' }, { type: 'line', label: 'Line' }]}
       buildConfig={build}
       table={{ headers: ['Day', 'Utilisation %'], rows: WEEKDAY_ORDER.map((d, i) => [d, values[i].toFixed(1) + '%']) }}
-      ctxText={CHART_CTX.weekdayChart}
+      insightSource={{ path: INSIGHT_PATHS.weekdayVsWeekend, params: range }}
     />
   );
 };
 
-export const LeadTimeChart: React.FC<{ data: LeadTimeBucket[] }> = ({ data }) => {
+export const LeadTimeChart: React.FC<{ data: LeadTimeBucket[]; range: Range }> = ({ data, range }) => {
   const total = data.reduce((sum, d) => sum + d.count, 0) || 1;
   const labels = data.map((d) => d.bucket);
   const percentages = data.map((d) => Math.round((d.count / total) * 1000) / 10);
@@ -212,14 +214,14 @@ export const LeadTimeChart: React.FC<{ data: LeadTimeBucket[] }> = ({ data }) =>
       types={[{ type: 'bar', label: 'Bar' }, { type: 'doughnut', label: 'Donut' }]}
       buildConfig={build}
       table={{ headers: ['Lead Time', '% Bookings'], rows: data.map((d, i) => [d.bucket, percentages[i] + '%']) }}
-      ctxText={CHART_CTX.leadTimeChart}
+      insightSource={{ path: INSIGHT_PATHS.bookingLeadTime, params: range }}
     />
   );
 };
 
 const AMENITY_SERIES_COLORS = [PALETTE.green, PALETTE.green2, PALETTE.teal, PALETTE.lav, PALETTE.blue];
 
-export const MonthAmenChart: React.FC<{ data: MonthlyAmenityBreakdown[] }> = ({ data }) => {
+export const MonthAmenChart: React.FC<{ data: MonthlyAmenityBreakdown[]; range: Range }> = ({ data, range }) => {
   const labels = data.map((m) => m.month);
   // Rank amenities by their most recent month's share, keep the top 4, fold the rest into "Others".
   const latest = data[data.length - 1];
@@ -262,12 +264,12 @@ export const MonthAmenChart: React.FC<{ data: MonthlyAmenityBreakdown[] }> = ({ 
       types={[{ type: 'bar', label: 'Bar' }, { type: 'line', label: 'Line' }]}
       buildConfig={build}
       table={{ headers: ['Month', ...seriesNames], rows: labels.map((m, i) => [m, ...seriesData.map((s) => s[i] + '%')]) }}
-      ctxText={CHART_CTX.monthAmenChart}
+      insightSource={{ path: INSIGHT_PATHS.monthlyBookingByAmenity, params: range }}
     />
   );
 };
 
-export const CancelAmenChart: React.FC<{ data: CancellationRateByAmenityRow[] }> = ({ data }) => {
+export const CancelAmenChart: React.FC<{ data: CancellationRateByAmenityRow[]; range: Range }> = ({ data, range }) => {
   const labels = data.map((d) => d.amenity);
   const rates = data.map((d) => d.cancellation_rate);
   const build = useCallback(
@@ -287,7 +289,7 @@ export const CancelAmenChart: React.FC<{ data: CancellationRateByAmenityRow[] }>
       types={[{ type: 'bar', label: 'Bar' }]}
       buildConfig={build}
       table={{ headers: ['Amenity', 'Cancel %'], rows: data.map((d) => [d.amenity, d.cancellation_rate.toFixed(1) + '%']) }}
-      ctxText={CHART_CTX.cancelAmenChart}
+      insightSource={{ path: INSIGHT_PATHS.cancellationByAmenity, params: range }}
     />
   );
 };
@@ -342,7 +344,7 @@ const METHOD_ORDER = ['UPI', 'Card', 'Wallet', 'Bank Transfer', 'Cash'];
 // ("upi") - matching only the exact display string left the chart empty against real data.
 const normalizeMethodKey = (s: string) => s.toLowerCase().replace(/[\s_-]/g, '');
 
-export const MethodChart: React.FC<{ data: PaymentMethodMix }> = ({ data }) => {
+export const MethodChart: React.FC<{ data: PaymentMethodMix; range: Range }> = ({ data, range }) => {
   const entries = Object.entries(data).filter((entry): entry is [string, number] => typeof entry[1] === 'number');
   const known = METHOD_ORDER.map((label) => {
     const match = entries.find(([key]) => normalizeMethodKey(key) === normalizeMethodKey(label));
@@ -370,12 +372,12 @@ export const MethodChart: React.FC<{ data: PaymentMethodMix }> = ({ data }) => {
       info={getInfo('Payment Method Mix')}
       types={[{ type: 'bar', label: 'Bar' }, { type: 'doughnut', label: 'Donut' }]}
       buildConfig={build}
-      ctxText={CHART_CTX.methodChart}
+      insightSource={{ path: INSIGHT_PATHS.paymentMethods, params: range }}
     />
   );
 };
 
-export const CancelChart: React.FC<{ data: CancellationRateTrendPoint[] }> = ({ data }) => {
+export const CancelChart: React.FC<{ data: CancellationRateTrendPoint[]; range: Range }> = ({ data, range }) => {
   const labels = data.map((d) => d.month);
   const rates = data.map((d) => d.cancellation_rate);
   const build = useCallback(
@@ -395,7 +397,7 @@ export const CancelChart: React.FC<{ data: CancellationRateTrendPoint[] }> = ({ 
       types={[{ type: 'line', label: 'Line' }, { type: 'bar', label: 'Bar' }]}
       buildConfig={build}
       table={{ headers: ['Month', 'Cancel %'], rows: data.map((d) => [d.month, d.cancellation_rate.toFixed(1) + '%']) }}
-      ctxText={CHART_CTX.cancelChart}
+      insightSource={{ path: INSIGHT_PATHS.cancellationRateTrend, params: range }}
     />
   );
 };
@@ -419,7 +421,7 @@ export const TicketChart: React.FC<{ data: TicketAgeBucket[] }> = ({ data }) => 
       info={getInfo('Open Tickets by Age')}
       types={[{ type: 'bar', label: 'Bar' }, { type: 'doughnut', label: 'Donut' }]}
       buildConfig={build}
-      ctxText={CHART_CTX.ticketChart}
+      insightSource={{ path: INSIGHT_PATHS.openTicketsByAge }}
     />
   );
 };
@@ -445,12 +447,12 @@ export const TicketCatChart: React.FC<{ data: TicketCategoryRow[] }> = ({ data }
       types={[{ type: 'doughnut', label: 'Donut' }, { type: 'bar', label: 'Bar' }]}
       buildConfig={build}
       table={{ headers: ['Category', 'Count', '%'], rows: data.map((d) => [d.category, d.ticket_count, Math.round((d.ticket_count / total) * 100) + '%']) }}
-      ctxText={CHART_CTX.ticketCatChart}
+      insightSource={{ path: INSIGHT_PATHS.ticketCategory }}
     />
   );
 };
 
-export const EventTrendChart: React.FC<{ data: EventRegistrationTrendRow[] }> = ({ data }) => {
+export const EventTrendChart: React.FC<{ data: EventRegistrationTrendRow[]; range: Range }> = ({ data, range }) => {
   const labels = data.map((d) => d.event);
   const values = data.map((d) => parseFloat(d.percentage) || 0);
   const build = useCallback(
@@ -470,7 +472,7 @@ export const EventTrendChart: React.FC<{ data: EventRegistrationTrendRow[] }> = 
       types={[{ type: 'bar', label: 'Bar' }, { type: 'line', label: 'Line' }]}
       buildConfig={build}
       table={{ headers: ['Event', 'Fill %'], rows: data.map((d) => [d.event, d.percentage]) }}
-      ctxText={CHART_CTX.eventTrendChart}
+      insightSource={{ path: INSIGHT_PATHS.eventRegistrationTrend, params: range }}
     />
   );
 };

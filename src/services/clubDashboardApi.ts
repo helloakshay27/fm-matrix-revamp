@@ -32,6 +32,69 @@ function qs(params: object): string {
   return s ? `?${s}` : "";
 }
 
+// ───────────────────────── AI Insight ─────────────────────────
+// Every chart's "Generate Insight" button re-requests that SAME chart-data endpoint with
+// ai_insights=true added, and reads summary/insights/recommendations back off the response
+// (alongside whatever normal fields that endpoint already returns) - no separate insights API.
+
+export interface AiInsightFinding {
+  title: string;
+  observation: string;
+  metric?: string;
+  severity?: "positive" | "warning" | "info" | "negative" | string;
+}
+
+export interface AiInsightRecommendation {
+  action: string;
+  rationale: string;
+  priority?: "high" | "medium" | "low" | string;
+}
+
+export interface AiInsightPayload {
+  status: string;
+  summary: string;
+  key_findings: string[];
+  insights: AiInsightFinding[];
+  recommendations: AiInsightRecommendation[];
+}
+
+export async function getAiInsight(
+  path: string,
+  params: Record<string, string | number | undefined> = {}
+): Promise<AiInsightPayload> {
+  const res = await apiClient.get(`${path}.json${qs({ ...params, ai_insights: true })}`);
+  // The whole payload sits under a top-level `ai_insights` key, alongside metadata
+  // (endpoint, model, generated_at, filters, ...) that isn't shown in the UI.
+  const body = res.data?.ai_insights ?? {};
+  return {
+    status: typeof body.status === "string" ? body.status : "unknown",
+    summary: typeof body.summary === "string" ? body.summary : "",
+    key_findings: Array.isArray(body.key_findings) ? body.key_findings : [],
+    insights: Array.isArray(body.insights) ? body.insights : [],
+    recommendations: Array.isArray(body.recommendations) ? body.recommendations : [],
+  };
+}
+
+// Endpoint paths reused by the insight buttons - kept alongside their matching getX() above
+// so the two never drift apart.
+export const INSIGHT_PATHS = {
+  newJoinVsExpiries: "/club_management_dashboard/new_join_vs_expiries",
+  planDistribution: "/club_management_dashboard/plan_distribution",
+  membershipByPaymentPlan: "/club_management_dashboard/membership_by_payment_plan",
+  paymentMethods: "/club_management_dashboard/payment_methods",
+  cancellationRateTrend: "/club_management_dashboard/cancellation_rate_trend",
+  bookingSummary: "/amenities_club_dashboard/booking_summary",
+  availableSlotsByDay: "/amenities_club_dashboard/available_slots_by_day",
+  weekdayVsWeekend: "/amenities_club_dashboard/weekday_vs_weekend_utilisation",
+  bookingLeadTime: "/amenities_club_dashboard/booking_lead_time_distribution",
+  monthlyBookingByAmenity: "/amenities_club_dashboard/monthly_booking_percentage_by_amenity",
+  cancellationByAmenity: "/amenities_club_dashboard/cancellation_rate_by_amenity",
+  amenityUtilization: "/amenities_club_dashboard/amenity_utilization_analysis",
+  openTicketsByAge: "/amenities_club_dashboard/open_tickets_by_age",
+  ticketCategory: "/amenities_club_dashboard/open_tickets_by_category",
+  eventRegistrationTrend: "/amenities_club_dashboard/event_registration_trend",
+} as const;
+
 // ───────────────────────── Branch Overview ─────────────────────────
 
 export interface MemberOverview {
