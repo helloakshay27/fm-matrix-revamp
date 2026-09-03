@@ -260,7 +260,7 @@ export const BranchManagerDashboard: React.FC<{ onSwitchRole: () => void }> = ({
         </div>
         <TopNavDateFilter onApply={setRange} />
         <div className="nav-right">
-          <span className="scope-pill">📍 Branch A – Worli</span>
+          {/* <span className="scope-pill">📍 Branch A – Worli</span> */}
           {/* <button className="switch-btn" onClick={onSwitchRole}>Switch role</button> */}
         </div>
       </div>
@@ -354,28 +354,28 @@ export const BranchManagerDashboard: React.FC<{ onSwitchRole: () => void }> = ({
           <div className="mini-stat"><div className="ms-label">Overdue</div><div className="ms-value" style={{ color: 'var(--error-text)' }}>{formatINR(billing?.overdue)}</div><div className="ms-ctx">Aged 7+ days</div></div>
           {/* <div className="mini-stat"><div className="ms-label">Retry Success</div><div className="ms-value" style={{ color: 'var(--success)' }}>—</div><div className="ms-ctx">Not tracked yet</div></div> */}
         </div>
-        <div className="grid3">
-          {/* <PayChart /> */}
-          {/* <CollTrendChart /> */}
-          <MethodChart data={paymentMethodsQ.data ?? {}} />
-        </div>
-        <div className="grid2eq" style={{ marginTop: 12 }}>
-          {/* <div className="card">
-            <div className="card-title">Total Refund Amount</div>
-            <div className="filter-bar">
-              <span className="filter-lbl">Period:</span>
-              {(['day', 'week', 'month', 'year'] as const).map((p) => (
-                <button key={p} className={'fpill' + (refundPeriod === p ? ' active' : '')} onClick={() => setRefundPeriod(p)}>
-                  {p === 'day' ? 'Today' : p === 'week' ? 'This Week' : p === 'month' ? 'This Month' : 'This Year'}
-                </button>
-              ))}
-            </div>
-            <div className="booking-big" style={{ margin: '6px 0 3px' }}>
-              <span className="bval" style={{ color: 'var(--error-text)' }}>{D.refundTotals[refundPeriod]}</span>
-              <span className="blbl">total refunds</span>
-            </div>
-            <div style={{ fontSize: 11, color: '#888', marginBottom: 10 }}>Not backed by an API yet - showing placeholder data.</div>
-          </div> */}
+        {/* <PayChart /> */}
+        {/* <CollTrendChart /> */}
+        {/* Only one chart left in this row (the other two are commented above) - no grid wrapper so it takes full width instead of sitting in one of three columns. */}
+        <MethodChart data={paymentMethodsQ.data ?? {}} />
+        {/* <div className="card">
+          <div className="card-title">Total Refund Amount</div>
+          <div className="filter-bar">
+            <span className="filter-lbl">Period:</span>
+            {(['day', 'week', 'month', 'year'] as const).map((p) => (
+              <button key={p} className={'fpill' + (refundPeriod === p ? ' active' : '')} onClick={() => setRefundPeriod(p)}>
+                {p === 'day' ? 'Today' : p === 'week' ? 'This Week' : p === 'month' ? 'This Month' : 'This Year'}
+              </button>
+            ))}
+          </div>
+          <div className="booking-big" style={{ margin: '6px 0 3px' }}>
+            <span className="bval" style={{ color: 'var(--error-text)' }}>{D.refundTotals[refundPeriod]}</span>
+            <span className="blbl">total refunds</span>
+          </div>
+          <div style={{ fontSize: 11, color: '#888', marginBottom: 10 }}>Not backed by an API yet - showing placeholder data.</div>
+        </div> */}
+        {/* Only one card left in this row - no grid wrapper so it takes full width. */}
+        <div style={{ marginTop: 12 }}>
           <CancelChart data={cancellationTrendQ.data ?? []} />
         </div>
         <div style={{ marginTop: 12 }}><div className="card">
@@ -395,25 +395,24 @@ export const BranchManagerDashboard: React.FC<{ onSwitchRole: () => void }> = ({
             ))}
           </tbody></table>
         </div></div>
-        <div className="grid2eq" style={{ marginTop: 12 }}>
-          <div className="card">
-            <div className="card-title">Overdue Invoices <span className="muted">aged &gt;7 days</span></div>
-            <table><tbody>
-              <tr><th>Account</th><th>Amount</th><th>Aged</th><th>Action</th></tr>
-              {(overdueInvoicesQ.data ?? []).map((inv, i) => (
-                <tr key={i} className="clickable" onClick={() => openDrill('Overdue', inv.account, invoiceHTML(inv.account, formatINR(inv.amount), inv.aged))}>
-                  <td>{inv.account}</td><td>{formatINR(inv.amount)}</td><td>{inv.aged}</td>
-                  <td><span className={'badge ' + actionBadgeClass(inv.action)}>{inv.action}</span></td>
-                </tr>
-              ))}
-            </tbody></table>
-          </div>
-          {/* <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: 20, textAlign: 'center' }}>
-            <div style={{ fontSize: 30, fontWeight: 700, color: 'var(--rc-green)' }}>{billing?.billed ? Math.round((billing.collection / billing.billed) * 100) : 0}%</div>
-            <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', color: 'var(--sage)', marginTop: 4 }}>Collection Efficiency</div>
-            <div style={{ fontSize: 10, color: '#888', marginTop: 6, maxWidth: 170 }}>Month to date</div>
-          </div> */}
+        {/* Only one card left in this row - no grid wrapper so it takes full width. */}
+        <div className="card" style={{ marginTop: 12 }}>
+          <div className="card-title">Overdue Invoices <span className="muted">aged &gt;7 days</span></div>
+          <table><tbody>
+            <tr><th>Account</th><th>Amount</th><th>Aged</th><th>Action</th></tr>
+            {(overdueInvoicesQ.data ?? []).map((inv, i) => (
+              <tr key={i} className="clickable" onClick={() => openDrill('Overdue', inv.account, invoiceHTML(inv.account, formatINR(inv.amount), inv.aged))}>
+                <td>{inv.account}</td><td>{formatINR(inv.amount)}</td><td>{inv.aged}</td>
+                <td><span className={'badge ' + actionBadgeClass(inv.action)}>{inv.action}</span></td>
+              </tr>
+            ))}
+          </tbody></table>
         </div>
+        {/* <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: 20, textAlign: 'center' }}>
+          <div style={{ fontSize: 30, fontWeight: 700, color: 'var(--rc-green)' }}>{billing?.billed ? Math.round((billing.collection / billing.billed) * 100) : 0}%</div>
+          <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', color: 'var(--sage)', marginTop: 4 }}>Collection Efficiency</div>
+          <div style={{ fontSize: 10, color: '#888', marginTop: 6, maxWidth: 170 }}>Month to date</div>
+        </div> */}
 
         {/* MEMBERSHIP */}
         <div className="section-head" id="bs-membership"><div className="lbl">Membership</div><div className="line" /></div>
@@ -426,12 +425,14 @@ export const BranchManagerDashboard: React.FC<{ onSwitchRole: () => void }> = ({
               {latestMonth ? ` · Net ${latestMonth.new - latestMonth.expired >= 0 ? '+' : ''}${latestMonth.new - latestMonth.expired}` : ''} · Retention {memGap.retention}
             </div>
           </div>
-          <div className="amh-stats">
-            {/* <div className="amh-stat"><div className="ahs-label">New Joins</div><div className="ahs-val">{latestMonth?.new ?? 0}</div></div>
+          {/* amh-stats was left with all four stats commented out, which rendered as an empty
+              flex child and skewed the hero's spacing - commenting out the wrapper too fixes it. */}
+          {/* <div className="amh-stats">
+            <div className="amh-stat"><div className="ahs-label">New Joins</div><div className="ahs-val">{latestMonth?.new ?? 0}</div></div>
             <div className="amh-stat"><div className="ahs-label">Expiries</div><div className="ahs-val">{latestMonth?.expired ?? 0}</div></div>
             <div className="amh-stat"><div className="ahs-label">Churn Rate</div><div className="ahs-val">{memGap.churn}</div></div>
-            <div className="amh-stat"><div className="ahs-label">Retention</div><div className="ahs-val">{memGap.retention}</div></div> */}
-          </div>
+            <div className="amh-stat"><div className="ahs-label">Retention</div><div className="ahs-val">{memGap.retention}</div></div>
+          </div> */}
         </div>
         {/* Membership Period pills removed - the top-nav date filter now drives this section too. */}
         {/* <div className="filter-bar" style={{ marginBottom: 12 }}>
@@ -451,39 +452,39 @@ export const BranchManagerDashboard: React.FC<{ onSwitchRole: () => void }> = ({
           <MemChart data={newJoinVsExpiries} />
           <PlanChart data={planDistributionQ.data ?? []} />
         </div>
-        <div className="grid2eq" style={{ marginTop: 12 }}>
-          <div className="card">
-            <div className="card-title">Active Membership Days Remaining<InfoTooltip info={getInfo('Active Membership Days Remaining')} /></div>
-            <div className="chart-sub">Members with &lt;30 days remaining need a renewal nudge this week.</div>
-            <table><tbody>
-              <tr><th>Member</th><th>Plan</th><th>Days Left</th><th>Free Bookings</th><th>Status</th></tr>
-              {(daysRemainingQ.data ?? []).map((m, i) => (
-                <tr key={i} className="clickable" onClick={() => openDrill('Days Remaining', m.member_name, memberDaysHTML(m.member_name, m.plan, String(m.days_left), String(m.free_bookings)))}>
-                  <td>{m.member_name}</td><td>{m.plan}</td>
-                  <td><span className={daysBadgeClass(m.days_left)}>{m.days_left}</span></td>
-                  <td>{m.free_bookings}</td>
-                  <td><span className={'badge ' + statusBadgeClass(m.status)}>{m.status}</span></td>
-                </tr>
-              ))}
-            </tbody></table>
-          </div>
-          {/* <div className="card">
-            <div className="card-title">Upcoming Renewals<InfoTooltip info={getInfo('Upcoming Renewals')} /></div>
-            <div className="chart-sub">Memberships expiring soon. Auto-renew tracking isn't available yet.</div>
-            <table><tbody>
-              <tr><th>Member</th><th>Plan</th><th>Expiry</th><th>Phone</th></tr>
-              {(upcomingRenewalsListQ.data ?? []).map((r, i) => (
-                <tr key={i} className="clickable" onClick={() => openDrill('Renewal', r.member_name, renewalRowHTML(r.member_name, r.plan, r.expiry))}>
-                  <td>{r.member_name}</td><td>{r.plan}</td><td>{r.expiry}</td><td>{r.phone}</td>
-                </tr>
-              ))}
-            </tbody></table>
-          </div> */}
+        {/* Only one card left in this row - no grid wrapper so it takes full width. */}
+        <div className="card" style={{ marginTop: 12 }}>
+          <div className="card-title">Active Membership Days Remaining<InfoTooltip info={getInfo('Active Membership Days Remaining')} /></div>
+          <div className="chart-sub">Members with &lt;30 days remaining need a renewal nudge this week.</div>
+          <table><tbody>
+            <tr><th>Member</th><th>Plan</th><th>Days Left</th><th>Free Bookings</th><th>Status</th></tr>
+            {(daysRemainingQ.data ?? []).map((m, i) => (
+              <tr key={i} className="clickable" onClick={() => openDrill('Days Remaining', m.member_name, memberDaysHTML(m.member_name, m.plan, String(m.days_left), String(m.free_bookings)))}>
+                <td>{m.member_name}</td><td>{m.plan}</td>
+                <td><span className={daysBadgeClass(m.days_left)}>{m.days_left}</span></td>
+                <td>{m.free_bookings}</td>
+                <td><span className={'badge ' + statusBadgeClass(m.status)}>{m.status}</span></td>
+              </tr>
+            ))}
+          </tbody></table>
         </div>
-        <div className="grid2eq" style={{ marginTop: 12 }}>
+        {/* <div className="card">
+          <div className="card-title">Upcoming Renewals<InfoTooltip info={getInfo('Upcoming Renewals')} /></div>
+          <div className="chart-sub">Memberships expiring soon. Auto-renew tracking isn't available yet.</div>
+          <table><tbody>
+            <tr><th>Member</th><th>Plan</th><th>Expiry</th><th>Phone</th></tr>
+            {(upcomingRenewalsListQ.data ?? []).map((r, i) => (
+              <tr key={i} className="clickable" onClick={() => openDrill('Renewal', r.member_name, renewalRowHTML(r.member_name, r.plan, r.expiry))}>
+                <td>{r.member_name}</td><td>{r.plan}</td><td>{r.expiry}</td><td>{r.phone}</td>
+              </tr>
+            ))}
+          </tbody></table>
+        </div> */}
+        {/* Only one chart left in this row - no grid wrapper so it takes full width. */}
+        <div style={{ marginTop: 12 }}>
           <PayPlanChart data={membershipByPaymentPlanQ.data ?? { yearly: 0, half_yearly: 0, quarterly: 0, monthly: 0 }} />
-          {/* <RevPlanChart /> */}
         </div>
+        {/* <RevPlanChart /> */}
         {/* <div style={{ marginTop: 12 }}><div className="card">
           <div className="card-title">Group Memberships – All Active Groups<InfoTooltip info={getInfo('Group Memberships')} /></div>
           <div className="chart-sub">{groupMemberships?.groups_count ?? 0} active group plans · {groupMemberships?.members_count ?? 0} members.</div>
@@ -501,28 +502,27 @@ export const BranchManagerDashboard: React.FC<{ onSwitchRole: () => void }> = ({
 
         {/* AMENITIES & BOOKINGS */}
         <div className="section-head" id="bs-amenities"><div className="lbl">Amenities & Bookings</div><div className="line" /></div>
-        <div className="grid2eq">
-          <div className="card">
-            <div className="card-title">Total Bookings</div>
-            {/* Period pills removed - the top-nav date filter now drives this card too. */}
-            {/* <div className="filter-bar">
-              <span className="filter-lbl">Period:</span>
-              {(['day', 'week', 'month', 'year'] as const).map((p) => (
-                <button key={p} className={'fpill' + (bookPeriod === p ? ' active' : '')} onClick={() => setBookPeriod(p)}>
-                  {p === 'day' ? 'Today' : p === 'week' ? 'This Week' : p === 'month' ? 'This Month' : 'This Year'}
-                </button>
-              ))}
-            </div> */}
-            <div className="booking-big"><span className="bval">{(bookingSummary?.total_bookings ?? 0).toLocaleString()}</span><span className="blbl">total bookings</span></div>
-            <div className="bk-split">
-              <div className="bk-seg"><div className="bsv" style={{ color: 'var(--blue)' }}>{(bookingSummary?.member ?? 0).toLocaleString()}</div><div className="bsl">Members</div></div>
-              <div className="bk-seg"><div className="bsv" style={{ color: '#5850a8' }}>{(bookingSummary?.guest ?? 0).toLocaleString()}</div><div className="bsl">Guests</div></div>
-              <div className="bk-seg"><div className="bsv" style={{ color: '#2d7a68' }}>{(bookingSummary?.staff ?? 0).toLocaleString()}</div><div className="bsl">Staff</div></div>
-            </div>
-            <div style={{ marginTop: 8 }}><AiInsightBlock ctxText="Bookings split by member type for the selected period." /></div>
+        {/* Only one card left in this row - no grid wrapper so it takes full width. */}
+        <div className="card">
+          <div className="card-title">Total Bookings</div>
+          {/* Period pills removed - the top-nav date filter now drives this card too. */}
+          {/* <div className="filter-bar">
+            <span className="filter-lbl">Period:</span>
+            {(['day', 'week', 'month', 'year'] as const).map((p) => (
+              <button key={p} className={'fpill' + (bookPeriod === p ? ' active' : '')} onClick={() => setBookPeriod(p)}>
+                {p === 'day' ? 'Today' : p === 'week' ? 'This Week' : p === 'month' ? 'This Month' : 'This Year'}
+              </button>
+            ))}
+          </div> */}
+          <div className="booking-big"><span className="bval">{(bookingSummary?.total_bookings ?? 0).toLocaleString()}</span><span className="blbl">total bookings</span></div>
+          <div className="bk-split">
+            <div className="bk-seg"><div className="bsv" style={{ color: 'var(--blue)' }}>{(bookingSummary?.member ?? 0).toLocaleString()}</div><div className="bsl">Members</div></div>
+            <div className="bk-seg"><div className="bsv" style={{ color: '#5850a8' }}>{(bookingSummary?.guest ?? 0).toLocaleString()}</div><div className="bsl">Guests</div></div>
+            <div className="bk-seg"><div className="bsv" style={{ color: '#2d7a68' }}>{(bookingSummary?.staff ?? 0).toLocaleString()}</div><div className="bsl">Staff</div></div>
           </div>
-          {/* <BookTypeChart member={bookingSummary?.member ?? 0} guest={bookingSummary?.guest ?? 0} staff={bookingSummary?.staff ?? 0} /> */}
+          <div style={{ marginTop: 8 }}><AiInsightBlock ctxText="Bookings split by member type for the selected period." /></div>
         </div>
+        {/* <BookTypeChart member={bookingSummary?.member ?? 0} guest={bookingSummary?.guest ?? 0} staff={bookingSummary?.staff ?? 0} /> */}
         {/* <div className="grid2" style={{ marginTop: 12 }}>
           <AvailableSlotsHeatmap data={availableSlotsQ.data} />
           <div className="card">

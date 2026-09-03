@@ -25,7 +25,8 @@ const ClubDashboardV6: React.FC = () => {
         {/* {!entered && <PersonaScreen selected={selected} onSelect={setSelected} onEnter={enter} />} */}
         {entered === 'branch' && <BranchManagerDashboard onSwitchRole={switchRole} />}
         {entered === 'super' && <SuperAdminDashboard onSwitchRole={switchRole} />}
-        {entered && <AIChatWidget persona={entered} />}
+        {/* Floating green "AI Insights" button commented out for now. */}
+        {/* {entered && <AIChatWidget persona={entered} />} */}
       </DrillProvider>
     </div>
   );
