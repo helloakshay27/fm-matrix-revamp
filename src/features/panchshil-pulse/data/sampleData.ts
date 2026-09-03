@@ -61,40 +61,76 @@ export const BM_DEFAULTS: Record<string, number> = {
 
 export const KPI_INFO: Record<string, { f: string; m: string }> = {
   "Active Users": {
-    f: "Unique residents (user_id) who fired at least one event during the selected period.",
-    m: "Shows the reach of the app among registered residents — pulled directly from PostHog's person-level activity."
+    f: "Count of distinct residents who were active at least once in a 7-day window (weekly active users, WAU).",
+    m: "Each person is counted only once no matter how many times they log in. This is your reach — how many of your community actually showed up in the week."
   },
   "Screen Views": {
-    f: "Count of all screen-viewed style events across modules (e.g. HomeScreenViewed, CommunityMainScreenViewed, PulseScreenViewed).",
-    m: "Overall content consumption across the app."
+    f: "Total number of screens/pages opened across everyone, added up over the selected date range.",
+    m: "Unlike active users, this counts every screen opened — so it climbs when people browse more deeply, not just when more people log in."
   },
-  "Total Sessions": {
-    f: "Count of distinct app sessions started in the period (from app open / SplashScreenViewed).",
-    m: "Usage volume across all residents."
+  "Sessions": {
+    f: "Total number of visits in the selected range. A session is one continuous visit that ends after about 30 minutes of no activity.",
+    m: "If one person logs in three separate times, that's three sessions. It measures how often people are coming back, not just how many people."
   },
-  "Average Session Duration": {
-    f: "Total session time ÷ total sessions.",
-    m: "Engagement depth per visit."
+  "Session Duration": {
+    f: "Total time everyone spent in the app ÷ total number of sessions.",
+    m: "The average length of a single visit, shown in minutes and seconds. A session ends after ~30 minutes of inactivity, so this reflects real time-in-app."
   },
   "Bounce Rate": {
-    f: "% of sessions with only a splash/home view and no further interaction.",
-    m: "Immediate exits or a poor first impression."
+    f: "Sessions where the person viewed only one screen and took no further action ÷ total sessions, shown as a percentage.",
+    m: "A \"bounce\" is a visit where someone opened the app but left without doing anything. Lower is better — it means people are finding a reason to stay."
   },
   "Returning Users": {
     f: "Users active in the period who were also active in a prior period.",
     m: "Retention and loyalty of the resident base."
   },
   "Recently Online": {
-    f: "Distinct residents with an event in the last 30 minutes.",
-    m: "A live pulse of who is in the app right now."
+    f: "Count of distinct residents who were active in the last ~30 minutes.",
+    m: "A near-live pulse of who is in the app right now. It moves up and down through the day rather than reflecting the whole date range."
   },
   "Views / Session": {
     f: "Total screen views ÷ total sessions.",
     m: "How much of the app a resident explores per visit."
   },
   "Device / Platform Split": {
-    f: "Share of active users and sessions by device_platform (android vs ios).",
-    m: "Pulse is a mobile-first community app — this shows where engineering and QA effort should concentrate."
+    f: "Sessions split by the device they came from — Desktop, Mobile and Tablet — each shown as a share of total sessions.",
+    m: "Tells you how residents are reaching the app. A heavy mobile/tablet share usually means people working on the move rather than at a desk — Pulse is a mobile-first community app."
+  },
+  "Seat Utilisation": {
+    f: "Weekly active users (WAU) ÷ total seats (licences purchased), shown as a percentage.",
+    m: "Of all the logins you pay for, what share are actually being used each week. A low number means licences are sitting idle."
+  },
+  "Stickiness": {
+    f: "Average daily active users ÷ monthly active users, shown as a percentage (DAU ÷ MAU).",
+    m: "Of the people who use the app in a month, what share use it on any given day. Roughly 30% means the average active user shows up ~9 days a month. Higher means more habitual use."
+  },
+  "Adoption Trend": {
+    f: "The change in weekly active users now versus four weeks ago, expressed as a percentage rise or fall.",
+    m: "A simple momentum reading: a positive number means more of your community is engaging than a month ago, a negative number means engagement is slipping."
+  },
+  "14-Day Activation": {
+    f: "New residents who completed a first meaningful action within 14 days of getting access ÷ all new residents in that window, as a percentage.",
+    m: "\"Activated\" means a new user got past just logging in and actually did something real. It shows how well newcomers get off the ground in their first two weeks."
+  },
+  "Module Breadth": {
+    f: "Count of distinct modules (from the Pulse PostHog event dictionary) used at least once ÷ all modules available.",
+    m: "How much of the platform a resident base has actually adopted, not just the home screen."
+  },
+  "Workflow Adoption": {
+    f: "Active users who started at least one of this module's workflows ÷ active users who could use them, as a percentage.",
+    m: "For the module you're viewing, how many of the relevant residents have actually begun using its workflows at all."
+  },
+  "Completion Rate": {
+    f: "Workflow runs that reached the final step ÷ workflow runs that were started, as a percentage.",
+    m: "Of the processes people begin (e.g. an amenity booking, a carpool ride, a helpdesk ticket), how many they carry through to the end rather than abandoning partway."
+  },
+  "Biggest Step Drop": {
+    f: "At the single worst step in the workflow, the share of runs that fail to move on to the next step, as a percentage.",
+    m: "Pinpoints the one place people most often get stuck or give up. Lower is better; a high number flags a confusing or heavy step to fix first."
+  },
+  "Usage Volume": {
+    f: "Total count of workflow runs started in this module during the selected range.",
+    m: "The raw amount of work flowing through the module — how many bookings, rides or tickets were kicked off. Shows overall throughput."
   },
   "Engagement Rate": {
     f: "% of sessions with a meaningful interaction beyond a view (a tap/create/submit-style event).",
@@ -111,14 +147,6 @@ export const KPI_INFO: Record<string, { f: string; m: string }> = {
   "Feature Interaction Rate": {
     f: "% of sessions where a resident fired a tap/select/submit-style event, not just a *_viewed event.",
     m: "Indicates depth of feature-level engagement."
-  },
-  "Module Breadth": {
-    f: "Count of distinct modules (from the 20-module PostHog event dictionary) used at least once ÷ 20 modules available.",
-    m: "How much of the platform a resident base has actually adopted, not just the home screen."
-  },
-  "Workflow Adoption": {
-    f: "% of active users who fired the workflow's first event (e.g. FindRideDateSelected, BookableAmenitiesFetchSuccess).",
-    m: "Shows how many residents attempt this process."
   },
   "Workflow Completion Rate": {
     f: "% of users who reached the workflow's terminal success event after starting.",

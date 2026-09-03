@@ -427,7 +427,8 @@ svg.chart{width:100%;height:auto;display:block}
 .funnel{display:flex;flex-direction:column;gap:9px;margin-top:4px}
 .funnel .fstep{
   position:relative;color:var(--on-ink);font-size:12.5px;font-weight:500;
-  padding:10px 14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  padding:10px 14px;border-radius:6px;min-width:200px;white-space:normal;overflow:visible;
+  display:flex;flex-direction:column;justify-content:center;height:72px;
 }
 .funnel .fsub{display:block;font-size:11px;font-weight:400;opacity:.86;margin-top:2px}
 .funnel .fdrop{font-size:11.5px;color:var(--neg);font-weight:400;padding-left:2px}
