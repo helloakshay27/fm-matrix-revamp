@@ -40,6 +40,8 @@ import { AIAssistantWidget } from '@/components/AIAssistantWidget';
 import { DashboardAIAssistant } from '@/components/DashboardAIAssistant';
 import { buildReturnToPath } from '@/utils/listBackNavigation';
 import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
+import { useViWorkflowEvents } from "@/components/PostHogViWorkflowEvents";
+import { useFlowEvents } from '@/components/PostHogFlowEvents';
 
 // Sortable Chart Item Component
 const SortableChartItem = ({
@@ -122,11 +124,18 @@ const SectionLoader: React.FC<{
 export const TicketDashboard = () => {
   const navigate = useNavigate();
   const gaEvents = useGaFunnelEvents();
+  // Vi catalogue name for the same entry point. No-op off the Vi deployment.
+  const viEvents = useViWorkflowEvents();
+  // flow_started is the funnel's denominator — see PostHogFlowEvents for why the API needs
+  // these three events instead of its own URL-pattern proxy.
+  const flowEvents = useFlowEvents();
 
   // GA parity: the ticket list was opened (mount-only, so filters and
   // paging inside the page do not each count as a fresh page view).
   useEffect(() => {
     gaEvents.onTicketPageClicked("admin");
+    viEvents.onTicketRaiseClicked();
+    flowEvents.onFlowStarted('ticketCreate');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   // Initialize permission hook

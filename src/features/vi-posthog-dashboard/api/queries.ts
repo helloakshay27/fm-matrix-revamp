@@ -29,7 +29,6 @@ export interface QueryFilters {
   to: string;
   siteIds: string[];
   devices: DeviceType[];
-  licensedSeats: number | null;
   module: string | null;
   subModule: string | null;
 }
@@ -113,8 +112,8 @@ export function useUsageAndDistribution(f: QueryFilters) {
 
 export function useAdoptionEngagement(f: QueryFilters) {
   return useQuery({
-    queryKey: [...ROOT, 'adoption_engagement', ...keyBase(f), f.licensedSeats],
-    queryFn: () => fetchAdoptionEngagement({ ...range(f), licensedSeats: f.licensedSeats }),
+    queryKey: [...ROOT, 'adoption_engagement', ...keyBase(f)],
+    queryFn: () => fetchAdoptionEngagement(range(f)),
     enabled: f.enabled,
     ...CACHE,
   });

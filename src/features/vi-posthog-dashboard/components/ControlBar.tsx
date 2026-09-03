@@ -18,7 +18,7 @@ function circleValue(tier: Tier, scope: string): string {
 
 export function ControlBar() {
   const {
-    vm, setCircle, setDate, setCustomRange, customRange, setDev, setLicensedSeats,
+    vm, setCircle, setDate, setCustomRange, customRange, setDev,
     togglePrev, refreshAll, isRefreshing,
   } = useViDashboard();
   const { state, sites, groups, sitesLoading, traffic } = vm;
@@ -26,10 +26,6 @@ export function ControlBar() {
   const [customOpen, setCustomOpen] = useState(false);
   const [draft, setDraft] = useState({ from: '', to: '' });
 
-  // Local text buffer so the field can be cleared without the value snapping back to 0.
-  const [seatsText, setSeatsText] = useState(
-    state.licensedSeats == null ? '' : String(state.licensedSeats),
-  );
 
   return (
     <div className="filterbar">
@@ -149,25 +145,6 @@ export function ControlBar() {
         ))}
       </div>
 
-      <label
-        className="ctrl"
-        title="Licensed seats — billing data the events don't carry. Sent only to adoption_engagement, to turn Seat Utilisation (A1) into a percentage."
-      >
-        <span className="ic">#</span>
-        <input
-          className="seatsin"
-          type="text"
-          inputMode="numeric"
-          placeholder="Licensed seats"
-          value={seatsText}
-          onChange={(e) => {
-            const v = e.target.value.trim();
-            setSeatsText(v);
-            const n = Number(v);
-            setLicensedSeats(v === '' || Number.isNaN(n) || n <= 0 ? null : n);
-          }}
-        />
-      </label>
 
       <button
         type="button"

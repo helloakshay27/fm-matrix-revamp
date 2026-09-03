@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PostHogTicketActivity } from '@/components/PostHogTicketActivity';
 import { useHelpdeskEvents } from '@/components/PostHogHelpdeskEvents';
+import { useViWorkflowEvents } from '@/components/PostHogViWorkflowEvents';
+import { useFlowEvents } from '@/components/PostHogFlowEvents';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -290,6 +292,17 @@ const getUserProfileFromAlternativeAPI = async () => {
 export const AddTicketDashboard = () => {
   const navigate = useNavigate();
   const helpdeskEvents = useHelpdeskEvents();
+  // Vi catalogue funnel: create viewed → submitted → succeeded / failed. No-ops off the Vi
+  // deployment — see PostHogViWorkflowEvents.
+  const viEvents = useViWorkflowEvents();
+  const flowEvents = useFlowEvents();
+
+  // Mount-only, so re-renders and in-form steps are not counted as fresh views.
+  useEffect(() => {
+    viEvents.onTicketCreateViewed();
+    flowEvents.onFlowStepViewed('ticketCreate', 'create_form', 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [ticketEvent, setTicketEvent] = useState<{
     event: "Ticket Create Form Opened" | "ticket creation successful" | "ticket abandoned";
@@ -1134,6 +1147,14 @@ export const AddTicketDashboard = () => {
 
       console.log('Submitting ticket with data:', ticketData, 'and files:', attachedFiles);
 
+      // Fires after validation and before the network call, per the catalogue's convention:
+      // submitted → succeeded then measures server/network drop-off only, and a validation
+      // bounce (which returned early above) is never counted as a submit the server lost.
+      viEvents.onTicketCreateSubmitted({
+        category: formData.categoryType || undefined,
+        priority: formData.severity || undefined,
+      });
+
 
       const response = await ticketManagementAPI.createTicket(ticketData, attachedFiles);
       console.log('Create ticket response:', response);
@@ -1146,6 +1167,8 @@ export const AddTicketDashboard = () => {
         : "Ticket created successfully!");
 
       setTicketEvent({ event: 'ticket creation successful', properties: { ticket_number: ticketNumber } });
+      viEvents.onTicketCreateSucceeded({ ticket_id: ticketNumber });
+      flowEvents.onFlowCompleted('ticketCreate', { succeeded: true });
 
       // Business lifecycle event — Ticket Created
       const createdId = response?.id || response?.complaint?.id || ticketNumber || null;
@@ -1179,6 +1202,11 @@ export const AddTicketDashboard = () => {
     } catch (error) {
       console.error('Error creating ticket:', error);
       toast.error("Failed to create ticket. Please try again.", { description: "Error" });
+      viEvents.onTicketCreateFailed(error instanceof Error ? error.message : 'request_failed');
+      flowEvents.onFlowCompleted('ticketCreate', {
+        succeeded: false,
+        failure_reason: error instanceof Error ? error.message : 'request_failed',
+      });
     } finally {
       setIsSubmitting(false);
     }

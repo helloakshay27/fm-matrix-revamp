@@ -94,14 +94,20 @@ export const fetchUsageAndDistribution = (f: RangeFilters) =>
 
 /* ------------------------------------------------------------------ Layer 2 */
 
-/** `licensedSeats` is billing data (not in events) — omit it and A1's % comes back null. */
-export const fetchAdoptionEngagement = (f: RangeFilters & { licensedSeats?: number | null }) =>
-  get<AdoptionEngagementResponse>('adoption_engagement', {
-    ...rangeParams(f),
-    ...(f.licensedSeats != null && f.licensedSeats > 0
-      ? { licensed_seats: String(f.licensedSeats) }
-      : {}),
-  });
+/**
+ * Seat count is NOT passed from the client, so `seat_utilisation.value` is always null.
+ *
+ * The endpoint's own note is unambiguous about this: "Seat count (licensed_seats) is billing
+ * data, not in events — pass ?licensed_seats=N. Without it, value is null; used_seats still
+ * returns." There is no server-side fallback — it cannot derive the denominator, and this
+ * dashboard has no seat input to supply one.
+ *
+ * That is a deliberate trade: a number typed into the UI is not API data, and this dashboard
+ * takes every value from the API. `used_seats` comes back regardless, so A1 renders as an
+ * active-seat count instead of an empty percentage — see data/viMetricIds.ts asActiveSeats.
+ */
+export const fetchAdoptionEngagement = (f: RangeFilters) =>
+  get<AdoptionEngagementResponse>('adoption_engagement', rangeParams(f));
 
 export const fetchAdoptionTrend = (f: WeeklyFilters) =>
   get<AdoptionTrendResponse>('adoption_trend', weeklyParams(f));
