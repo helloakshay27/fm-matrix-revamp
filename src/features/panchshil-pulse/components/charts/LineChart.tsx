@@ -15,11 +15,7 @@ interface LineChartProps {
   };
 }
 
-export const LineChart: React.FC<LineChartProps> = ({
-  cur,
-  prev,
-  opts = {},
-}) => {
+export const LineChart: React.FC<LineChartProps> = ({ cur, prev, opts = {} }) => {
   const { prev: showPrev } = usePulseDashboard();
 
   // Chart colors — re-sync whenever the applied `data-theme` changes.
@@ -48,7 +44,7 @@ export const LineChart: React.FC<LineChartProps> = ({
   const mx = opts.pctScale
     ? Math.min(100, Math.max(...allPoints) + 0.6)
     : Math.max(...allPoints) * 1.14 || 1;
-  const span = mx - mn || 1;
+  const span = (mx - mn) || 1;
 
   const n = cur.length;
   const xw = (W - pl - pr) / (n - 1 || 1);
@@ -62,12 +58,7 @@ export const LineChart: React.FC<LineChartProps> = ({
   const pathD = useMemo(() => {
     let d = "";
     for (let i = 0; i < cur.length; i++) {
-      d +=
-        (i ? "L" : "M") +
-        getX(i).toFixed(1) +
-        " " +
-        getY(cur[i]).toFixed(1) +
-        " ";
+      d += (i ? "L" : "M") + getX(i).toFixed(1) + " " + getY(cur[i]).toFixed(1) + " ";
     }
     return d;
   }, [cur, mn, mx, span]);
@@ -75,23 +66,9 @@ export const LineChart: React.FC<LineChartProps> = ({
   const areaD = useMemo(() => {
     let d = "";
     for (let i = 0; i < cur.length; i++) {
-      d +=
-        (i ? "L" : "M") +
-        getX(i).toFixed(1) +
-        " " +
-        getY(cur[i]).toFixed(1) +
-        " ";
+      d += (i ? "L" : "M") + getX(i).toFixed(1) + " " + getY(cur[i]).toFixed(1) + " ";
     }
-    d +=
-      "L" +
-      getX(n - 1).toFixed(1) +
-      " " +
-      base +
-      " L" +
-      getX(0).toFixed(1) +
-      " " +
-      base +
-      " Z";
+    d += "L" + getX(n - 1).toFixed(1) + " " + base + " L" + getX(0).toFixed(1) + " " + base + " Z";
     return d;
   }, [cur, mn, mx, span, n, base]);
 
@@ -99,12 +76,7 @@ export const LineChart: React.FC<LineChartProps> = ({
     if (!prev || !showPrev) return "";
     let d = "";
     for (let i = 0; i < prev.length; i++) {
-      d +=
-        (i ? "L" : "M") +
-        getX(i).toFixed(1) +
-        " " +
-        getY(prev[i]).toFixed(1) +
-        " ";
+      d += (i ? "L" : "M") + getX(i).toFixed(1) + " " + getY(prev[i]).toFixed(1) + " ";
     }
     return d;
   }, [prev, showPrev, mn, mx, span]);
@@ -112,11 +84,7 @@ export const LineChart: React.FC<LineChartProps> = ({
   const step = Math.max(1, Math.ceil(n / 6));
 
   return (
-    <svg
-      className="chart"
-      viewBox={`0 0 ${W} ${H}`}
-      preserveAspectRatio="xMidYMid meet"
-    >
+    <svg className="chart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet">
       {/* Grid lines & X labels */}
       {Array.from({ length: Math.ceil(n / step) }).map((_, idx) => {
         const i = idx * step;
@@ -239,37 +207,14 @@ export const LineChart: React.FC<LineChartProps> = ({
             const tipW = Math.max(66, metricName.length * 7.2 + 30);
             const tipH = 40;
             let tx = Math.max(pl, Math.min(getX(hover) + 12, W - pr - tipW));
-            let ty = Math.max(
-              pt,
-              Math.min(getY(hv) - tipH - 12, H - pb - tipH)
-            );
+            let ty = Math.max(pt, Math.min(getY(hv) - tipH - 12, H - pb - tipH));
             return (
               <g>
-                <rect
-                  x={tx}
-                  y={ty}
-                  width={tipW}
-                  height={tipH}
-                  rx="6"
-                  fill={colors.ink}
-                />
-                <text
-                  x={tx + tipW / 2}
-                  y={ty + 15}
-                  textAnchor="middle"
-                  fontSize="10"
-                  fill="#fff"
-                >
+                <rect x={tx} y={ty} width={tipW} height={tipH} rx="6" fill={colors.ink} />
+                <text x={tx + tipW / 2} y={ty + 15} textAnchor="middle" fontSize="10" fill="#fff">
                   {metricName}
                 </text>
-                <text
-                  x={tx + tipW / 2}
-                  y={ty + 29}
-                  textAnchor="middle"
-                  fontSize="13"
-                  fontWeight="600"
-                  fill="#fff"
-                >
+                <text x={tx + tipW / 2} y={ty + 29} textAnchor="middle" fontSize="13" fontWeight="600" fill="#fff">
                   {vfmt(hv)}
                 </text>
               </g>
