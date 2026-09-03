@@ -22,6 +22,7 @@ import axios from 'axios';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { toast } from 'sonner';
+import { SupplierSearchSelect } from '@/components/SupplierSearchSelect';
 
 interface FormData {
   firstname: string;
@@ -159,6 +160,7 @@ export const ViewFMUserPage = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
+        timeout: 20000,
       });
       setAttendanceData(response.data.attendances || []);
       setPaginationData({
@@ -275,16 +277,16 @@ export const ViewFMUserPage = () => {
         face_added: userData.face_added || false,
         app_downloaded: userData.app_downloaded || 'No',
         access_level: userData.lock_user_permission?.access_level || 'Site',
-        daily_helpdesk_report: userData.lock_user_permission?.daily_pms_report,
+        daily_helpdesk_report: userData.lock_user_permission?.daily_pms_report || false,
         site: userData.site_id || '',
-        base_unit: userData.unit_id,
-        system_user_type: userData.lock_user_permission?.user_type,
-        department: userData.department_id,
-        role: userData.lock_user_permission?.lock_role_id,
-        vendor_company: userData.supplier_id,
+        base_unit: userData.unit_id || '',
+        system_user_type: userData.lock_user_permission?.user_type || '',
+        department: userData.department_id || '',
+        role: userData.lock_user_permission?.lock_role_id || '',
+        vendor_company: userData.supplier_id || '',
         company_cluster: '',
-        last_working_day: userData.lock_user_permission?.last_working_date,
-        email_preference: userData.urgency_email_enabled?.toString(),
+        last_working_day: userData.lock_user_permission?.last_working_date || '',
+        email_preference: userData.urgency_email_enabled?.toString() || '',
         access: userData.access_to_array || [],
         profile_type: userData.profile_type || '',
         reports_to:
@@ -305,7 +307,7 @@ export const ViewFMUserPage = () => {
     }));
   };
 
-  if (entitiesLoading || suppliersLoading || unitsLoading || departmentLoading || roleLoading || userLoading) {
+  if (userLoading) {
     return (
       <div className="p-6 bg-white min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -836,24 +838,14 @@ export const ViewFMUserPage = () => {
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Vendor Company Name</Label>
-                  <Select value={formData.vendor_company} onValueChange={(value) => handleInputChange('vendor_company', value)} disabled>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select Vendor Company" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {suppliers?.length > 0 ? (
-                        suppliers.map((supplier) => (
-                          <SelectItem key={supplier.id} value={supplier.id}>
-                            {supplier.name}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <div className="px-2 py-1 text-sm text-gray-500">
-                          No vendors available
-                        </div>
-                      )}
-                    </SelectContent>
-                  </Select>
+                  <SupplierSearchSelect
+                    value={String(formData.vendor_company || '')}
+                    onChange={(value) => handleInputChange('vendor_company', value)}
+                    label=""
+                    size="compact"
+                    disabled
+                    disablePortal
+                  />
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Access Level</Label>
