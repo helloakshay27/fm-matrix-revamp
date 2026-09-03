@@ -18,7 +18,9 @@ import {
   ClubWalletDetailResponse,
 } from "@/services/clubWalletAPI";
 
-type FlowStep = "list" | "verify" | "detail";
+// OTP verification now gates the wallet LIST, not the detail view:
+// verify -> list (needs verification_token) -> detail (open, no token needed).
+type FlowStep = "verify" | "list" | "detail";
 
 const walletColumns: ColumnConfig[] = [
   { key: "user_name", label: "User", sortable: true, hideable: true, defaultVisible: true },
@@ -53,7 +55,17 @@ const formatDate = (iso: string | null | undefined) => {
 };
 
 export const ClubWalletsPage: React.FC = () => {
-  const [step, setStep] = useState<FlowStep>("list");
+  const [step, setStep] = useState<FlowStep>("verify");
+
+  const [mobileOtp, setMobileOtp] = useState("");
+  const [emailOtp, setEmailOtp] = useState("");
+  const [isRequestingOtp, setIsRequestingOtp] = useState(false);
+  const [otpDelivered, setOtpDelivered] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const cooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const [verificationToken, setVerificationToken] = useState<string | null>(null);
 
   const [wallets, setWallets] = useState<ClubWalletListItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -62,13 +74,8 @@ export const ClubWalletsPage: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
 
   const [selectedWallet, setSelectedWallet] = useState<ClubWalletListItem | null>(null);
-  const [mobileOtp, setMobileOtp] = useState("");
-  const [emailOtp, setEmailOtp] = useState("");
-  const [isRequestingOtp, setIsRequestingOtp] = useState(false);
-  const [otpDelivered, setOtpDelivered] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const cooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [detail, setDetail] = useState<ClubWalletDetailResponse | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const startResendCooldown = (seconds = 30) => {
     setResendCooldown(seconds);
@@ -90,44 +97,7 @@ export const ClubWalletsPage: React.FC = () => {
     };
   }, []);
 
-  const [verificationToken, setVerificationToken] = useState<string | null>(null);
-  const [detail, setDetail] = useState<ClubWalletDetailResponse | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
-
-  const loadWallets = async (page: number, search: string) => {
-    setListLoading(true);
-    try {
-      const res = await fetchClubWallets({ search, page, per_page: 20 });
-      setWallets(res.wallets);
-      setTotalPages(res.total_pages);
-      setCurrentPage(res.current_page);
-    } catch (error) {
-      console.error("Failed to load club wallets:", error);
-      toast.error("Failed to load wallets. Please try again.");
-    } finally {
-      setListLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadWallets(1, "");
-  }, []);
-
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-    loadWallets(1, value);
-  };
-
-  const handlePageChange = (page: number) => {
-    loadWallets(page, searchTerm);
-  };
-
-  const handleSelectWallet = async (wallet: ClubWalletListItem) => {
-    setSelectedWallet(wallet);
-    setMobileOtp("");
-    setEmailOtp("");
-    setOtpDelivered(false);
-    setStep("verify");
+  const requestOtp = async () => {
     setIsRequestingOtp(true);
     try {
       await requestClubWalletOtp();
@@ -141,50 +111,55 @@ export const ClubWalletsPage: React.FC = () => {
     }
   };
 
+  // Land directly on the OTP screen and send the codes right away.
+  useEffect(() => {
+    requestOtp();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleResendOtp = async () => {
-    setIsRequestingOtp(true);
-    try {
-      await requestClubWalletOtp();
-      setOtpDelivered(true);
-      startResendCooldown();
-      toast.success("Verification codes resent");
-    } catch (error) {
-      console.error("Failed to resend wallet OTP:", error);
-      toast.error("Failed to resend codes. Please try again.");
-    } finally {
-      setIsRequestingOtp(false);
-    }
+    await requestOtp();
+    toast.success("Verification codes resent");
   };
 
-  const loadDetail = async (walletId: string | number, token: string, page = 1) => {
-    setDetailLoading(true);
+  const loadWallets = async (page: number, search: string, token: string) => {
+    setListLoading(true);
     try {
-      const res = await fetchClubWalletDetail({
-        walletId,
-        verificationToken: token,
-        page,
-        per_page: 20,
-      });
-      setDetail(res);
+      const res = await fetchClubWallets({ search, page, per_page: 20, verificationToken: token });
+      setWallets(res.wallets);
+      setTotalPages(res.total_pages);
+      setCurrentPage(res.current_page);
     } catch (error) {
       if (error instanceof Error && error.message === "EXPIRED_TOKEN") {
         toast.error("Verification expired. Please verify again.");
         setStep("verify");
         setVerificationToken(null);
+        setMobileOtp("");
+        setEmailOtp("");
+        setOtpDelivered(false);
+        requestOtp();
         return;
       }
-      console.error("Failed to load wallet detail:", error);
-      toast.error("Failed to load wallet details. Please try again.");
+      console.error("Failed to load club wallets:", error);
+      toast.error("Failed to load wallets. Please try again.");
     } finally {
-      setDetailLoading(false);
+      setListLoading(false);
     }
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    if (verificationToken) loadWallets(1, value, verificationToken);
+  };
+
+  const handlePageChange = (page: number) => {
+    if (verificationToken) loadWallets(page, searchTerm, verificationToken);
   };
 
   // Only one of mobile/email OTP is required to continue.
   const canVerify = mobileOtp.length === 6 || emailOtp.length === 6;
 
   const handleVerifyAndContinue = async () => {
-    if (!selectedWallet) return;
     if (!canVerify) {
       toast.error("Enter either the mobile or email code to continue");
       return;
@@ -196,8 +171,8 @@ export const ClubWalletsPage: React.FC = () => {
         email_otp: emailOtp.length === 6 ? emailOtp : undefined,
       });
       setVerificationToken(res.verification_token);
-      setStep("detail");
-      await loadDetail(selectedWallet.wallet_id, res.verification_token);
+      setStep("list");
+      await loadWallets(1, searchTerm, res.verification_token);
     } catch (error) {
       console.error("Failed to verify wallet OTP:", error);
       toast.error(
@@ -208,15 +183,29 @@ export const ClubWalletsPage: React.FC = () => {
     }
   };
 
+  const loadDetail = async (walletId: string | number, page = 1) => {
+    setDetailLoading(true);
+    try {
+      const res = await fetchClubWalletDetail({ walletId, page, per_page: 20 });
+      setDetail(res);
+    } catch (error) {
+      console.error("Failed to load wallet detail:", error);
+      toast.error("Failed to load wallet details. Please try again.");
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const handleSelectWallet = (wallet: ClubWalletListItem) => {
+    setSelectedWallet(wallet);
+    setDetail(null);
+    setStep("detail");
+    loadDetail(wallet.wallet_id);
+  };
+
   const backToList = () => {
     setStep("list");
     setSelectedWallet(null);
-    setMobileOtp("");
-    setEmailOtp("");
-    setOtpDelivered(false);
-    if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
-    setResendCooldown(0);
-    setVerificationToken(null);
     setDetail(null);
   };
 
@@ -284,42 +273,8 @@ export const ClubWalletsPage: React.FC = () => {
 
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
-      {step === "list" && (
-        <>
-          <h1 className="text-xl font-semibold text-[#1a1a1a] mb-4">Club Wallets</h1>
-          <EnhancedTable
-            data={wallets}
-            columns={walletColumns}
-            renderCell={renderWalletCell}
-            renderActions={renderWalletActions}
-            storageKey="club-wallets-table"
-            enableSearch
-            searchTerm={searchTerm}
-            onSearchChange={handleSearchChange}
-            searchPlaceholder="Search name, email, wallet ID..."
-            emptyMessage="No wallets found"
-            loading={listLoading}
-            loadingMessage="Loading wallets..."
-            pagination
-            pageSize={20}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-            onRowClick={handleSelectWallet}
-          />
-        </>
-      )}
-
-      {step === "verify" && selectedWallet && (
+      {step === "verify" && (
         <div className="max-w-md mx-auto py-8">
-          <button
-            type="button"
-            onClick={backToList}
-            className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-6"
-          >
-            <ArrowLeft className="w-4 h-4" /> Back to wallet list
-          </button>
-
           <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6 sm:p-8">
             <div className="flex flex-col items-center gap-5">
               <div className="w-12 h-12 rounded-full bg-[#f6f4ee] flex items-center justify-center">
@@ -329,11 +284,7 @@ export const ClubWalletsPage: React.FC = () => {
               <div className="text-center space-y-1">
                 <h2 className="text-lg font-semibold text-[#1a1a1a]">Verify it's you</h2>
                 <p className="text-sm text-gray-600">
-                  Confirming access to{" "}
-                  <span className="font-medium text-[#1a1a1a]">
-                    {selectedWallet.user_name}
-                  </span>
-                  's wallet ({selectedWallet.wallet_id})
+                  Confirming access to Club Wallets
                 </p>
               </div>
 
@@ -429,6 +380,32 @@ export const ClubWalletsPage: React.FC = () => {
         </div>
       )}
 
+      {step === "list" && (
+        <>
+          <h1 className="text-xl font-semibold text-[#1a1a1a] mb-4">Club Wallets</h1>
+          <EnhancedTable
+            data={wallets}
+            columns={walletColumns}
+            renderCell={renderWalletCell}
+            renderActions={renderWalletActions}
+            storageKey="club-wallets-table"
+            enableSearch
+            searchTerm={searchTerm}
+            onSearchChange={handleSearchChange}
+            searchPlaceholder="Search name, email, wallet ID..."
+            emptyMessage="No wallets found"
+            loading={listLoading}
+            loadingMessage="Loading wallets..."
+            pagination
+            pageSize={20}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            onRowClick={handleSelectWallet}
+          />
+        </>
+      )}
+
       {step === "detail" && selectedWallet && (
         <>
           <button
@@ -480,9 +457,7 @@ export const ClubWalletsPage: React.FC = () => {
                 pageSize={20}
                 currentPage={detail.current_page}
                 totalPages={detail.total_pages}
-                onPageChange={(page) =>
-                  loadDetail(selectedWallet.wallet_id, verificationToken as string, page)
-                }
+                onPageChange={(page) => loadDetail(selectedWallet.wallet_id, page)}
               />
             </>
           )}

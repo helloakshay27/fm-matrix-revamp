@@ -28,7 +28,17 @@ export const occAllHTML = () => tbl(['Branch', 'Utilisation'], [['Branch A', '74
 export const arpuAllHTML = () => tbl(['Branch', 'ARPU'], [['Branch A', '₹3,974'], ['Branch B', '₹4,073'], ['Branch C', '₹4,428'], ['Branch D', '₹4,768']]);
 export const renewConvAllHTML = () => tbl(['Branch', 'Conv %'], [['Branch A', '87%'], ['Branch B', '81%'], ['Branch C', '76%'], ['Branch D', '69%']]);
 export const vendorAllHTML = () => tbl(['Branch', 'Outstanding'], [['Branch A', '₹85K'], ['Branch B', '₹64.2K'], ['Branch C', '₹91K'], ['Branch D', '₹70.5K']]);
-export const groupDrillHTML = () => tbl(['Group', 'Members', 'Plan', 'Expiry'], [['Full DY MEM', '3', 'Annual', 'Dec 2026'], ['Special Summer', '4', 'Quarterly', 'Sep 2026'], ['SPC Group', '3', 'Quarterly', 'Sep 2026'], ['Cricket Group', '4', 'Quarterly', 'Oct 2026'], ['DY Corporate', '8', 'Annual', 'Mar 2027']]);
+// Builds the Branch Overview > "Group Memberships" drill table from the live
+// getGroupMemberships() response, instead of the wireframe's static example rows.
+export function groupsTableHTML(groups: { group_name: string; plan: string; members: number; payment_frequency: string; expiry: string; status: string }[]): string {
+  if (!groups.length) {
+    return '<div class="chart-sub">No active group memberships for the selected range.</div>';
+  }
+  return tbl(
+    ['Group Name', 'Plan', 'Members', 'Payment Freq.', 'Expiry', 'Status'],
+    groups.map((g) => [g.group_name, g.plan, g.members, g.payment_frequency, g.expiry, g.status])
+  );
+}
 export const groupRowHTML = (n: string, c: string, p: string, e: string) => tbl(['Field', 'Value'], [['Group', n], ['Members', c], ['Plan', p], ['Expiry', e]]);
 export const memberDaysHTML = (n: string, p: string, d: string, f: string) => tbl(['Field', 'Value'], [['Member', n], ['Plan', p], ['Days Remaining', d], ['Free Bookings Left', f]]);
 export const cancelHTML = (n: string, t: string, a: string, s: string, r: string) => tbl(['Field', 'Value'], [['Member', n], ['Type', t], ['Amenity', a], ['Slot', s], ['Reason', r]]);
