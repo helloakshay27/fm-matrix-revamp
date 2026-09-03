@@ -73,10 +73,15 @@ function extractFilterOptions(
     })
     .filter((v): v is FilterOption => Boolean(v));
 
+  // Dedupe by id, not name — two genuinely distinct circles/functions can share
+  // a display name (e.g. two differently-scoped entries both labeled "Delhi").
+  // Deduping by name silently dropped one of them from the list, which under-
+  // counted "Select All" against the real backend total by however many such
+  // name collisions existed.
   const seen = new Set<string>();
   const deduped = options.filter((o) => {
-    if (seen.has(o.name)) return false;
-    seen.add(o.name);
+    if (seen.has(o.id)) return false;
+    seen.add(o.id);
     return true;
   });
   return deduped.sort((a, b) => a.name.localeCompare(b.name));

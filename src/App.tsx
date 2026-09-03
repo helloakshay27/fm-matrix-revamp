@@ -1530,7 +1530,11 @@ const WebSocketNotificationInitializer: React.FC<{
         onDisconnected: () => {
           console.warn("❌ Notification subscription disconnected");
           setIsSubscribed(false);
-          toast.error("Real-time notifications disconnected");
+          // Suppressed on the M-Safe dashboard — its own toasts/status UI shouldn't
+          // be interrupted by the app-wide WebSocket notification banner.
+          if (!window.location.pathname.startsWith("/msafedashboard")) {
+            toast.error("Real-time notifications disconnected");
+          }
         },
       });
       console.warn("📋 Subscription object:", sub);
