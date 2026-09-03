@@ -50,6 +50,7 @@ import {
 } from "@/store/slices/siteSlice";
 import { getUser, clearAuth, fetchLockAccount, logoutUser } from "@/utils/auth";
 import { permissionService } from "@/services/permissionService";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import { is } from "date-fns/locale";
 import { Dashboard } from "@mui/icons-material";
 import { AnalyticsGrid } from "./dashboard/AnalyticsGrid";
@@ -159,6 +160,28 @@ export const Header = () => {
   const showPulseUsageAnalytics = isPulseSite;
 
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
+
+  // Profile menu → Usage Analytics dropdown options. Each entry decides for itself whether
+  // it belongs in the menu via shouldShow() — the site/tenant check AND the role-based
+  // "Usage Analytics" permission must both pass — and the JSX below just filters + renders
+  // whatever does, instead of two separate hardcoded conditionals in the markup.
+  const usageAnalyticsOptions = [
+    {
+      key: "vi",
+      label: "Usage Analytics",
+      shouldShow: () => (isViSite || isLocalhost) && shouldShow("vi_usage_analytics"),
+      onSelect: () => {
+        window.location.href = usageAnalyticsPath;
+      },
+    },
+    {
+      key: "pulse",
+      label: "Usage Analytics",
+      shouldShow: () => showPulseUsageAnalytics && shouldShow("pulse_usage_analytics"),
+      onSelect: () => navigate("/pulse"),
+    },
+  ];
 
   useEffect(() => {
     if (selectedSite) {
@@ -1136,26 +1159,18 @@ export const Header = () => {
                   <User className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">My Profile</span>
                 </DropdownMenuItem>
-                {(isViSite || isLocalhost) && (
-                  <DropdownMenuItem
-                    onClick={() =>
-                      (window.location.href = usageAnalyticsPath)
-                    }
-                    className="mx-2 my-1 rounded-md"
-                  >
-                    <Activity className="w-4 h-4 mr-2 text-gray-500" />
-                    <span className="font-medium">Usage Analytics</span>
-                  </DropdownMenuItem>
-                )}
-                {showPulseUsageAnalytics && (
-                  <DropdownMenuItem
-                    onClick={() => navigate("/pulse")}
-                    className="mx-2 my-1 rounded-md"
-                  >
-                    <Activity className="w-4 h-4 mr-2 text-gray-500" />
-                    <span className="font-medium">Usage Analytics</span>
-                  </DropdownMenuItem>
-                )}
+                {usageAnalyticsOptions
+                  .filter((option) => option.shouldShow())
+                  .map((option) => (
+                    <DropdownMenuItem
+                      key={option.key}
+                      onClick={option.onSelect}
+                      className="mx-2 my-1 rounded-md"
+                    >
+                      <Activity className="w-4 h-4 mr-2 text-gray-500" />
+                      <span className="font-medium">{option.label}</span>
+                    </DropdownMenuItem>
+                  ))}
 
                 <DropdownMenuItem
                   onClick={() =>
