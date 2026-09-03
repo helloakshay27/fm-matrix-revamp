@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Chart, type ChartConfiguration, type ChartType } from 'chart.js/auto';
-import { AiInsightBlock } from './AiInsightBlock';
+import { AiInsightBlock, type AiInsightSource } from './AiInsightBlock';
 import { InfoTooltip } from './InfoTooltip';
 import type { InfoEntry } from '../clubDashboardData';
 
@@ -23,11 +23,14 @@ interface ChartCardProps {
   types: ChartTypeOption[];
   buildConfig: (type: ChartType) => ChartConfiguration;
   table?: { headers: (string | number)[]; rows: (string | number)[][] };
+  // Live mode (preferred): re-requests this chart's own data endpoint with ai_insights=true.
+  insightSource?: AiInsightSource;
+  // Legacy mode: charts with no backing API yet fall back to calling Anthropic directly.
   ctxText?: string;
   height?: number;
 }
 
-export const ChartCard: React.FC<ChartCardProps> = ({ title, subtitle, info, types, buildConfig, table, ctxText, height = 190 }) => {
+export const ChartCard: React.FC<ChartCardProps> = ({ title, subtitle, info, types, buildConfig, table, insightSource, ctxText, height = 190 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<Chart | null>(null);
@@ -110,7 +113,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({ title, subtitle, info, typ
           </tbody>
         </table>
       )}
-      {ctxText && <AiInsightBlock ctxText={ctxText} />}
+      {(insightSource || ctxText) && <AiInsightBlock source={insightSource} ctxText={ctxText} />}
     </div>
   );
 };

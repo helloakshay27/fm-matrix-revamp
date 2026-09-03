@@ -124,7 +124,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Detect Club Management routes
   const isClubManagementRoute =
     hostname === "club.lockated.com" ||
-    hostname === "localhost" ||
     hostname === "recess-club.panchshil.com" ||
     location.pathname.startsWith("/club-management");
 
@@ -640,7 +639,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             // Backdrop ko exactly wahin se shuru karo warna navbar ke neeche
             // ek patli dark patti dikhti hai jo gap jaisi lagti hai.
             isEmployeeLayout ? "top-14 sm:top-16" : "top-16"
-          }`}
+            }`}
           onClick={() => setIsMobileSidebarOpen(false)}
         />
       )}

@@ -21,6 +21,7 @@ import {
 } from '../drillTemplates';
 import {
   defaultDateRange,
+  INSIGHT_PATHS,
   type DateRangeParams,
   getMemberOverview,
   getGroupMemberships,
@@ -357,7 +358,7 @@ export const BranchManagerDashboard: React.FC<{ onSwitchRole: () => void }> = ({
         {/* <PayChart /> */}
         {/* <CollTrendChart /> */}
         {/* Only one chart left in this row (the other two are commented above) - no grid wrapper so it takes full width instead of sitting in one of three columns. */}
-        <MethodChart data={paymentMethodsQ.data ?? {}} />
+        <MethodChart data={paymentMethodsQ.data ?? {}} range={range} />
         {/* <div className="card">
           <div className="card-title">Total Refund Amount</div>
           <div className="filter-bar">
@@ -376,7 +377,7 @@ export const BranchManagerDashboard: React.FC<{ onSwitchRole: () => void }> = ({
         </div> */}
         {/* Only one card left in this row - no grid wrapper so it takes full width. */}
         <div style={{ marginTop: 12 }}>
-          <CancelChart data={cancellationTrendQ.data ?? []} />
+          <CancelChart data={cancellationTrendQ.data ?? []} range={range} />
         </div>
         <div style={{ marginTop: 12 }}><div className="card">
           <div className="card-title">Pending Payments <span className="muted">{(pendingPaymentsQ.data ?? []).length} invoices</span></div>
@@ -449,8 +450,8 @@ export const BranchManagerDashboard: React.FC<{ onSwitchRole: () => void }> = ({
           <div className="mini-stat"><div className="ms-label">Churn Rate</div><div className="ms-value" style={{ color: 'var(--success)' }}>{memGap.churn}</div><div className="ms-ctx">Not backed by an API yet</div></div>
         </div> */}
         <div className="grid2">
-          <MemChart data={newJoinVsExpiries} />
-          <PlanChart data={planDistributionQ.data ?? []} />
+          <MemChart data={newJoinVsExpiries} range={range} />
+          <PlanChart data={planDistributionQ.data ?? []} range={range} />
         </div>
         {/* Only one card left in this row - no grid wrapper so it takes full width. */}
         <div className="card" style={{ marginTop: 12 }}>
@@ -482,7 +483,7 @@ export const BranchManagerDashboard: React.FC<{ onSwitchRole: () => void }> = ({
         </div> */}
         {/* Only one chart left in this row - no grid wrapper so it takes full width. */}
         <div style={{ marginTop: 12 }}>
-          <PayPlanChart data={membershipByPaymentPlanQ.data ?? { yearly: 0, half_yearly: 0, quarterly: 0, monthly: 0 }} />
+          <PayPlanChart data={membershipByPaymentPlanQ.data ?? { yearly: 0, half_yearly: 0, quarterly: 0, monthly: 0 }} range={range} />
         </div>
         {/* <RevPlanChart /> */}
         {/* <div style={{ marginTop: 12 }}><div className="card">
@@ -520,11 +521,11 @@ export const BranchManagerDashboard: React.FC<{ onSwitchRole: () => void }> = ({
             <div className="bk-seg"><div className="bsv" style={{ color: '#5850a8' }}>{(bookingSummary?.guest ?? 0).toLocaleString()}</div><div className="bsl">Guests</div></div>
             <div className="bk-seg"><div className="bsv" style={{ color: '#2d7a68' }}>{(bookingSummary?.staff ?? 0).toLocaleString()}</div><div className="bsl">Staff</div></div>
           </div>
-          <div style={{ marginTop: 8 }}><AiInsightBlock ctxText="Bookings split by member type for the selected period." /></div>
+          <div style={{ marginTop: 8 }}><AiInsightBlock source={{ path: INSIGHT_PATHS.bookingSummary, params: range }} /></div>
         </div>
-        {/* <BookTypeChart member={bookingSummary?.member ?? 0} guest={bookingSummary?.guest ?? 0} staff={bookingSummary?.staff ?? 0} /> */}
+        {/* <BookTypeChart member={bookingSummary?.member ?? 0} guest={bookingSummary?.guest ?? 0} staff={bookingSummary?.staff ?? 0} range={range} /> */}
         {/* <div className="grid2" style={{ marginTop: 12 }}>
-          <AvailableSlotsHeatmap data={availableSlotsQ.data} />
+          <AvailableSlotsHeatmap data={availableSlotsQ.data} date={range.to_date} />
           <div className="card">
             <div className="card-title">No-Shows Today<InfoTooltip info={getInfo('No-Shows Today')} /></div>
             <div className="chart-sub">Not backed by an API yet - showing placeholder data.</div>
@@ -536,12 +537,12 @@ export const BranchManagerDashboard: React.FC<{ onSwitchRole: () => void }> = ({
           </div>
         </div> */}
         <div className="grid2eq" style={{ marginTop: 12 }}>
-          <WeekdayChart data={weekdayUtilisationQ.data ?? []} />
-          <LeadTimeChart data={leadTimeQ.data ?? []} />
+          <WeekdayChart data={weekdayUtilisationQ.data ?? []} range={range} />
+          <LeadTimeChart data={leadTimeQ.data ?? []} range={range} />
         </div>
         <div className="grid2eq" style={{ marginTop: 12 }}>
-          <MonthAmenChart data={monthlyAmenityQ.data ?? []} />
-          <CancelAmenChart data={cancellationByAmenityQ.data ?? []} />
+          <MonthAmenChart data={monthlyAmenityQ.data ?? []} range={range} />
+          <CancelAmenChart data={cancellationByAmenityQ.data ?? []} range={range} />
         </div>
 
         {/* COACH & STAFF SCHEDULE (not backed by an API yet - placeholder data) */}
@@ -580,7 +581,7 @@ export const BranchManagerDashboard: React.FC<{ onSwitchRole: () => void }> = ({
           <div className="mini-stat"><div className="ms-label">Advance Window</div><div className="ms-value">{capacityOverview?.advance_window ?? '—'}</div><div className="ms-ctx">Varies by amenity</div></div>
         </div>
         <div className="grid2eq">
-          <CapacityAnalysisCard data={amenityUtilization} />
+          <CapacityAnalysisCard data={amenityUtilization} range={range} />
           <div className="card">
             <div className="card-title">Cancelled Bookings – This Month <span className="muted">{(cancelledBookingsQ.data ?? []).length} total</span></div>
             <table><tbody>
@@ -644,7 +645,7 @@ export const BranchManagerDashboard: React.FC<{ onSwitchRole: () => void }> = ({
               })}
             </tbody></table>
           </div>
-          <EventTrendChart data={eventTrendQ.data ?? []} />
+          <EventTrendChart data={eventTrendQ.data ?? []} range={range} />
         </div>
       </div>
     </div>

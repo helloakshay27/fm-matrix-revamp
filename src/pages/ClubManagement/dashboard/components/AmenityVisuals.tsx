@@ -1,10 +1,12 @@
 import React from 'react';
 import { AiInsightBlock } from './AiInsightBlock';
 import { InfoTooltip } from './InfoTooltip';
-import { CHART_CTX, getInfo } from '../clubDashboardData';
+import { getInfo } from '../clubDashboardData';
 import { useDrill } from '../DrillContext';
 import { occupancyHTML } from '../drillTemplates';
-import type { AvailableSlotsByDay, AmenityUtilisationRow } from '@/services/clubDashboardApi';
+import { INSIGHT_PATHS, type AvailableSlotsByDay, type AmenityUtilisationRow, type DateRangeParams } from '@/services/clubDashboardApi';
+
+type Range = Required<DateRangeParams>;
 
 function heatColor(v: number) {
   if (v === 0) return '#E7848E';
@@ -13,7 +15,7 @@ function heatColor(v: number) {
   return '#108C72';
 }
 
-export const AvailableSlotsHeatmap: React.FC<{ data?: AvailableSlotsByDay }> = ({ data }) => {
+export const AvailableSlotsHeatmap: React.FC<{ data?: AvailableSlotsByDay; date: string }> = ({ data, date }) => {
   const { openDrill } = useDrill();
   const hours = data?.hours ?? [];
   const facilities = data?.facilities ?? [];
@@ -60,12 +62,12 @@ export const AvailableSlotsHeatmap: React.FC<{ data?: AvailableSlotsByDay }> = (
         <span><span className="leg-dot" style={{ background: '#9EC8BA' }} />Limited</span>
         <span><span className="leg-dot" style={{ background: '#108C72' }} />Open</span>
       </div>
-      <AiInsightBlock ctxText={CHART_CTX.heatmap} />
+      <AiInsightBlock source={{ path: INSIGHT_PATHS.availableSlotsByDay, params: { date } }} />
     </div>
   );
 };
 
-export const CapacityAnalysisCard: React.FC<{ data: AmenityUtilisationRow[] }> = ({ data }) => {
+export const CapacityAnalysisCard: React.FC<{ data: AmenityUtilisationRow[]; range: Range }> = ({ data, range }) => {
   const { openDrill } = useDrill();
   return (
     <div className="card">
@@ -86,7 +88,7 @@ export const CapacityAnalysisCard: React.FC<{ data: AmenityUtilisationRow[] }> =
           );
         })}
       </div>
-      <AiInsightBlock ctxText={CHART_CTX.capacityBars} />
+      <AiInsightBlock source={{ path: INSIGHT_PATHS.amenityUtilization, params: range }} />
     </div>
   );
 };
