@@ -11,6 +11,8 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
+import { useViWorkflowEvents } from "@/components/PostHogViWorkflowEvents";
+import { useFlowEvents } from '@/components/PostHogFlowEvents';
 
 interface Category {
   id: number;
@@ -80,6 +82,9 @@ const fieldStyles = {
 
 const SpaceManagementBookingAddEmployee = () => {
   const gaEvents = useGaFunnelEvents();
+  // Vi catalogue names for the confirm and success steps of the same funnel.
+  const viEvents = useViWorkflowEvents();
+  const flowEvents = useFlowEvents();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -387,6 +392,8 @@ const SpaceManagementBookingAddEmployee = () => {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     gaEvents.onSpaceBookConfirmClicked("employee", { seat_count: selectedSeat ? 1 : null });
+    viEvents.onSpaceBookConfirmClicked();
+    flowEvents.onFlowStepViewed('spaceBooking', 'confirm', 1);
     e.preventDefault();
 
     // Validation
@@ -475,10 +482,18 @@ const SpaceManagementBookingAddEmployee = () => {
 
       toast.success('Seat booking created successfully!');
       gaEvents.onSpaceBookConfirmSuccess("employee", { seat_count: selectedSeat ? 1 : null });
+      viEvents.onSpaceBookSuccess({ seat_count: selectedSeat ? 1 : undefined });
+      flowEvents.onFlowCompleted('spaceBooking', { succeeded: true });
       navigate('/employee/space-management/bookings');
     } catch (error) {
       console.error('Error creating booking:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to create seat booking');
+      // Terminal event on the failure path too, so an abandoned booking and a booking the
+      // server rejected are distinguishable rather than both just missing.
+      flowEvents.onFlowCompleted('spaceBooking', {
+        succeeded: false,
+        failure_reason: error instanceof Error ? error.message : 'request_failed',
+      });
     } finally {
       setSubmitting(false);
     }

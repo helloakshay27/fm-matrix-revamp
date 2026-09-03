@@ -50,6 +50,7 @@ import {
 } from '../api/queries';
 import { paletteFor, type ChartPalette, type ViTheme } from '../data/palette';
 import type { PageKey } from '../data/pages';
+import { VI_WORKFLOWS, findWorkflow } from '../data/workflows';
 import { VI_BM_DEFAULTS } from '../data/viMetricIds';
 import {
   ViDashboardContext,
@@ -103,10 +104,16 @@ const DEFAULT_STATE: DashboardState = {
   scope: 'org',
   date: 30,
   dev: 'all',
-  module: null,
-  subModule: null,
+  // Layer 3 is navigated by workflow (see data/workflows.ts), and the selected workflow
+  // is what sets `module` — so this starts on the first workflow's module rather than on
+  // whatever the `$pathname` tree happens to return first.
+  module: VI_WORKFLOWS[0].apiModule,
+  subModule: VI_WORKFLOWS[0].apiSubModule,
   sessTab: 'sessions',
   prev: true,
+  // Required by the shared DashboardState shape, and deliberately left at null forever:
+  // there is no seat input on this dashboard and the value is never sent, so A1 is whatever
+  // the API resolves server-side.
   licensedSeats: null,
   activePage: 'pgTraffic',
   theme: 'light',
@@ -116,6 +123,7 @@ const DEFAULT_STATE: DashboardState = {
 export function ViDashboardProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<DashboardState>(DEFAULT_STATE);
   const [page, setPage] = useState<PageKey>('pgTraffic');
+  const [workflow, setWorkflowKey] = useState<string>(VI_WORKFLOWS[0].key);
   const [theme, setTheme] = useState<ViTheme>(initialTheme);
   const [navCollapsed, setNavCollapsed] = useState(() => readStored(NAV_KEY) === 'collapsed');
   const [benchmarks, setBenchmarks] = useState<Record<string, number | null>>({});
@@ -164,13 +172,12 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
       to,
       siteIds,
       devices: deviceParam(state.dev),
-      licensedSeats: state.licensedSeats,
       module: state.module,
       subModule: state.subModule,
     }),
     [
       sitesSettled, from, to, siteIds,
-      state.dev, state.licensedSeats, state.module, state.subModule,
+      state.dev, state.module, state.subModule,
     ],
   );
 
@@ -197,24 +204,9 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
     [subModuleTreeQ.data],
   );
 
-  // The module list is dynamic, so the initial selection has to wait for the tree.
-  useEffect(() => {
-    if (!modules.length) return;
-    setState((s) => {
-      if (s.module && modules.some((m) => m.name === s.module)) return s;
-      return { ...s, module: modules[0].name, subModule: null };
-    });
-  }, [modules]);
-
-  // Same for the sub-module: default to the busiest one under the selected module.
-  useEffect(() => {
-    if (!state.module) return;
-    setState((s) => {
-      if (s.subModule && subModules.some((m) => m.name === s.subModule)) return s;
-      const first = subModules[0]?.name ?? null;
-      return s.subModule === first ? s : { ...s, subModule: first };
-    });
-  }, [subModules, state.module]);
+  // No module/sub-module auto-defaulting here on purpose: `module` is derived from the
+  // selected workflow below, and an effect that reset it to modules[0] on every tree
+  // response would fight that and snap the funnel back to an unrelated module.
 
   /* ---------------------------------------------------------- the view model */
 
@@ -362,9 +354,19 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
     },
     customRange,
     setDev: (dev) => setState((s) => ({ ...s, dev })),
-    setLicensedSeats: (licensedSeats) => setState((s) => ({ ...s, licensedSeats })),
     setModule: (module) => setState((s) => ({ ...s, module, subModule: null })),
     setSubModule: (subModule) => setState((s) => ({ ...s, subModule })),
+    workflow,
+    setWorkflow: (key) => {
+      const wf = findWorkflow(key);
+      setWorkflowKey(wf.key);
+      // The endpoint filters by module / sub_module, not by event-step list, so the route
+      // segments the workflow lives under are what actually change the data. Both move
+      // together — a sub_module from the previous module's tree would filter the new one
+      // down to nothing. Both are null for mobile-only workflows, and WorkflowSection
+      // renders those as awaiting data rather than querying and mislabelling the default.
+      setState((s) => ({ ...s, module: wf.apiModule, subModule: wf.apiSubModule }));
+    },
     setSessTab: (sessTab) => setState((s) => ({ ...s, sessTab })),
     togglePrev: () => setState((s) => ({ ...s, prev: !s.prev })),
     page,
