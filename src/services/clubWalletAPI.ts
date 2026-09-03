@@ -61,16 +61,22 @@ export const fetchClubWallets = async (params: {
   search?: string;
   page?: number;
   per_page?: number;
+  verificationToken: string;
 }): Promise<ClubWalletListResponse> => {
   const query = new URLSearchParams();
   if (params.search) query.set("search", params.search);
   query.set("page", String(params.page ?? 1));
   query.set("per_page", String(params.per_page ?? 20));
+  query.set("verification_token", params.verificationToken);
 
   const response = await fetch(
     `${getFullUrl("/club_wallets")}?${query.toString()}`,
     { headers: jsonHeaders() }
   );
+  if (response.status === 401) {
+    // { code: 401, error: "OTP verification required or expired" }
+    throw new Error("EXPIRED_TOKEN");
+  }
   if (!response.ok) {
     throw new Error(`Failed to fetch club wallets: ${response.status}`);
   }
@@ -114,12 +120,11 @@ export const verifyClubWalletOtp = async (params: {
 
 export const fetchClubWalletDetail = async (params: {
   walletId: string | number;
-  verificationToken: string;
   page?: number;
   per_page?: number;
 }): Promise<ClubWalletDetailResponse> => {
+  // No verification_token required anymore - only the wallet list is OTP-gated.
   const query = new URLSearchParams();
-  query.set("verification_token", params.verificationToken);
   query.set("page", String(params.page ?? 1));
   query.set("per_page", String(params.per_page ?? 20));
 
@@ -127,9 +132,6 @@ export const fetchClubWalletDetail = async (params: {
     `${getFullUrl(`/club_wallets/${params.walletId}`)}?${query.toString()}`,
     { headers: jsonHeaders() }
   );
-  if (response.status === 401) {
-    throw new Error("EXPIRED_TOKEN");
-  }
   if (!response.ok) {
     throw new Error(`Failed to fetch wallet detail: ${response.status}`);
   }
