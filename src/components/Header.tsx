@@ -144,13 +144,18 @@ export const Header = () => {
     hostname.includes("lockated.gophygital.work") ||
     hostname.includes("fm-matrix.lockated.com");
 
-  const isPulseSiteDomain = hostname === "pulse.lockated.com";
-  const isPanchshilUatSiteDomain =
-    hostname === "pulse-uat.panchshil.com" || hostname === "localhost";
-  const showPulseUsageAnalytics = isPulseSiteDomain || isPanchshilUatSiteDomain;
+  // Profile menu → Usage Analytics. Single entry, opens the Vi my Workspace adoption
+  // dashboard. The FM Matrix one at /posthog-dashboard is still routed and reachable
+  // directly by URL; it just no longer has a profile-menu entry.
+  const usageAnalyticsPath = "/vi-posthog-dashboard";
+  const showUsageAnalytics = isViSite || isLocalhost;
 
-  const showExistingPostHogUsageAnalytics =
-    isLocalhost || isPulseSiteDomain || hostname === "pulse-uat.panchshil.com";
+  // Pulse tenants get their own Usage Analytics entry (the /pulse dashboard) instead of
+  // the Vi adoption dashboard above. Scoped to isPulseSite (pulse domains + org_id 90)
+  // and deliberately NOT localhost — the entry above already renders there, and two
+  // identical "Usage Analytics" rows in the same profile menu is what the previous
+  // localhost condition produced.
+  const showPulseUsageAnalytics = isPulseSite;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -1078,10 +1083,10 @@ export const Header = () => {
                   <span className="font-medium">My Profile</span>
                 </DropdownMenuItem>
 
-                {showExistingPostHogUsageAnalytics && (
+                {showUsageAnalytics && (
                   <DropdownMenuItem
                     onClick={() =>
-                      (window.location.href = "/posthog-dashboard")
+                      (window.location.href = usageAnalyticsPath)
                     }
                     className="mx-2 my-1 rounded-md"
                   >

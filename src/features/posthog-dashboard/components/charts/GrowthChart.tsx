@@ -1,90 +1,133 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { GrowthWeek } from '../../data/metrics';
 
+/**
+ * Growth accounting: new / returning / resurrected stacked above the zero line,
+ * dormant below it. Same geometry and palette as the wireframe; the hover
+ * tooltip is self-contained within this chart's bounds.
+ */
 export function GrowthChart({ weeks }: { weeks: GrowthWeek[] }) {
-  const W = 560, H = 240, pl = 34, pr = 10, pt = 14, pb = 26;
-  const n = weeks.length;
+  const svgRef = useRef<SVGSVGElement>(null);
   const [tipIdx, setTipIdx] = useState<number | null>(null);
+
+  const W = 600, H = 250, pl = 36, pr = 12, pt = 18, pb = 28;
+  const n = weeks.length;
   if (!n) return null;
 
   const maxUp = Math.max(0, ...weeks.map((w) => w.nw + w.ret + w.res));
   const maxDn = Math.max(0, ...weeks.map((w) => w.dorm));
-  const bw = ((W - pl - pr) / n) * 0.6;
   const gap = (W - pl - pr) / n;
+  const bw = gap * 0.5;
   const zero = pt + (H - pt - pb) * (maxUp / (maxUp + maxDn || 1));
   const scaleUp = (zero - pt) / (maxUp || 1);
   const scaleDn = (H - pb - zero) / (maxDn || 1);
 
-  const TIP_W = 148, TIP_H = 90;
+  const TIP_W = 150, TIP_H = 92;
+  const axisFont = 'Inter,-apple-system,Segoe UI,sans-serif';
+
+  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const rect = svg.getBoundingClientRect();
+    const scaleX = W / rect.width;
+    const scaleY = H / rect.height;
+    const mouseX = (e.clientX - rect.left) * scaleX;
+    const mouseY = (e.clientY - rect.top) * scaleY;
+    
+    // Check X bounds
+    if (mouseX < pl || mouseX > W - pr) {
+      setTipIdx(null);
+      return;
+    }
+    
+    // Check Y bounds: only show tooltip when hovering over chart area (bars)
+    if (mouseY < pt || mouseY > H - pb) {
+      setTipIdx(null);
+      return;
+    }
+    
+    const idx = Math.floor((mouseX - pl) / gap);
+    if (idx >= 0 && idx < n) {
+      const week = weeks[idx];
+      
+      // Calculate the bar bounds for this week
+      const barTopY = zero - (week.nw + week.ret + week.res) * scaleUp;
+      const barBottomY = zero + week.dorm * scaleDn;
+      
+      // Only show tooltip if mouseY is within the actual bars (above zero OR below zero)
+      if ((mouseY >= barTopY && mouseY <= zero) || (mouseY >= zero && mouseY <= barBottomY)) {
+        setTipIdx(idx);
+      } else {
+        setTipIdx(null);
+      }
+    } else {
+      setTipIdx(null);
+    }
+  };
+
+  const selectedWeek = tipIdx != null && tipIdx >= 0 && tipIdx < n ? weeks[tipIdx] : null;
+  let tipX = 0;
+  let tipY = 0;
+  if (tipIdx != null && selectedWeek) {
+    const hitX = pl + tipIdx * gap;
+    const rawX = tipIdx >= Math.floor(n / 2) ? hitX - TIP_W - 8 : hitX + gap + 8;
+    tipX = Math.max(pl, Math.min(rawX, W - pr - TIP_W));
+    tipY = Math.max(pt, Math.min(zero - TIP_H / 2, H - pb - TIP_H));
+  }
 
   return (
     <svg
-      className="phg-chart"
+      ref={svgRef}
+      className="chart"
       viewBox={`0 0 ${W} ${H}`}
+      preserveAspectRatio="xMidYMid meet"
+      onMouseMove={handleMouseMove}
       onMouseLeave={() => setTipIdx(null)}
+      style={{ cursor: 'crosshair', overflow: 'hidden' }}
     >
-      <line x1={pl} y1={zero} x2={W - pr} y2={zero} stroke="#c9c6ba" />
-
       {weeks.map((w, i) => {
-        const x = pl + i * gap + gap * 0.2;
+        const x = pl + i * gap + (gap - bw) / 2;
         let y = zero;
         const segs: { h: number; fill: string }[] = [
-          { h: w.nw * scaleUp, fill: 'var(--phg-blue)' },
-          { h: w.ret * scaleUp, fill: 'var(--phg-green)' },
-          { h: w.res * scaleUp, fill: 'var(--phg-orange)' },
+          { h: w.nw * scaleUp, fill: 'var(--chart-blue)' },
+          { h: w.ret * scaleUp, fill: 'var(--chart-mint)' },
+          { h: w.res * scaleUp, fill: 'var(--chart-amber)' },
         ];
         const rects = segs.map((seg, si) => {
           y -= seg.h;
-          return <rect key={si} x={x} y={y} width={bw} height={Math.max(0, seg.h)} rx={1.5} fill={seg.fill} />;
+          return <rect key={si} x={x.toFixed(1)} y={y.toFixed(1)} width={bw.toFixed(1)} height={Math.max(0, seg.h).toFixed(1)} fill={seg.fill} />;
         });
         const hd = w.dorm * scaleDn;
-        const hitX = pl + i * gap;
-
-        // Tooltip positioning — flip to left if near right edge
-        const tipX = i > n - 3 ? hitX - TIP_W - 4 : hitX + gap * 0.2;
-        const tipY = Math.max(pt, zero - TIP_H - 8);
 
         return (
           <g key={w.label + i}>
-            {/* Invisible wider hit area for hover */}
-            <rect
-              x={hitX} y={pt} width={gap} height={H - pt - pb + 10}
-              fill="transparent"
-              style={{ cursor: 'crosshair' }}
-              onMouseEnter={() => setTipIdx(i)}
-            />
             {rects}
-            <rect x={x} y={zero} width={bw} height={Math.max(0, hd)} rx={1.5} fill="var(--phg-red)" opacity={0.92} />
-            <text x={x + bw / 2} y={H - 8} textAnchor="middle" fontSize={9.5} fill="#9b998f">{w.label}</text>
-
-            {/* Tooltip */}
-            {tipIdx === i && (
-              <g>
-                {/* Highlight column */}
-                <rect x={hitX} y={pt} width={gap} height={H - pt - pb} fill="#d97757" opacity={0.06} rx={3} />
-                {/* Box */}
-                <rect x={tipX} y={tipY} width={TIP_W} height={TIP_H} rx={8} fill="#1c1a17" opacity={0.93} />
-                {/* Header */}
-                <text x={tipX + 10} y={tipY + 16} fontSize={10} fill="#9b998f" fontWeight="600">
-                  Week of {w.label}
-                </text>
-                {/* Lines */}
-                <circle cx={tipX + 14} cy={tipY + 29} r={4} fill="var(--phg-blue)" />
-                <text x={tipX + 22} y={tipY + 33} fontSize={11} fill="#fff" fontWeight="600">New: {w.nw}</text>
-
-                <circle cx={tipX + 14} cy={tipY + 45} r={4} fill="var(--phg-green)" />
-                <text x={tipX + 22} y={tipY + 49} fontSize={11} fill="#fff" fontWeight="600">Returning: {w.ret}</text>
-
-                <circle cx={tipX + 14} cy={tipY + 61} r={4} fill="var(--phg-orange)" />
-                <text x={tipX + 22} y={tipY + 65} fontSize={11} fill="#fff" fontWeight="600">Resurrected: {w.res}</text>
-
-                <circle cx={tipX + 14} cy={tipY + 77} r={4} fill="var(--phg-red)" />
-                <text x={tipX + 22} y={tipY + 81} fontSize={11} fill="#fff" fontWeight="600">Dormant: {w.dorm}</text>
-              </g>
-            )}
+            <rect x={x.toFixed(1)} y={zero.toFixed(1)} width={bw.toFixed(1)} height={Math.max(0, hd).toFixed(1)} fill="var(--chart-red)" />
+            <text x={x + bw / 2} y={H - 8} textAnchor="middle" fontSize={11} fill="var(--faint)" fontFamily={axisFont}>{w.label}</text>
           </g>
         );
       })}
+      <line x1={pl} y1={zero.toFixed(1)} x2={W - pr} y2={zero.toFixed(1)} stroke="var(--chart-line)" />
+
+      {selectedWeek && tipIdx != null && (
+        <g style={{ pointerEvents: 'none' }}>
+          <rect x={tipX} y={tipY} width={TIP_W} height={TIP_H} rx={8} fill="var(--ink)" />
+          <text x={tipX + 11} y={tipY + 17} fontSize={11} fill="var(--on-ink)" opacity={0.62} fontFamily={axisFont}>
+            Week of {selectedWeek.label}
+          </text>
+          <circle cx={tipX + 15} cy={tipY + 30} r={4} fill="var(--chart-blue)" />
+          <text x={tipX + 24} y={tipY + 34} fontSize={12} fill="var(--on-ink)" fontFamily={axisFont}>New: {selectedWeek.nw}</text>
+
+          <circle cx={tipX + 15} cy={tipY + 46} r={4} fill="var(--chart-mint)" />
+          <text x={tipX + 24} y={tipY + 50} fontSize={12} fill="var(--on-ink)" fontFamily={axisFont}>Returning: {selectedWeek.ret}</text>
+
+          <circle cx={tipX + 15} cy={tipY + 62} r={4} fill="var(--chart-amber)" />
+          <text x={tipX + 24} y={tipY + 66} fontSize={12} fill="var(--on-ink)" fontFamily={axisFont}>Resurrected: {selectedWeek.res}</text>
+
+          <circle cx={tipX + 15} cy={tipY + 78} r={4} fill="var(--chart-red)" />
+          <text x={tipX + 24} y={tipY + 82} fontSize={12} fill="var(--on-ink)" fontFamily={axisFont}>Dormant: {selectedWeek.dorm}</text>
+        </g>
+      )}
     </svg>
   );
 }

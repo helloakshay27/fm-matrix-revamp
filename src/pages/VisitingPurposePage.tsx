@@ -24,6 +24,7 @@ import { createMoveInOutPurpose } from '@/services/moveInOutPurposeAPI';
 import { createWorkType } from '@/services/workTypeAPI';
 import { createVisitorComment } from '@/services/visitorCommentAPI';
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { useVisitorSetupEvents, type SetupTab } from '@/components/PostHogVisitorSetupEvents';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import {
@@ -126,6 +127,7 @@ interface VisitorCommentData {
 export const VisitingPurposePage = () => {
   const navigate = useNavigate();
    const { shouldShow } = useDynamicPermissions();
+  const setupEvents = useVisitorSetupEvents();
 
   const { toast } = useToast();
   const { setCurrentSection } = useLayout();
@@ -502,10 +504,12 @@ export const VisitingPurposePage = () => {
   };
 
   const handleAddPurpose = () => {
+    setupEvents.onSetupFormOpened('visit_purpose');
     setIsAddModalOpen(true);
   };
 
   const handleMoveInOut = () => {
+    setupEvents.onSetupFormOpened('move_in_out');
     setIsMoveInOutModalOpen(true);
   };
 
@@ -563,7 +567,11 @@ export const VisitingPurposePage = () => {
         }));
 
         setMoveInOutData(prev => [...prev, ...newMoveInOutPurposes]);
-        
+        setupEvents.onMoveInOutPurposeAdded({
+          purpose_count: successfulCreations.length,
+          active: moveInOutFormData.active,
+        });
+
         toast({
           title: "Success",
           description: `${successfulCreations.length} move in/out purpose(s) created successfully`,
@@ -594,6 +602,7 @@ export const VisitingPurposePage = () => {
   };
 
   const handleWorkType = () => {
+    setupEvents.onSetupFormOpened('work_type');
     setIsWorkTypeModalOpen(true);
   };
 
@@ -666,7 +675,12 @@ export const VisitingPurposePage = () => {
         }));
 
         setWorkTypeData(prev => [...prev, ...newWorkTypes]);
-        
+        setupEvents.onWorkTypeAdded({
+          work_type_count: successfulCreations.length,
+          staff_type: workTypeFormData.staffType,
+          active: workTypeFormData.active,
+        });
+
         toast({
           title: "Success",
           description: `${successfulCreations.length} work type(s) created successfully`,
@@ -829,7 +843,11 @@ export const VisitingPurposePage = () => {
         }));
 
         setPurposes(prev => [...prev, ...newPurposes]);
-        
+        setupEvents.onVisitPurposeAdded({
+          purpose_count: successfulCreations.length,
+          active: formData.active,
+        });
+
         toast({
           title: "Success",
           description: `${successfulCreations.length} visiting purpose(s) created successfully`,
@@ -984,6 +1002,14 @@ export const VisitingPurposePage = () => {
     setActiveTab(tab);
     setSearchTerm('');
     setFilters({ name: '', status: '' });
+
+    const setupTabMap: Record<string, SetupTab> = {
+      'Visit Purpose': 'visit_purpose',
+      'Work Type': 'work_type',
+      'Move In/Out': 'move_in_out',
+    };
+    const mappedTab = setupTabMap[tab];
+    if (mappedTab) setupEvents.onSetupTabViewed(mappedTab);
   };
 
   // Edit handlers for different types
@@ -1232,7 +1258,7 @@ export const VisitingPurposePage = () => {
                   const currentPurposes = formData.purpose ? formData.purpose.split('|') : [''];
                   setFormData({ ...formData, purpose: [...currentPurposes, ''].join('|') });
                 }}
-                className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030] h-8"
+                className="border-[#C72030] text-[#C72030]  hover:text-[#C72030] h-8"
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Add
@@ -1343,7 +1369,7 @@ export const VisitingPurposePage = () => {
                     const currentPurposes = moveInOutFormData.purpose ? moveInOutFormData.purpose.split('|') : [''];
                     setMoveInOutFormData({...moveInOutFormData, purpose: [...currentPurposes, ''].join('|')});
                   }}
-                  className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030] h-8"
+                  className="border-[#C72030] text-[#C72030]  hover:text-[#C72030] h-8"
                 >
                   <Plus className="w-4 h-4 mr-1" />
                   Add

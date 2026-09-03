@@ -3,6 +3,8 @@ import { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { Download, Loader2 } from 'lucide-react';
 import { InfoButton } from './InfoButton';
+import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
+import { ChartCardLabelContext } from '../context/ChartCardLabelContext';
 import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import type { Persona } from '../data/constants';
 
@@ -125,6 +127,7 @@ export function ChartCard({
   style,
 }: Props) {
   const { showToast, persona, appliedFilters } = useMsafeDashboard();
+  const msafeEvents = useMSafeEvents();
   const [exportingReport, setExportingReport] = useState(false);
   const isReportMode = Boolean(reportExportFor || reportPath);
 
@@ -135,12 +138,28 @@ export function ChartCard({
       const resolvedPath = reportPath || 'msafe_dashboard_report/report_template';
       const resolvedParams = { ...(reportExportFor ? { export_for: reportExportFor } : {}), ...reportParams };
       setExportingReport(true);
+      const reportEvent = {
+        screen: 'msafe_dashboard' as const,
+        source: 'chart_card' as const,
+        label,
+        file_format: 'xlsx' as const,
+        export_mode: 'server_report' as const,
+        export_for: reportExportFor ?? resolvedPath,
+        persona,
+        filters: appliedFilters,
+      };
       try {
         await downloadReport(resolvedPath, resolvedParams, label, persona, appliedFilters, reportExcludeDateRange);
         showToast(`Excel downloaded · ${label}`);
+        msafeEvents.onMsafeDownloaded({ ...reportEvent, succeeded: true });
       } catch (err) {
         console.warn(`Failed to download report from "${resolvedPath}".`, err);
         showToast(`Export failed · ${label}`);
+        msafeEvents.onMsafeDownloaded({
+          ...reportEvent,
+          succeeded: false,
+          failure_reason: (err as Error)?.message ?? 'request_failed',
+        });
       } finally {
         setExportingReport(false);
       }
@@ -150,12 +169,37 @@ export function ChartCard({
     if (exportData && exportData.length > 0) {
       downloadExcel(label, exportData);
       showToast(`Excel downloaded · ${label}`);
+      msafeEvents.onMsafeDownloaded({
+        screen: 'msafe_dashboard',
+        source: 'chart_card',
+        label,
+        file_format: 'xlsx',
+        export_mode: 'client_sheet',
+        row_count: exportData.length,
+        persona,
+        filters: appliedFilters,
+        succeeded: true,
+      });
     } else {
       showToast(`No data to export yet · ${label}`);
+      msafeEvents.onMsafeDownloaded({
+        screen: 'msafe_dashboard',
+        source: 'chart_card',
+        label,
+        file_format: 'xlsx',
+        export_mode: 'client_sheet',
+        row_count: 0,
+        persona,
+        filters: appliedFilters,
+        succeeded: false,
+        failure_reason: 'no_data',
+      });
     }
   };
 
   return (
+    // Names this card for the toolbar controls rendered inside it (see ChartSwitch).
+    <ChartCardLabelContext.Provider value={pdfLabel || title}>
     <div className={`card ${className || ''}`} style={style}>
       <div className="card-hd">
         <div>
@@ -183,6 +227,7 @@ export function ChartCard({
       </div>
       {children}
     </div>
+    </ChartCardLabelContext.Provider>
   );
 }
 

@@ -193,6 +193,15 @@ const SMTDashboard = () => {
     if (!baseUrl || !token) {
       setError('Missing base URL or token');
       toast.error('Missing base URL or token');
+      msafeEvents.onMsafeDownloaded({
+        screen: 'msafe_smt',
+        source: 'row_pdf',
+        label: 'SMT Form PDF',
+        file_format: 'pdf',
+        record_id: row.id,
+        succeeded: false,
+        failure_reason: 'missing_credentials',
+      });
       return;
     }
     setGeneratingId(row.id);
@@ -211,7 +220,7 @@ const SMTDashboard = () => {
         if (typeof val === 'string') {
           const s = val.trim();
           if (s.startsWith('[') && s.endsWith(']')) {
-            try { const parsed = JSON.parse(s); if (Array.isArray(parsed)) return parsed.map((p: any) => (p || '').toString().trim()).filter((p: string) => p.length > 0); } catch { }
+            try { const parsed = JSON.parse(s); if (Array.isArray(parsed)) return parsed.map((p: any) => (p || '').toString().trim()).filter((p: string) => p.length > 0); } catch {}
           }
           return s.split(/[;\n,]/g).map((x) => x.trim()).filter((x) => x.length > 0);
         }
@@ -242,22 +251,22 @@ const SMTDashboard = () => {
         return `${day}/${month}/${year}`;
       };
 
-      // Offscreen containers for snapshot (split to force page break)
-      const containerMain = document.createElement('div');
-      containerMain.style.padding = '20px';
-      containerMain.style.fontFamily = 'Arial, sans-serif';
-      containerMain.style.width = '1000px';
-      containerMain.style.background = '#f3f4f6';
-      containerMain.style.position = 'absolute';
-      containerMain.style.left = '-10000px';
+  // Offscreen containers for snapshot (split to force page break)
+  const containerMain = document.createElement('div');
+  containerMain.style.padding = '20px';
+  containerMain.style.fontFamily = 'Arial, sans-serif';
+  containerMain.style.width = '1000px';
+  containerMain.style.background = '#f3f4f6';
+  containerMain.style.position = 'absolute';
+  containerMain.style.left = '-10000px';
 
-      const containerTail = document.createElement('div');
-      containerTail.style.padding = '20px';
-      containerTail.style.fontFamily = 'Arial, sans-serif';
-      containerTail.style.width = '1000px';
-      containerTail.style.background = '#f3f4f6';
-      containerTail.style.position = 'absolute';
-      containerTail.style.left = '-10000px';
+  const containerTail = document.createElement('div');
+  containerTail.style.padding = '20px';
+  containerTail.style.fontFamily = 'Arial, sans-serif';
+  containerTail.style.width = '1000px';
+  containerTail.style.background = '#f3f4f6';
+  containerTail.style.position = 'absolute';
+  containerTail.style.left = '-10000px';
 
       const sectionCard = (title: string, bodyHtml: string) => `
         <div style='background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:24px;'>
@@ -361,8 +370,8 @@ const SMTDashboard = () => {
       const marginX = 20;
       const marginY = 20;
       const usableWidth = pageWidth - marginX * 2;
-      const ratioMain = usableWidth / canvasMain.width;
-      const fullHeightPtMain = canvasMain.height * ratioMain;
+  const ratioMain = usableWidth / canvasMain.width;
+  const fullHeightPtMain = canvasMain.height * ratioMain;
 
       const saveWithFallback = (pdfInst: any, filename: string) => {
         try { pdfInst.save(filename); }
@@ -373,7 +382,7 @@ const SMTDashboard = () => {
             const a = document.createElement('a');
             a.href = url; a.download = filename; document.body.appendChild(a); a.click();
             setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a); }, 1500);
-          } catch { }
+          } catch {}
         }
       };
 
@@ -411,7 +420,7 @@ const SMTDashboard = () => {
           if (typeof infoGetter === 'function') {
             return infoGetter.call((pdf as any)).pageNumber as number;
           }
-        } catch { }
+        } catch {}
         return pdf.getNumberOfPages();
       };
       const currentPageAfterMain = getCurrentPageNumber();
@@ -450,10 +459,27 @@ const SMTDashboard = () => {
       saveWithFallback(pdf, `smt_${row.id}.pdf`);
       document.body.removeChild(containerMain);
       document.body.removeChild(containerTail);
+      msafeEvents.onMsafeDownloaded({
+        screen: 'msafe_smt',
+        source: 'row_pdf',
+        label: 'SMT Form PDF',
+        file_format: 'pdf',
+        record_id: row.id,
+        succeeded: true,
+      });
     } catch (e: any) {
       console.error('[SMT][PDF] Generation error', e);
       setError(e?.message || 'Failed to generate PDF');
       toast.error('Failed to generate PDF');
+      msafeEvents.onMsafeDownloaded({
+        screen: 'msafe_smt',
+        source: 'row_pdf',
+        label: 'SMT Form PDF',
+        file_format: 'pdf',
+        record_id: row.id,
+        succeeded: false,
+        failure_reason: e?.message ?? 'pdf_generation_failed',
+      });
     } finally {
       setGeneratingId(null);
     }
@@ -616,10 +642,10 @@ const SMTDashboard = () => {
         onSelectItem={handleSelectItem}
         getItemId={item => item.id.toString()}
         storageKey="smt-dashboard-table"
-        emptyMessage="No SMT records found"
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        searchPlaceholder="Search by email..."
+  emptyMessage="No SMT records found"
+  searchTerm={searchTerm}
+  onSearchChange={setSearchTerm}
+  searchPlaceholder="Search by email..."
         enableExport={false}
         showBulkActions={false}
         pagination={false}
@@ -647,13 +673,13 @@ const SMTDashboard = () => {
           </Pagination>
         </div>
       )}
-      <SMTImportModal
-        isOpen={importModalOpen}
-        onClose={() => setImportModalOpen(false)}
+      <SMTImportModal 
+        isOpen={importModalOpen} 
+        onClose={() => setImportModalOpen(false)} 
         onImport={() => {
           // Refresh the table after successful import
           fetchSMTs(currentPage, debouncedSearch);
-        }}
+        }} 
       />
     </div>
   );

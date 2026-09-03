@@ -26,35 +26,34 @@ export function SiteBreakdownSection() {
   const streaming = siteLeague.loaded > 0 && siteLeague.loaded < siteLeague.total;
 
   return (
-    <div className="phg-section" id="secSites">
-      <div className="phg-section-head">
+    <div className="section" id="secSites">
+      <div className="section-head">
         <h2>Site-wise breakdown</h2>
-        <span className="phg-layerpill">{siteLeague.total + siteLeague.skipped} sites in scope</span>
-        <span className="phg-sd">Every site in the current scope, ranked by active users — click a row to drill into that site.</span>
+        <span className="layerpill">{siteLeague.total + siteLeague.skipped} sites in scope</span>
+        <span className="sd">Every site in the current scope, ranked by active users — click a row to drill into that site.</span>
       </div>
 
       <Card
-        accent="green"
         infoKey="chart.siteHealth"
         aiKey="chart.siteHealth"
-        bodyClassName="phg-tbl-wrap"
+        bodyClassName="tbl-wrap"
         head={
           <CardHead
             cr={
               <>
                 Per-site traffic &amp; session
                 {streaming && (
-                  <span className="phg-loadnote">
-                    <span className="phg-spin" /> {siteLeague.loaded} of {siteLeague.total} sites loaded…
+                  <span className="loadnote">
+                    <span className="spin" /> {siteLeague.loaded} of {siteLeague.total} sites loaded…
                   </span>
                 )}
                 {siteLeague.failed > 0 && !streaming && (
-                  <span className="phg-loadnote phg-state-err">
+                  <span className="loadnote err">
                     {siteLeague.failed} site(s) failed to load
                   </span>
                 )}
                 {siteLeague.skipped > 0 && (
-                  <span className="phg-loadnote">
+                  <span className="loadnote">
                     · {siteLeague.skipped} further site(s) not queried (fan-out capped at {siteLeague.total})
                   </span>
                 )}
@@ -70,7 +69,7 @@ export function SiteBreakdownSection() {
           empty={rows.length === 0}
           emptyLabel="No site returned activity for this filter set."
         >
-          <table className="phg-league">
+          <table className="league">
             <SiteHealthTable rows={rows} onSelect={drillToSite} />
           </table>
         </Guard>

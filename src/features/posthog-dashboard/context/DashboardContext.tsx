@@ -6,7 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useIsFetching } from "@tanstack/react-query";
 import {
   DEFAULT_STATE,
   normalizeScope,
@@ -33,6 +33,7 @@ import {
 } from "../data/constants";
 import type { DateRange, Device, Tier } from "../data/constants";
 import type { DeviceType } from "../api/adoptionApi";
+import { getToken, saveToken } from '@/utils/auth';
 import {
   dateRangeFor,
   useAllSites,
@@ -64,6 +65,7 @@ export interface SectionStatus {
 
 export interface ViewModel {
   state: DashboardState;
+  token: string;
   scopeLabel: string;
   traffic: TrafficData;
   adopt: AdoptData;
@@ -105,13 +107,18 @@ interface DashboardContextValue {
   setTier: (tier: Tier) => void;
   setScope: (scope: string) => void;
   setDate: (date: DateRange) => void;
+  setToken: (token: string) => void;
   setDev: (dev: Device) => void;
   setModule: (module: string) => void;
   setSubModule: (subModule: string) => void;
   setSessTab: (tab: DashboardState["sessTab"]) => void;
   setLicensedSeats: (seats: number | null) => void;
+  setActivePage: (page: DashboardState["activePage"]) => void;
+  setTheme: (theme: DashboardState["theme"]) => void;
+  setNavCollapsed: (collapsed: boolean) => void;
   togglePrev: () => void;
   refreshAll: () => void;
+  isRefreshing: boolean;
   benchmarks: Record<string, number | null>;
   getBenchmark: (id: string) => number | null;
   setBenchmark: (id: string, value: number | null) => void;
@@ -127,6 +134,7 @@ const DashboardContext = createContext<DashboardContextValue | null>(null);
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<DashboardState>(DEFAULT_STATE);
+  const [token, setTokenState] = useState(() => getToken() ?? '');
   const [benchmarks, setBenchmarks] = useState<Record<string, number | null>>(
     {}
   );
@@ -148,7 +156,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
   // Hold the analytics calls until the site list has settled — otherwise every endpoint
   // fires once for the whole tenant and again with the real site_id list.
-  const sitesSettled = !sitesQ.isLoading;
+  // Never issue unscoped analytics calls. Empty access is a valid state; a
+  // failed site lookup is exposed as an error instead of falling back tenant-wide.
+  const sitesSettled = sitesQ.isSuccess && sites.length > 0;
 
   // Keep the current scope valid for the tier once the site/company lists resolve.
   useEffect(() => {
@@ -159,6 +169,45 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   }, [sites, groups]);
 
   const { from, to } = useMemo(() => dateRangeFor(state.date), [state.date]);
+
+  // Sync theme and nav to HTML tag
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', state.theme);
+    if (state.navCollapsed) {
+      document.documentElement.classList.add('nav-collapsed');
+    } else {
+      document.documentElement.classList.remove('nav-collapsed');
+    }
+    // Try to save to localStorage as well
+    try {
+      localStorage.setItem('fmx-theme', state.theme);
+      localStorage.setItem('fmx-nav', state.navCollapsed ? 'collapsed' : 'expanded');
+    } catch (e) {}
+  }, [state.theme, state.navCollapsed]);
+
+  // Read initial theme/nav state from local storage on mount
+  useEffect(() => {
+    try {
+      const t = localStorage.getItem('fmx-theme');
+      const n = localStorage.getItem('fmx-nav');
+      setState(s => {
+        let updated = false;
+        const nextState = { ...s };
+        if (t === 'dark' || t === 'light') {
+          nextState.theme = t;
+          updated = true;
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          nextState.theme = 'dark';
+          updated = true;
+        }
+        if (n === 'collapsed' || n === 'expanded') {
+          nextState.navCollapsed = n === 'collapsed';
+          updated = true;
+        }
+        return updated ? nextState : s;
+      });
+    } catch (e) {}
+  }, []);
 
   const scopedSites = useMemo(
     () => scopeSites(state, sites, groups),
@@ -188,12 +237,13 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       licensedSeats: state.licensedSeats,
       module: state.module,
       subModule: state.subModule,
+      token,
     }),
-    [sitesSettled, from, to, siteIds, state.dev, state.licensedSeats, state.module, state.subModule]
+    [sitesSettled, from, to, siteIds, state.dev, state.licensedSeats, state.module, state.subModule, token]
   );
 
   /** A disabled query reports isLoading=false, so treat "not started yet" as loading too. */
-  const pending = !sitesSettled;
+  const pending = sitesQ.isLoading;
 
   /* --------------------------------------------------------- the 9 endpoints */
 
@@ -238,6 +288,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const vm = useMemo<ViewModel>(
     () => ({
       state,
+      token,
       scopeLabel: computeScopeLabel(state, sites, groups),
       traffic: buildTraffic(state, from, to, trafficQ.data, usageQ.data),
       adopt: buildAdopt(
@@ -260,7 +311,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       status: {
         traffic: {
           loading: pending || trafficQ.isLoading || usageQ.isLoading,
-          error: (trafficQ.error ?? usageQ.error) as Error | null,
+          error: (sitesQ.error ?? trafficQ.error ?? usageQ.error) as Error | null,
         },
         adopt: {
           loading:
@@ -270,7 +321,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
             growthQ.isLoading ||
             retentionQ.isLoading ||
             rolesQ.isLoading,
-          error: (engagementQ.error ??
+          error: (sitesQ.error ??
+            engagementQ.error ??
             trendQ.error ??
             growthQ.error ??
             retentionQ.error ??
@@ -284,9 +336,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
             moduleTreeQ.isLoading ||
             workflowQ.isLoading ||
             (!state.module && modules.length > 0),
-          error: (moduleTreeQ.error ?? workflowQ.error) as Error | null,
+          error: (sitesQ.error ?? moduleTreeQ.error ?? workflowQ.error) as Error | null,
         },
-        siteHealth: { loading: pending || league.isLoading, error: null },
+        siteHealth: {
+          loading: pending || league.isLoading,
+          error: (sitesQ.error ?? league.error) as Error | null,
+        },
       },
       siteLeague: {
         loaded: league.loaded,
@@ -304,6 +359,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       scopedSites,
       groups,
       pending,
+      sitesQ.error,
       from,
       to,
       modules,
@@ -337,6 +393,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       workflowQ.error,
       league.entries,
       league.isLoading,
+      league.error,
       league.loaded,
       league.failed,
       league.total,
@@ -344,6 +401,25 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   );
 
   const queryClient = useQueryClient();
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const isFetchingAdoption = useIsFetching({ queryKey: ["fm-adoption"] }) > 0;
+  const isRefreshing = isManualRefreshing || isFetchingAdoption;
+
+  const refreshAll = async () => {
+    setIsManualRefreshing(true);
+    const minDelay = new Promise((resolve) => setTimeout(resolve, 650));
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["fm-adoption"], refetchType: "all" }),
+        queryClient.refetchQueries({ queryKey: ["fm-adoption"], type: "active" }),
+        minDelay,
+      ]);
+    } catch {
+      // ignore fetch errors handled by query observers
+    } finally {
+      setIsManualRefreshing(false);
+    }
+  };
 
   const value: DashboardContextValue = {
     vm,
@@ -351,13 +427,21 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       setState((s) => ({ ...s, tier, scope: normalizeScope(tier, s.scope, sites, groups) })),
     setScope: (scope) => setState((s) => ({ ...s, scope })),
     setDate: (date) => setState((s) => ({ ...s, date })),
+    setToken: (nextToken) => {
+      setTokenState(nextToken);
+      saveToken(nextToken);
+    },
     setDev: (dev) => setState((s) => ({ ...s, dev })),
     setModule: (module) => setState((s) => ({ ...s, module, subModule: null })),
     setSubModule: (subModule) => setState((s) => ({ ...s, subModule })),
     setSessTab: (sessTab) => setState((s) => ({ ...s, sessTab })),
     setLicensedSeats: (licensedSeats) => setState((s) => ({ ...s, licensedSeats })),
+    setActivePage: (activePage) => setState((s) => ({ ...s, activePage })),
+    setTheme: (theme) => setState((s) => ({ ...s, theme })),
+    setNavCollapsed: (navCollapsed) => setState((s) => ({ ...s, navCollapsed })),
     togglePrev: () => setState((s) => ({ ...s, prev: !s.prev })),
-    refreshAll: () => queryClient.invalidateQueries({ queryKey: ["fm-adoption"] }),
+    refreshAll,
+    isRefreshing,
     benchmarks,
     getBenchmark: (id) =>
       id in benchmarks

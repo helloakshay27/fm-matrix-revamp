@@ -112,7 +112,7 @@ const LMCDashboard = () => {
             if (appliedUserEmail) params.push(`q[user_email_cont]=${appliedUserEmail.trim()}`);
             else if (searchTerm) params.push(`q[user_email_cont]=${searchTerm.trim()}`);
             if (appliedCreatedByEmail) params.push(`q[created_by_email_cont]=${appliedCreatedByEmail.trim()}`);
-            const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
             const url = `${cleanBaseUrl}/lmcs.json?${params.join('&')}`;
             const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
             if (!res.ok) throw new Error(`Failed (${res.status})`);
@@ -450,6 +450,16 @@ const LMCDashboard = () => {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
+        msafeEvents.onMsafeDownloaded({
+            screen: 'msafe_lmc',
+            source: 'list_export',
+            label: 'LMC list',
+            file_format: 'csv',
+            export_mode: 'client_sheet',
+            row_count: filteredData.length,
+            succeeded: filteredData.length > 0,
+            failure_reason: filteredData.length > 0 ? null : 'no_data',
+        });
     };
 
     const handleFilterClick = () => {
@@ -508,6 +518,7 @@ const LMCDashboard = () => {
                     getItemId={(row: LMCTableRow) => row.id.toString()}
                     onFilterClick={handleFilterClick}
                     handleExport={handleExport}
+                    analyticsDownloadHandled
                     exportFileName="lmc-export"
                     emptyMessage={loading ? 'Loading LMCs...' : 'No LMC records found'}
                 />

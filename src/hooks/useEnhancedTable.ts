@@ -7,6 +7,8 @@ export interface ColumnConfig {
   draggable?: boolean;
   defaultVisible?: boolean;
   hideable?: boolean;
+  /** Initial column width in px, used until the user manually drags-resizes it. */
+  width?: number | string;
 }
 
 interface UseEnhancedTableProps<T> {

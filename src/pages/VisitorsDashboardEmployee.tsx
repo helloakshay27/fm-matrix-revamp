@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/pagination';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions, getAuthHeader, ENDPOINTS } from '@/config/apiConfig';
 import { toast } from 'sonner';
+import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // Get current site ID dynamically from localStorage
@@ -208,6 +209,14 @@ const getVisitorsOut = async (siteId: number, page: number = 1, perPage: number 
 
 export const VisitorsDashboardEmployee = () => {
   const { shouldShow } = useDynamicPermissions();
+  const gaEvents = useGaFunnelEvents();
+
+  // GA parity: the visitor register was opened. Mount-only, so paging and tab
+  // switches inside the page do not each count as a fresh page view.
+  useEffect(() => {
+    gaEvents.onVisitorsPageClicked("employee");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [selectedPerson, setSelectedPerson] = useState('');
   const [isNewVisitorDialogOpen, setIsNewVisitorDialogOpen] = useState(false);
   const [isUpdateNumberDialogOpen, setIsUpdateNumberDialogOpen] = useState(false);
@@ -1188,6 +1197,7 @@ export const VisitorsDashboardEmployee = () => {
   };
 
   const handleVisitorDetails = (visitorId: number) => {
+    gaEvents.onVisitorListItemClicked("employee", visitorId);
     console.log('Navigating to visitor details:', visitorId);
     navigate(`/security/visitor/employee/details/${visitorId}`);
   };

@@ -5,6 +5,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { TextField, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { CheckCircle, FileText, Shield, ArrowLeft } from 'lucide-react';
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchFMUsers } from '@/store/slices/fmUserSlice';
 import { fetchEntities } from '@/store/slices/entitiesSlice';
@@ -13,6 +14,7 @@ import { fetchOccupantUsers } from '@/store/slices/occupantUsersSlice';
 import { apiClient } from '@/utils/apiClient';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
 
 const fieldStyles = {
   '& .MuiOutlinedInput-root': {
@@ -40,9 +42,28 @@ const fieldStyles = {
 };
 
 export const AddFacilityBookingPage = () => {
+  const gaEvents = useGaFunnelEvents();
+
+  // GA parity: the facility booking screen was opened. Mount-only, so re-renders and
+  // in-page steps are not counted as fresh page views.
+  useEffect(() => {
+    gaEvents.onBookFacilityPageClicked("admin");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [searchParams] = useSearchParams();
+
+  const pulseEvents = usePulseEvents();
+
+  useEffect(() => {
+    pulseEvents.onModuleViewed({
+      module: "Amenities",
+      package: "Pulse Privilege",
+      screen: "pulse_amenity_add",
+      guard: true,
+    });
+  }, [pulseEvents]);
 
   // Get URL parameters
   const urlFacilityId = searchParams.get('facility_id');
@@ -541,6 +562,7 @@ export const AddFacilityBookingPage = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    gaEvents.onBookFacilityClicked("admin", selectedFacility || null);
     e.preventDefault();
 
     try {
@@ -733,16 +755,17 @@ export const AddFacilityBookingPage = () => {
         const token = localStorage.getItem('token');
 
         if (bookingId && token) {
-          toast.success('Booking created successfully!');
-          navigate(-1);
-          // toast.success('Booking created successfully! Redirecting to payment gateway...');
-          // navigate(`/payment-redirect?bookingId=${bookingId}&token=${token}&amount=${costSummary.amountFull}`);
+          toast.success('Booking created successfully! Redirecting to payment gateway...');
+          gaEvents.onBookFacilitySuccess("admin", { facility_id: selectedFacility || null, booking_id: bookingId });
+          // Navigate to payment gateway redirection page with booking ID and token
+          navigate(`/payment-redirect?bookingId=${bookingId}&token=${token}&amount=${costSummary.amountFull}`);
         } else {
           toast.error('Booking created but payment redirection failed. Please contact support.');
           navigate(-1);
         }
       } else {
         toast.success('Booking created successfully!');
+        gaEvents.onBookFacilitySuccess("admin", { facility_id: selectedFacility || null });
         navigate(-1);
       }
     } catch (error: any) {
@@ -752,6 +775,7 @@ export const AddFacilityBookingPage = () => {
         console.error('Response status:', error.response.status);
       }
       toast.error('Error creating booking. Please check the console for details.');
+      gaEvents.onBookFacilityFailure("admin", { facility_id: selectedFacility || null, error });
     }
   };
 

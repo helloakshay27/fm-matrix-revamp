@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2, Filter, Flag } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate,useLocation } from 'react-router-dom';
 import { NewVisitorDialog } from '@/components/NewVisitorDialog';
 import { UpdateNumberDialog } from '@/components/UpdateNumberDialog';
 import { VisitorFilterDialog, VisitorFilters } from '@/components/VisitorFilterDialog';
@@ -28,6 +28,7 @@ import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions, getAuthHeader, EN
 import { toast } from 'sonner';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { useVisitorEvents } from '@/components/PostHogVisitorEvents';
+import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { MaterialDatePicker } from '@/components/ui/material-date-picker';
@@ -185,6 +186,14 @@ const getVisitorsOut = async (siteId: number, page: number = 1, perPage: number 
 export const VisitorsDashboard = () => {
   const { shouldShow } = useDynamicPermissions();
   const visitorEvents = useVisitorEvents();
+  const gaEvents = useGaFunnelEvents();
+
+  // GA parity: the visitor register was opened. Mount-only, so paging and tab
+  // switches inside the page do not each count as a fresh page view.
+  useEffect(() => {
+    gaEvents.onVisitorsPageClicked("admin");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [selectedPerson, setSelectedPerson] = useState('');
   const [isNewVisitorDialogOpen, setIsNewVisitorDialogOpen] = useState(false);
   const [isUpdateNumberDialogOpen, setIsUpdateNumberDialogOpen] = useState(false);
@@ -258,7 +267,7 @@ export const VisitorsDashboard = () => {
     totalEntries: 0,
     perPage: 20
   });
-  const [historyPagination, setHistoryPagination] = useState(() => {
+ const [historyPagination, setHistoryPagination] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return {
       currentPage: Number(params.get('page')) || 1,
@@ -1132,6 +1141,8 @@ export const VisitorsDashboard = () => {
       const data = await response.json();
       console.log('✅ Visitor checked out successfully:', data);
 
+      visitorEvents.onVisitorCheckedOut(visitorId);
+
       // Show success toast
       toast.success('Visitor checked out successfully!');
 
@@ -1152,6 +1163,7 @@ export const VisitorsDashboard = () => {
   };
 
   const handleVisitorDetails = (visitorId: number) => {
+    gaEvents.onVisitorListItemClicked("admin", visitorId);
     console.log('Navigating to visitor details:', visitorId);
     navigate(`/security/visitor/details/${visitorId}`);
   };
@@ -1559,7 +1571,7 @@ export const VisitorsDashboard = () => {
     navigate(`${location.pathname}?page=${historyPagination.currentPage}`, { replace: true });
   }, [historyPagination.currentPage]);
 
-  const handlePageChange = (page: number) => {
+const handlePageChange = (page: number) => {
     navigate(`${location.pathname}?page=${page}`, { replace: true });
     setHistoryPagination(prev => ({ ...prev, currentPage: page }));
     if (mainTab === 'visitor') {
@@ -1800,7 +1812,7 @@ export const VisitorsDashboard = () => {
               handleExport={handleExport}
               exportFileName="visitor-history"
               pagination={false}
-              loading={historyLoading}
+               loading={historyLoading}
               storageKey="visitor-history-table"
               emptyMessage="No visitor history available"
               searchPlaceholder="Search visitors..."
@@ -1810,10 +1822,10 @@ export const VisitorsDashboard = () => {
                   {shouldShow("visitor", "create") && (
                     <Button
                       onClick={() => setIsActionPanelOpen(true)}
-                      variant="ghost"
                       className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
                     >
-                      <Plus className="fm-button-fix fm-button-brand px-4 py-2" />
+                      <Plus  className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost" />
                       Action
                     </Button>
                   )}

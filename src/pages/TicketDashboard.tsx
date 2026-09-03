@@ -39,6 +39,7 @@ import { toast as sonnerToast } from 'sonner';
 import { AIAssistantWidget } from '@/components/AIAssistantWidget';
 import { DashboardAIAssistant } from '@/components/DashboardAIAssistant';
 import { buildReturnToPath } from '@/utils/listBackNavigation';
+import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
 
 // Sortable Chart Item Component
 const SortableChartItem = ({
@@ -120,6 +121,14 @@ const SectionLoader: React.FC<{
 
 export const TicketDashboard = () => {
   const navigate = useNavigate();
+  const gaEvents = useGaFunnelEvents();
+
+  // GA parity: the ticket list was opened (mount-only, so filters and
+  // paging inside the page do not each count as a fresh page view).
+  useEffect(() => {
+    gaEvents.onTicketPageClicked("admin");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // Initialize permission hook
   const { shouldShow } = useDynamicPermissions();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -251,7 +260,8 @@ export const TicketDashboard = () => {
     complaints: 0,
     suggestions: 0,
     requests: 0,
-    pending_tickets: 0
+    pending_tickets: 0,
+    completed_tickets: 0
   });
   const [filters, setFilters] = useState<TicketFilters>({});
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -525,6 +535,7 @@ export const TicketDashboard = () => {
   const openTickets = ticketSummary.open_tickets || 0;
   const inProgressTickets = ticketSummary.in_progress_tickets || 0;
   const closedTickets = ticketSummary.closed_tickets || 0;
+  const completedTickets = ticketSummary.completed_tickets || 0; // Assuming completed tickets are the same as closed tickets
   const totalSummaryTickets = ticketSummary.total_tickets || 0;
   const pendingTickets = ticketSummary.pending_tickets || 0; // Use ticket summary for pending as it's not in analytics
   // Always use the current totalSummaryTickets from API to ensure the count is up-to-date
@@ -675,6 +686,7 @@ export const TicketDashboard = () => {
     setVisibleSections(selectedSections);
   };
   const handleViewDetails = (ticketId: string) => {
+    gaEvents.onTicketListItemClicked("admin", ticketId);
     const currentPath = window.location.pathname;
     const returnTo = buildReturnToPath(location.pathname, location.search, location.hash);
 
@@ -1008,6 +1020,9 @@ export const TicketDashboard = () => {
       } else if (cardType === 'closed') {
         newFilters.complaint_status_fixed_state_eq = 'Closed';
         console.log('✅ Closed card - Combined filters with date_range:', newFilters);
+      } else if (cardType === 'complete') {
+        newFilters.complaint_status_fixed_state_eq = 'Complete';
+        console.log('✅ Complete card - Combined filters with date_range:', newFilters);
       }
 
       return newFilters;
@@ -1035,6 +1050,8 @@ export const TicketDashboard = () => {
       return filters.complaint_status_fixed_state_eq === 'In Progress';
     } else if (cardType === 'closed') {
       return filters.complaint_status_fixed_state_eq === 'Closed';
+    } else if (cardType === 'complete') {
+      return filters.complaint_status_fixed_state_eq === 'Complete';
     }
 
     return false;
@@ -1701,7 +1718,7 @@ export const TicketDashboard = () => {
 
           <TabsContent value="tickets" className="space-y-4 sm:space-y-4 mt-4 sm:mt-6">
             {/* Ticket Statistics Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
               {[{
                 label: 'Total Tickets',
                 value: displayTotalTickets,
@@ -1719,6 +1736,12 @@ export const TicketDashboard = () => {
                 value: closedTickets,
                 icon: Settings,
                 type: 'closed',
+                clickable: true
+              },{
+                label: 'Completed',
+                value: completedTickets,
+                icon: Settings,
+                type: 'complete',
                 clickable: true
               }].map((item, i) => {
                 const IconComponent = item.icon;
