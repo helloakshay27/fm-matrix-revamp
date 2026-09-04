@@ -62,5 +62,5 @@ export const capturePulseEvent = (
   event: string,
   props: Record<string, unknown> = {}
 ) => {
-  capturePostHogEvent(event, { project_code: "PULSE-01", ...props });
+  capturePostHogEvent(event, { project_code: "TEP-01", ...props });
 };

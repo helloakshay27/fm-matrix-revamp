@@ -788,8 +788,17 @@ export function EnhancedTable<T extends Record<string, any>>({
     e.stopPropagation();
     setResizingColumn(columnKey);
     setStartX(e.clientX);
+    // ColumnConfig.width accepts a CSS string too (some pages pass "150px"), but the
+    // resize maths needs a number — parseInt drops the unit, NaN falls back to the default.
     const configuredWidth = columns.find((c) => c.key === columnKey)?.width;
-    setStartWidth(columnWidths[columnKey] || configuredWidth || 128); // Default min-w-32 = 128px
+    const configuredWidthPx =
+      typeof configuredWidth === "number"
+        ? configuredWidth
+        : parseInt(String(configuredWidth ?? ""), 10);
+    setStartWidth(
+      columnWidths[columnKey] ||
+        (Number.isFinite(configuredWidthPx) ? configuredWidthPx : 128) // Default min-w-32 = 128px
+    );
     document.body.style.cursor = "col-resize";
     document.body.style.userSelect = "none";
   };

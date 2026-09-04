@@ -73,10 +73,15 @@ function extractFilterOptions(
     })
     .filter((v): v is FilterOption => Boolean(v));
 
+  // Dedupe by id, not name — two genuinely distinct circles/functions can share
+  // a display name (e.g. two differently-scoped entries both labeled "Delhi").
+  // Deduping by name silently dropped one of them from the list, which under-
+  // counted "Select All" against the real backend total by however many such
+  // name collisions existed.
   const seen = new Set<string>();
   const deduped = options.filter((o) => {
-    if (seen.has(o.name)) return false;
-    seen.add(o.name);
+    if (seen.has(o.id)) return false;
+    seen.add(o.id);
     return true;
   });
   return deduped.sort((a, b) => a.name.localeCompare(b.name));
@@ -130,7 +135,7 @@ export const DEFAULT_FILTERS: AppliedFilters = {
   functionIds: [],
   zone: 'All Zones',
   zoneId: '',
-  empType: 'Internal / External',
+  empType: 'Internal & External',
   empTypeId: '',
   // Last one month, by default: today and the 30 days before it.
   startDate: toISODate(oneMonthAgo),
@@ -148,7 +153,7 @@ const INITIAL_FILTERS: AppliedFilters = {
   functionIds: [],
   zone: 'All Zones',
   zoneId: '',
-  empType: 'Internal / External',
+  empType: 'Internal & External',
   empTypeId: '',
   startDate: toISODate(oneMonthAgo),
   endDate: toISODate(today),
@@ -263,7 +268,7 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
   const [circleOptions, setCircleOptions] = useState<FilterOption[]>([]);
   const [functionOptions, setFunctionOptions] = useState<FilterOption[]>([]);
   const [empTypeOptions, setEmpTypeOptions] = useState<FilterOption[]>([
-    { id: '', name: 'Internal / External' },
+    { id: '', name: 'Internal & External' },
   ]);
   const [loadingFilterOptions, setLoadingFilterOptions] = useState(true);
 
@@ -308,7 +313,7 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       if (controller.signal.aborted) return;
       setCircleOptions(circles);
       setFunctionOptions(funcs);
-      setEmpTypeOptions([{ id: '', name: 'Internal / External' }, ...empTypes]);
+      setEmpTypeOptions([{ id: '', name: 'Internal & External' }, ...empTypes]);
       setLoadingFilterOptions(false);
     })();
     return () => controller.abort();
@@ -479,7 +484,7 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
   // Reset clears the circle and date range entirely — unlike the persona-switch default
   // (Mumbai + last 30 days), "Reset" means no circle_id/from_date/to_date get sent at all,
   // and the Circle/date fields render empty. Function and employee type already default to
-  // "no filter" (empty list / "Internal / External"), so those stay as-is.
+  // "no filter" (empty list / "Internal & External"), so those stay as-is.
   const resetFilters = useCallback(() => {
     setCircles([]);
     setCircleIds([]);

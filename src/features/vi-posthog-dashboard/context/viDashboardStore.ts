@@ -71,9 +71,16 @@ export interface ViDashboardValue {
   /** The custom window currently applied, or null when a preset is active. */
   customRange: { from: string; to: string } | null;
   setDev: (dev: Device) => void;
-  setLicensedSeats: (seats: number | null) => void;
   setModule: (module: string) => void;
   setSubModule: (subModule: string) => void;
+  /**
+   * Selected workflow key from the Vi catalogue (see data/workflows.ts). Layer 3 is
+   * navigated by workflow rather than by raw `$pathname` module: the catalogue's bucket →
+   * workflow grouping is the documented structure, and setting a workflow also sets the
+   * `module` the workflow_usage endpoint is queried with.
+   */
+  workflow: string;
+  setWorkflow: (key: string) => void;
   setSessTab: (tab: DashboardState['sessTab']) => void;
   togglePrev: () => void;
 

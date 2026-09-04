@@ -25,6 +25,7 @@ import {
   Menu,
   X,
   Activity,
+  LayoutDashboard,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -49,6 +50,7 @@ import {
 } from "@/store/slices/siteSlice";
 import { getUser, clearAuth, fetchLockAccount, logoutUser } from "@/utils/auth";
 import { permissionService } from "@/services/permissionService";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import { is } from "date-fns/locale";
 import { Dashboard } from "@mui/icons-material";
 import { AnalyticsGrid } from "./dashboard/AnalyticsGrid";
@@ -158,6 +160,28 @@ export const Header = () => {
   const showPulseUsageAnalytics = isPulseSite;
 
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
+
+  // Profile menu → Usage Analytics dropdown options. Each entry decides for itself whether
+  // it belongs in the menu via shouldShow() — the site/tenant check AND the role-based
+  // "Usage Analytics" permission must both pass — and the JSX below just filters + renders
+  // whatever does, instead of two separate hardcoded conditionals in the markup.
+  const usageAnalyticsOptions = [
+    {
+      key: "vi",
+      label: "Usage Analytics",
+      shouldShow: () => (isViSite || isLocalhost) && shouldShow("vi_usage_analytics"),
+      onSelect: () => {
+        window.location.href = usageAnalyticsPath;
+      },
+    },
+    {
+      key: "pulse",
+      label: "Usage Analytics",
+      shouldShow: () => showPulseUsageAnalytics && shouldShow("pulse_usage_analytics"),
+      onSelect: () => navigate("/pulse"),
+    },
+  ];
 
   useEffect(() => {
     if (selectedSite) {
@@ -612,7 +636,8 @@ export const Header = () => {
           {/* Dashboard Button */}
           {!isRestrictedUser && (
             <div className="hidden lg:flex items-center gap-2">
-              {!isViSite && (
+              {/* Hidden for the Club tenant - only "Club Dashboard" should show there. */}
+              {!isViSite && !isClubSite && (
                 <button
                   onClick={() => (window.location.href = "/dashboard")}
                   className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
@@ -621,7 +646,7 @@ export const Header = () => {
                   Dashboard
                 </button>
               )}
-              {!isViSite && (
+              {!isViSite && !isClubSite && (
                 <button
                   onClick={() =>
                     (window.location.href = "/dashboard-executive")
@@ -630,6 +655,29 @@ export const Header = () => {
                 >
                   <ChartAreaIcon className="w-4 h-4" />
                   Executive Dashboard
+                </button>
+              )}
+              {isClubSite && (
+                <button
+                  onClick={() =>
+                    (window.location.href = "/club-management/membership")
+                  }
+                  className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                >
+                  <Home className="w-4 h-4" />
+                  Home
+                </button>
+              )}
+              {isClubSite && (
+                <button
+                  onClick={() =>
+                    (window.location.href = "/club-management/dashboard")
+                  }
+                  className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                >
+                  {/* <LayoutDashboard className="w-4 h-4" /> */}
+                   <ChartArea className="w-4 h-4" />
+                  Club Dashboard
                 </button>
               )}
 
@@ -819,7 +867,8 @@ export const Header = () => {
                 align="end"
                 className="!w-[calc(100vw-1rem)] max-w-[18rem] bg-white border border-[#D5DbDB] shadow-lg sm:!w-64"
               >
-                {!isViSite && (
+                {/* Hidden for the Club tenant - only "Club Dashboard" should show there. */}
+                {!isViSite && !isClubSite && (
                   <DropdownMenuItem
                     onClick={() => (window.location.href = "/dashboard")}
                   >
@@ -827,7 +876,7 @@ export const Header = () => {
                     Dashboard
                   </DropdownMenuItem>
                 )}
-                {!isViSite && (
+                {!isViSite && !isClubSite && (
                   <DropdownMenuItem
                     onClick={() =>
                       (window.location.href = "/dashboard-executive")
@@ -835,6 +884,26 @@ export const Header = () => {
                   >
                     <ChartAreaIcon className="w-4 h-4 mr-2" />
                     Executive Dashboard
+                  </DropdownMenuItem>
+                )}
+                {isClubSite && (
+                  <DropdownMenuItem
+                    onClick={() =>
+                      (window.location.href = "/club-management/membership")
+                    }
+                  >
+                    <Home className="w-4 h-4 mr-2" />
+                    Home
+                  </DropdownMenuItem>
+                )}
+                {isClubSite && (
+                  <DropdownMenuItem
+                    onClick={() =>
+                      (window.location.href = "/club-management/dashboard")
+                    }
+                  >
+                    <LayoutDashboard className="w-4 h-4 mr-2" />
+                    Club Dashboard
                   </DropdownMenuItem>
                 )}
                 {/* {canShowMSafeDashboard && (
@@ -1090,29 +1159,30 @@ export const Header = () => {
                   <User className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">My Profile</span>
                 </DropdownMenuItem>
-                {(isViSite || isLocalhost) && (
-                  <DropdownMenuItem
-                    onClick={() =>
-                      (window.location.href = usageAnalyticsPath)
-                    }
-                    className="mx-2 my-1 rounded-md"
-                  >
-                    <Activity className="w-4 h-4 mr-2 text-gray-500" />
-                    <span className="font-medium">Usage Analytics</span>
-                  </DropdownMenuItem>
-                )}
-                {showPulseUsageAnalytics && (
-                  <DropdownMenuItem
-                    onClick={() => navigate("/pulse")}
-                    className="mx-2 my-1 rounded-md"
-                  >
-                    <Activity className="w-4 h-4 mr-2 text-gray-500" />
-                    <span className="font-medium">Usage Analytics</span>
-                  </DropdownMenuItem>
-                )}
+                {usageAnalyticsOptions
+                  .filter((option) => option.shouldShow())
+                  .map((option) => (
+                    <DropdownMenuItem
+                      key={option.key}
+                      onClick={option.onSelect}
+                      className="mx-2 my-1 rounded-md"
+                    >
+                      <Activity className="w-4 h-4 mr-2 text-gray-500" />
+                      <span className="font-medium">{option.label}</span>
+                    </DropdownMenuItem>
+                  ))}
 
                 <DropdownMenuItem
-                  onClick={() => navigate("/settings")}
+                  onClick={() =>
+                    // "/settings" itself has no content - it's a bare parent route for
+                    // /settings/* pages. For the Club tenant, land on the first page of the
+                    // (now Master-merged) Settings package instead.
+                    navigate(
+                      isClubSite
+                        ? "/settings/vas/booking-club/setup"
+                        : "/settings"
+                    )
+                  }
                   className="mx-2 my-1 rounded-md"
                 >
                   <Settings className="w-4 h-4 mr-2 text-gray-500" />

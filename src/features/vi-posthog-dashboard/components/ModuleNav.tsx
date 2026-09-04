@@ -1,93 +1,57 @@
-import { fmtC } from '@/features/posthog-dashboard/data/format';
 import { useViDashboard } from '../context/viDashboardStore';
-
-/** How many modules / sub-modules get their own button before the "more" select takes over. */
-const VISIBLE = 8;
+import { VI_BUCKETS, findWorkflow, workflowsInBucket } from '../data/workflows';
 
 /**
- * Module and sub-module selector. Both lists come from the `modules` endpoint's `$pathname`
- * tree — nothing here is hardcoded, so the nav reflects whatever the tenant actually uses.
+ * Workflow selector for Layer 3 — bucket tabs over workflow chips, the structure the Vi
+ * catalogue itself defines (see data/workflows.ts).
+ *
+ * This deliberately does NOT list raw `$pathname` modules. The catalogue groups its 304 real
+ * events into named workflows under six buckets, and that grouping is what a reader of this
+ * dashboard recognises; a flat list of URL segments is an implementation detail of how the
+ * events happen to be stored. Picking a workflow sets the `module` the workflow_usage
+ * endpoint is queried with, so the cards below follow the selection.
  */
 export function ModuleNav() {
-  const { vm, setModule, setSubModule } = useViDashboard();
-  const { modules, subModules, state } = vm;
+  const { workflow, setWorkflow } = useViDashboard();
 
-  const shown = modules.slice(0, VISIBLE);
-  const rest = modules.slice(VISIBLE);
-  const selectedIsHidden = !!state.module && !shown.some((m) => m.name === state.module);
-
-  const subShown = subModules.slice(0, VISIBLE);
-  const subRest = subModules.slice(VISIBLE);
-  const subSelectedIsHidden =
-    !!state.subModule && !subShown.some((m) => m.name === state.subModule);
+  const current = findWorkflow(workflow);
+  const chips = workflowsInBucket(current.bucket);
 
   return (
     <div
       className="mnav"
-      title="Module & sub-module are derived from real $pathname segments — this filter applies to the Workflow Usage section only"
+      title="Choose a workflow — this filter applies to the Workflow Usage section only"
     >
       <div className="mnav-buckets">
-        {shown.map((m) => (
+        {VI_BUCKETS.map((bucket) => (
           <button
-            key={m.name}
+            key={bucket}
             type="button"
-            className={m.name === state.module ? 'on' : undefined}
-            onClick={() => setModule(m.name)}
-            title={`${fmtC(m.users)} users · ${fmtC(m.sessions)} sessions`}
+            className={bucket === current.bucket ? 'on' : undefined}
+            // Switching bucket lands on that bucket's first workflow: a bucket is a grouping,
+            // not a selectable scope of its own, so there is no "whole bucket" query to run.
+            onClick={() => setWorkflow(workflowsInBucket(bucket)[0].key)}
           >
-            {m.name}
+            {bucket}
+            <span className="mcount">{workflowsInBucket(bucket).length}</span>
           </button>
         ))}
-        {rest.length > 0 && (
-          <select
-            className="mmore"
-            value={selectedIsHidden ? state.module! : ''}
-            onChange={(e) => e.target.value && setModule(e.target.value)}
-          >
-            <option value="">More ({rest.length})…</option>
-            {rest.map((m) => (
-              <option key={m.name} value={m.name}>
-                {m.name}
-              </option>
-            ))}
-          </select>
-        )}
       </div>
 
       <div className="mnav-mods">
-        {subShown.length > 0 ? (
-          <div className="segbar">
-            {subShown.map((m) => (
-              <button
-                key={m.name}
-                type="button"
-                className={m.name === state.subModule ? 'on' : undefined}
-                onClick={() => setSubModule(m.name)}
-                title={`${fmtC(m.users)} users · ${fmtC(m.events)} events`}
-              >
-                {m.name}
-              </button>
-            ))}
-            {subRest.length > 0 && (
-              <select
-                className="mmore"
-                value={subSelectedIsHidden ? state.subModule! : ''}
-                onChange={(e) => e.target.value && setSubModule(e.target.value)}
-              >
-                <option value="">More ({subRest.length})…</option>
-                {subRest.map((m) => (
-                  <option key={m.name} value={m.name}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-        ) : (
-          <span className="sd">
-            {state.module ? `No sub-paths recorded under /${state.module}` : 'Loading modules…'}
-          </span>
-        )}
+        <div className="segbar">
+          {chips.map((wf) => (
+            <button
+              key={wf.key}
+              type="button"
+              className={wf.key === workflow ? 'on' : undefined}
+              onClick={() => setWorkflow(wf.key)}
+              title={`${wf.tier === 'modern' ? 'Modern' : 'Legacy GA'} instrumentation · ${wf.steps.join(' → ')}`}
+            >
+              {wf.name}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -3229,7 +3229,7 @@ button[class*="border-[#c62828]"],
 button[class*="border-[#C72030]"],
 button[class*="border-[#c72030]"] {
   border-color: var(--color-primary) !important;
-  color: var(--color-primary) !important;
+  color: var(--color-bg) !important;
 }
 
 button.hover\:bg-red-50:hover,
@@ -3330,7 +3330,7 @@ button.text-\[\#C72030\],
 button[class*="text-[#C72030]"],
 button[title="Filter"] {
   border-color: var(--color-primary) !important;
-  color: var(--color-primary) !important;
+  color: var(--color-bg) !important;
 }
 
 /* Filter hover */

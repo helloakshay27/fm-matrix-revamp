@@ -135,6 +135,11 @@ const modulesByPackage = {
       icon: FileText,
       href: "/club-management/debit-note",
     },
+    {
+      name: "Wallet",
+      icon: CircleDollarSign,
+      href: "/club-management/wallets",
+    },
     // {
     //     name: "Accounting",
     //     icon: Calculator,
@@ -155,144 +160,128 @@ const modulesByPackage = {
     // },
   ],
 
-  Settings: [
-    {
-      name: "Amenities Setup",
-      icon: Gem,
-      href: "/settings/vas/booking-club/setup",
-      additionalRoutes: [
-        "/settings/vas/booking-club/setup/add",
-        "/settings/vas/booking-club/setup/details",
-        "/settings/vas/booking-club/setup/edit",
-      ],
-    },
-    {
-      name: "Membership Plan Setup",
-      icon: ClipboardList,
-      href: "/settings/vas/membership-plan/setup",
-      additionalRoutes: [
-        "/settings/vas/membership-plan/setup/add",
-        "/settings/vas/membership-plan/setup/edit",
-        "/settings/vas/membership-plan/setup/details",
-      ],
-    },
-    {
-      name: "Accessories Setup",
-      icon: Boxes,
-      href: "/settings/accessories",
-      additionalRoutes: ["/settings/accessories"],
-    },
-    {
-      name: "Payment Plan Setup",
-      icon: CreditCard,
-      href: "/settings/payment-plan/setup",
-      additionalRoutes: [
-        "/settings/payment-plan/add",
-        "/settings/payment-plan/edit",
-        "/settings/payment-plan/details",
-        "/settings/payment-management",
-      ],
-    },
-    {
-      name: "Templates",
-      icon: FileSpreadsheet,
-      href: "/master/communication-template",
-      subItems: [
-        {
-          name: "Communication Template",
-          href: "/master/communication-template",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Root Cause Analysis",
-          href: "/master/template/root-cause-analysis",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Preventive Action",
-          href: "/master/template/preventive-action",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Short-term Impact",
-          href: "/master/template/short-term-impact",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Long-term Impact",
-          href: "/master/template/long-term-impact",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Corrective Action",
-          href: "/master/template/corrective-action",
-          color: "text-[#1a1a1a]",
-        },
-      ],
-    },
-
-    {
-      name: "Ticket Management",
-      icon: TicketCheck,
-      subItems: [
-        { name: "Setup", href: "/settings/ticket-management/setup" },
-        {
-          name: "Escalation Matrix",
-          href: "/settings/ticket-management/escalation-matrix",
-        },
-        {
-          name: "Cost Approval",
-          href: "/settings/ticket-management/cost-approval",
-        },
-      ],
-    },
-
-    {
-      name: "Club Privilege",
-      icon: Award,
-      subItems: [
-        { name: "Service", href: "/pulse/pulse-privilege/plus-service" },
-        {
-          name: "Service Category",
-          href: "/pulse/pulse-privilege/service-category",
-        },
-      ],
-    },
-
-    {
-      name: "Roles (RACI)",
-      icon: UserCheck,
-      href: "/settings/roles",
-      subItems: [
-        { name: "Department", href: "/settings/roles/department" },
-        { name: "Role", href: "/settings/roles/role" },
-      ],
-    },
-    {
-      name: "House Setup",
-      icon: House,
-      href: "/settings/house/setup",
-    },
-    {
-      name: "HSN Code Setup",
-      icon: Code,
-      href: "/settings/hsn-code/setup",
-    },
-
-    // {
-    //     name: "Accountants",
-    //     icon: Users,
-    //     subItems: [
-    //         { name: "Manual Journals ", href: "/settings/manual-journal" },
-    //         { name: "Transactions ", href: "/settings/transactions" },
-    //         // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
-    //         { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
-    //         { name: "Opening Balance", href: "/settings/opening-balance" },
-    //         { name: "Budget", href: "/settings/budget" },
-    //         { name: "Tax Setup ", href: "/settings/tax-setup" },
-    //     ],
-    // },
-  ],
+  // Settings package merged into Master above - keep commented out rather than delete.
+  // Settings: [
+  //   {
+  //     name: "Amenities Setup",
+  //     icon: Gem,
+  //     href: "/settings/vas/booking-club/setup",
+  //     additionalRoutes: [
+  //       "/settings/vas/booking-club/setup/add",
+  //       "/settings/vas/booking-club/setup/details",
+  //       "/settings/vas/booking-club/setup/edit",
+  //     ],
+  //   },
+  //   {
+  //     name: "Membership Plan Setup",
+  //     icon: ClipboardList,
+  //     href: "/settings/vas/membership-plan/setup",
+  //     additionalRoutes: [
+  //       "/settings/vas/membership-plan/setup/add",
+  //       "/settings/vas/membership-plan/setup/edit",
+  //       "/settings/vas/membership-plan/setup/details",
+  //     ],
+  //   },
+  //   {
+  //     name: "Accessories Setup",
+  //     icon: Boxes,
+  //     href: "/settings/accessories",
+  //     additionalRoutes: ["/settings/accessories"],
+  //   },
+  //   {
+  //     name: "Payment Plan Setup",
+  //     icon: CreditCard,
+  //     href: "/settings/payment-plan/setup",
+  //     additionalRoutes: [
+  //       "/settings/payment-plan/add",
+  //       "/settings/payment-plan/edit",
+  //       "/settings/payment-plan/details",
+  //       "/settings/payment-management",
+  //     ],
+  //   },
+  //   {
+  //     name: "Templates",
+  //     icon: FileSpreadsheet,
+  //     href: "/master/communication-template",
+  //     subItems: [
+  //       {
+  //         name: "Communication Template",
+  //         href: "/master/communication-template",
+  //         color: "text-[#1a1a1a]",
+  //       },
+  //       {
+  //         name: "Root Cause Analysis",
+  //         href: "/master/template/root-cause-analysis",
+  //         color: "text-[#1a1a1a]",
+  //       },
+  //       {
+  //         name: "Preventive Action",
+  //         href: "/master/template/preventive-action",
+  //         color: "text-[#1a1a1a]",
+  //       },
+  //       {
+  //         name: "Short-term Impact",
+  //         href: "/master/template/short-term-impact",
+  //         color: "text-[#1a1a1a]",
+  //       },
+  //       {
+  //         name: "Long-term Impact",
+  //         href: "/master/template/long-term-impact",
+  //         color: "text-[#1a1a1a]",
+  //       },
+  //       {
+  //         name: "Corrective Action",
+  //         href: "/master/template/corrective-action",
+  //         color: "text-[#1a1a1a]",
+  //       },
+  //     ],
+  //   },
+  //   {
+  //     name: "Ticket Management",
+  //     icon: TicketCheck,
+  //     subItems: [
+  //       { name: "Setup", href: "/settings/ticket-management/setup" },
+  //       {
+  //         name: "Escalation Matrix",
+  //         href: "/settings/ticket-management/escalation-matrix",
+  //       },
+  //       {
+  //         name: "Cost Approval",
+  //         href: "/settings/ticket-management/cost-approval",
+  //       },
+  //     ],
+  //   },
+  //   {
+  //     name: "Club Privilege",
+  //     icon: Award,
+  //     subItems: [
+  //       { name: "Service", href: "/pulse/pulse-privilege/plus-service" },
+  //       {
+  //         name: "Service Category",
+  //         href: "/pulse/pulse-privilege/service-category",
+  //       },
+  //     ],
+  //   },
+  //   {
+  //     name: "Roles (RACI)",
+  //     icon: UserCheck,
+  //     href: "/settings/roles",
+  //     subItems: [
+  //       { name: "Department", href: "/settings/roles/department" },
+  //       { name: "Role", href: "/settings/roles/role" },
+  //     ],
+  //   },
+  //   {
+  //     name: "House Setup",
+  //     icon: House,
+  //     href: "/settings/house/setup",
+  //   },
+  //   {
+  //     name: "HSN Code Setup",
+  //     icon: Code,
+  //     href: "/settings/hsn-code/setup",
+  //   },
+  // ],
 
   Accounting: [
     {
@@ -895,7 +884,129 @@ const modulesByPackage = {
   ],
 
   Master: [
+  
+
+    // Moved here from modulesByPackage.Settings (now commented out below)
     {
+      name: "Amenities Setup",
+      icon: Gem,
+      href: "/settings/vas/booking-club/setup",
+      additionalRoutes: [
+        "/settings/vas/booking-club/setup/add",
+        "/settings/vas/booking-club/setup/details",
+        "/settings/vas/booking-club/setup/edit",
+      ],
+    },
+    {
+      name: "Membership Plan Setup",
+      icon: ClipboardList,
+      href: "/settings/vas/membership-plan/setup",
+      additionalRoutes: [
+        "/settings/vas/membership-plan/setup/add",
+        "/settings/vas/membership-plan/setup/edit",
+        "/settings/vas/membership-plan/setup/details",
+      ],
+    },
+    {
+      name: "Accessories Setup",
+      icon: Boxes,
+      href: "/settings/accessories",
+      additionalRoutes: ["/settings/accessories"],
+    },
+    {
+      name: "Payment Plan Setup",
+      icon: CreditCard,
+      href: "/settings/payment-plan/setup",
+      additionalRoutes: [
+        "/settings/payment-plan/add",
+        "/settings/payment-plan/edit",
+        "/settings/payment-plan/details",
+        "/settings/payment-management",
+      ],
+    },
+    {
+      name: "Ticket Management",
+      icon: TicketCheck,
+      subItems: [
+        { name: "Setup", href: "/settings/ticket-management/setup" },
+        {
+          name: "Escalation Matrix",
+          href: "/settings/ticket-management/escalation-matrix",
+        },
+        {
+          name: "Cost Approval",
+          href: "/settings/ticket-management/cost-approval",
+        },
+        {
+          name: "Templates",
+          icon: FileSpreadsheet,
+          href: "/master/communication-template",
+          subItems: [
+            {
+              name: "Communication Template",
+              href: "/master/communication-template",
+              color: "text-[#1a1a1a]",
+            },
+            {
+              name: "Root Cause Analysis",
+              href: "/master/template/root-cause-analysis",
+              color: "text-[#1a1a1a]",
+            },
+            {
+              name: "Preventive Action",
+              href: "/master/template/preventive-action",
+              color: "text-[#1a1a1a]",
+            },
+            {
+              name: "Short-term Impact",
+              href: "/master/template/short-term-impact",
+              color: "text-[#1a1a1a]",
+            },
+            {
+              name: "Long-term Impact",
+              href: "/master/template/long-term-impact",
+              color: "text-[#1a1a1a]",
+            },
+            {
+              name: "Corrective Action",
+              href: "/master/template/corrective-action",
+              color: "text-[#1a1a1a]",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      name: "Club Privilege",
+      icon: Award,
+      subItems: [
+        { name: "Service", href: "/pulse/pulse-privilege/plus-service" },
+        {
+          name: "Service Category",
+          href: "/pulse/pulse-privilege/service-category",
+        },
+      ],
+    },
+    {
+      name: "Roles (RACI)",
+      icon: UserCheck,
+      href: "/settings/roles",
+      subItems: [
+        { name: "Department", href: "/settings/roles/department" },
+        { name: "Role", href: "/settings/roles/role" },
+      ],
+    },
+    {
+      name: "House Setup",
+      icon: House,
+      href: "/settings/house/setup",
+    },
+    {
+      name: "HSN Code Setup",
+      icon: Code,
+      href: "/settings/hsn-code/setup",
+    },
+      {
       name: "Location Master",
       icon: MapPin,
       subItems: [
@@ -1382,7 +1493,13 @@ export const ClubSidebar: React.FC = () => {
           <h3
             className={`text-sm font-medium text-[#C72030] uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"}`}
           >
-            {isSidebarCollapsed ? "" : currentSection || "Club Management"}
+            {/* "Master" is renamed to "Settings" for display only - the underlying section
+                key (modulesByPackage, routing) stays "Master" so nothing else has to change. */}
+            {isSidebarCollapsed
+              ? ""
+              : currentSection === "Master"
+                ? "Settings"
+                : currentSection || "Club Management"}
           </h3>
         </div>
 

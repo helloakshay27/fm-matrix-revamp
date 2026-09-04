@@ -11,7 +11,15 @@ import {
 } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Calendar, Share2, File, Info, XCircle, ArrowLeft, Pencil } from "lucide-react";
+import {
+  Calendar,
+  Share2,
+  File,
+  Info,
+  XCircle,
+  ArrowLeft,
+  Pencil,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -44,6 +52,7 @@ export const AddEventPage = () => {
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
+  const isClubSite = window.location.hostname === "club.lockated.com";
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -68,7 +77,9 @@ export const AddEventPage = () => {
     shareWithCommunities: "no",
   });
 
-  const [attachments, setAttachments] = useState<Array<{ file: File, preview: string | null }>>([]);
+  const [attachments, setAttachments] = useState<
+    Array<{ file: File; preview: string | null }>
+  >([]);
   const [isActive, setIsActive] = useState(true);
 
   // Tech Park Modal State
@@ -87,29 +98,29 @@ export const AddEventPage = () => {
 
   useEffect(() => {
     // Restore form data from localStorage if exists
-    const savedEventName = localStorage.getItem('eventName');
-    const savedEventType = localStorage.getItem('eventType');
-    const savedAmountPerPerson = localStorage.getItem('amountPerPerson');
-    const savedFromDate = localStorage.getItem('fromDate');
-    const savedToDate = localStorage.getItem('toDate');
-    const savedEventStartTime = localStorage.getItem('eventStartTime');
-    const savedEventEndTime = localStorage.getItem('eventEndTime');
-    const savedEventLocation = localStorage.getItem('eventLocation');
-    const savedMemberCapacity = localStorage.getItem('memberCapacity');
-    const savedPerMemberLimit = localStorage.getItem('perMemberLimit');
-    const savedPulseCategory = localStorage.getItem('pulseCategory');
-    const savedRsvp = localStorage.getItem('rsvp');
-    const savedShowOnHomeScreen = localStorage.getItem('showOnHomeScreen');
-    const savedApprovalRequired = localStorage.getItem('approvalRequired');
-    const savedEventDescription = localStorage.getItem('eventDescription');
-    const savedShareWith = localStorage.getItem('shareWith');
-    const savedSelectedTechParks = localStorage.getItem('selectedTechParks');
-    const savedPayAt = localStorage.getItem('payAt');
-    const savedExternalLink = localStorage.getItem('externalLink');
+    const savedEventName = localStorage.getItem("eventName");
+    const savedEventType = localStorage.getItem("eventType");
+    const savedAmountPerPerson = localStorage.getItem("amountPerPerson");
+    const savedFromDate = localStorage.getItem("fromDate");
+    const savedToDate = localStorage.getItem("toDate");
+    const savedEventStartTime = localStorage.getItem("eventStartTime");
+    const savedEventEndTime = localStorage.getItem("eventEndTime");
+    const savedEventLocation = localStorage.getItem("eventLocation");
+    const savedMemberCapacity = localStorage.getItem("memberCapacity");
+    const savedPerMemberLimit = localStorage.getItem("perMemberLimit");
+    const savedPulseCategory = localStorage.getItem("pulseCategory");
+    const savedRsvp = localStorage.getItem("rsvp");
+    const savedShowOnHomeScreen = localStorage.getItem("showOnHomeScreen");
+    const savedApprovalRequired = localStorage.getItem("approvalRequired");
+    const savedEventDescription = localStorage.getItem("eventDescription");
+    const savedShareWith = localStorage.getItem("shareWith");
+    const savedSelectedTechParks = localStorage.getItem("selectedTechParks");
+    const savedPayAt = localStorage.getItem("payAt");
+    const savedExternalLink = localStorage.getItem("externalLink");
 
     // If any saved data exists, restore it
     if (savedEventName || savedEventDescription || savedFromDate) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         eventName: savedEventName || prev.eventName,
         eventType: savedEventType || prev.eventType,
@@ -138,42 +149,44 @@ export const AddEventPage = () => {
         const parsedTechParks = JSON.parse(savedSelectedTechParks);
         setSelectedTechParks(parsedTechParks);
       } catch (error) {
-        console.error('Error parsing saved tech parks:', error);
+        console.error("Error parsing saved tech parks:", error);
       }
     }
 
     // Clean up localStorage after restoration
-    localStorage.removeItem('eventName');
-    localStorage.removeItem('eventType');
-    localStorage.removeItem('amountPerPerson');
-    localStorage.removeItem('fromDate');
-    localStorage.removeItem('toDate');
-    localStorage.removeItem('eventStartTime');
-    localStorage.removeItem('eventEndTime');
-    localStorage.removeItem('eventLocation');
-    localStorage.removeItem('memberCapacity');
-    localStorage.removeItem('perMemberLimit');
-    localStorage.removeItem('pulseCategory');
-    localStorage.removeItem('rsvp');
-    localStorage.removeItem('showOnHomeScreen');
-    localStorage.removeItem('approvalRequired');
-    localStorage.removeItem('eventDescription');
-    localStorage.removeItem('shareWith');
-    localStorage.removeItem('selectedTechParks');
-    localStorage.removeItem('payAt');
-    localStorage.removeItem('externalLink');
+    localStorage.removeItem("eventName");
+    localStorage.removeItem("eventType");
+    localStorage.removeItem("amountPerPerson");
+    localStorage.removeItem("fromDate");
+    localStorage.removeItem("toDate");
+    localStorage.removeItem("eventStartTime");
+    localStorage.removeItem("eventEndTime");
+    localStorage.removeItem("eventLocation");
+    localStorage.removeItem("memberCapacity");
+    localStorage.removeItem("perMemberLimit");
+    localStorage.removeItem("pulseCategory");
+    localStorage.removeItem("rsvp");
+    localStorage.removeItem("showOnHomeScreen");
+    localStorage.removeItem("approvalRequired");
+    localStorage.removeItem("eventDescription");
+    localStorage.removeItem("shareWith");
+    localStorage.removeItem("selectedTechParks");
+    localStorage.removeItem("payAt");
+    localStorage.removeItem("externalLink");
 
     // Check if returning from community selection
-    const savedCommunities = localStorage.getItem('selectedCommunityIds');
+    const savedCommunities = localStorage.getItem("selectedCommunityIds");
     if (savedCommunities) {
-      const communityIds = JSON.parse(savedCommunities).map((id: any) => typeof id === 'string' ? parseInt(id, 10) : id);
+      const communityIds = JSON.parse(savedCommunities).map((id: any) =>
+        typeof id === "string" ? parseInt(id, 10) : id
+      );
       setSelectedCommunities(communityIds);
 
       if (communityIds.length > 0) {
-        setFormData(prev => ({ ...prev, shareWithCommunities: 'yes' }));
+        setFormData((prev) => ({ ...prev, shareWithCommunities: "yes" }));
       }
 
-      localStorage.removeItem('selectedCommunityIds');
+      localStorage.removeItem("selectedCommunityIds");
     }
 
     fetchCommunities();
@@ -185,11 +198,14 @@ export const AddEventPage = () => {
 
     setIsLoadingTechParks(true);
     try {
-      const response = await axios.get(`https://${baseUrl}/pms/sites/allowed_sites.json`, {
-        headers: {
-          Authorization: `Bearer ${token}`
+      const response = await axios.get(
+        `https://${baseUrl}/pms/sites/allowed_sites.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      });
+      );
       setTechParks(response.data.sites || []);
     } catch (error) {
       console.error("Failed to fetch tech parks", error);
@@ -203,8 +219,8 @@ export const AddEventPage = () => {
     try {
       const response = await axios.get(`https://${baseUrl}/communities.json`, {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
       setCommunities(response.data.communities || []);
     } catch (error) {
@@ -212,7 +228,9 @@ export const AddEventPage = () => {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -237,26 +255,29 @@ export const AddEventPage = () => {
     }
     if (name === "shareWithCommunities" && value === "yes") {
       // Save form data to localStorage before navigation
-      localStorage.setItem('eventName', formData.eventName);
-      localStorage.setItem('eventType', formData.eventType);
-      localStorage.setItem('amountPerPerson', formData.amountPerPerson);
-      localStorage.setItem('fromDate', formData.fromDate);
-      localStorage.setItem('toDate', formData.toDate);
-      localStorage.setItem('eventStartTime', formData.eventStartTime);
-      localStorage.setItem('eventEndTime', formData.eventEndTime);
-      localStorage.setItem('eventLocation', formData.eventLocation);
-      localStorage.setItem('memberCapacity', formData.memberCapacity);
-      localStorage.setItem('perMemberLimit', formData.perMemberLimit);
-      localStorage.setItem('pulseCategory', formData.pulseCategory);
-      localStorage.setItem('rsvp', formData.rsvp);
-      localStorage.setItem('showOnHomeScreen', formData.showOnHomeScreen);
-      localStorage.setItem('approvalRequired', formData.approvalRequired);
-      localStorage.setItem('eventDescription', formData.eventDescription);
-      localStorage.setItem('shareWith', formData.shareWith);
-      localStorage.setItem('payAt', formData.payAt);
-      localStorage.setItem('externalLink', formData.externalLink);
-      localStorage.setItem('selectedTechParks', JSON.stringify(selectedTechParks));
-      navigate('/pulse/community?mode=selection&from=add-event');
+      localStorage.setItem("eventName", formData.eventName);
+      localStorage.setItem("eventType", formData.eventType);
+      localStorage.setItem("amountPerPerson", formData.amountPerPerson);
+      localStorage.setItem("fromDate", formData.fromDate);
+      localStorage.setItem("toDate", formData.toDate);
+      localStorage.setItem("eventStartTime", formData.eventStartTime);
+      localStorage.setItem("eventEndTime", formData.eventEndTime);
+      localStorage.setItem("eventLocation", formData.eventLocation);
+      localStorage.setItem("memberCapacity", formData.memberCapacity);
+      localStorage.setItem("perMemberLimit", formData.perMemberLimit);
+      localStorage.setItem("pulseCategory", formData.pulseCategory);
+      localStorage.setItem("rsvp", formData.rsvp);
+      localStorage.setItem("showOnHomeScreen", formData.showOnHomeScreen);
+      localStorage.setItem("approvalRequired", formData.approvalRequired);
+      localStorage.setItem("eventDescription", formData.eventDescription);
+      localStorage.setItem("shareWith", formData.shareWith);
+      localStorage.setItem("payAt", formData.payAt);
+      localStorage.setItem("externalLink", formData.externalLink);
+      localStorage.setItem(
+        "selectedTechParks",
+        JSON.stringify(selectedTechParks)
+      );
+      navigate("/pulse/community?mode=selection&from=add-event");
     }
   };
 
@@ -264,7 +285,7 @@ export const AddEventPage = () => {
     const file = e.target.files?.[0];
     if (file) {
       // Validate that file is an image
-      if (!file.type.startsWith('image/')) {
+      if (!file.type.startsWith("image/")) {
         toast.error("Only image files are allowed. Please select an image.");
         if (attachmentInputRef.current) {
           attachmentInputRef.current.value = "";
@@ -275,7 +296,10 @@ export const AddEventPage = () => {
       // Create preview for image files
       const reader = new FileReader();
       reader.onloadend = () => {
-        setAttachments(prev => [...prev, { file, preview: reader.result as string }]);
+        setAttachments((prev) => [
+          ...prev,
+          { file, preview: reader.result as string },
+        ]);
       };
       reader.readAsDataURL(file);
     }
@@ -293,7 +317,7 @@ export const AddEventPage = () => {
     if (e) {
       e.stopPropagation();
     }
-    setAttachments(prev => prev.filter((_, i) => i !== index));
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
   const validateForm = () => {
@@ -329,7 +353,7 @@ export const AddEventPage = () => {
       toast.error("Event Description is required");
       return false;
     }
-    if (formData.shareWith === 'individual' && selectedTechParks.length === 0) {
+    if (formData.shareWith === "individual" && selectedTechParks.length === 0) {
       toast.error("Please select at least one Tech Park");
       return false;
     }
@@ -342,35 +366,62 @@ export const AddEventPage = () => {
     try {
       const formDataToSend = new FormData();
 
-      formDataToSend.append('event[event_name]', formData.eventName);
-      formDataToSend.append("event[amount_per_member]", formData.amountPerPerson);
-      formDataToSend.append("event[from_time]", `${formData.fromDate}T${formData.eventStartTime}`);
-      formDataToSend.append("event[to_time]", `${formData.toDate}T${formData.eventEndTime}`);
+      formDataToSend.append("event[event_name]", formData.eventName);
+      formDataToSend.append(
+        "event[amount_per_member]",
+        formData.amountPerPerson
+      );
+      formDataToSend.append(
+        "event[from_time]",
+        `${formData.fromDate}T${formData.eventStartTime}`
+      );
+      formDataToSend.append(
+        "event[to_time]",
+        `${formData.toDate}T${formData.eventEndTime}`
+      );
       formDataToSend.append("event[event_at]", formData.eventLocation);
       formDataToSend.append("event[capacity]", formData.memberCapacity);
       formDataToSend.append("event[per_member_limit]", formData.perMemberLimit);
       formDataToSend.append("event[event_category]", formData.pulseCategory);
-      formDataToSend.append("event[rsvp_action]", formData.rsvp === "yes" ? "1" : "0");
-      formDataToSend.append("event[show_on_home]", formData.showOnHomeScreen === "yes" ? "1" : "0");
-      formDataToSend.append("event[approval_required]", formData.approvalRequired === "yes" ? "1" : "0");
+      formDataToSend.append(
+        "event[rsvp_action]",
+        formData.rsvp === "yes" ? "1" : "0"
+      );
+      formDataToSend.append(
+        "event[show_on_home]",
+        formData.showOnHomeScreen === "yes" ? "1" : "0"
+      );
+      formDataToSend.append(
+        "event[approval_required]",
+        formData.approvalRequired === "yes" ? "1" : "0"
+      );
       formDataToSend.append("event[description]", formData.eventDescription);
-      formDataToSend.append('event[of_phase]', 'pms');
-      formDataToSend.append('event[of_atype]', 'Pms::Site');
-      formDataToSend.append('event[of_atype_id]', localStorage.getItem("selectedSiteId") || "");
-      formDataToSend.append('event[share_with]', formData.shareWith);
-      formDataToSend.append('event[is_paid]', formData.eventType);
-      formData.eventType === "1" && formDataToSend.append('event[pay_at]', formData.payAt);
-      formData.eventType === "1" && formData.payAt === "external" && formDataToSend.append('event[payment_link]', formData.externalLink);
+      formDataToSend.append("event[of_phase]", "pms");
+      formDataToSend.append("event[of_atype]", "Pms::Site");
+      formDataToSend.append(
+        "event[of_atype_id]",
+        localStorage.getItem("selectedSiteId") || ""
+      );
+      formDataToSend.append("event[share_with]", formData.shareWith);
+      formDataToSend.append("event[is_paid]", formData.eventType);
+      formData.eventType === "1" &&
+        formDataToSend.append("event[pay_at]", formData.payAt);
+      formData.eventType === "1" &&
+        formData.payAt === "external" &&
+        formDataToSend.append("event[payment_link]", formData.externalLink);
 
-      if (formData.shareWith === 'individual') {
-        selectedTechParks.forEach(id => {
+      if (formData.shareWith === "individual") {
+        selectedTechParks.forEach((id) => {
           formDataToSend.append("event[pms_site_ids][]", id.toString());
         });
       }
 
       // Add selected community IDs if communities are selected
-      if (formData.shareWithCommunities === 'yes' && selectedCommunities.length > 0) {
-        selectedCommunities.forEach(id => {
+      if (
+        formData.shareWithCommunities === "yes" &&
+        selectedCommunities.length > 0
+      ) {
+        selectedCommunities.forEach((id) => {
           formDataToSend.append("event[community_ids][]", id.toString());
         });
       }
@@ -382,29 +433,31 @@ export const AddEventPage = () => {
         });
       }
 
-      await dispatch(createEvent({ baseUrl, token, data: formDataToSend })).unwrap();
+      await dispatch(
+        createEvent({ baseUrl, token, data: formDataToSend })
+      ).unwrap();
 
       // Clean up localStorage after successful submission
-      localStorage.removeItem('eventName');
-      localStorage.removeItem('eventType');
-      localStorage.removeItem('amountPerPerson');
-      localStorage.removeItem('fromDate');
-      localStorage.removeItem('toDate');
-      localStorage.removeItem('eventStartTime');
-      localStorage.removeItem('eventEndTime');
-      localStorage.removeItem('eventLocation');
-      localStorage.removeItem('memberCapacity');
-      localStorage.removeItem('perMemberLimit');
-      localStorage.removeItem('pulseCategory');
-      localStorage.removeItem('rsvp');
-      localStorage.removeItem('showOnHomeScreen');
-      localStorage.removeItem('approvalRequired');
-      localStorage.removeItem('eventDescription');
-      localStorage.removeItem('shareWith');
-      localStorage.removeItem('selectedTechParks');
-      localStorage.removeItem('selectedCommunityIds');
-      localStorage.removeItem('payAt');
-      localStorage.removeItem('externalLink');
+      localStorage.removeItem("eventName");
+      localStorage.removeItem("eventType");
+      localStorage.removeItem("amountPerPerson");
+      localStorage.removeItem("fromDate");
+      localStorage.removeItem("toDate");
+      localStorage.removeItem("eventStartTime");
+      localStorage.removeItem("eventEndTime");
+      localStorage.removeItem("eventLocation");
+      localStorage.removeItem("memberCapacity");
+      localStorage.removeItem("perMemberLimit");
+      localStorage.removeItem("pulseCategory");
+      localStorage.removeItem("rsvp");
+      localStorage.removeItem("showOnHomeScreen");
+      localStorage.removeItem("approvalRequired");
+      localStorage.removeItem("eventDescription");
+      localStorage.removeItem("shareWith");
+      localStorage.removeItem("selectedTechParks");
+      localStorage.removeItem("selectedCommunityIds");
+      localStorage.removeItem("payAt");
+      localStorage.removeItem("externalLink");
 
       toast.success("Event created successfully");
       navigate(`/pulse/events`);
@@ -438,7 +491,9 @@ export const AddEventPage = () => {
               <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
                 <Calendar size={16} />
               </div>
-              <span className="font-semibold text-lg text-gray-800">Event Detail</span>
+              <span className="font-semibold text-lg text-gray-800">
+                Event Detail
+              </span>
             </div>
             {/* <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-gray-400'}`}></div>
@@ -456,7 +511,11 @@ export const AddEventPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               <div className="flex flex-col gap-1.5">
                 <TextField
-                  label={<>Event Name<span className="text-[#C72030]">*</span></>}
+                  label={
+                    <>
+                      Event Name<span className="text-[#C72030]">*</span>
+                    </>
+                  }
                   id="eventName"
                   name="eventName"
                   value={formData.eventName}
@@ -466,10 +525,10 @@ export const AddEventPage = () => {
                   InputLabelProps={{ shrink: true }}
                   size="small"
                   sx={{
-                    '& .MuiOutlinedInput-root': {
-                      backgroundColor: '#FAFAFA',
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#C72030',
+                    "& .MuiOutlinedInput-root": {
+                      backgroundColor: "#FAFAFA",
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#C72030",
                       },
                     },
                   }}
@@ -478,53 +537,63 @@ export const AddEventPage = () => {
 
               <div className="flex flex-col gap-1.5">
                 <FormControl fullWidth size="small">
-                  <InputLabel shrink>Event Type<span className="text-[#C72030]">*</span></InputLabel>
+                  <InputLabel shrink>
+                    Event Type<span className="text-[#C72030]">*</span>
+                  </InputLabel>
                   <MuiSelect
                     name="eventType"
                     value={formData.eventType}
-                    onChange={(e) => handleSelectChange("eventType", e.target.value)}
+                    onChange={(e) =>
+                      handleSelectChange("eventType", e.target.value)
+                    }
                     label="Event Type*"
                     displayEmpty
                     sx={{
-                      backgroundColor: '#FAFAFA',
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#C72030',
+                      backgroundColor: "#FAFAFA",
+                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#C72030",
                       },
                     }}
                   >
-                    <MenuItem value="" disabled>Select event type...</MenuItem>
+                    <MenuItem value="" disabled>
+                      Select event type...
+                    </MenuItem>
                     <MenuItem value="1">Paid</MenuItem>
                     <MenuItem value="0">Complimentary</MenuItem>
                   </MuiSelect>
                 </FormControl>
               </div>
 
-              {
-                formData.eventType === "1" && (
-                  <div className="flex flex-col gap-1.5">
-                    <FormControl fullWidth size="small">
-                      <InputLabel shrink>Pay at<span className="text-[#C72030]">*</span></InputLabel>
-                      <MuiSelect
-                        name="payAt"
-                        value={formData.payAt}
-                        onChange={(e) => handleSelectChange("payAt", e.target.value)}
-                        label="Pay at*"
-                        displayEmpty
-                        sx={{
-                          backgroundColor: '#FAFAFA',
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#C72030',
-                          },
-                        }}
-                      >
-                        <MenuItem value="" disabled>Select pay at...</MenuItem>
-                        <MenuItem value="internal">Internal</MenuItem>
-                        <MenuItem value="external">External</MenuItem>
-                      </MuiSelect>
-                    </FormControl>
-                  </div>
-                )
-              }
+              {formData.eventType === "1" && (
+                <div className="flex flex-col gap-1.5">
+                  <FormControl fullWidth size="small">
+                    <InputLabel shrink>
+                      Pay at<span className="text-[#C72030]">*</span>
+                    </InputLabel>
+                    <MuiSelect
+                      name="payAt"
+                      value={formData.payAt}
+                      onChange={(e) =>
+                        handleSelectChange("payAt", e.target.value)
+                      }
+                      label="Pay at*"
+                      displayEmpty
+                      sx={{
+                        backgroundColor: "#FAFAFA",
+                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#C72030",
+                        },
+                      }}
+                    >
+                      <MenuItem value="" disabled>
+                        Select pay at...
+                      </MenuItem>
+                      <MenuItem value="internal">Internal</MenuItem>
+                      <MenuItem value="external">External</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+              )}
 
               <div className="flex flex-col gap-1.5">
                 <TextField
@@ -540,15 +609,15 @@ export const AddEventPage = () => {
                   size="small"
                   inputProps={{ min: 0 }}
                   onKeyDown={(e) => {
-                    if (e.key === '-' || e.key === 'e' || e.key === '+') {
+                    if (e.key === "-" || e.key === "e" || e.key === "+") {
                       e.preventDefault();
                     }
                   }}
                   sx={{
-                    '& .MuiOutlinedInput-root': {
-                      backgroundColor: '#FAFAFA',
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#C72030',
+                    "& .MuiOutlinedInput-root": {
+                      backgroundColor: "#FAFAFA",
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#C72030",
                       },
                     },
                   }}
@@ -557,7 +626,11 @@ export const AddEventPage = () => {
 
               <div className="flex flex-col gap-1.5">
                 <TextField
-                  label={<>From Date<span className="text-[#C72030]">*</span></>}
+                  label={
+                    <>
+                      From Date<span className="text-[#C72030]">*</span>
+                    </>
+                  }
                   id="fromDate"
                   name="fromDate"
                   type="date"
@@ -568,10 +641,10 @@ export const AddEventPage = () => {
                   InputLabelProps={{ shrink: true }}
                   size="small"
                   sx={{
-                    '& .MuiOutlinedInput-root': {
-                      backgroundColor: '#FAFAFA',
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#C72030',
+                    "& .MuiOutlinedInput-root": {
+                      backgroundColor: "#FAFAFA",
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#C72030",
                       },
                     },
                   }}
@@ -580,7 +653,11 @@ export const AddEventPage = () => {
 
               <div className="flex flex-col gap-1.5">
                 <TextField
-                  label={<>To Date<span className="text-[#C72030]">*</span></>}
+                  label={
+                    <>
+                      To Date<span className="text-[#C72030]">*</span>
+                    </>
+                  }
                   id="toDate"
                   name="toDate"
                   type="date"
@@ -591,13 +668,15 @@ export const AddEventPage = () => {
                   InputLabelProps={{ shrink: true }}
                   size="small"
                   inputProps={{
-                    min: formData.fromDate || new Date().toISOString().split('T')[0],
+                    min:
+                      formData.fromDate ||
+                      new Date().toISOString().split("T")[0],
                   }}
                   sx={{
-                    '& .MuiOutlinedInput-root': {
-                      backgroundColor: '#FAFAFA',
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#C72030',
+                    "& .MuiOutlinedInput-root": {
+                      backgroundColor: "#FAFAFA",
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#C72030",
                       },
                     },
                   }}
@@ -606,7 +685,11 @@ export const AddEventPage = () => {
 
               <div className="flex flex-col gap-1.5">
                 <TextField
-                  label={<>Event Start Time<span className="text-[#C72030]">*</span></>}
+                  label={
+                    <>
+                      Event Start Time<span className="text-[#C72030]">*</span>
+                    </>
+                  }
                   id="eventStartTime"
                   name="eventStartTime"
                   type="time"
@@ -617,10 +700,10 @@ export const AddEventPage = () => {
                   InputLabelProps={{ shrink: true }}
                   size="small"
                   sx={{
-                    '& .MuiOutlinedInput-root': {
-                      backgroundColor: '#FAFAFA',
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#C72030',
+                    "& .MuiOutlinedInput-root": {
+                      backgroundColor: "#FAFAFA",
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#C72030",
                       },
                     },
                   }}
@@ -629,7 +712,11 @@ export const AddEventPage = () => {
 
               <div className="flex flex-col gap-1.5">
                 <TextField
-                  label={<>Event End Time<span className="text-[#C72030]">*</span></>}
+                  label={
+                    <>
+                      Event End Time<span className="text-[#C72030]">*</span>
+                    </>
+                  }
                   id="eventEndTime"
                   name="eventEndTime"
                   type="time"
@@ -640,10 +727,10 @@ export const AddEventPage = () => {
                   InputLabelProps={{ shrink: true }}
                   size="small"
                   sx={{
-                    '& .MuiOutlinedInput-root': {
-                      backgroundColor: '#FAFAFA',
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#C72030',
+                    "& .MuiOutlinedInput-root": {
+                      backgroundColor: "#FAFAFA",
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#C72030",
                       },
                     },
                   }}
@@ -652,7 +739,11 @@ export const AddEventPage = () => {
 
               <div className="flex flex-col gap-1.5">
                 <TextField
-                  label={<>Event Location<span className="text-[#C72030]">*</span></>}
+                  label={
+                    <>
+                      Event Location<span className="text-[#C72030]">*</span>
+                    </>
+                  }
                   id="eventLocation"
                   name="eventLocation"
                   value={formData.eventLocation}
@@ -662,10 +753,10 @@ export const AddEventPage = () => {
                   InputLabelProps={{ shrink: true }}
                   size="small"
                   sx={{
-                    '& .MuiOutlinedInput-root': {
-                      backgroundColor: '#FAFAFA',
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#C72030',
+                    "& .MuiOutlinedInput-root": {
+                      backgroundColor: "#FAFAFA",
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#C72030",
                       },
                     },
                   }}
@@ -674,7 +765,11 @@ export const AddEventPage = () => {
 
               <div className="flex flex-col gap-1.5">
                 <TextField
-                  label={<>Member Capacity<span className="text-[#C72030]">*</span></>}
+                  label={
+                    <>
+                      Member Capacity<span className="text-[#C72030]">*</span>
+                    </>
+                  }
                   id="memberCapacity"
                   name="memberCapacity"
                   type="number"
@@ -686,15 +781,15 @@ export const AddEventPage = () => {
                   size="small"
                   inputProps={{ min: 0 }}
                   onKeyDown={(e) => {
-                    if (e.key === '-' || e.key === 'e' || e.key === '+') {
+                    if (e.key === "-" || e.key === "e" || e.key === "+") {
                       e.preventDefault();
                     }
                   }}
                   sx={{
-                    '& .MuiOutlinedInput-root': {
-                      backgroundColor: '#FAFAFA',
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#C72030',
+                    "& .MuiOutlinedInput-root": {
+                      backgroundColor: "#FAFAFA",
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#C72030",
                       },
                     },
                   }}
@@ -741,26 +836,58 @@ export const AddEventPage = () => {
                   row
                   name="pulseCategory"
                   value={formData.pulseCategory}
-                  onChange={(e) => handleRadioChange("pulseCategory", e.target.value)}
+                  onChange={(e) =>
+                    handleRadioChange("pulseCategory", e.target.value)
+                  }
                   sx={{
                     gap: 0,
-                    flexWrap: "nowrap"
+                    flexWrap: "nowrap",
                   }}
                 >
                   <FormControlLabel
                     value="play"
-                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-[12px] text-gray-600">Play</span>}
+                    control={
+                      <Radio
+                        sx={{
+                          color: "#da7756",
+                          "&.Mui-checked": { color: "#F47521" },
+                          "& .MuiSvgIcon-root": { fontSize: 16 },
+                        }}
+                      />
+                    }
+                    label={
+                      <span className="text-[12px] text-gray-600">Play</span>
+                    }
                   />
                   <FormControlLabel
                     value="panasche"
-                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-[12px] text-gray-600">Panache</span>}
+                    control={
+                      <Radio
+                        sx={{
+                          color: "#da7756",
+                          "&.Mui-checked": { color: "#F47521" },
+                          "& .MuiSvgIcon-root": { fontSize: 16 },
+                        }}
+                      />
+                    }
+                    label={
+                      <span className="text-[12px] text-gray-600">Panache</span>
+                    }
                   />
                   <FormControlLabel
                     value="persuit"
-                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-[12px] text-gray-600">Pursuit</span>}
+                    control={
+                      <Radio
+                        sx={{
+                          color: "#da7756",
+                          "&.Mui-checked": { color: "#F47521" },
+                          "& .MuiSvgIcon-root": { fontSize: 16 },
+                        }}
+                      />
+                    }
+                    label={
+                      <span className="text-[12px] text-gray-600">Pursuit</span>
+                    }
                   />
                 </RadioGroup>
               </div>
@@ -778,13 +905,33 @@ export const AddEventPage = () => {
                 >
                   <FormControlLabel
                     value="yes"
-                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-[12px] text-gray-600">Yes</span>}
+                    control={
+                      <Radio
+                        sx={{
+                          color: "#da7756",
+                          "&.Mui-checked": { color: "#F47521" },
+                          "& .MuiSvgIcon-root": { fontSize: 16 },
+                        }}
+                      />
+                    }
+                    label={
+                      <span className="text-[12px] text-gray-600">Yes</span>
+                    }
                   />
                   <FormControlLabel
                     value="no"
-                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-[12px] text-gray-600">No</span>}
+                    control={
+                      <Radio
+                        sx={{
+                          color: "#da7756",
+                          "&.Mui-checked": { color: "#F47521" },
+                          "& .MuiSvgIcon-root": { fontSize: 16 },
+                        }}
+                      />
+                    }
+                    label={
+                      <span className="text-[12px] text-gray-600">No</span>
+                    }
                   />
                 </RadioGroup>
               </div>
@@ -797,18 +944,40 @@ export const AddEventPage = () => {
                   row
                   name="showOnHomeScreen"
                   value={formData.showOnHomeScreen}
-                  onChange={(e) => handleRadioChange("showOnHomeScreen", e.target.value)}
+                  onChange={(e) =>
+                    handleRadioChange("showOnHomeScreen", e.target.value)
+                  }
                   sx={{ gap: 0 }}
                 >
                   <FormControlLabel
                     value="yes"
-                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-[12px] text-gray-600">Yes</span>}
+                    control={
+                      <Radio
+                        sx={{
+                          color: "#da7756",
+                          "&.Mui-checked": { color: "#F47521" },
+                          "& .MuiSvgIcon-root": { fontSize: 16 },
+                        }}
+                      />
+                    }
+                    label={
+                      <span className="text-[12px] text-gray-600">Yes</span>
+                    }
                   />
                   <FormControlLabel
                     value="no"
-                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-[12px] text-gray-600">No</span>}
+                    control={
+                      <Radio
+                        sx={{
+                          color: "#da7756",
+                          "&.Mui-checked": { color: "#F47521" },
+                          "& .MuiSvgIcon-root": { fontSize: 16 },
+                        }}
+                      />
+                    }
+                    label={
+                      <span className="text-[12px] text-gray-600">No</span>
+                    }
                   />
                 </RadioGroup>
               </div>
@@ -821,18 +990,40 @@ export const AddEventPage = () => {
                   row
                   name="approvalRequired"
                   value={formData.approvalRequired}
-                  onChange={(e) => handleRadioChange("approvalRequired", e.target.value)}
+                  onChange={(e) =>
+                    handleRadioChange("approvalRequired", e.target.value)
+                  }
                   sx={{ gap: 0 }}
                 >
                   <FormControlLabel
                     value="yes"
-                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-[12px] text-gray-600">Yes</span>}
+                    control={
+                      <Radio
+                        sx={{
+                          color: "#da7756",
+                          "&.Mui-checked": { color: "#F47521" },
+                          "& .MuiSvgIcon-root": { fontSize: 16 },
+                        }}
+                      />
+                    }
+                    label={
+                      <span className="text-[12px] text-gray-600">Yes</span>
+                    }
                   />
                   <FormControlLabel
                     value="no"
-                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-[12px] text-gray-600">No</span>}
+                    control={
+                      <Radio
+                        sx={{
+                          color: "#da7756",
+                          "&.Mui-checked": { color: "#F47521" },
+                          "& .MuiSvgIcon-root": { fontSize: 16 },
+                        }}
+                      />
+                    }
+                    label={
+                      <span className="text-[12px] text-gray-600">No</span>
+                    }
                   />
                 </RadioGroup>
               </div>
@@ -878,34 +1069,37 @@ export const AddEventPage = () => {
               </div>
             </div>
 
-            {
-              formData.payAt === "external" && (
-                <TextField
-                  label={<>External Link<span className="text-[#C72030]">*</span></>}
-                  id="externalLink"
-                  name="externalLink"
-                  value={formData.externalLink}
-                  onChange={handleInputChange}
-                  placeholder="Enter external link..."
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
-                  size="small"
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      backgroundColor: '#FAFAFA',
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#C72030',
-                      },
+            {formData.payAt === "external" && (
+              <TextField
+                label={
+                  <>
+                    External Link<span className="text-[#C72030]">*</span>
+                  </>
+                }
+                id="externalLink"
+                name="externalLink"
+                value={formData.externalLink}
+                onChange={handleInputChange}
+                placeholder="Enter external link..."
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                size="small"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    backgroundColor: "#FAFAFA",
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#C72030",
                     },
-                    marginTop: 2,
-                  }}
-                />
-              )
-            }
+                  },
+                  marginTop: 2,
+                }}
+              />
+            )}
           </div>
         </div>
 
-        {/* Share Section */}
+        {/* Share Section - hidden on club.lockated.com */}
+        {!isClubSite && (
         <div className="border border-gray-200 rounded-lg overflow-hidden">
           <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
             <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
@@ -923,18 +1117,44 @@ export const AddEventPage = () => {
                   row
                   name="shareWith"
                   value={formData.shareWith}
-                  onChange={(e) => handleRadioChange("shareWith", e.target.value)}
+                  onChange={(e) =>
+                    handleRadioChange("shareWith", e.target.value)
+                  }
                   className="gap-2"
                 >
                   <FormControlLabel
                     value="all"
-                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-sm text-gray-600">All Tech Park</span>}
+                    control={
+                      <Radio
+                        sx={{
+                          color: "#da7756",
+                          "&.Mui-checked": { color: "#F47521" },
+                          "& .MuiSvgIcon-root": { fontSize: 16 },
+                        }}
+                      />
+                    }
+                    label={
+                      <span className="text-sm text-gray-600">
+                        All Tech Park
+                      </span>
+                    }
                   />
                   <FormControlLabel
                     value="individual"
-                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-sm text-gray-600">Individual Tech Park</span>}
+                    control={
+                      <Radio
+                        sx={{
+                          color: "#da7756",
+                          "&.Mui-checked": { color: "#F47521" },
+                          "& .MuiSvgIcon-root": { fontSize: 16 },
+                        }}
+                      />
+                    }
+                    label={
+                      <span className="text-sm text-gray-600">
+                        Individual Tech Park
+                      </span>
+                    }
                   />
                 </RadioGroup>
               </div>
@@ -947,80 +1167,135 @@ export const AddEventPage = () => {
                   row
                   name="shareWithCommunities"
                   value={formData.shareWithCommunities}
-                  onChange={(e) => handleRadioChange("shareWithCommunities", e.target.value)}
+                  onChange={(e) =>
+                    handleRadioChange("shareWithCommunities", e.target.value)
+                  }
                   className="gap-2"
                 >
                   <FormControlLabel
                     value="yes"
-                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={
+                      <Radio
+                        sx={{
+                          color: "#da7756",
+                          "&.Mui-checked": { color: "#F47521" },
+                          "& .MuiSvgIcon-root": { fontSize: 16 },
+                        }}
+                      />
+                    }
                     label={<span className="text-sm text-gray-600">Yes</span>}
                   />
                   <FormControlLabel
                     value="no"
-                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#F47521' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={
+                      <Radio
+                        sx={{
+                          color: "#da7756",
+                          "&.Mui-checked": { color: "#F47521" },
+                          "& .MuiSvgIcon-root": { fontSize: 16 },
+                        }}
+                      />
+                    }
                     label={<span className="text-sm text-gray-600">No</span>}
                   />
                 </RadioGroup>
               </div>
             </div>
 
-            {formData.shareWith === "individual" && selectedTechParks.length > 0 && (
-              <div className="mt-0 flex items-center gap-2 text-[#C72030] text-sm font-medium">
-                <span>
-                  {techParks
-                    .filter(park => selectedTechParks.includes(park.id))
-                    .map(park => park.name)
-                    .join(", ")}
-                  .
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setIsTechParkModalOpen(true)}
-                  className="hover:text-red-700 transition-colors"
-                >
-                  <Pencil size={14} />
-                </button>
-              </div>
-            )}
+            {formData.shareWith === "individual" &&
+              selectedTechParks.length > 0 && (
+                <div className="mt-0 flex items-center gap-2 text-[#C72030] text-sm font-medium">
+                  <span>
+                    {techParks
+                      .filter((park) => selectedTechParks.includes(park.id))
+                      .map((park) => park.name)
+                      .join(", ")}
+                    .
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsTechParkModalOpen(true)}
+                    className="hover:text-red-700 transition-colors"
+                  >
+                    <Pencil size={14} />
+                  </button>
+                </div>
+              )}
 
-            {formData.shareWithCommunities === "yes" && selectedCommunities.length > 0 && (
-              <div className="mt-4 flex items-center gap-2 text-[#C72030] text-sm font-medium">
-                <span>
-                  {communities
-                    .filter(community => selectedCommunities.includes(community.id))
-                    .map(community => community.name)
-                    .join(", ")}
-                  .
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    localStorage.setItem('eventName', formData.eventName);
-                    localStorage.setItem('eventType', formData.eventType);
-                    localStorage.setItem('amountPerPerson', formData.amountPerPerson);
-                    localStorage.setItem('fromDate', formData.fromDate);
-                    localStorage.setItem('toDate', formData.toDate);
-                    localStorage.setItem('eventStartTime', formData.eventStartTime);
-                    localStorage.setItem('eventEndTime', formData.eventEndTime);
-                    localStorage.setItem('eventLocation', formData.eventLocation);
-                    localStorage.setItem('memberCapacity', formData.memberCapacity);
-                    localStorage.setItem('perMemberLimit', formData.perMemberLimit);
-                    localStorage.setItem('pulseCategory', formData.pulseCategory);
-                    localStorage.setItem('rsvp', formData.rsvp);
-                    localStorage.setItem('showOnHomeScreen', formData.showOnHomeScreen);
-                    localStorage.setItem('approvalRequired', formData.approvalRequired);
-                    localStorage.setItem('eventDescription', formData.eventDescription);
-                    localStorage.setItem('shareWith', formData.shareWith);
-                    navigate('/pulse/community?mode=selection&from=add-event')
-                  }}
-                  className="hover:text-red-700 transition-colors"
-                >
-                  <Pencil size={14} />
-                </button>
-              </div>
-            )}
+            {formData.shareWithCommunities === "yes" &&
+              selectedCommunities.length > 0 && (
+                <div className="mt-4 flex items-center gap-2 text-[#C72030] text-sm font-medium">
+                  <span>
+                    {communities
+                      .filter((community) =>
+                        selectedCommunities.includes(community.id)
+                      )
+                      .map((community) => community.name)
+                      .join(", ")}
+                    .
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      localStorage.setItem("eventName", formData.eventName);
+                      localStorage.setItem("eventType", formData.eventType);
+                      localStorage.setItem(
+                        "amountPerPerson",
+                        formData.amountPerPerson
+                      );
+                      localStorage.setItem("fromDate", formData.fromDate);
+                      localStorage.setItem("toDate", formData.toDate);
+                      localStorage.setItem(
+                        "eventStartTime",
+                        formData.eventStartTime
+                      );
+                      localStorage.setItem(
+                        "eventEndTime",
+                        formData.eventEndTime
+                      );
+                      localStorage.setItem(
+                        "eventLocation",
+                        formData.eventLocation
+                      );
+                      localStorage.setItem(
+                        "memberCapacity",
+                        formData.memberCapacity
+                      );
+                      localStorage.setItem(
+                        "perMemberLimit",
+                        formData.perMemberLimit
+                      );
+                      localStorage.setItem(
+                        "pulseCategory",
+                        formData.pulseCategory
+                      );
+                      localStorage.setItem("rsvp", formData.rsvp);
+                      localStorage.setItem(
+                        "showOnHomeScreen",
+                        formData.showOnHomeScreen
+                      );
+                      localStorage.setItem(
+                        "approvalRequired",
+                        formData.approvalRequired
+                      );
+                      localStorage.setItem(
+                        "eventDescription",
+                        formData.eventDescription
+                      );
+                      localStorage.setItem("shareWith", formData.shareWith);
+                      navigate(
+                        "/pulse/community?mode=selection&from=add-event"
+                      );
+                    }}
+                    className="hover:text-red-700 transition-colors"
+                  >
+                    <Pencil size={14} />
+                  </button>
+                </div>
+              )}
           </div>
         </div>
+        )}
 
         {/* Attachment Section */}
         <div className="border border-gray-200 rounded-lg overflow-hidden">
@@ -1028,7 +1303,9 @@ export const AddEventPage = () => {
             <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
               <File size={16} />
             </div>
-            <span className="font-semibold text-lg text-gray-800">Attachment</span>
+            <span className="font-semibold text-lg text-gray-800">
+              Attachment
+            </span>
           </div>
           <div className="p-6 bg-white">
             <div className="grid grid-cols-1 gap-6">
@@ -1093,7 +1370,9 @@ export const AddEventPage = () => {
                     />
 
                     <div className="text-center text-gray-500 text-sm">
-                      Choose a file or<br />drag & drop it here
+                      Choose a file or
+                      <br />
+                      drag & drop it here
                     </div>
                     <Button
                       type="button"
@@ -1129,48 +1408,65 @@ export const AddEventPage = () => {
       </div>
 
       {/* Tech Park Selection Modal */}
-      <Dialog open={isTechParkModalOpen} onOpenChange={(open) => {
-        setIsTechParkModalOpen(open);
-        if (!open && selectedTechParks.length === 0) {
-          setFormData(prev => ({ ...prev, shareWith: "all" }));
-        }
-      }}>
+      <Dialog
+        open={isTechParkModalOpen}
+        onOpenChange={(open) => {
+          setIsTechParkModalOpen(open);
+          if (!open && selectedTechParks.length === 0) {
+            setFormData((prev) => ({ ...prev, shareWith: "all" }));
+          }
+        }}
+      >
         <DialogContent className="max-w-md bg-white">
           <DialogHeader className="flex flex-row items-center justify-between">
-            <DialogTitle className="text-xl font-bold">Select Tech Park</DialogTitle>
+            <DialogTitle className="text-xl font-bold">
+              Select Tech Park
+            </DialogTitle>
           </DialogHeader>
           <div className="max-h-[60vh] overflow-y-auto pr-2 space-y-4 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
             {isLoadingTechParks ? (
               <div className="text-center py-4">Loading...</div>
             ) : techParks.length > 0 ? (
               techParks.map((park) => (
-                <div key={park.id} className="flex items-start space-x-4 p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                <div
+                  key={park.id}
+                  className="flex items-start space-x-4 p-2 hover:bg-gray-50 rounded-lg transition-colors"
+                >
                   <Checkbox
                     checked={selectedTechParks.includes(park.id)}
                     onCheckedChange={(checked) => {
                       if (checked) {
-                        setSelectedTechParks(prev => [...prev, park.id]);
+                        setSelectedTechParks((prev) => [...prev, park.id]);
                       } else {
-                        setSelectedTechParks(prev => prev.filter(id => id !== park.id));
+                        setSelectedTechParks((prev) =>
+                          prev.filter((id) => id !== park.id)
+                        );
                       }
                     }}
                     className="mt-1 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
                   />
                   <div className="flex gap-3">
                     <img
-                      src={park.image_url || "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3"}
+                      src={
+                        park.image_url ||
+                        "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3"
+                      }
                       alt={park.name}
                       className="w-16 h-16 rounded-md object-cover bg-gray-200"
                     />
                     <div>
                       <h4 className="font-medium text-gray-900">{park.name}</h4>
-                      <p className="text-sm text-[#F47521]">{park.tower_name || "Tower Name"}</p>
+                      <p className="text-sm text-[#F47521]">
+                        {park.tower_name || "Tower Name"}
+                      </p>
                     </div>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="text-center py-4 text-gray-500">No Tech Parks found</div>
+              <div className="text-center py-4 text-gray-500">
+                No Tech Parks found
+              </div>
             )}
           </div>
         </DialogContent>

@@ -186,8 +186,15 @@
   height:calc(100vh - var(--topbar-h));overflow-y:auto;overflow-x:hidden;
   padding:34px 14px 48px 26px;
 }
+/* 'Vi my Workspace' has to stay on one line, and the sidebar only leaves ~202px for it
+   (252px minus the 26px/14px sidebar padding and this 10px inset). At 26px it overran
+   that and .sidebar's overflow-x:hidden clipped the last letters. Newsreader is never
+   actually loaded — no @import and no <link> — so this renders in the Georgia fallback,
+   which is wider than the size was chosen for; 22px fits with room to spare in either.
+   Keep the 10px inset: it lines the brandmark up with the nav items' 10px text offset.
+   Raising this back to 26px needs Newsreader genuinely loaded AND a re-measure. */
 .vi-ph .brandmark{
-  font-family:var(--font-serif);font-size:26px;font-weight:400;
+  font-family:var(--font-serif);font-size:22px;font-weight:400;
   letter-spacing:-.012em;line-height:1.15;margin:0 0 4px;padding-left:10px;color:var(--ink);
   white-space:nowrap;
 }
@@ -425,6 +432,12 @@
   padding:10px 14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .vi-ph .funnel .fsub{display:block;font-size:11px;font-weight:400;opacity:.86;margin-top:2px}
+/* A step with no events in range: full width, outlined rather than filled, so it reads as
+   a declared-but-unmeasured step instead of a bar whose length means something. */
+.vi-ph .funnel .fstep-empty{
+  width:100%;color:var(--faint);background:none;
+  border:1px dashed var(--border);border-radius:8px;
+}
 .vi-ph .funnel .fdrop{font-size:11.5px;color:var(--neg);font-weight:400;padding-left:2px}
 .vi-ph .funnel .frow{display:grid;grid-template-columns:158px 1fr 92px;gap:12px;align-items:center}
 .vi-ph .funnel .fs{font-size:12.5px;color:var(--ink-2);font-weight:400}
@@ -686,12 +699,6 @@
 .vi-ph select.mmore:hover{color:var(--ink);background:var(--surface-2)}
 .vi-ph .mnav-buckets select.mmore{border-radius:var(--r-xs);padding:2px 8px;margin-bottom:8px}
 
-/* ---- licensed-seats input in the control bar ---- */
-.vi-ph .seatsin{
-  width:104px;border:0;outline:0;background:transparent;
-  color:inherit;font:inherit;
-}
-.vi-ph .seatsin::placeholder{color:var(--faint)}
 
 /* ---- site multi-select ---- */
 .vi-ph .sitepick{position:relative;display:inline-block}

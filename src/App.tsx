@@ -136,6 +136,11 @@ const TicketDashboard = lazy(() =>
     default: m.TicketDashboard,
   }))
 );
+const ClubWalletsPage = lazy(() =>
+  import("./pages/ClubWalletsPage").then((m) => ({
+    default: m.ClubWalletsPage,
+  }))
+);
 const AddTicketDashboard = lazy(() =>
   import("./pages/AddTicketDashboard").then((m) => ({
     default: m.AddTicketDashboard,
@@ -3578,6 +3583,9 @@ const ChargeSetupDashboard = lazy(
 const ChartOfAccountsDashboard = lazy(
   () => import("./pages/ClubManagement/ChartOfAccountsDashboard")
 );
+const ClubDashboardV6 = lazy(
+  () => import("./pages/ClubManagement/dashboard/ClubDashboardV6")
+);
 const ClubGroupMembershipDashboard = lazy(
   () => import("./pages/ClubManagement/ClubGroupMembershipDashboard")
 );
@@ -4328,7 +4336,11 @@ const WebSocketNotificationInitializer: React.FC<{
         onDisconnected: () => {
           console.warn("❌ Notification subscription disconnected");
           setIsSubscribed(false);
-          toast.error("Real-time notifications disconnected");
+          // Suppressed on the M-Safe dashboard — its own toasts/status UI shouldn't
+          // be interrupted by the app-wide WebSocket notification banner.
+          if (!window.location.pathname.startsWith("/msafedashboard")) {
+            toast.error("Real-time notifications disconnected");
+          }
         },
       });
       console.warn("📋 Subscription object:", sub);
@@ -4912,6 +4924,15 @@ function App() {
                             element={
                               <ProtectedRoute>
                                 <Dashboard />
+                              </ProtectedRoute>
+                            }
+                          />
+
+                          <Route
+                            path="/club-management/dashboard"
+                            element={
+                              <ProtectedRoute>
+                                <ClubDashboardV6 />
                               </ProtectedRoute>
                             }
                           />
@@ -6813,6 +6834,11 @@ function App() {
                               path="/club-management/helpdesk/edit/:id"
                               element={<UpdateTicketsPage />}
                             />
+                            {/* Club Management - Wallets */}
+                            <Route
+                              path="/club-management/wallets"
+                              element={<ClubWalletsPage />}
+                            />
                             {/* Club Management - Amenities Booking */}
                             <Route
                               path="/club-management/amenities-booking"
@@ -7457,11 +7483,11 @@ function App() {
                               element={<SurveyDetailsPage />}
                             />
                             <Route
-                              path="/master/survey/details/:id"
+                              path="/maintenance/survey/details/:id"
                               element={<SurveyDetailsPage />}
                             />
                             <Route
-                              path="/master/survey/edit/:id"
+                              path="/maintenance/survey/edit/:id"
                               element={<EditSurveyPage />}
                             />
                             <Route
