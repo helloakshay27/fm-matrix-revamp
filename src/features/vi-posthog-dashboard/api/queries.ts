@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAllSites, fetchCompanyNames } from '@/features/posthog-dashboard/api/sitesApi';
 import {
@@ -15,10 +16,11 @@ import {
   fetchTrafficSession,
   fetchUsageAndDistribution,
   fetchWorkflowUsage,
-  type DeviceType,
-  type RangeFilters,
-  type TrafficSessionResponse,
-  ANALYTICS_TENANT_URL,
+  type OsType,
+  type ViRangeFilters,
+  type ViSurface,
+  type UsageDistributionResponse,
+  VI_APP_ID,
 } from './adoptionApi';
 
 /** All Layer-1/2/3 calls share these; one object keeps every query key in step. */
@@ -27,8 +29,8 @@ export interface QueryFilters {
   enabled: boolean;
   from: string;
   to: string;
-  siteIds: string[];
-  devices: DeviceType[];
+  /** Platform filter — [] is "All", otherwise ['iOS'] or ['Android']. */
+  os: OsType[];
   module: string | null;
   subModule: string | null;
 }
@@ -47,11 +49,10 @@ export function dateRangeFor(days: number): { from: string; to: string } {
   return { from: ymd(from), to: ymd(to) };
 }
 
-const range = (f: QueryFilters): RangeFilters => ({
+const range = (f: QueryFilters): ViRangeFilters => ({
   from: f.from,
   to: f.to,
-  siteIds: f.siteIds,
-  devices: f.devices,
+  os: f.os,
 });
 
 /** Analytics is read-mostly and each call is a multi-second ClickHouse scan — cache generously. */
@@ -59,15 +60,15 @@ const CACHE = { staleTime: 5 * 60_000, gcTime: 30 * 60_000, refetchOnWindowFocus
 
 /**
  * Query-key root. `fm-adoption` is shared with `/posthog-dashboard` so one Refresh
- * invalidates the whole analytics family, but the tenant host is part of every key —
- * without it the two dashboards would collide in the cache whenever their date/site/device
- * filters happened to match, and each would render the other tenant's numbers.
+ * invalidates the whole analytics family, but the Vi app id is part of every key — without
+ * it the two dashboards would collide in the cache whenever their date/site/device filters
+ * happened to match, and each would render the other tenant's numbers.
  */
-const ROOT = ['fm-adoption', ANALYTICS_TENANT_URL] as const;
+const ROOT = ['fm-adoption', 'app', VI_APP_ID] as const;
 
-const keyBase = (f: QueryFilters) => [f.from, f.to, f.siteIds.join(','), f.devices.join(',')];
+const keyBase = (f: QueryFilters) => [f.from, f.to, f.os.join(',')];
 
-/** Sites the signed-in user can see — drives the scope selector and every `site_id` filter. */
+/** Sites the signed-in user can see — drives the Circle selector's options and labels. */
 export function useAllSites() {
   return useQuery({
     queryKey: [...ROOT, 'all-sites'],
@@ -121,9 +122,9 @@ export function useAdoptionEngagement(f: QueryFilters) {
 
 export function useAdoptionTrend(f: QueryFilters) {
   return useQuery({
-    queryKey: [...ROOT, 'adoption_trend', f.to, f.siteIds.join(','), f.devices.join(',')],
+    queryKey: [...ROOT, 'adoption_trend', f.to, f.os.join(',')],
     queryFn: () =>
-      fetchAdoptionTrend({ to: f.to, weeks: TREND_WEEKS, siteIds: f.siteIds, devices: f.devices }),
+      fetchAdoptionTrend({ to: f.to, weeks: TREND_WEEKS, os: f.os }),
     enabled: f.enabled,
     ...CACHE,
   });
@@ -131,9 +132,9 @@ export function useAdoptionTrend(f: QueryFilters) {
 
 export function useGrowth(f: QueryFilters) {
   return useQuery({
-    queryKey: [...ROOT, 'growth', f.to, f.siteIds.join(','), f.devices.join(',')],
+    queryKey: [...ROOT, 'growth', f.to, f.os.join(',')],
     queryFn: () =>
-      fetchGrowth({ to: f.to, weeks: GROWTH_WEEKS, siteIds: f.siteIds, devices: f.devices }),
+      fetchGrowth({ to: f.to, weeks: GROWTH_WEEKS, os: f.os }),
     enabled: f.enabled,
     ...CACHE,
   });
@@ -141,9 +142,9 @@ export function useGrowth(f: QueryFilters) {
 
 export function useRetention(f: QueryFilters) {
   return useQuery({
-    queryKey: [...ROOT, 'retention', f.to, f.siteIds.join(','), f.devices.join(',')],
+    queryKey: [...ROOT, 'retention', f.to, f.os.join(',')],
     queryFn: () =>
-      fetchRetention({ to: f.to, weeks: RETENTION_WEEKS, siteIds: f.siteIds, devices: f.devices }),
+      fetchRetention({ to: f.to, weeks: RETENTION_WEEKS, os: f.os }),
     enabled: f.enabled,
     ...CACHE,
   });
@@ -192,29 +193,68 @@ export function useWorkflowUsage(f: QueryFilters) {
   });
 }
 
-export interface SiteLeagueEntry {
-  siteId: string;
-  data: TrafficSessionResponse | undefined;
+/** One surface's slice of the web-vs-app split. */
+export interface SurfaceSplitRow {
+  surface: ViSurface;
+  label: string;
+  users: number;
+  sessions: number;
+  /** 0..1 share of sessions across the two platforms. */
+  share: number;
 }
 
 /**
- * The site-wise table. There is no per-site endpoint, so this is a single `traffic_session`
- * call carrying the whole scoped site list as one comma-separated `site_id`.
+ * Web app vs mobile app share, for the "where sessions come from" card.
+ *
+ * The two surfaces are not two values of one property: the mobile app is identified by
+ * `app_id`, the web app by its host, and an event carries one or the other but never both.
+ * So there is no single response to read the split off — it takes one call per surface.
+ *
+ * These two deliberately step outside the dashboard's own scoping (which pins every other
+ * query to the mobile app): comparing the surfaces is the whole point of the card, so it
+ * cannot be filtered to one of them. The platform toggle is left out of the key for the
+ * same reason.
  */
-export function useSiteLeague(f: QueryFilters, siteIds: string[], enabled: boolean) {
-  const query = useQuery({
-    queryKey: [...ROOT, 'traffic_session', f.from, f.to, siteIds.join(','), f.devices.join(',')],
-    queryFn: () => fetchTrafficSession({ from: f.from, to: f.to, siteIds, devices: f.devices }),
-    enabled: enabled && f.enabled,
+export function useSurfaceSplit(f: QueryFilters) {
+  const mk = (surface: ViSurface) => ({
+    queryKey: [...ROOT, 'usage_and_distribution', 'surface-split', surface, f.from, f.to],
+    queryFn: () =>
+      fetchUsageAndDistribution({ from: f.from, to: f.to, surface }),
+    enabled: f.enabled,
     ...CACHE,
   });
 
+  const web = useQuery(mk('web'));
+  const app = useQuery(mk('app'));
+
+  const rows = useMemo<SurfaceSplitRow[]>(() => {
+    const sessionsOf = (d: UsageDistributionResponse | undefined) =>
+      d?.device_split.total_sessions ?? 0;
+    const usersOf = (d: UsageDistributionResponse | undefined) =>
+      (d?.device_split.devices ?? []).reduce((n, x) => n + x.users, 0);
+
+    const counts = [
+      {
+        surface: 'web' as const,
+        label: 'Web app',
+        users: usersOf(web.data),
+        sessions: sessionsOf(web.data),
+      },
+      {
+        surface: 'app' as const,
+        label: 'Mobile app',
+        users: usersOf(app.data),
+        sessions: sessionsOf(app.data),
+      },
+    ];
+    const total = counts.reduce((n, c) => n + c.sessions, 0);
+    if (!total) return [];
+    return counts.map((c) => ({ ...c, share: c.sessions / total }));
+  }, [web.data, app.data]);
+
   return {
-    entries: siteIds.map((siteId) => ({ siteId, data: query.data })) as SiteLeagueEntry[],
-    isLoading: enabled && query.isLoading,
-    isError: query.isError,
-    loaded: query.data !== undefined ? siteIds.length : 0,
-    failed: query.isError ? siteIds.length : 0,
-    total: siteIds.length,
+    rows,
+    isLoading: web.isLoading || app.isLoading,
+    error: (web.error ?? app.error) as Error | null,
   };
 }
