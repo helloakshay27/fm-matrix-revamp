@@ -43,6 +43,10 @@ export const VI_APP_ID = (import.meta.env.VITE_VI_ADOPTION_APP_ID as string | un
  * Vi my Workspace ships as a mobile app only, so `device_type` is pinned rather than exposed
  * as a control. Verified against the API: adding it to an app_id query changes nothing
  * (every app_id event is already Mobile), so it narrows the scan without dropping data.
+ *
+ * It is dropped as soon as the caller picks an OS: once `os` is doing the platform
+ * filtering, `device_type` on top of it is redundant, so only one platform parameter is
+ * ever sent.
  */
 const VI_DEVICE_TYPE: DeviceType = 'Mobile';
 
@@ -97,11 +101,13 @@ export type {
 };
 
 function baseParams(os?: OsType[], surface: ViSurface = 'app') {
-  const p: Record<string, string> =
-    surface === 'web'
-      ? { url: ANALYTICS_TENANT_URL }
-      : { app_id: VI_APP_ID, device_type: VI_DEVICE_TYPE };
+  if (surface === 'web') return { url: ANALYTICS_TENANT_URL };
+
+  const p: Record<string, string> = { app_id: VI_APP_ID };
+  // One platform parameter at a time: `os` once the control bar picks iOS or Android,
+  // the pinned `device_type` only while it is still on All.
   if (os?.length) p.os = os.join(',');
+  else p.device_type = VI_DEVICE_TYPE;
   return p;
 }
 
