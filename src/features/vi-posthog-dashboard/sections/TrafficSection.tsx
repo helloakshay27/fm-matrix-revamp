@@ -4,6 +4,7 @@ import { ChartCard } from '../components/ChartCard';
 import { Guard } from '../components/Guard';
 import { Tile } from '../components/Tile';
 import { LineChart } from '../components/charts/LineChart';
+import { useSurfaceSplit } from '../api/queries';
 import { useViDashboard } from '../context/viDashboardStore';
 import { toViTiles } from '../data/viMetricIds';
 
@@ -15,8 +16,10 @@ const MEASURES = [
 
 /** Layer 1 — traffic_session (U1/U2/U3/U5/U6/U8) + usage_and_distribution. */
 export function TrafficSection() {
-  const { vm, setSessTab, palette } = useViDashboard();
+  const { vm, setSessTab, palette, queryFilters } = useViDashboard();
   const { traffic, status, state } = vm;
+  const surfaceSplit = useSurfaceSplit(queryFilters);
+  const surfaceColor = { web: palette.blue, app: palette.green };
 
   const measureColor =
     state.sessTab === 'views'
@@ -98,23 +101,29 @@ export function TrafficSection() {
         </ChartCard>
 
         <ChartCard
-          eyebrow="Device / platform split (U8)"
-          title="Where sessions come from"
-          purpose={INFO['chart.device'].f}
+          eyebrow="Surface split (U7)"
+          title="Web app vs mobile app"
+          // Not INFO['chart.device'] — that entry describes the FM Desktop/Mobile split.
+          purpose="Share of sessions on the Vi web app versus the Vi mobile app, counted from each surface's own events — shows which one employees actually work in."
         >
           <Guard
-            status={status.traffic}
-            empty={traffic.deviceRows.length === 0}
-            emptyLabel="No device breakdown for this filter set."
+            status={{ loading: surfaceSplit.isLoading, error: surfaceSplit.error }}
+            empty={surfaceSplit.rows.length === 0}
+            emptyLabel="No surface breakdown for this filter set."
           >
             <div className="hbars">
-              {traffic.deviceRows.map(([label, share, color]) => (
-                <div className="role" key={label}>
-                  <div className="rn">{label}</div>
+              {surfaceSplit.rows.map((row) => (
+                <div className="role" key={row.surface}>
+                  <div className="rn">{row.label}</div>
                   <div className="rbar">
-                    <i style={{ width: `${Math.round(share * 100)}%`, background: color }} />
+                    <i
+                      style={{
+                        width: `${Math.round(row.share * 100)}%`,
+                        background: surfaceColor[row.surface],
+                      }}
+                    />
                   </div>
-                  <div className="rv">{pct(share)}</div>
+                  <div className="rv">{pct(row.share)}</div>
                 </div>
               ))}
             </div>

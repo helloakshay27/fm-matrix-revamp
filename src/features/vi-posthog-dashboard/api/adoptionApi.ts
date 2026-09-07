@@ -30,6 +30,51 @@ export const ANALYTICS_BASE_URL =
   (import.meta.env.VITE_VI_ADOPTION_API_URL as string | undefined) ??
   'https://posthog-api.lockated.com';
 
+/**
+ * Vi my Workspace is a mobile product, so every call is scoped by `app_id` instead of by the
+ * web host: mobile-app events carry no `url`, and sending both AND-s them together and returns
+ * nothing (verified against the API — any app_id combined with a url yields 0 sessions).
+ * For the same reason the platform toggle is iOS / Android (the `os` property) rather than the
+ * FM dashboard's Desktop / Mobile `device_type` split.
+ */
+export const VI_APP_ID = (import.meta.env.VITE_VI_ADOPTION_APP_ID as string | undefined) ?? '40';
+
+/**
+ * Vi my Workspace ships as a mobile app only, so `device_type` is pinned rather than exposed
+ * as a control. Verified against the API: adding it to an app_id query changes nothing
+ * (every app_id event is already Mobile), so it narrows the scan without dropping data.
+ */
+const VI_DEVICE_TYPE: DeviceType = 'Mobile';
+
+/** `os` values the API matches on — case-sensitive. */
+export type OsType = 'iOS' | 'Android';
+
+/**
+ * Same shape as the FM filters minus `devices` and `siteIds`: `device_type` is pinned to
+ * Mobile above rather than picked, and `site_id` is never sent — mobile-app events carry no
+ * site, so filtering on one returns nothing. The only platform filter a caller passes is `os`.
+ */
+export interface ViRangeFilters extends Omit<RangeFilters, 'devices' | 'siteIds'> {
+  os?: OsType[];
+  /**
+   * Which Vi surface to count. Defaults to `app` — the mobile app this dashboard is about.
+   * `web` swaps `app_id`/`device_type` for the web host, and exists only for the web-vs-app
+   * split card, which has to reach outside the dashboard's own scope to compare the two.
+   */
+  surface?: ViSurface;
+}
+
+/** The two Vi surfaces: the mobile app (`app_id`) and the web app (its host). */
+export type ViSurface = 'app' | 'web';
+
+export interface ViWeeklyFilters extends Omit<WeeklyFilters, 'devices' | 'siteIds'> {
+  os?: OsType[];
+}
+
+/**
+ * The Vi web host. Kept for reference/reporting only — it is NOT sent as a filter (see
+ * VI_APP_ID above); mobile-app events carry no host, so filtering on it drops all of them.
+ */
 export const ANALYTICS_TENANT_URL =
   (import.meta.env.VITE_VI_ADOPTION_TENANT_URL as string | undefined) ??
   'vi-web.gophygital.work';
@@ -51,45 +96,39 @@ export type {
   WorkflowUsageResponse,
 };
 
-function baseParams(siteIds?: string[], devices?: DeviceType[]) {
-  const p: Record<string, string> = { url: ANALYTICS_TENANT_URL };
-  if (siteIds?.length) p.site_id = siteIds.join(',');
-  if (devices?.length) p.device_type = devices.join(',');
+function baseParams(os?: OsType[], surface: ViSurface = 'app') {
+  const p: Record<string, string> =
+    surface === 'web'
+      ? { url: ANALYTICS_TENANT_URL }
+      : { app_id: VI_APP_ID, device_type: VI_DEVICE_TYPE };
+  if (os?.length) p.os = os.join(',');
   return p;
 }
 
-const rangeParams = (f: RangeFilters) => ({
-  ...baseParams(f.siteIds, f.devices),
+const rangeParams = (f: ViRangeFilters) => ({
+  ...baseParams(f.os, f.surface),
   from: f.from,
   to: f.to,
 });
 
-const weeklyParams = (f: WeeklyFilters) => ({
-  ...baseParams(f.siteIds, f.devices),
+const weeklyParams = (f: ViWeeklyFilters) => ({
+  ...baseParams(f.os),
   to: f.to,
   weeks: String(f.weeks),
 });
 
 async function get<T>(path: string, params: Record<string, string>): Promise<T> {
-  // Build the query string manually so site_id commas are NOT percent-encoded (%2C),
-  // matching the format the server expects: site_id=2189,2190,2191,...
-  const base = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) {
-    if (k === 'site_id') continue; // appended below with literal commas
-    base.append(k, v);
-  }
-  let qs = base.toString();
-  if (params.site_id) qs += (qs ? '&' : '') + 'site_id=' + params.site_id;
+  const qs = new URLSearchParams(params).toString();
   const res = await client.get<T>(`/fm/adoption/${path}?${qs}`);
   return res.data;
 }
 
 /* ------------------------------------------------------------------ Layer 1 */
 
-export const fetchTrafficSession = (f: RangeFilters) =>
+export const fetchTrafficSession = (f: ViRangeFilters) =>
   get<TrafficSessionResponse>('traffic_session', rangeParams(f));
 
-export const fetchUsageAndDistribution = (f: RangeFilters) =>
+export const fetchUsageAndDistribution = (f: ViRangeFilters) =>
   get<UsageDistributionResponse>('usage_and_distribution', rangeParams(f));
 
 /* ------------------------------------------------------------------ Layer 2 */
@@ -106,30 +145,30 @@ export const fetchUsageAndDistribution = (f: RangeFilters) =>
  * takes every value from the API. `used_seats` comes back regardless, so A1 renders as an
  * active-seat count instead of an empty percentage — see data/viMetricIds.ts asActiveSeats.
  */
-export const fetchAdoptionEngagement = (f: RangeFilters) =>
+export const fetchAdoptionEngagement = (f: ViRangeFilters) =>
   get<AdoptionEngagementResponse>('adoption_engagement', rangeParams(f));
 
-export const fetchAdoptionTrend = (f: WeeklyFilters) =>
+export const fetchAdoptionTrend = (f: ViWeeklyFilters) =>
   get<AdoptionTrendResponse>('adoption_trend', weeklyParams(f));
 
-export const fetchGrowth = (f: WeeklyFilters) => get<GrowthResponse>('growth', weeklyParams(f));
+export const fetchGrowth = (f: ViWeeklyFilters) => get<GrowthResponse>('growth', weeklyParams(f));
 
-export const fetchRetention = (f: WeeklyFilters) =>
+export const fetchRetention = (f: ViWeeklyFilters) =>
   get<RetentionResponse>('retention', weeklyParams(f));
 
-export const fetchRoles = (f: RangeFilters) => get<RolesResponse>('roles', rangeParams(f));
+export const fetchRoles = (f: ViRangeFilters) => get<RolesResponse>('roles', rangeParams(f));
 
 /* ------------------------------------------------------------------ Layer 3 */
 
 /** Omit `module` for the top-level tree (path segment 1); pass it for sub-modules (segment 2). */
-export const fetchModules = (f: RangeFilters & { module?: string }) =>
+export const fetchModules = (f: ViRangeFilters & { module?: string }) =>
   get<ModulesResponse>('modules', {
     ...rangeParams(f),
     ...(f.module ? { module: f.module } : {}),
   });
 
 /** Defaults server-side to maintenance / ticket (helpdesk) when module/sub_module are omitted. */
-export const fetchWorkflowUsage = (f: RangeFilters & { module?: string; subModule?: string }) =>
+export const fetchWorkflowUsage = (f: ViRangeFilters & { module?: string; subModule?: string }) =>
   get<WorkflowUsageResponse>('workflow_usage', {
     ...rangeParams(f),
     ...(f.module ? { module: f.module } : {}),
