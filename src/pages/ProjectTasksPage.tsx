@@ -825,6 +825,20 @@ const ProjectTasksPage = () => {
         startDate: "",
         endDate: "",
     });
+    // Snapshot of the advanced filters actually applied to the API query.
+    // The selection state above changes live as the user interacts with the
+    // filter modal; this only updates on "Apply"/"Clear" so the API isn't
+    // called on every checkbox/date change.
+    const [appliedAdvancedFilters, setAppliedAdvancedFilters] = useState({
+        selectedStatuses: [] as string[],
+        selectedResponsible: [] as number[],
+        selectedCreators: [] as number[],
+        selectedProjects: [] as number[],
+        selectedWorkflowStatus: [] as string[],
+        selectedTags: [] as any[],
+        dates: { startDate: "", endDate: "", completedAt: "" },
+        dateRangeFilter: { startDate: "", endDate: "" },
+    });
     const [isDateRangePickerOpen, setIsDateRangePickerOpen] = useState(false);
     const [projectOptions, setProjectOptions] = useState<any[]>([]);
     const [tags, setTags] = useState<any[]>([]);
@@ -1456,6 +1470,19 @@ const ProjectTasksPage = () => {
                 true
             );
 
+            // Snapshot the current selections so buildFilters()/useTasks only
+            // pick up the new filters now, on Apply, not on every change above.
+            setAppliedAdvancedFilters({
+                selectedStatuses,
+                selectedResponsible,
+                selectedCreators,
+                selectedProjects,
+                selectedWorkflowStatus,
+                selectedTags,
+                dates,
+                dateRangeFilter,
+            });
+
             setIsFilterModalOpen(false);
             setCurrentPage(1);
             // Filters automatically applied through useTasks hook
@@ -1482,40 +1509,52 @@ const ProjectTasksPage = () => {
             filters["q[milestone_id_eq]"] = mid;
         }
 
-        // Add advanced filters
-        if (selectedStatuses.length > 0) {
-            filters["q[status_in][]"] = selectedStatuses;
+        // Add advanced filters (only what's actually been applied via the
+        // filter modal's Apply button, not the in-progress selection)
+        const {
+            selectedStatuses: appliedStatuses,
+            selectedWorkflowStatus: appliedWorkflowStatus,
+            selectedResponsible: appliedResponsible,
+            selectedCreators: appliedCreators,
+            selectedProjects: appliedProjects,
+            selectedTags: appliedTags,
+            dates: appliedDates,
+            dateRangeFilter: appliedDateRangeFilter,
+        } = appliedAdvancedFilters;
+
+        if (appliedStatuses.length > 0) {
+            filters["q[status_in][]"] = appliedStatuses;
         }
-        if (selectedWorkflowStatus.length > 0) {
-            filters["q[project_status_id_in][]"] = selectedWorkflowStatus;
+        if (appliedWorkflowStatus.length > 0) {
+            filters["q[project_status_id_in][]"] = appliedWorkflowStatus;
         }
-        if (selectedResponsible.length > 0) {
-            filters["q[responsible_person_id_in][]"] = selectedResponsible;
+        if (appliedResponsible.length > 0) {
+            filters["q[responsible_person_id_in][]"] = appliedResponsible;
         }
-        if (selectedCreators.length > 0) {
-            filters["q[created_by_id_in][]"] = selectedCreators;
+        if (appliedCreators.length > 0) {
+            filters["q[created_by_id_in][]"] = appliedCreators;
         }
-        if (selectedProjects.length > 0) {
-            filters["q[project_management_id_in][]"] = selectedProjects;
+        if (appliedProjects.length > 0) {
+            filters["q[project_management_id_in][]"] = appliedProjects;
         }
-        if (selectedTags.length > 0) {
-            filters["q[task_tags_company_tag_id_in][]"] = selectedTags;
+        if (appliedTags.length > 0) {
+            filters["q[task_tags_company_tag_id_in][]"] = appliedTags;
         }
-        if (dates.startDate) {
-            filters["q[expected_start_date_eq]"] = dates.startDate;
+        if (appliedDates.startDate) {
+            filters["q[expected_start_date_eq]"] = appliedDates.startDate;
         }
-        if (dates.endDate) {
-            filters["q[target_date_eq]"] = dates.endDate;
+        if (appliedDates.endDate) {
+            filters["q[target_date_eq]"] = appliedDates.endDate;
         }
-        if (dates.completedAt) {
-            filters["q[completed_at_gteq]"] = `${dates.completedAt}T00:00:00`;
-            filters["q[completed_at_lteq]"] = `${dates.completedAt}T23:59:59`;
+        if (appliedDates.completedAt) {
+            filters["q[completed_at_gteq]"] = `${appliedDates.completedAt}T00:00:00`;
+            filters["q[completed_at_lteq]"] = `${appliedDates.completedAt}T23:59:59`;
         }
-        if (dateRangeFilter.startDate && dateRangeFilter.endDate) {
-            filters["q[expected_start_date_gteq]"] = dateRangeFilter.startDate;
-            filters["q[expected_start_date_lteq]"] = dateRangeFilter.endDate;
-            filters["q[target_date_gteq]"] = dateRangeFilter.startDate;
-            filters["q[target_date_lteq]"] = dateRangeFilter.endDate;
+        if (appliedDateRangeFilter.startDate && appliedDateRangeFilter.endDate) {
+            filters["q[expected_start_date_gteq]"] = appliedDateRangeFilter.startDate;
+            filters["q[expected_start_date_lteq]"] = appliedDateRangeFilter.endDate;
+            filters["q[target_date_gteq]"] = appliedDateRangeFilter.startDate;
+            filters["q[target_date_lteq]"] = appliedDateRangeFilter.endDate;
         }
 
         // Add global search filter (searches in title, task_code, and description)
@@ -1571,6 +1610,16 @@ const ProjectTasksPage = () => {
         setSelectedTags([]);
         setDates({ startDate: "", endDate: "", completedAt: "" });
         setDateRangeFilter({ startDate: "", endDate: "" });
+        setAppliedAdvancedFilters({
+            selectedStatuses: [],
+            selectedResponsible: [],
+            selectedCreators: [],
+            selectedProjects: [],
+            selectedWorkflowStatus: [],
+            selectedTags: [],
+            dates: { startDate: "", endDate: "", completedAt: "" },
+            dateRangeFilter: { startDate: "", endDate: "" },
+        });
         setSearchTerms({
             status: "",
             workflowStatus: "",
@@ -3240,12 +3289,12 @@ const ProjectTasksPage = () => {
                     }}
                     showMyTasksOnly={taskType === "my"}
                     selectedFilterOption={selectedFilterOption}
-                    selectedStatuses={selectedStatuses}
-                    selectedWorkflowStatus={selectedWorkflowStatus}
-                    selectedResponsible={selectedResponsible}
-                    selectedCreators={selectedCreators}
-                    selectedProjects={selectedProjects}
-                    dates={dates}
+                    selectedStatuses={appliedAdvancedFilters.selectedStatuses}
+                    selectedWorkflowStatus={appliedAdvancedFilters.selectedWorkflowStatus}
+                    selectedResponsible={appliedAdvancedFilters.selectedResponsible}
+                    selectedCreators={appliedAdvancedFilters.selectedCreators}
+                    selectedProjects={appliedAdvancedFilters.selectedProjects}
+                    dates={appliedAdvancedFilters.dates}
                 />
 
                 <Dialog
