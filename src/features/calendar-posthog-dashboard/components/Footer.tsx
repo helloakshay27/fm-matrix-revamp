@@ -1,48 +1,39 @@
-import { ANALYTICS_TENANT_URL } from '../api/adoptionApi';
-import { TOTAL_REAL_EVENTS } from '../data/constants';
+import { TOTAL_REAL_EVENTS } from '../data/sampleData';
 
 /**
- * The dashboard's standing disclosure.
+ * The dashboard's standing disclosure, from the reference wireframe.
  *
- * The wireframe's version said every number was sample data. That is no longer true — the
- * numbers are live — but the catalogue caveats behind them are, so this now states what the
- * data actually is and what still needs confirming.
+ * It says plainly that every number here is illustrative sample data — this page runs off a
+ * seeded generator, not a query — while the module names, screen structure and event names
+ * are the real, documented ones.
  */
 export function Footer() {
   return (
     <div className="footer">
-      <b>Data note.</b> Every number on this dashboard is a live query against the FM Adoption
-      Analytics API (<code>/fm/adoption/*</code>), the same nine endpoints behind{' '}
-      <code>/posthog-dashboard</code> and <code>/vi-posthog-dashboard</code>, scoped to{' '}
-      <code>{ANALYTICS_TENANT_URL}</code>. The <b>module names, screen structure, and event
-      names</b> shown on Workflow Usage are the real, documented events from{' '}
+      <b>Wireframe note.</b> Single-tenant view — shows only Calendar App’s own users and their
+      events; no cross-tenant data. <b>Every number on this dashboard is illustrative sample
+      data</b> — it recomputes as you change <code>Provider</code>, <code>device</code> and{' '}
+      <code>previous period</code>, but it is not pulled from a live query. The <b>module names,
+      screen structure, and event names</b> are the real, documented events from{' '}
       <code>Calendar_App_PostHog_Events.xlsx</code> — {TOTAL_REAL_EVENTS} events across 16
-      categories, View/Action/Failure typed.{' '}
-      <b>⚠️ This catalogue is a single flat sheet and names no tenant/client value of its
-      own</b> — there is no "Read Me" sheet listing the standard device/tenant/session
-      properties and no "Known Gaps" sheet — so this dashboard reports on the frontend host it
-      is served from (<code>{ANALYTICS_TENANT_URL}</code>), where the web calendar at{' '}
-      <code>/employee/calendar</code> is instrumented by <code>PostHogCalendarEvents</code>.
-      That <code>url</code> parameter is a <b>frontend hostname, not the app's API base URL</b>
-      — passing the backend host returns zero rows. Confirm the mobile app's tenant value with
-      engineering before treating these as whole-product numbers, or web and mobile traffic will
-      be summed together.{' '}
-      <b>⚠️ Traffic &amp; Session and Adoption &amp; Engagement are whole-tenant, not
-      calendar-only.</b>{' '}
-      Those seven endpoints accept no page or module filter — passing{' '}
-      <code>module</code>/<code>sub_module</code> returns byte-identical responses, and the
-      endpoint's own formula block confirms it (<code>U1 = uniq(distinct_id) over the
-      period</code>, no <code>$pathname</code> dimension) — so those two layers report the same
-      figures as <code>/posthog-dashboard</code>. Only the <b>Calendar module</b> strip and the{' '}
-      <b>Workflow Usage</b> layer are scoped to <code>/employee/calendar</code>. Narrowing the
-      first two layers needs a path filter added to those queries server-side. Two further
-      limits are structural, not bugs: the endpoints expose{' '}
-      <b>no provider dimension</b>, so the wireframe's Provider filter and Provider-wise
-      breakdown are replaced by a module league table; and <code>workflow_usage</code>{' '}
-      <b>derives funnels from route segments, not from catalogue event names</b>, so Create
-      Event and Connect Calendar Account both resolve to <code>/employee/calendar</code> and
-      return the same path-derived funnel until the backend groups on the instrumented step
-      events. Workflows with no web screen are listed but left unqueried. Hover the{' '}
+      categories, View/Action/Failure typed. <b>Unlike every other product in this family, this
+      catalogue is a single flat sheet</b> — there is no “Read Me” sheet naming the standard
+      device/tenant/session properties (it only states that AnalyticsContext adds them on every
+      event, without listing them) and no “Known Gaps” sheet documenting disabled code paths, so
+      this dashboard does not claim a specific <code>client</code>/<code>tenant</code> filter
+      value the way other products do — confirm the real tenant value with engineering before
+      querying, or this dashboard’s numbers will mix in another app’s traffic. Calendar App is a
+      single-persona <b>personal productivity app</b>, not a resident/employee/gate-terminal app
+      — there is no audience or tier split to filter by, so the Provider dropdown filters by the
+      real <code>provider</code> property on <code>calendar_account_connected</code> (Google /
+      Outlook / etc.) instead of a site or persona. Per an explicit product decision,{' '}
+      <b>Workflow Usage concentrates depth on one primary funnel</b> (Create Event) rather than
+      giving every sub-flow its own multi-step funnel — Add People, Booking Slots, Location
+      Search, Propose Time and Assistant Voice are real, catalogue-sourced flows but are
+      surfaced as reach/adoption reference cards instead (see the Secondary Feature Reach card,
+      Adoption &amp; Engagement page). There is <b>no automatic screen tracking documented in
+      this catalogue</b> — every module/screen breakdown on this dashboard groups by the
+      explicit <code>screen</code> property stamped at the call site instead. Hover the{' '}
       <code>i</code> on any tile or chart for its exact definition.
     </div>
   );

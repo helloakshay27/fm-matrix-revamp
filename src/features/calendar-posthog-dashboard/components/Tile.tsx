@@ -42,12 +42,19 @@ export function Tile({ spec }: { spec: CalendarTileSpec }) {
         </InfoButton>
       </div>
       <div className="val">{spec.disp}</div>
-      {spec.delta != null && (
-        <div className={`delta ${deltaGood ? 'up' : 'dn'}`}>
-          {arrow} {Math.abs(spec.delta)}% vs prev. period
-        </div>
+      {/* Some tiles change by something that is not a percentage — seconds, a step name,
+          "vs prior 8 weeks" — so those carry their own line, arrow included. */}
+      {spec.deltaText ? (
+        <div className={`delta ${spec.deltaText.startsWith('▼') ? 'dn' : 'up'}`}>{spec.deltaText}</div>
+      ) : (
+        spec.delta != null && (
+          <div className={`delta ${deltaGood ? 'up' : 'dn'}`}>
+            {arrow} {Math.abs(spec.delta)}% vs prev. period
+          </div>
+        )
       )}
       {spec.sub && <div className="sub2">{spec.sub}</div>}
+      {!spec.noTarget && (
       <div className="bm">
         <span className="bl">Target</span>
         <input
@@ -65,6 +72,7 @@ export function Tile({ spec }: { spec: CalendarTileSpec }) {
         {spec.unit && <span className="bu">{spec.unit}</span>}
         {badge}
       </div>
+      )}
     </div>
   );
 }
