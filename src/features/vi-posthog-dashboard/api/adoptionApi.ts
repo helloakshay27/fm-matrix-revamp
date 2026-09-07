@@ -37,7 +37,7 @@ export const ANALYTICS_BASE_URL =
  * For the same reason the platform toggle is iOS / Android (the `os` property) rather than the
  * FM dashboard's Desktop / Mobile `device_type` split.
  */
-export const VI_APP_ID = (import.meta.env.VITE_VI_ADOPTION_APP_ID as string | undefined) ?? '40';
+export const VI_APP_ID = (import.meta.env.VITE_VI_ADOPTION_APP_ID as string | undefined) ?? '31';
 
 /**
  * Vi my Workspace ships as a mobile app only, so `device_type` is pinned rather than exposed
