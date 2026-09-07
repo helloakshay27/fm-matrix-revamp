@@ -24,7 +24,7 @@ import {
 /** Layer 2 — adoption_engagement, adoption_trend, growth, retention, roles + the site league. */
 export function AdoptionSection() {
   const { vm, setCircle, palette } = useViDashboard();
-  const { adopt, siteHealth, status, scopedSites } = vm;
+  const { adopt, status, weekTips, retentionRowTitles } = vm;
 
   const retentionCols = adopt.retentionCohorts[0]?.length ?? 0;
 
@@ -67,6 +67,7 @@ export function AdoptionSection() {
             cur={adopt.trendChart.cur}
             prev={adopt.trendChart.prev.length ? adopt.trendChart.prev : null}
             labels={adopt.trendChart.labels}
+            tipLabels={weekTips.trend}
             color={palette.blue}
             fill={palette.fill}
           />
@@ -96,6 +97,7 @@ export function AdoptionSection() {
           >
             <StackedBarChart
               labels={adopt.growthWeeks.map((w) => w.label)}
+              tipLabels={weekTips.growth}
               series={[
                 { label: 'New', data: adopt.growthWeeks.map((w) => w.nw), color: palette.blue },
                 { label: 'Returning', data: adopt.growthWeeks.map((w) => w.ret), color: palette.green },
@@ -137,7 +139,7 @@ export function AdoptionSection() {
             <table className="rt">
               <thead>
                 <tr>
-                  <th style={{ textAlign: 'left' }}>Cohort · size</th>
+                  <th style={{ textAlign: 'left' }}>Cohort</th>
                   {Array.from({ length: retentionCols }, (_, w) => (
                     <th key={w}>Week {w}</th>
                   ))}
@@ -146,7 +148,9 @@ export function AdoptionSection() {
               <tbody>
                 {adopt.retentionCohorts.map((row, i) => (
                   <tr key={adopt.retentionRowLabels[i]}>
-                    <td className="lbl">{adopt.retentionRowLabels[i]}</td>
+                    <td className="lbl" title={retentionRowTitles[i]}>
+                      {adopt.retentionRowLabels[i]}
+                    </td>
                     {row.map((v, w) => {
                       if (v == null) {
                         return (
@@ -315,70 +319,12 @@ export function AdoptionSection() {
         </table>
       </ChartCard>
 
-      {scopedSites.length > 1 && (
-        <ChartCard
-          className="mt12"
-          eyebrow="League table (A12)"
-          title="Circle-wise breakdown"
-          purpose={INFO['chart.siteHealth'].f}
-        >
-          <Guard
-            status={status.siteHealth}
-            empty={!siteHealth || siteHealth.rows.length === 0}
-            emptyLabel="No per-circle activity in this window."
-          >
-            <table className="league">
-              <thead>
-                <tr>
-                  <th>Circle</th>
-                  <th className="num">Active users</th>
-                  <th className="num">Sessions</th>
-                  <th className="num">Avg session</th>
-                  <th className="num">Bounce</th>
-                  <th>Trend</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(siteHealth?.rows ?? []).map((row) => {
-                  // §7.2 A12 bands, keyed off bounce rate.
-                  const [cls, label] =
-                    row.bounce >= 22
-                      ? ['st-drop', 'Watch']
-                      : row.bounce >= 16
-                        ? ['st-watch', 'Steady']
-                        : ['st-healthy', 'Healthy'];
-                  const arrow = row.trend == null ? 'flat' : row.trend > 0 ? 'up' : row.trend < 0 ? 'dn' : 'flat';
-                  return (
-                    <tr
-                      key={row.siteId}
-                      className="rowlink"
-                      // One-shot so the scope never lands on an intermediate value.
-                      onClick={() => setCircle('t1', row.siteId)}
-                      title={`Drill into ${row.name}`}
-                    >
-                      <td className="strong">{row.name}</td>
-                      <td className="num">{row.users.toLocaleString()}</td>
-                      <td className="num">{row.sessions.toLocaleString()}</td>
-                      <td className="num">{fmtDur(row.durSec)}</td>
-                      <td className="num">{row.bounce.toFixed(1)}%</td>
-                      <td>
-                        <span className={`arrow ${arrow}`}>
-                          {arrow === 'up' ? '↗' : arrow === 'dn' ? '↘' : '→'}
-                          {row.trend != null && ` ${Math.abs(row.trend)}%`}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`status ${cls}`}>{label}</span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </Guard>
-        </ChartCard>
-      )}
+      {/*
+        Circle-wise breakdown (A12) is hidden: the mobile-app events this dashboard reads
+        carry no site, so `site_id` is never sent and there is no per-circle split to show.
+        The league table and its `useSiteLeague` query were removed with it — restore both
+        from git history if app events start carrying a site.
+      */}
     </section>
   );
 }

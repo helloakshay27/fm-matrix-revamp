@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import type { DateRange, Device, Tier } from '@/features/posthog-dashboard/data/constants';
-import { useViDashboard } from '../context/viDashboardStore';
+import type { DateRange, Tier } from '@/features/posthog-dashboard/data/constants';
+import { useViDashboard, type ViPlatform } from '../context/viDashboardStore';
 
 /**
  * The reference (§7.1, cross-cutting controls) is explicit that Vi my Workspace has no admin
@@ -11,6 +11,13 @@ import { useViDashboard } from '../context/viDashboardStore';
  */
 const ALL_CIRCLES = 'all-circles';
 
+/** Vi my Workspace is a mobile app — the platform choice is iOS vs Android, not desktop vs mobile. */
+const PLATFORMS: { value: ViPlatform; label: string; title: string }[] = [
+  { value: 'all', label: 'All', title: 'Both platforms' },
+  { value: 'iOS', label: 'iOS', title: 'iOS only' },
+  { value: 'Android', label: 'Android', title: 'Android only' },
+];
+
 function circleValue(tier: Tier, scope: string): string {
   if (tier === 't3' && scope === 'org') return ALL_CIRCLES;
   return scope;
@@ -18,7 +25,7 @@ function circleValue(tier: Tier, scope: string): string {
 
 export function ControlBar() {
   const {
-    vm, setCircle, setDate, setCustomRange, customRange, setDev,
+    vm, setCircle, setDate, setCustomRange, customRange, platform, setPlatform,
     togglePrev, refreshAll, isRefreshing,
   } = useViDashboard();
   const { state, sites, groups, sitesLoading, traffic } = vm;
@@ -31,7 +38,7 @@ export function ControlBar() {
     <div className="filterbar">
       <label
         className="ctrl"
-        title="Circle — re-scopes every metric via site_id / company_id (§6.5). Companies group the sites beneath them."
+        title="Circle — labels the view. Mobile-app events carry no site, so site_id is not sent and the metrics below are tenant-wide."
       >
         <span className="ic">◎</span>
         {sitesLoading ? (
@@ -132,15 +139,16 @@ export function ControlBar() {
         </div>
       )}
 
-      <div className="devtoggle" title="Platform (device_type)">
-        {(['all', 'desktop', 'mobile'] as Device[]).map((d) => (
+      <div className="devtoggle" title="Platform (os)">
+        {PLATFORMS.map((p) => (
           <button
-            key={d}
+            key={p.value}
             type="button"
-            className={state.dev === d ? 'on' : undefined}
-            onClick={() => setDev(d)}
+            title={p.title}
+            className={platform === p.value ? 'on' : undefined}
+            onClick={() => setPlatform(p.value)}
           >
-            {d === 'all' ? 'All' : d === 'desktop' ? 'Desktop' : 'Mobile'}
+            {p.label}
           </button>
         ))}
       </div>

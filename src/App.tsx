@@ -4227,6 +4227,7 @@ const PulseContestRewardsDetails = lazy(() => import("./pages/PulseContestReward
 const PulseContestRewardCreate = lazy(() => import("./pages/PulseContestRewardCreate.tsx"));
 const PosthogDashboardPage = lazy(() => import("./features/posthog-dashboard/PosthogDashboardPage").then(m => ({ default: m.PosthogDashboardPage })));
 const ViPosthogDashboardPage = lazy(() => import("./features/vi-posthog-dashboard/ViPosthogDashboardPage").then(m => ({ default: m.ViPosthogDashboardPage })));
+const CalendarPosthogDashboardPage = lazy(() => import("./features/calendar-posthog-dashboard/CalendarPosthogDashboardPage").then(m => ({ default: m.CalendarPosthogDashboardPage })));
 const SmartSecureDashboardPage = lazy(() => import("./features/smartsecure-dashboard/SmartSecureDashboardPage").then(m => ({ default: m.SmartSecureDashboardPage })));
 const FmAdoptionDashboardPage = lazy(() => import("./features/fm-adoption-dashboard/FmAdoptionDashboardPage").then(m => ({ default: m.FmAdoptionDashboardPage })));
 const RevampDashboardPage = lazy(() => import("./pages/RevampDashboardPage"));
@@ -4582,6 +4583,10 @@ function App() {
                           <Route
                             path="/vi-posthog-dashboard"
                             element={<ViPosthogDashboardPage />}
+                          />
+                          <Route
+                            path="/calendar-posthog-dashboard"
+                            element={<CalendarPosthogDashboardPage />}
                           />
                           <Route
                             path="/smartsecure-dashboard"

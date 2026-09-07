@@ -9,7 +9,6 @@ import { useIsFetching, useQueryClient } from '@tanstack/react-query';
 import {
   groupSites,
   type DateRange,
-  type Device,
   type Site,
   type SiteGroup,
   type Tier,
@@ -17,7 +16,6 @@ import {
 import {
   buildAdopt,
   buildFlows,
-  buildSiteHealth,
   buildTraffic,
   normalizeScope,
   scopeLabel as computeScopeLabel,
@@ -30,18 +28,20 @@ import {
   type SiteHealthData,
   type TrafficData,
 } from '@/features/posthog-dashboard/data/metrics';
-import type { DeviceType } from '../api/adoptionApi';
+import type { OsType, UsageDistributionResponse } from '../api/adoptionApi';
+import { toCohortLabels, toRoleLabel, toUsageChart, toWeekLabels } from '../data/usageChart';
+import { toDeclaredFunnel } from '../data/declaredFunnel';
 import {
   dateRangeFor,
   useAdoptionEngagement,
   useAdoptionTrend,
   useAllSites,
+  useAppEventFlows,
   useCompanyNames,
   useGrowth,
   useModuleTree,
   useRetention,
   useRoles,
-  useSiteLeague,
   useSubModuleTree,
   useTrafficSession,
   useUsageAndDistribution,
@@ -57,6 +57,7 @@ import {
   type SectionStatus,
   type ViDashboardValue,
   type ViewModel,
+  type ViPlatform,
 } from './viDashboardStore';
 
 const THEME_KEY = 'vimyworkspace-theme';
@@ -87,11 +88,20 @@ function initialTheme(): ViTheme {
   return 'light';
 }
 
-/** `all` sends no `device_type` at all; the API is case-sensitive on the other two. */
-function deviceParam(dev: Device): DeviceType[] {
-  if (dev === 'desktop') return ['Desktop'];
-  if (dev === 'mobile') return ['Mobile'];
-  return [];
+/** `all` sends no `os` at all; the API is case-sensitive on the other two. */
+function osParam(platform: ViPlatform): OsType[] {
+  return platform === 'all' ? [] : [platform];
+}
+
+/** Swaps the shared builder's daily "8/9"-labelled series for the one this dashboard shows. */
+function withUsageChart(
+  traffic: TrafficData,
+  usage: UsageDistributionResponse | undefined,
+  measure: DashboardState['sessTab'],
+  from: string,
+  to: string,
+): TrafficData {
+  return { ...traffic, chart: toUsageChart(traffic.chart, usage, measure, from, to) };
 }
 
 /**
@@ -103,6 +113,7 @@ const DEFAULT_STATE: DashboardState = {
   tier: 't3',
   scope: 'org',
   date: 30,
+  // Unused: the shared state shape requires it, but this dashboard never sends device_type.
   dev: 'all',
   // Layer 3 is navigated by workflow (see data/workflows.ts), and the selected workflow
   // is what sets `module` — so this starts on the first workflow's module rather than on
@@ -131,6 +142,9 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
   // today, so a custom start date has to bypass it entirely rather than be converted
   // into a day-count.
   const [customRange, setCustomRange] = useState<{ from: string; to: string } | null>(null);
+  // Platform lives outside DashboardState: the shared state's `dev` is Desktop/Mobile
+  // (`device_type`), and this dashboard filters by `os` instead — see ViPlatform.
+  const [platform, setPlatform] = useState<ViPlatform>('all');
 
   /* ------------------------------------------------------- tenant metadata */
 
@@ -145,8 +159,8 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
     [sites, companiesQ.data],
   );
 
-  // Hold the analytics calls until the site list has settled — otherwise every endpoint
-  // fires once for the whole tenant and again with the real site_id list.
+  // Hold the analytics calls until the site list has settled, so the header's scope label
+  // and the metrics under it appear together rather than one render apart.
   const sitesSettled = !sitesQ.isLoading;
 
   // Keep the current scope valid for the tier once the site/company lists resolve.
@@ -163,21 +177,19 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
   );
 
   const scopedSites = useMemo(() => scopeSites(state, sites, groups), [state, sites, groups]);
-  const siteIds = useMemo(() => scopedSites.map((s) => s.id), [scopedSites]);
 
   const filters = useMemo<QueryFilters>(
     () => ({
       enabled: sitesSettled,
       from,
       to,
-      siteIds,
-      devices: deviceParam(state.dev),
+      os: osParam(platform),
       module: state.module,
       subModule: state.subModule,
     }),
     [
-      sitesSettled, from, to, siteIds,
-      state.dev, state.module, state.subModule,
+      sitesSettled, from, to, platform,
+      state.module, state.subModule,
     ],
   );
 
@@ -196,7 +208,9 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
   const moduleTreeQ = useModuleTree(filters);
   const subModuleTreeQ = useSubModuleTree(filters);
   const workflowQ = useWorkflowUsage(filters);
-  const league = useSiteLeague(filters, siteIds, scopedSites.length > 1);
+  // The app-wide event list — mobile events carry no , so the module-scoped query
+  // above cannot see them. See useAppEventFlows.
+  const appFlowsQ = useAppEventFlows(filters);
 
   const modules = useMemo(() => toModuleOptions(moduleTreeQ.data?.tree), [moduleTreeQ.data]);
   const subModules = useMemo(
@@ -210,22 +224,51 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
 
   /* ---------------------------------------------------------- the view model */
 
-  const vm = useMemo<ViewModel>(
-    () => ({
+  const vm = useMemo<ViewModel>(() => {
+    const adopt = buildAdopt(
+      state,
+      to,
+      engagementQ.data,
+      trendQ.data,
+      growthQ.data,
+      retentionQ.data,
+      rolesQ.data,
+    );
+    // The trend axis is numbered W1..Wn here; the week each number stands for moves to the
+    // hover card. See toTrendLabels.
+    const trendLabels = toWeekLabels(adopt.trendChart.labels);
+    const growthLabels = toWeekLabels(adopt.growthWeeks.map((w) => w.label));
+    // Cohort rows are keyed on their week; the cohort size moves to the row's tooltip.
+    const cohortLabels = toCohortLabels(adopt.retentionRowLabels);
+
+    return {
       state,
       scopeLabel: computeScopeLabel(state, sites, groups),
-      traffic: buildTraffic(state, from, to, trafficQ.data, usageQ.data),
-      adopt: buildAdopt(
-        state,
+      // Same tiles and device rows as the FM dashboard; only the usage series differs —
+      // month-wise over long ranges, and spelled-out date labels either way. See toUsageChart.
+      traffic: withUsageChart(
+        buildTraffic(state, from, to, trafficQ.data, usageQ.data),
+        usageQ.data,
+        state.sessTab,
+        from,
         to,
-        engagementQ.data,
-        trendQ.data,
-        growthQ.data,
-        retentionQ.data,
-        rolesQ.data,
       ),
-      siteHealth: buildSiteHealth(league.entries, sites),
+      adopt: {
+        ...adopt,
+        trendChart: { ...adopt.trendChart, labels: trendLabels.axis },
+        growthWeeks: adopt.growthWeeks.map((w, i) => ({ ...w, label: growthLabels.axis[i] })),
+        retentionRowLabels: cohortLabels.labels,
+        // 'pms_occupant' is a database value, not a label — see toRoleLabel.
+        roleShares: adopt.roleShares.map((r) => ({ ...r, name: toRoleLabel(r.name) })),
+      },
+      weekTips: { trend: trendLabels.tips, growth: growthLabels.tips },
+      retentionRowTitles: cohortLabels.titles,
+      // Circle-wise breakdown is hidden (see AdoptionSection) and `site_id` is never sent,
+      // so there is nothing to build a per-site league from.
+      siteHealth: null,
       flows: buildFlows(state, workflowQ.data),
+      // Declared catalogue steps measured against the app-wide event list — see toDeclaredFunnel.
+      declaredFunnel: toDeclaredFunnel(findWorkflow(workflow), appFlowsQ.data),
       sites,
       scopedSites,
       groups,
@@ -261,11 +304,12 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
             (!state.module && modules.length > 0),
           error: (moduleTreeQ.error ?? workflowQ.error) as Error | null,
         },
-        siteHealth: { loading: pending || league.isLoading, error: null },
+        siteHealth: { loading: false, error: null },
       },
       generatedAt: trafficQ.data?.meta.generated_at ?? null,
       range: { from, to },
-    }),
+    };
+  },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       state, sites, scopedSites, groups, pending, from, to, modules, subModules,
@@ -279,7 +323,7 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
       rolesQ.data, rolesQ.isLoading, rolesQ.error,
       moduleTreeQ.data, moduleTreeQ.isLoading, moduleTreeQ.error,
       workflowQ.data, workflowQ.isLoading, workflowQ.error,
-      league.entries, league.isLoading,
+      appFlowsQ.data, appFlowsQ.isLoading, appFlowsQ.error, workflow,
     ],
   );
 
@@ -339,6 +383,7 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
 
   const value: ViDashboardValue = {
     vm,
+    queryFilters: filters,
     setTier: (tier) =>
       setState((s) => ({ ...s, tier, scope: normalizeScope(tier, s.scope, sites, groups) })),
     setScope: (scope) => setState((s) => ({ ...s, scope })),
@@ -353,7 +398,8 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
       setCustomRange({ from: f, to: t });
     },
     customRange,
-    setDev: (dev) => setState((s) => ({ ...s, dev })),
+    platform,
+    setPlatform,
     setModule: (module) => setState((s) => ({ ...s, module, subModule: null })),
     setSubModule: (subModule) => setState((s) => ({ ...s, subModule })),
     workflow,
