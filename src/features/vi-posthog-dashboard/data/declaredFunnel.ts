@@ -32,6 +32,10 @@ export interface DeclaredFunnelStep {
   step: string;
   /** Users who reached it, or null before the event list has loaded. */
   users: number | null;
+  /** Raw event volume for this step, from the app-wide event list. */
+  events: number | null;
+  /** Sessions the step was fired in, from the app-wide event list. */
+  sessions: number | null;
   /** Share of the funnel's entrants still present, 0..1. */
   ofEntrants: number | null;
   /** Drop from the previous step as a percentage; null on the first step. */
@@ -76,11 +80,21 @@ function findDeclared(
   return declared.find((d) => d.steps.some((s) => s.step === first));
 }
 
-function fromDeclared(d: ApiDeclaredWorkflow): DeclaredFunnel {
+/** Event volume and session counts per event name, for the screens table. */
+type Volumes = Map<string, { events: number; sessions: number }>;
+
+const volumesOf = (wf: ViWorkflowUsageResponse | undefined): Volumes =>
+  new Map((wf?.flows ?? []).map((f) => [f.path, { events: f.events, sessions: f.sessions }]));
+
+function fromDeclared(d: ApiDeclaredWorkflow, vol: Volumes): DeclaredFunnel {
   const entrants = d.steps[0]?.reach ?? 0;
   const steps: DeclaredFunnelStep[] = d.steps.map((s) => ({
     step: s.step,
     users: s.reach,
+    // The declared block reports sequenced reach only, so volume still comes off the raw
+    // event list — a step nobody reached in sequence can still have fired out of order.
+    events: vol.get(s.step)?.events ?? 0,
+    sessions: vol.get(s.step)?.sessions ?? 0,
     ofEntrants: entrants > 0 ? s.reach / entrants : null,
     dropPct: s.drop_pct,
     awaiting: s.reach === 0,
@@ -108,8 +122,9 @@ export function toDeclaredFunnel(
   workflow: ViWorkflow,
   wf: ViWorkflowUsageResponse | undefined,
 ): DeclaredFunnel {
+  const vol = volumesOf(wf);
   const declared = wf?.workflows?.length ? findDeclared(workflow, wf.workflows) : undefined;
-  if (declared) return fromDeclared(declared);
+  if (declared) return fromDeclared(declared, vol);
 
   const loaded = wf != null;
   const users = new Map((wf?.flows ?? []).map((f) => [f.path, f.users]));
@@ -122,6 +137,8 @@ export function toDeclaredFunnel(
     return {
       step,
       users: now,
+      events: loaded ? (vol.get(step)?.events ?? 0) : null,
+      sessions: loaded ? (vol.get(step)?.sessions ?? 0) : null,
       ofEntrants: now == null || entrants === 0 ? null : now / entrants,
       // A drop needs both ends; the first step has nothing to fall from, and a step after an
       // empty one has no base to express the fall as a share of.
