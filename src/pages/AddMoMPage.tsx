@@ -24,6 +24,7 @@ import MuiMultiSelect from "../components/MuiMultiSelect";
 import { API_CONFIG } from "../config/apiConfig";
 import { toast } from "sonner";
 import { useLayout } from "@/contexts/LayoutContext";
+import { usePATMEvents } from "@/components/PostHogPATMEvents";
 
 // Define types for form data
 interface Attendee {
@@ -59,6 +60,7 @@ interface FormData {
 
 const AddMoMPage = () => {
   const { setCurrentSection } = useLayout();
+  const patmEvents = usePATMEvents();
 
   const view = localStorage.getItem("selectedView");
 
@@ -447,7 +449,10 @@ const AddMoMPage = () => {
     }
 
     try {
-      await dispatch(createMoM(formDataPayload)).unwrap();
+      const result = await dispatch(createMoM(formDataPayload)).unwrap();
+      const momId = result?.id || result?.mom?.id || "";
+      patmEvents.onMoMCreated(momId, formData.title);
+
       toast.success("Minute of Meeting Created Successfully");
       // Invalidate cache after MOM creation
       const { cache } = await import("../utils/cacheUtils");

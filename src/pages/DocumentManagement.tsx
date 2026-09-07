@@ -25,10 +25,10 @@ import {
   getCategories,
   CreateDocumentPayload,
   FolderPermission,
-  Category,
-} from "@/services/documentService";
+import { Category } from "@/services/documentService";
 import { toast } from "sonner";
 import { FileIcon } from "@/components/document/FileIcon";
+import { usePATMEvents } from "@/components/PostHogPATMEvents";
 
 interface Document {
   id: number;
@@ -221,8 +221,14 @@ export const DocumentManagement = () => {
     fileType: "",
     createdDateFrom: "",
     createdDateTo: "",
+    createdDateTo: "",
     status: "",
   });
+  const patmEvents = usePATMEvents();
+
+  useEffect(() => {
+    patmEvents.onDocumentListViewed();
+  }, [patmEvents]);
 
   // Fetch categories on mount
   useEffect(() => {
@@ -518,9 +524,10 @@ export const DocumentManagement = () => {
 
     try {
       // Delete each folder
-      const deletePromises = selectedItems.map((id) =>
-        deleteFolder(parseInt(id))
-      );
+      const deletePromises = selectedItems.map((id) => {
+        patmEvents.onDocumentDeleted(parseInt(id));
+        return deleteFolder(parseInt(id));
+      });
       await Promise.all(deletePromises);
 
       toast.success(`Successfully deleted ${selectedItems.length} folder(s)`);
@@ -609,6 +616,7 @@ export const DocumentManagement = () => {
       const documentId = (createResponse as any)?.attachment?.id;
 
       if (documentId) {
+        patmEvents.onDocumentUploaded(documentId, randomTitle);
         toast.success("Blank PDF created! Opening editor...");
         navigate(`/maintenance/documents/editor/${documentId}`);
       } else {
@@ -690,6 +698,7 @@ export const DocumentManagement = () => {
       const documentId = (createResponse as any)?.attachment?.id;
 
       if (documentId) {
+        patmEvents.onDocumentUploaded(documentId, randomTitle);
         toast.success("Blank PDF created! Opening editor...");
         navigate(`/maintenance/documents/editor/${documentId}`);
       } else {
@@ -771,6 +780,7 @@ export const DocumentManagement = () => {
       const documentId = (createResponse as any)?.attachment?.id;
 
       if (documentId) {
+        patmEvents.onDocumentUploaded(documentId, randomTitle);
         toast.success("Blank PDF created! Opening editor...");
         navigate(`/maintenance/documents/editor/${documentId}`);
       } else {
@@ -852,6 +862,7 @@ export const DocumentManagement = () => {
       const documentId = (createResponse as any)?.attachment?.id;
 
       if (documentId) {
+        patmEvents.onDocumentUploaded(documentId, randomTitle);
         toast.success("Blank PDF created! Opening editor...");
         navigate(`/maintenance/documents/editor/${documentId}`);
       } else {

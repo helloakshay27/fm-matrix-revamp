@@ -18,6 +18,7 @@ import { useTodos, useToggleTodo, usePriorityTodos } from "@/hooks/useTodos";
 import PriorityTodo from "@/components/PriorityTodo";
 import { DndContext, DragEndEvent, useDraggable, useDroppable, DragOverlay, Active } from "@dnd-kit/core";
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { usePATMEvents } from '@/components/PostHogPATMEvents';
 // Countdown timer component with real-time updates
 const CountdownTimer = ({
   startDate,
@@ -123,6 +124,7 @@ const DEFAULT_TODO_FILTERS: TodoFilters = {
 export default function Todo() {
   const { setCurrentSection } = useLayout();
   const { shouldShow } = useDynamicPermissions();
+  const patmEvents = usePATMEvents();
   const view = localStorage.getItem("selectedView");
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -137,6 +139,7 @@ export default function Todo() {
     setCurrentSection(
       view === "admin" ? "Value Added Services" : "Project Task"
     );
+    patmEvents.onTodoListViewed();
   }, [setCurrentSection]);
 
   const baseUrl = localStorage.getItem("baseUrl");
@@ -370,6 +373,8 @@ export default function Todo() {
         id: todoToToggle.id,
         completed: isCompleted,
       });
+      const newStatus = isCompleted ? "completed" : "open";
+      patmEvents.onTodoStatusChanged(todoToToggle.id, newStatus);
       toast.success(isCompleted ? "Task completed successfully" : "Task reopened successfully");
       setIsToggleConfirmOpen(false);
       setTodoToToggle(null);

@@ -1,4 +1,4 @@
-﻿import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { renderGroupedUserCheckboxList } from "@/components/GroupedUserCheckboxList";
@@ -67,6 +67,7 @@ import {
 import { toast } from "sonner";
 import ProjectTaskCreateModal from "@/components/ProjectTaskCreateModal";
 import TaskManagementKanban from "@/components/TaskManagementKanban";
+import { usePATMEvents } from "@/components/PostHogPATMEvents";
 import {
     Pagination,
     PaginationContent,
@@ -702,6 +703,11 @@ const ProjectTasksPage = () => {
     const { setCurrentSection } = useLayout();
     const [searchParams, setSearchParams] = useSearchParams();
     const { shouldShow } = useDynamicPermissions();
+    const patmEvents = usePATMEvents();
+
+    useEffect(() => {
+        patmEvents.onTaskListViewed();
+    }, [patmEvents]);
 
     const view = localStorage.getItem("selectedView");
     const urlToken = searchParams.get("token");
@@ -1902,9 +1908,12 @@ const ProjectTasksPage = () => {
             },
         };
         try {
-            await dispatch(
+            const response = await dispatch(
                 createProjectTask({ token, baseUrl, data: payload })
             ).unwrap();
+
+            const newTaskId = response?.id || "unknown";
+            patmEvents.onTaskCreated(newTaskId, data.title, data.priority || "P2");
 
             toast.success("Task created successfully");
             await refetchTasks();
@@ -2023,7 +2032,12 @@ const ProjectTasksPage = () => {
 
             // Check if task is being marked as completed and if it's overdue
             if (status === "completed") {
-                const task = tasks.find((t) => t.id === id);
+                // `tasks` only holds top-level rows - subtasks live nested
+                // under each task's `sub_tasks_managements`, so look there too.
+                const task = tasks.find((t) => t.id === id) ||
+                    tasks
+                        .flatMap((t) => t.sub_tasks_managements || [])
+                        .find((s) => s.id === id);
                 if (!task) {
                     toast.error("Task not found");
                     return;
@@ -2051,6 +2065,7 @@ const ProjectTasksPage = () => {
 
             // Use TanStack Query mutation for status change
             await statusMutation.mutateAsync({ id, status });
+            patmEvents.onTaskUpdated(id);
             toast.success("Task status changed successfully");
         } catch (error) {
             console.log(error);
@@ -2351,7 +2366,12 @@ const ProjectTasksPage = () => {
         }
 
         // Find the task to check if it's overdue
-        const task = tasks.find((t) => t.id === id);
+        // `tasks` only holds top-level rows - subtasks live nested under
+        // each task's `sub_tasks_managements`, so look there too.
+        const task = tasks.find((t) => t.id === id) ||
+            tasks
+                .flatMap((t) => t.sub_tasks_managements || [])
+                .find((s) => s.id === id);
         if (!task) {
             toast.error("Task not found");
             return;
@@ -2380,6 +2400,7 @@ const ProjectTasksPage = () => {
                     id,
                     completionPercent: percentage,
                 });
+                patmEvents.onTaskUpdated(id);
                 toast.success("Completion percentage updated successfully");
             } catch (error) {
                 console.log(error);

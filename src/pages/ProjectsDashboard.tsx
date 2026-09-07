@@ -44,6 +44,7 @@ import {
   useImportProjects,
 } from "@/hooks/useProjects";
 import { CreateProjectPayload } from "@/types/projects";
+import { usePATMEvents } from "@/components/PostHogPATMEvents";
 
 const columns: ColumnConfig[] = [
   {
@@ -275,6 +276,11 @@ export const ProjectsDashboard = () => {
   const dispatch = useAppDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
   const { shouldShow } = useDynamicPermissions();
+  const patmEvents = usePATMEvents();
+
+  useEffect(() => {
+    patmEvents.onProjectListViewed();
+  }, [patmEvents]);
 
   const view = localStorage.getItem("selectedView");
   const urlToken = searchParams.get("token");
@@ -627,7 +633,12 @@ export const ProjectsDashboard = () => {
           project_type_id: data.type,
         },
       };
-      await createMutation.mutateAsync(payload);
+      const response = await createMutation.mutateAsync(payload);
+      
+      // Fire PostHog event
+      const newProjectId = response?.data?.id || response?.id || "unknown";
+      patmEvents.onProjectCreated(newProjectId, data.title);
+
       toast.success("Project created successfully");
       setCurrentPage(1);
       // Cache automatically invalidated by the mutation hook
@@ -726,6 +737,7 @@ export const ProjectsDashboard = () => {
         id,
         status,
       });
+      patmEvents.onProjectUpdated(id);
       toast.success("Project status changed successfully");
       // Cache automatically invalidated by the mutation hook
     } catch (error) {

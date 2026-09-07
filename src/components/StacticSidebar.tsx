@@ -80,6 +80,7 @@ import {
   Settings2,
 } from "lucide-react";
 import { template } from "lodash";
+import { capturePostHogEvent } from "@/utils/posthogHelpers";
 
 const navigationStructure = {
   Settings: {
@@ -2072,9 +2073,23 @@ export const StacticSidebar = () => {
     }
   }, [isSidebarCollapsed]);
 
-  const handleNavigation = (href: string, section?: string) => {
+  const handleNavigation = (href: string, section?: string, itemName?: string) => {
+    // If we're already on this exact path, don't navigate
+    if (location.pathname === href) return;
+
+    if (section === "Projects & Tasks" || section === "Project Task" || currentSection === "Project Task") {
+      capturePostHogEvent("PATM Sidebar Item Clicked", {
+        item_name: itemName || "Unknown",
+        href: href,
+      });
+    }
+
     if (section && section !== currentSection) {
       setCurrentSection(section);
+    }
+
+    if (isMobileSidebarOpen) {
+      setIsMobileSidebarOpen(false);
     }
     navigate(href);
   };
@@ -2433,12 +2448,12 @@ export const StacticSidebar = () => {
               // Navigate to the deepest navigable sub-item's href if it exists
               const deepestHref = findDeepestNavigableItem(module);
               if (deepestHref) {
-                handleNavigation(deepestHref, currentSection);
+                handleNavigation(deepestHref, currentSection, module.name);
               } else {
                 toggleExpanded(module.name);
               }
             } else if (module.href) {
-              handleNavigation(module.href, currentSection);
+              handleNavigation(module.href, currentSection, module.name);
             }
           }}
           className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${active || isExpanded
@@ -2527,12 +2542,12 @@ export const StacticSidebar = () => {
                     if (module.subItems && module.subItems.length > 0) {
                       const deepestHref = findDeepestNavigableItem(module);
                       if (deepestHref) {
-                        handleNavigation(deepestHref, currentSection);
+                        handleNavigation(deepestHref, currentSection, module.name);
                       } else if (module.href) {
-                        handleNavigation(module.href, currentSection);
+                        handleNavigation(module.href, currentSection, module.name);
                       }
                     } else if (module.href) {
-                      handleNavigation(module.href, currentSection);
+                      handleNavigation(module.href, currentSection, module.name);
                     }
                   }}
                   className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href, "prefix")

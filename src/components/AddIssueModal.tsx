@@ -43,6 +43,7 @@ import { SpeechInput } from "./SpeechInput";
 import { useSpeechToText } from "@/hooks/useSpeechToText";
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
+import { usePATMEvents } from "@/components/PostHogPATMEvents";
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & { children: React.ReactElement },
@@ -264,6 +265,8 @@ const AddIssueModal = ({
   preSelectedProjectId?: string;
   prefillData?: any
 }) => {
+  const patmEvents = usePATMEvents();
+  const dispatch = useAppDispatch();
   console.log(prefillData)
   const [title, setTitle] = useState("");
   const [responsiblePerson, setResponsiblePerson] = useState("");
@@ -991,9 +994,12 @@ const AddIssueModal = ({
 
       try {
         // Use unwrap so rejected action throws and we can catch the backend error payload
-        await dispatch(
+        const result = await dispatch(
           createIssue({ baseUrl, token, data: formData })
         ).unwrap();
+        const createdIssueId = result?.id || result?.issue?.id || "";
+        patmEvents.onIssueCreated(createdIssueId, title.trim());
+
         // Refresh issues list in store - fetch based on context
         // If created from project details page, fetch for that project; otherwise fetch all
         dispatch(
@@ -1096,6 +1102,7 @@ const AddIssueModal = ({
       dateWiseHours,
       baseUrl,
       token,
+      patmEvents,
     ]
   );
 

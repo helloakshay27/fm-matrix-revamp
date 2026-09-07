@@ -16,6 +16,7 @@ import { useTodos, useToggleTodo } from "@/hooks/useTodos";
 import MobilePriorityTodo from "@/components/MobilePriorityTodo";
 import { DndContext, DragEndEvent, useDraggable, useDroppable, DragOverlay } from "@dnd-kit/core";
 import { format } from "date-fns";
+import { usePATMEvents } from '@/components/PostHogPATMEvents';
 
 // Countdown timer component with real-time updates
 const CountdownTimer = ({
@@ -93,6 +94,7 @@ const TodoSkeleton = () => {
 
 export default function MobileTodo() {
     const { setCurrentSection } = useLayout();
+    const patmEvents = usePATMEvents();
     const view = localStorage.getItem("selectedView");
     const [taskType, setTaskType] = useState<"all" | "my">("my");
     const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
@@ -102,6 +104,7 @@ export default function MobileTodo() {
         setCurrentSection(
             view === "admin" ? "Value Added Services" : "Project Task"
         );
+        patmEvents.onTodoListViewed();
     }, [setCurrentSection]);
 
     const baseUrl = localStorage.getItem("baseUrl");
@@ -258,6 +261,8 @@ export default function MobileTodo() {
                 id: todoToToggle.id,
                 completed: isCompleted,
             });
+            const newStatus = isCompleted ? "completed" : "open";
+            patmEvents.onTodoStatusChanged(todoToToggle.id, newStatus);
             toast.success(isCompleted ? "Task completed successfully" : "Task reopened successfully");
             setIsToggleConfirmOpen(false);
             setTodoToToggle(null);
