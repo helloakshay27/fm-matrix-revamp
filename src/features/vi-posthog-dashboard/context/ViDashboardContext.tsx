@@ -29,7 +29,7 @@ import {
   type TrafficData,
 } from '@/features/posthog-dashboard/data/metrics';
 import type { OsType, UsageDistributionResponse } from '../api/adoptionApi';
-import { toCohortLabels, toUsageChart, toWeekLabels } from '../data/usageChart';
+import { toCohortLabels, toRoleLabel, toUsageChart, toWeekLabels } from '../data/usageChart';
 import {
   dateRangeFor,
   useAdoptionEngagement,
@@ -253,6 +253,8 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
         trendChart: { ...adopt.trendChart, labels: trendLabels.axis },
         growthWeeks: adopt.growthWeeks.map((w, i) => ({ ...w, label: growthLabels.axis[i] })),
         retentionRowLabels: cohortLabels.labels,
+        // 'pms_occupant' is a database value, not a label — see toRoleLabel.
+        roleShares: adopt.roleShares.map((r) => ({ ...r, name: toRoleLabel(r.name) })),
       },
       weekTips: { trend: trendLabels.tips, growth: growthLabels.tips },
       retentionRowTitles: cohortLabels.titles,
