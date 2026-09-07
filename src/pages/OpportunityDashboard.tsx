@@ -15,8 +15,8 @@ import EditOpportunityModal from '@/components/EditOpportunityModal';
 import { useLayout } from '@/contexts/LayoutContext';
 import { FormControl, MenuItem, Select } from '@mui/material';
 import { useAppDispatch } from '@/store/hooks';
-import { div } from '@tensorflow/tfjs';
 import OpportunityFilterModal from '@/components/OpportunityFilterModal';
+import { usePATMEvents } from "@/components/PostHogPATMEvents";
 
 // Types
 interface Opportunity {
@@ -78,6 +78,11 @@ const OpportunityDashboard = () => {
     const location = useLocation();
     const dispatch = useAppDispatch();
     const baseUrl = localStorage.getItem('baseUrl');
+    const patmEvents = usePATMEvents();
+
+    useEffect(() => {
+        patmEvents.onOpportunityListViewed();
+    }, [patmEvents]);
 
     const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
     const [loading, setLoading] = useState(false);
@@ -196,6 +201,7 @@ const OpportunityDashboard = () => {
             cache.invalidatePattern('opportunities_*');
 
             fetchOpportunities();
+            patmEvents.onOpportunityUpdated(id);
             toast.success("Project status changed successfully");
         } catch (error) {
             console.log(error)
@@ -220,6 +226,7 @@ const OpportunityDashboard = () => {
             cache.invalidatePattern('opportunities_*');
 
             fetchOpportunities();
+            patmEvents.onOpportunityUpdated(id);
             toast.success("Responsible person updated successfully");
         } catch (error) {
             console.log(error);
@@ -619,7 +626,12 @@ const OpportunityDashboard = () => {
             <AddOpportunityModal
                 open={showAddModal}
                 onClose={() => setShowAddModal(false)}
-                onSuccess={fetchOpportunities}
+                onSuccess={(newOpportunity?: any) => {
+                    if (newOpportunity?.id) {
+                        patmEvents.onOpportunityCreated(newOpportunity.id, newOpportunity.title || '');
+                    }
+                    fetchOpportunities();
+                }}
             />
 
             {selectedOpportunityId && (

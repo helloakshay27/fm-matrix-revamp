@@ -28,6 +28,7 @@ import {
 import { OnlyOfficeEditor } from "@/components/document/OnlyOfficeEditor";
 import { BulkMoveDialog } from "@/components/document/BulkMoveDialog";
 import { DocumentShareModal } from "@/components/document/DocumentShareModal";
+import { usePATMEvents } from "@/components/PostHogPATMEvents";
 
 interface DocumentPermission {
   id: number;
@@ -87,6 +88,7 @@ interface DocumentDetail {
 export const DocumentDetailPage = () => {
   const navigate = useNavigate();
   const { shouldShow } = useDynamicPermissions();
+  const patmEvents = usePATMEvents();
   const { id } = useParams<{ id: string }>();
   const [document, setDocument] = useState<DocumentDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -136,6 +138,7 @@ export const DocumentDetailPage = () => {
 
     try {
       await deleteDocument(parseInt(id, 10));
+      patmEvents.onDocumentDeleted(id);
       toast.success("Document deleted successfully");
       navigate("/maintenance/documents");
     } catch (error) {

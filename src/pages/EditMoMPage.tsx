@@ -17,9 +17,9 @@ import {
   IconButton,
   FormControlLabel,
   Checkbox,
-} from "@mui/material";
 import { Button as SButton } from "../components/ui/button";
 import MuiSelectField from "../components/MuiSelectField";
+import { usePATMEvents } from "@/components/PostHogPATMEvents";
 
 interface Attendee {
   id: number;
@@ -63,6 +63,7 @@ const EditMoMPage = () => {
 
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
+  const patmEvents = usePATMEvents();
 
   // Redux Selectors
   const { projectTags: tagsData } = useSelector(
@@ -140,8 +141,9 @@ const EditMoMPage = () => {
     // Fetch MoM detail
     if (id) {
       dispatch(fetchMoMDetail(id));
+      patmEvents.onMoMViewed(id);
     }
-  }, [dispatch, id]);
+  }, [dispatch, id, patmEvents]);
 
   // Populate form with MoM data
   useEffect(() => {
@@ -558,10 +560,10 @@ const EditMoMPage = () => {
       }
     }
 
-    try {
       await dispatch(
         updateMoM({ id: id!, formData: formDataPayload })
       ).unwrap();
+      patmEvents.onMoMUpdated(id!);
       toast.success("Minute of Meeting Updated Successfully");
       navigate(-1);
     } catch (error) {

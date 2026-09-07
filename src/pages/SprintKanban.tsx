@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useParams } from 'react-router-dom';
 import { useDroppable } from '@dnd-kit/core';
@@ -32,6 +32,7 @@ import KanbanBoard from '@/components/KanbanBoard';
 import TaskCard from '@/components/TaskCard';
 import SubtaskCard from '@/components/SubtaskCard';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { usePATMEvents } from "@/components/PostHogPATMEvents";
 
 const getColor = (index: number) => {
     const colors = [
@@ -314,6 +315,7 @@ const SprintKanban: React.FC<SprintKanbanProps> = ({ selectedProject: initialSel
     const dispatch = useAppDispatch();
     const token = localStorage.getItem('token');
     const baseUrl = localStorage.getItem('baseUrl') || '';
+    const patmEvents = usePATMEvents();
 
     const { data: sprint, loading: sprintLoading } = useAppSelector(
         (state: any) => state.fetchSprintById
@@ -662,6 +664,7 @@ const SprintKanban: React.FC<SprintKanbanProps> = ({ selectedProject: initialSel
 
                 try {
                     await dispatch(updateSprint({ baseUrl, token, id, data: payload }) as any).unwrap();
+                    if (id) patmEvents.onSprintUpdated(id);
                 } catch (error) {
                     console.error('Failed to update sprint:', error);
                 }
@@ -687,6 +690,7 @@ const SprintKanban: React.FC<SprintKanbanProps> = ({ selectedProject: initialSel
             const payload = { status: newStatus };
             try {
                 await dispatch(updateSprint({ baseUrl, token, id, data: payload }) as any).unwrap();
+                patmEvents.onSprintUpdated(id);
                 setSelectedSprint((prev: any) => ({
                     ...prev,
                     status: newStatus,

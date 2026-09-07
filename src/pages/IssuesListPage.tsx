@@ -43,9 +43,9 @@ import axios from "axios";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { useAppDispatch } from "@/store/hooks";
 import { updateSprint, fetchSprints } from "@/store/slices/sprintSlice";
-import { useLayout } from "@/contexts/LayoutContext";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import qs from "qs";
+import { usePATMEvents } from "@/components/PostHogPATMEvents";
 import {
   Tooltip,
   TooltipContent,
@@ -370,6 +370,12 @@ const IssuesListPage = ({
   const projectIdParam = searchParams.get("project_id");
   const milestoneIdParam = searchParams.get("milestone_id");
   const taskIdParam = searchParams.get("task_id");
+
+  const patmEvents = usePATMEvents();
+
+  useEffect(() => {
+    patmEvents.onIssueListViewed();
+  }, [patmEvents]);
 
   const view = localStorage.getItem("selectedView");
 
@@ -874,6 +880,7 @@ const IssuesListPage = ({
         baseUrl,
         token,
       });
+      patmEvents.onIssueUpdated(issueId);
       toast.success("Issue type updated successfully");
     } catch (error) {
       console.log(error);
@@ -902,6 +909,7 @@ const IssuesListPage = ({
           baseUrl,
           token,
         });
+        patmEvents.onIssueUpdated(issueId);
         toast.success("Issue updated successfully");
       } catch (error) {
         console.log(error);
@@ -923,6 +931,7 @@ const IssuesListPage = ({
         baseUrl,
         token,
       });
+      patmEvents.onIssueUpdated(issueId);
       toast.success("Issue responsible person updated successfully");
       setIsResponsibleModalOpen(false);
       setResponsibleTaskId(null);
@@ -945,6 +954,7 @@ const IssuesListPage = ({
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      patmEvents.onIssueUpdated(issueId);
       toast.success("Issue status updated successfully");
       refetchIssues();
     } catch (error) {
@@ -1024,6 +1034,7 @@ const IssuesListPage = ({
         { status: "started" },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      patmEvents.onIssueUpdated(String(id));
       toast.success("Issue started successfully");
       refetchIssues();
     } catch (error) {
@@ -1040,6 +1051,7 @@ const IssuesListPage = ({
         { status: "stopped" },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      patmEvents.onIssueUpdated(String(iid));
       toast.success("Issue paused successfully");
       setIsPauseModalOpen(false);
       setPauseIssueId(null);
@@ -1060,6 +1072,7 @@ const IssuesListPage = ({
         { status: "completed" },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      patmEvents.onIssueUpdated(String(iid));
       toast.success("Issue ended successfully");
       setIsPauseModalOpen(false);
       setPauseIssueId(null);

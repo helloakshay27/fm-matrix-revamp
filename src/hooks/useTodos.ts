@@ -14,6 +14,7 @@ import {
     toggleTodo,
     TodosResponse,
 } from "@/services/todosApi";
+import { usePATMEvents } from "@/components/PostHogPATMEvents";
 
 /**
  * Query Keys for todos
@@ -206,10 +207,12 @@ export const useUpdateTodo = () => {
  */
 export const useDeleteTodo = () => {
     const queryClient = useQueryClient();
+    const patmEvents = usePATMEvents();
 
     return useMutation({
         mutationFn: (id: number | string) => deleteTodo(id),
         onSuccess: (_, id) => {
+            patmEvents.onTodoDeleted(id);
             // Invalidate both list and specific todo detail
             queryClient.invalidateQueries({
                 queryKey: todosQueryKeys.lists(),
@@ -229,6 +232,7 @@ export const useDeleteTodo = () => {
  */
 export const useToggleTodo = () => {
     const queryClient = useQueryClient();
+    const patmEvents = usePATMEvents();
 
     return useMutation({
         mutationFn: ({
@@ -238,7 +242,8 @@ export const useToggleTodo = () => {
             id: number | string;
             completed: boolean;
         }) => toggleTodo(id, completed),
-        onSuccess: () => {
+        onSuccess: (_, variables) => {
+            patmEvents.onTodoStatusChanged(variables.id, variables.completed ? "completed" : "open");
             // Invalidate all todos lists
             queryClient.invalidateQueries({
                 queryKey: todosQueryKeys.lists(),

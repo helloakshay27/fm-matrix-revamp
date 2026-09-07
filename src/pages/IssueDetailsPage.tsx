@@ -11,6 +11,7 @@ import { Mention, MentionsInput } from "react-mentions";
 import EditIssueModal from "@/components/EditIssueModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { usePATMEvents } from "@/components/PostHogPATMEvents";
 
 interface Issue {
     id?: string;
@@ -1144,11 +1145,14 @@ const IssueDetailsPage = () => {
         }
     };
 
+    const patmEvents = usePATMEvents();
+
     useEffect(() => {
         if (issueId && baseUrl && token) {
             fetchIssueDetails();
+            patmEvents.onIssueViewed(issueId);
         }
-    }, [issueId, baseUrl, token, navigate]);
+    }, [issueId, baseUrl, token, navigate, patmEvents]);
 
     useEffect(() => {
         if (issueData?.status) {
@@ -1166,6 +1170,7 @@ const IssueDetailsPage = () => {
                 { status: apiStatus },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
+            patmEvents.onIssueUpdated(issueId);
             toast.success("Status updated successfully");
             getIssue();
         } catch (error) {
@@ -1635,6 +1640,7 @@ const IssueDetailsPage = () => {
                     issueData={issueData}
                     onIssueUpdated={() => {
                         fetchIssueDetails();
+                        if (issueData.id) patmEvents.onIssueUpdated(issueData.id);
                     }}
                 />
             )}

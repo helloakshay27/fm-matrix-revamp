@@ -62,6 +62,7 @@ import AddSubtaskModal from "@/components/AddSubtaskModal";
 import DependencyKanban from "@/components/DependencyKanban";
 import { fetchProjectStatuses } from "@/store/slices/projectStatusSlice";
 import { useLayout } from "@/contexts/LayoutContext";
+import { usePATMEvents } from "@/components/PostHogPATMEvents";
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & { children: React.ReactElement },
@@ -1374,6 +1375,7 @@ const mapDisplayToApiStatus = (displayStatus) => {
 
 export const ProjectTaskDetails = () => {
   const { setCurrentSection } = useLayout();
+  const patmEvents = usePATMEvents();
 
   const view = localStorage.getItem("selectedView");
 
@@ -1489,6 +1491,10 @@ export const ProjectTaskDetails = () => {
 
       // Fetch dependent tasks
       await fetchDependentTasks(response);
+      
+      if (taskId) {
+        patmEvents.onTaskViewed(taskId);
+      }
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to load task details";
