@@ -294,30 +294,9 @@ const IssueFilterModal = ({
         setDates({ startDate: "", endDate: "", completedAt: "" });
         localStorage.removeItem("issueFilters");
 
-        // Build empty filter query to clear all filters
-        const emptyFilters: Record<string, any> = {
-            "q[status_in][]": [],
-            "q[issue_type_in][]": [],
-            "q[priority_in][]": [],
-            "q[responsible_person_id_in][]": [],
-            "q[created_by_id_in][]": [],
-            "q[project_management_id_in][]": [],
-            "q[tags_id_in][]": [],
-            "q[start_date_gteq]": "",
-            "q[start_date_lteq]": "",
-            "q[end_date_gteq]": "",
-            "q[end_date_lteq]": "",
-            "q[completed_at_gteq]": "",
-            "q[completed_at_lteq]": "",
-        };
-        const emptyQueryString = qs.stringify(emptyFilters, {
-            arrayFormat: "repeat",
-        });
-
         // Use setTimeout to ensure state updates are applied before calling onApplyFilters
         setTimeout(() => {
-            // Apply empty filter to reload all data
-            onApplyFilters?.(emptyQueryString);
+            onApplyFilters?.("");
 
             // Show success toast
             toast.success("Filters reset successfully");
