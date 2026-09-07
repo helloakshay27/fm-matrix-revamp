@@ -90,24 +90,28 @@ function formatPct(n: number | null): string | null {
   return n !== null ? `${n}%` : null;
 }
 
-/** Reads a `{ count, rate }` sub-object (the current API shape for pass/fail/pending),
- *  falling back to a flat number/string field directly on the record (older shape). */
+/** Reads a `{ count, rate }` sub-object (an older API shape for pass/fail/pending),
+ *  falling back to a flat number/string field directly on the record — including the
+ *  key itself (e.g. `record.pass` as a plain number, the current flat API shape). */
 function getGroupCount(record: Record<string, unknown>, key: string, flatKeys: string[]): number | null {
   const group = record[key];
   if (group && typeof group === 'object' && !Array.isArray(group)) {
     const count = getNumberOrPercent(group as Record<string, unknown>, ['count']);
     if (count !== null) return count;
   }
-  return getNumberOrPercent(record, flatKeys);
+  return getNumberOrPercent(record, [key, ...flatKeys]);
 }
 
-function getGroupRate(record: Record<string, unknown>, key: string): string | null {
+/** Reads a nested `{ rate }` sub-object, falling back to a flat `${key}_rate`-style
+ *  field (e.g. `record.pass_rate`) passed in via `flatKeys` — the current flat API shape. */
+function getGroupRate(record: Record<string, unknown>, key: string, flatKeys: string[] = []): string | null {
   const group = record[key];
   if (group && typeof group === 'object' && !Array.isArray(group)) {
     const rate = getNumberOrPercent(group as Record<string, unknown>, ['rate']);
     if (rate !== null) return `${rate}%`;
   }
-  return null;
+  const flatRate = getNumberOrPercent(record, flatKeys);
+  return flatRate !== null ? `${flatRate}%` : null;
 }
 
 type TrainPFSlice = TrainSlice & { rate: string | null };
@@ -121,16 +125,25 @@ function normalizeTrainPassFail(
   const fail = getGroupCount(record, 'fail', ['failed', 'total_fail', 'fail_count']);
   const pending = getGroupCount(record, 'pending', ['pending_count', 'total_pending']);
 
-  const slices: TrainPFSlice[] = [];
-  if (pass !== null) slices.push({ name: 'Pass', value: pass, color: C.ok, rate: getGroupRate(record, 'pass') });
-  if (fail !== null) slices.push({ name: 'Fail', value: fail, color: C.vi, rate: getGroupRate(record, 'fail') });
-  if (pending !== null)
-    slices.push({ name: 'Pending', value: pending, color: C.warn, rate: getGroupRate(record, 'pending') });
+  const passRateKeys = ['pass_rate', 'pass_percentage', 'passing_percentage'];
+  const failRateKeys = ['fail_rate', 'fail_percentage', 'failing_percentage'];
+  const pendingRateKeys = ['pending_rate', 'pending_percentage'];
 
-  const flatRate = getNumberOrPercent(record, ['pass_rate', 'pass_percentage', 'passing_percentage']);
+  const slices: TrainPFSlice[] = [];
+  if (pass !== null)
+    slices.push({ name: 'Pass', value: pass, color: C.ok, rate: getGroupRate(record, 'pass', passRateKeys) });
+  if (fail !== null)
+    slices.push({ name: 'Fail', value: fail, color: C.vi, rate: getGroupRate(record, 'fail', failRateKeys) });
+  if (pending !== null)
+    slices.push({
+      name: 'Pending',
+      value: pending,
+      color: C.warn,
+      rate: getGroupRate(record, 'pending', pendingRateKeys),
+    });
+
   const passRate =
-    getGroupRate(record, 'pass') ??
-    (flatRate !== null ? `${flatRate}%` : null) ??
+    getGroupRate(record, 'pass', passRateKeys) ??
     (pass !== null && fail !== null && pass + fail > 0
       ? `${((pass / (pass + fail)) * 100).toFixed(1)}%`
       : null);
