@@ -102,6 +102,7 @@ export function SupplierForm({
     };
 
     const MOBILE_PATTERN = /^\d{10}$/;
+    const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     const handleSubmit = async () => {
         if (
@@ -114,6 +115,11 @@ export function SupplierForm({
             toast.error(
                 "First name, last name, email, company name, and mobile are required"
             );
+            return;
+        }
+
+        if (!EMAIL_PATTERN.test(form.email.trim())) {
+            toast.error("Enter a valid email address");
             return;
         }
 
