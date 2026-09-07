@@ -14,6 +14,7 @@ import type {
   Tier,
 } from '@/features/posthog-dashboard/data/constants';
 import type { QueryFilters } from '../api/queries';
+import type { EventCoverage } from '../data/eventCoverage';
 import type { ChartPalette, ViTheme } from '../data/palette';
 import type { PageKey } from '../data/pages';
 
@@ -48,6 +49,8 @@ export interface ViewModel {
   weekTips: { trend: string[]; growth: string[] };
   /** Hover text for each retention cohort row, carrying the cohort size the label drops. */
   retentionRowTitles: string[];
+  /** Per-module instrumentation coverage, derived from the live event list. */
+  eventCoverage: EventCoverage;
   siteHealth: SiteHealthData | null;
   flows: FlowsData;
   sites: Site[];

@@ -30,6 +30,7 @@ import {
 } from '@/features/posthog-dashboard/data/metrics';
 import type { OsType, UsageDistributionResponse } from '../api/adoptionApi';
 import { toCohortLabels, toRoleLabel, toUsageChart, toWeekLabels } from '../data/usageChart';
+import { toEventCoverage } from '../data/eventCoverage';
 import {
   dateRangeFor,
   useAdoptionEngagement,
@@ -262,6 +263,8 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
       // so there is nothing to build a per-site league from.
       siteHealth: null,
       flows: buildFlows(state, workflowQ.data),
+      // Instrumentation coverage read off the events that actually fired — see toEventCoverage.
+      eventCoverage: toEventCoverage(workflowQ.data, trafficQ.data?.tiles.active_users ?? null),
       sites,
       scopedSites,
       groups,
