@@ -28,7 +28,8 @@ import {
   type SiteHealthData,
   type TrafficData,
 } from '@/features/posthog-dashboard/data/metrics';
-import type { OsType } from '../api/adoptionApi';
+import type { OsType, UsageDistributionResponse } from '../api/adoptionApi';
+import { toMonthlyChart } from '../data/monthlyUsage';
 import {
   dateRangeFor,
   useAdoptionEngagement,
@@ -88,6 +89,15 @@ function initialTheme(): ViTheme {
 /** `all` sends no `os` at all; the API is case-sensitive on the other two. */
 function osParam(platform: ViPlatform): OsType[] {
   return platform === 'all' ? [] : [platform];
+}
+
+/** Swaps the shared builder's daily usage series for the month-wise one this dashboard shows. */
+function withMonthlyUsage(
+  traffic: TrafficData,
+  usage: UsageDistributionResponse | undefined,
+  measure: DashboardState['sessTab'],
+): TrafficData {
+  return { ...traffic, chart: toMonthlyChart(traffic.chart, usage, measure) };
 }
 
 /**
@@ -211,7 +221,13 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
     () => ({
       state,
       scopeLabel: computeScopeLabel(state, sites, groups),
-      traffic: buildTraffic(state, from, to, trafficQ.data, usageQ.data),
+      // Same tiles and device rows as the FM dashboard, but the usage series is rolled up
+      // to one point per month — see toMonthlyChart.
+      traffic: withMonthlyUsage(
+        buildTraffic(state, from, to, trafficQ.data, usageQ.data),
+        usageQ.data,
+        state.sessTab,
+      ),
       adopt: buildAdopt(
         state,
         to,
