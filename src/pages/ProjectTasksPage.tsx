@@ -2023,7 +2023,12 @@ const ProjectTasksPage = () => {
 
             // Check if task is being marked as completed and if it's overdue
             if (status === "completed") {
-                const task = tasks.find((t) => t.id === id);
+                // `tasks` only holds top-level rows - subtasks live nested
+                // under each task's `sub_tasks_managements`, so look there too.
+                const task = tasks.find((t) => t.id === id) ||
+                    tasks
+                        .flatMap((t) => t.sub_tasks_managements || [])
+                        .find((s) => s.id === id);
                 if (!task) {
                     toast.error("Task not found");
                     return;
@@ -2351,7 +2356,12 @@ const ProjectTasksPage = () => {
         }
 
         // Find the task to check if it's overdue
-        const task = tasks.find((t) => t.id === id);
+        // `tasks` only holds top-level rows - subtasks live nested under
+        // each task's `sub_tasks_managements`, so look there too.
+        const task = tasks.find((t) => t.id === id) ||
+            tasks
+                .flatMap((t) => t.sub_tasks_managements || [])
+                .find((s) => s.id === id);
         if (!task) {
             toast.error("Task not found");
             return;
