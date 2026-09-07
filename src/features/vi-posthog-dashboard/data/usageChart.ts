@@ -159,6 +159,20 @@ export function toCohortLabels(labels: string[]): { labels: string[]; titles: st
   };
 }
 
+/**
+ * Role rows: 'pms_occupant' -> 'Occupant'.
+ *
+ * The roles endpoint returns the raw `user_role` property, which is a database value, not a
+ * label — the `pms_` prefix is an internal namespace and the underscores are not words. This
+ * only tidies the string; it does not rename or regroup a role, so an unrecognised value
+ * still comes through recognisably.
+ */
+export function toRoleLabel(role: string): string {
+  const words = role.replace(/^pms_/, '').split(/[_\-\s]+/).filter(Boolean);
+  if (words.length === 0) return role;
+  return words.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
 /** '8/4' -> '4 Aug'. Returns null for anything not in the shared mdLabel's M/D shape. */
 function spellMd(label: string): string | null {
   const [m, d] = label.split('/').map(Number);
