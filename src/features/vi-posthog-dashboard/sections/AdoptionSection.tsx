@@ -3,7 +3,7 @@ import {
   INFO,
   TREND_WEEKS,
 } from '@/features/posthog-dashboard/data/constants';
-import { fmtC, fmtDur, pct } from '@/features/posthog-dashboard/data/format';
+import { fmtDur, pct } from '@/features/posthog-dashboard/data/format';
 import { ChartCard } from '../components/ChartCard';
 import { Guard } from '../components/Guard';
 import { Tile } from '../components/Tile';
@@ -12,15 +12,19 @@ import { StackedBarChart } from '../components/charts/StackedBarChart';
 import { useViDashboard } from '../context/viDashboardStore';
 import { toViTiles } from '../data/viMetricIds';
 import {
+  TIER_LABEL,
   VI_COVERAGE_CAVEAT,
   VI_LEGACY_EVENTS,
   VI_MODERN_EVENTS,
+  VI_MODULE_COVERAGE,
+  viLegacyModuleCount,
+  viModernModuleCount,
 } from '../data/instrumentationCoverage';
 
 /** Layer 2 — adoption_engagement, adoption_trend, growth, retention, roles + the site league. */
 export function AdoptionSection() {
   const { vm, setCircle, palette } = useViDashboard();
-  const { adopt, status, weekTips, retentionRowTitles, eventCoverage } = vm;
+  const { adopt, status, weekTips, retentionRowTitles } = vm;
 
   const retentionCols = adopt.retentionCohorts[0]?.length ?? 0;
 
@@ -247,9 +251,9 @@ export function AdoptionSection() {
       */}
       <ChartCard
         className="mt12"
-        eyebrow="Instrumentation coverage · live events"
+        eyebrow="Instrumentation coverage · reference"
         title="Modern vs. Legacy event coverage"
-        purpose="Which instrumentation is actually firing, from workflow_usage's own event list: every custom event seen in this window, grouped into modules by its name prefix, with the share of active users each module reached. The two counters compare that against the event catalogue (128 modern + 176 legacy GA events) to show how much of it has yet to produce a single event. The API exposes no per-event generation flag, so the modern/legacy split cannot be broken out per module — see the caveat above."
+        purpose="Reference card — not a filter. Vi my Workspace carries two instrumentation generations side by side: Modern (128 events, View/Action/Failure typed, real *_submitted / *_succeeded / *_failed funnels for the fully-instrumented modules) and Legacy (176 older Google-Analytics events, dual-sunk to both PostHog and Firebase, mostly page/click-only for the rest). This card shows both at once so you can see which modules are worth instrumenting properly next; it does not change any other number on the dashboard."
       >
         <div className="bmnote crashnote" style={{ marginBottom: 14 }}>
           <span>&#9888;</span>
@@ -260,55 +264,59 @@ export function AdoptionSection() {
 
         <div className="kv" style={{ marginBottom: 16 }}>
           <div>
-            <div className="k">Firing — active users</div>
+            <div className="k">Modern instrumentation</div>
             <div className="v" style={{ fontSize: 20 }}>
-              {eventCoverage.activeUsers == null ? '—' : fmtC(eventCoverage.activeUsers)}
+              {viModernModuleCount} modules
             </div>
-            <div className="u">
-              {eventCoverage.moduleCount} modules · {eventCoverage.eventCount} events ·{' '}
-              {fmtC(eventCoverage.volume)} fired
-            </div>
+            <div className="u">{VI_MODERN_EVENTS} events · view / action / submit / outcome</div>
           </div>
           <div>
-            <div className="k">Catalogued — not yet firing</div>
+            <div className="k">Legacy GA instrumentation</div>
             <div className="v" style={{ fontSize: 20 }}>
-              {Math.max(0, VI_MODERN_EVENTS + VI_LEGACY_EVENTS - eventCoverage.eventCount)}
+              {viLegacyModuleCount} modules
             </div>
-            <div className="u">
-              of {VI_MODERN_EVENTS + VI_LEGACY_EVENTS} catalogued events ({VI_MODERN_EVENTS} modern
-              · {VI_LEGACY_EVENTS} legacy GA)
-            </div>
+            <div className="u">{VI_LEGACY_EVENTS} events · mostly page / click only</div>
           </div>
         </div>
 
-        <Guard
-          status={status.flows}
-          empty={eventCoverage.rows.length === 0}
-          emptyLabel="No custom events fired in this window."
-        >
-          <table className="pathtbl">
-            <thead>
-              <tr>
-                <th>Module</th>
-                <th>Events</th>
-                <th>Reach</th>
-                <th>Fired</th>
+        <table className="pathtbl">
+          <thead>
+            <tr>
+              <th>Module</th>
+              <th>Tier</th>
+              <th>What exists</th>
+            </tr>
+          </thead>
+          <tbody>
+            {VI_MODULE_COVERAGE.map((m) => (
+              <tr key={m.name}>
+                <td>{m.name}</td>
+                <td>
+                  {/* Both = the same feature is documented in each sheet, so it has the full
+                      modern funnel AND the older click events still firing alongside it. */}
+                  <span
+                    className={`status ${
+                      m.tier === 'both'
+                        ? 'st-healthy'
+                        : m.tier === 'modern'
+                          ? 'st-watch'
+                          : 'st-drop'
+                    }`}
+                  >
+                    {TIER_LABEL[m.tier]}
+                  </span>
+                </td>
+                <td>
+                  {m.tier === 'both'
+                    ? 'Full funnel + legacy click events'
+                    : m.tier === 'modern'
+                      ? 'View / action / failure typed events'
+                      : 'Page / click events only — no step-level funnel'}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {eventCoverage.rows.map((m) => (
-                <tr key={m.module}>
-                  <td>{m.module}</td>
-                  <td>{m.events}</td>
-                  <td title={`${m.users} of ${eventCoverage.activeUsers ?? '—'} active users`}>
-                    {m.reach == null ? '—' : pct(m.reach)}
-                  </td>
-                  <td>{fmtC(m.volume)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Guard>
+            ))}
+          </tbody>
+        </table>
       </ChartCard>
 
       {/*
