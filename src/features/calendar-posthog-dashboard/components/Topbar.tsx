@@ -37,11 +37,9 @@ export function Topbar() {
           <path d="M10 1.8v1.7M10 16.5v1.7M18.2 10h-1.7M3.5 10H1.8M15.8 4.2l-1.2 1.2M5.4 14.6l-1.2 1.2M15.8 15.8l-1.2-1.2M5.4 5.4 4.2 4.2" />
         </svg>
       </button>
-      {vm.generatedAt && (
-        <span className="badge-sample" title="generated_at from the Layer-1 response">
-          Updated {new Date(vm.generatedAt).toLocaleString()}
-        </span>
-      )}
+      <span className="badge-sample" title="This page runs off a seeded generator, not a query">
+        Sample data
+      </span>
       <div className="avatar">CA</div>
     </header>
   );

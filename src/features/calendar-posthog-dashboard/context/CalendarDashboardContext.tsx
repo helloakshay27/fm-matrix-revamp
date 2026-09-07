@@ -1,38 +1,24 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { useIsFetching, useQueryClient } from '@tanstack/react-query';
-import {
-  buildAdopt,
-  buildFlows,
-  buildTraffic,
-  toModuleOptions,
-  DEFAULT_STATE,
-  type DashboardState,
-} from '@/features/posthog-dashboard/data/metrics';
 import { dateRangeFor } from '@/features/analytics-dashboard-shared/dateRange';
 import { paletteFor, type DashboardTheme } from '@/features/analytics-dashboard-shared/palette';
-import {
-  ROOT,
-  useAdoptionEngagement,
-  useAdoptionTrend,
-  useGrowth,
-  useCalendarModule,
-  useModuleTree,
-  useRetention,
-  useRoles,
-  useTrafficSession,
-  useUsageAndDistribution,
-  useWorkflowUsage,
-  type QueryFilters,
-} from '../api/queries';
-import type { DeviceType } from '../api/adoptionApi';
-import { BM_DEFAULTS, findWorkflow, type DateRange, type Device } from '../data/constants';
+import { BM_DEFAULTS, type DateRange, type Device } from '../data/constants';
 import type { PageKey } from '../data/pages';
+import { buildAdoption, buildTraffic, buildWorkflow, findWorkflow } from '../data/sampleData';
 import {
   CalendarDashboardContext,
   type CalendarDashboardValue,
-  type SectionStatus,
+  type SessTab,
   type ViewModel,
 } from './calendarDashboardStore';
+
+/**
+ * Provider for the Calendar App dashboard.
+ *
+ * This dashboard is a wireframe: it holds filter state and recomputes the page from the
+ * seeded sample-data engine in `data/sampleData.ts`. There is no API layer and no data
+ * fetching — see that file's header for what is real (module, workflow and event names) and
+ * what is illustrative (every number).
+ */
 
 const THEME_KEY = 'calendar-theme';
 const NAV_KEY = 'calendar-nav';
@@ -62,30 +48,19 @@ function initialTheme(): DashboardTheme {
   return 'light';
 }
 
-/** UI toggle → the API's case-sensitive `device_type` values. `all` sends no filter. */
-function devicesFor(dev: Device): DeviceType[] {
-  if (dev === 'desktop') return ['Desktop'];
-  if (dev === 'mobile') return ['Mobile'];
-  return [];
-}
+/** Day count each preset covers — the sample engine scales cumulative counts by it. */
+const DAYS_IN: Record<DateRange, number> = { 7: 7, 30: 30, 90: 90 };
 
-function statusOf(q: { isLoading: boolean; error: unknown }): SectionStatus {
-  return { loading: q.isLoading, error: (q.error as Error) ?? null };
-}
-
-/** The worst state across several calls — a section is only "ready" once all of them are. */
-function combine(...s: SectionStatus[]): SectionStatus {
-  return {
-    loading: s.some((x) => x.loading),
-    error: s.find((x) => x.error)?.error ?? null,
-  };
+function daysBetween(from: string, to: string): number {
+  const ms = new Date(`${to}T00:00:00Z`).getTime() - new Date(`${from}T00:00:00Z`).getTime();
+  return Math.max(1, Math.round(ms / 86400000) + 1);
 }
 
 export function CalendarDashboardProvider({ children }: { children: ReactNode }) {
   const [date, setDate] = useState<DateRange>(30);
   const [customRange, setCustomRangeState] = useState<{ from: string; to: string } | null>(null);
   const [dev, setDevState] = useState<Device>('all');
-  const [sessTab, setSessTabState] = useState<DashboardState['sessTab']>('visitors');
+  const [sessTab, setSessTabState] = useState<SessTab>('visitors');
   const [prev, setPrev] = useState(true);
   const [workflow, setWorkflowState] = useState('eventCreate');
   const [page, setPage] = useState<PageKey>('pgTraffic');
@@ -105,105 +80,23 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
   }, []);
 
   const range = useMemo(() => customRange ?? dateRangeFor(date), [customRange, date]);
-  const wf = findWorkflow(workflow);
+  const rangeDays = customRange ? daysBetween(customRange.from, customRange.to) : DAYS_IN[date];
 
-  const filters: QueryFilters = useMemo(
+  const vm = useMemo<ViewModel>(
     () => ({
-      from: range.from,
-      to: range.to,
-      devices: devicesFor(dev),
-      module: wf.apiModule,
-      subModule: wf.apiSubModule,
-    }),
-    [range.from, range.to, dev, wf.apiModule, wf.apiSubModule],
-  );
-
-  /* ---- the nine endpoints ---- */
-  const trafficQ = useTrafficSession(filters);
-  const usageQ = useUsageAndDistribution(filters);
-  const engQ = useAdoptionEngagement(filters);
-  const trendQ = useAdoptionTrend(filters);
-  const growthQ = useGrowth(filters);
-  const retentionQ = useRetention(filters);
-  const rolesQ = useRoles(filters);
-  const modulesQ = useModuleTree(filters);
-  const calendarScopeQ = useCalendarModule(filters);
-  const workflowQ = useWorkflowUsage(filters);
-
-  /**
-   * The shared `metrics.ts` builders read their inputs off a `DashboardState`. Calendar has no
-   * tier/scope/site dimension, so those keep the shared defaults and only the filters this
-   * dashboard actually exposes are set.
-   */
-  const state: DashboardState = useMemo(
-    () => ({
-      ...DEFAULT_STATE,
-      date,
-      dev,
+      traffic: buildTraffic(dev, rangeDays),
+      adopt: buildAdoption(dev, rangeDays),
+      flows: buildWorkflow(workflow, dev),
       sessTab,
+      dev,
       prev,
-      module: wf.apiModule,
-      subModule: wf.apiSubModule,
-      activePage: page,
-      theme,
-      navCollapsed,
+      range,
+      scopeLabel: 'Calendar App · all users',
     }),
-    [date, dev, sessTab, prev, wf.apiModule, wf.apiSubModule, page, theme, navCollapsed],
+    [dev, rangeDays, workflow, sessTab, prev, range],
   );
 
-  const vm: ViewModel = useMemo(() => {
-    const trafficStatus = combine(statusOf(trafficQ), statusOf(usageQ));
-    const adoptStatus = combine(
-      statusOf(engQ), statusOf(trendQ), statusOf(growthQ),
-      statusOf(retentionQ), statusOf(rolesQ),
-    );
-    // A workflow with no web route is never fetched, so it reads as ready-and-empty rather
-    // than as a call stuck loading forever.
-    const flowsStatus: SectionStatus = wf.apiModule
-      ? statusOf(workflowQ)
-      : { loading: false, error: null };
-
-    return {
-      state,
-      traffic: buildTraffic(state, range.from, range.to, trafficQ.data, usageQ.data),
-      adopt: buildAdopt(
-        state, range.to, engQ.data, trendQ.data, growthQ.data, retentionQ.data, rolesQ.data,
-      ),
-      flows: buildFlows(state, wf.apiModule ? workflowQ.data : undefined),
-      modules: toModuleOptions(modulesQ.data?.tree),
-      calendarScope: calendarScopeQ.data ?? null,
-      status: {
-        traffic: trafficStatus,
-        adopt: adoptStatus,
-        flows: flowsStatus,
-        modules: statusOf(modulesQ),
-        calendarScope: statusOf(calendarScopeQ),
-      },
-      generatedAt: trafficQ.data?.meta?.generated_at ?? null,
-      range,
-      scopeLabel: dev === 'all' ? 'All users · all platforms' : `All users · ${dev}`,
-    };
-    /* Depend on each query's `data` / `isLoading` / `error` rather than on the query objects
-       themselves: React Query hands back a new object identity on every render, so listing
-       `trafficQ` would make this memo recompute every time and defeat the point. Every field
-       the body reads is listed below, so the memo is still correct — the rule just can't see
-       through the property access. Same approach as ViDashboardContext. */
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    state, range, dev, wf.apiModule,
-    trafficQ.data, trafficQ.isLoading, trafficQ.error,
-    usageQ.data, usageQ.isLoading, usageQ.error,
-    engQ.data, engQ.isLoading, engQ.error,
-    trendQ.data, trendQ.isLoading, trendQ.error,
-    growthQ.data, growthQ.isLoading, growthQ.error,
-    retentionQ.data, retentionQ.isLoading, retentionQ.error,
-    rolesQ.data, rolesQ.isLoading, rolesQ.error,
-    modulesQ.data, modulesQ.isLoading, modulesQ.error,
-    calendarScopeQ.data, calendarScopeQ.isLoading, calendarScopeQ.error,
-    workflowQ.data, workflowQ.isLoading, workflowQ.error,
-  ]);
-
-  /* ---- actions ---- */
+  /* ---------------------------------------------------------------- setters */
 
   const setPreset = useCallback((d: DateRange) => {
     setCustomRangeState(null);
@@ -211,14 +104,13 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
   }, []);
 
   const setCustomRange = useCallback((from: string, to: string) => {
-    if (!from || !to) return;
     setCustomRangeState({ from, to });
   }, []);
 
   const setDev = useCallback((d: Device) => setDevState(d), []);
-  const setSessTab = useCallback((t: DashboardState['sessTab']) => setSessTabState(t), []);
-  const setWorkflow = useCallback((key: string) => setWorkflowState(key), []);
+  const setSessTab = useCallback((t: SessTab) => setSessTabState(t), []);
   const togglePrev = useCallback(() => setPrev((p) => !p), []);
+  const setWorkflow = useCallback((key: string) => setWorkflowState(findWorkflow(key).key), []);
 
   const toggleTheme = useCallback(() => {
     setTheme((t) => {
@@ -230,29 +122,22 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
 
   const toggleNav = useCallback(() => {
     setNavCollapsed((c) => {
-      writeStored(NAV_KEY, c ? 'open' : 'collapsed');
+      writeStored(NAV_KEY, c ? 'expanded' : 'collapsed');
       return !c;
     });
   }, []);
 
-  const queryClient = useQueryClient();
-  const refreshAll = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: [...ROOT] });
-  }, [queryClient]);
-  const isRefreshing = useIsFetching({ queryKey: [...ROOT] }) > 0;
-
   const getBenchmark = useCallback(
-    (id: string): number | null => {
-      if (id in benchmarks) return benchmarks[id];
-      if (id in BM_DEFAULTS) return BM_DEFAULTS[id];
-      return null;
-    },
+    (id: string) => (id in benchmarks ? benchmarks[id] : (BM_DEFAULTS[id] ?? null)),
     [benchmarks],
   );
-
   const setBenchmark = useCallback((id: string, value: number | null) => {
     setBenchmarks((b) => ({ ...b, [id]: value }));
   }, []);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
   const value = useMemo<CalendarDashboardValue>(
     () => ({
@@ -261,13 +146,12 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
       workflow, setWorkflow, togglePrev,
       page, setPage, theme, toggleTheme, navCollapsed, toggleNav,
       palette: paletteFor(theme),
-      refreshAll, isRefreshing,
       getBenchmark, setBenchmark,
     }),
     [
       vm, setPreset, setCustomRange, customRange, setDev, setSessTab,
       workflow, setWorkflow, togglePrev, page, theme, toggleTheme,
-      navCollapsed, toggleNav, refreshAll, isRefreshing, getBenchmark, setBenchmark,
+      navCollapsed, toggleNav, getBenchmark, setBenchmark,
     ],
   );
 

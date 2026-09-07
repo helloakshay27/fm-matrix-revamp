@@ -15,6 +15,13 @@ export interface CalendarTileSpec extends TileSpec {
   infoKey: string;
   /** Label the wireframe's KPI_INFO dictionary is keyed by, for the `i` popover. */
   infoLabel: string;
+  /**
+   * Delta line rendered verbatim, for tiles whose change is not a percentage — "▲ 16s",
+   * "▲ vs prior 8 weeks". Takes precedence over `delta` when present.
+   */
+  deltaText?: string;
+  /** Tiles that carry no user-settable target — volume counts and live pulses. */
+  noTarget?: boolean;
 }
 
 /**

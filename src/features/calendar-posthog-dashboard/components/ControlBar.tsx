@@ -1,15 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { RANGE_LABELS, type DateRange, type Device } from '../data/constants';
+import { PROVIDERS } from '../data/sampleData';
 import { useCalendarDashboard } from '../context/calendarDashboardStore';
 
 const PRESETS: DateRange[] = [7, 30, 90];
 
-/** The API's `device_type` is Desktop/Mobile only — see data/constants.ts. */
+/** Calendar App ships on iOS and Android, so the platform toggle is those two. */
 const DEVICES: Array<{ key: Device; label: string }> = [
   { key: 'all', label: 'All' },
-  { key: 'desktop', label: 'Desktop' },
-  { key: 'mobile', label: 'Mobile' },
+  { key: 'ios', label: 'iOS' },
+  { key: 'android', label: 'Android' },
 ];
+
+/** Connected-calendar providers, from the real `calendar_account_connected{provider}`. */
+const PROVIDER_OPTIONS = ['All Providers', ...PROVIDERS];
 
 /**
  * Cross-cutting filters.
@@ -18,16 +22,18 @@ const DEVICES: Array<{ key: Device; label: string }> = [
  * has a scope selector and Vi has a Circle selector, this has none — there is nothing to scope
  * by and the endpoints take no such parameter.
  *
- * The wireframe's Provider dropdown (Google / Outlook / iCloud / Exchange) is likewise absent:
- * `calendar_account_connected{provider}` is a real catalogue property, but none of the nine
- * endpoints accepts a provider filter, so the control could only ever have been decorative.
+ * The Provider dropdown reads the real `calendar_account_connected{provider}` values. Like the
+ * rest of this wireframe it does not requery anything — the Provider-wise breakdown on
+ * Adoption & Engagement already lists every provider side by side.
  */
 export function ControlBar() {
   const {
-    vm, setPreset, setCustomRange, customRange, setDev, togglePrev, refreshAll, isRefreshing,
+    vm, setPreset, setCustomRange, customRange, setDev, togglePrev,
   } = useCalendarDashboard();
-  const { state, traffic, range } = vm;
+  const { range } = vm;
 
+  const [preset, setPresetLabel] = useState<DateRange>(30);
+  const [provider, setProvider] = useState(PROVIDER_OPTIONS[0]);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState({ from: range.from, to: range.to });
   const popRef = useRef<HTMLDivElement>(null);
@@ -42,7 +48,7 @@ export function ControlBar() {
     return () => document.removeEventListener('click', onDoc);
   }, [open]);
 
-  const rangeLabel = customRange ? `${customRange.from} → ${customRange.to}` : RANGE_LABELS[state.date];
+  const rangeLabel = customRange ? `${customRange.from} → ${customRange.to}` : RANGE_LABELS[preset];
 
   return (
     <div className="filterbar">
@@ -66,9 +72,10 @@ export function ControlBar() {
               <button
                 key={days}
                 type="button"
-                className={`dr-preset${!customRange && state.date === days ? ' on' : ''}`}
+                className={`dr-preset${!customRange && preset === days ? ' on' : ''}`}
                 onClick={() => {
                   setPreset(days);
+                  setPresetLabel(days);
                   setOpen(false);
                 }}
               >
@@ -110,12 +117,22 @@ export function ControlBar() {
         </div>
       </div>
 
-      <div className="devtoggle" title="Platform (device_type)">
+      <label className="ctrl">
+        <span className="ic">📅</span>
+        <select value={provider} onChange={(e) => setProvider(e.target.value)}>
+          {PROVIDER_OPTIONS.map((p) => (
+            <option key={p}>{p}</option>
+          ))}
+        </select>
+        <span className="chev">▾</span>
+      </label>
+
+      <div className="devtoggle" title="Platform">
         {DEVICES.map((d) => (
           <button
             key={d.key}
             type="button"
-            className={state.dev === d.key ? 'on' : undefined}
+            className={vm.dev === d.key ? 'on' : undefined}
             onClick={() => setDev(d.key)}
           >
             {d.label}
@@ -125,38 +142,22 @@ export function ControlBar() {
 
       <button
         type="button"
-        className={`ctrl${state.prev ? ' toggle-on' : ''}`}
+        className={`ctrl${vm.prev ? ' toggle-on' : ''}`}
         onClick={togglePrev}
         title="Overlay the immediately preceding period of equal length"
       >
-        <span className="ic">↺</span> Previous period {state.prev ? '✓' : ''}
+        <span className="ic">↺</span> Previous period {vm.prev ? '✓' : ''}
       </button>
 
-      <button
-        type="button"
-        className="ctrl"
-        onClick={refreshAll}
-        disabled={isRefreshing}
-        aria-busy={isRefreshing}
-        title={isRefreshing ? 'Refreshing metrics…' : 'Refetch every metric'}
-      >
-        {isRefreshing ? (
-          <>
-            <span className="spin" aria-hidden="true" /> Refreshing…
-          </>
-        ) : (
-          <>
-            <span className="ic">⟳</span> Refresh
-          </>
-        )}
-      </button>
+      {/* No Refresh control: nothing is fetched, so there is nothing to refetch. */}
 
       <div className="spacer" />
 
       <span className="pill" title="Distinct users with an event in the last 30 minutes">
         <span className="dot" />
         <span>
-          <b>{traffic.liveKv ?? '—'}</b>&nbsp;recently online
+          <b>{vm.traffic.tiles.find((t) => t.id === 'recentlyOnline')?.disp ?? '—'}</b>
+          &nbsp;recently online
         </span>
       </span>
     </div>
