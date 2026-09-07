@@ -94,18 +94,36 @@ export function SupplierForm({
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
+    const setMobileField = (field: "mobile1" | "mobile2") => (
+        e: React.ChangeEvent<HTMLInputElement>
+    ) => {
+        const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 10);
+        setForm((prev) => ({ ...prev, [field]: digitsOnly }));
+    };
+
+    const MOBILE_PATTERN = /^\d{10}$/;
+
     const handleSubmit = async () => {
         if (
             !form.first_name.trim() ||
             !form.last_name.trim() ||
             !form.email.trim() ||
             !form.company_name.trim() ||
-            !form.mobile1.trim() ||
-            !form.category.trim()
+            !form.mobile1.trim()
         ) {
             toast.error(
-                "First name, last name, email, company name, mobile, and category are required"
+                "First name, last name, email, company name, and mobile are required"
             );
+            return;
+        }
+
+        if (!MOBILE_PATTERN.test(form.mobile1.trim())) {
+            toast.error("Mobile 1 must be a 10 digit number");
+            return;
+        }
+
+        if (form.mobile2.trim() && !MOBILE_PATTERN.test(form.mobile2.trim())) {
+            toast.error("Mobile 2 must be a 10 digit number");
             return;
         }
 
@@ -124,7 +142,7 @@ export function SupplierForm({
             ...(form.state.trim() ? { state: form.state.trim() } : {}),
             ...(form.city.trim() ? { city: form.city.trim() } : {}),
             ...(form.pincode.trim() ? { pincode: form.pincode.trim() } : {}),
-            category: form.category.trim(),
+            ...(form.category.trim() ? { category: form.category.trim() } : {}),
         };
 
         await onSubmit(payload);
@@ -207,20 +225,22 @@ export function SupplierForm({
                                 label={<>Mobile 1 <Required /></>}
                                 placeholder="Enter Mobile Number"
                                 value={form.mobile1}
-                                onChange={setField("mobile1")}
+                                onChange={setMobileField("mobile1")}
                                 fullWidth
                                 variant="outlined"
                                 InputLabelProps={{ shrink: true }}
+                                inputProps={{ inputMode: "numeric", maxLength: 10 }}
                                 sx={singleLineFieldStyles}
                             />
                             <TextField
                                 label="Mobile 2"
                                 placeholder="Enter Alternate Mobile Number"
                                 value={form.mobile2}
-                                onChange={setField("mobile2")}
+                                onChange={setMobileField("mobile2")}
                                 fullWidth
                                 variant="outlined"
                                 InputLabelProps={{ shrink: true }}
+                                inputProps={{ inputMode: "numeric", maxLength: 10 }}
                                 sx={singleLineFieldStyles}
                             />
                             <TextField
@@ -244,7 +264,7 @@ export function SupplierForm({
                                 sx={singleLineFieldStyles}
                             />
                             <TextField
-                                label={<>Category <Required /></>}
+                                label="Category"
                                 placeholder="Enter Category"
                                 value={form.category}
                                 onChange={setField("category")}

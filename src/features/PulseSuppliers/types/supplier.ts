@@ -109,7 +109,7 @@ export interface CreateSupplierPayload {
     state?: string;
     city?: string;
     pincode?: string;
-    category: string;
+    category?: string;
     active: boolean;
     supplier_type: string[];
   };
