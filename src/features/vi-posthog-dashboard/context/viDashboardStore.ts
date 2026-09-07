@@ -41,6 +41,13 @@ export interface ViewModel {
   scopeLabel: string;
   traffic: TrafficData;
   adopt: AdoptData;
+  /**
+   * Hover text for the two weekly charts, one entry per point. Their axes read "W1 … W8" —
+   * short enough that every week fits — and these carry the week each number actually is.
+   */
+  weekTips: { trend: string[]; growth: string[] };
+  /** Hover text for each retention cohort row, carrying the cohort size the label drops. */
+  retentionRowTitles: string[];
   siteHealth: SiteHealthData | null;
   flows: FlowsData;
   sites: Site[];

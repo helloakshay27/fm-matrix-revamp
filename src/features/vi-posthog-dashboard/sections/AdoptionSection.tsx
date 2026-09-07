@@ -24,7 +24,7 @@ import {
 /** Layer 2 — adoption_engagement, adoption_trend, growth, retention, roles + the site league. */
 export function AdoptionSection() {
   const { vm, setCircle, palette } = useViDashboard();
-  const { adopt, status } = vm;
+  const { adopt, status, weekTips, retentionRowTitles } = vm;
 
   const retentionCols = adopt.retentionCohorts[0]?.length ?? 0;
 
@@ -67,6 +67,7 @@ export function AdoptionSection() {
             cur={adopt.trendChart.cur}
             prev={adopt.trendChart.prev.length ? adopt.trendChart.prev : null}
             labels={adopt.trendChart.labels}
+            tipLabels={weekTips.trend}
             color={palette.blue}
             fill={palette.fill}
           />
@@ -96,6 +97,7 @@ export function AdoptionSection() {
           >
             <StackedBarChart
               labels={adopt.growthWeeks.map((w) => w.label)}
+              tipLabels={weekTips.growth}
               series={[
                 { label: 'New', data: adopt.growthWeeks.map((w) => w.nw), color: palette.blue },
                 { label: 'Returning', data: adopt.growthWeeks.map((w) => w.ret), color: palette.green },
@@ -137,7 +139,7 @@ export function AdoptionSection() {
             <table className="rt">
               <thead>
                 <tr>
-                  <th style={{ textAlign: 'left' }}>Cohort · size</th>
+                  <th style={{ textAlign: 'left' }}>Cohort</th>
                   {Array.from({ length: retentionCols }, (_, w) => (
                     <th key={w}>Week {w}</th>
                   ))}
@@ -146,7 +148,9 @@ export function AdoptionSection() {
               <tbody>
                 {adopt.retentionCohorts.map((row, i) => (
                   <tr key={adopt.retentionRowLabels[i]}>
-                    <td className="lbl">{adopt.retentionRowLabels[i]}</td>
+                    <td className="lbl" title={retentionRowTitles[i]}>
+                      {adopt.retentionRowLabels[i]}
+                    </td>
                     {row.map((v, w) => {
                       if (v == null) {
                         return (

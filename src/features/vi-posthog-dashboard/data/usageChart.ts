@@ -124,6 +124,48 @@ export function toUsageChart(
   };
 }
 
+/**
+ * Weekly-chart axis: "W1 … W8" instead of the shared builder's "8/4" week-start dates.
+ *
+ * Each chart's own title already says which weeks these are ("last 8 weeks"), so the axis only
+ * has to number them — and eight short labels all fit, where eight dates do not. The dates are
+ * not thrown away: they come back spelled out in `tips`, which the hover card shows.
+ */
+export function toWeekLabels(labels: string[]): { axis: string[]; tips: string[] } {
+  return {
+    axis: labels.map((_, i) => `W${i + 1}`),
+    tips: labels.map((l, i) => {
+      const spelled = spellMd(l);
+      return spelled ? `W${i + 1} · week of ${spelled}` : `W${i + 1}`;
+    }),
+  };
+}
+
+/**
+ * Retention cohort rows: "5/22 · 128" -> a "22 May" label plus "128 new users" as hover text.
+ *
+ * The shared builder packs the cohort's size into the row label, which makes the first column
+ * the widest thing in the grid and buries the date it is really keyed on. The size is still
+ * worth having, so it moves to the row's tooltip rather than being dropped.
+ */
+export function toCohortLabels(labels: string[]): { labels: string[]; titles: string[] } {
+  const parts = labels.map((l) => l.split(' · '));
+  return {
+    labels: parts.map(([md], i) => spellMd(md) ?? labels[i]),
+    titles: parts.map(([md, size]) => {
+      const when = spellMd(md) ?? md;
+      return size ? `Employees first seen in the week of ${when} · ${size} new` : when;
+    }),
+  };
+}
+
+/** '8/4' -> '4 Aug'. Returns null for anything not in the shared mdLabel's M/D shape. */
+function spellMd(label: string): string | null {
+  const [m, d] = label.split('/').map(Number);
+  if (!Number.isFinite(m) || !Number.isFinite(d) || !MONTHS[m - 1]) return null;
+  return `${d} ${MONTHS[m - 1]}`;
+}
+
 /** The previous period's own months, in order. */
 function bucketPrevMonths(rows: UsageDay[], measure: Measure) {
   const days = rows.map((r) => r.day).sort();
