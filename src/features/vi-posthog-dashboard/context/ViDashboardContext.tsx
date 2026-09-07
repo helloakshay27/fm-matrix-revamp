@@ -29,7 +29,7 @@ import {
   type TrafficData,
 } from '@/features/posthog-dashboard/data/metrics';
 import type { OsType, UsageDistributionResponse } from '../api/adoptionApi';
-import { toUsageChart } from '../data/usageChart';
+import { toCohortLabels, toUsageChart, toWeekLabels } from '../data/usageChart';
 import {
   dateRangeFor,
   useAdoptionEngagement,
@@ -219,8 +219,24 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
 
   /* ---------------------------------------------------------- the view model */
 
-  const vm = useMemo<ViewModel>(
-    () => ({
+  const vm = useMemo<ViewModel>(() => {
+    const adopt = buildAdopt(
+      state,
+      to,
+      engagementQ.data,
+      trendQ.data,
+      growthQ.data,
+      retentionQ.data,
+      rolesQ.data,
+    );
+    // The trend axis is numbered W1..Wn here; the week each number stands for moves to the
+    // hover card. See toTrendLabels.
+    const trendLabels = toWeekLabels(adopt.trendChart.labels);
+    const growthLabels = toWeekLabels(adopt.growthWeeks.map((w) => w.label));
+    // Cohort rows are keyed on their week; the cohort size moves to the row's tooltip.
+    const cohortLabels = toCohortLabels(adopt.retentionRowLabels);
+
+    return {
       state,
       scopeLabel: computeScopeLabel(state, sites, groups),
       // Same tiles and device rows as the FM dashboard; only the usage series differs —
@@ -232,15 +248,14 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
         from,
         to,
       ),
-      adopt: buildAdopt(
-        state,
-        to,
-        engagementQ.data,
-        trendQ.data,
-        growthQ.data,
-        retentionQ.data,
-        rolesQ.data,
-      ),
+      adopt: {
+        ...adopt,
+        trendChart: { ...adopt.trendChart, labels: trendLabels.axis },
+        growthWeeks: adopt.growthWeeks.map((w, i) => ({ ...w, label: growthLabels.axis[i] })),
+        retentionRowLabels: cohortLabels.labels,
+      },
+      weekTips: { trend: trendLabels.tips, growth: growthLabels.tips },
+      retentionRowTitles: cohortLabels.titles,
       // Circle-wise breakdown is hidden (see AdoptionSection) and `site_id` is never sent,
       // so there is nothing to build a per-site league from.
       siteHealth: null,
@@ -284,7 +299,8 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
       },
       generatedAt: trafficQ.data?.meta.generated_at ?? null,
       range: { from, to },
-    }),
+    };
+  },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       state, sites, scopedSites, groups, pending, from, to, modules, subModules,

@@ -15,6 +15,7 @@ export function LineChart({
   cur,
   prev,
   labels,
+  tipLabels,
   color,
   fill,
   pctScale,
@@ -22,6 +23,8 @@ export function LineChart({
   cur: number[];
   prev?: number[] | null;
   labels?: string[];
+  /** Per-point hover text, when the axis labels are too terse to identify a point on their own. */
+  tipLabels?: string[];
   color?: string;
   fill?: string;
   pctScale?: boolean;
@@ -156,7 +159,7 @@ export function LineChart({
 
           <rect x={tipX} y={tipY} width={TIP_W} height={TIP_H} rx="8" ry="8" fill={palette.ink} opacity="0.94" />
           <text x={tipX + 11} y={tipY + 17} fontSize="11" fill={palette.onHeat} opacity="0.8" fontFamily={axisFont}>
-            {labels?.[i] ?? `Point ${i + 1}`}
+            {tipLabels?.[i] ?? labels?.[i] ?? `Point ${i + 1}`}
           </text>
           {rows.map((r, k) => (
             <text
