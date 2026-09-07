@@ -178,17 +178,23 @@ export function WorkflowSection() {
         </Guard>
       </ChartCard>
 
-      {onWeb && (
       <ChartCard
         className="mt12"
         eyebrow="All screens in this module (F-scr)"
         title="All screens in this module"
         purpose={INFO['chart.flowList'].f}
       >
+        {/*
+          Rows are this workflow's own declared steps, not the module's raw sub-paths: the
+          sub-path list only exists for web modules ($pathname), and it answers a different
+          question anyway. Same source as the funnel above, so the two always agree.
+          Completion is each step's share of the funnel's entrants — the endpoint returns
+          `f_comp: null` on every per-flow row, so there is no server-side completion to show.
+        */}
         <Guard
-          status={status.flows}
-          empty={flows.flowRows.length === 0}
-          emptyLabel="No sub-paths recorded under this module."
+          status={onWeb ? status.flows : { loading: false, error: null }}
+          empty={declaredFunnel.steps.length === 0}
+          emptyLabel="This workflow declares no steps."
         >
           <table className="pathtbl">
             <thead>
@@ -201,20 +207,23 @@ export function WorkflowSection() {
               </tr>
             </thead>
             <tbody>
-              {flows.flowRows.map((row) => (
-                <tr key={row.path}>
-                  <td>{row.path}</td>
-                  <td className="num">{row.users.toLocaleString()}</td>
-                  <td className="num">{row.events.toLocaleString()}</td>
-                  <td className="num">{row.sessions.toLocaleString()}</td>
-                  <td className="num">{row.comp == null ? '—' : `${row.comp.toFixed(1)}%`}</td>
+              {declaredFunnel.steps.map((s) => (
+                <tr key={s.step}>
+                  <td title={s.uninstrumented ? 'Not emitted anywhere in the tenant' : undefined}>
+                    {s.step}
+                  </td>
+                  <td className="num">{s.users == null ? '—' : fmtC(s.users)}</td>
+                  <td className="num">{s.events == null ? '—' : fmtC(s.events)}</td>
+                  <td className="num">{s.sessions == null ? '—' : fmtC(s.sessions)}</td>
+                  <td className="num" title="Share of the workflow's entrants that reached this step">
+                    {s.ofEntrants == null ? '—' : `${Math.round(s.ofEntrants * 100)}%`}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </Guard>
       </ChartCard>
-      )}
 
       <ChartCard
         className="mt12"
