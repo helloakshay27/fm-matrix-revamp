@@ -9,7 +9,9 @@ import { useViDashboard } from '../context/viDashboardStore';
 import { toViTiles } from '../data/viMetricIds';
 
 const MEASURES = [
-  { key: 'visitors', label: 'Visitors' },
+  // "Employees", not "Visitors": Vi my Workspace is an internal app, so the distinct users
+  // behind this count are staff. The API field is still `visitors`.
+  { key: 'visitors', label: 'Employees' },
   { key: 'views', label: 'Views' },
   { key: 'sessions', label: 'Sessions' },
 ] as const;
