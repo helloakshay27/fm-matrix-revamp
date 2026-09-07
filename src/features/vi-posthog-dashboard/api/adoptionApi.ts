@@ -54,6 +54,54 @@ const VI_DEVICE_TYPE: DeviceType = 'Mobile';
 export type OsType = 'iOS' | 'Android';
 
 /**
+ * One declared workflow from `workflow_usage`'s `workflows` block.
+ *
+ * This block is additive and independent of the auto-derived `funnel`: the server reads the
+ * named flows out of its own `config/workflows.yml` and computes each with
+ * `windowFunnel(1800)` over that flow's declared, ordered step events. That is a properly
+ * sequenced funnel — a user counted at step 3 really did pass steps 1 and 2 — which the
+ * per-event `flows` counts cannot express.
+ *
+ * `instrumented: false` on a step, and any name in `missing_steps`, mean that event is not
+ * emitted anywhere in the tenant. Where the TERMINAL step is missing, `completion_pct` reads
+ * low for want of data rather than because users abandoned, and `data_complete` flags exactly
+ * that — so the two must be read together.
+ *
+ * The shared `WorkflowUsageResponse` does not declare this block, so it is typed here.
+ */
+export interface ApiDeclaredWorkflowStep {
+  step: string;
+  reach: number;
+  drop_pct: number | null;
+  /** False when the tenant emits this event nowhere at all. */
+  instrumented: boolean;
+}
+
+export interface ApiDeclaredWorkflow {
+  key: string;
+  name: string;
+  bucket: string;
+  /** Which app's spec declared it — filterable with `?workflow_app=`. */
+  app: string;
+  adoption_pct: number | null;
+  completion_pct: number | null;
+  biggest_drop_pct: number | null;
+  volume: number;
+  completions: number;
+  avg_seconds: number;
+  steps: ApiDeclaredWorkflowStep[];
+  missing_steps: string[];
+  data_complete: boolean;
+}
+
+/** The workflow_usage response plus the declared-workflow block the shared type omits. */
+export type ViWorkflowUsageResponse = WorkflowUsageResponse & {
+  workflows?: ApiDeclaredWorkflow[];
+  workflow_app?: string | null;
+  scope_mode?: 'app' | 'pathname';
+};
+
+/**
  * Same shape as the FM filters minus `devices` and `siteIds`: `device_type` is pinned to
  * Mobile above rather than picked, and `site_id` is never sent — mobile-app events carry no
  * site, so filtering on one returns nothing. The only platform filter a caller passes is `os`.
@@ -175,7 +223,7 @@ export const fetchModules = (f: ViRangeFilters & { module?: string }) =>
 
 /** Defaults server-side to maintenance / ticket (helpdesk) when module/sub_module are omitted. */
 export const fetchWorkflowUsage = (f: ViRangeFilters & { module?: string; subModule?: string }) =>
-  get<WorkflowUsageResponse>('workflow_usage', {
+  get<ViWorkflowUsageResponse>('workflow_usage', {
     ...rangeParams(f),
     ...(f.module ? { module: f.module } : {}),
     ...(f.subModule ? { sub_module: f.subModule } : {}),

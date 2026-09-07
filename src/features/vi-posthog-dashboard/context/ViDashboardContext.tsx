@@ -31,11 +31,13 @@ import {
 import type { OsType, UsageDistributionResponse } from '../api/adoptionApi';
 import { toCohortLabels, toRoleLabel, toUsageChart, toWeekLabels } from '../data/usageChart';
 import { toEventCoverage } from '../data/eventCoverage';
+import { toDeclaredFunnel } from '../data/declaredFunnel';
 import {
   dateRangeFor,
   useAdoptionEngagement,
   useAdoptionTrend,
   useAllSites,
+  useAppEventFlows,
   useCompanyNames,
   useGrowth,
   useModuleTree,
@@ -207,6 +209,9 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
   const moduleTreeQ = useModuleTree(filters);
   const subModuleTreeQ = useSubModuleTree(filters);
   const workflowQ = useWorkflowUsage(filters);
+  // The app-wide event list — mobile events carry no , so the module-scoped query
+  // above cannot see them. See useAppEventFlows.
+  const appFlowsQ = useAppEventFlows(filters);
 
   const modules = useMemo(() => toModuleOptions(moduleTreeQ.data?.tree), [moduleTreeQ.data]);
   const subModules = useMemo(
@@ -264,7 +269,9 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
       siteHealth: null,
       flows: buildFlows(state, workflowQ.data),
       // Instrumentation coverage read off the events that actually fired — see toEventCoverage.
-      eventCoverage: toEventCoverage(workflowQ.data, trafficQ.data?.tiles.active_users ?? null),
+      eventCoverage: toEventCoverage(appFlowsQ.data, trafficQ.data?.tiles.active_users ?? null),
+      // Declared catalogue steps measured against the app-wide event list — see toDeclaredFunnel.
+      declaredFunnel: toDeclaredFunnel(findWorkflow(workflow), appFlowsQ.data),
       sites,
       scopedSites,
       groups,
@@ -319,6 +326,7 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
       rolesQ.data, rolesQ.isLoading, rolesQ.error,
       moduleTreeQ.data, moduleTreeQ.isLoading, moduleTreeQ.error,
       workflowQ.data, workflowQ.isLoading, workflowQ.error,
+      appFlowsQ.data, appFlowsQ.isLoading, appFlowsQ.error, workflow,
     ],
   );
 

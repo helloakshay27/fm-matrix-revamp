@@ -193,6 +193,25 @@ export function useWorkflowUsage(f: QueryFilters) {
   });
 }
 
+/**
+ * Every custom event fired by the Vi app in the window, with its own user/event/session
+ * counts — `workflow_usage` called with NO module, so the server's `scope_mode` falls back
+ * to `app` and scopes by the request filters alone.
+ *
+ * That unscoped call is the only way to see the app's whole event surface: the module-scoped
+ * one above filters by `$pathname`, which mobile events do not carry, so it can only ever
+ * describe the web app. Two consumers need the app-wide list — the instrumentation coverage
+ * table, and the declared-step funnel lookup for mobile-only workflows.
+ */
+export function useAppEventFlows(f: QueryFilters) {
+  return useQuery({
+    queryKey: [...ROOT, 'workflow_usage', 'app-flows', ...keyBase(f)],
+    queryFn: () => fetchWorkflowUsage(range(f)),
+    enabled: f.enabled,
+    ...CACHE,
+  });
+}
+
 /** One surface's slice of the web-vs-app split. */
 export interface SurfaceSplitRow {
   surface: ViSurface;

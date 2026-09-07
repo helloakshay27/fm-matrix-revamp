@@ -1,4 +1,4 @@
-import type { WorkflowUsageResponse } from '../api/adoptionApi';
+import type { ViWorkflowUsageResponse } from '../api/adoptionApi';
 
 /**
  * Instrumentation coverage, derived from the events actually firing — nothing hardcoded.
@@ -67,7 +67,7 @@ const keyOf = (event: string) => headOf(event).replace(/s$/, '');
 const titleCase = (name: string) => name.charAt(0).toUpperCase() + name.slice(1);
 
 export function toEventCoverage(
-  wf: WorkflowUsageResponse | undefined,
+  wf: ViWorkflowUsageResponse | undefined,
   activeUsers: number | null,
 ): EventCoverage {
   const flows = wf?.flows ?? [];
