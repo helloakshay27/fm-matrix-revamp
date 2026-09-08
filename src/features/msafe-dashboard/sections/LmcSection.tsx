@@ -56,7 +56,7 @@ function getMsafeBaseUrl(): string {
  *  the same way regardless of persona. */
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
   const params: Record<string, string> = {};
-  if (f.circleIds.length > 0) params.circle_id = f.circleIds.join(',');
+  if (f.clusterIds.length > 0) params.cluster_id = f.clusterIds.join(',');
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type = f.empTypeId;
@@ -442,7 +442,7 @@ export function LmcSection() {
   const { openDrill, persona, appliedFilters } = useMsafeDashboard();
   const [dailyMode, setDailyMode] = useState('line');
   const [funcMode, setFuncMode] = useState('donut');
-  const [funcTab, setFuncTab] = useState<'function' | 'circle'>('function');
+  const [funcTab, setFuncTab] = useState<'function' | 'cluster'>('function');
   const [trendMode, setTrendMode] = useState('line');
   const [dailyData, setDailyData] = useState<DailyRow[]>([]);
   const [dailyCircleData, setDailyCircleData] = useState<DailyCircleRow[]>([]);
@@ -531,14 +531,23 @@ export function LmcSection() {
     setFuncLoading(true);
     (async () => {
       try {
-        const payload = await fetchMsafeLmcJson(
-          'lmc_signoffs_by_function.json',
-          { type: funcTab, ...buildFilterParams(persona, appliedFilters) },
-          controller.signal,
-        );
+        // Cluster is a separate, standalone endpoint (no `type` param) — Function
+        // stays on the shared function/circle endpoint with type=function.
+        const payload =
+          funcTab === 'cluster'
+            ? await fetchMsafeLmcJson(
+                'lmc_signoffs_by_cluster.json',
+                buildFilterParams(persona, appliedFilters),
+                controller.signal,
+              )
+            : await fetchMsafeLmcJson(
+                'lmc_signoffs_by_function.json',
+                { type: funcTab, ...buildFilterParams(persona, appliedFilters) },
+                controller.signal,
+              );
         if (!controller.signal.aborted) setFuncData(normalizeByFunction(payload));
       } catch (err) {
-        if ((err as Error).name !== 'AbortError') console.warn('M-Safe lmc-signoffs-by-function API failed.', err);
+        if ((err as Error).name !== 'AbortError') console.warn('M-Safe lmc-signoffs-by-function/cluster API failed.', err);
       } finally {
         if (!controller.signal.aborted) setFuncLoading(false);
       }
@@ -647,7 +656,7 @@ export function LmcSection() {
 
   // Reads the approved count/percentage (plus total_users/pending, when present)
   // directly off the hovered slice's own data (attached by normalizeByFunction) —
-  // works for both the Function and Circle tabs since they share the same slice
+  // works for both the Function and Cluster tabs since they share the same slice
   // shape. Each stat gets its own labeled row (rather than one packed line) so
   // it reads clearly at a glance, matching the pattern used elsewhere in this
   // dashboard (e.g. TrainingSection's renderGroupTrainingTooltip).
@@ -729,19 +738,19 @@ export function LmcSection() {
         </ChartCard>
       </div>
 
-      {/* Full-width, not a 3-column grid slot — the Circle tab can have 20+ circles,
+      {/* Full-width, not a 3-column grid slot — the Cluster tab can have 15+ clusters,
           which was getting squeezed into a third of the row's width and rendering badly. */}
       <ChartCard
-        title={funcTab === 'circle' ? 'LMC by Circle' : 'LMC by Function'}
+        title={funcTab === 'cluster' ? 'LMC by Cluster' : 'LMC by Function'}
         sub={
-          funcTab === 'circle'
-            ? "Which circle's managers are most active"
+          funcTab === 'cluster'
+            ? "Which cluster's managers are most active"
             : "Which function's managers are most active"
         }
         infoKey="lmc-func"
         style={{ marginTop: 16 }}
         showPdf
-        pdfLabel={funcTab === 'circle' ? 'LMC by Circle' : 'LMC by Function'}
+        pdfLabel={funcTab === 'cluster' ? 'LMC by Cluster' : 'LMC by Function'}
         reportPath="msafe_dashboard_report/lmc_status"
         reportParams={{ status: 'Completed' }}
         exportData={funcData.map((d) => ({
@@ -752,7 +761,7 @@ export function LmcSection() {
           'Pending Count': d.pendingCount ?? '',
           'Pending %': d.pendingPercentage ?? '',
         }))}
-        tag={<ChartSwitch modes={['function', 'circle']} value={funcTab} onChange={(v) => setFuncTab(v as 'function' | 'circle')} />}
+        tag={<ChartSwitch modes={['function', 'cluster']} value={funcTab} onChange={(v) => setFuncTab(v as 'function' | 'cluster')} />}
         chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={funcMode} onChange={setFuncMode} />}
       >
         {funcLoading || funcData.length === 0 ? (

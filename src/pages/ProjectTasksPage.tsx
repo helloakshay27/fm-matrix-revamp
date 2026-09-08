@@ -51,7 +51,14 @@ import {
     ArrowLeft,
     Calendar as CalendarIcon,
 } from "lucide-react";
-import { useEffect, useState, useRef, forwardRef, useCallback } from "react";
+import {
+    useEffect,
+    useState,
+    useRef,
+    forwardRef,
+    useCallback,
+    type ReactNode,
+} from "react";
 import { cache } from "@/utils/cacheUtils";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import {
@@ -274,6 +281,14 @@ const COLUMN_TO_BACKEND_MAP: Record<string, string> = {
     predecessor: "predecessor_task",
     successor: "successor_task",
     completion_percentage: "completion_percent",
+};
+
+// Matches the priority options in ProjectTaskCreateModal.tsx/ProjectTaskEditModal.tsx
+const PRIORITY_LABELS: Record<string, string> = {
+    P1: "Q1: Urgent & Important",
+    P2: "Q2: Important, Not Urgent",
+    P3: "Q3: Urgent, Not Important",
+    P4: "Q4: Not Urgent or Important",
 };
 
 // Utility function to calculate duration between two dates (matching task_management)
@@ -644,6 +659,50 @@ const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
     );
 };
 
+// Generic Confirmation Modal Component (status changes, starting a task, etc.)
+const ConfirmationModal = ({
+    isOpen,
+    onClose,
+    onConfirm,
+    isLoading,
+    title,
+    message,
+    loadingLabel = "Updating...",
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+    isLoading: boolean;
+    title: string;
+    message: ReactNode;
+    loadingLabel?: string;
+}) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full max-w-[30rem] mx-4">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">{title}</h2>
+
+                <p className="text-sm text-gray-600 mb-6">{message}</p>
+
+                <div className="flex gap-3 justify-end">
+                    <Button variant="outline" onClick={onClose} disabled={isLoading}>
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={onConfirm}
+                        disabled={isLoading}
+                        className="fm-button-fix fm-button-brand px-4 py-2"
+                    >
+                        {isLoading ? loadingLabel : "Confirm"}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const AddToSprintModal = ({
     isOpen,
     onClose,
@@ -855,8 +914,6 @@ const ProjectTasksPage = () => {
         createdBy: false,
         project: false,
         tags: false,
-        startDate: false,
-        endDate: false,
         completedAt: false,
         dateRange: false,
     });
@@ -899,6 +956,21 @@ const ProjectTasksPage = () => {
         id: number;
         status: string;
     } | null>(null);
+
+    // Status Change Confirmation Modal State (every other status change)
+    const [isStatusConfirmOpen, setIsStatusConfirmOpen] = useState(false);
+    const [isStatusConfirmLoading, setIsStatusConfirmLoading] = useState(false);
+    const [pendingDirectStatusChange, setPendingDirectStatusChange] = useState<{
+        id: number;
+        status: string;
+    } | null>(null);
+
+    // Play (Start) Confirmation Modal State
+    const [isPlayConfirmOpen, setIsPlayConfirmOpen] = useState(false);
+    const [isPlayConfirmLoading, setIsPlayConfirmLoading] = useState(false);
+    const [pendingPlayTaskId, setPendingPlayTaskId] = useState<number | null>(
+        null
+    );
 
     // Row selection state
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -1053,8 +1125,6 @@ const ProjectTasksPage = () => {
         const urlProjects = searchParams.getAll("project");
         const urlWorkflowStatus = searchParams.getAll("workflow_status");
         const urlTags = searchParams.getAll("tags");
-        const urlStartDate = searchParams.get("start_date") || "";
-        const urlEndDate = searchParams.get("end_date") || "";
         const urlCompletedAt = searchParams.get("completed_at") || "";
         const urlDateRangeStart = searchParams.get("date_range_start") || "";
         const urlDateRangeEnd = searchParams.get("date_range_end") || "";
@@ -1077,12 +1147,8 @@ const ProjectTasksPage = () => {
         if (urlTags.length > 0) {
             setSelectedTags(urlTags.map(Number));
         }
-        if (urlStartDate || urlEndDate || urlCompletedAt) {
-            setDates({
-                startDate: urlStartDate,
-                endDate: urlEndDate,
-                completedAt: urlCompletedAt,
-            });
+        if (urlCompletedAt) {
+            setDates((prev) => ({ ...prev, completedAt: urlCompletedAt }));
         }
         if (urlDateRangeStart || urlDateRangeEnd) {
             setDateRangeFilter({
@@ -1315,8 +1381,6 @@ const ProjectTasksPage = () => {
             selectedProjects?.length > 0 ||
             selectedWorkflowStatus?.length > 0 ||
             selectedTags?.length > 0 ||
-            dates.startDate ||
-            dates.endDate ||
             dates.completedAt ||
             dateRangeFilter.startDate ||
             dateRangeFilter.endDate
@@ -1347,8 +1411,6 @@ const ProjectTasksPage = () => {
                 responsiblePerson: false,
                 createdBy: false,
                 project: false,
-                startDate: false,
-                endDate: false,
                 completedAt: false,
                 dateRange: false,
                 tags: false,
@@ -1433,12 +1495,6 @@ const ProjectTasksPage = () => {
             if (selectedProjects.length > 0) {
                 params["q[project_management_id_in][]"] = selectedProjects;
             }
-            if (dates.startDate) {
-                params["q[expected_start_date_eq]"] = dates.startDate;
-            }
-            if (dates.endDate) {
-                params["q[target_date_eq]"] = dates.endDate;
-            }
             if (dates.completedAt) {
                 params["q[completed_at_gteq]"] = `${dates.completedAt}T00:00:00`;
                 params["q[completed_at_lteq]"] = `${dates.completedAt}T23:59:59`;
@@ -1467,8 +1523,6 @@ const ProjectTasksPage = () => {
                         selectedCreators.length > 0 ? selectedCreators : undefined,
                     project: selectedProjects.length > 0 ? selectedProjects : undefined,
                     tags: selectedTags.length > 0 ? selectedTags : undefined,
-                    start_date: dates.startDate || undefined,
-                    end_date: dates.endDate || undefined,
                     completed_at: dates.completedAt || undefined,
                     date_range_start: dateRangeFilter.startDate || undefined,
                     date_range_end: dateRangeFilter.endDate || undefined,
@@ -1545,12 +1599,6 @@ const ProjectTasksPage = () => {
         }
         if (appliedTags.length > 0) {
             filters["q[task_tags_company_tag_id_in][]"] = appliedTags;
-        }
-        if (appliedDates.startDate) {
-            filters["q[expected_start_date_eq]"] = appliedDates.startDate;
-        }
-        if (appliedDates.endDate) {
-            filters["q[target_date_eq]"] = appliedDates.endDate;
         }
         if (appliedDates.completedAt) {
             filters["q[completed_at_gteq]"] = `${appliedDates.completedAt}T00:00:00`;
@@ -2063,12 +2111,32 @@ const ProjectTasksPage = () => {
                 }
             }
 
-            // Use TanStack Query mutation for status change
+            // Every other status change goes through a confirmation modal
+            // (on_hold and overdue-completed already confirm via their own
+            // reason-collection modals above).
+            setPendingDirectStatusChange({ id, status });
+            setIsStatusConfirmOpen(true);
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    const handleConfirmDirectStatusChange = async () => {
+        if (!pendingDirectStatusChange) return;
+        const { id, status } = pendingDirectStatusChange;
+
+        setIsStatusConfirmLoading(true);
+        try {
             await statusMutation.mutateAsync({ id, status });
             patmEvents.onTaskUpdated(id);
             toast.success("Task status changed successfully");
+            setIsStatusConfirmOpen(false);
+            setPendingDirectStatusChange(null);
         } catch (error) {
             console.log(error);
+            toast.error("Failed to update task status");
+        } finally {
+            setIsStatusConfirmLoading(false);
         }
     };
 
@@ -2327,13 +2395,21 @@ const ProjectTasksPage = () => {
         }
     };
 
-    const handlePlayTask = async (id: number) => {
+    const handlePlayTask = (id: number) => {
+        setPendingPlayTaskId(id);
+        setIsPlayConfirmOpen(true);
+    };
+
+    const handleConfirmPlayTask = async () => {
+        if (pendingPlayTaskId === null) return;
+
+        setIsPlayConfirmLoading(true);
         try {
             await dispatch(
                 updateTaskStatus({
                     token,
                     baseUrl,
-                    id: String(id),
+                    id: String(pendingPlayTaskId),
                     data: { status: "started" },
                 })
             ).unwrap();
@@ -2342,9 +2418,13 @@ const ProjectTasksPage = () => {
             await refetchTasks();
 
             toast.success("Task started successfully");
+            setIsPlayConfirmOpen(false);
+            setPendingPlayTaskId(null);
         } catch (error) {
             console.log(error);
             toast.error(error.response?.data?.error || "Failed to start task");
+        } finally {
+            setIsPlayConfirmLoading(false);
         }
     };
 
@@ -2775,9 +2855,7 @@ const ProjectTasksPage = () => {
                 );
             }
             case "priority": {
-                return (
-                    item.priority.charAt(0).toUpperCase() + item.priority.slice(1) || "-"
-                );
+                return item.priority ? PRIORITY_LABELS[item.priority] || item.priority : "-";
             }
             case "predecessor": {
                 return item.predecessor_task?.length || "0";
@@ -3887,64 +3965,6 @@ const ProjectTasksPage = () => {
                             )}
                         </div>
 
-                        {/* Start Date */}
-                        <div className="p-6 py-3">
-                            <div
-                                className="flex items-center justify-between cursor-pointer"
-                                onClick={() => toggleDropdown("startDate")}
-                            >
-                                <span className="font-medium text-sm select-none">
-                                    Start Date
-                                </span>
-                                {dropdowns.startDate ? (
-                                    <ChevronDown className="text-gray-400" />
-                                ) : (
-                                    <ChevronRight className="text-gray-400" />
-                                )}
-                            </div>
-                            {dropdowns.startDate && (
-                                <div className="mt-4">
-                                    <input
-                                        type="date"
-                                        value={dates.startDate}
-                                        onChange={(e) =>
-                                            setDates({ ...dates, startDate: e.target.value })
-                                        }
-                                        className="w-full p-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-red-600"
-                                    />
-                                </div>
-                            )}
-                        </div>
-
-                        {/* End Date */}
-                        <div className="p-6 py-3">
-                            <div
-                                className="flex items-center justify-between cursor-pointer"
-                                onClick={() => toggleDropdown("endDate")}
-                            >
-                                <span className="font-medium text-sm select-none">
-                                    End Date
-                                </span>
-                                {dropdowns.endDate ? (
-                                    <ChevronDown className="text-gray-400" />
-                                ) : (
-                                    <ChevronRight className="text-gray-400" />
-                                )}
-                            </div>
-                            {dropdowns.endDate && (
-                                <div className="mt-4">
-                                    <input
-                                        type="date"
-                                        value={dates.endDate}
-                                        onChange={(e) =>
-                                            setDates({ ...dates, endDate: e.target.value })
-                                        }
-                                        className="w-full p-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-red-600"
-                                    />
-                                </div>
-                            )}
-                        </div>
-
                         {/* Completed At */}
                         <div className="p-6 py-3">
                             <div
@@ -4113,6 +4133,45 @@ const ProjectTasksPage = () => {
                 }}
                 onSubmit={handleOverdueReasonSubmit}
                 isLoading={isOverdueLoading}
+            />
+
+            {/* Status Change Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={isStatusConfirmOpen}
+                onClose={() => {
+                    setIsStatusConfirmOpen(false);
+                    setPendingDirectStatusChange(null);
+                }}
+                onConfirm={handleConfirmDirectStatusChange}
+                isLoading={isStatusConfirmLoading}
+                title="Change Status"
+                message={
+                    <>
+                        Are you sure you want to change the status to{" "}
+                        <span className="font-medium text-gray-900">
+                            {statusOptions.find(
+                                (opt) => opt.value === pendingDirectStatusChange?.status
+                            )?.label ||
+                                pendingDirectStatusChange?.status ||
+                                ""}
+                        </span>
+                        ?
+                    </>
+                }
+            />
+
+            {/* Play (Start) Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={isPlayConfirmOpen}
+                onClose={() => {
+                    setIsPlayConfirmOpen(false);
+                    setPendingPlayTaskId(null);
+                }}
+                onConfirm={handleConfirmPlayTask}
+                isLoading={isPlayConfirmLoading}
+                title="Start Task"
+                message="Are you sure you want to start this task?"
+                loadingLabel="Starting..."
             />
 
             {showActionPanel && (

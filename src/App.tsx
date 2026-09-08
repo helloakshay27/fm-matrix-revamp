@@ -1863,6 +1863,9 @@ const KRCCFormListDashboard = lazy(() =>
     default: m.KRCCFormListDashboard,
   }))
 );
+const ViAuditListPage = lazy(() => import("./pages/ViAuditListPage"));
+const ViAuditAddPage = lazy(() => import("./pages/ViAuditAddPage"));
+const ViAuditDetailPage = lazy(() => import("./pages/ViAuditDetailPage"));
 const KRCCFormDetail = lazy(() =>
   import("./pages/KRCCFormDetail").then((m) => ({ default: m.KRCCFormDetail }))
 );
@@ -8752,6 +8755,18 @@ function App() {
                             <Route
                               path="/safety/m-safe/krcc-form-list"
                               element={<KRCCFormListDashboard />}
+                            />
+                            <Route
+                              path="/safety/audit-list"
+                              element={<ViAuditListPage />}
+                            />
+                            <Route
+                              path="/safety/audit-list/add"
+                              element={<ViAuditAddPage />}
+                            />
+                            <Route
+                              path="/safety/audit-list/:id"
+                              element={<ViAuditDetailPage />}
                             />
                             <Route
                               path="/safety/m-safe"
