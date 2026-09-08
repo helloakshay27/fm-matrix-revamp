@@ -869,12 +869,14 @@ export const AmenityBookingDetailsClubPage = () => {
           </Button>
           {/* )
           } */}
-          {((bookings?.current_status === 'Pending') || (bookings?.payment_method === "pay_on_facility" && bookings?.amount_paid === null)) && (
-            <Button variant="outline" onClick={() => setOpenPaymentModal(true)}>
-              <CreditCard className="w-4 h-4 mr-1" />
-              Payment
-            </Button>
-          )}
+          {(bookings?.pg_state?.toLowerCase() !== 'success' &&
+            (bookings?.amount_full ?? 0) > 0 &&
+            (bookings?.amount_paid === null || bookings?.amount_paid === 0)) && (
+              <Button variant="outline" onClick={() => setOpenPaymentModal(true)}>
+                <CreditCard className="w-4 h-4 mr-1" />
+                Payment
+              </Button>
+            )}
           {bookings?.current_status === 'Confirmed' && bookings?.can_cancel_bool && (
             <Button
               variant="outline"
