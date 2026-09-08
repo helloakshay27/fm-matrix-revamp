@@ -17,6 +17,7 @@ import {
   IconButton,
   FormControlLabel,
   Checkbox,
+} from "@mui/material";
 import { Button as SButton } from "../components/ui/button";
 import MuiSelectField from "../components/MuiSelectField";
 import { usePATMEvents } from "@/components/PostHogPATMEvents";
@@ -560,6 +561,7 @@ const EditMoMPage = () => {
       }
     }
 
+    try {
       await dispatch(
         updateMoM({ id: id!, formData: formDataPayload })
       ).unwrap();
