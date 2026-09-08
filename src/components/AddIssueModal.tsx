@@ -469,8 +469,6 @@ const AddIssueModal = ({
   const [taskOptions, setTaskOptions] = useState([]);
   const [shift, setShift] = useState({});
 
-  const dispatch = useAppDispatch();
-
   useEffect(() => {
     const responsiblePersonId = prefillData?.responsible_person?.id;
     if (!responsiblePersonId) return;
@@ -1003,7 +1001,7 @@ const AddIssueModal = ({
         // Refresh issues list in store - fetch based on context
         // If created from project details page, fetch for that project; otherwise fetch all
         dispatch(
-          fetchIssues({ baseUrl, token, id: preSelectedProjectId || "" })
+          fetchIssues({ baseUrl, token, id: preSelectedProjectId || "", page: 1 })
         );
         // Emit a global event so any listeners (list pages) can react and refetch
         try {

@@ -10,6 +10,7 @@ import { Skeleton } from "./ui/skeleton";
 
 const NewConversationModal = ({
   modalRef,
+  anchorPosition,
   filteredUsers,
   searchQuery,
   setSearchQuery,
@@ -158,7 +159,8 @@ const NewConversationModal = ({
 
   return (
     <div
-      className="absolute top-1 left-[15.5rem] w-[32rem] h-[35rem] bg-white flex flex-col shadow-2xl rounded-2xl p-4 space-y-4 border border-gray-100 z-10"
+      className="fixed w-[32rem] h-[35rem] bg-white flex flex-col shadow-2xl rounded-2xl p-4 space-y-4 border border-gray-100 z-50"
+      style={{ top: anchorPosition?.top ?? 4, left: anchorPosition?.left ?? 248 }}
       ref={modalRef}
     >
       <div className="flex items-center justify-between">
@@ -310,12 +312,12 @@ const NewConversationModal = ({
                   </div>
                 ))
               ) : escalateUsers.filter(
-                  (user) =>
-                    user.id !== currentUserId &&
-                    user.full_name
-                      .toLowerCase()
-                      .includes(searchQuery.toLowerCase())
-                ).length > 0 ? (
+                (user) =>
+                  user.id !== currentUserId &&
+                  user.full_name
+                    .toLowerCase()
+                    .includes(searchQuery.toLowerCase())
+              ).length > 0 ? (
                 escalateUsers
                   .filter(
                     (user) =>
@@ -327,11 +329,10 @@ const NewConversationModal = ({
                   .map((user) => (
                     <div
                       key={user.id}
-                      className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition ${
-                        selectedUsers.includes(user.id)
+                      className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition ${selectedUsers.includes(user.id)
                           ? "bg-[#c72030]/10"
                           : "hover:bg-gray-100"
-                      }`}
+                        }`}
                       onClick={() => toggleUserSelection(user.id)}
                     >
                       <input

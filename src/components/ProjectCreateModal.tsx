@@ -129,6 +129,7 @@ const ProjectCreateModal = ({
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
   const [formData, setFormData] = useState({
+    projectCode: "",
     title: "",
     isChannel: false,
     isTemplate: false,
@@ -171,6 +172,7 @@ const ProjectCreateModal = ({
         })) || [];
 
       setFormData({
+        projectCode: templateDetails.project_code || "",
         title:
           templateDetails?.title
             ?.replace(/@\[(.*?)\]\(\d+\)/g, "@$1")
@@ -193,6 +195,7 @@ const ProjectCreateModal = ({
     } else {
       // Reset form if no template
       setFormData({
+        projectCode: "",
         title: "",
         isChannel: false,
         isTemplate: false,
@@ -328,6 +331,7 @@ const ProjectCreateModal = ({
     setIsSubmitting(true);
     const payload = {
       project_management: {
+        project_code: formData.projectCode,
         title: formData.title,
         description: formData.description,
         start_date: formData.startDate,
@@ -425,6 +429,21 @@ const ProjectCreateModal = ({
             >
               <form onSubmit={handleSubmit}>
                 <div className="max-w-[90%] mx-auto pr-3">
+                  <div className="mt-4 space-y-2">
+                    <TextField
+                      label="Project Code"
+                      name="projectCode"
+                      placeholder="Enter Project Code"
+                      fullWidth
+                      variant="outlined"
+                      value={formData.projectCode}
+                      onChange={handleChange}
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
+                    />
+                  </div>
+
                   <div className="mt-4 space-y-2">
                     <SpeechInput
                       label={

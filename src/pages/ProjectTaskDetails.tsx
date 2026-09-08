@@ -1373,6 +1373,149 @@ const mapDisplayToApiStatus = (displayStatus) => {
   return reverseStatusMap[displayStatus] || "open";
 };
 
+// Hold Reason Modal Component
+const HoldReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
+  const [reason, setReason] = useState("");
+
+  useEffect(() => {
+    if (!isOpen) {
+      setReason("");
+    }
+  }, [isOpen]);
+
+  const handleSubmit = () => {
+    if (!reason.trim()) {
+      toast.error("Please enter a reason for putting the task on hold");
+      return;
+    }
+    onSubmit(reason);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full max-w-[30rem] mx-4">
+        <h2 className="text-lg font-semibold mb-4 text-gray-800">
+          Reason for Hold
+        </h2>
+
+        <div className="mb-6">
+          <textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Enter reason for putting task on hold..."
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+            rows={4}
+            disabled={isLoading}
+          />
+        </div>
+
+        <div className="flex gap-3 justify-end">
+          <Button variant="outline" onClick={onClose} disabled={isLoading}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={isLoading}>
+            {isLoading ? "Submitting..." : "Put on Hold"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Overdue Reason Modal Component
+const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
+  const [reason, setReason] = useState("");
+
+  useEffect(() => {
+    if (!isOpen) {
+      setReason("");
+    }
+  }, [isOpen]);
+
+  const handleSubmit = () => {
+    if (!reason.trim()) {
+      toast.error("Please enter a reason for the overdue task");
+      return;
+    }
+    onSubmit(reason);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full max-w-[30rem] mx-4">
+        <h2 className="text-lg font-semibold mb-4 text-gray-800">
+          Reason for Overdue
+        </h2>
+
+        <div className="mb-6">
+          <textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Enter reason for overdue..."
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+            rows={4}
+            disabled={isLoading}
+          />
+        </div>
+
+        <div className="flex gap-3 justify-end">
+          <Button variant="outline" onClick={onClose} disabled={isLoading}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={isLoading}>
+            {isLoading ? "Submitting..." : "Submit"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Status Change Confirmation Modal Component
+const StatusChangeConfirmModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  isLoading,
+  statusLabel,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  isLoading: boolean;
+  statusLabel: string;
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full max-w-[30rem] mx-4">
+        <h2 className="text-lg font-semibold mb-4 text-gray-800">
+          Change Status
+        </h2>
+
+        <p className="text-sm text-gray-600 mb-6">
+          Are you sure you want to change the status to{" "}
+          <span className="font-medium text-gray-900">{statusLabel}</span>?
+        </p>
+
+        <div className="flex gap-3 justify-end">
+          <Button variant="outline" onClick={onClose} disabled={isLoading}>
+            Cancel
+          </Button>
+          <Button onClick={onConfirm} disabled={isLoading}>
+            {isLoading ? "Updating..." : "Confirm"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const ProjectTaskDetails = () => {
   const { setCurrentSection } = useLayout();
   const patmEvents = usePATMEvents();
@@ -1413,6 +1556,21 @@ export const ProjectTaskDetails = () => {
   const [projectName, setProjectName] = useState<string>("");
   const [milestoneName, setMilestoneName] = useState<string>("");
   const [isSubSubtask, setIsSubSubtask] = useState(false);
+
+  // Hold Reason Modal State
+  const [isHoldModalOpen, setIsHoldModalOpen] = useState(false);
+  const [isHoldLoading, setIsHoldLoading] = useState(false);
+
+  // Overdue Reason Modal State (shown when marking an overdue task Completed)
+  const [isOverdueModalOpen, setIsOverdueModalOpen] = useState(false);
+  const [isOverdueLoading, setIsOverdueLoading] = useState(false);
+
+  // Status Change Confirmation Modal State (every other status change)
+  const [isStatusConfirmOpen, setIsStatusConfirmOpen] = useState(false);
+  const [isStatusConfirmLoading, setIsStatusConfirmLoading] = useState(false);
+  const [pendingStatusOption, setPendingStatusOption] = useState<string | null>(
+    null
+  );
 
   const firstContentRef = useRef<HTMLDivElement>(null);
   const secondContentRef = useRef<HTMLDivElement>(null);
@@ -1572,22 +1730,151 @@ export const ProjectTaskDetails = () => {
   };
 
   const handleOptionSelect = async (option) => {
-    setSelectedOption(option);
     setOpenDropdown(false);
+    const apiStatus = mapDisplayToApiStatus(option);
 
-    await dispatch(
-      updateTaskStatus({
-        baseUrl,
-        token,
-        id: taskId,
-        data: {
-          status: mapDisplayToApiStatus(option),
+    // Putting a task on hold requires a reason, collected via a modal,
+    // before the status change is actually applied.
+    if (apiStatus === "on_hold") {
+      setIsHoldModalOpen(true);
+      return;
+    }
+
+    // Marking an overdue task Completed requires a reason too.
+    if (apiStatus === "completed") {
+      const isTaskOverdue = (date: string | Date) => {
+        const d = new Date(date);
+        const today = new Date();
+        d.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+        return d < today;
+      };
+
+      if (
+        taskDetails.target_date &&
+        isTaskOverdue(new Date(taskDetails.target_date))
+      ) {
+        setPendingStatusOption(option);
+        setIsOverdueModalOpen(true);
+        return;
+      }
+    }
+
+    // Every other status change goes through a confirmation modal.
+    setPendingStatusOption(option);
+    setIsStatusConfirmOpen(true);
+  };
+
+  const handleOverdueReasonSubmit = async (reason: string) => {
+    if (!taskId || !pendingStatusOption) return;
+
+    setIsOverdueLoading(true);
+    try {
+      await dispatch(
+        updateTaskStatus({
+          baseUrl,
+          token,
+          id: taskId,
+          data: { status: "completed" },
+        })
+      ).unwrap();
+
+      // Save the overdue reason as a comment
+      const commentPayload = {
+        comment: {
+          body: `Overdue reason: ${reason}`,
+          commentable_id: taskId,
+          commentable_type: "TaskManagement",
+          commentor_id: JSON.parse(localStorage.getItem("user"))?.id,
+          active: true,
         },
-      })
-    ).unwrap();
-    fetchData();
-    toast.dismiss();
-    toast.success("Status updated successfully");
+      };
+
+      await axios.post(`https://${baseUrl}/comments.json`, commentPayload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setSelectedOption(pendingStatusOption);
+      toast.success("Task marked as complete with overdue reason");
+      setIsOverdueModalOpen(false);
+      setPendingStatusOption(null);
+      fetchData();
+    } catch (error) {
+      console.error("Failed to update task:", error);
+      toast.error(error?.response?.data?.error || "Failed to update task");
+    } finally {
+      setIsOverdueLoading(false);
+    }
+  };
+
+  const handleConfirmStatusChange = async () => {
+    if (!taskId || !pendingStatusOption) return;
+
+    setIsStatusConfirmLoading(true);
+    try {
+      await dispatch(
+        updateTaskStatus({
+          baseUrl,
+          token,
+          id: taskId,
+          data: { status: mapDisplayToApiStatus(pendingStatusOption) },
+        })
+      ).unwrap();
+
+      setSelectedOption(pendingStatusOption);
+      toast.success("Status updated successfully");
+      setIsStatusConfirmOpen(false);
+      setPendingStatusOption(null);
+      fetchData();
+    } catch (error) {
+      console.error("Failed to update status:", error);
+      toast.error("Failed to update status");
+    } finally {
+      setIsStatusConfirmLoading(false);
+    }
+  };
+
+  const handleHoldReasonSubmit = async (reason: string) => {
+    if (!taskId) return;
+
+    setIsHoldLoading(true);
+    try {
+      await dispatch(
+        updateTaskStatus({
+          baseUrl,
+          token,
+          id: taskId,
+          data: { status: "on_hold" },
+        })
+      ).unwrap();
+
+      // Save the hold reason as a comment
+      const commentPayload = {
+        comment: {
+          body: `On hold with reason: ${reason}`,
+          commentable_id: taskId,
+          commentable_type: "TaskManagement",
+          commentor_id: JSON.parse(localStorage.getItem("user"))?.id,
+          active: true,
+        },
+      };
+
+      await axios.post(`https://${baseUrl}/comments.json`, commentPayload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setSelectedOption("On Hold");
+      toast.success("Task put on hold with reason");
+      setIsHoldModalOpen(false);
+      fetchData();
+    } catch (error) {
+      console.error("Failed to put task on hold:", error);
+      toast.error(
+        error?.response?.data?.error || "Failed to put task on hold"
+      );
+    } finally {
+      setIsHoldLoading(false);
+    }
   };
 
   const handleWorkflowChange = async (newStatusId: string) => {
@@ -2235,6 +2522,37 @@ export const ProjectTaskDetails = () => {
         isSubSubtask={isSubSubtask}
         setIsSubSubtask={setIsSubSubtask}
         subTasks={subtasks}
+      />
+
+      {/* Hold Reason Modal */}
+      <HoldReasonModal
+        isOpen={isHoldModalOpen}
+        onClose={() => setIsHoldModalOpen(false)}
+        onSubmit={handleHoldReasonSubmit}
+        isLoading={isHoldLoading}
+      />
+
+      {/* Overdue Reason Modal */}
+      <OverdueReasonModal
+        isOpen={isOverdueModalOpen}
+        onClose={() => {
+          setIsOverdueModalOpen(false);
+          setPendingStatusOption(null);
+        }}
+        onSubmit={handleOverdueReasonSubmit}
+        isLoading={isOverdueLoading}
+      />
+
+      {/* Status Change Confirmation Modal */}
+      <StatusChangeConfirmModal
+        isOpen={isStatusConfirmOpen}
+        onClose={() => {
+          setIsStatusConfirmOpen(false);
+          setPendingStatusOption(null);
+        }}
+        onConfirm={handleConfirmStatusChange}
+        isLoading={isStatusConfirmLoading}
+        statusLabel={pendingStatusOption || ""}
       />
 
       {/* Tabs Section */}
