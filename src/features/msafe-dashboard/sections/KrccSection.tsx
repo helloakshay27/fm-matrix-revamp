@@ -21,7 +21,7 @@ import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboar
 import type { Persona } from '../data/constants';
 
 type Slice = { name: string; value: number; color: string };
-type CircleBar = { name: string; pct: number; totalUsers: number; approvedUsers: number; color: string };
+type ClusterBar = { name: string; pct: number; totalUsers: number; approvedUsers: number; color: string };
 type CircleDays = { name: string; days: number; color: string };
 type AgingRow = { label: string; pct: number; val: string; color: string };
 
@@ -36,7 +36,7 @@ function getMsafeBaseUrl(): string {
  *  the same way regardless of persona. */
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
   const params: Record<string, string> = {};
-  if (f.circleIds.length > 0) params.circle_id = f.circleIds.join(',');
+  if (f.clusterIds.length > 0) params.cluster_id = f.clusterIds.join(',');
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type = f.empTypeId;
@@ -309,13 +309,13 @@ function colorForClearancePct(pct: number): string {
   return C.err;
 }
 
-function normalizeClearanceByCircle(payload: unknown): CircleBar[] {
-  const list = unwrapList(payload, ['data', 'result', 'circles']);
+function normalizeClearanceByCluster(payload: unknown): ClusterBar[] {
+  const list = unwrapList(payload, ['data', 'result', 'clusters']);
   return list
     .map((item) => {
       if (!item || typeof item !== 'object') return null;
       const record = item as Record<string, unknown>;
-      const name = getString(record, ['circle_name', 'circle', 'name', 'label']);
+      const name = getString(record, ['cluster_name', 'circle_name', 'circle', 'name', 'label']);
       if (!name) return null;
       const rawPct = getNumber(record, ['clearance_percentage', 'approved_percentage', 'cleared_percentage', 'percentage', 'pct']);
       if (rawPct === null) return null;
@@ -326,7 +326,7 @@ function normalizeClearanceByCircle(payload: unknown): CircleBar[] {
       const approvedUsers = getNumber(record, ['approved_users', 'approved']) ?? 0;
       return { name, pct, totalUsers, approvedUsers, color: colorForClearancePct(pct) };
     })
-    .filter((item): item is CircleBar => Boolean(item));
+    .filter((item): item is ClusterBar => Boolean(item));
 }
 
 function warnIfEmpty(endpoint: string, normalized: unknown[], payload: unknown): void {
@@ -362,8 +362,8 @@ export function KrccSection() {
   const [categoryLoading, setCategoryLoading] = useState(true);
   const [turnaroundData, setTurnaroundData] = useState<CircleDays[]>([]);
   const [turnaroundLoading, setTurnaroundLoading] = useState(true);
-  const [circlePctData, setCirclePctData] = useState<CircleBar[]>([]);
-  const [circlePctLoading, setCirclePctLoading] = useState(true);
+  const [clusterPctData, setClusterPctData] = useState<ClusterBar[]>([]);
+  const [clusterPctLoading, setClusterPctLoading] = useState(true);
 
   // "KRCC Clearance Status" card hidden per request — API call disabled too.
   // useEffect(() => {
@@ -463,21 +463,21 @@ export function KrccSection() {
 
   useEffect(() => {
     const controller = new AbortController();
-    setCirclePctLoading(true);
+    setClusterPctLoading(true);
     (async () => {
       try {
         const payload = await fetchMsafeKrccJson(
-          'krcc_cleared_user_percentage_by_circle.json',
+          'krcc_cleared_user_percentage_by_cluster.json',
           buildFilterParams(persona, appliedFilters),
           controller.signal,
         );
-        const normalized = normalizeClearanceByCircle(payload);
-        warnIfEmpty('krcc_cleared_user_percentage_by_circle.json', normalized, payload);
-        if (!controller.signal.aborted) setCirclePctData(normalized);
+        const normalized = normalizeClearanceByCluster(payload);
+        warnIfEmpty('krcc_cleared_user_percentage_by_cluster.json', normalized, payload);
+        if (!controller.signal.aborted) setClusterPctData(normalized);
       } catch (err) {
         if ((err as Error).name !== 'AbortError') console.warn('M-Safe krcc-cleared-user-percentage API failed.', err);
       } finally {
-        if (!controller.signal.aborted) setCirclePctLoading(false);
+        if (!controller.signal.aborted) setClusterPctLoading(false);
       }
     })();
     return () => controller.abort();
@@ -511,20 +511,20 @@ export function KrccSection() {
 
   const renderClearanceTooltip = ({ active, payload }: TooltipProps<ValueType, NameType>) => {
     if (!active || !payload?.length) return null;
-    const circle = payload[0]?.payload as CircleBar | undefined;
-    if (!circle) return null;
+    const cluster = payload[0]?.payload as ClusterBar | undefined;
+    if (!cluster) return null;
 
     return (
       <div className="msafe-chart-tip">
-        <div className="msafe-chart-tip-title">{circle.name}</div>
+        <div className="msafe-chart-tip-title">{cluster.name}</div>
         <div className="msafe-chart-tip-row">
-          <span>Approved Users: {circle.approvedUsers.toLocaleString('en-IN')}</span>
+          <span>Approved Users: {cluster.approvedUsers.toLocaleString('en-IN')}</span>
         </div>
         <div className="msafe-chart-tip-row">
-          <span>Total Users: {circle.totalUsers.toLocaleString('en-IN')}</span>
+          <span>Total Users: {cluster.totalUsers.toLocaleString('en-IN')}</span>
         </div>
         <div className="msafe-chart-tip-row">
-          <span>Clearance Percentage: {circle.pct.toFixed(2)}%</span>
+          <span>Clearance Percentage: {cluster.pct.toFixed(2)}%</span>
         </div>
       </div>
     );
@@ -605,27 +605,27 @@ export function KrccSection() {
       </div>
 
       <ChartCard
-        title="KRCC Clearance % by Circle"
+        title="KRCC Clearance % by Cluster"
         sub="Green ≥98% · Amber 95–<98% · Red <95%"
-        infoKey="krcc-circle"
+        infoKey="krcc-cluster"
         showPdf
-        pdfLabel="KRCC by Circle"
+        pdfLabel="KRCC by Cluster"
         reportExportFor="circle_clearance"
-        exportData={circlePctData.map((d) => ({
-          Circle: d.name,
+        exportData={clusterPctData.map((d) => ({
+          Cluster: d.name,
           'Approved Users': d.approvedUsers,
           'Total Users': d.totalUsers,
           'Clearance %': d.pct,
         }))}
         style={{ marginTop: 16 }}
       >
-        {circlePctLoading || circlePctData.length === 0 ? (
-          <DataState loading={circlePctLoading} empty={circlePctData.length === 0} label="circle data" />
+        {clusterPctLoading || clusterPctData.length === 0 ? (
+          <DataState loading={clusterPctLoading} empty={clusterPctData.length === 0} label="cluster data" />
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <div style={{ minWidth: Math.max(700, circlePctData.length * 55) }}>
+            <div style={{ minWidth: Math.max(700, clusterPctData.length * 55) }}>
               <ResponsiveContainer width="100%" height={360}>
-                <BarChart data={circlePctData} margin={{ top: 20, right: 16, left: 0, bottom: 70 }}>
+                <BarChart data={clusterPctData} margin={{ top: 20, right: 16, left: 0, bottom: 70 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
                   <XAxis
                     dataKey="name"
@@ -638,7 +638,7 @@ export function KrccSection() {
                   <YAxis domain={[0, 100]} allowDataOverflow tick={{ fontSize: 10, fill: C.sage }} />
                   <Tooltip content={renderClearanceTooltip} />
                   <Bar dataKey="pct" name="Clearance %" radius={[5, 5, 0, 0]}>
-                    {circlePctData.map((d) => (
+                    {clusterPctData.map((d) => (
                       <Cell key={d.name} fill={d.color} />
                     ))}
                     <LabelList

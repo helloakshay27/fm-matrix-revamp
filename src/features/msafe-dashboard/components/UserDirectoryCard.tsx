@@ -23,7 +23,7 @@ function getMsafeBaseUrl(): string {
  *  the same way regardless of persona. */
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
   const params: Record<string, string> = {};
-  if (f.circleIds.length > 0) params.circle_id = f.circleIds.join(',');
+  if (f.clusterIds.length > 0) params.cluster_id = f.clusterIds.join(',');
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type = f.empTypeId;
@@ -119,7 +119,10 @@ const normalizeDirectory = (payload: unknown): DirectoryUser[] => {
       const type = mapEmployeeType(
         record.employment_type ?? record.type ?? record.user_type ?? record.category,
       );
+      // "Personal Area" column — the raw circle field.
       const circle = getFirstString(record, ['circle_name', 'circle']) ?? '—';
+      // "Circle" column — a distinct field, cluster_name (part of the app-wide circle→cluster migration).
+      const clusterName = getFirstString(record, ['cluster_name']) ?? '—';
       const role = getFirstString(record, ['role', 'designation', 'role_name', 'department', 'function']) ?? '—';
 
       const tr = mapStatus(record.training_status ?? record.tr_status ?? record.training ?? record.tr);
@@ -129,7 +132,7 @@ const normalizeDirectory = (payload: unknown): DirectoryUser[] => {
       const email = getFirstString(record, ['email', 'email_id']) ?? undefined;
       const mobile = getFirstString(record, ['mobile', 'mobile_number', 'phone', 'phone_number']) ?? undefined;
 
-      return { name, emp, type, circle, role, tr, kr, lm, overallLabel, email, mobile };
+      return { name, emp, type, circle, clusterName, role, tr, kr, lm, overallLabel, email, mobile };
     })
     .filter((item): item is DirectoryUser => Boolean(item));
 };
@@ -207,7 +210,8 @@ function downloadDirectoryExcel(rows: DirectoryUser[]) {
     Email: u.email ?? '—',
     'Mobile No.': u.mobile ?? '—',
     Type: u.type,
-    Circle: u.circle,
+    'Personal Area': u.circle,
+    'Circle': u.clusterName ?? '—',
     Role: u.role,
     KRCC: STATUS_LABEL[u.kr],
     LMC: STATUS_LABEL[u.lm],
@@ -402,6 +406,7 @@ export function UserDirectoryCard({
               <th>Email</th>
               <th>Mobile No.</th>
               <th>Type</th>
+              <th>Personal Area</th>
               <th>Circle</th>
               <th>Role</th>
               <th style={{ textAlign: 'center' }}>KRCC</th>
@@ -440,6 +445,7 @@ export function UserDirectoryCard({
                       </span>
                     </td>
                     <td>{u.circle}</td>
+                    <td>{u.clusterName ?? '—'}</td>
                     <td>{u.role}</td>
                     <td style={{ textAlign: 'center' }}>
                       <StatusDot value={u.kr} />

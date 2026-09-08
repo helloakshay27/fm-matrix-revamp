@@ -32,7 +32,7 @@ function getMsafeBaseUrl(): string {
  *  the same way regardless of persona. */
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
   const params: Record<string, string> = {};
-  if (f.circleIds.length > 0) params.circle_id = f.circleIds.join(',');
+  if (f.clusterIds.length > 0) params.cluster_id = f.clusterIds.join(',');
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type = f.empTypeId;
@@ -286,7 +286,7 @@ const normalizeTrainingCounts = (payload: unknown): CategoryTrainingSlice[] => {
 };
 
 // Shared shape behind both function_wise_training_status.json and
-// circle_wise_training_status.json: a list of groups (functions or circles),
+// cluster_wise_training_status.json: a list of groups (functions or clusters),
 // each carrying a `records` array of per-training-category rows (completed
 // count + completion % only — no pass/fail/pending). The chart shows one
 // slice per group (total completed across its categories, with an overall
@@ -353,14 +353,13 @@ function normalizeFunctionTrainingStatus(payload: unknown): GroupTrainingSlice[]
   });
 }
 
-// circle_wise_training_status.json now returns the same per-category
-// records shape as function_wise_training_status.json (see
-// normalizeGroupedTrainingStatus above) — one group per circle instead of
-// per function.
-function normalizeCircleTrainingStatus(payload: unknown): GroupTrainingSlice[] {
-  return normalizeGroupedTrainingStatus(payload, ['circles', 'records'], (record) => {
-    const rawName = typeof record.circle_name === 'string' ? record.circle_name.trim() : '';
-    return rawName || (typeof record.circle_id === 'number' ? `Circle ${record.circle_id}` : null);
+// cluster_wise_training_status.json returns the same per-category records
+// shape as function_wise_training_status.json (see normalizeGroupedTrainingStatus
+// above) — one group per cluster instead of per function.
+function normalizeClusterTrainingStatus(payload: unknown): GroupTrainingSlice[] {
+  return normalizeGroupedTrainingStatus(payload, ['clusters', 'records'], (record) => {
+    const rawName = typeof record.cluster_name === 'string' ? record.cluster_name.trim() : '';
+    return rawName || (typeof record.cluster_id === 'number' ? `Cluster ${record.cluster_id}` : null);
   });
 }
 
@@ -518,9 +517,9 @@ export function TrainingSection() {
   const [funcTrainingMode, setFuncTrainingMode] = useState('donut');
   const [funcTrainingData, setFuncTrainingData] = useState<GroupTrainingSlice[]>([]);
   const [funcTrainingLoading, setFuncTrainingLoading] = useState(true);
-  const [circleTrainingMode, setCircleTrainingMode] = useState('donut');
-  const [circleTrainingData, setCircleTrainingData] = useState<GroupTrainingSlice[]>([]);
-  const [circleTrainingLoading, setCircleTrainingLoading] = useState(true);
+  const [clusterTrainingMode, setClusterTrainingMode] = useState('donut');
+  const [clusterTrainingData, setClusterTrainingData] = useState<GroupTrainingSlice[]>([]);
+  const [clusterTrainingLoading, setClusterTrainingLoading] = useState(true);
   const [scoreDistribution, setScoreDistribution] = useState<ScoreBucket[]>([]);
   const [trainFailures, setTrainFailures] = useState<TrainFailure[]>([]);
   const [trainCountsLoading, setTrainCountsLoading] = useState(true);
@@ -645,23 +644,23 @@ export function TrainingSection() {
   useEffect(() => {
     let isMounted = true;
 
-    const loadCircleTraining = async () => {
-      setCircleTrainingLoading(true);
+    const loadClusterTraining = async () => {
+      setClusterTrainingLoading(true);
       try {
         const payload = await fetchMsafeTrainingJson(
-          'circle_wise_training_status.json',
+          'cluster_wise_training_status.json',
           buildFilterParams(persona, appliedFilters),
         );
-        const normalized = normalizeCircleTrainingStatus(payload);
-        if (isMounted) setCircleTrainingData(normalized);
+        const normalized = normalizeClusterTrainingStatus(payload);
+        if (isMounted) setClusterTrainingData(normalized);
       } catch (error) {
-        console.warn('M-Safe circle-wise-training-status API failed.', error);
+        console.warn('M-Safe cluster-wise-training-status API failed.', error);
       } finally {
-        if (isMounted) setCircleTrainingLoading(false);
+        if (isMounted) setClusterTrainingLoading(false);
       }
     };
 
-    loadCircleTraining();
+    loadClusterTraining();
 
     return () => {
       isMounted = false;
@@ -1007,33 +1006,33 @@ export function TrainingSection() {
       </ChartCard>
 
       <ChartCard
-        title="Circle-wise Training Status"
-        sub="Completed training count and completion % by circle"
-        infoKey="train-circle-status"
+        title="Cluster-wise Training Status"
+        sub="Completed training count and completion % by cluster"
+        infoKey="train-cluster-status"
         showPdf
-        pdfLabel="Circle-wise Training Status"
+        pdfLabel="Cluster-wise Training Status"
         reportPath="msafe_dashboard_report/training_circle_wise"
-        exportData={circleTrainingData.map((d) => ({
-          Circle: d.name,
+        exportData={clusterTrainingData.map((d) => ({
+          Cluster: d.name,
           Completed: d.completed,
           'Completion %': d.completionPercentage !== null ? `${d.completionPercentage}%` : '-',
         }))}
         style={{ marginTop: 16 }}
-        chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={circleTrainingMode} onChange={setCircleTrainingMode} />}
+        chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={clusterTrainingMode} onChange={setClusterTrainingMode} />}
       >
-        {circleTrainingLoading || circleTrainingData.length === 0 ? (
-          <DataState loading={circleTrainingLoading} empty={circleTrainingData.length === 0} label="circle training data" />
-        ) : circleTrainingMode === 'donut' ? (
+        {clusterTrainingLoading || clusterTrainingData.length === 0 ? (
+          <DataState loading={clusterTrainingLoading} empty={clusterTrainingData.length === 0} label="cluster training data" />
+        ) : clusterTrainingMode === 'donut' ? (
           <DonutChart
-            data={circleTrainingData}
-            height={Math.min(420, Math.max(220, Math.ceil(circleTrainingData.length / 2) * 26))}
+            data={clusterTrainingData}
+            height={Math.min(420, Math.max(220, Math.ceil(clusterTrainingData.length / 2) * 26))}
             tooltipContent={renderGroupTrainingTooltip}
           />
-        ) : circleTrainingMode === 'bar' ? (
+        ) : clusterTrainingMode === 'bar' ? (
           <div style={{ overflowX: 'auto' }}>
-            <div style={{ minWidth: Math.max(700, circleTrainingData.length * 55) }}>
+            <div style={{ minWidth: Math.max(700, clusterTrainingData.length * 55) }}>
               <ResponsiveContainer width="100%" height={360}>
-                <BarChart data={circleTrainingData} margin={{ top: 20, right: 16, left: 0, bottom: 70 }}>
+                <BarChart data={clusterTrainingData} margin={{ top: 20, right: 16, left: 0, bottom: 70 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
                   <XAxis
                     dataKey="name"
@@ -1046,7 +1045,7 @@ export function TrainingSection() {
                   <YAxis tick={{ fontSize: 10, fill: C.sage }} />
                   <Tooltip content={renderGroupTrainingTooltip} />
                   <Bar dataKey="completed" fill={C.ok} name="Completed" radius={[5, 5, 0, 0]}>
-                    {circleTrainingData.map((d) => (
+                    {clusterTrainingData.map((d) => (
                       <Cell key={d.name} fill={d.color} />
                     ))}
                     <LabelList dataKey="completed" position="top" style={{ fontSize: 10, fill: C.dark, fontWeight: 600 }} />
@@ -1060,13 +1059,13 @@ export function TrainingSection() {
             <table>
               <thead>
                 <tr>
-                  <th>Circle</th>
+                  <th>Cluster</th>
                   <th>Completed</th>
                   <th>Completion %</th>
                 </tr>
               </thead>
               <tbody>
-                {circleTrainingData.map((d) => (
+                {clusterTrainingData.map((d) => (
                   <tr key={d.name}>
                     <td>{d.name}</td>
                     <td>{d.completed.toLocaleString('en-IN')}</td>
