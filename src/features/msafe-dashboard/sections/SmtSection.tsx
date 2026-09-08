@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import {
   ResponsiveContainer,
   BarChart,
@@ -7,11 +7,8 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Cell,
   LabelList,
 } from 'recharts';
-import type { TooltipProps } from 'recharts';
-import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 import { AccordionShell, ChartCard } from '../components/ChartCard';
 import { ChartSwitch } from '../components/ChartSwitch';
 import { DonutChart } from '../components/DonutChart';
@@ -37,9 +34,10 @@ function getMsafeBaseUrl(): string {
 /** Circle Manager filter bar values, applied as query params once the user clicks Apply.
  *  Pan India now uses the exact same filter bar as Circle Manager, so every field applies
  *  the same way regardless of persona. */
+// SMT deliberately does NOT filter by cluster — every other section scopes its
+// queries with cluster_id, but SMT's own APIs don't take a cluster filter.
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
   const params: Record<string, string> = {};
-  if (f.circleIds.length > 0) params.circle_id = f.circleIds.join(',');
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type = f.empTypeId;
@@ -249,6 +247,8 @@ type RawRoleMonthlyRecord = {
   roleId: string;
   role: string;
   monthly: { month: string; visits: number }[];
+  /** API-reported total for this (circle, role) — falls back to summing `monthly` if absent. */
+  totalVisits: number;
 };
 
 function normalizeSmtRoleWiseRaw(payload: unknown): RawRoleMonthlyRecord[] {
@@ -283,7 +283,12 @@ function normalizeSmtRoleWiseRaw(payload: unknown): RawRoleMonthlyRecord[] {
         if (!month || visits === null) continue;
         monthly.push({ month, visits });
       }
-      if (monthly.length > 0) rows.push({ circleId, circle, roleId, role, monthly });
+      if (monthly.length > 0) {
+        const totalVisits =
+          getNumber(record, ['total_smt_visits', 'total_visits', 'total']) ??
+          monthly.reduce((sum, m) => sum + m.visits, 0);
+        rows.push({ circleId, circle, roleId, role, monthly, totalVisits });
+      }
     }
   }
 
@@ -317,9 +322,16 @@ type RoleCircleMonthlyIndex = {
   roles: RoleOption[];
   months: string[];
   lookup: Map<string, number>; // key: `${circleId}||${roleId}||${month}`
+  totalLookup: Map<string, number>; // key: `${circleId}||${roleId}`
 };
 
-const EMPTY_ROLE_INDEX: RoleCircleMonthlyIndex = { circles: [], roles: [], months: [], lookup: new Map() };
+const EMPTY_ROLE_INDEX: RoleCircleMonthlyIndex = {
+  circles: [],
+  roles: [],
+  months: [],
+  lookup: new Map(),
+  totalLookup: new Map(),
+};
 
 function buildRoleCircleMonthlyIndex(raw: RawRoleMonthlyRecord[]): RoleCircleMonthlyIndex {
   const circleOrder: string[] = [];
@@ -328,6 +340,7 @@ function buildRoleCircleMonthlyIndex(raw: RawRoleMonthlyRecord[]): RoleCircleMon
   const roleNames = new Map<string, string>();
   const monthSet = new Set<string>();
   const lookup = new Map<string, number>();
+  const totalLookup = new Map<string, number>();
 
   for (const record of raw) {
     if (!circleNames.has(record.circleId)) {
@@ -343,6 +356,8 @@ function buildRoleCircleMonthlyIndex(raw: RawRoleMonthlyRecord[]): RoleCircleMon
       const key = `${record.circleId}||${record.roleId}||${month}`;
       lookup.set(key, (lookup.get(key) ?? 0) + visits);
     }
+    const totalKey = `${record.circleId}||${record.roleId}`;
+    totalLookup.set(totalKey, (totalLookup.get(totalKey) ?? 0) + record.totalVisits);
   }
 
   return {
@@ -354,7 +369,26 @@ function buildRoleCircleMonthlyIndex(raw: RawRoleMonthlyRecord[]): RoleCircleMon
       .map((id) => ({ id, name: roleNames.get(id)! })),
     months: Array.from(monthSet).sort((a, b) => monthSortKey(a) - monthSortKey(b)),
     lookup,
+    totalLookup,
   };
+}
+
+// Matches the reference bubble-matrix legend: 0 grey, 1-19 purple, 20-30 orange, 31+ red.
+function colorForSmtCellCount(n: number): string {
+  if (n <= 0) return '#B9B2A0';
+  if (n <= 19) return C.lav;
+  if (n <= 30) return C.warn;
+  return C.err;
+}
+
+// Area-proportional (sqrt) bubble sizing so differences at the high end don't
+// dwarf everything else — a flat/linear scale would make small counts invisible.
+function smtBubbleRadius(count: number, maxCount: number): number {
+  if (count <= 0) return 8;
+  const minR = 12;
+  const maxR = 22;
+  if (maxCount <= 0) return minR;
+  return minR + Math.sqrt(count / maxCount) * (maxR - minR);
 }
 
 function DataState({ loading, empty, label }: { loading: boolean; empty: boolean; label: string }) {
@@ -379,9 +413,7 @@ export function SmtSection() {
   const [progressLoading, setProgressLoading] = useState(true);
   const [freqData, setFreqData] = useState<ProgressRow[]>([]);
   const [freqLoading, setFreqLoading] = useState(true);
-  const [roleWiseMode, setRoleWiseMode] = useState('bar');
   const [roleIndex, setRoleIndex] = useState<RoleCircleMonthlyIndex>(EMPTY_ROLE_INDEX);
-  const [selectedCircleIdx, setSelectedCircleIdx] = useState(0);
   const [roleWiseLoading, setRoleWiseLoading] = useState(true);
 
   useEffect(() => {
@@ -438,9 +470,6 @@ export function SmtSection() {
           const raw = normalizeSmtRoleWiseRaw(payload);
           const index = buildRoleCircleMonthlyIndex(raw);
           setRoleIndex(index);
-          // Reset to the first circle whenever fresh data comes in (filters
-          // changed) — mirrors "initially display the first circle".
-          setSelectedCircleIdx(0);
         }
       } catch (err) {
         if ((err as Error).name !== 'AbortError') console.warn('M-Safe smt-monthly-role-wise API failed.', err);
@@ -513,56 +542,22 @@ export function SmtSection() {
   //   return () => controller.abort();
   // }, [appliedFilters, persona]);
 
-  // Derived from the lookup for whichever circle is currently selected — the
-  // 11 roles never change. Each role is a SINGLE bar (value = that role's
-  // visits summed across every month for this circle); the full month-by-
-  // month breakdown is kept on the row (`monthly`) purely for the tooltip.
-  const selectedCircle = roleIndex.circles[selectedCircleIdx];
-  const roleChartRows = roleIndex.roles.map((role, index) => {
-    const monthly = roleIndex.months.map((month) => ({
-      month,
-      visits: selectedCircle ? roleIndex.lookup.get(`${selectedCircle.id}||${role.id}||${month}`) ?? 0 : 0,
-    }));
-    return {
-      name: role.name,
-      value: monthly.reduce((sum, m) => sum + m.visits, 0),
-      color: SLICE_PALETTE[index % SLICE_PALETTE.length],
-      monthly,
-    };
-  });
-  const canGoPrevCircle = selectedCircleIdx > 0;
-  const canGoNextCircle = selectedCircleIdx < roleIndex.circles.length - 1;
+  // Every (role, circle) pair as one bubble-matrix cell — Circle on the X-axis,
+  // Role on the Y-axis, bubble size/color driven by that pair's total SMT visits.
+  const smtGridMax = Math.max(
+    0,
+    ...roleIndex.roles.flatMap((role) =>
+      roleIndex.circles.map((circle) => roleIndex.totalLookup.get(`${circle.id}||${role.id}`) ?? 0),
+    ),
+  );
 
-  // Circle is fixed by the navigation above the chart; hovering a role's
-  // single bar shows that role's full month-by-month breakdown (attached to
-  // the row above) rather than just the bar's total.
-  const renderRoleWiseTooltip = ({ active, payload }: TooltipProps<ValueType, NameType>) => {
-    if (!active || !payload?.length) return null;
-    const row = payload[0]?.payload as (typeof roleChartRows)[number] | undefined;
-    if (!row) return null;
-
-    return (
-      <div className="msafe-chart-tip" style={{ maxHeight: 320, overflowY: 'auto' }}>
-        <div className="msafe-chart-tip-row">
-          <span>Circle: {selectedCircle?.name ?? '—'}</span>
-        </div>
-        <div className="msafe-chart-tip-row">
-          <span>Role: {row.name}</span>
-        </div>
-        <div className="msafe-chart-tip-row" style={{ fontWeight: 600, marginTop: 2 }}>
-          <span>Total SMT Visits: {row.value.toLocaleString('en-IN')}</span>
-        </div>
-        {row.monthly.map((m) => (
-          <div key={m.month} className="msafe-chart-tip-row">
-            <span className="msafe-chart-tip-sw" style={{ background: row.color }} />
-            <span>
-              {m.month}: {m.visits.toLocaleString('en-IN')}
-            </span>
-          </div>
-        ))}
-      </div>
-    );
-  };
+  const smtGridExportRows = roleIndex.roles.flatMap((role) =>
+    roleIndex.circles.map((circle) => ({
+      Circle: circle.name,
+      Role: role.name,
+      'Total SMT Visits': roleIndex.totalLookup.get(`${circle.id}||${role.id}`) ?? 0,
+    })),
+  );
 
   return (
     <AccordionShell
@@ -629,123 +624,127 @@ export function SmtSection() {
       </ChartCard>
 
       <ChartCard
-        title="SMT Visits – Role-wise Trend"
-        sub="One circle at a time · same 11 roles on every screen · hover a bar for its full month-by-month breakdown"
+        title="SMT Count by Circle and Role"
+        sub="Circle on x-axis · Role on y-axis · bubble size and label show count"
         infoKey="smt-role-wise"
         showPdf
         pdfLabel="SMT Role-wise Trend"
         reportPath="msafe_dashboard_report/smt_summary"
-        exportData={roleChartRows.map((row) => {
-          const record: Record<string, unknown> = {
-            Circle: selectedCircle?.name ?? '',
-            Role: row.name,
-            'Total SMT Visits': row.value,
-          };
-          row.monthly.forEach((m) => { record[m.month] = m.visits; });
-          return record;
-        })}
+        exportData={smtGridExportRows}
         style={{ marginTop: 16 }}
-        chartSwitch={<ChartSwitch modes={['bar', 'table']} value={roleWiseMode} onChange={setRoleWiseMode} />}
+        tag={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 11, color: C.sage }}>
+            <span style={{ fontWeight: 600, color: C.dark }}>Count scale</span>
+            {[
+              { label: '1–19', color: C.lav },
+              { label: '20–30', color: C.warn },
+              { label: '40+', color: C.err },
+              { label: '0', color: '#B9B2A0' },
+            ].map((s) => (
+              <span key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    background: s.color,
+                    display: 'inline-block',
+                  }}
+                />
+                {s.label}
+              </span>
+            ))}
+          </div>
+        }
       >
         {roleWiseLoading || roleIndex.circles.length === 0 ? (
           <DataState loading={roleWiseLoading} empty={roleIndex.circles.length === 0} label="role-wise visit data" />
         ) : (
-          <>
-            {/* Circle navigation */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 10 }}>
-              <button
-                type="button"
-                onClick={() => setSelectedCircleIdx((i) => Math.max(0, i - 1))}
-                disabled={!canGoPrevCircle}
-                style={{
-                  border: `1px solid ${C.border}`,
-                  background: canGoPrevCircle ? '#fff' : '#F2EEE4',
-                  color: canGoPrevCircle ? C.terra : '#B9B2A0',
-                  borderRadius: 6,
-                  padding: '5px 12px',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: canGoPrevCircle ? 'pointer' : 'not-allowed',
-                }}
-              >
-                ← Previous
-              </button>
-              <span style={{ fontSize: 14, fontWeight: 700, color: C.dark, minWidth: 160, textAlign: 'center' }}>
-                {selectedCircle?.name ?? '—'}
-              </span>
-              <button
-                type="button"
-                onClick={() => setSelectedCircleIdx((i) => Math.min(roleIndex.circles.length - 1, i + 1))}
-                disabled={!canGoNextCircle}
-                style={{
-                  border: `1px solid ${C.border}`,
-                  background: canGoNextCircle ? '#fff' : '#F2EEE4',
-                  color: canGoNextCircle ? C.terra : '#B9B2A0',
-                  borderRadius: 6,
-                  padding: '5px 12px',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: canGoNextCircle ? 'pointer' : 'not-allowed',
-                }}
-              >
-                Next →
-              </button>
-            </div>
+          <div style={{ overflowX: 'auto' }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: `170px repeat(${roleIndex.circles.length}, minmax(76px, 1fr))`,
+                minWidth: 170 + roleIndex.circles.length * 76,
+              }}
+            >
+              {/* One row per role, one bubble per circle */}
+              {roleIndex.roles.map((role) => (
+                <Fragment key={role.id}>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: C.dark,
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '6px 8px 6px 0',
+                      borderTop: `1px solid #F0ECE0`,
+                    }}
+                  >
+                    {role.name}
+                  </div>
+                  {roleIndex.circles.map((circle) => {
+                    const total = roleIndex.totalLookup.get(`${circle.id}||${role.id}`) ?? 0;
+                    const monthlyLines = roleIndex.months
+                      .map((month) => `${month}: ${roleIndex.lookup.get(`${circle.id}||${role.id}||${month}`) ?? 0}`)
+                      .join('\n');
+                    return (
+                      <div
+                        key={`${role.id}-${circle.id}`}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '6px 0',
+                          borderTop: `1px solid #F0ECE0`,
+                        }}
+                        title={`${circle.name} · ${role.name}\nTotal: ${total}\n${monthlyLines}`}
+                      >
+                        <div
+                          style={{
+                            width: smtBubbleRadius(total, smtGridMax) * 2,
+                            height: smtBubbleRadius(total, smtGridMax) * 2,
+                            borderRadius: '50%',
+                            background: colorForSmtCellCount(total),
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 10,
+                            fontWeight: 700,
+                            color: total > 0 ? '#fff' : '#8A8272',
+                          }}
+                        >
+                          {total > 0 ? total : ''}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </Fragment>
+              ))}
 
-            {roleWiseMode === 'table' ? (
-              <div className="tbl-scroll" style={{ maxHeight: 420, overflowX: 'auto' }}>
-                <table className="tbl">
-                  <thead>
-                    <tr>
-                      <th>Role</th>
-                      <th>Total SMT Visits</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {roleChartRows.map((row) => (
-                      <tr key={row.name}>
-                        <td className="cell-strong">{row.name}</td>
-                        <td>{row.value.toLocaleString('en-IN')}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <div style={{ minWidth: Math.max(700, roleChartRows.length * 90) }}>
-                  <ResponsiveContainer width="100%" height={380}>
-                    <BarChart data={roleChartRows} margin={{ top: 20, right: 16, left: 0, bottom: 110 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
-                      <XAxis
-                        type="category"
-                        dataKey="name"
-                        interval={0}
-                        angle={-45}
-                        textAnchor="end"
-                        height={130}
-                        tick={{ fontSize: 10, fill: C.sage }}
-                        label={{ value: 'Role', position: 'insideBottom', offset: -125, fontSize: 11, fill: C.dark }}
-                      />
-                      <YAxis
-                        type="number"
-                        allowDecimals={false}
-                        tick={{ fontSize: 10, fill: C.sage }}
-                        label={{ value: 'SMT Visits', angle: -90, position: 'insideLeft', fontSize: 11, fill: C.dark }}
-                      />
-                      <Tooltip content={renderRoleWiseTooltip} />
-                      <Bar dataKey="value" name="SMT Visits" radius={[5, 5, 0, 0]}>
-                        {roleChartRows.map((row) => (
-                          <Cell key={row.name} fill={row.color} />
-                        ))}
-                        <LabelList dataKey="value" position="top" style={{ fontSize: 10, fill: C.dark, fontWeight: 600 }} />
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+              {/* Circle names sit below the grid, like a conventional x-axis */}
+              <div />
+              {roleIndex.circles.map((circle) => (
+                <div
+                  key={circle.id}
+                  style={{
+                    textAlign: 'center',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: C.dark,
+                    padding: '8px 4px 0',
+                    borderTop: `1px solid ${C.border}`,
+                  }}
+                  title={circle.name}
+                >
+                  {circle.name}
                 </div>
-              </div>
-            )}
-          </>
+              ))}
+            </div>
+            <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: C.dark, marginTop: 10 }}>
+              Circle
+            </div>
+          </div>
         )}
       </ChartCard>
 

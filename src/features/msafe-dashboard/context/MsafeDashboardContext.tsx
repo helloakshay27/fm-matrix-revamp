@@ -101,8 +101,8 @@ async function fetchFilterOptions(
 export type DrillState = { id: string; title: string; crumb: string } | null;
 export type ToastItem = { id: number; message: string };
 export type AppliedFilters = {
-  circles: string[];
-  circleIds: string[];
+  clusters: string[];
+  clusterIds: string[];
   functions: string[];
   functionIds: string[];
   zone: string;
@@ -126,11 +126,14 @@ const today = new Date();
 const oneMonthAgo = new Date();
 oneMonthAgo.setDate(today.getDate() - 30);
 
-// Circle Manager's defaults (Mumbai + last one month) — applied only when the
-// user explicitly switches into the 'circle' persona (see setPersona below).
+// Circle Manager's defaults (COR cluster + last one month) — applied only when
+// the user explicitly switches into the 'circle' persona (see setPersona below).
+// clusterIds stays empty here — the real id isn't known until the cluster
+// options API has loaded, at which point it's resolved by name (see
+// resolveDefaultClusters below) rather than hardcoded.
 export const DEFAULT_FILTERS: AppliedFilters = {
-  circles: ['Mumbai'],
-  circleIds: [],
+  clusters: ['COR'],
+  clusterIds: [],
   functions: [],
   functionIds: [],
   zone: 'All Zones',
@@ -143,12 +146,12 @@ export const DEFAULT_FILTERS: AppliedFilters = {
 };
 
 // The app's actual starting state (persona defaults to 'admin'/Pan India on
-// load) — no preselected circle, but the same last-one-month date default as
+// load) — no preselected cluster, but the same last-one-month date default as
 // Circle Manager. setPersona('admin') only runs on an explicit persona switch,
 // not on mount, so this mirrors that branch's dates directly.
 const INITIAL_FILTERS: AppliedFilters = {
-  circles: [],
-  circleIds: [],
+  clusters: [],
+  clusterIds: [],
   functions: [],
   functionIds: [],
   zone: 'All Zones',
@@ -176,10 +179,10 @@ type Ctx = {
   setKpiLmc: (v: string) => void;
   kpiSmt: string;
   setKpiSmt: (v: string) => void;
-  circles: string[];
-  setCircles: (c: string[]) => void;
-  circleIds: string[];
-  setCircleIds: (ids: string[]) => void;
+  clusters: string[];
+  setClusters: (c: string[]) => void;
+  clusterIds: string[];
+  setClusterIds: (ids: string[]) => void;
   functions: string[];
   setFunctions: (f: string[]) => void;
   functionIds: string[];
@@ -197,12 +200,11 @@ type Ctx = {
   endDate: string;
   setEndDate: (d: string) => void;
   /** Snapshots the live dropdown/date state into appliedFilters. `overrides` lets a caller
-   *  (e.g. the circle-manager filter bar resolving a default circle's id after it loads)
    *  push a value in immediately without waiting on a stale render's closured state.
    *  `silent` skips the "Filter applied" toast — for automatic, not user-initiated, applies. */
   applyFilters: (overrides?: Partial<AppliedFilters>, opts?: { silent?: boolean }) => void;
   resetFilters: () => void;
-  /** Snapshot of circle/functions/zone/empType/startDate/endDate taken at the last "Apply" click.
+  /** Snapshot of cluster/functions/zone/empType/startDate/endDate taken at the last "Apply" click.
    *  API-fetching sections should key their fetches off this, not the live dropdown state, so
    *  data only refreshes once the user explicitly applies filters. */
   appliedFilters: AppliedFilters;
@@ -215,11 +217,8 @@ type Ctx = {
   setSelectedAnalytics: (ids: string[]) => void;
   analyticsOpen: boolean;
   setAnalyticsOpen: (v: boolean) => void;
-  /** Circle/function/employee-type dropdown options for the Circle Manager filter bar.
-   *  Fetched once here (not in the filter bar) so switching to the 'circle' persona can
-   *  resolve the default circle's real id synchronously, in the same state update, instead
-   *  of a follow-up effect that would re-fire (and cancel) every section's in-flight fetch. */
-  circleOptions: FilterOption[];
+  /** Cluster/function/employee-type dropdown options for the Circle Manager filter bar. */
+  clusterOptions: FilterOption[];
   functionOptions: FilterOption[];
   empTypeOptions: FilterOption[];
   loadingFilterOptions: boolean;
@@ -242,8 +241,8 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
   const [kpiUsers, setKpiUsers] = useState('27,438');
   const [kpiLmc, setKpiLmc] = useState('1,284');
   const [kpiSmt, setKpiSmt] = useState('438');
-  const [circles, setCircles] = useState<string[]>(INITIAL_FILTERS.circles);
-  const [circleIds, setCircleIds] = useState<string[]>(INITIAL_FILTERS.circleIds);
+  const [clusters, setClusters] = useState<string[]>(INITIAL_FILTERS.clusters);
+  const [clusterIds, setClusterIds] = useState<string[]>(INITIAL_FILTERS.clusterIds);
   const [functions, setFunctions] = useState<string[]>(INITIAL_FILTERS.functions);
   const [functionIds, setFunctionIds] = useState<string[]>(INITIAL_FILTERS.functionIds);
   const [zone, setZone] = useState(INITIAL_FILTERS.zone);
@@ -265,27 +264,27 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [selectedAnalytics, setSelectedAnalytics] = useState<string[]>([]);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
-  const [circleOptions, setCircleOptions] = useState<FilterOption[]>([]);
+  const [clusterOptions, setClusterOptions] = useState<FilterOption[]>([]);
   const [functionOptions, setFunctionOptions] = useState<FilterOption[]>([]);
   const [empTypeOptions, setEmpTypeOptions] = useState<FilterOption[]>([
     { id: '', name: 'Internal & External' },
   ]);
   const [loadingFilterOptions, setLoadingFilterOptions] = useState(true);
 
-  // Fetched once here (rather than inside CircleManagerFilterBar) so the default circle's
-  // real id can be resolved synchronously when switching personas — see setPersona/resetFilters.
+  // Fetched once here (rather than inside CircleManagerFilterBar) so every consumer sees
+  // the same options without re-fetching per section.
   useEffect(() => {
     const controller = new AbortController();
     (async () => {
-      const [circles, funcs, empTypes] = await Promise.all([
+      const [clusters, funcs, empTypes] = await Promise.all([
         fetchFilterOptions(
-          'circle_level_filter.json',
-          ['circles'],
-          ['circle_name', 'name'],
-          ['circle_id', 'id'],
+          'cluster_level_filter.json',
+          ['clusters'],
+          ['cluster_name', 'name'],
+          ['id', 'cluster_id'],
           controller.signal,
         ).catch((err) => {
-          if ((err as Error).name !== 'AbortError') console.error('Failed to load circle filter:', err);
+          if ((err as Error).name !== 'AbortError') console.error('Failed to load cluster filter:', err);
           return [] as FilterOption[];
         }),
         fetchFilterOptions(
@@ -311,7 +310,7 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       ]);
 
       if (controller.signal.aborted) return;
-      setCircleOptions(circles);
+      setClusterOptions(clusters);
       setFunctionOptions(funcs);
       setEmpTypeOptions([{ id: '', name: 'Internal & External' }, ...empTypes]);
       setLoadingFilterOptions(false);
@@ -319,17 +318,17 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
     return () => controller.abort();
   }, []);
 
-  // Snapshot of circleOptions for callbacks below — avoids recreating setPersona/resetFilters
+  // Snapshot of clusterOptions for callbacks below — avoids recreating setPersona/resetFilters
   // (and every context consumer memoized on them) on every options fetch tick.
-  const circleOptionsRef = useRef(circleOptions);
-  circleOptionsRef.current = circleOptions;
+  const clusterOptionsRef = useRef(clusterOptions);
+  clusterOptionsRef.current = clusterOptions;
 
-  const resolveDefaultCircles = useCallback((): { circles: string[]; circleIds: string[] } => {
-    const defaultName = DEFAULT_FILTERS.circles[0];
-    const match = circleOptionsRef.current.find((o) => o.name.toLowerCase().includes(defaultName.toLowerCase()));
+  const resolveDefaultClusters = useCallback((): { clusters: string[]; clusterIds: string[] } => {
+    const defaultName = DEFAULT_FILTERS.clusters[0];
+    const match = clusterOptionsRef.current.find((o) => o.name.toLowerCase() === defaultName.toLowerCase());
     return {
-      circles: [match?.name ?? defaultName],
-      circleIds: match ? [match.id] : DEFAULT_FILTERS.circleIds,
+      clusters: [match?.name ?? defaultName],
+      clusterIds: match ? [match.id] : DEFAULT_FILTERS.clusterIds,
     };
   }, []);
 
@@ -342,11 +341,11 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
   const setPersona = useCallback((p: Persona) => {
     setPersonaState(p);
     if (p === 'admin') {
-      // Pan India now shows the exact same filter bar as Circle Manager (Circle, Function,
+      // Pan India now shows the exact same filter bar as Circle Manager (Cluster, Function,
       // Employee Type, Date range) — defaults to the same last-one-month date range as
-      // Circle Manager each time this persona is entered, just without picking a circle.
-      setCircles([]);
-      setCircleIds([]);
+      // Circle Manager each time this persona is entered, just without picking a cluster.
+      setClusters([]);
+      setClusterIds([]);
       setFunctions(DEFAULT_FILTERS.functions);
       setFunctionIds(DEFAULT_FILTERS.functionIds);
       setZone(DEFAULT_FILTERS.zone);
@@ -357,8 +356,8 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       setEndDate(DEFAULT_FILTERS.endDate);
       setAppliedFilters({
         ...DEFAULT_FILTERS,
-        circles: [],
-        circleIds: [],
+        clusters: [],
+        clusterIds: [],
       });
       setPageTitle('M-Safe · Pan India View');
       setScopeText('27,438 registered users across 22 circles');
@@ -366,13 +365,13 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       setKpiLmc('1,284');
       setKpiSmt('438');
     } else {
-      // Circle Manager defaults to the Mumbai circle and the last one month of data — resolved
+      // Circle Manager defaults to the COR cluster and the last one month of data — resolved
       // and applied in this single state update (not a follow-up effect) so every section's
-      // fetch effect re-runs exactly once with the right circle_id, instead of once with an
-      // empty circle_id and then again a moment later when the id gets resolved.
-      const resolved = resolveDefaultCircles();
-      setCircles(resolved.circles);
-      setCircleIds(resolved.circleIds);
+      // fetch effect re-runs exactly once with the right cluster_id, instead of once with an
+      // empty cluster_id and then again a moment later when the id gets resolved.
+      const resolved = resolveDefaultClusters();
+      setClusters(resolved.clusters);
+      setClusterIds(resolved.clusterIds);
       setFunctions(DEFAULT_FILTERS.functions);
       setFunctionIds(DEFAULT_FILTERS.functionIds);
       setZone(DEFAULT_FILTERS.zone);
@@ -381,14 +380,14 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       setEmpTypeId(DEFAULT_FILTERS.empTypeId);
       setStartDate(DEFAULT_FILTERS.startDate);
       setEndDate(DEFAULT_FILTERS.endDate);
-      setAppliedFilters({ ...DEFAULT_FILTERS, circles: resolved.circles, circleIds: resolved.circleIds });
+      setAppliedFilters({ ...DEFAULT_FILTERS, clusters: resolved.clusters, clusterIds: resolved.clusterIds });
       setPageTitle('M-Safe · Circle Manager');
       setScopeText('2,148 registered users · 12 clusters · 84 work locations');
       setKpiUsers('2,148');
       setKpiLmc('112');
       setKpiSmt('38');
     }
-  }, [resolveDefaultCircles]);
+  }, [resolveDefaultClusters]);
 
   // HTML v6 behavior: sections stay mounted; KPI click highlights + smooth-scrolls
   const toggleAccordion = useCallback((key: AccordionKey) => {
@@ -420,8 +419,8 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
   const applyFilters = useCallback(
     (overrides?: Partial<AppliedFilters>, opts?: { silent?: boolean }) => {
       const next: AppliedFilters = {
-        circles,
-        circleIds,
+        clusters,
+        clusterIds,
         functions,
         functionIds,
         zone,
@@ -443,7 +442,7 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
         const prev = appliedFiltersRef.current;
         const changed = (
           [
-            ['circle', prev.circleIds.join(',') !== next.circleIds.join(',') || prev.circles.join(',') !== next.circles.join(',')],
+            ['cluster', prev.clusterIds.join(',') !== next.clusterIds.join(',') || prev.clusters.join(',') !== next.clusters.join(',')],
             ['function', prev.functionIds.join(',') !== next.functionIds.join(',') || prev.functions.join(',') !== next.functions.join(',')],
             ['zone', prev.zoneId !== next.zoneId || prev.zone !== next.zone],
             ['employee_type', prev.empTypeId !== next.empTypeId || prev.empType !== next.empType],
@@ -464,30 +463,30 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       setPageTitle(persona === 'circle' ? 'M-Safe · Circle Manager' : 'M-Safe · Pan India View');
       if (!opts?.silent) showToast('Filter applied');
     },
-    [persona, circles, circleIds, functions, functionIds, zone, zoneId, empType, empTypeId, startDate, endDate, showToast],
+    [persona, clusters, clusterIds, functions, functionIds, zone, zoneId, empType, empTypeId, startDate, endDate, showToast],
   );
 
   // Rare-race fallback: covers the sliver of time where the user switches to Circle Manager
-  // (or hits Reset) before circleOptions has finished its first load, so setPersona/resetFilters
-  // resolved to the empty-id default. Once the options land, resolve and push the real id in.
+  // before clusterOptions has finished its first load, so setPersona resolved to the
+  // empty-id default. Once the options land, resolve and push the real id in.
   useEffect(() => {
     if (persona !== 'circle') return;
-    const defaultName = DEFAULT_FILTERS.circles[0];
-    if (circles.length !== 1 || circles[0] !== defaultName || circleIds.length > 0) return;
-    const match = circleOptions.find((o) => o.name.toLowerCase().includes(defaultName.toLowerCase()));
+    const defaultName = DEFAULT_FILTERS.clusters[0];
+    if (clusters.length !== 1 || clusters[0] !== defaultName || clusterIds.length > 0) return;
+    const match = clusterOptions.find((o) => o.name.toLowerCase() === defaultName.toLowerCase());
     if (!match) return;
-    setCircles([match.name]);
-    setCircleIds([match.id]);
-    applyFilters({ circles: [match.name], circleIds: [match.id] }, { silent: true });
-  }, [persona, circles, circleIds, circleOptions, applyFilters]);
+    setClusters([match.name]);
+    setClusterIds([match.id]);
+    applyFilters({ clusters: [match.name], clusterIds: [match.id] }, { silent: true });
+  }, [persona, clusters, clusterIds, clusterOptions, applyFilters]);
 
-  // Reset clears the circle and date range entirely — unlike the persona-switch default
-  // (Mumbai + last 30 days), "Reset" means no circle_id/from_date/to_date get sent at all,
-  // and the Circle/date fields render empty. Function and employee type already default to
+  // Reset clears the cluster and date range entirely — unlike the persona-switch default
+  // (last 30 days), "Reset" means no cluster_id/from_date/to_date get sent at all, and the
+  // Cluster/date fields render empty. Function and employee type already default to
   // "no filter" (empty list / "Internal & External"), so those stay as-is.
   const resetFilters = useCallback(() => {
-    setCircles([]);
-    setCircleIds([]);
+    setClusters([]);
+    setClusterIds([]);
     setFunctions(DEFAULT_FILTERS.functions);
     setFunctionIds(DEFAULT_FILTERS.functionIds);
     setZone(DEFAULT_FILTERS.zone);
@@ -498,8 +497,8 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
     setEndDate('');
     setAppliedFilters({
       ...DEFAULT_FILTERS,
-      circles: [],
-      circleIds: [],
+      clusters: [],
+      clusterIds: [],
       startDate: '',
       endDate: '',
     });
@@ -525,10 +524,10 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       setKpiLmc,
       kpiSmt,
       setKpiSmt,
-      circles,
-      setCircles,
-      circleIds,
-      setCircleIds,
+      clusters,
+      setClusters,
+      clusterIds,
+      setClusterIds,
       functions,
       setFunctions,
       functionIds,
@@ -557,7 +556,7 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       setSelectedAnalytics,
       analyticsOpen,
       setAnalyticsOpen,
-      circleOptions,
+      clusterOptions,
       functionOptions,
       empTypeOptions,
       loadingFilterOptions,
@@ -573,8 +572,8 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       kpiUsers,
       kpiLmc,
       kpiSmt,
-      circles,
-      circleIds,
+      clusters,
+      clusterIds,
       functions,
       functionIds,
       zone,
@@ -593,7 +592,7 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       showToast,
       selectedAnalytics,
       analyticsOpen,
-      circleOptions,
+      clusterOptions,
       functionOptions,
       empTypeOptions,
       loadingFilterOptions,
