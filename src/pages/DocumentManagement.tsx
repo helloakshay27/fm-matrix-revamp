@@ -25,7 +25,8 @@ import {
   getCategories,
   CreateDocumentPayload,
   FolderPermission,
-import { Category } from "@/services/documentService";
+  Category
+} from "@/services/documentService";
 import { toast } from "sonner";
 import { FileIcon } from "@/components/document/FileIcon";
 import { usePATMEvents } from "@/components/PostHogPATMEvents";
@@ -220,7 +221,6 @@ export const DocumentManagement = () => {
     fileName: "",
     fileType: "",
     createdDateFrom: "",
-    createdDateTo: "",
     createdDateTo: "",
     status: "",
   });
