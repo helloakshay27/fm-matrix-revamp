@@ -331,6 +331,9 @@ export const InvoiceClubManagementAdd: React.FC = () => {
     // Sales Order Details
     const [salesOrderNumber, setSalesOrderNumber] = useState('');
     const [referenceNumber, setReferenceNumber] = useState('');
+    // Optional manual override — bill_number is otherwise only minted automatically once payment
+    // is confirmed (LockAccountBill#assign_bill_number_on_payment). Leave blank for that default.
+    const [invoiceNumber, setInvoiceNumber] = useState('');
     const [salesOrderDate, setSalesOrderDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [expectedShipmentDate, setExpectedShipmentDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [paymentTerms, setPaymentTerms] = useState('');
@@ -1505,6 +1508,11 @@ export const InvoiceClubManagementAdd: React.FC = () => {
             formData.append('bill_booking[user_id]', String(selectedUser || ''));
             // New invoices default to "Pending" status
             formData.append('bill_booking[status]', 'Pending');
+            // Optional — omit entirely (rather than sending an empty string) so it stays genuinely
+            // nil and still gets auto-minted on payment if left blank here.
+            if (invoiceNumber.trim()) {
+                formData.append('bill_booking[bill_number]', invoiceNumber.trim());
+            }
             formData.append('bill_booking[bill_date]', salesOrderDate);
             formData.append('bill_booking[due_date]', expectedShipmentDate);
             formData.append('bill_booking[order_number]', referenceNumber || '');
@@ -1517,11 +1525,15 @@ export const InvoiceClubManagementAdd: React.FC = () => {
             formData.append('bill_booking[destination_of_supply]', placeOfSupply || '');
             formData.append('bill_booking[discount_per]', discountTypeOnTotal === 'percentage' ? String(discountOnTotal) : '0');
 
-            // resource_type/resource_id: use the first line item backed by a real entity (facility booking/membership/event)
+            // resource_type/resource_id: use the first line item backed by a real entity (facility booking/membership/event).
+            // With no such entity, tag it "Other" (blank resource_id) so it still shows up on the
+            // Lock Account Bills list alongside Facility Booking / Club Member Allocation bills.
             const resourceItem = items.find(item => item.line_item_type && item.line_item_type !== 'other' && item.item_id);
             if (resourceItem && resourceItem.line_item_type) {
                 formData.append('bill_booking[resource_type]', LINE_ITEM_RESOURCE_TYPE[resourceItem.line_item_type]);
                 formData.append('bill_booking[resource_id]', String(resourceItem.item_id));
+            } else {
+                formData.append('bill_booking[resource_type]', 'Other');
             }
 
             formData.append('bill_booking[address_detail_attributes][gst_detail_id]', selectedGstDetail?.id ? String(selectedGstDetail.id) : '');
@@ -1984,6 +1996,19 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                 {/* Sales Order Details */}
                 <Section title="Invoice Details" icon={<Calendar className="w-5 h-5" />}>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                        <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Invoice Number
+                            </label>
+                            <TextField
+                                fullWidth
+                                value={invoiceNumber}
+                                onChange={(e) => setInvoiceNumber(e.target.value)}
+                                placeholder="Leave blank to auto-assign on payment"
+                                sx={fieldStyles}
+                            />
+                        </div>
 
                         <div>
                             <label className="block text-sm font-medium mb-2">

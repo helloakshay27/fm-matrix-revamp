@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Eye, Edit, Trash2 } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
@@ -181,6 +181,8 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [selectedDeleteId, setSelectedDeleteId] = useState<number | null>(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const [importing, setImporting] = useState(false);
+    const importInputRef = useRef<HTMLInputElement>(null);
 
 
 
@@ -581,6 +583,52 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
     const handleMarkAsSent = () => handleUpdateStatus('sent', 'Invoices marked as sent', 'Failed to mark invoices as sent');
 
     const handleSubmitForApproval = () => handleUpdateStatus('pending_approval', 'Invoices submitted for approval', 'Failed to submit invoices for approval');
+
+    // Bulk-import via POST /lock_accounts/:lock_account_id/bill_bookings/import — one row per
+    // invoice, each with exactly one line item. See BillBookingsController#import for the
+    // expected columns (Email*, Bill Number, Bill Date, Due Date, Subject, Note, Item Name*,
+    // Quantity, Rate*, Discount, GST Rate).
+    const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        e.target.value = '';
+        if (!file) return;
+
+        setImporting(true);
+        const loadingToast = toast.loading('Importing invoices...');
+        try {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await axios.post(
+                `https://${baseUrl}/lock_accounts/${lock_account_id}/bill_bookings/import`,
+                formData,
+                { headers: { Authorization: token ? `Bearer ${token}` : undefined } }
+            );
+
+            const { created = 0, errors: rowErrors = [] } = response.data || {};
+            if (rowErrors.length > 0) {
+                console.error('Invoice import row errors:', rowErrors);
+            }
+            if (created > 0) {
+                toast.success(`Imported ${created} invoice(s)${rowErrors.length ? `, ${rowErrors.length} row(s) skipped` : ''}`);
+                fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+            } else {
+                toast.error(rowErrors[0]?.error || 'No invoices were imported — check the file and try again');
+            }
+        } catch (error) {
+            console.error('Error importing invoices:', error);
+            const apiErrors = (error as { response?: { data?: { errors?: (string | { error?: string })[] } } })?.response?.data?.errors;
+            const firstError = apiErrors?.[0];
+            const message = typeof firstError === 'string' ? firstError : firstError?.error;
+            toast.error(message || 'Failed to import invoices');
+        } finally {
+            toast.dismiss(loadingToast);
+            setImporting(false);
+        }
+    };
     return (
         <div className="p-6 space-y-6">
             <header className="flex items-center justify-between">
@@ -608,6 +656,27 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
                         >
                             <Plus className="w-4 h-4 mr-2" /> Add
                         </Button>
+                        <input
+                            ref={importInputRef}
+                            type="file"
+                            accept=".csv,.xlsx,.xls,.ods"
+                            className="hidden"
+                            onChange={handleImportFile}
+                        />
+                        <Button
+                            variant="outline"
+                            onClick={() => importInputRef.current?.click()}
+                            disabled={importing}
+                        >
+                            <Upload className="w-4 h-4 mr-2" /> {importing ? 'Importing...' : 'Import'}
+                        </Button>
+                        <a
+                            href="/samples/invoice-import-sample.csv"
+                            download="invoice-import-sample.csv"
+                            className="text-sm text-brand underline hover:no-underline"
+                        >
+                            Download sample
+                        </a>
                         {/* {selectedRows.length > 0 && (
                             <Button
                                 className='bg-green-600 text-white hover:bg-green-700'

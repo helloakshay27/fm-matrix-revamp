@@ -3754,6 +3754,16 @@ const InvoiceClubManagementEdit = lazy(() =>
     default: m.InvoiceClubManagementEdit,
   }))
 );
+const LockAccountBillsDashboard = lazy(() =>
+  import("./pages/ClubManagement/LockAccountBillsDashboard").then((m) => ({
+    default: m.LockAccountBillsDashboard,
+  }))
+);
+const LockAccountBillDetails = lazy(() =>
+  import("./pages/ClubManagement/LockAccountBillDetails").then((m) => ({
+    default: m.LockAccountBillDetails,
+  }))
+);
 const CreditNoteClubDashboard = lazy(() =>
   import("./pages/ClubManagement/CreditNoteClubDashboard").then((m) => ({
     default: m.CreditNoteClubDashboard,
@@ -6940,6 +6950,15 @@ function App() {
                             <Route
                               path="/club-management/invoice/edit/:id"
                               element={<InvoiceClubManagementEdit />}
+                            />
+                            {/* Club Management - Lock Account Bills */}
+                            <Route
+                              path="/club-management/lock-account-bills"
+                              element={<LockAccountBillsDashboard />}
+                            />
+                            <Route
+                              path="/club-management/lock-account-bills/details/:id"
+                              element={<LockAccountBillDetails />}
                             />
                             {/* Club Management - Credit Note */}
                             <Route
