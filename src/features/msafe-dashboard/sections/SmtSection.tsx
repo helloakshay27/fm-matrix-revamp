@@ -569,7 +569,12 @@ export function SmtSection() {
         sub="Ranked by SMT field visit count"
         infoKey="smt-cluster"
         showPdf
+<<<<<<< HEAD
+                showPdf
+        pdfLabel="Visits per Circle"
+=======
         pdfLabel="Visits per Cluster"
+>>>>>>> d95d9ddef (refactor: rename Circle to Cluster in LmcSection and SmtSection for consistency)
         reportPath="msafe_dashboard_report/smt_details"
         exportData={clusterData.map((d) => ({ Cluster: d.name, Visits: d.n }))}
         chartSwitch={<ChartSwitch modes={['bar', 'table']} value={clusterMode} onChange={setClusterMode} />}
