@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Eye, Edit, Trash2, Printer } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Printer, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -139,6 +139,8 @@ export const CreditNoteClubDashboard: React.FC = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<CreditNote | null>(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const [importing, setImporting] = useState(false);
+    const importInputRef = useRef<HTMLInputElement>(null);
     const [pagination, setPagination] = useState({
         current_page: 1,
         per_page: 10,
@@ -227,6 +229,51 @@ export const CreditNoteClubDashboard: React.FC = () => {
     useEffect(() => {
         fetchCreditNoteData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
     }, [currentPage, perPage, debouncedSearchQuery, appliedFilters]);
+
+    // Bulk-import via POST /lock_accounts/:lock_account_id/credit_notes/import — one row per
+    // credit note, each with exactly one line item. See CreditNotesController#import for the
+    // expected columns (Email*, Date, Reason, Subject, Item Name*, Quantity, Rate*, Discount, GST Rate).
+    const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        e.target.value = '';
+        if (!file) return;
+
+        setImporting(true);
+        const loadingToast = toast.loading('Importing credit notes...');
+        try {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await axios.post(
+                `https://${baseUrl}/lock_accounts/${lock_account_id}/credit_notes/import`,
+                formData,
+                { headers: { Authorization: token ? `Bearer ${token}` : undefined } }
+            );
+
+            const { created = 0, errors: rowErrors = [] } = response.data || {};
+            if (rowErrors.length > 0) {
+                console.error('Credit note import row errors:', rowErrors);
+            }
+            if (created > 0) {
+                toast.success(`Imported ${created} credit note(s)${rowErrors.length ? `, ${rowErrors.length} row(s) skipped` : ''}`);
+                fetchCreditNoteData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+            } else {
+                toast.error(rowErrors[0]?.error || 'No credit notes were imported — check the file and try again');
+            }
+        } catch (error) {
+            console.error('Error importing credit notes:', error);
+            const apiErrors = (error as { response?: { data?: { errors?: (string | { error?: string })[] } } })?.response?.data?.errors;
+            const firstError = apiErrors?.[0];
+            const message = typeof firstError === 'string' ? firstError : firstError?.error;
+            toast.error(message || 'Failed to import credit notes');
+        } finally {
+            toast.dismiss(loadingToast);
+            setImporting(false);
+        }
+    };
 
     const handleSearch = (term: string) => {
         setSearchTerm(term);
@@ -399,6 +446,27 @@ export const CreditNoteClubDashboard: React.FC = () => {
                         >
                             <Plus className="w-4 h-4 mr-2" /> Add
                         </Button>
+                        <input
+                            ref={importInputRef}
+                            type="file"
+                            accept=".csv,.xlsx,.xls,.ods"
+                            className="hidden"
+                            onChange={handleImportFile}
+                        />
+                        <Button
+                            variant="outline"
+                            onClick={() => importInputRef.current?.click()}
+                            disabled={importing}
+                        >
+                            <Upload className="w-4 h-4 mr-2" /> {importing ? 'Importing...' : 'Import'}
+                        </Button>
+                        <a
+                            href="/samples/credit-note-import-sample.csv"
+                            download="credit-note-import-sample.csv"
+                            className="text-sm text-brand underline hover:no-underline"
+                        >
+                            Download sample
+                        </a>
                         {selectedRows.length > 0 && (
                             <Button
                                 variant="outline"

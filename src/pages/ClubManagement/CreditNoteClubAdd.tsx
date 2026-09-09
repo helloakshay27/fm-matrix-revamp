@@ -41,6 +41,7 @@ import { ShoppingCart, Package, Calendar, FileText, ArrowLeft } from 'lucide-rea
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { toast } from "sonner";
+import { RESOURCE_TYPE_LABELS } from './lockAccountBillInvoiceUtils';
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -502,7 +503,20 @@ export const CreditNoteClubAddPage: React.FC = () => {
     });
 
     // Credit Note specific fields
-    const [invoiceList, setInvoiceList] = useState<{ id: string; invoice_number: string }[]>([]);
+    //
+    // invoiceList merges two distinct backends sharing the same lock_account_bills table:
+    // - "bill_booking": rows with invoice_format='bill_booking', created via the Invoice Add page.
+    // - "lock_account_bill": rows linked to a Facility Booking / Club Member Allocation — the
+    //   same set shown on the Lock Account Bills list page. These carry their own resource_type/
+    //   resource_id (which the credit_notes API already supports directly), not a
+    //   lock_account_invoice_id — see handleSubmit.
+    const [invoiceList, setInvoiceList] = useState<{
+        id: string;
+        invoice_number: string;
+        source: 'bill_booking' | 'lock_account_bill';
+        resource_type?: string;
+        resource_id?: number;
+    }[]>([]);
     const [selectedInvoice, setSelectedInvoice] = useState('');
     const [invoiceType, setInvoiceType] = useState('');
     const [reason, setReason] = useState('');
@@ -528,38 +542,73 @@ export const CreditNoteClubAddPage: React.FC = () => {
         'Others',
     ];
 
-    // Fetch invoices (bill_bookings) for the selected user, to link this credit note to one
+    // Fetch invoices for the selected user, to link this credit note to one. Merges two sources
+    // sharing the same lock_account_bills table: bill_bookings (Invoice Add page) and the Lock
+    // Account Bills list (Facility Booking / Club Member Allocation-sourced bills) — see the
+    // invoiceList type comment above for why they need different resource-linking on submit.
     useEffect(() => {
         if (!selectedUser) {
             setInvoiceList([]);
             setSelectedInvoice('');
             return;
         }
-        const fetchInvoices = async () => {
-            const baseUrl = localStorage.getItem('baseUrl');
-            const token = localStorage.getItem('token');
-            const lock_account_id = localStorage.getItem('lock_account_id');
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+        const authHeaders = { Authorization: token ? `Bearer ${token}` : undefined };
+
+        const fetchBillBookings = async () => {
             try {
                 const res = await axios.get(
                     `https://${baseUrl}/lock_accounts/${lock_account_id}/bill_bookings.json`,
                     {
                         params: { user_id: selectedUser, page: 1, per_page: 20, paid: true },
-                        headers: { Authorization: token ? `Bearer ${token}` : undefined }
+                        headers: authHeaders
                     }
                 );
                 // NOTE: response shape is unconfirmed — best-effort parsing across common shapes.
                 const data = res.data;
                 const list = data?.bill_bookings || data?.data || (Array.isArray(data) ? data : []);
-                setInvoiceList((list || []).map((inv: any) => ({
+                return (list || []).map((inv: any) => ({
                     id: String(inv.id),
-                    invoice_number:  inv.bill_number 
-                    // `#${inv.id}` || || inv.order_number || inv.invoice_number ||
-                })));
+                    invoice_number: inv.bill_number,
+                    source: 'bill_booking' as const,
+                }));
             } catch {
-                setInvoiceList([]);
+                return [];
             }
         };
-        fetchInvoices();
+
+        const fetchLockAccountBills = async () => {
+            try {
+                const params = new URLSearchParams();
+                if (lock_account_id) params.append('lock_account_id', lock_account_id);
+                params.append('per_page', '100');
+                params.append('q[billed_to_eq]', String(selectedUser));
+                params.append('q[billed_to_type_eq]', 'User');
+                params.append('q[resource_type_in][]', 'FacilityBooking');
+                params.append('q[resource_type_in][]', 'ClubMemberAllocation');
+                const res = await axios.get(
+                    `https://${baseUrl}/lock_account_bills.json?${params.toString()}`,
+                    { headers: authHeaders }
+                );
+                const list = Array.isArray(res.data) ? res.data : [];
+                return list.map((bill: any) => ({
+                    id: String(bill.id),
+                    invoice_number: bill.bill_number
+                        || `#${bill.id} — ${RESOURCE_TYPE_LABELS[bill.resource_type] || bill.resource_type} #${bill.resource_id}`,
+                    source: 'lock_account_bill' as const,
+                    resource_type: bill.resource_type as string | undefined,
+                    resource_id: bill.resource_id as number | undefined,
+                }));
+            } catch {
+                return [];
+            }
+        };
+
+        Promise.all([fetchBillBookings(), fetchLockAccountBills()]).then(([billBookings, lockAccountBills]) => {
+            setInvoiceList([...billBookings, ...lockAccountBills]);
+        });
     }, [selectedUser]);
 
     // Dropdowns data
@@ -1025,9 +1074,86 @@ export const CreditNoteClubAddPage: React.FC = () => {
     const [membershipPlanOptions, setMembershipPlanOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
     const [eventOptionsList, setEventOptionsList] = useState<{ id: string; name: string; rate: number }[]>([]);
 
-    // When an invoice is selected, pull its line items in and lock every field except Rate
+    // When an invoice is selected, pull its line items in and lock every field except Rate.
+    // Branches on the selected entry's source: a plain bill_booking's own endpoint, or (for an
+    // entry merged in from the Lock Account Bills list) the lock_account_bills show endpoint.
     useEffect(() => {
         if (!selectedInvoice) return;
+        const selectedEntry = invoiceList.find((inv) => inv.id === selectedInvoice);
+
+        const fetchLockAccountBillItems = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            try {
+                const res = await axios.get(
+                    `https://${baseUrl}/lock_account_bills/${selectedInvoice}.json?show=true`,
+                    { headers: { Authorization: token ? `Bearer ${token}` : undefined } }
+                );
+                const bill = res.data || {};
+                const charges = Array.isArray(bill.item_details) ? bill.item_details : [];
+                if (charges.length === 0) {
+                    toast.error('Selected invoice has no items');
+                    return;
+                }
+
+                // The whole bill is tied to one resource (unlike a bill_booking, which can mix
+                // facility/membership/event line items) — every mapped row shares the same source.
+                const sourceKey: 'facility' | 'membership' | 'other' =
+                    bill.resource_type === 'FacilityBooking' ? 'facility'
+                        : bill.resource_type === 'ClubMemberAllocation' ? 'membership'
+                            : 'other';
+
+                const sourceSel: Record<string, 'facility' | 'membership' | 'event' | 'other' | ''> = {};
+                const entitySel: Record<string, string> = {};
+
+                const mappedItems: Item[] = charges.map((charge: any, idx: number) => {
+                    const itemId = `lab-${charge.id ?? idx}-${idx}`;
+                    sourceSel[itemId] = sourceKey;
+                    if (bill.resource_id) entitySel[itemId] = String(bill.resource_id);
+
+                    return {
+                        id: itemId,
+                        name: charge.item_name || charge.name || '',
+                        item_id: bill.resource_id ? String(bill.resource_id) : null,
+                        description: '',
+                        quantity: Number(charge.quantity) || 1,
+                        rate: Number(charge.rate) || 0,
+                        discount: 0,
+                        discountType: 'amount',
+                        tax: '',
+                        taxRate: 0,
+                        amount: Number(charge.total_amount) || 0,
+                        account: '',
+                        customer: '',
+                        item_tax_type: '',
+                        tax_group_id: null,
+                        tax_exemption_id: null,
+                        locked: true,
+                    };
+                });
+                setItems(mappedItems);
+                setItemSourceSelection(sourceSel);
+                setSelectedEntityByItem(entitySel);
+                setOtherItemNameDraft({});
+
+                if (bill.discount_per) {
+                    setDiscountTypeOnTotal('percentage');
+                    setDiscountOnTotal(Number(bill.discount_per) || 0);
+                } else if (bill.discount_amount) {
+                    setDiscountTypeOnTotal('amount');
+                    setDiscountOnTotal(Number(bill.discount_amount) || 0);
+                }
+            } catch (error) {
+                console.error('Error fetching lock account bill items:', error);
+                toast.error('Failed to load items from the selected invoice');
+            }
+        };
+
+        if (selectedEntry?.source === 'lock_account_bill') {
+            fetchLockAccountBillItems();
+            return;
+        }
+
         const fetchInvoiceItems = async () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
@@ -1102,7 +1228,7 @@ export const CreditNoteClubAddPage: React.FC = () => {
             }
         };
         fetchInvoiceItems();
-    }, [selectedInvoice]);
+    }, [selectedInvoice, invoiceList]);
 
     // Extracts an options array regardless of which wrapper key the API used, and
     // normalizes each entity's id/name/rate — exact response shape unconfirmed.
@@ -1360,7 +1486,17 @@ export const CreditNoteClubAddPage: React.FC = () => {
             // totalDiscount is always the final combined amount (item-level + invoice-level discount),
             // regardless of whether the invoice-level portion was entered as a percentage or a flat amount.
             formData.append('credit_note[discount_amount]', String(totalDiscount));
-            if (selectedInvoice) {
+            // An entry merged in from the Lock Account Bills list links via its own resource_type/
+            // resource_id (the same manual pair used across that whole feature) — lock_account_invoice_id
+            // is a real FK into the separate LockAccountInvoice table and doesn't apply to these bills.
+            const selectedInvoiceEntry = invoiceList.find((inv) => inv.id === selectedInvoice);
+            const usedBillLevelResource = selectedInvoiceEntry?.source === 'lock_account_bill' && !!selectedInvoiceEntry.resource_type;
+            if (usedBillLevelResource) {
+                formData.append('credit_note[resource_type]', selectedInvoiceEntry!.resource_type!);
+                if (selectedInvoiceEntry!.resource_id != null) {
+                    formData.append('credit_note[resource_id]', String(selectedInvoiceEntry!.resource_id));
+                }
+            } else if (selectedInvoice) {
                 formData.append('credit_note[lock_account_invoice_id]', selectedInvoice);
             }
             // Invoice Type dropdown sent as "invoice_type" directly (overrides the earlier "bill_booking"
@@ -1392,7 +1528,10 @@ export const CreditNoteClubAddPage: React.FC = () => {
             formData.append('credit_note[billing_gstin]', selectedGstDetail?.gstin || gstin || '');
 
             const lineItemTypes = items.map(item => SOURCE_KEY_TO_LINE_ITEM_TYPE[itemSourceSelection[item.id] || ''] || 'other');
-            const resourceIdx = items.findIndex((item, idx) => lineItemTypes[idx] !== 'other' && item.item_id);
+            // Skip when the bill-level resource was already set above — a Lock Account Bill's
+            // resource_type/resource_id describes the whole bill, not any one line item, and must
+            // win over whatever a per-row facility/membership/event picker would derive here.
+            const resourceIdx = usedBillLevelResource ? -1 : items.findIndex((item, idx) => lineItemTypes[idx] !== 'other' && item.item_id);
             if (resourceIdx !== -1) {
                 formData.append('credit_note[resource_type]', LINE_ITEM_RESOURCE_TYPE[lineItemTypes[resourceIdx]]);
                 formData.append('credit_note[resource_id]', String(items[resourceIdx].item_id));

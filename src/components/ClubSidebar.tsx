@@ -43,6 +43,7 @@ import {
   TrendingUp,
   Code,
   Award,
+  Receipt,
 } from "lucide-react";
 
 type SidebarItem = {
@@ -139,6 +140,11 @@ const modulesByPackage = {
       name: "Wallet",
       icon: CircleDollarSign,
       href: "/club-management/wallets",
+    },
+    {
+      name: "Lock Account Bills",
+      icon: Receipt,
+      href: "/club-management/lock-account-bills",
     },
     // {
     //     name: "Accounting",
