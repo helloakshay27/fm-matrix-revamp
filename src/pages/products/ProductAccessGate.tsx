@@ -64,6 +64,10 @@ const ProductAccessGate: React.FC = () => {
     });
   }, [isVisible, accessGranted, navigate, targetPath]);
 
+  if (isVisible && accessGranted) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-[#F6F4EE] font-poppins text-[#2C2C2C]">
       <SecurityOverlays security={security} />
