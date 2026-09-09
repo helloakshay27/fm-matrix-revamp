@@ -1117,7 +1117,6 @@ const ProjectTasksPage = () => {
         [searchParams, setSearchParams]
     );
 
-    // Initialize filter states from URL on mount
     useEffect(() => {
         const urlStatuses = searchParams.getAll("status");
         const urlResponsible = searchParams.getAll("responsible");
@@ -1129,39 +1128,38 @@ const ProjectTasksPage = () => {
         const urlDateRangeStart = searchParams.get("date_range_start") || "";
         const urlDateRangeEnd = searchParams.get("date_range_end") || "";
 
-        if (urlStatuses.length > 0) {
-            setSelectedStatuses(urlStatuses);
-        }
-        if (urlResponsible.length > 0) {
-            setSelectedResponsible(urlResponsible.map(Number));
-        }
-        if (urlCreators.length > 0) {
-            setSelectedCreators(urlCreators.map(Number));
-        }
-        if (urlProjects.length > 0) {
-            setSelectedProjects(urlProjects.map(Number));
-        }
-        if (urlWorkflowStatus.length > 0) {
-            setSelectedWorkflowStatus(urlWorkflowStatus);
-        }
-        if (urlTags.length > 0) {
-            setSelectedTags(urlTags.map(Number));
-        }
-        if (urlCompletedAt) {
-            setDates((prev) => ({ ...prev, completedAt: urlCompletedAt }));
-        }
-        if (urlDateRangeStart || urlDateRangeEnd) {
-            setDateRangeFilter({
+        setSelectedStatuses(urlStatuses);
+        setSelectedResponsible(urlResponsible.map(Number));
+        setSelectedCreators(urlCreators.map(Number));
+        setSelectedProjects(urlProjects.map(Number));
+        setSelectedWorkflowStatus(urlWorkflowStatus);
+        setSelectedTags(urlTags.map(Number));
+        setDates((prev) => ({ ...prev, completedAt: urlCompletedAt }));
+        setDateRangeFilter({
+            startDate: urlDateRangeStart,
+            endDate: urlDateRangeEnd,
+        });
+
+        setAppliedAdvancedFilters({
+            selectedStatuses: urlStatuses,
+            selectedResponsible: urlResponsible.map(Number),
+            selectedCreators: urlCreators.map(Number),
+            selectedProjects: urlProjects.map(Number),
+            selectedWorkflowStatus: urlWorkflowStatus,
+            selectedTags: urlTags.map(Number),
+            dates: { startDate: "", endDate: "", completedAt: urlCompletedAt },
+            dateRangeFilter: {
                 startDate: urlDateRangeStart,
                 endDate: urlDateRangeEnd,
-            });
-        }
+            },
+        });
 
         const urlView = (searchParams.get("view") || "List") as "Kanban" | "List" | "Gantt";
         if (urlView !== selectedView) {
             setSelectedView(urlView);
         }
-    }, []);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams.toString()]);
 
     // Sync view preference to URL and localStorage
     useEffect(() => {
@@ -2150,10 +2148,11 @@ const ProjectTasksPage = () => {
                     data: { project_status_id: status },
                 })
             ).unwrap();
-            setCurrentPage(1);
+            await refetchTasks();
             toast.success("Task status changed successfully");
         } catch (error) {
             console.log(error);
+            toast.error("Failed to update task status");
         }
     };
 
