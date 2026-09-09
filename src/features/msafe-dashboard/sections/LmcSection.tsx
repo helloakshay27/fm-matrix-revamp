@@ -378,12 +378,12 @@ function normalizeLmcStatus(payload: unknown): WeekRow[] {
   }));
 }
 
-type TrendCircleRow = { month: string; circle: string; volume: number };
+type TrendClusterRow = { month: string; cluster: string; volume: number };
 
-// Raw per-record shape from the API: one row per (circle, month) combination —
-// { circle_name, month, lmc_volume }. Kept separate from the aggregated trend
-// data so the hover tooltip can show the full circle-wise breakdown per month.
-function normalizeMonthlyTrendByCircle(payload: unknown): TrendCircleRow[] {
+// Raw per-record shape from the API: one row per (cluster, month) combination —
+// { cluster_name, month, lmc_volume }. Kept separate from the aggregated trend
+// data so the hover tooltip can show the full cluster-wise breakdown per month.
+function normalizeMonthlyTrendByCluster(payload: unknown): TrendClusterRow[] {
   const list = unwrapList(payload, ['data', 'result', 'months', 'trend']);
   return list
     .map((item) => {
@@ -401,16 +401,16 @@ function normalizeMonthlyTrendByCircle(payload: unknown): TrendCircleRow[] {
         'sign_offs',
       ]);
       if (volume === null) return null;
-      const circle = getString(record, ['circle_name', 'circle']) ?? '—';
-      return { month, circle, volume };
+      const cluster = getString(record, ['cluster_name', 'circle_name', 'circle']) ?? '—';
+      return { month, cluster, volume };
     })
-    .filter((item): item is TrendCircleRow => Boolean(item));
+    .filter((item): item is TrendClusterRow => Boolean(item));
 }
 
-// The response is one row per (circle, month) — { circle_name, month, lmc_volume } — so
-// volumes are summed across every circle for the same month, same approach as the daily
+// The response is one row per (cluster, month) — { cluster_name, month, lmc_volume } — so
+// volumes are summed across every cluster for the same month, same approach as the daily
 // volume and weekly completion normalizers above.
-function normalizeMonthlyTrend(rows: TrendCircleRow[]): TrendRow[] {
+function normalizeMonthlyTrend(rows: TrendClusterRow[]): TrendRow[] {
   const order: string[] = [];
   const totals = new Map<string, number>();
   for (const r of rows) {
@@ -456,7 +456,7 @@ export function LmcSection() {
   const [statusData, setStatusData] = useState<WeekRow[]>([]);
   const [statusLoading, setStatusLoading] = useState(true);
   const [trendData, setTrendData] = useState<TrendRow[]>([]);
-  const [trendCircleData, setTrendCircleData] = useState<TrendCircleRow[]>([]);
+  const [trendClusterData, setTrendClusterData] = useState<TrendClusterRow[]>([]);
   const [trendLoading, setTrendLoading] = useState(true);
 
   // "Daily LMC Volume — Last 30 Days" card hidden per request — API call disabled too.
@@ -586,17 +586,17 @@ export function LmcSection() {
         // its own "Last 12 Months" title. Drop the date range, keep every other filter.
         const { from_date, to_date, ...trendParams } = buildFilterParams(persona, appliedFilters);
         const payload = await fetchMsafeLmcJson(
-          'monthly_lmc_signoff_volume.json',
+          'cluster_wise_lmc_signoff',
           trendParams,
           controller.signal,
         );
-        const circleRows = normalizeMonthlyTrendByCircle(payload);
+        const clusterRows = normalizeMonthlyTrendByCluster(payload);
         if (!controller.signal.aborted) {
-          setTrendCircleData(circleRows);
-          setTrendData(normalizeMonthlyTrend(circleRows));
+          setTrendClusterData(clusterRows);
+          setTrendData(normalizeMonthlyTrend(clusterRows));
         }
       } catch (err) {
-        if ((err as Error).name !== 'AbortError') console.warn('M-Safe monthly-lmc-signoff-volume API failed.', err);
+        if ((err as Error).name !== 'AbortError') console.warn('M-Safe cluster-wise-lmc-signoff API failed.', err);
       } finally {
         if (!controller.signal.aborted) setTrendLoading(false);
       }
@@ -629,21 +629,21 @@ export function LmcSection() {
     );
   };
 
-  // "LMC Completion Trend" points are totals summed across every circle for that
-  // month — this looks up the per-circle breakdown for the hovered month so the
-  // tooltip can list each circle's sign-off volume, not just the month total.
+  // "LMC Completion Trend" points are totals summed across every cluster for that
+  // month — this looks up the per-cluster breakdown for the hovered month so the
+  // tooltip can list each cluster's sign-off volume, not just the month total.
   const renderTrendTooltip = ({ active, label }: { active?: boolean; label?: string }) => {
     if (!active || !label) return null;
-    const circleRows = trendCircleData.filter((r) => r.month === label);
-    const total = circleRows.reduce((sum, r) => sum + r.volume, 0);
+    const clusterRows = trendClusterData.filter((r) => r.month === label);
+    const total = clusterRows.reduce((sum, r) => sum + r.volume, 0);
     return (
       <div className="msafe-chart-tip">
         <div className="msafe-chart-tip-title">{formatMonthLabel(label)}</div>
-        {circleRows.map((r) => (
-          <div key={r.circle} className="msafe-chart-tip-row">
+        {clusterRows.map((r) => (
+          <div key={r.cluster} className="msafe-chart-tip-row">
             <span className="msafe-chart-tip-sw" style={{ background: C.sage }} />
             <span>
-              {r.circle}: {r.volume.toLocaleString('en-IN')}
+              {r.cluster}: {r.volume.toLocaleString('en-IN')}
             </span>
           </div>
         ))}

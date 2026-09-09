@@ -292,6 +292,8 @@ const getUserProfileFromAlternativeAPI = async () => {
 export const AddTicketDashboard = () => {
   const navigate = useNavigate();
   const helpdeskEvents = useHelpdeskEvents();
+  // Org 10 requires an engineer to be assigned at ticket creation time.
+  const isAssignedToMandatory = localStorage.getItem("org_id") === "10";
   // Vi catalogue funnel: create viewed → submitted → succeeded / failed. No-ops off the Vi
   // deployment — see PostHogViWorkflowEvents.
   const viEvents = useViWorkflowEvents();
@@ -1077,6 +1079,11 @@ export const AddTicketDashboard = () => {
       return;
     }
 
+    if (isAssignedToMandatory && !formData.assignedTo) {
+      toast.error("Validation Error: Assigned To is required.");
+      return;
+    }
+
     // Validate complaint mode is selected
     if (!formData.complaintMode) {
       toast.error("Validation Error: Complaint mode is required.");
@@ -1563,7 +1570,9 @@ export const AddTicketDashboard = () => {
                 variant="outlined"
                 sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
-                <InputLabel shrink>Assigned To</InputLabel>
+                <InputLabel shrink>
+                  Assigned To {isAssignedToMandatory && <span className="text-red-500">*</span>}
+                </InputLabel>
                 <MuiSelect
                   value={formData.assignedTo}
                   onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}

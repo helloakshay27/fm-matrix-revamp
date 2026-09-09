@@ -18,9 +18,9 @@ import { C } from '../data/constants';
 import type { Persona } from '../data/constants';
 import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 
-type CircleRow = { name: string; n: number };
+type ClusterRow = { name: string; n: number };
 type Slice = { name: string; value: number; color: string };
-type RecentVisit = { name: string; func: string; circle: string; area: string; date: string };
+type RecentVisit = { name: string; func: string; cluster: string; area: string; date: string };
 type ProgressRow = { label: string; pct: number; val: string; color: string };
 
 const SLICE_PALETTE = [C.sage, C.terra, C.blue, C.teal, C.warn, C.lav, C.err, C.ok, '#B4A38A'];
@@ -34,10 +34,9 @@ function getMsafeBaseUrl(): string {
 /** Circle Manager filter bar values, applied as query params once the user clicks Apply.
  *  Pan India now uses the exact same filter bar as Circle Manager, so every field applies
  *  the same way regardless of persona. */
-// SMT deliberately does NOT filter by cluster — every other section scopes its
-// queries with cluster_id, but SMT's own APIs don't take a cluster filter.
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
   const params: Record<string, string> = {};
+  if (f.clusterIds.length > 0) params.cluster_id = f.clusterIds.join(',');
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type = f.empTypeId;
@@ -100,19 +99,19 @@ function getString(record: Record<string, unknown>, keys: string[]): string | nu
   return null;
 }
 
-function normalizeVisitsPerCircle(payload: unknown): CircleRow[] {
-  const list = unwrapList(payload, ['data', 'result', 'circles']);
+function normalizeVisitsPerCluster(payload: unknown): ClusterRow[] {
+  const list = unwrapList(payload, ['data', 'result', 'clusters']);
   return list
     .map((item) => {
       if (!item || typeof item !== 'object') return null;
       const record = item as Record<string, unknown>;
-      const name = getString(record, ['circle_name', 'circle', 'name', 'label']);
+      const name = getString(record, ['cluster', 'cluster_name', 'circle_name', 'circle', 'name', 'label']);
       if (!name) return null;
       const n = getNumber(record, ['total_visits', 'count', 'value', 'n', 'total', 'visits']);
       if (n === null) return null;
       return { name, n };
     })
-    .filter((item): item is CircleRow => Boolean(item));
+    .filter((item): item is ClusterRow => Boolean(item));
 }
 
 function normalizeVisitsPerDepartment(payload: unknown): Slice[] {
@@ -155,10 +154,10 @@ function normalizeRecentVisits(payload: unknown): RecentVisit[] {
       const name = getString(record, ['done_by', 'user_name', 'employee_name', 'name']);
       if (!name) return null;
       const func = getString(record, ['function_name', 'function', 'func', 'department']) ?? '—';
-      const circle = getString(record, ['circle_name', 'circle']) ?? '—';
+      const cluster = getString(record, ['cluster_name', 'cluster', 'circle_name', 'circle']) ?? '—';
       const area = getString(record, ['area_visited', 'area', 'location', 'site']) ?? '—';
       const date = formatDateDMY(getString(record, ['visit_date', 'date', 'created_at']) ?? '—');
-      return { name, func, circle, area, date };
+      return { name, func, cluster, area, date };
     })
     .filter((item): item is RecentVisit => Boolean(item));
 }
@@ -235,33 +234,33 @@ function normalizeVisitFrequency(payload: unknown): ProgressRow[] {
   }));
 }
 
-// Raw per-record shape: one row per (circle, role) record as returned by the
+// Raw per-record shape: one row per (cluster, role) record as returned by the
 // API, carrying its own monthly_data array — kept separate from the grouped
-// chart rows so duplicate (circle_id, role_id) records can be summed
-// month-by-month before the chart ever sees them. circleId/roleId are the
-// true uniqueness keys — circle/role are just the display names, which can
-// coincidentally repeat across different circles/roles.
+// chart rows so duplicate (cluster_id, role_id) records can be summed
+// month-by-month before the chart ever sees them. clusterId/roleId are the
+// true uniqueness keys — cluster/role are just the display names, which can
+// coincidentally repeat across different clusters/roles.
 type RawRoleMonthlyRecord = {
-  circleId: string;
-  circle: string;
+  clusterId: string;
+  cluster: string;
   roleId: string;
   role: string;
   monthly: { month: string; visits: number }[];
-  /** API-reported total for this (circle, role) — falls back to summing `monthly` if absent. */
+  /** API-reported total for this (cluster, role) — falls back to summing `monthly` if absent. */
   totalVisits: number;
 };
 
 function normalizeSmtRoleWiseRaw(payload: unknown): RawRoleMonthlyRecord[] {
-  const circles = unwrapList(payload, ['data', 'result']);
+  const clusters = unwrapList(payload, ['data', 'result']);
   const rows: RawRoleMonthlyRecord[] = [];
 
-  for (const circleItem of circles) {
-    if (!circleItem || typeof circleItem !== 'object') continue;
-    const circleRecord = circleItem as Record<string, unknown>;
-    const circle = getString(circleRecord, ['circle_name', 'circle']) ?? '—';
-    const circleIdNum = getNumber(circleRecord, ['circle_id']);
-    const circleId = circleIdNum !== null ? String(circleIdNum) : circle;
-    const records = circleRecord.records;
+  for (const clusterItem of clusters) {
+    if (!clusterItem || typeof clusterItem !== 'object') continue;
+    const clusterRecord = clusterItem as Record<string, unknown>;
+    const cluster = getString(clusterRecord, ['cluster_name', 'cluster', 'circle_name', 'circle']) ?? '—';
+    const clusterIdNum = getNumber(clusterRecord, ['cluster_id', 'circle_id']);
+    const clusterId = clusterIdNum !== null ? String(clusterIdNum) : cluster;
+    const records = clusterRecord.records;
     if (!Array.isArray(records)) continue;
 
     for (const item of records) {
@@ -287,7 +286,7 @@ function normalizeSmtRoleWiseRaw(payload: unknown): RawRoleMonthlyRecord[] {
         const totalVisits =
           getNumber(record, ['total_smt_visits', 'total_visits', 'total']) ??
           monthly.reduce((sum, m) => sum + m.visits, 0);
-        rows.push({ circleId, circle, roleId, role, monthly, totalVisits });
+        rows.push({ clusterId, cluster, roleId, role, monthly, totalVisits });
       }
     }
   }
@@ -306,36 +305,36 @@ function monthSortKey(month: string): number {
   return year * 12 + monthIndex;
 }
 
-type CircleOption = { id: string; name: string };
+type ClusterOption = { id: string; name: string };
 type RoleOption = { id: string; name: string };
 
-// A single circle+role+month lookup, built once per API response — the chart
-// then just reads out of it for whichever circle/month is currently
-// selected, instead of re-deriving anything. Keying by circle_id + role_id
-// (not names) means the same role_name under two different circles, or two
+// A single cluster+role+month lookup, built once per API response — the chart
+// then just reads out of it for whichever cluster/month is currently
+// selected, instead of re-deriving anything. Keying by cluster_id + role_id
+// (not names) means the same role_name under two different clusters, or two
 // different role_ids sharing a name, is never mixed up. `roles` carries every
-// unique role_id seen across ALL circles, in a fixed order, so the X-axis
-// stays identical (11 roles) no matter which circle is selected — a circle
+// unique role_id seen across ALL clusters, in a fixed order, so the X-axis
+// stays identical (11 roles) no matter which cluster is selected — a cluster
 // missing a given role simply has no lookup entry, which reads back as 0.
-type RoleCircleMonthlyIndex = {
-  circles: CircleOption[];
+type RoleClusterMonthlyIndex = {
+  clusters: ClusterOption[];
   roles: RoleOption[];
   months: string[];
-  lookup: Map<string, number>; // key: `${circleId}||${roleId}||${month}`
-  totalLookup: Map<string, number>; // key: `${circleId}||${roleId}`
+  lookup: Map<string, number>; // key: `${clusterId}||${roleId}||${month}`
+  totalLookup: Map<string, number>; // key: `${clusterId}||${roleId}`
 };
 
-const EMPTY_ROLE_INDEX: RoleCircleMonthlyIndex = {
-  circles: [],
+const EMPTY_ROLE_INDEX: RoleClusterMonthlyIndex = {
+  clusters: [],
   roles: [],
   months: [],
   lookup: new Map(),
   totalLookup: new Map(),
 };
 
-function buildRoleCircleMonthlyIndex(raw: RawRoleMonthlyRecord[]): RoleCircleMonthlyIndex {
-  const circleOrder: string[] = [];
-  const circleNames = new Map<string, string>();
+function buildRoleClusterMonthlyIndex(raw: RawRoleMonthlyRecord[]): RoleClusterMonthlyIndex {
+  const clusterOrder: string[] = [];
+  const clusterNames = new Map<string, string>();
   const roleOrder: string[] = [];
   const roleNames = new Map<string, string>();
   const monthSet = new Set<string>();
@@ -343,9 +342,9 @@ function buildRoleCircleMonthlyIndex(raw: RawRoleMonthlyRecord[]): RoleCircleMon
   const totalLookup = new Map<string, number>();
 
   for (const record of raw) {
-    if (!circleNames.has(record.circleId)) {
-      circleOrder.push(record.circleId);
-      circleNames.set(record.circleId, record.circle);
+    if (!clusterNames.has(record.clusterId)) {
+      clusterOrder.push(record.clusterId);
+      clusterNames.set(record.clusterId, record.cluster);
     }
     if (!roleNames.has(record.roleId)) {
       roleOrder.push(record.roleId);
@@ -353,17 +352,17 @@ function buildRoleCircleMonthlyIndex(raw: RawRoleMonthlyRecord[]): RoleCircleMon
     }
     for (const { month, visits } of record.monthly) {
       monthSet.add(month);
-      const key = `${record.circleId}||${record.roleId}||${month}`;
+      const key = `${record.clusterId}||${record.roleId}||${month}`;
       lookup.set(key, (lookup.get(key) ?? 0) + visits);
     }
-    const totalKey = `${record.circleId}||${record.roleId}`;
+    const totalKey = `${record.clusterId}||${record.roleId}`;
     totalLookup.set(totalKey, (totalLookup.get(totalKey) ?? 0) + record.totalVisits);
   }
 
   return {
-    circles: circleOrder.map((id) => ({ id, name: circleNames.get(id)! })),
+    clusters: clusterOrder.map((id) => ({ id, name: clusterNames.get(id)! })),
     // Sort roles consistently, alphabetically by display name, so the X-axis
-    // order never shuffles as the user navigates between circles.
+    // order never shuffles as the user navigates between clusters.
     roles: [...roleOrder]
       .sort((a, b) => roleNames.get(a)!.localeCompare(roleNames.get(b)!))
       .map((id) => ({ id, name: roleNames.get(id)! })),
@@ -402,9 +401,9 @@ function DataState({ loading, empty, label }: { loading: boolean; empty: boolean
 
 export function SmtSection() {
   const { openDrill, persona, appliedFilters } = useMsafeDashboard();
-  const [circleMode, setCircleMode] = useState('bar');
-  const [circleData, setCircleData] = useState<CircleRow[]>([]);
-  const [circleLoading, setCircleLoading] = useState(true);
+  const [clusterMode, setClusterMode] = useState('bar');
+  const [clusterData, setClusterData] = useState<ClusterRow[]>([]);
+  const [clusterLoading, setClusterLoading] = useState(true);
   const [funcData, setFuncData] = useState<Slice[]>([]);
   const [funcLoading, setFuncLoading] = useState(true);
   const [recentVisits, setRecentVisits] = useState<RecentVisit[]>([]);
@@ -413,24 +412,24 @@ export function SmtSection() {
   const [progressLoading, setProgressLoading] = useState(true);
   const [freqData, setFreqData] = useState<ProgressRow[]>([]);
   const [freqLoading, setFreqLoading] = useState(true);
-  const [roleIndex, setRoleIndex] = useState<RoleCircleMonthlyIndex>(EMPTY_ROLE_INDEX);
+  const [roleIndex, setRoleIndex] = useState<RoleClusterMonthlyIndex>(EMPTY_ROLE_INDEX);
   const [roleWiseLoading, setRoleWiseLoading] = useState(true);
 
   useEffect(() => {
     const controller = new AbortController();
-    setCircleLoading(true);
+    setClusterLoading(true);
     (async () => {
       try {
         const payload = await fetchMsafeSmtJson(
-          'visits_per_circle.json',
+          'visits_per_cluster.json',
           buildFilterParams(persona, appliedFilters),
           controller.signal,
         );
-        if (!controller.signal.aborted) setCircleData(normalizeVisitsPerCircle(payload));
+        if (!controller.signal.aborted) setClusterData(normalizeVisitsPerCluster(payload));
       } catch (err) {
-        if ((err as Error).name !== 'AbortError') console.warn('M-Safe visits-per-circle API failed.', err);
+        if ((err as Error).name !== 'AbortError') console.warn('M-Safe visits-per-cluster API failed.', err);
       } finally {
-        if (!controller.signal.aborted) setCircleLoading(false);
+        if (!controller.signal.aborted) setClusterLoading(false);
       }
     })();
     return () => controller.abort();
@@ -468,7 +467,7 @@ export function SmtSection() {
         );
         if (!controller.signal.aborted) {
           const raw = normalizeSmtRoleWiseRaw(payload);
-          const index = buildRoleCircleMonthlyIndex(raw);
+          const index = buildRoleClusterMonthlyIndex(raw);
           setRoleIndex(index);
         }
       } catch (err) {
@@ -542,20 +541,20 @@ export function SmtSection() {
   //   return () => controller.abort();
   // }, [appliedFilters, persona]);
 
-  // Every (role, circle) pair as one bubble-matrix cell — Circle on the X-axis,
+  // Every (role, cluster) pair as one bubble-matrix cell — Cluster on the X-axis,
   // Role on the Y-axis, bubble size/color driven by that pair's total SMT visits.
   const smtGridMax = Math.max(
     0,
     ...roleIndex.roles.flatMap((role) =>
-      roleIndex.circles.map((circle) => roleIndex.totalLookup.get(`${circle.id}||${role.id}`) ?? 0),
+      roleIndex.clusters.map((cluster) => roleIndex.totalLookup.get(`${cluster.id}||${role.id}`) ?? 0),
     ),
   );
 
   const smtGridExportRows = roleIndex.roles.flatMap((role) =>
-    roleIndex.circles.map((circle) => ({
-      Circle: circle.name,
+    roleIndex.clusters.map((cluster) => ({
+      Cluster: cluster.name,
       Role: role.name,
-      'Total SMT Visits': roleIndex.totalLookup.get(`${circle.id}||${role.id}`) ?? 0,
+      'Total SMT Visits': roleIndex.totalLookup.get(`${cluster.id}||${role.id}`) ?? 0,
     })),
   );
 
@@ -566,28 +565,28 @@ export function SmtSection() {
       excelLabel="SMT Visits"
     >
       <ChartCard
-        title="Visits per Circle "
+        title="Visits per Cluster "
         sub="Ranked by SMT field visit count"
-        infoKey="smt-circle"
+        infoKey="smt-cluster"
         showPdf
-        pdfLabel="Visits per Circle"
+        pdfLabel="Visits per Cluster"
         reportPath="msafe_dashboard_report/smt_details"
-        exportData={circleData.map((d) => ({ Circle: d.name, Visits: d.n }))}
-        chartSwitch={<ChartSwitch modes={['bar', 'table']} value={circleMode} onChange={setCircleMode} />}
+        exportData={clusterData.map((d) => ({ Cluster: d.name, Visits: d.n }))}
+        chartSwitch={<ChartSwitch modes={['bar', 'table']} value={clusterMode} onChange={setClusterMode} />}
       >
-        {circleLoading || circleData.length === 0 ? (
-          <DataState loading={circleLoading} empty={circleData.length === 0} label="circle visit data" />
-        ) : circleMode === 'table' ? (
+        {clusterLoading || clusterData.length === 0 ? (
+          <DataState loading={clusterLoading} empty={clusterData.length === 0} label="cluster visit data" />
+        ) : clusterMode === 'table' ? (
           <div className="chart-as-table" style={{ maxHeight: 420 }}>
             <table>
               <thead>
                 <tr>
-                  <th>Circle</th>
+                  <th>Cluster</th>
                   <th>Visits</th>
                 </tr>
               </thead>
               <tbody>
-                {circleData.map((d) => (
+                {clusterData.map((d) => (
                   <tr key={d.name}>
                     <td>{d.name}</td>
                     <td className="num">{d.n}</td>
@@ -598,8 +597,8 @@ export function SmtSection() {
           </div>
         ) : (
           <div style={{ maxHeight: 560, overflowY: 'auto' }}>
-            <ResponsiveContainer width="100%" height={Math.max(320, circleData.length * 22)}>
-              <BarChart data={circleData} layout="vertical" margin={{ top: 4, right: 32, left: 0, bottom: 4 }}>
+            <ResponsiveContainer width="100%" height={Math.max(320, clusterData.length * 22)}>
+              <BarChart data={clusterData} layout="vertical" margin={{ top: 4, right: 32, left: 0, bottom: 4 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
                 <XAxis type="number" tick={{ fontSize: 10, fill: C.sage }} />
                 <YAxis
@@ -623,8 +622,8 @@ export function SmtSection() {
       </ChartCard>
 
       <ChartCard
-        title="SMT Count by Circle and Role"
-        sub="Circle on x-axis · Role on y-axis · bubble size and label show count"
+        title="SMT Count by Cluster and Role"
+        sub="Cluster on x-axis · Role on y-axis · bubble size and label show count"
         infoKey="smt-role-wise"
         showPdf
         pdfLabel="SMT Role-wise Trend"
@@ -656,18 +655,18 @@ export function SmtSection() {
           </div>
         }
       >
-        {roleWiseLoading || roleIndex.circles.length === 0 ? (
-          <DataState loading={roleWiseLoading} empty={roleIndex.circles.length === 0} label="role-wise visit data" />
+        {roleWiseLoading || roleIndex.clusters.length === 0 ? (
+          <DataState loading={roleWiseLoading} empty={roleIndex.clusters.length === 0} label="role-wise visit data" />
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: `170px repeat(${roleIndex.circles.length}, minmax(76px, 1fr))`,
-                minWidth: 170 + roleIndex.circles.length * 76,
+                gridTemplateColumns: `170px repeat(${roleIndex.clusters.length}, minmax(76px, 1fr))`,
+                minWidth: 170 + roleIndex.clusters.length * 76,
               }}
             >
-              {/* One row per role, one bubble per circle */}
+              {/* One row per role, one bubble per cluster */}
               {roleIndex.roles.map((role) => (
                 <Fragment key={role.id}>
                   <div
@@ -682,14 +681,14 @@ export function SmtSection() {
                   >
                     {role.name}
                   </div>
-                  {roleIndex.circles.map((circle) => {
-                    const total = roleIndex.totalLookup.get(`${circle.id}||${role.id}`) ?? 0;
+                  {roleIndex.clusters.map((cluster) => {
+                    const total = roleIndex.totalLookup.get(`${cluster.id}||${role.id}`) ?? 0;
                     const monthlyLines = roleIndex.months
-                      .map((month) => `${month}: ${roleIndex.lookup.get(`${circle.id}||${role.id}||${month}`) ?? 0}`)
+                      .map((month) => `${month}: ${roleIndex.lookup.get(`${cluster.id}||${role.id}||${month}`) ?? 0}`)
                       .join('\n');
                     return (
                       <div
-                        key={`${role.id}-${circle.id}`}
+                        key={`${role.id}-${cluster.id}`}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -697,7 +696,7 @@ export function SmtSection() {
                           padding: '6px 0',
                           borderTop: `1px solid #F0ECE0`,
                         }}
-                        title={`${circle.name} · ${role.name}\nTotal: ${total}\n${monthlyLines}`}
+                        title={`${cluster.name} · ${role.name}\nTotal: ${total}\n${monthlyLines}`}
                       >
                         <div
                           style={{
@@ -721,11 +720,11 @@ export function SmtSection() {
                 </Fragment>
               ))}
 
-              {/* Circle names sit below the grid, like a conventional x-axis */}
+              {/* Cluster names sit below the grid, like a conventional x-axis */}
               <div />
-              {roleIndex.circles.map((circle) => (
+              {roleIndex.clusters.map((cluster) => (
                 <div
-                  key={circle.id}
+                  key={cluster.id}
                   style={{
                     textAlign: 'center',
                     fontSize: 11,
@@ -734,14 +733,14 @@ export function SmtSection() {
                     padding: '8px 4px 0',
                     borderTop: `1px solid ${C.border}`,
                   }}
-                  title={circle.name}
+                  title={cluster.name}
                 >
-                  {circle.name}
+                  {cluster.name}
                 </div>
               ))}
             </div>
             <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: C.dark, marginTop: 10 }}>
-              Circle
+              Cluster
             </div>
           </div>
         )}
@@ -772,7 +771,7 @@ export function SmtSection() {
           exportData={recentVisits.map((s) => ({
             'Done By': s.name,
             Function: s.func,
-            Circle: s.circle,
+            Cluster: s.cluster,
             'Area Visited': s.area,
             Date: s.date,
           }))}
@@ -787,7 +786,7 @@ export function SmtSection() {
                   <tr>
                     <th>Done By</th>
                     <th>Function</th>
-                    <th>Circle</th>
+                    <th>Cluster</th>
                     <th>Area Visited</th>
                     <th>Date</th>
                   </tr>
@@ -800,7 +799,7 @@ export function SmtSection() {
                     >
                       <td className="cell-strong" title={s.name}>{s.name}</td>
                       <td title={s.func}>{s.func}</td>
-                      <td title={s.circle}>{s.circle}</td>
+                      <td title={s.cluster}>{s.cluster}</td>
                       <td title={s.area}>{s.area}</td>
                       <td>{s.date}</td>
                     </tr>
