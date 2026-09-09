@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   procurementManagementDetailedSWOTTable,
   procurementManagementThreatsTable,
@@ -212,6 +212,10 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
   const { productId: productIdFromParams } = useParams();
   const productId =
     productIdProp || productIdFromParams || location.state?.productId || "1";
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [productId]);
 
   const security = useProductSecurity();
   const { isBlurred } = security;
@@ -2482,7 +2486,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
 
   return (
     <div
-      className={`min-h-screen bg-white font-sans select-none relative transition-all duration-500 ${isBlurred ? "blur-2xl" : ""}`}
+      className={`min-h-screen bg-white font-sans select-none relative ${isBlurred ? "blur-2xl" : ""}`}
       style={
         {
           WebkitUserSelect: "none",
