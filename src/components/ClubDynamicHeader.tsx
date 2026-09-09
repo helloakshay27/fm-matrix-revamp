@@ -1,7 +1,11 @@
 import React from "react";
 import { useLayout } from "../contexts/LayoutContext";
 
-const clubPackages = ["Club Management", "Accounting", "Master", "Settings"];
+const clubPackages = ["Club Management", 
+  // "Accounting", 
+  "Master", 
+  // "Settings"
+];
 
 export const ClubDynamicHeader = () => {
   const { currentSection, setCurrentSection, isSidebarCollapsed } = useLayout();
@@ -14,7 +18,7 @@ export const ClubDynamicHeader = () => {
       <div className="flex items-center h-full px-4 overflow-x-auto">
         <div className="w-full overflow-x-auto md:overflow-visible no-scrollbar">
           {/* Mobile & Tablet: scroll + spacing; Desktop: full width and justify-between */}
-          <div className="flex w-full justify-between whitespace-nowrap">
+          <div className="flex w-full justify-start gap-20 whitespace-nowrap">
             {clubPackages.map((packageName) => (
               <button
                 key={packageName}

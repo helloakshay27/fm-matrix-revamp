@@ -12,10 +12,13 @@ import {
   ClipboardCheck,
   MapPin,
   Download,
+  AlertCircle,
+  Loader2,
 } from 'lucide-react';
 import type { AccordionKey, Persona } from '../data/constants';
 import { ADMIN_KPIS } from '../data/mockData';
 import { InfoButton } from './InfoButton';
+import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -32,7 +35,7 @@ function getMsafeBaseUrl(): string {
  *  the same way regardless of persona. */
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
   const params: Record<string, string> = {};
-  if (f.circleId) params.circle_id = f.circleId;
+  if (f.circleIds.length > 0) params.circle_id = f.circleIds.join(',');
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type = f.empTypeId;
@@ -78,6 +81,7 @@ const KPI_FIELD_MAP: Record<string, { valueKeys: string[]; valueType: KpiValueTy
     valueType: 'count',
     subKeys: ['krcc_rejected_percentage', 'krcc_rejected_percent'],
   },
+  'krcc-not-started': { valueKeys: ['krcc_not_started', 'krcc_not_started_count'], valueType: 'count' },
   'train-cat': {
     valueKeys: ['average_training_completion_percentage', 'train_category_percentage', 'category_wise_completion'],
     valueType: 'percent',
@@ -145,6 +149,7 @@ const ICONS: Record<string, ReactNode> = {
   'krcc-approved': <CheckCircle2 size={16} />,
   'krcc-pending': <FileText size={16} />,
   'krcc-rejected': <XCircle size={16} />,
+  'krcc-not-started': <AlertCircle size={16} />,
   'train-cat': <GraduationCap size={16} />,
   'train-user': <UserCheck size={16} />,
   'train-int': <ShieldCheck size={16} />,
@@ -161,6 +166,48 @@ function downloadExcel(label: string, rows: Record<string, unknown>[]) {
   XLSX.writeFile(workbook, filename);
 }
 
+/** Server-generated Excel report — used by KPI cards that set `exportFor`
+ *  (e.g. KRCC Rejected) instead of exporting the on-screen value client-side.
+ *  Carries the same circle/function/zone/employee-type/date-range filters the KPI
+ *  overview itself is currently filtered by (appliedFilters.startDate/endDate already
+ *  default to "one month ago → today" when the user hasn't touched the filter bar). */
+async function downloadKpiReportTemplate(
+  exportFor: string,
+  filenameLabel: string,
+  persona: Persona,
+  appliedFilters: AppliedFilters,
+): Promise<void> {
+  const token = localStorage.getItem('token') || '';
+  const companyId =
+    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145';
+  const params = new URLSearchParams({
+    company_id: companyId,
+    export_for: exportFor,
+    ...buildFilterParams(persona, appliedFilters),
+  });
+  if (token) {
+    params.set('access_token', token);
+    params.set('token', token);
+  }
+  const url = `${getMsafeBaseUrl()}/msafe_dashboard_report/report_template?${params.toString()}`;
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(url, { headers });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const blob = await res.blob();
+
+  const filename = `${filenameLabel.replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '') || 'report'}.xlsx`;
+  const downloadUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = downloadUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(downloadUrl);
+}
+
 const HINT: Record<string, string> = {
   users: 'Users',
   krcc: 'KRCC',
@@ -173,6 +220,8 @@ export function KpiOverview() {
   const { openAcc, toggleAccordion, showToast, persona, appliedFilters } = useMsafeDashboard();
   const [kpiApiData, setKpiApiData] = useState<Record<string, KpiApiValue>>({});
   const [kpiLoading, setKpiLoading] = useState(true);
+  const [exportingId, setExportingId] = useState<string | null>(null);
+  const msafeEvents = useMSafeEvents();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -248,21 +297,77 @@ export function KpiOverview() {
                 type="button"
                 className="kpi-dl-btn"
                 title="Download Excel"
-                onClick={(e) => {
+                disabled={exportingId === k.id}
+                onClick={async (e) => {
                   e.stopPropagation();
                   const label = k.download || k.label;
+
+                  const downloadEvent = {
+                    screen: 'msafe_dashboard' as const,
+                    source: 'kpi_card' as const,
+                    label,
+                    file_format: 'xlsx' as const,
+                    record_id: k.id,
+                    persona,
+                    filters: appliedFilters,
+                  };
+
+                  if (k.exportFor) {
+                    setExportingId(k.id);
+                    try {
+                      await downloadKpiReportTemplate(k.exportFor, k.label, persona, appliedFilters);
+                      showToast(`Excel downloaded · ${label}`);
+                      msafeEvents.onMsafeDownloaded({
+                        ...downloadEvent,
+                        export_mode: 'server_report',
+                        export_for: k.exportFor,
+                        succeeded: true,
+                      });
+                    } catch (err) {
+                      console.warn(`Failed to download report for KPI "${k.id}".`, err);
+                      showToast(`Export failed · ${label}`);
+                      msafeEvents.onMsafeDownloaded({
+                        ...downloadEvent,
+                        export_mode: 'server_report',
+                        export_for: k.exportFor,
+                        succeeded: false,
+                        failure_reason: (err as Error)?.message ?? 'request_failed',
+                      });
+                    } finally {
+                      setExportingId(null);
+                    }
+                    return;
+                  }
+
                   const api = kpiApiData[k.id];
                   if (kpiLoading || !api) {
                     showToast(`No data to export yet · ${label}`);
+                    msafeEvents.onMsafeDownloaded({
+                      ...downloadEvent,
+                      export_mode: 'client_sheet',
+                      row_count: 0,
+                      succeeded: false,
+                      failure_reason: kpiLoading ? 'still_loading' : 'no_data',
+                    });
                     return;
                   }
                   const row: Record<string, unknown> = { Metric: k.label, Value: api.value };
                   if (api.sub) row.Detail = api.sub;
                   downloadExcel(label, [row]);
                   showToast(`Excel downloaded · ${label}`);
+                  msafeEvents.onMsafeDownloaded({
+                    ...downloadEvent,
+                    export_mode: 'client_sheet',
+                    row_count: 1,
+                    succeeded: true,
+                  });
                 }}
               >
-                <Download size={14} />
+                {exportingId === k.id ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Download size={14} />
+                )}
               </button>
               <div className="kpi-top">
                 <div className="kpi-lbl">

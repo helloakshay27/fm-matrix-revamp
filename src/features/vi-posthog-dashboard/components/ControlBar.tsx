@@ -1,0 +1,210 @@
+import { useState } from 'react';
+import type { DateRange, Device, Tier } from '@/features/posthog-dashboard/data/constants';
+import { useViDashboard } from '../context/viDashboardStore';
+
+/**
+ * The reference (§7.1, cross-cutting controls) is explicit that Vi my Workspace has no admin
+ * scope or persona tier — one product, one persona, employees and contractors undifferentiated.
+ * So the FM three-tier selector collapses into a single Circle control here. Tier still exists
+ * underneath because the shared `scopeSites`/`normalizeScope` helpers key off it; it just isn't
+ * a thing the viewer picks.
+ */
+const ALL_CIRCLES = 'all-circles';
+
+function circleValue(tier: Tier, scope: string): string {
+  if (tier === 't3' && scope === 'org') return ALL_CIRCLES;
+  return scope;
+}
+
+export function ControlBar() {
+  const {
+    vm, setCircle, setDate, setCustomRange, customRange, setDev, setLicensedSeats,
+    togglePrev, refreshAll, isRefreshing,
+  } = useViDashboard();
+  const { state, sites, groups, sitesLoading, traffic } = vm;
+
+  const [customOpen, setCustomOpen] = useState(false);
+  const [draft, setDraft] = useState({ from: '', to: '' });
+
+  // Local text buffer so the field can be cleared without the value snapping back to 0.
+  const [seatsText, setSeatsText] = useState(
+    state.licensedSeats == null ? '' : String(state.licensedSeats),
+  );
+
+  return (
+    <div className="filterbar">
+      <label
+        className="ctrl"
+        title="Circle — re-scopes every metric via site_id / company_id (§6.5). Companies group the sites beneath them."
+      >
+        <span className="ic">◎</span>
+        {sitesLoading ? (
+          <span>Loading circles…</span>
+        ) : (
+          <select
+            value={circleValue(state.tier, state.scope)}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === ALL_CIRCLES) setCircle('t3', 'org');
+              else if (groups.some((g) => g.id === v)) setCircle('t3', v);
+              else setCircle('t1', v);
+            }}
+          >
+            <option value={ALL_CIRCLES}>All Circles{sites.length ? ` (${sites.length})` : ''}</option>
+            {groups.length > 0 && (
+              <optgroup label="Companies">
+                {groups.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name} ({g.siteIds.length})
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {sites.length > 0 && (
+              <optgroup label="Circles / sites">
+                {sites.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+          </select>
+        )}
+        <span className="chev">▾</span>
+      </label>
+
+      <label className="ctrl" title="Date range">
+        <span className="ic">📅</span>
+        <select
+          value={customRange ? 'custom' : state.date}
+          onChange={(e) => {
+            if (e.target.value === 'custom') {
+              // Seed the pickers from whatever window is on screen right now.
+              setDraft({ from: vm.range.from, to: vm.range.to });
+              setCustomOpen(true);
+              return;
+            }
+            setDate(Number(e.target.value) as DateRange);
+          }}
+        >
+          <option value={7}>Last 7 days</option>
+          <option value={30}>Last 30 days</option>
+          <option value={90}>Last 90 days</option>
+          <option value="custom">
+            {customRange ? `${customRange.from} → ${customRange.to}` : 'Custom range…'}
+          </option>
+        </select>
+        <span className="chev">▾</span>
+      </label>
+
+      {customOpen && (
+        <div className="daterange-inline">
+          <input
+            type="date"
+            value={draft.from}
+            max={draft.to || undefined}
+            onChange={(e) => setDraft((d) => ({ ...d, from: e.target.value }))}
+            aria-label="From date"
+          />
+          <span className="dr-to">–</span>
+          <input
+            type="date"
+            value={draft.to}
+            min={draft.from || undefined}
+            onChange={(e) => setDraft((d) => ({ ...d, to: e.target.value }))}
+            aria-label="To date"
+          />
+          <button
+            type="button"
+            className="dr-apply"
+            disabled={!draft.from || !draft.to || draft.from > draft.to}
+            onClick={() => {
+              setCustomRange(draft.from, draft.to);
+              setCustomOpen(false);
+            }}
+          >
+            Apply
+          </button>
+          <button
+            type="button"
+            className="dr-cancel"
+            onClick={() => setCustomOpen(false)}
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
+      <div className="devtoggle" title="Platform (device_type)">
+        {(['all', 'desktop', 'mobile'] as Device[]).map((d) => (
+          <button
+            key={d}
+            type="button"
+            className={state.dev === d ? 'on' : undefined}
+            onClick={() => setDev(d)}
+          >
+            {d === 'all' ? 'All' : d === 'desktop' ? 'Desktop' : 'Mobile'}
+          </button>
+        ))}
+      </div>
+
+      <label
+        className="ctrl"
+        title="Licensed seats — billing data the events don't carry. Sent only to adoption_engagement, to turn Seat Utilisation (A1) into a percentage."
+      >
+        <span className="ic">#</span>
+        <input
+          className="seatsin"
+          type="text"
+          inputMode="numeric"
+          placeholder="Licensed seats"
+          value={seatsText}
+          onChange={(e) => {
+            const v = e.target.value.trim();
+            setSeatsText(v);
+            const n = Number(v);
+            setLicensedSeats(v === '' || Number.isNaN(n) || n <= 0 ? null : n);
+          }}
+        />
+      </label>
+
+      <button
+        type="button"
+        className={`ctrl${state.prev ? ' toggle-on' : ''}`}
+        onClick={togglePrev}
+        title="Overlay the immediately preceding period of equal length"
+      >
+        <span className="ic">↺</span> Previous period {state.prev ? '✓' : ''}
+      </button>
+
+      <button
+        type="button"
+        className="ctrl"
+        onClick={refreshAll}
+        disabled={isRefreshing}
+        aria-busy={isRefreshing}
+        title={isRefreshing ? 'Refreshing metrics…' : 'Refetch every metric'}
+      >
+        {isRefreshing ? (
+          <>
+            <span className="spin" aria-hidden="true" /> Refreshing…
+          </>
+        ) : (
+          <>
+            <span className="ic">⟳</span> Refresh
+          </>
+        )}
+      </button>
+
+      <div className="spacer" />
+
+      <span className="pill" title="Distinct users active in the last 30 minutes (U6)">
+        <span className="dot" />
+        <span>
+          <b>{traffic.liveKv ?? '—'}</b>&nbsp;recently online
+        </span>
+      </span>
+    </div>
+  );
+}

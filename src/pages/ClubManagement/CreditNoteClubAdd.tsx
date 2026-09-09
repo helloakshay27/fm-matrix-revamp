@@ -41,17 +41,18 @@ import { ShoppingCart, Package, Calendar, FileText, ArrowLeft } from 'lucide-rea
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { toast } from "sonner";
+import { RESOURCE_TYPE_LABELS } from './lockAccountBillInvoiceUtils';
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
-    <section className="bg-card rounded-lg border border-border shadow-sm">
-        <div className="px-6 py-4 border-b border-border flex items-center gap-3">
-            <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+    <section className="border border-gray-200 rounded-lg overflow-hidden">
+        <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
+            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
                 {icon}
             </div>
-            <h2 className="text-sm font-semibold tracking-wide uppercase">{title}</h2>
+            <span className="font-semibold text-lg text-gray-800">{title}</span>
         </div>
-        <div className="p-6">{children}</div>
+        <div className="p-6 bg-white">{children}</div>
     </section>
 );
 
@@ -502,7 +503,20 @@ export const CreditNoteClubAddPage: React.FC = () => {
     });
 
     // Credit Note specific fields
-    const [invoiceList, setInvoiceList] = useState<{ id: string; invoice_number: string }[]>([]);
+    //
+    // invoiceList merges two distinct backends sharing the same lock_account_bills table:
+    // - "bill_booking": rows with invoice_format='bill_booking', created via the Invoice Add page.
+    // - "lock_account_bill": rows linked to a Facility Booking / Club Member Allocation — the
+    //   same set shown on the Lock Account Bills list page. These carry their own resource_type/
+    //   resource_id (which the credit_notes API already supports directly), not a
+    //   lock_account_invoice_id — see handleSubmit.
+    const [invoiceList, setInvoiceList] = useState<{
+        id: string;
+        invoice_number: string;
+        source: 'bill_booking' | 'lock_account_bill';
+        resource_type?: string;
+        resource_id?: number;
+    }[]>([]);
     const [selectedInvoice, setSelectedInvoice] = useState('');
     const [invoiceType, setInvoiceType] = useState('');
     const [reason, setReason] = useState('');
@@ -528,38 +542,73 @@ export const CreditNoteClubAddPage: React.FC = () => {
         'Others',
     ];
 
-    // Fetch invoices (bill_bookings) for the selected user, to link this credit note to one
+    // Fetch invoices for the selected user, to link this credit note to one. Merges two sources
+    // sharing the same lock_account_bills table: bill_bookings (Invoice Add page) and the Lock
+    // Account Bills list (Facility Booking / Club Member Allocation-sourced bills) — see the
+    // invoiceList type comment above for why they need different resource-linking on submit.
     useEffect(() => {
         if (!selectedUser) {
             setInvoiceList([]);
             setSelectedInvoice('');
             return;
         }
-        const fetchInvoices = async () => {
-            const baseUrl = localStorage.getItem('baseUrl');
-            const token = localStorage.getItem('token');
-            const lock_account_id = localStorage.getItem('lock_account_id');
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+        const authHeaders = { Authorization: token ? `Bearer ${token}` : undefined };
+
+        const fetchBillBookings = async () => {
             try {
                 const res = await axios.get(
                     `https://${baseUrl}/lock_accounts/${lock_account_id}/bill_bookings.json`,
                     {
-                        params: { user_id: selectedUser, page: 1, per_page: 20 },
-                        headers: { Authorization: token ? `Bearer ${token}` : undefined }
+                        params: { user_id: selectedUser, page: 1, per_page: 20, paid: true },
+                        headers: authHeaders
                     }
                 );
                 // NOTE: response shape is unconfirmed — best-effort parsing across common shapes.
                 const data = res.data;
                 const list = data?.bill_bookings || data?.data || (Array.isArray(data) ? data : []);
-                setInvoiceList((list || []).map((inv: any) => ({
+                return (list || []).map((inv: any) => ({
                     id: String(inv.id),
-                    invoice_number:  `#${inv.id}`
-                    // inv.bill_number || inv.order_number || inv.invoice_number ||
-                })));
+                    invoice_number: inv.bill_number,
+                    source: 'bill_booking' as const,
+                }));
             } catch {
-                setInvoiceList([]);
+                return [];
             }
         };
-        fetchInvoices();
+
+        const fetchLockAccountBills = async () => {
+            try {
+                const params = new URLSearchParams();
+                if (lock_account_id) params.append('lock_account_id', lock_account_id);
+                params.append('per_page', '100');
+                params.append('q[billed_to_eq]', String(selectedUser));
+                params.append('q[billed_to_type_eq]', 'User');
+                params.append('q[resource_type_in][]', 'FacilityBooking');
+                params.append('q[resource_type_in][]', 'ClubMemberAllocation');
+                const res = await axios.get(
+                    `https://${baseUrl}/lock_account_bills.json?${params.toString()}`,
+                    { headers: authHeaders }
+                );
+                const list = Array.isArray(res.data) ? res.data : [];
+                return list.map((bill: any) => ({
+                    id: String(bill.id),
+                    invoice_number: bill.bill_number
+                        || `#${bill.id} — ${RESOURCE_TYPE_LABELS[bill.resource_type] || bill.resource_type} #${bill.resource_id}`,
+                    source: 'lock_account_bill' as const,
+                    resource_type: bill.resource_type as string | undefined,
+                    resource_id: bill.resource_id as number | undefined,
+                }));
+            } catch {
+                return [];
+            }
+        };
+
+        Promise.all([fetchBillBookings(), fetchLockAccountBills()]).then(([billBookings, lockAccountBills]) => {
+            setInvoiceList([...billBookings, ...lockAccountBills]);
+        });
     }, [selectedUser]);
 
     // Dropdowns data
@@ -1025,9 +1074,86 @@ export const CreditNoteClubAddPage: React.FC = () => {
     const [membershipPlanOptions, setMembershipPlanOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
     const [eventOptionsList, setEventOptionsList] = useState<{ id: string; name: string; rate: number }[]>([]);
 
-    // When an invoice is selected, pull its line items in and lock every field except Rate
+    // When an invoice is selected, pull its line items in and lock every field except Rate.
+    // Branches on the selected entry's source: a plain bill_booking's own endpoint, or (for an
+    // entry merged in from the Lock Account Bills list) the lock_account_bills show endpoint.
     useEffect(() => {
         if (!selectedInvoice) return;
+        const selectedEntry = invoiceList.find((inv) => inv.id === selectedInvoice);
+
+        const fetchLockAccountBillItems = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            try {
+                const res = await axios.get(
+                    `https://${baseUrl}/lock_account_bills/${selectedInvoice}.json?show=true`,
+                    { headers: { Authorization: token ? `Bearer ${token}` : undefined } }
+                );
+                const bill = res.data || {};
+                const charges = Array.isArray(bill.item_details) ? bill.item_details : [];
+                if (charges.length === 0) {
+                    toast.error('Selected invoice has no items');
+                    return;
+                }
+
+                // The whole bill is tied to one resource (unlike a bill_booking, which can mix
+                // facility/membership/event line items) — every mapped row shares the same source.
+                const sourceKey: 'facility' | 'membership' | 'other' =
+                    bill.resource_type === 'FacilityBooking' ? 'facility'
+                        : bill.resource_type === 'ClubMemberAllocation' ? 'membership'
+                            : 'other';
+
+                const sourceSel: Record<string, 'facility' | 'membership' | 'event' | 'other' | ''> = {};
+                const entitySel: Record<string, string> = {};
+
+                const mappedItems: Item[] = charges.map((charge: any, idx: number) => {
+                    const itemId = `lab-${charge.id ?? idx}-${idx}`;
+                    sourceSel[itemId] = sourceKey;
+                    if (bill.resource_id) entitySel[itemId] = String(bill.resource_id);
+
+                    return {
+                        id: itemId,
+                        name: charge.item_name || charge.name || '',
+                        item_id: bill.resource_id ? String(bill.resource_id) : null,
+                        description: '',
+                        quantity: Number(charge.quantity) || 1,
+                        rate: Number(charge.rate) || 0,
+                        discount: 0,
+                        discountType: 'amount',
+                        tax: '',
+                        taxRate: 0,
+                        amount: Number(charge.total_amount) || 0,
+                        account: '',
+                        customer: '',
+                        item_tax_type: '',
+                        tax_group_id: null,
+                        tax_exemption_id: null,
+                        locked: true,
+                    };
+                });
+                setItems(mappedItems);
+                setItemSourceSelection(sourceSel);
+                setSelectedEntityByItem(entitySel);
+                setOtherItemNameDraft({});
+
+                if (bill.discount_per) {
+                    setDiscountTypeOnTotal('percentage');
+                    setDiscountOnTotal(Number(bill.discount_per) || 0);
+                } else if (bill.discount_amount) {
+                    setDiscountTypeOnTotal('amount');
+                    setDiscountOnTotal(Number(bill.discount_amount) || 0);
+                }
+            } catch (error) {
+                console.error('Error fetching lock account bill items:', error);
+                toast.error('Failed to load items from the selected invoice');
+            }
+        };
+
+        if (selectedEntry?.source === 'lock_account_bill') {
+            fetchLockAccountBillItems();
+            return;
+        }
+
         const fetchInvoiceItems = async () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
@@ -1102,7 +1228,7 @@ export const CreditNoteClubAddPage: React.FC = () => {
             }
         };
         fetchInvoiceItems();
-    }, [selectedInvoice]);
+    }, [selectedInvoice, invoiceList]);
 
     // Extracts an options array regardless of which wrapper key the API used, and
     // normalizes each entity's id/name/rate — exact response shape unconfirmed.
@@ -1289,11 +1415,6 @@ export const CreditNoteClubAddPage: React.FC = () => {
             return false;
         }
 
-        if (!placeOfSupply) {
-            setErrors(newErrors);
-            toast.error('Place of Supply is required');
-            return false;
-        }
 
         if (!salesOrderDate) {
             setErrors(newErrors);
@@ -1365,7 +1486,17 @@ export const CreditNoteClubAddPage: React.FC = () => {
             // totalDiscount is always the final combined amount (item-level + invoice-level discount),
             // regardless of whether the invoice-level portion was entered as a percentage or a flat amount.
             formData.append('credit_note[discount_amount]', String(totalDiscount));
-            if (selectedInvoice) {
+            // An entry merged in from the Lock Account Bills list links via its own resource_type/
+            // resource_id (the same manual pair used across that whole feature) — lock_account_invoice_id
+            // is a real FK into the separate LockAccountInvoice table and doesn't apply to these bills.
+            const selectedInvoiceEntry = invoiceList.find((inv) => inv.id === selectedInvoice);
+            const usedBillLevelResource = selectedInvoiceEntry?.source === 'lock_account_bill' && !!selectedInvoiceEntry.resource_type;
+            if (usedBillLevelResource) {
+                formData.append('credit_note[resource_type]', selectedInvoiceEntry!.resource_type!);
+                if (selectedInvoiceEntry!.resource_id != null) {
+                    formData.append('credit_note[resource_id]', String(selectedInvoiceEntry!.resource_id));
+                }
+            } else if (selectedInvoice) {
                 formData.append('credit_note[lock_account_invoice_id]', selectedInvoice);
             }
             // Invoice Type dropdown sent as "invoice_type" directly (overrides the earlier "bill_booking"
@@ -1397,7 +1528,10 @@ export const CreditNoteClubAddPage: React.FC = () => {
             formData.append('credit_note[billing_gstin]', selectedGstDetail?.gstin || gstin || '');
 
             const lineItemTypes = items.map(item => SOURCE_KEY_TO_LINE_ITEM_TYPE[itemSourceSelection[item.id] || ''] || 'other');
-            const resourceIdx = items.findIndex((item, idx) => lineItemTypes[idx] !== 'other' && item.item_id);
+            // Skip when the bill-level resource was already set above — a Lock Account Bill's
+            // resource_type/resource_id describes the whole bill, not any one line item, and must
+            // win over whatever a per-row facility/membership/event picker would derive here.
+            const resourceIdx = usedBillLevelResource ? -1 : items.findIndex((item, idx) => lineItemTypes[idx] !== 'other' && item.item_id);
             if (resourceIdx !== -1) {
                 formData.append('credit_note[resource_type]', LINE_ITEM_RESOURCE_TYPE[lineItemTypes[resourceIdx]]);
                 formData.append('credit_note[resource_id]', String(items[resourceIdx].item_id));
@@ -1686,7 +1820,7 @@ export const CreditNoteClubAddPage: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-2">
-                                        Place of Supply<span className="text-red-500">*</span>
+                                        Place of Supply
                                     </label>
                                     <TextField
                                         select
@@ -1915,20 +2049,20 @@ export const CreditNoteClubAddPage: React.FC = () => {
                             <div className="text-red-500 text-sm bg-red-50 p-3 rounded-md">{errors.items}</div>
                         )}
 
-                        <div className="border border-border rounded-lg overflow-x-auto">
+                        <div className="border border-gray-200 rounded-lg overflow-x-auto">
                                 <table className="w-full min-w-[900px] item-table-no-hover">
-                                    <thead className="bg-muted/50">
+                                    <thead className="bg-gray-50">
                                         <tr>
                                             <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
-                                            <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th>
+                                            {/* <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th> */}
                                             <th className="px-4 py-3 text-left text-sm font-medium">Rate</th>
                                             {/* <th className="px-4 py-3 text-left text-sm font-medium">Discount</th> */}
                                             <th className="px-4 py-3 text-left text-sm font-medium">Tax</th>
                                             <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
-                                            <th className="px-4 py-3 text-center text-sm font-medium">Action</th>
+                                            {/* <th className="px-4 py-3 text-center text-sm font-medium">Action</th> */}
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-border">
+                                    <tbody className="divide-y divide-gray-200">
 
                                         {items.map((item, index) => (
                                             <tr key={item.id}>
@@ -1948,6 +2082,8 @@ export const CreditNoteClubAddPage: React.FC = () => {
                                                         </div>
                                                     ) : (
                                                         <>
+                                                            {/* Facility Booking / Membership / Event / Other picker — commented out per request,
+                                                                every row now goes straight to a plain "Other" item-name input below.
                                                             {(() => {
                                                                 const rowSource = itemSourceSelection[item.id] || '';
                                                                 const sourceOptions: { key: 'facility' | 'membership' | 'event'; label: string; options: { id: string; name: string; rate: number }[] }[] = [
@@ -2018,6 +2154,20 @@ export const CreditNoteClubAddPage: React.FC = () => {
                                                                     </div>
                                                                 );
                                                             })()}
+                                                            */}
+                                                            <div className="mt-2">
+                                                                <TextField
+                                                                    size="small"
+                                                                    placeholder="Enter item name"
+                                                                    value={otherItemNameDraft[item.id] ?? item.name ?? ''}
+                                                                    onChange={(e) => setOtherItemNameDraft(prev => ({ ...prev, [item.id]: e.target.value }))}
+                                                                    onBlur={() => {
+                                                                        const name = (otherItemNameDraft[item.id] ?? item.name ?? '').trim();
+                                                                        updateItemFields(index, { item_id: null, name });
+                                                                    }}
+                                                                    sx={{ minWidth: 200 }}
+                                                                />
+                                                            </div>
 
                                                             {/* <TextField
                                                                 fullWidth
@@ -2034,7 +2184,7 @@ export const CreditNoteClubAddPage: React.FC = () => {
                                                 </td>
 
 
-                                                <td className="px-4 py-3">
+                                                {/* <td className="px-4 py-3">
                                                     {item.locked ? (
                                                         <div className="text-sm text-gray-900">{item.quantity}</div>
                                                     ) : (
@@ -2047,7 +2197,7 @@ export const CreditNoteClubAddPage: React.FC = () => {
                                                             sx={{ width: 80 }}
                                                         />
                                                     )}
-                                                </td>
+                                                </td> */}
                                                 <td className="px-4 py-3">
                                                     <TextField
                                                         type="number"
@@ -2115,16 +2265,20 @@ export const CreditNoteClubAddPage: React.FC = () => {
                                                 <td className="px-4 py-3 text-right font-semibold">
                                                     ₹{item.amount.toFixed(2)}
                                                 </td>
-                                                <td className="px-4 py-3 text-center">
+                                                {/* <td className="px-4 py-3 text-center">
                                                     <IconButton
                                                         size="small"
                                                         onClick={() => removeItem(index)}
                                                         disabled={items.length === 1}
-                                                        color="error"
+                                                        sx={{
+                                                            color: '#DA7756',
+                                                            '&:hover': { backgroundColor: 'rgba(218, 119, 86, 0.08)' },
+                                                            '&.Mui-disabled': { color: 'rgba(218, 119, 86, 0.4)' },
+                                                        }}
                                                     >
                                                         <Delete fontSize="small" />
                                                     </IconButton>
-                                                </td>
+                                                </td> */}
                                             </tr>
                                         ))}
                                     </tbody>
@@ -2158,7 +2312,7 @@ export const CreditNoteClubAddPage: React.FC = () => {
                                 <span className="font-semibold text-base">₹{subTotal.toFixed(2)}</span>
                             </div>
 
-                            <div className="flex justify-between items-center py-2">
+                            {/* <div className="flex justify-between items-center py-2">
                                 <span className="text-sm font-medium text-muted-foreground">Discount</span>
                                 <div className="flex items-center gap-2">
                                     <Select
@@ -2181,7 +2335,7 @@ export const CreditNoteClubAddPage: React.FC = () => {
 
                                     <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
                                 </div>
-                            </div>
+                            </div> */}
                             {taxBreakdown.map((tax, index) => (
                                 <div key={index} className="flex justify-between items-center py-2">
                                     <span className="text-sm font-medium text-muted-foreground">
@@ -2602,29 +2756,86 @@ export const CreditNoteClubAddPage: React.FC = () => {
                 <DialogTitle className="!text-base !font-semibold">Additional Address</DialogTitle>
                 <DialogContent dividers>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-                        <TextField label="Attention" fullWidth value={addressForm.attention} onChange={(e) => setAddressForm((prev) => ({ ...prev, attention: e.target.value }))} className="md:col-span-2" />
+                        <TextField label="Attention" placeholder="Enter contact person name" InputLabelProps={{ shrink: true }} fullWidth value={addressForm.attention} onChange={(e) => setAddressForm((prev) => ({ ...prev, attention: e.target.value }))} className="md:col-span-2" />
                         <TextField label="Country/Region" select fullWidth value={addressForm.country} onChange={(e) => setAddressForm((prev) => ({ ...prev, country: e.target.value }))} className="md:col-span-2">
                             {addressCountryOptions.map((opt) => (<MenuItem key={opt.code} value={opt.name}>{opt.name}</MenuItem>))}
                         </TextField>
-                        <TextField label="Tax Information" select fullWidth value={selectedAddressTaxInfoId} onChange={(e) => setSelectedAddressTaxInfoId(String(e.target.value))} className="md:col-span-2">
+                        {/* <TextField label="Tax Information" select fullWidth value={selectedAddressTaxInfoId} onChange={(e) => setSelectedAddressTaxInfoId(String(e.target.value))} className="md:col-span-2">
                             <MenuItem value="">Select</MenuItem>
                             {gstDetails.map((gst) => (<MenuItem key={gst.id} value={String(gst.id)}>{gst.gstin} - {gst.place_of_supply}</MenuItem>))}
-                        </TextField>
-                        <TextField label="Address" placeholder="Street 1" fullWidth value={addressForm.address} onChange={(e) => setAddressForm((prev) => ({ ...prev, address: e.target.value }))} className="md:col-span-2" />
+                        </TextField> */}
+                        <TextField label="Address" placeholder="Street 1" InputLabelProps={{ shrink: true }} fullWidth value={addressForm.address} onChange={(e) => setAddressForm((prev) => ({ ...prev, address: e.target.value }))} className="md:col-span-2" />
                         <TextField placeholder="Street 2" fullWidth value={addressForm.address_line_two} onChange={(e) => setAddressForm((prev) => ({ ...prev, address_line_two: e.target.value }))} className="md:col-span-2" />
-                        <TextField label="City" fullWidth value={addressForm.city} onChange={(e) => setAddressForm((prev) => ({ ...prev, city: e.target.value }))} className="md:col-span-2" />
-                        <TextField label="State" select fullWidth value={addressForm.state} onChange={(e) => setAddressForm((prev) => ({ ...prev, state: e.target.value }))}>
-                            <MenuItem value="">Select</MenuItem>
+                        <TextField label="City" placeholder="Enter city" InputLabelProps={{ shrink: true }} fullWidth value={addressForm.city} onChange={(e) => setAddressForm((prev) => ({ ...prev, city: e.target.value }))} className="md:col-span-2" />
+                        <TextField
+                            label="State"
+                            select
+                            fullWidth
+                            value={addressForm.state}
+                            onChange={(e) => setAddressForm((prev) => ({ ...prev, state: e.target.value }))}
+                            SelectProps={{
+                                displayEmpty: true,
+                                MenuProps: {
+                                    PaperProps: {
+                                        sx: {
+                                            maxHeight: 300,
+                                            '& .MuiMenuItem-root': { fontSize: '14px !important', minHeight: 'auto !important', padding: '8px 12px !important' },
+                                        },
+                                    },
+                                },
+                            }}
+                        >
+                            <MenuItem value="" disabled>Select State</MenuItem>
                             {states.map((state) => (<MenuItem key={state} value={state}>{state}</MenuItem>))}
                         </TextField>
-                        <TextField label="Pin Code" fullWidth value={addressForm.pin_code} onChange={(e) => setAddressForm((prev) => ({ ...prev, pin_code: e.target.value }))} />
-                        <TextField label="Phone" fullWidth value={addressForm.telephone_number} onChange={(e) => setAddressForm((prev) => ({ ...prev, telephone_number: e.target.value }))} InputProps={{ startAdornment: <InputAdornment position="start">+91</InputAdornment> }} />
-                        <TextField label="Fax Number" fullWidth value={addressForm.fax_number} onChange={(e) => setAddressForm((prev) => ({ ...prev, fax_number: e.target.value }))} />
+                        <TextField
+                            label="Pin Code"
+                            placeholder="Enter 6-digit pin code"
+                            InputLabelProps={{ shrink: true }}
+                            fullWidth
+                            value={addressForm.pin_code}
+                            onChange={(e) => {
+                                const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                setAddressForm((prev) => ({ ...prev, pin_code: digitsOnly }));
+                            }}
+                            inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 6 }}
+                        />
+                        <TextField
+                            label="Phone"
+                            placeholder="Enter phone number"
+                            InputLabelProps={{ shrink: true }}
+                            fullWidth
+                            value={addressForm.telephone_number}
+                            onChange={(e) => {
+                                const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                setAddressForm((prev) => ({ ...prev, telephone_number: digitsOnly }));
+                            }}
+                            inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 10 }}
+                            InputProps={{ startAdornment: <InputAdornment position="start">+91</InputAdornment> }}
+                        />
+                        <TextField
+                            label="Fax Number"
+                            placeholder="Enter fax number"
+                            InputLabelProps={{ shrink: true }}
+                            fullWidth
+                            value={addressForm.fax_number}
+                            onChange={(e) => {
+                                const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 15);
+                                setAddressForm((prev) => ({ ...prev, fax_number: digitsOnly }));
+                            }}
+                            inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 15 }}
+                        />
                     </div>
                 </DialogContent>
-                <DialogActions className="!justify-start !px-6 !py-3">
-                    <button type="button" onClick={handleSaveAddressForm} className="px-4 py-2 rounded border border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756] hover:text-white text-sm">Save</button>
-                    <button type="button" onClick={() => setAddressFormModalOpen(false)} className="px-4 py-2 rounded border border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756] hover:text-white text-sm">Cancel</button>
+                <DialogActions className="!justify-center !px-6 !py-3">
+                    <button type="button" onClick={handleSaveAddressForm} className="fm-button-fix fm-button-brand px-8 py-2">Save</button>
+                    <button
+                        type="button"
+                        onClick={() => setAddressFormModalOpen(false)}
+                        className="fm-button-fix px-8 py-2 border border-[#DA7756] text-[#DA7756] bg-transparent hover:border-[#C45F40] hover:bg-[#F2EEE9] hover:text-[#C45F40]"
+                    >
+                        Cancel
+                    </button>
                 </DialogActions>
             </Dialog>
 

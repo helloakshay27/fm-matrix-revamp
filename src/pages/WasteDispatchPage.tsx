@@ -87,8 +87,8 @@ const renderWasteGenerationCell = (item: WasteGeneration, key: string) => {
   if (key === 'floor') return item.area_name || item.wing_name || '-';
   if (key === 'user_type') return item.user_type || item.resource_type || '-';
   if (key === 'client_name') return item.client_name || item.vendor?.company_name || item.agency_name || '-';
-  if (key === 'waste_category') return item.category?.category_name || '-';
-  if (key === 'total_bags') return item.bag_counts != null ? item.bag_counts.toString() : '-';
+  if (key === 'waste_category') return item.category_names || item.category?.category_name || '-';
+  if (key === 'total_bags') return (item.total_bag_count ?? item.bag_counts) != null ? String(item.total_bag_count ?? item.bag_counts) : '-';
   // The API doesn't distinguish Kg vs Ltr — waste_unit is assumed to be in Kg
   // (matching how this figure is labeled everywhere else in the app).
   if (key === 'quantity_kg') return item.waste_unit != null ? `${item.waste_unit}` : '-';
@@ -197,7 +197,7 @@ const WasteDispatchPage: React.FC = () => {
     const totalRecycled = items.reduce((sum, item) => sum + (item.recycled_unit || 0), 0);
     const dryWaste = Math.max(totalWasteKg - totalRecycled, 0);
     const hazardousWaste = items
-      .filter((item) => (item.category?.category_name || '').toLowerCase().includes('hazard'))
+      .filter((item) => (item.category_names || item.category?.category_name || '').toLowerCase().includes('hazard'))
       .reduce((sum, item) => sum + (item.waste_unit || 0), 0);
 
     return [

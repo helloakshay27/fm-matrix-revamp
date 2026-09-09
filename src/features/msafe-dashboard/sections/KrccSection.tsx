@@ -8,19 +8,20 @@ import {
   CartesianGrid,
   Tooltip,
   Cell,
+  LabelList,
 } from 'recharts';
 import type { TooltipProps } from 'recharts';
 import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 import { AccordionShell, ChartCard } from '../components/ChartCard';
 import { ChartSwitch } from '../components/ChartSwitch';
-import { ChartTable, DonutChart, SideLegendDonut, SliceBarChart } from '../components/DonutChart';
+import { DonutChart, SideLegendDonut, SliceBarChart } from '../components/DonutChart';
 import { ProgressRows } from '../components/ProgressRows';
 import { C } from '../data/constants';
 import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import type { Persona } from '../data/constants';
 
 type Slice = { name: string; value: number; color: string };
-type CircleBar = { name: string; pct: number; pendingPct: number; color: string };
+type CircleBar = { name: string; pct: number; totalUsers: number; approvedUsers: number; color: string };
 type CircleDays = { name: string; days: number; color: string };
 type AgingRow = { label: string; pct: number; val: string; color: string };
 
@@ -35,7 +36,7 @@ function getMsafeBaseUrl(): string {
  *  the same way regardless of persona. */
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
   const params: Record<string, string> = {};
-  if (f.circleId) params.circle_id = f.circleId;
+  if (f.circleIds.length > 0) params.circle_id = f.circleIds.join(',');
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type = f.empTypeId;
@@ -158,8 +159,33 @@ const AGING_FLAT_FIELDS: [string, string][] = [
   ['days_0_3', '0 – 3 days'],
   ['days_4_7', '4 – 7 days'],
   ['days_8_14', '8 – 14 days'],
-  ['days_15_plus', '15+ days · High Priority'],
+  ['days_15_plus', '15+ days'],
 ];
+
+const AGING_BUCKET_LABELS: Record<string, string> = {
+  '0-3': '0 – 3 days',
+  '4-7': '4 – 7 days',
+  '8-14': '8 – 14 days',
+};
+
+// Youngest-to-oldest display order, regardless of the order the API happens
+// to return buckets/records in.
+const AGING_LABEL_ORDER = AGING_FLAT_FIELDS.map(([, label]) => label);
+function agingSortRank(label: string): number {
+  const idx = AGING_LABEL_ORDER.indexOf(label);
+  return idx === -1 ? AGING_LABEL_ORDER.length : idx;
+}
+
+/** Turns a raw bucket key like "0-3" or "15+" into the same label style as
+ *  AGING_FLAT_FIELDS, for buckets not already covered by that fixed list. */
+function humanizeAgingBucket(bucket: string): string {
+  if (AGING_BUCKET_LABELS[bucket]) return AGING_BUCKET_LABELS[bucket];
+  const [lo, hi] = bucket.split('-');
+  if (/\+/.test(bucket) || (lo && !hi && Number(lo) >= 15)) {
+    return `${bucket.replace(/\+$/, '')}+ days`;
+  }
+  return hi ? `${lo} – ${hi} days` : `${bucket} days`;
+}
 
 function normalizeAging(payload: unknown): AgingRow[] {
   const root = payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
@@ -176,24 +202,52 @@ function normalizeAging(payload: unknown): AgingRow[] {
     Boolean(item),
   );
 
-  const rows =
+  const bucketRows =
     flatRows.length > 0
-      ? flatRows
+      ? []
       : unwrapList(payload, ['data', 'result', 'buckets', 'aging', 'ranges'])
-          .map((item) => {
-            if (!item || typeof item !== 'object') return null;
-            const record = item as Record<string, unknown>;
-            const label = getString(record, ['bucket', 'range', 'age_range', 'label', 'name']);
-            if (!label) return null;
-            const count = getNumber(record, ['count', 'value', 'total', 'users_count']);
-            if (count === null) return null;
-            const explicitPct = getNumber(record, ['pct', 'percentage', 'percent']);
-            return { label, count, explicitPct, color: colorForAgingLabel(label) };
-          })
-          .filter(
-            (item): item is { label: string; count: number; explicitPct: number | null; color: string } =>
-              Boolean(item),
-          );
+        .map((item) => {
+          if (!item || typeof item !== 'object') return null;
+          const record = item as Record<string, unknown>;
+          // Raw bucket keys ("15+", "0-3") need humanizing into a display label;
+          // an already human-formatted label/name (older shape) is used as-is.
+          const rawBucket = getString(record, ['ageing_bucket', 'aging_bucket', 'bucket', 'range', 'age_range']);
+          const plainLabel = getString(record, ['label', 'name']);
+          const label = rawBucket ? humanizeAgingBucket(rawBucket) : plainLabel;
+          if (!label) return null;
+          const count = getNumber(record, ['pending_krcc_count', 'count', 'value', 'total', 'users_count']);
+          if (count === null) return null;
+          const explicitPct = getNumber(record, ['pct', 'percentage', 'percent']);
+          return { label, count, explicitPct, color: colorForAgingLabel(label) };
+        })
+        .filter(
+          (item): item is { label: string; count: number; explicitPct: number | null; color: string } =>
+            Boolean(item),
+        );
+
+  // The response can also be one row per pending KRCC record — { krcc_id, aging_bucket, ... } —
+  // rather than pre-aggregated counts, so tally how many records fall into each aging_bucket.
+  let recordRows: { label: string; count: number; explicitPct: number | null; color: string }[] = [];
+  if (flatRows.length === 0 && bucketRows.length === 0) {
+    const records = unwrapList(payload, ['data', 'result', 'records']);
+    const order: string[] = [];
+    const totals = new Map<string, number>();
+    for (const item of records) {
+      if (!item || typeof item !== 'object') continue;
+      const bucket = getString(item as Record<string, unknown>, ['aging_bucket']);
+      if (!bucket) continue;
+      if (!totals.has(bucket)) order.push(bucket);
+      totals.set(bucket, (totals.get(bucket) ?? 0) + 1);
+    }
+    recordRows = order.map((bucket) => {
+      const label = humanizeAgingBucket(bucket);
+      return { label, count: totals.get(bucket) ?? 0, explicitPct: null, color: colorForAgingLabel(label) };
+    });
+  }
+
+  const rows = (flatRows.length > 0 ? flatRows : bucketRows.length > 0 ? bucketRows : recordRows)
+    .slice()
+    .sort((a, b) => agingSortRank(a.label) - agingSortRank(b.label));
 
   const maxCount = Math.max(1, ...rows.map((r) => r.count));
   return rows.map((r) => ({
@@ -204,7 +258,13 @@ function normalizeAging(payload: unknown): AgingRow[] {
   }));
 }
 
-function normalizeCategory(payload: unknown): Slice[] {
+// Carries approved_percentage directly on each pie slice (rather than in a
+// separate parallel array cross-referenced by category name) so the hover
+// tooltip can read it straight off the exact slice being hovered — immune to
+// any category-name mismatch between two independently-built arrays.
+type CategorySlice = Slice & { approvedPercentage: number | null };
+
+function normalizeCategory(payload: unknown): CategorySlice[] {
   const list = unwrapList(payload, ['data', 'result', 'categories']);
   return list
     .map((item, index) => {
@@ -214,28 +274,10 @@ function normalizeCategory(payload: unknown): Slice[] {
       if (!name) return null;
       const value = getNumber(record, ['approved', 'count', 'value', 'total', 'cleared_count']);
       if (value === null) return null;
-      return { name, value, color: SLICE_PALETTE[index % SLICE_PALETTE.length] };
+      const approvedPercentage = getNumber(record, ['approved_percentage', 'approved_pct']);
+      return { name, value, color: SLICE_PALETTE[index % SLICE_PALETTE.length], approvedPercentage };
     })
-    .filter((item): item is Slice => Boolean(item));
-}
-
-type CategoryDetail = { name: string; approved: number; pending: number };
-
-// Same source list as normalizeCategory, but keeps the approved/pending breakdown
-// instead of collapsing it to a single chart value — used for the donut/bar tooltip.
-function normalizeCategoryDetails(payload: unknown): CategoryDetail[] {
-  const list = unwrapList(payload, ['data', 'result', 'categories']);
-  return list
-    .map((item) => {
-      if (!item || typeof item !== 'object') return null;
-      const record = item as Record<string, unknown>;
-      const name = getString(record, ['category_name', 'category', 'name', 'label', 'title']);
-      if (!name) return null;
-      const approved = getNumber(record, ['approved', 'count', 'value', 'total', 'cleared_count']) ?? 0;
-      const pending = getNumber(record, ['pending']) ?? 0;
-      return { name, approved, pending };
-    })
-    .filter((item): item is CategoryDetail => Boolean(item));
+    .filter((item): item is CategorySlice => Boolean(item));
 }
 
 function colorForTurnaroundDays(days: number): string {
@@ -260,9 +302,10 @@ function normalizeTurnaround(payload: unknown): CircleDays[] {
     .filter((item): item is CircleDays => Boolean(item));
 }
 
+// RAG thresholds standardized across the dashboard: Green >=98%, Amber 95-98%, Red <95%.
 function colorForClearancePct(pct: number): string {
-  if (pct >= 100) return C.ok;
-  if (pct >= 75) return C.warn;
+  if (pct >= 98) return C.ok;
+  if (pct >= 95) return C.warn;
   return C.err;
 }
 
@@ -274,10 +317,14 @@ function normalizeClearanceByCircle(payload: unknown): CircleBar[] {
       const record = item as Record<string, unknown>;
       const name = getString(record, ['circle_name', 'circle', 'name', 'label']);
       if (!name) return null;
-      const pct = getNumber(record, ['cleared_percentage', 'percentage', 'pct', 'cleared_pct']);
-      if (pct === null) return null;
-      const pendingPct = getNumber(record, ['pending_percentage', 'pending_pct']) ?? Math.max(0, 100 - pct);
-      return { name, pct, pendingPct, color: colorForClearancePct(pct) };
+      const rawPct = getNumber(record, ['clearance_percentage', 'approved_percentage', 'cleared_percentage', 'percentage', 'pct']);
+      if (rawPct === null) return null;
+      // Defensively clamp to 0–100 — a single out-of-range value (bad data upstream)
+      // would otherwise blow out the chart's Y-axis scale and shrink every other bar.
+      const pct = Math.min(100, Math.max(0, rawPct));
+      const totalUsers = getNumber(record, ['total_users', 'total']) ?? 0;
+      const approvedUsers = getNumber(record, ['approved_users', 'approved']) ?? 0;
+      return { name, pct, totalUsers, approvedUsers, color: colorForClearancePct(pct) };
     })
     .filter((item): item is CircleBar => Boolean(item));
 }
@@ -311,49 +358,51 @@ export function KrccSection() {
   const [apiClearedPct, setApiClearedPct] = useState<string | null>(null);
   const [agingData, setAgingData] = useState<AgingRow[]>([]);
   const [agingLoading, setAgingLoading] = useState(true);
-  const [categoryData, setCategoryData] = useState<Slice[]>([]);
-  const [categoryDetails, setCategoryDetails] = useState<CategoryDetail[]>([]);
+  const [categoryData, setCategoryData] = useState<CategorySlice[]>([]);
   const [categoryLoading, setCategoryLoading] = useState(true);
   const [turnaroundData, setTurnaroundData] = useState<CircleDays[]>([]);
   const [turnaroundLoading, setTurnaroundLoading] = useState(true);
   const [circlePctData, setCirclePctData] = useState<CircleBar[]>([]);
   const [circlePctLoading, setCirclePctLoading] = useState(true);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    setStatusLoading(true);
-    (async () => {
-      try {
-        const payload = await fetchMsafeKrccJson(
-          'krcc_clearance_status.json',
-          buildFilterParams(persona, appliedFilters),
-          controller.signal,
-        );
-        const normalized = normalizeStatus(payload);
-        warnIfEmpty('krcc_clearance_status.json', normalized, payload);
-        if (!controller.signal.aborted) {
-          setStatusData(normalized);
-          setApiClearedPct(extractClearancePercentage(payload));
-        }
-      } catch (err) {
-        if ((err as Error).name !== 'AbortError') console.warn('M-Safe krcc-clearance-status API failed.', err);
-      } finally {
-        if (!controller.signal.aborted) setStatusLoading(false);
-      }
-    })();
-    return () => controller.abort();
-  }, [appliedFilters, persona]);
+  // "KRCC Clearance Status" card hidden per request — API call disabled too.
+  // useEffect(() => {
+  //   const controller = new AbortController();
+  //   setStatusLoading(true);
+  //   (async () => {
+  //     try {
+  //       const payload = await fetchMsafeKrccJson(
+  //         'krcc_clearance_status.json',
+  //         buildFilterParams(persona, appliedFilters),
+  //         controller.signal,
+  //       );
+  //       const normalized = normalizeStatus(payload);
+  //       warnIfEmpty('krcc_clearance_status.json', normalized, payload);
+  //       if (!controller.signal.aborted) {
+  //         setStatusData(normalized);
+  //         setApiClearedPct(extractClearancePercentage(payload));
+  //       }
+  //     } catch (err) {
+  //       if ((err as Error).name !== 'AbortError') console.warn('M-Safe krcc-clearance-status API failed.', err);
+  //     } finally {
+  //       if (!controller.signal.aborted) setStatusLoading(false);
+  //     }
+  //   })();
+  //   return () => controller.abort();
+  // }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
     setAgingLoading(true);
     (async () => {
       try {
-        const payload = await fetchMsafeKrccJson(
-          'krcc_pending_aging.json',
-          buildFilterParams(persona, appliedFilters),
-          controller.signal,
-        );
+        // This is a snapshot of how long currently-pending KRCCs have been waiting
+        // as of today (each record's aging_days is computed against "today_date"),
+        // not a historical view scoped to an arbitrary range — sending from_date/
+        // to_date here would misleadingly imply the applied date filter changes it.
+        // Drop the date range, keep every other filter.
+        const { from_date, to_date, ...agingParams } = buildFilterParams(persona, appliedFilters);
+        const payload = await fetchMsafeKrccJson('krcc_pending_aging.json', agingParams, controller.signal);
         const normalized = normalizeAging(payload);
         warnIfEmpty('krcc_pending_aging.json', normalized, payload);
         if (!controller.signal.aborted) setAgingData(normalized);
@@ -378,10 +427,7 @@ export function KrccSection() {
         );
         const normalized = normalizeCategory(payload);
         warnIfEmpty('krcc_cleared_by_category.json', normalized, payload);
-        if (!controller.signal.aborted) {
-          setCategoryData(normalized);
-          setCategoryDetails(normalizeCategoryDetails(payload));
-        }
+        if (!controller.signal.aborted) setCategoryData(normalized);
       } catch (err) {
         if ((err as Error).name !== 'AbortError') console.warn('M-Safe krcc-cleared-by-category API failed.', err);
       } finally {
@@ -442,24 +488,43 @@ export function KrccSection() {
   const clearedPct =
     apiClearedPct ?? (totalStatus > 0 ? `${((clearedStatus / totalStatus) * 100).toFixed(1)}%` : '—');
 
-  // "KRCC Cleared by Category" slices only carry the approved count — this looks
-  // up the full approved/pending breakdown for the hovered category so both the
-  // donut and bar chart tooltips show both numbers, not just the approved total.
+  // Reads approvedPercentage directly off the hovered slice's own data (attached
+  // by normalizeCategory) instead of cross-referencing a second array by name —
+  // guaranteed correct even if two categories ever share the same display name.
   const renderCategoryTooltip = ({ active, payload }: TooltipProps<ValueType, NameType>) => {
     if (!active || !payload?.length) return null;
-    const name = String(payload[0]?.payload?.name ?? payload[0]?.name ?? '');
-    const detail = categoryDetails.find((d) => d.name === name);
-    if (!detail) return null;
+    const slice = payload[0]?.payload as CategorySlice | undefined;
+    if (!slice) return null;
     return (
       <div className="msafe-chart-tip">
-        <div className="msafe-chart-tip-title">{name}</div>
+        <div className="msafe-chart-tip-title">{slice.name}</div>
         <div className="msafe-chart-tip-row">
           <span className="msafe-chart-tip-sw" style={{ background: C.ok }} />
-          <span>Approved : {detail.approved.toLocaleString('en-IN')}</span>
+          <span>
+            Approved : {slice.value.toLocaleString('en-IN')}
+            {slice.approvedPercentage !== null ? ` (${slice.approvedPercentage}%)` : ''}
+          </span>
+        </div>
+      </div>
+    );
+  };
+
+  const renderClearanceTooltip = ({ active, payload }: TooltipProps<ValueType, NameType>) => {
+    if (!active || !payload?.length) return null;
+    const circle = payload[0]?.payload as CircleBar | undefined;
+    if (!circle) return null;
+
+    return (
+      <div className="msafe-chart-tip">
+        <div className="msafe-chart-tip-title">{circle.name}</div>
+        <div className="msafe-chart-tip-row">
+          <span>Approved Users: {circle.approvedUsers.toLocaleString('en-IN')}</span>
         </div>
         <div className="msafe-chart-tip-row">
-          <span className="msafe-chart-tip-sw" style={{ background: C.warn }} />
-          <span>Pending : {detail.pending.toLocaleString('en-IN')}</span>
+          <span>Total Users: {circle.totalUsers.toLocaleString('en-IN')}</span>
+        </div>
+        <div className="msafe-chart-tip-row">
+          <span>Clearance Percentage: {circle.pct.toFixed(2)}%</span>
         </div>
       </div>
     );
@@ -468,59 +533,90 @@ export function KrccSection() {
   return (
     <AccordionShell
       title="KRCC — Key Risk Compliance Check"
-      sub="Status, aging, and where clearance is falling behind"
+      sub="Status, ageing, and where clearance is falling behind"
       excelLabel="KRCC"
     >
-      <div className="g g2">
+      {/* "KRCC Clearance Status" card hidden per request — API call disabled too. */}
+      <div className="g g2" style={{ alignItems: 'start' }}>
         <ChartCard
-          title="KRCC Clearance Status"
-          sub="Completed vs Pending vs Not Started"
-          infoKey="krcc-status"
+          title="KRCC Ageing — Pending Requests"
+          sub="How long pending KRCCs have been waiting · always as of today, not affected by the date filter"
+          infoKey="krcc-ageing"
           showPdf
-          pdfLabel="KRCC Clearance Status"
-          exportData={statusData.map((s) => ({ Status: s.name, Users: s.value }))}
-          chartSwitch={<ChartSwitch modes={['donut', 'bar']} value={statusMode} onChange={setStatusMode} />}
-        >
-          {statusLoading || statusData.length === 0 ? (
-            <DataState loading={statusLoading} empty={statusData.length === 0} label="status data" />
-          ) : statusMode === 'donut' ? (
-            <SideLegendDonut
-              data={statusData}
-              centerValue={clearedPct}
-              centerLabel="Completed"
-              bodyLabel="Users"
-              onRowClick={(name) => openDrill(`krcc-${name.toLowerCase().replace(/\s/g, '')}`, name)}
-            />
-          ) : (
-            <SliceBarChart data={statusData} />
-          )}
-        </ChartCard>
-
-        <ChartCard
-          title="KRCC Aging — Pending Requests"
-          sub="How long pending KRCCs have been waiting"
-          infoKey="krcc-aging"
+          pdfLabel="KRCC Ageing - Pending Requests"
+          reportExportFor="krcc_pending"
+          reportExcludeDateRange
+          exportData={agingData.map((d) => ({ 'Ageing Bucket': d.label, Value: d.val }))}
         >
           {agingLoading || agingData.length === 0 ? (
             <DataState loading={agingLoading} empty={agingData.length === 0} label="aging data" />
           ) : (
-            <ProgressRows
-              rows={agingData.map((r) => ({
-                ...r,
-                onClick: () => openDrill('krcc-stale', r.label),
-              }))}
-            />
+            <div style={{ minHeight: 220 }}>
+              <ProgressRows rows={agingData} />
+            </div>
+          )}
+        </ChartCard>
+
+        <ChartCard
+          title="KRCC Cleared by Category"
+          sub="Which check category makes up cleared KRCCs"
+          infoKey="krcc-category"
+          showPdf
+          pdfLabel="KRCC by Category"
+          reportPath="msafe_dashboard_report/krcc_cleared_by_category"
+          exportData={categoryData.map((d) => ({
+            Category: d.name,
+            Approved: d.value,
+            'Approved %': d.approvedPercentage,
+          }))}
+          chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={catMode} onChange={setCatMode} />}
+        >
+          {categoryLoading || categoryData.length === 0 ? (
+            <DataState loading={categoryLoading} empty={categoryData.length === 0} label="category data" />
+          ) : (
+            <>
+              {catMode === 'donut' && <DonutChart data={categoryData} tooltipContent={renderCategoryTooltip} />}
+              {catMode === 'bar' && <SliceBarChart data={categoryData} tooltipContent={renderCategoryTooltip} />}
+              {catMode === 'table' && (
+                <div className="chart-as-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Category</th>
+                        <th>Approved</th>
+                        <th>Approved %</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {categoryData.map((d) => (
+                        <tr key={d.name}>
+                          <td>{d.name}</td>
+                          <td>{d.value.toLocaleString('en-IN')}</td>
+                          <td>{d.approvedPercentage !== null ? `${d.approvedPercentage}%` : '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
           )}
         </ChartCard>
       </div>
 
       <ChartCard
         title="KRCC Clearance % by Circle"
-        sub="Green = 100% · Amber = 75–99% · Red = <75%"
+        sub="Green ≥98% · Amber 95–<98% · Red <95%"
         infoKey="krcc-circle"
         showPdf
         pdfLabel="KRCC by Circle"
-        exportData={circlePctData.map((d) => ({ Circle: d.name, 'Cleared %': d.pct, 'Pending %': d.pendingPct }))}
+        reportExportFor="circle_clearance"
+        exportData={circlePctData.map((d) => ({
+          Circle: d.name,
+          'Approved Users': d.approvedUsers,
+          'Total Users': d.totalUsers,
+          'Clearance %': d.pct,
+        }))}
         style={{ marginTop: 16 }}
       >
         {circlePctLoading || circlePctData.length === 0 ? (
@@ -529,7 +625,7 @@ export function KrccSection() {
           <div style={{ overflowX: 'auto' }}>
             <div style={{ minWidth: Math.max(700, circlePctData.length * 55) }}>
               <ResponsiveContainer width="100%" height={360}>
-                <BarChart data={circlePctData} margin={{ top: 4, right: 16, left: 0, bottom: 70 }}>
+                <BarChart data={circlePctData} margin={{ top: 20, right: 16, left: 0, bottom: 70 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
                   <XAxis
                     dataKey="name"
@@ -539,52 +635,23 @@ export function KrccSection() {
                     height={90}
                     tick={{ fontSize: 10, fill: C.sage }}
                   />
-                  <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: C.sage }} />
-                  <Tooltip
-                    contentStyle={{
-                      background: C.dark,
-                      border: 'none',
-                      borderRadius: 6,
-                      fontSize: 11,
-                      color: '#fff',
-                    }}
-                    formatter={(value, name) => [`${value}%`, name]}
-                  />
-                  <Bar dataKey="pct" stackId="krcc-circle" name="Cleared %">
+                  <YAxis domain={[0, 100]} allowDataOverflow tick={{ fontSize: 10, fill: C.sage }} />
+                  <Tooltip content={renderClearanceTooltip} />
+                  <Bar dataKey="pct" name="Clearance %" radius={[5, 5, 0, 0]}>
                     {circlePctData.map((d) => (
                       <Cell key={d.name} fill={d.color} />
                     ))}
+                    <LabelList
+                      dataKey="pct"
+                      position="top"
+                      style={{ fontSize: 10, fill: C.dark, fontWeight: 600 }}
+                      formatter={(v: number) => `${v}%`}
+                    />
                   </Bar>
-                  <Bar dataKey="pendingPct" stackId="krcc-circle" fill={C.border} radius={[5, 5, 0, 0]} name="Pending %" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
-        )}
-      </ChartCard>
-
-      <ChartCard
-        title="KRCC Cleared by Category"
-        sub="Which check category makes up cleared KRCCs"
-        infoKey="krcc-category"
-        showPdf
-        pdfLabel="KRCC by Category"
-        exportData={categoryDetails.map((d) => ({
-          Category: d.name,
-          Approved: d.approved,
-          Pending: d.pending,
-        }))}
-        style={{ marginTop: 16 }}
-        chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={catMode} onChange={setCatMode} />}
-      >
-        {categoryLoading || categoryData.length === 0 ? (
-          <DataState loading={categoryLoading} empty={categoryData.length === 0} label="category data" />
-        ) : (
-          <>
-            {catMode === 'donut' && <DonutChart data={categoryData} tooltipContent={renderCategoryTooltip} />}
-            {catMode === 'bar' && <SliceBarChart data={categoryData} tooltipContent={renderCategoryTooltip} />}
-            {catMode === 'table' && <ChartTable data={categoryData} valueLabel="KRCCs Cleared" />}
-          </>
         )}
       </ChartCard>
 
@@ -651,6 +718,11 @@ export function KrccSection() {
                   {turnaroundData.map((d) => (
                     <Cell key={d.name} fill={d.color} />
                   ))}
+                  <LabelList
+                    dataKey="days"
+                    position="right"
+                    style={{ fontSize: 10, fill: C.dark, fontWeight: 600 }}
+                  />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>

@@ -17,6 +17,7 @@ import axios from 'axios';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@/components/ui/select';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
 
 const enhancedTableColumns: ColumnConfig[] = [
     { key: 'id', label: 'ID', sortable: true, draggable: true },
@@ -106,6 +107,7 @@ const getStatusBadgeVariant = (status: string) => {
 
 const EmployeeBookingListDashboard = () => {
     const navigate = useNavigate();
+    const gaEvents = useGaFunnelEvents();
     const dispatch = useAppDispatch();
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
@@ -602,6 +604,7 @@ const EmployeeBookingListDashboard = () => {
     };
 
     const handleView = (id: number) => {
+        gaEvents.onMyBookingsListItemClicked("employee", id);
         const currentPath = window.location.pathname;
 
         if (currentPath.includes("bookings")) {

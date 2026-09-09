@@ -9,6 +9,8 @@ import { taskService } from '@/services/taskService';
 import { JobSheetPDFGenerator } from './JobSheetPDFGenerator';
 import { toast as sonnerToast } from 'sonner';
 
+const TASK_COMMENTS_MAX_LENGTH = 5000;
+
 interface JobSheetModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -73,7 +75,8 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
     } catch (error) {
       console.error('Failed to update comments:', error);
       sonnerToast.dismiss(loadingToastId);
-      sonnerToast.error('Failed to update comments. Please try again.');
+      const responseData = (error as { response?: { data?: { error?: string; message?: string } } })?.response?.data;
+      sonnerToast.error(responseData?.error || responseData?.message || 'Failed to update comments. Please try again.');
     } finally {
       setIsUpdating(false);
     }
@@ -525,16 +528,23 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
                   multiline
                   rows={4}
                   value={jobSheetComments}
-                  onChange={(e) => setJobSheetComments(e.target.value)}
+                  onChange={(e) => setJobSheetComments(e.target.value.slice(0, TASK_COMMENTS_MAX_LENGTH))}
                   variant="outlined"
                   placeholder="Enter new comments to update the task"
+                  inputProps={{ maxLength: TASK_COMMENTS_MAX_LENGTH }}
                   sx={{
-                    mb: 2,
+                    mb: 0.5,
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: 'white'
                     }
                   }}
                 />
+                <p
+                  className="text-xs mb-2 text-right"
+                  style={{ color: jobSheetComments.length >= TASK_COMMENTS_MAX_LENGTH ? '#C72030' : '#6b7280' }}
+                >
+                  {jobSheetComments.length} / {TASK_COMMENTS_MAX_LENGTH}
+                </p>
                 <Button
                   onClick={handleJobSheetUpdate}
                   style={{ backgroundColor: '#22c55e' }}

@@ -370,7 +370,7 @@ const ProjectEditModal = ({
       TransitionComponent={Transition}
     >
       <DialogContent
-        className="w-[35rem] fixed right-0 top-0 rounded-none bg-[#fff] text-sm h-full"
+        className="w-screen sm:w-[35rem] fixed right-0 top-0 rounded-none bg-[#fff] text-sm h-full"
         style={{ margin: 0 }}
         sx={{ padding: "0 !important" }}
       >
@@ -378,7 +378,7 @@ const ProjectEditModal = ({
           Edit Project
         </h3>
         <X
-          className="absolute top-[26px] right-8 cursor-pointer"
+          className="absolute top-[26px] right-4 sm:right-8 cursor-pointer"
           onClick={handleCloseDialog}
         />
         <hr className="border border-[#E95420] mt-4" />
@@ -387,7 +387,7 @@ const ProjectEditModal = ({
           style={{ height: "calc(100vh - 110px)" }}
         >
           <form onSubmit={handleSubmit}>
-            <div className="max-w-[90%] mx-auto pr-3">
+            <div className="max-w-[92%] sm:max-w-[90%] mx-auto pr-0 sm:pr-3">
               <div className="mt-4 space-y-2">
                 <TextField
                   label="Project Code"
@@ -418,7 +418,7 @@ const ProjectEditModal = ({
                 />
               </div>
 
-              <div className="flex justify-between my-4">
+              <div className="flex justify-between my-4 max-md:flex-wrap max-md:gap-y-2">
                 {[
                   { id: "createChannel", name: "isChannel", label: "Channel" },
                   {
@@ -504,7 +504,7 @@ const ProjectEditModal = ({
                 </FormControl>
               </div>
 
-              <div className="flex gap-2 mt-4 text-[12px]">
+              <div className="flex flex-col sm:flex-row gap-2 mt-4 text-[12px]">
                 {["startDate", "endDate"].map((field) => (
                   <div key={field} className="w-full space-y-2">
                     <TextField
@@ -522,7 +522,7 @@ const ProjectEditModal = ({
                   </div>
                 ))}
 
-                <div className="w-[300px] space-y-2">
+                <div className="w-full sm:w-[300px] space-y-2">
                   <TextField
                     label="Duration"
                     name="duration"
@@ -572,7 +572,7 @@ const ProjectEditModal = ({
                   </FormControl>
                 </div>
 
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
                   <FormControl fullWidth variant="outlined" sx={{ mt: 2 }}>
                     <InputLabel shrink>Project Type*</InputLabel>
                     <Select

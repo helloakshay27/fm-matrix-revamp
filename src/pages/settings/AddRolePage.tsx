@@ -561,6 +561,7 @@ export const AddRolePage = () => {
                       ? "bg-[#C72030] text-white border-[#C72030]"
                       : "bg-white text-[#C72030] border-[#C72030] hover:bg-[#C72030]/10"
                       }`}
+                    style={activeModuleTab === tab.id ? { color: "#ffffff" } : undefined}
                   >
                     {tab.name}
                   </button>

@@ -47,6 +47,7 @@ export function PageToolbar() {
         </button>
       </div>
 
+      {/* "My Dashboard" button hidden per request.
       <button
         type="button"
         className={`mydash-btn ${module === 'mydashboard' ? 'active' : ''}`}
@@ -58,6 +59,7 @@ export function PageToolbar() {
         <LayoutDashboard size={16} />
         My Dashboard
       </button>
+      */}
 
       <div className="tb-spacer" />
 

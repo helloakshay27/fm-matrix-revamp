@@ -10,10 +10,36 @@ import { BrowserRouter as Router } from "react-router-dom";
 import { PostHogProvider } from "@posthog/react";
 import { PostHogPageView } from "./components/PostHogPageView.tsx";
 import posthog from "posthog-js";
+import { getPostHogSuperProperties } from "./utils/posthogContext.ts";
+import { attachPostHogDebugLogger } from "./utils/posthogDebug.ts";
+import { installDownloadTracking } from "./utils/downloadTracking.ts";
 // import { registerServiceWorker } from "./utils/pwa.ts";
 
 // Register service worker for PWA
 // registerServiceWorker();
+
+// Every page in this app is lazy-loaded, and Vite fingerprints each chunk
+// with a content hash that changes on every deploy. A tab left open across a
+// deploy still holds the old chunk URLs, so navigating to a route not yet
+// loaded this session requests a chunk that no longer exists on the server —
+// the import rejects and, with nothing to catch it, React unmounts to a
+// blank page. Vite dispatches this event specifically for that case; reload
+// once to pick up the new build. The session flag stops a reload loop if the
+// server is actually down rather than just serving a newer build, and clears
+// itself after the app has been running a while so a later real deploy can
+// still trigger a reload.
+const RELOAD_ONCE_KEY = "vite-preload-error-reloaded";
+window.addEventListener("vite:preloadError", () => {
+  if (sessionStorage.getItem(RELOAD_ONCE_KEY)) {
+    console.error(
+      "[vite] Dynamic import failed again after a reload — not reloading again."
+    );
+    return;
+  }
+  sessionStorage.setItem(RELOAD_ONCE_KEY, "1");
+  window.location.reload();
+});
+setTimeout(() => sessionStorage.removeItem(RELOAD_ONCE_KEY), 10_000);
 
 // Apply Lockated Brand Theme and color patch on live and local environments
 // if (
@@ -41,8 +67,8 @@ const posthogHost = import.meta.env.VITE_POSTHOG_HOST;
 if (!posthogToken || posthogToken === "phc_replace_me") {
   console.error(
     "[PostHog] VITE_POSTHOG_PROJECT_TOKEN is not set — analytics is DISABLED " +
-      "and every event will be dropped. Copy .env.example to .env and restart " +
-      "the dev server (Vite inlines VITE_* at build time)."
+      "and every event will be dropped. Set it in .env and restart the dev server " +
+      "(Vite inlines VITE_* at build time)."
   );
 } else {
   posthog.init(posthogToken, {
@@ -51,6 +77,21 @@ if (!posthogToken || posthogToken === "phc_replace_me") {
     capture_pageview: false, // handled manually by PostHogPageView
     disable_session_recording: true,
   });
+
+  // Several apps share this PostHog project — the Vi my Workspace Flutter app, a separate
+  // Resident app, and this web app. `client` and `is_test` are the mandatory filters every
+  // query needs to tell them apart (§6.1/§6.7 of the instrumentation reference); registering
+  // them as super-properties stamps them on $pageview and on every per-module event helper
+  // without each one having to remember. See utils/posthogContext.ts.
+  posthog.register(getPostHogSuperProperties());
+
+  // Logs every captured event to the console on the dev server, or anywhere once
+  // `localStorage.ph_debug = '1'` is set. One listener covers every event module.
+  attachPostHogDebugLogger(posthog);
+
+  // Catch-all for file downloads that no call site reports explicitly - see
+  // utils/downloadTracking.ts for why this is a patch and not 150 edits.
+  installDownloadTracking(posthog);
 }
 
 createRoot(document.getElementById("root")!).render(

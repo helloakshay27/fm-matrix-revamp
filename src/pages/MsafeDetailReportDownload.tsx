@@ -86,6 +86,14 @@ const MsafeDetailReportDownload: React.FC = () => {
           document.body.removeChild(link);
           window.URL.revokeObjectURL(url);
           toast.success('File downloaded successfully');
+          msafeEvents.onMsafeDownloaded({
+            screen: 'msafe_detail_report',
+            source: 'report_page',
+            label: 'MSafe Detail Report',
+            file_format: 'xlsx',
+            export_mode: 'server_report',
+            succeeded: true,
+          });
           msafeEvents.onMsafeReportDownloaded({
             screen: 'msafe_detail_report',
             report_type: 'detail_report',

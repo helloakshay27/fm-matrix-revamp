@@ -1,7 +1,9 @@
 // @ts-nocheck
+import { toast } from "sonner";
 import { useJobs } from "../JobsContext";
 import { T, TARGET_FREQ, DATA_SOURCES, MODULES_BY_SOURCE } from "../constants";
 import { Fld, FI, FS, Btn } from "../components/UI";
+import UnitField from "../components/UnitField";
 import MemberSearchSelect from "../components/MemberSearchSelect";
 import { useDepartments } from "../hooks/useDepartments";
 
@@ -9,7 +11,7 @@ export default function KpiEntryModal() {
   const { data: departments = [], isLoading: deptLoading } = useDepartments();
   const {
     showAddKpi, setShowAddKpi, newKpi, setNewKpi, allJds,
-    saveNewKpi, customUnits, kpisSaving, kpiAssignUsers, kpiAssignUsersLoading,
+    saveNewKpi, kpisSaving, kpiAssignUsers, kpiAssignUsersLoading,
     kpiModalJdsLoading, kpiModalJdsError, kpiModalKras, kpiModalKrasLoading, kpiModalKrasError,
     kraWeightageLimit, kraWeightageUsed,
   } = useJobs();
@@ -25,6 +27,30 @@ export default function KpiEntryModal() {
     id: d.id,
     name: d.department_name || d.name || d.title || "Unnamed department",
   }));
+
+  // Returns the first validation error, or null if the form is complete.
+  const getKpiError = () => {
+    if (!newKpi.jdId) return "Job Description is required";
+    if (!newKpi.kraId) return "Linked KRA is required";
+    if (!newKpi.name?.trim()) return "KPI Name is required";
+    if (!newKpi.unit) return "KPI Unit is required";
+    if (!newKpi.target?.toString().trim()) return "Target Value is required";
+    if (!newKpi.freq) return "Target Frequency is required";
+    if (!newKpi.weightage || Number(newKpi.weightage) <= 0) return "KPI Weightage must be greater than 0%";
+    if (newKpi.kraId && Number(newKpi.weightage) > kraRemainingWeightage)
+      return `KPI weightage exceeds the remaining ${kraRemainingWeightage}% for this KRA`;
+    if (newKpi.updateType === "automatic" && !newKpi.dataSource)
+      return "Data Source is required for Automatic update type";
+    if (newKpi.updateType === "automatic" && newKpi.dataSource && !newKpi.module)
+      return "Module is required after selecting a Data Source";
+    return null;
+  };
+
+  const handleKpiSubmit = () => {
+    const err = getKpiError();
+    if (err) { toast.error(err); return; }
+    saveNewKpi();
+  };
   return (
     <div
       style={{
@@ -176,21 +202,13 @@ export default function KpiEntryModal() {
                 }
               />
             </Fld>
-            <Fld label="KPI Unit">
-              <FS
-                value={newKpi.unit}
-                onChange={(e) =>
-                  setNewKpi((f) => ({ ...f, unit: e.target.value }))
-                }
-              >
-                <option value="">Select</option>
-                {customUnits.map((u) => (
-                  <option key={u.name}>{u.name}</option>
-                ))}
-              </FS>
-            </Fld>
+            <UnitField
+              value={newKpi.unit}
+              onChange={(unit) => setNewKpi((f) => ({ ...f, unit }))}
+              disabled={kpisSaving}
+            />
             <Fld
-              label="KPI Weightage (%)"
+              label="KPI Weightage (%) *"
               hint={
                 newKpi.kraId
                   ? `${kraUsedWeightage}% used, ${kraRemainingWeightage}% left of ${kraTotalWeightage}% KRA weightage`
@@ -231,7 +249,7 @@ export default function KpiEntryModal() {
                 }
               />
             </Fld>
-            <Fld label="Target Frequency">
+            <Fld label="Target Frequency *">
               <FS
                 value={newKpi.freq}
                 onChange={(e) =>
@@ -252,7 +270,7 @@ export default function KpiEntryModal() {
               gap: 16,
             }}
           >
-            <Fld label="Update Type">
+            <Fld label="Update Type *">
               <FS
                 value={newKpi.updateType}
                 onChange={(e) =>
@@ -298,7 +316,7 @@ export default function KpiEntryModal() {
                 gap: 16,
               }}
             >
-              <Fld label="Data Source">
+              <Fld label="Data Source *">
                 <FS
                   value={newKpi.dataSource}
                   onChange={(e) =>
@@ -316,7 +334,7 @@ export default function KpiEntryModal() {
                 </FS>
               </Fld>
               {newKpi.dataSource && (
-                <Fld label="Module">
+                <Fld label="Module *">
                   <FS
                     value={newKpi.module}
                     onChange={(e) =>
@@ -344,7 +362,12 @@ export default function KpiEntryModal() {
           }}
         >
           <Btn onClick={() => setShowAddKpi(false)}>Cancel</Btn>
-          <Btn primary onClick={saveNewKpi}>
+          <Btn
+            primary
+            onClick={handleKpiSubmit}
+            disabled={kpisSaving}
+            softDisabled={!!getKpiError()}
+          >
             {kpisSaving ? "Saving..." : "Submit"}
           </Btn>
         </div>

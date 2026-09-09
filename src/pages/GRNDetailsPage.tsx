@@ -746,6 +746,12 @@ export const GRNDetailsPage = () => {
           </div>
 
           <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">PR Type</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{grnDetails.pr_type}</span>
+          </div>
+
+          <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Notes</span>
             <span className="text-gray-500 mx-2">:</span>
             <span className="text-gray-900 font-medium">{grnDetails.notes}</span>

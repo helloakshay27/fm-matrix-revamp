@@ -16,6 +16,7 @@ import {
   Copy,
 } from "lucide-react";
 import { toast } from "sonner";
+import { isMobileUiSite } from "@/utils/mobileUiSites";
 import axios from "axios";
 import { useSpeechToText } from "@/hooks/useSpeechToText";
 import { Mention, MentionsInput } from "react-mentions";
@@ -825,7 +826,7 @@ const Attachments = ({
   };
 
   return (
-    <div className="flex flex-col gap-3 p-5">
+    <div className={isMobileUiSite() ? "flex flex-col gap-3 p-3 md:p-5" : "flex flex-col gap-3 p-5"}>
       {files.length > 0 ? (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4 mt-4">
@@ -890,7 +891,7 @@ const Attachments = ({
           </div>
 
           <button
-            className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4 disabled:opacity-50"
+            className={`bg-[#C72030] h-[40px] text-white px-5 mt-4 disabled:opacity-50 ${isMobileUiSite() ? "w-full md:w-[240px]" : "w-[240px]"}`}
             onClick={handleAttachFile}
             disabled={isSubmitting}
           >
@@ -905,7 +906,7 @@ const Attachments = ({
             Drop or attach relevant documents here
           </div>
           <button
-            className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4 disabled:opacity-50"
+            className={`bg-[#C72030] h-[40px] text-white px-5 mt-4 disabled:opacity-50 ${isMobileUiSite() ? "w-full md:w-[240px]" : "w-[240px]"}`}
             onClick={handleAttachFile}
             disabled={isSubmitting}
           >
@@ -1719,7 +1720,7 @@ export const ProjectTaskDetails = () => {
   }
 
   return (
-    <div className="my-4 m-8">
+    <div className={isMobileUiSite() ? "my-3 mx-3 md:my-4 md:m-8" : "my-4 m-8"}>
       {location.pathname.includes("projects") && (
         <Breadcrumb className="mb-2">
           <BreadcrumbList>
@@ -1790,8 +1791,8 @@ export const ProjectTaskDetails = () => {
                 </Button>
               </span>
             <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
-            <div className="flex items-center justify-between my-3 text-[12px]">
-              <div className="flex items-center gap-3 text-[#323232]">
+            <div className={isMobileUiSite() ? "flex flex-wrap items-center justify-between gap-2 my-3 text-[12px] md:flex-nowrap md:gap-0" : "flex items-center justify-between my-3 text-[12px]"}>
+              <div className={isMobileUiSite() ? "flex flex-wrap items-center gap-x-3 gap-y-2 text-[#323232] md:flex-nowrap" : "flex items-center gap-3 text-[#323232]"}>
                 <span>
                   Created By:{" "}
                   {typeof taskDetails?.created_by === "string"
@@ -1911,7 +1912,7 @@ export const ProjectTaskDetails = () => {
             <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
 
             {/* Description Section */}
-            <div className="bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 p-6 mt-4">
+            <div className={isMobileUiSite() ? "bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 mt-4 p-4 md:p-6" : "bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 p-6 mt-4"}>
               <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
                 <ChevronDownCircle
                   color="#E95420"
@@ -1937,7 +1938,7 @@ export const ProjectTaskDetails = () => {
             </div>
 
             {/* Details Section */}
-            <div className="bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 p-6">
+            <div className={isMobileUiSite() ? "bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 p-4 md:p-6" : "bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 p-6"}>
               <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
                 <ChevronDownCircle
                   color="#E95420"
@@ -1990,9 +1991,9 @@ export const ProjectTaskDetails = () => {
                 ref={secondContentRef}
               >
                 <div className="flex flex-col space-y-4">
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="flex items-start">
-                      <div className="min-w-[200px]">
+                  <div className={`grid gap-6 ${isMobileUiSite() ? "grid-cols-1 gap-3 md:grid-cols-2 md:gap-6" : "grid-cols-2"}`}>
+                    <div className={isMobileUiSite() ? "flex items-start gap-2 md:gap-0" : "flex items-start"}>
+                      <div className={isMobileUiSite() ? "min-w-[130px] md:min-w-[200px]" : "min-w-[200px]"}>
                         <p className="text-sm font-medium text-gray-600">
                           Responsible Person:
                         </p>
@@ -2004,8 +2005,8 @@ export const ProjectTaskDetails = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-start">
-                      <div className="min-w-[200px]">
+                    <div className={isMobileUiSite() ? "flex items-start gap-2 md:gap-0" : "flex items-start"}>
+                      <div className={isMobileUiSite() ? "min-w-[130px] md:min-w-[200px]" : "min-w-[200px]"}>
                         <p className="text-sm font-medium text-gray-600">
                           Project:
                         </p>
@@ -2017,8 +2018,8 @@ export const ProjectTaskDetails = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-start">
-                      <div className="min-w-[200px]">
+                    <div className={isMobileUiSite() ? "flex items-start gap-2 md:gap-0" : "flex items-start"}>
+                      <div className={isMobileUiSite() ? "min-w-[130px] md:min-w-[200px]" : "min-w-[200px]"}>
                         <p className="text-sm font-medium text-gray-600">
                           Start Date:
                         </p>
@@ -2032,8 +2033,8 @@ export const ProjectTaskDetails = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-start">
-                      <div className="min-w-[200px]">
+                    <div className={isMobileUiSite() ? "flex items-start gap-2 md:gap-0" : "flex items-start"}>
+                      <div className={isMobileUiSite() ? "min-w-[130px] md:min-w-[200px]" : "min-w-[200px]"}>
                         <p className="text-sm font-medium text-gray-600">
                           {taskDetails.parent_id ? "Task" : "Milestones"}:
                         </p>
@@ -2047,8 +2048,8 @@ export const ProjectTaskDetails = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-start">
-                      <div className="min-w-[200px]">
+                    <div className={isMobileUiSite() ? "flex items-start gap-2 md:gap-0" : "flex items-start"}>
+                      <div className={isMobileUiSite() ? "min-w-[130px] md:min-w-[200px]" : "min-w-[200px]"}>
                         <p className="text-sm font-medium text-gray-600">
                           End Date:
                         </p>
@@ -2060,8 +2061,8 @@ export const ProjectTaskDetails = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-start">
-                      <div className="min-w-[200px]">
+                    <div className={isMobileUiSite() ? "flex items-start gap-2 md:gap-0" : "flex items-start"}>
+                      <div className={isMobileUiSite() ? "min-w-[130px] md:min-w-[200px]" : "min-w-[200px]"}>
                         <p className="text-sm font-medium text-gray-600">
                           Tags:
                         </p>
@@ -2087,8 +2088,8 @@ export const ProjectTaskDetails = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-start">
-                      <div className="min-w-[200px]">
+                    <div className={isMobileUiSite() ? "flex items-start gap-2 md:gap-0" : "flex items-start"}>
+                      <div className={isMobileUiSite() ? "min-w-[130px] md:min-w-[200px]" : "min-w-[200px]"}>
                         <p className="text-sm font-medium text-gray-600">
                           Efforts Duration:
                         </p>
@@ -2100,8 +2101,8 @@ export const ProjectTaskDetails = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-start">
-                      <div className="min-w-[200px]">
+                    <div className={isMobileUiSite() ? "flex items-start gap-2 md:gap-0" : "flex items-start"}>
+                      <div className={isMobileUiSite() ? "min-w-[130px] md:min-w-[200px]" : "min-w-[200px]"}>
                         <p className="text-sm font-medium text-gray-600">
                           Observer:
                         </p>
@@ -2134,8 +2135,8 @@ export const ProjectTaskDetails = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-start">
-                      <div className="min-w-[200px]">
+                    <div className={isMobileUiSite() ? "flex items-start gap-2 md:gap-0" : "flex items-start"}>
+                      <div className={isMobileUiSite() ? "min-w-[130px] md:min-w-[200px]" : "min-w-[200px]"}>
                         <p className="text-sm font-medium text-gray-600">
                           Actual Efforts Taken:
                         </p>
@@ -2150,8 +2151,8 @@ export const ProjectTaskDetails = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-start">
-                      <div className="min-w-[200px]">
+                    <div className={isMobileUiSite() ? "flex items-start gap-2 md:gap-0" : "flex items-start"}>
+                      <div className={isMobileUiSite() ? "min-w-[130px] md:min-w-[200px]" : "min-w-[200px]"}>
                         <p className="text-sm font-medium text-gray-600">
                           Workflow Status:
                         </p>
@@ -2182,8 +2183,8 @@ export const ProjectTaskDetails = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-start">
-                      <div className="min-w-[200px]">
+                    <div className={isMobileUiSite() ? "flex items-start gap-2 md:gap-0" : "flex items-start"}>
+                      <div className={isMobileUiSite() ? "min-w-[130px] md:min-w-[200px]" : "min-w-[200px]"}>
                         <p className="text-sm font-medium text-gray-600">
                           {calculateDuration(
                             taskDetails.expected_start_date,
@@ -2202,8 +2203,8 @@ export const ProjectTaskDetails = () => {
                     </div>
 
 
-                    <div className="flex items-start">
-                      <div className="min-w-[200px]">
+                    <div className={isMobileUiSite() ? "flex items-start gap-2 md:gap-0" : "flex items-start"}>
+                      <div className={isMobileUiSite() ? "min-w-[130px] md:min-w-[200px]" : "min-w-[200px]"}>
                         <p className="text-sm font-medium text-gray-600">
                           Priority:
                         </p>
@@ -2243,7 +2244,7 @@ export const ProjectTaskDetails = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-6 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${activeTab === tab.id
+                  className={`py-3 text-sm font-medium whitespace-nowrap ${isMobileUiSite() ? "px-4 md:px-6" : "px-6"} border-b-2 transition-colors ${activeTab === tab.id
                     ? "border-[#C72030] text-[#C72030]"
                     : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
                     }`}
@@ -2254,7 +2255,7 @@ export const ProjectTaskDetails = () => {
           </div>
         </div>
 
-        <div className="px-6 pb-6">
+        <div className={isMobileUiSite() ? "px-3 pb-4 md:px-6 md:pb-6" : "px-6 pb-6"}>
           {/* Subtasks Tab */}
           {activeTab === "subtasks" && !taskDetails?.parent_id && (
             <SubtasksTable subtasks={subtasks} fetchData={fetchData} />
@@ -2372,7 +2373,7 @@ export const ProjectTaskDetails = () => {
         maxWidth={false}
       >
         <DialogContent
-          className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
+          className={isMobileUiSite() ? "w-full fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto md:w-1/2" : "w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"}
           style={{
             margin: 0,
             maxHeight: "100vh",

@@ -66,6 +66,7 @@ const columns: ColumnConfig[] = [
     sortable: true,
     draggable: true,
     defaultVisible: true,
+    width: 250, // shows truncated on first load; user can still drag to resize
   },
   {
     key: "status",
@@ -252,6 +253,21 @@ const statusOptions = [
   { value: "completed", label: "Completed" },
   { value: "overdue", label: "Overdue" },
 ];
+
+const getErrorMessage = (error: unknown, fallback = "Something went wrong"): string => {
+  if (typeof error === "string") return error;
+  if (error && typeof error === "object") {
+    const err = error as any;
+    return (
+      err.response?.data?.error ||
+      err.response?.data?.message ||
+      err.data?.error ||
+      err.message ||
+      fallback
+    );
+  }
+  return fallback;
+};
 
 export const ProjectsDashboard = () => {
   const { setCurrentSection } = useLayout();
@@ -548,7 +564,7 @@ export const ProjectsDashboard = () => {
       setOwners(response.data.users);
     } catch (error) {
       console.log(error);
-      toast.error(error);
+      toast.error(getErrorMessage(error));
     }
   }, [baseUrl, token]);
 
@@ -557,7 +573,7 @@ export const ProjectsDashboard = () => {
       await dispatch(fetchProjectTeams()).unwrap();
     } catch (error) {
       console.log(error);
-      toast.error(error);
+      toast.error(getErrorMessage(error));
     }
   }, [dispatch]);
 
@@ -567,7 +583,7 @@ export const ProjectsDashboard = () => {
       setProjectTypes(result);
     } catch (error) {
       console.log(error);
-      toast.error(error);
+      toast.error(getErrorMessage(error));
     }
   }, [dispatch]);
 
@@ -576,7 +592,7 @@ export const ProjectsDashboard = () => {
       await dispatch(fetchProjectsTags({ active: true })).unwrap();
     } catch (error) {
       console.log(error);
-      toast.error(error);
+      toast.error(getErrorMessage(error));
     }
   }, [dispatch]);
 
@@ -617,7 +633,7 @@ export const ProjectsDashboard = () => {
       // Cache automatically invalidated by the mutation hook
     } catch (error) {
       console.log(error);
-      toast.error(error);
+      toast.error(getErrorMessage(error));
     }
   };
 
@@ -891,7 +907,7 @@ export const ProjectsDashboard = () => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <div
-                  className="max-w-[250px] truncate cursor-pointer"
+                  className="w-full min-w-0 truncate cursor-pointer"
                   onClick={() =>
                     navigate(`/vas/projects/${item.id}/milestones`)
                   }

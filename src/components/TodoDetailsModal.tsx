@@ -207,14 +207,14 @@ const TodoDetailsModal = ({ isModalOpen, setIsModalOpen, todo = null, onEditClic
                                 )}
 
                                 {/* Responsible Person */}
-                                {todo.user && (
+                                {(todo.user || todo.responsible_person) && (
                                     <div className="flex gap-3">
                                         <div className="flex-shrink-0">
                                             <User className="text-blue-500" size={20} />
                                         </div>
                                         <div>
                                             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Responsible Person</p>
-                                            <p className="text-base font-semibold text-gray-900">{todo.user}</p>
+                                            <p className="text-base font-semibold text-gray-900">{todo.user || todo.responsible_person}</p>
                                         </div>
                                     </div>
                                 )}

@@ -34,7 +34,7 @@ import {
   changeSite,
   clearSites,
 } from "@/store/slices/siteSlice";
-import { getUser, clearAuth } from "@/utils/auth";
+import { getUser, clearAuth, logoutUser } from "@/utils/auth";
 
 export interface Company {
   id: number;
@@ -425,7 +425,8 @@ export const DashboardHeader = () => {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => {
+                  onClick={async () => {
+                    await logoutUser();
                     clearAuth();
                     window.location.reload();
                     navigate("/login");

@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import { GoogleReCaptchaProvider, useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import posthog from "posthog-js";
 import { TextField, IconButton, InputAdornment } from "@mui/material";
+import { isMobileUiSite } from "@/utils/mobileUiSites";
 import { Button } from "@/components/ui/button";
 import { Building2, Eye, EyeOff } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -459,8 +460,17 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
       posthog.identify(response.id?.toString(), {
         email: response.email,
         name: `${response.firstname || ""} ${response.lastname || ""}`.trim(),
+        // §6.5 names this property `user_name`; `name` is kept alongside it so existing
+        // queries and the PostHog person UI keep working.
+        user_name: `${response.firstname || ""} ${response.lastname || ""}`.trim(),
+        contact_number: response.mobile ?? response.phone ?? undefined,
         user_type: response.user_type,
         user_role: response.user_type,
+        is_logged_in: true,
+        // CAUTION: this means "has a @lockated.com address", i.e. Lockated's own staff.
+        // It is NOT the Internal-FTE-vs-External-contractor split that A9 (Adoption by
+        // Employment Type) needs — no employment_type property exists on any event yet.
+        // Do not wire A9 to this.
         is_internal: response.email?.endsWith("@lockated.com") ?? false,
       });
 
@@ -764,7 +774,7 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Background Image */}
-      <div className="flex-1 relative">
+      <div className={isMobileUiSite() ? "relative hidden flex-1 md:block" : "flex-1 relative"}>
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
@@ -774,12 +784,12 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
       </div>
 
       {/* Right Side - Forgot Password Form */}
-      <div className="w-full max-w-lg bg-white/90 backdrop-blur-lg p-4 rounded-xl flex flex-col justify-center px-12 py-12">
+      <div className={isMobileUiSite() ? "w-full max-w-lg bg-white/90 backdrop-blur-lg rounded-xl flex flex-col justify-center px-4 py-6 md:p-4 md:px-12 md:py-12" : "w-full max-w-lg bg-white/90 backdrop-blur-lg p-4 rounded-xl flex flex-col justify-center px-12 py-12"}>
         {/* Logo and Branding */}
 
         {/* Title and Description */}
         <div className="w-full max-w-md">
-          <div className=" rounded-2xl  p-8 sm:p-10 relative z-10 animate-fade-in">
+          <div className={isMobileUiSite() ? "rounded-2xl p-3 sm:p-10 relative z-10 animate-fade-in" : " rounded-2xl  p-8 sm:p-10 relative z-10 animate-fade-in"}>
             {/* Logo */}
             <div
               className={`text-center mb-5 flex flex-col items-center space-y-2 ${isViSite ? "-mt-4" : ""

@@ -7,6 +7,9 @@ interface ImportMetaEnv {
   readonly VITE_FACE_COLLECTION_ID?: string;
   readonly VITE_FACE_RECOGNIZE_PATH?: string;
   readonly VITE_FACE_RECOGNIZE_COLLECTION_ID?: string;
+  // PostHog adoption analytics tenant/domain config shared by the Pulse and
+  // FM Matrix dashboards. The API host is fixed in the shared client.
+  readonly VITE_FM_ADOPTION_TENANT_URL?: string;
   // add more env variables here as needed
 }
 

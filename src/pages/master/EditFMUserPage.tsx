@@ -611,9 +611,13 @@ export const EditFMUserPage = () => {
                     label="First Name"
                     variant="outlined"
                     value={formData.firstName}
-                    onChange={(e) =>
-                      handleInputChange("firstName", e.target.value)
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Only allow letters, numbers and spaces
+                      if (value === '' || /^[a-zA-Z0-9\s]*$/.test(value)) {
+                        handleInputChange("firstName", value);
+                      }
+                    }}
                     required
                     InputLabelProps={{
                       classes: {
@@ -629,9 +633,13 @@ export const EditFMUserPage = () => {
                     label="Last Name"
                     variant="outlined"
                     value={formData.lastName}
-                    onChange={(e) =>
-                      handleInputChange("lastName", e.target.value)
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Only allow letters, numbers and spaces
+                      if (value === '' || /^[a-zA-Z0-9\s]*$/.test(value)) {
+                        handleInputChange("lastName", value);
+                      }
+                    }}
                     required
                     InputLabelProps={{
                       classes: {

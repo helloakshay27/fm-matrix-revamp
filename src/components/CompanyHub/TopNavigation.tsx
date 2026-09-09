@@ -43,7 +43,7 @@ import { useLayout } from "@/contexts/LayoutContext";
 import { usePermissions } from "@/contexts/PermissionsContext";
 import { useActionLayout } from "@/contexts/ActionLayoutContext";
 import { permissionService } from "@/services/permissionService";
-import { getUser, clearAuth } from "@/utils/auth";
+import { getUser, clearAuth, logoutUser } from "@/utils/auth";
 import axios from "axios";
 import { toast } from "sonner";
 
@@ -338,7 +338,8 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
   };
   const userFullName = `${user.firstname} ${user.lastname}`.trim();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await logoutUser();
     clearAuth();
     navigate("/login");
   };

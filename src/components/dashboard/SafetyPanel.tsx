@@ -167,9 +167,18 @@ interface SafetyPanelProps {
   /** Live incidents overview/trend/analysis/hotspots data — null until loaded or if the dashboard's site scope isn't resolved yet. */
   incidents: IncidentsDashboardData | null;
   incidentsLoading: boolean;
+  /** When set, renders only the cards the user has saved to My Dashboard, across all sections. */
+  visibleKeys?: Set<string>;
 }
 
-export function SafetyPanel({ activeSection, permits, permitsLoading, incidents, incidentsLoading }: SafetyPanelProps) {
+export function SafetyPanel({
+  activeSection,
+  permits,
+  permitsLoading,
+  incidents,
+  incidentsLoading,
+  visibleKeys,
+}: SafetyPanelProps) {
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
@@ -1302,7 +1311,14 @@ export function SafetyPanel({ activeSection, permits, permitsLoading, incidents,
       </div>
 
       <div ref={registerRef("SOHI")} className="scroll-mt-24">
-        <SafetyGridSection storageKey="safetySohiGridLayout" items={sohiItems} responsive />
+        <SafetyGridSection
+          storageKey="safetySohiGridLayout"
+          items={sohiItems}
+          responsive
+          moduleKey="safety"
+          subTab="SOHI"
+          visibleKeys={visibleKeys}
+        />
       </div>
 
       <div ref={registerRef("Incidents")} className="scroll-mt-24">
@@ -1312,7 +1328,14 @@ export function SafetyPanel({ activeSection, permits, permitsLoading, incidents,
             Loading incident analytics for the selected sites and date range…
           </div>
         )}
-        <SafetyGridSection storageKey="safetyIncidentsGridLayout" items={incidentsItems} responsive />
+        <SafetyGridSection
+          storageKey="safetyIncidentsGridLayout"
+          items={incidentsItems}
+          responsive
+          moduleKey="safety"
+          subTab="Incidents"
+          visibleKeys={visibleKeys}
+        />
       </div>
 
       <div ref={registerRef("Permits")} className="scroll-mt-24">
@@ -1322,11 +1345,25 @@ export function SafetyPanel({ activeSection, permits, permitsLoading, incidents,
             Loading permit analytics for the selected sites and date range…
           </div>
         )}
-        <SafetyGridSection storageKey="safetyPermitsGridLayout" items={permitsItems} responsive />
+        <SafetyGridSection
+          storageKey="safetyPermitsGridLayout"
+          items={permitsItems}
+          responsive
+          moduleKey="safety"
+          subTab="Permits"
+          visibleKeys={visibleKeys}
+        />
       </div>
 
       <div ref={registerRef("Emergency")} className="scroll-mt-24">
-        <SafetyGridSection storageKey="safetyEmergencyGridLayout" items={emergencyItems} responsive />
+        <SafetyGridSection
+          storageKey="safetyEmergencyGridLayout"
+          items={emergencyItems}
+          responsive
+          moduleKey="safety"
+          subTab="Emergency"
+          visibleKeys={visibleKeys}
+        />
       </div>
     </div>
   );

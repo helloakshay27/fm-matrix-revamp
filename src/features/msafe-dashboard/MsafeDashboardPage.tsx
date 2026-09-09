@@ -50,7 +50,7 @@ function MsafeMain() {
         id="content-msafe"
       >
         <PageHeader />
-        <AlertStrip />
+        {/* Priority Actions / notification strip hidden per request. <AlertStrip /> */}
         <KpiOverview />
         <div
           id="acc-users"

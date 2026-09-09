@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Download, Loader2 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { ChartCard } from './ChartCard';
 import { StatusDot } from './StatusDot';
 import { overallStatus, type DirectoryUser } from '../data/mockData';
@@ -7,6 +8,7 @@ import type { StatusCode, Persona } from '../data/constants';
 import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import { getAuthHeader } from '@/config/apiConfig';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 
 type Filter = 'all' | 'internal' | 'external' | 'pending' | 'cleared';
 
@@ -21,7 +23,7 @@ function getMsafeBaseUrl(): string {
  *  the same way regardless of persona. */
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
   const params: Record<string, string> = {};
-  if (f.circleId) params.circle_id = f.circleId;
+  if (f.circleIds.length > 0) params.circle_id = f.circleIds.join(',');
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type = f.empTypeId;
@@ -153,6 +155,70 @@ function extractPagination(payload: unknown): Pagination | null {
   return { currentPage, perPage, totalEntries, totalPages };
 }
 
+const STATUS_LABEL: Record<StatusCode, string> = {
+  ok: 'Completed',
+  pending: 'Pending',
+  fail: 'Failed',
+  na: 'N/A',
+};
+
+/** Walks every server page (honoring the active search/filters) and returns the full
+ *  result set — used for the "download all" export, since the table itself only ever
+ *  holds one page (~20 rows) at a time. */
+async function fetchAllDirectoryRows(
+  persona: Persona,
+  appliedFilters: AppliedFilters,
+  search: string,
+): Promise<DirectoryUser[]> {
+  const commonParams = {
+    ...(search ? { search } : {}),
+    ...buildFilterParams(persona, appliedFilters),
+  };
+
+  const firstPayload = await fetchMsafeUserDashboardJson('employee_compliance_status.json', {
+    page: '1',
+    current_page: '1',
+    per_page: '1000',
+    ...commonParams,
+  });
+  let rows = normalizeDirectory(firstPayload);
+  const pageInfo = extractPagination(firstPayload);
+
+  if (pageInfo && pageInfo.perPage > 0 && pageInfo.totalEntries > rows.length) {
+    const totalPages = Math.ceil(pageInfo.totalEntries / pageInfo.perPage);
+    for (let p = 2; p <= totalPages; p++) {
+      const payload = await fetchMsafeUserDashboardJson('employee_compliance_status.json', {
+        page: String(p),
+        current_page: String(p),
+        per_page: String(pageInfo.perPage),
+        ...commonParams,
+      });
+      rows = rows.concat(normalizeDirectory(payload));
+    }
+  }
+
+  return rows;
+}
+
+function downloadDirectoryExcel(rows: DirectoryUser[]) {
+  const sheetRows = rows.map((u) => ({
+    Name: u.name,
+    'Emp ID': u.emp,
+    Email: u.email ?? '—',
+    'Mobile No.': u.mobile ?? '—',
+    Type: u.type,
+    Circle: u.circle,
+    Role: u.role,
+    KRCC: STATUS_LABEL[u.kr],
+    LMC: STATUS_LABEL[u.lm],
+    Status: u.overallLabel ?? overallStatus(u).t,
+  }));
+  const worksheet = XLSX.utils.json_to_sheet(sheetRows);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'All Users');
+  XLSX.writeFile(workbook, 'All_Users_KRCC_LMC_Status.xlsx');
+}
+
 const CHIP_DEFS: { id: Filter; label: string; match: (u: DirectoryUser) => boolean }[] = [
   { id: 'all', label: 'All', match: () => true },
   { id: 'internal', label: 'Internal FTE', match: (u) => u.type === 'Internal' },
@@ -173,7 +239,7 @@ export function UserDirectoryCard({
   style?: CSSProperties;
   hideStatusColumn?: boolean;
 }) {
-  const { openDrill, persona, appliedFilters } = useMsafeDashboard();
+  const { openDrill, persona, appliedFilters, showToast } = useMsafeDashboard();
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search.trim(), 400);
   const [filter, setFilter] = useState<Filter>('all');
@@ -181,6 +247,48 @@ export function UserDirectoryCard({
   const [directoryLoading, setDirectoryLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState<Pagination | null>(null);
+  const [exportingAll, setExportingAll] = useState(false);
+  const msafeEvents = useMSafeEvents();
+
+  const handleDownloadAll = async () => {
+    if (exportingAll) return;
+    setExportingAll(true);
+    const downloadEvent = {
+      screen: 'msafe_dashboard' as const,
+      source: 'user_directory' as const,
+      label: 'All Users KRCC/LMC Status',
+      file_format: 'xlsx' as const,
+      export_mode: 'client_sheet' as const,
+      persona,
+      filters: appliedFilters,
+    };
+    try {
+      const rows = await fetchAllDirectoryRows(persona, appliedFilters, debouncedSearch);
+      if (rows.length === 0) {
+        showToast('No data to export');
+        msafeEvents.onMsafeDownloaded({
+          ...downloadEvent,
+          row_count: 0,
+          succeeded: false,
+          failure_reason: 'no_data',
+        });
+        return;
+      }
+      downloadDirectoryExcel(rows);
+      showToast(`Excel downloaded · ${rows.length.toLocaleString()} users`);
+      msafeEvents.onMsafeDownloaded({ ...downloadEvent, row_count: rows.length, succeeded: true });
+    } catch (error) {
+      console.warn('Failed to export full user directory to Excel.', error);
+      showToast('Export failed — please try again');
+      msafeEvents.onMsafeDownloaded({
+        ...downloadEvent,
+        succeeded: false,
+        failure_reason: (error as Error)?.message ?? 'request_failed',
+      });
+    } finally {
+      setExportingAll(false);
+    }
+  };
 
   // The API paginates server-side (per_page ~20, total_entries in the hundred-thousands),
   // so each page change re-fetches rather than slicing a locally-held full dataset. Search
@@ -250,13 +358,24 @@ export function UserDirectoryCard({
       infoKey="directory"
       style={style}
       tag={
-        <div className="usr-search">
-          <Search size={14} />
-          <input
-            placeholder="Search by name, emp ID, mobile, or email…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="usr-search">
+            <Search size={14} />
+            <input
+              placeholder="Search by name, emp ID, mobile, or email…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <button
+            type="button"
+            className="chart-pdf-btn"
+            title="Download all users as Excel"
+            disabled={exportingAll}
+            onClick={handleDownloadAll}
+          >
+            {exportingAll ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+          </button>
         </div>
       }
     >
@@ -269,7 +388,7 @@ export function UserDirectoryCard({
             onClick={() => setFilter(c.id)}
             title="Count reflects the current page only"
           >
-            {c.label} ({directory.filter(c.match).length.toLocaleString()})
+            {c.label}
           </button>
         ))}
       </div>
@@ -307,7 +426,10 @@ export function UserDirectoryCard({
               data.map((u) => {
                 const st = overallStatus(u);
                 return (
-                  <tr key={u.emp + u.name} onClick={() => openDrill('user-detail', u.name)}>
+                  <tr
+                    key={u.emp + u.name}
+                  // onClick={() => openDrill('user-detail', u.name)}
+                  >
                     <td className="cell-strong">{u.name}</td>
                     <td className="cell-mono">{u.emp}</td>
                     <td>{u.email ?? '—'}</td>

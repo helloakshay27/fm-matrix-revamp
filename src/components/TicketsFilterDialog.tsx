@@ -88,6 +88,9 @@ export const TicketsFilterDialog = ({
   const [priority, setPriority] = useState("");
   const [assignedUser, setAssignedUser] = useState("");
   const [userSearch, setUserSearch] = useState("");
+  const [isSubticket, setIsSubticket] = useState("");
+  const [hasFeedback, setHasFeedback] = useState("");
+  const [customerName, setCustomerName] = useState("");
   const [filtersCleared, setFiltersCleared] = useState(false);
 
   const [categories, setCategories] = useState<CategoryOption[]>([]);
@@ -117,7 +120,10 @@ export const TicketsFilterDialog = ({
       !status &&
       !priority &&
       !assignedUser &&
-      !userSearch;
+      !userSearch &&
+      !isSubticket &&
+      !hasFeedback &&
+      !customerName;
 
     setFiltersCleared(allFiltersEmpty);
   }, [
@@ -132,6 +138,9 @@ export const TicketsFilterDialog = ({
     priority,
     assignedUser,
     userSearch,
+    isSubticket,
+    hasFeedback,
+    customerName,
   ]);
 
   useEffect(() => {
@@ -233,6 +242,9 @@ export const TicketsFilterDialog = ({
     if (priority) filters.priority_eq = priority;
     if (assignedUser) filters.assigned_to_in = [Number(assignedUser)];
     if (userSearch) filters.user_firstname_or_user_lastname_cont = userSearch;
+    if (isSubticket) filters.is_subticket_eq = isSubticket;
+    if (hasFeedback) filters.has_feedback_eq = hasFeedback;
+    if (customerName) filters.entity_name_con = customerName;
 
     onApplyFilters(filters);
     toast({
@@ -264,6 +276,9 @@ export const TicketsFilterDialog = ({
     setPriority("");
     setAssignedUser("");
     setUserSearch("");
+    setIsSubticket("");
+    setHasFeedback("");
+    setCustomerName("");
     onApplyFilters({});
 
     toast({
@@ -516,6 +531,51 @@ export const TicketsFilterDialog = ({
             label="Search User"
             value={userSearch}
             onChange={(e) => setUserSearch(e.target.value)}
+            fullWidth
+            variant="outlined"
+            sx={fieldStyles}
+          />
+
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="ticket-filter-subticket-label">Subticket</InputLabel>
+            <MuiSelect
+              labelId="ticket-filter-subticket-label"
+              label="Subticket"
+              value={isSubticket}
+              onChange={(e) => setIsSubticket(e.target.value as string)}
+              sx={fieldStyles}
+              MenuProps={selectMenuProps}
+            >
+              <MenuItem value="">
+                <em>Select Subticket</em>
+              </MenuItem>
+              <MenuItem value="true">Yes</MenuItem>
+              <MenuItem value="false">No</MenuItem>
+            </MuiSelect>
+          </FormControl>
+
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="ticket-filter-feedback-label">Feedback</InputLabel>
+            <MuiSelect
+              labelId="ticket-filter-feedback-label"
+              label="Feedback"
+              value={hasFeedback}
+              onChange={(e) => setHasFeedback(e.target.value as string)}
+              sx={fieldStyles}
+              MenuProps={selectMenuProps}
+            >
+              <MenuItem value="">
+                <em>Select Feedback</em>
+              </MenuItem>
+              <MenuItem value="true">Yes</MenuItem>
+              <MenuItem value="false">No</MenuItem>
+            </MuiSelect>
+          </FormControl>
+
+          <TextField
+            label="Customer Name"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
             fullWidth
             variant="outlined"
             sx={fieldStyles}

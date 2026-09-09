@@ -124,6 +124,14 @@ const MsafeReportDownload = () => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       toast.success('File downloaded successfully');
+      msafeEvents.onMsafeDownloaded({
+        screen: 'msafe_user_report',
+        source: 'report_page',
+        label: 'MSafe Users Report',
+        file_format: 'xlsx',
+        export_mode: 'server_report',
+        succeeded: true,
+      });
       msafeEvents.onMsafeReportDownloaded({
         screen: 'msafe_user_report',
         report_type: 'user_report',

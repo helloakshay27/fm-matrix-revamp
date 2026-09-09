@@ -835,6 +835,14 @@ const TrainingDashboard = () => {
                         link.click();
                         document.body.removeChild(link);
                         window.URL.revokeObjectURL(url);
+                        msafeEvents.onMsafeDownloaded({
+                          screen: 'msafe_training',
+                          source: 'row_pdf',
+                          label: 'Training attachment',
+                          file_format: 'pdf',
+                          record_id: previewAttachmentId,
+                          succeeded: true,
+                        });
                       } else {
                         // Fallback: try direct URL download
                         const a = document.createElement('a');
@@ -843,10 +851,27 @@ const TrainingDashboard = () => {
                         document.body.appendChild(a);
                         a.click();
                         document.body.removeChild(a);
+                        msafeEvents.onMsafeDownloaded({
+                          screen: 'msafe_training',
+                          source: 'row_pdf',
+                          label: 'Training attachment',
+                          file_format: 'pdf',
+                          record_id: previewAttachmentId,
+                          succeeded: true,
+                        });
                       }
                     } catch (e) {
                       console.error('Error downloading attachment:', e);
                       window.open(previewImage!, '_blank');
+                      msafeEvents.onMsafeDownloaded({
+                        screen: 'msafe_training',
+                        source: 'row_pdf',
+                        label: 'Training attachment',
+                        file_format: 'pdf',
+                        record_id: previewAttachmentId,
+                        succeeded: false,
+                        failure_reason: (e as Error)?.message ?? 'request_failed',
+                      });
                     } finally {
                       setDownloadingAttachment(false);
                     }

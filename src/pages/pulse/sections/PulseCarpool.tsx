@@ -291,7 +291,13 @@ export function PulseCarpool({ filters }: Props) {
   }
 
   const topDriverRows = firstArray(topDrivers, "drivers").slice(0, 10);
-  const topDriverColumns = deriveColumns(topDriverRows);
+  const topDriverColumns = (() => {
+    const cols = deriveColumns(topDriverRows);
+    const nameIdx = cols.indexOf("name");
+    const insertAt = nameIdx === -1 ? 0 : nameIdx + 1;
+    return [...cols.slice(0, insertAt), "company", ...cols.slice(insertAt)];
+  })();
+  const selectedCompanyName = localStorage.getItem("selectedCompany") ?? "—";
 
   const rideRows = firstArray(rides, "rides");
   const rideColumns = deriveColumns(rideRows);
@@ -335,6 +341,7 @@ export function PulseCarpool({ filters }: Props) {
         { label: "Seats Offered", value: rideOverview.kpis.seats_offered.toLocaleString() },
         { label: "Seats Filled", value: rideOverview.kpis.seats_filled.toLocaleString() },
         { label: "Seats Utilization", value: rideOverview.kpis.seats_utilization.toFixed(2) },
+        { label: "Ride Distance (km)", value: rideOverview.kpis.ride_distance_in_km.toLocaleString() },
       ]
       : [];
 
@@ -633,7 +640,6 @@ export function PulseCarpool({ filters }: Props) {
             <table className="pd-table">
               <thead>
                 <tr>
-                  <th className="pd-num">#</th>
                   {topDriverColumns.map((c) => (
                     <th key={c}>{titleCase(c)}</th>
                   ))}
@@ -642,9 +648,10 @@ export function PulseCarpool({ filters }: Props) {
               <tbody>
                 {topDriverRows.map((row, i) => (
                   <tr key={String(row.id ?? row.driver_id ?? i)}>
-                    <td className="pd-num">{i + 1}</td>
                     {topDriverColumns.map((c) => (
-                      <td key={c}>{formatCell(row[c], c)}</td>
+                      <td key={c}>
+                        {c === "company" ? selectedCompanyName : formatCell(row[c], c)}
+                      </td>
                     ))}
                   </tr>
                 ))}

@@ -10,6 +10,16 @@ export interface ConsumptionDetail {
   consumption_type: string
   comments: string
   consumed_by: string
+  // Handover Details captured on Add/Consume. Confirmed shape: building/wing/
+  // floor/area nested under `location` as { id, name } (id/name null when
+  // not set), `handover_to` as a top-level { id, name }.
+  location?: {
+    building?: { id: number | null; name: string | null }
+    wing?: { id: number | null; name: string | null }
+    floor?: { id: number | null; name: string | null }
+    area?: { id: number | null; name: string | null }
+  }
+  handover_to?: { id: number | null; name: string | null }
 }
 
 export interface InventoryDetails {

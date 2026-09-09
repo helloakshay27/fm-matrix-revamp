@@ -42,7 +42,7 @@ interface WasteGenerationFilterDialogProps {
 
 const USER_TYPE_OPTIONS = [
   { value: 'FM', label: 'FM' },
-  { value: 'Client', label: 'Client' },
+  { value: 'Client User', label: 'Client User' },
 ];
 
 
@@ -168,23 +168,17 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
   // correctly with a plain string comparison, so no Date parsing is needed here.
   const dateRangeInvalid = Boolean(filters.fromDate && filters.toDate && filters.fromDate > filters.toDate);
 
-  const formatDate = (dateStr: string): string => {
-    const [y, m, d] = dateStr.split('-');
-    return `${d}/${m}/${y}`;
-  };
-
   const buildApiFilters = (): WasteGenerationFilters => {
     const f: WasteGenerationFilters = {};
-    if (filters.fromDate && filters.toDate) {
-      f.date_range = `${formatDate(filters.fromDate)} - ${formatDate(filters.toDate)}`;
-    }
-    if (filters.userName) f.created_by_firstname_or_lastname_cont = filters.userName;
+    if (filters.fromDate) f.wg_date_gteq = filters.fromDate;
+    if (filters.toDate) f.wg_date_lteq = filters.toDate;
+    if (filters.userName) f.user_name = filters.userName;
     if (filters.customerId) f.entity_id_eq = filters.customerId;
-    if (filters.userType) f.resource_type_eq = filters.userType;
+    if (filters.userType) f.user_type = filters.userType;
     if (filters.categoryId) f.commodity_id_eq = filters.categoryId;
     if (filters.subcategoryId) f.category_id_eq = filters.subcategoryId;
-    if (filters.status) f.status_eq = filters.status;
-    if (filters.deviceTabId) f.devise_id_cont = filters.deviceTabId;
+    if (filters.status) f.status_cont = filters.status;
+    if (filters.deviceTabId) f.device_id_cont = filters.deviceTabId;
     return f;
   };
 

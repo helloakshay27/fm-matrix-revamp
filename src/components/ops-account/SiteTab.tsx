@@ -220,7 +220,8 @@ export const SiteTab: React.FC<SiteTabProps> = ({
       "dev@lockated.com",
       "sumitra.patil@lockated.com",
       "testpulse1@panchshil.com",
-      "anjali.lungare@lockated.com"
+      "anjali.lungare@lockated.com",
+      "abdul.ghaffar@lockated.com"
     ];
     setCanEditSite(allowedEmails.includes(userEmail));
   }, [user.email]);

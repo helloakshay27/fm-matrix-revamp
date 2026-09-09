@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SmartSecure · Analytics Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<script>
+/* Resolve theme + nav state before first paint so there is no flash.
+   Persistence is best-effort: storage may be unavailable (file://, private mode). */
+(function(){
+  var t=null,n=null;
+  try{t=localStorage.getItem('smartsecure-theme');n=localStorage.getItem('smartsecure-nav');}catch(e){}
+  if(t!=='dark'&&t!=='light'){
+    t=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';
+  }
+  document.documentElement.setAttribute('data-theme',t);
+  if(n==='collapsed') document.documentElement.classList.add('nav-collapsed');
+})();
+</script>
+<style>
+/* ============================================================
+   SmartSecure · Analytics Dashboard
+   Design system ported verbatim from FM Matrix v2 (the now-final
+   Lockated dashboard design system): warm off-white ground,
+   pure-white cards, hairline borders, no shadows, colour used
+   only as signal.
+   ============================================================ */
+
+:root{
+  color-scheme:light;
+
+  /* --- surfaces & ink --- */
+  --bg:#faf9f7;
+  --surface:#ffffff;
+  --surface-2:#f5f4f1;
+  --surface-3:#edebe6;
+  --border:#e6e4de;
+  --border-2:#d9d6ce;
+  --ink:#141413;
+  --ink-2:#3f3e3a;
+  --muted:#6f6e68;
+  --faint:#9b9990;
+  --on-ink:#ffffff;
+
+  /* --- data palette (sparse, signal only) --- */
+  --blue:#2c7be5;
+  --blue-tint:#e7effc;
+  --blue-fill:#cfe1f8;
+  --green:#0f8a3d;
+  --green-tint:#e2efe6;
+  --mint:#3daf7d;
+  --mint-tint:#e0f1e9;
+  --amber:#c98a12;
+  --amber-ink:#8a6210;
+  --amber-tint:#f7ecd2;
+  --red:#b3402c;
+  --red-tint:#f6e2dd;
+  --pos:#17803d;
+  --neg:#b3402c;
+
+  /* --- chart palette (read into JS at render time) --- */
+  --chart-grid:#e6e4de;
+  --chart-line:#d9d6ce;
+  --chart-blue:#2c7be5;
+  --chart-fill:#d3e3f9;
+  --chart-mint:#3daf7d;
+  --chart-amber:#c98a12;
+  --chart-red:#b3402c;
+  --chart-violet:#7c6fd6;
+  --chart-violet-tint:#e7e4f8;
+  --heat-rgb:44,123,229;
+  --heat-a0:0.09;
+  --heat-a1:0.78;
+  --on-heat:#ffffff;
+
+  /* --- depth (used sparingly: popovers & drawers only) --- */
+  --scrim:rgba(20,20,19,.16);
+  --shadow-pop:0 10px 34px rgba(20,20,19,.13);
+  --shadow-panel:-10px 0 34px rgba(20,20,19,.10);
+  --shadow-spot:0 24px 64px -24px rgba(20,20,19,.34);
+  --focus-ring:0 0 0 3px rgba(44,123,229,.13);
+
+  --r:12px; --r-sm:8px; --r-xs:6px;
+  --font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --font-serif:'Newsreader','Tiempos Headline',Georgia,'Times New Roman',serif;
+  --sidebar-w:252px;
+  --sidebar-rail:64px;
+  --topbar-h:56px;
+}
+
+html[data-theme="dark"]{
+  color-scheme:dark;
+
+  --bg:#1a1917;
+  --surface:#211f1d;
+  --surface-2:#2a2825;
+  --surface-3:#35322d;
+  --border:#33302a;
+  --border-2:#474339;
+  --ink:#f2f0eb;
+  --ink-2:#d3d0c8;
+  --muted:#a09d94;
+  --faint:#7b7871;
+  --on-ink:#1a1917;
+
+  --blue:#5f9df6;
+  --blue-tint:#1b2a3e;
+  --blue-fill:#233448;
+  --green:#4fc07f;
+  --green-tint:#1a2c21;
+  --mint:#57c496;
+  --mint-tint:#1a2d26;
+  --amber:#dfa63e;
+  --amber-ink:#dfa63e;
+  --amber-tint:#332918;
+  --red:#e4735c;
+  --red-tint:#37211c;
+  --pos:#4fc07f;
+  --neg:#e4735c;
+
+  --chart-grid:#33302a;
+  --chart-line:#4a463d;
+  --chart-blue:#5f9df6;
+  --chart-fill:#22344b;
+  --chart-mint:#57c496;
+  --chart-amber:#dfa63e;
+  --chart-red:#e4735c;
+  --chart-violet:#9d90e8;
+  --chart-violet-tint:#292440;
+  --heat-rgb:95,157,246;
+  --heat-a0:0.12;
+  --heat-a1:0.80;
+  --on-heat:#101820;
+
+  --scrim:rgba(0,0,0,.52);
+  --shadow-pop:0 10px 34px rgba(0,0,0,.52);
+  --shadow-panel:-10px 0 34px rgba(0,0,0,.42);
+  --shadow-spot:0 24px 64px -24px rgba(0,0,0,.72);
+  --focus-ring:0 0 0 3px rgba(95,157,246,.22);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font-sans);
+  font-size:14px;
+  line-height:1.5;
+  color:var(--ink);
+  background:var(--bg);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  font-feature-settings:"cv05" 1,"cv11" 1;
+}
+a{color:inherit}
+button{font-family:inherit}
+::selection{background:var(--blue-tint)}
+
+/* ============ TOP BAR ============ */
+.topbar{
+  position:sticky;top:0;z-index:60;height:var(--topbar-h);
+  display:flex;align-items:center;gap:12px;padding:0 20px 0 14px;
+  background:var(--surface);border-bottom:1px solid var(--border);
+}
+.topbar .back{
+  width:28px;height:28px;display:grid;place-items:center;
+  border:none;background:none;color:var(--ink-2);font-size:17px;
+  border-radius:var(--r-xs);cursor:pointer;transition:background .12s;
+}
+.topbar .back:hover{background:var(--surface-2)}
+.topbar-title{font-size:14px;font-weight:500;color:var(--ink-2);white-space:nowrap}
+.topbar .spacer{flex:1}
+.topbar .badge-sample{
+  font-size:11.5px;font-weight:400;color:var(--muted);
+  background:var(--surface-2);border:1px solid var(--border);
+  border-radius:20px;padding:3px 10px;white-space:nowrap;
+}
+.avatar{
+  width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--on-ink);
+  display:grid;place-items:center;font-size:10.5px;font-weight:600;letter-spacing:.03em;flex:none;
+}
+.topbar .rule{width:1px;height:22px;background:var(--border);flex:none}
+
+.iconbtn{
+  width:30px;height:30px;flex:none;display:grid;place-items:center;
+  border:none;background:none;color:var(--muted);
+  border-radius:var(--r-xs);cursor:pointer;transition:background .12s,color .12s;
+}
+.iconbtn:hover{background:var(--surface-2);color:var(--ink)}
+.iconbtn svg{width:17px;height:17px;display:block}
+.iconbtn:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+
+#themeBtn .i-moon{display:block}
+#themeBtn .i-sun{display:none}
+html[data-theme="dark"] #themeBtn .i-moon{display:none}
+html[data-theme="dark"] #themeBtn .i-sun{display:block}
+
+/* ============ SHELL ============ */
+.shell{
+  display:grid;grid-template-columns:var(--sidebar-w) 1fr;align-items:start;
+  max-width:1560px;margin:0 auto;
+  transition:grid-template-columns .2s ease;
+}
+
+.sidebar{
+  position:sticky;top:var(--topbar-h);
+  height:calc(100vh - var(--topbar-h));overflow-y:auto;overflow-x:hidden;
+  padding:34px 14px 48px 26px;
+}
+.brandmark{
+  font-family:var(--font-serif);font-size:26px;font-weight:400;
+  letter-spacing:-.012em;line-height:1.15;margin:0 0 4px;padding-left:10px;color:var(--ink);
+  white-space:nowrap;
+}
+.brandmark .bm-mini{display:none}
+.brandmark-sub{font-size:12px;color:var(--faint);padding-left:10px;margin:0 0 26px;white-space:nowrap}
+.nav-group{margin-bottom:20px}
+.nav-label{font-size:12px;color:var(--faint);font-weight:400;padding:0 10px 7px;white-space:nowrap}
+.nav-item{
+  position:relative;display:flex;align-items:center;gap:11px;
+  width:100%;text-align:left;
+  font-size:14px;font-weight:400;color:var(--ink-2);
+  background:none;border:none;border-radius:var(--r-sm);
+  padding:8px 10px;cursor:pointer;transition:background .12s,color .12s;
+}
+.nav-item:hover{background:var(--surface-2);color:var(--ink)}
+.nav-item.on{background:var(--surface-3);color:var(--ink);font-weight:500}
+.nav-item:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.nav-item .ni-ic{flex:none;width:17px;height:17px;display:grid;place-items:center;color:var(--faint)}
+.nav-item .ni-ic svg{width:17px;height:17px;display:block}
+.nav-item.on .ni-ic{color:var(--ink)}
+.nav-item .ni-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+html.nav-collapsed{--sidebar-w:var(--sidebar-rail)}
+html.nav-collapsed .sidebar{padding:34px 11px 48px;overflow:visible}
+html.nav-collapsed .brandmark{
+  font-size:21px;padding:0;text-align:center;margin-bottom:26px;
+}
+html.nav-collapsed .brandmark .bm-full{display:none}
+html.nav-collapsed .brandmark .bm-mini{display:inline}
+html.nav-collapsed .brandmark-sub,
+html.nav-collapsed .nav-label,
+html.nav-collapsed .nav-item .ni-t{display:none}
+html.nav-collapsed .nav-item{justify-content:center;padding:10px 0;gap:0}
+html.nav-collapsed .nav-group{margin-bottom:10px}
+html.nav-collapsed .nav-group+.nav-group{
+  margin-top:10px;padding-top:14px;border-top:1px solid var(--border);
+}
+html.nav-collapsed .nav-item:hover::after{
+  content:attr(data-tip);position:absolute;left:calc(100% + 10px);top:50%;
+  transform:translateY(-50%);z-index:90;pointer-events:none;
+  background:var(--ink);color:var(--on-ink);
+  font-size:12px;font-weight:400;line-height:1;
+  padding:6px 9px;border-radius:var(--r-xs);white-space:nowrap;
+  box-shadow:var(--shadow-pop);
+}
+
+/* ============ MAIN ============ */
+.main{padding:34px 40px 90px;min-width:0}
+.page-head{margin-bottom:22px}
+.page-head h2{font-size:23px;font-weight:500;letter-spacing:-.015em;margin:0}
+.page-head .page-sub{font-size:14px;color:var(--muted);margin:5px 0 0}
+
+.filterbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;row-gap:8px;margin-bottom:24px}
+.filterbar .spacer{flex:1}
+
+.page{display:none}
+.page.on{display:block}
+
+.section{margin-top:38px}
+.section:first-child{margin-top:0}
+.section-head{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin:0 0 14px}
+.section-head h2{font-size:17px;font-weight:500;letter-spacing:-.008em;margin:0}
+.section-head .sd{font-size:13px;color:var(--muted)}
+.section-head .layerpill{
+  font-size:11.5px;font-weight:400;color:var(--muted);
+  background:var(--surface-2);border:1px solid var(--border);
+  padding:2px 9px;border-radius:20px;
+}
+.section-head .spacer{flex:1}
+.qbox{font-size:12.5px;line-height:1.6;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);padding:12px 15px;margin:12px 0 0}
+.qbox b{color:var(--ink);font-weight:500}
+.qbox ul{margin:6px 0 0;padding-left:18px}
+.qbox li{margin:2px 0}
+
+/* ============ CONTROLS ============ */
+.ctrl{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:13px;font-weight:400;color:var(--ink);
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);
+  padding:6px 11px;cursor:pointer;white-space:nowrap;
+  transition:background .12s,border-color .12s;
+}
+.ctrl:hover{background:var(--surface-2)}
+.ctrl .ic{color:var(--faint);font-size:12px}
+.ctrl .chev{color:var(--faint);font-size:10px;margin-left:1px}
+.ctrl select{
+  font:inherit;font-size:13px;font-weight:400;border:none;background:none;
+  color:var(--ink);cursor:pointer;outline:none;
+  max-width:190px;overflow:hidden;text-overflow:ellipsis;
+  -webkit-appearance:none;appearance:none;padding-right:2px;
+}
+.ctrl.toggle-on{border-color:var(--border-2);background:var(--surface-2);color:var(--ink)}
+
+/* ============ DATE RANGE CONTROL ============ */
+.daterange{position:relative;display:inline-block}
+.daterange-pop{
+  position:absolute;top:calc(100% + 6px);left:0;z-index:60;width:250px;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  box-shadow:var(--shadow-pop);padding:10px;display:none;
+}
+.daterange.open .daterange-pop{display:block}
+.dr-presets{display:flex;flex-direction:column;gap:2px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.dr-preset{
+  text-align:left;font:inherit;font-size:13px;color:var(--ink);background:none;border:none;
+  border-radius:var(--r-xs);padding:7px 9px;cursor:pointer;
+}
+.dr-preset:hover{background:var(--surface-2)}
+.dr-preset.on{background:var(--surface-2);font-weight:500}
+.dr-custom-label{font-size:11.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.03em;margin-bottom:6px}
+.dr-custom-row{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.dr-custom-row input[type=date]{
+  flex:1;min-width:0;font:inherit;font-size:12.5px;color:var(--ink);background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--r-xs);padding:5px 6px;
+}
+.dr-custom-row input[type=date]:focus{outline:none;border-color:var(--blue);box-shadow:var(--focus-ring)}
+.dr-to{color:var(--faint);font-size:12px}
+.dr-apply{
+  width:100%;font:inherit;font-size:12.5px;font-weight:500;color:var(--on-ink);background:var(--ink);
+  border:none;border-radius:var(--r-xs);padding:8px;cursor:pointer;
+}
+.dr-apply:hover{opacity:.9}
+.dr-apply.applied{background:var(--mint);color:var(--ink)}
+
+.seg,.charttabs,.devtoggle{
+  display:inline-flex;gap:2px;padding:3px;
+  background:var(--surface-3);border:none;border-radius:var(--r-sm);
+}
+.seg button,.charttabs button,.devtoggle button{
+  font:inherit;font-size:12.5px;font-weight:400;
+  padding:5px 12px;border:none;background:none;color:var(--muted);
+  cursor:pointer;border-radius:var(--r-xs);white-space:nowrap;
+  transition:background .12s,color .12s;
+}
+.seg button:hover:not(.on),.charttabs button:hover:not(.on),.devtoggle button:hover:not(.on){color:var(--ink)}
+.seg button.on,.charttabs button.on,.devtoggle button.on{background:var(--surface);color:var(--ink);font-weight:500}
+.devtoggle button{padding:5px 9px;font-size:13px}
+
+.pill{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:12.5px;font-weight:400;color:var(--muted);
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:20px;padding:5px 11px;white-space:nowrap;
+}
+.pill b{color:var(--ink);font-weight:500}
+.pill .dot{width:7px;height:7px;border-radius:50%;background:var(--mint)}
+
+/* ============ CARDS ============ */
+.grid{display:grid;gap:12px}
+.card{
+  position:relative;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--r);
+}
+.card-head{padding:18px 20px 8px;border:0}
+.card-head .cr{font-size:12px;font-weight:400;color:var(--faint);letter-spacing:0;text-transform:none}
+.card-head .ct{font-size:15px;font-weight:500;margin:3px 0 0;display:flex;align-items:center;gap:8px;letter-spacing:-.005em}
+.card-head .cd{font-size:12.5px;color:var(--muted);margin:5px 0 0;line-height:1.45}
+.card-body{padding:8px 20px 20px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.grid32{display:grid;grid-template-columns:1.5fr 1fr;gap:12px;margin-top:12px}
+@media(max-width:1100px){.grid2,.grid32{grid-template-columns:1fr}}
+
+/* ============ KPI TILES ============ */
+.tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-top:16px}
+@media(max-width:1600px){.tiles{grid-template-columns:repeat(3,1fr)!important}}
+@media(max-width:820px){.tiles{grid-template-columns:repeat(2,1fr)!important}}
+.tile{
+  position:relative;display:flex;flex-direction:column;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:18px 18px 16px;text-align:left;
+}
+.tile .tophead{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.tile .val{font-size:28px;font-weight:500;letter-spacing:-.025em;line-height:1.12;font-variant-numeric:tabular-nums}
+.tile .delta{font-size:12.5px;font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap;margin-top:4px}
+.delta.up{color:var(--pos)} .delta.dn{color:var(--neg)} .delta.flat{color:var(--faint)}
+.tile .lbl{font-size:13.5px;font-weight:500;color:var(--ink);margin-top:9px;letter-spacing:0;text-transform:none}
+.tile .sub2{font-size:12.5px;color:var(--faint);margin-top:2px}
+
+.bm{
+  display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+  margin-top:14px;padding-top:12px;border-top:1px solid var(--border);
+  font-size:12px;
+}
+.bm .bl{color:var(--faint);font-weight:400;letter-spacing:0;text-transform:none}
+input.bmin{
+  width:52px;max-width:52px;font:inherit;font-size:12px;font-weight:500;text-align:center;
+  border:1px solid var(--border-2);border-radius:var(--r-xs);
+  padding:3px 4px;background:var(--surface);color:var(--ink);
+}
+.bm input.bmin{width:44px;max-width:44px}
+input.bmin:focus{outline:none;border-color:var(--blue);box-shadow:var(--focus-ring)}
+.bm .bu{color:var(--faint);font-weight:400;margin-left:-4px}
+.bm .bb{font-weight:500;font-size:11.5px;padding:2px 8px;border-radius:20px;margin-left:auto;white-space:nowrap}
+.bm .bb.met{background:var(--green-tint);color:var(--green)}
+.bm .bb.miss{background:var(--red-tint);color:var(--red)}
+.bm .bb.unset{background:var(--surface-2);color:var(--faint)}
+
+.bmnote,.scope-note{
+  display:flex;gap:10px;align-items:flex-start;
+  font-size:12.5px;line-height:1.55;color:var(--muted);
+  background:var(--surface-2);border:1px solid var(--border);
+  border-radius:var(--r);padding:12px 15px;margin:0 0 14px;
+}
+.bmnote b,.scope-note b{color:var(--ink);font-weight:500}
+.bmnote>span:first-child,.scope-note>span:first-child{color:var(--faint)}
+.bmnote.crashnote{background:var(--amber-tint);border-color:var(--amber);margin-top:12px}
+.bmnote.crashnote>span:first-child{color:var(--amber-ink)}
+.bmnote.crashnote b{color:var(--amber-ink)}
+
+/* ============ LAYOUT HELPERS ============ */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.two-32{display:grid;grid-template-columns:1.5fr 1fr;gap:12px}
+@media(max-width:1100px){.two,.two-32{grid-template-columns:1fr}}
+.charthead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px}
+.charthead .gb{font-size:12.5px;color:var(--faint)}
+svg.chart{width:100%;height:auto;display:block}
+
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:12px}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
+.legend i.dash{height:0;border-top:2px dashed var(--border-2);width:16px;border-radius:0}
+
+/* ============ RETENTION HEATMAP / COHORT ============ */
+.rt{border-collapse:separate;border-spacing:3px;width:100%;font-variant-numeric:tabular-nums}
+.rt th{font-size:11.5px;font-weight:400;color:var(--faint);letter-spacing:0;text-transform:none;padding:2px 3px}
+.rt td{text-align:center;font-size:12px;font-weight:400;border-radius:5px;padding:9px 4px;color:var(--ink)}
+.rt td.lbl{background:none;text-align:left;color:var(--muted);white-space:nowrap}
+
+.heatgrid{display:grid;grid-template-columns:150px repeat(6,1fr);gap:3px;font-size:11.5px}
+.heatgrid .hwk{text-align:center;color:var(--faint);padding:2px 0 6px}
+.heatgrid .hlab{color:var(--muted);display:flex;align-items:center;padding-right:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.heatgrid .hcell{border-radius:5px;min-height:30px}
+
+/* ============ FUNNEL ============ */
+.funnel{display:flex;flex-direction:column;gap:9px;margin-top:4px}
+.funnel .fstep{
+  position:relative;color:var(--on-ink);font-size:12.5px;font-weight:500;
+  padding:10px 14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.funnel .fsub{display:block;font-size:11px;font-weight:400;opacity:.86;margin-top:2px}
+.funnel .fdrop{font-size:11.5px;color:var(--neg);font-weight:400;padding-left:2px}
+.funnel .frow{display:grid;grid-template-columns:158px 1fr 92px;gap:12px;align-items:center}
+.funnel .fs{font-size:12.5px;color:var(--ink-2);font-weight:400}
+.funnel .fbar{height:22px;background:var(--surface-2);border-radius:5px;overflow:hidden;position:relative}
+.funnel .fbar i{display:block;height:100%;background:var(--blue);border-radius:5px}
+.funnel .fbar i.warn{background:var(--amber)}
+.funnel .fbar i.bad{background:var(--red)}
+.funnel .fnum{font-size:12.5px;font-weight:500;text-align:right;font-variant-numeric:tabular-nums}
+
+/* ============ HORIZONTAL BARS ============ */
+.hbars{display:flex;flex-direction:column;gap:13px;margin-top:4px}
+.role{display:grid;grid-template-columns:150px 1fr 46px;gap:12px;align-items:center}
+.role .rn{font-size:12.5px;font-weight:400;color:var(--ink-2)}
+.role .rbar{height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden}
+.role .rbar i{display:block;height:100%;border-radius:4px}
+.role .rv{font-size:12.5px;font-weight:500;text-align:right;font-variant-numeric:tabular-nums}
+
+/* ============ TABLES ============ */
+.tbl-wrap{overflow-x:auto}
+table.league,table.pathtbl{border-collapse:collapse;width:100%;font-size:13px}
+table.league th,table.league td,table.pathtbl th,table.pathtbl td{
+  padding:11px 12px;text-align:left;white-space:nowrap;
+}
+table.league thead th,table.pathtbl thead th{
+  font-size:12px;font-weight:400;color:var(--faint);
+  letter-spacing:0;text-transform:none;border-bottom:1px solid var(--border);
+}
+table.league tbody td,table.pathtbl tbody td{border-bottom:1px solid var(--surface-2);transition:background .12s}
+table.league tbody tr:last-child td,table.pathtbl tbody tr:last-child td{border-bottom:none}
+table.league tbody tr:hover,table.pathtbl tbody tr:hover{background:var(--surface-2)}
+.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:400}
+.strong{font-weight:500}
+.arrow{font-weight:400;font-size:12px}
+.arrow.up{color:var(--pos)} .arrow.dn{color:var(--neg)} .arrow.flat{color:var(--faint)}
+.status{font-size:11.5px;font-weight:500;letter-spacing:0;padding:3px 9px;border-radius:20px;text-transform:none}
+.st-healthy{background:var(--green-tint);color:var(--green)}
+.st-watch{background:var(--amber-tint);color:var(--amber-ink)}
+.st-drop{background:var(--red-tint);color:var(--red)}
+.minibar{display:inline-block;width:56px;height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden;vertical-align:middle;margin-right:8px}
+.minibar i{display:block;height:100%;border-radius:3px}
+
+/* crash issue table */
+table.crashtbl{border-collapse:collapse;width:100%;font-size:13px;margin-top:10px}
+table.crashtbl th,table.crashtbl td{padding:10px 12px;text-align:left;white-space:nowrap}
+table.crashtbl thead th{font-size:12px;font-weight:400;color:var(--faint);border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+table.crashtbl thead th.sorted{color:var(--ink);font-weight:500}
+table.crashtbl tbody td{border-bottom:1px solid var(--surface-2)}
+table.crashtbl tbody tr:last-child td{border-bottom:none}
+table.crashtbl tbody tr:hover{background:var(--surface-2)}
+.issuecell small{display:block;font-size:11px;color:var(--faint);font-weight:400;white-space:normal}
+.crash-verbadge{font-size:11px;font-weight:500;background:var(--surface-2);border:1px solid var(--border);border-radius:20px;padding:2px 8px;color:var(--ink-2)}
+.sortarrow{font-size:10px;color:var(--faint);margin-left:4px}
+.crash-search{
+  width:100%;max-width:280px;font:inherit;font-size:13px;color:var(--ink);
+  border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 11px;background:var(--surface);
+  margin-bottom:10px;
+}
+.crash-search:focus{outline:none;border-color:var(--blue);box-shadow:var(--focus-ring)}
+.crash-empty{font-size:13px;color:var(--faint);padding:20px 4px;text-align:center}
+.sparkline{display:inline-flex;align-items:flex-end;gap:2px;height:22px}
+.sparkline i{display:block;width:4px;background:var(--red);border-radius:1px;opacity:.75}
+
+/* ============ KEY VALUES ============ */
+.kv{display:flex;gap:30px;flex-wrap:wrap;margin-top:4px}
+.kv .k{font-size:12.5px;font-weight:400;color:var(--muted);letter-spacing:0;text-transform:none}
+.kv .v{font-size:22px;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:-.02em;margin-top:3px}
+.kv .u{font-size:12px;font-weight:400;color:var(--faint)}
+
+/* ============ OVERVIEW-ONLY PRIMITIVES ============ */
+.statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:1100px){.statgrid{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px}
+.stat .sv{font-size:28px;font-weight:500;letter-spacing:-.025em;font-variant-numeric:tabular-nums;line-height:1.12}
+.stat .sl{font-size:13.5px;font-weight:500;color:var(--ink);margin-top:9px}
+.stat .ss{font-size:12.5px;color:var(--faint);margin-top:2px}
+
+.stick{display:flex;gap:26px;align-items:stretch;height:210px;padding:6px 4px 0}
+.stick .sitem{flex:1;display:flex;flex-direction:column;align-items:center;gap:9px;min-width:0}
+.stick .spct{text-align:center;line-height:1.25}
+.stick .spct b{display:block;font-size:15px;font-weight:500;font-variant-numeric:tabular-nums}
+.stick .spct span{display:block;font-size:11.5px;color:var(--faint)}
+.stick .strack{width:100%;max-width:118px;flex:1;display:flex;align-items:flex-end;border-radius:4px;overflow:hidden}
+.stick .strack i{display:block;width:100%;border-radius:4px 4px 0 0}
+.stick .slabel{font-size:12.5px;color:var(--muted);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+
+.seeall{
+  font-size:12.5px;font-weight:400;color:var(--ink-2);
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:5px 11px;cursor:pointer;transition:background .12s;
+}
+.seeall:hover{background:var(--surface-2)}
+
+/* ============ (i) EXPLAIN POPOVER ============ */
+.info-wrap{position:absolute;top:14px;right:14px;z-index:6}
+.info-btn{
+  width:18px;height:18px;border-radius:50%;
+  border:1px solid var(--border-2);background:var(--surface);color:var(--faint);
+  font-family:var(--font-serif);font-size:11px;font-weight:500;font-style:italic;line-height:1;
+  cursor:pointer;display:grid;place-items:center;padding:0;
+  transition:border-color .12s,color .12s;
+}
+.info-btn:hover{border-color:var(--ink);color:var(--ink)}
+.info-pop{
+  position:absolute;top:26px;right:0;max-width:320px;width:max-content;
+  background:var(--surface);color:var(--muted);
+  border:1px solid var(--border);border-radius:var(--r);
+  padding:14px 16px;font-size:12.5px;line-height:1.55;
+  box-shadow:var(--shadow-pop);
+  z-index:60;display:none;
+}
+.info-wrap:hover .info-pop,.info-wrap:focus-within .info-pop{display:block}
+.info-pop b{color:var(--ink);font-weight:500;display:block;margin-bottom:4px}
+.info-pop .sep{margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+
+
+/* ============ MODULE NAV (bucket tabs + module chips, ported from FM Matrix v2) ============ */
+.mnav{margin:16px 0 16px;background:none;border:0;border-radius:0}
+.mnav-buckets{display:flex;gap:22px;flex-wrap:wrap;padding:0 2px;border-bottom:1px solid var(--border)}
+.mnav-buckets button{
+  font-size:13px;font-weight:400;letter-spacing:0;text-transform:none;
+  padding:0 0 10px;margin-bottom:-1px;
+  border:none;border-bottom:2px solid transparent;background:none;
+  color:var(--muted);cursor:pointer;white-space:nowrap;transition:color .12s,border-color .12s;
+}
+.mnav-buckets button:hover:not(.on){color:var(--ink)}
+.mnav-buckets button.on{color:var(--ink);font-weight:500;border-bottom-color:var(--ink)}
+.mnav-buckets .mcount{font-size:11.5px;font-weight:400;color:var(--faint);margin-left:5px}
+.mnav-mods{display:flex;padding:13px 0 0}
+.mnav-mods .segbar{display:inline-flex;flex-wrap:wrap;gap:6px;border:0;background:none;border-radius:0}
+.mnav-mods button{
+  font-size:12.5px;font-weight:400;padding:5px 13px;
+  border:1px solid var(--border);border-radius:20px;background:var(--surface);
+  color:var(--muted);cursor:pointer;white-space:nowrap;transition:all .12s;
+}
+.mnav-mods button:hover:not(.on){color:var(--ink);background:var(--surface-2)}
+.mnav-mods button.on{background:var(--ink);border-color:var(--ink);color:var(--on-ink)}
+
+/* ============ PRODUCT HEALTH GAUGE ============ */
+.gauge-wrap{display:flex;align-items:center;gap:30px;flex-wrap:wrap}
+.gauge-num{font-size:30px;font-weight:500;fill:var(--ink);font-family:var(--font-sans)}
+.gauge-lbl{font-size:11px;fill:var(--faint);font-family:var(--font-sans)}
+.gauge-band{font-size:11.5px;font-weight:500;padding:3px 11px;border-radius:20px;display:inline-block;margin-top:6px}
+.gauge-band.healthy{background:var(--green-tint);color:var(--green)}
+.gauge-band.watch{background:var(--amber-tint);color:var(--amber-ink)}
+.gauge-band.risk{background:var(--red-tint);color:var(--red)}
+.gauge-breakdown{flex:1;min-width:220px;display:flex;flex-direction:column;gap:11px}
+.gauge-row{display:grid;grid-template-columns:150px 1fr 40px;gap:10px;align-items:center;font-size:12.5px}
+.gauge-row .gn{color:var(--ink-2)}
+.gauge-row .gbar{height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden}
+.gauge-row .gbar i{display:block;height:100%;border-radius:4px}
+.gauge-row .gv{text-align:right;font-weight:500;font-variant-numeric:tabular-nums}
+
+/* ============ CUSTOMER JOURNEY FLOW ============ */
+.jflow{display:flex;align-items:center;flex-wrap:wrap;gap:0;margin-top:6px}
+.jstep{
+  font-size:12.5px;font-weight:500;color:var(--ink);background:var(--surface-2);
+  border:1px solid var(--border);border-radius:20px;padding:7px 15px;white-space:nowrap;
+}
+.jarrow{color:var(--faint);font-size:14px;padding:0 8px}
+.jexit{font-size:11px;color:var(--red);font-weight:500;align-self:flex-start;margin:-2px 4px 0}
+
+/* ============ APP NAVIGATION MAP ============ */
+.navmap-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:14px}
+.navmap-legend span{display:inline-flex;align-items:center;gap:6px}
+.navmap-legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
+.navmap-root{
+  display:inline-block;font-size:13.5px;font-weight:500;color:var(--on-ink);background:var(--ink);
+  border-radius:var(--r-sm);padding:9px 18px;
+}
+.navmap-row{display:flex;flex-wrap:wrap;gap:9px;justify-content:flex-start;margin:8px 0}
+.navnode{
+  font-size:12px;font-weight:500;border-radius:var(--r-sm);padding:8px 12px;min-width:120px;
+  border:1px solid transparent;
+}
+.navnode small{display:block;font-size:10.5px;font-weight:400;opacity:.8;margin-top:2px}
+.navnode.tracked{background:var(--green-tint);color:var(--green);border-color:var(--green)}
+.navnode.renamed{background:var(--blue-tint);color:var(--blue);border-color:var(--blue)}
+.navnode.untracked{background:var(--red-tint);color:var(--red);border-color:var(--red)}
+
+/* ============ FOOTER ============ */
+.footer{
+  margin-top:48px;padding-top:20px;border-top:1px solid var(--border);
+  font-size:12.5px;line-height:1.65;color:var(--faint);
+}
+.footer b{color:var(--muted);font-weight:500}
+.footer code{font-size:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:1px 5px}
+
+/* ============ RESPONSIVE ============ */
+@media(max-width:1080px){
+  .topbar .badge-sample{display:none}
+  .topbar-title{display:none}
+}
+@media(max-width:960px){
+  .shell,html.nav-collapsed .shell{grid-template-columns:1fr}
+  .nav-toggle{display:none}
+  .sidebar,html.nav-collapsed .sidebar{position:static;height:auto;padding:24px 22px 0;overflow:visible}
+  .sidebar nav{display:flex;flex-wrap:wrap;gap:6px}
+  .nav-group,html.nav-collapsed .nav-group{margin:0 0 8px;padding-top:0;border-top:none;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .nav-label,html.nav-collapsed .nav-label{display:block;padding:0 4px 0 0}
+  .nav-item,html.nav-collapsed .nav-item{width:auto;justify-content:flex-start;gap:8px;padding:7px 11px;border:1px solid var(--border);background:var(--surface)}
+  html.nav-collapsed .nav-item .ni-t{display:inline}
+  html.nav-collapsed .nav-item:hover::after{display:none}
+  .brandmark,html.nav-collapsed .brandmark{font-size:22px;text-align:left;padding-left:0;margin-bottom:2px}
+  html.nav-collapsed .brandmark .bm-full{display:inline}
+  html.nav-collapsed .brandmark .bm-mini{display:none}
+  html.nav-collapsed .brandmark-sub{display:block}
+  .brandmark-sub{padding-left:0;margin-bottom:18px}
+  .main{padding:22px 22px 70px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+@media print{
+  html,html[data-theme="dark"]{
+    color-scheme:light;
+    --bg:#ffffff;--surface:#ffffff;--surface-2:#f5f4f1;--surface-3:#edebe6;
+    --border:#e6e4de;--border-2:#d9d6ce;
+    --ink:#141413;--ink-2:#3f3e3a;--muted:#6f6e68;--faint:#9b9990;--on-ink:#ffffff;
+  }
+  .sidebar,.topbar,.info-wrap,.filterbar{display:none}
+  .page{display:block!important}
+  .card,.tile,.stat{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <button class="iconbtn nav-toggle" id="navToggle" aria-label="Collapse navigation" aria-expanded="true" title="Collapse navigation">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="2.5" y="3.5" width="15" height="13" rx="2.5"/><line x1="8" y1="3.5" x2="8" y2="16.5"/>
+    </svg>
+  </button>
+  <button class="back" aria-label="Back">&#8592;</button>
+  <span class="topbar-title">SmartSecure Analytics</span>
+  <div class="spacer"></div>
+  <span class="rule"></span>
+  <button class="iconbtn" id="themeBtn" aria-label="Switch theme" title="Switch to dark theme">
+    <svg class="i-moon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M16.5 11.8A7 7 0 0 1 8.2 3.5a7 7 0 1 0 8.3 8.3Z"/>
+    </svg>
+    <svg class="i-sun" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="10" cy="10" r="3.6"/>
+      <path d="M10 1.8v1.7M10 16.5v1.7M18.2 10h-1.7M3.5 10H1.8M15.8 4.2l-1.2 1.2M5.4 14.6l-1.2 1.2M15.8 15.8l-1.2-1.2M5.4 5.4 4.2 4.2"/>
+    </svg>
+  </button>
+  <span class="badge-sample">Wireframe &middot; sample data</span>
+  <div class="avatar">SS</div>
+</header>
+
+<div class="shell">
+
+  <aside class="sidebar">
+    <h1 class="brandmark"><span class="bm-full">SmartSecure</span><span class="bm-mini">SS</span></h1>
+    <p class="brandmark-sub">SmartSecure &middot; Gatekeeper &amp; Security App</p>
+    <nav aria-label="Sections">
+      <div class="nav-group">
+        <div class="nav-label">Layers</div>
+        <button class="nav-item on" data-page="pgTraffic" data-tip="Traffic &amp; Session">
+          <span class="ni-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M2.4 12.6 6.6 7.4l3.4 3.1 4.1-5.4 3.5 4.3"/><path d="M2.4 16.4h15.2"/>
+          </svg></span><span class="ni-t">Traffic &amp; Session</span>
+        </button>
+        <button class="nav-item" data-page="pgAdopt" data-tip="Adoption &amp; Engagement">
+          <span class="ni-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="7.6" cy="6.8" r="2.9"/><path d="M2.6 16.6c0-2.7 2.2-4.6 5-4.6s5 1.9 5 4.6"/>
+            <path d="M13.4 4.3a2.9 2.9 0 0 1 0 5.4M14.6 12.4c1.8.5 3 1.9 3 4.2"/>
+          </svg></span><span class="ni-t">Adoption &amp; Engagement</span>
+        </button>
+        <button class="nav-item" data-page="pgFlows" data-tip="Workflow Usage">
+          <span class="ni-ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M10 2.4 17.4 6 10 9.6 2.6 6Z"/><path d="M2.6 10 10 13.6 17.4 10"/><path d="M2.6 14 10 17.6 17.4 14"/>
+          </svg></span><span class="ni-t">Workflow Usage</span>
+        </button>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="main">
+
+    <div class="page-head">
+      <h2 id="pageTitle">Traffic &amp; Session</h2>
+      <p class="page-sub"><span id="custName">SmartSecure Application</span> &middot; <span id="scopeLabel">Gate staff &amp; admins &middot; all societies</span></p>
+    </div>
+
+    <div class="filterbar">
+      <div class="daterange" id="dateRange">
+        <button class="ctrl" id="dateRangeBtn"><span class="ic">&#128197;</span><span id="dateRangeLabel">Last 30 days</span><span class="chev">&#9662;</span></button>
+        <div class="daterange-pop" id="dateRangePop">
+          <div class="dr-presets">
+            <button class="dr-preset on" data-range="7">Last 7 days</button>
+            <button class="dr-preset" data-range="30">Last 30 days</button>
+            <button class="dr-preset" data-range="90">Last 90 days</button>
+          </div>
+          <div class="dr-custom">
+            <div class="dr-custom-label">Custom range</div>
+            <div class="dr-custom-row">
+              <input type="date" id="dateFrom" value="2026-06-22"/>
+              <span class="dr-to">&ndash;</span>
+              <input type="date" id="dateTo" value="2026-07-22"/>
+            </div>
+            <button class="dr-apply" id="dateApplyBtn">Apply custom range</button>
+          </div>
+        </div>
+      </div>
+      <label class="ctrl"><span class="ic">&#127959;</span>
+        <select id="projectSel">
+          <option>All Societies</option><option>Society A &ndash; Powai</option><option>Society B &ndash; Andheri</option><option>Society C &ndash; Malad</option><option>Society D &ndash; Chembur</option>
+        </select><span class="chev">&#9662;</span>
+      </label>
+      <div class="devtoggle" id="devToggle" title="Platform">
+        <button data-dev="all" class="on">All</button>
+        <button data-dev="ios" title="iOS only">iOS</button>
+        <button data-dev="android" title="Android only">Android</button>
+      </div>
+      <label class="ctrl toggle-on" id="prevBtn"><span class="ic">&#8634;</span> Previous period &#10003;</label>
+      <div class="spacer"></div>
+      <span class="pill"><span class="dot"></span><span id="liveCount">&mdash; recently online</span></span>
+    </div>
+
+    <!-- ==================== PAGE: TRAFFIC & SESSION ==================== -->
+    <section class="page on" id="pgTraffic">
+      <div class="section-head">
+        <div class="eyebrow-sec"></div>
+        <h2>Traffic &amp; Session</h2>
+        <span class="sd">Monitor overall application traffic, gate-staff activity, and session behavior.</span>
+      </div>
+      <div class="qbox"><b>Key questions</b>
+        <ul><li>How many gate staff and admins are actively using the app, and how frequently?</li>
+        <li>Which societies generate the highest traffic, and are devices staying active shift over shift?</li></ul>
+      </div>
+      <div class="tiles" style="grid-template-columns:repeat(3,1fr)" id="tilesTraffic"></div>
+      <div class="grid2">
+        <div class="card" id="card-trafficActive"></div>
+        <div class="card" id="card-deviceSplit"></div>
+      </div>
+    </section>
+
+    <!-- ==================== PAGE: ADOPTION & ENGAGEMENT ==================== -->
+    <section class="page" id="pgAdopt">
+      <div class="section-head">
+        <h2>Adoption &amp; Engagement</h2>
+        <span class="sd">Measure how effectively gate staff adopt and engage with the app&rsquo;s major modules, and whether they keep coming back shift over shift.</span>
+      </div>
+      <div class="qbox"><b>Key questions</b>
+        <ul><li>Which modules and gate operations receive the highest engagement and adoption?</li>
+        <li>Which modules need UX improvements, and where do gate staff spend the most time?</li>
+        <li>Are gate staff returning to the application, and is retention improving over time?</li></ul>
+      </div>
+      <div class="tiles" style="grid-template-columns:repeat(3,1fr);margin-top:16px" id="tilesAdoption"></div>
+      <div class="card" style="margin-top:12px" id="card-adoptionTrend"></div>
+      <div class="grid2">
+        <div class="card" id="card-growthAccounting"></div>
+        <div class="card" id="card-retentionCohort"></div>
+      </div>
+      <div class="grid2">
+        <div class="card" id="card-roleSplit"></div>
+        <div class="card" id="card-dormant"></div>
+      </div>
+      <div class="card" style="margin-top:12px" id="card-siteWise"></div>
+    </section>
+
+    <!-- ==================== PAGE: WORKFLOW USAGE ==================== -->
+    <section class="page" id="pgFlows">
+      <div class="section-head">
+        <h2>Workflow Usage</h2>
+        <span class="sd">Gate staff completion of key operational workflows per module, all-modules comparison, and where staff navigate &amp; exit.</span>
+      </div>
+      <div class="mnav" id="modNav" title="Choose a module — this filter applies to the per-module cards only"></div>
+      <div class="tiles" style="grid-template-columns:repeat(4,1fr)" id="wfKpis"></div>
+      <div id="wfScopeNote"></div>
+      <div class="card" style="margin:16px 0" id="card-wfFunnel"></div>
+      <div class="card" style="margin-top:12px" id="card-allScreens"></div>
+      <div class="card" style="margin-top:12px" id="card-entryScreens"></div>
+    </section>
+
+    <div class="footer">
+      <b>Wireframe note.</b> Single-tenant gate-admin view &mdash; shows only one society&rsquo;s own gate staff, visitors and vehicles; no cross-society data. <b>Every number on this dashboard is illustrative sample data</b> &mdash; it recomputes as you change <code>device</code> and <code>previous period</code>, but there is no live PostHog project behind SmartSecure yet. The <b>module names, screen structure, and event names</b> are the real, documented events from the SmartSecure PostHog Events catalogue (17 modules, 180 events across 38 categories) &mdash; they describe intended instrumentation, but nothing is actually flowing into PostHog today, so every volume, rate, and trend line is a placeholder standing in for that future data. Hover the <code>i</code> on any tile or chart for its exact definition.
+    </div>
+
+  </main>
+</div>
+
+<script>
+/* ================================================================
+   SmartSecure · Analytics Dashboard — logic
+   Design system + SVG chart engine ported from FM Matrix v2, matching
+   the structure used for Runwal Connect, Panchshil Connect, Panchshil
+   Pulse and Rustomjee Circle.
+
+   DATA DISCLOSURE: unlike Rustomjee Circle, there is NO live PostHog
+   project behind SmartSecure at all (see SmartSecure_PostHog_Events.xlsx
+   — a documented, developer-authored event catalogue describing
+   intended instrumentation, not a live/firing analytics feed). Every
+   volume, rate, percentage, and trend value below is seeded
+   illustrative sample data (see rngFor / seeded arrays), generated only
+   so the wireframe reads like a populated dashboard. The MODULE NAMES,
+   BUCKET GROUPING, and EVENT NAMES are real — taken verbatim from the
+   "PostHog Events" sheet (180 events, 38 categories, mapped here into
+   17 product modules / 19 real workflows, plus 3 PROPOSED workflows
+   added after reviewing the design team's Figma screens for the
+   visitor-registration flow — see the proposed:true flag on those
+   entries in workflows[] below). Every invented number is called
+   out inline where it first appears.
+   ================================================================ */
+
+/* ---------- seeded RNG (deterministic sample data) ---------- */
+function hashStr(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function rngFor(key){return mulberry32(hashStr(key))}
+
+/* ---------- state (filters) ---------- */
+const state={dev:'all',prev:true,wf:'devApproval',bucket:'Access & Device',page:'pgTraffic',ovTab:'weekly',
+  range:30,rangeLabel:'Last 30 days',rangeFrom:'2026-06-22',rangeTo:'2026-07-22'};
+
+/* ---------- user-defined benchmarks ---------- */
+const BENCHMARKS={};
+const BM_DEFAULTS={
+  activeUsers:75,bounceRate:18,engagementRate:65,featureInteractionRate:50,
+  wfAdoption:50,wfCompletion:70,wfDropoff:30,
+  featureAdoptionRate:60,repeatUsageRate:55,
+  day1Retention:55,day7Retention:35,day30Retention:20,churnRate:10,
+  crashFreeUsers:99,crashFreeSessions:99
+};
+function getBM(id){ if(id in BENCHMARKS) return BENCHMARKS[id]; if(id in BM_DEFAULTS) return BM_DEFAULTS[id]; return null; }
+
+/* ---------- KPI info dictionary (formula + business meaning) ---------- */
+const KPI_INFO = {
+ "Active Users":{f:"Unique gate staff/admins (user_id) who fired at least one event during the selected period.",m:"Shows the reach of the app among registered gate staff — pulled directly from PostHog's person-level activity."},
+ "Screen Views":{f:"Count of all Success-typed screen-load events across modules (e.g. home_screen_viewed, staff_list_viewed, visitor_checkout_list_viewed) — SmartSecure's catalogue has no separate View type, so screen loads are typed Success.",m:"Overall screen/content consumption across the app."},
+ "Total Sessions":{f:"Count of distinct app sessions started in the period (from app_launched, the first event of every session).",m:"Usage volume across all gate devices."},
+ "Average Session Duration":{f:"Total session time ÷ total sessions.",m:"Engagement depth per shift."},
+ "Bounce Rate":{f:"% of sessions with only app_launched/home_tab_viewed and no further interaction.",m:"Immediate exits or a device left idle after login."},
+ "Returning Users":{f:"Users active in the period who were also active in a prior period.",m:"Retention and consistency of gate-staff usage."},
+ "Recently Online":{f:"Distinct gate devices/staff with an event in the last 30 minutes.",m:"A live pulse of which gates are currently active."},
+ "Views / Session":{f:"Total screen views ÷ total sessions.",m:"How much of the app gate staff traverse per shift/session."},
+ "Device / Platform Split":{f:"Share of active users and sessions by platform (android vs ios).",m:"SmartSecure runs on gate tablets — this shows where engineering and QA effort should concentrate."},
+ "Engagement Rate":{f:"% of sessions with a meaningful interaction beyond a view (an Action- or Success-typed event tied to a real workflow, not just app_launched/tab views).",m:"Distinguishes active gate operations from an idle/logged-in device."},
+ "Average Time Spent":{f:"Total time spent in a module ÷ sessions using it.",m:"How much attention a module commands during a shift."},
+ "Average Sessions per User":{f:"Total sessions ÷ unique active users.",m:"Habit and usage frequency across shifts."},
+ "Feature Interaction Rate":{f:"% of sessions where gate staff fired an Action-typed event (e.g. a check-in/check-out attempt), not just a screen load.",m:"Indicates depth of feature-level engagement beyond browsing lists."},
+ "Module Breadth":{f:"Count of distinct modules (from the 17-module PostHog catalogue) used at least once ÷ 17 modules available.",m:"How much of the platform a gate/society has actually adopted, not just Home and Visitor check-in."},
+ "Workflow Adoption":{f:"% of active users who fired the workflow's first event (e.g. visitor_mobile_verify_attempted, staff_check_in_attempted).",m:"Shows how many gate staff attempt this process."},
+ "Workflow Completion Rate":{f:"% of users who reached the workflow's terminal success event after starting.",m:"How effectively the workflow converts to a completed check-in/check-out/creation."},
+ "Drop-off Rate":{f:"% of users who fired the start event but never fired the terminal success event.",m:"Highlights where the gate process is losing completions (often a validation failure or API failure)."},
+ "Average Completion Time":{f:"Median time from the workflow's first to last event.",m:"Indicates process friction at the gate — lower is smoother and faster entry."},
+ "Successful Completions":{f:"Count of users who fired the workflow's terminal success event this period.",m:"Absolute volume of successful check-ins, check-outs, or creations."},
+ "Feature Adoption Rate":{f:"% of active users who used at least one tracked module.",m:"How broadly modules are being adopted across gates."},
+ "Feature Usage Frequency":{f:"Avg. number of times a module's events fire per active user per week.",m:"How habitual a module is once discovered."},
+ "Unique Users per Feature":{f:"Distinct users who triggered any event in the module at least once.",m:"Reach of a module across the gate-staff base."},
+ "Repeat Usage Rate":{f:"% of module users who used it more than once.",m:"Signals whether a module earns repeat trust across shifts."},
+ "Day 1 Retention":{f:"% of new users who return exactly 1 day after their first session.",m:"Immediate stickiness of onboarding for newly added gate staff."},
+ "Day 7 Retention":{f:"% of new users who return in the 7 days after their first session.",m:"Whether the app has earned a place in the gate staff's weekly routine."},
+ "Day 30 Retention":{f:"% of new users still active 30 days after their first session.",m:"Long-run habit formation among gate staff."},
+ "Churn Rate":{f:"% of previously active users with no activity in the last 30 days.",m:"How many gate staff/devices have gone inactive outright — the mirror image of retention."},
+ "Top Entry Screen":{f:"The screen property value most often seen on the first event of a session.",m:"Where gate staff land — usually the Splash/device-approval flow or Home after login."},
+ "Top Exit Screen":{f:"The screen property value most often seen on the last event of a session.",m:"Where gate staff stop — either a completed task or a mid-flow drop-off, depending on the screen."}
+};
+function kpiInfoHtml(label){
+  const i = KPI_INFO[label] || {f:"Definition not yet finalized for this metric.",m:"Business meaning to be confirmed with product team."};
+  return "<b>Formula</b>"+i.f+"<div class=\"sep\"><b>Business meaning</b>"+i.m+"</div>";
+}
+
+/* ---------- chart palette (read into JS at render time; theme-aware) ---------- */
+let C_INK,C_FAINT,C_GRID,C_LINE,C_BLUE,C_FILL,C_MINT,C_AMBER,C_RED,C_VIOLET,C_VIOLET_TINT,C_GREEN,C_HEAT,C_ONHEAT,C_HEAT_A0,C_HEAT_A1;
+function syncChartPalette(){
+  const cs=getComputedStyle(document.documentElement);
+  const g=(n,fb)=>{const v=cs.getPropertyValue(n).trim();return v||fb;};
+  C_INK   = g('--ink','#141413');
+  C_FAINT = g('--faint','#9b9990');
+  C_GRID  = g('--chart-grid','#e6e4de');
+  C_LINE  = g('--chart-line','#d9d6ce');
+  C_BLUE  = g('--chart-blue','#2c7be5');
+  C_FILL  = g('--chart-fill','#d3e3f9');
+  C_MINT  = g('--chart-mint','#3daf7d');
+  C_AMBER = g('--chart-amber','#c98a12');
+  C_RED   = g('--chart-red','#b3402c');
+  C_VIOLET= g('--chart-violet','#7c6fd6');
+  C_VIOLET_TINT=g('--chart-violet-tint','#e7e4f8');
+  C_GREEN = g('--green','#0f8a3d');
+  C_HEAT  = g('--heat-rgb','44,123,229');
+  C_ONHEAT= g('--on-heat','#ffffff');
+  C_HEAT_A0=parseFloat(g('--heat-a0','0.09'));
+  C_HEAT_A1=parseFloat(g('--heat-a1','0.78'));
+}
+syncChartPalette();
+
+/* ---------- formatting helpers ---------- */
+function fmtC(n){if(n>=100000)return Math.round(n/1000)+'K';if(n>=1000)return (n/1000).toFixed(n>=10000?0:1)+'K';return String(Math.round(n));}
+function pct(x,d){return (x).toFixed(d==null?0:d)+'%';}
+function devFactor(){ return state.dev==='ios'?0.58 : state.dev==='android'?0.42 : 1; }
+/* Scales cumulative counts (sessions, screen views, completions) to the selected
+   window length, relative to the 30-day baseline the seeded sample series were built for.
+   Rate/percentage metrics (bounce rate, retention %, durations) are window-independent
+   and should NOT be passed through this. */
+function rangeFactor(){ return state.range/30; }
+
+/* ---------- tile w/ optional user-editable target ---------- */
+function tile(o){
+  const arrowSym = o.dir==='up'?'▲':o.dir==='dn'?'▼':'—';
+  const infoBtn='<span class="info-wrap"><button class="info-btn">i</button><div class="info-pop">'+kpiInfoHtml(o.label)+'</div></span>';
+  let bm='';
+  if(!o.noTarget && o.id){
+    const t=getBM(o.id); const unit=o.unit||'';
+    let badge;
+    if(t==null||isNaN(t)){ badge='<span class="bb unset">set a target</span>'; }
+    else { const met=(o.goodUp!==false)? o.raw>=t : o.raw<=t; badge='<span class="bb '+(met?'met':'miss')+'">'+(met?'✓ on target':'✕ off target')+'</span>'; }
+    bm='<div class="bm"><span class="bl">Target</span>'+
+      '<input class="bmin" type="text" inputmode="decimal" data-bm="'+o.id+'" value="'+(t==null||isNaN(t)?'':t)+'" placeholder="—" title="Set your own target for this KPI">'+
+      (unit?'<span class="bu">'+unit+'</span>':'')+badge+'</div>';
+  }
+  return '<div class="tile" data-raw="'+(o.raw==null?'':o.raw)+'" data-goodup="'+(o.goodUp!==false)+'">'+
+    '<div class="tophead"><div class="lbl">'+o.label+'</div>'+infoBtn+'</div>'+
+    '<div class="val">'+o.val+'</div>'+
+    (o.delta!=null?'<div class="delta '+o.dir+'">'+arrowSym+' '+o.delta+'</div>':'')+
+    (o.sub?'<div class="sub2">'+o.sub+'</div>':'')+
+    bm+
+  '</div>';
+}
+document.addEventListener('input',function(e){
+  if(e.target && e.target.classList.contains('bmin') && e.target.hasAttribute('data-bm')){
+    const id=e.target.dataset.bm, v=e.target.value.trim();
+    BENCHMARKS[id]=(v===''?null:parseFloat(v));
+    const wrap=e.target.closest('.bm');
+    const old=wrap.querySelector('.bb'); if(old) old.remove();
+    const tileEl=e.target.closest('.tile');
+    const raw=parseFloat(tileEl.dataset.raw), goodUp=tileEl.dataset.goodup!=='false';
+    const t=getBM(id);
+    let badge;
+    if(t==null||isNaN(t)){ badge='<span class="bb unset">set a target</span>'; }
+    else { const met=goodUp? raw>=t : raw<=t; badge='<span class="bb '+(met?'met':'miss')+'">'+(met?'✓ on target':'✕ off target')+'</span>'; }
+    wrap.insertAdjacentHTML('beforeend',badge);
+  }
+});
+/* Overview stat card — same anatomy, no target row */
+function stat(o){
+  return '<div class="stat"><div class="tile-top" style="display:flex;align-items:baseline;gap:8px"><span class="sv">'+o.disp+'</span>'+
+    (o.delta!=null?'<span class="delta '+(o.dir||'up')+'">'+(o.dir==='dn'?'▼':'▲')+' '+o.delta+'</span>':'')+'</div>'+
+    '<div class="sl">'+o.label+'</div>'+(o.sub?'<div class="ss">'+o.sub+'</div>':'')+'</div>';
+}
+
+/* ---------- chart card shell ---------- */
+function chartCard(container,key,eyebrow,title,purpose,insight){
+  /* `insight` (a canned analysis string) is intentionally accepted but not
+     rendered — this build has no AI-insight surface on chart cards. */
+  container.innerHTML =
+    '<div class="card-head">'+
+      '<div class="charthead">'+
+        '<div><div class="cr">'+eyebrow+'</div><div class="ct">'+title+'</div></div>'+
+        '<span class="info-wrap"><button class="info-btn">i</button><div class="info-pop"><b>Purpose</b>'+purpose+'</div></span>'+
+      '</div>'+
+    '</div>'+
+    '<div class="card-body" id="body-'+key+'"></div>';
+  return document.getElementById('body-'+key);
+}
+
+/* ================= inline-SVG chart builders (FM Matrix v2 house style) =================
+   No chart frame, no horizontal rules. Faint vertical dashed gridlines at label
+   positions only. Y scale as three plain grey numbers at left. One saturated
+   data colour + one pale area fill; everything else grey. Colours are read from
+   CSS custom properties at render time so a theme flip only needs a re-sync + re-render. */
+function axisLabel(x,y,txt,anchor){
+  return '<text x="'+x+'" y="'+y+'" text-anchor="'+(anchor||'middle')+'" font-size="11" fill="'+C_FAINT+'" '+
+         'font-family="Inter,-apple-system,Segoe UI,sans-serif">'+txt+'</text>';
+}
+
+/* Generic single-series line chart with optional dashed previous-period overlay. */
+function lineChart(cur,prev,opts){
+  opts=opts||{};
+  const W=680,H=250,pl=(opts.pctScale?54:44),pr=14,pt=16,pb=30;
+  const color=opts.color||C_BLUE, fill=opts.fill||C_FILL;
+  const all=cur.concat(prev&&state.prev?prev:[]);
+  /* percent-style series (e.g. crash-free %) stay pinned near their true range instead
+     of a 0-based scale, so small real movements are still visible. */
+  const mn=opts.pctScale? Math.max(0,Math.min.apply(null,all)-0.6) : 0;
+  const mx=opts.pctScale? Math.min(100,Math.max.apply(null,all)+0.6) : (Math.max.apply(null,all)*1.14||1);
+  const span=(mx-mn)||1;
+  const n=cur.length, xw=(W-pl-pr)/(n-1||1);
+  const X=i=>pl+i*xw, Y=v=>pt+(H-pt-pb)*(1-(v-mn)/span);
+  const base=H-pb;
+  const vfmt=opts.pctScale? (v=>v.toFixed(1)+'%') : fmtC;
+  function path(arr){let d='';for(let i=0;i<arr.length;i++){d+=(i?'L':'M')+X(i).toFixed(1)+' '+Y(arr[i]).toFixed(1)+' ';}return d;}
+
+  const step=Math.max(1,Math.ceil(n/6));
+  let grid='',xlab='';
+  for(let i=0;i<n;i+=step){
+    grid+='<line x1="'+X(i).toFixed(1)+'" y1="'+pt+'" x2="'+X(i).toFixed(1)+'" y2="'+base+'" stroke="'+C_GRID+'" stroke-dasharray="2 4"/>';
+    xlab+=axisLabel(X(i).toFixed(1),H-9,(opts.labels?opts.labels[i]:i+1));
+  }
+  let ylab='';
+  for(let g=0;g<=2;g++){
+    const y=pt+(H-pt-pb)*g/2, val=mn+span*(1-g/2);
+    ylab+=axisLabel(pl-11,y+4,vfmt(val),'end');
+  }
+  let areaD='';
+  for(let i=0;i<n;i++){areaD+=(i?'L':'M')+X(i).toFixed(1)+' '+Y(cur[i]).toFixed(1)+' ';}
+  areaD+='L'+X(n-1).toFixed(1)+' '+base+' L'+X(0).toFixed(1)+' '+base+' Z';
+
+  const prevPath=(prev&&state.prev)
+    ? '<path d="'+path(prev)+'" fill="none" stroke="'+C_LINE+'" stroke-width="1.8" stroke-dasharray="4 4"/>' : '';
+
+  return '<svg class="chart" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">'+
+    grid+ylab+xlab+
+    '<line x1="'+pl+'" y1="'+base+'" x2="'+(W-pr)+'" y2="'+base+'" stroke="'+C_GRID+'"/>'+
+    '<path d="'+areaD+'" fill="'+fill+'"/>'+prevPath+
+    '<path d="'+path(cur)+'" fill="none" stroke="'+color+'" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>'+
+    '<circle cx="'+X(n-1).toFixed(1)+'" cy="'+Y(cur[n-1]).toFixed(1)+'" r="3" fill="'+color+'"/></svg>';
+}
+
+/* Active users against a natural ceiling (registered gate staff/admins) — Overview headline chart,
+   reusing FM Matrix's seatsChart amber-ceiling-line pattern. */
+function seatsChart(active,ceiling,labels){
+  const W=680,H=250,pl=44,pr=14,pt=16,pb=30;
+  const mx=Math.max(ceiling,Math.max.apply(null,active))*1.12||1;
+  const n=active.length, xw=(W-pl-pr)/(n-1||1);
+  const X=i=>pl+i*xw, Y=v=>pt+(H-pt-pb)*(1-v/mx);
+  const base=H-pb;
+  const step=Math.max(1,Math.ceil(n/6));
+  let grid='',xlab='';
+  for(let i=0;i<n;i+=step){
+    grid+='<line x1="'+X(i).toFixed(1)+'" y1="'+pt+'" x2="'+X(i).toFixed(1)+'" y2="'+base+'" stroke="'+C_GRID+'" stroke-dasharray="2 4"/>';
+    xlab+=axisLabel(X(i).toFixed(1),H-9,labels[i]);
+  }
+  let ylab='';
+  for(let g=0;g<=2;g++){const y=pt+(H-pt-pb)*g/2;ylab+=axisLabel(pl-11,y+4,fmtC(Math.round(mx*(1-g/2))),'end');}
+  let d='',area='';
+  for(let i=0;i<n;i++){d+=(i?'L':'M')+X(i).toFixed(1)+' '+Y(active[i]).toFixed(1)+' ';}
+  area=d+'L'+X(n-1).toFixed(1)+' '+base+' L'+X(0).toFixed(1)+' '+base+' Z';
+  const sy=Y(ceiling).toFixed(1);
+  return '<svg class="chart" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">'+
+    grid+ylab+xlab+
+    '<line x1="'+pl+'" y1="'+base+'" x2="'+(W-pr)+'" y2="'+base+'" stroke="'+C_GRID+'"/>'+
+    '<path d="'+area+'" fill="'+C_FILL+'"/>'+
+    '<path d="'+d+'" fill="none" stroke="'+C_BLUE+'" stroke-width="2.2" stroke-linejoin="round"/>'+
+    '<line x1="'+pl+'" y1="'+sy+'" x2="'+(W-pr)+'" y2="'+sy+'" stroke="'+C_AMBER+'" stroke-width="2"/></svg>';
+}
+
+/* Plain vertical bars — the "Adoption level" card. */
+function barsV(items){
+  const W=560,H=215,pl=34,pr=10,pt=16,pb=30;
+  const mx=Math.max.apply(null,items.map(i=>i.value))*1.12||1;
+  const n=items.length, slot=(W-pl-pr)/n, bw=Math.min(96,slot*0.56);
+  const base=H-pb;
+  let ylab='';
+  for(let g=0;g<=2;g++){const y=pt+(base-pt)*g/2;ylab+=axisLabel(pl-10,y+4,fmtC(Math.round(mx*(1-g/2))),'end');}
+  let bars='';
+  items.forEach((it,i)=>{
+    const h=(base-pt)*(it.value/mx), x=pl+i*slot+(slot-bw)/2;
+    bars+='<rect x="'+x.toFixed(1)+'" y="'+(base-h).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(0,h).toFixed(1)+'" rx="3" fill="'+C_BLUE+'"/>';
+    bars+=axisLabel(x+bw/2,H-9,it.label);
+  });
+  return '<svg class="chart" viewBox="0 0 '+W+' '+H+'">'+ylab+
+    '<line x1="'+pl+'" y1="'+base+'" x2="'+(W-pr)+'" y2="'+base+'" stroke="'+C_GRID+'"/>'+bars+'</svg>';
+}
+
+/* Horizontal bar chart — replaces Chart.js hbarChartJS. items=[[label,value],...] (ascending order looks best, longest on top). */
+function truncLabel(s,max){ s=String(s); return s.length>max ? s.slice(0,max-1)+'…' : s; }
+function hbarChart(labels,values,color,colorArr){
+  const W=720,rowH=28,pr=58,pt=6,pb=6;
+  const n=labels.length, H=pt+pb+n*rowH;
+  const mx=Math.max.apply(null,values)*1.08||1;
+  const labelW=196; // reserved left label column, wide enough for the longest real workflow/module names
+  const chartW=W-pr-labelW-14;
+  let bars='';
+  labels.forEach((lab,i)=>{
+    const y=pt+i*rowH, bh=rowH*0.62;
+    const w=Math.max(2,(values[i]/mx)*chartW);
+    const col=(colorArr&&colorArr[i])||color||C_BLUE;
+    bars+='<text x="'+labelW+'" y="'+(y+bh/2+4)+'" text-anchor="end" font-size="11.5" fill="'+C_INK+'" font-family="Inter,sans-serif"><title>'+esc(lab)+'</title>'+esc(truncLabel(lab,26))+'</text>';
+    bars+='<rect x="'+(labelW+10)+'" y="'+y+'" width="'+w.toFixed(1)+'" height="'+bh.toFixed(1)+'" rx="4" fill="'+col+'"/>';
+    bars+='<text x="'+(labelW+10+w+8)+'" y="'+(y+bh/2+4)+'" font-size="11.5" fill="'+C_INK+'" font-family="Inter,sans-serif" font-weight="500">'+fmtC(values[i])+'</text>';
+  });
+  return '<svg class="chart" viewBox="0 0 '+W+' '+H+'">'+bars+'</svg>';
+}
+
+/* Donut chart via stroke-dasharray arcs. rows=[[label,value,color],...] */
+function donutChart(rows){
+  const total=rows.reduce((a,r)=>a+r[1],0)||1;
+  const W=260,H=200,cx=90,cy=100,rad=62,sw=24;
+  const circ=2*Math.PI*rad;
+  let acc=0, arcs='';
+  rows.forEach(r=>{
+    const frac=r[1]/total, len=frac*circ;
+    arcs+='<circle cx="'+cx+'" cy="'+cy+'" r="'+rad+'" fill="none" stroke="'+r[2]+'" stroke-width="'+sw+'" '+
+      'stroke-dasharray="'+len.toFixed(1)+' '+(circ-len).toFixed(1)+'" stroke-dashoffset="'+(-acc).toFixed(1)+'" transform="rotate(-90 '+cx+' '+cy+')"/>';
+    acc+=len;
+  });
+  let legend='';
+  rows.forEach((r,i)=>{
+    legend+='<circle cx="188" cy="'+(58+i*26)+'" r="5" fill="'+r[2]+'"/>'+
+      '<text x="200" y="'+(58+i*26+4)+'" font-size="12" fill="'+C_INK+'" font-family="Inter,sans-serif">'+esc(r[0])+' &middot; '+Math.round(r[1]/total*100)+'%</text>';
+  });
+  return '<svg class="chart" viewBox="0 0 '+W+' '+H+'">'+arcs+legend+'</svg>';
+}
+
+/* Stacked bar chart with a negative ("below the line") segment — for growth accounting.
+   series = [{label,data:[...],color}], negSeries={label,data:[...],color} (rendered downward). */
+function stackedBarChart(labels,series,negSeries){
+  const W=600,H=260,pl=40,pr=12,pt=14,pb=26;
+  const n=labels.length;
+  const maxUp=Math.max.apply(null,labels.map((_,i)=>series.reduce((a,s)=>a+s.data[i],0)));
+  const maxDn=negSeries?Math.max.apply(null,negSeries.data):0;
+  const gap=(W-pl-pr)/n, bw=gap*0.52;
+  const zero=pt+(H-pt-pb)*(maxUp/((maxUp+maxDn)||1));
+  const scaleUp=(zero-pt)/(maxUp||1), scaleDn=(H-pb-zero)/(maxDn||1);
+  let bars='',xlab='';
+  labels.forEach((lab,i)=>{
+    const x=pl+i*gap+(gap-bw)/2; let y=zero;
+    series.forEach(s=>{
+      const h=s.data[i]*scaleUp; y-=h;
+      bars+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(0,h).toFixed(1)+'" fill="'+s.color+'"/>';
+    });
+    if(negSeries){
+      const hd=negSeries.data[i]*scaleDn;
+      bars+='<rect x="'+x.toFixed(1)+'" y="'+zero.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(0,hd).toFixed(1)+'" fill="'+negSeries.color+'"/>';
+    }
+    xlab+=axisLabel(x+bw/2,H-8,lab);
+  });
+  return '<svg class="chart" viewBox="0 0 '+W+' '+H+'">'+bars+xlab+
+    '<line x1="'+pl+'" y1="'+zero.toFixed(1)+'" x2="'+(W-pr)+'" y2="'+zero.toFixed(1)+'" stroke="'+C_LINE+'"/></svg>';
+}
+
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+/* ================= shared data ================= */
+const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+/* ILLUSTRATIVE — there is no live PostHog project behind SmartSecure at all.
+   This 12-point curve is a plain smooth-growth shape chosen only so the "Usage over time"
+   chart looks populated; it is NOT anchored to any real endpoint from any live project. */
+const activeUsersBase=[1650,1720,1790,1860,1930,2000,2070,2140,2205,2270,2330,2390];
+const sessionsBase=[9200,9600,10000,10400,10800,11200,11600,12000,12380,12760,13120,13480];
+function seriesForDev(base){ return base.map(v=>Math.round(v*devFactor())); }
+function prevSeries(base,shrink){ return base.map(v=>Math.round(v*shrink*devFactor())); }
+
+/* ILLUSTRATIVE placeholder society names — sample data only, not real SmartSecure client names. */
+const PROJECTS=['Society A – Powai','Society B – Andheri','Society C – Malad','Society D – Chembur'];
+const BOOKED_HOMEBUYERS=2500; /* ILLUSTRATIVE ceiling — an estimated total registered-gate-staff-and-admin count across societies, not a real/confirmed figure. Named BOOKED_HOMEBUYERS only to keep the variable identical across the whole product family's shared JS engine; it functions here as the "registered users" ceiling the Active Users line is scaled against. */
+
+/* ================= real modules — from SmartSecure_PostHog_Events.xlsx ("PostHog Events" sheet) =================
+   17 modules, 180 events across 38 categories. Module NAMES and their underlying event names
+   are the real, documented events from that catalogue; the reach % next to each module is
+   illustrative/sample — there is no live PostHog project behind SmartSecure yet. */
+const modulesList=[
+  ['Home',100],['Splash & Device Approval',97],['Authentication',94],['Visitor Management',86],
+  ['Staff Management',71],['Profile & Staff Verification',52],['Notifications',48],
+  ['Member Vehicle',44],['Visitor Vehicle',41],['QR Scanner / Gate Entry',63],
+  ['Setup',36],['Patrolling',33],['Goods Outward',28],['History Filter (shared)',39],
+  ['Help Center',17],['Shared Utilities',45],['App Lifecycle',100]
+];
+const TOTAL_MODULES=modulesList.length;
+const WORKFLOW_MODULES=modulesList.filter(m=>m[0]!=='App Lifecycle'&&m[0]!=='Home'&&m[0]!=='Authentication'&&m[0]!=='Notifications'&&m[0]!=='Help Center'&&m[0]!=='History Filter (shared)'&&m[0]!=='Shared Utilities');
+const TOTAL_WORKFLOW_MODULES=WORKFLOW_MODULES.length;
+const TOTAL_REAL_EVENTS=180;
+
+/* ================================================================
+   0. PRODUCT HEALTH SCORE (gauge)
+   ================================================================ */
+/* ================================================================
+   1. TRAFFIC & SESSION
+   ================================================================ */
+function renderTraffic(){
+  const activeUsers=seriesForDev(activeUsersBase);
+  const sessions=seriesForDev(sessionsBase);
+  const rf=rangeFactor();
+  const curActive=Math.min(Math.round(activeUsers[activeUsers.length-1]*Math.min(rf,1.6)), Math.round(BOOKED_HOMEBUYERS*0.92));
+  const curSessions=Math.round(sessions[sessions.length-1]*rf);
+  const views=Math.round(curSessions*4.07), bounce=22, avgDur='4m 02s';
+  const recentlyOnline=Math.round(curActive*0.021);
+
+  document.getElementById('tilesTraffic').innerHTML = [
+    tile({id:'activeUsers',label:'Active Users',val:curActive.toLocaleString(),dir:'up',delta:'5.8% vs prev. period',sub:'unique gate staff/admins this period',raw:curActive,unit:'K',goodUp:true}),
+    tile({id:'screenViews',label:'Screen Views',val:fmtC(views),dir:'up',delta:'4.6%',sub:'total across modules',raw:views,noTarget:true}),
+    tile({id:'totalSessions',label:'Sessions',val:curSessions.toLocaleString(),dir:'up',delta:'4.1%',sub:'app sessions started',raw:curSessions,noTarget:true}),
+    tile({id:'avgSessionDur',label:'Session Duration',val:avgDur,dir:'up',delta:'16s',sub:'per session',raw:4.03,noTarget:true}),
+    tile({id:'bounceRate',label:'Bounce Rate',val:'22%',dir:'dn',delta:'1.3%',sub:'lower is better',raw:bounce,unit:'%',goodUp:false}),
+    tile({id:'recentlyOnline',label:'Recently Online',val:recentlyOnline.toLocaleString(),dir:'flat',delta:null,sub:'active in last 30 min',noTarget:true})
+  ].join('');
+
+  (function(){
+    const el=chartCard(document.getElementById('card-trafficActive'),'trafActive','Usage over time · SVG chart','Usage over time',
+      'Visitors, screen views, and sessions over time, across all projects, with the previous period overlaid for comparison.',
+      'Active Users increased steadily over the period, with Project A contributing the strongest month-over-month growth.');
+    el.innerHTML='<div class="charttabs" id="usageTabs" style="margin-bottom:10px">'+
+        '<button data-u="visitors" class="on">Visitors</button><button data-u="views">Views</button><button data-u="sessions">Sessions</button>'+
+      '</div><div id="usageChartBody">'+
+      lineChart(activeUsers,prevSeries(activeUsersBase,0.90),{labels:months,color:C_BLUE,fill:C_FILL})+
+      '<div class="legend"><span><i style="background:'+C_BLUE+'"></i> Visitors</span><span><i class="dash"></i> Previous period</span></div></div>';
+    el.querySelectorAll('#usageTabs button').forEach(b=>b.onclick=()=>{
+      el.querySelectorAll('#usageTabs button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+      const body=el.querySelector('#usageChartBody');
+      if(b.dataset.u==='visitors') body.innerHTML=lineChart(activeUsers,prevSeries(activeUsersBase,0.90),{labels:months,color:C_BLUE,fill:C_FILL})+'<div class="legend"><span><i style="background:'+C_BLUE+'"></i> Visitors</span><span><i class="dash"></i> Previous period</span></div>';
+      else if(b.dataset.u==='views'){ const viewsSeries=activeUsers.map(v=>Math.round(v*4.07)); body.innerHTML=lineChart(viewsSeries,prevSeries(activeUsersBase.map(v=>v*4.07),0.90),{labels:months,color:C_VIOLET,fill:C_VIOLET_TINT})+'<div class="legend"><span><i style="background:'+C_VIOLET+'"></i> Views</span><span><i class="dash"></i> Previous period</span></div>'; }
+      else body.innerHTML=lineChart(sessions,prevSeries(sessionsBase,0.92),{labels:months,color:C_GREEN,fill:'var(--green-tint)'})+'<div class="legend"><span><i style="background:'+C_GREEN+'"></i> Sessions</span><span><i class="dash"></i> Previous period</span></div>';
+    });
+  })();
+
+  (function(){
+    const ds=0.59;
+    const iosShare=state.dev==='android'?0:state.dev==='ios'?1:ds;
+    const andShare=state.dev==='ios'?0:state.dev==='android'?1:(1-ds);
+    const rows=[['iOS',iosShare,C_VIOLET],['Android',andShare,C_GREEN]];
+    const el=chartCard(document.getElementById('card-deviceSplit'),'deviceSplit','Device / platform split','Web app vs mobile OS usage',
+      'Share of active users by platform — SmartSecure runs on gate tablets, so this shows where release testing and support effort should concentrate.',
+      'iOS and Android usage is close to evenly split (59/41) — release QA and support responses should budget equal attention to both platforms rather than treating one as primary.');
+    el.innerHTML='<div class="hbars">'+rows.map(r=>'<div class="role"><div class="rn">'+r[0]+'</div><div class="rbar"><i style="width:'+Math.round(r[1]*100)+'%;background:'+r[2]+'"></i></div><div class="rv">'+pct(r[1]*100)+'</div></div>').join('')+
+      '</div><div class="kv" style="margin-top:14px"><div><div class="k">Views / session</div><div class="v" style="font-size:18px">'+(views/curSessions).toFixed(1)+'</div><div class="u">screens per visit</div></div></div>';
+  })();
+}
+
+/* ================================================================
+   2. ADOPTION & ENGAGEMENT
+   ================================================================ */
+function renderAdoption(){
+  const r=rngFor('adoptTiles|'+state.dev);
+  const activeUsers=seriesForDev(activeUsersBase);
+  const rf=rangeFactor();
+  const curActive=Math.min(Math.round(activeUsers[activeUsers.length-1]*Math.min(rf,1.6)), Math.round(BOOKED_HOMEBUYERS*0.92));
+  const seatUtil=curActive/BOOKED_HOMEBUYERS;
+  const stickiness=0.34+r()*0.08;
+  const adoptionTrend=Math.round(4+r()*6);
+  const activation14=Math.round(52+r()*10);
+  const usedModules=11; /* ILLUSTRATIVE — sample count of the 18 real modules touched at least once this period */
+
+  document.getElementById('tilesAdoption').innerHTML = [
+    tile({id:'seatUtil',label:'Seat Utilisation',val:pct(seatUtil*100),dir:'up',delta:'2.1%',sub:'active ÷ registered gate staff',raw:seatUtil*100,unit:'%',goodUp:true}),
+    tile({id:'stickiness',label:'Stickiness',val:pct(stickiness*100),dir:'up',delta:'1.2%',sub:'avg DAU/MAU',raw:stickiness*100,unit:'%',goodUp:true}),
+    tile({id:'adoptionTrend',label:'Adoption Trend',val:'+'+adoptionTrend+'%',dir:'up',delta:'vs prior 8 weeks',sub:'weekly active users',noTarget:true}),
+    tile({id:'activation14',label:'14-Day Activation',val:activation14+'%',dir:'up',delta:'1.8%',sub:'of new bookings',raw:activation14,unit:'%',goodUp:true}),
+    tile({id:'moduleBreadth2',label:'Module Breadth',val:usedModules+' / '+TOTAL_MODULES,dir:'flat',delta:null,sub:'modules used this period',noTarget:true})
+  ].join('');
+
+  (function(){
+    const weeks=['W1','W2','W3','W4','W5','W6','W7','W8'];
+    const base=curActive*0.62;
+    const tr=rngFor('adoptTrendChart|'+state.dev);
+    const series=weeks.map((_,i)=>Math.round(base*(0.88+i*0.018)*(0.97+tr()*0.06)));
+    chartCard(document.getElementById('card-adoptionTrend'),'adoptTrendChart','Trend · SVG line chart','Adoption trend (weekly active users, last 8 weeks)',
+      'Weekly active users over the last 8 weeks — the trend line behind the Adoption Trend tile above.',
+      'Weekly actives have climbed steadily over the last 8 weeks, consistent with the +'+adoptionTrend+'% Adoption Trend figure above.').innerHTML=
+      lineChart(series,null,{labels:weeks,color:C_BLUE,fill:C_FILL})+
+      '<div class="legend"><span><i style="background:'+C_BLUE+'"></i> Weekly active users</span></div>';
+  })();
+
+  (function(){
+    const r2=rngFor('growth|'+state.dev);
+    const weeks=['W1','W2','W3','W4','W5','W6'];
+    const base=7600*devFactor();
+    const nw=[],ret=[],res=[],dorm=[];
+    weeks.forEach(()=>{
+      nw.push(Math.round(base*(0.05+r2()*0.06)));
+      ret.push(Math.round(base*(0.55+r2()*0.15)));
+      res.push(Math.round(base*(0.03+r2()*0.04)));
+      dorm.push(Math.round(base*(0.06+r2()*0.08)));
+    });
+    chartCard(document.getElementById('card-growthAccounting'),'growthAcct','Growth accounting · Last 6 weeks','New · Returning · Resurrecting · Dormant',
+      'Breaks the active base into new signups, retained users, win-backs and users going quiet — a fuller view than a simple new-vs-returning split.',
+      'Returning users anchor the base every week, and resurrecting users (win-backs) outnumber newly dormant users in 4 of the last 6 weeks — the base is growing net-healthy, not just net-new.').innerHTML=
+      stackedBarChart(weeks,[{label:'New',data:nw,color:C_BLUE},{label:'Returning',data:ret,color:C_GREEN},{label:'Resurrecting',data:res,color:C_MINT}],{label:'Dormant',data:dorm,color:C_RED})+
+      '<div class="legend"><span><i style="background:'+C_BLUE+'"></i> New</span><span><i style="background:'+C_GREEN+'"></i> Returning</span><span><i style="background:'+C_MINT+'"></i> Resurrecting</span><span><i style="background:'+C_RED+'"></i> Dormant</span></div>';
+  })();
+
+  renderRetentionCohort();
+
+  (function(){
+    const roles=[['Gatekeepers',0.91,C_BLUE],['Supervisors',0.64,C_VIOLET],['Society Admins',0.52,C_MINT],['All registered staff',0.71,C_GREEN]];
+    const el=chartCard(document.getElementById('card-roleSplit'),'roleSplit','Adoption by role',"Who is (and isn't) using the app",
+      "Active users ÷ registered users, split by the role property stamped on every event (gatekeeper, supervisor, admin) — shows whether adoption is concentrated at the gate or also reaching the people who configure Setup and review history.");
+    el.innerHTML='<div class="hbars">'+roles.map(r2=>'<div class="role"><div class="rn">'+r2[0]+'</div><div class="rbar"><i style="width:'+Math.round(r2[1]*100)+'%;background:'+r2[2]+'"></i></div><div class="rv">'+pct(r2[1]*100)+'</div></div>').join('')+'</div>';
+  })();
+
+  renderDormant();
+  renderSiteWise();
+}
+
+/* Note: app navigation map and any sampled journey/entry-exit cards from
+   older Overview-style layouts have been dropped entirely — none of
+   them map onto FM's 3-layer structure, and the goal is strict 1:1
+   parity with FM so developers can build against one proven pattern. */
+
+/* ================================================================
+   4. WORKFLOW USAGE — 10 workflow-bearing modules (of 17 total; Home,
+   Authentication, Notifications, Help Center, History Filter (shared)
+   and Shared Utilities are bookkeeping-only, and App Lifecycle is a
+   single session-start event — see the note below the array), grouped
+   into 6 buckets. Module names, bucket grouping, and every step[]
+   event name below are real, taken verbatim from the "PostHog Events"
+   sheet of SmartSecure_PostHog_Events.xlsx (180 events, 38
+   categories). adoption / completionRate / dropoffRate / avgTime /
+   completions are ILLUSTRATIVE sample figures — there is no live
+   PostHog project behind SmartSecure yet.
+
+   3 additional workflows (visitorAssetDeclare, visitorIdVerify,
+   visitorNdaConsent) carry proposed:true and use PROPOSED event names
+   that do NOT appear in SmartSecure_PostHog_Events.xlsx. They were
+   added after reviewing the design team's Figma screens for visitor
+   registration, which show a 5-step wizard (Registration → Additional
+   Visitors/Vehicle → Asset Declaration → Identity Verification →
+   Preview/Submit, ending in either a Gate Pass or an NDA-acceptance
+   step) — only step 1 of that wizard is in the current PostHog
+   catalogue. These 3 cards exist so engineers have a concrete
+   starting point for instrumenting the missing steps; the event
+   names are suggestions, not confirmed instrumentation.
+   ================================================================ */
+const workflows=[
+  {key:'devApproval',name:'Device Gatekeeper Verification',bucket:'Access & Device',
+   steps:['splash_routed_to_gatekeeper_verification','gatekeeper_verification_submit_attempted','gatekeeper_verification_submit_succeeded'],
+   adoption:18,completionRate:74,dropoffRate:26,avgTime:'2m 10s',completions:'340'},
+  {key:'staffFaceVerify',name:'Staff Face Verification',bucket:'Access & Device',
+   steps:['profile_verify_staff_attempted','profile_verify_staff_succeeded'],
+   adoption:41,completionRate:88,dropoffRate:12,avgTime:'15s',completions:'2,860'},
+  {key:'visitorCreate',name:'Visitor Creation',bucket:'Visitor Ops',
+   steps:['visitor_mobile_verify_attempted','visitor_tower_flat_list_viewed','visitor_tower_flat_selection_confirmed','visitor_create_attempted','visitor_create_succeeded'],
+   adoption:92,completionRate:81,dropoffRate:19,avgTime:'1m 35s',completions:'18,240',
+   incompleteNote:'The Figma screens for visitor registration show this is actually step 1 of a 5-step wizard (Registration → Additional Visitors/Vehicle → Asset Declaration → Identity Verification → Preview/Submit, then either a Gate Pass or an NDA-acceptance step depending on who fills the form). Only this first step’s events are in the current PostHog catalogue — see the 3 proposed workflow cards below (Visitor Asset Declaration, Visitor Identity Verification, Visitor NDA Consent) for the missing steps.'},
+  {key:'visitorCheckin',name:'Visitor Check-in',bucket:'Visitor Ops',
+   steps:['visitor_otp_send_attempted','visitor_otp_verify_attempted','visitor_check_in_attempted','visitor_check_in_confirmed'],
+   adoption:88,completionRate:90,dropoffRate:10,avgTime:'45s',completions:'21,560'},
+  {key:'visitorCheckout',name:'Visitor Checkout',bucket:'Visitor Ops',
+   steps:['visitor_checkout_list_viewed','visitor_checkout_attempted','visitor_checkout_succeeded'],
+   adoption:74,completionRate:93,dropoffRate:7,avgTime:'20s',completions:'16,980'},
+  {key:'visitorAssetDeclare',name:'Visitor Asset Declaration',bucket:'Visitor Ops',proposed:true,
+   steps:['visitor_asset_declaration_opened','visitor_asset_category_selected','visitor_asset_details_entered','visitor_asset_added','visitor_asset_declaration_completed'],
+   adoption:38,completionRate:71,dropoffRate:29,avgTime:'1m 20s',completions:'6,940'},
+  {key:'visitorIdVerify',name:'Visitor Identity Verification',bucket:'Visitor Ops',proposed:true,
+   steps:['visitor_id_type_selected','visitor_id_photo_captured','visitor_id_verification_attempted','visitor_id_verification_succeeded'],
+   adoption:81,completionRate:76,dropoffRate:24,avgTime:'1m 05s',completions:'15,120'},
+  {key:'visitorNdaConsent',name:'Visitor NDA Consent',bucket:'Visitor Ops',proposed:true,
+   steps:['visitor_nda_screen_viewed','visitor_nda_accepted','visitor_selfservice_registration_submitted'],
+   adoption:29,completionRate:87,dropoffRate:13,avgTime:'35s',completions:'3,260'},
+  {key:'staffCreate',name:'Staff Creation',bucket:'Staff Ops',
+   steps:['staff_create_screen_viewed','staff_create_attempted','staff_create_succeeded'],
+   adoption:23,completionRate:69,dropoffRate:31,avgTime:'2m 50s',completions:'560'},
+  {key:'staffCheckin',name:'Staff Check-in',bucket:'Staff Ops',
+   steps:['staff_in_list_viewed','staff_check_in_attempted','staff_check_in_succeeded'],
+   adoption:66,completionRate:91,dropoffRate:9,avgTime:'25s',completions:'9,840'},
+  {key:'staffCheckout',name:'Staff Check-out',bucket:'Staff Ops',
+   steps:['staff_out_list_viewed','staff_check_out_attempted','staff_check_out_succeeded'],
+   adoption:63,completionRate:94,dropoffRate:6,avgTime:'18s',completions:'9,320'},
+  {key:'memberVehIn',name:'Member Vehicle Check-in',bucket:'Vehicle Ops',
+   steps:['member_vehicle_check_in_list_viewed','member_vehicle_check_in_attempted','member_vehicle_check_in_succeeded'],
+   adoption:48,completionRate:89,dropoffRate:11,avgTime:'22s',completions:'7,120'},
+  {key:'memberVehOut',name:'Member Vehicle Check-out',bucket:'Vehicle Ops',
+   steps:['member_vehicle_check_out_list_viewed','member_vehicle_check_out_attempted','member_vehicle_check_out_succeeded'],
+   adoption:46,completionRate:92,dropoffRate:8,avgTime:'18s',completions:'6,880'},
+  {key:'visitorVehCreate',name:'Visitor Vehicle Creation',bucket:'Vehicle Ops',
+   steps:['visitor_vehicle_create_screen_viewed','visitor_vehicle_create_attempted','visitor_vehicle_create_succeeded'],
+   adoption:31,completionRate:76,dropoffRate:24,avgTime:'1m 05s',completions:'3,420'},
+  {key:'visitorVehIn',name:'Visitor Vehicle In',bucket:'Vehicle Ops',
+   steps:['visitor_vehicle_in_list_viewed','visitor_vehicle_check_in_attempted','visitor_vehicle_check_in_succeeded'],
+   adoption:34,completionRate:87,dropoffRate:13,avgTime:'20s',completions:'4,060'},
+  {key:'visitorVehOut',name:'Visitor Vehicle Out',bucket:'Vehicle Ops',
+   steps:['visitor_vehicle_out_list_viewed','visitor_vehicle_check_out_attempted','visitor_vehicle_check_out_succeeded'],
+   adoption:33,completionRate:90,dropoffRate:10,avgTime:'16s',completions:'3,980'},
+  {key:'qrGateEntry',name:'QR Gate Entry',bucket:'Security & Assets',
+   steps:['qr_scan_verify_attempted','qr_scan_verify_succeeded'],
+   adoption:57,completionRate:85,dropoffRate:15,avgTime:'8s',completions:'12,640'},
+  {key:'patrollingRound',name:'Patrolling Round',bucket:'Security & Assets',
+   steps:['patrolling_comment_submit_attempted','home_qr_scan_patrolling_comment_submitted'],
+   adoption:29,completionRate:79,dropoffRate:21,avgTime:'1m 40s',completions:'2,140'},
+  {key:'goodsOutward',name:'Goods Outward',bucket:'Security & Assets',
+   steps:['goods_outward_list_viewed','goods_outward_mark_out_attempted','goods_outward_mark_out_succeeded'],
+   adoption:21,completionRate:82,dropoffRate:18,avgTime:'50s',completions:'1,480'},
+  {key:'setupVisitPurpose',name:'Setup - Visit Purpose',bucket:'Configuration',
+   steps:['setup_visit_purpose_list_viewed','setup_visit_purpose_add_attempted','setup_visit_purpose_add_succeeded'],
+   adoption:11,completionRate:88,dropoffRate:12,avgTime:'40s',completions:'310'},
+  {key:'setupWorkType',name:'Setup - Work Type',bucket:'Configuration',
+   steps:['setup_work_type_list_viewed','setup_work_type_add_attempted','setup_work_type_add_succeeded'],
+   adoption:9,completionRate:86,dropoffRate:14,avgTime:'45s',completions:'250'},
+  {key:'setupMoveInOut',name:'Setup - Move In/Out',bucket:'Configuration',
+   steps:['setup_move_in_out_list_viewed','setup_move_in_out_add_attempted','setup_move_in_out_add_succeeded'],
+   adoption:14,completionRate:84,dropoffRate:16,avgTime:'42s',completions:'390'}
+];
+/* Home, Authentication, Notifications, Help Center, History Filter (shared) and
+   Shared Utilities are deliberately excluded from workflows[] above: Home's events
+   (home_tab_viewed, home_refresh_triggered, home_menu_tile_tapped, plus the visitor-pass
+   OTP and QR-scan-failure sub-events) are lateral navigation/dashboard impressions with no
+   single directional funnel of their own; Authentication is a single login/logout action
+   pair rather than a multi-step process; Notifications, Help Center, History Filter and
+   Shared Utilities (document preview/download, camera capture) are cross-cutting utility
+   surfaces reused across other modules' real workflows rather than funnels in their own
+   right. All six are still counted in modulesList/TOTAL_MODULES for bookkeeping, the same
+   treatment Rustomjee Circle gives Home & Navigation and Panchshil Pulse gives Discover.
+   App Lifecycle (app_launched, the first event of every session) is excluded for the same
+   reason — a single session-start marker, not a user-facing workflow. */
+function renderWfSelector(){
+  const nav=document.getElementById('modNav');
+  const buckets=[...new Set(workflows.map(w=>w.bucket))];   /* preserves declaration order */
+  const curBucket=(workflows.find(w=>w.key===state.wf)||workflows[0]).bucket;
+  state.bucket=curBucket;
+  const mods=workflows.filter(w=>w.bucket===curBucket);
+  nav.innerHTML=
+    '<div class="mnav-buckets">'+buckets.map(b=>
+      '<button data-bkt="'+b+'"'+(b===curBucket?' class="on"':'')+'>'+b+
+      '<span class="mcount">'+workflows.filter(w=>w.bucket===b).length+'</span></button>').join('')+'</div>'+
+    '<div class="mnav-mods"><div class="segbar">'+mods.map(w=>
+      '<button data-wf="'+w.key+'"'+(w.key===state.wf?' class="on"':'')+'>'+w.name+(w.proposed?' <span style="opacity:.6;font-style:italic">(proposed)</span>':'')+'</button>').join('')+'</div></div>';
+  nav.querySelectorAll('.mnav-buckets button').forEach(b=>b.onclick=()=>{
+    const first=workflows.find(w=>w.bucket===b.dataset.bkt);
+    state.wf=first.key;renderWf();
+  });
+  nav.querySelectorAll('.mnav-mods button').forEach(b=>b.onclick=()=>{state.wf=b.dataset.wf;renderWf();});
+}
+function renderWf(){
+  renderWfSelector();
+  const w=workflows.find(x=>x.key===state.wf);
+  const biggestDrop=(function(){
+    const fr=rngFor('funnel|'+w.key);
+    const n=w.steps.length;
+    let maxDrop=0, maxStep=w.steps[Math.min(1,n-1)];
+    for(let i=1;i<n;i++){
+      const drop=Math.round((n-i)*3+fr()*8);
+      if(drop>maxDrop){ maxDrop=drop; maxStep=w.steps[i]; }
+    }
+    return {step:maxStep,pct:maxDrop};
+  })();
+
+  document.getElementById('wfKpis').innerHTML=[
+    tile({id:'wfAdoption',label:'Workflow Adoption',val:w.adoption+'%',dir:w.adoption>=45?'up':'flat',delta:w.adoption>=45?'improving':'stable',raw:w.adoption,unit:'%',goodUp:true}),
+    tile({id:'wfCompletion',label:'Completion Rate',val:w.completionRate+'%',dir:w.completionRate>=55?'up':'dn',delta:w.completionRate>=55?'improving':'needs attention',raw:w.completionRate,unit:'%',goodUp:true}),
+    tile({label:'Biggest Step Drop',val:biggestDrop.pct+'%',dir:'dn',delta:biggestDrop.step,sub:'at '+biggestDrop.step,noTarget:true}),
+    tile({label:'Usage Volume',val:w.completions,dir:'up',delta:'this period',sub:'completions',noTarget:true})
+  ].join('');
+
+  const scopeNoteEl=document.getElementById('wfScopeNote');
+  if(w.proposed){
+    scopeNoteEl.innerHTML='<div class="bmnote crashnote"><span>&#9888;</span><div><b>Proposed workflow — not yet in the PostHog catalogue.</b> This card and its event names (steps below) do not exist in SmartSecure_PostHog_Events.xlsx. They were added after reviewing the design team\'s Figma screens for visitor registration, which show this step as part of the real product flow. Treat every event name here as a suggested starting point for engineers to confirm and instrument, not as confirmed instrumentation.</div></div>';
+  } else if(w.incompleteNote){
+    scopeNoteEl.innerHTML='<div class="bmnote crashnote"><span>&#9888;</span><div><b>Known gap vs. the actual product flow.</b> '+w.incompleteNote+'</div></div>';
+  } else {
+    scopeNoteEl.innerHTML='';
+  }
+
+  const funnelBody = chartCard(document.getElementById('card-wfFunnel'),'wfFunnel',w.proposed?'Workflow funnel (proposed event sequence)':'Workflow funnel (real event sequence)',w.name+' — completion funnel',
+    w.proposed?'Shows step-by-step completion and drop-off for the selected workflow, using proposed (not yet confirmed) event names in sequence.':'Shows step-by-step completion and drop-off for the selected workflow, using the real PostHog event names in sequence.',
+    'For '+w.name+', the steepest drop-off happens right after '+biggestDrop.step+' - worth a UX review of that screen to reduce abandonment.');
+  const n=w.steps.length, start=100;
+  const fr=rngFor('funnel|'+w.key);
+  funnelBody.innerHTML = '<div class="funnel">'+w.steps.map((s,i)=>{
+    const pct2=Math.round(start-(i*(start*0.55/(n-1||1))));
+    const width=45+(pct2/100)*55;
+    const drop = i>0 ? Math.round((n-i)*3 + fr()*8) : null;
+    const dropHtml = i>0 ? '<div class="fdrop">▼ '+drop+'% drop-off</div>' : '';
+    return dropHtml+'<div class="fstep" style="width:'+width+'%;background:'+C_BLUE+';opacity:'+(1-i*0.1)+';border-radius:8px" title="'+s+': '+pct2+'% of entrants remain">'+s+'<span class="fsub">'+pct2+'% of entrants</span></div>';
+  }).join('')+'</div>';
+
+  (function(){
+    const el=chartCard(document.getElementById('card-allScreens'),'allScreens','All screens in this module','All screens in this module',
+      'Every screen path inside '+w.name+', with users, events, sessions and completion rate for each — the module-scoped equivalent of the funnel above, at the individual-screen level.');
+    const rr=rngFor('allscreens|'+w.key);
+    const rows=w.steps.map((s,i)=>{
+      const users=Math.round(parseInt(w.completions.replace(/,/g,''))*(1-(i*0.12))*(0.9+rr()*0.2));
+      const events=Math.round(users*(1.1+rr()*0.6));
+      const sessions=Math.round(users*(0.85+rr()*0.1));
+      const comp=Math.max(8,Math.round(w.completionRate+( (n-1-i)*4 )-rr()*6));
+      return {s,users,events,sessions,comp};
+    });
+    let h='<table class="pathtbl"><thead><tr><th>Screen</th><th class="num">Users</th><th class="num">Events</th><th class="num">Sessions</th><th class="num">Completion</th></tr></thead><tbody>';
+    rows.forEach(r=>{h+='<tr><td>'+r.s+'</td><td class="num">'+r.users.toLocaleString()+'</td><td class="num">'+r.events.toLocaleString()+'</td><td class="num">'+r.sessions.toLocaleString()+'</td><td class="num">'+r.comp+'%</td></tr>';});
+    h+='</tbody></table>';
+    el.innerHTML=h;
+  })();
+
+  (function(){
+    const rows=[['splash_screen_viewed',58,'up'],['home_tab_viewed',22,'up'],['splash_opened_from_notification',9,'flat'],['notifications_list_viewed',6,'dn'],['gatekeeper_verification_approval_status_checked',5,'up']];
+    const el=chartCard(document.getElementById('card-entryScreens'),'entryScreens','Top entry screens','Top entry screens',
+      'The first screen property seen in each session — usually reached via push notification, deep link, or the app icon.');
+    let h='<table class="pathtbl"><thead><tr><th>Screen</th><th class="num">Visitors</th><th class="num">Views</th><th class="num">Bounce</th></tr></thead><tbody>';
+    rows.forEach(rr=>{
+      const visitors=Math.round(rr[1]*120*devFactor());
+      const views=Math.round(visitors*1.8);
+      const bounce=Math.max(6,Math.round(30-rr[1]*0.3));
+      h+='<tr><td>'+rr[0]+'</td><td class="num">'+visitors.toLocaleString()+'</td><td class="num">'+views.toLocaleString()+'</td><td class="num">'+bounce+'%</td></tr>';
+    });
+    h+='</tbody></table>';
+    el.innerHTML=h;
+  })();
+}
+function C_GREEN_TINT_FALLBACK(){ const cs=getComputedStyle(document.documentElement); return cs.getPropertyValue('--green-tint').trim()||'#e2efe6'; }
+
+/* Note: "All modules at a glance" (feature-adoption bars/heatmap/trend) and the
+   "Customer journey & path" section (sampled journey flow, entry/exit screens)
+   have been removed from Workflow Usage entirely — FM's Layer 3 has only the
+   module/sub-module selector, 4 KPI tiles, one funnel chart, an all-screens
+   table, and a top-entry-screens table. Match is now 1:1. */
+/* ================================================================
+   6. RETENTION — folds into Adoption & Engagement (14-Day Activation
+   tile + the retention cohort table below).
+   ================================================================ */
+function renderRetentionCohort(){
+  (function(){
+    const el=chartCard(document.getElementById('card-retentionCohort'),'retentionCohort','Retention · weekly cohorts','Do new users keep coming back?',
+      'Each row = gate staff first active that week; cells = % of that cohort still active N weeks later.',
+      'The 6/26 cohort is retaining slightly better than the 5/22 cohort at the same week mark — worth checking whether an onboarding change shipped between those two weeks.');
+    const rows=6, cols=6;
+    let html='<table class="rt"><thead><tr><th style="text-align:left">Cohort</th>';
+    for(let w=0;w<cols;w++) html+='<th>Week '+w+'</th>';
+    html+='</tr></thead><tbody>';
+    const dates=['5/22','5/29','6/5','6/12','6/19','6/26'];
+    dates.forEach((dt,i)=>{
+      html+='<tr><td class="lbl">'+dt+'</td>';
+      const rr=rngFor('cohort|'+dt+'|'+state.dev);
+      let base=1;
+      for(let w=0;w<cols;w++){
+        if(w > (cols-1)-(rows-1-i)){ html+='<td style="background:var(--surface-2);color:var(--faint)">·</td>'; continue; }
+        let v; if(w===0) v=1; else { base=base*(0.6+rr()*0.28); v=base; }
+        const val = w===0?100:Math.round(v*100);
+        const t=val/100; const bg='rgba('+C_HEAT+','+(C_HEAT_A0+t*C_HEAT_A1).toFixed(2)+')'; const col=t>0.55?C_ONHEAT:'var(--ink)';
+        html+='<td style="background:'+bg+';color:'+col+'">'+val+'%</td>';
+      }
+      html+='</tr>';
+    });
+    html+='</tbody></table>';
+    el.innerHTML=html;
+  })();
+}
+
+/* Site-wise / per-property breakdown table — FM's Layer 2 has this exact
+   table (site / active users / sessions / avg session / bounce / trend / status).
+   "Site" here is a society (each SmartSecure gate device belongs to one society_id). */
+function renderSiteWise(){
+  const el=chartCard(document.getElementById('card-siteWise'),'siteWise','League table','Society-wise breakdown',
+    'Active gate staff, sessions and bounce rate per society, worst-trending first.');
+  let h='<table class="league"><thead><tr><th>Society</th><th class="num">Active users</th><th class="num">Sessions</th>'+
+    '<th class="num">Avg session</th><th class="num">Bounce</th><th>Trend</th><th>Status</th></tr></thead><tbody>';
+  const rows=PROJECTS.map(p=>{
+    const rr=rngFor('sitewise|'+p+'|'+state.dev);
+    const active=Math.round((90+rr()*260)*devFactor());
+    const sessions=Math.round(active*(2.6+rr()*1.4));
+    const avgSess=(2.0+rr()*1.6).toFixed(1)+'m';
+    const bounce=Math.round(10+rr()*16);
+    const trend=rr()>0.35?'up':rr()>0.15?'flat':'dn';
+    return {p,active,sessions,avgSess,bounce,trend};
+  }).sort((a,b)=>b.active-a.active);
+  rows.forEach(row=>{
+    const st = row.bounce>=22?['st-drop','Watch']:row.bounce>=16?['st-watch','Steady']:['st-healthy','Healthy'];
+    h+='<tr><td class="strong">'+row.p+'</td><td class="num">'+row.active.toLocaleString()+'</td>'+
+      '<td class="num">'+row.sessions.toLocaleString()+'</td><td class="num">'+row.avgSess+'</td>'+
+      '<td class="num">'+row.bounce+'%</td><td><span class="arrow '+row.trend+'">'+(row.trend==='up'?'↗':row.trend==='dn'?'↘':'→')+'</span></td>'+
+      '<td><span class="status '+st[0]+'">'+st[1]+'</span></td></tr>';
+  });
+  h+='</tbody></table>';
+  el.innerHTML=h;
+}
+
+/* Dormant users tile — FM's Layer 2 A4 metric, standalone card. */
+function renderDormant(){
+  const r=rngFor('dormant|'+state.dev);
+  const dormant=Math.round(60+r()*90);
+  const el=chartCard(document.getElementById('card-dormant'),'dormantUsers','Dormant users','Dormant users',
+    'Registered gate staff/admins with no activity in the last 14 days — out of scope for the 14-Day Activation tile above.');
+  el.innerHTML='<div class="kv"><div><div class="k">Dormant gate staff</div><div class="v" style="font-size:22px">'+dormant.toLocaleString()+'</div><div class="u">no activity 14+ days</div></div></div>';
+}
+
+/* Note: this dashboard has no App Stability / Crash Analytics page, by
+   scope decision — matching Runwal Connect's and Panchshil Pulse's 3-layer
+   treatment rather than Panchshil Connect's bespoke 4th layer. SmartSecure's
+   catalogue does carry Failure-typed events throughout nearly every category
+   (login_failed, *_validation_failed, *_add_failed, *_check_in_failed, and
+   so on — 63 of the 180 documented events are Failure-typed), so there is
+   plenty of real failure-signal material that could support a dedicated
+   reliability/error-rate page later (the pattern is already proven on
+   Panchshil Connect), but building it is out of scope for this pass. */
+
+/* ================================================================
+   FILTER WIRING (device toggle + previous-period toggle) + sidebar nav
+   ================================================================ */
+function renderAll(){
+  renderTraffic();
+  renderAdoption();
+  renderWf();
+}
+/* ---------- date range control ---------- */
+const RANGE_LABELS={7:'Last 7 days',30:'Last 30 days',90:'Last 90 days'};
+function setRange(days,label,sub){
+  state.range=days; state.rangeLabel=label; state.rangeSub=sub||('in the '+label.toLowerCase());
+  document.getElementById('dateRangeLabel').textContent=label;
+  document.querySelectorAll('.dr-preset').forEach(b=>b.classList.toggle('on',+b.dataset.range===days));
+  document.getElementById('dateApplyBtn').classList.remove('applied');
+  document.getElementById('dateApplyBtn').textContent='Apply custom range';
+  renderAll();
+}
+const dateRangeEl=document.getElementById('dateRange'), dateRangeBtn=document.getElementById('dateRangeBtn');
+dateRangeBtn.addEventListener('click',e=>{ e.stopPropagation(); dateRangeEl.classList.toggle('open'); });
+document.addEventListener('click',e=>{ if(!dateRangeEl.contains(e.target)) dateRangeEl.classList.remove('open'); });
+document.querySelectorAll('.dr-preset').forEach(b=>b.addEventListener('click',()=>{
+  setRange(+b.dataset.range, RANGE_LABELS[b.dataset.range]);
+}));
+document.getElementById('dateApplyBtn').addEventListener('click',()=>{
+  const from=document.getElementById('dateFrom').value, to=document.getElementById('dateTo').value;
+  if(!from||!to) return;
+  const days=Math.max(1,Math.round((new Date(to)-new Date(from))/86400000)+1);
+  state.rangeFrom=from; state.rangeTo=to;
+  const fmt=d=>{const dt=new Date(d);return dt.toLocaleDateString('en-US',{month:'short',day:'numeric'});};
+  const label=fmt(from)+' – '+fmt(to);
+  document.querySelectorAll('.dr-preset').forEach(b=>b.classList.remove('on'));
+  const btn=document.getElementById('dateApplyBtn');
+  btn.classList.add('applied'); btn.textContent='Range applied ✓';
+  setRange(days,label,'in the selected range');
+});
+document.getElementById('devToggle').addEventListener('click',e=>{
+  const btn=e.target.closest('button[data-dev]'); if(!btn) return;
+  document.querySelectorAll('#devToggle button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); state.dev=btn.dataset.dev;
+  renderAll();
+});
+document.getElementById('prevBtn').addEventListener('click',()=>{
+  state.prev=!state.prev;
+  const btn=document.getElementById('prevBtn');
+  btn.classList.toggle('toggle-on',state.prev);
+  btn.innerHTML='<span class="ic">&#8634;</span> Previous period '+(state.prev?'✓':'');
+  renderAll();
+});
+
+/* ---------- sidebar navigation ---------- */
+const PAGE_TITLES={pgTraffic:'Traffic & Session',pgAdopt:'Adoption & Engagement',
+  pgFlows:'Workflow Usage'};
+function showPage(id){
+  if(!document.getElementById(id)) return;
+  state.page=id;
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on',p.id===id));
+  document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.classList.toggle('on',b.dataset.page===id));
+  document.getElementById('pageTitle').textContent=PAGE_TITLES[id]||'Traffic & Session';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.onclick=()=>showPage(b.dataset.page));
+document.querySelectorAll('[data-goto]').forEach(b=>b.onclick=()=>showPage(b.dataset.goto));
+
+renderAll();
+
+/* ============================================================
+   CHROME — theme switch and the collapsible navigation rail.
+   ============================================================ */
+const root=document.documentElement;
+function store(k,v){try{localStorage.setItem(k,v);}catch(e){/* file:// or private mode */}}
+
+const themeBtn=document.getElementById('themeBtn');
+function applyTheme(t,persist){
+  root.setAttribute('data-theme',t);
+  const next=(t==='dark')?'light':'dark';
+  themeBtn.title='Switch to '+next+' theme';
+  themeBtn.setAttribute('aria-label','Switch to '+next+' theme');
+  syncChartPalette();
+  renderAll();
+  if(persist) store('smartsecure-theme',t);
+}
+themeBtn.onclick=()=>applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark',true);
+
+if(window.matchMedia){
+  const mq=window.matchMedia('(prefers-color-scheme: dark)');
+  const onOS=e=>{
+    let saved=null;try{saved=localStorage.getItem('smartsecure-theme');}catch(err){}
+    if(!saved) applyTheme(e.matches?'dark':'light',false);
+  };
+  if(mq.addEventListener) mq.addEventListener('change',onOS);
+  else if(mq.addListener) mq.addListener(onOS);
+}
+
+/* ---------- navigation rail ---------- */
+const navToggle=document.getElementById('navToggle');
+function applyNav(collapsed,persist){
+  root.classList.toggle('nav-collapsed',collapsed);
+  const label=(collapsed?'Expand':'Collapse')+' navigation';
+  navToggle.title=label;
+  navToggle.setAttribute('aria-label',label);
+  navToggle.setAttribute('aria-expanded',String(!collapsed));
+  if(persist) store('smartsecure-nav',collapsed?'collapsed':'open');
+}
+navToggle.onclick=()=>applyNav(!root.classList.contains('nav-collapsed'),true);
+applyNav(root.classList.contains('nav-collapsed'),false);
+
+document.addEventListener('keydown',e=>{
+  if(e.key!=='[' || e.metaKey || e.ctrlKey || e.altKey) return;
+  const t=e.target, tag=t&&t.tagName;
+  if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||(t&&t.isContentEditable)) return;
+  e.preventDefault();
+  applyNav(!root.classList.contains('nav-collapsed'),true);
+});
+
+</script>
+</body>
+</html>

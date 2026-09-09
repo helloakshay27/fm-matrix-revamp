@@ -88,7 +88,7 @@ export async function createJobDescription(payload) {
 
   if (!baseUrl) throw new Error("Base URL not found in localStorage");
 
-  const url = `https://${baseUrl}/job_descriptions`;
+  const url = `https://${baseUrl}/job_descriptions.json`;
 
   const res = await axios.post(url, payload, {
     headers: {
@@ -202,7 +202,7 @@ export async function fetchJobDescriptions() {
 
   if (!baseUrl) throw new Error("Base URL not found in localStorage");
 
-  const url = `https://${baseUrl}/job_descriptions`;
+  const url = `https://${baseUrl}/job_descriptions.json`;
 
   const res = await axios.get(url, {
     headers: {

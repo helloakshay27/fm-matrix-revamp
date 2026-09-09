@@ -10,6 +10,7 @@ import {
   Area,
   AreaChart,
   Legend,
+  LabelList,
 } from 'recharts';
 import { AccordionShell, ChartCard } from '../components/ChartCard';
 import { ChartSwitch } from '../components/ChartSwitch';
@@ -20,7 +21,7 @@ import type { Persona } from '../data/constants';
 import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import { getAuthHeader } from '@/config/apiConfig';
 
-type CircleChartRow = { name: string; Internal: number; External: number };
+type CircleChartRow = { name: string; Internal: number; External: number; Total: number };
 type FuncChartRow = { name: string; value: number; color: string };
 type RegChartRow = { m: string; n: number; internal: number; external: number };
 
@@ -101,10 +102,14 @@ const normalizeCircleChartData = (payload: unknown): CircleChartRow[] => {
         return null;
       }
 
+      const finalInternal = normalizedInternal ?? 0;
+      const finalExternal = normalizedExternal ?? 0;
+
       return {
         name,
-        Internal: normalizedInternal ?? 0,
-        External: normalizedExternal ?? 0,
+        Internal: finalInternal,
+        External: finalExternal,
+        Total: finalInternal + finalExternal,
       };
     })
     .filter((item): item is CircleChartRow => Boolean(item));
@@ -205,10 +210,10 @@ function getMsafeBaseUrl(): string {
  *  the same way regardless of persona. */
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
   const params: Record<string, string> = {};
-  if (f.circleId) params.circle_id = f.circleId;
+  if (f.circleIds.length > 0) params.circle_id = f.circleIds.join(',');
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
-  if (f.empTypeId) params.employee_type= f.empTypeId;
+  if (f.empTypeId) params.employee_type = f.empTypeId;
   if (f.startDate) params.from_date = f.startDate;
   if (f.endDate) params.to_date = f.endDate;
   return params;
@@ -245,6 +250,21 @@ async function fetchMsafeUserDashboardJson(
 
 async function fetchUserStatistics(type: string, extraParams?: Record<string, string>): Promise<unknown> {
   return fetchMsafeUserDashboardJson('user_statistics.json', { type, ...extraParams });
+}
+
+/** Hides the first and last point's label — with only ~220px of chart width, the
+ *  first value collides with the Y-axis tick labels and the last collides with
+ *  the line's own endpoint / adjacent series label. */
+function renderAreaEndLabel(color: string, lastIndex: number) {
+  return (props: { x?: number; y?: number; value?: number; index?: number }) => {
+    const { x, y, value, index } = props;
+    if (index === 0 || index === lastIndex || x == null || y == null) return null;
+    return (
+      <text x={x} y={y} dy={-6} textAnchor="middle" fontSize={9} fontWeight={600} fill={color}>
+        {value}
+      </text>
+    );
+  };
 }
 
 function DataState({ loading, empty, label }: { loading: boolean; empty: boolean; label: string }) {
@@ -307,10 +327,13 @@ export function UsersSection() {
       setRegLoading(true);
 
       try {
-        const payload = await fetchMsafeUserDashboardJson(
-          'new_registrations.json',
-          buildFilterParams(persona, appliedFilters),
-        );
+        // "New Registrations — Last 12 Months" is a fixed trailing-12-months view,
+        // not scoped to whatever date range is currently applied elsewhere — sending
+        // from_date/to_date here would clip it down to just the applied range,
+        // contradicting its own "Last 12 Months" title. Drop the date range, keep
+        // every other filter (matches "LMC Completion Trend"'s same fix).
+        const { from_date, to_date, ...regParams } = buildFilterParams(persona, appliedFilters);
+        const payload = await fetchMsafeUserDashboardJson('new_registrations.json', regParams);
         const normalized = normalizeRegChartData(payload);
         if (isMounted) setRegChartData(normalized);
       } catch (error) {
@@ -398,6 +421,7 @@ export function UsersSection() {
           infoKey="user-comp"
           showPdf
           pdfLabel="User Composition"
+          reportExportFor="user_composition"
           exportData={compChartData.map((d) => ({ Department: d.name, Users: d.value }))}
           chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={compMode} onChange={setCompMode} />}
         >
@@ -414,10 +438,12 @@ export function UsersSection() {
 
         <ChartCard
           title="New Registrations · Last 12 Months"
-          sub="Monthly onboarding trend"
+          // sub="Monthly onboarding trend · always shows the trailing 12 months, not affected by the date filter"
           infoKey="user-reg"
           showPdf
           pdfLabel="New Registrations"
+          reportExportFor="new_registration"
+          reportExcludeDateRange
           exportData={regChartData.map((d) => ({
             Month: d.m,
             'Internal Users': d.internal,
@@ -457,7 +483,14 @@ export function UsersSection() {
                 {regMode === 'line' ? (
                   <AreaChart data={regChartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
-                    <XAxis dataKey="m" tick={{ fontSize: 10, fill: C.sage }} />
+                    <XAxis
+                      dataKey="m"
+                      tick={{ fontSize: 10, fill: C.sage }}
+                      interval={0}
+                      angle={-35}
+                      textAnchor="end"
+                      height={56}
+                    />
                     <YAxis tick={{ fontSize: 10, fill: C.sage }} />
                     <Tooltip />
                     <Legend wrapperStyle={{ fontSize: 12 }} />
@@ -468,7 +501,9 @@ export function UsersSection() {
                       fill="rgba(218,119,86,.14)"
                       strokeWidth={2.5}
                       name="Internal Users"
-                    />
+                    >
+                      <LabelList dataKey="internal" content={renderAreaEndLabel(C.terra, regChartData.length - 1)} />
+                    </Area>
                     <Area
                       type="monotone"
                       dataKey="external"
@@ -476,17 +511,30 @@ export function UsersSection() {
                       fill="rgba(107,155,204,.14)"
                       strokeWidth={2.5}
                       name="External Users"
-                    />
+                    >
+                      <LabelList dataKey="external" content={renderAreaEndLabel(C.blue, regChartData.length - 1)} />
+                    </Area>
                   </AreaChart>
                 ) : (
-                  <BarChart data={regChartData}>
+                  <BarChart data={regChartData} margin={{ top: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
-                    <XAxis dataKey="m" tick={{ fontSize: 10, fill: C.sage }} />
+                    <XAxis
+                      dataKey="m"
+                      tick={{ fontSize: 10, fill: C.sage }}
+                      interval={0}
+                      angle={-35}
+                      textAnchor="end"
+                      height={56}
+                    />
                     <YAxis tick={{ fontSize: 10, fill: C.sage }} />
                     <Tooltip />
                     <Legend wrapperStyle={{ fontSize: 12 }} />
-                    <Bar dataKey="internal" fill={C.terra} radius={[5, 5, 0, 0]} name="Internal Users" />
-                    <Bar dataKey="external" fill={C.blue} radius={[5, 5, 0, 0]} name="External Users" />
+                    <Bar dataKey="internal" fill={C.terra} radius={[5, 5, 0, 0]} name="Internal Users">
+                      <LabelList dataKey="internal" position="top" style={{ fontSize: 9, fill: C.dark, fontWeight: 600 }} />
+                    </Bar>
+                    <Bar dataKey="external" fill={C.blue} radius={[5, 5, 0, 0]} name="External Users">
+                      <LabelList dataKey="external" position="top" style={{ fontSize: 9, fill: C.dark, fontWeight: 600 }} />
+                    </Bar>
                   </BarChart>
                 )}
               </ResponsiveContainer>
@@ -495,90 +543,101 @@ export function UsersSection() {
         </ChartCard>
       </div>
 
-      <div className="g g-2-1" style={{ marginTop: 16 }}>
-        <ChartCard
-          title="Users per Circle"
-          sub="Distribution across 22 VIL circles"
-          infoKey="user-circle"
-          showPdf
-          pdfLabel="Users per Circle"
-          exportData={circleChartData.map((d) => ({
-            Circle: d.name,
-            Internal: d.Internal,
-            External: d.External,
-            Total: d.Internal + d.External,
-          }))}
-          chartSwitch={<ChartSwitch modes={['bar', 'table']} value={circleMode} onChange={setCircleMode} />}
-        >
-          {circleLoading || circleChartData.length === 0 ? (
-            <DataState loading={circleLoading} empty={circleChartData.length === 0} label="circle data" />
-          ) : circleMode === 'bar' ? (
-            <div className="chart-wrap tall">
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={circleChartData} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+      <ChartCard
+        title="Users per Circle"
+        sub="Distribution across 22 VIL circles"
+        infoKey="user-circle"
+        showPdf
+        pdfLabel="Users per Circle"
+        reportExportFor="users_by_circle"
+        exportData={circleChartData.map((d) => ({
+          Circle: d.name,
+          Internal: d.Internal,
+          External: d.External,
+          Total: d.Internal + d.External,
+        }))}
+        style={{ marginTop: 16 }}
+        chartSwitch={<ChartSwitch modes={['bar', 'table']} value={circleMode} onChange={setCircleMode} />}
+      >
+        {circleLoading || circleChartData.length === 0 ? (
+          <DataState loading={circleLoading} empty={circleChartData.length === 0} label="circle data" />
+        ) : circleMode === 'bar' ? (
+          <div style={{ overflowX: 'auto' }}>
+            <div style={{ minWidth: Math.max(700, circleChartData.length * 55) }}>
+              <ResponsiveContainer width="100%" height={360}>
+                <BarChart data={circleChartData} margin={{ top: 24, right: 8, left: 0, bottom: 70 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
                   <XAxis
                     dataKey="name"
                     tick={{ fontSize: 9, fill: C.sage }}
                     interval={0}
-                    angle={-35}
+                    angle={-45}
                     textAnchor="end"
-                    height={70}
+                    height={90}
                   />
                   <YAxis tick={{ fontSize: 10, fill: C.sage }} />
                   <Tooltip />
                   <Legend wrapperStyle={{ fontSize: 10.5 }} iconType="square" iconSize={10} />
                   <Bar dataKey="Internal" stackId="a" fill={C.blue} radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="External" stackId="a" fill={C.terra} radius={[5, 5, 0, 0]} />
+                  <Bar dataKey="External" stackId="a" fill={C.terra} radius={[5, 5, 0, 0]}>
+                    <LabelList dataKey="Total" position="top" style={{ fontSize: 9, fill: C.dark, fontWeight: 600 }} />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          ) : (
-            <div className="chart-as-table" style={{ maxHeight: 280 }}>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Circle</th>
-                    <th>Internal</th>
-                    <th>External</th>
-                    <th>Total</th>
+          </div>
+        ) : (
+          <div className="chart-as-table" style={{ maxHeight: 420 }}>
+            <table>
+              <thead>
+                <tr>
+                  <th>Circle</th>
+                  <th>Internal</th>
+                  <th>External</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {circleChartData.map((r) => (
+                  <tr key={r.name}>
+                    <td>{r.name}</td>
+                    <td className="num">{r.Internal.toLocaleString()}</td>
+                    <td className="num">{r.External.toLocaleString()}</td>
+                    <td className="num">{(r.Internal + r.External).toLocaleString()}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {circleChartData.map((r) => (
-                    <tr key={r.name}>
-                      <td>{r.name}</td>
-                      <td className="num">{r.Internal.toLocaleString()}</td>
-                      <td className="num">{r.External.toLocaleString()}</td>
-                      <td className="num">{(r.Internal + r.External).toLocaleString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </ChartCard>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </ChartCard>
 
-        <ChartCard
-          title="Users by Department / Function"
-          sub="Sales, S&D, Technology, HR, Marketing, Ops, etc."
-          infoKey="user-func"
-          showPdf
-          pdfLabel="Users by Department"
-          exportData={funcChartData.map((d) => ({ Department: d.name, Users: d.value }))}
-          chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={funcMode} onChange={setFuncMode} />}
-        >
-          {funcLoading || funcChartData.length === 0 ? (
-            <DataState loading={funcLoading} empty={funcChartData.length === 0} label="department data" />
-          ) : (
-            <>
-              {funcMode === 'donut' && <DonutChart data={funcChartData} height={280} />}
-              {funcMode === 'bar' && <SliceBarChart data={funcChartData} height={280} horizontal />}
-              {funcMode === 'table' && <ChartTable data={funcChartData} valueLabel="Users" />}
-            </>
-          )}
-        </ChartCard>
-      </div>
+      <ChartCard
+        title="Users by Department / Function"
+        sub="Sales, S&D, Technology, HR, Marketing, Ops, etc."
+        infoKey="user-func"
+        showPdf
+        pdfLabel="Users by Department"
+        reportExportFor="users_by_department"
+        exportData={funcChartData.map((d) => ({ Department: d.name, Users: d.value }))}
+        style={{ marginTop: 16 }}
+        chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={funcMode} onChange={setFuncMode} />}
+      >
+        {funcLoading || funcChartData.length === 0 ? (
+          <DataState loading={funcLoading} empty={funcChartData.length === 0} label="department data" />
+        ) : (
+          <>
+            {funcMode === 'donut' && (
+              <DonutChart
+                data={funcChartData}
+                height={Math.min(420, Math.max(280, Math.ceil(funcChartData.length / 2) * 26))}
+              />
+            )}
+            {funcMode === 'bar' && <SliceBarChart data={funcChartData} height={420} horizontal />}
+            {funcMode === 'table' && <ChartTable data={funcChartData} valueLabel="Users" />}
+          </>
+        )}
+      </ChartCard>
 
       <UserDirectoryCard style={{ marginTop: 16 }} hideStatusColumn />
     </AccordionShell>

@@ -340,11 +340,12 @@ const SimpleTaskForm = ({
   prefilledTitle?: string;
   dateResetKey?: number;
 }) => {
+  const currentUserId = JSON.parse(localStorage.getItem("user") || "{}")?.id || "";
   const [users, setUsers] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     taskTitle: prefilledTitle || "",
     description: "",
-    responsiblePerson: "",
+    responsiblePerson: currentUserId,
     responsiblePersonName: "",
     isRecurring: false,
     cronExpression: "",
@@ -409,6 +410,18 @@ const SimpleTaskForm = ({
       .then((res) => setUsers((res.data.users || []).filter((u: any) => u?.id)))
       .catch(() => { });
   }, []);
+
+  useEffect(() => {
+    if (currentUserId && !formData.responsiblePersonName) {
+      const current = users.find((u: any) => u.id === currentUserId);
+      if (current) {
+        setFormData((prev) => ({
+          ...prev,
+          responsiblePersonName: current.full_name || current.name || "",
+        }));
+      }
+    }
+  }, [users, currentUserId]);
 
   useEffect(() => {
     if (quillRef.current && !quillEditorRef.current) {

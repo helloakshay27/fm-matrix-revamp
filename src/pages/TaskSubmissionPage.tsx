@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Upload, Camera, Edit, User, FileText } from "lucide-react";
+import { ArrowLeft, Upload, Camera, Edit, User, FileText, X } from "lucide-react";
 import { toast as sonnerToast } from "sonner";
 import { taskService, TaskOccurrence } from "@/services/taskService";
 import { TaskSubmissionSuccessModal } from "@/components/TaskSubmissionSuccessModal";
@@ -27,6 +27,64 @@ import {
   Box,
   Typography,
 } from "@mui/material";
+
+// Attachment fields accept images plus common document types (PDF, Word,
+// Excel, CSV, text) — not restricted to images only.
+const ATTACHMENT_ACCEPT =
+  "image/*,.pdf,application/pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.csv,text/csv,.txt,text/plain";
+
+const isImageFile = (file: File) => file.type.startsWith("image/");
+
+// Renders an image preview for image files, or a generic file icon + name
+// for non-image attachments (PDF, Excel, Word, etc.) — URL.createObjectURL
+// works for any file, but an <img> tag can't render non-image blobs.
+const AttachmentThumb = ({
+  file,
+  className,
+  onRemove,
+}: {
+  file: File;
+  className?: string;
+  onRemove?: () => void;
+}) => {
+  const removeButton = onRemove ? (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onRemove();
+      }}
+      className="absolute -top-2 -right-2 bg-white rounded-full border border-gray-300 shadow p-0.5 hover:bg-red-50"
+      aria-label="Remove attachment"
+    >
+      <X className="w-3 h-3 text-gray-600" />
+    </button>
+  ) : null;
+
+  if (isImageFile(file)) {
+    return (
+      <div className="relative inline-block">
+        <img
+          src={URL.createObjectURL(file)}
+          alt={file.name}
+          className={className}
+        />
+        {removeButton}
+      </div>
+    );
+  }
+  return (
+    <div className="relative inline-block">
+      <div
+        className={`${className || ""} flex items-center justify-center bg-gray-100 border rounded`}
+        title={file.name}
+      >
+        <FileText className="w-6 h-6 text-gray-500" />
+      </div>
+      {removeButton}
+    </div>
+  );
+};
 
 interface TaskSubmissionStep {
   id: number;
@@ -1398,12 +1456,12 @@ export const TaskSubmissionPage: React.FC = () => {
                                 {formData.checklist[item.id]?.attachment && (
                                   <div className="">
                                     <div className="flex items-center gap-3 p-3 bg-gray-50 rounded border">
-                                      <img
-                                        src={URL.createObjectURL(
-                                          formData.checklist[item.id].attachment
-                                        )}
-                                        alt="Attachment"
+                                      <AttachmentThumb
+                                        file={formData.checklist[item.id].attachment}
                                         className="w-16 h-16 object-cover rounded border"
+                                        onRemove={() =>
+                                          handleChecklistChange(item.id, "attachment", null)
+                                        }
                                       />
                                       <Typography
                                         variant="body2"
@@ -1423,7 +1481,7 @@ export const TaskSubmissionPage: React.FC = () => {
                                     onClick={() => {
                                       const input = document.createElement("input");
                                       input.type = "file";
-                                      input.accept = "image/*";
+                                      input.accept = ATTACHMENT_ACCEPT;
                                       input.onchange = (e) => {
                                         const file = (e.target as HTMLInputElement)
                                           .files?.[0];
@@ -1567,9 +1625,8 @@ export const TaskSubmissionPage: React.FC = () => {
                                       <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
                                         {attachment ? (
                                           <div className="flex items-center gap-2">
-                                            <img
-                                              src={URL.createObjectURL(attachment)}
-                                              alt="Attachment"
+                                            <AttachmentThumb
+                                              file={attachment}
                                               className="w-8 h-8 object-cover rounded border border-gray-200"
                                             />
                                             <span className="text-xs text-gray-600 truncate max-w-20">
@@ -1650,9 +1707,8 @@ export const TaskSubmissionPage: React.FC = () => {
                                 <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
                                   {attachment ? (
                                     <div className="flex items-center gap-2">
-                                      <img
-                                        src={URL.createObjectURL(attachment)}
-                                        alt="Attachment"
+                                      <AttachmentThumb
+                                        file={attachment}
                                         className="w-8 h-8 object-cover rounded border border-gray-200"
                                       />
                                       <span className="text-xs text-gray-600 truncate max-w-20">
@@ -1716,10 +1772,10 @@ export const TaskSubmissionPage: React.FC = () => {
                               Before
                             </Typography>
                             <div className="flex items-start gap-4">
-                              <img
-                                src={URL.createObjectURL(formData.beforePhoto)}
-                                alt="Before"
+                              <AttachmentThumb
+                                file={formData.beforePhoto}
                                 className="w-24 h-24 object-cover rounded border border-gray-200"
+                                onRemove={() => handleFileUpload("before", null)}
                               />
                               <div className="flex-1">
                                 <FormControl
@@ -1775,7 +1831,7 @@ export const TaskSubmissionPage: React.FC = () => {
                       <input
                         ref={beforePhotoRef}
                         type="file"
-                        accept="image/*"
+                        accept={ATTACHMENT_ACCEPT}
                         className="hidden"
                         onChange={(e) =>
                           handleFileUpload(
@@ -1831,9 +1887,8 @@ export const TaskSubmissionPage: React.FC = () => {
                         Before
                       </Typography>
                       <div className="flex items-start gap-4">
-                        <img
-                          src={URL.createObjectURL(formData.beforePhoto)}
-                          alt="Before"
+                        <AttachmentThumb
+                          file={formData.beforePhoto}
                           className="w-20 h-20 object-cover rounded border border-gray-200"
                         />
                         <div className="flex-1">
@@ -2123,12 +2178,12 @@ export const TaskSubmissionPage: React.FC = () => {
                                 {formData.checklist[item.id]?.attachment && (
                                   <div className="">
                                     <div className="flex items-center gap-3 p-3 bg-gray-50 rounded border">
-                                      <img
-                                        src={URL.createObjectURL(
-                                          formData.checklist[item.id].attachment
-                                        )}
-                                        alt="Attachment"
+                                      <AttachmentThumb
+                                        file={formData.checklist[item.id].attachment}
                                         className="w-16 h-16 object-cover rounded border"
+                                        onRemove={() =>
+                                          handleChecklistChange(item.id, "attachment", null)
+                                        }
                                       />
                                       <Typography
                                         variant="body2"
@@ -2148,7 +2203,7 @@ export const TaskSubmissionPage: React.FC = () => {
                                     onClick={() => {
                                       const input = document.createElement("input");
                                       input.type = "file";
-                                      input.accept = "image/*";
+                                      input.accept = ATTACHMENT_ACCEPT;
                                       input.onchange = (e) => {
                                         const file = (e.target as HTMLInputElement)
                                           .files?.[0];
@@ -2389,12 +2444,12 @@ export const TaskSubmissionPage: React.FC = () => {
                           {formData.checklist[item.id]?.attachment && (
                             <div className="">
                               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded border">
-                                <img
-                                  src={URL.createObjectURL(
-                                    formData.checklist[item.id].attachment
-                                  )}
-                                  alt="Attachment"
+                                <AttachmentThumb
+                                  file={formData.checklist[item.id].attachment}
                                   className="w-16 h-16 object-cover rounded border"
+                                  onRemove={() =>
+                                    handleChecklistChange(item.id, "attachment", null)
+                                  }
                                 />
                                 <Typography
                                   variant="body2"
@@ -2414,7 +2469,7 @@ export const TaskSubmissionPage: React.FC = () => {
                               onClick={() => {
                                 const input = document.createElement("input");
                                 input.type = "file";
-                                input.accept = "image/*";
+                                input.accept = ATTACHMENT_ACCEPT;
                                 input.onchange = (e) => {
                                   const file = (e.target as HTMLInputElement)
                                     .files?.[0];
@@ -2481,9 +2536,8 @@ export const TaskSubmissionPage: React.FC = () => {
                         Before
                       </Typography>
                       <div className="flex items-start gap-4">
-                        <img
-                          src={URL.createObjectURL(formData.beforePhoto)}
-                          alt="Before"
+                        <AttachmentThumb
+                          file={formData.beforePhoto}
                           className="w-20 h-20 object-cover rounded border border-gray-200"
                         />
                         <div className="flex-1">
@@ -2689,11 +2743,8 @@ export const TaskSubmissionPage: React.FC = () => {
                                 {formData.checklist[item.id]?.attachment && (
                                   <div className="">
                                     <div className="flex items-center gap-3 p-3 bg-gray-50 rounded border">
-                                      <img
-                                        src={URL.createObjectURL(
-                                          formData.checklist[item.id].attachment
-                                        )}
-                                        alt="Attachment"
+                                      <AttachmentThumb
+                                        file={formData.checklist[item.id].attachment}
                                         className="w-16 h-16 object-cover rounded border"
                                       />
                                       <Typography
@@ -2834,11 +2885,8 @@ export const TaskSubmissionPage: React.FC = () => {
                           {formData.checklist[item.id]?.attachment && (
                             <div className="">
                               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded border">
-                                <img
-                                  src={URL.createObjectURL(
-                                    formData.checklist[item.id].attachment
-                                  )}
-                                  alt="Attachment"
+                                <AttachmentThumb
+                                  file={formData.checklist[item.id].attachment}
                                   className="w-16 h-16 object-cover rounded border"
                                 />
                                 <Typography
@@ -2890,10 +2938,10 @@ export const TaskSubmissionPage: React.FC = () => {
                               After
                             </Typography>
                             <div className="flex items-start gap-4">
-                              <img
-                                src={URL.createObjectURL(formData.afterPhoto)}
-                                alt="After"
+                              <AttachmentThumb
+                                file={formData.afterPhoto}
                                 className="w-24 h-24 object-cover rounded border border-gray-200"
+                                onRemove={() => handleFileUpload("after", null)}
                               />
                               <div className="flex-1">
                                 <FormControl
@@ -2949,7 +2997,7 @@ export const TaskSubmissionPage: React.FC = () => {
                       <input
                         ref={afterPhotoRef}
                         type="file"
-                        accept="image/*"
+                        accept={ATTACHMENT_ACCEPT}
                         className="hidden"
                         onChange={(e) =>
                           handleFileUpload(
@@ -3006,9 +3054,8 @@ export const TaskSubmissionPage: React.FC = () => {
                       </div>
                       {formData.beforePhoto && (
                         <div className="bg-gray-50 p-4 rounded-lg">
-                          <img
-                            src={URL.createObjectURL(formData.beforePhoto)}
-                            alt="Before"
+                          <AttachmentThumb
+                            file={formData.beforePhoto}
                             className="w-full h-64 object-cover rounded border border-gray-200 mb-4"
                           />
                           <div className="text-center">
@@ -3052,9 +3099,8 @@ export const TaskSubmissionPage: React.FC = () => {
                       </div>
                       {formData.afterPhoto && (
                         <div className="bg-gray-50 p-4 rounded-lg">
-                          <img
-                            src={URL.createObjectURL(formData.afterPhoto)}
-                            alt="After"
+                          <AttachmentThumb
+                            file={formData.afterPhoto}
                             className="w-full h-64 object-cover rounded border border-gray-200 mb-4"
                           />
                           <div className="text-center">
@@ -3186,9 +3232,8 @@ export const TaskSubmissionPage: React.FC = () => {
                                       <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
                                         {attachment ? (
                                           <div className="flex items-center gap-2">
-                                            <img
-                                              src={URL.createObjectURL(attachment)}
-                                              alt="Attachment"
+                                            <AttachmentThumb
+                                              file={attachment}
                                               className="w-8 h-8 object-cover rounded border border-gray-200"
                                             />
                                             <span className="text-xs text-gray-600 truncate max-w-20">
@@ -3269,9 +3314,8 @@ export const TaskSubmissionPage: React.FC = () => {
                                 <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
                                   {attachment ? (
                                     <div className="flex items-center gap-2">
-                                      <img
-                                        src={URL.createObjectURL(attachment)}
-                                        alt="Attachment"
+                                      <AttachmentThumb
+                                        file={attachment}
                                         className="w-8 h-8 object-cover rounded border border-gray-200"
                                       />
                                       <span className="text-xs text-gray-600 truncate max-w-20">

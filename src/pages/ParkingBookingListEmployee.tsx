@@ -42,6 +42,7 @@ import { ParkingStatisticsCard } from '@/components/parking-analytics/ParkingSta
 import { ParkingOccupancyChart } from '@/components/parking-analytics/ParkingOccupancyChart';
 import { FloorWiseOccupancyChart } from '@/components/parking-analytics/FloorWiseOccupancyChart';
 import { ParkingAnalyticsSelector } from '@/components/ParkingAnalyticsSelector';
+import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
@@ -191,6 +192,14 @@ const SectionLoader: React.FC<{
 };
 
 const ParkingBookingListEmployee = () => {
+  const gaEvents = useGaFunnelEvents();
+
+  // GA parity: the parking booking screen was opened. Mount-only, so tab switches and
+  // paging inside the page are not counted as fresh page views.
+  useEffect(() => {
+    gaEvents.onBookParkingPageClicked("employee");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [showFiltersModal, setShowFiltersModal] = useState(false);

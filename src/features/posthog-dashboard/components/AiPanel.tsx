@@ -87,7 +87,7 @@ export function AiPanel() {
           <button className="ai-x" aria-label="Close" onClick={closeAiPanel}>✕</button>
         </div>
         <div className="ai-sim">
-          <span>✦</span><span>Simulated insight (demo). Connect an AI endpoint to enable live answers — the wiring is already in place.</span>
+          <span>✦</span><span>Insight calculated from the live dashboard data for the selected filters.</span>
         </div>
         <div className="ai-body" ref={bodyRef}>
           {messages.map((m, i) => (

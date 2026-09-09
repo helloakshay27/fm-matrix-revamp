@@ -422,9 +422,28 @@ useEffect(() => {
       URL.revokeObjectURL(downloadUrl);
       toast.success('M-Safe data exported successfully');
       msafeEvents.onMSafeUserListExported('fte', selectedItems.length > 0 ? selectedItems.length : pagination.total_count);
+      msafeEvents.onMsafeDownloaded({
+        screen: 'msafe_fte_list',
+        source: 'list_export',
+        label: 'M-Safe FTE users',
+        file_format: 'xlsx',
+        export_mode: 'server_report',
+        row_count: selectedItems.length > 0 ? selectedItems.length : pagination.total_count,
+        succeeded: true,
+      });
     } catch (error) {
       console.error('Export failed:', error);
       toast.error('Failed to export M-Safe data');
+      msafeEvents.onMsafeDownloaded({
+        screen: 'msafe_fte_list',
+        source: 'list_export',
+        label: 'M-Safe FTE users',
+        file_format: 'xlsx',
+        export_mode: 'server_report',
+        row_count: selectedItems.length > 0 ? selectedItems.length : pagination.total_count,
+        succeeded: false,
+        failure_reason: (error as Error)?.message ?? 'request_failed',
+      });
     }
   };
 
@@ -497,7 +516,7 @@ useEffect(() => {
 
         <div className="rounded-lg">
           <EnhancedTable data={fmUsers || []} columns={columns} onFilterClick={handleFiltersClick}
-            renderCell={renderCell} renderActions={renderActions} onSelectAll={handleSelectAll} storageKey="msafe-fm-users" searchTerm={searchTerm} onSearchChange={setSearchTerm} searchPlaceholder="Search..." handleExport={handleExport} exportFileName="fm-users" pagination={false} pageSize={10} loading={loading} enableSearch={true} onRowClick={user => console.log('Row clicked:', user)} />
+            renderCell={renderCell} renderActions={renderActions} onSelectAll={handleSelectAll} storageKey="msafe-fm-users" searchTerm={searchTerm} onSearchChange={setSearchTerm} searchPlaceholder="Search..." handleExport={handleExport} analyticsDownloadHandled exportFileName="fm-users" pagination={false} pageSize={10} loading={loading} enableSearch={true} onRowClick={user => console.log('Row clicked:', user)} />
           {!loading && pagination.total_pages > 1 && (
             <div className="flex flex-col items-center gap-2 mt-6">
             <div className="text-sm text-gray-600">Page {page} of {pagination.total_pages} | Total {pagination.total_count}</div>              <Pagination>

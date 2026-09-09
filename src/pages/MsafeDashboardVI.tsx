@@ -22,6 +22,7 @@ import {
 } from 'recharts';
 import { Download } from 'lucide-react';
 import { DownloadOutlined } from '@mui/icons-material';
+import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 
 const COLORS = {
     krcc: '#FFC107', // Yellow
@@ -34,6 +35,7 @@ const COLORS = {
 type Option = { label: string; value: string };
 
 const MsafeDashboardVI: React.FC = () => {
+    const msafeEvents = useMSafeEvents();
     // Drag & drop: order of sections
     type SectionKey =
         | 'onboarding-status'
@@ -329,6 +331,14 @@ const MsafeDashboardVI: React.FC = () => {
         link.download = 'new-joinee-trend.png';
         link.href = canvas.toDataURL();
         link.click();
+        msafeEvents.onMsafeDownloaded({
+            screen: 'msafe_dashboard_legacy',
+            source: 'chart_image',
+            label: 'New Joinee Trend',
+            file_format: 'png',
+            filters: downloadFilterProps(),
+            succeeded: true,
+        });
     };
 
     // Fetch New Joinee Trend from API
@@ -721,6 +731,17 @@ const MsafeDashboardVI: React.FC = () => {
         setAppliedEmployeeType(snap.employeeType || '');
         setAppliedStartDate(snap.from ?? null);
         setAppliedEndDate(snap.to ?? null);
+        msafeEvents.onMsafeDashboardFilterApplied({
+            screen: 'msafe_dashboard_legacy',
+            filters: {
+                clusterIds: snap.cluster || [],
+                circleIds: snap.circle || [],
+                functionIds: snap.func || [],
+                empTypeId: snap.employeeType || '',
+                startDate: snap.from ? formatDate(snap.from) : '',
+                endDate: snap.to ? formatDate(snap.to) : '',
+            },
+        });
         const id = toast.loading('Applying filters…');
         try {
             await Promise.all([
@@ -852,6 +873,17 @@ const MsafeDashboardVI: React.FC = () => {
         }
     };
 
+    // Filter context stamped on every download event from this dashboard, so a file
+    // can be tied back to the slice of data the user was actually looking at.
+    const downloadFilterProps = () => ({
+        clusterIds: appliedCluster,
+        circleIds: appliedCircle,
+        functionIds: appliedFunc,
+        empTypeId: appliedEmployeeType,
+        startDate: formatDate(appliedStartDate),
+        endDate: formatDate(appliedEndDate),
+    });
+
     const downloadChart = async () => {
         if (!chartRef.current) return;
         const canvas = await html2canvas(chartRef.current);
@@ -859,15 +891,44 @@ const MsafeDashboardVI: React.FC = () => {
         link.download = 'onboarding-status.png';
         link.href = canvas.toDataURL();
         link.click();
+        msafeEvents.onMsafeDownloaded({
+            screen: 'msafe_dashboard_legacy',
+            source: 'chart_image',
+            label: 'Onboarding Status',
+            file_format: 'png',
+            filters: downloadFilterProps(),
+            succeeded: true,
+        });
     };
 
     // Generic function to download data from API as JSON
     const downloadDataFromAPI = async (endpoint: string, filename: string) => {
+        // One capture point for all nine section exports below.
+        const reportDownload = (
+            succeeded: boolean,
+            fileFormat: 'json' | 'xlsx',
+            failureReason?: string,
+        ) =>
+            msafeEvents.onMsafeDownloaded({
+                screen: 'msafe_dashboard_legacy',
+                source: 'section_data',
+                // Filename is kebab-case ("onboarding-status"); the label ends up in the
+                // event name, so read it back as "Onboarding Status".
+                label: filename.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+                file_format: fileFormat,
+                export_mode: 'server_report',
+                export_for: endpoint,
+                filters: downloadFilterProps(),
+                succeeded,
+                failure_reason: failureReason ?? null,
+            });
+
         try {
             const baseUrl = localStorage.getItem('baseUrl') || '';
             const token = localStorage.getItem('token') || '';
             if (!baseUrl || !token) {
                 toast.error('Missing baseUrl or token — cannot download data');
+                reportDownload(false, 'json', 'missing_credentials');
                 return;
             }
 
@@ -908,6 +969,7 @@ const MsafeDashboardVI: React.FC = () => {
                 link.download = `${filename}-${formatDate(appliedStartDate)}-to-${formatDate(appliedEndDate)}.json`;
                 link.click();
                 URL.revokeObjectURL(url_blob);
+                reportDownload(true, 'json');
             } catch (parseError) {
                 console.error('Failed to parse JSON response:', parseError);
                 // If JSON parsing fails, download as Excel file
@@ -917,12 +979,14 @@ const MsafeDashboardVI: React.FC = () => {
                 link.download = `${filename}-${formatDate(appliedStartDate)}-to-${formatDate(appliedEndDate)}.xlsx`;
                 link.click();
                 URL.revokeObjectURL(url_blob);
+                reportDownload(true, 'xlsx');
             }
             
             toast.success(`${filename} data downloaded successfully`);
         } catch (err) {
             console.error(`Failed to download ${filename} data:`, err);
             toast.error('Failed to download data');
+            reportDownload(false, 'json', (err as Error)?.message ?? 'request_failed');
         }
     };
 
@@ -944,6 +1008,14 @@ const MsafeDashboardVI: React.FC = () => {
         link.download = 'day1-hsw-induction.png';
         link.href = canvas.toDataURL();
         link.click();
+        msafeEvents.onMsafeDownloaded({
+            screen: 'msafe_dashboard_legacy',
+            source: 'chart_image',
+            label: 'Day 1 HSW Induction',
+            file_format: 'png',
+            filters: downloadFilterProps(),
+            succeeded: true,
+        });
     };
 
     const downloadTrainingChart = async () => {
@@ -953,6 +1025,14 @@ const MsafeDashboardVI: React.FC = () => {
         link.download = 'training-compliance.png';
         link.href = canvas.toDataURL();
         link.click();
+        msafeEvents.onMsafeDownloaded({
+            screen: 'msafe_dashboard_legacy',
+            source: 'chart_image',
+            label: 'Training Compliance',
+            file_format: 'png',
+            filters: downloadFilterProps(),
+            succeeded: true,
+        });
     };
 
     // Day 1 HSW data is fetched from API
@@ -1072,6 +1152,14 @@ const MsafeDashboardVI: React.FC = () => {
         link.download = 'training-first-time-pass-rate.png';
         link.href = canvas.toDataURL();
         link.click();
+        msafeEvents.onMsafeDownloaded({
+            screen: 'msafe_dashboard_legacy',
+            source: 'chart_image',
+            label: 'Training First Time Pass Rate',
+            file_format: 'png',
+            filters: downloadFilterProps(),
+            succeeded: true,
+        });
     };
 
     // Fetch FTPR from API
@@ -1215,6 +1303,14 @@ const MsafeDashboardVI: React.FC = () => {
         link.download = 'lmc.png';
         link.href = canvas.toDataURL();
         link.click();
+        msafeEvents.onMsafeDownloaded({
+            screen: 'msafe_dashboard_legacy',
+            source: 'chart_image',
+            label: 'LMC',
+            file_format: 'png',
+            filters: downloadFilterProps(),
+            succeeded: true,
+        });
     };
     // Fetch LMC from API
     const fetchLMC = async (useFilters: boolean, filters?: FiltersSnapshot) => {
@@ -1293,6 +1389,14 @@ const MsafeDashboardVI: React.FC = () => {
         link.download = 'smt.png';
         link.href = canvas.toDataURL();
         link.click();
+        msafeEvents.onMsafeDownloaded({
+            screen: 'msafe_dashboard_legacy',
+            source: 'chart_image',
+            label: 'SMT',
+            file_format: 'png',
+            filters: downloadFilterProps(),
+            succeeded: true,
+        });
     };
 
     // Fetch SMT data from API
@@ -1416,6 +1520,14 @@ const MsafeDashboardVI: React.FC = () => {
         link.download = 'compliance-forcasting.png';
         link.href = canvas.toDataURL();
         link.click();
+        msafeEvents.onMsafeDownloaded({
+            screen: 'msafe_dashboard_legacy',
+            source: 'chart_image',
+            label: 'Compliance Forecasting',
+            file_format: 'png',
+            filters: downloadFilterProps(),
+            succeeded: true,
+        });
     };
 
     // Fetch Compliance Forecasting from API
@@ -1523,6 +1635,14 @@ const MsafeDashboardVI: React.FC = () => {
         link.download = 'driving.png';
         link.href = canvas.toDataURL();
         link.click();
+        msafeEvents.onMsafeDownloaded({
+            screen: 'msafe_dashboard_legacy',
+            source: 'chart_image',
+            label: 'Driving',
+            file_format: 'png',
+            filters: downloadFilterProps(),
+            succeeded: true,
+        });
     };
 
     // Fetch Driving section from API
@@ -1731,6 +1851,14 @@ const MsafeDashboardVI: React.FC = () => {
         link.download = 'medical-checkup-first-aid.png';
         link.href = canvas.toDataURL();
         link.click();
+        msafeEvents.onMsafeDownloaded({
+            screen: 'msafe_dashboard_legacy',
+            source: 'chart_image',
+            label: 'Medical Checkup & First Aid',
+            file_format: 'png',
+            filters: downloadFilterProps(),
+            succeeded: true,
+        });
     };
 
     const todayLabell = 'Tuesday';

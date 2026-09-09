@@ -1,18 +1,18 @@
 import axios from 'axios';
+import { FM_ADOPTION_TENANT_URL } from '@/config/fmAdoptionTenant';
 
 /**
  * FM Adoption Analytics API — the 9 endpoints documented in FM_ADOPTION_API_CURLS.md
  * (repo root). No auth header and no `team` param: team is fixed server-side to 1.
- * `url` is the tenant host and is fixed here — this layer only exposes date / site /
+ * `url` is the tenant host and is resolved from the shared tenant configuration
+ * (see src/config/fmAdoptionTenant.ts) — this layer only exposes date / site /
  * device / module filters.
  */
 const BASE_URL =
   (import.meta.env.VITE_FM_ADOPTION_API_URL as string | undefined) ??
   'https://posthog-api.lockated.com';
 
-const TENANT_URL =
-  (import.meta.env.VITE_FM_ADOPTION_TENANT_URL as string | undefined) ??
-  'fm-matrix.lockated.com';
+const TENANT_URL = FM_ADOPTION_TENANT_URL;
 
 const client = axios.create({ baseURL: BASE_URL, timeout: 60_000 });
 
@@ -35,34 +35,26 @@ export interface WeeklyFilters {
   devices?: DeviceType[];
 }
 
-function baseParams(siteIds?: string[], devices?: DeviceType[]) {
+// `site_id` is intentionally NOT sent to the PostHog Adoption Analytics APIs —
+// it is not part of the API contract (the working Panchshil Connect dashboard
+// sends none). Site data may still exist app-side for scoping/labels, but it is
+// never forwarded to PostHog as a `site_id` query parameter.
+function baseParams(devices?: DeviceType[]) {
   const p: Record<string, string> = { url: TENANT_URL };
-  if (siteIds?.length) p.site_id = siteIds.join(',');
   if (devices?.length) p.device_type = devices.join(',');
   return p;
 }
 
 function rangeParams(f: RangeFilters) {
-  return { ...baseParams(f.siteIds, f.devices), from: f.from, to: f.to };
+  return { ...baseParams(f.devices), from: f.from, to: f.to };
 }
 
 function weeklyParams(f: WeeklyFilters) {
-  return { ...baseParams(f.siteIds, f.devices), to: f.to, weeks: String(f.weeks) };
+  return { ...baseParams(f.devices), to: f.to, weeks: String(f.weeks) };
 }
 
 async function get<T>(path: string, params: Record<string, string>): Promise<T> {
-  // Build query string manually so site_id commas are NOT percent-encoded (%2C),
-  // matching the format the server expects: site_id=2189,2190,2191,...
-  const base = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) {
-    if (k === 'site_id') continue; // handle below
-    base.append(k, v);
-  }
-  let qs = base.toString();
-  if (params.site_id) {
-    // Append site_id with literal commas, not encoded
-    qs += (qs ? '&' : '') + 'site_id=' + params.site_id;
-  }
+  const qs = new URLSearchParams(params).toString();
   const res = await client.get<T>(`/fm/adoption/${path}?${qs}`);
   return res.data;
 }

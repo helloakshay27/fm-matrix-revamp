@@ -44,14 +44,14 @@ import { toast } from "sonner";
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
-    <section className="bg-card rounded-lg border border-border shadow-sm">
-        <div className="px-6 py-4 border-b border-border flex items-center gap-3">
-            <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+    <section className="border border-gray-200 rounded-lg overflow-hidden">
+        <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
+            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
                 {icon}
             </div>
-            <h2 className="text-sm font-semibold tracking-wide uppercase">{title}</h2>
+            <span className="font-semibold text-lg text-gray-800">{title}</span>
         </div>
-        <div className="p-6">{children}</div>
+        <div className="p-6 bg-white">{children}</div>
     </section>
 );
 
@@ -545,7 +545,7 @@ export const DebitNoteClubEditPage: React.FC = () => {
                 const res = await axios.get(
                     `https://${baseUrl}/lock_accounts/${lock_account_id}/bill_bookings.json`,
                     {
-                        params: { user_id: selectedUser, page: 1, per_page: 20 },
+                        params: { user_id: selectedUser, page: 1, per_page: 20, paid: true },
                         headers: { Authorization: token ? `Bearer ${token}` : undefined }
                     }
                 );
@@ -554,7 +554,7 @@ export const DebitNoteClubEditPage: React.FC = () => {
                 const list = data?.bill_bookings || data?.data || (Array.isArray(data) ? data : []);
                 const freshList = (list || []).map((inv: any) => ({
                     id: String(inv.id),
-                    invoice_number: `#${inv.id}`
+                    invoice_number: inv.bill_number 
                     // inv.bill_number || inv.order_number || inv.invoice_number ||
                 }));
                 // This page (page=1&per_page=20) may not include the currently linked/selected
@@ -1508,11 +1508,6 @@ export const DebitNoteClubEditPage: React.FC = () => {
             return false;
         }
 
-        if (!placeOfSupply) {
-            setErrors(newErrors);
-            toast.error('Place of Supply is required');
-            return false;
-        }
 
         if (!salesOrderDate) {
             setErrors(newErrors);
@@ -1552,7 +1547,7 @@ export const DebitNoteClubEditPage: React.FC = () => {
     // Maps a line_item_type to the PascalCase resource_type the debit_notes API expects
     const LINE_ITEM_RESOURCE_TYPE: Record<string, string> = {
         facility_booking: 'FacilityBooking',
-        membership: 'Membership',
+        membership: 'ClubMemberAllocation',
         event: 'Event',
     };
 
@@ -1917,7 +1912,7 @@ export const DebitNoteClubEditPage: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-2">
-                                        Place of Supply <span className="text-red-500">*</span>
+                                        Place of Supply
                                     </label>
                                     <TextField
                                         select
@@ -2146,20 +2141,20 @@ export const DebitNoteClubEditPage: React.FC = () => {
                             <div className="text-red-500 text-sm bg-red-50 p-3 rounded-md">{errors.items}</div>
                         )}
 
-                        <div className="border border-border rounded-lg overflow-x-auto">
+                        <div className="border border-gray-200 rounded-lg overflow-x-auto">
                                 <table className="w-full min-w-[900px] item-table-no-hover">
-                                    <thead className="bg-muted/50">
+                                    <thead className="bg-gray-50">
                                         <tr>
                                             <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
-                                            <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th>
+                                            {/* <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th> */}
                                             <th className="px-4 py-3 text-left text-sm font-medium">Rate</th>
                                             {/* <th className="px-4 py-3 text-left text-sm font-medium">Discount</th> */}
                                             <th className="px-4 py-3 text-left text-sm font-medium">Tax</th>
                                             <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
-                                            <th className="px-4 py-3 text-center text-sm font-medium">Action</th>
+                                            {/* <th className="px-4 py-3 text-center text-sm font-medium">Action</th> */}
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-border">
+                                    <tbody className="divide-y divide-gray-200">
 
                                         {items.map((item, index) => (
                                             <tr key={item.id}>
@@ -2179,6 +2174,8 @@ export const DebitNoteClubEditPage: React.FC = () => {
                                                         </div>
                                                     ) : (
                                                         <>
+                                                            {/* Facility Booking / Membership / Event / Other picker — commented out per request,
+                                                                every row now goes straight to a plain "Other" item-name input below.
                                                             {(() => {
                                                                 const rowSource = itemSourceSelection[item.id] || '';
                                                                 const sourceOptions: { key: 'facility' | 'membership' | 'event'; label: string; options: { id: string; name: string; rate: number }[] }[] = [
@@ -2249,6 +2246,20 @@ export const DebitNoteClubEditPage: React.FC = () => {
                                                                     </div>
                                                                 );
                                                             })()}
+                                                            */}
+                                                            <div className="mt-2">
+                                                                <TextField
+                                                                    size="small"
+                                                                    placeholder="Enter item name"
+                                                                    value={otherItemNameDraft[item.id] ?? item.name ?? ''}
+                                                                    onChange={(e) => setOtherItemNameDraft(prev => ({ ...prev, [item.id]: e.target.value }))}
+                                                                    onBlur={() => {
+                                                                        const name = (otherItemNameDraft[item.id] ?? item.name ?? '').trim();
+                                                                        updateItemFields(index, { item_id: null, name });
+                                                                    }}
+                                                                    sx={{ minWidth: 200 }}
+                                                                />
+                                                            </div>
 
                                                             <TextField
                                                                 fullWidth
@@ -2265,7 +2276,7 @@ export const DebitNoteClubEditPage: React.FC = () => {
                                                 </td>
 
 
-                                                <td className="px-4 py-3">
+                                                {/* <td className="px-4 py-3">
                                                     {item.locked ? (
                                                         <div className="text-sm text-gray-900">{item.quantity}</div>
                                                     ) : (
@@ -2278,7 +2289,7 @@ export const DebitNoteClubEditPage: React.FC = () => {
                                                             sx={{ width: 80 }}
                                                         />
                                                     )}
-                                                </td>
+                                                </td> */}
                                                 <td className="px-4 py-3">
                                                     <TextField
                                                         type="number"
@@ -2346,16 +2357,20 @@ export const DebitNoteClubEditPage: React.FC = () => {
                                                 <td className="px-4 py-3 text-right font-semibold">
                                                     ₹{item.amount.toFixed(2)}
                                                 </td>
-                                                <td className="px-4 py-3 text-center">
+                                                {/* <td className="px-4 py-3 text-center">
                                                     <IconButton
                                                         size="small"
                                                         onClick={() => removeItem(index)}
                                                         disabled={items.length === 1}
-                                                        color="error"
+                                                        sx={{
+                                                            color: '#DA7756',
+                                                            '&:hover': { backgroundColor: 'rgba(218, 119, 86, 0.08)' },
+                                                            '&.Mui-disabled': { color: 'rgba(218, 119, 86, 0.4)' },
+                                                        }}
                                                     >
                                                         <Delete fontSize="small" />
                                                     </IconButton>
-                                                </td>
+                                                </td> */}
                                             </tr>
                                         ))}
                                     </tbody>
@@ -2389,7 +2404,7 @@ export const DebitNoteClubEditPage: React.FC = () => {
                                 <span className="font-semibold text-base">₹{subTotal.toFixed(2)}</span>
                             </div>
 
-                            <div className="flex justify-between items-center py-2">
+                            {/* <div className="flex justify-between items-center py-2">
                                 <span className="text-sm font-medium text-muted-foreground">Discount</span>
                                 <div className="flex items-center gap-2">
                                     <Select
@@ -2412,7 +2427,7 @@ export const DebitNoteClubEditPage: React.FC = () => {
 
                                     <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
                                 </div>
-                            </div>
+                            </div> */}
                             {taxBreakdown.map((tax, index) => (
                                 <div key={index} className="flex justify-between items-center py-2">
                                     <span className="text-sm font-medium text-muted-foreground">
@@ -2833,29 +2848,86 @@ export const DebitNoteClubEditPage: React.FC = () => {
                 <DialogTitle className="!text-base !font-semibold">Additional Address</DialogTitle>
                 <DialogContent dividers>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-                        <TextField label="Attention" fullWidth value={addressForm.attention} onChange={(e) => setAddressForm((prev) => ({ ...prev, attention: e.target.value }))} className="md:col-span-2" />
+                        <TextField label="Attention" placeholder="Enter contact person name" InputLabelProps={{ shrink: true }} fullWidth value={addressForm.attention} onChange={(e) => setAddressForm((prev) => ({ ...prev, attention: e.target.value }))} className="md:col-span-2" />
                         <TextField label="Country/Region" select fullWidth value={addressForm.country} onChange={(e) => setAddressForm((prev) => ({ ...prev, country: e.target.value }))} className="md:col-span-2">
                             {addressCountryOptions.map((opt) => (<MenuItem key={opt.code} value={opt.name}>{opt.name}</MenuItem>))}
                         </TextField>
-                        <TextField label="Tax Information" select fullWidth value={selectedAddressTaxInfoId} onChange={(e) => setSelectedAddressTaxInfoId(String(e.target.value))} className="md:col-span-2">
+                        {/* <TextField label="Tax Information" select fullWidth value={selectedAddressTaxInfoId} onChange={(e) => setSelectedAddressTaxInfoId(String(e.target.value))} className="md:col-span-2">
                             <MenuItem value="">Select</MenuItem>
                             {gstDetails.map((gst) => (<MenuItem key={gst.id} value={String(gst.id)}>{gst.gstin} - {gst.place_of_supply}</MenuItem>))}
-                        </TextField>
-                        <TextField label="Address" placeholder="Street 1" fullWidth value={addressForm.address} onChange={(e) => setAddressForm((prev) => ({ ...prev, address: e.target.value }))} className="md:col-span-2" />
+                        </TextField> */}
+                        <TextField label="Address" placeholder="Street 1" InputLabelProps={{ shrink: true }} fullWidth value={addressForm.address} onChange={(e) => setAddressForm((prev) => ({ ...prev, address: e.target.value }))} className="md:col-span-2" />
                         <TextField placeholder="Street 2" fullWidth value={addressForm.address_line_two} onChange={(e) => setAddressForm((prev) => ({ ...prev, address_line_two: e.target.value }))} className="md:col-span-2" />
-                        <TextField label="City" fullWidth value={addressForm.city} onChange={(e) => setAddressForm((prev) => ({ ...prev, city: e.target.value }))} className="md:col-span-2" />
-                        <TextField label="State" select fullWidth value={addressForm.state} onChange={(e) => setAddressForm((prev) => ({ ...prev, state: e.target.value }))}>
-                            <MenuItem value="">Select</MenuItem>
+                        <TextField label="City" placeholder="Enter city" InputLabelProps={{ shrink: true }} fullWidth value={addressForm.city} onChange={(e) => setAddressForm((prev) => ({ ...prev, city: e.target.value }))} className="md:col-span-2" />
+                        <TextField
+                            label="State"
+                            select
+                            fullWidth
+                            value={addressForm.state}
+                            onChange={(e) => setAddressForm((prev) => ({ ...prev, state: e.target.value }))}
+                            SelectProps={{
+                                displayEmpty: true,
+                                MenuProps: {
+                                    PaperProps: {
+                                        sx: {
+                                            maxHeight: 300,
+                                            '& .MuiMenuItem-root': { fontSize: '14px !important', minHeight: 'auto !important', padding: '8px 12px !important' },
+                                        },
+                                    },
+                                },
+                            }}
+                        >
+                            <MenuItem value="" disabled>Select State</MenuItem>
                             {states.map((state) => (<MenuItem key={state} value={state}>{state}</MenuItem>))}
                         </TextField>
-                        <TextField label="Pin Code" fullWidth value={addressForm.pin_code} onChange={(e) => setAddressForm((prev) => ({ ...prev, pin_code: e.target.value }))} />
-                        <TextField label="Phone" fullWidth value={addressForm.telephone_number} onChange={(e) => setAddressForm((prev) => ({ ...prev, telephone_number: e.target.value }))} InputProps={{ startAdornment: <InputAdornment position="start">+91</InputAdornment> }} />
-                        <TextField label="Fax Number" fullWidth value={addressForm.fax_number} onChange={(e) => setAddressForm((prev) => ({ ...prev, fax_number: e.target.value }))} />
+                        <TextField
+                            label="Pin Code"
+                            placeholder="Enter 6-digit pin code"
+                            InputLabelProps={{ shrink: true }}
+                            fullWidth
+                            value={addressForm.pin_code}
+                            onChange={(e) => {
+                                const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                setAddressForm((prev) => ({ ...prev, pin_code: digitsOnly }));
+                            }}
+                            inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 6 }}
+                        />
+                        <TextField
+                            label="Phone"
+                            placeholder="Enter phone number"
+                            InputLabelProps={{ shrink: true }}
+                            fullWidth
+                            value={addressForm.telephone_number}
+                            onChange={(e) => {
+                                const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                setAddressForm((prev) => ({ ...prev, telephone_number: digitsOnly }));
+                            }}
+                            inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 10 }}
+                            InputProps={{ startAdornment: <InputAdornment position="start">+91</InputAdornment> }}
+                        />
+                        <TextField
+                            label="Fax Number"
+                            placeholder="Enter fax number"
+                            InputLabelProps={{ shrink: true }}
+                            fullWidth
+                            value={addressForm.fax_number}
+                            onChange={(e) => {
+                                const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 15);
+                                setAddressForm((prev) => ({ ...prev, fax_number: digitsOnly }));
+                            }}
+                            inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 15 }}
+                        />
                     </div>
                 </DialogContent>
-                <DialogActions className="!justify-start !px-6 !py-3">
-                    <button type="button" onClick={handleSaveAddressForm} className="px-4 py-2 rounded border border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756] hover:text-white text-sm">Save</button>
-                    <button type="button" onClick={() => setAddressFormModalOpen(false)} className="px-4 py-2 rounded border border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756] hover:text-white text-sm">Cancel</button>
+                <DialogActions className="!justify-center !px-6 !py-3">
+                    <button type="button" onClick={handleSaveAddressForm} className="fm-button-fix fm-button-brand px-8 py-2">Save</button>
+                    <button
+                        type="button"
+                        onClick={() => setAddressFormModalOpen(false)}
+                        className="fm-button-fix px-8 py-2 border border-[#DA7756] text-[#DA7756] bg-transparent hover:border-[#C45F40] hover:bg-[#F2EEE9] hover:text-[#C45F40]"
+                    >
+                        Cancel
+                    </button>
                 </DialogActions>
             </Dialog>
 

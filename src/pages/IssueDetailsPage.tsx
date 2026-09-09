@@ -158,7 +158,7 @@ const Attachments = ({ attachments, id, baseUrl, token, getIssue, fetchIssueDeta
     };
 
     return (
-        <div className="flex flex-col gap-3 p-5">
+        <div className="flex flex-col gap-3 p-3 sm:p-5">
             {files && files.length > 0 ? (
                 <>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4 mt-4">
@@ -230,7 +230,7 @@ const Attachments = ({ attachments, id, baseUrl, token, getIssue, fetchIssueDeta
                         })}
                     </div>
                     <button
-                        className={`bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4 flex items-center justify-center ${uploading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                        className={`bg-[#C72030] h-[40px] w-full sm:w-[240px] text-white px-5 mt-4 flex items-center justify-center ${uploading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                         onClick={handleAttachFile}
                         disabled={uploading}
                         aria-disabled={uploading}
@@ -253,7 +253,7 @@ const Attachments = ({ attachments, id, baseUrl, token, getIssue, fetchIssueDeta
                     <span>No Documents Attached</span>
                     <div className="text-[#C2C2C2]">Drop or attach relevant documents here</div>
                     <button
-                        className={`bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4 flex items-center justify-center ${uploading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                        className={`bg-[#C72030] h-[40px] w-full sm:w-[240px] text-white px-5 mt-4 flex items-center justify-center ${uploading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                         onClick={handleAttachFile}
                         disabled={uploading}
                         aria-disabled={uploading}
@@ -778,13 +778,13 @@ const Comments = ({ comments, getIssue, baseUrl, token, id }: any) => {
 
     return (
         <div className="text-[14px] flex flex-col gap-2">
-            <div className="flex justify-start m-2 gap-5">
-                <div className="bg-[#01569E] h-[36px] w-[36px] rounded-full text-white text-center p-1.5">
+            <div className="flex justify-start m-2 gap-3 sm:gap-5">
+                <div className="bg-[#01569E] h-[36px] w-[36px] max-md:shrink-0 rounded-full text-white text-center p-1.5">
                     <span>
                         {`${currentUser?.firstname?.charAt(0) || ""}${currentUser?.lastname?.charAt(0) || ""}`}
                     </span>
                 </div>
-                <div className="relative w-[95%]">
+                <div className="relative w-full sm:w-[95%] max-md:min-w-0">
                     <MentionsInput
                         inputRef={textareaRef}
                         value={comment}
@@ -884,8 +884,8 @@ const Comments = ({ comments, getIssue, baseUrl, token, id }: any) => {
             {localComments?.map((cmt: any) => {
                 const isEditing = editingCommentId === cmt.id;
                 return (
-                    <div key={cmt.id} className="relative flex justify-start m-2 gap-5">
-                        <div className="bg-[#01569E] h-[36px] w-[36px] rounded-full text-white text-center p-1.5">
+                    <div key={cmt.id} className="relative flex justify-start m-2 gap-3 sm:gap-5">
+                        <div className="bg-[#01569E] h-[36px] w-[36px] max-md:shrink-0 rounded-full text-white text-center p-1.5">
                             <span>
                                 {cmt?.commentor_full_name
                                     ?.split(" ")
@@ -1244,7 +1244,7 @@ const IssueDetailsPage = () => {
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back
                 </Button>
-                <div className="px-4 pt-1">
+                <div className="px-0 sm:px-4 pt-1">
                     {/* Title skeleton */}
                     <div className="p-3 px-0">
                         <Skeleton className="h-6 w-3/4 mb-2" />
@@ -1265,7 +1265,7 @@ const IssueDetailsPage = () => {
                     <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)] my-3"></div>
 
                     {/* Description section skeleton */}
-                    <div className="border rounded-[10px] shadow-md p-5 mb-4">
+                    <div className="border rounded-[10px] shadow-md p-3 sm:p-5 mb-4">
                         <div className="flex items-center gap-4 mb-4">
                             <Skeleton className="h-8 w-8 rounded" />
                             <Skeleton className="h-6 w-32" />
@@ -1278,7 +1278,7 @@ const IssueDetailsPage = () => {
                     </div>
 
                     {/* Details section skeleton */}
-                    <div className="border rounded-[10px] shadow-md p-5 mb-4">
+                    <div className="border rounded-[10px] shadow-md p-3 sm:p-5 mb-4">
                         <div className="flex items-center gap-4 mb-4">
                             <Skeleton className="h-8 w-8 rounded" />
                             <Skeleton className="h-6 w-32" />
@@ -1321,15 +1321,15 @@ const IssueDetailsPage = () => {
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
             </Button>
-            <div className="px-4 pt-1">
-                <h2 className="text-[15px] p-3 px-0">
+            <div className="px-0 sm:px-4 pt-1">
+                <h2 className="text-[15px] p-3 px-0 max-md:break-words">
                     <span className="mr-3">Issue-{issueData?.id}</span>
                     <span>{issueData?.title}</span>
                 </h2>
 
                 <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
                 <div className="flex items-center justify-between my-3 text-[12px]">
-                    <div className="flex items-center gap-3 text-[#323232]">
+                    <div className="flex max-md:flex-wrap items-center gap-3 text-[#323232]">
                         <span>Created By : {issueData?.created_by?.name}</span>
 
                         <span className="h-6 w-[1px] border border-gray-300"></span>
@@ -1413,12 +1413,12 @@ const IssueDetailsPage = () => {
                 </div>
                 <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)] my-3"></div>
 
-                <div className="border rounded-[10px] shadow-md p-5 mb-4 text-[14px]">
+                <div className="border rounded-[10px] shadow-md p-3 sm:p-5 mb-4 text-[14px]">
                     <div className="font-[600] text-[16px] flex items-center gap-4">
                         <ChevronDownCircle
                             color="#E95420"
                             size={30}
-                            className={`${isFirstCollapsed ? "rotate-180" : "rotate-0"} cursor-pointer transition-transform`}
+                            className={`${isFirstCollapsed ? "rotate-180" : "rotate-0"} cursor-pointer transition-transform max-md:shrink-0`}
                             onClick={toggleFirstCollapse}
                         />
                         Description
@@ -1441,19 +1441,19 @@ const IssueDetailsPage = () => {
                     </div>
                 </div>
 
-                <div className="border rounded-[10px] shadow-md p-5 mb-4">
-                    <div className="font-[600] text-[16px] flex items-center gap-10">
+                <div className="border rounded-[10px] shadow-md p-3 sm:p-5 mb-4">
+                    <div className="font-[600] text-[16px] flex items-center gap-10 max-md:flex-wrap max-md:gap-y-3">
                         <div className="flex items-center gap-4">
                             <ChevronDownCircle
                                 color="#E95420"
                                 size={30}
-                                className={`${isSecondCollapsed ? "rotate-180" : "rotate-0"} cursor-pointer transition-transform`}
+                                className={`${isSecondCollapsed ? "rotate-180" : "rotate-0"} cursor-pointer transition-transform max-md:shrink-0`}
                                 onClick={toggleSecondCollapse}
                             />
                             Details
                         </div>
                         {isSecondCollapsed && (
-                            <div className="flex items-center gap-6">
+                            <div className="flex items-center gap-6 max-md:flex-wrap max-md:gap-y-2">
                                 <div className="flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]">
                                         Responsible Person:
@@ -1488,8 +1488,8 @@ const IssueDetailsPage = () => {
                         }}
                     >
                         <div className="flex flex-col">
-                            <div className="flex items-center ml-36">
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0 ml-0 sm:ml-36">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]">
                                         Responsible Person :
                                     </div>
@@ -1497,7 +1497,7 @@ const IssueDetailsPage = () => {
                                         {issueData?.responsible_person?.name}
                                     </div>
                                 </div>
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]">Priority :</div>
                                     <div className="text-left text-[12px]">
                                         {issueData?.priority?.charAt(0).toUpperCase() +
@@ -1508,12 +1508,12 @@ const IssueDetailsPage = () => {
 
                             <span className="border h-[1px] inline-block w-full my-4"></span>
 
-                            <div className="flex items-center ml-36">
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0 ml-0 sm:ml-36">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]">Issue Type:</div>
                                     <div className="text-left text-[12px]">{issueData?.issue_type_name}</div>
                                 </div>
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]">Project :</div>
                                     <div className="text-left text-[12px]">
                                         {issueData?.project_management_name || ""}
@@ -1523,14 +1523,14 @@ const IssueDetailsPage = () => {
 
                             <span className="border h-[1px] inline-block w-full my-4"></span>
 
-                            <div className="flex items-center ml-36">
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0 ml-0 sm:ml-36">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]">Start Date :</div>
                                     <div className="text-left text-[12px]">
                                         {issueData?.start_date?.split("T")[0]}
                                     </div>
                                 </div>
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]">MileStone :</div>
                                     <div className="text-left text-[12px]">
                                         {issueData?.milstone_name || ""}
@@ -1540,14 +1540,14 @@ const IssueDetailsPage = () => {
 
                             <span className="border h-[1px] inline-block w-full my-4"></span>
 
-                            <div className="flex items-center ml-36">
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0 ml-0 sm:ml-36">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]">End Date :</div>
                                     <div className="text-left text-[12px]">
                                         {issueData?.end_date?.split("T")[0]}
                                     </div>
                                 </div>
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-semibold]">Task :</div>
                                     <div className="text-left text-[12px]">
                                         {issueData?.task_management_name || ""}
@@ -1557,14 +1557,14 @@ const IssueDetailsPage = () => {
 
                             <span className="border h-[1px] inline-block w-full my-4"></span>
 
-                            <div className="flex items-center ml-36">
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0 ml-0 sm:ml-36">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]">Efforts Duration :</div>
                                     <div className="text-left text-[12px]">
                                         {formatTime(issueData?.issue_allocation_times)}
                                     </div>
                                 </div>
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-semibold]">
                                         {calculateDuration(
                                             issueData?.start_date,
@@ -1586,11 +1586,11 @@ const IssueDetailsPage = () => {
                 </div>
                 <div>
                     <div className="flex items-center justify-between my-3">
-                        <div className="flex items-center gap-10">
+                        <div className="flex items-center gap-10 max-md:overflow-x-auto">
                             {["Comments", "Documents", "Activity Log"].map((item) => (
                                 <div
                                     key={item}
-                                    className={`text-[14px] font-[400] ${activeTab === item
+                                    className={`text-[14px] font-[400] max-md:shrink-0 max-md:whitespace-nowrap ${activeTab === item
                                         ? "border-b-2 border-[#E95420] text-[#E95420]"
                                         : "cursor-pointer"
                                         }`}

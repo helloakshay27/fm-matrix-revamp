@@ -9,7 +9,10 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  LabelList,
 } from 'recharts';
+import type { TooltipProps } from 'recharts';
+import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 import { AccordionShell, ChartCard } from '../components/ChartCard';
 import { ChartSwitch } from '../components/ChartSwitch';
 import { ChartTable, DonutChart, SliceBarChart } from '../components/DonutChart';
@@ -27,6 +30,21 @@ type TrendRow = { m: string; n: number };
 
 const SLICE_PALETTE = [C.terra, C.sage, C.blue, C.teal, C.warn, C.err, C.lav, C.ok, '#B4A38A'];
 
+/** Hides the first and last point's label — with only ~220px of chart width, the
+ *  first value collides with the Y-axis tick labels and the last gets clipped by
+ *  the chart's right edge. */
+function renderAreaEndLabel(color: string, lastIndex: number) {
+  return (props: { x?: number; y?: number; value?: number; index?: number }) => {
+    const { x, y, value, index } = props;
+    if (index === 0 || index === lastIndex || x == null || y == null) return null;
+    return (
+      <text x={x} y={y} dy={-6} textAnchor="middle" fontSize={12} fontWeight={600} fill={color}>
+        {value}
+      </text>
+    );
+  };
+}
+
 function getMsafeBaseUrl(): string {
   const fromLS = localStorage.getItem('baseUrl') || '';
   const host = fromLS.replace(/^https?:\/\//, '').replace(/\/$/, '');
@@ -38,7 +56,7 @@ function getMsafeBaseUrl(): string {
  *  the same way regardless of persona. */
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
   const params: Record<string, string> = {};
-  if (f.circleId) params.circle_id = f.circleId;
+  if (f.circleIds.length > 0) params.circle_id = f.circleIds.join(',');
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type = f.empTypeId;
@@ -134,10 +152,11 @@ function normalizeDailyVolume(rows: DailyCircleRow[]): DailyRow[] {
   return order.map((d) => ({ d, n: totals.get(d) ?? 0 }));
 }
 
+// RAG thresholds standardized across the dashboard: Green >=98%, Amber 95-98%, Red <95%.
 function colorForWeekPct(pct: number): string {
-  if (pct >= 90) return C.ok;
-  if (pct >= 70) return C.teal;
-  return C.warn;
+  if (pct >= 98) return C.ok;
+  if (pct >= 95) return C.warn;
+  return C.err;
 }
 
 type WeeklyDayRecord = { label: string; actual: number; target: number | null; explicitPct: number | null };
@@ -239,7 +258,19 @@ function normalizeManagers(payload: unknown): ManagerRow[] {
     .filter((item): item is ManagerRow => Boolean(item));
 }
 
-function normalizeByFunction(payload: unknown): Slice[] {
+// Carries the raw approved count/percentage (plus total_users and the pending
+// counterparts, when the API sends them) directly on each slice — rather than a
+// separate array cross-referenced by name — so the hover tooltip can read
+// everything straight off the exact slice being hovered.
+type FunctionSlice = Slice & {
+  count: number;
+  percentage: number | null;
+  totalUsers: number | null;
+  pendingCount: number | null;
+  pendingPercentage: number | null;
+};
+
+function normalizeByFunction(payload: unknown): FunctionSlice[] {
   const list = unwrapList(payload, ['data', 'result', 'functions']);
   return list
     .map((item, index) => {
@@ -247,11 +278,27 @@ function normalizeByFunction(payload: unknown): Slice[] {
       const record = item as Record<string, unknown>;
       const name = getString(record, ['function_name', 'function', 'func', 'name', 'label', 'title']);
       if (!name) return null;
-      const value = getNumber(record, ['percentage', 'pct', 'value', 'count', 'sign_offs', 'total']);
+      // `approved_count`/`approved_percentage` are the current API field names
+      // (the old `lmc_count`/`percentage` keys are kept as fallbacks).
+      const count = getNumber(record, ['approved_count', 'lmc_count', 'count', 'value', 'sign_offs', 'total']);
+      const percentage = getNumber(record, ['approved_percentage', 'percentage', 'pct']);
+      const totalUsers = getNumber(record, ['total_users']);
+      const pendingCount = getNumber(record, ['pending_count']);
+      const pendingPercentage = getNumber(record, ['pending_percentage']);
+      const value = count ?? percentage;
       if (value === null) return null;
-      return { name, value, color: SLICE_PALETTE[index % SLICE_PALETTE.length] };
+      return {
+        name,
+        value,
+        color: SLICE_PALETTE[index % SLICE_PALETTE.length],
+        count: count ?? value,
+        percentage,
+        totalUsers,
+        pendingCount,
+        pendingPercentage,
+      };
     })
-    .filter((item): item is Slice => Boolean(item));
+    .filter((item): item is FunctionSlice => Boolean(item));
 }
 
 function colorForStatusLabel(label: string): string {
@@ -373,6 +420,15 @@ function normalizeMonthlyTrend(rows: TrendCircleRow[]): TrendRow[] {
   return order.map((m) => ({ m, n: totals.get(m) ?? 0 }));
 }
 
+function formatMonthLabel(raw: string): string {
+  const match = /^(\d{4})-(\d{2})$/.exec(raw);
+  if (!match) return raw;
+  const [, year, month] = match;
+  const date = new Date(Number(year), Number(month) - 1, 1);
+  if (Number.isNaN(date.getTime())) return raw;
+  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+}
+
 function DataState({ loading, empty, label }: { loading: boolean; empty: boolean; label: string }) {
   if (!loading && !empty) return null;
   return (
@@ -395,7 +451,7 @@ export function LmcSection() {
   const [weekLoading, setWeekLoading] = useState(true);
   const [managerData, setManagerData] = useState<ManagerRow[]>([]);
   const [managerLoading, setManagerLoading] = useState(true);
-  const [funcData, setFuncData] = useState<Slice[]>([]);
+  const [funcData, setFuncData] = useState<FunctionSlice[]>([]);
   const [funcLoading, setFuncLoading] = useState(true);
   const [statusData, setStatusData] = useState<WeekRow[]>([]);
   const [statusLoading, setStatusLoading] = useState(true);
@@ -403,50 +459,52 @@ export function LmcSection() {
   const [trendCircleData, setTrendCircleData] = useState<TrendCircleRow[]>([]);
   const [trendLoading, setTrendLoading] = useState(true);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    setDailyLoading(true);
-    (async () => {
-      try {
-        const payload = await fetchMsafeLmcJson(
-          'daily_lmc_volume.json',
-          buildFilterParams(persona, appliedFilters),
-          controller.signal,
-        );
-        if (!controller.signal.aborted) {
-          const circleRows = normalizeDailyVolumeByCircle(payload);
-          setDailyCircleData(circleRows);
-          setDailyData(normalizeDailyVolume(circleRows));
-        }
-      } catch (err) {
-        if ((err as Error).name !== 'AbortError') console.warn('M-Safe daily-lmc-volume API failed.', err);
-      } finally {
-        if (!controller.signal.aborted) setDailyLoading(false);
-      }
-    })();
-    return () => controller.abort();
-  }, [appliedFilters, persona]);
+  // "Daily LMC Volume — Last 30 Days" card hidden per request — API call disabled too.
+  // useEffect(() => {
+  //   const controller = new AbortController();
+  //   setDailyLoading(true);
+  //   (async () => {
+  //     try {
+  //       const payload = await fetchMsafeLmcJson(
+  //         'daily_lmc_volume.json',
+  //         buildFilterParams(persona, appliedFilters),
+  //         controller.signal,
+  //       );
+  //       if (!controller.signal.aborted) {
+  //         const circleRows = normalizeDailyVolumeByCircle(payload);
+  //         setDailyCircleData(circleRows);
+  //         setDailyData(normalizeDailyVolume(circleRows));
+  //       }
+  //     } catch (err) {
+  //       if ((err as Error).name !== 'AbortError') console.warn('M-Safe daily-lmc-volume API failed.', err);
+  //     } finally {
+  //       if (!controller.signal.aborted) setDailyLoading(false);
+  //     }
+  //   })();
+  //   return () => controller.abort();
+  // }, [appliedFilters, persona]);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    setWeekLoading(true);
-    (async () => {
-      try {
-        const filterParams = buildFilterParams(persona, appliedFilters);
-        const payload = await fetchMsafeLmcJson(
-          'lmc_weekly_completion.json',
-          { from_date: filterParams.from_date ?? '', end_date: filterParams.to_date ?? '' },
-          controller.signal,
-        );
-        if (!controller.signal.aborted) setWeekData(normalizeWeeklyCompletion(payload));
-      } catch (err) {
-        if ((err as Error).name !== 'AbortError') console.warn('M-Safe lmc-weekly-completion API failed.', err);
-      } finally {
-        if (!controller.signal.aborted) setWeekLoading(false);
-      }
-    })();
-    return () => controller.abort();
-  }, [appliedFilters, persona]);
+  // "LMC Completion" card hidden per request — API call disabled too.
+  // useEffect(() => {
+  //   const controller = new AbortController();
+  //   setWeekLoading(true);
+  //   (async () => {
+  //     try {
+  //       const filterParams = buildFilterParams(persona, appliedFilters);
+  //       const payload = await fetchMsafeLmcJson(
+  //         'lmc_weekly_completion.json',
+  //         { from_date: filterParams.from_date ?? '', end_date: filterParams.to_date ?? '' },
+  //         controller.signal,
+  //       );
+  //       if (!controller.signal.aborted) setWeekData(normalizeWeeklyCompletion(payload));
+  //     } catch (err) {
+  //       if ((err as Error).name !== 'AbortError') console.warn('M-Safe lmc-weekly-completion API failed.', err);
+  //     } finally {
+  //       if (!controller.signal.aborted) setWeekLoading(false);
+  //     }
+  //   })();
+  //   return () => controller.abort();
+  // }, [appliedFilters, persona]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -571,7 +629,7 @@ export function LmcSection() {
     const total = circleRows.reduce((sum, r) => sum + r.volume, 0);
     return (
       <div className="msafe-chart-tip">
-        <div className="msafe-chart-tip-title">{label}</div>
+        <div className="msafe-chart-tip-title">{formatMonthLabel(label)}</div>
         {circleRows.map((r) => (
           <div key={r.circle} className="msafe-chart-tip-row">
             <span className="msafe-chart-tip-sw" style={{ background: C.sage }} />
@@ -587,79 +645,54 @@ export function LmcSection() {
     );
   };
 
+  // Reads the approved count/percentage (plus total_users/pending, when present)
+  // directly off the hovered slice's own data (attached by normalizeByFunction) —
+  // works for both the Function and Circle tabs since they share the same slice
+  // shape. Each stat gets its own labeled row (rather than one packed line) so
+  // it reads clearly at a glance, matching the pattern used elsewhere in this
+  // dashboard (e.g. TrainingSection's renderGroupTrainingTooltip).
+  const renderFuncTooltip = ({ active, payload }: TooltipProps<ValueType, NameType>) => {
+    if (!active || !payload?.length) return null;
+    const slice = payload[0]?.payload as FunctionSlice | undefined;
+    if (!slice) return null;
+    return (
+      <div className="msafe-chart-tip">
+        <div className="msafe-chart-tip-title">{slice.name}</div>
+        {slice.totalUsers !== null && (
+          <div className="msafe-chart-tip-row">
+            <span>Total Users: {slice.totalUsers.toLocaleString('en-IN')}</span>
+          </div>
+        )}
+        <div className="msafe-chart-tip-row">
+          <span className="msafe-chart-tip-sw" style={{ background: C.ok }} />
+          <span>
+            Approved: {slice.count.toLocaleString('en-IN')}
+            {slice.percentage !== null ? ` (${slice.percentage}%)` : ''}
+          </span>
+        </div>
+        {slice.pendingCount !== null && (
+          <div className="msafe-chart-tip-row">
+            <span className="msafe-chart-tip-sw" style={{ background: C.warn }} />
+            <span>
+              Pending: {slice.pendingCount.toLocaleString('en-IN')}
+              {slice.pendingPercentage !== null ? ` (${slice.pendingPercentage}%)` : ''}
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <AccordionShell
       title="LMC — Line Manager Check Activity"
       sub="Daily sign-off volume and manager engagement"
       excelLabel="LMC"
     >
-      <ChartCard
-        title="Daily LMC Volume — Last 30 Days"
-        sub="Number of LMC sign-offs recorded per day"
-        infoKey="lmc-daily"
-        showPdf
-        pdfLabel="Daily LMC Volume"
-        exportData={dailyCircleData.map((r) => ({ Date: r.date, Circle: r.circle, 'LMC Sign-offs': r.volume }))}
-        chartSwitch={<ChartSwitch modes={['line', 'bar', 'table']} value={dailyMode} onChange={setDailyMode} />}
-      >
-        {dailyLoading || dailyData.length === 0 ? (
-          <DataState loading={dailyLoading} empty={dailyData.length === 0} label="daily volume data" />
-        ) : dailyMode === 'table' ? (
-          <div className="tbl-scroll" style={{ maxHeight: 420, overflowX: 'auto' }}>
-            <table className="tbl">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Circle</th>
-                  <th>LMC Sign-offs</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dailyCircleData.map((r, idx) => (
-                  <tr key={`${r.date}-${r.circle}-${idx}`}>
-                    <td className="cell-strong">{r.date}</td>
-                    <td>{r.circle}</td>
-                    <td>{r.volume.toLocaleString('en-IN')}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <div style={{ minWidth: Math.max(700, dailyData.length * 26) }}>
-              <ResponsiveContainer width="100%" height={380}>
-                {dailyMode === 'line' ? (
-                  <AreaChart data={dailyData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
-                    <XAxis dataKey="d" tick={{ fontSize: 8, fill: C.sage }} interval={4} />
-                    <YAxis tick={{ fontSize: 10, fill: C.sage }} />
-                    <Tooltip content={renderDailyVolumeTooltip} />
-                    <Area
-                      type="monotone"
-                      dataKey="n"
-                      stroke={C.vi}
-                      fill="rgba(238,39,55,.10)"
-                      strokeWidth={2.5}
-                      name="LMC Sign-offs"
-                    />
-                  </AreaChart>
-                ) : (
-                  <BarChart data={dailyData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
-                    <XAxis dataKey="d" tick={{ fontSize: 8, fill: C.sage }} interval={4} />
-                    <YAxis tick={{ fontSize: 10, fill: C.sage }} />
-                    <Tooltip content={renderDailyVolumeTooltip} />
-                    <Bar dataKey="n" fill={C.vi} radius={[5, 5, 0, 0]} name="LMC Sign-offs" />
-                  </BarChart>
-                )}
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
-      </ChartCard>
-
-      <div className="g g3" style={{ marginTop: 16, alignItems: 'start' }}>
+      {/* "Daily LMC Volume — Last 30 Days" and "LMC Completion" cards hidden per
+          request — their API calls (daily_lmc_volume.json, lmc_weekly_completion.json)
+          are disabled above too. */}
+      <div className="g g2" style={{ alignItems: 'start' }}>
         <ChartCard title="Top LMC Managers — Last 30 Days" sub="Most active line managers" infoKey="lmc-managers">
           {managerLoading || managerData.length === 0 ? (
             <DataState loading={managerLoading} empty={managerData.length === 0} label="manager data" />
@@ -670,40 +703,27 @@ export function LmcSection() {
                   name: m.name,
                   meta: `${m.department} · ${m.circle}`,
                   value: m.count,
-                  onClick: () => openDrill('user-detail', m.name),
+                  // onClick: () => openDrill('user-detail', m.name),
                 }))}
               />
             </div>
           )}
         </ChartCard>
 
-        <ChartCard title="LMC Completion" sub="Daily target vs actual" infoKey="lmc-week">
-          {weekLoading || weekData.length === 0 ? (
-            <DataState loading={weekLoading} empty={weekData.length === 0} label="weekly completion data" />
-          ) : (
-            <div style={{ minHeight: 420, maxHeight: 420, overflowY: 'auto' }}>
-              <ProgressRows
-                rows={weekData.map((r) => ({
-                  ...r,
-                  onClick: () => openDrill(`lmc-${r.label.toLowerCase()}`, `LMC · ${r.label}`),
-                }))}
-              />
-            </div>
-          )}
-        </ChartCard>
-
-        <ChartCard title="LMC Status Breakdown" sub="All LMCs " infoKey="lmc-status">
+        <ChartCard
+          title="LMC Status Breakdown"
+          sub="All LMCs "
+          infoKey="lmc-status"
+          showPdf
+          pdfLabel="LMC Status Breakdown"
+          reportPath="msafe_dashboard_report/lmc_status"
+          exportData={statusData.map((d) => ({ Status: d.label, Value: d.val }))}
+        >
           {statusLoading || statusData.length === 0 ? (
             <DataState loading={statusLoading} empty={statusData.length === 0} label="status data" />
           ) : (
             <div style={{ minHeight: 420 }}>
-            <ProgressRows
-              rows={statusData.map((r) => ({
-                ...r,
-                onClick: () =>
-                  openDrill(`lmc-${r.label.toLowerCase().replace(/\s/g, '')}`, r.label),
-              }))}
-            />
+              <ProgressRows rows={statusData} />
             </div>
           )}
         </ChartCard>
@@ -720,6 +740,18 @@ export function LmcSection() {
         }
         infoKey="lmc-func"
         style={{ marginTop: 16 }}
+        showPdf
+        pdfLabel={funcTab === 'circle' ? 'LMC by Circle' : 'LMC by Function'}
+        reportPath="msafe_dashboard_report/lmc_status"
+        reportParams={{ status: 'Completed' }}
+        exportData={funcData.map((d) => ({
+          Name: d.name,
+          'Total Users': d.totalUsers ?? '',
+          'Approved Count': d.count,
+          'Approved %': d.percentage ?? '',
+          'Pending Count': d.pendingCount ?? '',
+          'Pending %': d.pendingPercentage ?? '',
+        }))}
         tag={<ChartSwitch modes={['function', 'circle']} value={funcTab} onChange={(v) => setFuncTab(v as 'function' | 'circle')} />}
         chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={funcMode} onChange={setFuncMode} />}
       >
@@ -731,12 +763,13 @@ export function LmcSection() {
               <DonutChart
                 data={funcData}
                 height={Math.min(420, Math.max(220, Math.ceil(funcData.length / 2) * 26))}
+                tooltipContent={renderFuncTooltip}
               />
             )}
             {funcMode === 'bar' && (
               <div style={{ overflowX: 'auto' }}>
                 <div style={{ minWidth: Math.max(700, funcData.length * 55) }}>
-                  <SliceBarChart data={funcData} height={420} />
+                  <SliceBarChart data={funcData} height={420} tooltipContent={renderFuncTooltip} />
                 </div>
               </div>
             )}
@@ -751,7 +784,9 @@ export function LmcSection() {
         infoKey="lmc-trend-12mo"
         showPdf
         pdfLabel="LMC Completion Trend"
-        exportData={trendData.map((d) => ({ Month: d.m, 'Sign-offs': d.n }))}
+        reportPath="msafe_dashboard_report/lmc_status"
+        reportParams={{ skip_date: 'true' }}
+        exportData={trendData.map((d) => ({ Month: formatMonthLabel(d.m), 'Sign-offs': d.n }))}
         style={{ marginTop: 16 }}
         chartSwitch={<ChartSwitch modes={['line', 'bar', 'table']} value={trendMode} onChange={setTrendMode} />}
       >
@@ -769,7 +804,7 @@ export function LmcSection() {
               <tbody>
                 {trendData.map((r) => (
                   <tr key={r.m}>
-                    <td>{r.m}</td>
+                    <td>{formatMonthLabel(r.m)}</td>
                     <td className="num">{r.n.toLocaleString()}</td>
                   </tr>
                 ))}
@@ -780,9 +815,9 @@ export function LmcSection() {
           <div className="chart-wrap">
             <ResponsiveContainer width="100%" height={220}>
               {trendMode === 'line' ? (
-                <AreaChart data={trendData}>
+                <AreaChart data={trendData} margin={{ top: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
-                  <XAxis dataKey="m" tick={{ fontSize: 10, fill: C.sage }} />
+                  <XAxis dataKey="m" tick={{ fontSize: 10, fill: C.sage }} tickFormatter={formatMonthLabel} />
                   <YAxis tick={{ fontSize: 10, fill: C.sage }} />
                   <Tooltip content={renderTrendTooltip} />
                   <Area
@@ -792,15 +827,23 @@ export function LmcSection() {
                     fill="rgba(121,140,94,.10)"
                     strokeWidth={2.5}
                     name="LMC Sign-offs"
-                  />
+                  >
+                    <LabelList dataKey="n" content={renderAreaEndLabel(C.sage, trendData.length - 1)} />
+                  </Area>
                 </AreaChart>
               ) : (
-                <BarChart data={trendData}>
+                <BarChart data={trendData} margin={{ top: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
-                  <XAxis dataKey="m" tick={{ fontSize: 10, fill: C.sage }} />
+                  <XAxis dataKey="m" tick={{ fontSize: 10, fill: C.sage }} tickFormatter={formatMonthLabel} />
                   <YAxis tick={{ fontSize: 10, fill: C.sage }} />
                   <Tooltip content={renderTrendTooltip} />
-                  <Bar dataKey="n" fill={C.sage} radius={[5, 5, 0, 0]} name="LMC Sign-offs" />
+                  <Bar dataKey="n" fill={C.sage} radius={[5, 5, 0, 0]} name="LMC Sign-offs">
+                    <LabelList
+                      dataKey="n"
+                      position="top"
+                      style={{ fontSize: 10, fill: C.dark, fontWeight: 600 }}
+                    />
+                  </Bar>
                 </BarChart>
               )}
             </ResponsiveContainer>

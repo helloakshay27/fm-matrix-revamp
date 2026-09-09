@@ -1,9 +1,22 @@
 import React, { useState, useEffect } from "react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { useParams, useNavigate } from "react-router-dom";
+import {
+    TextField,
+    MenuItem,
+    InputAdornment,
+    FormControl,
+    Select as MuiSelect,
+    Dialog as MuiDialog,
+    DialogContent as MuiDialogContent,
+} from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
     Table,
     TableBody,
@@ -22,6 +35,8 @@ import {
     Trash2,
     Download,
     Receipt,
+    CreditCard,
+    X,
 } from "lucide-react";
 import {
     Dialog,
@@ -56,9 +71,25 @@ export const InvoiceClubManagementDetails = () => {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [bankDetail, setBankDetail] = useState(null);
 
+    // Payment modal state
+    const [openPaymentModal, setOpenPaymentModal] = useState(false);
+    const [paymentMode, setPaymentMode] = useState("online");
+    const [paymentMethod, setPaymentMethod] = useState("");
+    const [paymentDate, setPaymentDate] = useState(() => format(new Date(), "yyyy-MM-dd"));
+    const [paymentNote, setPaymentNote] = useState("");
+    const [paymentLoading, setPaymentLoading] = useState(false);
+
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
     const lock_account_id = localStorage.getItem("lock_account_id");
+
+    // Matches the field styling used on the Invoice Add page's MUI inputs
+    const fieldStyles = {
+        height: { xs: 28, sm: 36, md: 45 },
+        '& .MuiInputBase-input, & .MuiSelect-select': {
+            padding: { xs: '8px', sm: '10px', md: '12px' },
+        },
+    };
 
     useEffect(() => {
         if (id && baseUrl && token) {
@@ -171,6 +202,55 @@ export const InvoiceClubManagementDetails = () => {
         }
     };
 
+    // Confirmed: POST {baseUrl}/lock_accounts/{lock_account_id}/bill_bookings/{id}/add_payment.json
+    // body: { lock_payment: { paid_amount, total_amount, payment_method, payment_date, notes } }
+    const handlePayment = async () => {
+        if (!paymentMethod) {
+            sonnerToast.error("Please select a payment method");
+            return;
+        }
+        if (!paymentDate) {
+            sonnerToast.error("Please select a payment date");
+            return;
+        }
+        setPaymentLoading(true);
+        try {
+            const totals = invoiceData?.totals || {};
+            const totalAmount = totals.grand_total ?? (invoiceData?.total_amount || 0);
+            const paidAmount = invoiceData?.balance_due ?? totalAmount;
+
+            await axios.post(
+                `https://${baseUrl}/lock_accounts/${lock_account_id}/bill_bookings/${id}/add_payment.json`,
+                {
+                    lock_payment: {
+                        paid_amount: paidAmount,
+                        total_amount: totalAmount,
+                        payment_method: paymentMethod,
+                        payment_date: paymentDate,
+                        notes: paymentNote,
+                    },
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+
+            sonnerToast.success("Payment recorded successfully");
+            setOpenPaymentModal(false);
+            setPaymentMethod("");
+            setPaymentNote("");
+            fetchInvoiceDetails();
+        } catch (error) {
+            console.error("Error recording payment:", error);
+            sonnerToast.error("Failed to record payment");
+        } finally {
+            setPaymentLoading(false);
+        }
+    };
+
     const formatCurrency = (amount) => {
         const currencySymbol = localStorage.getItem("currencySymbol") || "₹";
         return `${currencySymbol}${Number(amount || 0).toFixed(2)}`;
@@ -239,7 +319,7 @@ export const InvoiceClubManagementDetails = () => {
     const shippingAddressText = formatAddress(shippingAddress);
 
     return (
-        <div className="min-h-screen bg-background p-6">
+        <div className="min-h-screen bg-white p-6">
             <div className="space-y-6">
                 {/* Header */}
                 <div className="flex items-center justify-between flex-wrap gap-3">
@@ -270,9 +350,15 @@ export const InvoiceClubManagementDetails = () => {
                                 {String(invoiceData.status).replace(/_/g, " ").toUpperCase()}
                             </Badge>
                         )}
-                        <Button size="sm" variant="outline" onClick={handleDownloadPdf} className="gap-2">
+                        {invoiceData.status && String(invoiceData.status).toLowerCase() !== "paid" && (
+                            <Button size="sm" variant="outline" onClick={() => setOpenPaymentModal(true)} className="gap-2">
+                                <CreditCard className="h-4 w-4" />
+                                Payment
+                            </Button>
+                        )}
+                        <Button size="sm" onClick={handleDownloadPdf} className="gap-2 fm-button-fix fm-button-brand">
                             <Download className="h-4 w-4" />
-                            Download Invoice 
+                            Download Invoice
                         </Button>
                         {/* <Button size="sm" variant="outline" onClick={handleEdit} className="gap-2">
               <Edit className="h-4 w-4" />
@@ -291,14 +377,16 @@ export const InvoiceClubManagementDetails = () => {
                 </div>
 
                 {/* Invoice Information — mirrors the bill_booking fields sent on creation */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <FileText className="h-5 w-5 text-primary" />
+                <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
+                    <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center gap-3 space-y-0 p-4">
+                        <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
+                            <FileText className="h-4 w-4" />
+                        </div>
+                        <CardTitle className="text-lg font-semibold text-gray-800">
                             Invoice Information
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-6 bg-white">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Invoice To</p>
@@ -334,12 +422,11 @@ export const InvoiceClubManagementDetails = () => {
               </div> */}
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Place of Supply</p>
-                                <p className="text-base font-semibold mt-1">{invoiceData.source_of_supply || "-"}</p>
+                                {/* Confirmed: bill_booking[destination_of_supply] is what the Add/Edit page's
+                                    "Place of Supply" dropdown actually sends — source_of_supply is the
+                                    organization's own (fixed) state, not the customer's place of supply. */}
+                                <p className="text-base font-semibold mt-1">{invoiceData.destination_of_supply || "-"}</p>
                             </div>
-                            {/* <div>
-                <p className="text-sm font-medium text-muted-foreground">Destination of Supply</p>
-                <p className="text-base font-semibold mt-1">{invoiceData.destination_of_supply || "-"}</p>
-              </div> */}
                             {/* <div>
                 <p className="text-sm font-medium text-muted-foreground">Billing GSTIN</p>
                 <p className="text-base font-semibold mt-1">{invoiceData.billing_gstin || "-"}</p>
@@ -365,14 +452,16 @@ export const InvoiceClubManagementDetails = () => {
                 </Card>
 
                 {/* Address & GST — mirrors address_detail_attributes sent on creation */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <User className="h-5 w-5 text-primary" />
+                <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
+                    <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center gap-3 space-y-0 p-4">
+                        <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
+                            <User className="h-4 w-4" />
+                        </div>
+                        <CardTitle className="text-lg font-semibold text-gray-800">
                             Address
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-6 bg-white">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground mb-1">Billing Address</p>
@@ -419,15 +508,17 @@ export const InvoiceClubManagementDetails = () => {
                 </Card>
 
                 {/* Bank Details */}
-                {bankDetail && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <User className="h-5 w-5 text-primary" />
+                {/* {bankDetail && (
+                    <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
+                        <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center gap-3 space-y-0 p-4">
+                            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
+                                <User className="h-4 w-4" />
+                            </div>
+                            <CardTitle className="text-lg font-semibold text-gray-800">
                                 Bank Details
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <CardContent className="p-6 bg-white grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Bank Name</p>
                                 <p className="text-sm mt-1">{bankDetail.bankName}</p>
@@ -456,26 +547,28 @@ export const InvoiceClubManagementDetails = () => {
                             </div>
                         </CardContent>
                     </Card>
-                )}
+                )} */}
 
                 {/* Line Items — mirrors the line_items array sent on creation */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Package className="h-5 w-5 text-primary" />
+                <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
+                    <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center gap-3 space-y-0 p-4">
+                        <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
+                            <Package className="h-4 w-4" />
+                        </div>
+                        <CardTitle className="text-lg font-semibold text-gray-800">
                             Line Items
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-6 bg-white">
                         {lineItems.length > 0 ? (
                             <>
-                                <div className="border border-border rounded-lg overflow-hidden">
+                                <div className="border border-gray-200 rounded-lg overflow-hidden">
                                     <Table>
                                         <TableHeader>
-                                            <TableRow className="bg-muted/50">
+                                            <TableRow className="bg-gray-50">
                                                 <TableHead>Type</TableHead>
                                                 <TableHead>Item</TableHead>
-                                                <TableHead className="text-right">Quantity</TableHead>
+                                                {/* <TableHead className="text-right">Quantity</TableHead> */}
                                                 <TableHead className="text-right">Rate</TableHead>
                                                 {/* <TableHead className="text-right">Discount</TableHead> */}
                                                 <TableHead className="text-right">GST</TableHead>
@@ -489,7 +582,7 @@ export const InvoiceClubManagementDetails = () => {
                                                         {LINE_ITEM_TYPE_LABELS[item.line_item_type] || item.line_item_type || "-"}
                                                     </TableCell>
                                                     <TableCell className="font-semibold">{item.name || "-"}</TableCell>
-                                                    <TableCell className="text-right">{item.quantity ?? 0}</TableCell>
+                                                    {/* <TableCell className="text-right">{item.quantity ?? 0}</TableCell> */}
                                                     <TableCell className="text-right">{formatCurrency(item.rate)}</TableCell>
                                                     {/* <TableCell className="text-right">{formatCurrency(item.discount)}</TableCell> */}
                                                     <TableCell className="text-right">
@@ -515,14 +608,14 @@ export const InvoiceClubManagementDetails = () => {
                                             <span className="text-sm font-medium text-muted-foreground">Sub Total</span>
                                             <span className="font-semibold text-base">{formatCurrency(subTotal)}</span>
                                         </div>
-                                        <div className="flex justify-between items-center py-2">
+                                        {/* <div className="flex justify-between items-center py-2">
                                             <span className="text-sm font-medium text-muted-foreground">
                                                 Discount{invoiceData.discount_per ? ` (${invoiceData.discount_per}%)` : ""}
                                             </span>
                                             <span className="font-semibold text-base text-red-600">
                                                 -{formatCurrency(totalDiscount)}
                                             </span>
-                                        </div>
+                                        </div> */}
                                         <div className="flex justify-between items-center py-2">
                                             <span className="text-sm font-medium text-muted-foreground">GST</span>
                                             <span className="font-semibold text-base">{formatCurrency(totalCgst + totalSgst)}</span>
@@ -554,14 +647,16 @@ export const InvoiceClubManagementDetails = () => {
                 </Card>
 
                 {/* Attachments */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Paperclip className="h-5 w-5 text-primary" />
+                <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
+                    <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center gap-3 space-y-0 p-4">
+                        <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
+                            <Paperclip className="h-4 w-4" />
+                        </div>
+                        <CardTitle className="text-lg font-semibold text-gray-800">
                             Attachments
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-6 bg-white">
                         {invoiceData.attachments?.length > 0 ? (
                             <div className="space-y-2">
                                 {invoiceData.attachments.map((file, idx) => (
@@ -593,6 +688,106 @@ export const InvoiceClubManagementDetails = () => {
                     </CardContent>
                     </Card>
             </div>
+
+            {/* Payment Modal — uses MUI's own Dialog (like AddChartofAccountModal), not the Radix
+                Dialog the rest of this page uses. MUI's Select computes its popup position against
+                the Modal/Portal foundation it shares with MUI Dialog; nested inside the Radix Dialog
+                (transform-based centering + its own scroll lock) that math broke no matter what
+                Select props were set, so the whole modal now matches AddChartofAccountModal's shell. */}
+            <MuiDialog open={openPaymentModal} onClose={() => {
+                setOpenPaymentModal(false);
+                setPaymentMethod("");
+                setPaymentNote("");
+            }} fullWidth>
+                <div className="flex items-center justify-between px-6 pt-6">
+                    <h5 className="text-lg font-semibold">Make Payment</h5>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setOpenPaymentModal(false)}
+                        className="h-6 w-6 p-0"
+                    >
+                        <X className="h-4 w-4" />
+                    </Button>
+                </div>
+                <MuiDialogContent>
+                    <div className="space-y-4">
+                        <div className="w-full">
+                            <label className="block text-sm font-medium mb-2">
+                                Payment Method<span className="text-brand">*</span>
+                            </label>
+                            <FormControl fullWidth>
+                                <MuiSelect
+                                    value={paymentMethod}
+                                    onChange={(e) => setPaymentMethod(e.target.value)}
+                                    disabled={paymentLoading}
+                                    displayEmpty
+                                    MenuProps={{
+                                        PaperProps: {
+                                            style: {
+                                                maxHeight: 300,
+                                            },
+                                        },
+                                    }}
+                                >
+                                    <MenuItem value="" disabled>
+                                        Select Payment Method
+                                    </MenuItem>
+                                    <MenuItem value="UPI">UPI</MenuItem>
+                                    <MenuItem value="Credit Card">Credit Card</MenuItem>
+                                    <MenuItem value="Bank Transfer">Bank Transfer</MenuItem>
+                                    <MenuItem value="Bank Remittance">Bank Remittance</MenuItem>
+                                    <MenuItem value="Cash">Cash</MenuItem>
+                                    <MenuItem value="Cheque">Cheque</MenuItem>
+                                </MuiSelect>
+                            </FormControl>
+                        </div>
+                        <div className="w-full">
+                            <label className="block text-sm font-medium mb-2">
+                                Payment Date
+                            </label>
+                            <TextField
+                                fullWidth
+                                type="date"
+                                value={paymentDate}
+                                onChange={(e) => setPaymentDate(e.target.value)}
+                                disabled={paymentLoading}
+                                sx={{
+                                    ...fieldStyles,
+                                    '& .MuiInputBase-input': {
+                                        color: paymentDate ? 'transparent' : 'inherit',
+                                    }
+                                }}
+                                InputLabelProps={{ shrink: true }}
+                                InputProps={{
+                                    startAdornment: paymentDate ? (
+                                        <InputAdornment position="start" sx={{ position: 'absolute', pointerEvents: 'none', left: '10px', backgroundColor: 'white', pr: 1, zIndex: 1 }}>
+                                            {format(parseISO(paymentDate), 'dd/MM/yyyy')}
+                                        </InputAdornment>
+                                    ) : null
+                                }}
+                            />
+                        </div>
+                        <div className="w-full">
+                            <Label htmlFor="payment_note">Note</Label>
+                            <Textarea
+                                id="payment_note"
+                                placeholder="Enter a note (optional)"
+                                value={paymentNote}
+                                onChange={(e) => setPaymentNote(e.target.value)}
+                                disabled={paymentLoading}
+                                className="w-full mt-1"
+                                rows={3}
+                            />
+                        </div>
+                    </div>
+                    <div className="mt-4 pt-2 flex justify-center gap-3">
+                        <Button onClick={handlePayment} disabled={paymentLoading} className="w-full fm-button-fix fm-button-brand">
+                            {paymentLoading ? "Processing..." : "Submit Payment"}
+                        </Button>
+                    </div>
+                </MuiDialogContent>
+            </MuiDialog>
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

@@ -39,7 +39,7 @@ export interface DashboardState {
   prev: boolean;
   /** A1 needs a licensed-seat count — billing data the events don't carry. */
   licensedSeats: number | null;
-  activePage: 'pgOverview' | 'pgTraffic' | 'pgAdopt' | 'pgFlows';
+  activePage: 'pgOverview' | 'pgTraffic' | 'pgAdopt' | 'pgFlows' | 'pgFm';
   theme: 'light' | 'dark';
   navCollapsed: boolean;
 }

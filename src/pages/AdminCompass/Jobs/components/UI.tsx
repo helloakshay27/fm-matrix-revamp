@@ -48,19 +48,164 @@ export const FT = ({ style: sx, ...p }) => {
   return <textarea {...p} style={{ ...tB, ...sx, ...(fc ? fb : {}) }} onFocus={() => sfc(true)} onBlur={() => sfc(false)} />;
 };
 
-export const Fld = ({ label, children, hint, span }) => (
-  <div style={{ display: "flex", flexDirection: "column", gap: 6, ...(span ? { gridColumn: `span ${span}` } : {}) }}>
-    <label style={{ fontSize: 12, fontWeight: 600, color: T.inkSoft }}>{label}</label>
-    {children}
-    {hint && <span style={{ fontSize: 11, color: T.inkMuted }}>{hint}</span>}
-  </div>
-);
+export const Fld = ({ label, children, hint, span }) => {
+  const isRequired = typeof label === "string" && label.trimEnd().endsWith("*");
+  const cleanLabel = isRequired ? label.trimEnd().slice(0, -1).trimEnd() : label;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, ...(span ? { gridColumn: `span ${span}` } : {}) }}>
+      <label style={{ fontSize: 12, fontWeight: 600, color: T.inkSoft, display: "flex", alignItems: "center", gap: 2 }}>
+        {cleanLabel}
+        {isRequired && <span style={{ color: "#E53E3E", fontWeight: 700, fontSize: 13, lineHeight: 1 }}>*</span>}
+      </label>
+      {children}
+      {hint && <span style={{ fontSize: 11, color: T.inkMuted }}>{hint}</span>}
+    </div>
+  );
+};
 
-export const Btn = ({ primary, children, disabled, ...p }) => (
-  <button {...p} disabled={disabled} style={{ minHeight: 42, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "0 22px", borderRadius: T.rsm, border: primary ? "none" : `1px solid ${T.borderSoft}`, cursor: disabled ? "not-allowed" : "pointer", fontFamily: T.font, background: primary ? (disabled ? T.inkMuted : T.orange) : T.raised, color: primary ? "#fff" : T.inkSoft, fontSize: 13, fontWeight: 600, opacity: disabled ? 0.5 : 1, transition: "all .16s" }}>
+export const Btn = ({ primary, children, disabled, softDisabled, ...p }) => (
+  <button
+    {...p}
+    disabled={disabled}
+    style={{
+      minHeight: 42,
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      padding: "0 22px",
+      borderRadius: T.rsm,
+      border: primary ? "none" : `1px solid ${T.borderSoft}`,
+      cursor: (disabled || softDisabled) ? "not-allowed" : "pointer",
+      fontFamily: T.font,
+      background: primary
+        ? (disabled || softDisabled) ? T.inkMuted : T.orange
+        : T.raised,
+      color: primary ? "#fff" : T.inkSoft,
+      fontSize: 13,
+      fontWeight: 600,
+      opacity: (disabled || softDisabled) ? 0.5 : 1,
+      transition: "all .16s",
+    }}
+  >
     {children}
   </button>
 );
+
+/* Delete jaise irreversible actions ke liye chhota confirm popup —
+   module ke baaki modals jaisa hi look rakha hai. */
+export const ConfirmDialog = ({
+  open,
+  title,
+  message,
+  confirmLabel = "Delete",
+  cancelLabel = "Cancel",
+  onConfirm,
+  onCancel,
+  danger = true,
+}) => {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") onCancel?.();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onCancel]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(44,44,44,.32)",
+        display: "grid",
+        placeItems: "center",
+        zIndex: 60,
+        backdropFilter: "blur(2px)",
+      }}
+      onClick={onCancel}
+    >
+      <div
+        style={{
+          width: 420,
+          maxWidth: "92vw",
+          background: T.raised,
+          borderRadius: T.rxl,
+          padding: 26,
+          boxShadow: "0 8px 40px rgba(44,44,44,.14)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+          <div
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: "50%",
+              flexShrink: 0,
+              display: "grid",
+              placeItems: "center",
+              background: danger ? "rgba(231,132,142,.15)" : T.orangeSoft,
+              color: danger ? T.danger : T.orange,
+            }}
+          >
+            {ico.trash}
+          </div>
+          <div>
+            <h3 style={{ fontSize: 16, fontWeight: 700, margin: "2px 0 6px" }}>
+              {title}
+            </h3>
+            <p
+              style={{
+                fontSize: 12.5,
+                color: T.inkMuted,
+                margin: 0,
+                lineHeight: 1.6,
+              }}
+            >
+              {message}
+            </p>
+          </div>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 10,
+            marginTop: 22,
+          }}
+        >
+          <Btn onClick={onCancel}>{cancelLabel}</Btn>
+          <button
+            onClick={onConfirm}
+            style={{
+              minHeight: 42,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              padding: "0 22px",
+              borderRadius: T.rsm,
+              border: "none",
+              cursor: "pointer",
+              fontFamily: T.font,
+              background: danger ? T.danger : T.orange,
+              color: "#fff",
+              fontSize: 13,
+              fontWeight: 600,
+              transition: "all .16s",
+            }}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const SH = ({ icon, title, sub }) => (
   <div style={{ marginBottom: 20 }}>

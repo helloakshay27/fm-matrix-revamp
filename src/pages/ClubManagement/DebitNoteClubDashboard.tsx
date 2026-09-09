@@ -316,7 +316,7 @@ export const DebitNoteClubDashboard: React.FC = () => {
                 >
                     <Edit className="w-4 h-4" />
                 </button>
-                <button
+                {/* <button
                     onClick={() => {
                         setDeleteTarget(cn);
                         setShowDeleteModal(true);
@@ -325,7 +325,7 @@ export const DebitNoteClubDashboard: React.FC = () => {
                     title="Delete"
                 >
                     <Trash2 className="w-4 h-4" />
-                </button>
+                </button> */}
             </div>
         ),
         debit_note_number: (

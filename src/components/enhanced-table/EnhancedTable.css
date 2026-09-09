@@ -164,3 +164,48 @@ table th {
     border-right: 1px solid #ddd;
   }
 }
+
+/**
+ * Mobile (<640px) card/list view
+ * ------------------------------
+ * Neeche sirf mobile cards ke andar ka content normalize karte hain. Pages apne
+ * renderCell me desktop-only classes bhejte hain (whitespace-nowrap, truncate,
+ * min-w-[220px], fixed widths) — card ki chhoti width me wahi content bahar
+ * nikal jaata tha, isliye mobile par use wrap hone dete hain.
+ * Desktop table in rules se bilkul affected nahi hota (media query + scoped class).
+ */
+@media (max-width: 639px) {
+  .enhanced-mobile-card {
+    max-width: 100%;
+  }
+
+  .enhanced-mobile-card [class*="whitespace-nowrap"],
+  .enhanced-mobile-card [class*="truncate"] {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+
+  /* Fixed/min widths mobile par card ko phaila dete hain. */
+  .enhanced-mobile-card [class*="min-w-["],
+  .enhanced-mobile-card [class*="w-["] {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .enhanced-mobile-card img,
+  .enhanced-mobile-card svg,
+  .enhanced-mobile-card video {
+    max-width: 100%;
+  }
+
+  /* Expanded child rows ek chhote nested table me render hote hain. */
+  .enhanced-mobile-card table td,
+  .enhanced-mobile-card table th {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+}

@@ -50,5 +50,6 @@ release
 .vite-no-cache
 *.cache
 .cache
+*.tsbuildinfo
 clear-cache.js
 bun.lock

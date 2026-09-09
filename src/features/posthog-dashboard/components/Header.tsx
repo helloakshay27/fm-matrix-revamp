@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 
 const TIER_OPTIONS: { value: Tier; label: string; hint: string }[] = [
   { value: 't1', label: 'Site Manager', hint: 'One or more sites' },
-  { value: 't2', label: 'Regional', hint: 'One company and all of its sites' },
+  // { value: 't2', label: 'Regional', hint: 'One company and all of its sites' },
   { value: 't3', label: 'Management', hint: 'All sites for the organisation' },
 ];
 
@@ -106,10 +106,10 @@ export function Header() {
       
       {vm.generatedAt ? (
         <span className="badge-sample" title={`generated_at: ${vm.generatedAt}`}>
-          Live · sample data
+          Live API
         </span>
       ) : (
-        <span className="badge-sample">Wireframe · sample data</span>
+        <span className="badge-sample">Awaiting API data</span>
       )}
       
       <div className="avatar" title={displayName || 'User'}>{initials}</div>

@@ -332,7 +332,7 @@ const ConvertModal = ({
         project_type_id: projectFormData.type,
         opportunity_id: opportunityId,
       },
-      task_tag_ids: projectFormData.tags,
+      task_tag_ids: projectFormData.tags.map((tag: any) => tag.value),
     };
 
     try {

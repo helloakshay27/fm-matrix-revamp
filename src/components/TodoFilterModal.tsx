@@ -14,6 +14,10 @@ interface TodoFilterModalProps {
         department_id?: number | string | null;
         department_name?: string | null;
     }>;
+    // Distinguishes the localStorage cache between pages that both use this
+    // modal (e.g. VAS Todo vs Business Compass Todo) so their filters don't
+    // bleed into each other.
+    storageKey?: string;
 }
 
 export interface TodoFilters {
@@ -38,12 +42,13 @@ const TodoFilterModal = ({
     setIsModalOpen,
     onApplyFilters,
     users = [],
+    storageKey = "todoFilters",
 }: TodoFilterModalProps) => {
     const modalRef = useRef(null);
 
     const getInitialFilters = (): TodoFilters => {
         try {
-            const saved = localStorage.getItem("todoFilters");
+            const saved = localStorage.getItem(storageKey);
             return saved
                 ? JSON.parse(saved)
                 : {
@@ -106,9 +111,9 @@ const TodoFilterModal = ({
             creatorSearch ||
             selectedAssignedTo.length > 0
         ) {
-            localStorage.setItem("todoFilters", JSON.stringify(filters));
+            localStorage.setItem(storageKey, JSON.stringify(filters));
         }
-    }, [fromDate, toDate, selectedPriorities, selectedCreators, creatorSearch, selectedAssignedTo, assignedToSearch]);
+    }, [fromDate, toDate, selectedPriorities, selectedCreators, creatorSearch, selectedAssignedTo, assignedToSearch, storageKey]);
 
     // Dropdown open/close state
     const [dropdowns, setDropdowns] = useState({
@@ -210,7 +215,7 @@ const TodoFilterModal = ({
         setCreatorSearch("");
         setSelectedAssignedTo([]);
         setAssignedToSearch("");
-        localStorage.removeItem("todoFilters");
+        localStorage.removeItem(storageKey);
 
         onApplyFilters({
             fromDate: "",

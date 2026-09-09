@@ -518,10 +518,10 @@ export const EditStatusDialog = ({
       s => s.id.toString() === selectedStatus
     );
 
-    const isClosedStatus = selectedStatusObj?.fixed_state === 'closed';
+    const isClosedStatus = selectedStatusObj?.fixed_state === 'closed' || selectedStatusObj?.fixed_state === 'complete';
     const isOrg63 = orgId === 63;
 
-    // ✅ Mandatory validation ONLY for org_id 63 + closed
+    // ✅ Mandatory validation ONLY for org_id 63 + closed/complete
     if (isOrg63 && isClosedStatus) {
       // For org 63, validate text inputs (not selectors)
       if (!rcaText.trim()) {
@@ -598,9 +598,9 @@ export const EditStatusDialog = ({
     menu: (provided: any) => ({ ...provided, zIndex: 9999 })
   };
 
-  // Determine if selected status is "closed" for conditional field display
+  // Determine if selected status is "closed" or "complete" for conditional field display
   const selectedStatusObj = statuses.find(s => s.id.toString() === selectedStatus);
-  const isClosedStatus = selectedStatusObj?.fixed_state === 'closed';
+  const isClosedStatus = selectedStatusObj?.fixed_state === 'closed' || selectedStatusObj?.fixed_state === 'complete';
   const isOrg63 = orgId === 63;
   const showRcaFields = isOrg63 && isClosedStatus;
 
@@ -624,9 +624,9 @@ export const EditStatusDialog = ({
             <Label>Status</Label>
             <Select value={selectedStatus} onValueChange={(val) => {
               setSelectedStatus(val);
-              // Clear template selections when status changes away from closed
+              // Clear template selections when status changes away from closed/complete
               const newStatusObj = statuses.find(s => s.id.toString() === val);
-              if (newStatusObj?.fixed_state !== 'closed') {
+              if (newStatusObj?.fixed_state !== 'closed' && newStatusObj?.fixed_state !== 'complete') {
                 setRcaTemplateIds([]);
                 setCorrectiveActionTemplateIds([]);
                 setPreventiveActionTemplateIds([]);

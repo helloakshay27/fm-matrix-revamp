@@ -88,6 +88,9 @@ interface Issue {
   comment?: string;
   is_started?: boolean;
   active_time_till_now?: { hours: number; minutes: number; seconds: number };
+  total_allocated_hours?: number;
+  estimated_hour?: number;
+  estimated_min?: number;
 }
 
 const columns: ColumnConfig[] = [
@@ -111,6 +114,7 @@ const columns: ColumnConfig[] = [
     sortable: true,
     draggable: true,
     defaultVisible: true,
+    width: 320, // shows truncated on first load; user can still drag to resize
   },
   {
     key: "project_name",
@@ -584,8 +588,32 @@ const IssuesListPage = ({
       comment: issue.comments[issue.comments.length - 1]?.body || "",
       is_started: issue.is_started || false,
       active_time_till_now: issue.active_time_till_now || null,
+      total_allocated_hours: issue.total_allocated_hours,
+      estimated_hour: issue.estimated_hour,
+      estimated_min: issue.estimated_min,
     };
   };
+
+  function formatHours(hours: number): string {
+    if (hours < 1) {
+      const minutes = Math.round(hours * 60);
+      return `${minutes} min${minutes !== 1 ? "s" : ""}`;
+    }
+
+    const wholeHours = Math.floor(hours);
+    const remainingMinutes = Math.round((hours - wholeHours) * 60);
+
+    if (remainingMinutes === 0) {
+      return `${wholeHours} hr${wholeHours !== 1 ? "s" : ""}`;
+    }
+
+    return `${wholeHours} hr${wholeHours !== 1 ? "s" : ""} ${remainingMinutes} min${remainingMinutes !== 1 ? "s" : ""}`;
+  }
+
+  const getEffortsDuration = (item: any): number =>
+    item?.total_allocated_hours
+      ? item.total_allocated_hours
+      : (item?.estimated_hour || 0) + (item?.estimated_min || 0) / 60;
 
   // Determine which issues to display - simplified with TanStack Query
   const displayIssues = useMemo(() => {
@@ -1073,11 +1101,11 @@ const IssuesListPage = ({
       const isStarted = item.is_started;
       return (
         <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2 w-[20rem]">
+          <div className="flex items-center gap-2 w-full min-w-0">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="w-full truncate">{item.title}</span>
+                  <span className="min-w-0 flex-1 truncate">{item.title}</span>
                 </TooltipTrigger>
                 <TooltipContent className="rounded-[5px]">
                   <p>{item.title}</p>
@@ -1105,6 +1133,17 @@ const IssuesListPage = ({
                   <Play size={13} className="text-green-500" />
                 </button>
               ))}
+          </div>
+          <div className="flex items-center gap-3 text-[11px] text-gray-500 font-medium">
+            <span className="flex items-center gap-1">
+              Effort taken:
+              <ActiveTimer
+                activeTimeTillNow={item?.active_time_till_now}
+                isStarted={item?.is_started}
+              />
+            </span>
+            <span>•</span>
+            <span>Duration: {formatHours(getEffortsDuration(item))}</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {item.milestone_name && (
@@ -1936,7 +1975,7 @@ const ResponsiblePersonReasonModal = ({
           <Button
             onClick={handleSubmit}
             disabled={isLoading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+            className="px-4 py-2 rounded-md disabled:opacity-50"
           >
             {isLoading ? "Submitting..." : "Change Responsible Person"}
           </Button>

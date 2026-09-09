@@ -14,7 +14,6 @@ import { TransitionProps } from "@mui/material/transitions";
 import { CalendarIcon, X, Mic, MicOff } from "lucide-react";
 import Quill from "quill";
 import { forwardRef, useEffect, useRef, useState } from "react";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import { DurationPicker } from "./DurationPicker";
 import { CustomCalender } from "./CustomCalender";
 import { TaskDatePicker } from "./TaskDatePicker";
@@ -61,66 +60,6 @@ interface ParentTask {
         title: string;
     };
 }
-
-// Virtualized wrapper for task rendering
-const VirtualizedTaskMenuContent = ({
-    tasks,
-    renderItem,
-}: {
-    tasks: any[];
-    renderItem: (task: any) => React.ReactNode;
-}) => {
-    const containerRef = useRef<HTMLDivElement | null>(null);
-
-    const virtualizer = useVirtualizer({
-        count: tasks.length,
-        getScrollElement: () => containerRef.current,
-        estimateSize: () => 35,
-        measureElement: (el) => el?.getBoundingClientRect().height,
-        overscan: 5,
-    });
-
-    const virtualItems = virtualizer.getVirtualItems();
-
-    if (!tasks.length || tasks.length < 10) {
-        return <>{tasks.map((task) => renderItem(task))}</>;
-    }
-
-    return (
-        <div
-            ref={containerRef}
-            style={{
-                height: "300px",
-                overflow: "auto",
-                scrollbarWidth: "thin",
-            }}
-        >
-            <div
-                style={{
-                    height: `${virtualizer.getTotalSize()}px`,
-                    width: "100%",
-                    position: "relative",
-                }}
-            >
-                {virtualItems.map((virtualItem) => (
-                    <div
-                        key={virtualItem.key}
-                        data-index={virtualItem.index}
-                        style={{
-                            position: "absolute",
-                            top: 0,
-                            left: 0,
-                            width: "100%",
-                            transform: `translateY(${virtualItem.start}px)`,
-                        }}
-                    >
-                        {renderItem(tasks[virtualItem.index])}
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-};
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -1164,20 +1103,17 @@ const AddSubtaskModal = ({
                             MenuProps={{
                                 PaperProps: {
                                     style: {
-                                        maxHeight: "auto",
-                                        overflow: "visible",
+                                        maxHeight: 300,
+                                        overflow: "auto",
                                     },
                                 },
                             }}
                         >
-                            <VirtualizedTaskMenuContent
-                                tasks={availableTasks}
-                                renderItem={(task) => (
-                                    <MenuItem key={task.id} value={task.id}>
-                                        {task.title}
-                                    </MenuItem>
-                                )}
-                            />
+                            {availableTasks.map((task) => (
+                                <MenuItem key={task.id} value={task.id}>
+                                    {task.title}
+                                </MenuItem>
+                            ))}
                         </Select>
                     </FormControl>
                 </div>

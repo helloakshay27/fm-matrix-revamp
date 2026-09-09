@@ -75,8 +75,14 @@ const fieldStyles = {
 const tableFieldStyles = {
   height: 40,
   backgroundColor: 'white',
-  '& .MuiInputBase-input, & .MuiSelect-select': {
+  '& .MuiInputBase-input': {
     padding: '8px 10px',
+  },
+  // Select needs extra right padding to leave room for its dropdown arrow —
+  // reusing the plain-input padding above collapses that gap, so the arrow
+  // ends up overlapping long placeholder text like "Select Commodity".
+  '& .MuiSelect-select': {
+    padding: '8px 32px 8px 10px',
   },
 };
 
@@ -577,10 +583,10 @@ const AddWasteGenerationPage = () => {
                   <TableHeader className="bg-gray-50">
                     <TableRow className="border-b-gray-200 hover:bg-gray-50">
                       <TableHead className="w-12 font-semibold text-gray-600">Sr. No.</TableHead>
-                      <TableHead className="min-w-[180px] font-semibold text-gray-600">
+                      <TableHead className="min-w-[220px] font-semibold text-gray-600">
                         Category <span className="text-red-500">*</span>
                       </TableHead>
-                      <TableHead className="min-w-[180px] font-semibold text-gray-600">
+                      <TableHead className="min-w-[220px] font-semibold text-gray-600">
                         Commodity <span className="text-red-500">*</span>
                       </TableHead>
                       <TableHead className="min-w-[110px] font-semibold text-gray-600">
@@ -824,7 +830,7 @@ const AddWasteGenerationPage = () => {
                 sx={fieldStyles}
               /> */}
 
-              <div className="md:col-span-2">
+              <div className="md:col-span-4">
                 <TextField
                   label="Remark"
                   placeholder="Enter remark"
@@ -833,7 +839,26 @@ const AddWasteGenerationPage = () => {
                   fullWidth
                   variant="outlined"
                   multiline
-                  minRows={2}
+                  rows={4}
+                  sx={{
+                    mt: 1,
+                    "& .MuiOutlinedInput-root": {
+                      height: "auto !important",
+                      padding: "2px !important",
+                      display: "flex",
+                    },
+                    "& .MuiInputBase-input[aria-hidden='true']": {
+                      flex: 0,
+                      width: 0,
+                      height: 0,
+                      padding: "0 !important",
+                      margin: 0,
+                      display: "none",
+                    },
+                    "& .MuiInputBase-input": {
+                      resize: "none !important",
+                    },
+                  }}
                   slotProps={{
                     inputLabel: {
                       shrink: true,

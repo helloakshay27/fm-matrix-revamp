@@ -193,6 +193,15 @@ const SMTDashboard = () => {
     if (!baseUrl || !token) {
       setError('Missing base URL or token');
       toast.error('Missing base URL or token');
+      msafeEvents.onMsafeDownloaded({
+        screen: 'msafe_smt',
+        source: 'row_pdf',
+        label: 'SMT Form PDF',
+        file_format: 'pdf',
+        record_id: row.id,
+        succeeded: false,
+        failure_reason: 'missing_credentials',
+      });
       return;
     }
     setGeneratingId(row.id);
@@ -450,10 +459,27 @@ const SMTDashboard = () => {
       saveWithFallback(pdf, `smt_${row.id}.pdf`);
       document.body.removeChild(containerMain);
       document.body.removeChild(containerTail);
+      msafeEvents.onMsafeDownloaded({
+        screen: 'msafe_smt',
+        source: 'row_pdf',
+        label: 'SMT Form PDF',
+        file_format: 'pdf',
+        record_id: row.id,
+        succeeded: true,
+      });
     } catch (e: any) {
       console.error('[SMT][PDF] Generation error', e);
       setError(e?.message || 'Failed to generate PDF');
       toast.error('Failed to generate PDF');
+      msafeEvents.onMsafeDownloaded({
+        screen: 'msafe_smt',
+        source: 'row_pdf',
+        label: 'SMT Form PDF',
+        file_format: 'pdf',
+        record_id: row.id,
+        succeeded: false,
+        failure_reason: e?.message ?? 'pdf_generation_failed',
+      });
     } finally {
       setGeneratingId(null);
     }

@@ -1,8 +1,12 @@
 import type { CSSProperties, ReactNode } from 'react';
+import { useState } from 'react';
 import * as XLSX from 'xlsx';
-import { FileSpreadsheet, Download } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
 import { InfoButton } from './InfoButton';
-import { useMsafeDashboard } from '../context/MsafeDashboardContext';
+import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
+import { ChartCardLabelContext } from '../context/ChartCardLabelContext';
+import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
+import type { Persona } from '../data/constants';
 
 type Props = {
   title: string;
@@ -14,6 +18,23 @@ type Props = {
   pdfLabel?: string;
   /** Row data to export as an .xlsx sheet when the download button is clicked. */
   exportData?: Record<string, unknown>[];
+  /** When set, the download button hits `msafe_dashboard_report/report_template?export_for=<reportExportFor>`
+   *  for a server-generated Excel report (carrying the current circle/function/zone/employee-type/date-range
+   *  filters) instead of exporting `exportData` client-side — and switches to the same Download/loader icon
+   *  used on the KPI overview cards. Shorthand for `reportParams={{ export_for: reportExportFor }}` on the
+   *  default `reportPath`. */
+  reportExportFor?: string;
+  /** Overrides the report endpoint path (relative to the base URL) — defaults to
+   *  `msafe_dashboard_report/report_template`. Use for cards backed by a different report
+   *  endpoint, e.g. `msafe_dashboard_report/lmc_status`. Setting this (or `reportExportFor`)
+   *  puts the download button in "report mode" (API-backed, Download/loader icon). */
+  reportPath?: string;
+  /** Extra static query params merged into the report request alongside company_id and the
+   *  applied filters — e.g. `{ skip_date: 'true' }` or `{ status: 'Completed' }`. */
+  reportParams?: Record<string, string>;
+  /** Drop from_date/to_date from the report request — for cards whose chart is a fixed
+   *  trailing window (e.g. "Last 12 Months") that the applied date-range filter doesn't clip. */
+  reportExcludeDateRange?: boolean;
   tag?: ReactNode;
   className?: string;
   style?: CSSProperties;
@@ -27,6 +48,67 @@ function downloadExcel(label: string, rows: Record<string, unknown>[]) {
   XLSX.writeFile(workbook, filename);
 }
 
+function getMsafeBaseUrl(): string {
+  const fromLS = localStorage.getItem('baseUrl') || '';
+  const host = fromLS.replace(/^https?:\/\//, '').replace(/\/$/, '');
+  return host ? `https://${host}` : 'https://live-api.gophygital.work';
+}
+
+function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
+  const params: Record<string, string> = {};
+  if (f.circleIds.length > 0) params.circle_id = f.circleIds.join(',');
+  if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
+  if (f.zoneId) params.zone_id = f.zoneId;
+  if (f.empTypeId) params.employee_type = f.empTypeId;
+  if (f.startDate) params.from_date = f.startDate;
+  if (f.endDate) params.to_date = f.endDate;
+  return params;
+}
+
+async function downloadReport(
+  reportPath: string,
+  extraParams: Record<string, string> | undefined,
+  filenameLabel: string,
+  persona: Persona,
+  appliedFilters: AppliedFilters,
+  excludeDateRange?: boolean,
+): Promise<void> {
+  const token = localStorage.getItem('token') || '';
+  const companyId =
+    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145';
+  const filterParams = buildFilterParams(persona, appliedFilters);
+  if (excludeDateRange) {
+    delete filterParams.from_date;
+    delete filterParams.to_date;
+  }
+  const params = new URLSearchParams({
+    company_id: companyId,
+    ...extraParams,
+    ...filterParams,
+  });
+  if (token) {
+    params.set('access_token', token);
+    params.set('token', token);
+  }
+  const url = `${getMsafeBaseUrl()}/${reportPath}?${params.toString()}`;
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(url, { headers });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const blob = await res.blob();
+
+  const filename = `${filenameLabel.replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '') || 'report'}.xlsx`;
+  const downloadUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = downloadUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(downloadUrl);
+}
+
 export function ChartCard({
   title,
   sub,
@@ -36,23 +118,88 @@ export function ChartCard({
   showPdf,
   pdfLabel,
   exportData,
+  reportExportFor,
+  reportPath,
+  reportParams,
+  reportExcludeDateRange,
   tag,
   className,
   style,
 }: Props) {
-  const { showToast } = useMsafeDashboard();
+  const { showToast, persona, appliedFilters } = useMsafeDashboard();
+  const msafeEvents = useMSafeEvents();
+  const [exportingReport, setExportingReport] = useState(false);
+  const isReportMode = Boolean(reportExportFor || reportPath);
 
-  const handleExport = () => {
+  const handleExport = async () => {
     const label = pdfLabel || title;
+
+    if (isReportMode) {
+      const resolvedPath = reportPath || 'msafe_dashboard_report/report_template';
+      const resolvedParams = { ...(reportExportFor ? { export_for: reportExportFor } : {}), ...reportParams };
+      setExportingReport(true);
+      const reportEvent = {
+        screen: 'msafe_dashboard' as const,
+        source: 'chart_card' as const,
+        label,
+        file_format: 'xlsx' as const,
+        export_mode: 'server_report' as const,
+        export_for: reportExportFor ?? resolvedPath,
+        persona,
+        filters: appliedFilters,
+      };
+      try {
+        await downloadReport(resolvedPath, resolvedParams, label, persona, appliedFilters, reportExcludeDateRange);
+        showToast(`Excel downloaded · ${label}`);
+        msafeEvents.onMsafeDownloaded({ ...reportEvent, succeeded: true });
+      } catch (err) {
+        console.warn(`Failed to download report from "${resolvedPath}".`, err);
+        showToast(`Export failed · ${label}`);
+        msafeEvents.onMsafeDownloaded({
+          ...reportEvent,
+          succeeded: false,
+          failure_reason: (err as Error)?.message ?? 'request_failed',
+        });
+      } finally {
+        setExportingReport(false);
+      }
+      return;
+    }
+
     if (exportData && exportData.length > 0) {
       downloadExcel(label, exportData);
       showToast(`Excel downloaded · ${label}`);
+      msafeEvents.onMsafeDownloaded({
+        screen: 'msafe_dashboard',
+        source: 'chart_card',
+        label,
+        file_format: 'xlsx',
+        export_mode: 'client_sheet',
+        row_count: exportData.length,
+        persona,
+        filters: appliedFilters,
+        succeeded: true,
+      });
     } else {
       showToast(`No data to export yet · ${label}`);
+      msafeEvents.onMsafeDownloaded({
+        screen: 'msafe_dashboard',
+        source: 'chart_card',
+        label,
+        file_format: 'xlsx',
+        export_mode: 'client_sheet',
+        row_count: 0,
+        persona,
+        filters: appliedFilters,
+        succeeded: false,
+        failure_reason: 'no_data',
+      });
     }
   };
 
   return (
+    // Names this card for the toolbar controls rendered inside it (see ChartSwitch).
+    <ChartCardLabelContext.Provider value={pdfLabel || title}>
     <div className={`card ${className || ''}`} style={style}>
       <div className="card-hd">
         <div>
@@ -60,51 +207,49 @@ export function ChartCard({
             {title}
             {infoKey ? <InfoButton infoKey={infoKey} /> : null}
           </div>
-          {sub ? <div className="card-sub">{sub}</div> : null}
+          {/* {sub ? <div className="card-sub">{sub}</div> : null} */}
         </div>
         <div className="card-actions-row">
           {chartSwitch}
           {tag}
           {showPdf ? (
-            <button type="button" className="chart-pdf-btn" title="Download Excel" onClick={handleExport}>
-              <FileSpreadsheet size={14} />
+            <button
+              type="button"
+              className="chart-pdf-btn"
+              title="Download Excel"
+              disabled={exportingReport}
+              onClick={handleExport}
+            >
+              {exportingReport ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
             </button>
           ) : null}
         </div>
       </div>
       {children}
     </div>
+    </ChartCardLabelContext.Provider>
   );
 }
 
 export function AccordionShell({
   title,
   sub,
-  excelLabel,
   children,
 }: {
   title: string;
   sub: string;
-  excelLabel: string;
+  // No longer rendered — the section-level "Excel" export button was removed
+  // from every section (see AccordionShell below). Kept optional so existing
+  // callers don't need to drop the prop.
+  excelLabel?: string;
   children: ReactNode;
 }) {
-  const { showToast } = useMsafeDashboard();
   return (
     <div className="accordion-panel open">
       <div className="acc-hd">
         <div>
           <div className="acc-title">{title}</div>
           <div className="acc-sub">{sub}</div>
-        </div>
-        <div className="acc-hd-actions">
-          <button
-            type="button"
-            className="acc-dl-btn"
-            onClick={() => showToast(`Excel export started · ${excelLabel}`)}
-          >
-            <Download size={14} />
-            Excel
-          </button>
         </div>
       </div>
       {children}

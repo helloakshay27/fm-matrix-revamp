@@ -266,6 +266,9 @@ export interface TicketFilters {
   user_firstname_or_user_lastname_cont?: string;
   search_all_fields_cont?: string;
   assigned_to_in?: number[];
+  is_subticket_eq?: string;
+  has_feedback_eq?: string;
+  entity_name_con?: string;
   complaint_status_fixed_state_eq?: string;
   complaint_status_name_eq?: string;
   complaint_status_fixed_state_not_eq?: string;

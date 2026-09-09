@@ -30,6 +30,7 @@ import { useSelector } from 'react-redux';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { useVisitorEvents } from "@/components/PostHogVisitorEvents";
+import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
 
 interface Building {
   id: number;
@@ -37,10 +38,20 @@ interface Building {
   site_id: string;
 }
 
+const getLocalDateTimeString = (date: Date = new Date()) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  const h = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
+  return `${y}-${m}-${d}T${h}:${min}`;
+};
+
 export const VisitorFormPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const visitorEvents = useVisitorEvents();
+  const gaEvents = useGaFunnelEvents();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -89,7 +100,7 @@ export const VisitorFormPage = () => {
     mobileNumber: initialMobileNumber,
     visitorComingFrom: "",
     remarks: "",
-    expected_at: new Date().toISOString().slice(0, 16),
+    expected_at: getLocalDateTimeString(),
     skipHostApproval: false,
     goodsInwards: false,
     passValidFrom: "",
@@ -398,7 +409,7 @@ export const VisitorFormPage = () => {
           newData.expected_at = "";
         } else if (value === "expected") {
           if (!newData.expected_at) {
-            newData.expected_at = new Date().toISOString().slice(0, 16);
+            newData.expected_at = getLocalDateTimeString();
           }
         }
       }
@@ -508,6 +519,8 @@ export const VisitorFormPage = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    const gaVisitorType = formData.visitorVisit === "unexpected" ? "unexpected" : "expected";
+    gaEvents.onVisitorCreateClicked("admin", { visitor_type: gaVisitorType });
     e.preventDefault();
     if (isSubmitting) return;
     if (!formData.host) {
@@ -740,11 +753,13 @@ export const VisitorFormPage = () => {
         host_id: formData.host ? String(formData.host) : null,
         is_returning: Boolean(visitorInfo),
       });
+      gaEvents.onVisitorCreateSuccess("admin", { visitor_type: gaVisitorType });
       toast.success("Visitor created successfully!");
       navigate("/security/visitor");
     } catch (error) {
       console.error("❌ Error creating visitor:", error);
       toast.error("Failed to create visitor. Please try again.");
+      gaEvents.onVisitorCreateFailure("admin", { visitor_type: gaVisitorType, error });
     } finally {
       setIsSubmitting(false);
     }
@@ -1513,15 +1528,7 @@ export const VisitorFormPage = () => {
                   InputLabelProps={{ shrink: true }}
                   sx={fieldStyles}
                   inputProps={{
-                    min: (() => {
-                      const now = new Date();
-                      const y = now.getFullYear();
-                      const m = String(now.getMonth() + 1).padStart(2, '0');
-                      const d = String(now.getDate()).padStart(2, '0');
-                      const h = String(now.getHours()).padStart(2, '0');
-                      const min = String(now.getMinutes()).padStart(2, '0');
-                      return `${y}-${m}-${d}T${h}:${min}`;
-                    })(),
+                    min: getLocalDateTimeString(),
                   }}
                 />
               )}
