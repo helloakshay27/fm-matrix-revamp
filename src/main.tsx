@@ -13,13 +13,7 @@ import posthog from "posthog-js";
 import { getPostHogSuperProperties } from "./utils/posthogContext.ts";
 import { attachPostHogDebugLogger } from "./utils/posthogDebug.ts";
 import { installDownloadTracking } from "./utils/downloadTracking.ts";
-import { installLocalBackendHttpDowngrade } from "./utils/localBackendProtocol.ts";
 // import { registerServiceWorker } from "./utils/pwa.ts";
-
-// Dev-only: downgrade https://localhost:*/... requests to http://, since a local Rails/Puma
-// server has no TLS cert. See utils/localBackendProtocol.ts for why this is a patch and not
-// ~570 edits.
-installLocalBackendHttpDowngrade();
 
 // Register service worker for PWA
 // registerServiceWorker();

@@ -269,15 +269,7 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
 
 
   const handleOrganizationSelect = (org: Organization) => {
-    // VITE_LOCAL_BACKEND_URL (see .env / auth.ts) already overrides the org-lookup and sign-in
-    // requests for local backend testing — extend that same override to the saved baseUrl so
-    // every subsequent request (not just those two) hits localhost too. Gated behind the env var
-    // so this can never affect a real deployed build; unset it (or don't set it) to get the
-    // normal per-org domain back.
-    const localOverride = (import.meta as any).env?.VITE_LOCAL_BACKEND_URL as string | undefined;
-    const baseUrl = localOverride
-      ? localOverride.replace(/^https?:\/\//, "")
-      : `${org.sub_domain}.${org.domain}`;
+    const baseUrl = `${org.sub_domain}.${org.domain}`;
 
     // Save org details
     localStorage.setItem("selectedOrg", org.name);

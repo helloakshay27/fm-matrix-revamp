@@ -315,22 +315,6 @@ const isPanchshilClubSite =
 export const getOrganizationsByEmail = async (
   email: string
 ): Promise<Organization[]> => {
-  // VITE_LOCAL_BACKEND_URL overrides the org's backend for local testing
-  // e.g. VITE_LOCAL_BACKEND_URL=http://localhost:3000
-  const localOverride = (import.meta as any).env?.VITE_LOCAL_BACKEND_URL;
-  if (localOverride) {
-    const response = await fetch(
-      `${localOverride}/api/users/get_organizations_by_email.json?email=${email}`
-    );
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch organizations");
-    }
-
-    const data = await response.json();
-    return data.organizations || [];
-  }
-
   if (isOmanSite || isFmSite) {
     const response = await fetch(
       `https://club-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
@@ -799,15 +783,9 @@ export const getOrganizationsByEmailAndAutoSelect = async (
   const isDevSite = hostname === "dev-fm-matrix.lockated.com";
   const isPanchshilUatSite = hostname === "pulse-uat.panchshil.com";
 
-  // VITE_LOCAL_BACKEND_URL overrides the org's backend for local testing
-  // e.g. VITE_LOCAL_BACKEND_URL=http://localhost:3000
-  const localOverride = (import.meta as any).env?.VITE_LOCAL_BACKEND_URL;
-
   let apiUrl = "";
 
-  if (localOverride) {
-    apiUrl = `${localOverride}/api/users/get_organizations_by_email.json?email=${email}`;
-  } else if (isOmanSite || isFmSite) {
+  if (isOmanSite || isFmSite) {
     apiUrl = `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
   } else if (isViSite) {
     apiUrl = `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`;
