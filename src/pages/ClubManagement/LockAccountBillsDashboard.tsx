@@ -134,21 +134,18 @@ export const LockAccountBillsDashboard: React.FC = () => {
       const params = buildFilterParams();
       params.append("page", String(page));
       params.append("per_page", String(per_page));
+      // Opts into { data, total_count } instead of the bare array other pages still rely on
+      // (see index.json.jbuilder) — total_count in the body avoids depending on the
+      // X-Total-Count response header being exposed via CORS at all.
+      params.append("include_total", "true");
 
       const response = await axios.get(`https://${baseUrl}/lock_account_bills.json?${params.toString()}`, {
         headers: { Authorization: token ? `Bearer ${token}` : undefined },
       });
 
-      const list: LockAccountBillRecord[] = Array.isArray(response.data) ? response.data : [];
+      const list: LockAccountBillRecord[] = Array.isArray(response.data?.data) ? response.data.data : [];
       setBills(list);
-
-      const totalHeader = response.headers?.["x-total-count"];
-      if (totalHeader) {
-        setTotalRecords(Number(totalHeader));
-      } else {
-        // Fallback when the header isn't reachable: keep Next enabled while a full page came back.
-        setTotalRecords((page - 1) * per_page + list.length + (list.length === per_page ? 1 : 0));
-      }
+      setTotalRecords(Number(response.data?.total_count ?? list.length));
     } catch (error) {
       console.error("Error fetching lock account bills:", error);
       toast.error("Failed to load lock account bills");
