@@ -464,6 +464,10 @@ export const Header = () => {
     navigate("/msafedashboard"); // new MSafe Dashboard revamp
   };
 
+  const handleFmPosthog = () => {
+    navigate('/posthog-dashboard')
+  }
+
   const logoClassName =
     "max-h-10 w-auto max-w-full object-contain sm:max-h-12 md:max-h-[60px]";
 
@@ -676,7 +680,7 @@ export const Header = () => {
                   className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
                   {/* <LayoutDashboard className="w-4 h-4" /> */}
-                   <ChartArea className="w-4 h-4" />
+                  <ChartArea className="w-4 h-4" />
                   Club Dashboard
                 </button>
               )}
@@ -1158,6 +1162,13 @@ export const Header = () => {
                 >
                   <User className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">My Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleFmPosthog}
+                  className="mx-2 my-1 rounded-md"
+                >
+                  <Activity className="w-4 h-4 mr-2 text-gray-500" />
+                  <span className="font-medium">Usage Analytics</span>
                 </DropdownMenuItem>
                 {usageAnalyticsOptions
                   .filter((option) => option.shouldShow())
