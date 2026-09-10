@@ -7885,6 +7885,7 @@ export const TicketDetailsPage = () => {
                                           url: url,
                                           document_url: url,
                                           document: url,
+                                          doctype: attachment.doctype,
                                         });
                                         setShowImagePreview(true);
                                       }}
@@ -7903,6 +7904,7 @@ export const TicketDetailsPage = () => {
                                           url: url,
                                           document_url: url,
                                           document: url,
+                                          doctype: attachment.doctype,
                                         });
                                         setShowImagePreview(true);
                                       }}
@@ -7946,6 +7948,7 @@ export const TicketDetailsPage = () => {
                                         url: url,
                                         document_url: url,
                                         document: url,
+                                        doctype: attachment.doctype,
                                       });
                                       setShowImagePreview(true);
                                     }}
@@ -11382,6 +11385,7 @@ export const TicketDetailsPage = () => {
                                       url: url,
                                       document_url: url,
                                       document: url,
+                                      doctype: attachment.doctype,
                                       type: 'image'
                                     });
                                     setShowImagePreview(true);
@@ -11401,6 +11405,7 @@ export const TicketDetailsPage = () => {
                                       url: url,
                                       document_url: url,
                                       document: url,
+                                      doctype: attachment.doctype,
                                       type: 'image'
                                     });
                                     setShowImagePreview(true);
