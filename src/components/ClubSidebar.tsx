@@ -64,6 +64,22 @@ const modulesByPackage = {
       additionalRoutes: ["/club-management/group-membership"],
     },
     {
+      name: "Setup",
+      icon: Wrench,
+      subItems: [
+        {
+          name: "Class setup",
+          href: "/club-management/class-setup",
+          color: "text-[#1a1a1a]",
+          additionalRoutes: [
+            "/club-management/class-setup/add",
+            "/club-management/class-setup/edit",
+            "/club-management/class-setup/details",
+          ],
+        },
+      ],
+    },
+    {
       name: "User Management",
       icon: Users,
       href: "/club-management/users",

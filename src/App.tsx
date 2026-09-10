@@ -3252,6 +3252,26 @@ const BookingSetupDetailClubPage = lazy(() =>
     default: m.BookingSetupDetailClubPage,
   }))
 );
+const ClassSetupList = lazy(() =>
+  import("./pages/ClubManagement/ClassSetupList").then((m) => ({
+    default: m.ClassSetupList,
+  }))
+);
+const ClassSetupAdd = lazy(() =>
+  import("./pages/ClubManagement/ClassSetupAdd").then((m) => ({
+    default: m.ClassSetupAdd,
+  }))
+);
+const ClassSetupEdit = lazy(() =>
+  import("./pages/ClubManagement/ClassSetupEdit").then((m) => ({
+    default: m.ClassSetupEdit,
+  }))
+);
+const ClassSetupDetails = lazy(() =>
+  import("./pages/ClubManagement/ClassSetupDetails").then((m) => ({
+    default: m.ClassSetupDetails,
+  }))
+);
 const BudgetDashboard = lazy(() =>
   import("./pages/ClubManagement/BudgetDashboard").then((m) => ({
     default: m.BudgetDashboard,
@@ -6888,6 +6908,23 @@ function App() {
                             <Route
                               path="/vas/bookings-club/details/:id"
                               element={<AmenityBookingDetailsClubPage />}
+                            />
+                            {/* Club Management - Class Setup */}
+                            <Route
+                              path="/club-management/class-setup"
+                              element={<ClassSetupList />}
+                            />
+                            <Route
+                              path="/club-management/class-setup/add"
+                              element={<ClassSetupAdd />}
+                            />
+                            <Route
+                              path="/club-management/class-setup/edit/:id"
+                              element={<ClassSetupEdit />}
+                            />
+                            <Route
+                              path="/club-management/class-setup/details/:id"
+                              element={<ClassSetupDetails />}
                             />
                             {/* Club Management - Broadcast */}
                             <Route
