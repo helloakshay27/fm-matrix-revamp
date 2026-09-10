@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
-import { Plus } from "lucide-react";
+import { Plus, Edit } from "lucide-react";
 import { apiClient } from "@/utils/apiClient";
 import { format } from "date-fns";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
@@ -26,12 +26,13 @@ interface DelegationData {
   site_id?: number;
   site_name?: string;
   site?: { id?: number; name?: string };
-  delegation_for?: string;
+  delegation_for?: string | string[];
   starts_at?: string;
   ends_at?: string;
   reason?: string;
   created_by?: string;
   created_at?: string;
+  delegator_name?: string;
 }
 
 const columns: ColumnConfig[] = [
@@ -68,6 +69,7 @@ const DelegationSetupPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [selectedDelegation, setSelectedDelegation] = useState<DelegationData | null>(null);
 
   const fetchDelegations = useCallback(async () => {
     try {
@@ -119,8 +121,14 @@ const DelegationSetupPage = () => {
         return item.delegator_name || "-";
       case "site":
         return item.site_name || item.site?.name || item.site_id || "-";
-      case "delegation_for":
-        return delegationForLabels[item.delegation_for ?? ""] || item.delegation_for || "-";
+      case "delegation_for": {
+        const val = item.delegation_for;
+        if (Array.isArray(val)) {
+          const labels = val.map((v) => delegationForLabels[v] || v);
+          return labels.join(", ") || "-";
+        }
+        return delegationForLabels[String(val) ?? ""] || String(val) || "-";
+      }
       case "starts_at":
         return formatDate(item.starts_at);
       case "ends_at":
@@ -143,6 +151,27 @@ const DelegationSetupPage = () => {
       Add
     </Button>
   ) : null;
+
+  const renderActions = (item: DelegationData) => {
+    return (
+      <div className="flex items-center">
+        {shouldShow("Delegation", "edit") && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSelectedDelegation(item);
+              setIsAddModalOpen(true);
+            }}
+            className="h-8 w-8 p-0"
+            title="Edit delegation"
+          >
+            <Edit className="w-4 h-4 text-gray-600" />
+          </Button>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="p-6 sm:p-8 min-h-screen bg-transparent space-y-6">
@@ -174,6 +203,7 @@ const DelegationSetupPage = () => {
         data={filteredData}
         columns={columns}
         renderCell={renderCell}
+        renderActions={renderActions}
         leftActions={leftActions}
         storageKey="delegation-setup-table"
         emptyMessage={searchTerm ? "No delegations found matching your search" : "No delegations found"}
@@ -190,11 +220,43 @@ const DelegationSetupPage = () => {
         getItemId={(item) => String(item.id)}
       />
 
-      <AddDelegationModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onCreated={fetchDelegations}
-      />
+      {
+        (() => {
+          const del = selectedDelegation
+            ? {
+                id: selectedDelegation.id,
+                delegator_id:
+                  // prefer explicit delegator_id if present, otherwise try common fallback keys
+                  (selectedDelegation as any).delegator_id ?? (selectedDelegation as any).created_by ?? undefined,
+                delegatee_id: selectedDelegation.delegatee_id ?? selectedDelegation.delegatee?.id,
+                site_id: selectedDelegation.site_id ?? selectedDelegation.site?.id,
+                delegation_for: Array.isArray(selectedDelegation.delegation_for)
+                  ? selectedDelegation.delegation_for
+                  : selectedDelegation.delegation_for
+                  ? [String(selectedDelegation.delegation_for)]
+                  : [],
+                starts_at: selectedDelegation.starts_at,
+                ends_at: selectedDelegation.ends_at,
+                reason: selectedDelegation.reason,
+              }
+            : null;
+          return (
+            <AddDelegationModal
+              isOpen={isAddModalOpen}
+              onClose={() => {
+                setIsAddModalOpen(false);
+                setSelectedDelegation(null);
+              }}
+              onCreated={() => {
+                fetchDelegations();
+                setIsAddModalOpen(false);
+                setSelectedDelegation(null);
+              }}
+              delegation={del}
+            />
+          );
+        })()
+      }
     </div>
   );
 };
