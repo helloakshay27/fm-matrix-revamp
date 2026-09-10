@@ -10,6 +10,7 @@ import { AppDispatch, RootState } from "@/store/store";
 import { fetchMoMs } from "@/store/slices/momSlice";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { usePATMEvents } from "@/components/PostHogPATMEvents";
 
 // Function to generate smooth, light random colors for participant badges
 const generateLightColor = (seed: number): string => {
@@ -100,8 +101,13 @@ const columns: ColumnConfig[] = [
 const MinutesOfMeeting = () => {
     const { setCurrentSection } = useLayout();
     const { shouldShow } = useDynamicPermissions();
+    const patmEvents = usePATMEvents();
 
     const view = localStorage.getItem("selectedView");
+
+    useEffect(() => {
+        patmEvents.onMoMListViewed();
+    }, [patmEvents]);
 
     useEffect(() => {
         setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");

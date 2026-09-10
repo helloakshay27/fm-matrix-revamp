@@ -47,7 +47,10 @@ const dateFieldStyles = {
 const selectMenuProps = {
   PaperProps: {
     style: {
-      maxHeight: 280,
+      // Tall enough to show most/all of a long list (e.g. all 17 clusters) without
+      // forcing a scroll on every open — a short cap here reads as "options are
+      // missing" when they're really just scrolled out of view.
+      maxHeight: 400,
       backgroundColor: 'white',
       border: '1px solid #e2e8f0',
       borderRadius: '8px',
@@ -64,9 +67,9 @@ const selectMenuProps = {
 export function CircleManagerFilterBar() {
   const {
     persona,
-    circles,
-    setCircles,
-    setCircleIds,
+    clusters,
+    setClusters,
+    setClusterIds,
     functions,
     setFunctions,
     setFunctionIds,
@@ -83,17 +86,17 @@ export function CircleManagerFilterBar() {
     applyFilters,
     resetFilters,
     setPageTitle,
-    circleOptions,
+    clusterOptions,
     functionOptions,
     empTypeOptions,
     loadingFilterOptions,
   } = useMsafeDashboard();
 
   const [funcOpen, setFuncOpen] = useState(false);
-  const [circleOpen, setCircleOpen] = useState(false);
+  const [clusterOpen, setClusterOpen] = useState(false);
 
   // Pan India ('admin') gets the exact same filter bar as Circle Manager —
-  // Circle, Function, Employee Type, and Date range all apply for either persona.
+  // Cluster, Function, Employee Type, and Date range all apply for either persona.
   if (persona !== 'circle' && persona !== 'admin') return null;
 
   const functionSummary =
@@ -103,15 +106,15 @@ export function CircleManagerFilterBar() {
         ? functions[0]
         : `${functions.length} Functions Selected`;
 
-  const circleSummary =
-    circles.length === 0
-      ? 'Select Circle'
-      : circles.length === 1
-        ? circles[0]
-        : `${circles.length} Circles Selected`;
+  const clusterSummary =
+    clusters.length === 0
+      ? 'Select Cluster'
+      : clusters.length === 1
+        ? clusters[0]
+        : `${clusters.length} Clusters Selected`;
 
-  const allCircleNames = circleOptions.map((c) => c.name);
-  const isAllCirclesSelected = allCircleNames.length > 0 && circles.length === allCircleNames.length;
+  const allClusterNames = clusterOptions.map((c) => c.name);
+  const isAllClustersSelected = allClusterNames.length > 0 && clusters.length === allClusterNames.length;
 
   const allFunctionNames = functionOptions.map((fn) => fn.name);
   const isAllFunctionsSelected = allFunctionNames.length > 0 && functions.length === allFunctionNames.length;
@@ -125,37 +128,37 @@ export function CircleManagerFilterBar() {
           sx={{ minWidth: 170, flex: '1 1 170px', maxWidth: 240 }}
         >
           <InputLabel shrink>
-            Circle <span style={{ color: '#EE2737' }}>*</span>
+            Cluster <span style={{ color: '#EE2737' }}>*</span>
           </InputLabel>
           <MuiSelect
             multiple
-            label="Circle *"
+            label="Cluster *"
             notched
             displayEmpty
-            open={circleOpen}
-            onOpen={() => setCircleOpen(true)}
-            onClose={() => setCircleOpen(false)}
-            value={circles}
+            open={clusterOpen}
+            onOpen={() => setClusterOpen(true)}
+            onClose={() => setClusterOpen(false)}
+            value={clusters}
             onChange={(e) => {
               const v = e.target.value;
               const raw = typeof v === 'string' ? v.split(',') : (v as string[]);
-              const names = raw.includes(ALL_VALUE) ? (isAllCirclesSelected ? [] : allCircleNames) : raw;
-              setCircles(names);
+              const names = raw.includes(ALL_VALUE) ? (isAllClustersSelected ? [] : allClusterNames) : raw;
+              setClusters(names);
               const ids = names
-                .map((n) => circleOptions.find((o) => o.name === n)?.id)
+                .map((n) => clusterOptions.find((o) => o.name === n)?.id)
                 .filter((id): id is string => Boolean(id));
-              setCircleIds(ids);
+              setClusterIds(ids);
               setPageTitle(
                 names.length === 0
                   ? 'M-Safe · Circle Manager'
                   : names.length === 1
-                    ? `M-Safe · ${names[0]} Circle`
-                    : `M-Safe · ${names.length} Circles`,
+                    ? `M-Safe · ${names[0]} Cluster`
+                    : `M-Safe · ${names.length} Clusters`,
               );
             }}
-            input={<OutlinedInput notched label="Circle *" />}
+            input={<OutlinedInput notched label="Cluster *" />}
             renderValue={() => (
-              <span style={{ color: circles.length ? '#2C2C2C' : '#9ca3af' }}>{circleSummary}</span>
+              <span style={{ color: clusters.length ? '#2C2C2C' : '#9ca3af' }}>{clusterSummary}</span>
             )}
             sx={fieldStyles}
             MenuProps={selectMenuProps}
@@ -163,7 +166,7 @@ export function CircleManagerFilterBar() {
           >
             <MenuItem value={ALL_VALUE} dense>
               <Checkbox
-                checked={isAllCirclesSelected}
+                checked={isAllClustersSelected}
                 size="small"
                 sx={{
                   color: '#C4B89D',
@@ -176,10 +179,10 @@ export function CircleManagerFilterBar() {
                 primaryTypographyProps={{ fontSize: 13, fontFamily: "'Poppins', sans-serif" }}
               />
             </MenuItem>
-            {circleOptions.map((c) => (
+            {clusterOptions.map((c) => (
               <MenuItem key={c.id} value={c.name} dense>
                 <Checkbox
-                  checked={circles.includes(c.name)}
+                  checked={clusters.includes(c.name)}
                   size="small"
                   sx={{
                     color: '#C4B89D',

@@ -896,12 +896,12 @@ const BusinessCompassTodoPage = () => {
         const memberIds = selectedUsers.map((u) => u.value);
 
         if (taskType === "my") {
-            if (currentUserId) filters["q[user_id_eq]"] = String(currentUserId);
+            if (currentUserId) filters["q[responsible_person_id_eq]"] = String(currentUserId);
         } else if (taskType === "all" && memberIds.length === 0) {
-            if (currentUserId) filters["q[user_id_or_created_by_id_eq]"] = String(currentUserId);
+            if (currentUserId) filters["q[responsible_person_id_or_created_by_id_eq]"] = String(currentUserId);
         } else if (taskType === "all" && memberIds.length > 0) {
             memberIds.forEach((id, i) => {
-                filters[`q[user_id_in][${i}]`] = String(id);
+                filters[`q[responsible_person_id_in][${i}]`] = String(id);
             });
             if (currentUserId) filters["q[created_by_id_eq]"] = String(currentUserId);
         }
@@ -924,7 +924,7 @@ const BusinessCompassTodoPage = () => {
         }
         if (appliedFilters.selectedAssignedTo.length > 0) {
             appliedFilters.selectedAssignedTo.forEach((id, i) => {
-                filters[`q[user_id_in][${i}]`] = String(id);
+                filters[`q[responsible_person_id_in][${i}]`] = String(id);
             });
         }
         return filters;
@@ -1175,7 +1175,8 @@ const BusinessCompassTodoPage = () => {
     const completedTodos = filteredTodosByFilters.filter((t: any) => t.status === "completed");
 
     const groupedCompletedTodos = completedTodos.reduce((groups: Record<string, any[]>, todo: any) => {
-        const date = todo.updated_at ? todo.updated_at.split("T")[0] : "No Date";
+        const completionDate = todo.completed_at || todo.updated_at;
+        const date = completionDate ? completionDate.split("T")[0] : "No Date";
         if (!groups[date]) groups[date] = [];
         groups[date].push(todo);
         return groups;

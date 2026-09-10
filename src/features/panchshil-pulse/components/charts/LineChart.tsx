@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { getChartColors } from "../../utils/chartColors";
 import { fmtC } from "../../utils/calculations";
 import { usePulseDashboard } from "../../contexts/PulseDashboardContext";
@@ -11,6 +11,7 @@ interface LineChartProps {
     labels?: string[];
     color?: string;
     fill?: string;
+    metric?: string;
   };
 }
 
@@ -19,6 +20,10 @@ export const LineChart: React.FC<LineChartProps> = ({ cur, prev, opts = {} }) =>
 
   // Re-sync colors on theme change
   const colors = useMemo(() => getChartColors(), [theme]);
+
+  // Hovered point index → the value shown in the tooltip. Rendered so the
+  // resting graph is unchanged; only hovering a point surfaces its value.
+  const [hover, setHover] = useState<number | null>(null);
 
   const W = 680;
   const H = 250;
@@ -48,6 +53,7 @@ export const LineChart: React.FC<LineChartProps> = ({ cur, prev, opts = {} }) =>
   const getY = (v: number) => pt + (H - pt - pb) * (1 - (v - mn) / span);
 
   const vfmt = opts.pctScale ? (v: number) => v.toFixed(1) + "%" : fmtC;
+  const metricName = opts.metric || "Value";
 
   const pathD = useMemo(() => {
     let d = "";
@@ -163,6 +169,58 @@ export const LineChart: React.FC<LineChartProps> = ({ cur, prev, opts = {} }) =>
           r="3"
           fill={color}
         />
+      )}
+
+      {/* Invisible hover overlay → surfaces the nearest point's value */}
+      <rect
+        x={pl}
+        y={pt}
+        width={W - pl - pr}
+        height={H - pt - pb}
+        fill="transparent"
+        onMouseMove={(e) => {
+          const svg = e.currentTarget.ownerSVGElement;
+          if (!svg) return;
+          const r = svg.getBoundingClientRect();
+          if (!r.width) return;
+          const scale = r.width / W;
+          const mx = (e.clientX - r.left) / scale;
+          const idx = Math.round((mx - pl) / (xw || 1));
+          setHover(Math.max(0, Math.min(n - 1, idx)));
+        }}
+        onMouseLeave={() => setHover(null)}
+      />
+
+      {/* Hover tooltip — value for the exact hovered point */}
+      {hover != null && n > 0 && (
+        <g>
+          <circle
+            cx={getX(hover).toFixed(1)}
+            cy={getY(cur[hover]).toFixed(1)}
+            r="5"
+            fill={color}
+            stroke="#fff"
+            strokeWidth="1.5"
+          />
+          {(() => {
+            const hv = cur[hover];
+            const tipW = Math.max(66, metricName.length * 7.2 + 30);
+            const tipH = 40;
+            let tx = Math.max(pl, Math.min(getX(hover) + 12, W - pr - tipW));
+            let ty = Math.max(pt, Math.min(getY(hv) - tipH - 12, H - pb - tipH));
+            return (
+              <g>
+                <rect x={tx} y={ty} width={tipW} height={tipH} rx="6" fill={colors.ink} />
+                <text x={tx + tipW / 2} y={ty + 15} textAnchor="middle" fontSize="10" fill="#fff">
+                  {metricName}
+                </text>
+                <text x={tx + tipW / 2} y={ty + 29} textAnchor="middle" fontSize="13" fontWeight="600" fill="#fff">
+                  {vfmt(hv)}
+                </text>
+              </g>
+            );
+          })()}
+        </g>
       )}
     </svg>
   );

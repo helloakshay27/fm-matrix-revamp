@@ -33,9 +33,9 @@ import {
   PaginationItem,
   PaginationLink,
   PaginationNext,
-  PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { usePATMEvents } from "@/components/PostHogPATMEvents";
 interface Sprint {
   id: string;
   name?: string;
@@ -165,6 +165,11 @@ export const SprintDashboard = () => {
   const { shouldShow } = useDynamicPermissions();
   const { setCurrentSection } = useLayout();
   const view = localStorage.getItem("selectedView");
+  const patmEvents = usePATMEvents();
+
+  useEffect(() => {
+    patmEvents.onSprintListViewed();
+  }, [patmEvents]);
 
   useEffect(() => {
     setCurrentSection(
@@ -267,7 +272,9 @@ export const SprintDashboard = () => {
           priority: data.priority,
         },
       };
-      await dispatch(createSprint({ token, baseUrl, data: payload })).unwrap();
+      const response = await dispatch(createSprint({ token, baseUrl, data: payload })).unwrap();
+      const newSprintId = response?.id || "unknown";
+      patmEvents.onSprintCreated(newSprintId, data.title);
       toast.success("Sprint created successfully");
       fetchData(pagination.current_page);
       setAddSprintModalOpen(false);
@@ -282,6 +289,7 @@ export const SprintDashboard = () => {
       await dispatch(
         updateSprint({ token, baseUrl, id, data: { sprint: data } })
       ).unwrap();
+      patmEvents.onSprintUpdated(id);
       toast.success("Sprint updated successfully");
       fetchData(pagination.current_page);
     } catch (error: any) {
@@ -300,6 +308,7 @@ export const SprintDashboard = () => {
           data: { status: newStatus.toLowerCase() },
         })
       ).unwrap();
+      patmEvents.onSprintUpdated(id);
       toast.success("Sprint status updated successfully");
       fetchData(pagination.current_page);
     } catch (error: any) {

@@ -8,6 +8,7 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { toast } from "sonner";
 import IssuesListPage from "./IssuesListPage";
 import ProjectEditModal from "@/components/ProjectEditModal";
+import { usePATMEvents } from "@/components/PostHogPATMEvents";
 
 const Members = ({ allNames, projectOwner }) => {
     return (
@@ -297,6 +298,7 @@ const Attachments = ({ attachments, id, getProjectDetails }) => {
 
 const ProjectDetailsPage = () => {
     const { setCurrentSection } = useLayout();
+    const patmEvents = usePATMEvents();
 
     const view = localStorage.getItem("selectedView");
 
@@ -380,6 +382,9 @@ const ProjectDetailsPage = () => {
             if (response?.status) {
                 setSelectedOption(mapStatusToDisplay(response.status));
             }
+            if (id) {
+                patmEvents.onProjectViewed(id);
+            }
         } catch (error) {
             console.log(error)
         } finally {
@@ -421,6 +426,7 @@ const ProjectDetailsPage = () => {
                     },
                 })
             ).unwrap();
+            patmEvents.onProjectUpdated(id);
             toast.dismiss();
             toast.success("Status updated successfully");
             // Refetch project details to get updated data

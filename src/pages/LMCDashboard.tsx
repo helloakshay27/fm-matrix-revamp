@@ -17,6 +17,7 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import formSchema from './lmc_form.json';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
+import { useViWorkflowEvents } from '@/components/PostHogViWorkflowEvents';
 
 const columns = [
     { key: 'actions', label: 'Actions', sortable: false },
@@ -68,6 +69,10 @@ const PAGE_SIZE = 20; // rely on API default page size (adjust if backend suppor
 
 const LMCDashboard = () => {
     const msafeEvents = useMSafeEvents();
+    // The Vi catalogue's msafe_lmc_requests_opened is this same moment — the LMC request list
+    // being opened — under the name the Vi dashboard's funnel queries. The second half of that
+    // funnel (msafe_lmc_request_created) is an employee action in the Vi mobile app, not here.
+    const viEvents = useViWorkflowEvents();
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -136,9 +141,11 @@ const LMCDashboard = () => {
                 setTotalPages(json.pagination.total_pages);
                 setTotalCount(json.pagination.total_count);
                 msafeEvents.onMSafeSubmoduleViewed('lmc', json.pagination.total_count);
+                viEvents.onLmcRequestsOpened();
             } else {
                 setTotalPages(1); setTotalCount(apiRows.length); setCurrentPage(1);
                 msafeEvents.onMSafeSubmoduleViewed('lmc', apiRows.length);
+                viEvents.onLmcRequestsOpened();
             }
         } catch (e: any) {
             setError(e.message || 'Failed to load LMCs');

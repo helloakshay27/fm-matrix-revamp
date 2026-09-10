@@ -9,11 +9,12 @@ import type {
 } from '@/features/posthog-dashboard/data/metrics';
 import type {
   DateRange,
-  Device,
   Site,
   SiteGroup,
   Tier,
 } from '@/features/posthog-dashboard/data/constants';
+import type { QueryFilters } from '../api/queries';
+import type { DeclaredFunnel } from '../data/declaredFunnel';
 import type { ChartPalette, ViTheme } from '../data/palette';
 import type { PageKey } from '../data/pages';
 
@@ -25,6 +26,12 @@ import type { PageKey } from '../data/pages';
  * it mints a brand-new context object that live consumers no longer match.
  */
 
+/**
+ * Platform filter. Vi my Workspace ships as a mobile app only, so the choice is iOS vs
+ * Android (the API's `os` property) — not the FM dashboard's Desktop / Mobile `device_type`.
+ */
+export type ViPlatform = 'all' | 'iOS' | 'Android';
+
 export interface SectionStatus {
   loading: boolean;
   error: Error | null;
@@ -35,6 +42,15 @@ export interface ViewModel {
   scopeLabel: string;
   traffic: TrafficData;
   adopt: AdoptData;
+  /**
+   * Hover text for the two weekly charts, one entry per point. Their axes read "W1 … W8" —
+   * short enough that every week fits — and these carry the week each number actually is.
+   */
+  weekTips: { trend: string[]; growth: string[] };
+  /** Hover text for each retention cohort row, carrying the cohort size the label drops. */
+  retentionRowTitles: string[];
+  /** The selected workflow's catalogue steps, measured against the live event list. */
+  declaredFunnel: DeclaredFunnel;
   siteHealth: SiteHealthData | null;
   flows: FlowsData;
   sites: Site[];
@@ -59,6 +75,8 @@ export interface ViewModel {
 
 export interface ViDashboardValue {
   vm: ViewModel;
+  /** The filter set every analytics query is keyed on — for sections that fire their own. */
+  queryFilters: QueryFilters;
 
   /** filters */
   setTier: (tier: Tier) => void;
@@ -70,10 +88,19 @@ export interface ViDashboardValue {
   setCustomRange: (from: string, to: string) => void;
   /** The custom window currently applied, or null when a preset is active. */
   customRange: { from: string; to: string } | null;
-  setDev: (dev: Device) => void;
-  setLicensedSeats: (seats: number | null) => void;
+  /** iOS / Android / All — sent as `os` on every analytics call. */
+  platform: ViPlatform;
+  setPlatform: (platform: ViPlatform) => void;
   setModule: (module: string) => void;
   setSubModule: (subModule: string) => void;
+  /**
+   * Selected workflow key from the Vi catalogue (see data/workflows.ts). Layer 3 is
+   * navigated by workflow rather than by raw `$pathname` module: the catalogue's bucket →
+   * workflow grouping is the documented structure, and setting a workflow also sets the
+   * `module` the workflow_usage endpoint is queried with.
+   */
+  workflow: string;
+  setWorkflow: (key: string) => void;
   setSessTab: (tab: DashboardState['sessTab']) => void;
   togglePrev: () => void;
 

@@ -9,6 +9,7 @@ import { useLayout } from '@/contexts/LayoutContext';
 import { Button } from '@/components/ui/button';
 import ReactMarkdown from 'react-markdown';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
+import { usePATMEvents } from "@/components/PostHogPATMEvents";
 
 // Types
 interface OpportunityDetailsData {
@@ -518,6 +519,7 @@ const OpportunityDetailsPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const baseUrl = localStorage.getItem('baseUrl');
+    const patmEvents = usePATMEvents();
 
     const [isFirstCollapsed, setIsFirstCollapsed] = useState(false);
     const [isSecondCollapsed, setIsSecondCollapsed] = useState(false);
@@ -558,7 +560,8 @@ const OpportunityDetailsPage = () => {
 
     useEffect(() => {
         getOpportunity();
-    }, [id, token]);
+        if (id) patmEvents.onOpportunityViewed(id);
+    }, [id, token, patmEvents]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -588,6 +591,7 @@ const OpportunityDetailsPage = () => {
             });
             toast.dismiss();
             toast.success('Status updated successfully');
+            if (id) patmEvents.onOpportunityUpdated(id);
             await getOpportunity();
         } catch (error) {
             console.error('Error updating status:', error);

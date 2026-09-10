@@ -674,18 +674,6 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
       return false;
     }
 
-    if (!formData.observer?.length) {
-      toast.dismiss();
-      toast.error("Please select at least one observer.");
-      return false;
-    }
-
-    if (!formData.tags?.length) {
-      toast.dismiss();
-      toast.error("Please select at least one tag.");
-      return false;
-    }
-
     if (!formData.isRecurring && !endDate) {
       toast.dismiss();
       toast.error("Target date is required.");

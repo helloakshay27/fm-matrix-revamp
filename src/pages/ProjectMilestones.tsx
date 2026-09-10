@@ -7,16 +7,20 @@ import { useAppDispatch } from '@/store/hooks'
 import MilestoneList from '@/components/MilestoneList'
 import MilestoneKanban from '@/components/MilestoneKanban'
 import { useLayout } from '@/contexts/LayoutContext'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
+import { usePATMEvents } from '@/components/PostHogPATMEvents'
 
 const ProjectMilestones = () => {
     const { setCurrentSection } = useLayout();
+    const patmEvents = usePATMEvents();
+    const { id } = useParams<{ id: string }>();
 
     const view = localStorage.getItem("selectedView");
 
     useEffect(() => {
         setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
+        if (id) patmEvents.onMilestoneListViewed(id);
     }, [setCurrentSection]);
 
     const dispatch = useAppDispatch();

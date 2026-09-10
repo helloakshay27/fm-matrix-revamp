@@ -56,7 +56,7 @@ function getMsafeBaseUrl(): string {
 
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
   const params: Record<string, string> = {};
-  if (f.circleIds.length > 0) params.circle_id = f.circleIds.join(',');
+  if (f.clusterIds.length > 0) params.cluster_id = f.clusterIds.join(',');
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type = f.empTypeId;

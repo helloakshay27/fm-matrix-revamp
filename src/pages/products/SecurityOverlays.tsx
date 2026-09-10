@@ -247,7 +247,7 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
         <div className="fixed inset-0 z-[9998] bg-[#1a1a1a] flex flex-col items-center justify-center text-white text-center px-8">
           <div className="relative mb-6">
             <div
-              className="absolute inset-0 rounded-xl animate-ping"
+              className="absolute inset-0 rounded-xl"
               style={{
                 background:
                   faceAuthStatus === "unconfigured"
@@ -400,7 +400,7 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
         >
           <div className="relative">
             <div
-              className="absolute inset-0 rounded-xl animate-ping"
+              className="absolute inset-0 rounded-xl"
               style={{
                 background: isBlurred
                   ? "rgba(239,68,68,0.35)"

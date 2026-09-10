@@ -94,6 +94,32 @@ export function normalizeRoute(pathname: string = window.location.pathname): str
   return collapsed ? `/${collapsed}` : '/';
 }
 
+/**
+ * The signed-in user's role, for the A8 Adoption-by-Role card.
+ *
+ * Without this the roles endpoint has almost nothing to group by: on the Vi tenant it returned
+ * total_users = 2 for a range where adoption_engagement counted 151 active users, because only
+ * a couple of people's events carried a `user_role` at all. Sending it as a super-property
+ * classifies every event from every signed-in user instead.
+ *
+ * `user_role_name` is written by permissionService from /pms/users/get_user_role.json;
+ * `lock_role.name` on the stored user is the fallback for accounts that resolve a role at login
+ * but never hit that endpoint. Undefined when neither is known — better an unclassified event
+ * than one stamped with a guess.
+ */
+function resolveUserRole(): string | undefined {
+  const stored = localStorage.getItem('user_role_name');
+  if (stored) return stored;
+  try {
+    const raw = localStorage.getItem('user');
+    if (!raw) return undefined;
+    return JSON.parse(raw)?.lock_role?.name ?? undefined;
+  } catch {
+    // A corrupt or partially-written user blob must not take analytics down with it.
+    return undefined;
+  }
+}
+
 /** Tenant company label (§6.1, Tenant group) — set once the user has picked a company. */
 function resolveClientCompany(): string | undefined {
   return (
@@ -109,6 +135,7 @@ export interface PostHogSuperProperties {
   platform: 'web';
   release_version: string;
   client_company?: string;
+  user_role?: string;
 }
 
 export function getPostHogSuperProperties(): PostHogSuperProperties {
@@ -118,5 +145,6 @@ export function getPostHogSuperProperties(): PostHogSuperProperties {
     platform: 'web',
     release_version: (import.meta.env.VITE_APP_VERSION as string) ?? 'dev',
     client_company: resolveClientCompany(),
+    user_role: resolveUserRole(),
   };
 }

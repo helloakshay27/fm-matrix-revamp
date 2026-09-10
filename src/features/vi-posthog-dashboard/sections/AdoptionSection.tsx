@@ -11,11 +11,20 @@ import { LineChart } from '../components/charts/LineChart';
 import { StackedBarChart } from '../components/charts/StackedBarChart';
 import { useViDashboard } from '../context/viDashboardStore';
 import { toViTiles } from '../data/viMetricIds';
+import {
+  TIER_LABEL,
+  VI_COVERAGE_CAVEAT,
+  VI_LEGACY_EVENTS,
+  VI_MODERN_EVENTS,
+  VI_MODULE_COVERAGE,
+  viLegacyModuleCount,
+  viModernModuleCount,
+} from '../data/instrumentationCoverage';
 
 /** Layer 2 — adoption_engagement, adoption_trend, growth, retention, roles + the site league. */
 export function AdoptionSection() {
   const { vm, setCircle, palette } = useViDashboard();
-  const { adopt, siteHealth, status, scopedSites } = vm;
+  const { adopt, status, weekTips, retentionRowTitles } = vm;
 
   const retentionCols = adopt.retentionCohorts[0]?.length ?? 0;
 
@@ -45,9 +54,9 @@ export function AdoptionSection() {
 
       <ChartCard
         className="mt12"
-        eyebrow="Adoption trend chart (A6)"
-        title={`Adoption trend (last ${TREND_WEEKS} weeks)`}
-        purpose={INFO['chart.adoptTrend'].f}
+        eyebrow="Trend · SVG line chart"
+        title={`Adoption trend (weekly active employees, last ${TREND_WEEKS} weeks)`}
+        purpose={`Weekly active employees over the last ${TREND_WEEKS} weeks — the trend line behind the Adoption Trend tile above.`}
       >
         <Guard
           status={status.adopt}
@@ -58,12 +67,13 @@ export function AdoptionSection() {
             cur={adopt.trendChart.cur}
             prev={adopt.trendChart.prev.length ? adopt.trendChart.prev : null}
             labels={adopt.trendChart.labels}
+            tipLabels={weekTips.trend}
             color={palette.blue}
             fill={palette.fill}
           />
           <div className="legend">
             <span>
-              <i style={{ background: palette.blue }} /> Weekly active users
+              <i style={{ background: palette.blue }} /> Weekly active employees
             </span>
             {adopt.trendChart.prev.length > 0 && (
               <span>
@@ -87,6 +97,7 @@ export function AdoptionSection() {
           >
             <StackedBarChart
               labels={adopt.growthWeeks.map((w) => w.label)}
+              tipLabels={weekTips.growth}
               series={[
                 { label: 'New', data: adopt.growthWeeks.map((w) => w.nw), color: palette.blue },
                 { label: 'Returning', data: adopt.growthWeeks.map((w) => w.ret), color: palette.green },
@@ -128,7 +139,7 @@ export function AdoptionSection() {
             <table className="rt">
               <thead>
                 <tr>
-                  <th style={{ textAlign: 'left' }}>Cohort · size</th>
+                  <th style={{ textAlign: 'left' }}>Cohort</th>
                   {Array.from({ length: retentionCols }, (_, w) => (
                     <th key={w}>Week {w}</th>
                   ))}
@@ -137,7 +148,9 @@ export function AdoptionSection() {
               <tbody>
                 {adopt.retentionCohorts.map((row, i) => (
                   <tr key={adopt.retentionRowLabels[i]}>
-                    <td className="lbl">{adopt.retentionRowLabels[i]}</td>
+                    <td className="lbl" title={retentionRowTitles[i]}>
+                      {adopt.retentionRowLabels[i]}
+                    </td>
                     {row.map((v, w) => {
                       if (v == null) {
                         return (
@@ -204,96 +217,114 @@ export function AdoptionSection() {
           </Guard>
         </ChartCard>
 
+        {/*
+          Dormant stands alone here, as it does in the reference. Module Breadth used to share
+          this card, which put an unrelated metric — and a second, differently-scaled number —
+          under a heading that says Dormant users; it already has its own tile in the row above,
+          so the reader was reading the same figure twice under the wrong label.
+        */}
         <ChartCard
           eyebrow="Dormant users (A10)"
           title="Dormant users"
-          purpose="Users who were active before but have gone quiet — the mirror image of the activation tile above."
+          purpose="Registered employees/contractors with no activity in the last 14 days — out of scope for the 14-Day Activation tile above."
         >
           <Guard status={status.adopt}>
             <div className="kv">
               <div>
-                <div className="k">Dormant users</div>
+                <div className="k">Dormant employees</div>
                 <div className="v" style={{ fontSize: 22 }}>
                   {adopt.dormantKv}
                 </div>
-                <div className="u">no recent activity</div>
-              </div>
-              <div>
-                <div className="k">Module breadth (A5)</div>
-                <div className="v" style={{ fontSize: 22 }}>
-                  {adopt.breadthKv}
-                </div>
-                <div className="u">modules in use</div>
+                <div className="u">no activity 14+ days</div>
               </div>
             </div>
           </Guard>
         </ChartCard>
       </div>
 
-      {scopedSites.length > 1 && (
-        <ChartCard
-          className="mt12"
-          eyebrow="League table (A12)"
-          title="Circle-wise breakdown"
-          purpose={INFO['chart.siteHealth'].f}
-        >
-          <Guard
-            status={status.siteHealth}
-            empty={!siteHealth || siteHealth.rows.length === 0}
-            emptyLabel="No per-circle activity in this window."
-          >
-            <table className="league">
-              <thead>
-                <tr>
-                  <th>Circle</th>
-                  <th className="num">Active users</th>
-                  <th className="num">Sessions</th>
-                  <th className="num">Avg session</th>
-                  <th className="num">Bounce</th>
-                  <th>Trend</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(siteHealth?.rows ?? []).map((row) => {
-                  // §7.2 A12 bands, keyed off bounce rate.
-                  const [cls, label] =
-                    row.bounce >= 22
-                      ? ['st-drop', 'Watch']
-                      : row.bounce >= 16
-                        ? ['st-watch', 'Steady']
-                        : ['st-healthy', 'Healthy'];
-                  const arrow = row.trend == null ? 'flat' : row.trend > 0 ? 'up' : row.trend < 0 ? 'dn' : 'flat';
-                  return (
-                    <tr
-                      key={row.siteId}
-                      className="rowlink"
-                      // One-shot so the scope never lands on an intermediate value.
-                      onClick={() => setCircle('t1', row.siteId)}
-                      title={`Drill into ${row.name}`}
-                    >
-                      <td className="strong">{row.name}</td>
-                      <td className="num">{row.users.toLocaleString()}</td>
-                      <td className="num">{row.sessions.toLocaleString()}</td>
-                      <td className="num">{fmtDur(row.durSec)}</td>
-                      <td className="num">{row.bounce.toFixed(1)}%</td>
-                      <td>
-                        <span className={`arrow ${arrow}`}>
-                          {arrow === 'up' ? '↗' : arrow === 'dn' ? '↘' : '→'}
-                          {row.trend != null && ` ${Math.abs(row.trend)}%`}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`status ${cls}`}>{label}</span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </Guard>
-        </ChartCard>
-      )}
+      {/*
+        Reference card, not a filter — it describes which generation of tracking code exists
+        per module and changes no other number on this page. The reference dashboard also puts
+        per-tier active-user counts and modern/legacy reach percentages here; those are seeded
+        sample data in that wireframe, so they are left out rather than invented. What is real
+        is the module list, each module's tier, and the per-sheet event totals.
+      */}
+      <ChartCard
+        className="mt12"
+        eyebrow="Instrumentation coverage · reference"
+        title="Modern vs. Legacy event coverage"
+        purpose="Reference card — not a filter. Vi my Workspace carries two instrumentation generations side by side: Modern (128 events, View/Action/Failure typed, real *_submitted / *_succeeded / *_failed funnels for the fully-instrumented modules) and Legacy (176 older Google-Analytics events, dual-sunk to both PostHog and Firebase, mostly page/click-only for the rest). This card shows both at once so you can see which modules are worth instrumenting properly next; it does not change any other number on the dashboard."
+      >
+        <div className="bmnote crashnote" style={{ marginBottom: 14 }}>
+          <span>&#9888;</span>
+          <div>
+            <b>{VI_COVERAGE_CAVEAT.headline}</b> {VI_COVERAGE_CAVEAT.body}
+          </div>
+        </div>
+
+        <div className="kv" style={{ marginBottom: 16 }}>
+          <div>
+            <div className="k">Modern instrumentation</div>
+            <div className="v" style={{ fontSize: 20 }}>
+              {viModernModuleCount} modules
+            </div>
+            <div className="u">{VI_MODERN_EVENTS} events · view / action / submit / outcome</div>
+          </div>
+          <div>
+            <div className="k">Legacy GA instrumentation</div>
+            <div className="v" style={{ fontSize: 20 }}>
+              {viLegacyModuleCount} modules
+            </div>
+            <div className="u">{VI_LEGACY_EVENTS} events · mostly page / click only</div>
+          </div>
+        </div>
+
+        <table className="pathtbl">
+          <thead>
+            <tr>
+              <th>Module</th>
+              <th>Tier</th>
+              <th>What exists</th>
+            </tr>
+          </thead>
+          <tbody>
+            {VI_MODULE_COVERAGE.map((m) => (
+              <tr key={m.name}>
+                <td>{m.name}</td>
+                <td>
+                  {/* Both = the same feature is documented in each sheet, so it has the full
+                      modern funnel AND the older click events still firing alongside it. */}
+                  <span
+                    className={`status ${
+                      m.tier === 'both'
+                        ? 'st-healthy'
+                        : m.tier === 'modern'
+                          ? 'st-watch'
+                          : 'st-drop'
+                    }`}
+                  >
+                    {TIER_LABEL[m.tier]}
+                  </span>
+                </td>
+                <td>
+                  {m.tier === 'both'
+                    ? 'Full funnel + legacy click events'
+                    : m.tier === 'modern'
+                      ? 'View / action / failure typed events'
+                      : 'Page / click events only — no step-level funnel'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </ChartCard>
+
+      {/*
+        Circle-wise breakdown (A12) is hidden: the mobile-app events this dashboard reads
+        carry no site, so `site_id` is never sent and there is no per-circle split to show.
+        The league table and its `useSiteLeague` query were removed with it — restore both
+        from git history if app events start carrying a site.
+      */}
     </section>
   );
 }

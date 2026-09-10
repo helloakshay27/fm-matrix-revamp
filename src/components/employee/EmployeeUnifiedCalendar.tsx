@@ -17,6 +17,7 @@ import {
   Briefcase,
   Ticket,
   RefreshCw,
+  BarChart3,
 } from "lucide-react";
 import {
   FormControl,
@@ -33,6 +34,11 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { getToken, getBaseUrl } from "@/utils/auth";
+import {
+  useCalendarEvents,
+  type CreateEventSource,
+  type EventCreateField,
+} from "@/components/PostHogCalendarEvents";
 
 const selectMenuProps = {
   PaperProps: {
@@ -98,6 +104,20 @@ export const EmployeeUnifiedCalendar: React.FC<
   const [hasAppliedCustomFilters, setHasAppliedCustomFilters] = useState(false);
   const calendarRef = useRef<FullCalendar>(null);
   const navigate = useNavigate();
+  const calendarAnalytics = useCalendarEvents();
+
+  /**
+   * Fields already reported for the create-event modal currently on screen. The catalogue's
+   * `event_create_field_tapped` is a funnel step — "did the user engage with the form" — so it
+   * fires once per field per open. Without this, tabbing back into the title box would report
+   * the same step again and inflate the step's user count.
+   */
+  const tappedFields = useRef<Set<EventCreateField>>(new Set());
+  const trackFieldTap = (field: EventCreateField) => {
+    if (tappedFields.current.has(field)) return;
+    tappedFields.current.add(field);
+    calendarAnalytics.onCreateFieldTapped(field);
+  };
 
   // Default date range = current month
   const getDefaultDateRange = () => {
@@ -471,7 +491,14 @@ export const EmployeeUnifiedCalendar: React.FC<
     setAvailabilityLoading(false);
   };
 
-  const openCreateEventModal = (start: string, end?: string) => {
+  const openCreateEventModal = (
+    start: string,
+    end?: string,
+    source: CreateEventSource = "date_click"
+  ) => {
+    calendarAnalytics.onCreateEventOpened(source);
+    // Field-tap steps are once-per-field-per-open, so the seen-set resets with the modal.
+    tappedFields.current.clear();
     setCreateEventForm({
       title: "",
       description: "",
@@ -490,6 +517,7 @@ export const EmployeeUnifiedCalendar: React.FC<
 
   const handleCreateEvent = async () => {
     if (!createEventForm.title.trim()) {
+      calendarAnalytics.onEventCreateFailed("title_required");
       toast.error("Title is required");
       return;
     }
@@ -498,6 +526,7 @@ export const EmployeeUnifiedCalendar: React.FC<
       const token = getToken();
       const baseUrl = getBaseUrl();
       if (!token || !baseUrl) {
+        calendarAnalytics.onEventCreateFailed("not_authenticated");
         toast.error("Not authenticated");
         return;
       }
@@ -532,6 +561,12 @@ export const EmployeeUnifiedCalendar: React.FC<
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || "Failed to create event");
+      const inviteeCount = createEventForm.attendees.length;
+      if (inviteeCount > 0) calendarAnalytics.onAddPeopleConfirmed(inviteeCount);
+      calendarAnalytics.onEventCreated({
+        all_day: createEventForm.all_day,
+        invitee_count: inviteeCount,
+      });
       toast.success("Event created on Google Calendar");
       if (data?.google_calendar_link) {
         window.open(data.google_calendar_link, "_blank");
@@ -539,6 +574,9 @@ export const EmployeeUnifiedCalendar: React.FC<
       setCreateEventModal(false);
       fetchCalendarData();
     } catch (err) {
+      calendarAnalytics.onEventCreateFailed(
+        err instanceof Error ? err.message : "unknown_error"
+      );
       toast.error(
         err instanceof Error ? err.message : "Failed to create event"
       );
@@ -1054,6 +1092,7 @@ export const EmployeeUnifiedCalendar: React.FC<
                 if (!statusRes.ok) throw new Error("Failed to check status");
                 const statusData = await statusRes.json();
                 if (statusData.connected === true) {
+                  calendarAnalytics.onAccountConnected("google");
                   toast.info("Syncing Google Calendar events...");
                   const syncRes = await fetch(
                     `https://${domain}/google_calander/sync?email=${encodeURIComponent(email)}`
@@ -1063,6 +1102,7 @@ export const EmployeeUnifiedCalendar: React.FC<
                     fetchCalendarData();
                   } else toast.error("Failed to sync");
                 } else {
+                  calendarAnalytics.onConnectPromptAccepted("google");
                   toast.info("Opening Google Calendar connection...");
                   window.open(
                     `https://${domain}/google_oauth/connect?email=${encodeURIComponent(email)}`,
@@ -1079,6 +1119,17 @@ export const EmployeeUnifiedCalendar: React.FC<
             <RefreshCw className="h-4 w-4" />
             Sync Google Calendar
           </Button>
+
+          {/* Opens the Calendar usage-analytics dashboard the events in this module feed. */}
+          <Button
+            onClick={() => navigate("/calendar-posthog-dashboard")}
+            variant="outline"
+            className="flex items-center gap-2 px-4 py-2 h-10"
+          >
+            <BarChart3 className="h-4 w-4" />
+            Usage Analytics
+          </Button>
+
           <Button
             onClick={() => setIsFilterModalOpen(true)}
             variant="outline"
@@ -1209,12 +1260,12 @@ export const EmployeeUnifiedCalendar: React.FC<
                 const end = moment(info.dateStr)
                   .add(1, "hour")
                   .format("YYYY-MM-DDTHH:mm");
-                openCreateEventModal(start, end);
+                openCreateEventModal(start, end, "date_click");
               }}
               select={(info) => {
                 const start = moment(info.startStr).format("YYYY-MM-DDTHH:mm");
                 const end = moment(info.endStr).format("YYYY-MM-DDTHH:mm");
-                openCreateEventModal(start, end);
+                openCreateEventModal(start, end, "range_select");
               }}
               dayHeaderFormat={{ weekday: "short", day: "numeric" }}
               eventContent={(eventInfo) => {
@@ -1482,6 +1533,7 @@ export const EmployeeUnifiedCalendar: React.FC<
                 <input
                   type="text"
                   placeholder="Add title"
+                  onFocus={() => trackFieldTap("title")}
                   value={createEventForm.title}
                   onChange={(e) =>
                     setCreateEventForm((f) => ({ ...f, title: e.target.value }))
@@ -1495,12 +1547,17 @@ export const EmployeeUnifiedCalendar: React.FC<
                   <input
                     type="checkbox"
                     checked={createEventForm.all_day}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      // Flipping to all-day IS choosing a duration, so it reports the same
+                      // funnel step as editing the end time — `all_day` says which it was.
+                      calendarAnalytics.onCreateDurationSelected({
+                        all_day: e.target.checked,
+                      });
                       setCreateEventForm((f) => ({
                         ...f,
                         all_day: e.target.checked,
-                      }))
-                    }
+                      }));
+                    }}
                     className="rounded border-gray-300 text-blue-600"
                   />
                   All day
@@ -1514,6 +1571,9 @@ export const EmployeeUnifiedCalendar: React.FC<
                     </label>
                     <input
                       type={createEventForm.all_day ? "date" : "datetime-local"}
+                      onFocus={() =>
+                        trackFieldTap(createEventForm.all_day ? "date" : "time")
+                      }
                       value={
                         createEventForm.all_day
                           ? createEventForm.start_time.slice(0, 10)
@@ -1535,13 +1595,21 @@ export const EmployeeUnifiedCalendar: React.FC<
                       </label>
                       <input
                         type="datetime-local"
+                        onFocus={() => trackFieldTap("time")}
                         value={createEventForm.end_time}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          calendarAnalytics.onCreateDurationSelected({
+                            all_day: false,
+                            duration_minutes: moment(e.target.value).diff(
+                              moment(createEventForm.start_time),
+                              "minutes"
+                            ),
+                          });
                           setCreateEventForm((f) => ({
                             ...f,
                             end_time: e.target.value,
-                          }))
-                        }
+                          }));
+                        }}
                         className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                       />
                     </div>
@@ -1572,6 +1640,7 @@ export const EmployeeUnifiedCalendar: React.FC<
                   <input
                     type="text"
                     placeholder="Add location"
+                    onFocus={() => trackFieldTap("location")}
                     value={createEventForm.location}
                     onChange={(e) =>
                       setCreateEventForm((f) => ({
@@ -1600,6 +1669,7 @@ export const EmployeeUnifiedCalendar: React.FC<
                   </svg>
                   <textarea
                     placeholder="Add description"
+                    onFocus={() => trackFieldTap("description")}
                     value={createEventForm.description}
                     onChange={(e) =>
                       setCreateEventForm((f) => ({
@@ -1649,6 +1719,7 @@ export const EmployeeUnifiedCalendar: React.FC<
                       if (!user) return;
                       if (createEventForm.attendees.some((a) => a.id === uid))
                         return;
+                      trackFieldTap("people");
                       setCreateEventForm((f) => ({
                         ...f,
                         attendees: [

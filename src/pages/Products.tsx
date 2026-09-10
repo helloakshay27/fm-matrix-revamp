@@ -12,6 +12,7 @@ import { EmployeeHeader } from "@/components/EmployeeHeader";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { canViewProduct } from "@/pages/products/productVisibility";
+import { FACE_DETECTION_ENABLED } from "@/pages/products/useProductSecurity";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -794,12 +795,18 @@ const Products: React.FC = () => {
   const openProductDetails = (product: Product) => {
     const targetPath = `/product/${product.slug}`;
 
-    navigate(`${targetPath}/access`, {
-      state: {
-        productName: getDisplayProductName(product),
-        targetPath,
-      },
-    });
+    if (FACE_DETECTION_ENABLED) {
+      navigate(`${targetPath}/access`, {
+        state: {
+          productName: getDisplayProductName(product),
+          targetPath,
+        },
+      });
+    } else {
+      navigate(targetPath, {
+        state: { faceAuthVerifiedAt: Date.now() },
+      });
+    }
   };
 
   const renderCell = (product: Product, columnKey: string) => {

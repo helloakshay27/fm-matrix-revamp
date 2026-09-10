@@ -116,7 +116,10 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
 
   const getPriorityDisplay = (priority: string | undefined) => {
     if (!priority) return '-';
-    return priorityLabels[priority] || '-';
+    // Match TicketDetailsPage's getPriorityLabel: case-insensitive match
+    // against the P1-P5 map, falling back to the raw value (not '-') when
+    // the priority doesn't fit that map — e.g. a plain "Critical" string.
+    return priorityLabels[priority.toUpperCase()] || priority;
   };
 
   // Fetch communication templates from API

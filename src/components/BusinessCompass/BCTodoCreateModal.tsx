@@ -18,8 +18,6 @@ const Transition = forwardRef(function Transition(
 
 const getTodayDate = () => new Date().toISOString().split('T')[0];
 
-const BC_API_BASE = `https://${localStorage.getItem('baseUrl')}`;
-
 interface BCTodoCreateModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -184,7 +182,7 @@ const BCTodoCreateModal = ({ isOpen, onClose, onSuccess, prefilledDate, prefille
                 },
             };
 
-            await axios.post(`${BC_API_BASE}/business_compass/todos.json`, payload, {
+            await axios.post(`https://${baseURL}/business_compass/todos.json`, payload, {
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`,

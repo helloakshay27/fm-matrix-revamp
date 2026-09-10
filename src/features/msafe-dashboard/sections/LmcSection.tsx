@@ -56,7 +56,7 @@ function getMsafeBaseUrl(): string {
  *  the same way regardless of persona. */
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
   const params: Record<string, string> = {};
-  if (f.circleIds.length > 0) params.circle_id = f.circleIds.join(',');
+  if (f.clusterIds.length > 0) params.cluster_id = f.clusterIds.join(',');
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type = f.empTypeId;
@@ -378,12 +378,12 @@ function normalizeLmcStatus(payload: unknown): WeekRow[] {
   }));
 }
 
-type TrendCircleRow = { month: string; circle: string; volume: number };
+type TrendClusterRow = { month: string; cluster: string; volume: number };
 
-// Raw per-record shape from the API: one row per (circle, month) combination —
-// { circle_name, month, lmc_volume }. Kept separate from the aggregated trend
-// data so the hover tooltip can show the full circle-wise breakdown per month.
-function normalizeMonthlyTrendByCircle(payload: unknown): TrendCircleRow[] {
+// Raw per-record shape from the API: one row per (cluster, month) combination —
+// { cluster_name, month, lmc_volume }. Kept separate from the aggregated trend
+// data so the hover tooltip can show the full cluster-wise breakdown per month.
+function normalizeMonthlyTrendByCluster(payload: unknown): TrendClusterRow[] {
   const list = unwrapList(payload, ['data', 'result', 'months', 'trend']);
   return list
     .map((item) => {
@@ -401,16 +401,16 @@ function normalizeMonthlyTrendByCircle(payload: unknown): TrendCircleRow[] {
         'sign_offs',
       ]);
       if (volume === null) return null;
-      const circle = getString(record, ['circle_name', 'circle']) ?? '—';
-      return { month, circle, volume };
+      const cluster = getString(record, ['cluster_name', 'circle_name', 'circle']) ?? '—';
+      return { month, cluster, volume };
     })
-    .filter((item): item is TrendCircleRow => Boolean(item));
+    .filter((item): item is TrendClusterRow => Boolean(item));
 }
 
-// The response is one row per (circle, month) — { circle_name, month, lmc_volume } — so
-// volumes are summed across every circle for the same month, same approach as the daily
+// The response is one row per (cluster, month) — { cluster_name, month, lmc_volume } — so
+// volumes are summed across every cluster for the same month, same approach as the daily
 // volume and weekly completion normalizers above.
-function normalizeMonthlyTrend(rows: TrendCircleRow[]): TrendRow[] {
+function normalizeMonthlyTrend(rows: TrendClusterRow[]): TrendRow[] {
   const order: string[] = [];
   const totals = new Map<string, number>();
   for (const r of rows) {
@@ -442,7 +442,7 @@ export function LmcSection() {
   const { openDrill, persona, appliedFilters } = useMsafeDashboard();
   const [dailyMode, setDailyMode] = useState('line');
   const [funcMode, setFuncMode] = useState('donut');
-  const [funcTab, setFuncTab] = useState<'function' | 'circle'>('function');
+  const [funcTab, setFuncTab] = useState<'function' | 'cluster'>('function');
   const [trendMode, setTrendMode] = useState('line');
   const [dailyData, setDailyData] = useState<DailyRow[]>([]);
   const [dailyCircleData, setDailyCircleData] = useState<DailyCircleRow[]>([]);
@@ -456,7 +456,7 @@ export function LmcSection() {
   const [statusData, setStatusData] = useState<WeekRow[]>([]);
   const [statusLoading, setStatusLoading] = useState(true);
   const [trendData, setTrendData] = useState<TrendRow[]>([]);
-  const [trendCircleData, setTrendCircleData] = useState<TrendCircleRow[]>([]);
+  const [trendClusterData, setTrendClusterData] = useState<TrendClusterRow[]>([]);
   const [trendLoading, setTrendLoading] = useState(true);
 
   // "Daily LMC Volume — Last 30 Days" card hidden per request — API call disabled too.
@@ -531,14 +531,23 @@ export function LmcSection() {
     setFuncLoading(true);
     (async () => {
       try {
-        const payload = await fetchMsafeLmcJson(
-          'lmc_signoffs_by_function.json',
-          { type: funcTab, ...buildFilterParams(persona, appliedFilters) },
-          controller.signal,
-        );
+        // Cluster is a separate, standalone endpoint (no `type` param) — Function
+        // stays on the shared function/circle endpoint with type=function.
+        const payload =
+          funcTab === 'cluster'
+            ? await fetchMsafeLmcJson(
+                'lmc_signoffs_by_cluster.json',
+                buildFilterParams(persona, appliedFilters),
+                controller.signal,
+              )
+            : await fetchMsafeLmcJson(
+                'lmc_signoffs_by_function.json',
+                { type: funcTab, ...buildFilterParams(persona, appliedFilters) },
+                controller.signal,
+              );
         if (!controller.signal.aborted) setFuncData(normalizeByFunction(payload));
       } catch (err) {
-        if ((err as Error).name !== 'AbortError') console.warn('M-Safe lmc-signoffs-by-function API failed.', err);
+        if ((err as Error).name !== 'AbortError') console.warn('M-Safe lmc-signoffs-by-function/cluster API failed.', err);
       } finally {
         if (!controller.signal.aborted) setFuncLoading(false);
       }
@@ -577,17 +586,17 @@ export function LmcSection() {
         // its own "Last 12 Months" title. Drop the date range, keep every other filter.
         const { from_date, to_date, ...trendParams } = buildFilterParams(persona, appliedFilters);
         const payload = await fetchMsafeLmcJson(
-          'monthly_lmc_signoff_volume.json',
+          'cluster_wise_lmc_signoff',
           trendParams,
           controller.signal,
         );
-        const circleRows = normalizeMonthlyTrendByCircle(payload);
+        const clusterRows = normalizeMonthlyTrendByCluster(payload);
         if (!controller.signal.aborted) {
-          setTrendCircleData(circleRows);
-          setTrendData(normalizeMonthlyTrend(circleRows));
+          setTrendClusterData(clusterRows);
+          setTrendData(normalizeMonthlyTrend(clusterRows));
         }
       } catch (err) {
-        if ((err as Error).name !== 'AbortError') console.warn('M-Safe monthly-lmc-signoff-volume API failed.', err);
+        if ((err as Error).name !== 'AbortError') console.warn('M-Safe cluster-wise-lmc-signoff API failed.', err);
       } finally {
         if (!controller.signal.aborted) setTrendLoading(false);
       }
@@ -620,21 +629,21 @@ export function LmcSection() {
     );
   };
 
-  // "LMC Completion Trend" points are totals summed across every circle for that
-  // month — this looks up the per-circle breakdown for the hovered month so the
-  // tooltip can list each circle's sign-off volume, not just the month total.
+  // "LMC Completion Trend" points are totals summed across every cluster for that
+  // month — this looks up the per-cluster breakdown for the hovered month so the
+  // tooltip can list each cluster's sign-off volume, not just the month total.
   const renderTrendTooltip = ({ active, label }: { active?: boolean; label?: string }) => {
     if (!active || !label) return null;
-    const circleRows = trendCircleData.filter((r) => r.month === label);
-    const total = circleRows.reduce((sum, r) => sum + r.volume, 0);
+    const clusterRows = trendClusterData.filter((r) => r.month === label);
+    const total = clusterRows.reduce((sum, r) => sum + r.volume, 0);
     return (
       <div className="msafe-chart-tip">
         <div className="msafe-chart-tip-title">{formatMonthLabel(label)}</div>
-        {circleRows.map((r) => (
-          <div key={r.circle} className="msafe-chart-tip-row">
+        {clusterRows.map((r) => (
+          <div key={r.cluster} className="msafe-chart-tip-row">
             <span className="msafe-chart-tip-sw" style={{ background: C.sage }} />
             <span>
-              {r.circle}: {r.volume.toLocaleString('en-IN')}
+              {r.cluster}: {r.volume.toLocaleString('en-IN')}
             </span>
           </div>
         ))}
@@ -647,7 +656,7 @@ export function LmcSection() {
 
   // Reads the approved count/percentage (plus total_users/pending, when present)
   // directly off the hovered slice's own data (attached by normalizeByFunction) —
-  // works for both the Function and Circle tabs since they share the same slice
+  // works for both the Function and Cluster tabs since they share the same slice
   // shape. Each stat gets its own labeled row (rather than one packed line) so
   // it reads clearly at a glance, matching the pattern used elsewhere in this
   // dashboard (e.g. TrainingSection's renderGroupTrainingTooltip).
@@ -729,19 +738,19 @@ export function LmcSection() {
         </ChartCard>
       </div>
 
-      {/* Full-width, not a 3-column grid slot — the Circle tab can have 20+ circles,
+      {/* Full-width, not a 3-column grid slot — the Cluster tab can have 15+ clusters,
           which was getting squeezed into a third of the row's width and rendering badly. */}
       <ChartCard
-        title={funcTab === 'circle' ? 'LMC by Circle' : 'LMC by Function'}
+        title={funcTab === 'cluster' ? 'LMC by Cluster' : 'LMC by Function'}
         sub={
-          funcTab === 'circle'
-            ? "Which circle's managers are most active"
+          funcTab === 'cluster'
+            ? "Which cluster's managers are most active"
             : "Which function's managers are most active"
         }
         infoKey="lmc-func"
         style={{ marginTop: 16 }}
         showPdf
-        pdfLabel={funcTab === 'circle' ? 'LMC by Circle' : 'LMC by Function'}
+        pdfLabel={funcTab === 'cluster' ? 'LMC by Cluster' : 'LMC by Function'}
         reportPath="msafe_dashboard_report/lmc_status"
         reportParams={{ status: 'Completed' }}
         exportData={funcData.map((d) => ({
@@ -752,7 +761,7 @@ export function LmcSection() {
           'Pending Count': d.pendingCount ?? '',
           'Pending %': d.pendingPercentage ?? '',
         }))}
-        tag={<ChartSwitch modes={['function', 'circle']} value={funcTab} onChange={(v) => setFuncTab(v as 'function' | 'circle')} />}
+        tag={<ChartSwitch modes={['function', 'cluster']} value={funcTab} onChange={(v) => setFuncTab(v as 'function' | 'cluster')} />}
         chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={funcMode} onChange={setFuncMode} />}
       >
         {funcLoading || funcData.length === 0 ? (

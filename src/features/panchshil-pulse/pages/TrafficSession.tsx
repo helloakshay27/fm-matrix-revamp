@@ -6,6 +6,23 @@ import { SectionState } from "../components/common/SectionState";
 import { tileToKpi } from "../utils/tileAdapter";
 import { getChartColors } from "../utils/chartColors";
 
+// Platform labels shown in the device-split card. The API reports Desktop /
+// Mobile groups; Pulse is a mobile-first app so we present those rows as the
+// Android vs iOS split users care about. The share/percentage data is untouched.
+const DEVICE_LABELS: Record<string, string> = {
+  Desktop: "Android",
+  Mobile: "iOS",
+};
+
+// x-axis labels arrive as "M/D" (e.g. 8/5). Render them as the month name so
+// the usage-over-time chart shows Jan/Mar/May/... instead of day/month. The
+// underlying dates, data and tick positions are untouched.
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const toMonthLabel = (label: string): string => {
+  const m = parseInt(label.split("/")[0], 10);
+  return m >= 1 && m <= 12 ? MONTH_NAMES[m - 1] : label;
+};
+
 export const TrafficSession: React.FC = () => {
   const { sessTab, setSessTab, theme, vm } = usePulseDashboard();
   const colors = useMemo(() => getChartColors(), [theme]);
@@ -13,15 +30,16 @@ export const TrafficSession: React.FC = () => {
   const t = vm.traffic;
 
   // Usage chart line styling per tab — matches the wireframe's colour choices.
+  const xLabels = useMemo(() => t.chart.labels.map(toMonthLabel), [t.chart.labels]);
   const chartOpts = useMemo(() => {
     if (sessTab === "visitors") {
-      return { labels: t.chart.labels, color: colors.blue, fill: colors.fill };
+      return { labels: xLabels, color: colors.blue, fill: colors.fill, metric: "Visitors" };
     }
     if (sessTab === "views") {
-      return { labels: t.chart.labels, color: colors.violet, fill: colors.violetTint };
+      return { labels: xLabels, color: colors.violet, fill: colors.violetTint, metric: "Views" };
     }
-    return { labels: t.chart.labels, color: colors.green, fill: "var(--green-tint)" };
-  }, [sessTab, t.chart.labels, colors]);
+    return { labels: xLabels, color: colors.green, fill: "var(--green-tint)", metric: "Sessions" };
+  }, [sessTab, xLabels, colors]);
 
   return (
     <section className="page on" id="pgTraffic">
@@ -79,8 +97,11 @@ export const TrafficSession: React.FC = () => {
                 <span className="info-wrap">
                   <button className="info-btn" type="button" tabIndex={-1}>i</button>
                   <div className="info-pop">
-                    <b>Purpose</b>
-                    Visitors, screen views, and sessions over time, across all sites, with the previous period overlaid for comparison.
+                    <b>Usage over time</b>
+                    For each day in the range, the solid line plots the chosen measure — Visitors (distinct active people), Views (screens opened) or Sessions (visits). The faint dashed line is the same measure for the immediately preceding period of equal length.
+                    <div className="sep">
+                      Lets you spot the trend and compare it like-for-like against the previous period. The short dashed tail at the end is a simple projection of where the current pace is heading.
+                    </div>
                   </div>
                 </span>
               </div>
@@ -140,13 +161,16 @@ export const TrafficSession: React.FC = () => {
               <div className="charthead">
                 <div>
                   <div className="cr">Device / platform split</div>
-                  <div className="ct">Web app vs mobile OS usage</div>
+                  <div className="ct">Android vs iOS usage</div>
                 </div>
                 <span className="info-wrap">
                   <button className="info-btn" type="button" tabIndex={-1}>i</button>
                   <div className="info-pop">
-                    <b>Purpose</b>
-                    Share of sessions by device_platform — Pulse is a mobile-first community app, so this shows where release testing and support effort should concentrate.
+                    <b>Device / platform split</b>
+                    Sessions split by the device they came from — Desktop, iOS and other mobile — each shown as a share of total sessions.
+                    <div className="sep">
+                      Tells you how residents are reaching the app. A heavy mobile/iOS share usually means people working on the move rather than at a desk — Pulse is a mobile-first community app, so this shows where release testing and support effort should concentrate.
+                    </div>
                   </div>
                 </span>
               </div>
@@ -156,7 +180,7 @@ export const TrafficSession: React.FC = () => {
                 {t.deviceRows.length > 0 ? (
                   t.deviceRows.map(row => (
                     <div className="role" key={row[0]}>
-                      <div className="rn">{row[0]}</div>
+                      <div className="rn">{DEVICE_LABELS[row[0]] ?? row[0]}</div>
                       <div className="rbar">
                         <i style={{ width: `${Math.round(row[1] * 100)}%`, background: row[2] }}></i>
                       </div>

@@ -112,6 +112,7 @@ export const getFMUsers = createAsyncThunk(
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          timeout: 20000,
         }
       );
       return response.data;
@@ -134,6 +135,7 @@ export const fetchSuppliers = createAsyncThunk(
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          timeout: 20000,
         }
       );
       return response.data;
@@ -158,6 +160,7 @@ export const fetchUnits = createAsyncThunk(
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        timeout: 20000,
       });
       return response.data;
     } catch (error) {
@@ -181,6 +184,7 @@ export const fetchRoles = createAsyncThunk(
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        timeout: 20000,
       });
       return response.data;
     } catch (error) {
@@ -231,6 +235,7 @@ export const getUserDetails = createAsyncThunk(
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          timeout: 20000,
         }
       );
       return response.data;

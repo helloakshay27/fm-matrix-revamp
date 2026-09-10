@@ -405,6 +405,8 @@ const employeeNavigationByModule: Record<string, any> = {
   },
 };
 
+import { capturePostHogEvent } from "@/utils/posthogHelpers";
+
 export const EmployeeSidebarStatic: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -477,8 +479,15 @@ export const EmployeeSidebarStatic: React.FC = () => {
    */
   const handleNavigation = (
     href: string,
+    itemName?: string,
     shouldKeepSidebarOpen: boolean = false
   ) => {
+    if (currentSection === "Project Task" || currentSection === "PATM") {
+      capturePostHogEvent("PATM Sidebar Item Clicked", {
+        item_name: itemName || "Unknown",
+        href: href,
+      });
+    }
     // Navigate to the route
     navigate(href);
 
@@ -545,7 +554,7 @@ export const EmployeeSidebarStatic: React.FC = () => {
                 return (
                   <button
                     key={key}
-                    onClick={() => handleNavigation(sectionHref)}
+                    onClick={() => handleNavigation(sectionHref, key)}
                     className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors relative ${
                       isActive(sectionHref)
                         ? "bg-[#DBC2A9] text-[#1a1a1a]"
@@ -597,7 +606,7 @@ export const EmployeeSidebarStatic: React.FC = () => {
                       {section.items.map((item: any) => (
                         <button
                           key={item.name}
-                          onClick={() => handleNavigation(item.href)}
+                          onClick={() => handleNavigation(item.href, item.name)}
                           className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors relative ${
                             isActive(item.href)
                               ? "bg-[#DBC2A9] text-[#1a1a1a]"

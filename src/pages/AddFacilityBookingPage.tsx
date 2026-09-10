@@ -15,6 +15,8 @@ import { apiClient } from '@/utils/apiClient';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
+import { useViWorkflowEvents } from "@/components/PostHogViWorkflowEvents";
+import { useFlowEvents } from '@/components/PostHogFlowEvents';
 
 const fieldStyles = {
   '& .MuiOutlinedInput-root': {
@@ -43,11 +45,17 @@ const fieldStyles = {
 
 export const AddFacilityBookingPage = () => {
   const gaEvents = useGaFunnelEvents();
+  // Same three funnel points, under the Vi catalogue's own event names. No-ops off the Vi
+  // deployment — see PostHogViWorkflowEvents for why both sets fire rather than one renamed.
+  const viEvents = useViWorkflowEvents();
+  const flowEvents = useFlowEvents();
 
   // GA parity: the facility booking screen was opened. Mount-only, so re-renders and
   // in-page steps are not counted as fresh page views.
   useEffect(() => {
     gaEvents.onBookFacilityPageClicked("admin");
+    viEvents.onBookFacilityPageClicked();
+    flowEvents.onFlowStarted('facilityBooking');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const navigate = useNavigate();
@@ -563,6 +571,8 @@ export const AddFacilityBookingPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     gaEvents.onBookFacilityClicked("admin", selectedFacility || null);
+    viEvents.onBookFacilityButtonClicked();
+    flowEvents.onFlowStepViewed('facilityBooking', 'confirm', 1);
     e.preventDefault();
 
     try {
@@ -757,6 +767,8 @@ export const AddFacilityBookingPage = () => {
         if (bookingId && token) {
           toast.success('Booking created successfully! Redirecting to payment gateway...');
           gaEvents.onBookFacilitySuccess("admin", { facility_id: selectedFacility || null, booking_id: bookingId });
+          viEvents.onBookFacilitySuccess({ facility_id: selectedFacility || undefined });
+          flowEvents.onFlowCompleted('facilityBooking', { succeeded: true });
           // Navigate to payment gateway redirection page with booking ID and token
           navigate(`/payment-redirect?bookingId=${bookingId}&token=${token}&amount=${costSummary.amountFull}`);
         } else {
@@ -766,6 +778,8 @@ export const AddFacilityBookingPage = () => {
       } else {
         toast.success('Booking created successfully!');
         gaEvents.onBookFacilitySuccess("admin", { facility_id: selectedFacility || null });
+        viEvents.onBookFacilitySuccess({ facility_id: selectedFacility || undefined });
+        flowEvents.onFlowCompleted('facilityBooking', { succeeded: true });
         navigate(-1);
       }
     } catch (error: any) {
@@ -776,6 +790,10 @@ export const AddFacilityBookingPage = () => {
       }
       toast.error('Error creating booking. Please check the console for details.');
       gaEvents.onBookFacilityFailure("admin", { facility_id: selectedFacility || null, error });
+      flowEvents.onFlowCompleted('facilityBooking', {
+        succeeded: false,
+        failure_reason: error instanceof Error ? error.message : 'request_failed',
+      });
     }
   };
 

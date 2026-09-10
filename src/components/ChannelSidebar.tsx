@@ -18,11 +18,13 @@ const ChannelSidebar = () => {
     const baseUrl = localStorage.getItem("baseUrl");
 
     const modalRef = useRef<HTMLDivElement | null>(null);
+    const sidebarWrapperRef = useRef<HTMLDivElement | null>(null);
 
     const [isGroupsOpen, setIsGroupsOpen] = useState(false);
     const [isMessagesOpen, setIsMessagesOpen] = useState(false);
     const [users, setUsers] = useState([]);
     const [newConversationModal, setNewConversationModal] = useState(false);
+    const [modalAnchor, setModalAnchor] = useState({ top: 4, left: 248 });
     const [searchQuery, setSearchQuery] = useState("");
     const [sidebarSearchQuery, setSidebarSearchQuery] = useState("");
     const [conversations, setConversations] = useState([]);
@@ -188,8 +190,29 @@ const ChannelSidebar = () => {
         };
     }, [newConversationModal]);
 
+    // Position the "New Conversation" modal (fixed to the viewport, so it
+    // isn't clipped by / doesn't add horizontal scroll to this narrow,
+    // scrollable sidebar column) right at this column's own right edge.
+    useEffect(() => {
+        if (!newConversationModal) return;
+
+        const updatePosition = () => {
+            const rect = sidebarWrapperRef.current?.getBoundingClientRect();
+            if (rect) {
+                setModalAnchor({ top: rect.top + 4, left: rect.right - 8 });
+            }
+        };
+
+        updatePosition();
+        window.addEventListener("resize", updatePosition);
+        return () => window.removeEventListener("resize", updatePosition);
+    }, [newConversationModal]);
+
     return (
-        <div className={`w-full shrink-0 md:w-64 ${localStorage.getItem('user_role_name') === 'Employee' ? "md:h-[calc(100vh-64px)]" : "md:h-[calc(100vh-112px)]"} max-h-[60vh] overflow-y-auto md:max-h-none py-3 border-b md:border-b-0 md:border-r border-gray-200 shadow-md space-y-2 relative`}>
+        <div
+            ref={sidebarWrapperRef}
+            className={`w-full shrink-0 md:w-64 ${localStorage.getItem('user_role_name') === 'Employee' ? "md:h-[calc(100vh-64px)]" : "md:h-[calc(100vh-112px)]"} max-h-[60vh] overflow-y-auto md:max-h-none py-3 border-b md:border-b-0 md:border-r border-gray-200 shadow-md space-y-2 relative`}
+        >
             <div className="w-full px-3" onClick={() => setNewConversationModal(true)}>
                 <Button className="w-full">+ New Chat</Button>
             </div>
@@ -356,6 +379,7 @@ const ChannelSidebar = () => {
             {newConversationModal && (
                 <NewConversationModal
                     modalRef={modalRef}
+                    anchorPosition={modalAnchor}
                     filteredUsers={filteredUsers}
                     searchQuery={searchQuery}
                     setSearchQuery={setSearchQuery}

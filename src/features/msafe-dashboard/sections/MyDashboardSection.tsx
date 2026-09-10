@@ -55,7 +55,7 @@ function renderAreaEndLabel(color: string, lastIndex: number) {
  *  TrainingSection/SmtSection's buildFilterParams (employee_type, not employee_type_id). */
 function buildFilterParams(_persona: Persona, f: AppliedFilters): Record<string, string> {
   const params: Record<string, string> = {};
-  if (f.circleIds.length > 0) params.circle_id = f.circleIds.join(',');
+  if (f.clusterIds.length > 0) params.cluster_id = f.clusterIds.join(',');
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type = f.empTypeId;
@@ -69,7 +69,7 @@ function buildFilterParams(_persona: Persona, f: AppliedFilters): Record<string,
  *  other msafe_tranning_dashboard endpoints on the same base URL). */
 function buildKpiFilterParams(_persona: Persona, f: AppliedFilters): Record<string, string> {
   const params: Record<string, string> = {};
-  if (f.circleIds.length > 0) params.circle_id = f.circleIds.join(',');
+  if (f.clusterIds.length > 0) params.cluster_id = f.clusterIds.join(',');
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type = f.empTypeId;

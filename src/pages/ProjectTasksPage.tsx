@@ -1,4 +1,4 @@
-﻿import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { renderGroupedUserCheckboxList } from "@/components/GroupedUserCheckboxList";
@@ -51,7 +51,14 @@ import {
     ArrowLeft,
     Calendar as CalendarIcon,
 } from "lucide-react";
-import { useEffect, useState, useRef, forwardRef, useCallback } from "react";
+import {
+    useEffect,
+    useState,
+    useRef,
+    forwardRef,
+    useCallback,
+    type ReactNode,
+} from "react";
 import { cache } from "@/utils/cacheUtils";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import {
@@ -67,6 +74,7 @@ import {
 import { toast } from "sonner";
 import ProjectTaskCreateModal from "@/components/ProjectTaskCreateModal";
 import TaskManagementKanban from "@/components/TaskManagementKanban";
+import { usePATMEvents } from "@/components/PostHogPATMEvents";
 import {
     Pagination,
     PaginationContent,
@@ -273,6 +281,14 @@ const COLUMN_TO_BACKEND_MAP: Record<string, string> = {
     predecessor: "predecessor_task",
     successor: "successor_task",
     completion_percentage: "completion_percent",
+};
+
+// Matches the priority options in ProjectTaskCreateModal.tsx/ProjectTaskEditModal.tsx
+const PRIORITY_LABELS: Record<string, string> = {
+    P1: "Q1: Urgent & Important",
+    P2: "Q2: Important, Not Urgent",
+    P3: "Q3: Urgent, Not Important",
+    P4: "Q4: Not Urgent or Important",
 };
 
 // Utility function to calculate duration between two dates (matching task_management)
@@ -643,6 +659,50 @@ const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
     );
 };
 
+// Generic Confirmation Modal Component (status changes, starting a task, etc.)
+const ConfirmationModal = ({
+    isOpen,
+    onClose,
+    onConfirm,
+    isLoading,
+    title,
+    message,
+    loadingLabel = "Updating...",
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+    isLoading: boolean;
+    title: string;
+    message: ReactNode;
+    loadingLabel?: string;
+}) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full max-w-[30rem] mx-4">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">{title}</h2>
+
+                <p className="text-sm text-gray-600 mb-6">{message}</p>
+
+                <div className="flex gap-3 justify-end">
+                    <Button variant="outline" onClick={onClose} disabled={isLoading}>
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={onConfirm}
+                        disabled={isLoading}
+                        className="fm-button-fix fm-button-brand px-4 py-2"
+                    >
+                        {isLoading ? loadingLabel : "Confirm"}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const AddToSprintModal = ({
     isOpen,
     onClose,
@@ -702,6 +762,11 @@ const ProjectTasksPage = () => {
     const { setCurrentSection } = useLayout();
     const [searchParams, setSearchParams] = useSearchParams();
     const { shouldShow } = useDynamicPermissions();
+    const patmEvents = usePATMEvents();
+
+    useEffect(() => {
+        patmEvents.onTaskListViewed();
+    }, [patmEvents]);
 
     const view = localStorage.getItem("selectedView");
     const urlToken = searchParams.get("token");
@@ -825,6 +890,20 @@ const ProjectTasksPage = () => {
         startDate: "",
         endDate: "",
     });
+    // Snapshot of the advanced filters actually applied to the API query.
+    // The selection state above changes live as the user interacts with the
+    // filter modal; this only updates on "Apply"/"Clear" so the API isn't
+    // called on every checkbox/date change.
+    const [appliedAdvancedFilters, setAppliedAdvancedFilters] = useState({
+        selectedStatuses: [] as string[],
+        selectedResponsible: [] as number[],
+        selectedCreators: [] as number[],
+        selectedProjects: [] as number[],
+        selectedWorkflowStatus: [] as string[],
+        selectedTags: [] as any[],
+        dates: { startDate: "", endDate: "", completedAt: "" },
+        dateRangeFilter: { startDate: "", endDate: "" },
+    });
     const [isDateRangePickerOpen, setIsDateRangePickerOpen] = useState(false);
     const [projectOptions, setProjectOptions] = useState<any[]>([]);
     const [tags, setTags] = useState<any[]>([]);
@@ -835,8 +914,6 @@ const ProjectTasksPage = () => {
         createdBy: false,
         project: false,
         tags: false,
-        startDate: false,
-        endDate: false,
         completedAt: false,
         dateRange: false,
     });
@@ -879,6 +956,21 @@ const ProjectTasksPage = () => {
         id: number;
         status: string;
     } | null>(null);
+
+    // Status Change Confirmation Modal State (every other status change)
+    const [isStatusConfirmOpen, setIsStatusConfirmOpen] = useState(false);
+    const [isStatusConfirmLoading, setIsStatusConfirmLoading] = useState(false);
+    const [pendingDirectStatusChange, setPendingDirectStatusChange] = useState<{
+        id: number;
+        status: string;
+    } | null>(null);
+
+    // Play (Start) Confirmation Modal State
+    const [isPlayConfirmOpen, setIsPlayConfirmOpen] = useState(false);
+    const [isPlayConfirmLoading, setIsPlayConfirmLoading] = useState(false);
+    const [pendingPlayTaskId, setPendingPlayTaskId] = useState<number | null>(
+        null
+    );
 
     // Row selection state
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -1025,7 +1117,6 @@ const ProjectTasksPage = () => {
         [searchParams, setSearchParams]
     );
 
-    // Initialize filter states from URL on mount
     useEffect(() => {
         const urlStatuses = searchParams.getAll("status");
         const urlResponsible = searchParams.getAll("responsible");
@@ -1033,49 +1124,42 @@ const ProjectTasksPage = () => {
         const urlProjects = searchParams.getAll("project");
         const urlWorkflowStatus = searchParams.getAll("workflow_status");
         const urlTags = searchParams.getAll("tags");
-        const urlStartDate = searchParams.get("start_date") || "";
-        const urlEndDate = searchParams.get("end_date") || "";
         const urlCompletedAt = searchParams.get("completed_at") || "";
         const urlDateRangeStart = searchParams.get("date_range_start") || "";
         const urlDateRangeEnd = searchParams.get("date_range_end") || "";
 
-        if (urlStatuses.length > 0) {
-            setSelectedStatuses(urlStatuses);
-        }
-        if (urlResponsible.length > 0) {
-            setSelectedResponsible(urlResponsible.map(Number));
-        }
-        if (urlCreators.length > 0) {
-            setSelectedCreators(urlCreators.map(Number));
-        }
-        if (urlProjects.length > 0) {
-            setSelectedProjects(urlProjects.map(Number));
-        }
-        if (urlWorkflowStatus.length > 0) {
-            setSelectedWorkflowStatus(urlWorkflowStatus);
-        }
-        if (urlTags.length > 0) {
-            setSelectedTags(urlTags.map(Number));
-        }
-        if (urlStartDate || urlEndDate || urlCompletedAt) {
-            setDates({
-                startDate: urlStartDate,
-                endDate: urlEndDate,
-                completedAt: urlCompletedAt,
-            });
-        }
-        if (urlDateRangeStart || urlDateRangeEnd) {
-            setDateRangeFilter({
+        setSelectedStatuses(urlStatuses);
+        setSelectedResponsible(urlResponsible.map(Number));
+        setSelectedCreators(urlCreators.map(Number));
+        setSelectedProjects(urlProjects.map(Number));
+        setSelectedWorkflowStatus(urlWorkflowStatus);
+        setSelectedTags(urlTags.map(Number));
+        setDates((prev) => ({ ...prev, completedAt: urlCompletedAt }));
+        setDateRangeFilter({
+            startDate: urlDateRangeStart,
+            endDate: urlDateRangeEnd,
+        });
+
+        setAppliedAdvancedFilters({
+            selectedStatuses: urlStatuses,
+            selectedResponsible: urlResponsible.map(Number),
+            selectedCreators: urlCreators.map(Number),
+            selectedProjects: urlProjects.map(Number),
+            selectedWorkflowStatus: urlWorkflowStatus,
+            selectedTags: urlTags.map(Number),
+            dates: { startDate: "", endDate: "", completedAt: urlCompletedAt },
+            dateRangeFilter: {
                 startDate: urlDateRangeStart,
                 endDate: urlDateRangeEnd,
-            });
-        }
+            },
+        });
 
         const urlView = (searchParams.get("view") || "List") as "Kanban" | "List" | "Gantt";
         if (urlView !== selectedView) {
             setSelectedView(urlView);
         }
-    }, []);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams.toString()]);
 
     // Sync view preference to URL and localStorage
     useEffect(() => {
@@ -1295,8 +1379,6 @@ const ProjectTasksPage = () => {
             selectedProjects?.length > 0 ||
             selectedWorkflowStatus?.length > 0 ||
             selectedTags?.length > 0 ||
-            dates.startDate ||
-            dates.endDate ||
             dates.completedAt ||
             dateRangeFilter.startDate ||
             dateRangeFilter.endDate
@@ -1327,8 +1409,6 @@ const ProjectTasksPage = () => {
                 responsiblePerson: false,
                 createdBy: false,
                 project: false,
-                startDate: false,
-                endDate: false,
                 completedAt: false,
                 dateRange: false,
                 tags: false,
@@ -1413,12 +1493,6 @@ const ProjectTasksPage = () => {
             if (selectedProjects.length > 0) {
                 params["q[project_management_id_in][]"] = selectedProjects;
             }
-            if (dates.startDate) {
-                params["q[expected_start_date_eq]"] = dates.startDate;
-            }
-            if (dates.endDate) {
-                params["q[target_date_eq]"] = dates.endDate;
-            }
             if (dates.completedAt) {
                 params["q[completed_at_gteq]"] = `${dates.completedAt}T00:00:00`;
                 params["q[completed_at_lteq]"] = `${dates.completedAt}T23:59:59`;
@@ -1447,14 +1521,25 @@ const ProjectTasksPage = () => {
                         selectedCreators.length > 0 ? selectedCreators : undefined,
                     project: selectedProjects.length > 0 ? selectedProjects : undefined,
                     tags: selectedTags.length > 0 ? selectedTags : undefined,
-                    start_date: dates.startDate || undefined,
-                    end_date: dates.endDate || undefined,
                     completed_at: dates.completedAt || undefined,
                     date_range_start: dateRangeFilter.startDate || undefined,
                     date_range_end: dateRangeFilter.endDate || undefined,
                 },
                 true
             );
+
+            // Snapshot the current selections so buildFilters()/useTasks only
+            // pick up the new filters now, on Apply, not on every change above.
+            setAppliedAdvancedFilters({
+                selectedStatuses,
+                selectedResponsible,
+                selectedCreators,
+                selectedProjects,
+                selectedWorkflowStatus,
+                selectedTags,
+                dates,
+                dateRangeFilter,
+            });
 
             setIsFilterModalOpen(false);
             setCurrentPage(1);
@@ -1482,40 +1567,46 @@ const ProjectTasksPage = () => {
             filters["q[milestone_id_eq]"] = mid;
         }
 
-        // Add advanced filters
-        if (selectedStatuses.length > 0) {
-            filters["q[status_in][]"] = selectedStatuses;
+        // Add advanced filters (only what's actually been applied via the
+        // filter modal's Apply button, not the in-progress selection)
+        const {
+            selectedStatuses: appliedStatuses,
+            selectedWorkflowStatus: appliedWorkflowStatus,
+            selectedResponsible: appliedResponsible,
+            selectedCreators: appliedCreators,
+            selectedProjects: appliedProjects,
+            selectedTags: appliedTags,
+            dates: appliedDates,
+            dateRangeFilter: appliedDateRangeFilter,
+        } = appliedAdvancedFilters;
+
+        if (appliedStatuses.length > 0) {
+            filters["q[status_in][]"] = appliedStatuses;
         }
-        if (selectedWorkflowStatus.length > 0) {
-            filters["q[project_status_id_in][]"] = selectedWorkflowStatus;
+        if (appliedWorkflowStatus.length > 0) {
+            filters["q[project_status_id_in][]"] = appliedWorkflowStatus;
         }
-        if (selectedResponsible.length > 0) {
-            filters["q[responsible_person_id_in][]"] = selectedResponsible;
+        if (appliedResponsible.length > 0) {
+            filters["q[responsible_person_id_in][]"] = appliedResponsible;
         }
-        if (selectedCreators.length > 0) {
-            filters["q[created_by_id_in][]"] = selectedCreators;
+        if (appliedCreators.length > 0) {
+            filters["q[created_by_id_in][]"] = appliedCreators;
         }
-        if (selectedProjects.length > 0) {
-            filters["q[project_management_id_in][]"] = selectedProjects;
+        if (appliedProjects.length > 0) {
+            filters["q[project_management_id_in][]"] = appliedProjects;
         }
-        if (selectedTags.length > 0) {
-            filters["q[task_tags_company_tag_id_in][]"] = selectedTags;
+        if (appliedTags.length > 0) {
+            filters["q[task_tags_company_tag_id_in][]"] = appliedTags;
         }
-        if (dates.startDate) {
-            filters["q[expected_start_date_eq]"] = dates.startDate;
+        if (appliedDates.completedAt) {
+            filters["q[completed_at_gteq]"] = `${appliedDates.completedAt}T00:00:00`;
+            filters["q[completed_at_lteq]"] = `${appliedDates.completedAt}T23:59:59`;
         }
-        if (dates.endDate) {
-            filters["q[target_date_eq]"] = dates.endDate;
-        }
-        if (dates.completedAt) {
-            filters["q[completed_at_gteq]"] = `${dates.completedAt}T00:00:00`;
-            filters["q[completed_at_lteq]"] = `${dates.completedAt}T23:59:59`;
-        }
-        if (dateRangeFilter.startDate && dateRangeFilter.endDate) {
-            filters["q[expected_start_date_gteq]"] = dateRangeFilter.startDate;
-            filters["q[expected_start_date_lteq]"] = dateRangeFilter.endDate;
-            filters["q[target_date_gteq]"] = dateRangeFilter.startDate;
-            filters["q[target_date_lteq]"] = dateRangeFilter.endDate;
+        if (appliedDateRangeFilter.startDate && appliedDateRangeFilter.endDate) {
+            filters["q[expected_start_date_gteq]"] = appliedDateRangeFilter.startDate;
+            filters["q[expected_start_date_lteq]"] = appliedDateRangeFilter.endDate;
+            filters["q[target_date_gteq]"] = appliedDateRangeFilter.startDate;
+            filters["q[target_date_lteq]"] = appliedDateRangeFilter.endDate;
         }
 
         // Add global search filter (searches in title, task_code, and description)
@@ -1571,6 +1662,16 @@ const ProjectTasksPage = () => {
         setSelectedTags([]);
         setDates({ startDate: "", endDate: "", completedAt: "" });
         setDateRangeFilter({ startDate: "", endDate: "" });
+        setAppliedAdvancedFilters({
+            selectedStatuses: [],
+            selectedResponsible: [],
+            selectedCreators: [],
+            selectedProjects: [],
+            selectedWorkflowStatus: [],
+            selectedTags: [],
+            dates: { startDate: "", endDate: "", completedAt: "" },
+            dateRangeFilter: { startDate: "", endDate: "" },
+        });
         setSearchTerms({
             status: "",
             workflowStatus: "",
@@ -1853,9 +1954,12 @@ const ProjectTasksPage = () => {
             },
         };
         try {
-            await dispatch(
+            const response = await dispatch(
                 createProjectTask({ token, baseUrl, data: payload })
             ).unwrap();
+
+            const newTaskId = response?.id || "unknown";
+            patmEvents.onTaskCreated(newTaskId, data.title, data.priority || "P2");
 
             toast.success("Task created successfully");
             await refetchTasks();
@@ -1974,7 +2078,12 @@ const ProjectTasksPage = () => {
 
             // Check if task is being marked as completed and if it's overdue
             if (status === "completed") {
-                const task = tasks.find((t) => t.id === id);
+                // `tasks` only holds top-level rows - subtasks live nested
+                // under each task's `sub_tasks_managements`, so look there too.
+                const task = tasks.find((t) => t.id === id) ||
+                    tasks
+                        .flatMap((t) => t.sub_tasks_managements || [])
+                        .find((s) => s.id === id);
                 if (!task) {
                     toast.error("Task not found");
                     return;
@@ -2000,11 +2109,32 @@ const ProjectTasksPage = () => {
                 }
             }
 
-            // Use TanStack Query mutation for status change
-            await statusMutation.mutateAsync({ id, status });
-            toast.success("Task status changed successfully");
+            // Every other status change goes through a confirmation modal
+            // (on_hold and overdue-completed already confirm via their own
+            // reason-collection modals above).
+            setPendingDirectStatusChange({ id, status });
+            setIsStatusConfirmOpen(true);
         } catch (error) {
             console.log(error);
+        }
+    };
+
+    const handleConfirmDirectStatusChange = async () => {
+        if (!pendingDirectStatusChange) return;
+        const { id, status } = pendingDirectStatusChange;
+
+        setIsStatusConfirmLoading(true);
+        try {
+            await statusMutation.mutateAsync({ id, status });
+            patmEvents.onTaskUpdated(id);
+            toast.success("Task status changed successfully");
+            setIsStatusConfirmOpen(false);
+            setPendingDirectStatusChange(null);
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to update task status");
+        } finally {
+            setIsStatusConfirmLoading(false);
         }
     };
 
@@ -2018,10 +2148,11 @@ const ProjectTasksPage = () => {
                     data: { project_status_id: status },
                 })
             ).unwrap();
-            setCurrentPage(1);
+            await refetchTasks();
             toast.success("Task status changed successfully");
         } catch (error) {
             console.log(error);
+            toast.error("Failed to update task status");
         }
     };
 
@@ -2263,13 +2394,21 @@ const ProjectTasksPage = () => {
         }
     };
 
-    const handlePlayTask = async (id: number) => {
+    const handlePlayTask = (id: number) => {
+        setPendingPlayTaskId(id);
+        setIsPlayConfirmOpen(true);
+    };
+
+    const handleConfirmPlayTask = async () => {
+        if (pendingPlayTaskId === null) return;
+
+        setIsPlayConfirmLoading(true);
         try {
             await dispatch(
                 updateTaskStatus({
                     token,
                     baseUrl,
-                    id: String(id),
+                    id: String(pendingPlayTaskId),
                     data: { status: "started" },
                 })
             ).unwrap();
@@ -2278,9 +2417,13 @@ const ProjectTasksPage = () => {
             await refetchTasks();
 
             toast.success("Task started successfully");
+            setIsPlayConfirmOpen(false);
+            setPendingPlayTaskId(null);
         } catch (error) {
             console.log(error);
             toast.error(error.response?.data?.error || "Failed to start task");
+        } finally {
+            setIsPlayConfirmLoading(false);
         }
     };
 
@@ -2302,7 +2445,12 @@ const ProjectTasksPage = () => {
         }
 
         // Find the task to check if it's overdue
-        const task = tasks.find((t) => t.id === id);
+        // `tasks` only holds top-level rows - subtasks live nested under
+        // each task's `sub_tasks_managements`, so look there too.
+        const task = tasks.find((t) => t.id === id) ||
+            tasks
+                .flatMap((t) => t.sub_tasks_managements || [])
+                .find((s) => s.id === id);
         if (!task) {
             toast.error("Task not found");
             return;
@@ -2331,6 +2479,7 @@ const ProjectTasksPage = () => {
                     id,
                     completionPercent: percentage,
                 });
+                patmEvents.onTaskUpdated(id);
                 toast.success("Completion percentage updated successfully");
             } catch (error) {
                 console.log(error);
@@ -2705,9 +2854,7 @@ const ProjectTasksPage = () => {
                 );
             }
             case "priority": {
-                return (
-                    item.priority.charAt(0).toUpperCase() + item.priority.slice(1) || "-"
-                );
+                return item.priority ? PRIORITY_LABELS[item.priority] || item.priority : "-";
             }
             case "predecessor": {
                 return item.predecessor_task?.length || "0";
@@ -3240,12 +3387,12 @@ const ProjectTasksPage = () => {
                     }}
                     showMyTasksOnly={taskType === "my"}
                     selectedFilterOption={selectedFilterOption}
-                    selectedStatuses={selectedStatuses}
-                    selectedWorkflowStatus={selectedWorkflowStatus}
-                    selectedResponsible={selectedResponsible}
-                    selectedCreators={selectedCreators}
-                    selectedProjects={selectedProjects}
-                    dates={dates}
+                    selectedStatuses={appliedAdvancedFilters.selectedStatuses}
+                    selectedWorkflowStatus={appliedAdvancedFilters.selectedWorkflowStatus}
+                    selectedResponsible={appliedAdvancedFilters.selectedResponsible}
+                    selectedCreators={appliedAdvancedFilters.selectedCreators}
+                    selectedProjects={appliedAdvancedFilters.selectedProjects}
+                    dates={appliedAdvancedFilters.dates}
                 />
 
                 <Dialog
@@ -3817,64 +3964,6 @@ const ProjectTasksPage = () => {
                             )}
                         </div>
 
-                        {/* Start Date */}
-                        <div className="p-6 py-3">
-                            <div
-                                className="flex items-center justify-between cursor-pointer"
-                                onClick={() => toggleDropdown("startDate")}
-                            >
-                                <span className="font-medium text-sm select-none">
-                                    Start Date
-                                </span>
-                                {dropdowns.startDate ? (
-                                    <ChevronDown className="text-gray-400" />
-                                ) : (
-                                    <ChevronRight className="text-gray-400" />
-                                )}
-                            </div>
-                            {dropdowns.startDate && (
-                                <div className="mt-4">
-                                    <input
-                                        type="date"
-                                        value={dates.startDate}
-                                        onChange={(e) =>
-                                            setDates({ ...dates, startDate: e.target.value })
-                                        }
-                                        className="w-full p-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-red-600"
-                                    />
-                                </div>
-                            )}
-                        </div>
-
-                        {/* End Date */}
-                        <div className="p-6 py-3">
-                            <div
-                                className="flex items-center justify-between cursor-pointer"
-                                onClick={() => toggleDropdown("endDate")}
-                            >
-                                <span className="font-medium text-sm select-none">
-                                    End Date
-                                </span>
-                                {dropdowns.endDate ? (
-                                    <ChevronDown className="text-gray-400" />
-                                ) : (
-                                    <ChevronRight className="text-gray-400" />
-                                )}
-                            </div>
-                            {dropdowns.endDate && (
-                                <div className="mt-4">
-                                    <input
-                                        type="date"
-                                        value={dates.endDate}
-                                        onChange={(e) =>
-                                            setDates({ ...dates, endDate: e.target.value })
-                                        }
-                                        className="w-full p-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-red-600"
-                                    />
-                                </div>
-                            )}
-                        </div>
-
                         {/* Completed At */}
                         <div className="p-6 py-3">
                             <div
@@ -4043,6 +4132,45 @@ const ProjectTasksPage = () => {
                 }}
                 onSubmit={handleOverdueReasonSubmit}
                 isLoading={isOverdueLoading}
+            />
+
+            {/* Status Change Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={isStatusConfirmOpen}
+                onClose={() => {
+                    setIsStatusConfirmOpen(false);
+                    setPendingDirectStatusChange(null);
+                }}
+                onConfirm={handleConfirmDirectStatusChange}
+                isLoading={isStatusConfirmLoading}
+                title="Change Status"
+                message={
+                    <>
+                        Are you sure you want to change the status to{" "}
+                        <span className="font-medium text-gray-900">
+                            {statusOptions.find(
+                                (opt) => opt.value === pendingDirectStatusChange?.status
+                            )?.label ||
+                                pendingDirectStatusChange?.status ||
+                                ""}
+                        </span>
+                        ?
+                    </>
+                }
+            />
+
+            {/* Play (Start) Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={isPlayConfirmOpen}
+                onClose={() => {
+                    setIsPlayConfirmOpen(false);
+                    setPendingPlayTaskId(null);
+                }}
+                onConfirm={handleConfirmPlayTask}
+                isLoading={isPlayConfirmLoading}
+                title="Start Task"
+                message="Are you sure you want to start this task?"
+                loadingLabel="Starting..."
             />
 
             {showActionPanel && (

@@ -38,6 +38,7 @@ import { TechParkSelectionModal } from "@/components/document/TechParkSelectionM
 import { CommunitySelectionModal } from "@/components/document/CommunitySelectionModal";
 import { DocumentShareModal } from "@/components/document/DocumentShareModal";
 import { toast } from "sonner";
+import { usePATMEvents } from "@/components/PostHogPATMEvents";
 
 // Field styles for Material-UI components
 const fieldStyles = {
@@ -94,6 +95,7 @@ interface NewDocument {
 export const AddDocumentDashboard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const patmEvents = usePATMEvents();
   const source = searchParams.get("source");
   const folderName = searchParams.get("folderName") || "";
   const isFolderDisabled = source === "new";
@@ -426,6 +428,7 @@ export const AddDocumentDashboard = () => {
         };
 
         await createDocument(payload);
+        patmEvents.onDocumentUploaded(Date.now(), formData.title);
         toast.success("Document added successfully!");
         navigate("/maintenance/documents");
       }

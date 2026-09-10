@@ -884,33 +884,6 @@ export function useProductSecurity(): SecurityState {
     return () => document.getElementById("fm-content-protection")?.remove();
   }, []);
 
-  // Enhanced window focus/blur detection with immediate blur effect
-  useEffect(() => {
-    let blurTimeout: number | undefined;
-
-    const handleBlur = () => {
-      setIsBlurred(true);
-      // Immediately flash blank screen when window loses focus (common during screenshots)
-      flashScreenshotBlank(2500);
-    };
-
-    const handleFocus = () => {
-      if (blurTimeout) window.clearTimeout(blurTimeout);
-      blurTimeout = window.setTimeout(() => {
-        if (faceDetected) setIsBlurred(false);
-      }, 200);
-    };
-
-    window.addEventListener("blur", handleBlur);
-    window.addEventListener("focus", handleFocus);
-
-    return () => {
-      if (blurTimeout) window.clearTimeout(blurTimeout);
-      window.removeEventListener("blur", handleBlur);
-      window.removeEventListener("focus", handleFocus);
-    };
-  }, [faceDetected, flashScreenshotBlank]);
-
   // Aggressive screenshot protection - blank screen on any key press
   useEffect(() => {
     const handleAnyKeyDown = (e: KeyboardEvent) => {
@@ -938,29 +911,15 @@ export function useProductSecurity(): SecurityState {
       z-index: 99999;
       background: repeating-linear-gradient(
         0deg,
-        rgba(0, 0, 0, 0.05),
-        rgba(0, 0, 0, 0.05) 1px,
+        rgba(0, 0, 0, 0.03),
+        rgba(0, 0, 0, 0.03) 1px,
         transparent 1px,
         transparent 2px
       );
-      mix-blend-mode: multiply;
     `;
     document.body.appendChild(protectionDiv);
 
-    // Add random color flickering to interfere with screenshots
-    const flickerInterval = window.setInterval(() => {
-      const randomOpacity = Math.random() * 0.1;
-      protectionDiv.style.background = `repeating-linear-gradient(
-        0deg,
-        rgba(${Math.random() * 50}, ${Math.random() * 50}, ${Math.random() * 50}, ${randomOpacity}),
-        rgba(${Math.random() * 50}, ${Math.random() * 50}, ${Math.random() * 50}, ${randomOpacity}) 1px,
-        transparent 1px,
-        transparent 2px
-      )`;
-    }, 100);
-
     return () => {
-      window.clearInterval(flickerInterval);
       document.getElementById("fm-protection-overlay")?.remove();
     };
   }, []);

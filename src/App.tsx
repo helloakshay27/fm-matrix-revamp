@@ -1863,6 +1863,9 @@ const KRCCFormListDashboard = lazy(() =>
     default: m.KRCCFormListDashboard,
   }))
 );
+const ViAuditListPage = lazy(() => import("./pages/ViAuditListPage"));
+const ViAuditAddPage = lazy(() => import("./pages/ViAuditAddPage"));
+const ViAuditDetailPage = lazy(() => import("./pages/ViAuditDetailPage"));
 const KRCCFormDetail = lazy(() =>
   import("./pages/KRCCFormDetail").then((m) => ({ default: m.KRCCFormDetail }))
 );
@@ -4237,6 +4240,7 @@ const PulseContestRewardsDetails = lazy(() => import("./pages/PulseContestReward
 const PulseContestRewardCreate = lazy(() => import("./pages/PulseContestRewardCreate.tsx"));
 const PosthogDashboardPage = lazy(() => import("./features/posthog-dashboard/PosthogDashboardPage").then(m => ({ default: m.PosthogDashboardPage })));
 const ViPosthogDashboardPage = lazy(() => import("./features/vi-posthog-dashboard/ViPosthogDashboardPage").then(m => ({ default: m.ViPosthogDashboardPage })));
+const CalendarPosthogDashboardPage = lazy(() => import("./features/calendar-posthog-dashboard/CalendarPosthogDashboardPage").then(m => ({ default: m.CalendarPosthogDashboardPage })));
 const SmartSecureDashboardPage = lazy(() => import("./features/smartsecure-dashboard/SmartSecureDashboardPage").then(m => ({ default: m.SmartSecureDashboardPage })));
 const FmAdoptionDashboardPage = lazy(() => import("./features/fm-adoption-dashboard/FmAdoptionDashboardPage").then(m => ({ default: m.FmAdoptionDashboardPage })));
 const RevampDashboardPage = lazy(() => import("./pages/RevampDashboardPage"));
@@ -4448,7 +4452,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-          (response[0]?.currency as string | undefined)
+            (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -4588,6 +4592,10 @@ function App() {
                           <Route
                             path="/vi-posthog-dashboard"
                             element={<ViPosthogDashboardPage />}
+                          />
+                          <Route
+                            path="/calendar-posthog-dashboard"
+                            element={<CalendarPosthogDashboardPage />}
                           />
                           <Route
                             path="/smartsecure-dashboard"
@@ -5688,7 +5696,7 @@ function App() {
                               path="/crm/broadcast"
                               element={
                                 hostname === "vi-web.gophygital.work" ||
-                                hostname === "localhost" ? (
+                                  hostname === "localhost" ? (
                                   <ClubBroadcastDashboard />
                                 ) : (
                                   <BroadcastDashboard />
@@ -5699,7 +5707,7 @@ function App() {
                               path="/crm/broadcast/add"
                               element={
                                 hostname === "vi-web.gophygital.work" ||
-                                hostname === "localhost" ? (
+                                  hostname === "localhost" ? (
                                   <AddClubBroadcastPage />
                                 ) : (
                                   <AddBroadcastPage />
@@ -5710,7 +5718,7 @@ function App() {
                               path="/crm/broadcast/details/:id"
                               element={
                                 hostname === "vi-web.gophygital.work" ||
-                                hostname === "localhost" ? (
+                                  hostname === "localhost" ? (
                                   <ClubBroadcastDetailsPage />
                                 ) : (
                                   <BroadcastDetailsPage />
@@ -8774,6 +8782,18 @@ function App() {
                             <Route
                               path="/safety/m-safe/krcc-form-list"
                               element={<KRCCFormListDashboard />}
+                            />
+                            <Route
+                              path="/safety/audit-list"
+                              element={<ViAuditListPage />}
+                            />
+                            <Route
+                              path="/safety/audit-list/add"
+                              element={<ViAuditAddPage />}
+                            />
+                            <Route
+                              path="/safety/audit-list/:id"
+                              element={<ViAuditDetailPage />}
                             />
                             <Route
                               path="/safety/m-safe"
