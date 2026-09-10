@@ -13,7 +13,7 @@ function getMsafeBaseUrl(): string {
 async function fetchMsafeTrainingJson(endpoint: string, signal?: AbortSignal): Promise<unknown> {
   const token = localStorage.getItem('token') || '';
   const companyId =
-    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '';
+    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145';
   const params = new URLSearchParams({ company_id: companyId });
   if (token) {
     params.set('access_token', token);
