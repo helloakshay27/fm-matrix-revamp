@@ -132,7 +132,7 @@ export const Header = () => {
   const isWebSite = hostname.includes("web.gophygital.work") && !isViSite;
 
   const isClubSite =
-    hostname === "club.lockated.com" || hostname.includes("localhost");
+    hostname === "club.lockated.com" || hostname.includes("localhost") || hostname === "recess-club.panchshil.com";
   const org_id = localStorage.getItem("org_id");
 
   const isPulseSite =

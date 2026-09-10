@@ -72,7 +72,7 @@ async function fetchMsafeLmcJson(
 ): Promise<unknown> {
   const token = localStorage.getItem('token') || '';
   const companyId =
-    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '';
+    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145';
   const params = new URLSearchParams({ company_id: companyId, ...extraQuery });
   if (token) {
     params.set('access_token', token);
