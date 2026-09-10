@@ -48,7 +48,7 @@ async function fetchMsafeTrainingJson(
 ): Promise<unknown> {
   const token = localStorage.getItem('token') || '';
   const companyId =
-    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '';
+    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145';
   const params = new URLSearchParams({ company_id: companyId, ...extraParams });
   if (token) {
     params.set('access_token', token);
