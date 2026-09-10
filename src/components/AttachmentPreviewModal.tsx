@@ -13,12 +13,14 @@ interface AttachmentPreviewModalProps {
     document_name?: string;
     document_file_name?: string;
     url: string;
+    doctype?: string;
   } | null;
   setSelectedDoc: React.Dispatch<React.SetStateAction<{
     id: number;
     document_name?: string;
     document_file_name?: string;
     url: string;
+    doctype?: string;
   } | null>>;
 }
 
@@ -109,10 +111,23 @@ export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
     setSelectedDoc(null);
   }, [setIsModalOpen, setSelectedDoc]);
 
-  const isImage = selectedDoc?.url && /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(selectedDoc.url);
-  const isPdf = selectedDoc?.url && /\.pdf$/i.test(selectedDoc.url);
-  const isExcel = selectedDoc?.url && /\.(xls|xlsx|csv)$/i.test(selectedDoc.url);
-  const isWord = selectedDoc?.url && /\.(doc|docx)$/i.test(selectedDoc.url);
+  // The API often serves attachments through an opaque /attachfiles/<token>/download
+  // URL with no file extension, so extension matching alone can't tell what the file
+  // is. Fall back to the doctype (MIME type) the caller already knows about.
+  const doctype = selectedDoc?.doctype || '';
+  const isImage =
+    (selectedDoc?.url && /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(selectedDoc.url)) ||
+    doctype.startsWith('image/');
+  const isPdf =
+    (selectedDoc?.url && /\.pdf$/i.test(selectedDoc.url)) || doctype === 'application/pdf';
+  const isExcel =
+    (selectedDoc?.url && /\.(xls|xlsx|csv)$/i.test(selectedDoc.url)) ||
+    doctype.includes('spreadsheet') ||
+    doctype.includes('excel');
+  const isWord =
+    (selectedDoc?.url && /\.(doc|docx)$/i.test(selectedDoc.url)) ||
+    doctype.includes('msword') ||
+    doctype.includes('wordprocessingml');
 
   const renderFileIcon = () => {
     if (isPdf) {
