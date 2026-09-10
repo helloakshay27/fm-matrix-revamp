@@ -52,7 +52,7 @@ async function fetchMsafeSmtJson(
 ): Promise<unknown> {
   const token = localStorage.getItem('token') || '';
   const companyId =
-    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '';
+    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145';
   const params = new URLSearchParams({ company_id: companyId, ...extraParams });
   if (token) {
     params.set('access_token', token);
@@ -372,12 +372,22 @@ function buildRoleClusterMonthlyIndex(raw: RawRoleMonthlyRecord[]): RoleClusterM
   };
 }
 
-// Matches the reference bubble-matrix legend: 0 grey, 1-19 purple, 20-30 orange, 31+ red.
+// Deep/saturated variants for this bubble matrix specifically — the shared
+// palette's lav/warn/err are pastel tones used elsewhere in the dashboard and
+// read too washed-out at bubble size, so this grid uses its own darker scale.
+const SMT_GRID_COLORS = {
+  purple: '#7C3AED',
+  orange: '#F97316',
+  red: '#B91C1C',
+  grey: '#D1D5DB',
+};
+
+// Matches the reference bubble-matrix legend: 0 grey, 1-19 purple, 20-39 orange, 40+ red.
 function colorForSmtCellCount(n: number): string {
-  if (n <= 0) return '#B9B2A0';
-  if (n <= 19) return C.lav;
-  if (n <= 30) return C.warn;
-  return C.err;
+  if (n <= 0) return SMT_GRID_COLORS.grey;
+  if (n <= 19) return SMT_GRID_COLORS.purple;
+  if (n <= 39) return SMT_GRID_COLORS.orange;
+  return SMT_GRID_COLORS.red;
 }
 
 // Area-proportional (sqrt) bubble sizing so differences at the high end don't
@@ -634,10 +644,10 @@ export function SmtSection() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 11, color: C.sage }}>
             <span style={{ fontWeight: 600, color: C.dark }}>Count scale</span>
             {[
-              { label: '1–19', color: C.lav },
-              { label: '20–30', color: C.warn },
-              { label: '40+', color: C.err },
-              { label: '0', color: '#B9B2A0' },
+              { label: '1–19', color: SMT_GRID_COLORS.purple },
+              { label: '20–39', color: SMT_GRID_COLORS.orange },
+              { label: '40+', color: SMT_GRID_COLORS.red },
+              { label: '0', color: SMT_GRID_COLORS.grey },
             ].map((s) => (
               <span key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <span
@@ -664,6 +674,9 @@ export function SmtSection() {
                 display: 'grid',
                 gridTemplateColumns: `170px repeat(${roleIndex.clusters.length}, minmax(76px, 1fr))`,
                 minWidth: 170 + roleIndex.clusters.length * 76,
+                border: `1px solid #EDEDF2`,
+                borderRadius: 8,
+                overflow: 'hidden',
               }}
             >
               {/* One row per role, one bubble per cluster */}
@@ -675,8 +688,8 @@ export function SmtSection() {
                       color: C.dark,
                       display: 'flex',
                       alignItems: 'center',
-                      padding: '6px 8px 6px 0',
-                      borderTop: `1px solid #F0ECE0`,
+                      padding: '6px 8px',
+                      borderTop: `1px solid #EDEDF2`,
                     }}
                   >
                     {role.name}
@@ -694,7 +707,8 @@ export function SmtSection() {
                           alignItems: 'center',
                           justifyContent: 'center',
                           padding: '6px 0',
-                          borderTop: `1px solid #F0ECE0`,
+                          borderTop: `1px solid #EDEDF2`,
+                          borderLeft: `1px solid #EDEDF2`,
                         }}
                         title={`${cluster.name} · ${role.name}\nTotal: ${total}\n${monthlyLines}`}
                       >
@@ -709,10 +723,10 @@ export function SmtSection() {
                             justifyContent: 'center',
                             fontSize: 10,
                             fontWeight: 700,
-                            color: total > 0 ? '#fff' : '#8A8272',
+                            color: total > 0 ? '#fff' : '#6B7280',
                           }}
                         >
-                          {total > 0 ? total : ''}
+                          {total}
                         </div>
                       </div>
                     );
@@ -721,7 +735,7 @@ export function SmtSection() {
               ))}
 
               {/* Cluster names sit below the grid, like a conventional x-axis */}
-              <div />
+              <div style={{ borderTop: `1px solid #EDEDF2` }} />
               {roleIndex.clusters.map((cluster) => (
                 <div
                   key={cluster.id}
@@ -730,8 +744,9 @@ export function SmtSection() {
                     fontSize: 11,
                     fontWeight: 700,
                     color: C.dark,
-                    padding: '8px 4px 0',
-                    borderTop: `1px solid ${C.border}`,
+                    padding: '8px 4px',
+                    borderTop: `1px solid #EDEDF2`,
+                    borderLeft: `1px solid #EDEDF2`,
                   }}
                   title={cluster.name}
                 >

@@ -547,11 +547,11 @@ export function UsersSection() {
       </div>
 
       <ChartCard
-        title="Users per Cluster"
+        title="Users per Circle"
         sub="Distribution across clusters"
         infoKey="user-cluster"
         showPdf
-        pdfLabel="Users per Cluster"
+        pdfLabel="Users per Circle"
         reportExportFor="users_by_cluster"
         exportData={clusterChartData.map((d) => ({
           Cluster: d.name,
