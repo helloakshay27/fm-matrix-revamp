@@ -15,6 +15,7 @@ import {
   resolveBaseUrlByOrgId,
   hasEmbeddedSession,
   initializeEmbeddedNavigation,
+  clearEmbeddedMode,
 } from "@/utils/embeddedMode";
 
 interface ProtectedRouteProps {
@@ -45,6 +46,21 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         hasUserId: !!embeddedConfig.userId,
         currentPath: location.pathname,
       });
+
+      // An org_id in the URL without a matching access_token is an incomplete
+      // or stripped-down embed link (e.g. msafedashboard?org_id=34 with the
+      // token removed or blank) — reject it outright instead of falling back
+      // to hasEmbeddedSession()/isAuthenticated(), which would otherwise let
+      // a stale token from an earlier, legitimate visit in this browser
+      // (persisted in sessionStorage/localStorage) grant access again.
+      if (embeddedConfig.orgId && !embeddedConfig.accessToken) {
+        console.warn(
+          "🚫 ProtectedRoute: org_id present without access_token — rejecting incomplete embed link"
+        );
+        clearEmbeddedMode();
+        setIsAuthorized(false);
+        return;
+      }
 
       // Handle embedded mode (e.g., /vas/tasks?embedded=true&org_id=13&access_token=xxx)
       if (embeddedConfig.orgId && embeddedConfig.accessToken) {
