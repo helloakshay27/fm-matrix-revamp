@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   LockAccountBillRecord,
   RESOURCE_TYPE_LABELS,
@@ -84,6 +85,7 @@ export const LockAccountBillsDashboard: React.FC = () => {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [facilityBookingStatusFilter, setFacilityBookingStatusFilter] = useState<string>("all");
+  const [nonZeroOnly, setNonZeroOnly] = useState(false);
 
   // A Facility Booking status filter only makes sense against Facility Booking bills — force
   // the resource type in step with it rather than let the two silently contradict each other
@@ -111,6 +113,7 @@ export const LockAccountBillsDashboard: React.FC = () => {
     if (fromDate) params.append("q[bill_date_gteq]", fromDate);
     if (toDate) params.append("q[bill_date_lteq]", toDate);
     if (facilityBookingStatusFilter !== "all") params.append("facility_booking_status", facilityBookingStatusFilter);
+    if (nonZeroOnly) params.append("q[total_amount_not_eq]", "0");
 
     // Only show bills with a resource_type set — Facility Booking / Club Member Allocation
     // (a real linked resource) or Other (a manually-created Invoice/Credit Note, resource_id blank).
@@ -157,7 +160,7 @@ export const LockAccountBillsDashboard: React.FC = () => {
   useEffect(() => {
     fetchBills(currentPage, perPage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, perPage, debouncedSearchTerm, resourceTypeFilter, statusFilter, fromDate, toDate, facilityBookingStatusFilter]);
+  }, [currentPage, perPage, debouncedSearchTerm, resourceTypeFilter, statusFilter, fromDate, toDate, facilityBookingStatusFilter, nonZeroOnly]);
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
@@ -271,6 +274,8 @@ export const LockAccountBillsDashboard: React.FC = () => {
         resource_id: "For (ID)",
         facility_booking_status: "Facility Booking Status",
         payment_status: "Payment Status",
+        membership_start_date: "Membership Start Date",
+        membership_end_date: "Membership End Date",
         notes: "Notes",
       };
 
@@ -461,7 +466,17 @@ export const LockAccountBillsDashboard: React.FC = () => {
             </SelectContent>
           </Select>
         </div>
-        {(fromDate || toDate || resourceTypeFilter !== "all" || statusFilter !== "all" || facilityBookingStatusFilter !== "all") && (
+        <div className="flex items-center gap-2 mt-1 h-9">
+          <Checkbox
+            id="lab-non-zero"
+            checked={nonZeroOnly}
+            onCheckedChange={(checked) => { setNonZeroOnly(checked === true); setCurrentPage(1); }}
+          />
+          <Label htmlFor="lab-non-zero" className="text-sm text-gray-700 cursor-pointer">
+            Non-zero invoices only
+          </Label>
+        </div>
+        {(fromDate || toDate || resourceTypeFilter !== "all" || statusFilter !== "all" || facilityBookingStatusFilter !== "all" || nonZeroOnly) && (
           <Button
             variant="ghost"
             size="sm"
@@ -471,6 +486,7 @@ export const LockAccountBillsDashboard: React.FC = () => {
               setResourceTypeFilter("all");
               setStatusFilter("all");
               setFacilityBookingStatusFilter("all");
+              setNonZeroOnly(false);
               setCurrentPage(1);
             }}
           >
