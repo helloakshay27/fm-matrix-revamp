@@ -38,9 +38,11 @@ import SprintProjectModal, {
 import SprintTaskList from "@/components/SprintTaskList";
 import SprintIssueList from "@/components/SprintIssueList";
 import SprintActivityLog from "@/components/SprintActivityLog";
+import { usePATMEvents } from "@/components/PostHogPATMEvents";
 
 export const SprintDetailsPage = () => {
   const { setCurrentSection } = useLayout();
+  const patmEvents = usePATMEvents();
   useEffect(() => {
     setCurrentSection("Project Task");
   }, [setCurrentSection]);
@@ -119,6 +121,7 @@ export const SprintDetailsPage = () => {
       setTotalMembers(resp.total_members ?? null);
       setSelectedOption(mapStatusToDisplay(resp.status));
       setProjectsSummary(projectsResp.data?.projects_summary || []);
+      patmEvents.onSprintViewed(id);
     } catch (error) {
       toast.error(String(error) || "Failed to fetch sprint details");
     } finally {
@@ -176,6 +179,7 @@ export const SprintDetailsPage = () => {
         data: { status: option.toLowerCase().replace(/\s+/g, "_") },
       })
     ).unwrap();
+    patmEvents.onSprintUpdated(id);
     fetchData();
     toast.dismiss();
     toast.success("Status updated successfully");

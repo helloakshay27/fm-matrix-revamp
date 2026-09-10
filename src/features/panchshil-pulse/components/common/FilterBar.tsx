@@ -169,10 +169,10 @@ export const FilterBar: React.FC = () => {
         </button>
         <button
           className={dev === "desktop" ? "on" : ""}
-          title="Desktop only"
+          title="iOS only"
           onClick={() => setDev("desktop")}
         >
-          Desktop
+          iOS
         </button>
         <button
           className={dev === "mobile" ? "on" : ""}

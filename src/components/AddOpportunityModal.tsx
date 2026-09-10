@@ -28,6 +28,7 @@ import { Button } from "./ui/button";
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
 import { useSpeechToText } from "../hooks/useSpeechToText";
+import { usePATMEvents } from "@/components/PostHogPATMEvents";
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & { children: React.ReactElement },
@@ -67,6 +68,7 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({
   className = "",
 }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const patmEvents = usePATMEvents();
   const { data: fmUsersData } = useSelector(
     (state: RootState) => state.fmUsers
   );
@@ -296,12 +298,15 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({
       });
 
       const token = localStorage.getItem("token");
-      await axios.post(getFullUrl("/opportunities.json"), formData, {
+      const response = await axios.post(getFullUrl("/opportunities.json"), formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           // Content-Type is set automatically for FormData
         },
       });
+
+      const opportunityId = response.data?.opportunity?.id || response.data?.id || "";
+      patmEvents.onOpportunityCreated(opportunityId, title);
 
       toast.success("Opportunity created successfully");
       // Invalidate cache after opportunity creation

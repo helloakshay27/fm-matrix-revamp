@@ -29,6 +29,8 @@ import { toast } from 'sonner';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { useVisitorEvents } from '@/components/PostHogVisitorEvents';
 import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
+import { useViWorkflowEvents } from "@/components/PostHogViWorkflowEvents";
+import { useFlowEvents } from '@/components/PostHogFlowEvents';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { MaterialDatePicker } from '@/components/ui/material-date-picker';
@@ -187,11 +189,16 @@ export const VisitorsDashboard = () => {
   const { shouldShow } = useDynamicPermissions();
   const visitorEvents = useVisitorEvents();
   const gaEvents = useGaFunnelEvents();
+  // Vi catalogue name for the same entry point. No-op off the Vi deployment.
+  const viEvents = useViWorkflowEvents();
+  const flowEvents = useFlowEvents();
 
   // GA parity: the visitor register was opened. Mount-only, so paging and tab
   // switches inside the page do not each count as a fresh page view.
   useEffect(() => {
     gaEvents.onVisitorsPageClicked("admin");
+    viEvents.onVisitorAddClicked();
+    flowEvents.onFlowStarted('visitorCreate');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [selectedPerson, setSelectedPerson] = useState('');

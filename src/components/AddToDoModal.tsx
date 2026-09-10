@@ -8,6 +8,7 @@ import Quill from "quill";
 import "quill/dist/quill.snow.css";
 import { TransitionProps } from '@mui/material/transitions';
 import { useSpeechToText } from '../hooks/useSpeechToText';
+import { usePATMEvents } from "@/components/PostHogPATMEvents";
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -40,6 +41,7 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
     const [priority, setPriority] = useState('');
     const [isEditorReady, setIsEditorReady] = useState(false);
     const [baseValue, setBaseValue] = useState("");
+    const patmEvents = usePATMEvents();
 
     const { isListening, activeId, transcript, supported, startListening, stopListening } = useSpeechToText();
 
@@ -210,15 +212,18 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
                         Authorization: `Bearer ${localStorage.getItem('token')}`,
                     },
                 });
+                patmEvents.onTodoUpdated(editingTodo.id);
                 toast.success('To-Do updated successfully');
             } else {
                 // Create new todo
-                await axios.post(`https://${baseURL}/todos.json`, payload, {
+                const response = await axios.post(`https://${baseURL}/todos.json`, payload, {
                     headers: {
                         'Content-Type': 'application/json',
                         Authorization: `Bearer ${localStorage.getItem('token')}`,
                     },
                 });
+                const todoId = response.data?.todo?.id || response.data?.id || "";
+                patmEvents.onTodoCreated(todoId, title);
                 toast.success('To-Do added successfully');
             }
             closeModal();

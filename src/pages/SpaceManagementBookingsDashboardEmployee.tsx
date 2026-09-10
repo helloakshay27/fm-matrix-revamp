@@ -14,6 +14,8 @@ import { CancelBookingDialog } from "@/components/CancelBookingDialog";
 import { ColumnVisibilityDropdown } from "@/components/ColumnVisibilityDropdown";
 import { getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
+import { useViWorkflowEvents } from "@/components/PostHogViWorkflowEvents";
+import { useFlowEvents } from '@/components/PostHogFlowEvents';
 
 // API Response Interfaces
 interface SeatBooking {
@@ -49,11 +51,16 @@ interface SeatBookingsApiResponse {
 
 export const SpaceManagementBookingsDashboardEmployee = () => {
   const gaEvents = useGaFunnelEvents();
+  // Vi catalogue name for the same entry point. No-op off the Vi deployment.
+  const viEvents = useViWorkflowEvents();
+  const flowEvents = useFlowEvents();
 
   // GA parity: the seat booking screen was opened. Mount-only, so tab switches and
   // paging inside the page are not counted as fresh page views.
   useEffect(() => {
     gaEvents.onBookSeatPageClicked("employee");
+    viEvents.onBookSeatPageClicked();
+    flowEvents.onFlowStarted('spaceBooking');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const navigate = useNavigate();

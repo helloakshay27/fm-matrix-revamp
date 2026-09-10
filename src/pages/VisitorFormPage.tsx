@@ -31,6 +31,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { useVisitorEvents } from "@/components/PostHogVisitorEvents";
 import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
+import { useViWorkflowEvents } from "@/components/PostHogViWorkflowEvents";
+import { useFlowEvents } from '@/components/PostHogFlowEvents';
 
 interface Building {
   id: number;
@@ -52,6 +54,18 @@ export const VisitorFormPage = () => {
   const location = useLocation();
   const visitorEvents = useVisitorEvents();
   const gaEvents = useGaFunnelEvents();
+  // Vi catalogue funnel step 2 of visitors_add_clicked → visitors_create_viewed →
+  // visitors_create_succeeded. No-op off the Vi deployment.
+  const viEvents = useViWorkflowEvents();
+  const flowEvents = useFlowEvents();
+
+  // Mount-only: the catalogue's *_viewed means the create screen was opened, so this must
+  // not sit in the submit handler — a submit is the step AFTER this one, not this one.
+  useEffect(() => {
+    viEvents.onVisitorCreateViewed();
+    flowEvents.onFlowStepViewed('visitorCreate', 'create_form', 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -754,12 +768,19 @@ export const VisitorFormPage = () => {
         is_returning: Boolean(visitorInfo),
       });
       gaEvents.onVisitorCreateSuccess("admin", { visitor_type: gaVisitorType });
+      viEvents.onVisitorCreateSucceeded({ visitor_type: gaVisitorType });
+      flowEvents.onFlowCompleted('visitorCreate', { succeeded: true });
       toast.success("Visitor created successfully!");
       navigate("/security/visitor");
     } catch (error) {
       console.error("❌ Error creating visitor:", error);
       toast.error("Failed to create visitor. Please try again.");
       gaEvents.onVisitorCreateFailure("admin", { visitor_type: gaVisitorType, error });
+      viEvents.onVisitorCreateFailed(error instanceof Error ? error.message : 'request_failed');
+      flowEvents.onFlowCompleted('visitorCreate', {
+        succeeded: false,
+        failure_reason: error instanceof Error ? error.message : 'request_failed',
+      });
     } finally {
       setIsSubmitting(false);
     }

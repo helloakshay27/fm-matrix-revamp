@@ -5578,6 +5578,13 @@ export const TicketDetailsPage = () => {
 
                 {/* Parent Complaint Card - Only show if data exists */}
                 {ticketData?.parent_complaint && (
+                  ticketData.parent_complaint.id ||
+                  ticketData.parent_complaint.desc ||
+                  ticketData.parent_complaint.category_type ||
+                  ticketData.parent_complaint.sub_category_type ||
+                  ticketData.parent_complaint.created_by ||
+                  ticketData.parent_complaint.assigned_to
+                ) && (
                   <Card className="w-full bg-white rounded-lg shadow-sm border">
                     <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                       <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
@@ -5620,7 +5627,7 @@ export const TicketDetailsPage = () => {
                             <TableCell>{ticketData.parent_complaint.sub_category_type || '-'}</TableCell>
                             <TableCell>{ticketData.parent_complaint.created_by || '-'}</TableCell>
                             <TableCell>{ticketData.parent_complaint.assigned_to || '-'}</TableCell>
-                            
+
                           </TableRow>
                         </TableBody>
                       </Table>
@@ -7878,6 +7885,7 @@ export const TicketDetailsPage = () => {
                                           url: url,
                                           document_url: url,
                                           document: url,
+                                          doctype: attachment.doctype,
                                         });
                                         setShowImagePreview(true);
                                       }}
@@ -7896,6 +7904,7 @@ export const TicketDetailsPage = () => {
                                           url: url,
                                           document_url: url,
                                           document: url,
+                                          doctype: attachment.doctype,
                                         });
                                         setShowImagePreview(true);
                                       }}
@@ -7939,6 +7948,7 @@ export const TicketDetailsPage = () => {
                                         url: url,
                                         document_url: url,
                                         document: url,
+                                        doctype: attachment.doctype,
                                       });
                                       setShowImagePreview(true);
                                     }}
@@ -11375,6 +11385,7 @@ export const TicketDetailsPage = () => {
                                       url: url,
                                       document_url: url,
                                       document: url,
+                                      doctype: attachment.doctype,
                                       type: 'image'
                                     });
                                     setShowImagePreview(true);
@@ -11394,6 +11405,7 @@ export const TicketDetailsPage = () => {
                                       url: url,
                                       document_url: url,
                                       document: url,
+                                      doctype: attachment.doctype,
                                       type: 'image'
                                     });
                                     setShowImagePreview(true);

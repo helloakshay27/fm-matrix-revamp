@@ -50,6 +50,7 @@ import {
 } from "@/store/slices/siteSlice";
 import { getUser, clearAuth, fetchLockAccount, logoutUser } from "@/utils/auth";
 import { permissionService } from "@/services/permissionService";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import { is } from "date-fns/locale";
 import { Dashboard } from "@mui/icons-material";
 import { AnalyticsGrid } from "./dashboard/AnalyticsGrid";
@@ -131,7 +132,7 @@ export const Header = () => {
   const isWebSite = hostname.includes("web.gophygital.work") && !isViSite;
 
   const isClubSite =
-    hostname === "club.lockated.com" || hostname.includes("localhost");
+    hostname === "club.lockated.com" || hostname.includes("localhost") || hostname === "recess-club.panchshil.com";
   const org_id = localStorage.getItem("org_id");
 
   const isPulseSite =
@@ -159,6 +160,28 @@ export const Header = () => {
   const showPulseUsageAnalytics = isPulseSite;
 
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
+
+  // Profile menu → Usage Analytics dropdown options. Each entry decides for itself whether
+  // it belongs in the menu via shouldShow() — the site/tenant check AND the role-based
+  // "Usage Analytics" permission must both pass — and the JSX below just filters + renders
+  // whatever does, instead of two separate hardcoded conditionals in the markup.
+  const usageAnalyticsOptions = [
+    {
+      key: "vi",
+      label: "Usage Analytics",
+      shouldShow: () => (isViSite || isLocalhost) && shouldShow("vi_usage_analytics"),
+      onSelect: () => {
+        window.location.href = usageAnalyticsPath;
+      },
+    },
+    {
+      key: "pulse",
+      label: "Usage Analytics",
+      shouldShow: () => showPulseUsageAnalytics && shouldShow("pulse_usage_analytics"),
+      onSelect: () => navigate("/pulse"),
+    },
+  ];
 
   useEffect(() => {
     if (selectedSite) {
@@ -441,6 +464,10 @@ export const Header = () => {
     navigate("/msafedashboard"); // new MSafe Dashboard revamp
   };
 
+  const handleFmPosthog = () => {
+    navigate('/posthog-dashboard')
+  }
+
   const logoClassName =
     "max-h-10 w-auto max-w-full object-contain sm:max-h-12 md:max-h-[60px]";
 
@@ -653,7 +680,7 @@ export const Header = () => {
                   className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
                   {/* <LayoutDashboard className="w-4 h-4" /> */}
-                   <ChartArea className="w-4 h-4" />
+                  <ChartArea className="w-4 h-4" />
                   Club Dashboard
                 </button>
               )}
@@ -1136,26 +1163,25 @@ export const Header = () => {
                   <User className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">My Profile</span>
                 </DropdownMenuItem>
-                {(isViSite || isLocalhost) && (
-                  <DropdownMenuItem
-                    onClick={() =>
-                      (window.location.href = usageAnalyticsPath)
-                    }
-                    className="mx-2 my-1 rounded-md"
-                  >
-                    <Activity className="w-4 h-4 mr-2 text-gray-500" />
-                    <span className="font-medium">Usage Analytics</span>
-                  </DropdownMenuItem>
-                )}
-                {showPulseUsageAnalytics && (
-                  <DropdownMenuItem
-                    onClick={() => navigate("/pulse")}
-                    className="mx-2 my-1 rounded-md"
-                  >
-                    <Activity className="w-4 h-4 mr-2 text-gray-500" />
-                    <span className="font-medium">Usage Analytics</span>
-                  </DropdownMenuItem>
-                )}
+                <DropdownMenuItem
+                  onClick={handleFmPosthog}
+                  className="mx-2 my-1 rounded-md"
+                >
+                  <Activity className="w-4 h-4 mr-2 text-gray-500" />
+                  <span className="font-medium">Usage Analytics</span>
+                </DropdownMenuItem>
+                {usageAnalyticsOptions
+                  .filter((option) => option.shouldShow())
+                  .map((option) => (
+                    <DropdownMenuItem
+                      key={option.key}
+                      onClick={option.onSelect}
+                      className="mx-2 my-1 rounded-md"
+                    >
+                      <Activity className="w-4 h-4 mr-2 text-gray-500" />
+                      <span className="font-medium">{option.label}</span>
+                    </DropdownMenuItem>
+                  ))}
 
                 <DropdownMenuItem
                   onClick={() =>

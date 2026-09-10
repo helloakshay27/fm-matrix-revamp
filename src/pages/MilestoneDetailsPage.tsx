@@ -22,6 +22,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { usePATMEvents } from "@/components/PostHogPATMEvents";
 
 interface Dependency {
   title?: string;
@@ -176,6 +177,7 @@ export const MilestoneDetailsPage = () => {
   const { setCurrentSection } = useLayout();
 
   const view = localStorage.getItem("selectedView");
+  const patmEvents = usePATMEvents();
 
   useEffect(() => {
     setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
@@ -209,6 +211,7 @@ export const MilestoneDetailsPage = () => {
       const response = await dispatch(fetchMilestoneById({ baseUrl, token, id: mid })).unwrap();
       setMilestoneDetails(response);
       setSelectedOption(mapStatusToDisplay(response.status));
+      patmEvents.onMilestoneViewed(mid);
     } catch (error) {
       console.error("Error fetching milestone details:", error);
       toast.error(String(error) || "Failed to fetch milestone details");
@@ -325,6 +328,7 @@ export const MilestoneDetailsPage = () => {
           payload: { status: mapDisplayToApiStatus(option) },
         })
       ).unwrap();
+      patmEvents.onMilestoneUpdated(mid);
       toast.success("Status updated successfully");
       await fetchData(); // Refresh to get latest data
     } catch (error) {

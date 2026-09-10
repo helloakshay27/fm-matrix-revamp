@@ -21,7 +21,7 @@ import type { Persona } from '../data/constants';
 import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import { getAuthHeader } from '@/config/apiConfig';
 
-type CircleChartRow = { name: string; Internal: number; External: number; Total: number };
+type ClusterChartRow = { name: string; Internal: number; External: number; Total: number };
 type FuncChartRow = { name: string; value: number; color: string };
 type RegChartRow = { m: string; n: number; internal: number; external: number };
 
@@ -43,7 +43,7 @@ const getNumericValue = (record: Record<string, unknown>, keys: string[]): numbe
   return null;
 };
 
-const normalizeCircleChartData = (payload: unknown): CircleChartRow[] => {
+const normalizeClusterChartData = (payload: unknown): ClusterChartRow[] => {
   const source = Array.isArray(payload)
     ? payload
     : payload && typeof payload === 'object'
@@ -66,6 +66,9 @@ const normalizeCircleChartData = (payload: unknown): CircleChartRow[] => {
 
       const record = item as Record<string, unknown>;
       const name = [
+        record.cluster,
+        record.cluster_name,
+        record.clusterName,
         record.circle_name,
         record.circleName,
         record.circle,
@@ -112,7 +115,7 @@ const normalizeCircleChartData = (payload: unknown): CircleChartRow[] => {
         Total: finalInternal + finalExternal,
       };
     })
-    .filter((item): item is CircleChartRow => Boolean(item));
+    .filter((item): item is ClusterChartRow => Boolean(item));
 };
 
 const normalizeStatSlices = (
@@ -210,7 +213,7 @@ function getMsafeBaseUrl(): string {
  *  the same way regardless of persona. */
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
   const params: Record<string, string> = {};
-  if (f.circleIds.length > 0) params.circle_id = f.circleIds.join(',');
+  if (f.clusterIds.length > 0) params.cluster_id = f.clusterIds.join(',');
   if (f.functionIds.length > 0) params.function_id = f.functionIds.join(',');
   if (f.zoneId) params.zone_id = f.zoneId;
   if (f.empTypeId) params.employee_type = f.empTypeId;
@@ -280,10 +283,10 @@ export function UsersSection() {
   const { persona, appliedFilters } = useMsafeDashboard();
   const [compMode, setCompMode] = useState('donut');
   const [regMode, setRegMode] = useState('line');
-  const [circleMode, setCircleMode] = useState('bar');
+  const [clusterMode, setClusterMode] = useState('bar');
   const [funcMode, setFuncMode] = useState('donut');
-  const [circleChartData, setCircleChartData] = useState<CircleChartRow[]>([]);
-  const [circleLoading, setCircleLoading] = useState(true);
+  const [clusterChartData, setClusterChartData] = useState<ClusterChartRow[]>([]);
+  const [clusterLoading, setClusterLoading] = useState(true);
   const [funcChartData, setFuncChartData] = useState<FuncChartRow[]>([]);
   const [funcLoading, setFuncLoading] = useState(true);
   const [compChartData, setCompChartData] = useState<FuncChartRow[]>([]);
@@ -294,26 +297,26 @@ export function UsersSection() {
   useEffect(() => {
     let isMounted = true;
 
-    const loadCircleData = async () => {
-      setCircleLoading(true);
+    const loadClusterData = async () => {
+      setClusterLoading(true);
 
       try {
         const payload = await fetchMsafeUserDashboardJson(
-          'users_by_circle.json',
+          'users_by_cluster.json',
           buildFilterParams(persona, appliedFilters),
         );
-        const normalized = normalizeCircleChartData(payload);
-        if (isMounted) setCircleChartData(normalized);
+        const normalized = normalizeClusterChartData(payload);
+        if (isMounted) setClusterChartData(normalized);
       } catch (error) {
-        console.warn('M-Safe users-by-circle API failed.', error);
+        console.warn('M-Safe users-by-cluster API failed.', error);
       } finally {
         if (isMounted) {
-          setCircleLoading(false);
+          setClusterLoading(false);
         }
       }
     };
 
-    loadCircleData();
+    loadClusterData();
 
     return () => {
       isMounted = false;
@@ -544,28 +547,28 @@ export function UsersSection() {
       </div>
 
       <ChartCard
-        title="Users per Circle"
-        sub="Distribution across 22 VIL circles"
-        infoKey="user-circle"
+        title="Users per Cluster"
+        sub="Distribution across clusters"
+        infoKey="user-cluster"
         showPdf
-        pdfLabel="Users per Circle"
-        reportExportFor="users_by_circle"
-        exportData={circleChartData.map((d) => ({
-          Circle: d.name,
+        pdfLabel="Users per Cluster"
+        reportExportFor="users_by_cluster"
+        exportData={clusterChartData.map((d) => ({
+          Cluster: d.name,
           Internal: d.Internal,
           External: d.External,
           Total: d.Internal + d.External,
         }))}
         style={{ marginTop: 16 }}
-        chartSwitch={<ChartSwitch modes={['bar', 'table']} value={circleMode} onChange={setCircleMode} />}
+        chartSwitch={<ChartSwitch modes={['bar', 'table']} value={clusterMode} onChange={setClusterMode} />}
       >
-        {circleLoading || circleChartData.length === 0 ? (
-          <DataState loading={circleLoading} empty={circleChartData.length === 0} label="circle data" />
-        ) : circleMode === 'bar' ? (
+        {clusterLoading || clusterChartData.length === 0 ? (
+          <DataState loading={clusterLoading} empty={clusterChartData.length === 0} label="cluster data" />
+        ) : clusterMode === 'bar' ? (
           <div style={{ overflowX: 'auto' }}>
-            <div style={{ minWidth: Math.max(700, circleChartData.length * 55) }}>
+            <div style={{ minWidth: Math.max(700, clusterChartData.length * 55) }}>
               <ResponsiveContainer width="100%" height={360}>
-                <BarChart data={circleChartData} margin={{ top: 24, right: 8, left: 0, bottom: 70 }}>
+                <BarChart data={clusterChartData} margin={{ top: 24, right: 8, left: 0, bottom: 70 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
                   <XAxis
                     dataKey="name"
@@ -591,14 +594,14 @@ export function UsersSection() {
             <table>
               <thead>
                 <tr>
-                  <th>Circle</th>
+                  <th>Cluster</th>
                   <th>Internal</th>
                   <th>External</th>
                   <th>Total</th>
                 </tr>
               </thead>
               <tbody>
-                {circleChartData.map((r) => (
+                {clusterChartData.map((r) => (
                   <tr key={r.name}>
                     <td>{r.name}</td>
                     <td className="num">{r.Internal.toLocaleString()}</td>

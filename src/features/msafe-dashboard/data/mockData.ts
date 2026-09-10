@@ -5,7 +5,10 @@ export type DirectoryUser = {
   name: string;
   emp: string;
   type: 'Internal' | 'External';
+  /** "Personal Area" column — sourced from the API's circle_name/circle field. */
   circle: string;
+  /** "Circle" column — sourced from the API's cluster_name field (a distinct concept from `circle`). */
+  clusterName?: string;
   role: string;
   tr: StatusCode;
   kr: StatusCode;

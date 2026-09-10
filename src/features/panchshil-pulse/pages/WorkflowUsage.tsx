@@ -113,9 +113,8 @@ export const WorkflowUsage: React.FC = () => {
   const funnelSteps = funnel.steps.map((step, i) => {
     const maxReach = funnel.reaches[0] || 1;
     const pct = Math.min(100, Math.round((funnel.reaches[i] / maxReach) * 100));
-    const width = 45 + (pct / 100) * 55;
     const drop = i > 0 ? funnel.dropPct[i] : null;
-    return { step, pct, width, drop };
+    return { step, pct, drop };
   });
 
   return (
@@ -158,11 +157,10 @@ export const WorkflowUsage: React.FC = () => {
               <span className="info-wrap">
                 <button className="info-btn" type="button" tabIndex={-1}>i</button>
                 <div className="info-pop">
-                  <b>Purpose</b>
-                  Shows the share of sessions remaining at each sequential step — the highlighted step is the single biggest drop-off.
+                  <b>Workflow funnel</b>
+                  For the flagship workflow of the selected module, the number of runs still present at each successive step, from start to finish. The percentage on each step is the drop from the step before it.
                   <div className="sep">
-                    <b>Note</b>
-                    For {flows.modName || "this module"}, the steepest drop-off happens right after {funnel.steps[funnel.worst] ?? "the first step"} — worth a UX review of that screen to reduce abandonment.
+                    Each bar is narrower than the one above because some runs drop off. The highlighted step is the single biggest drop — worth a UX review of that screen to reduce abandonment. For {flows.modName || "this module"}, the steepest drop-off happens right after {funnel.steps[funnel.worst] ?? "the first step"}.
                   </div>
                 </div>
               </span>
@@ -179,7 +177,7 @@ export const WorkflowUsage: React.FC = () => {
                     <div
                       className={`fstep${i === funnel.worst ? " worst" : ""}`}
                       style={{
-                        width: `${fs.width}%`,
+                        width: `${fs.pct}%`,
                         background: "var(--blue)",
                         opacity: 1 - i * 0.1
                       }}
@@ -208,8 +206,11 @@ export const WorkflowUsage: React.FC = () => {
               <span className="info-wrap">
                 <button className="info-btn" type="button" tabIndex={-1}>i</button>
                 <div className="info-pop">
-                  <b>Purpose</b>
-                  Every sub-path inside {flows.modName || "this module"}, with users, events, sessions and completion rate for each — completeness reads as a dash until per-flow completion keys are instrumented.
+                  <b>All screens in this module</b>
+                  Every sub-path under the selected module, with the users, events and sessions recorded on it. Per-path completion (F-comp) needs a flow_key event property that is not instrumented yet, so it reads as a dash.
+                  <div className="sep">
+                    A per-screen scorecard so you can see which specific parts of the module are being used and which are ignored.
+                  </div>
                 </div>
               </span>
             </div>
@@ -255,8 +256,11 @@ export const WorkflowUsage: React.FC = () => {
               <span className="info-wrap">
                 <button className="info-btn" type="button" tabIndex={-1}>i</button>
                 <div className="info-pop">
-                  <b>Purpose</b>
-                  The first screen property seen in each session — usually reached via push notification, deep link, or the app icon.
+                  <b>Top entry screens</b>
+                  The screen each session lands on first, listed with its Visitors, Views and Bounce rate.
+                  <div className="sep">
+                    Shows the most common entry points into the app — what residents actually come to the app to do first, usually reached via push notification, deep link, or the app icon.
+                  </div>
                 </div>
               </span>
             </div>
