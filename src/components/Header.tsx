@@ -1163,13 +1163,13 @@ export const Header = () => {
                   <User className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">My Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem
+                {/* <DropdownMenuItem
                   onClick={handleFmPosthog}
                   className="mx-2 my-1 rounded-md"
                 >
                   <Activity className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">Usage Analytics</span>
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
                 {usageAnalyticsOptions
                   .filter((option) => option.shouldShow())
                   .map((option) => (
