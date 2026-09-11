@@ -121,6 +121,13 @@ const columns: ColumnConfig[] = [
         defaultVisible: true,
     },
     {
+        key: "created_by_name",
+        label: "Created By",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
         key: "start_date",
         label: "Start Date",
         sortable: true,
