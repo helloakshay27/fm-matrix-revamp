@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { DateRange, Tier } from '@/features/posthog-dashboard/data/constants';
 import { useViDashboard, type ViPlatform } from '../context/viDashboardStore';
 
@@ -10,6 +10,24 @@ import { useViDashboard, type ViPlatform } from '../context/viDashboardStore';
  * a thing the viewer picks.
  */
 const ALL_CIRCLES = 'all-circles';
+
+const PRESETS: DateRange[] = [7, 30, 90];
+
+const RANGE_LABELS: Record<DateRange, string> = {
+  7: 'Last 7 days',
+  30: 'Last 30 days',
+  90: 'Last 90 days',
+};
+
+/** '2026-06-22' -> 'Jun 22', the button label the reference shows for a custom window. */
+function shortDate(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
+}
 
 /** Vi my Workspace is a mobile app — the platform choice is iOS vs Android, not desktop vs mobile. */
 const PLATFORMS: { value: ViPlatform; label: string; title: string }[] = [
@@ -32,6 +50,21 @@ export function ControlBar() {
 
   const [customOpen, setCustomOpen] = useState(false);
   const [draft, setDraft] = useState({ from: '', to: '' });
+  const dateRef = useRef<HTMLDivElement>(null);
+
+  /* Click anywhere outside the control closes the popover, as in the reference. */
+  useEffect(() => {
+    if (!customOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (dateRef.current && !dateRef.current.contains(e.target as Node)) setCustomOpen(false);
+    };
+    document.addEventListener('click', onDoc);
+    return () => document.removeEventListener('click', onDoc);
+  }, [customOpen]);
+
+  const rangeLabel = customRange
+    ? `${shortDate(customRange.from)} – ${shortDate(customRange.to)}`
+    : RANGE_LABELS[state.date];
 
 
   return (
@@ -77,67 +110,71 @@ export function ControlBar() {
         <span className="chev">▾</span>
       </label>
 
-      <label className="ctrl" title="Date range">
-        <span className="ic">📅</span>
-        <select
-          value={customRange ? 'custom' : state.date}
-          onChange={(e) => {
-            if (e.target.value === 'custom') {
-              // Seed the pickers from whatever window is on screen right now.
-              setDraft({ from: vm.range.from, to: vm.range.to });
-              setCustomOpen(true);
-              return;
-            }
-            setDate(Number(e.target.value) as DateRange);
+      <div className={`daterange${customOpen ? ' open' : ''}`} ref={dateRef}>
+        <button
+          type="button"
+          className="ctrl"
+          title="Date range"
+          onClick={(e) => {
+            e.stopPropagation();
+            // Seed the pickers from whatever window is on screen right now.
+            setDraft({ from: vm.range.from, to: vm.range.to });
+            setCustomOpen((o) => !o);
           }}
         >
-          <option value={7}>Last 7 days</option>
-          <option value={30}>Last 30 days</option>
-          <option value={90}>Last 90 days</option>
-          <option value="custom">
-            {customRange ? `${customRange.from} → ${customRange.to}` : 'Custom range…'}
-          </option>
-        </select>
-        <span className="chev">▾</span>
-      </label>
-
-      {customOpen && (
-        <div className="daterange-inline">
-          <input
-            type="date"
-            value={draft.from}
-            max={draft.to || undefined}
-            onChange={(e) => setDraft((d) => ({ ...d, from: e.target.value }))}
-            aria-label="From date"
-          />
-          <span className="dr-to">–</span>
-          <input
-            type="date"
-            value={draft.to}
-            min={draft.from || undefined}
-            onChange={(e) => setDraft((d) => ({ ...d, to: e.target.value }))}
-            aria-label="To date"
-          />
-          <button
-            type="button"
-            className="dr-apply"
-            disabled={!draft.from || !draft.to || draft.from > draft.to}
-            onClick={() => {
-              setCustomRange(draft.from, draft.to);
-              setCustomOpen(false);
-            }}
-          >
-            Apply
-          </button>
-          <button
-            type="button"
-            className="dr-cancel"
-            onClick={() => setCustomOpen(false)}
-          >
-            Cancel
-          </button>
+          <span className="ic">📅</span>
+          <span>{rangeLabel}</span>
+          <span className="chev">▾</span>
+        </button>
+        <div className="daterange-pop">
+          <div className="dr-presets">
+            {PRESETS.map((days) => (
+              <button
+                key={days}
+                type="button"
+                className={`dr-preset${!customRange && state.date === days ? ' on' : ''}`}
+                onClick={() => {
+                  setDate(days);
+                  setCustomOpen(false);
+                }}
+              >
+                {RANGE_LABELS[days]}
+              </button>
+            ))}
+          </div>
+          <div className="dr-custom">
+            <div className="dr-custom-label">Custom range</div>
+            <div className="dr-custom-row">
+              <input
+                type="date"
+                value={draft.from}
+                max={draft.to || undefined}
+                onChange={(e) => setDraft((d) => ({ ...d, from: e.target.value }))}
+                aria-label="From date"
+              />
+              <span className="dr-to">–</span>
+              <input
+                type="date"
+                value={draft.to}
+                min={draft.from || undefined}
+                onChange={(e) => setDraft((d) => ({ ...d, to: e.target.value }))}
+                aria-label="To date"
+              />
+            </div>
+            <button
+              type="button"
+              className={`dr-apply${customRange ? ' applied' : ''}`}
+              disabled={!draft.from || !draft.to || draft.from > draft.to}
+              onClick={() => {
+                setCustomRange(draft.from, draft.to);
+                setCustomOpen(false);
+              }}
+            >
+              {customRange ? 'Range applied ✓' : 'Apply custom range'}
+            </button>
+          </div>
         </div>
-      )}
+      </div>
 
       <div className="devtoggle" title="Platform (os)">
         {PLATFORMS.map((p) => (

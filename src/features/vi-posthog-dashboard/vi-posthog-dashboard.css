@@ -734,20 +734,6 @@
 .vi-ph tr.rowlink:hover td{background:var(--surface-2)}
 
 
-/* ---- inline custom date range (§7.1 date picker: presets or a from-to window) ---- */
-.vi-ph .daterange-inline{
-  display:flex;align-items:center;gap:6px;
-  padding:5px 9px;border:1px solid var(--border-2);border-radius:var(--r-sm);
-  background:var(--surface-2);
-}
-.vi-ph .daterange-inline input[type="date"]{
-  font:inherit;font-size:12.5px;color:var(--ink);
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r-xs);padding:3px 6px;
-}
-.vi-ph .dr-cancel{
-  font:inherit;font-size:12.5px;color:var(--muted);
-  background:none;border:0;cursor:pointer;padding:3px 6px;
-}
-.vi-ph .dr-cancel:hover{color:var(--ink)}
+/* The date control is the popover above (.daterange / .daterange-pop); this only adds the
+   disabled state, which the reference has no need for because its Apply never disables. */
 .vi-ph .dr-apply[disabled]{opacity:.45;cursor:not-allowed}
