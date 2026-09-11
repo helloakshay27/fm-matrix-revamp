@@ -44,10 +44,12 @@ import { useSpeechToText } from "@/hooks/useSpeechToText";
 
 interface SubTask {
     estimated_hour?: number;
+    total_allocated_hours?: number;
 }
 
 interface ParentTask {
     estimated_hour?: number;
+    total_allocated_hours?: number;
     sub_tasks_managements?: SubTask[];
     project_management_id?: number | string;
     project_milestone_id?: number | string;
@@ -972,12 +974,12 @@ const AddSubtaskModal = ({
             return true; // If parent task data not loaded, skip validation
         }
 
-        const parentEstimatedHours = parentTask.estimated_hour || 0;
+        const parentEstimatedHours = parentTask.total_allocated_hours || 0;
 
-        // Calculate total estimated hours of existing subtasks
+        // Calculate total allocated hours of existing subtasks
         const existingSubtasksHours = (
             parentTask.sub_tasks_managements || []
-        ).reduce((sum, subtask) => sum + (subtask.estimated_hour || 0), 0);
+        ).reduce((sum, subtask) => sum + (subtask.total_allocated_hours || 0), 0);
 
         // New subtask hours
         const newSubtaskHours = Number(totalWorkingHours) || 0;
