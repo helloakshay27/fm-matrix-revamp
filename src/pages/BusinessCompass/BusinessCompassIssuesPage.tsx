@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
     useImportIssues,
@@ -42,6 +42,14 @@ import {
 } from "@/components/ui/pagination";
 import { useLayout } from "@/contexts/LayoutContext";
 
+// Matches the priority options in BCIssueCreateModal.tsx
+const PRIORITY_LABELS: Record<string, string> = {
+    P1: "Q1: Urgent & Important",
+    P2: "Q2: Important, Not Urgent",
+    P3: "Q3: Urgent, Not Important",
+    P4: "Q4: Not Urgent or Important",
+};
+
 interface Issue {
     id?: string;
     title?: string;
@@ -54,6 +62,7 @@ interface Issue {
     updated_at?: string;
     start_date?: string;
     due_date?: string;
+    raw_due_date?: string;
     effort_duration?: string;
     comment?: string;
     is_started?: boolean;
@@ -289,6 +298,135 @@ const ResponsiblePersonReasonModal = ({
     );
 };
 
+// Hold Reason Modal Component
+const HoldReasonModal = ({ isOpen, onClose, onSubmit, isLoading, issueId }: any) => {
+    const [reason, setReason] = useState("");
+
+    useEffect(() => {
+        if (!isOpen) setReason("");
+    }, [isOpen]);
+
+    const handleSubmit = () => {
+        if (!reason.trim()) {
+            toast.error("Please enter a reason for putting the issue on hold");
+            return;
+        }
+        onSubmit(reason, issueId);
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-[30rem]">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Hold</h2>
+                <div className="mb-6">
+                    <textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="Enter reason for putting issue on hold..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                        rows={4}
+                        disabled={isLoading}
+                    />
+                </div>
+                <div className="flex gap-3 justify-end">
+                    <Button variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
+                    <Button
+                        onClick={handleSubmit}
+                        disabled={isLoading}
+                        className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50"
+                    >
+                        {isLoading ? "Submitting..." : "Put on Hold"}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Overdue Reason Modal Component
+const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }: any) => {
+    const [reason, setReason] = useState("");
+
+    useEffect(() => {
+        if (!isOpen) setReason("");
+    }, [isOpen]);
+
+    const handleSubmit = () => {
+        if (!reason.trim()) {
+            toast.error("Please enter a reason for the overdue issue");
+            return;
+        }
+        onSubmit(reason);
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-[30rem]">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Overdue</h2>
+                <div className="mb-6">
+                    <textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="Enter reason for overdue..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+                        rows={4}
+                        disabled={isLoading}
+                    />
+                </div>
+                <div className="flex gap-3 justify-end">
+                    <Button variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
+                    <Button
+                        onClick={handleSubmit}
+                        disabled={isLoading}
+                        className="fm-button-fix fm-button-brand px-4 py-2"
+                    >
+                        {isLoading ? "Submitting..." : "Submit"}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Generic Confirmation Modal Component (status changes, starting an issue, etc.)
+const ConfirmationModal = ({
+    isOpen,
+    onClose,
+    onConfirm,
+    isLoading,
+    title,
+    message,
+    loadingLabel = "Updating...",
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+    isLoading: boolean;
+    title: string;
+    message: ReactNode;
+    loadingLabel?: string;
+}) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-[30rem]">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">{title}</h2>
+                <p className="text-sm text-gray-600 mb-6">{message}</p>
+                <div className="flex gap-3 justify-end">
+                    <Button variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
+                    <Button onClick={onConfirm} disabled={isLoading} className="fm-button-fix fm-button-brand px-4 py-2">
+                        {isLoading ? loadingLabel : "Confirm"}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const BusinessCompassIssuesPage = () => {
     const { setCurrentSection } = useLayout();
     const navigate = useNavigate();
@@ -356,6 +494,33 @@ const BusinessCompassIssuesPage = () => {
         string | null
     >(null);
     const [isResponsibleLoading, setIsResponsibleLoading] = useState(false);
+
+    // Hold Reason Modal State
+    const [isHoldModalOpen, setIsHoldModalOpen] = useState(false);
+    const [holdIssueId, setHoldIssueId] = useState<string | null>(null);
+    const [isHoldLoading, setIsHoldLoading] = useState(false);
+
+    // Overdue Reason Modal State
+    const [isOverdueModalOpen, setIsOverdueModalOpen] = useState(false);
+    const [overdueIssueId, setOverdueIssueId] = useState<string | null>(null);
+    const [isOverdueLoading, setIsOverdueLoading] = useState(false);
+    const [pendingStatusChange, setPendingStatusChange] = useState<{
+        id: string;
+        status: string;
+    } | null>(null);
+
+    // Status Change Confirmation Modal State (every other status change)
+    const [isStatusConfirmOpen, setIsStatusConfirmOpen] = useState(false);
+    const [isStatusConfirmLoading, setIsStatusConfirmLoading] = useState(false);
+    const [pendingDirectStatusChange, setPendingDirectStatusChange] = useState<{
+        id: string;
+        status: string;
+    } | null>(null);
+
+    // Play (Start) Confirmation Modal State
+    const [isPlayConfirmOpen, setIsPlayConfirmOpen] = useState(false);
+    const [isPlayConfirmLoading, setIsPlayConfirmLoading] = useState(false);
+    const [pendingPlayIssueId, setPendingPlayIssueId] = useState<number | null>(null);
 
     // Sync myIssuesOnly to URL
     useEffect(() => {
@@ -479,6 +644,7 @@ const BusinessCompassIssuesPage = () => {
             due_date: issue.end_date
                 ? new Date(issue.end_date).toLocaleDateString()
                 : "",
+            raw_due_date: issue.end_date || "",
             effort_duration: issue.effort_duration || "-",
             comment: issue.comments?.[issue.comments.length - 1]?.body || "",
             is_started: issue.is_started || false,
@@ -654,17 +820,128 @@ const BusinessCompassIssuesPage = () => {
         issueId: string,
         newStatus: string
     ) => {
+        if (newStatus === "on_hold") {
+            setHoldIssueId(issueId);
+            setIsHoldModalOpen(true);
+            return;
+        }
+
+        if (newStatus === "completed") {
+            const issue = issues.find((i) => i.id === issueId);
+            const isIssueOverdue = (date: string) => {
+                if (!date) return false;
+                const d = new Date(date);
+                const today = new Date();
+                d.setHours(0, 0, 0, 0);
+                today.setHours(0, 0, 0, 0);
+                return d < today;
+            };
+
+            if (issue && isIssueOverdue(issue.raw_due_date)) {
+                setOverdueIssueId(issueId);
+                setPendingStatusChange({ id: issueId, status: newStatus });
+                setIsOverdueModalOpen(true);
+                return;
+            }
+        }
+
+        // Every other status change goes through a confirmation modal
+        // (on_hold and overdue-completed already confirm via their own
+        // reason-collection modals above).
+        setPendingDirectStatusChange({ id: issueId, status: newStatus });
+        setIsStatusConfirmOpen(true);
+    };
+
+    const handleConfirmDirectStatusChange = async () => {
+        if (!pendingDirectStatusChange) return;
+        const { id, status } = pendingDirectStatusChange;
+        setIsStatusConfirmLoading(true);
         try {
             await axios.put(
-                `https://${baseUrl}/business_compass/issues/${issueId}/update_status.json`,
-                { status: newStatus },
+                `https://${baseUrl}/business_compass/issues/${id}/update_status.json`,
+                { status },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             toast.success("Issue status updated successfully");
             refetchIssues();
+            setIsStatusConfirmOpen(false);
+            setPendingDirectStatusChange(null);
         } catch (error) {
             console.log(error);
             toast.error("Failed to update issue status");
+        } finally {
+            setIsStatusConfirmLoading(false);
+        }
+    };
+
+    const handleHoldReasonSubmit = async (reason: string, iid: string) => {
+        if (!iid) return;
+        setIsHoldLoading(true);
+        try {
+            await axios.put(
+                `https://${baseUrl}/business_compass/issues/${iid}/update_status.json`,
+                { status: "on_hold" },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            const commentPayload = {
+                comment: {
+                    body: `On hold with reason: ${reason}`,
+                    commentable_id: iid,
+                    commentable_type: "BusinessCompassIssue",
+                    commentor_id: JSON.parse(localStorage.getItem("user"))?.id,
+                    active: true,
+                },
+            };
+            await axios.post(`https://${baseUrl}/comments.json`, commentPayload, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            toast.success("Issue put on hold with reason");
+            setIsHoldModalOpen(false);
+            setHoldIssueId(null);
+            refetchIssues();
+        } catch (error) {
+            console.error("Failed to put issue on hold:", error);
+            toast.error("Failed to put issue on hold");
+        } finally {
+            setIsHoldLoading(false);
+        }
+    };
+
+    const handleOverdueReasonSubmit = async (reason: string) => {
+        if (!overdueIssueId || !pendingStatusChange) return;
+        setIsOverdueLoading(true);
+        try {
+            await axios.put(
+                `https://${baseUrl}/business_compass/issues/${overdueIssueId}/update_status.json`,
+                { status: pendingStatusChange.status },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            const commentPayload = {
+                comment: {
+                    body: `Overdue reason: ${reason}`,
+                    commentable_id: overdueIssueId,
+                    commentable_type: "BusinessCompassIssue",
+                    commentor_id: JSON.parse(localStorage.getItem("user"))?.id,
+                    active: true,
+                },
+            };
+            await axios.post(`https://${baseUrl}/comments.json`, commentPayload, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            toast.success("Issue marked as complete with overdue reason");
+            setIsOverdueModalOpen(false);
+            setOverdueIssueId(null);
+            setPendingStatusChange(null);
+            refetchIssues();
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to update issue");
+        } finally {
+            setIsOverdueLoading(false);
         }
     };
 
@@ -723,17 +1000,28 @@ const BusinessCompassIssuesPage = () => {
         }
     };
 
-    const handlePlayIssue = async (id: number) => {
+    const handlePlayIssue = (id: number) => {
+        setPendingPlayIssueId(id);
+        setIsPlayConfirmOpen(true);
+    };
+
+    const handleConfirmPlayIssue = async () => {
+        if (pendingPlayIssueId === null) return;
+        setIsPlayConfirmLoading(true);
         try {
             await axios.put(
-                `https://${baseUrl}/business_compass/issues/${id}/update_status.json`,
+                `https://${baseUrl}/business_compass/issues/${pendingPlayIssueId}/update_status.json`,
                 { status: "started" },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             toast.success("Issue started successfully");
             refetchIssues();
+            setIsPlayConfirmOpen(false);
+            setPendingPlayIssueId(null);
         } catch (error) {
             toast.error(error.response?.data?.error || "Failed to start issue");
+        } finally {
+            setIsPlayConfirmLoading(false);
         }
     };
 
@@ -883,7 +1171,7 @@ const BusinessCompassIssuesPage = () => {
             );
         }
         if (columnKey === "priority") {
-            return item[columnKey];
+            return PRIORITY_LABELS[item[columnKey]] || item[columnKey];
         }
         if (columnKey === "status") {
             const statusColorMap = {
@@ -1255,6 +1543,8 @@ const BusinessCompassIssuesPage = () => {
                 issueTypes={issueTypeOptions}
                 users={users}
                 projects={projects}
+                hideProjectFilter
+                hideTagsFilter
             />
 
             {/* Add Issue Modal */}
@@ -1430,6 +1720,65 @@ const BusinessCompassIssuesPage = () => {
                 taskId={responsibleTaskId}
                 pendingResponsiblePersonId={pendingResponsiblePersonId}
                 users={users}
+            />
+
+            {/* Hold Reason Modal */}
+            <HoldReasonModal
+                isOpen={isHoldModalOpen}
+                onClose={() => {
+                    setIsHoldModalOpen(false);
+                    setHoldIssueId(null);
+                }}
+                onSubmit={handleHoldReasonSubmit}
+                isLoading={isHoldLoading}
+                issueId={holdIssueId}
+            />
+
+            {/* Overdue Reason Modal */}
+            <OverdueReasonModal
+                isOpen={isOverdueModalOpen}
+                onClose={() => {
+                    setIsOverdueModalOpen(false);
+                    setOverdueIssueId(null);
+                }}
+                onSubmit={handleOverdueReasonSubmit}
+                isLoading={isOverdueLoading}
+            />
+
+            {/* Status Change Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={isStatusConfirmOpen}
+                onClose={() => {
+                    setIsStatusConfirmOpen(false);
+                    setPendingDirectStatusChange(null);
+                }}
+                onConfirm={handleConfirmDirectStatusChange}
+                isLoading={isStatusConfirmLoading}
+                title="Change Status"
+                message={
+                    <>
+                        Are you sure you want to change the status to{" "}
+                        <span className="font-medium text-gray-900">
+                            {ISSUSE_STATUS.find((opt) => opt.value === pendingDirectStatusChange?.status)
+                                ?.label || pendingDirectStatusChange?.status || ""}
+                        </span>
+                        ?
+                    </>
+                }
+            />
+
+            {/* Play (Start) Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={isPlayConfirmOpen}
+                onClose={() => {
+                    setIsPlayConfirmOpen(false);
+                    setPendingPlayIssueId(null);
+                }}
+                onConfirm={handleConfirmPlayIssue}
+                isLoading={isPlayConfirmLoading}
+                title="Start Issue"
+                message="Are you sure you want to start this issue?"
+                loadingLabel="Starting..."
             />
         </div>
     );

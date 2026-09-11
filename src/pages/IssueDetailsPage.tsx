@@ -11,6 +11,7 @@ import { Mention, MentionsInput } from "react-mentions";
 import EditIssueModal from "@/components/EditIssueModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { usePATMEvents } from "@/components/PostHogPATMEvents";
 
 interface Issue {
     id?: string;
@@ -158,7 +159,7 @@ const Attachments = ({ attachments, id, baseUrl, token, getIssue, fetchIssueDeta
     };
 
     return (
-        <div className="flex flex-col gap-3 p-5">
+        <div className="flex flex-col gap-3 p-3 sm:p-5">
             {files && files.length > 0 ? (
                 <>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4 mt-4">
@@ -230,7 +231,7 @@ const Attachments = ({ attachments, id, baseUrl, token, getIssue, fetchIssueDeta
                         })}
                     </div>
                     <button
-                        className={`bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4 flex items-center justify-center ${uploading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                        className={`bg-[#C72030] h-[40px] w-full sm:w-[240px] text-white px-5 mt-4 flex items-center justify-center ${uploading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                         onClick={handleAttachFile}
                         disabled={uploading}
                         aria-disabled={uploading}
@@ -253,7 +254,7 @@ const Attachments = ({ attachments, id, baseUrl, token, getIssue, fetchIssueDeta
                     <span>No Documents Attached</span>
                     <div className="text-[#C2C2C2]">Drop or attach relevant documents here</div>
                     <button
-                        className={`bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4 flex items-center justify-center ${uploading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                        className={`bg-[#C72030] h-[40px] w-full sm:w-[240px] text-white px-5 mt-4 flex items-center justify-center ${uploading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                         onClick={handleAttachFile}
                         disabled={uploading}
                         aria-disabled={uploading}
@@ -778,13 +779,13 @@ const Comments = ({ comments, getIssue, baseUrl, token, id }: any) => {
 
     return (
         <div className="text-[14px] flex flex-col gap-2">
-            <div className="flex justify-start m-2 gap-5">
-                <div className="bg-[#01569E] h-[36px] w-[36px] rounded-full text-white text-center p-1.5">
+            <div className="flex justify-start m-2 gap-3 sm:gap-5">
+                <div className="bg-[#01569E] h-[36px] w-[36px] max-md:shrink-0 rounded-full text-white text-center p-1.5">
                     <span>
                         {`${currentUser?.firstname?.charAt(0) || ""}${currentUser?.lastname?.charAt(0) || ""}`}
                     </span>
                 </div>
-                <div className="relative w-[95%]">
+                <div className="relative w-full sm:w-[95%] max-md:min-w-0">
                     <MentionsInput
                         inputRef={textareaRef}
                         value={comment}
@@ -884,8 +885,8 @@ const Comments = ({ comments, getIssue, baseUrl, token, id }: any) => {
             {localComments?.map((cmt: any) => {
                 const isEditing = editingCommentId === cmt.id;
                 return (
-                    <div key={cmt.id} className="relative flex justify-start m-2 gap-5">
-                        <div className="bg-[#01569E] h-[36px] w-[36px] rounded-full text-white text-center p-1.5">
+                    <div key={cmt.id} className="relative flex justify-start m-2 gap-3 sm:gap-5">
+                        <div className="bg-[#01569E] h-[36px] w-[36px] max-md:shrink-0 rounded-full text-white text-center p-1.5">
                             <span>
                                 {cmt?.commentor_full_name
                                     ?.split(" ")
@@ -1065,6 +1066,149 @@ const CountdownTimer = ({
     );
 };
 
+// Hold Reason Modal Component
+const HoldReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
+    const [reason, setReason] = useState("");
+
+    useEffect(() => {
+        if (!isOpen) {
+            setReason("");
+        }
+    }, [isOpen]);
+
+    const handleSubmit = () => {
+        if (!reason.trim()) {
+            toast.error("Please enter a reason for putting the issue on hold");
+            return;
+        }
+        onSubmit(reason);
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full max-w-[30rem] mx-4">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">
+                    Reason for Hold
+                </h2>
+
+                <div className="mb-6">
+                    <textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="Enter reason for putting issue on hold..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                        rows={4}
+                        disabled={isLoading}
+                    />
+                </div>
+
+                <div className="flex gap-3 justify-end">
+                    <Button variant="outline" onClick={onClose} disabled={isLoading}>
+                        Cancel
+                    </Button>
+                    <Button onClick={handleSubmit} disabled={isLoading}>
+                        {isLoading ? "Submitting..." : "Put on Hold"}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Overdue Reason Modal Component
+const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
+    const [reason, setReason] = useState("");
+
+    useEffect(() => {
+        if (!isOpen) {
+            setReason("");
+        }
+    }, [isOpen]);
+
+    const handleSubmit = () => {
+        if (!reason.trim()) {
+            toast.error("Please enter a reason for the overdue issue");
+            return;
+        }
+        onSubmit(reason);
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full max-w-[30rem] mx-4">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">
+                    Reason for Overdue
+                </h2>
+
+                <div className="mb-6">
+                    <textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="Enter reason for overdue..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+                        rows={4}
+                        disabled={isLoading}
+                    />
+                </div>
+
+                <div className="flex gap-3 justify-end">
+                    <Button variant="outline" onClick={onClose} disabled={isLoading}>
+                        Cancel
+                    </Button>
+                    <Button onClick={handleSubmit} disabled={isLoading}>
+                        {isLoading ? "Submitting..." : "Submit"}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Status Change Confirmation Modal Component
+const StatusChangeConfirmModal = ({
+    isOpen,
+    onClose,
+    onConfirm,
+    isLoading,
+    statusLabel,
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+    isLoading: boolean;
+    statusLabel: string;
+}) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full max-w-[30rem] mx-4">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">
+                    Change Status
+                </h2>
+
+                <p className="text-sm text-gray-600 mb-6">
+                    Are you sure you want to change the status to{" "}
+                    <span className="font-medium text-gray-900">{statusLabel}</span>?
+                </p>
+
+                <div className="flex gap-3 justify-end">
+                    <Button variant="outline" onClick={onClose} disabled={isLoading}>
+                        Cancel
+                    </Button>
+                    <Button onClick={onConfirm} disabled={isLoading}>
+                        {isLoading ? "Updating..." : "Confirm"}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const IssueDetailsPage = () => {
     const { setCurrentSection } = useLayout();
 
@@ -1088,6 +1232,21 @@ const IssueDetailsPage = () => {
     const [openStatusDropdown, setOpenStatusDropdown] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState("Open");
     const [openEditModal, setOpenEditModal] = useState(false);
+
+    // Hold Reason Modal State
+    const [isHoldModalOpen, setIsHoldModalOpen] = useState(false);
+    const [isHoldLoading, setIsHoldLoading] = useState(false);
+
+    // Overdue Reason Modal State (shown when marking an overdue issue Completed)
+    const [isOverdueModalOpen, setIsOverdueModalOpen] = useState(false);
+    const [isOverdueLoading, setIsOverdueLoading] = useState(false);
+
+    // Status Change Confirmation Modal State (every other status change)
+    const [isStatusConfirmOpen, setIsStatusConfirmOpen] = useState(false);
+    const [isStatusConfirmLoading, setIsStatusConfirmLoading] = useState(false);
+    const [pendingStatusOption, setPendingStatusOption] = useState<
+        string | null
+    >(null);
 
     const statusDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -1144,11 +1303,14 @@ const IssueDetailsPage = () => {
         }
     };
 
+    const patmEvents = usePATMEvents();
+
     useEffect(() => {
         if (issueId && baseUrl && token) {
             fetchIssueDetails();
+            patmEvents.onIssueViewed(issueId);
         }
-    }, [issueId, baseUrl, token, navigate]);
+    }, [issueId, baseUrl, token, navigate, patmEvents]);
 
     useEffect(() => {
         if (issueData?.status) {
@@ -1157,20 +1319,117 @@ const IssueDetailsPage = () => {
     }, [issueData?.status]);
 
     const handleStatusChange = async (newStatus: string) => {
-        setSelectedStatus(newStatus);
         setOpenStatusDropdown(false);
+        const apiStatus = mapDisplayToApiStatus(newStatus);
+
+        // Putting an issue on hold requires a reason, collected via a modal,
+        // before the status change is actually applied.
+        if (apiStatus === "on_hold") {
+            setIsHoldModalOpen(true);
+            return;
+        }
+
+        // Marking an overdue issue Completed requires a reason too.
+        if (apiStatus === "completed") {
+            const isIssueOverdue = (date: string | Date) => {
+                const d = new Date(date);
+                const today = new Date();
+                d.setHours(0, 0, 0, 0);
+                today.setHours(0, 0, 0, 0);
+                return d < today;
+            };
+
+            if (
+                issueData?.end_date &&
+                isIssueOverdue(new Date(issueData.end_date))
+            ) {
+                setPendingStatusOption(newStatus);
+                setIsOverdueModalOpen(true);
+                return;
+            }
+        }
+
+        // Every other status change goes through a confirmation modal.
+        setPendingStatusOption(newStatus);
+        setIsStatusConfirmOpen(true);
+    };
+
+    const applyStatusChange = async (newStatus: string) => {
+        const apiStatus = mapDisplayToApiStatus(newStatus);
+        await axios.put(
+            `https://${baseUrl}/issues/${issueId}/update_status.json`,
+            { status: apiStatus },
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setSelectedStatus(newStatus);
+        patmEvents.onIssueUpdated(issueId);
+    };
+
+    const postCommentForStatusChange = async (body: string) => {
+        const commentPayload = {
+            comment: {
+                body,
+                commentable_id: issueId,
+                commentable_type: "Issue",
+                commentor_id: JSON.parse(localStorage.getItem("user") || "{}")?.id,
+                active: true,
+            },
+        };
+        await axios.post(`https://${baseUrl}/comments.json`, commentPayload, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+    };
+
+    const handleHoldReasonSubmit = async (reason: string) => {
+        setIsHoldLoading(true);
         try {
-            const apiStatus = mapDisplayToApiStatus(newStatus);
-            await axios.put(
-                `https://${baseUrl}/issues/${issueId}/update_status.json`,
-                { status: apiStatus },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            await applyStatusChange("On Hold");
+            await postCommentForStatusChange(`On hold with reason: ${reason}`);
+            toast.success("Issue put on hold with reason");
+            setIsHoldModalOpen(false);
+            getIssue();
+        } catch (error) {
+            console.error("Failed to put issue on hold:", error);
+            toast.error("Failed to put issue on hold");
+        } finally {
+            setIsHoldLoading(false);
+        }
+    };
+
+    const handleOverdueReasonSubmit = async (reason: string) => {
+        if (!pendingStatusOption) return;
+
+        setIsOverdueLoading(true);
+        try {
+            await applyStatusChange(pendingStatusOption);
+            await postCommentForStatusChange(`Overdue reason: ${reason}`);
+            toast.success("Issue marked as complete with overdue reason");
+            setIsOverdueModalOpen(false);
+            setPendingStatusOption(null);
+            getIssue();
+        } catch (error) {
+            console.error("Failed to update issue:", error);
+            toast.error("Failed to update issue");
+        } finally {
+            setIsOverdueLoading(false);
+        }
+    };
+
+    const handleConfirmStatusChange = async () => {
+        if (!pendingStatusOption) return;
+
+        setIsStatusConfirmLoading(true);
+        try {
+            await applyStatusChange(pendingStatusOption);
             toast.success("Status updated successfully");
+            setIsStatusConfirmOpen(false);
+            setPendingStatusOption(null);
             getIssue();
         } catch (error) {
             console.error("Error updating status:", error);
             toast.error("Failed to update status");
+        } finally {
+            setIsStatusConfirmLoading(false);
         }
     };
 
@@ -1244,7 +1503,7 @@ const IssueDetailsPage = () => {
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back
                 </Button>
-                <div className="px-4 pt-1">
+                <div className="px-0 sm:px-4 pt-1">
                     {/* Title skeleton */}
                     <div className="p-3 px-0">
                         <Skeleton className="h-6 w-3/4 mb-2" />
@@ -1265,7 +1524,7 @@ const IssueDetailsPage = () => {
                     <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)] my-3"></div>
 
                     {/* Description section skeleton */}
-                    <div className="border rounded-[10px] shadow-md p-5 mb-4">
+                    <div className="border rounded-[10px] shadow-md p-3 sm:p-5 mb-4">
                         <div className="flex items-center gap-4 mb-4">
                             <Skeleton className="h-8 w-8 rounded" />
                             <Skeleton className="h-6 w-32" />
@@ -1278,7 +1537,7 @@ const IssueDetailsPage = () => {
                     </div>
 
                     {/* Details section skeleton */}
-                    <div className="border rounded-[10px] shadow-md p-5 mb-4">
+                    <div className="border rounded-[10px] shadow-md p-3 sm:p-5 mb-4">
                         <div className="flex items-center gap-4 mb-4">
                             <Skeleton className="h-8 w-8 rounded" />
                             <Skeleton className="h-6 w-32" />
@@ -1321,15 +1580,15 @@ const IssueDetailsPage = () => {
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
             </Button>
-            <div className="px-4 pt-1">
-                <h2 className="text-[15px] p-3 px-0">
+            <div className="px-0 sm:px-4 pt-1">
+                <h2 className="text-[15px] p-3 px-0 max-md:break-words">
                     <span className="mr-3">Issue-{issueData?.id}</span>
                     <span>{issueData?.title}</span>
                 </h2>
 
                 <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
                 <div className="flex items-center justify-between my-3 text-[12px]">
-                    <div className="flex items-center gap-3 text-[#323232]">
+                    <div className="flex max-md:flex-wrap items-center gap-3 text-[#323232]">
                         <span>Created By : {issueData?.created_by?.name}</span>
 
                         <span className="h-6 w-[1px] border border-gray-300"></span>
@@ -1413,12 +1672,12 @@ const IssueDetailsPage = () => {
                 </div>
                 <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)] my-3"></div>
 
-                <div className="border rounded-[10px] shadow-md p-5 mb-4 text-[14px]">
+                <div className="border rounded-[10px] shadow-md p-3 sm:p-5 mb-4 text-[14px]">
                     <div className="font-[600] text-[16px] flex items-center gap-4">
                         <ChevronDownCircle
                             color="#E95420"
                             size={30}
-                            className={`${isFirstCollapsed ? "rotate-180" : "rotate-0"} cursor-pointer transition-transform`}
+                            className={`${isFirstCollapsed ? "rotate-180" : "rotate-0"} cursor-pointer transition-transform max-md:shrink-0`}
                             onClick={toggleFirstCollapse}
                         />
                         Description
@@ -1441,19 +1700,19 @@ const IssueDetailsPage = () => {
                     </div>
                 </div>
 
-                <div className="border rounded-[10px] shadow-md p-5 mb-4">
-                    <div className="font-[600] text-[16px] flex items-center gap-10">
+                <div className="border rounded-[10px] shadow-md p-3 sm:p-5 mb-4">
+                    <div className="font-[600] text-[16px] flex items-center gap-10 max-md:flex-wrap max-md:gap-y-3">
                         <div className="flex items-center gap-4">
                             <ChevronDownCircle
                                 color="#E95420"
                                 size={30}
-                                className={`${isSecondCollapsed ? "rotate-180" : "rotate-0"} cursor-pointer transition-transform`}
+                                className={`${isSecondCollapsed ? "rotate-180" : "rotate-0"} cursor-pointer transition-transform max-md:shrink-0`}
                                 onClick={toggleSecondCollapse}
                             />
                             Details
                         </div>
                         {isSecondCollapsed && (
-                            <div className="flex items-center gap-6">
+                            <div className="flex items-center gap-6 max-md:flex-wrap max-md:gap-y-2">
                                 <div className="flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]">
                                         Responsible Person:
@@ -1488,8 +1747,8 @@ const IssueDetailsPage = () => {
                         }}
                     >
                         <div className="flex flex-col">
-                            <div className="flex items-center ml-36">
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0 ml-0 sm:ml-36">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]">
                                         Responsible Person :
                                     </div>
@@ -1497,7 +1756,7 @@ const IssueDetailsPage = () => {
                                         {issueData?.responsible_person?.name}
                                     </div>
                                 </div>
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]">Priority :</div>
                                     <div className="text-left text-[12px]">
                                         {issueData?.priority?.charAt(0).toUpperCase() +
@@ -1508,12 +1767,12 @@ const IssueDetailsPage = () => {
 
                             <span className="border h-[1px] inline-block w-full my-4"></span>
 
-                            <div className="flex items-center ml-36">
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0 ml-0 sm:ml-36">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]">Issue Type:</div>
                                     <div className="text-left text-[12px]">{issueData?.issue_type_name}</div>
                                 </div>
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]">Project :</div>
                                     <div className="text-left text-[12px]">
                                         {issueData?.project_management_name || ""}
@@ -1523,14 +1782,14 @@ const IssueDetailsPage = () => {
 
                             <span className="border h-[1px] inline-block w-full my-4"></span>
 
-                            <div className="flex items-center ml-36">
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0 ml-0 sm:ml-36">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]">Start Date :</div>
                                     <div className="text-left text-[12px]">
                                         {issueData?.start_date?.split("T")[0]}
                                     </div>
                                 </div>
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]">MileStone :</div>
                                     <div className="text-left text-[12px]">
                                         {issueData?.milstone_name || ""}
@@ -1540,14 +1799,14 @@ const IssueDetailsPage = () => {
 
                             <span className="border h-[1px] inline-block w-full my-4"></span>
 
-                            <div className="flex items-center ml-36">
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0 ml-0 sm:ml-36">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]">End Date :</div>
                                     <div className="text-left text-[12px]">
                                         {issueData?.end_date?.split("T")[0]}
                                     </div>
                                 </div>
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-semibold]">Task :</div>
                                     <div className="text-left text-[12px]">
                                         {issueData?.task_management_name || ""}
@@ -1557,14 +1816,14 @@ const IssueDetailsPage = () => {
 
                             <span className="border h-[1px] inline-block w-full my-4"></span>
 
-                            <div className="flex items-center ml-36">
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0 ml-0 sm:ml-36">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]">Efforts Duration :</div>
                                     <div className="text-left text-[12px]">
                                         {formatTime(issueData?.issue_allocation_times)}
                                     </div>
                                 </div>
-                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                <div className="w-full sm:w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-semibold]">
                                         {calculateDuration(
                                             issueData?.start_date,
@@ -1586,11 +1845,11 @@ const IssueDetailsPage = () => {
                 </div>
                 <div>
                     <div className="flex items-center justify-between my-3">
-                        <div className="flex items-center gap-10">
+                        <div className="flex items-center gap-10 max-md:overflow-x-auto">
                             {["Comments", "Documents", "Activity Log"].map((item) => (
                                 <div
                                     key={item}
-                                    className={`text-[14px] font-[400] ${activeTab === item
+                                    className={`text-[14px] font-[400] max-md:shrink-0 max-md:whitespace-nowrap ${activeTab === item
                                         ? "border-b-2 border-[#E95420] text-[#E95420]"
                                         : "cursor-pointer"
                                         }`}
@@ -1635,9 +1894,41 @@ const IssueDetailsPage = () => {
                     issueData={issueData}
                     onIssueUpdated={() => {
                         fetchIssueDetails();
+                        if (issueData.id) patmEvents.onIssueUpdated(issueData.id);
                     }}
                 />
             )}
+
+            {/* Hold Reason Modal */}
+            <HoldReasonModal
+                isOpen={isHoldModalOpen}
+                onClose={() => setIsHoldModalOpen(false)}
+                onSubmit={handleHoldReasonSubmit}
+                isLoading={isHoldLoading}
+            />
+
+            {/* Overdue Reason Modal */}
+            <OverdueReasonModal
+                isOpen={isOverdueModalOpen}
+                onClose={() => {
+                    setIsOverdueModalOpen(false);
+                    setPendingStatusOption(null);
+                }}
+                onSubmit={handleOverdueReasonSubmit}
+                isLoading={isOverdueLoading}
+            />
+
+            {/* Status Change Confirmation Modal */}
+            <StatusChangeConfirmModal
+                isOpen={isStatusConfirmOpen}
+                onClose={() => {
+                    setIsStatusConfirmOpen(false);
+                    setPendingStatusOption(null);
+                }}
+                onConfirm={handleConfirmStatusChange}
+                isLoading={isStatusConfirmLoading}
+                statusLabel={pendingStatusOption || ""}
+            />
         </div>
     );
 };

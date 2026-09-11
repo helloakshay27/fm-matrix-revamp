@@ -22,8 +22,11 @@ import {
     ChevronRight,
     Play,
     Pause,
+    Calendar as CalendarIcon,
 } from "lucide-react";
-import { useEffect, useState, useRef, forwardRef, useCallback } from "react";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { renderGroupedUserCheckboxList } from "@/components/GroupedUserCheckboxList";
+import { useEffect, useState, useRef, forwardRef, useCallback, type ReactNode } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import {
     Dialog,
@@ -155,6 +158,14 @@ const COLUMN_TO_BACKEND_MAP: Record<string, string> = {
     priority: "priority",
 };
 
+// Matches the priority options in BCTaskCreateModal.tsx/BCTaskEditModal.tsx
+const PRIORITY_LABELS: Record<string, string> = {
+    P1: "Q1: Urgent & Important",
+    P2: "Q2: Important, Not Urgent",
+    P3: "Q3: Urgent, Not Important",
+    P4: "Q4: Not Urgent or Important",
+};
+
 // Utility function to calculate duration between two dates
 const calculateDuration = (
     start: string | undefined,
@@ -209,6 +220,27 @@ const CountdownTimer = ({
     return (
         <div className={`text-left ${textColor} text-[12px]`}>{countdown.text}</div>
     );
+};
+
+// Date <-> "YYYY-MM-DD" helpers for the date range filter
+const formatDateToYMD = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+    return `${year}-${month}-${day}`;
+};
+
+const parseYMDToDate = (value: string): Date | null => {
+    if (!value) return null;
+    const [year, month, day] = value.split("-").map(Number);
+    return new Date(year, month - 1, day);
+};
+
+// "yyyy-MM-dd" -> "MM/DD/YYYY" for the date range input display
+const formatYMDToDisplay = (value: string): string => {
+    if (!value) return "";
+    const [year, month, day] = value.split("-");
+    return `${day}/${month}/${year}`;
 };
 
 // Pause Reason Modal Component
@@ -465,6 +497,41 @@ const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
     );
 };
 
+// Generic Confirmation Modal Component (status changes, starting a task, etc.)
+const ConfirmationModal = ({
+    isOpen,
+    onClose,
+    onConfirm,
+    isLoading,
+    title,
+    message,
+    loadingLabel = "Updating...",
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+    isLoading: boolean;
+    title: string;
+    message: ReactNode;
+    loadingLabel?: string;
+}) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full max-w-[30rem] mx-4">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">{title}</h2>
+                <p className="text-sm text-gray-600 mb-6">{message}</p>
+                <div className="flex gap-3 justify-end">
+                    <Button variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
+                    <Button onClick={onConfirm} disabled={isLoading} className="fm-button-fix fm-button-brand px-4 py-2">
+                        {isLoading ? loadingLabel : "Confirm"}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const BusinessCompassTasksPage = () => {
     const { setCurrentSection } = useLayout();
     const navigate = useNavigate();
@@ -512,23 +579,26 @@ const BusinessCompassTasksPage = () => {
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
     const [selectedResponsible, setSelectedResponsible] = useState<number[]>([]);
-    const [selectedTags, setSelectedTags] = useState<any[]>([]);
+    const [selectedCreators, setSelectedCreators] = useState<number[]>([]);
     const [dates, setDates] = useState({
+        completedAt: "",
+    });
+    const [dateRangeFilter, setDateRangeFilter] = useState({
         startDate: "",
         endDate: "",
     });
-    const [tags, setTags] = useState<any[]>([]);
+    const [isDateRangePickerOpen, setIsDateRangePickerOpen] = useState(false);
     const [dropdowns, setDropdowns] = useState({
         status: false,
         responsiblePerson: false,
-        tags: false,
-        startDate: false,
-        endDate: false,
+        createdBy: false,
+        completedAt: false,
+        dateRange: false,
     });
     const [searchTerms, setSearchTerms] = useState({
         status: "",
         responsiblePerson: "",
-        tags: "",
+        createdBy: "",
     });
 
     // Pause Modal State
@@ -560,6 +630,19 @@ const BusinessCompassTasksPage = () => {
         status: string;
     } | null>(null);
 
+    // Status Change Confirmation Modal State (every other status change)
+    const [isStatusConfirmOpen, setIsStatusConfirmOpen] = useState(false);
+    const [isStatusConfirmLoading, setIsStatusConfirmLoading] = useState(false);
+    const [pendingDirectStatusChange, setPendingDirectStatusChange] = useState<{
+        id: number;
+        status: string;
+    } | null>(null);
+
+    // Play (Start) Confirmation Modal State
+    const [isPlayConfirmOpen, setIsPlayConfirmOpen] = useState(false);
+    const [isPlayConfirmLoading, setIsPlayConfirmLoading] = useState(false);
+    const [pendingPlayTaskId, setPendingPlayTaskId] = useState<number | null>(null);
+
     const statusDropdownRef = useRef<HTMLDivElement>(null);
 
     /**
@@ -582,29 +665,6 @@ const BusinessCompassTasksPage = () => {
         },
         [searchParams, setSearchParams]
     );
-
-    // Fetch tags from API
-    useEffect(() => {
-        const fetchTags = async () => {
-            try {
-                const response = baseUrl
-                    ? await axios.get(`https://${baseUrl}/company_tags.json`, {
-                        headers: { Authorization: `Bearer ${token}` },
-                    })
-                    : await baseClient.get(`/company_tags.json`, {
-                        headers: { Authorization: `Bearer ${token}` },
-                    });
-                setTags(response.data || []);
-            } catch (error) {
-                console.log("Error fetching tags:", error);
-                setTags([]);
-            }
-        };
-
-        if (token && baseUrl) {
-            fetchTags();
-        }
-    }, [baseUrl, token]);
 
     const getUsers = useCallback(async () => {
         try {
@@ -655,9 +715,9 @@ const BusinessCompassTasksPage = () => {
             return {
                 status: false,
                 responsiblePerson: false,
-                tags: false,
-                startDate: false,
-                endDate: false,
+                createdBy: false,
+                completedAt: false,
+                dateRange: false,
                 [key]: true,
             };
         });
@@ -732,12 +792,13 @@ const BusinessCompassTasksPage = () => {
     const handleClearFilters = () => {
         setSelectedStatuses([]);
         setSelectedResponsible([]);
-        setSelectedTags([]);
-        setDates({ startDate: "", endDate: "" });
+        setSelectedCreators([]);
+        setDates({ completedAt: "" });
+        setDateRangeFilter({ startDate: "", endDate: "" });
         setSearchTerms({
             status: "",
             responsiblePerson: "",
-            tags: "",
+            createdBy: "",
         });
         setCurrentPage(1);
     };
@@ -761,14 +822,18 @@ const BusinessCompassTasksPage = () => {
         if (selectedResponsible.length > 0) {
             filters["q[responsible_person_id_in][]"] = selectedResponsible;
         }
-        if (selectedTags.length > 0) {
-            filters["q[tag_ids_in][]"] = selectedTags;
+        if (selectedCreators.length > 0) {
+            filters["q[created_by_id_in][]"] = selectedCreators;
         }
-        if (dates.startDate) {
-            filters["q[start_date_eq]"] = dates.startDate;
+        if (dates.completedAt) {
+            filters["q[completed_at_gteq]"] = `${dates.completedAt}T00:00:00`;
+            filters["q[completed_at_lteq]"] = `${dates.completedAt}T23:59:59`;
         }
-        if (dates.endDate) {
-            filters["q[due_date_eq]"] = dates.endDate;
+        if (dateRangeFilter.startDate && dateRangeFilter.endDate) {
+            filters["q[start_date_gteq]"] = dateRangeFilter.startDate;
+            filters["q[start_date_lteq]"] = dateRangeFilter.endDate;
+            filters["q[due_date_gteq]"] = dateRangeFilter.startDate;
+            filters["q[due_date_lteq]"] = dateRangeFilter.endDate;
         }
         if (debouncedSearchTerm.trim()) {
             filters["q[title_or_description_cont]"] = debouncedSearchTerm.trim();
@@ -1071,6 +1136,22 @@ const BusinessCompassTasksPage = () => {
                 }
             }
 
+            // Every other status change goes through a confirmation modal
+            // (on_hold and overdue-completed already confirm via their own
+            // reason-collection modals above).
+            setPendingDirectStatusChange({ id, status });
+            setIsStatusConfirmOpen(true);
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to change task status");
+        }
+    };
+
+    const handleConfirmDirectStatusChange = async () => {
+        if (!pendingDirectStatusChange) return;
+        const { id, status } = pendingDirectStatusChange;
+        setIsStatusConfirmLoading(true);
+        try {
             await axios.put(
                 `https://${baseUrl}/business_compass/tasks/${id}/update_status.json`,
                 { status },
@@ -1078,9 +1159,13 @@ const BusinessCompassTasksPage = () => {
             );
             await refetchTasks();
             toast.success("Task status changed successfully");
+            setIsStatusConfirmOpen(false);
+            setPendingDirectStatusChange(null);
         } catch (error) {
             console.log(error);
-            toast.error("Failed to change task status");
+            toast.error("Failed to update task status");
+        } finally {
+            setIsStatusConfirmLoading(false);
         }
     };
 
@@ -1288,19 +1373,30 @@ const BusinessCompassTasksPage = () => {
         }
     };
 
-    const handlePlayTask = async (id: number) => {
+    const handlePlayTask = (id: number) => {
+        setPendingPlayTaskId(id);
+        setIsPlayConfirmOpen(true);
+    };
+
+    const handleConfirmPlayTask = async () => {
+        if (pendingPlayTaskId === null) return;
+        setIsPlayConfirmLoading(true);
         try {
             await axios.put(
-                `https://${baseUrl}/business_compass/tasks/${id}/update_status.json`,
+                `https://${baseUrl}/business_compass/tasks/${pendingPlayTaskId}/update_status.json`,
                 { status: "started" },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
             await refetchTasks();
             toast.success("Task started successfully");
+            setIsPlayConfirmOpen(false);
+            setPendingPlayTaskId(null);
         } catch (error) {
             console.log(error);
             toast.error(error.response?.data?.error || "Failed to start task");
+        } finally {
+            setIsPlayConfirmLoading(false);
         }
     };
 
@@ -1515,7 +1611,7 @@ const BusinessCompassTasksPage = () => {
             }
             case "priority": {
                 return item.priority
-                    ? item.priority.charAt(0).toUpperCase() + item.priority.slice(1)
+                    ? PRIORITY_LABELS[item.priority] || item.priority
                     : "-";
             }
             default:
@@ -1785,12 +1881,8 @@ const BusinessCompassTasksPage = () => {
                                             }
                                         />
                                     </div>
-                                    {renderCheckboxList(
-                                        users.map((u: any) => ({
-                                            ...u,
-                                            label: u.full_name,
-                                            value: u.id,
-                                        })),
+                                    {renderGroupedUserCheckboxList(
+                                        users,
                                         selectedResponsible,
                                         setSelectedResponsible,
                                         searchTerms.responsiblePerson
@@ -1799,20 +1891,22 @@ const BusinessCompassTasksPage = () => {
                             )}
                         </div>
 
-                        {/* Tags */}
+                        {/* Created By */}
                         <div className="p-6 py-3">
                             <div
                                 className="flex items-center justify-between cursor-pointer"
-                                onClick={() => toggleDropdown("tags")}
+                                onClick={() => toggleDropdown("createdBy")}
                             >
-                                <span className="font-medium text-sm select-none">Tags</span>
-                                {dropdowns.tags ? (
+                                <span className="font-medium text-sm select-none">
+                                    Created By
+                                </span>
+                                {dropdowns.createdBy ? (
                                     <ChevronDown className="text-gray-400" />
                                 ) : (
                                     <ChevronRight className="text-gray-400" />
                                 )}
                             </div>
-                            {dropdowns.tags && (
+                            {dropdowns.createdBy && (
                                 <div className="mt-4 border">
                                     <div className="relative border-b">
                                         <Search
@@ -1821,49 +1915,49 @@ const BusinessCompassTasksPage = () => {
                                         />
                                         <input
                                             type="text"
-                                            placeholder="Filter tags..."
+                                            placeholder="Filter created by..."
                                             className="w-full pl-8 pr-4 py-2 text-sm border focus:outline-none"
-                                            value={searchTerms.tags}
+                                            value={searchTerms.createdBy}
                                             onChange={(e) =>
-                                                setSearchTerms({ ...searchTerms, tags: e.target.value })
+                                                setSearchTerms({
+                                                    ...searchTerms,
+                                                    createdBy: e.target.value,
+                                                })
                                             }
                                         />
                                     </div>
-                                    {renderCheckboxList(
-                                        tags.map((tag: any) => ({
-                                            label: tag.name || tag.label,
-                                            value: tag.id,
-                                        })),
-                                        selectedTags,
-                                        setSelectedTags,
-                                        searchTerms.tags
+                                    {renderGroupedUserCheckboxList(
+                                        users,
+                                        selectedCreators,
+                                        setSelectedCreators,
+                                        searchTerms.createdBy
                                     )}
                                 </div>
                             )}
                         </div>
 
-                        {/* Start Date */}
+                        {/* Completed At */}
                         <div className="p-6 py-3">
                             <div
                                 className="flex items-center justify-between cursor-pointer"
-                                onClick={() => toggleDropdown("startDate")}
+                                onClick={() => toggleDropdown("completedAt")}
                             >
                                 <span className="font-medium text-sm select-none">
-                                    Start Date
+                                    Completed At
                                 </span>
-                                {dropdowns.startDate ? (
+                                {dropdowns.completedAt ? (
                                     <ChevronDown className="text-gray-400" />
                                 ) : (
                                     <ChevronRight className="text-gray-400" />
                                 )}
                             </div>
-                            {dropdowns.startDate && (
+                            {dropdowns.completedAt && (
                                 <div className="mt-4">
                                     <input
                                         type="date"
-                                        value={dates.startDate}
+                                        value={dates.completedAt}
                                         onChange={(e) =>
-                                            setDates({ ...dates, startDate: e.target.value })
+                                            setDates({ ...dates, completedAt: e.target.value })
                                         }
                                         className="w-full p-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-red-600"
                                     />
@@ -1871,31 +1965,72 @@ const BusinessCompassTasksPage = () => {
                             )}
                         </div>
 
-                        {/* End Date */}
+                        {/* Date Range */}
                         <div className="p-6 py-3">
                             <div
                                 className="flex items-center justify-between cursor-pointer"
-                                onClick={() => toggleDropdown("endDate")}
+                                onClick={() => toggleDropdown("dateRange")}
                             >
                                 <span className="font-medium text-sm select-none">
-                                    End Date
+                                    Date Range
                                 </span>
-                                {dropdowns.endDate ? (
+                                {dropdowns.dateRange ? (
                                     <ChevronDown className="text-gray-400" />
                                 ) : (
                                     <ChevronRight className="text-gray-400" />
                                 )}
                             </div>
-                            {dropdowns.endDate && (
+                            {dropdowns.dateRange && (
                                 <div className="mt-4">
-                                    <input
-                                        type="date"
-                                        value={dates.endDate}
-                                        onChange={(e) =>
-                                            setDates({ ...dates, endDate: e.target.value })
-                                        }
-                                        className="w-full p-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-red-600"
-                                    />
+                                    <div className="relative mb-3">
+                                        <input
+                                            type="text"
+                                            readOnly
+                                            placeholder="MM/DD/YYYY – MM/DD/YYYY"
+                                            onClick={() => setIsDateRangePickerOpen(true)}
+                                            value={
+                                                dateRangeFilter.startDate
+                                                    ? `${formatYMDToDisplay(dateRangeFilter.startDate)} – ${dateRangeFilter.endDate
+                                                        ? formatYMDToDisplay(dateRangeFilter.endDate)
+                                                        : "MM/DD/YYYY"
+                                                    }`
+                                                    : ""
+                                            }
+                                            className="w-full rounded-md border border-gray-300 px-3 py-2 pr-9 text-sm cursor-pointer focus:outline-none focus:ring-1 focus:ring-red-600"
+                                        />
+                                        {dateRangeFilter.startDate ? (
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setDateRangeFilter({ startDate: "", endDate: "" })
+                                                }
+                                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                                aria-label="Clear date range"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        ) : (
+                                            <CalendarIcon
+                                                size={14}
+                                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                                            />
+                                        )}
+                                    </div>
+                                    {isDateRangePickerOpen && (
+                                        <DateRangePicker
+                                            startDate={parseYMDToDate(dateRangeFilter.startDate)}
+                                            endDate={parseYMDToDate(dateRangeFilter.endDate)}
+                                            onChange={({ startDate, endDate }) => {
+                                                setDateRangeFilter({
+                                                    startDate: startDate ? formatDateToYMD(startDate) : "",
+                                                    endDate: endDate ? formatDateToYMD(endDate) : "",
+                                                });
+                                                if (startDate && endDate) {
+                                                    setIsDateRangePickerOpen(false);
+                                                }
+                                            }}
+                                        />
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -1968,6 +2103,42 @@ const BusinessCompassTasksPage = () => {
                 }}
                 onSubmit={handleOverdueReasonSubmit}
                 isLoading={isOverdueLoading}
+            />
+
+            {/* Status Change Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={isStatusConfirmOpen}
+                onClose={() => {
+                    setIsStatusConfirmOpen(false);
+                    setPendingDirectStatusChange(null);
+                }}
+                onConfirm={handleConfirmDirectStatusChange}
+                isLoading={isStatusConfirmLoading}
+                title="Change Status"
+                message={
+                    <>
+                        Are you sure you want to change the status to{" "}
+                        <span className="font-medium text-gray-900">
+                            {statusOptions.find((opt) => opt.value === pendingDirectStatusChange?.status)
+                                ?.label || pendingDirectStatusChange?.status || ""}
+                        </span>
+                        ?
+                    </>
+                }
+            />
+
+            {/* Play (Start) Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={isPlayConfirmOpen}
+                onClose={() => {
+                    setIsPlayConfirmOpen(false);
+                    setPendingPlayTaskId(null);
+                }}
+                onConfirm={handleConfirmPlayTask}
+                isLoading={isPlayConfirmLoading}
+                title="Start Task"
+                message="Are you sure you want to start this task?"
+                loadingLabel="Starting..."
             />
 
             {showActionPanel && (

@@ -1,4 +1,4 @@
-import { X, Search, ChevronRight, ChevronDown } from "lucide-react";
+import { X, Search, ChevronRight, ChevronDown, Calendar as CalendarIcon } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import clsx from "clsx";
 import { useDispatch, useSelector } from "react-redux";
@@ -6,6 +6,28 @@ import qs from "qs";
 import { toast } from "sonner";
 import axios from "axios";
 import { renderGroupedUserCheckboxList } from "@/components/GroupedUserCheckboxList";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+
+// Date <-> "YYYY-MM-DD" helpers for the date range filter
+const formatDateToYMD = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+    return `${year}-${month}-${day}`;
+};
+
+const parseYMDToDate = (value: string): Date | null => {
+    if (!value) return null;
+    const [year, month, day] = value.split("-").map(Number);
+    return new Date(year, month - 1, day);
+};
+
+// "yyyy-MM-dd" -> "MM/DD/YYYY" for the date range input display
+const formatYMDToDisplay = (value: string): string => {
+    if (!value) return "";
+    const [year, month, day] = value.split("-");
+    return `${day}/${month}/${year}`;
+};
 
 const statusOptions = [
     { label: "Open", value: "open", color: "bg-blue-500" },
@@ -18,9 +40,10 @@ const statusOptions = [
 ];
 
 const priorityOptions = [
-    { label: "High", value: "high" },
-    { label: "Medium", value: "medium" },
-    { label: "Low", value: "low" },
+    { label: "Q1: Urgent & Important", value: "P1" },
+    { label: "Q2: Important, Not Urgent", value: "P2" },
+    { label: "Q3: Urgent, Not Important", value: "P3" },
+    { label: "Q4: Not Urgent or Important", value: "P4" },
 ];
 
 const IssueFilterModal = ({
@@ -30,6 +53,8 @@ const IssueFilterModal = ({
     issueTypes,
     users,
     projects,
+    hideProjectFilter = false,
+    hideTagsFilter = false,
 }) => {
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl") || "";
@@ -50,7 +75,8 @@ const IssueFilterModal = ({
                     selectedCreators: [],
                     selectedProjects: [],
                     selectedTags: [],
-                    dates: { startDate: "", endDate: "", completedAt: "" },
+                    dates: { completedAt: "" },
+                    dateRangeFilter: { startDate: "", endDate: "" },
                     statusSearch: "",
                     typeSearch: "",
                     assigneeSearch: "",
@@ -68,7 +94,8 @@ const IssueFilterModal = ({
                 selectedCreators: [],
                 selectedProjects: [],
                 selectedTags: [],
-                dates: { startDate: "", endDate: "", completedAt: "" },
+                dates: { completedAt: "" },
+                dateRangeFilter: { startDate: "", endDate: "" },
                 statusSearch: "",
                 typeSearch: "",
                 assigneeSearch: "",
@@ -101,6 +128,10 @@ const IssueFilterModal = ({
         getInitialFilters().selectedTags
     );
     const [dates, setDates] = useState(getInitialFilters().dates);
+    const [dateRangeFilter, setDateRangeFilter] = useState(
+        getInitialFilters().dateRangeFilter
+    );
+    const [isDateRangePickerOpen, setIsDateRangePickerOpen] = useState(false);
     const [statusSearch, setStatusSearch] = useState(
         getInitialFilters().statusSearch
     );
@@ -130,6 +161,7 @@ const IssueFilterModal = ({
             selectedProjects,
             selectedTags,
             dates,
+            dateRangeFilter,
             statusSearch,
             typeSearch,
             assigneeSearch,
@@ -151,9 +183,9 @@ const IssueFilterModal = ({
             creatorSearch ||
             projectSearch ||
             tagSearch ||
-            dates.startDate ||
-            dates.endDate ||
-            dates.completedAt
+            dates.completedAt ||
+            dateRangeFilter.startDate ||
+            dateRangeFilter.endDate
         ) {
             localStorage.setItem("issueFilters", JSON.stringify(filters));
         }
@@ -166,6 +198,7 @@ const IssueFilterModal = ({
         selectedProjects,
         selectedTags,
         dates,
+        dateRangeFilter,
         statusSearch,
         typeSearch,
         assigneeSearch,
@@ -183,9 +216,8 @@ const IssueFilterModal = ({
         createdBy: false,
         project: false,
         tags: false,
-        startDate: false,
-        endDate: false,
         completedAt: false,
+        dateRange: false,
     });
 
     const toggleDropdown = (key: string) => {
@@ -201,9 +233,8 @@ const IssueFilterModal = ({
                 assignee: false,
                 createdBy: false,
                 project: false,
-                startDate: false,
-                endDate: false,
                 completedAt: false,
+                dateRange: false,
                 tags: false,
                 [key]: true,
             };
@@ -291,7 +322,8 @@ const IssueFilterModal = ({
         setCreatorSearch("");
         setProjectSearch("");
         setTagSearch("");
-        setDates({ startDate: "", endDate: "", completedAt: "" });
+        setDates({ completedAt: "" });
+        setDateRangeFilter({ startDate: "", endDate: "" });
         localStorage.removeItem("issueFilters");
 
         // Use setTimeout to ensure state updates are applied before calling onApplyFilters
@@ -314,13 +346,11 @@ const IssueFilterModal = ({
             "q[project_management_id_in][]": selectedProjects,
             "q[task_tags_company_tag_id_in][]": selectedTags,
         };
-        if (dates.startDate) {
-            newFilters["q[start_date_gteq]"] = `${dates.startDate} 00:00:00`;
-            newFilters["q[start_date_lteq]"] = `${dates.startDate} 23:59:59`;
-        }
-        if (dates.endDate) {
-            newFilters["q[end_date_gteq]"] = `${dates.endDate} 00:00:00`;
-            newFilters["q[end_date_lteq]"] = `${dates.endDate} 23:59:59`;
+        if (dateRangeFilter.startDate && dateRangeFilter.endDate) {
+            newFilters["q[start_date_gteq]"] = dateRangeFilter.startDate;
+            newFilters["q[start_date_lteq]"] = dateRangeFilter.endDate;
+            newFilters["q[end_date_gteq]"] = dateRangeFilter.startDate;
+            newFilters["q[end_date_lteq]"] = dateRangeFilter.endDate;
         }
         if (dates.completedAt) {
             newFilters["q[completed_at_gteq]"] = `${dates.completedAt} 00:00:00`;
@@ -368,10 +398,10 @@ const IssueFilterModal = ({
             }
         };
 
-        if (token && baseUrl) {
+        if (token && baseUrl && !hideTagsFilter) {
             fetchTags();
         }
-    }, [baseUrl, token]);
+    }, [baseUrl, token, hideTagsFilter]);
 
     const tagOptions =
         tags && tags.length > 0
@@ -507,80 +537,84 @@ const IssueFilterModal = ({
                     </div>
 
                     {/* Project Filter */}
-                    <div className="p-6 py-3">
-                        <div
-                            className="flex items-center justify-between cursor-pointer"
-                            onClick={() => toggleDropdown("project")}
-                        >
-                            <span className="font-medium text-sm select-none">Project</span>
-                            {dropdowns.project ? (
-                                <ChevronDown className="text-gray-400" />
-                            ) : (
-                                <ChevronRight className="text-gray-400" />
-                            )}
-                        </div>
-                        {dropdowns.project && (
-                            <div className="mt-4 border">
-                                <div className="relative border-b">
-                                    <Search
-                                        className="absolute left-3 top-2.5 text-red-400"
-                                        size={16}
-                                    />
-                                    <input
-                                        type="text"
-                                        placeholder="Filter project..."
-                                        className="w-full pl-8 pr-4 py-2 text-sm border focus:outline-none"
-                                        value={projectSearch}
-                                        onChange={(e) => setProjectSearch(e.target.value)}
-                                    />
-                                </div>
-                                {renderCheckboxList(
-                                    projectOptions,
-                                    selectedProjects,
-                                    setSelectedProjects,
-                                    projectSearch
+                    {!hideProjectFilter && (
+                        <div className="p-6 py-3">
+                            <div
+                                className="flex items-center justify-between cursor-pointer"
+                                onClick={() => toggleDropdown("project")}
+                            >
+                                <span className="font-medium text-sm select-none">Project</span>
+                                {dropdowns.project ? (
+                                    <ChevronDown className="text-gray-400" />
+                                ) : (
+                                    <ChevronRight className="text-gray-400" />
                                 )}
                             </div>
-                        )}
-                    </div>
+                            {dropdowns.project && (
+                                <div className="mt-4 border">
+                                    <div className="relative border-b">
+                                        <Search
+                                            className="absolute left-3 top-2.5 text-red-400"
+                                            size={16}
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder="Filter project..."
+                                            className="w-full pl-8 pr-4 py-2 text-sm border focus:outline-none"
+                                            value={projectSearch}
+                                            onChange={(e) => setProjectSearch(e.target.value)}
+                                        />
+                                    </div>
+                                    {renderCheckboxList(
+                                        projectOptions,
+                                        selectedProjects,
+                                        setSelectedProjects,
+                                        projectSearch
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Tags Filter */}
-                    <div className="p-6 py-3">
-                        <div
-                            className="flex items-center justify-between cursor-pointer"
-                            onClick={() => toggleDropdown("tags")}
-                        >
-                            <span className="font-medium text-sm select-none">Tags</span>
-                            {dropdowns.tags ? (
-                                <ChevronDown className="text-gray-400" />
-                            ) : (
-                                <ChevronRight className="text-gray-400" />
-                            )}
-                        </div>
-                        {dropdowns.tags && (
-                            <div className="mt-4 border">
-                                <div className="relative border-b">
-                                    <Search
-                                        className="absolute left-3 top-2.5 text-red-400"
-                                        size={16}
-                                    />
-                                    <input
-                                        type="text"
-                                        placeholder="Filter tags..."
-                                        className="w-full pl-8 pr-4 py-2 text-sm border focus:outline-none"
-                                        value={tagSearch}
-                                        onChange={(e) => setTagSearch(e.target.value)}
-                                    />
-                                </div>
-                                {renderCheckboxList(
-                                    tagOptions,
-                                    selectedTags,
-                                    setSelectedTags,
-                                    tagSearch
+                    {!hideTagsFilter && (
+                        <div className="p-6 py-3">
+                            <div
+                                className="flex items-center justify-between cursor-pointer"
+                                onClick={() => toggleDropdown("tags")}
+                            >
+                                <span className="font-medium text-sm select-none">Tags</span>
+                                {dropdowns.tags ? (
+                                    <ChevronDown className="text-gray-400" />
+                                ) : (
+                                    <ChevronRight className="text-gray-400" />
                                 )}
                             </div>
-                        )}
-                    </div>
+                            {dropdowns.tags && (
+                                <div className="mt-4 border">
+                                    <div className="relative border-b">
+                                        <Search
+                                            className="absolute left-3 top-2.5 text-red-400"
+                                            size={16}
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder="Filter tags..."
+                                            className="w-full pl-8 pr-4 py-2 text-sm border focus:outline-none"
+                                            value={tagSearch}
+                                            onChange={(e) => setTagSearch(e.target.value)}
+                                        />
+                                    </div>
+                                    {renderCheckboxList(
+                                        tagOptions,
+                                        selectedTags,
+                                        setSelectedTags,
+                                        tagSearch
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Assigned To Filter */}
                     <div className="p-6 py-3">
@@ -662,56 +696,6 @@ const IssueFilterModal = ({
                         )}
                     </div>
 
-                    {/* Start Date */}
-                    <div className="p-6 py-3">
-                        <div
-                            className="flex items-center justify-between cursor-pointer"
-                            onClick={() => toggleDropdown("startDate")}
-                        >
-                            <span className="font-medium text-sm select-none">Start Date</span>
-                            {dropdowns.startDate ? (
-                                <ChevronDown className="text-gray-400" />
-                            ) : (
-                                <ChevronRight className="text-gray-400" />
-                            )}
-                        </div>
-                        {dropdowns.startDate && (
-                            <div className="mt-4">
-                                <input
-                                    type="date"
-                                    value={dates.startDate}
-                                    onChange={(e) => setDates({ ...dates, startDate: e.target.value })}
-                                    className="w-full p-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-red-600"
-                                />
-                            </div>
-                        )}
-                    </div>
-
-                    {/* End Date */}
-                    <div className="p-6 py-3">
-                        <div
-                            className="flex items-center justify-between cursor-pointer"
-                            onClick={() => toggleDropdown("endDate")}
-                        >
-                            <span className="font-medium text-sm select-none">End Date</span>
-                            {dropdowns.endDate ? (
-                                <ChevronDown className="text-gray-400" />
-                            ) : (
-                                <ChevronRight className="text-gray-400" />
-                            )}
-                        </div>
-                        {dropdowns.endDate && (
-                            <div className="mt-4">
-                                <input
-                                    type="date"
-                                    value={dates.endDate}
-                                    onChange={(e) => setDates({ ...dates, endDate: e.target.value })}
-                                    className="w-full p-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-red-600"
-                                />
-                            </div>
-                        )}
-                    </div>
-
                     {/* Completed At */}
                     <div className="p-6 py-3">
                         <div
@@ -733,6 +717,74 @@ const IssueFilterModal = ({
                                     onChange={(e) => setDates({ ...dates, completedAt: e.target.value })}
                                     className="w-full p-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-red-600"
                                 />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Date Range */}
+                    <div className="p-6 py-3">
+                        <div
+                            className="flex items-center justify-between cursor-pointer"
+                            onClick={() => toggleDropdown("dateRange")}
+                        >
+                            <span className="font-medium text-sm select-none">Date Range</span>
+                            {dropdowns.dateRange ? (
+                                <ChevronDown className="text-gray-400" />
+                            ) : (
+                                <ChevronRight className="text-gray-400" />
+                            )}
+                        </div>
+                        {dropdowns.dateRange && (
+                            <div className="mt-4">
+                                <div className="relative mb-3">
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        placeholder="MM/DD/YYYY – MM/DD/YYYY"
+                                        onClick={() => setIsDateRangePickerOpen(true)}
+                                        value={
+                                            dateRangeFilter.startDate
+                                                ? `${formatYMDToDisplay(dateRangeFilter.startDate)} – ${dateRangeFilter.endDate
+                                                    ? formatYMDToDisplay(dateRangeFilter.endDate)
+                                                    : "MM/DD/YYYY"
+                                                }`
+                                                : ""
+                                        }
+                                        className="w-full rounded-md border border-gray-300 px-3 py-2 pr-9 text-sm cursor-pointer focus:outline-none focus:ring-1 focus:ring-red-600"
+                                    />
+                                    {dateRangeFilter.startDate ? (
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setDateRangeFilter({ startDate: "", endDate: "" })
+                                            }
+                                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                            aria-label="Clear date range"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    ) : (
+                                        <CalendarIcon
+                                            size={14}
+                                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                                        />
+                                    )}
+                                </div>
+                                {isDateRangePickerOpen && (
+                                    <DateRangePicker
+                                        startDate={parseYMDToDate(dateRangeFilter.startDate)}
+                                        endDate={parseYMDToDate(dateRangeFilter.endDate)}
+                                        onChange={({ startDate, endDate }) => {
+                                            setDateRangeFilter({
+                                                startDate: startDate ? formatDateToYMD(startDate) : "",
+                                                endDate: endDate ? formatDateToYMD(endDate) : "",
+                                            });
+                                            if (startDate && endDate) {
+                                                setIsDateRangePickerOpen(false);
+                                            }
+                                        }}
+                                    />
+                                )}
                             </div>
                         )}
                     </div>
