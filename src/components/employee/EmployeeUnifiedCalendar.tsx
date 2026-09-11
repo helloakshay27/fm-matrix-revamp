@@ -1022,13 +1022,31 @@ export const EmployeeUnifiedCalendar: React.FC<
               }
               className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
                 activeFilters.showGoogleCalendar
-                  ? "bg-purple-100 text-purple-700 border border-purple-300"
+                  ? "bg-purple-600 !text-white border border-purple-600"
                   : "bg-gray-100 text-gray-500 border border-gray-300"
               }`}
+              style={{
+                color: activeFilters.showGoogleCalendar ? "#ffffff" : undefined,
+              }}
             >
-              <div className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                Google Calendar
+              <div
+                className="flex items-center gap-1"
+                style={{
+                  color: activeFilters.showGoogleCalendar ? "#ffffff" : undefined,
+                }}
+              >
+                <Calendar
+                  className={`w-3 h-3 ${
+                    activeFilters.showGoogleCalendar ? "!text-white" : "text-gray-500"
+                  }`}
+                />
+                <span
+                  className={
+                    activeFilters.showGoogleCalendar ? "!text-white" : "text-gray-500"
+                  }
+                >
+                  Google Calendar
+                </span>
               </div>
             </button>
             <button
