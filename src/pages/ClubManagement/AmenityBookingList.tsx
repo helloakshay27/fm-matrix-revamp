@@ -1,10 +1,22 @@
+import { useEffect, useRef } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 // import BookingListDashboard from "./BookingListDashboard"
 // import BookingCalenderView from "./BookingCalenderView"
 import AmenityBookingClubCalenderView from "./AmenityBookingCalenderView"
 import AmenityBookingListClubDashboard from "./AmenityBookingDashboard"
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents"
 
 const AmenityBookingListClub = () => {
+    const cmEvents = useClubManagementEvents();
+    const listViewedFired = useRef(false);
+
+    useEffect(() => {
+        if (!listViewedFired.current) {
+            listViewedFired.current = true;
+            cmEvents.listViewed("Amenity Booking", "amenity_booking_list");
+        }
+    }, [cmEvents]);
+
     return (
         <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
             <Tabs

@@ -16,6 +16,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { API_CONFIG, getFullUrl } from '@/config/apiConfig';
 import { getToken } from '@/utils/auth';
 import axios from 'axios';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 
 interface MembershipPlan {
     id: number;
@@ -63,6 +64,7 @@ const validateMobile = (mobile: string): boolean => /^[0-9]{10}$/.test(mobile);
 export const EditGroupMembershipStep1Page = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
+    const cmEvents = useClubManagementEvents();
 
     const [loading, setLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -220,6 +222,7 @@ export const EditGroupMembershipStep1Page = () => {
             await axios.post(url, payload, {
                 headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
             });
+            cmEvents.updated("Group Membership", id, "group_membership_edit");
             navigate("/club-management/membership/groups");
             setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
         } catch (error: any) {

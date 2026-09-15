@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useDispatch } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
@@ -52,6 +53,8 @@ const columns: ColumnConfig[] = [
 export const GuestUserMasterDashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const cmEvents = useClubManagementEvents();
+  const listViewedRef = useRef(false);
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState<boolean>(false);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
@@ -148,6 +151,12 @@ export const GuestUserMasterDashboard = () => {
       })
     );
     toast.success("Filters applied successfully");
+    cmEvents.filtered("Guest", "guest_list", {
+      name: newFilters.name,
+      email: newFilters.email,
+      status: newFilters.status,
+      search: newFilters.search,
+    });
     setFilterDialogOpen(false);
   };
 
@@ -174,6 +183,7 @@ export const GuestUserMasterDashboard = () => {
       link.remove();
 
       toast.success("Data exported successfully");
+      cmEvents.exported("Guest", "xlsx", undefined, "guest_list");
     } catch (error) {
       toast.error("Failed to export data");
     }
@@ -195,6 +205,10 @@ export const GuestUserMasterDashboard = () => {
     setCurrentSection("Club Management");
     fetchUsers();
     dispatch(fetchOccupantUserCounts('guest'));
+    if (!listViewedRef.current) {
+      listViewedRef.current = true;
+      cmEvents.listViewed("Guest", "guest_list");
+    }
   }, [setCurrentSection, dispatch]);
 
   const debouncedSearch = useCallback(
@@ -202,6 +216,7 @@ export const GuestUserMasterDashboard = () => {
       handleApplyFilters({
         search: searchQuery,
       });
+      if (searchQuery?.trim()) cmEvents.searched("Guest", searchQuery, "guest_list");
     }, 500),
     [pagination.current_page]
   );
@@ -418,6 +433,7 @@ export const GuestUserMasterDashboard = () => {
       );
 
       toast.success("User status updated successfully!");
+      cmEvents.statusChanged("Guest", selectedUser?.lockUserId, { action: "status_change", status: selectedStatus });
       dispatch(fetchOccupantUserCounts('guest')); // Refresh counts
       setStatusDialogOpen(false);
       setSelectedUser(null);

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Box, Select } from '@mui/material';
@@ -14,6 +15,7 @@ import { ArrowLeft } from 'lucide-react'
 
 export const ClubAddOccupantUserPage: React.FC = () => {
     const navigate = useNavigate();
+    const cmEvents = useClubManagementEvents();
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -233,6 +235,7 @@ export const ClubAddOccupantUserPage: React.FC = () => {
             }
 
             toast.success('Occupant user added successfully');
+            cmEvents.created("Occupant", response.data?.id ?? response.data?.data?.id, "occupant_add");
             navigate('/club-management/users/occupant-users');
         } catch (error: any) {
             const msg = error?.response?.data?.error || error?.message || 'Failed to create occupant user';

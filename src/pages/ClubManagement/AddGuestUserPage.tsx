@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Camera, User } from 'lucide-react';
@@ -14,6 +15,7 @@ import { RootState } from '@/store/store';
 
 export const AddGuestUserPage: React.FC = () => {
   const navigate = useNavigate();
+  const cmEvents = useClubManagementEvents();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -249,6 +251,7 @@ export const AddGuestUserPage: React.FC = () => {
       }
 
       toast.success('Guest added successfully');
+      cmEvents.created("Guest", response.data?.id ?? response.data?.data?.id, "guest_add");
       navigate('/club-management/users/guest');
     } catch (error: any) {
       const msg = error?.response?.data?.error || error?.message || 'Failed to create guest';

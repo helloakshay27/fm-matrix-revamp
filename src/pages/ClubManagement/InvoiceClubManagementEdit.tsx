@@ -38,6 +38,7 @@ import {
 import { ShoppingCart, Package, Calendar, FileText, ChevronDown, ChevronUp, Mail, Phone, Smartphone, Star, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { toast } from "sonner";
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import { format, parseISO } from 'date-fns';
 import {
     BankRecord,
@@ -165,6 +166,7 @@ interface ExternalUser {
 }
 
 export const InvoiceClubManagementEdit: React.FC = () => {
+    const cmEvents = useClubManagementEvents();
     // Subject field
     const [subject, setSubject] = useState('');
     // Fetch item list from API
@@ -1763,6 +1765,7 @@ export const InvoiceClubManagementEdit: React.FC = () => {
             });
 
             toast.success('Invoice updated successfully!');
+            cmEvents.updated('Invoice', id, 'invoice_edit');
             navigate('/club-management/invoice');
         } catch (error) {
             console.error('Error updating invoice:', error);

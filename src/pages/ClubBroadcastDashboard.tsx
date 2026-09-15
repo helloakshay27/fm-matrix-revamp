@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Plus, Eye } from "lucide-react";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -75,6 +76,8 @@ export const ClubBroadcastDashboard = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const { shouldShow } = useDynamicPermissions();
+    const cmEvents = useClubManagementEvents();
+    const listViewedRef = useRef(false);
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
 
@@ -88,6 +91,12 @@ export const ClubBroadcastDashboard = () => {
         total_count: 0,
         total_pages: 0,
     });
+
+    useEffect(() => {
+        if (listViewedRef.current) return;
+        listViewedRef.current = true;
+        cmEvents.listViewed("Notice", "notice_list");
+    }, [cmEvents]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -241,6 +250,11 @@ export const ClubBroadcastDashboard = () => {
                 total_count: response.pagination.total_count,
                 total_pages: response.pagination.total_pages,
             });
+            if (data.status) {
+                cmEvents.filtered("Notice", "notice_list", { status: data.status });
+            } else {
+                cmEvents.filtersReset("Notice", "notice_list");
+            }
         } catch (error) {
             toast.error('Failed to fetch broadcasts');
         }

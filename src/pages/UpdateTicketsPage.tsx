@@ -22,6 +22,7 @@ import { getToken, getUser } from "@/utils/auth";
 import { API_CONFIG, getFullUrl, getAuthHeader } from "@/config/apiConfig";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchHelpdeskCategories } from "@/store/slices/helpdeskCategoriesSlice";
+import { useCMHelpdeskEvents } from "@/components/PostHogHelpdeskEvents";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -172,6 +173,8 @@ const UpdateTicketsPage: React.FC = () => {
   const { id } = useParams();
   const { toast } = useToast();
   const dispatch = useAppDispatch();
+  const cmHdEvents = useCMHelpdeskEvents();
+  const isCMHelpdesk = window.location.pathname.includes("/club-management/helpdesk");
   const { data: helpdeskData, loading: helpdeskLoading } = useAppSelector(
     (state) => state.helpdeskCategories
   );
@@ -326,6 +329,17 @@ const UpdateTicketsPage: React.FC = () => {
       },
     },
   };
+
+  useEffect(() => {
+    // Helpdesk Ticket Edit Opened — mount-only screen event, gated to the
+    // club-management/helpdesk route (this shared page also serves
+    // /maintenance/ticket/update). Not an "updated" event; the update event
+    // fires only after the submit API succeeds in handleSubmit.
+    if (isCMHelpdesk && id) {
+      cmHdEvents.onEditOpened(id, "update_page");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -2279,6 +2293,19 @@ const UpdateTicketsPage: React.FC = () => {
         title: "Success",
         description: `Successfully updated ticket ${ticketNumber}.`,
       });
+
+      // Helpdesk Ticket Updated — fired only after the update API genuinely succeeds
+      // (2xx), and only on the club-management/helpdesk route. A 4xx/5xx response must
+      // never report this event even if the code below still parses its body.
+      if (isCMHelpdesk && response.ok) {
+        cmHdEvents.onTicketUpdated(ticketId, {
+          status: formData.selectedStatus || null,
+          assignee: formData.assignTo ? Number(formData.assignTo) : null,
+          priority: formData.adminPriority || null,
+          has_comment: Boolean(formData.comments && formData.comments.trim()),
+          cost_involved: Boolean(formData.costInvolved),
+        });
+      }
 
       // Redirect to ticket details page
       navigate(`/maintenance/ticket/details/${ticketId}`);

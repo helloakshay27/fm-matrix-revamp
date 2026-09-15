@@ -17,6 +17,8 @@ import axios from 'axios';
 import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
 import { useViWorkflowEvents } from "@/components/PostHogViWorkflowEvents";
 import { useFlowEvents } from '@/components/PostHogFlowEvents';
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { isCMContextActive } from "@/utils/posthogHelpers";
 
 const fieldStyles = {
   '& .MuiOutlinedInput-root': {
@@ -49,6 +51,7 @@ export const AddFacilityBookingPage = () => {
   // deployment — see PostHogViWorkflowEvents for why both sets fire rather than one renamed.
   const viEvents = useViWorkflowEvents();
   const flowEvents = useFlowEvents();
+  const cmEvents = useClubManagementEvents();
 
   // GA parity: the facility booking screen was opened. Mount-only, so re-renders and
   // in-page steps are not counted as fresh page views.
@@ -769,6 +772,9 @@ export const AddFacilityBookingPage = () => {
           gaEvents.onBookFacilitySuccess("admin", { facility_id: selectedFacility || null, booking_id: bookingId });
           viEvents.onBookFacilitySuccess({ facility_id: selectedFacility || undefined });
           flowEvents.onFlowCompleted('facilityBooking', { succeeded: true });
+          if (isCMContextActive()) {
+            cmEvents.created("Amenity Booking", bookingId, "amenity_booking_add");
+          }
           // Navigate to payment gateway redirection page with booking ID and token
           navigate(`/payment-redirect?bookingId=${bookingId}&token=${token}&amount=${costSummary.amountFull}`);
         } else {
@@ -780,6 +786,10 @@ export const AddFacilityBookingPage = () => {
         gaEvents.onBookFacilitySuccess("admin", { facility_id: selectedFacility || null });
         viEvents.onBookFacilitySuccess({ facility_id: selectedFacility || undefined });
         flowEvents.onFlowCompleted('facilityBooking', { succeeded: true });
+        if (isCMContextActive()) {
+          const bookingId = response.data?.facility_booking?.id ?? response.data?.id;
+          cmEvents.created("Amenity Booking", bookingId, "amenity_booking_add");
+        }
         navigate(-1);
       }
     } catch (error: any) {

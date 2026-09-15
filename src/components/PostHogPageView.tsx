@@ -2,6 +2,13 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { usePostHog } from "@posthog/react";
 import { getPostHogSuperProperties, normalizeRoute } from "@/utils/posthogContext";
+import {
+  resolveHelpdeskProjectContext,
+  isCMRoutePath,
+  isCMSharedPath,
+  markCMOrigin,
+  clearCMOrigin,
+} from "@/utils/posthogHelpers";
 
 export function PostHogPageView() {
   const location = useLocation();
@@ -9,6 +16,19 @@ export function PostHogPageView() {
 
   useEffect(() => {
     if (!posthog) return;
+
+    // Track whether this tab's flow originated from Club Management. Any
+    // /club-management/* route marks the origin so the shared CM/FM/Pulse screens
+    // (tickets, amenities booking, notices, events, community, vendor, booking-club)
+    // reached afterwards keep reporting CM-01/P-238 for CM-originated flows. Direct
+    // FM/Pulse visits to the same shared screens stay FM-01/P-223. sessionStorage
+    // survives SPA navigation and reloads within the same tab. Navigating between
+    // shared screens keeps whatever marker is currently set.
+    if (isCMRoutePath(location.pathname)) {
+      markCMOrigin();
+    } else if (!isCMSharedPath(location.pathname)) {
+      clearCMOrigin();
+    }
 
     // Re-register the super-properties on every navigation, for two reasons:
     //
@@ -33,8 +53,7 @@ export function PostHogPageView() {
 
     posthog.capture("$pageview", {
       $current_url: window.location.href,
-      project_id: "P-223",
-      project_code: "FM-01",
+      ...resolveHelpdeskProjectContext(),
       site_id: siteIdNum,
       site_name: localStorage.getItem("selectedSiteName") ?? undefined,
       company_id: companyIdNum,

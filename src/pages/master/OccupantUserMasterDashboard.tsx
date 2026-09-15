@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate,useSearchParams } from "react-router-dom";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useDispatch } from "react-redux";
 import moment from "moment";
@@ -69,6 +70,8 @@ export const OccupantUserMasterDashboard = () => {
   const location = useLocation();
   const user = getUser();
   const { shouldShow } = useDynamicPermissions();
+  const cmEvents = useClubManagementEvents();
+  const listViewedRef = useRef(false);
   const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
   const isOpsConsole = location.pathname.includes('/ops-console/');
 
@@ -197,6 +200,13 @@ const currentPage = Number(searchParams.get("page")) || 1;
       })
     );
     toast.success("Filters applied successfully");
+    cmEvents.filtered("Occupant", "occupant_list", {
+      name: newFilters.name,
+      email: newFilters.email,
+      status: newFilters.status,
+      entity: newFilters.entity,
+      search: newFilters.search,
+    });
     setFilterDialogOpen(false);
   };
 
@@ -240,6 +250,7 @@ const currentPage = Number(searchParams.get("page")) || 1;
       window.URL.revokeObjectURL(downloadUrl);
 
       toast.success("Data exported successfully");
+      cmEvents.exported("Occupant", "xlsx", undefined, "occupant_list");
     } catch (error) {
       toast.error("Failed to export data");
     }
@@ -269,6 +280,10 @@ const currentPage = Number(searchParams.get("page")) || 1;
     setCurrentSection("Master");
     fetchUsers();
     dispatch(fetchOccupantUserCounts('occupant'));
+    if (!listViewedRef.current) {
+      listViewedRef.current = true;
+      cmEvents.listViewed("Occupant", "occupant_list");
+    }
   }, [setCurrentSection, dispatch]);
 
   const debouncedSearch = useCallback(
@@ -276,6 +291,7 @@ const currentPage = Number(searchParams.get("page")) || 1;
       handleApplyFilters({
         search: searchQuery,
       });
+      if (searchQuery?.trim()) cmEvents.searched("Occupant", searchQuery, "occupant_list");
     }, 500),
     [pagination.current_page]
   );
@@ -468,6 +484,7 @@ const currentPage = Number(searchParams.get("page")) || 1;
       );
 
       toast.success("User status updated successfully!");
+      cmEvents.statusChanged("Occupant", userId, { action: isActive ? "activate" : "deactivate" });
     } catch (error: unknown) {
       console.error("Status toggle failed:", error);
       toast.error("Failed to update user status.");
@@ -551,6 +568,7 @@ const currentPage = Number(searchParams.get("page")) || 1;
       );
 
       toast.success("User status updated successfully!");
+      cmEvents.statusChanged("Occupant", selectedUser?.lockUserId, { action: "status_change", status: selectedStatus });
       dispatch(fetchOccupantUserCounts('occupant')); // Refresh counts
       setStatusDialogOpen(false);
       setSelectedUser(null);
@@ -642,6 +660,7 @@ const currentPage = Number(searchParams.get("page")) || 1;
       setOtpData(response.data);
       setOtpDialogOpen(true);
       toast.success(response.data.message || "OTP generated successfully");
+      cmEvents.action("otp_generated", { module: "Occupant", screen: "occupant_list" });
     } catch (error) {
       console.error("OTP generation failed:", error);
       toast.error("Failed to generate OTP");

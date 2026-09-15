@@ -1,11 +1,12 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { useAppDispatch } from '@/store/hooks';
 import { fetchEventById } from '@/store/slices/eventSlice';
 import { format } from 'date-fns';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 
 interface Event {
     id: string;
@@ -29,6 +30,8 @@ export const ClubEventDetailsPage = () => {
     const dispatch = useAppDispatch();
     const { id } = useParams();
     const navigate = useNavigate();
+    const cmEvents = useClubManagementEvents();
+    const detailViewedRef = useRef(false);
 
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem("token");
@@ -40,6 +43,10 @@ export const ClubEventDetailsPage = () => {
             try {
                 const response = await dispatch(fetchEventById({ id, baseUrl, token })).unwrap();
                 setEventData(response)
+                if (!detailViewedRef.current) {
+                    detailViewedRef.current = true;
+                    cmEvents.detailViewed("Event", id, "event_details");
+                }
             } catch (error) {
                 console.log(error)
                 toast.error("Failed to fetch event")

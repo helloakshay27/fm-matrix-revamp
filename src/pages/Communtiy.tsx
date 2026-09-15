@@ -1,11 +1,13 @@
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable"
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { isCMContextActive } from "@/utils/posthogHelpers";
 import { Button } from "@/components/ui/button"
 import { Switch } from "@mui/material"
 import { ColumnConfig } from "@/hooks/useEnhancedTable"
 import axios from "axios"
 import { Edit, Eye, Plus } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { CommunityFilterModal } from "@/components/CommunityFilterModal"
 import { toast } from "sonner"
@@ -58,6 +60,8 @@ const columns: ColumnConfig[] = [
 
 const Communtiy = () => {
   const pulseEvents = usePulseEvents();
+  const cmEvents = useClubManagementEvents();
+  const cmListViewedRef = useRef(false);
 
   useEffect(() => {
     pulseEvents.onModuleViewed({
@@ -65,7 +69,11 @@ const Communtiy = () => {
       package: "Pulse Privilege",
       screen: "pulse_community_list",
     });
-  }, [pulseEvents]);
+    if (isCMContextActive() && !cmListViewedRef.current) {
+      cmListViewedRef.current = true;
+      cmEvents.listViewed("Community", "community_list");
+    }
+  }, [pulseEvents, cmEvents]);
 
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -136,6 +144,20 @@ const Communtiy = () => {
         fetchCommunities(1, filters, searchTerm)
     }, [searchTerm])
 
+    // Debounced Community Search Performed — fires once per settled term, never per keystroke,
+    // and not on pagination/filter re-fetches. CM-originated flows only (shared Pulse route).
+    const communitySearchFired = useRef<string>("");
+    useEffect(() => {
+        const term = searchTerm.trim();
+        if (!term || !isCMContextActive()) return;
+        if (communitySearchFired.current === term) return;
+        const timer = setTimeout(() => {
+            communitySearchFired.current = term;
+            cmEvents.searched("Community", term, "community_list");
+        }, 600);
+        return () => clearTimeout(timer);
+    }, [searchTerm])
+
     const handleApplyFilter = async (filterData: { status?: string; created_at?: string; created_by?: string }) => {
         const newFilters = {
             status: filterData.status || '',
@@ -144,6 +166,12 @@ const Communtiy = () => {
         };
         setFilters(newFilters);
         fetchCommunities(1, newFilters, searchTerm);
+        if (isCMContextActive()) {
+            const activeFilters = Object.entries(newFilters).filter(([, v]) => v && v !== '');
+            if (activeFilters.length > 0) {
+                cmEvents.filtered("Community", "community_list", Object.fromEntries(activeFilters));
+            }
+        }
     }
 
     const handleContinue = () => {
@@ -225,6 +253,9 @@ const Communtiy = () => {
                 )
             );
             toast.success(`Community ${newActive ? 'activated' : 'deactivated'} successfully`);
+            if (isCMContextActive()) {
+                cmEvents.statusChanged("Community", id, { active: newActive, screen: "community_list" });
+            }
         } catch (error: any) {
             console.error(error);
             toast.error(error.response?.data?.error || "Failed to update community status");

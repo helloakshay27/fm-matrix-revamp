@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Box, Autocomplete, Chip, Select, Avatar } from '@mui/material';
@@ -15,6 +16,7 @@ import { ArrowLeft, Camera, User } from 'lucide-react';
 export const EditGuestUserPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const cmEvents = useClubManagementEvents();
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -315,6 +317,7 @@ export const EditGuestUserPage: React.FC = () => {
         },
       });
       toast.success('Guest updated successfully');
+      cmEvents.updated("Guest", id, "guest_edit");
       navigate(`/club-management/users/guest/view/${id}`);
     } catch (error: any) {
       const msg = error?.response?.data?.error || error?.message || 'Failed to update guest';

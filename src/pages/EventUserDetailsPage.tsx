@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, FileText, Loader2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
+import { isCMContextActive } from '@/utils/posthogHelpers';
 
 interface UserDetail {
     firstname?: string;
@@ -41,9 +43,18 @@ const EventUserDetailsPage = () => {
     const { id, userid } = useParams();
     const [loading, setLoading] = useState(true);
     const [details, setDetails] = useState<EventUserDetailResponse | null>(null);
+    const cmEvents = useClubManagementEvents();
+    const detailViewedRef = useRef(false);
 
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
+
+    useEffect(() => {
+        if (details && !detailViewedRef.current && isCMContextActive()) {
+            detailViewedRef.current = true;
+            cmEvents.detailViewed("Event", id, "event_user_details");
+        }
+    }, [details, id, cmEvents]);
 
     useEffect(() => {
         const fetchUserDetails = async () => {

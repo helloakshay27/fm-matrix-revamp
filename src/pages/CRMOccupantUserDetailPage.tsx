@@ -1,17 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TextField, MenuItem, FormControl, InputLabel, Select, Chip, Box } from '@mui/material';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 export const CRMOccupantUserDetailPage = () => {
   const {
     id
   } = useParams();
   const navigate = useNavigate();
   const { shouldShow } = useDynamicPermissions();
+  const cmEvents = useClubManagementEvents();
+  const detailViewedRef = useRef(false);
   const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
+
+  useEffect(() => {
+    if (!detailViewedRef.current) {
+      detailViewedRef.current = true;
+      cmEvents.detailViewed("Occupant", id, "occupant_crm_details");
+    }
+  }, [cmEvents, id]);
 
   // Sample user data - in real app, this would be fetched based on ID
   const userData = {

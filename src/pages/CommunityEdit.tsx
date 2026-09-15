@@ -12,11 +12,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import axios from "axios";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { isCMContextActive } from "@/utils/posthogHelpers";
 
 const CommunityEdit = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const coverImageInputRef = useRef<HTMLInputElement>(null);
+  const { detailViewed, updated, statusChanged } = useClubManagementEvents();
+  const viewedRef = useRef(false);
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -54,6 +58,10 @@ const CommunityEdit = () => {
         });
         setIsActive(Boolean(community?.active));
         setCoverImagePreview(community?.icon || community?.cover_image || null);
+        if (isCMContextActive() && !viewedRef.current) {
+          viewedRef.current = true;
+          detailViewed("Community", id, "community_edit");
+        }
       } catch (error: any) {
         toast.error(error?.response?.data?.error || error?.message || "Failed to load community");
       } finally {
@@ -136,6 +144,9 @@ const CommunityEdit = () => {
       });
 
       toast.success("Community updated successfully");
+      if (isCMContextActive()) {
+        updated("Community", id, "community_edit", { name: formData.communityName });
+      }
       navigate(-1);
     } catch (error: any) {
       toast.error(error?.response?.data?.error || error?.message || "Failed to update community");
@@ -163,6 +174,9 @@ const CommunityEdit = () => {
 
       setIsActive(newActive);
       toast.success(`Community ${newActive ? 'activated' : 'deactivated'} successfully`);
+      if (isCMContextActive()) {
+        statusChanged("Community", id, { active: newActive, screen: "community_edit" });
+      }
     } catch (error: any) {
       console.error(error);
       toast.error(error.response?.data?.error || "Failed to update community status");
