@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 import { getUser } from "@/utils/auth";
 import { useLayout } from "@/contexts/LayoutContext";
 import { Button } from "@/components/ui/button";
@@ -171,6 +172,7 @@ interface Payload {
 export const EditFMUserPage = () => {
   const { id } = useParams<{ id: string }>(); // Explicitly type useParams
   const dispatch = useAppDispatch();
+  const cmEvents = useClubManagementEvents();
   const navigate = useNavigate();
   const { setCurrentSection } = useLayout();
   const baseUrl = localStorage.getItem("baseUrl") || "";
@@ -539,6 +541,7 @@ export const EditFMUserPage = () => {
         editFMUser({ data: formDataToSend, baseUrl, token, id: Number(id) })
       ).unwrap();
       toast.success("User updated successfully");
+      cmEvents.updated("Staff", id, "staff_edit");
       navigate("/master/user/fm-users");
     } catch (error) {
       console.error("Error updating user:", error);

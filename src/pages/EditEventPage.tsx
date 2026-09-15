@@ -32,12 +32,15 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import axios from "axios";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { isCMContextActive } from "@/utils/posthogHelpers";
 
 export const EditEventPage = () => {
   const { id } = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const attachmentInputRef = useRef<HTMLInputElement>(null);
+  const cmEvents = useClubManagementEvents();
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -460,6 +463,10 @@ export const EditEventPage = () => {
       }
 
       await dispatch(updateEvent({ id: id!, baseUrl, token, data: formDataToSend })).unwrap();
+
+      if (isCMContextActive()) {
+        cmEvents.updated("Event", id, "event_edit");
+      }
 
       // Clean up localStorage after successful submission
       [

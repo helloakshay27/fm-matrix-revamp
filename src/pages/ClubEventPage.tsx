@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon, Plus } from 'lucide-react';
@@ -18,10 +18,13 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { toast } from 'sonner';
 import { fetchEvents } from '@/store/slices/eventSlice';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 
 export const ClubEventsPage = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const cmEvents = useClubManagementEvents();
+    const listViewedRef = useRef(false);
 
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem("token");
@@ -44,6 +47,12 @@ export const ClubEventsPage = () => {
         total_pages: 0,
     });
     const [openFilterDialog, setOpenFilterDialog] = useState(false);
+
+    useEffect(() => {
+        if (listViewedRef.current) return;
+        listViewedRef.current = true;
+        cmEvents.listViewed("Event", "event_list");
+    }, [cmEvents]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -130,7 +139,17 @@ export const ClubEventsPage = () => {
                 current_page: response.pagination.current_page,
                 total_count: response.pagination.total_count,
                 total_pages: response.pagination.total_pages
-            })
+            });
+
+            const filterSummary: Record<string, unknown> = {};
+            if (filters.status) filterSummary.status = filters.status;
+            if (filters.dateRange.from) filterSummary.date_from = format(new Date(filters.dateRange.from), "MM/dd/yyyy");
+            if (filters.dateRange.to) filterSummary.date_to = format(new Date(filters.dateRange.to), "MM/dd/yyyy");
+            if (Object.keys(filterSummary).length > 0) {
+                cmEvents.filtered("Event", "event_list", filterSummary);
+            } else {
+                cmEvents.filtersReset("Event", "event_list");
+            }
         } catch (error) {
             console.log(error);
             toast.error('Failed to fetch data');
@@ -147,6 +166,7 @@ export const ClubEventsPage = () => {
             },
             status: '',
         });
+        cmEvents.filtersReset("Event", "event_list");
     };
 
     const handleAdd = () => {

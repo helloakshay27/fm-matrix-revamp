@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 import { getUser } from "@/utils/auth";
 import { useLayout } from "@/contexts/LayoutContext";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ import { SupplierSearchSelect } from "@/components/SupplierSearchSelect";
 
 export const AddFMUserPage = () => {
   const dispatch = useAppDispatch();
+  const cmEvents = useClubManagementEvents();
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const user = getUser();
@@ -371,6 +373,7 @@ export const AddFMUserPage = () => {
         return;
       }
       toast.success("User added successfully");
+      cmEvents.created("Staff", response?.id ?? response?.data?.id, "staff_add");
       navigate(-1);
     } catch (error: any) {
       console.log(error);
@@ -413,6 +416,7 @@ export const AddFMUserPage = () => {
 
       if (response.data) {
         toast.success("Permissions assigned successfully");
+        cmEvents.created("Staff", response.data?.id, "staff_add_permission");
         setDuplicateUserDialog((prev) => ({ ...prev, open: false }));
         navigate(-1);
       }

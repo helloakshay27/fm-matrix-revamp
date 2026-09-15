@@ -22,6 +22,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { getFullUrl, getAuthenticatedFetchOptions, API_CONFIG } from '@/config/apiConfig';
 import { getToken } from '@/utils/auth';
 import axios from 'axios';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 
 // Interfaces
 interface OccupantUserResponse {
@@ -168,6 +169,7 @@ export const AddClubMembershipPage = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>(); // Get ID from URL for edit mode
   const isEditMode = !!id;
+  const cmEvents = useClubManagementEvents();
 
   // Form state
   const [userSelectionMode, setUserSelectionMode] = useState<'select' | 'manual'>('manual');
@@ -1278,6 +1280,13 @@ export const AddClubMembershipPage = () => {
 
       const data = await response.json();
       console.log(`Club membership ${isEditMode ? 'updated' : 'created'} successfully:`, data);
+
+      const newId = data?.club_member?.id ?? data?.id;
+      if (isEditMode) {
+        cmEvents.updated("Membership", newId ?? id, "membership_edit");
+      } else {
+        cmEvents.created("Membership", newId, "membership_add");
+      }
 
       toast.success(`Club membership ${isEditMode ? 'updated' : 'added'} successfully`);
       navigate('/club-management/membership');

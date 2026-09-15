@@ -25,7 +25,7 @@ import Select, { components } from "react-select";
 import { min } from 'lodash';
 import { getReturnToFromState } from "@/utils/listBackNavigation";
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
-import { useHelpdeskEvents } from '@/components/PostHogHelpdeskEvents';
+import { useHelpdeskEvents, useCMHelpdeskEvents } from '@/components/PostHogHelpdeskEvents';
 import { useGaFunnelEvents } from '@/components/PostHogGaFunnelEvents';
 
 // Utility function to format date to DD/MM/YYYY
@@ -592,6 +592,8 @@ export const TicketDetailsPage = () => {
   const navigate = useNavigate();
   const { shouldShow } = useDynamicPermissions();
   const helpdeskEvents = useHelpdeskEvents();
+  const cmHdEvents = useCMHelpdeskEvents();
+  const isCMHelpdesk = window.location.pathname.includes("/club-management/helpdesk");
   const gaEvents = useGaFunnelEvents();
    const location = useLocation();
   const [ticketData, setTicketData] = useState(null);
@@ -953,6 +955,13 @@ export const TicketDetailsPage = () => {
         const data = await ticketManagementAPI.getTicketDetails(id);
         setTicketData(data);
         setTicketDetailsLoaded(true); // Mark details as loaded
+
+        // Helpdesk Ticket Viewed — fired only after the detail request succeeds, and only
+        // on the club-management/helpdesk route (this shared page also serves /tickets
+        // and /maintenance/ticket, which are out of scope). No event on route change alone.
+        if (isCMHelpdesk) {
+          cmHdEvents.onTicketDetailOpened(id, 'list');
+        }
       } catch (err) {
         console.error('Error fetching ticket details:', err);
         setError('Failed to fetch ticket details');
@@ -963,6 +972,7 @@ export const TicketDetailsPage = () => {
     };
 
     fetchTicketDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   // Fetch org_id from localStorage on component mount

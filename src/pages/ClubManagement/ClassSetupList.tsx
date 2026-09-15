@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Eye, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
 import { toast } from "sonner";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -43,6 +44,15 @@ const PAGE_SIZE = 10;
 
 export const ClassSetupList = () => {
   const navigate = useNavigate();
+  const cmEvents = useClubManagementEvents();
+  const listViewLogged = useRef(false);
+
+  useEffect(() => {
+    if (listViewLogged.current) return;
+    listViewLogged.current = true;
+    cmEvents.listViewed("Class Setup", "class_setup_list");
+  }, [cmEvents]);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [refreshTick, setRefreshTick] = useState(0);
@@ -69,6 +79,7 @@ export const ClassSetupList = () => {
   const handleConfirmDelete = () => {
     if (!deleteTarget) return;
     deleteClass(deleteTarget.id);
+    cmEvents.deleted("Class Setup", deleteTarget.id, "class_setup_list");
     toast.success("Class deleted successfully!");
     setShowDeleteModal(false);
     setDeleteTarget(null);

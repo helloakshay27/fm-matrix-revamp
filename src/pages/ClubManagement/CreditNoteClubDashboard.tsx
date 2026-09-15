@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Eye, Edit, Trash2, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import axios from 'axios';
 import {
     AlertDialog,
@@ -128,6 +129,8 @@ const columns: ColumnConfig[] = [
 
 export const CreditNoteClubDashboard: React.FC = () => {
     const navigate = useNavigate();
+    const cmEvents = useClubManagementEvents();
+    const listViewedRef = useRef(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
     const [searchTerm, setSearchTerm] = useState('');
@@ -228,11 +231,24 @@ export const CreditNoteClubDashboard: React.FC = () => {
         fetchCreditNoteData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
     }, [currentPage, perPage, debouncedSearchQuery, appliedFilters]);
 
+    useEffect(() => {
+        if (!listViewedRef.current) {
+            listViewedRef.current = true;
+            cmEvents.listViewed('Credit Note', 'credit_note_dashboard');
+        }
+    }, []);
+
     const handleSearch = (term: string) => {
         setSearchTerm(term);
         setCurrentPage(1);
         if (!term.trim()) fetchCreditNoteData(1, perPage, '', appliedFilters);
     };
+
+    useEffect(() => {
+        if (debouncedSearchQuery.trim()) {
+            cmEvents.searched('Credit Note', debouncedSearchQuery.trim(), 'credit_note_dashboard');
+        }
+    }, [debouncedSearchQuery]);
 
     const handlePageChange = (page: number) => setCurrentPage(page);
 
@@ -270,6 +286,7 @@ export const CreditNoteClubDashboard: React.FC = () => {
             );
 
             toast.success('Credit note deleted successfully!');
+            cmEvents.deleted('Credit Note', deleteTarget.id, 'credit_note_dashboard');
             setShowDeleteModal(false);
             setDeleteTarget(null);
             fetchCreditNoteData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
@@ -404,6 +421,7 @@ export const CreditNoteClubDashboard: React.FC = () => {
                                 variant="outline"
                                 onClick={() => {
                                     toast.success(`Printing ${selectedRows.length} credit note(s)...`);
+                                    cmEvents.exported('Credit Note', 'print', selectedRows.length, 'credit_note_dashboard');
                                     window.print();
                                 }}
                             >

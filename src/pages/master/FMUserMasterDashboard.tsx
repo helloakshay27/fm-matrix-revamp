@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 import { useNavigate,useSearchParams } from "react-router-dom";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useDispatch, useSelector } from "react-redux";
@@ -117,6 +118,8 @@ export const FMUserMasterDashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
   const user = getUser();
   const { shouldShow } = useDynamicPermissions();
+  const cmEvents = useClubManagementEvents();
+  const listViewedRef = useRef(false);
   const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
   const {
     loading,
@@ -265,6 +268,7 @@ export const FMUserMasterDashboard = () => {
   const debouncedSearch = useCallback(
     debounce(async (searchQuery: string) => {
       fetchUsers(1, { search_all_fields_cont: searchQuery });
+      if (searchQuery?.trim()) cmEvents.searched("Staff", searchQuery, "staff_list");
     }, 500),
     [dispatch, baseUrl, token, pagination.current_page]
   );
@@ -276,6 +280,10 @@ export const FMUserMasterDashboard = () => {
     }
     setCurrentSection("Master");
     dispatch(fetchUserCounts());
+    if (!listViewedRef.current) {
+      listViewedRef.current = true;
+      cmEvents.listViewed("Staff", "staff_list");
+    }
   }, [setCurrentSection, dispatch, isRestrictedUser, navigate]);
 
   const handleSearchChange = (value: string) => {
@@ -350,6 +358,7 @@ export const FMUserMasterDashboard = () => {
       );
 
       toast.success("User status updated successfully!");
+      cmEvents.statusChanged("Staff", userId, { action: isActive ? "activate" : "deactivate" });
     } catch (error: unknown) {
       console.error("Status toggle failed:", error);
       toast.error("Failed to update user status.");
@@ -404,6 +413,7 @@ export const FMUserMasterDashboard = () => {
         )
       );
       toast.success("User status updated successfully!");
+      cmEvents.statusChanged("Staff", selectedUser?.lockUserId, { action: "status_change", status: selectedStatus });
       dispatch(fetchUserCounts());
       setStatusDialogOpen(false);
       setSelectedUser(null);
@@ -446,6 +456,7 @@ export const FMUserMasterDashboard = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
+      cmEvents.exported("Staff", "xlsx", undefined, "staff_list");
     } catch (error: unknown) {
       console.error(error);
       toast.error("Failed to export users.");
@@ -463,6 +474,7 @@ export const FMUserMasterDashboard = () => {
       lastname_cont: lastName,
       email_cont: newFilters.email,
     });
+    cmEvents.filtered("Staff", "staff_list", { name: newFilters.name, email: newFilters.email });
     setFilterDialogOpen(false);
   };
 
@@ -509,6 +521,7 @@ export const FMUserMasterDashboard = () => {
       }
 
       toast.success(`Role ${operationType} successful!`);
+      cmEvents.action(operationType === "clone" ? "role_clone" : "role_transfer", { module: "Staff", screen: "staff_list" });
       setCloneRoleDialogOpen(false);
       setFromUser("");
       setToUser("");
@@ -530,6 +543,7 @@ export const FMUserMasterDashboard = () => {
     });
     setSearchTerm("");
     await fetchUsers(1);
+    cmEvents.filtersReset("Staff", "staff_list");
     setFilterDialogOpen(false);
   };
 

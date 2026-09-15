@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +20,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { toast as sonnerToast } from "sonner";
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import axios from "axios";
 
 // Mirrors the line_item_type values sent by the Debit Note Add page
@@ -33,6 +34,8 @@ const LINE_ITEM_TYPE_LABELS = {
 export const DebitNoteClubDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const cmEvents = useClubManagementEvents();
+  const detailViewedRef = useRef(false);
 
   const [debitNoteData, setDebitNoteData] = useState(null);
   const [lineItems, setLineItems] = useState([]);
@@ -49,6 +52,13 @@ export const DebitNoteClubDetails = () => {
       fetchDebitNoteDetails();
     }
   }, [id, baseUrl, token]);
+
+  useEffect(() => {
+    if (id && !detailViewedRef.current) {
+      detailViewedRef.current = true;
+      cmEvents.detailViewed('Debit Note', id, 'debit_note_details');
+    }
+  }, [id]);
 
   const fetchDebitNoteDetails = async () => {
     try {
@@ -95,6 +105,7 @@ export const DebitNoteClubDetails = () => {
         }
       );
       sonnerToast.success("Debit note deleted successfully");
+      cmEvents.deleted('Debit Note', id, 'debit_note_details');
       navigate("/club-management/debit-note");
     } catch (error) {
       console.error("Error deleting debit note:", error);

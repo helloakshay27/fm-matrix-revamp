@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, FileText, AlertCircle, File, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ import {
 } from "@/components/ui/dialog";
 import axios from "axios";
 import { toast } from "sonner";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { isCMContextActive } from "@/utils/posthogHelpers";
 
 interface UserDetail {
     id: number;
@@ -27,6 +29,8 @@ interface UserDetail {
 const CommunityUserDetails = () => {
     const { userId, communityId } = useParams();
     const navigate = useNavigate();
+    const { detailViewed, action } = useClubManagementEvents();
+    const viewedRef = useRef(false);
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
 
@@ -51,6 +55,10 @@ const CommunityUserDetails = () => {
                 }
             );
             setUserDetails(response.data);
+            if (isCMContextActive() && !viewedRef.current) {
+                viewedRef.current = true;
+                detailViewed("Community", userId, "community_user_details");
+            }
         } catch (error) {
             console.error("Error fetching user details:", error);
         } finally {
@@ -102,6 +110,9 @@ const CommunityUserDetails = () => {
                 }
             });
             toast.success("Report deleted successfully");
+            if (isCMContextActive()) {
+                action("Community Report Deleted", { entity_id: deleteConfirmation.reportId, screen: "community_user_details" });
+            }
             await fetchUserDetails();
         } catch (error) {
             console.log(error);

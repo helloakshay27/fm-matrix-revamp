@@ -1,11 +1,23 @@
+import { useEffect, useRef } from "react"
 import { useSearchParams } from "react-router-dom"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import BookingListDashboard from "./BookingListDashboard"
 import BookingCalenderView from "./BookingCalenderView"
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents"
+import { isCMContextActive } from "@/utils/posthogHelpers"
 
 const BookingList = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const activeTab = searchParams.get("tab") === "list" ? "list" : "calender";
+    const cmEvents = useClubManagementEvents();
+    const listViewedFired = useRef(false);
+
+    useEffect(() => {
+        if (!listViewedFired.current && isCMContextActive()) {
+            listViewedFired.current = true;
+            cmEvents.listViewed("Amenity Booking", "amenity_booking_list");
+        }
+    }, [cmEvents]);
 
     const handleTabChange = (tab: string) => {
         if (tab === "list") {

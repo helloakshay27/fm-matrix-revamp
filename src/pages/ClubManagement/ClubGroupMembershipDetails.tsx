@@ -19,6 +19,7 @@ import AudioFileIcon from '@mui/icons-material/AudioFile';
 import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import axios from 'axios';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 
 interface Attachment {
   id: number;
@@ -217,6 +218,8 @@ const QUESTION_SECTIONS: { [key: string]: { title: string; questionIds: string[]
 export const ClubGroupMembershipDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const cmEvents = useClubManagementEvents();
+  const detailViewLogged = useRef(false);
 
   const [membershipData, setMembershipData] = useState<GroupMembershipDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -377,6 +380,7 @@ export const ClubGroupMembershipDetails = () => {
         }
       );
       toast.success('Payment request sent successfully!');
+      cmEvents.action("Group Membership Payment Requested", { entity_id: id, bill_id: selectedBill.id, payment_mode: paymentMode });
       setOpenPaymentModal(false);
       setAttachments([]);
       if (id) {
@@ -471,6 +475,10 @@ export const ClubGroupMembershipDetails = () => {
 
       const data = await response.json();
       setMembershipData(data);
+      if (!detailViewLogged.current) {
+        detailViewLogged.current = true;
+        cmEvents.detailViewed("Group Membership", id, "group_membership_details");
+      }
 
     } catch (error) {
       console.error('Error fetching membership details:', error);
@@ -535,6 +543,7 @@ export const ClubGroupMembershipDetails = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success('Invoice sent successfully');
+      cmEvents.action("Group Membership Invoice Sent", { entity_id: id });
     } catch (error: any) {
       const msg = error?.response?.data?.error || error?.response?.data?.message || 'Failed to send invoice';
       toast.error(msg);
@@ -553,6 +562,7 @@ export const ClubGroupMembershipDetails = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success('Invoice sent successfully');
+      cmEvents.action("Group Membership Invoice Sent", { entity_id: id, bill_id: billId });
     } catch (error: any) {
       const msg = error?.response?.data?.error || error?.response?.data?.message || 'Failed to send invoice';
       toast.error(msg);
@@ -715,6 +725,7 @@ export const ClubGroupMembershipDetails = () => {
       window.URL.revokeObjectURL(downloadUrl);
 
       toast.success('PDF downloaded successfully');
+      cmEvents.exported("Group Membership", "PDF", 1, "group_membership_details");
     } catch (error) {
       console.error('Error downloading PDF:', error);
       toast.error('Failed to download PDF');

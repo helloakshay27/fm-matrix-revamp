@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CommunityDetailsTab from "@/components/community/CommunityDetailsTab";
@@ -6,6 +6,8 @@ import CommunityFeedTab from "@/components/community/CommunityFeedTab";
 import CommunityReportsTab from "@/components/community/CommunityReportsTab";
 import CommunityEventsTab from "@/components/community/CommunityEventsTab";
 import CommunityPendingRequestTab from "@/components/CommunityPendingRequestTab";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { isCMContextActive } from "@/utils/posthogHelpers";
 
 const ALLOWED_TABS = [
     "details",
@@ -18,6 +20,8 @@ const ALLOWED_TABS = [
 const CommunityDetails = () => {
     const { id } = useParams();
     const [searchParams, setSearchParams] = useSearchParams();
+    const { detailViewed } = useClubManagementEvents();
+    const viewedRef = useRef(false);
 
     // 🔑 Read tab from URL (fallback to "details")
     const tabFromUrl = searchParams.get("tab");
@@ -32,6 +36,13 @@ const CommunityDetails = () => {
 
     const [communityName, setCommunityName] = useState("");
     const [communityImg, setCommunityImg] = useState("");
+
+    useEffect(() => {
+        if (isCMContextActive() && id && !viewedRef.current) {
+            viewedRef.current = true;
+            detailViewed("Community", id, "community_details");
+        }
+    }, [id, detailViewed]);
 
     return (
         <div className="p-4 md:px-8 py-6 bg-white min-h-screen">

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { API_CONFIG } from "@/config/apiConfig";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 
 interface Attachment {
   id: number;
@@ -164,6 +165,8 @@ interface LockPayment {
 export const PaymentDetailPage = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { detailViewed, action } = useClubManagementEvents();
+  const viewedRef = useRef(false);
 
   const [payment, setPayment] = useState<LockPayment | null>(null);
   const [loading, setLoading] = useState(false);
@@ -200,6 +203,10 @@ export const PaymentDetailPage = () => {
       const data = await response.json();
 
       setPayment(data.lock_payment || data);
+      if (!viewedRef.current) {
+        viewedRef.current = true;
+        detailViewed("Payment", id, "payment_detail");
+      }
       toast.success("Payment details loaded");
     } catch (error) {
       toast.error("Failed to load payment details");
@@ -304,6 +311,7 @@ export const PaymentDetailPage = () => {
 
       toast.dismiss();
       toast.success("Receipt downloaded successfully");
+      action("Payment Receipt Downloaded", { entity_id: id, screen: "payment_detail" });
     } catch (error) {
       console.error("Error downloading receipt:", error);
       toast.dismiss();

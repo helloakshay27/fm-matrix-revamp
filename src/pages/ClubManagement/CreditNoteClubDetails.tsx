@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +20,7 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog";
 import { toast as sonnerToast } from "sonner";
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import axios from "axios";
 
 // Mirrors the line_item_type values sent by the Credit Note Add page
@@ -33,6 +34,8 @@ const LINE_ITEM_TYPE_LABELS = {
 export const CreditNoteClubDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const cmEvents = useClubManagementEvents();
+    const detailViewedRef = useRef(false);
 
     const [creditNoteData, setCreditNoteData] = useState(null);
     const [lineItems, setLineItems] = useState([]);
@@ -49,6 +52,13 @@ export const CreditNoteClubDetails = () => {
             fetchCreditNoteDetails();
         }
     }, [id, baseUrl, token]);
+
+    useEffect(() => {
+        if (id && !detailViewedRef.current) {
+            detailViewedRef.current = true;
+            cmEvents.detailViewed('Credit Note', id, 'credit_note_details');
+        }
+    }, [id]);
 
     const fetchCreditNoteDetails = async () => {
         try {
@@ -93,6 +103,7 @@ export const CreditNoteClubDetails = () => {
                 }
             );
             sonnerToast.success("Credit note deleted successfully");
+            cmEvents.deleted('Credit Note', id, 'credit_note_details');
             navigate("/club-management/credit-note");
         } catch (error) {
             console.error("Error deleting credit note:", error);

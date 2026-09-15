@@ -12,6 +12,8 @@ import { useNavigate } from "react-router-dom";
 import { useAppDispatch } from "@/store/hooks";
 import { toast } from "sonner";
 import { createBroadcast } from "@/store/slices/broadcastSlice";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { isCMContextActive } from "@/utils/posthogHelpers";
 import axios from "axios";
 import {
   Tooltip,
@@ -32,6 +34,7 @@ export const AddBroadcastPage = () => {
   const navigate = useNavigate();
   const attachmentInputRef = useRef<HTMLInputElement>(null);
   const coverImageInputRef = useRef<HTMLInputElement>(null);
+  const cmEvents = useClubManagementEvents();
 
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
@@ -329,7 +332,11 @@ export const AddBroadcastPage = () => {
         formDataToSend.append("cover_image", formData.coverImage);
       }
 
-      await dispatch(createBroadcast({ data: formDataToSend, baseUrl, token })).unwrap();
+      const createdBroadcast = await dispatch(createBroadcast({ data: formDataToSend, baseUrl, token })).unwrap();
+
+      if (isCMContextActive()) {
+        cmEvents.created("Notice", (createdBroadcast as any)?.id ?? (createdBroadcast as any)?.noticeboard?.id, "notice_add");
+      }
 
       // Clean up localStorage after successful submission
       localStorage.removeItem('title');

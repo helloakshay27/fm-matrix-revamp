@@ -3,10 +3,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { getClassById, updateClass } from "./classSetupMockData";
 import { ClassSetupForm, emptyClassSetupForm, type ClassSetupFormState } from "./ClassSetupForm";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 
 export const ClassSetupEdit = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const cmEvents = useClubManagementEvents();
   const [initialValues, setInitialValues] = useState<ClassSetupFormState | null>(null);
 
   useEffect(() => {
@@ -43,6 +45,7 @@ export const ClassSetupEdit = () => {
       onSubmit={(payload) => {
         if (!id) return;
         updateClass(id, payload);
+        cmEvents.updated("Class Setup", id, "class_setup_edit");
         toast.success("Class updated successfully!");
         navigate(`/club-management/class-setup/details/${id}`);
       }}

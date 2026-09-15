@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2, Printer, Star, FileText, Share2, File, Pencil, Trash2 } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -9,6 +9,8 @@ import { fetchBroadcastById } from '@/store/slices/broadcastSlice';
 import { format } from 'date-fns';
 import axios from 'axios';
 import { Switch } from '@mui/material';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
+import { isCMContextActive } from '@/utils/posthogHelpers';
 
 interface BroadcastDetails {
     id?: string;
@@ -33,6 +35,8 @@ export const CommunityNoticeDetails = () => {
     const { id } = useParams();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const { detailViewed, statusChanged, exported } = useClubManagementEvents();
+    const viewedRef = useRef(false);
 
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem("token");
@@ -54,6 +58,10 @@ export const CommunityNoticeDetails = () => {
                 setIsActive(response.active);
                 setShowOnHomeScreen(response.show_on_home_screen || false);
                 setVisibleAfterExpire(response.flag_expire || false);
+                if (isCMContextActive() && !viewedRef.current) {
+                    viewedRef.current = true;
+                    detailViewed("Community Notice", id, "community_notice_details");
+                }
             } catch (error) {
                 console.log(error)
                 toast.error("Failed to fetch broadcast details")
@@ -92,6 +100,9 @@ export const CommunityNoticeDetails = () => {
             // Clean up
             link.parentNode.removeChild(link);
             window.URL.revokeObjectURL(url); // optional: free memory
+            if (isCMContextActive()) {
+                exported("Community Notice", "pdf", 1, "community_notice_details", { entity_id: id });
+            }
         } catch (error) {
             console.log(error)
         } finally {
@@ -125,6 +136,9 @@ export const CommunityNoticeDetails = () => {
             );
 
             toast.success('Status updated successfully');
+            if (isCMContextActive()) {
+                statusChanged("Community Notice", id, { field, active: value, screen: "community_notice_details" });
+            }
         } catch (error) {
             console.error('Failed to update status:', error);
             toast.error('Failed to update status');

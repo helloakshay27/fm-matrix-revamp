@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 import {
   addTrainerToClass,
   deleteClass,
@@ -53,8 +54,16 @@ const getStatusBadge = (status: string) => (
 export const ClassSetupDetails = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const cmEvents = useClubManagementEvents();
+  const detailViewLogged = useRef(false);
   const [, forceRefresh] = useState(0);
   const cls = id ? getClassById(id) : undefined;
+
+  useEffect(() => {
+    if (detailViewLogged.current) return;
+    detailViewLogged.current = true;
+    cmEvents.detailViewed("Class Setup", id, "class_setup_details");
+  }, [cmEvents, id]);
 
   const [addTrainerOpen, setAddTrainerOpen] = useState(false);
   const [trainerForm, setTrainerForm] = useState({ name: "", email: "", specialization: "", experience: "" });
@@ -72,6 +81,7 @@ export const ClassSetupDetails = () => {
 
   const handleDelete = () => {
     deleteClass(cls.id);
+    cmEvents.deleted("Class Setup", cls.id, "class_setup_details");
     toast.success("Class deleted successfully!");
     navigate("/club-management/class-setup");
   };
@@ -82,6 +92,7 @@ export const ClassSetupDetails = () => {
       return;
     }
     addTrainerToClass(cls.id, { ...trainerForm, status: "Active" });
+    cmEvents.action("Class Setup Trainer Added", { entity_id: cls.id });
     toast.success("Trainer added successfully!");
     setTrainerForm({ name: "", email: "", specialization: "", experience: "" });
     setAddTrainerOpen(false);
@@ -90,6 +101,7 @@ export const ClassSetupDetails = () => {
 
   const handleRemoveTrainer = (trainerId: string) => {
     removeTrainerFromClass(cls.id, trainerId);
+    cmEvents.action("Class Setup Trainer Removed", { entity_id: cls.id, trainer_id: trainerId });
     forceRefresh((n) => n + 1);
   };
 

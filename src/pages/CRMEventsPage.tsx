@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate ,useLocation} from 'react-router-dom';
 import { format } from 'date-fns';
 import { Plus, Edit, Calendar, IndianRupee, CalendarCheck, AlertCircle, CalendarClock, FileCheck, CalendarRange } from 'lucide-react';
@@ -13,11 +13,15 @@ import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, Pagi
 import { CRMEventsFilterModal } from '@/components/CRMEventsFilterModal';
 import { Switch } from '@/components/ui/switch';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
+import { isCMContextActive } from '@/utils/posthogHelpers';
 
 export const CRMEventsPage = () => {
   const { shouldShow } = useDynamicPermissions();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const cmEvents = useClubManagementEvents();
+  const listViewedRef = useRef(false);
 
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem("token");
@@ -78,6 +82,13 @@ const [pagination, setPagination] = useState(() => {
     attachments: event.documents || [],
     created_at: event.created_at,
   });
+
+  useEffect(() => {
+    if (!listViewedRef.current && isCMContextActive()) {
+      listViewedRef.current = true;
+      cmEvents.listViewed("Event", "event_list");
+    }
+  }, [cmEvents]);
 
   useEffect(() => {
   const params = new URLSearchParams(location.search);
@@ -183,6 +194,18 @@ const [pagination, setPagination] = useState(() => {
         total_count: response.pagination.total_count,
         total_pages: response.pagination.total_pages
       })
+
+      if (isCMContextActive()) {
+        const summary: Record<string, unknown> = {};
+        if (filterData.status) summary.status = filterData.status;
+        if (filterData.created_at) summary.created_at = filterData.created_at;
+        if (filterData.created_by) summary.created_by = filterData.created_by;
+        if (Object.keys(summary).length > 0) {
+          cmEvents.filtered("Event", "event_list", summary);
+        } else {
+          cmEvents.filtersReset("Event", "event_list");
+        }
+      }
     } catch (error) {
       console.log(error);
       toast.error('Failed to fetch data');
@@ -226,6 +249,10 @@ const [pagination, setPagination] = useState(() => {
       ).unwrap();
 
       toast.success("Event status updated successfully");
+
+      if (isCMContextActive()) {
+        cmEvents.statusChanged("Event", item.id, { event_status: newStatus === 1 ? "published" : "disabled" });
+      }
     } catch (error) {
       console.error(error);
       toast.error("Failed to update event status");

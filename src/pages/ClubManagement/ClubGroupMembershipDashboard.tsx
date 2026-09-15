@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import { Badge } from "@/components/ui/badge";
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
@@ -102,6 +103,8 @@ interface GroupMembershipData {
 export const ClubGroupMembershipDashboard = () => {
   const navigate = useNavigate();
   const loginState = useSelector((state: RootState) => state.login);
+  const cmEvents = useClubManagementEvents();
+  const listViewLogged = useRef(false);
 
   // State management
   const [memberships, setMemberships] = useState<GroupMembershipData[]>([]);
@@ -194,6 +197,10 @@ export const ClubGroupMembershipDashboard = () => {
         setMemberships(data.club_member_allocations);
         setTotalMembers(data.pagination?.total_count || 0);
         setTotalPages(data.pagination?.total_pages || Math.ceil((data.pagination?.total_count || 0) / perPage));
+        if (!listViewLogged.current) {
+          listViewLogged.current = true;
+          cmEvents.listViewed("Group Membership", "group_membership_list");
+        }
       } else {
         setMemberships([]);
         setTotalMembers(0);
@@ -224,6 +231,8 @@ export const ClubGroupMembershipDashboard = () => {
     if (currentSearch === newSearch) {
       return;
     }
+
+    cmEvents.searched("Group Membership", newSearch, "group_membership_list");
 
     setFilters(prevFilters => ({
       ...prevFilters,
@@ -313,6 +322,8 @@ export const ClubGroupMembershipDashboard = () => {
 
       toast.success('Excel file downloaded successfully', { id: loadingToast });
 
+      cmEvents.exported("Group Membership", "Excel", memberships.length, "group_membership_list");
+
     } catch (error: any) {
       console.error('Error exporting data:', error);
       toast.error(error.message || 'Failed to export data', { id: loadingToast });
@@ -343,6 +354,7 @@ export const ClubGroupMembershipDashboard = () => {
   // Handle filter apply
   const handleFilterApply = (newFilters: ClubMembershipFilters) => {
     console.log('Applying filters:', newFilters);
+    cmEvents.filtered("Group Membership", "group_membership_list", newFilters as unknown as Record<string, unknown>);
     setFilters(newFilters);
     setCurrentPage(1);
     setIsFilterOpen(false);
