@@ -108,6 +108,11 @@ const adminNavigationStructure = {
         icon: Brain,
         href: "/ops-console/admin/disc-report",
       },
+      {
+        name: "Gate Integration",
+        icon: TrendingUp,
+        href: "/ops-console/settings/gate-integration",
+      },
     ],
   },
 };
