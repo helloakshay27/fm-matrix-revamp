@@ -3737,6 +3737,15 @@ import EditSupplierPage from "./features/PulseSuppliers/pages/EditSupplierPage.t
 const ModulesManagement = lazy(
   () => import("./pages/settings/ModulesManagement")
 );
+const GateIntegrationPage = lazy(
+  () => import("./features/gate-integration/pages/GateIntegration")
+);
+const AddGatePage = lazy(
+  () => import("./features/gate-integration/pages/AddGatePage")
+);
+const EditGatePage = lazy(
+  () => import("./features/gate-integration/pages/EditGatePage")
+);
 const InvoiceAdd = lazy(() =>
   import("./pages/ClubManagement/InvoiceAdd").then((m) => ({
     default: m.InvoiceAdd,
@@ -4746,6 +4755,18 @@ function App() {
                             <Route
                               path="settings/modules"
                               element={<ModulesManagement />}
+                            />
+                            <Route
+                              path="settings/gate-integration"
+                              element={<GateIntegrationPage />}
+                            />
+                            <Route
+                              path="settings/gate-integration/add"
+                              element={<AddGatePage />}
+                            />
+                            <Route
+                              path="settings/gate-integration/edit/:id"
+                              element={<EditGatePage />}
                             />
 
                             {/* <Route

@@ -169,6 +169,11 @@ type Ctx = {
   setModule: (m: ModuleView) => void;
   openAcc: AccordionKey;
   toggleAccordion: (key: AccordionKey) => void;
+  /** Which sections are currently checked in the Employee Data/KRCC/LMC/Training/SMT
+   *  toggle row — a section's component only mounts (and therefore only calls its
+   *  own API) once it's in this set. */
+  visibleSections: Set<Exclude<AccordionKey, null>>;
+  setSectionVisible: (key: Exclude<AccordionKey, null>, visible: boolean) => void;
   pageTitle: string;
   setPageTitle: (t: string) => void;
   scopeText: string;
@@ -236,6 +241,20 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
   const [persona, setPersonaState] = useState<Persona>('admin');
   const [module, setModule] = useState<ModuleView>('msafe');
   const [openAcc, setOpenAcc] = useState<AccordionKey>(null);
+  // Employee Data (users) is on by default; KRCC/LMC/Training/SMT start unchecked.
+  const [visibleSections, setVisibleSections] = useState<Set<Exclude<AccordionKey, null>>>(
+    () => new Set<Exclude<AccordionKey, null>>(['users']),
+  );
+
+  const setSectionVisible = useCallback((key: Exclude<AccordionKey, null>, visible: boolean) => {
+    setVisibleSections((prev) => {
+      if (visible === prev.has(key)) return prev;
+      const next = new Set(prev);
+      if (visible) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+  }, []);
   const [pageTitle, setPageTitle] = useState('M-Safe · All-India View');
   const [scopeText, setScopeText] = useState('27,438 registered users across 22 circles');
   const [kpiUsers, setKpiUsers] = useState('27,438');
@@ -389,10 +408,13 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
     }
   }, [resolveDefaultClusters]);
 
-  // HTML v6 behavior: sections stay mounted; KPI click highlights + smooth-scrolls
+  // HTML v6 behavior: sections stay mounted; KPI click highlights + smooth-scrolls.
+  // A KPI card for a section that's currently unchecked also checks it first —
+  // otherwise the target element wouldn't exist yet to scroll to.
   const toggleAccordion = useCallback((key: AccordionKey) => {
     if (!key) return;
     setOpenAcc(key);
+    setSectionVisible(key, true);
     const idMap: Record<Exclude<AccordionKey, null>, string> = {
       users: 'acc-users',
       krcc: 'acc-krcc',
@@ -401,10 +423,12 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       smt: 'acc-smt',
     };
     window.requestAnimationFrame(() => {
-      document.getElementById(idMap[key])?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      window.requestAnimationFrame(() => {
+        document.getElementById(idMap[key])?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
     });
     window.setTimeout(() => setOpenAcc(null), 1600);
-  }, []);
+  }, [setSectionVisible]);
 
   const openDrill = useCallback((id: string, title?: string) => {
     setDrill({
@@ -514,6 +538,8 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       setModule,
       openAcc,
       toggleAccordion,
+      visibleSections,
+      setSectionVisible,
       pageTitle,
       setPageTitle,
       scopeText,
@@ -567,6 +593,8 @@ export function MsafeDashboardProvider({ children }: { children: React.ReactNode
       module,
       openAcc,
       toggleAccordion,
+      visibleSections,
+      setSectionVisible,
       pageTitle,
       scopeText,
       kpiUsers,
