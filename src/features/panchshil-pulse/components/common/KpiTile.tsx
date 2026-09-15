@@ -24,7 +24,7 @@ export const KpiTile: React.FC<KpiTileProps> = ({
   dir = 'flat',
   delta,
   sub,
-  noTarget = false,
+  noTarget = true,
   unit = '',
   goodUp = true
 }) => {

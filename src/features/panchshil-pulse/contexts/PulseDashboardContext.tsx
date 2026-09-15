@@ -14,13 +14,13 @@ import {
   buildTraffic,
   buildAdopt,
   buildFlows,
-  buildSiteHealth,
+  buildModuleHealth,
   toModuleOptions,
   type DashboardState,
   type TrafficData,
   type AdoptData,
   type FlowsData,
-  type SiteHealthData,
+  type ModuleHealthData,
   type ModuleOption,
 } from "../../posthog-dashboard/data/metrics";
 import {
@@ -40,7 +40,6 @@ import {
   useModuleTree,
   useRetention,
   useRoles,
-  useSiteLeague,
   useSubModuleTree,
   useTrafficSession,
   useUsageAndDistribution,
@@ -71,6 +70,18 @@ function deviceParam(dev: Dev): DeviceType[] {
   return [];
 }
 
+/* Pulse's platform selector maps onto the Connect-style platform values used to
+   build the single `os`/`device_type` API param (see getDeviceInfo): the iOS
+   button sends "ios" → `os=ios`, the Mobile/Android button sends "android" →
+   `os=Android`, and "all" sends `device_type=Desktop,Mobile` so every platform's
+   usage is included. No `dev` value is ever sent — only the resulting
+   os/device_type param. */
+function pulseDev(dev: Dev): string {
+  if (dev === "desktop") return "ios";
+  if (dev === "mobile") return "android";
+  return "all";
+}
+
 export interface SectionStatus {
   loading: boolean;
   error: Error | null;
@@ -80,7 +91,7 @@ export interface PulseViewModel {
   scopeLabel: string;
   traffic: TrafficData;
   adopt: AdoptData;
-  siteHealth: SiteHealthData | null;
+  siteHealth: ModuleHealthData | null;
   flows: FlowsData;
   sites: Site[];
   /** The sites covered by the current FilterBar scope ("All Sites" = every org site). */
@@ -94,13 +105,6 @@ export interface PulseViewModel {
     adopt: SectionStatus;
     flows: SectionStatus;
     siteHealth: SectionStatus;
-  };
-  /** Progress of the per-site `traffic_session` fan-out behind the site-wise table. */
-  siteLeague: {
-    loaded: number;
-    failed: number;
-    total: number;
-    skipped: number;
   };
   /** `generated_at` of the Layer-1 response — the freshness stamp shown in the header. */
   generatedAt: string | null;
@@ -149,6 +153,15 @@ export const PulseDashboardProvider: React.FC<{
   const location = useLocation();
   const init = useMemo(() => dateRangeFor(30), []);
 
+  // Which analytics section the current URL maps to. The section shown on first
+  // entry (e.g. the Traffic page when opening from the app header) loads
+  // automatically via the loadedSections initializer; the other sections load
+  // when the user navigates to them.
+  const activeSection = useMemo(
+    () => sectionForPath(location.pathname),
+    [location.pathname]
+  );
+
   const [dev, setDev] = useState<Dev>("all");
   const [prev, setPrev] = useState<boolean>(true);
   const [project, setProject] = useState<string>("all");
@@ -159,23 +172,25 @@ export const PulseDashboardProvider: React.FC<{
   const [sessTab, setSessTab] = useState<SessTab>("sessions");
   const [module, setModuleState] = useState<string | null>(null);
   const [subModule, setSubModuleState] = useState<string | null>(null);
-  const [loadedSections, setLoadedSections] = useState<Record<AnalyticsSection, boolean>>({
-    traffic: false,
-    adopt: false,
-    flows: false,
-  });
+  const [loadedSections, setLoadedSections] = useState<Record<AnalyticsSection, boolean>>(() => ({
+    traffic: activeSection === "traffic",
+    adopt: activeSection === "adopt",
+    flows: activeSection === "flows",
+  }));
   const [requestId, setRequestId] = useState(0);
-  const activeSection = useMemo(() => sectionForPath(location.pathname), [location.pathname]);
   const hasRequestedAnalytics = Object.values(loadedSections).some(Boolean);
   const initialLocationKey = useRef(location.key);
 
   // A click on a Layer link changes React Router's location key. Load that
-  // destination once, but never load automatically for the initial page view.
+  // destination once; the section entered on the initial page view is already
+  // enabled by the loadedSections initializer above, and re-visiting a loaded
+  // section reuses its cached data instead of bumping the request id again.
   useEffect(() => {
     if (location.key === initialLocationKey.current) return;
+    if (loadedSections[activeSection]) return;
     setLoadedSections((sections) => ({ ...sections, [activeSection]: true }));
     setRequestId((id) => id + 1);
-  }, [location.key, activeSection]);
+  }, [location.key, activeSection, loadedSections]);
 
   // Theme state — always start the dashboard in the app's existing light theme.
   // Do NOT restore a persisted dark preference or auto-detect the user's system
@@ -277,7 +292,8 @@ export const PulseDashboardProvider: React.FC<{
   /* ------------------------------------------------------- data orchestration */
 
   // Every site on the tenant (/pms/sites.json) — drives the All Sites / per-site scope.
-  // Site metadata is also click-to-load; the dashboard makes no request on mount.
+  // Site metadata is fetched once analytics have been requested, which now
+  // includes the initial page view's section.
   const sitesQ = useAllSites(hasRequestedAnalytics);
   const companiesQ = useCompanyNames(hasRequestedAnalytics);
   const sites = useMemo<Site[]>(() => sitesQ.data ?? [], [sitesQ.data]);
@@ -298,8 +314,6 @@ export const PulseDashboardProvider: React.FC<{
     if (!sites.some((s) => s.id === project)) setProject("all");
   }, [project, sites, sitesQ.isLoading]);
 
-  const siteIds = useMemo(() => scopedSites.map((s) => s.id), [scopedSites]);
-
   // Hold the analytics calls until the site list has settled — otherwise every
   // endpoint fires once for the whole tenant and again with the real site_id list.
   // Do not call analytics without an explicit site scope. An empty site list is
@@ -311,14 +325,19 @@ export const PulseDashboardProvider: React.FC<{
       enabled: sitesSettled,
       from: rangeFrom,
       to: rangeTo,
-      siteIds,
+      // Panchshil Pulse must NOT send `site_id` to the analytics API — the
+      // request carries only project_code/from/to plus the device param. Keep
+      // the site list for the scope label/UI, but never forward it as a filter:
+      // an empty array makes buildQuery drop the `site_id` param entirely.
+      siteIds: [],
       devices: deviceParam(dev),
+      dev: pulseDev(dev),
       licensedSeats: null,
       module,
       subModule,
       requestId,
     }),
-    [sitesSettled, rangeFrom, rangeTo, siteIds, dev, module, subModule, requestId]
+    [sitesSettled, rangeFrom, rangeTo, dev, module, subModule, requestId]
   );
 
   /** A disabled query reports isLoading=false, so treat "not started yet" as loading too. */
@@ -326,8 +345,9 @@ export const PulseDashboardProvider: React.FC<{
 
   /* --------------------------------------------------------- route-scoped API calls */
 
-  // Opening or navigating to a page never loads analytics automatically.
-  // The Refresh control explicitly enables the section below.
+  // The section shown when the dashboard opens (e.g. Traffic & Session) loads
+  // automatically on first entry. Navigating to another Layer tab enables that
+  // section via the location-key effect; Refresh re-requests the active section.
 
   const trafficFilters = useMemo(
     () => ({
@@ -358,15 +378,23 @@ export const PulseDashboardProvider: React.FC<{
   const growthQ = useGrowth(adoptionFilters);
   const retentionQ = useRetention(adoptionFilters);
   const rolesQ = useRoles(adoptionFilters);
-  const moduleTreeQ = useModuleTree(workflowFilters);
-  const subModuleTreeQ = useSubModuleTree(workflowFilters);
-  const workflowQ = useWorkflowUsage(workflowFilters);
-
-  const league = useSiteLeague(
-    adoptionFilters,
-    siteIds,
-    scopedSites.length > 1
+  // The module tree powers BOTH the Workflow Usage nav and the adoption tab's
+  // site-wise breakdown — exactly like Connect's `useModuleTree`. The adoption
+  // layer therefore fetches the tree too, not just the workflow layer.
+  const moduleTreeQ = useModuleTree(
+    activeSection === "adopt" || activeSection === "flows"
+      ? {
+          ...filters,
+          enabled:
+            filters.enabled &&
+            (activeSection === "adopt"
+              ? loadedSections.adopt
+              : loadedSections.flows),
+        }
+      : { ...filters, enabled: false }
   );
+  const subModuleTreeQ = useSubModuleTree(workflowFilters);
+  const workflowQ = useWorkflowUsage(workflowFilters, { requireModule: false });
 
   const modules = useMemo(
     () => toModuleOptions(moduleTreeQ.data?.tree),
@@ -429,7 +457,7 @@ export const PulseDashboardProvider: React.FC<{
         retentionQ.data,
         rolesQ.data
       ),
-      siteHealth: buildSiteHealth(league.entries, sites),
+      siteHealth: buildModuleHealth(modules),
       flows: buildFlows(dashState, workflowQ.data),
       sites,
       scopedSites,
@@ -467,15 +495,9 @@ export const PulseDashboardProvider: React.FC<{
           error: (sitesQ.error ?? moduleTreeQ.error ?? workflowQ.error) as Error | null,
         },
         siteHealth: {
-          loading: pending || league.isLoading,
-          error: (sitesQ.error ?? league.error) as Error | null,
+          loading: pending || moduleTreeQ.isLoading,
+          error: (sitesQ.error ?? moduleTreeQ.error) as Error | null,
         },
-      },
-      siteLeague: {
-        loaded: league.loaded,
-        failed: league.failed,
-        total: league.total,
-        skipped: Math.max(0, scopedSites.length - league.total),
       },
       generatedAt: trafficQ.data?.meta.generated_at ?? null,
       range: { from: rangeFrom, to: rangeTo },
@@ -520,12 +542,6 @@ export const PulseDashboardProvider: React.FC<{
       workflowQ.data,
       workflowQ.isLoading,
       workflowQ.error,
-      league.entries,
-      league.isLoading,
-      league.error,
-      league.loaded,
-      league.failed,
-      league.total,
     ]
   );
 
