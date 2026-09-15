@@ -640,6 +640,23 @@
 }
 .msafe-dash .mtab.active .mtab-badge {background:var(--terra)}
 
+/* Employee Data / KRCC / LMC / Training / SMT section toggles — sit to the
+   right of the M-Safe tab in the same dark bar. */
+.msafe-dash .msafe-section-toggles {
+  display:flex;align-items:center;gap:18px;
+  margin-left:auto;padding-right:4px;
+}
+.msafe-dash .msafe-section-toggle {
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:600;color:rgba(255,255,255,.75);
+  white-space:nowrap;cursor:pointer;
+  transition:color .15s;
+}
+.msafe-dash .msafe-section-toggle:hover {color:#fff}
+.msafe-dash .msafe-section-toggle input[type="checkbox"] {
+  width:14px;height:14px;accent-color:var(--terra);cursor:pointer;
+}
+
 /* subnav needs to sit below module-tabs now */
 .msafe-dash .subnav { top:110px; }
 
