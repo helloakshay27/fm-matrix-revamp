@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { usePulseDashboard } from "../../contexts/PulseDashboardContext";
 
 export const Topbar: React.FC = () => {
-  const { collapsed, setCollapsed, theme, setTheme, vm } = usePulseDashboard();
+  const { collapsed, setCollapsed, theme, setTheme } = usePulseDashboard();
   const navigate = useNavigate();
 
   const handleToggleNav = () => {
@@ -15,7 +15,6 @@ export const Topbar: React.FC = () => {
   };
 
   const nextThemeLabel = theme === 'dark' ? 'light' : 'dark';
-  const freshStamp = vm.generatedAt ? `Data generated ${vm.generatedAt}` : "Live data";
 
   return (
     <header className="topbar">
@@ -83,7 +82,6 @@ export const Topbar: React.FC = () => {
           <path d="M10 1.8v1.7M10 16.5v1.7M18.2 10h-1.7M3.5 10H1.8M15.8 4.2l-1.2 1.2M5.4 14.6l-1.2 1.2M15.8 15.8l-1.2-1.2M5.4 5.4 4.2 4.2" />
         </svg>
       </button>
-      <span className="badge-sample" title={freshStamp}>Live &middot; PostHog analytics</span>
       <div className="avatar">PP</div>
     </header>
   );
