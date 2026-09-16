@@ -1574,43 +1574,94 @@ export const VisitorsDashboard = () => {
     });
 
     try {
-      const exportUrl = getFullUrl(ENDPOINTS.VISITOR_HISTORY_EXPORT);
+      // Step 1: kick off the background export job.
+      // exportFromDate/exportToDate are already "DD/MM/YYYY" strings from
+      // MaterialDatePicker, matching the confirmed "DD/MM/YYYY - DD/MM/YYYY" format.
+      const startUrl = new URL(getFullUrl(ENDPOINTS.VISITOR_HISTORY_EXPORT_START));
+      startUrl.searchParams.set('q[date_range]', `${exportFromDate} - ${exportToDate}`);
 
-      const fromParts = exportFromDate.split('/');
-      const toParts = exportToDate.split('/');
-      const dateRangeParam = `${fromParts[1]}%2F${fromParts[0]}%2F${fromParts[2]}-${toParts[1]}%2F${toParts[0]}%2F${toParts[2]}`;
-
-      const separator = exportUrl.includes('?') ? '&' : '?';
-      const urlWithDateRange = `${exportUrl}${separator}q[date_range]=${dateRangeParam}`;
-
-      console.log('Export URL with date range:', urlWithDateRange);
-
-      const response = await fetch(urlWithDateRange, {
+      const startResponse = await fetch(startUrl.toString(), {
         method: 'GET',
-        headers: {
-          'Authorization': getAuthHeader(),
-        },
+        headers: { Authorization: getAuthHeader() },
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Export API error response:', errorText);
-        if (response.status === 401) {
+      if (!startResponse.ok) {
+        if (startResponse.status === 401) {
           throw new Error('Authentication failed. Please login again.');
         }
-        throw new Error(`Export failed: ${response.status} ${response.statusText}`);
+        throw new Error(`Export failed: ${startResponse.status} ${startResponse.statusText}`);
       }
 
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
+      const { export_key: exportKey } = await startResponse.json();
+      if (!exportKey) {
+        throw new Error('Export did not return a valid export key.');
+      }
+
+      // Step 2: poll until the export job is done (or failed).
+      const statusUrl = new URL(getFullUrl(ENDPOINTS.VISITOR_EXPORT_STATUS));
+      statusUrl.searchParams.set('key', exportKey);
+
+      const POLL_INTERVAL_MS = 2000;
+      const MAX_POLL_ATTEMPTS = 60; // ~2 minutes
+      let exportStatus: 'processing' | 'done' | 'failed' = 'processing';
+      let statusError: string | undefined;
+
+      for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
+        const statusResponse = await fetch(statusUrl.toString(), {
+          method: 'GET',
+          headers: { Authorization: getAuthHeader() },
+        });
+
+        if (!statusResponse.ok) {
+          throw new Error(
+            `Failed to check export status: ${statusResponse.status} ${statusResponse.statusText}`
+          );
+        }
+
+        const statusData = await statusResponse.json();
+        exportStatus = statusData.status;
+
+        if (exportStatus === 'done') break;
+        if (exportStatus === 'failed') {
+          statusError = statusData.error;
+          break;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+      }
+
+      if (exportStatus === 'failed') {
+        throw new Error(statusError || 'Export failed. Please try again.');
+      }
+      if (exportStatus !== 'done') {
+        throw new Error('Export is taking longer than expected. Please try again shortly.');
+      }
+
+      // Step 3: download the finished file.
+      const downloadUrl = new URL(getFullUrl(ENDPOINTS.VISITOR_DOWNLOAD_EXPORT));
+      downloadUrl.searchParams.set('key', exportKey);
+
+      const downloadResponse = await fetch(downloadUrl.toString(), {
+        method: 'GET',
+        headers: { Authorization: getAuthHeader() },
+      });
+
+      if (!downloadResponse.ok) {
+        throw new Error(
+          `Failed to download export: ${downloadResponse.status} ${downloadResponse.statusText}`
+        );
+      }
+
+      const blob = await downloadResponse.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = downloadUrl;
+      link.href = objectUrl;
       const timestamp = new Date().toISOString().slice(0, 10);
       link.download = `visitor_history_${timestamp}.xlsx`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
+      window.URL.revokeObjectURL(objectUrl);
 
       toast.dismiss(loadingToastId);
       toast.success('Visitor history exported successfully!');
