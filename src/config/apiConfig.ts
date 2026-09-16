@@ -272,6 +272,10 @@ export const API_CONFIG = {
     RECENT_SURVEYS: "/survey_mappings/response_list.json?&recent=true",
     // Visitor history export endpoint
     VISITOR_HISTORY_EXPORT: "/pms/admin/visitors/visitors_history.xlsx",
+    // Background visitor history export flow: trigger -> poll status -> download
+    VISITOR_HISTORY_EXPORT_START: "/pms/manage/visitors/visitor_history_export",
+    VISITOR_EXPORT_STATUS: "/pms/manage/visitors/export_status",
+    VISITOR_DOWNLOAD_EXPORT: "/pms/manage/visitors/download_export",
     ASSET_TYPES: "/pms/custom_forms/get_asset_type",
     COMMUNICATION_TEMPLATES: "/communication_templates.json",
     // Vehicle details endpoint
