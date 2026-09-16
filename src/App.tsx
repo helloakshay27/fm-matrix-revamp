@@ -981,9 +981,21 @@ const CreateFolderPage = lazy(() => import("./pages/CreateFolderPage").then(m =>
 const EditFolderPage = lazy(() => import("./pages/EditFolderPage").then(m => ({ default: m.EditFolderPage })));
 const OnlyOfficeEditorPage = lazy(() => import("./pages/OnlyOfficeEditorPage").then(m => ({ default: m.OnlyOfficeEditorPage })));
 
-const DocumentShareLinkPage = lazy(() => import("./pages/DocumentShareLinkPage").then(m => ({ default: m.DocumentShareLinkPage })));
-const BookingWebviewPage = lazy(() => import("./pages/BookingWebviewPage").then(m => ({ default: m.BookingWebviewPage })));
-const BookingConfirmedPage = lazy(() => import("./pages/BookingConfirmedPage").then(m => ({ default: m.BookingConfirmedPage })));
+const DocumentShareLinkPage = lazy(() =>
+  import("./pages/DocumentShareLinkPage").then((m) => ({
+    default: m.DocumentShareLinkPage,
+  }))
+);
+const ViMyworkspaceOccupantPrivacyPolicy = lazy(() =>
+  import("./pages/ViMyworkspaceOccupantPrivacyPolicy").then((m) => ({
+    default: m.ViMyworkspaceOccupantPrivacyPolicy,
+  }))
+);
+const ViMyworkspaceTermsAndConditions = lazy(() =>
+  import("./pages/ViMyworkspaceTermsAndConditions").then((m) => ({
+    default: m.ViMyworkspaceTermsAndConditions,
+  }))
+);
 const GroupConversation = lazy(() => import("./components/GroupConversation"));
 const ChannelTasksAll = lazy(() => import("./pages/ChannelTasksAll"));
 const ChatTaskDetailsPage = lazy(() => import("./pages/ChatTaskDetailsPage"));
@@ -1759,6 +1771,14 @@ function App() {
                           <Route
                             path="/document/share/:id"
                             element={<DocumentShareLinkPage />}
+                          />
+                          <Route
+                            path="/vi-myworkspace/occupant-privacy-policy"
+                            element={<ViMyworkspaceOccupantPrivacyPolicy />}
+                          />
+                          <Route
+                            path="/vi-myworkspace/terms-and-conditions"
+                            element={<ViMyworkspaceTermsAndConditions />}
                           />
                           <Route
                             path="/documents/editor/:documentId"
