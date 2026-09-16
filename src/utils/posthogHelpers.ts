@@ -57,12 +57,15 @@ export const captureHelpdeskEvent = (
  * Fire a Pulse (Panchshil Pulse) product-analytics event with standard
  * platform/release context. Use this for all custom events across the
  * Pulse module (carpool, community, SOS, amenities, etc).
+ * Pulse identifies its analytics context using project_code=TEP-01 ONLY —
+ * project_id is explicitly neutralized so the shared base's P-223 default
+ * never leaks into Pulse events (P-238 is never used either).
  */
 export const capturePulseEvent = (
   event: string,
   props: Record<string, unknown> = {}
 ) => {
-  capturePostHogEvent(event, { project_code: "TEP-01", ...props });
+  capturePostHogEvent(event, { project_code: "TEP-01", project_id: undefined, ...props });
 };
 
 /**
