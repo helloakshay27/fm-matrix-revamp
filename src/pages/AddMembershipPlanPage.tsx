@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import axios from "axios";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { isCMContextActive } from "@/utils/posthogHelpers";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -95,6 +97,7 @@ const AMENITIES_OPTIONS = [
 
 export const AddMembershipPlanPage = () => {
   const navigate = useNavigate();
+  const cmEvents = useClubManagementEvents();
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
 
@@ -267,6 +270,9 @@ export const AddMembershipPlanPage = () => {
       })
 
       toast.success("Membership plan created successfully!");
+      if (isCMContextActive()) {
+        cmEvents.created("Membership Plan", undefined, "membership_plan_add");
+      }
       navigate(-1);
     } catch (error) {
       console.error("Error saving membership plan:", error);

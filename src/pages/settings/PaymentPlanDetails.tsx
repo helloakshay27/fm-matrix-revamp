@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Edit } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { isCMContextActive } from "@/utils/posthogHelpers";
 
 interface PaymentPlanSchedule {
   month_number: number;
@@ -24,6 +26,7 @@ export const PaymentPlanDetails = () => {
   const [plan, setPlan] = useState<PaymentPlan | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const cmEvents = useClubManagementEvents();
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
 
@@ -41,6 +44,7 @@ export const PaymentPlanDetails = () => {
 
       if (response.data) {
         setPlan(response.data);
+        cmEvents.detailViewed("Payment Plan", id, "payment_plan_detail_view");
       } else {
         toast.error('Payment plan not found');
         navigate('/settings/payment-plan/setup');

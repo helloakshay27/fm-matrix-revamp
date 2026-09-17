@@ -5,6 +5,8 @@ import { Plus, Eye, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import axios from 'axios';
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { isCMContextActive } from "@/utils/posthogHelpers";
 
 interface PaymentPlanSchedule {
   month_number: number;
@@ -27,6 +29,8 @@ export const PaymentPlanSetup = () => {
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
 
+  const cmEvents = useClubManagementEvents();
+
   const fetchPlans = async () => {
     setLoading(true);
     try {
@@ -38,8 +42,9 @@ export const PaymentPlanSetup = () => {
           },
         }
       );
-      setPlans(response.data.plans || []);
-    } catch (error) {
+            setPlans(response.data.plans || []);
+            cmEvents.listViewed("Payment Plan", "payment_plan_setup_list");
+        } catch (error) {
       console.error('Error fetching payment plans:', error);
       toast.error('Failed to fetch payment plans');
     } finally {
@@ -65,7 +70,8 @@ export const PaymentPlanSetup = () => {
           },
         }
       );
-      toast.success('Payment plan deleted successfully');
+                    toast.success('Payment plan deleted successfully');
+                    cmEvents.deleted("Payment Plan", planId, "payment_plan_setup_delete", undefined, "payment_plan_setup_list");
       fetchPlans();
     } catch (error) {
       console.error('Error deleting payment plan:', error);

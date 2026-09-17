@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
 import { ClubGalleryImageUpload } from "@/components/ClubGalleryImageUpload";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -84,6 +85,7 @@ export const AddBookingSetupClubPage = () => {
   const navigate = useNavigate();
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
+  const cmEvents = useClubManagementEvents();
 
   const coverImageRef = useRef(null);
   const bookingImageRef = useRef(null);
@@ -845,6 +847,7 @@ export const AddBookingSetupClubPage = () => {
 
       if (response.ok) {
         toast.success("Booking setup saved successfully");
+        cmEvents.created("Amenity Setup", undefined, "amenity_setup_add");
         navigate(-1);
       } else {
         console.error("Failed to save booking setup:", response.statusText);

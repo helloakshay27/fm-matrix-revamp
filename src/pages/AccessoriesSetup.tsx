@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { Radio, RadioGroup, FormControlLabel } from '@mui/material';
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 
 const columns: ColumnConfig[] = [
     {
@@ -53,6 +54,7 @@ const columns: ColumnConfig[] = [
 const AccessoriesSetup = () => {
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
+    const cmEvents = useClubManagementEvents();
 
     const navigate = useNavigate();
 
@@ -62,13 +64,14 @@ const AccessoriesSetup = () => {
 
     const fetchAccessories = async () => {
         try {
-            const reseponse = await axios.get(`https://${baseUrl}/pms/inventories.json`, {
+            const response = await axios.get(`https://${baseUrl}/pms/inventories.json`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             })
 
-            setAccessories(reseponse.data.inventories);
+            setAccessories(response.data.inventories);
+            cmEvents.listViewed("Accessories", "accessories_setup_list");
         } catch (error) {
             console.log(error)
         }
@@ -111,6 +114,7 @@ const AccessoriesSetup = () => {
             if (response.status === 200 || response.status === 204) {
                 toast.success('Status updated successfully', { id: loadingToast });
                 fetchAccessories();
+                cmEvents.statusChanged("Accessories", accessory.id, { active: newStatus });
             } else {
                 throw new Error('Failed to update status');
             }
