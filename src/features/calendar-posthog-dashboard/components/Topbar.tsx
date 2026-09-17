@@ -1,9 +1,109 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCalendarDashboard } from '../context/calendarDashboardStore';
 
+/** Resolves the currently logged-in user's profile details from localStorage / session. */
+function getLoggedInUserInfo(): { initial: string; displayName: string; email?: string } {
+  try {
+    const raw = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const full = `${parsed.firstname || ''} ${parsed.lastname || ''}`.trim();
+      const name =
+        full ||
+        parsed.name ||
+        parsed.first_name ||
+        parsed.username ||
+        parsed.email?.split('@')[0] ||
+        '';
+
+      if (name) {
+        return {
+          initial: name.charAt(0).toUpperCase(),
+          displayName: full || parsed.name || name,
+          email: parsed.email,
+        };
+      }
+    }
+
+    const fallbackEmail =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('email') || localStorage.getItem('username')
+        : null;
+
+    if (fallbackEmail) {
+      const name = fallbackEmail.split('@')[0];
+      return {
+        initial: name.charAt(0).toUpperCase(),
+        displayName: name,
+        email: fallbackEmail,
+      };
+    }
+  } catch {
+    // ignore
+  }
+
+  return { initial: 'U', displayName: 'Logged-in user' };
+}
+
 export function Topbar() {
   const navigate = useNavigate();
-  const { vm, theme, toggleTheme, navCollapsed, toggleNav, isLive, isLoading } = useCalendarDashboard();
+  const { page, setPage, theme, toggleTheme, navCollapsed, toggleNav, isLive, isLoading } =
+    useCalendarDashboard();
+  const [userInfo, setUserInfo] = useState(getLoggedInUserInfo);
+
+  useEffect(() => {
+    const handleStorageChange = () => setUserInfo(getLoggedInUserInfo());
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  const handleBack = () => {
+    // 1. If currently on a secondary layer (Adoption or Workflow), step back to Traffic & Session
+    if (page !== 'pgTraffic') {
+      setPage('pgTraffic');
+      return;
+    }
+
+    // 2. If browser has internal navigation history in this tab session, go back
+    if (
+      window.history.state &&
+      typeof window.history.state.idx === 'number' &&
+      window.history.state.idx > 0
+    ) {
+      const currentPath = window.location.pathname;
+      navigate(-1);
+
+      // Fallback safeguard if history.go was ignored or stayed on same path
+      setTimeout(() => {
+        if (window.location.pathname === currentPath) {
+          navigate('/employee/calendar');
+        }
+      }, 150);
+      return;
+    }
+
+    // 3. If arriving from an internal referrer that is not this exact path
+    if (
+      typeof document !== 'undefined' &&
+      document.referrer &&
+      document.referrer.startsWith(window.location.origin)
+    ) {
+      try {
+        const refUrl = new URL(document.referrer);
+        if (refUrl.pathname !== window.location.pathname) {
+          navigate(refUrl.pathname + refUrl.search);
+          return;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    // 4. Default fallback when directly opened or refreshed: return to Unified Calendar
+    navigate('/employee/calendar');
+  };
+
   const navLabel = `${navCollapsed ? 'Expand' : 'Collapse'} navigation`;
   const themeLabel = `Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`;
 
@@ -22,7 +122,13 @@ export function Topbar() {
           <line x1="8" y1="3.5" x2="8" y2="16.5" />
         </svg>
       </button>
-      <button type="button" className="back" aria-label="Back" onClick={() => navigate(-1)}>
+      <button
+        type="button"
+        className="back"
+        aria-label="Back"
+        onClick={handleBack}
+        title={page !== 'pgTraffic' ? 'Back to Traffic & Session' : 'Back to Calendar'}
+      >
         ←
       </button>
       <span className="topbar-title">Calendar App Analytics</span>
@@ -43,7 +149,14 @@ export function Topbar() {
       >
         {isLoading ? 'Loading…' : isLive ? 'Live · appid 29' : 'Wireframe · sample data'}
       </span>
-      <div className="avatar">CA</div>
+      <div
+        className="avatar"
+        title={`${userInfo.displayName}${userInfo.email ? ` (${userInfo.email})` : ''}`}
+        aria-label={`Logged in as ${userInfo.displayName}`}
+      >
+        {userInfo.initial}
+      </div>
     </header>
   );
 }
+
