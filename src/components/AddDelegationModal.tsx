@@ -107,6 +107,7 @@ const siteMenuProps: Partial<MenuProps> = {
   const [errors, setErrors] = useState<Partial<Record<keyof typeof emptyForm, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEdit = !!delegation?.id;
+  const isImmutableEdit = true;
 
   const normalizeSiteIds = (value?: Array<string | number> | string | number) => {
     if (Array.isArray(value)) return value.map((id) => String(id));
@@ -325,6 +326,7 @@ const siteMenuProps: Partial<MenuProps> = {
               multiple
               value={form.site_ids}
               onChange={(event) => {
+                if (isImmutableEdit) return;
                 const selected = event.target.value;
                 const selectedValues = Array.isArray(selected) ? selected : [selected];
                 if (selectedValues.includes("all")) {
@@ -334,7 +336,7 @@ const siteMenuProps: Partial<MenuProps> = {
                 updateField("site_ids", selectedValues.filter(Boolean) as string[]);
               }}
               label="Site"
-              disabled={loadingOptions}
+              disabled={loadingOptions || isImmutableEdit}
               renderValue={(selected) => {
                 const selectedIds = selected as string[];
                 if (selectedIds.length === 0) return "Select sites";
@@ -346,17 +348,25 @@ const siteMenuProps: Partial<MenuProps> = {
               }}
               MenuProps={siteMenuProps}
             >
-              <MenuItem value="all" onClick={() => updateField("site_ids", sites.map((site) => String(site.id)))}>
-                <Checkbox checked={sites.length > 0 && form.site_ids.length === sites.length} />
+              <MenuItem
+                value="all"
+                onClick={() => {
+                  if (isImmutableEdit) return;
+                  updateField("site_ids", sites.map((site) => String(site.id)));
+                }}
+                disabled={isImmutableEdit}
+              >
+                <Checkbox checked={sites.length > 0 && form.site_ids.length === sites.length} disabled={isImmutableEdit} />
                 <ListItemText primary="Select All" />
               </MenuItem>
               {sites.map((site) => (
-                <MenuItem key={site.id} value={String(site.id)}>
-                  <Checkbox checked={form.site_ids.includes(String(site.id))} />
+                <MenuItem key={site.id} value={String(site.id)} disabled={isImmutableEdit}>
+                  <Checkbox checked={form.site_ids.includes(String(site.id))} disabled={isImmutableEdit} />
                   <ListItemText primary={site.name} />
                 </MenuItem>
               ))}
             </Select>
+            {isImmutableEdit && <p className="mt-1 text-[11px] text-gray-500">Site is locked for this existing delegation.</p>}
           </FormControl>
 
           <div className="rounded-md border border-gray-200 p-3">
@@ -368,6 +378,7 @@ const siteMenuProps: Partial<MenuProps> = {
                 size="sm"
                 className="h-7 px-2 text-xs"
                 onClick={selectAllDelegationFor}
+                disabled={isImmutableEdit}
               >
                 Select All
               </Button>
@@ -380,8 +391,11 @@ const siteMenuProps: Partial<MenuProps> = {
                   <label key={option.value} className="flex items-center gap-2 text-sm text-gray-700">
                     <Checkbox
                       checked={checked}
-                      onChange={() => toggleDelegationFor(option.value)}
+                      onChange={() => {
+                        if (!isImmutableEdit) toggleDelegationFor(option.value);
+                      }}
                       size="small"
+                      disabled={isImmutableEdit}
                     />
                     {option.label}
                   </label>
@@ -389,6 +403,7 @@ const siteMenuProps: Partial<MenuProps> = {
               })}
             </div>
 
+            {isImmutableEdit && <p className="mt-2 text-[11px] text-gray-500">Delegation-for is locked for this existing delegation.</p>}
             {errors.delegation_for && <p className="mt-2 text-xs text-red-500">{errors.delegation_for}</p>}
           </div>
 
