@@ -3,7 +3,7 @@ import { useCalendarDashboard } from '../context/calendarDashboardStore';
 
 export function Topbar() {
   const navigate = useNavigate();
-  const { vm, theme, toggleTheme, navCollapsed, toggleNav } = useCalendarDashboard();
+  const { vm, theme, toggleTheme, navCollapsed, toggleNav, isLive, isLoading } = useCalendarDashboard();
   const navLabel = `${navCollapsed ? 'Expand' : 'Collapse'} navigation`;
   const themeLabel = `Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`;
 
@@ -28,7 +28,7 @@ export function Topbar() {
       <span className="topbar-title">Calendar App Analytics</span>
       <div className="spacer" />
       <span className="rule" />
-      <button type="button" className="iconbtn theme-btn" onClick={toggleTheme} aria-label={themeLabel} title={themeLabel}>
+      <button type="button" className="iconbtn theme-btn" id="themeBtn" onClick={toggleTheme} aria-label={themeLabel} title={themeLabel}>
         <svg className="i-moon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M16.5 11.8A7 7 0 0 1 8.2 3.5a7 7 0 1 0 8.3 8.3Z" />
         </svg>
@@ -37,8 +37,11 @@ export function Topbar() {
           <path d="M10 1.8v1.7M10 16.5v1.7M18.2 10h-1.7M3.5 10H1.8M15.8 4.2l-1.2 1.2M5.4 14.6l-1.2 1.2M15.8 15.8l-1.2-1.2M5.4 5.4 4.2 4.2" />
         </svg>
       </button>
-      <span className="badge-sample" title="This page runs off a seeded generator, not a query">
-        Sample data
+      <span
+        className="badge-sample"
+        style={isLive ? { background: 'var(--green-tint)', color: 'var(--green)', borderColor: 'var(--green)' } : undefined}
+      >
+        {isLoading ? 'Loading…' : isLive ? 'Live · appid 29' : 'Wireframe · sample data'}
       </span>
       <div className="avatar">CA</div>
     </header>

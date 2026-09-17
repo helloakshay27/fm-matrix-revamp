@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { InfoButton } from '@/features/analytics-dashboard-shared/components/InfoButton';
+import { SkeletonTile } from './Skeleton';
 import { useCalendarDashboard } from '../context/calendarDashboardStore';
 import type { CalendarTileSpec } from '../data/calendarMetricIds';
 import { kpiInfo } from '../data/kpiInfo';
@@ -82,16 +83,30 @@ export function Tiles({
   specs,
   columns,
   style,
+  id,
+  className,
+  loading = false,
 }: {
   specs: CalendarTileSpec[];
   columns: number;
   style?: CSSProperties;
+  id?: string;
+  className?: string;
+  loading?: boolean;
 }) {
   return (
-    <div className="tiles" style={{ gridTemplateColumns: `repeat(${columns},1fr)`, ...style }}>
-      {specs.map((s) => (
-        <Tile key={s.id} spec={s} />
-      ))}
+    <div
+      id={id}
+      className={`tiles${className ? ` ${className}` : ''}`}
+      style={{ gridTemplateColumns: `repeat(${columns},1fr)`, ...style }}
+    >
+      {loading
+        ? Array.from({ length: specs.length || columns }).map((_, i) => (
+            <SkeletonTile key={i} />
+          ))
+        : specs.map((s) => (
+            <Tile key={s.id} spec={s} />
+          ))}
     </div>
   );
 }

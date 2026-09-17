@@ -44,6 +44,7 @@ export function Sidebar() {
               key={key}
               type="button"
               className={`nav-item${page === key ? ' on' : ''}`}
+              data-page={key}
               data-tip={PAGE_TITLES[key]}
               onClick={() => {
                 setPage(key);

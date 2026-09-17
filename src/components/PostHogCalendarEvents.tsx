@@ -80,6 +80,19 @@ export type CalendarEvent =
   | 'event_create_duration_selected'
   | 'event_created'
   | 'event_create_failed'
+  | 'event_detail_viewed'
+  | 'event_menu_opened'
+  | 'event_menu_action_selected'
+  | 'event_updated'
+  | 'event_update_failed'
+  | 'event_deleted'
+  | 'event_delete_failed'
+  | 'event_complete_toggled'
+  | 'calendar_view_changed'
+  | 'calendar_filter_applied'
+  | 'calendar_filter_reset'
+  | 'calendar_sync_succeeded'
+  | 'calendar_sync_failed'
   // ── Calendar Accounts ─────────────────────────────────────────────────────
   | 'calendar_connect_prompt_accepted'
   | 'calendar_account_connected'
@@ -172,6 +185,54 @@ export function useCalendarEvents() {
      */
     onEventCreateFailed: (reason: string) =>
       track('event_create_failed', { screen: 'event_create', failure_reason: reason }),
+
+    /* ---- Event read/update/delete lifecycle ---- */
+
+    onEventDetailViewed: (props: {
+      event_id: string;
+      event_type: string;
+      source: 'calendar' | 'schedule' | 'year' | 'detail_modal';
+    }) => track('event_detail_viewed', props),
+
+    onEventMenuOpened: (event_id: string) =>
+      track('event_menu_opened', { event_id }),
+
+    onEventMenuActionSelected: (event_id: string, action: string) =>
+      track('event_menu_action_selected', { event_id, action }),
+
+    onEventUpdated: (props: { event_id: string; via: string }) =>
+      track('event_updated', props),
+
+    onEventUpdateFailed: (event_id: string, reason: string) =>
+      track('event_update_failed', { event_id, failure_reason: reason }),
+
+    onEventDeleted: (event_id: string) =>
+      track('event_deleted', { event_id }),
+
+    onEventDeleteFailed: (event_id: string, reason: string) =>
+      track('event_delete_failed', { event_id, failure_reason: reason }),
+
+    onEventCompleteToggled: (event_id: string, completed: boolean) =>
+      track('event_complete_toggled', { event_id, completed }),
+
+    /* ---- Calendar usage ---- */
+
+    onCalendarViewChanged: (view: string) =>
+      track('calendar_view_changed', { view }),
+
+    onCalendarFilterApplied: (props: {
+      date_from?: string;
+      date_to?: string;
+      types?: string[];
+    }) => track('calendar_filter_applied', props),
+
+    onCalendarFilterReset: () => track('calendar_filter_reset'),
+
+    onCalendarSyncSucceeded: (provider = 'google') =>
+      track('calendar_sync_succeeded', { provider }),
+
+    onCalendarSyncFailed: (reason: string, provider = 'google') =>
+      track('calendar_sync_failed', { provider, failure_reason: reason }),
 
     /* ---- Add People ---- */
 

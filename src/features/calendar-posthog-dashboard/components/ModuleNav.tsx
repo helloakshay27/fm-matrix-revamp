@@ -13,7 +13,7 @@ export function ModuleNav() {
   const mods = CALENDAR_WORKFLOWS.filter((w) => w.bucket === current.bucket);
 
   return (
-    <div className="mnav" title="Choose a workflow — this filter applies to the per-module cards only">
+    <div className="mnav" id="modNav" title="Choose a workflow — this filter applies to the per-module cards only">
       <div className="mnav-buckets">
         {buckets.map((b) => (
           <button
