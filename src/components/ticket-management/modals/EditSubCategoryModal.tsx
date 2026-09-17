@@ -36,6 +36,7 @@ import { fetchFloors } from '@/store/slices/floorsSlice';
 import { fetchZones } from '@/store/slices/zonesSlice';
 import { fetchRooms } from '@/store/slices/roomsSlice';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 
 const subCategorySchema = z.object({
   name: z.string().min(1, 'Subcategory name is required'),
@@ -107,6 +108,9 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
   onUpdate,
 }) => {
   const dispatch = useAppDispatch();
+  const analytics = useClubManagementEvents();
+  const module = 'Ticket Management';
+  const screen = 'Sub Category';
   
   // Redux selectors
   const { data: helpdeskCategoriesData, loading: categoriesLoading } = useAppSelector(
@@ -417,6 +421,7 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
 
       onUpdate(updatedSubCategory);
       toast.success('Sub-category updated successfully!');
+      analytics.updated(module, currentSubCategory.id, screen, { entity_type: 'sub_category' });
       onOpenChange(false);
     } catch (error) {
       toast.error('Failed to update sub-category');
