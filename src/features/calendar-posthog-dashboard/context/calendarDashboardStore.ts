@@ -22,6 +22,8 @@ export interface ViewModel {
   sessTab: SessTab;
   /** Platform filter — every count is scaled by it. */
   dev: Device;
+  /** Provider filter. */
+  provider: string;
   /** Whether the previous-period overlay is on. */
   prev: boolean;
   range: { from: string; to: string };
@@ -33,6 +35,8 @@ export interface CalendarDashboardValue {
   vm: ViewModel;
 
   /** filters */
+  provider: string;
+  setProvider: (provider: string) => void;
   setPreset: (date: DateRange) => void;
   /** Explicit from/to, bypassing the 7/30/90 presets. Both YYYY-MM-DD. */
   setCustomRange: (from: string, to: string) => void;
@@ -57,6 +61,14 @@ export interface CalendarDashboardValue {
   /** user-defined KPI targets — local only, never sent anywhere */
   getBenchmark: (id: string) => number | null;
   setBenchmark: (id: string, value: number | null) => void;
+
+  /** Live API status & section loading states */
+  isLive: boolean;
+  isLoading: boolean;
+  trafficLoading: boolean;
+  adoptLoading: boolean;
+  flowsLoading: boolean;
+  refetch: () => void;
 }
 
 export const CalendarDashboardContext = createContext<CalendarDashboardValue | null>(null);

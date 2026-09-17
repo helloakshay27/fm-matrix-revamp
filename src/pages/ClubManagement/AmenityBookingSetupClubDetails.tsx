@@ -38,6 +38,7 @@ import { QRCodeModal } from "@/components/QRCodeModal";
 import axios from "axios";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -106,6 +107,7 @@ export const BookingSetupDetailClubPage = () => {
   const { id } = useParams();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const cmEvents = useClubManagementEvents();
   const [selectedFile, setSelectedFile] = useState();
   const [selectedBookingFiles, setSelectedBookingFiles] = useState([]);
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
@@ -530,6 +532,7 @@ export const BookingSetupDetailClubPage = () => {
       }
 
       setGalleryImages(allGalleryImages);
+      cmEvents.detailViewed("Amenity Setup", id, "amenity_setup_details");
     } catch (error) {
       console.error("Error fetching facility details:", error);
       console.error("Error details:", error?.response?.data || error.message);
@@ -573,6 +576,10 @@ export const BookingSetupDetailClubPage = () => {
       );
 
       console.log("Data sent successfully:", response.data);
+      cmEvents.updated("Amenity Setup", id, "amenity_setup_details", {
+        update_type: "slot_premium",
+        slot_time_id: slotId,
+      });
 
       // Update isPremiumSlots to reflect the premium status
       setIsPremiumSlots(prev => ({

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -17,6 +17,7 @@ import {
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { EditSubCategoryModal } from './modals/EditSubCategoryModal';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import { toast } from 'sonner';
 import { Edit, Trash2, Upload, Plus, X, Search } from 'lucide-react';
 import {
@@ -158,6 +159,10 @@ interface FloorsResponse {
 
 export const SubCategoryTab: React.FC = () => {
   const dispatch = useAppDispatch();
+  const analytics = useClubManagementEvents();
+  const listViewFired = useRef(false);
+  const module = 'Ticket Management';
+  const screen = 'Sub Category';
   
   // Redux selectors
   const { data: helpdeskCategoriesData, loading: categoriesLoading } = useAppSelector(
@@ -233,6 +238,9 @@ export const SubCategoryTab: React.FC = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
+      if (searchTerm.trim()) {
+        analytics.searched(module, searchTerm, screen);
+      }
     }, 500);
     return () => clearTimeout(timer);
   }, [searchTerm]);
@@ -278,6 +286,10 @@ export const SubCategoryTab: React.FC = () => {
         };
         console.log('Setting pagination data:', paginationData);
         setPagination(paginationData);
+        if (!listViewFired.current) {
+          listViewFired.current = true;
+          analytics.listViewed(module, screen, { row_count: subCategoriesResponse.total_count ?? 0 });
+        }
       }
 
     } catch (error) {
@@ -352,6 +364,7 @@ export const SubCategoryTab: React.FC = () => {
 
       await ticketManagementAPI.createSubCategory(subCategoryData);
       toast.success('Sub-category created successfully!');
+      analytics.created(module, undefined, screen, { entity_type: 'sub_category', entity_name: data.category });
       form.reset();
       setTags(['']);
       setSelectedEngineers([]);
@@ -479,6 +492,7 @@ export const SubCategoryTab: React.FC = () => {
       await ticketManagementAPI.deleteSubCategory(subCategory.id);
       setSubCategories(subCategories.filter(sub => sub.id !== subCategory.id));
       toast.success('Sub-category deleted successfully!');
+      analytics.deleted(module, subCategory.id, screen, { entity_type: 'sub_category' });
       fetchData(currentPage, searchTerm);
     } catch (error) {
       console.error('Error deleting sub-category:', error);

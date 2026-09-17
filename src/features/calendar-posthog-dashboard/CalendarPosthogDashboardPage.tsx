@@ -35,9 +35,10 @@ function DashboardLayout() {
         <Sidebar />
         <main className="main">
           <div className="page-head">
-            <h2>{PAGE_TITLES[page]}</h2>
+            <h2 id="pageTitle">{PAGE_TITLES[page]}</h2>
             <p className="page-sub">
-              Calendar App · {vm.scopeLabel} · {vm.range.from} → {vm.range.to}
+              <span id="custName">Calendar App &mdash; Personal Productivity App</span> &middot;{' '}
+              <span id="scopeLabel">{vm.scopeLabel}</span>
             </p>
           </div>
 

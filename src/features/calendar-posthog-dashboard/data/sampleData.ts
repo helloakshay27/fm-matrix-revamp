@@ -436,7 +436,7 @@ export interface WorkflowSample {
   workflow: CalendarWorkflow;
   tiles: CalendarTileSpec[];
   funnel: { step: string; ofEntrants: number; dropPct: number | null }[];
-  screens: { screen: string; users: number; events: number; sessions: number; completion: number }[];
+  screens: { screen: string; users: number; events: number; sessions: number; completion: number | null }[];
   entryRows: { event: string; sessions: number; views: number; build: string }[];
 }
 

@@ -5,10 +5,13 @@ import { Button } from "./ui/button";
 import { X } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { isCMContextActive } from "@/utils/posthogHelpers";
 
 const AddAccessoriesModal = ({ open, onOpenChange, editingAccessory = null }) => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
+    const cmEvents = useClubManagementEvents();
 
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [formData, setFormData] = useState({
@@ -107,15 +110,17 @@ const AddAccessoriesModal = ({ open, onOpenChange, editingAccessory = null }) =>
                         Authorization: `Bearer ${token}`,
                     }
                 });
-                toast.success("Accessories updated successfully");
-            } else {
-                // Create new accessory
-                await axios.post(`https://${baseUrl}/pms/inventories.json`, payload, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    }
-                });
-                toast.success("Accessories added successfully");
+                    toast.success("Accessories updated successfully");
+                    cmEvents.updated("Accessories", editingAccessory.id, formData.name, "add_accessories_modal");
+                } else {
+                    // Create new accessory
+                    await axios.post(`https://${baseUrl}/pms/inventories.json`, payload, {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        }
+                    });
+                    toast.success("Accessories added successfully");
+                    cmEvents.created("Accessories", formData.name, "add_accessories_modal");
             }
             onOpenChange(false);
         } catch (error) {

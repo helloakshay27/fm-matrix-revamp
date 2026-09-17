@@ -599,7 +599,7 @@ export const InvoiceDetails = () => {
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Invoice Date</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{formatDate(invoice.invoice_date)}</span>
+                        <span className="text-gray-900 font-medium">{invoice.invoice_date}</span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Posting Date</span>

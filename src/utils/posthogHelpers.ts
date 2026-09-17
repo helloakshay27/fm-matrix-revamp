@@ -99,7 +99,8 @@ const CM_ORIGIN_KEY = "ph_cm_origin";
 
 /** True when the route is one of the Club Management app's own routes (/club-management/*). */
 export const isCMRoutePath = (pathname: string): boolean =>
-  pathname.startsWith("/club-management");
+  pathname.startsWith("/club-management") ||
+  pathname.startsWith("/settings/vas/booking-club");
 
 /** True when the route is part of the Club Management helpdesk (…/club-management/helpdesk…). */
 export const isCMHelpdeskPath = (pathname: string): boolean =>
@@ -118,7 +119,15 @@ export const isCMSharedPath = (pathname: string): boolean =>
   pathname.startsWith("/pulse/notices") ||
   pathname.startsWith("/pulse/events") ||
   pathname.startsWith("/pulse/community") ||
-  pathname.startsWith("/vas/booking-club");
+  pathname.startsWith("/vas/booking-club") ||
+  pathname.startsWith("/settings/vas/membership-plan") ||
+  pathname.startsWith("/settings/accessories") ||
+  pathname.startsWith("/settings/payment-plan") ||
+  pathname.startsWith("/settings/ticket-management") ||
+  pathname.startsWith("/settings/house") ||
+  pathname.startsWith("/settings/hsn-code") ||
+  pathname.startsWith("/settings/roles") ||
+  pathname.startsWith("/master/location");
 
 /** Backwards-compatible alias used by the existing helpdesk instrumentation. */
 export const isSharedHelpdeskPath = (pathname: string): boolean =>

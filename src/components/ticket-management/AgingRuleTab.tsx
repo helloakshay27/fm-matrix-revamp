@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import {
   Form,
   FormControl,
@@ -64,8 +65,19 @@ const ruleTypes = ['Critical', 'High', 'Medium', 'Low'];
 const ruleUnits = ['Hours', 'Days', 'Weeks'];
 
 export const AgingRuleTab: React.FC = () => {
+  const analytics = useClubManagementEvents();
+  const listViewFired = useRef(false);
+  const module = 'Ticket Management';
+  const screen = 'Aging Rule';
   const [agingRules, setAgingRules] = useState<AgingRuleType[]>(mockAgingRules);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!listViewFired.current) {
+      listViewFired.current = true;
+      analytics.listViewed(module, screen, { row_count: mockAgingRules.length, source: 'mock' });
+    }
+  }, []);
 
   const form = useForm<AgingRuleFormData>({
     resolver: zodResolver(agingRuleSchema),
@@ -87,6 +99,7 @@ export const AgingRuleTab: React.FC = () => {
       setAgingRules([...agingRules, newAgingRule]);
       console.log('Aging Rule Data:', data);
       toast.success('Aging rule created successfully!');
+      analytics.created(module, newAgingRule.id, screen, { entity_type: 'aging_rule', entity_name: newAgingRule.rule, source: 'mock' });
       form.reset();
     } catch (error) {
       toast.error('Failed to create aging rule');

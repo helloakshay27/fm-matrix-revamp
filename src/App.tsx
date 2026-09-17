@@ -2848,6 +2848,16 @@ const DocumentShareLinkPage = lazy(() =>
     default: m.DocumentShareLinkPage,
   }))
 );
+const ViMyworkspaceOccupantPrivacyPolicy = lazy(() =>
+  import("./pages/ViMyworkspaceOccupantPrivacyPolicy").then((m) => ({
+    default: m.ViMyworkspaceOccupantPrivacyPolicy,
+  }))
+);
+const ViMyworkspaceTermsAndConditions = lazy(() =>
+  import("./pages/ViMyworkspaceTermsAndConditions").then((m) => ({
+    default: m.ViMyworkspaceTermsAndConditions,
+  }))
+);
 const GroupConversation = lazy(() => import("./components/GroupConversation"));
 const ChannelTasksAll = lazy(() => import("./pages/ChannelTasksAll"));
 const ChatTaskDetailsPage = lazy(() => import("./pages/ChatTaskDetailsPage"));
@@ -4603,6 +4613,14 @@ function App() {
                           <Route
                             path="/document/share/:id"
                             element={<DocumentShareLinkPage />}
+                          />
+                          <Route
+                            path="/vi-myworkspace/occupant-privacy-policy"
+                            element={<ViMyworkspaceOccupantPrivacyPolicy />}
+                          />
+                          <Route
+                            path="/vi-myworkspace/terms-and-conditions"
+                            element={<ViMyworkspaceTermsAndConditions />}
                           />
                           <Route
                             path="/documents/editor/:documentId"

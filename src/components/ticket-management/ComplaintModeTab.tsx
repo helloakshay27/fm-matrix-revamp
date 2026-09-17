@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -17,6 +17,7 @@ import {
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { EditComplaintModeModal } from './modals/EditComplaintModeModal';
 import { ticketManagementAPI, UserAccountResponse } from '@/services/ticketManagementAPI';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import { toast } from 'sonner';
 import { Edit, Trash2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -45,6 +46,10 @@ interface ComplaintModeType {
 
 export const ComplaintModeTab: React.FC = () => {
   const dispatch = useDispatch<any>();
+  const analytics = useClubManagementEvents();
+  const listViewFired = useRef(false);
+  const module = 'Ticket Management';
+  const screen = 'Complaint Mode';
   const complaintModesState = useSelector((state: any) => state.complaintModes) || {};
   const { data: complaintModess = [], loading, fetchLoading, error, accounts } = complaintModesState;
   const [complaintModes, setComplaintModes] = useState<ComplaintModeType[]>(complaintModess);
@@ -80,7 +85,12 @@ export const ComplaintModeTab: React.FC = () => {
     setIsLoading(true);
     try {
       const data = await ticketManagementAPI.getComplaintModes();
-      setComplaintModes(Array.isArray(data) ? data : []);
+      const modes = Array.isArray(data) ? data : [];
+      setComplaintModes(modes);
+      if (!listViewFired.current) {
+        listViewFired.current = true;
+        analytics.listViewed(module, screen, { row_count: modes.length });
+      }
     } catch (error) {
       toast.error('Failed to fetch complaint modes');
       console.error('Error fetching complaint modes:', error);
@@ -122,6 +132,7 @@ export const ComplaintModeTab: React.FC = () => {
 
       await ticketManagementAPI.createComplaintMode(complaintModeData);
       toast.success('Complaint mode created successfully!');
+      analytics.created(module, undefined, screen, { entity_type: 'complaint_mode', entity_name: data.complaintMode });
       form.reset();
       fetchComplaintModes();
     } catch (error: any) {
@@ -161,6 +172,7 @@ export const ComplaintModeTab: React.FC = () => {
       await ticketManagementAPI.deleteComplaintMode(complaintMode.id);
       setComplaintModes(complaintModes.filter(mode => mode.id !== complaintMode.id));
       toast.success('Complaint mode deleted successfully!');
+      analytics.deleted(module, complaintMode.id, screen, { entity_type: 'complaint_mode' });
     } catch (error) {
       console.error('Error deleting complaint mode:', error);
       toast.error('Failed to delete complaint mode');
