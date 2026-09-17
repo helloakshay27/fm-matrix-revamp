@@ -95,6 +95,7 @@ export function TrafficSection() {
                   labels={series.labels}
                   color={color}
                   fill={fill}
+                  showPrev={vm.prev && series.prev.length > 0}
                 />
                 <Legend
                   items={[
@@ -140,7 +141,12 @@ export function TrafficSection() {
           ) : (
             <div className="hbars">
               {traffic.platformRows.map((row, i) => (
-                <div className="role" key={row.label}>
+                <div
+                  className="role"
+                  key={row.label}
+                  title={`${row.label}: ${Math.round(row.share * 100)}% of users`}
+                  style={{ cursor: 'pointer' }}
+                >
                   <div className="rn">{row.label}</div>
                   <div className="rbar">
                     <i
