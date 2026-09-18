@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ticketManagementAPI, OperationalDay, UserAccountResponse } from '@/services/ticketManagementAPI';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import { toast } from 'sonner';
 import { Upload, Download } from 'lucide-react';
 
@@ -33,6 +34,10 @@ const daysOfWeek = [
 ];
 
 export const OperationalDaysTab: React.FC = () => {
+  const analytics = useClubManagementEvents();
+  const listViewFired = useRef(false);
+  const module = 'Ticket Management';
+  const screen = 'Operational Days';
   const [schedule, setSchedule] = useState<OperationalDay[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -77,6 +82,10 @@ export const OperationalDaysTab: React.FC = () => {
       });
       
       setSchedule(completeSchedule);
+      if (!listViewFired.current) {
+        listViewFired.current = true;
+        analytics.listViewed(module, screen, { row_count: completeSchedule.length });
+      }
     } catch (error) {
       toast.error('Failed to fetch operational days');
       console.error('Error fetching operational days:', error);
@@ -122,6 +131,7 @@ export const OperationalDaysTab: React.FC = () => {
 
       await ticketManagementAPI.updateOperationalDays(siteId, schedule);
       toast.success('Operational days saved successfully!');
+      analytics.updated(module, undefined, screen, { entity_type: 'operational_days', days_count: schedule.length });
     } catch (error) {
       toast.error('Failed to save operational days');
       console.error('Error saving operational days:', error);
@@ -142,6 +152,7 @@ export const OperationalDaysTab: React.FC = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast.success('Sample file downloaded successfully!');
+      analytics.action('Ticket Management Sample File Downloaded', { module, screen });
     } catch (error) {
       toast.error('Failed to download sample file');
       console.error('Error downloading sample file:', error);
@@ -157,6 +168,7 @@ export const OperationalDaysTab: React.FC = () => {
     try {
       await ticketManagementAPI.uploadOperationalFile(uploadFile);
       toast.success('File uploaded successfully!');
+      analytics.action('Ticket Management Operational Days Imported', { module, screen, file_name: uploadFile.name });
       setImportDialogOpen(false);
       setUploadFile(null);
       fetchOperationalDays();

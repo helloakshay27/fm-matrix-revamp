@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, Fragment } from "react";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ChevronDown, ChevronDownCircle, Eye, PencilIcon, Trash2 } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronDownCircle, Eye, Loader2, PencilIcon, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import { useSpeechToText } from "@/hooks/useSpeechToText";
@@ -17,11 +17,13 @@ interface Issue {
     title?: string;
     description?: string;
     issue_type?: string;
+    issue_type_name?: string;
     priority?: string;
     status?: string;
     responsible_person?: string;
     responsible_person_id?: string;
     created_at?: string;
+    created_by_name?: string;
     updated_at?: string;
     start_date?: string;
     end_date?: string;
@@ -268,9 +270,11 @@ const ActivityLog = ({ issueId }: { issueId: string }) => {
     const token = localStorage.getItem("token") || "";
     const [issueSystemLogs, setIssueSystemLogs] = useState<any[]>([]);
     const [userMapping, setUserMapping] = useState<Record<string, string>>({});
+    const [isLoadingLogs, setIsLoadingLogs] = useState(true);
 
     useEffect(() => {
         const fetchLogs = async () => {
+            setIsLoadingLogs(true);
             try {
                 const response = await axios.get(
                     `https://${baseUrl}/business_compass/issues/${issueId}/activity_logs.json`,
@@ -279,6 +283,8 @@ const ActivityLog = ({ issueId }: { issueId: string }) => {
                 setIssueSystemLogs(response.data?.activity_logs || []);
             } catch (error) {
                 console.error("Error fetching activity logs:", error);
+            } finally {
+                setIsLoadingLogs(false);
             }
         };
         if (issueId) fetchLogs();
@@ -394,6 +400,14 @@ const ActivityLog = ({ issueId }: { issueId: string }) => {
 
         return { isCreation: false, fields };
     };
+
+    if (isLoadingLogs) {
+        return (
+            <div className="flex items-center justify-center py-12 w-full text-gray-500">
+                <Loader2 className="w-6 h-6 animate-spin" />
+            </div>
+        );
+    }
 
     if (!issueSystemLogs.length) {
         return (
@@ -1048,11 +1062,13 @@ const BusinessCompassIssueDetailsPage = () => {
         title: issueDetail.title || "",
         description: issueDetail.description || "",
         issue_type: issueDetail.issue_type || "",
+        issue_type_name: issueDetail.issue_type_name || "",
         priority: issueDetail.priority || "",
         status: issueDetail.status || "open",
         responsible_person: issueDetail.responsible_person || "Unassigned",
         responsible_person_id: issueDetail.responsible_person_id || "",
         created_at: issueDetail.created_at || "",
+        created_by_name: issueDetail.created_by_name || "",
         updated_at: issueDetail.updated_at || "",
         start_date: issueDetail.start_date || "",
         end_date: issueDetail.end_date || "",
@@ -1330,6 +1346,10 @@ const BusinessCompassIssueDetailsPage = () => {
                 <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
                 <div className="flex items-center justify-between my-3 text-[12px]">
                     <div className="flex items-center gap-3 text-[#323232] flex-wrap">
+                        <span>Created By: {issueData?.created_by_name}</span>
+
+                        <span className="h-6 w-[1px] border border-gray-300"></span>
+
                         <span className="flex items-center gap-3">
                             Created On : {formatToDDMMYYYY_AMPM(issueData?.created_at)}
                         </span>
@@ -1499,7 +1519,7 @@ const BusinessCompassIssueDetailsPage = () => {
                             <div className="flex items-center ml-36">
                                 <div className="w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]">Issue Type:</div>
-                                    <div className="text-left text-[12px] capitalize">{issueData?.issue_type}</div>
+                                    <div className="text-left text-[12px] capitalize">{issueData?.issue_type_name}</div>
                                 </div>
                                 <div className="w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]">Start Date :</div>

@@ -4,6 +4,8 @@ import axios from "axios";
 import { ArrowLeft, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { isCMContextActive } from "@/utils/posthogHelpers";
 
 const muiTheme = createTheme({
     components: {
@@ -70,6 +72,8 @@ const AccessoriesDetailsPage = () => {
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
 
+    const cmEvents = useClubManagementEvents();
+
     const navigate = useNavigate();
     const [accessory, setAccessory] = useState({
         name: '',
@@ -88,6 +92,7 @@ const AccessoriesDetailsPage = () => {
             })
 
             setAccessory(response.data);
+            cmEvents.detailViewed("Accessories", id, "accessories_details");
         } catch (error) {
             console.log(error);
         }

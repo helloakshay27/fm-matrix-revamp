@@ -1,20 +1,95 @@
 import axios from 'axios';
 import { FM_ADOPTION_TENANT_URL } from '@/config/fmAdoptionTenant';
 
-/**
- * FM Adoption Analytics API — the 9 endpoints documented in FM_ADOPTION_API_CURLS.md
- * (repo root). No auth header and no `team` param: team is fixed server-side to 1.
- * `url` is the tenant host and is resolved from the shared tenant configuration
- * (see src/config/fmAdoptionTenant.ts) — this layer only exposes date / site /
- * device / module filters.
- */
-const BASE_URL =
+
+/* ---------------------------------------------------------------------------
+ * FM Adoption Analytics API client.
+ *
+ * The client mirrors the reference usage-analytics dashboard architecture:
+ * the API host comes from VITE_FM_ADOPTION_API_URL and the tenant (`url`
+ * query param) comes from the shared tenant configuration module
+ * (src/config/fmAdoptionTenant.ts) — never a hardcoded string here, never
+ * the backend API URL.
+ *
+ * Base URL : VITE_FM_ADOPTION_API_URL (default https://posthog-api.lockated.com)
+ * Tenant   : sent as the `url` query param — the FRONTEND host whose analytics
+ *            are returned, resolved by src/config/fmAdoptionTenant.ts.
+ * Auth     : the analytics host answers openly (HTTP 200, no auth). A Bearer
+ *            interceptor is attached at request time for consistency with the
+ *            app's other clients and future-proofing — it only fires when a
+ *            token is actually present, and the request still goes out without
+ *            one. No static token is ever embedded or put in env.
+ * ------------------------------------------------------------------------- */
+
+export const ANALYTICS_BASE_URL =
   (import.meta.env.VITE_FM_ADOPTION_API_URL as string | undefined) ??
   'https://posthog-api.lockated.com';
 
-const TENANT_URL = FM_ADOPTION_TENANT_URL;
+/* Frontend/tenant host sent as the `url` query param — from the shared
+   tenant configuration module, never hardcoded here. */
+export const ANALYTICS_TENANT = FM_ADOPTION_TENANT_URL;
 
-const client = axios.create({ baseURL: BASE_URL, timeout: 60_000 });
+/* Panchshil Pulse project code — passed statically, mirroring the per-brand
+   project_code mechanism used by Panchshil Connect. Pulse Usage Analytics
+   identifies the Pulse/TEP context using project_code=TEP-01 ONLY; no
+   project_id is ever sent for Pulse (never P-238, never P-223). */
+export const ANALYTICS_PROJECT_CODE = 'TEP-01';
+
+/* The Panchshil Pulse tenant switches the request construction onto the
+   Connect pattern: it sends `project_code` (never the `url`/`base_url`)
+   plus a single `os`/`device_type` param instead of the shared `device_type`
+   array. No `project_id` is sent for Pulse. Every other tenant keeps the
+   shared url + device_type array behaviour. */
+const IS_PULSE = ANALYTICS_TENANT.includes('pulse');
+
+/**
+ * Platform filter → the API's single platform param, copied from Panchshil
+ * Connect's getDeviceInfo: "ios" sends { os: "ios" }, "android" sends
+ * { os: "Android" }, everything else ("all") sends { device_type: "mobile" }.
+ */
+export const getDeviceInfo = (dev?: string): Record<string, string> => {
+  if (dev === 'ios') return { os: 'ios' };
+  if (dev === 'android') return { os: 'Android' };
+  return { device_type: 'mobile' };
+};
+
+const analyticsClient = axios.create({
+  baseURL: ANALYTICS_BASE_URL,
+  timeout: 60000,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+/* Bearer token attached at REQUEST time, only when present. The read prefers
+   the same keys the app's other clients use (see src/utils/auth.ts and the
+   sign-in flow). */
+analyticsClient.interceptors.request.use((config) => {
+  const token =
+    localStorage.getItem('access_token') ||
+    sessionStorage.getItem('access_token') ||
+    '';
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+/* Response interceptor: when a backend endpoint returns 404 (or any non-JSON
+   like a Rails HTML error page), silently return null instead of throwing so
+   React Query treats it as "no data" and the UI falls back to sample/empty
+   state — exactly the same graceful degradation pattern the other layers
+   (traffic, adoption, workflow) use. */
+analyticsClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status;
+    const contentType = error.response?.headers?.['content-type'] || '';
+    if (status === 404 || (status >= 400 && !contentType.includes('application/json'))) {
+      return Promise.resolve({ data: null });
+    }
+    return Promise.reject(error);
+  },
+);
 
 /** `device_type` is case-sensitive server-side (`Desktop` / `Mobile`). */
 export type DeviceType = 'Desktop' | 'Mobile';
@@ -25,6 +100,9 @@ export interface RangeFilters {
   to: string; // YYYY-MM-DD
   siteIds?: string[];
   devices?: DeviceType[];
+  /** Raw platform/device selection ("all" | "ios" | "android") — used by the
+      Panchshil Pulse tenant to build the Connect-style `os`/`device_type` param. */
+  dev?: string;
 }
 
 /** Filters for the three look-back endpoints (adoption_trend / growth / retention). */
@@ -33,31 +111,68 @@ export interface WeeklyFilters {
   weeks: number;
   siteIds?: string[];
   devices?: DeviceType[];
+  dev?: string;
 }
 
-// `site_id` is intentionally NOT sent to the PostHog Adoption Analytics APIs —
-// it is not part of the API contract (the working Panchshil Connect dashboard
-// sends none). Site data may still exist app-side for scoping/labels, but it is
-// never forwarded to PostHog as a `site_id` query parameter.
-function baseParams(devices?: DeviceType[]) {
-  const p: Record<string, string> = { url: TENANT_URL };
-  if (devices?.length) p.device_type = devices.join(',');
-  return p;
-}
+/* ---------------------------------------------------------------------------
+ * Query-string builder.
+ *
+ * `site_id` must be joined with RAW commas in the query string — never
+ * percent-encoded to %2C. Axios would encode array values, so we build the
+ * query string manually from an ordered list of [key, value] pairs and append
+ * it directly to the URL. Non-array string values are kept as-is.
+ * ------------------------------------------------------------------------- */
 
-function rangeParams(f: RangeFilters) {
-  return { ...baseParams(f.devices), from: f.from, to: f.to };
-}
+/**
+ * @param {Array<[string, string | string[] | number | undefined | null]>} pairs
+ */
+const buildQuery = (pairs: Array<[string, string | string[] | number | undefined | null]>) => {
+  const parts: string[] = [];
+  for (const [key, value] of pairs) {
+    if (value === undefined || value === null || value === '') continue;
+    if (Array.isArray(value)) {
+      if (value.length === 0) continue;
+      // join with raw commas, e.g. site_id=2189,2190
+      parts.push(`${key}=${value.join(',')}`);
+    } else {
+      parts.push(`${key}=${encodeURIComponent(String(value))}`);
+    }
+  }
+  return parts.join('&');
+};
 
-function weeklyParams(f: WeeklyFilters) {
-  return { ...baseParams(f.devices), to: f.to, weeks: String(f.weeks) };
-}
+/**
+ * GET helper: appends a manually built query string (raw commas preserved for
+ * site_id) to the endpoint and returns the parsed response.
+ */
+const get = async <T>(endpoint: string, pairs: Array<[string, string | string[] | number | undefined | null]>): Promise<T> => {
+  const qs = buildQuery(pairs);
+  const url = `/fm/adoption/${endpoint}${qs ? `?${qs}` : ''}`;
+  const { data } = await analyticsClient.get<T>(url);
+  return data;
+};
 
-async function get<T>(path: string, params: Record<string, string>): Promise<T> {
-  const qs = new URLSearchParams(params).toString();
-  const res = await client.get<T>(`/fm/adoption/${path}?${qs}`);
-  return res.data;
-}
+/* Shared param slices ---------------------------------------------------- */
+
+const rangeParams = ({ from, to, siteIds, devices, dev }: RangeFilters): Array<[string, string | string[] | number | undefined | null]> => [
+  IS_PULSE ? ['project_code', ANALYTICS_PROJECT_CODE] : ['url', ANALYTICS_TENANT],
+  ['from', from],
+  ['to', to],
+  ['site_id', siteIds],
+  ...(IS_PULSE
+    ? Object.entries(getDeviceInfo(dev))
+    : ([['device_type', devices]] as Array<[string, string | string[] | number | undefined | null]>)),
+];
+
+const weeklyParams = ({ to, weeks, siteIds, devices, dev }: WeeklyFilters): Array<[string, string | string[] | number | undefined | null]> => [
+  IS_PULSE ? ['project_code', ANALYTICS_PROJECT_CODE] : ['url', ANALYTICS_TENANT],
+  ['to', to],
+  ['weeks', weeks],
+  ['site_id', siteIds],
+  ...(IS_PULSE
+    ? Object.entries(getDeviceInfo(dev))
+    : ([['device_type', devices]] as Array<[string, string | string[] | number | undefined | null]>)),
+];
 
 /* ------------------------------------------------------------------ shared */
 
@@ -166,13 +281,14 @@ export interface AdoptionEngagementResponse {
 }
 
 /** `licensedSeats` is billing data (not in events) — omit it and A1's % comes back null. */
-export const fetchAdoptionEngagement = (f: RangeFilters & { licensedSeats?: number | null }) =>
-  get<AdoptionEngagementResponse>('adoption_engagement', {
-    ...rangeParams(f),
-    ...(f.licensedSeats != null && f.licensedSeats > 0
-      ? { licensed_seats: String(f.licensedSeats) }
-      : {}),
-  });
+export const fetchAdoptionEngagement = (f: RangeFilters & { licensedSeats?: number | null }) => {
+  const { licensedSeats, ...rest } = f;
+  const pairs = rangeParams(rest);
+  if (licensedSeats != null && licensedSeats > 0) {
+    pairs.push(['licensed_seats', Number(licensedSeats)]);
+  }
+  return get<AdoptionEngagementResponse>('adoption_engagement', pairs);
+};
 
 /* -------------------------------------------- Layer 2 · adoption_trend (A3) */
 
@@ -256,11 +372,11 @@ export interface ModulesResponse {
 }
 
 /** Omit `module` for the top-level tree (path segment 1); pass it for sub-modules (segment 2). */
-export const fetchModules = (f: RangeFilters & { module?: string }) =>
-  get<ModulesResponse>('modules', {
-    ...rangeParams(f),
-    ...(f.module ? { module: f.module } : {}),
-  });
+export const fetchModules = (f: RangeFilters & { module?: string }) => {
+  const pairs = rangeParams(f);
+  if (f.module) pairs.push(['module', f.module]);
+  return get<ModulesResponse>('modules', pairs);
+};
 
 /* ---------------------------------------------- Layer 3 · workflow_usage */
 
@@ -311,9 +427,9 @@ export interface WorkflowUsageResponse {
 /** Defaults server-side to maintenance / ticket (helpdesk) when module/sub_module are omitted. */
 export const fetchWorkflowUsage = (
   f: RangeFilters & { module?: string; subModule?: string }
-) =>
-  get<WorkflowUsageResponse>('workflow_usage', {
-    ...rangeParams(f),
-    ...(f.module ? { module: f.module } : {}),
-    ...(f.subModule ? { sub_module: f.subModule } : {}),
-  });
+) => {
+  const pairs = rangeParams(f);
+  if (f.module) pairs.push(['module', f.module]);
+  if (f.subModule) pairs.push(['sub_module', f.subModule]);
+  return get<WorkflowUsageResponse>('workflow_usage', pairs);
+};

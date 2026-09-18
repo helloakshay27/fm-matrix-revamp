@@ -397,6 +397,7 @@ import { X } from 'lucide-react';
 import ReactSelect from 'react-select';
 import { apiClient } from '@/utils/apiClient';
 import { toast } from 'sonner';
+import { useHelpdeskEvents } from '@/components/PostHogHelpdeskEvents';
 
 interface EditStatusDialogProps {
   open: boolean;
@@ -461,6 +462,7 @@ export const EditStatusDialog = ({
   const [preventiveActionText, setPreventiveActionText] = useState('');
 
   const orgId = Number(localStorage.getItem('org_id')); // ✅ org_id
+  const helpdeskEvents = useHelpdeskEvents();
 
   useEffect(() => {
     if (!open) return;
@@ -580,6 +582,16 @@ export const EditStatusDialog = ({
       toast.success('Status updated successfully');
       onOpenChange(false);
       onSuccess?.();
+
+      // PostHog — Ticket Status Changed, fired only after the status-update API succeeds,
+      // using the established business-lifecycle helper. Route-aware: flows originating from
+      // the Club Management helpdesk report CM-01/P-238, FM flows stay FM-01/P-223.
+      const toStatusObj = statuses.find(s => s.id.toString() === selectedStatus);
+      helpdeskEvents.onTicketStatusChanged(complaintId, {
+        from_status: currentStatus ?? null,
+        to_status: toStatusObj?.name ?? null,
+        changed_by_role: localStorage.getItem('role') || null,
+      });
     } catch {
       toast.error('Failed to update status');
     } finally {

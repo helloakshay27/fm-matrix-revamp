@@ -12,6 +12,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAppDispatch } from "@/store/hooks";
 import { toast } from "sonner";
 import { updateBroadcast, fetchBroadcastById } from "@/store/slices/broadcastSlice";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { isCMContextActive } from "@/utils/posthogHelpers";
 import axios from "axios";
 import {
     Tooltip,
@@ -33,6 +35,7 @@ export const EditBroadcastPage = () => {
     const navigate = useNavigate();
     const attachmentInputRef = useRef<HTMLInputElement>(null);
     const coverImageInputRef = useRef<HTMLInputElement>(null);
+    const cmEvents = useClubManagementEvents();
 
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
@@ -372,6 +375,9 @@ export const EditBroadcastPage = () => {
             }
 
             await dispatch(updateBroadcast({ id, data: formDataToSend, baseUrl, token })).unwrap();
+            if (isCMContextActive()) {
+                cmEvents.updated("Notice", id, "notice_edit");
+            }
             toast.success("Notice updated successfully");
             navigate("/pulse/notices");
         } catch (error: any) {

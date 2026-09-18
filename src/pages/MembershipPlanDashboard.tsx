@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -10,6 +10,8 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import axios from "axios";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { isCMContextActive } from "@/utils/posthogHelpers";
 
 interface MembershipPlan {
   id: string;
@@ -127,12 +129,14 @@ const transformData = (data) => {
 export const MembershipPlanDashboard = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
+  const cmEvents = useClubManagementEvents();
 
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [membershipPlanData, setMembershipPlanData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showActionPanel, setShowActionPanel] = useState(false);
+  const listViewedRef = useRef(false);
   const pageFromUrl = parseInt(searchParams.get("page") || "1", 10);
   const [pagination, setPagination] = useState({
     current_page: pageFromUrl,
@@ -156,6 +160,13 @@ export const MembershipPlanDashboard = () => {
 
       const plans = Array.isArray(response.data.plans) ? response.data.plans : response.data.plans || [];
       setMembershipPlanData(transformData(plans));
+      if (isCMContextActive() && !listViewedRef.current) {
+        listViewedRef.current = true;
+        cmEvents.listViewed("Membership Plan", "membership_plan_list", {
+          count: plans.length,
+          page: pagination?.current_page,
+        });
+      }
 
       // Update pagination from response
       if (response.data.pagination) {
@@ -198,6 +209,12 @@ export const MembershipPlanDashboard = () => {
 
       if (response.status === 200 || response.status === 204) {
         toast.success('Status updated successfully', { id: loadingToast });
+        if (isCMContextActive()) {
+          cmEvents.statusChanged("Membership Plan", plan.id, {
+            screen: "membership_plan_list",
+            new_status: newStatus ? "active" : "inactive",
+          });
+        }
         fetchMembershipPlanData(pagination.current_page);
       } else {
         throw new Error('Failed to update status');

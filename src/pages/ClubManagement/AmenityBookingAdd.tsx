@@ -14,11 +14,13 @@ import { fetchOccupantUsers } from '@/store/slices/occupantUsersSlice';
 import { apiClient } from '@/utils/apiClient';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 
 
 export const AddFacilityBookingClubPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const cmEvents = useClubManagementEvents();
   const [searchParams] = useSearchParams();
 
   // Get URL parameters
@@ -843,6 +845,8 @@ export const AddFacilityBookingClubPage = () => {
 
       if (response.status === 200 || response.status === 201) {
         toast.success('Booking created successfully!');
+        const bookingId = response.data?.facility_booking?.id ?? response.data?.id;
+        cmEvents.created("Amenity Booking", bookingId, "amenity_booking_add");
         navigate(-1);
       }
     } catch (error: any) {

@@ -684,6 +684,8 @@ export const EmployeeUnifiedCalendar: React.FC<
   };
 
   const handleViewChange = (newView: any) => {
+    calendarAnalytics.onCalendarViewChanged(newView);
+
     // When switching to 52 Week view, automatically set date range to full year
     if (newView === "year") {
       setIsYearLoading(true);
@@ -727,10 +729,18 @@ export const EmployeeUnifiedCalendar: React.FC<
     }
   };
 
-  const handleSelectEvent = (info: any) => {
+  const handleSelectEvent = (info: any, trackDetailView = true) => {
     const eventType = info.event.extendedProps?.type;
     const eventId = info.event.id;
     const redirectUrl = info.event.extendedProps?.resource?.redirectUrl;
+
+    if (trackDetailView) {
+      calendarAnalytics.onEventDetailViewed({
+        event_id: eventId,
+        event_type: eventType,
+        source: view === "year" ? "year" : "calendar",
+      });
+    }
 
     // First priority: use redirect_url from API if available
     if (redirectUrl) {
@@ -798,6 +808,11 @@ export const EmployeeUnifiedCalendar: React.FC<
   const handleEventClick = (info: any) => {
     if (view === "timeGridWeek" || view === "timeGridDay") {
       info.jsEvent.preventDefault();
+      calendarAnalytics.onEventDetailViewed({
+        event_id: info.event.id,
+        event_type: info.event.extendedProps?.type,
+        source: "detail_modal",
+      });
       setSelectedEvent(info.event);
     } else {
       handleSelectEvent(info);
@@ -1022,13 +1037,31 @@ export const EmployeeUnifiedCalendar: React.FC<
               }
               className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
                 activeFilters.showGoogleCalendar
-                  ? "bg-purple-100 text-purple-700 border border-purple-300"
+                  ? "bg-purple-600 !text-white border border-purple-600"
                   : "bg-gray-100 text-gray-500 border border-gray-300"
               }`}
+              style={{
+                color: activeFilters.showGoogleCalendar ? "#ffffff" : undefined,
+              }}
             >
-              <div className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                Google Calendar
+              <div
+                className="flex items-center gap-1"
+                style={{
+                  color: activeFilters.showGoogleCalendar ? "#ffffff" : undefined,
+                }}
+              >
+                <Calendar
+                  className={`w-3 h-3 ${
+                    activeFilters.showGoogleCalendar ? "!text-white" : "text-gray-500"
+                  }`}
+                />
+                <span
+                  className={
+                    activeFilters.showGoogleCalendar ? "!text-white" : "text-gray-500"
+                  }
+                >
+                  Google Calendar
+                </span>
               </div>
             </button>
             <button
@@ -1098,9 +1131,13 @@ export const EmployeeUnifiedCalendar: React.FC<
                     `https://${domain}/google_calander/sync?email=${encodeURIComponent(email)}`
                   );
                   if (syncRes.ok) {
+                    calendarAnalytics.onCalendarSyncSucceeded("google");
                     toast.success("Google Calendar synced!");
                     fetchCalendarData();
-                  } else toast.error("Failed to sync");
+                  } else {
+                    calendarAnalytics.onCalendarSyncFailed("sync_request_failed", "google");
+                    toast.error("Failed to sync");
+                  }
                 } else {
                   calendarAnalytics.onConnectPromptAccepted("google");
                   toast.info("Opening Google Calendar connection...");
@@ -1110,6 +1147,7 @@ export const EmployeeUnifiedCalendar: React.FC<
                   );
                 }
               } catch {
+                calendarAnalytics.onCalendarSyncFailed("connection_check_failed", "google");
                 toast.error("Failed to process Google Calendar request");
               }
             }}
@@ -1201,7 +1239,12 @@ export const EmployeeUnifiedCalendar: React.FC<
           <GoogleScheduleView
             events={filteredEvents}
             date={date}
-            onEventClick={(ev) =>
+            onEventClick={(ev) => {
+              calendarAnalytics.onEventDetailViewed({
+                event_id: ev.id,
+                event_type: ev.type,
+                source: "schedule",
+              });
               setSelectedEvent({
                 ...ev,
                 backgroundColor: ev.color,
@@ -1212,8 +1255,8 @@ export const EmployeeUnifiedCalendar: React.FC<
                   location: ev.location,
                   resource: ev,
                 },
-              })
-            }
+              });
+            }}
             getColorForType={getColorForType}
             getEventTypeIcon={getEventTypeIcon}
             getEventTypeLabel={getEventTypeLabel}
@@ -1470,7 +1513,7 @@ export const EmployeeUnifiedCalendar: React.FC<
                       <button
                         onClick={() => {
                           closeEventModal();
-                          handleSelectEvent({ event: selectedEvent });
+                          handleSelectEvent({ event: selectedEvent }, false);
                         }}
                         className="px-3 py-2 bg-[#C72030] text-white text-xs font-medium rounded hover:bg-[#a01828] transition-colors flex items-center gap-1"
                       >
@@ -2373,6 +2416,7 @@ export const EmployeeUnifiedCalendar: React.FC<
                     showTodos: true,
                   });
                   setHasAppliedCustomFilters(false);
+                  calendarAnalytics.onCalendarFilterReset();
                 }}
                 className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               >
@@ -2382,6 +2426,13 @@ export const EmployeeUnifiedCalendar: React.FC<
                 onClick={() => {
                   setIsFilterModalOpen(false);
                   setHasAppliedCustomFilters(true);
+                  calendarAnalytics.onCalendarFilterApplied({
+                    date_from: activeFilters.dateFrom,
+                    date_to: activeFilters.dateTo,
+                    types: Object.entries(activeFilters)
+                      .filter(([key, value]) => key.startsWith("show") && value)
+                      .map(([key]) => key.replace(/^show/, "")),
+                  });
                 }}
                 className="px-4 py-2 bg-[#C72030] text-white rounded-md hover:bg-[#a01828] transition-colors text-sm font-medium"
               >

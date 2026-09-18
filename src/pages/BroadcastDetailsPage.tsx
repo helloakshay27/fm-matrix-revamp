@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2, Printer, Star, FileText, Share2, File, Pencil, FileVideo, FileSpreadsheet, Download } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -10,6 +10,8 @@ import { format } from 'date-fns';
 import axios from 'axios';
 import { Switch } from '@mui/material';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
+import { isCMContextActive } from '@/utils/posthogHelpers';
 
 interface BroadcastDetails {
   id?: string;
@@ -35,6 +37,8 @@ export const BroadcastDetailsPage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { shouldShow } = useDynamicPermissions();
+  const cmEvents = useClubManagementEvents();
+  const detailViewedRef = useRef(false);
 
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem("token");
@@ -56,6 +60,12 @@ export const BroadcastDetailsPage = () => {
         setIsActive(response.active);
         setShowOnHomeScreen(response.show_on_home_screen || false);
         setVisibleAfterExpire(response.flag_expire || false);
+        if (!detailViewedRef.current) {
+          detailViewedRef.current = true;
+          if (isCMContextActive()) {
+            cmEvents.detailViewed("Notice", id, "notice_details");
+          }
+        }
       } catch (error) {
         console.log(error)
         toast.error("Failed to fetch broadcast details")
@@ -127,6 +137,9 @@ export const BroadcastDetailsPage = () => {
       );
 
       toast.success('Status updated successfully');
+      if (isCMContextActive()) {
+        cmEvents.statusChanged("Notice", id, { notice_status: field, value });
+      }
     } catch (error) {
       console.error('Failed to update status:', error);
       toast.error('Failed to update status');

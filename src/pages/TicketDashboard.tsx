@@ -42,6 +42,7 @@ import { buildReturnToPath } from '@/utils/listBackNavigation';
 import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
 import { useViWorkflowEvents } from "@/components/PostHogViWorkflowEvents";
 import { useFlowEvents } from '@/components/PostHogFlowEvents';
+import { useCMHelpdeskEvents } from '@/components/PostHogHelpdeskEvents';
 
 // Sortable Chart Item Component
 const SortableChartItem = ({
@@ -129,6 +130,10 @@ export const TicketDashboard = () => {
   // flow_started is the funnel's denominator — see PostHogFlowEvents for why the API needs
   // these three events instead of its own URL-pattern proxy.
   const flowEvents = useFlowEvents();
+  // Club Management (club-management/helpdesk) screen-level analytics. Gated on the route
+  // below so the shared component's other routes (/tickets, /maintenance/ticket) stay untouched.
+  const cmHdEvents = useCMHelpdeskEvents();
+  const isCMHelpdesk = window.location.pathname.includes("/club-management/helpdesk");
 
   // GA parity: the ticket list was opened (mount-only, so filters and
   // paging inside the page do not each count as a fresh page view).
@@ -276,6 +281,7 @@ export const TicketDashboard = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const debouncedSearchQuery = useDebounce(searchQuery, 300); // Optimized debounce timing
   const isSearchingRef = useRef(false);
+  const cmListViewedRef = useRef(false);
   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
   const [selectedTicketForEdit, setSelectedTicketForEdit] = useState<TicketResponse | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -463,6 +469,14 @@ export const TicketDashboard = () => {
           setTotalTickets(response.complaints.length);
         }
       });
+
+      // Helpdesk List Viewed — once per successful initial list load, and only on the
+      // club-management/helpdesk route (the shared component also serves /tickets and
+      // /maintenance/ticket, which are out of scope).
+      if (isCMHelpdesk && !cmListViewedRef.current) {
+        cmListViewedRef.current = true;
+        cmHdEvents.onListViewed("all");
+      }
     } catch (error) {
       console.error('Error fetching tickets:', error);
       sonnerToast.error("Failed to fetch tickets. Please try again.");
@@ -474,6 +488,7 @@ export const TicketDashboard = () => {
         setLoading(false);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, perPage]);
 
   // Handle search input change
@@ -503,12 +518,19 @@ export const TicketDashboard = () => {
       return newFilters;
     });
 
+    // Helpdesk Search Performed — one event per meaningful (debounced) search
+    // application, not per keystroke. Result count is the last fetched total.
+    if (isCMHelpdesk && newSearch) {
+      cmHdEvents.onSearchPerformed(newSearch.length, totalTickets);
+    }
+
     // Reset to first page when searching, but only if it's a new search
     if (isSearchingRef.current || (newSearch && !currentSearch)) {
       goToPage(1);
       isSearchingRef.current = false;
     }
-  }, [debouncedSearchQuery, filters.search_all_fields_cont, goToPage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchQuery, filters.search_all_fields_cont, goToPage, totalTickets]);
   useEffect(() => {
     // Always fetch tickets when currentPage or filters change
     fetchTickets(currentPage);
@@ -785,6 +807,10 @@ export const TicketDashboard = () => {
 
       sonnerToast.success("Tickets marked as Golden Ticket successfully!");
 
+      if (isCMHelpdesk) {
+        cmHdEvents.onGoldenTicketMarked(selectedTickets);
+      }
+
       setSelectedTickets([]);
       fetchTicketSummary();
     } catch (error) {
@@ -806,6 +832,10 @@ export const TicketDashboard = () => {
       await fetchTickets(currentPage);
 
       sonnerToast.success(`${selectedTickets.length} ticket(s) flag status updated successfully!`);
+
+      if (isCMHelpdesk) {
+        cmHdEvents.onFlagged(selectedTickets, true);
+      }
 
       setSelectedTickets([]);
       fetchTicketSummary();
@@ -854,6 +884,10 @@ export const TicketDashboard = () => {
       }
 
       sonnerToast.success(response.message || `Ticket ${!currentFlagStatus ? 'flagged' : 'unflagged'} successfully!`);
+
+      if (isCMHelpdesk) {
+        cmHdEvents.onFlagged([ticketId], !currentFlagStatus);
+      }
 
       // Refresh ticket summary to keep counts in sync
       fetchTicketSummary();
@@ -907,6 +941,10 @@ export const TicketDashboard = () => {
 
       sonnerToast.success(response.message || `Golden Ticket ${!currentGoldenStatus ? 'marked' : 'unmarked'} successfully!`);
 
+      if (isCMHelpdesk) {
+        cmHdEvents.onGoldenTicketMarked([ticketId]);
+      }
+
       // Optionally refresh ticket summary to keep counts in sync
       fetchTicketSummary();
     } catch (error) {
@@ -941,6 +979,11 @@ export const TicketDashboard = () => {
       sonnerToast.dismiss(loadingToastId);
       sonnerToast.success("Tickets exported successfully!");
 
+      // Helpdesk Exported — only after the export/download operation succeeds.
+      if (isCMHelpdesk) {
+        cmHdEvents.onExport("xlsx", totalTickets);
+      }
+
     } catch (error) {
       console.error('Export failed:', error);
 
@@ -952,6 +995,36 @@ export const TicketDashboard = () => {
     }
   };
   const handleFilterApply = (newFilters: TicketFilters) => {
+    // Helpdesk Filter Applied — fired on every meaningful Apply/Reset from the filter
+    // dialog, with the structured filter names actually in use.
+    if (isCMHelpdesk) {
+      const filterLabelMap: Record<string, string> = {
+        date_range: 'date_range',
+        category_type_id_eq: 'category',
+        sub_category_id_eq: 'sub_category',
+        dept_id_eq: 'department',
+        site_id_eq: 'site',
+        unit_id_eq: 'unit',
+        issue_status_in: 'status',
+        priority_eq: 'priority',
+        assigned_to_in: 'assigned_user',
+        user_firstname_or_user_lastname_cont: 'user_name',
+        is_subticket_eq: 'is_subticket',
+        has_feedback_eq: 'has_feedback',
+        entity_name_con: 'customer_name',
+        complaint_status_fixed_state_eq: 'status',
+      };
+      const activeFilterKeys = Object.keys(newFilters).filter((k) => {
+        const v = (newFilters as Record<string, unknown>)[k];
+        if (Array.isArray(v)) return v.length > 0;
+        return v !== undefined && v !== null && v !== '';
+      });
+      cmHdEvents.onFilterApplied(
+        activeFilterKeys.length,
+        activeFilterKeys.map((k) => filterLabelMap[k] ?? k)
+      );
+    }
+
     setFilters(newFilters);
     goToPage(1); // Reset to first page when applying filters
     setIsFilterOpen(false);

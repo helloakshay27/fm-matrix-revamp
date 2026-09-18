@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Eye, Edit, Trash2, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import axios from 'axios';
 import {
     AlertDialog,
@@ -128,6 +129,8 @@ const columns: ColumnConfig[] = [
 
 export const DebitNoteClubDashboard: React.FC = () => {
     const navigate = useNavigate();
+    const cmEvents = useClubManagementEvents();
+    const listViewedRef = useRef(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
     const [searchTerm, setSearchTerm] = useState('');
@@ -231,11 +234,24 @@ export const DebitNoteClubDashboard: React.FC = () => {
         fetchDebitNoteData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
     }, [currentPage, perPage, debouncedSearchQuery, appliedFilters]);
 
+    useEffect(() => {
+        if (!listViewedRef.current) {
+            listViewedRef.current = true;
+            cmEvents.listViewed('Debit Note', 'debit_note_dashboard');
+        }
+    }, []);
+
     const handleSearch = (term: string) => {
         setSearchTerm(term);
         setCurrentPage(1);
         if (!term.trim()) fetchDebitNoteData(1, perPage, '', appliedFilters);
     };
+
+    useEffect(() => {
+        if (debouncedSearchQuery.trim()) {
+            cmEvents.searched('Debit Note', debouncedSearchQuery.trim(), 'debit_note_dashboard');
+        }
+    }, [debouncedSearchQuery]);
 
     const handlePageChange = (page: number) => setCurrentPage(page);
 
@@ -273,6 +289,7 @@ export const DebitNoteClubDashboard: React.FC = () => {
             );
 
             toast.success('Debit note deleted successfully!');
+            cmEvents.deleted('Debit Note', deleteTarget.id, 'debit_note_dashboard');
             setShowDeleteModal(false);
             setDeleteTarget(null);
             fetchDebitNoteData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
@@ -407,6 +424,7 @@ export const DebitNoteClubDashboard: React.FC = () => {
                                 variant="outline"
                                 onClick={() => {
                                     toast.success(`Printing ${selectedRows.length} debit note(s)...`);
+                                    cmEvents.exported('Debit Note', 'print', selectedRows.length, 'debit_note_dashboard');
                                     window.print();
                                 }}
                             >

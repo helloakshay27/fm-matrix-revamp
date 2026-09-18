@@ -19,6 +19,8 @@ import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { isCMContextActive } from "@/utils/posthogHelpers";
 
 const enhancedTableColumns: ColumnConfig[] = [
   { key: 'id', label: 'ID', sortable: true, draggable: true },
@@ -117,6 +119,7 @@ const BookingListDashboard = () => {
   const token = localStorage.getItem('token');
   const isPulsePath = window.location.pathname.startsWith('/pulse/amenity');
   const pulseEvents = usePulseEvents();
+  const cmEvents = useClubManagementEvents();
 
   useEffect(() => {
     pulseEvents.onModuleViewed({
@@ -223,6 +226,9 @@ const BookingListDashboard = () => {
         )
       );
       toast.success(`Booking ${bookingId} status updated to ${newStatus}`);
+      if (isCMContextActive()) {
+        cmEvents.statusChanged("Amenity Booking", bookingId, { action: newStatus.toLowerCase() });
+      }
     } catch (error) {
       console.error('Error updating booking status:', error);
       toast.error('Failed to update booking status');
@@ -343,6 +349,13 @@ const BookingListDashboard = () => {
       });
       setIsFilterModalOpen(false);
       toast.success('Filters applied successfully');
+      if (isCMContextActive()) {
+        cmEvents.filtered("Amenity Booking", "amenity_booking_list", {
+          facility: filters.facilityName || undefined,
+          status: filters.status || undefined,
+          amenity_type: filters.amenityType || undefined,
+        });
+      }
     } catch (error) {
       console.error('Error applying filters:', error);
       toast.error('Failed to apply filters');
@@ -368,6 +381,9 @@ const BookingListDashboard = () => {
       current_page: 1,
     });
     toast.info('Filters reset');
+    if (isCMContextActive()) {
+      cmEvents.filtersReset("Amenity Booking", "amenity_booking_list");
+    }
   };
 
   const handleAddBooking = () => {
@@ -752,6 +768,9 @@ const BookingListDashboard = () => {
       link.remove();
       window.URL.revokeObjectURL(url);
       toast.success('File downloaded successfully');
+      if (isCMContextActive()) {
+        cmEvents.exported("Amenity Booking", "xlsx", pagination.total_count, "amenity_booking_list");
+      }
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Error downloading file');

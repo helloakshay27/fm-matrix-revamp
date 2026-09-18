@@ -41,6 +41,7 @@ import { ShoppingCart, Package, Calendar, FileText, ArrowLeft } from 'lucide-rea
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { toast } from "sonner";
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -181,6 +182,7 @@ interface ExternalUser {
 }
 
 export const CreditNoteClubAddPage: React.FC = () => {
+    const cmEvents = useClubManagementEvents();
     const [subject, setSubject] = useState('');
     // Fetch item list from API
     useEffect(() => {
@@ -1428,6 +1430,7 @@ export const CreditNoteClubAddPage: React.FC = () => {
             });
 
             toast.success('Credit note created successfully!');
+            cmEvents.created('Credit Note', undefined, 'credit_note_add');
             navigate('/club-management/credit-note');
         } catch (error) {
             console.error('Error submitting credit note:', error);

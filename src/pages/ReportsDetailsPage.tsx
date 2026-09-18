@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, File, FileText, Heart, MoreVertical, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,8 @@ import {
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { isCMContextActive } from "@/utils/posthogHelpers";
 
 interface ReportDetail {
     id?: number;
@@ -90,6 +92,8 @@ interface Post {
 const ReportsDetailsPage = () => {
     const { id, communityId } = useParams();
     const navigate = useNavigate();
+    const { detailViewed, statusChanged, action } = useClubManagementEvents();
+    const viewedRef = useRef(false);
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
 
@@ -127,6 +131,10 @@ const ReportsDetailsPage = () => {
             setReportDetails(response.data.report);
             setReviewStatus(response.data?.report?.status || "Under Review");
             setExistingAttachments(response.data?.report?.post?.attachments || []);
+            if (isCMContextActive() && !viewedRef.current) {
+                viewedRef.current = true;
+                detailViewed("Community Report", id, "community_report_details");
+            }
         } catch (error) {
             console.error("Error fetching report details:", error);
         } finally {
@@ -154,6 +162,9 @@ const ReportsDetailsPage = () => {
 
             if (response.data.success || response.status === 200) {
                 setReviewStatus(newStatus);
+                if (isCMContextActive()) {
+                    statusChanged("Community Report", id, { status: newStatus, screen: "community_report_details" });
+                }
                 // Optionally refresh the report details
                 await fetchReportDetails();
             }
@@ -428,6 +439,9 @@ const ReportsDetailsPage = () => {
 
                 if (response.status === 200 || response.status === 204) {
                     toast.success('Post deleted successfully');
+                    if (isCMContextActive()) {
+                        action("Community Post Deleted", { entity_id: deleteConfirmation.id, screen: "community_report_details" });
+                    }
                     await fetchReportDetails();
                 }
             } else if (deleteConfirmation.type === 'comment') {
@@ -440,6 +454,9 @@ const ReportsDetailsPage = () => {
                     }
                 );
                 toast.success('Comment deleted successfully');
+                if (isCMContextActive()) {
+                    action("Community Comment Deleted", { entity_id: deleteConfirmation.id, screen: "community_report_details" });
+                }
                 await fetchReportDetails();
             }
             navigate(`/pulse/community/${communityId}`)

@@ -12,9 +12,12 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import axios from "axios";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { isCMContextActive } from "@/utils/posthogHelpers";
 
 const CommunityAdd = () => {
     const navigate = useNavigate();
+    const { created } = useClubManagementEvents();
     const baseUrl = localStorage.getItem("baseUrl")
     const token = localStorage.getItem("token")
     const coverImageInputRef = useRef<HTMLInputElement>(null);
@@ -109,6 +112,9 @@ const CommunityAdd = () => {
                 headers: { Authorization: `Bearer ${token}` },
             })
             toast.success("Community created successfully");
+            if (isCMContextActive()) {
+                created("Community", undefined, "community_add", { name: formData.communityName });
+            }
             navigate(-1);
         } catch (error: any) {
             console.log(error);

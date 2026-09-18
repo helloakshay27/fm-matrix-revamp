@@ -2848,6 +2848,16 @@ const DocumentShareLinkPage = lazy(() =>
     default: m.DocumentShareLinkPage,
   }))
 );
+const ViMyworkspaceOccupantPrivacyPolicy = lazy(() =>
+  import("./pages/ViMyworkspaceOccupantPrivacyPolicy").then((m) => ({
+    default: m.ViMyworkspaceOccupantPrivacyPolicy,
+  }))
+);
+const ViMyworkspaceTermsAndConditions = lazy(() =>
+  import("./pages/ViMyworkspaceTermsAndConditions").then((m) => ({
+    default: m.ViMyworkspaceTermsAndConditions,
+  }))
+);
 const GroupConversation = lazy(() => import("./components/GroupConversation"));
 const ChannelTasksAll = lazy(() => import("./pages/ChannelTasksAll"));
 const ChatTaskDetailsPage = lazy(() => import("./pages/ChatTaskDetailsPage"));
@@ -3737,6 +3747,15 @@ import EditSupplierPage from "./features/PulseSuppliers/pages/EditSupplierPage.t
 const ModulesManagement = lazy(
   () => import("./pages/settings/ModulesManagement")
 );
+const GateIntegrationPage = lazy(
+  () => import("./features/gate-integration/pages/GateIntegration")
+);
+const AddGatePage = lazy(
+  () => import("./features/gate-integration/pages/AddGatePage")
+);
+const EditGatePage = lazy(
+  () => import("./features/gate-integration/pages/EditGatePage")
+);
 const InvoiceAdd = lazy(() =>
   import("./pages/ClubManagement/InvoiceAdd").then((m) => ({
     default: m.InvoiceAdd,
@@ -4596,6 +4615,14 @@ function App() {
                             element={<DocumentShareLinkPage />}
                           />
                           <Route
+                            path="/vi-myworkspace/occupant-privacy-policy"
+                            element={<ViMyworkspaceOccupantPrivacyPolicy />}
+                          />
+                          <Route
+                            path="/vi-myworkspace/terms-and-conditions"
+                            element={<ViMyworkspaceTermsAndConditions />}
+                          />
+                          <Route
                             path="/documents/editor/:documentId"
                             element={<OnlyOfficePublicEditorPage />}
                           />
@@ -4746,6 +4773,18 @@ function App() {
                             <Route
                               path="settings/modules"
                               element={<ModulesManagement />}
+                            />
+                            <Route
+                              path="settings/gate-integration"
+                              element={<GateIntegrationPage />}
+                            />
+                            <Route
+                              path="settings/gate-integration/add"
+                              element={<AddGatePage />}
+                            />
+                            <Route
+                              path="settings/gate-integration/edit/:id"
+                              element={<EditGatePage />}
                             />
 
                             {/* <Route

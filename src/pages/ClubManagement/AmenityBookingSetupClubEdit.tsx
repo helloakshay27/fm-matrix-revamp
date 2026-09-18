@@ -18,6 +18,7 @@ import axios from "axios";
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
 import { ClubGalleryImageUpload } from "@/components/ClubGalleryImageUpload";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -82,6 +83,7 @@ const muiTheme = createTheme({
 
 export const EditBookingSetupClubPage = () => {
     const navigate = useNavigate();
+    const cmEvents = useClubManagementEvents();
     const { id } = useParams();
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
@@ -436,6 +438,7 @@ export const EditBookingSetupClubPage = () => {
 
             setExistingGalleryImages(galleryImages);
             setSelectedGalleryImages(galleryImages); // Also set to selectedGalleryImages to display them
+            cmEvents.detailViewed("Amenity Setup", id, "amenity_setup_edit");
         } catch (error) {
             console.error("Error fetching facility details:", error);
             toast.error("Failed to fetch facility details");
@@ -1102,6 +1105,7 @@ export const EditBookingSetupClubPage = () => {
 
             if (response.ok) {
                 toast.success("Booking setup updated successfully");
+                cmEvents.updated("Amenity Setup", id, "amenity_setup_edit");
                 navigate(-1);
             } else {
                 console.error("Failed to update booking setup:", response.statusText);

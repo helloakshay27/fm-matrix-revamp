@@ -17,6 +17,7 @@ import {
   ClubWalletListItem,
   ClubWalletDetailResponse,
 } from "@/services/clubWalletAPI";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 
 // OTP verification now gates the wallet LIST, not the detail view:
 // verify -> list (needs verification_token) -> detail (open, no token needed).
@@ -55,6 +56,10 @@ const formatDate = (iso: string | null | undefined) => {
 };
 
 export const ClubWalletsPage: React.FC = () => {
+  const { listViewed, detailViewed, action } = useClubManagementEvents();
+  const listViewedRef = useRef(false);
+  const detailViewedRef = useRef(false);
+
   const [step, setStep] = useState<FlowStep>("verify");
 
   const [mobileOtp, setMobileOtp] = useState("");
@@ -129,6 +134,10 @@ export const ClubWalletsPage: React.FC = () => {
       setWallets(res.wallets);
       setTotalPages(res.total_pages);
       setCurrentPage(res.current_page);
+      if (!listViewedRef.current) {
+        listViewedRef.current = true;
+        listViewed("Wallet", "wallet_list", { total: res.total_pages * 20 });
+      }
     } catch (error) {
       if (error instanceof Error && error.message === "EXPIRED_TOKEN") {
         toast.error("Verification expired. Please verify again.");
@@ -188,6 +197,10 @@ export const ClubWalletsPage: React.FC = () => {
     try {
       const res = await fetchClubWalletDetail({ walletId, page, per_page: 20 });
       setDetail(res);
+      if (!detailViewedRef.current) {
+        detailViewedRef.current = true;
+        detailViewed("Wallet", walletId, "wallet_detail");
+      }
     } catch (error) {
       console.error("Failed to load wallet detail:", error);
       toast.error("Failed to load wallet details. Please try again.");
@@ -207,6 +220,7 @@ export const ClubWalletsPage: React.FC = () => {
     setStep("list");
     setSelectedWallet(null);
     setDetail(null);
+    detailViewedRef.current = false;
   };
 
   const renderWalletCell = (item: ClubWalletListItem, key: string) => {

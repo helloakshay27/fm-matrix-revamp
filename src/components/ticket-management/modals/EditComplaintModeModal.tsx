@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/form';
 import { toast } from 'sonner';
 import { fetchComplaintModeById, updateComplaintMode, ComplaintMode } from '@/services/complaintModeAPI';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 
 const complaintModeSchema = z.object({
   complaintMode: z.string().min(1, 'Complaint mode is required'),
@@ -49,6 +50,9 @@ export const EditComplaintModeModal: React.FC<EditComplaintModeModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [apiComplaintMode, setApiComplaintMode] = useState<ComplaintMode | null>(null);
+  const analytics = useClubManagementEvents();
+  const module = 'Ticket Management';
+  const screen = 'Complaint Mode';
 
   const form = useForm<ComplaintModeFormData>({
     resolver: zodResolver(complaintModeSchema),
@@ -132,6 +136,7 @@ export const EditComplaintModeModal: React.FC<EditComplaintModeModalProps> = ({
 
       onUpdate(updatedComplaintMode);
       toast.success('Complaint mode updated successfully!');
+      analytics.updated(module, complaintModeId, screen, { entity_type: 'complaint_mode' });
       onOpenChange(false);
     } catch (error) {
       console.error('Error updating complaint mode:', error);

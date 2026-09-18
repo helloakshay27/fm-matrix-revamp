@@ -41,6 +41,7 @@ import { ShoppingCart, Package, Calendar, FileText, ArrowLeft } from 'lucide-rea
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { toast } from "sonner";
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -181,6 +182,7 @@ interface ExternalUser {
 }
 
 export const DebitNoteClubAddPage: React.FC = () => {
+    const cmEvents = useClubManagementEvents();
     const [subject, setSubject] = useState('');
     // Fetch item list from API
     useEffect(() => {
@@ -1429,6 +1431,7 @@ export const DebitNoteClubAddPage: React.FC = () => {
             });
 
             toast.success('Debit note created successfully!');
+            cmEvents.created('Debit Note', undefined, 'debit_note_add');
             navigate('/club-management/debit-note');
         } catch (error) {
             console.error('Error submitting debit note:', error);

@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { toast } from "sonner";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 import {
   CloudUpload,
   PictureAsPdf,
@@ -32,6 +33,8 @@ export const AmenityBookingDetailsClubPage = () => {
   const { id } = useParams();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const cmEvents = useClubManagementEvents();
+  const detailViewedFired = useRef(false);
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
 
@@ -135,6 +138,7 @@ export const AmenityBookingDetailsClubPage = () => {
       );
       toast.success('Booking cancelled successfully!');
       setShowCancelModal(false); // Close the modal after success
+      cmEvents.statusChanged("Amenity Booking", Number(id), { action: "cancelled", booking_type: bookings?.fac_type?.toLowerCase() || "facility" });
       fetchDetails();
     } catch (error) {
       toast.error('Failed to cancel booking');
@@ -237,6 +241,10 @@ export const AmenityBookingDetailsClubPage = () => {
         fetchBookingDetails({ baseUrl, token, id })
       ).unwrap();
       setBookings(response);
+      if (!detailViewedFired.current) {
+        detailViewedFired.current = true;
+        cmEvents.detailViewed("Amenity Booking", id, "amenity_booking_details");
+      }
     } catch (error) {
       console.error("Error fetching booking details:", error);
     }
@@ -294,6 +302,7 @@ export const AmenityBookingDetailsClubPage = () => {
         }
       );
       toast.success(`Booking ${id} status updated to ${newStatus}`);
+      cmEvents.statusChanged("Amenity Booking", Number(id), { action: newStatus.toLowerCase(), booking_type: bookings?.fac_type?.toLowerCase() || "facility" });
       fetchDetails();
     } catch (error) {
       console.error('Error updating booking status:', error);

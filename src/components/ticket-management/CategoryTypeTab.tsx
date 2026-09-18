@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -31,6 +31,7 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { userService } from '@/services/userService';
 import { API_CONFIG, getAuthHeader, getFullUrl } from '@/config/apiConfig';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import { toast } from 'sonner';
 import { Edit, Plus, Trash2, Upload, X } from 'lucide-react';
 import {
@@ -188,6 +189,20 @@ export const CategoryTypeTab: React.FC = () => {
   const [editVendorEmails, setEditVendorEmails] = useState<string[]>(['']);
   const [editCustomerEnabled, setEditCustomerEnabled] = useState(false);
   const [editSelectedSiteId, setEditSelectedSiteId] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const analytics = useClubManagementEvents();
+  const listViewFired = useRef(false);
+  const module = 'Ticket Management';
+  const screen = 'Category Type';
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchTerm.trim()) {
+        analytics.searched(module, searchTerm, screen);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const form = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
@@ -236,6 +251,10 @@ export const CategoryTypeTab: React.FC = () => {
     try {
       const response = await ticketManagementAPI.getCategories();
       setCategories(response.helpdesk_categories || []);
+      if (!listViewFired.current) {
+        listViewFired.current = true;
+        analytics.listViewed(module, screen, { row_count: response.helpdesk_categories?.length ?? 0 });
+      }
     } catch (error) {
       toast.error('Failed to fetch categories');
       console.error('Error fetching categories:', error);
@@ -428,6 +447,7 @@ export const CategoryTypeTab: React.FC = () => {
 
       if (response.ok) {
         toast.success('Category created successfully!');
+        analytics.created(module, undefined, screen, { entity_type: 'category', entity_name: data.categoryName });
         
         // Reset form
         form.reset();
@@ -675,6 +695,7 @@ export const CategoryTypeTab: React.FC = () => {
 
       if (response.ok) {
         toast.success('Category updated successfully!');
+        analytics.updated(module, editingCategory.id, screen, { entity_type: 'category' });
         setIsEditModalOpen(false);
         setEditingCategory(null);
         fetchCategories(); // Refresh the list
@@ -771,6 +792,7 @@ export const CategoryTypeTab: React.FC = () => {
       if (response.ok) {
         setCategories(categories.filter(cat => cat.id !== category.id));
         toast.success('Category deleted successfully!');
+        analytics.deleted(module, category.id, screen, { entity_type: 'category' });
       } else {
         const errorData = await response.json().catch(() => null);
         toast.error(errorData?.message || 'Failed to delete category');
@@ -1237,6 +1259,7 @@ export const CategoryTypeTab: React.FC = () => {
               storageKey="category-types-table"
               enableSearch={true}
               searchPlaceholder="Search categories..."
+              onSearchChange={setSearchTerm}
             />
           )}
         </CardContent>

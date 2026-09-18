@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import axios from "axios";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { isCMContextActive } from "@/utils/posthogHelpers";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -96,6 +98,7 @@ const AMENITIES_OPTIONS = [
 export const EditMembershipPlanPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const cmEvents = useClubManagementEvents();
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -198,6 +201,9 @@ export const EditMembershipPlanPage = () => {
         cgst: data.cgst?.toString() || "",
         sgst: data.sgst?.toString() || "",
       })
+      if (isCMContextActive()) {
+        cmEvents.detailViewed("Membership Plan", id, "membership_plan_edit");
+      }
     } catch (error) {
       console.error("Error fetching membership plan details:", error);
       toast.error("Failed to fetch membership plan details");
@@ -301,6 +307,9 @@ export const EditMembershipPlanPage = () => {
       })
 
       toast.success("Membership plan updated successfully!");
+      if (isCMContextActive()) {
+        cmEvents.updated("Membership Plan", id, "membership_plan_edit");
+      }
       navigate(-1);
     } catch (error) {
       console.error("Error updating membership plan:", error);

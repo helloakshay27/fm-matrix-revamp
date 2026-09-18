@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Box, Autocomplete, Chip, Select } from '@mui/material';
@@ -15,6 +16,7 @@ import { ArrowLeft } from 'lucide-react';
 export const ClubEditOccupantUserPage: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams();
+    const cmEvents = useClubManagementEvents();
     const [loading, setLoading] = useState(true);
     const [formData, setFormData] = useState({
         firstName: '',
@@ -252,6 +254,7 @@ export const ClubEditOccupantUserPage: React.FC = () => {
                 },
             });
             toast.success('Occupant user updated successfully');
+            cmEvents.updated("Occupant", id, "occupant_edit");
             navigate(`/club-management/users/occupant-users/view/${id}`);
         } catch (error: any) {
             const msg = error?.response?.data?.error || error?.message || 'Failed to update occupant user';

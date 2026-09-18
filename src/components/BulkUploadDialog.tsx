@@ -231,7 +231,7 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
 
       if (context === "custom_forms") {
         endpoint = ENDPOINTS.CUSTOM_FORMS_BULK_UPLOAD;
-        formData.append("custom_form_file", selectedFile);
+        formData.append("file", selectedFile);
       } else if (context === "measurements") {
         endpoint = ENDPOINTS.ASSET_MEASUREMENT_IMPORT;
         formData.append("measurement_file", selectedFile);

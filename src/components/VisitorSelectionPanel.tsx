@@ -24,6 +24,7 @@ import {
   RotateCcw,
   Ban,
   Flag,
+  XCircle,
 } from "lucide-react";
 import {
   getFullUrl,
@@ -54,7 +55,8 @@ interface VisitorSelectionPanelProps {
   onCheckOut: () => Promise<void>;
   onApprove: () => Promise<void>;
   onVerifyOtp?: () => Promise<void>;
-  onBlacklist?: () => Promise<void>;
+  onBlacklist?: (reason: string) => Promise<void>;
+  onCancel?: () => Promise<void>;
   onFlag?: () => Promise<void>;
   onExport: () => void;
   onClearSelection: () => void;
@@ -70,6 +72,7 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
   onApprove,
   onVerifyOtp,
   onBlacklist,
+  onCancel,
   onFlag,
   onExport,
   onClearSelection,
@@ -89,6 +92,10 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
   const [otpValue, setOtpValue] = useState("");
   const [isOtpVerifying, setIsOtpVerifying] = useState(false);
+  const [isBlacklistModalOpen, setIsBlacklistModalOpen] = useState(false);
+  const [blacklistReason, setBlacklistReason] = useState("");
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isCancelLoading, setIsCancelLoading] = useState(false);
 
   const handleCheckIn = async () => {
     console.log(
@@ -436,24 +443,74 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
     }
   };
 
-  const handleBlacklist = async () => {
+  const handleBlacklistClick = () => {
     console.log(
       "VisitorSelectionPanel - Blacklist clicked for visitors:",
       selectedVisitors
     );
+    setIsBlacklistModalOpen(true);
+  };
+
+  const handleBlacklistModalClose = () => {
+    setIsBlacklistModalOpen(false);
+    setBlacklistReason("");
+  };
+
+  const handleBlacklistSubmit = async () => {
+    if (!blacklistReason.trim()) {
+      toast.error("Reason is required to blacklist a visitor.");
+      return;
+    }
+
     setIsBlacklistLoading(true);
     try {
       if (onBlacklist) {
-        await onBlacklist();
-        toast.success(
-          `Successfully blacklisted ${selectedVisitors.length} visitor(s).`
-        );
+        await onBlacklist(blacklistReason.trim());
+        setIsBlacklistModalOpen(false);
+        setBlacklistReason("");
+        fetchVisitorHistory();
       }
     } catch (error) {
       console.error("Failed to blacklist visitors:", error);
-      toast.error("Failed to blacklist visitors. Please try again.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to blacklist visitors. Please try again."
+      );
     } finally {
       setIsBlacklistLoading(false);
+    }
+  };
+
+  const handleCancelClick = () => {
+    console.log(
+      "VisitorSelectionPanel - Cancel clicked for visitors:",
+      selectedVisitors
+    );
+    setIsCancelModalOpen(true);
+  };
+
+  const handleCancelModalClose = () => {
+    setIsCancelModalOpen(false);
+  };
+
+  const handleCancelConfirm = async () => {
+    setIsCancelLoading(true);
+    try {
+      if (onCancel) {
+        await onCancel();
+        setIsCancelModalOpen(false);
+        fetchVisitorHistory();
+      }
+    } catch (error) {
+      console.error("Failed to cancel visitors:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to cancel visitors. Please try again."
+      );
+    } finally {
+      setIsCancelLoading(false);
     }
   };
 
@@ -616,6 +673,17 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
       !visitor.check_in_time
   );
 
+  // Blacklist/Cancel only make sense for a single selected visitor whose
+  // current status isn't already blacklisted/cancelled.
+  const isSingleSelection = selectedVisitors.length === 1;
+  const singleSelectedVisitor = isSingleSelection
+    ? selectedVisitorObjects[0]
+    : undefined;
+  const canBlacklist =
+    isSingleSelection && singleSelectedVisitor?.status !== "Blacklisted";
+  const canCancel =
+    isSingleSelection && singleSelectedVisitor?.status !== "Cancelled";
+
   return (
     <>
       <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white shadow-[0px_4px_20px_rgba(0,0,0,0.15)] rounded-lg z-50 flex h-[105px] selection-panel">
@@ -728,21 +796,41 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
               <span className="text-xs text-gray-600">Check Out</span>
             </Button>
 
-            {/* Blacklist Button */}
-            <Button
-              onClick={handleBlacklist}
-              disabled={isBlacklistLoading}
-              variant="ghost"
-              size="sm"
-              className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
-            >
-              {isBlacklistLoading ? (
-                <Loader2 className="w-6 h-6 animate-spin text-black" />
-              ) : (
-                <Ban className="w-6 h-6 text-black" />
-              )}
-              <span className="text-xs text-gray-600">Blacklist</span>
-            </Button>
+            {/* Blacklist Button - single selection only, and not already blacklisted */}
+            {canBlacklist && (
+              <Button
+                onClick={handleBlacklistClick}
+                disabled={isBlacklistLoading}
+                variant="ghost"
+                size="sm"
+                className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
+              >
+                {isBlacklistLoading ? (
+                  <Loader2 className="w-6 h-6 animate-spin text-black" />
+                ) : (
+                  <Ban className="w-6 h-6 text-black" />
+                )}
+                <span className="text-xs text-gray-600">Blacklist</span>
+              </Button>
+            )}
+
+            {/* Cancel Button - single selection only, and not already cancelled */}
+            {onCancel && canCancel && (
+              <Button
+                onClick={handleCancelClick}
+                disabled={isCancelLoading}
+                variant="ghost"
+                size="sm"
+                className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
+              >
+                {isCancelLoading ? (
+                  <Loader2 className="w-6 h-6 animate-spin text-black" />
+                ) : (
+                  <XCircle className="w-6 h-6 text-black" />
+                )}
+                <span className="text-xs text-gray-600">Cancel</span>
+              </Button>
+            )}
 
             {/* Flag Button */}
             {onFlag && (
@@ -900,6 +988,104 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
                 </>
               ) : (
                 "Verify OTP"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Blacklist Reason Modal */}
+      <Dialog
+        open={isBlacklistModalOpen}
+        onOpenChange={(open) => !open && handleBlacklistModalClose()}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Blacklist {selectedVisitors.length} Visitor
+              {selectedVisitors.length > 1 ? "s" : ""}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label
+                htmlFor="blacklist-reason"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Reason <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                id="blacklist-reason"
+                value={blacklistReason}
+                onChange={(e) => setBlacklistReason(e.target.value)}
+                placeholder="Enter reason for blacklisting..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 resize-none text-sm"
+                rows={4}
+                disabled={isBlacklistLoading}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={handleBlacklistModalClose}
+              disabled={isBlacklistLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleBlacklistSubmit}
+              disabled={isBlacklistLoading || !blacklistReason.trim()}
+              className="bg-[#C72030] hover:bg-[#B01E2F] text-white"
+            >
+              {isBlacklistLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Blacklisting...
+                </>
+              ) : (
+                "Blacklist"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel Confirmation Modal */}
+      <Dialog
+        open={isCancelModalOpen}
+        onOpenChange={(open) => !open && handleCancelModalClose()}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cancel Visitor{selectedVisitors.length > 1 ? "s" : ""}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-600">
+            Are you sure you want to cancel {selectedVisitors.length} selected
+            visitor{selectedVisitors.length > 1 ? "s" : ""}? This action cannot
+            be undone.
+          </p>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={handleCancelModalClose}
+              disabled={isCancelLoading}
+            >
+              No, Keep
+            </Button>
+            <Button
+              onClick={handleCancelConfirm}
+              disabled={isCancelLoading}
+              className="bg-[#C72030] hover:bg-[#B01E2F] text-white"
+            >
+              {isCancelLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Cancelling...
+                </>
+              ) : (
+                "Yes, Cancel"
               )}
             </Button>
           </DialogFooter>

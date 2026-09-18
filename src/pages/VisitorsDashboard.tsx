@@ -34,6 +34,7 @@ import { useFlowEvents } from '@/components/PostHogFlowEvents';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { MaterialDatePicker } from '@/components/ui/material-date-picker';
+import { CommonImportModal } from '@/components/CommonImportModal';
 
 // Get current site ID dynamically from localStorage
 const getCurrentSiteId = (): number => {
@@ -214,6 +215,9 @@ export const VisitorsDashboard = () => {
   const [selectedVisitors, setSelectedVisitors] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [isActionPanelOpen, setIsActionPanelOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [selectedImportFile, setSelectedImportFile] = useState<File | null>(null);
+  const [isImportUploading, setIsImportUploading] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [exportFromDate, setExportFromDate] = useState('');
   const [exportToDate, setExportToDate] = useState('');
@@ -1374,11 +1378,183 @@ export const VisitorsDashboard = () => {
     }
   };
 
+  const handleBulkBlacklist = async (reason: string) => {
+    console.log('VisitorsDashboard - Bulk blacklist action for visitors:', selectedVisitors, 'reason:', reason);
+    if (selectedVisitors.length === 0) {
+      toast.error("Please select visitors to blacklist");
+      return;
+    }
+
+    let successCount = 0;
+    let errorCount = 0;
+    let lastErrorMessage = "";
+
+    for (const visitorId of selectedVisitors) {
+      try {
+        const url = getFullUrl(`/visitors/${visitorId}/update_status`);
+        const options = getAuthenticatedFetchOptions();
+        const requestOptions: RequestInit = {
+          ...options,
+          method: 'POST',
+          headers: {
+            ...options.headers,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: 'blacklisted', reason }),
+        };
+
+        const response = await fetch(url, requestOptions);
+        const data = await response.json().catch(() => ({}));
+
+        if (response.ok && data.code === 200) {
+          successCount++;
+        } else {
+          errorCount++;
+          lastErrorMessage = data.message || `Failed to blacklist visitor ${visitorId}`;
+          console.error('Failed to blacklist visitor', visitorId, data);
+        }
+      } catch (error) {
+        errorCount++;
+        lastErrorMessage = error instanceof Error ? error.message : "Failed to blacklist visitor";
+        console.error('Error blacklisting visitor', visitorId, error);
+      }
+    }
+
+    if (successCount > 0) {
+      toast.success(
+        successCount === 1
+          ? "Visitor blacklisted successfully"
+          : `Successfully blacklisted ${successCount} visitor(s).`
+      );
+      setSelectedVisitors([]);
+      await fetchVisitorHistory();
+    }
+
+    if (errorCount > 0) {
+      if (successCount === 0) {
+        // No visitor succeeded - surface the specific backend message
+        // (e.g. reason required, invalid status, visitor not found) and let
+        // the caller keep the modal open for retry.
+        throw new Error(lastErrorMessage || "Failed to blacklist visitor(s).");
+      }
+      toast.error(lastErrorMessage || `Failed to blacklist ${errorCount} visitor(s).`);
+    }
+  };
+
+  const handleBulkCancel = async () => {
+    console.log('VisitorsDashboard - Bulk cancel action for visitors:', selectedVisitors);
+    if (selectedVisitors.length === 0) {
+      toast.error("Please select visitors to cancel");
+      return;
+    }
+
+    let successCount = 0;
+    let errorCount = 0;
+    let lastErrorMessage = "";
+
+    for (const visitorId of selectedVisitors) {
+      try {
+        const url = getFullUrl(`/visitors/${visitorId}/update_status`);
+        const options = getAuthenticatedFetchOptions();
+        const requestOptions: RequestInit = {
+          ...options,
+          method: 'POST',
+          headers: {
+            ...options.headers,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: 'cancelled' }),
+        };
+
+        const response = await fetch(url, requestOptions);
+        const data = await response.json().catch(() => ({}));
+
+        if (response.ok && data.code === 200) {
+          successCount++;
+        } else {
+          errorCount++;
+          lastErrorMessage = data.message || `Failed to cancel visitor ${visitorId}`;
+          console.error('Failed to cancel visitor', visitorId, data);
+        }
+      } catch (error) {
+        errorCount++;
+        lastErrorMessage = error instanceof Error ? error.message : "Failed to cancel visitor";
+        console.error('Error cancelling visitor', visitorId, error);
+      }
+    }
+
+    if (successCount > 0) {
+      toast.success(
+        successCount === 1
+          ? "Visitor cancelled successfully"
+          : `Successfully cancelled ${successCount} visitor(s).`
+      );
+      setSelectedVisitors([]);
+      await fetchVisitorHistory();
+    }
+
+    if (errorCount > 0) {
+      if (successCount === 0) {
+        // No visitor succeeded - surface the specific backend message
+        // (e.g. invalid status, visitor not found) and let the caller
+        // keep the modal open for retry.
+        throw new Error(lastErrorMessage || "Failed to cancel visitor(s).");
+      }
+      toast.error(lastErrorMessage || `Failed to cancel ${errorCount} visitor(s).`);
+    }
+  };
+
   const handleImportVisitors = () => {
     console.log('Import visitors functionality');
-    toast.info('Import visitors feature coming soon!');
-    // TODO: Implement import functionality
-    // This could open a file dialog, navigate to import page, etc.
+    setIsImportModalOpen(true);
+  };
+
+  const handleImportSubmit = async () => {
+    if (!selectedImportFile) {
+      toast.error('Please select a file to import');
+      return;
+    }
+
+    setIsImportUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('visitor_file', selectedImportFile);
+      formData.append('skip_approval', 'true');
+
+      const url = getFullUrl('/pms/admin/visitors/bulk_upload_visitors');
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { Authorization: getAuthHeader() },
+        body: formData,
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message ||
+          `Failed to import visitors: ${response.status} ${response.statusText}`
+        );
+      }
+
+      if (data?.failed && data.failed.length > 0) {
+        data.failed.forEach((item: { row: number; errors: string[] }) => {
+          toast.error(`Row ${item.row}: ${item.errors.join(', ')}`);
+        });
+      } else {
+        toast.success('Visitors imported successfully');
+        setIsImportModalOpen(false);
+        setSelectedImportFile(null);
+        await fetchVisitorHistory();
+      }
+    } catch (error) {
+      console.error('Failed to import visitors:', error);
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to import visitors'
+      );
+    } finally {
+      setIsImportUploading(false);
+    }
   };
 
   const handleExport = async () => {
@@ -1398,43 +1574,94 @@ export const VisitorsDashboard = () => {
     });
 
     try {
-      const exportUrl = getFullUrl(ENDPOINTS.VISITOR_HISTORY_EXPORT);
+      // Step 1: kick off the background export job.
+      // exportFromDate/exportToDate are already "DD/MM/YYYY" strings from
+      // MaterialDatePicker, matching the confirmed "DD/MM/YYYY - DD/MM/YYYY" format.
+      const startUrl = new URL(getFullUrl(ENDPOINTS.VISITOR_HISTORY_EXPORT_START));
+      startUrl.searchParams.set('q[date_range]', `${exportFromDate} - ${exportToDate}`);
 
-      const fromParts = exportFromDate.split('/');
-      const toParts = exportToDate.split('/');
-      const dateRangeParam = `${fromParts[1]}%2F${fromParts[0]}%2F${fromParts[2]}-${toParts[1]}%2F${toParts[0]}%2F${toParts[2]}`;
-
-      const separator = exportUrl.includes('?') ? '&' : '?';
-      const urlWithDateRange = `${exportUrl}${separator}q[date_range]=${dateRangeParam}`;
-
-      console.log('Export URL with date range:', urlWithDateRange);
-
-      const response = await fetch(urlWithDateRange, {
+      const startResponse = await fetch(startUrl.toString(), {
         method: 'GET',
-        headers: {
-          'Authorization': getAuthHeader(),
-        },
+        headers: { Authorization: getAuthHeader() },
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Export API error response:', errorText);
-        if (response.status === 401) {
+      if (!startResponse.ok) {
+        if (startResponse.status === 401) {
           throw new Error('Authentication failed. Please login again.');
         }
-        throw new Error(`Export failed: ${response.status} ${response.statusText}`);
+        throw new Error(`Export failed: ${startResponse.status} ${startResponse.statusText}`);
       }
 
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
+      const { export_key: exportKey } = await startResponse.json();
+      if (!exportKey) {
+        throw new Error('Export did not return a valid export key.');
+      }
+
+      // Step 2: poll until the export job is done (or failed).
+      const statusUrl = new URL(getFullUrl(ENDPOINTS.VISITOR_EXPORT_STATUS));
+      statusUrl.searchParams.set('key', exportKey);
+
+      const POLL_INTERVAL_MS = 2000;
+      const MAX_POLL_ATTEMPTS = 60; // ~2 minutes
+      let exportStatus: 'processing' | 'done' | 'failed' = 'processing';
+      let statusError: string | undefined;
+
+      for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
+        const statusResponse = await fetch(statusUrl.toString(), {
+          method: 'GET',
+          headers: { Authorization: getAuthHeader() },
+        });
+
+        if (!statusResponse.ok) {
+          throw new Error(
+            `Failed to check export status: ${statusResponse.status} ${statusResponse.statusText}`
+          );
+        }
+
+        const statusData = await statusResponse.json();
+        exportStatus = statusData.status;
+
+        if (exportStatus === 'done') break;
+        if (exportStatus === 'failed') {
+          statusError = statusData.error;
+          break;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+      }
+
+      if (exportStatus === 'failed') {
+        throw new Error(statusError || 'Export failed. Please try again.');
+      }
+      if (exportStatus !== 'done') {
+        throw new Error('Export is taking longer than expected. Please try again shortly.');
+      }
+
+      // Step 3: download the finished file.
+      const downloadUrl = new URL(getFullUrl(ENDPOINTS.VISITOR_DOWNLOAD_EXPORT));
+      downloadUrl.searchParams.set('key', exportKey);
+
+      const downloadResponse = await fetch(downloadUrl.toString(), {
+        method: 'GET',
+        headers: { Authorization: getAuthHeader() },
+      });
+
+      if (!downloadResponse.ok) {
+        throw new Error(
+          `Failed to download export: ${downloadResponse.status} ${downloadResponse.statusText}`
+        );
+      }
+
+      const blob = await downloadResponse.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = downloadUrl;
+      link.href = objectUrl;
       const timestamp = new Date().toISOString().slice(0, 10);
       link.download = `visitor_history_${timestamp}.xlsx`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
+      window.URL.revokeObjectURL(objectUrl);
 
       toast.dismiss(loadingToastId);
       toast.success('Visitor history exported successfully!');
@@ -1899,6 +2126,8 @@ const handlePageChange = (page: number) => {
         onCheckOut={handleBulkCheckOut}
         onApprove={handleBulkApprove}
         onFlag={handleBulkFlag}
+        onBlacklist={handleBulkBlacklist}
+        onCancel={handleBulkCancel}
         onExport={handleBulkExport}
         onClearSelection={handleClearSelection}
       />
@@ -1915,6 +2144,17 @@ const handlePageChange = (page: number) => {
           handleImportVisitors();
           setIsActionPanelOpen(false);
         }}
+      />
+
+      <CommonImportModal
+        selectedFile={selectedImportFile}
+        setSelectedFile={setSelectedImportFile}
+        open={isImportModalOpen}
+        onOpenChange={setIsImportModalOpen}
+        title="Import Visitors"
+        entityType="visitors"
+        onImport={handleImportSubmit}
+        isUploading={isImportUploading}
       />
 
       <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
