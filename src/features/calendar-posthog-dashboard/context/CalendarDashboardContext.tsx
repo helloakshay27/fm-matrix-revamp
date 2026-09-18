@@ -87,6 +87,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
   const [sessTab, setSessTabState] = useState<SessTab>('visitors');
   const [prev, setPrev] = useState(true);
   const [workflow, setWorkflowState] = useState('login');
+  const [selectedModule, setSelectedModuleState] = useState<string | null>(null);
   const [page, setPage] = useState<PageKey>('pgTraffic');
   const [theme, setTheme] = useState<DashboardTheme>(initialTheme);
   const [navCollapsed, setNavCollapsed] = useState(() => readStored(NAV_KEY) === 'collapsed');
@@ -107,9 +108,8 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
   const rangeDays = customRange ? daysBetween(customRange.from, customRange.to) : DAYS_IN[date];
 
   const scopeLabel = useMemo(() => {
-    const provStr = provider === 'All Providers' ? 'all providers' : provider.toLowerCase();
-    return `All users · ${provStr} · calendar_app (app_id 29)`;
-  }, [provider]);
+    return 'All users · calendar_app (app_id 29)';
+  }, []);
 
   /* Live API query filters */
   const osFilter = useMemo<CalendarOsType[] | undefined>(() => {
@@ -118,6 +118,10 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
     return undefined;
   }, [dev]);
 
+  /* Live API query filters
+   * Layer 1 & 2 use queryFilters (no module param).
+   * Layer 3 (workflow_usage) uses workflowFilters which adds the selected module.
+   */
   const queryFilters: CalendarQueryFilters = useMemo(
     () => ({
       from: range.from,
@@ -128,16 +132,27 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
     [range.from, range.to, osFilter, provider],
   );
 
+  const workflowFilters: CalendarQueryFilters = useMemo(
+    () => ({
+      from: range.from,
+      to: range.to,
+      os: osFilter,
+      provider: provider !== 'All Providers' ? provider : undefined,
+      module: selectedModule ?? undefined,
+    }),
+    [range.from, range.to, osFilter, provider, selectedModule],
+  );
+
   /* Live API endpoints for Calendar App (app_id=29) */
-  const trafficQuery = useTrafficSession(queryFilters);
-  const usageQuery = useUsageAndDistribution(queryFilters);
-  const adoptQuery = useAdoptionEngagement(queryFilters);
-  const trendQuery = useAdoptionTrend(queryFilters);
-  const growthQuery = useGrowth(queryFilters);
-  const retentionQuery = useRetention(queryFilters);
-  const rolesQuery = useRoles(queryFilters);
-  const modulesQuery = useModules(queryFilters);
-  const workflowQuery = useWorkflowUsage(queryFilters);
+  const trafficQuery = useTrafficSession(queryFilters);       // Layer 1
+  const usageQuery = useUsageAndDistribution(queryFilters);   // Layer 1
+  const adoptQuery = useAdoptionEngagement(queryFilters);     // Layer 2
+  const trendQuery = useAdoptionTrend(queryFilters);          // Layer 2
+  const growthQuery = useGrowth(queryFilters);                // Layer 2
+  const retentionQuery = useRetention(queryFilters);          // Layer 2
+  const rolesQuery = useRoles(queryFilters);                  // Layer 2
+  const modulesQuery = useModules(queryFilters);              // Layer 3 — base (no module filter, gives pill list)
+  const workflowQuery = useWorkflowUsage(workflowFilters);   // Layer 3 — filtered by selectedModule
 
   const trafficLoading = trafficQuery.isLoading || usageQuery.isLoading;
   const adoptLoading =
@@ -145,6 +160,13 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
   const flowsLoading = workflowQuery.isLoading || modulesQuery.isLoading;
   const isLoading = trafficLoading || adoptLoading || flowsLoading;
   const isLive = Boolean(trafficQuery.data || adoptQuery.data || workflowQuery.data);
+
+  /** Flat list of modules from the live API — drives the module pill nav. */
+  const modulesList = useMemo(
+    () => (modulesQuery.data?.tree ?? []).map((m) => ({ name: m.name, users: m.users })),
+    [modulesQuery.data],
+  );
+
 
   const refetch = useCallback(() => {
     trafficQuery.refetch();
@@ -465,6 +487,11 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
     const curWf = findWorkflow(workflow);
     const k = wf?.kpis;
 
+    /* When a live module is selected, use its display name; otherwise fall back to static wf. */
+    const displayName = selectedModule
+      ? selectedModule.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+      : curWf.name;
+
     const tiles: CalendarTileSpec[] = [
       {
         id: 'wfAdoption',
@@ -476,6 +503,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
         goodUp: true,
         infoKey: 'wfAdoption',
         infoLabel: 'Module Adoption',
+        noTarget: true,
       },
       {
         id: 'wfCompletion',
@@ -487,13 +515,14 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
         goodUp: true,
         infoKey: 'wfCompletion',
         infoLabel: 'Completion Rate',
+        noTarget: true,
       },
       {
         id: 'wfDropoff',
         label: 'Biggest Step Drop',
         disp: k?.f_step?.value != null ? `${Math.round(k.f_step.value)}%` : '—',
         raw: k?.f_step?.value ?? 0,
-        sub: 'critical friction point',
+        sub: 'highest single drop-off',
         unit: '%',
         goodUp: false,
         noTarget: true,
@@ -502,14 +531,14 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
       },
       {
         id: 'wfVolume',
-        label: 'Flagship Volume',
+        label: 'Usage Volume',
         disp: k?.f_vol?.value != null ? k.f_vol.value.toLocaleString() : '—',
         raw: k?.f_vol?.value ?? 0,
-        sub: 'flow sessions started',
+        sub: 'workflow completions',
         goodUp: true,
         noTarget: true,
         infoKey: 'wfVolume',
-        infoLabel: 'Flagship Volume',
+        infoLabel: 'Usage Volume',
       },
     ];
 
@@ -561,13 +590,14 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
     }
 
     return {
-      workflow: curWf,
+      /* When selectedModule is active, suppress the static scope note (it belongs to the static wf). */
+      workflow: { ...curWf, name: displayName, incompleteNote: selectedModule ? undefined : curWf.incompleteNote },
       tiles,
       funnel,
       entryRows,
       screens,
     };
-  }, [workflow, workflowQuery.data, modulesQuery.data]);
+  }, [workflow, selectedModule, workflowQuery.data, modulesQuery.data]);
 
   const vm = useMemo<ViewModel>(
     () => ({
@@ -580,8 +610,9 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
       prev,
       range,
       scopeLabel,
+      selectedModule,
     }),
-    [traffic, adopt, flows, sessTab, dev, provider, prev, range, scopeLabel],
+    [traffic, adopt, flows, sessTab, dev, provider, prev, range, scopeLabel, selectedModule],
   );
 
   /* ---------------------------------------------------------------- setters */
@@ -600,6 +631,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
   const setSessTab = useCallback((t: SessTab) => setSessTabState(t), []);
   const togglePrev = useCallback(() => setPrev((p) => !p), []);
   const setWorkflow = useCallback((key: string) => setWorkflowState(findWorkflow(key).key), []);
+  const setSelectedModule = useCallback((m: string | null) => setSelectedModuleState(m), []);
 
   const toggleTheme = useCallback(() => {
     setTheme((t) => {
@@ -634,6 +666,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
       provider, setProvider,
       setPreset, setCustomRange, customRange, setDev, setSessTab,
       workflow, setWorkflow, togglePrev,
+      selectedModule, setSelectedModule, modulesList,
       page, setPage, theme, toggleTheme, navCollapsed, toggleNav,
       palette: paletteFor(theme),
       getBenchmark, setBenchmark,
@@ -646,8 +679,8 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
     }),
     [
       vm, provider, setProvider, setPreset, setCustomRange, customRange, setDev, setSessTab,
-      workflow, setWorkflow, togglePrev, page, theme, toggleTheme,
-      navCollapsed, toggleNav, getBenchmark, setBenchmark,
+      workflow, setWorkflow, togglePrev, selectedModule, setSelectedModule, modulesList,
+      page, theme, toggleTheme, navCollapsed, toggleNav, getBenchmark, setBenchmark,
       isLive, isLoading, trafficLoading, adoptLoading, flowsLoading, refetch,
     ],
   );

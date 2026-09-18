@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { RANGE_LABELS, type DateRange, type Device } from '../data/constants';
-import { PROVIDERS } from '../data/sampleData';
 import { useCalendarDashboard } from '../context/calendarDashboardStore';
 
 const PRESETS: DateRange[] = [7, 30, 90];
@@ -12,23 +11,16 @@ const DEVICES: Array<{ key: Device; label: string }> = [
   { key: 'android', label: 'Android' },
 ];
 
-/** Connected-calendar providers, from the real `calendar_account_connected{provider}`. */
-const PROVIDER_OPTIONS = ['All Providers', ...PROVIDERS];
-
 /**
  * Cross-cutting filters.
  *
  * Calendar App is a single-persona product with no site or tier dimension, so where FM Matrix
  * has a scope selector and Vi has a Circle selector, this has none — there is nothing to scope
  * by and the endpoints take no such parameter.
- *
- * The Provider dropdown reads the real `calendar_account_connected{provider}` values. Like the
- * rest of this wireframe it does not requery anything — the Provider-wise breakdown on
- * Adoption & Engagement already lists every provider side by side.
  */
 export function ControlBar() {
   const {
-    vm, provider, setProvider, setPreset, setCustomRange, customRange, setDev, togglePrev,
+    vm, setPreset, setCustomRange, customRange, setDev, togglePrev,
   } = useCalendarDashboard();
   const { range } = vm;
 
@@ -120,16 +112,6 @@ export function ControlBar() {
           </div>
         </div>
       </div>
-
-      <label className="ctrl">
-        <span className="ic">&#128197;</span>
-        <select id="projectSel" value={provider} onChange={(e) => setProvider(e.target.value)}>
-          {PROVIDER_OPTIONS.map((p) => (
-            <option key={p}>{p}</option>
-          ))}
-        </select>
-        <span className="chev">&#9662;</span>
-      </label>
 
       <div className="devtoggle" id="devToggle" title="Platform">
         {DEVICES.map((d) => (

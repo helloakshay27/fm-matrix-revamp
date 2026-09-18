@@ -83,7 +83,11 @@ function baseParams(os?: CalendarOsType[], provider?: string): Record<string, st
     app_id: CALENDAR_APP_ID,
   };
   if (os?.length) {
-    p.os = os.join(',');
+    // Specific platform selected → send lowercase os param (ios / android)
+    p.os = os.map((o) => o.toLowerCase()).join(',');
+  } else {
+    // "All" selected → indicate this is a mobile app to the backend
+    p.device_type = 'mobile';
   }
   if (provider && provider !== 'All Providers') {
     p.provider = provider;
