@@ -5,11 +5,11 @@ import { LineChart } from "../components/charts/LineChart";
 import { StackedBarChart } from "../components/charts/StackedBarChart";
 import { SectionState } from "../components/common/SectionState";
 import { tileToKpi } from "../utils/tileAdapter";
-import { getChartColors } from "../utils/chartColors";
+import { useChartColors } from "../utils/chartColors";
 
 export const AdoptionEngagement: React.FC = () => {
-  const { theme, vm } = usePulseDashboard();
-  const colors = useMemo(() => getChartColors(), [theme]);
+  const { vm } = usePulseDashboard();
+  const colors = useChartColors();
 
   const adopt = vm.adopt;
 
