@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 export interface ChartColors {
   ink: string;
   faint: string;
@@ -43,4 +45,30 @@ export function getChartColors(): ChartColors {
     heatA0: parseFloat(g('--heat-a0', '0.09')),
     heatA1: parseFloat(g('--heat-a1', '0.78'))
   };
+}
+
+/**
+ * Chart colors that stay in sync with whichever theme is actually applied.
+ *
+ * The dashboard writes its theme via the `data-theme` attribute on <html> in a
+ * layout effect, i.e. AFTER the render triggered by a theme toggle. Reading the
+ * CSS variables during that render — and memoizing the result keyed on the theme
+ * string — therefore caches the PREVIOUS theme's palette for the rest of the
+ * session (e.g. after Dark → Light the area fill keeps the dark navy value).
+ *
+ * This hook instead observes `data-theme` mutations and re-derives the colors
+ * only AFTER the attribute has been applied, so the returned palette always
+ * matches the applied theme regardless of which mechanism toggles it.
+ */
+export function useChartColors(): ChartColors {
+  const [colors, setColors] = useState<ChartColors>(() => getChartColors());
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const observer = new MutationObserver(() => setColors(getChartColors()));
+    observer.observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => observer.disconnect();
+  }, []);
+
+  return colors;
 }

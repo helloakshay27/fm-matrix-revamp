@@ -4,11 +4,11 @@ import { KpiTile } from "../components/common/KpiTile";
 import { LineChart } from "../components/charts/LineChart";
 import { SectionState } from "../components/common/SectionState";
 import { tileToKpi } from "../utils/tileAdapter";
-import { getChartColors } from "../utils/chartColors";
+import { useChartColors } from "../utils/chartColors";
 
 export const TrafficSession: React.FC = () => {
-  const { sessTab, setSessTab, theme, vm } = usePulseDashboard();
-  const colors = useMemo(() => getChartColors(), [theme]);
+  const { sessTab, setSessTab, vm } = usePulseDashboard();
+  const colors = useChartColors();
 
   const t = vm.traffic;
 

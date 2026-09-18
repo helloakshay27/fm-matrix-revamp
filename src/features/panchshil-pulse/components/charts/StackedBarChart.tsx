@@ -1,6 +1,5 @@
 import React, { useMemo } from "react";
-import { getChartColors } from "../../utils/chartColors";
-import { usePulseDashboard } from "../../contexts/PulseDashboardContext";
+import { useChartColors } from "../../utils/chartColors";
 
 export interface StackedSeries {
   label: string;
@@ -21,8 +20,7 @@ interface StackedBarChartProps {
 }
 
 export const StackedBarChart: React.FC<StackedBarChartProps> = ({ labels, series, negSeries }) => {
-  const { theme } = usePulseDashboard();
-  const colors = useMemo(() => getChartColors(), [theme]);
+  const colors = useChartColors();
 
   const W = 600;
   const H = 260;

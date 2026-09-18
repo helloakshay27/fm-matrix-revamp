@@ -8,18 +8,20 @@ import { GrowthStackedBarChart } from "../components/charts/GrowthStackedBarChar
 import { toWeekLabels } from "../utils/weekLabels";
 import { SectionState } from "../components/common/SectionState";
 import { tileToKpi } from "../utils/tileAdapter";
-import { getChartColors } from "../utils/chartColors";
+import { useChartColors } from "../utils/chartColors";
 
 export const AdoptionEngagement: React.FC = () => {
-  const { theme, vm, prev: showPrev } = usePulseDashboard();
-  const colors = useMemo(() => getChartColors(), [theme]);
+  const { vm } = usePulseDashboard();
+  const colors = useChartColors();
 
   const adopt = vm.adopt;
 
   // Retention heat columns — reference layout shows Week 0 through Week 5.
   const retentionCols = 6;
 
-  const trendPrev = adopt.trendChart.prev.length ? adopt.trendChart.prev : undefined;
+  const trendPrev = adopt.trendChart.prev.length
+    ? adopt.trendChart.prev
+    : undefined;
 
   // x-axis ticks arrive as "M/D" week-start dates (e.g. 7/13). Display them as
   // positional week labels (W1, W3, ...) for the 8-week window; the dates come
@@ -29,20 +31,36 @@ export const AdoptionEngagement: React.FC = () => {
 
   const growthSeries = useMemo(
     () => [
-      { label: "New", data: adopt.growthWeeks.map(w => w.nw), color: colors.blue },
-      { label: "Returning", data: adopt.growthWeeks.map(w => w.ret), color: colors.green },
-      { label: "Resurrecting", data: adopt.growthWeeks.map(w => w.res), color: colors.mint }
+      {
+        label: "New",
+        data: adopt.growthWeeks.map((w) => w.nw),
+        color: colors.blue,
+      },
+      {
+        label: "Returning",
+        data: adopt.growthWeeks.map((w) => w.ret),
+        color: colors.green,
+      },
+      {
+        label: "Resurrecting",
+        data: adopt.growthWeeks.map((w) => w.res),
+        color: colors.mint,
+      },
     ],
     [adopt.growthWeeks, colors]
   );
   const growthNeg = useMemo(
-    () => ({ label: "Dormant", data: adopt.growthWeeks.map(w => w.dorm), color: colors.red }),
+    () => ({
+      label: "Dormant",
+      data: adopt.growthWeeks.map((w) => w.dorm),
+      color: colors.red,
+    }),
     [adopt.growthWeeks, colors]
   );
   // The axis numbers the weeks (W1..W6) and the week each number stands for comes back in
   // `tips` for the hover card — the same split Vi My Workspace makes, and the same axis
   // labels this chart already showed.
-  const growthLabels = toWeekLabels(adopt.growthWeeks.map(w => w.label));
+  const growthLabels = toWeekLabels(adopt.growthWeeks.map((w) => w.label));
 
   const heatStyle = (val: number) => {
     const t = val / 100;
@@ -55,50 +73,91 @@ export const AdoptionEngagement: React.FC = () => {
     <section className="page on" id="pgAdopt">
       <div className="section-head">
         <h2>Adoption &amp; Engagement</h2>
-        <span className="sd">Measure how effectively residents adopt and engage with the app&rsquo;s major modules, and whether they keep coming back.</span>
+        <span className="sd">
+          Measure how effectively residents adopt and engage with the
+          app&rsquo;s major modules, and whether they keep coming back.
+        </span>
       </div>
 
       <div className="qbox">
         <b>Key questions</b>
         <ul>
-          <li>Which modules and services receive the highest engagement and adoption?</li>
-          <li>Which modules need UX improvements, and where do residents spend the most time?</li>
-          <li>Are residents returning to the application, and is retention improving over time?</li>
+          <li>
+            Which modules and services receive the highest engagement and
+            adoption?
+          </li>
+          <li>
+            Which modules need UX improvements, and where do residents spend the
+            most time?
+          </li>
+          <li>
+            Are residents returning to the application, and is retention
+            improving over time?
+          </li>
         </ul>
       </div>
 
       <SectionState status={vm.status.adopt} label="adoption data">
         {/* KPI Tiles */}
-        <div className="tiles" style={{ gridTemplateColumns: "repeat(3, 1fr)", marginTop: "16px" }} id="tilesAdoption">
+        <div
+          className="tiles"
+          style={{ gridTemplateColumns: "repeat(3, 1fr)", marginTop: "16px" }}
+          id="tilesAdoption"
+        >
           <KpiTile
-            {...tileToKpi(adopt.tiles[0], { label: "Stickiness", id: "stickiness" })}
+            {...tileToKpi(adopt.tiles[0], {
+              label: "Stickiness",
+              id: "stickiness",
+            })}
           />
           <KpiTile
-            {...tileToKpi(adopt.tiles[1], { label: "Adoption Trend", noTarget: true })}
+            {...tileToKpi(adopt.tiles[1], {
+              label: "Adoption Trend",
+              noTarget: true,
+            })}
           />
           <KpiTile
-            {...tileToKpi(adopt.tiles[2], { label: "14-Day Activation", id: "activation14" })}
+            {...tileToKpi(adopt.tiles[2], {
+              label: "14-Day Activation",
+              id: "activation14",
+            })}
           />
           <KpiTile
-            {...tileToKpi(adopt.tiles[3], { label: "Module Breadth", id: "moduleBreadth2", noTarget: true })}
+            {...tileToKpi(adopt.tiles[3], {
+              label: "Module Breadth",
+              id: "moduleBreadth2",
+              noTarget: true,
+            })}
           />
         </div>
 
         {/* Adoption Trend Chart */}
-        <div className="card" style={{ marginTop: "12px" }} id="card-adoptionTrend">
+        <div
+          className="card"
+          style={{ marginTop: "12px" }}
+          id="card-adoptionTrend"
+        >
           <div className="card-head">
             <div className="charthead">
               <div>
                 <div className="cr">Trend &middot; weekly active users</div>
-                <div className="ct">Adoption trend (weekly active users, last 8 weeks)</div>
+                <div className="ct">
+                  Adoption trend (weekly active users, last 8 weeks)
+                </div>
               </div>
               <span className="info-wrap">
-                <button className="info-btn" type="button" tabIndex={-1}>i</button>
+                <button className="info-btn" type="button" tabIndex={-1}>
+                  i
+                </button>
                 <div className="info-pop">
                   <b>Adoption trend</b>
-                  Weekly active users (WAU) plotted for each of the last 8 weeks, with the faint dashed line showing the prior comparison period.
+                  Weekly active users (WAU) plotted for each of the last 8
+                  weeks, with the faint dashed line showing the prior comparison
+                  period.
                   <div className="sep">
-                    Shows whether more of your community is engaging week over week, or whether active usage has flattened or fallen — the trend line behind the Adoption Trend tile above.
+                    Shows whether more of your community is engaging week over
+                    week, or whether active usage has flattened or fallen — the
+                    trend line behind the Adoption Trend tile above.
                   </div>
                 </div>
               </span>
@@ -134,16 +193,30 @@ export const AdoptionEngagement: React.FC = () => {
             <div className="card-head">
               <div className="charthead">
                 <div>
-                  <div className="cr">Growth accounting &middot; Last 6 weeks</div>
-                  <div className="ct">New &middot; Returning &middot; Resurrecting &middot; Dormant</div>
+                  <div className="cr">
+                    Growth accounting &middot; Last 6 weeks
+                  </div>
+                  <div className="ct">
+                    New &middot; Returning &middot; Resurrecting &middot;
+                    Dormant
+                  </div>
                 </div>
                 <span className="info-wrap">
-                  <button className="info-btn" type="button" tabIndex={-1}>i</button>
+                  <button className="info-btn" type="button" tabIndex={-1}>
+                    i
+                  </button>
                   <div className="info-pop">
                     <b>Growth accounting</b>
-                    Each week, active users are split into New (first-ever active), Returning (active the prior week too) and Resurrected (came back after a gap) above the line, with Dormant (were active before, not this week) shown below the line.
+                    Each week, active users are split into New (first-ever
+                    active), Returning (active the prior week too) and
+                    Resurrected (came back after a gap) above the line, with
+                    Dormant (were active before, not this week) shown below the
+                    line.
                     <div className="sep">
-                      Explains why your active-user number moved: bars above zero are gains, the bar below zero is the loss. If losses regularly outweigh gains, growth is at risk — a fuller view than a simple new-vs-returning split.
+                      Explains why your active-user number moved: bars above
+                      zero are gains, the bar below zero is the loss. If losses
+                      regularly outweigh gains, growth is at risk — a fuller
+                      view than a simple new-vs-returning split.
                     </div>
                   </div>
                 </span>
@@ -158,10 +231,18 @@ export const AdoptionEngagement: React.FC = () => {
                 palette={colors}
               />
               <div className="legend">
-                <span><i style={{ background: colors.blue }}></i> New</span>
-                <span><i style={{ background: colors.green }}></i> Returning</span>
-                <span><i style={{ background: colors.mint }}></i> Resurrecting</span>
-                <span><i style={{ background: colors.red }}></i> Dormant</span>
+                <span>
+                  <i style={{ background: colors.blue }}></i> New
+                </span>
+                <span>
+                  <i style={{ background: colors.green }}></i> Returning
+                </span>
+                <span>
+                  <i style={{ background: colors.mint }}></i> Resurrecting
+                </span>
+                <span>
+                  <i style={{ background: colors.red }}></i> Dormant
+                </span>
               </div>
             </div>
           </div>
@@ -175,12 +256,17 @@ export const AdoptionEngagement: React.FC = () => {
                   <div className="ct">Do new users keep coming back?</div>
                 </div>
                 <span className="info-wrap">
-                  <button className="info-btn" type="button" tabIndex={-1}>i</button>
+                  <button className="info-btn" type="button" tabIndex={-1}>
+                    i
+                  </button>
                   <div className="info-pop">
                     <b>Retention</b>
-                    Each row = residents first active that week; cells = % of that cohort still active N weeks later.
+                    Each row = residents first active that week; cells = % of
+                    that cohort still active N weeks later.
                     <div className="sep">
-                      Reading left to right shows how well each joining group sticks around. Darker cells mean more people retained. It answers "once people start, do they keep coming back?"
+                      Reading left to right shows how well each joining group
+                      sticks around. Darker cells mean more people retained. It
+                      answers "once people start, do they keep coming back?"
                     </div>
                   </div>
                 </span>
@@ -200,12 +286,20 @@ export const AdoptionEngagement: React.FC = () => {
                   <tbody>
                     {adopt.retentionCohorts.map((curve, i) => (
                       <tr key={i}>
-                        <td className="lbl">{adopt.retentionRowLabels[i] ?? `Cohort ${i + 1}`}</td>
+                        <td className="lbl">
+                          {adopt.retentionRowLabels[i] ?? `Cohort ${i + 1}`}
+                        </td>
                         {Array.from({ length: retentionCols }).map((_, w) => {
                           const val = curve[w];
                           if (val == null) {
                             return (
-                              <td key={w} style={{ background: "var(--surface-2)", color: "var(--faint)" }}>
+                              <td
+                                key={w}
+                                style={{
+                                  background: "var(--surface-2)",
+                                  color: "var(--faint)",
+                                }}
+                              >
                                 &middot;
                               </td>
                             );
@@ -237,12 +331,19 @@ export const AdoptionEngagement: React.FC = () => {
                   <div className="ct">Who is (and isn't) using the app</div>
                 </div>
                 <span className="info-wrap">
-                  <button className="info-btn" type="button" tabIndex={-1}>i</button>
+                  <button className="info-btn" type="button" tabIndex={-1}>
+                    i
+                  </button>
                   <div className="info-pop">
                     <b>Adoption by audience</b>
-                    Active people broken down by their resident category (owner, tenant, visitor/family member), each shown as a share within the group — active users ÷ registered users per category.
+                    Active people broken down by their resident category (owner,
+                    tenant, visitor/family member), each shown as a share within
+                    the group — active users ÷ registered users per category.
                     <div className="sep">
-                      Shows which type of resident is actually engaging. If a key category such as tenants is under-represented, adoption may be uneven — helping the community team see which segment of the resident base is actually engaging.
+                      Shows which type of resident is actually engaging. If a
+                      key category such as tenants is under-represented,
+                      adoption may be uneven — helping the community team see
+                      which segment of the resident base is actually engaging.
                     </div>
                   </div>
                 </span>
@@ -255,7 +356,12 @@ export const AdoptionEngagement: React.FC = () => {
                     <div className="role" key={idx}>
                       <div className="rn">{r.name}</div>
                       <div className="rbar">
-                        <i style={{ width: `${Math.round(r.share * 100)}%`, background: r.color }}></i>
+                        <i
+                          style={{
+                            width: `${Math.round(r.share * 100)}%`,
+                            background: r.color,
+                          }}
+                        ></i>
                       </div>
                       <div className="rv">{(r.share * 100).toFixed(0)}%</div>
                     </div>
@@ -276,12 +382,18 @@ export const AdoptionEngagement: React.FC = () => {
                   <div className="ct">Dormant users</div>
                 </div>
                 <span className="info-wrap">
-                  <button className="info-btn" type="button" tabIndex={-1}>i</button>
+                  <button className="info-btn" type="button" tabIndex={-1}>
+                    i
+                  </button>
                   <div className="info-pop">
                     <b>Dormant users</b>
                     Registered residents with no activity in the last 14 days.
                     <div className="sep">
-                      There is no such thing as a completely "dead" user — some residents only engage seasonally (e.g. when a service or event interest them). This shows how many of the base is going quiet and is out of scope for the 14-Day Activation tile above.
+                      There is no such thing as a completely "dead" user — some
+                      residents only engage seasonally (e.g. when a service or
+                      event interest them). This shows how many of the base is
+                      going quiet and is out of scope for the 14-Day Activation
+                      tile above.
                     </div>
                   </div>
                 </span>
