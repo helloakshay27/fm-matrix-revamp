@@ -1068,7 +1068,7 @@ const BusinessCompassIssueDetailsPage = () => {
         responsible_person: issueDetail.responsible_person || "Unassigned",
         responsible_person_id: issueDetail.responsible_person_id || "",
         created_at: issueDetail.created_at || "",
-        created_by_name: issueDetail.created_by_name || "",
+        created_by_name: issueDetail.created_by || "",
         updated_at: issueDetail.updated_at || "",
         start_date: issueDetail.start_date || "",
         end_date: issueDetail.end_date || "",
