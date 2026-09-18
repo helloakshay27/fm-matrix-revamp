@@ -29,6 +29,8 @@ export interface ViewModel {
   range: { from: string; to: string };
   /** Label under the page title. */
   scopeLabel: string;
+  /** Currently selected module from the live modules API (null = All Modules). */
+  selectedModule: string | null;
 }
 
 export interface CalendarDashboardValue {
@@ -48,6 +50,12 @@ export interface CalendarDashboardValue {
   workflow: string;
   setWorkflow: (key: string) => void;
   togglePrev: () => void;
+
+  /** Module pills — live from the modules API */
+  selectedModule: string | null;
+  setSelectedModule: (m: string | null) => void;
+  /** Flat list of { name, users } from the modules API tree, for rendering pills. */
+  modulesList: Array<{ name: string; users: number }>;
 
   /** navigation + chrome */
   page: PageKey;
