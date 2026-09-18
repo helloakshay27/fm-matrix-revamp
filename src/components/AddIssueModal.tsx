@@ -740,7 +740,7 @@ const AddIssueModal = ({
         );
         const issueTypes = response.data.issue_types || response.data || [];
         setIssueTypeOptions(
-          issueTypes.map((i: any) => ({
+          issueTypes.reverse().map((i: any) => ({
             value: i.id,
             label: i.name,
           }))
