@@ -23,6 +23,7 @@ import {
   History,
   FileCheck,
   Trash2,
+  Paperclip,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -39,6 +40,7 @@ import {
 } from "../services/wasteGenerationAPI";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import { apiClient } from "@/utils/apiClient";
+import { API_CONFIG } from "@/config/apiConfig";
 
 interface BagRow {
   id: string;
@@ -198,41 +200,110 @@ export const WasteGenerationDetailsPage = () => {
   // so the hook order stays stable across renders.
   const logEntries = useMemo(() => {
     if (!wasteData) return [];
-    const dispatchApplicable = hasData(wasteData.vendor?.company_name);
-    const entries: { date: string; activity: string; performedBy: string; remarks: string }[] = [];
+
+    const apiLogs = [
+      ...(wasteData.logs ?? []),
+      ...(wasteData.dispatch_logs ?? []),
+      ...(wasteData.recycle_logs ?? []),
+    ].sort((a, b) => {
+      const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return aTime - bTime;
+    });
+
+    const entries: { date: string; activity: string; performedBy: string; remarks: string }[] = apiLogs.map((log) => {
+      const date = log.created_at ? new Date(log.created_at).toLocaleString("en-IN") : "-";
+      const activity = log.log_type || "Record activity";
+      const performedBy = log.changed_by || wasteData.created_by?.full_name || "-";
+
+      const remarks = Array.isArray(log.changes) && log.changes.length > 0
+        ? log.changes
+            .slice(0, 3)
+            .map((change) => `${change.field}: ${change.new_value ?? change.old_value ?? "-"}`)
+            .join(" • ")
+        : "-";
+
+      return { date, activity, performedBy, remarks };
+    });
+
+    if (entries.length > 0) return entries;
+
+    const fallbackEntries: { date: string; activity: string; performedBy: string; remarks: string }[] = [];
     if (wasteData.wg_date) {
-      entries.push({
-        date: new Date(wasteData.wg_date).toLocaleString(),
+      fallbackEntries.push({
+        date: new Date(wasteData.wg_date).toLocaleString("en-IN"),
         activity: "Waste Generated",
         performedBy: wasteData.user_name || wasteData.created_by?.full_name || "-",
         remarks: wasteData.category?.category_name ? `Category: ${wasteData.category.category_name}` : "-",
       });
     }
     if (wasteData.updated_at && wasteData.updated_at !== wasteData.created_at) {
-      entries.push({
-        date: new Date(wasteData.updated_at).toLocaleString(),
+      fallbackEntries.push({
+        date: new Date(wasteData.updated_at).toLocaleString("en-IN"),
         activity: "Record Updated",
         performedBy: wasteData.created_by?.full_name || "-",
         remarks: "-",
       });
     }
-    if (dispatchApplicable) {
-      entries.push({
-        date: new Date(wasteData.updated_at || wasteData.wg_date).toLocaleString(),
-        activity: `Dispatched to ${wasteData.vendor?.company_name}`,
+    if (wasteData.vendor?.company_name) {
+      fallbackEntries.push({
+        date: new Date(wasteData.updated_at || wasteData.wg_date).toLocaleString("en-IN"),
+        activity: `Dispatched to ${wasteData.vendor.company_name}`,
         performedBy: wasteData.created_by?.full_name || "-",
         remarks: wasteData.waste_unit != null ? `${wasteData.waste_unit} KG` : "-",
       });
     }
-    if (wasteData.recycled_unit > 0) {
-      entries.push({
-        date: new Date(wasteData.updated_at || wasteData.wg_date).toLocaleString(),
+    if (wasteData.recycled_unit != null && wasteData.recycled_unit > 0) {
+      fallbackEntries.push({
+        date: new Date(wasteData.updated_at || wasteData.wg_date).toLocaleString("en-IN"),
         activity: "Recycling Confirmed",
         performedBy: "-",
         remarks: `${wasteData.recycled_unit} KG recycled`,
       });
     }
-    return entries;
+    return fallbackEntries;
+  }, [wasteData]);
+
+  const attachmentEntries = useMemo(() => {
+    if (!wasteData) return [];
+
+    type AttachmentItem = {
+      id: number;
+      url: string;
+      isImage: boolean;
+      name: string;
+    };
+
+    interface ApiAttachmentLike {
+      id?: number | string;
+      document?: string | null;
+      url?: string | null;
+      file_url?: string | null;
+    }
+
+    const topLevelAttachments = Array.isArray(wasteData.attachments) ? wasteData.attachments : [];
+    const categoryAttachments = (wasteData.categories ?? []).flatMap((entry) =>
+      Array.isArray(entry.attachments) ? entry.attachments : []
+    );
+
+    return [...topLevelAttachments, ...categoryAttachments]
+      .map((attachment: ApiAttachmentLike, index: number) => {
+        const rawUrl = attachment?.document ?? attachment?.url ?? attachment?.file_url ?? "";
+        const normalizedUrl = typeof rawUrl === "string" ? decodeURIComponent(rawUrl) : "";
+        if (!normalizedUrl) return null;
+
+        const url = normalizedUrl.startsWith("http") ? normalizedUrl : `${API_CONFIG.BASE_URL}${normalizedUrl}`;
+        const lowerUrl = url.toLowerCase();
+        const isImage = /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(lowerUrl);
+
+        return {
+          id: Number(attachment?.id ?? index),
+          url,
+          isImage,
+          name: `Attachment ${index + 1}`,
+        } satisfies AttachmentItem;
+      })
+      .filter((item): item is AttachmentItem => Boolean(item));
   }, [wasteData]);
 
   if (loading) {
@@ -346,20 +417,27 @@ export const WasteGenerationDetailsPage = () => {
     { label: "Recycle %", value: recycledPct },
     { label: "Status", value: wasteData.status },
     { label: "Device Id", value: wasteData.device_id != null ? wasteData.device_id.toString() : undefined },
-    { label: "Remarks", value: (wasteData as unknown as Record<string, unknown>).remarks as string | undefined },
+    { label: "Remark", value: wasteData.remark || undefined },
     { label: "Location", value: wasteData.location_details },
     { label: "Operational Name", value: wasteData.operational_landlord?.category_name },
     { label: "Agency Name", value: wasteData.agency_name },
     { label: "Reference Number", value: wasteData.reference_number },
   ];
 
-  // "Dispatch" info only exists on this record once it's been sent to a
-  // vendor — shown only when that data is actually present.
-  const dispatchApplicable = hasData(wasteData.vendor?.company_name);
+  // A dispatch weight may exist even when the vendor/company name is blank or
+  // not populated in the response. The API payload is the source of truth here.
+  const dispatchWeightValue =
+    wasteData.dispatch_weight_kg !== null && wasteData.dispatch_weight_kg !== undefined && wasteData.dispatch_weight_kg !== ""
+      ? Number(wasteData.dispatch_weight_kg)
+      : null;
+
+  const dispatchApplicable =
+    dispatchWeightValue !== null && !Number.isNaN(dispatchWeightValue);
+
   const dispatchFields: Field[] = [
     { label: "Vendor / Facility", value: wasteData.vendor?.company_name },
     { label: "Status", value: wasteData.status },
-    { label: "Dispatch Weight (Kg)", value: wasteData.waste_unit != null ? wasteData.waste_unit : undefined },
+    { label: "Dispatch Weight (Kg)", value: dispatchWeightValue != null ? dispatchWeightValue.toString() : undefined },
     { label: "Recycled (Kg)", value: wasteData.recycled_unit != null ? wasteData.recycled_unit : undefined },
   ];
 
@@ -370,18 +448,35 @@ export const WasteGenerationDetailsPage = () => {
   // total — so Recycle Weight is only shown on the legacy single-row case.
   const wasteDetailTableRows =
     wasteData.categories && wasteData.categories.length > 0
-      ? wasteData.categories.map((entry) => ({
-          category: entry.category?.category_name || "-",
-          totalWeight: entry.waste_unit != null ? `${entry.waste_unit} ${entry.uom || "kg"}` : "-",
-          dispatchWeight:
-            dispatchApplicable && entry.waste_unit != null ? `${entry.waste_unit} ${entry.uom || "kg"}` : "-",
-          recycleWeight: "-",
-        }))
+      ? (() => {
+          const entries = wasteData.categories.map((entry) => ({
+            category: entry.category?.category_name || "-",
+            totalWeight: entry.waste_unit != null ? `${entry.waste_unit} ${entry.uom || "kg"}` : "-",
+            recycleWeight: "-",
+          }));
+
+          const totalDispatchWeight =
+            dispatchWeightValue !== null && !Number.isNaN(dispatchWeightValue)
+              ? dispatchWeightValue
+              : 0;
+
+          const splitDispatchWeight = entries.length > 0 && totalDispatchWeight > 0
+            ? totalDispatchWeight / entries.length
+            : 0;
+
+          return entries.map((entry) => ({
+            ...entry,
+            dispatchWeight:
+              dispatchApplicable && splitDispatchWeight > 0
+                ? `${splitDispatchWeight.toFixed(2)} kg`
+                : "-",
+          }));
+        })()
       : [
           {
             category: wasteData.category?.category_name || "-",
             totalWeight: wasteData.waste_unit != null ? `${wasteData.waste_unit} kg` : "-",
-            dispatchWeight: dispatchApplicable && wasteData.waste_unit != null ? `${wasteData.waste_unit} kg` : "-",
+            dispatchWeight: dispatchApplicable && dispatchWeightValue != null ? `${dispatchWeightValue.toFixed(2)} kg` : "-",
             recycleWeight: wasteData.recycled_unit != null ? `${wasteData.recycled_unit} kg` : "-",
           },
         ];
@@ -459,6 +554,7 @@ export const WasteGenerationDetailsPage = () => {
             { label: "Waste Details", value: "waste-details", icon: Package },
             { label: "User Details", value: "user-details", icon: User },
             { label: "Bag Details", value: "bag-details", icon: ShoppingBag },
+            { label: "Attachments", value: "attachments", icon: Paperclip },
             { label: "Logs", value: "logs", icon: History },
           ].map((tab) => (
             <TabsTrigger
@@ -583,6 +679,46 @@ export const WasteGenerationDetailsPage = () => {
                 </Table>
               </div>
             </div>
+          </DetailCard>
+        </TabsContent>
+
+        <TabsContent value="attachments">
+          <DetailCard icon={Paperclip} title="Attachments">
+            {attachmentEntries.length === 0 ? (
+              <div className="text-center text-gray-400 py-8">No attachments available.</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {attachmentEntries.map((attachment) => (
+                  <div key={attachment.id} className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm">
+                    {attachment.isImage ? (
+                      <img
+                        src={attachment.url}
+                        alt={attachment.name}
+                        className="h-52 w-full object-cover border-b border-gray-200"
+                      />
+                    ) : (
+                      <div className="h-52 flex items-center justify-center bg-gray-50 text-gray-500">
+                        <div className="text-center">
+                          <Paperclip className="w-8 h-8 mx-auto mb-2" />
+                          <div className="text-sm font-medium">Document</div>
+                        </div>
+                      </div>
+                    )}
+                    <div className="p-3 flex items-center justify-between gap-3">
+                      <span className="text-sm font-medium text-gray-700 truncate">{attachment.name}</span>
+                      <a
+                        href={attachment.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[#C72030] text-sm font-medium hover:underline"
+                      >
+                        Open
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </DetailCard>
         </TabsContent>
 

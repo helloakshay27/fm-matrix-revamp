@@ -218,6 +218,29 @@ const WasteDispatchDetailPage: React.FC = () => {
   // so this isn't a complete history, just what can be honestly derived today.
   const logEntries = useMemo(() => {
     if (!dispatchData) return [];
+
+    const apiLogs = Array.isArray(dispatchData.logs) ? dispatchData.logs : [];
+    if (apiLogs.length > 0) {
+      return [...apiLogs]
+        .sort((a, b) => {
+          const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return aTime - bTime;
+        })
+        .map((log) => ({
+          date: log.created_at ? new Date(log.created_at).toLocaleString('en-IN') : '-',
+          activity: log.log_type || 'Record activity',
+          performedBy: log.changed_by || dispatchData.created_by?.full_name || '-',
+          remarks:
+            Array.isArray(log.changes) && log.changes.length > 0
+              ? log.changes
+                  .slice(0, 3)
+                  .map((change) => `${change.field}: ${change.new_value ?? change.old_value ?? '-'}`)
+                  .join(' • ')
+              : '-',
+        }));
+    }
+
     const entries: { date: string; activity: string; performedBy: string; remarks: string }[] = [];
     entries.push({
       date: dispatchData.dispatch_date || '-',
@@ -227,14 +250,14 @@ const WasteDispatchDetailPage: React.FC = () => {
     });
     if (dispatchData.updated_at && dispatchData.updated_at !== dispatchData.created_at) {
       entries.push({
-        date: new Date(dispatchData.updated_at).toLocaleString(),
+        date: new Date(dispatchData.updated_at).toLocaleString('en-IN'),
         activity: 'Record Updated',
         performedBy: dispatchData.created_by?.full_name || '-',
         remarks: '-',
       });
     }
     entries.push({
-      date: dispatchData.updated_at ? new Date(dispatchData.updated_at).toLocaleString() : dispatchData.dispatch_date || '-',
+      date: dispatchData.updated_at ? new Date(dispatchData.updated_at).toLocaleString('en-IN') : dispatchData.dispatch_date || '-',
       activity: `Status: ${dispatchData.approval_status || '-'}`,
       performedBy: dispatchData.approved_by?.full_name || '-',
       remarks: dispatchData.vendor?.company_name ? `To ${dispatchData.vendor.company_name}` : '-',

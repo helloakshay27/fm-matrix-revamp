@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Eye, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,6 @@ import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
 import { toast } from "sonner";
-import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -17,44 +16,38 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
-import { deleteClass, getClasses, updateClass, type ClassSetup } from "./classSetupMockData";
+import { deleteTrainer, getTrainers, updateTrainer, type TrainerSetup } from "./trainerSetupMockData";
 
 const columns: ColumnConfig[] = [
   { key: "actions", label: "Actions", sortable: false, hideable: false, draggable: false },
-  { key: "className", label: "Class name", sortable: true, hideable: true, draggable: true },
-  { key: "maxCapacity", label: "Max Capacity", sortable: true, hideable: true, draggable: true },
-  { key: "minParticipants", label: "Min Participants", sortable: true, hideable: true, draggable: true },
-  { key: "duration", label: "Duration", sortable: true, hideable: true, draggable: true },
-  { key: "location", label: "Location", sortable: true, hideable: true, draggable: true },
+  { key: "name", label: "Trainer Name", sortable: true, hideable: true, draggable: true },
+  { key: "specialization", label: "Specialization", sortable: true, hideable: true, draggable: true },
+  { key: "experience", label: "Experience", sortable: true, hideable: true, draggable: true },
+  { key: "ratePerSession", label: "Rate / Session", sortable: true, hideable: true, draggable: true },
+  { key: "contactNumber", label: "Contact Number", sortable: true, hideable: true, draggable: true },
   { key: "status", label: "Status", sortable: true, hideable: true, draggable: true },
 ];
 
 const PAGE_SIZE = 10;
 
-export const ClassSetupList = () => {
+export const TrainerSetupList = () => {
   const navigate = useNavigate();
-  const cmEvents = useClubManagementEvents();
-  const listViewLogged = useRef(false);
-
-  useEffect(() => {
-    if (listViewLogged.current) return;
-    listViewLogged.current = true;
-    cmEvents.listViewed("Class Setup", "class_setup_list");
-  }, [cmEvents]);
-
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [refreshTick, setRefreshTick] = useState(0);
-  const [deleteTarget, setDeleteTarget] = useState<ClassSetup | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<TrainerSetup | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const allClasses = useMemo(() => getClasses(), [refreshTick]);
+  const allTrainers = useMemo(() => getTrainers(), [refreshTick]);
 
   const filtered = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
-    if (!q) return allClasses;
-    return allClasses.filter((c) => c.className.toLowerCase().includes(q));
-  }, [allClasses, searchTerm]);
+    if (!q) return allTrainers;
+    return allTrainers.filter(
+      (t) =>
+        t.name.toLowerCase().includes(q) || t.specialization.toLowerCase().includes(q)
+    );
+  }, [allTrainers, searchTerm]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const page = Math.min(currentPage, totalPages);
@@ -65,36 +58,34 @@ export const ClassSetupList = () => {
     setCurrentPage(1);
   };
 
-  const handleToggleStatus = (cls: ClassSetup) => {
-    const nextStatus = cls.status === "Active" ? "Inactive" : "Active";
-    updateClass(cls.id, { ...cls, status: nextStatus });
-    cmEvents.action("Class Setup Status Toggled", { entity_id: cls.id, status: nextStatus });
-    toast.success(`Class marked ${nextStatus}`);
+  const handleToggleStatus = (trainer: TrainerSetup) => {
+    const nextStatus = trainer.status === "Active" ? "Inactive" : "Active";
+    updateTrainer(trainer.id, { ...trainer, status: nextStatus });
+    toast.success(`Trainer marked ${nextStatus}`);
     setRefreshTick((n) => n + 1);
   };
 
   const handleConfirmDelete = () => {
     if (!deleteTarget) return;
-    deleteClass(deleteTarget.id);
-    cmEvents.deleted("Class Setup", deleteTarget.id, "class_setup_list");
-    toast.success("Class deleted successfully!");
+    deleteTrainer(deleteTarget.id);
+    toast.success("Trainer deleted successfully!");
     setShowDeleteModal(false);
     setDeleteTarget(null);
     setRefreshTick((n) => n + 1);
   };
 
-  const renderRow = (cls: ClassSetup) => ({
+  const renderRow = (trainer: TrainerSetup) => ({
     actions: (
       <div className="flex items-center gap-2">
         <button
-          onClick={() => navigate(`/club-management/class-setup/details/${cls.id}`)}
+          onClick={() => navigate(`/club-management/trainer-setup/details/${trainer.id}`)}
           className="p-1 text-black hover:bg-gray-100 rounded"
           title="View"
         >
           <Eye className="w-4 h-4" />
         </button>
         <button
-          onClick={() => navigate(`/club-management/class-setup/edit/${cls.id}`)}
+          onClick={() => navigate(`/club-management/trainer-setup/edit/${trainer.id}`)}
           className="p-1 text-black hover:bg-gray-100 rounded"
           title="Edit"
         >
@@ -102,7 +93,7 @@ export const ClassSetupList = () => {
         </button>
         <button
           onClick={() => {
-            setDeleteTarget(cls);
+            setDeleteTarget(trainer);
             setShowDeleteModal(true);
           }}
           className="p-1 text-black hover:bg-gray-100 rounded"
@@ -112,28 +103,28 @@ export const ClassSetupList = () => {
         </button>
       </div>
     ),
-    className: (
+    name: (
       <div
         className="font-medium text-brand cursor-pointer"
-        onClick={() => navigate(`/club-management/class-setup/details/${cls.id}`)}
+        onClick={() => navigate(`/club-management/trainer-setup/details/${trainer.id}`)}
       >
-        {cls.className}
+        {trainer.name}
       </div>
     ),
-    maxCapacity: <span className="text-sm text-gray-900">{cls.maxCapacity}</span>,
-    minParticipants: <span className="text-sm text-gray-900">{cls.minParticipants}</span>,
-    duration: <span className="text-sm text-gray-600">{cls.duration || "-"}</span>,
-    location: <span className="text-sm text-gray-600">{cls.location}</span>,
+    specialization: <span className="text-sm text-gray-700">{trainer.specialization}</span>,
+    experience: <span className="text-sm text-gray-900">{trainer.experience}</span>,
+    ratePerSession: <span className="text-sm text-gray-900">₹ {trainer.ratePerSession}/hr</span>,
+    contactNumber: <span className="text-sm text-gray-600">{trainer.contactNumber}</span>,
     status: (
       <button
         type="button"
-        onClick={() => handleToggleStatus(cls)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${cls.status === "Active" ? "bg-brand" : "bg-gray-300"
+        onClick={() => handleToggleStatus(trainer)}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${trainer.status === "Active" ? "bg-brand" : "bg-gray-300"
           }`}
-        title={cls.status === "Active" ? "Active - click to deactivate" : "Inactive - click to activate"}
+        title={trainer.status === "Active" ? "Active - click to deactivate" : "Inactive - click to activate"}
       >
         <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${cls.status === "Active" ? "translate-x-6" : "translate-x-1"
+          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${trainer.status === "Active" ? "translate-x-6" : "translate-x-1"
             }`}
         />
       </button>
@@ -143,24 +134,24 @@ export const ClassSetupList = () => {
   return (
     <div className="p-6 space-y-6">
       <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Class Setup</h1>
+        <h1 className="text-2xl font-bold">Trainer Setup</h1>
       </header>
 
       <EnhancedTaskTable
         data={pageRows}
         columns={columns}
         renderRow={renderRow}
-        storageKey="class-setup-list-v1"
+        storageKey="trainer-setup-list-v1"
         hideTableExport={true}
         enableSearch={true}
         searchTerm={searchTerm}
         onSearchChange={handleSearch}
-        searchPlaceholder="Search class..."
-        emptyMessage="No classes found"
+        searchPlaceholder="Search trainer..."
+        emptyMessage="No trainers found"
         leftActions={
           <Button
             className="fm-button-fix fm-button-brand px-8 py-2"
-            onClick={() => navigate("/club-management/class-setup/add")}
+            onClick={() => navigate("/club-management/trainer-setup/add")}
           >
             <Plus className="w-4 h-4 mr-2" /> Add
           </Button>
@@ -188,10 +179,10 @@ export const ClassSetupList = () => {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Class</AlertDialogTitle>
+            <AlertDialogTitle>Delete Trainer</AlertDialogTitle>
             <AlertDialogDescription>
-              Once you delete this class, you won't be able to retrieve it later. Are you sure you
-              want to delete {deleteTarget?.className || "this class"}?
+              Once you delete this trainer, you won't be able to retrieve it later. Are you sure you
+              want to delete {deleteTarget?.name || "this trainer"}?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -212,4 +203,4 @@ export const ClassSetupList = () => {
   );
 };
 
-export default ClassSetupList;
+export default TrainerSetupList;

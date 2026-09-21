@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Eye, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,6 @@ import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
 import { toast } from "sonner";
-import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -17,44 +16,38 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
-import { deleteClass, getClasses, updateClass, type ClassSetup } from "./classSetupMockData";
+import { deletePackage, getPackages, updatePackage, type PackageSetup } from "./packageSetupMockData";
 
 const columns: ColumnConfig[] = [
   { key: "actions", label: "Actions", sortable: false, hideable: false, draggable: false },
-  { key: "className", label: "Class name", sortable: true, hideable: true, draggable: true },
-  { key: "maxCapacity", label: "Max Capacity", sortable: true, hideable: true, draggable: true },
-  { key: "minParticipants", label: "Min Participants", sortable: true, hideable: true, draggable: true },
-  { key: "duration", label: "Duration", sortable: true, hideable: true, draggable: true },
-  { key: "location", label: "Location", sortable: true, hideable: true, draggable: true },
+  { key: "name", label: "Package name", sortable: true, hideable: true, draggable: true },
+  { key: "classActivity", label: "Class/Activity", sortable: true, hideable: true, draggable: true },
+  { key: "packageType", label: "Package Type", sortable: true, hideable: true, draggable: true },
+  { key: "sessions", label: "Sessions", sortable: true, hideable: true, draggable: true },
+  { key: "price", label: "Price", sortable: true, hideable: true, draggable: true },
+  { key: "validity", label: "Validity", sortable: true, hideable: true, draggable: true },
   { key: "status", label: "Status", sortable: true, hideable: true, draggable: true },
 ];
 
 const PAGE_SIZE = 10;
 
-export const ClassSetupList = () => {
+export const PackageSetupList = () => {
   const navigate = useNavigate();
-  const cmEvents = useClubManagementEvents();
-  const listViewLogged = useRef(false);
-
-  useEffect(() => {
-    if (listViewLogged.current) return;
-    listViewLogged.current = true;
-    cmEvents.listViewed("Class Setup", "class_setup_list");
-  }, [cmEvents]);
-
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [refreshTick, setRefreshTick] = useState(0);
-  const [deleteTarget, setDeleteTarget] = useState<ClassSetup | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<PackageSetup | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const allClasses = useMemo(() => getClasses(), [refreshTick]);
+  const allPackages = useMemo(() => getPackages(), [refreshTick]);
 
   const filtered = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
-    if (!q) return allClasses;
-    return allClasses.filter((c) => c.className.toLowerCase().includes(q));
-  }, [allClasses, searchTerm]);
+    if (!q) return allPackages;
+    return allPackages.filter(
+      (p) => p.name.toLowerCase().includes(q) || p.classActivity.toLowerCase().includes(q)
+    );
+  }, [allPackages, searchTerm]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const page = Math.min(currentPage, totalPages);
@@ -65,36 +58,34 @@ export const ClassSetupList = () => {
     setCurrentPage(1);
   };
 
-  const handleToggleStatus = (cls: ClassSetup) => {
-    const nextStatus = cls.status === "Active" ? "Inactive" : "Active";
-    updateClass(cls.id, { ...cls, status: nextStatus });
-    cmEvents.action("Class Setup Status Toggled", { entity_id: cls.id, status: nextStatus });
-    toast.success(`Class marked ${nextStatus}`);
+  const handleToggleStatus = (pkg: PackageSetup) => {
+    const nextStatus = pkg.status === "Active" ? "Inactive" : "Active";
+    updatePackage(pkg.id, { ...pkg, status: nextStatus });
+    toast.success(`Package marked ${nextStatus}`);
     setRefreshTick((n) => n + 1);
   };
 
   const handleConfirmDelete = () => {
     if (!deleteTarget) return;
-    deleteClass(deleteTarget.id);
-    cmEvents.deleted("Class Setup", deleteTarget.id, "class_setup_list");
-    toast.success("Class deleted successfully!");
+    deletePackage(deleteTarget.id);
+    toast.success("Package deleted successfully!");
     setShowDeleteModal(false);
     setDeleteTarget(null);
     setRefreshTick((n) => n + 1);
   };
 
-  const renderRow = (cls: ClassSetup) => ({
+  const renderRow = (pkg: PackageSetup) => ({
     actions: (
       <div className="flex items-center gap-2">
         <button
-          onClick={() => navigate(`/club-management/class-setup/details/${cls.id}`)}
+          onClick={() => navigate(`/club-management/package-setup/details/${pkg.id}`)}
           className="p-1 text-black hover:bg-gray-100 rounded"
           title="View"
         >
           <Eye className="w-4 h-4" />
         </button>
         <button
-          onClick={() => navigate(`/club-management/class-setup/edit/${cls.id}`)}
+          onClick={() => navigate(`/club-management/package-setup/edit/${pkg.id}`)}
           className="p-1 text-black hover:bg-gray-100 rounded"
           title="Edit"
         >
@@ -102,7 +93,7 @@ export const ClassSetupList = () => {
         </button>
         <button
           onClick={() => {
-            setDeleteTarget(cls);
+            setDeleteTarget(pkg);
             setShowDeleteModal(true);
           }}
           className="p-1 text-black hover:bg-gray-100 rounded"
@@ -112,28 +103,29 @@ export const ClassSetupList = () => {
         </button>
       </div>
     ),
-    className: (
+    name: (
       <div
         className="font-medium text-brand cursor-pointer"
-        onClick={() => navigate(`/club-management/class-setup/details/${cls.id}`)}
+        onClick={() => navigate(`/club-management/package-setup/details/${pkg.id}`)}
       >
-        {cls.className}
+        {pkg.name}
       </div>
     ),
-    maxCapacity: <span className="text-sm text-gray-900">{cls.maxCapacity}</span>,
-    minParticipants: <span className="text-sm text-gray-900">{cls.minParticipants}</span>,
-    duration: <span className="text-sm text-gray-600">{cls.duration || "-"}</span>,
-    location: <span className="text-sm text-gray-600">{cls.location}</span>,
+    classActivity: <span className="text-sm text-gray-700">{pkg.classActivity}</span>,
+    packageType: <span className="text-sm text-gray-700">{pkg.packageType}</span>,
+    sessions: <span className="text-sm text-gray-900">{pkg.sessions} Sessions</span>,
+    price: <span className="text-sm text-gray-900">₹{pkg.price.toLocaleString("en-IN")}</span>,
+    validity: <span className="text-sm text-gray-600">{pkg.validity}</span>,
     status: (
       <button
         type="button"
-        onClick={() => handleToggleStatus(cls)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${cls.status === "Active" ? "bg-brand" : "bg-gray-300"
+        onClick={() => handleToggleStatus(pkg)}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${pkg.status === "Active" ? "bg-brand" : "bg-gray-300"
           }`}
-        title={cls.status === "Active" ? "Active - click to deactivate" : "Inactive - click to activate"}
+        title={pkg.status === "Active" ? "Active - click to deactivate" : "Inactive - click to activate"}
       >
         <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${cls.status === "Active" ? "translate-x-6" : "translate-x-1"
+          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${pkg.status === "Active" ? "translate-x-6" : "translate-x-1"
             }`}
         />
       </button>
@@ -143,24 +135,24 @@ export const ClassSetupList = () => {
   return (
     <div className="p-6 space-y-6">
       <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Class Setup</h1>
+        <h1 className="text-2xl font-bold">Package Setup</h1>
       </header>
 
       <EnhancedTaskTable
         data={pageRows}
         columns={columns}
         renderRow={renderRow}
-        storageKey="class-setup-list-v1"
+        storageKey="package-setup-list-v1"
         hideTableExport={true}
         enableSearch={true}
         searchTerm={searchTerm}
         onSearchChange={handleSearch}
-        searchPlaceholder="Search class..."
-        emptyMessage="No classes found"
+        searchPlaceholder="Search packages..."
+        emptyMessage="No packages found"
         leftActions={
           <Button
             className="fm-button-fix fm-button-brand px-8 py-2"
-            onClick={() => navigate("/club-management/class-setup/add")}
+            onClick={() => navigate("/club-management/package-setup/add")}
           >
             <Plus className="w-4 h-4 mr-2" /> Add
           </Button>
@@ -188,10 +180,10 @@ export const ClassSetupList = () => {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Class</AlertDialogTitle>
+            <AlertDialogTitle>Delete Package</AlertDialogTitle>
             <AlertDialogDescription>
-              Once you delete this class, you won't be able to retrieve it later. Are you sure you
-              want to delete {deleteTarget?.className || "this class"}?
+              Once you delete this package, you won't be able to retrieve it later. Are you sure you
+              want to delete {deleteTarget?.name || "this package"}?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -212,4 +204,4 @@ export const ClassSetupList = () => {
   );
 };
 
-export default ClassSetupList;
+export default PackageSetupList;

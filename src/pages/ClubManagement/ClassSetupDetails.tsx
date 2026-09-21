@@ -30,6 +30,7 @@ import {
   deleteClass,
   getClassById,
   removeTrainerFromClass,
+  updateTrainerStatus,
 } from "./classSetupMockData";
 
 const trainerColumns: ColumnConfig[] = [
@@ -102,6 +103,14 @@ export const ClassSetupDetails = () => {
   const handleRemoveTrainer = (trainerId: string) => {
     removeTrainerFromClass(cls.id, trainerId);
     cmEvents.action("Class Setup Trainer Removed", { entity_id: cls.id, trainer_id: trainerId });
+    forceRefresh((n) => n + 1);
+  };
+
+  const handleToggleTrainerStatus = (trainerId: string, current: "Active" | "Inactive") => {
+    const nextStatus = current === "Active" ? "Inactive" : "Active";
+    updateTrainerStatus(cls.id, trainerId, nextStatus);
+    cmEvents.action("Class Setup Trainer Status Toggled", { entity_id: cls.id, trainer_id: trainerId, status: nextStatus });
+    toast.success(`Trainer marked ${nextStatus}`);
     forceRefresh((n) => n + 1);
   };
 
@@ -207,7 +216,20 @@ export const ClassSetupDetails = () => {
                 ),
                 specialization: <span className="text-sm text-gray-700">{trainer.specialization}</span>,
                 experience: <span className="text-sm text-gray-700">{trainer.experience}</span>,
-                status: getStatusBadge(trainer.status),
+                status: (
+                  <button
+                    type="button"
+                    onClick={() => handleToggleTrainerStatus(trainer.id, trainer.status)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${trainer.status === "Active" ? "bg-brand" : "bg-gray-300"
+                      }`}
+                    title={trainer.status === "Active" ? "Active - click to deactivate" : "Inactive - click to activate"}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${trainer.status === "Active" ? "translate-x-6" : "translate-x-1"
+                        }`}
+                    />
+                  </button>
+                ),
                 actions: (
                   <div className="flex items-center gap-1">
                     <Button size="icon" variant="ghost" className="h-7 w-7" title="Edit">

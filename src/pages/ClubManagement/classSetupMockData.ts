@@ -11,8 +11,11 @@ export interface ClassSetup {
   maxCapacity: number;
   location: string;
   duration: string;
-  trainer: string;
+  trainer: string[];
   status: "Active" | "Inactive";
+  // 24h "HH:mm" values from the native <input type="time"> pickers.
+  startTime?: string;
+  endTime?: string;
   description: string;
   trainers: ClassTrainer[];
 }
@@ -35,7 +38,7 @@ let classes: ClassSetup[] = [
     maxCapacity: 8,
     location: "Studio A",
     duration: "60 min",
-    trainer: "Sarah Johnson",
+    trainer: ["Sarah Johnson"],
     status: "Active",
     description:
       "Our Reformer Pilates class provides a complete body strength and conditioning workout using specialized spring-loaded resistance machines. Ideal for establishing core support, upgrading athletic flexibility, and sharpening spinal alignment. Sessions are strictly scaled to 8 members max for personalized guidance.",
@@ -54,7 +57,7 @@ let classes: ClassSetup[] = [
     maxCapacity: 2,
     location: "Studio B",
     duration: "60 min",
-    trainer: "Mike Chen",
+    trainer: ["Mike Chen"],
     status: "Active",
     description: "One-on-one and duo Cadillac sessions using the trapeze table for deep stretching, spring resistance, and rehabilitation-focused training.",
     trainers: [
@@ -69,7 +72,7 @@ let classes: ClassSetup[] = [
     maxCapacity: 1,
     location: "Studio A",
     duration: "45 min",
-    trainer: "Lisa Park",
+    trainer: ["Lisa Park"],
     status: "Active",
     description: "Fully personalized one-on-one Pilates session tailored to individual goals, mobility, and fitness level.",
     trainers: [
@@ -84,7 +87,7 @@ let classes: ClassSetup[] = [
     maxCapacity: 15,
     location: "Studio C",
     duration: "60 min",
-    trainer: "Lisa Park",
+    trainer: ["Lisa Park"],
     status: "Active",
     description: "Group Vinyasa flow class focused on breath-led movement, flexibility, and stress relief.",
     trainers: [
@@ -99,7 +102,7 @@ let classes: ClassSetup[] = [
     maxCapacity: 20,
     location: "Studio C",
     duration: "45 min",
-    trainer: "Mike Chen",
+    trainer: ["Mike Chen"],
     status: "Inactive",
     description: "High-intensity interval training class combining bodyweight circuits and cardio bursts. Currently paused for the season.",
     trainers: [
@@ -114,7 +117,7 @@ let classes: ClassSetup[] = [
     maxCapacity: 4,
     location: "Court 1",
     duration: "60 min",
-    trainer: "David Kim",
+    trainer: ["David Kim"],
     status: "Active",
     description: "Doubles and singles pickleball court booking with optional coaching for beginners.",
     trainers: [
@@ -135,7 +138,7 @@ extraNames.forEach((name, i) => {
     maxCapacity: 10,
     location: i % 2 === 0 ? "Studio A" : "Studio B",
     duration: "45 min",
-    trainer: "Sarah Johnson",
+    trainer: ["Sarah Johnson"],
     status: i % 5 === 0 ? "Inactive" : "Active",
     description: `${name} class - details to be configured.`,
     trainers: [],
@@ -184,6 +187,16 @@ export function removeTrainerFromClass(classId: string, trainerId: string): void
   const cls = classes.find((c) => c.id === classId);
   if (!cls) return;
   cls.trainers = cls.trainers.filter((t) => t.id !== trainerId);
+}
+
+export function updateTrainerStatus(
+  classId: string,
+  trainerId: string,
+  status: "Active" | "Inactive"
+): void {
+  const cls = classes.find((c) => c.id === classId);
+  if (!cls) return;
+  cls.trainers = cls.trainers.map((t) => (t.id === trainerId ? { ...t, status } : t));
 }
 
 export const LOCATIONS = ["Studio A", "Studio B", "Studio C", "Court 1"];

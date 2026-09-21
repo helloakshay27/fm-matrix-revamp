@@ -53,45 +53,68 @@ export interface WasteGenerationCategoryEntry {
   signature: string | null;
 }
 
+export interface WasteGenerationLogChange {
+  field: string;
+  old_value?: unknown;
+  new_value?: unknown;
+}
+
+export interface WasteGenerationLog {
+  id: number;
+  log_type: string;
+  log_of: string;
+  log_of_id: number;
+  changed_by: string | null;
+  changed_by_id: number | null;
+  created_at: string | null;
+  changes: WasteGenerationLogChange[];
+  raw_changed_attr?: Record<string, [unknown, unknown]>;
+}
+
 export interface WasteGeneration {
+  dispatch_weight_kg: null;
+  dispatch_weight_kg: any;
   id: number;
   reference_number: number;
   waste_unit: number;
-  recycled_unit: number;
-  agency_name: string;
-  remark?: string;
+  recycled_unit: number | null;
+  agency_name: string | null;
+  remark?: string | null;
   wg_date: string;
   created_at: string;
   updated_at: string;
   resource_id: number;
   resource_type: string;
   location_details: string;
-  building_id: number;
-  building_name: string;
+  building_id: number | null;
+  building_name: string | null;
   wing_id: number | null;
   wing_name: string | null;
   area_id: number | null;
   area_name: string | null;
   entity_id: number | null;
   client_name: string | null;
-  device_id: number | null;
+  device_id: number | string | null;
   status: string | null;
   dispatch_id?: number | null;
   dispatch_status?: boolean;
-  user_type: string;
-  user_name: string;
+  user_type: string | null;
+  user_name: string | null;
   bag_counts: number;
-  vendor: Vendor;
+  vendor: Vendor | null;
   // Present on legacy single-category records; null on newer multi-category
   // records, which instead carry the breakdown in `categories`.
   commodity: Commodity | null;
   category: Category | null;
-  operational_landlord: OperationalLandlord;
-  created_by: CreatedBy;
+  operational_landlord: OperationalLandlord | null;
+  created_by: CreatedBy | null;
   url: string;
   attachments: unknown[];
   signature: string | null;
   waste_bag_details: WasteBagDetail[];
+  logs?: WasteGenerationLog[];
+  dispatch_logs?: WasteGenerationLog[];
+  recycle_logs?: WasteGenerationLog[];
   // Per-category breakdown for records created with multiple waste entries.
   categories?: WasteGenerationCategoryEntry[];
   // Comma-joined category/commodity names and the total bag count across every
@@ -101,14 +124,24 @@ export interface WasteGeneration {
   total_bag_count?: number | null;
 }
 
+// export interface WasteGenerationCounts {
+//   total_waste: number;
+//   total_recycled: number;
+//   recycling_percentage: number;
+//   dry_waste: number;
+//   hazardous_waste: number;
+// }
+
 export interface WasteGenerationCounts {
   total_waste: number;
   total_recycled: number;
   recycling_percentage: number;
-  dry_waste: number;
-  hazardous_waste: number;
+  wet_waste?: number;
+  dry_waste?: number;
+  hazardous_waste?: number;
+  category_counts?: any[];
+  sub_category_counts?: any[];
 }
-
 export interface WasteGenerationResponse {
   waste_generations: WasteGeneration[];
   pagination: {
