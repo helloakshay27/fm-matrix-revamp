@@ -43,7 +43,9 @@ interface SelectedAnalytic {
     | "incident_management"
     | "utility"
     | "amount_management"
-    | "quickgate_management";
+    | "quickgate_management"
+    | "escalation_management"
+    | "occupancy_management";
   endpoint: string;
   title: string;
 }
@@ -309,6 +311,21 @@ const executiveAnalyticsOptions = {
         endpoint: "resolution_tat_performance_quarterly",
         label: "Resolution TAT Performance",
       },
+      {
+        id: "helpdesk_unit_categorywise_proactive",
+        endpoint: "unit_categorywise_proactive",
+        label: "Unit Category-wise Tickets (Proactive)",
+      },
+      {
+        id: "helpdesk_common_area_categorywise",
+        endpoint: "common_area_categorywise",
+        label: "Common Area Category-wise Tickets",
+      },
+      {
+        id: "helpdesk_common_area_categorywise_proactive",
+        endpoint: "common_area_categorywise_proactive",
+        label: "Common Area Category-wise Tickets (Proactive)",
+      },
     ],
   },
 
@@ -451,6 +468,16 @@ const executiveAnalyticsOptions = {
         endpoint: "body_injury_chart",
         label: "Body Injury Chart",
       },
+      {
+        id: "incident_safety_metrics",
+        endpoint: "safety_metrics",
+        label: "Incident Summary",
+      },
+      {
+        id: "incident_cause_wise",
+        endpoint: "cause_wise_incidents",
+        label: "Primary Root Cause Category",
+      },
     ],
   },
 
@@ -499,6 +526,52 @@ const executiveAnalyticsOptions = {
         id: "quickgate_site_wise_visitors",
         endpoint: "site_wise_visitors",
         label: "Site-wise Visitor Count",
+      },
+      {
+        id: "quickgate_goods_staff_overview",
+        endpoint: "goods_staff_overview",
+        label: "Goods & Staff Overview",
+      },
+    ],
+  },
+
+  escalation_management: {
+    icon: BarChart3,
+    label: "Escalation",
+    color: "#E7848E",
+    options: [
+      {
+        id: "escalation_kpis",
+        endpoint: "escalation_kpis",
+        label: "Escalation Overview",
+      },
+      {
+        id: "escalation_zone_wise",
+        endpoint: "zone_wise",
+        label: "Zone Escalations",
+      },
+      {
+        id: "escalation_category_wise",
+        endpoint: "category_wise",
+        label: "Category Wise Executive Escalations",
+      },
+      {
+        id: "escalation_service_partner_evaluation",
+        endpoint: "service_partner_evaluation",
+        label: "Service Partner Evaluation",
+      },
+    ],
+  },
+
+  occupancy_management: {
+    icon: BarChart3,
+    label: "Occupancy Summary",
+    color: "#9EC8BA",
+    options: [
+      {
+        id: "occupancy_summary",
+        endpoint: "occupancy_summary",
+        label: "Occupancy Summary",
       },
     ],
   },
@@ -562,6 +635,21 @@ const executiveAnalyticsOptions = {
         id: "utility_site_wise_dry_waste_segregation",
         endpoint: "site_wise_dry_waste_segregation",
         label: "Site Wise Waste Segregation",
+      },
+      {
+        id: "utility_card_fuel_consumption",
+        endpoint: "card_fuel_consumption",
+        label: "Fuel Consumption",
+      },
+      {
+        id: "utility_power_consumption_top_management",
+        endpoint: "power_consumption_top_management",
+        label: "Power Consumption Top Management",
+      },
+      {
+        id: "utility_water_consumption_top_management",
+        endpoint: "water_consumption_top_management",
+        label: "Water Consumption Top Management",
       },
     ],
   },

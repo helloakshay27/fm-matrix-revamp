@@ -106,6 +106,16 @@ const utilityAnalyticsAPI = {
     const resp = await apiClient.get(url);
     return resp.data;
   },
+
+  // Per the "fm" Postman collection at the repo root.
+  async getFuelConsumption(fromDate: Date, toDate: Date): Promise<any> {
+    const start = formatDate(fromDate);
+    const end = formatDate(toDate);
+    const siteId = localStorage.getItem('selectedSiteId') || '';
+    const url = `/utility_dashboard/card_fuel_consumption.json?site_id=${encodeURIComponent(siteId)}&from_date=${encodeURIComponent(start)}&to_date=${encodeURIComponent(end)}`;
+    const resp = await apiClient.get(url);
+    return resp.data;
+  },
 };
 
 export default utilityAnalyticsAPI;

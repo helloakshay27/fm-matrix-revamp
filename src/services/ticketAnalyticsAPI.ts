@@ -269,7 +269,43 @@ export const ticketAnalyticsAPI = {
     const toDateStr = formatDateForAPI(toDate);
     
     const url = `/pms/admin/complaints/chart_unit_categorywise.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
-    
+
+    const response = await apiClient.get(url);
+    return response.data;
+  },
+
+  // Get unit categorywise data — proactive tickets only
+  async getUnitCategorywiseProactiveData(fromDate: Date, toDate: Date): Promise<UnitCategorywiseData> {
+    const siteId = getCurrentSiteId();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+
+    const url = `/pms/admin/complaints/chart_unit_categorywise_proactive.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+
+    const response = await apiClient.get(url);
+    return response.data;
+  },
+
+  // Get common area categorywise data
+  async getCommonAreaCategorywiseData(fromDate: Date, toDate: Date): Promise<UnitCategorywiseData> {
+    const siteId = getCurrentSiteId();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+
+    const url = `/pms/admin/complaints/chart_common_area_categorywise.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+
+    const response = await apiClient.get(url);
+    return response.data;
+  },
+
+  // Get common area categorywise data — proactive tickets only
+  async getCommonAreaCategorywiseProactiveData(fromDate: Date, toDate: Date): Promise<UnitCategorywiseData> {
+    const siteId = getCurrentSiteId();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+
+    const url = `/pms/admin/complaints/chart_common_area_categorywise_proactive.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+
     const response = await apiClient.get(url);
     return response.data;
   },
