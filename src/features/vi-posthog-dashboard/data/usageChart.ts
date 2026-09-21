@@ -173,6 +173,33 @@ export function toRoleLabel(role: string): string {
   return words.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 
+/**
+ * Module chips: 'msafe_krcc_form' -> 'mSafe KRCC Form'.
+ *
+ * The modules endpoint returns the app's own event-group keys, which are wire values, not
+ * labels — the underscores are not words. Only the display string is tidied; the raw name is
+ * still what gets sent as `module` and what the tooltip shows, so an unrecognised key stays
+ * traceable back to the response.
+ */
+const MODULE_WORDS: Record<string, string> = {
+  msafe: 'mSafe',
+  krcc: 'KRCC',
+  lmc: 'LMC',
+  otp: 'OTP',
+  vi: 'Vi',
+  qr: 'QR',
+  pp: 'PP',
+  fnb: 'F&B',
+};
+
+export function toModuleLabel(module: string): string {
+  const words = module.split(/[_\-\s]+/).filter(Boolean);
+  if (words.length === 0) return module;
+  return words
+    .map((w) => MODULE_WORDS[w] ?? w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
+
 /** '8/4' -> '4 Aug'. Returns null for anything not in the shared mdLabel's M/D shape. */
 function spellMd(label: string): string | null {
   const [m, d] = label.split('/').map(Number);

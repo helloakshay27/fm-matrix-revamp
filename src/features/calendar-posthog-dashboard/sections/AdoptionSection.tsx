@@ -136,12 +136,14 @@ export function AdoptionSection() {
                       ) : (
                         <td
                           key={w}
+                          title={`${adopt.retention.labels[i]} · Week ${w}: ${v}% retained`}
                           style={{
                             background: `rgba(${palette.heatRgb},${(
                               palette.heatA0 +
                               (v / 100) * palette.heatA1
                             ).toFixed(2)})`,
                             color: v / 100 > 0.55 ? palette.onHeat : 'var(--ink)',
+                            cursor: 'default',
                           }}
                         >
                           {v}%
@@ -181,7 +183,12 @@ export function AdoptionSection() {
           ) : (
             <div className="hbars">
               {adopt.itemTypes.map((row, i) => (
-                <div className="role" key={row.label}>
+                <div
+                  className="role"
+                  key={row.label}
+                  title={`${row.label}: ${Math.round(row.share * 100)}% share`}
+                  style={{ cursor: 'pointer' }}
+                >
                   <div className="rn">{row.label}</div>
                   <div className="rbar">
                     <i style={{ width: `${Math.round(row.share * 100)}%`, background: itemColor[i % itemColor.length] }} />

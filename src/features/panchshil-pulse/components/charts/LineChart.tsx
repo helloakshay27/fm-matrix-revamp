@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { getChartColors } from "../../utils/chartColors";
+import { useChartColors } from "../../utils/chartColors";
 import { fmtC } from "../../utils/calculations";
 import { usePulseDashboard } from "../../contexts/PulseDashboardContext";
 
@@ -16,10 +16,10 @@ interface LineChartProps {
 }
 
 export const LineChart: React.FC<LineChartProps> = ({ cur, prev, opts = {} }) => {
-  const { prev: showPrev, theme } = usePulseDashboard();
+  const { prev: showPrev } = usePulseDashboard();
 
-  // Re-sync colors on theme change
-  const colors = useMemo(() => getChartColors(), [theme]);
+  // Chart colors — re-sync whenever the applied `data-theme` changes.
+  const colors = useChartColors();
 
   // Hovered point index → the value shown in the tooltip. Rendered so the
   // resting graph is unchanged; only hovering a point surfaces its value.

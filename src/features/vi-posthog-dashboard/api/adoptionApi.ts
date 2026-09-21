@@ -116,6 +116,25 @@ export interface ViRangeFilters extends Omit<RangeFilters, 'devices' | 'siteIds'
   surface?: ViSurface;
 }
 
+/**
+ * One OS row inside `usage_and_distribution`'s `device_split`.
+ *
+ * The server nests an `os_breakdown` under each device row — `session_share` there is the OS's
+ * share OF THAT DEVICE, not of the period, so a single-device response reads 100% on its only
+ * OS. The shared `UsageDistributionResponse` does not declare the block, so it is typed here.
+ */
+export interface ApiOsSplit {
+  os: string;
+  users: number;
+  sessions: number;
+  /** Percentage of the parent DEVICE's sessions, not of the period's. */
+  session_share: number;
+}
+
+/** A device row plus the OS breakdown the shared type omits. */
+export type ViDeviceSplitRow = UsageDistributionResponse['device_split']['devices'][number] & {
+  os_breakdown?: ApiOsSplit[];
+};
 /** The two Vi surfaces: the mobile app (`app_id`) and the web app (its host). */
 export type ViSurface = 'app' | 'web';
 
@@ -130,6 +149,14 @@ export interface ViWeeklyFilters extends Omit<WeeklyFilters, 'devices' | 'siteId
 export const ANALYTICS_TENANT_URL =
   (import.meta.env.VITE_VI_ADOPTION_TENANT_URL as string | undefined) ??
   'vi-web.gophygital.work';
+
+/**
+ * Tenant project code sent on every analytics call. It is applied in `get()` rather than in
+ * `baseParams`, so it rides along regardless of surface (`app` or `web`) or window shape
+ * (range or weekly) — no analytics request should omit it.
+ */
+export const VI_PROJECT_CODE =
+  (import.meta.env.VITE_VI_ADOPTION_PROJECT_CODE as string | undefined) ?? 'MS-01';
 
 const client = axios.create({ baseURL: ANALYTICS_BASE_URL, timeout: 60_000 });
 
@@ -172,7 +199,7 @@ const weeklyParams = (f: ViWeeklyFilters) => ({
 });
 
 async function get<T>(path: string, params: Record<string, string>): Promise<T> {
-  const qs = new URLSearchParams(params).toString();
+  const qs = new URLSearchParams({ ...params, project_code: VI_PROJECT_CODE }).toString();
   const res = await client.get<T>(`/fm/adoption/${path}?${qs}`);
   return res.data;
 }
@@ -221,10 +248,13 @@ export const fetchModules = (f: ViRangeFilters & { module?: string }) =>
     ...(f.module ? { module: f.module } : {}),
   });
 
-/** Defaults server-side to maintenance / ticket (helpdesk) when module/sub_module are omitted. */
-export const fetchWorkflowUsage = (f: ViRangeFilters & { module?: string; subModule?: string }) =>
+/**
+ * Defaults server-side to maintenance / ticket (helpdesk) when module is omitted.
+ *
+ * `sub_module` is deliberately not a parameter here: the payload carries `module` alone.
+ */
+export const fetchWorkflowUsage = (f: ViRangeFilters & { module?: string }) =>
   get<ViWorkflowUsageResponse>('workflow_usage', {
     ...rangeParams(f),
     ...(f.module ? { module: f.module } : {}),
-    ...(f.subModule ? { sub_module: f.subModule } : {}),
   });

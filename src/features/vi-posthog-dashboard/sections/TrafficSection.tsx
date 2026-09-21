@@ -4,7 +4,7 @@ import { ChartCard } from '../components/ChartCard';
 import { Guard } from '../components/Guard';
 import { Tile } from '../components/Tile';
 import { LineChart } from '../components/charts/LineChart';
-import { useSurfaceSplit } from '../api/queries';
+import { usePlatformSplit } from '../api/queries';
 import { useViDashboard } from '../context/viDashboardStore';
 import { toViTiles } from '../data/viMetricIds';
 
@@ -20,8 +20,9 @@ const MEASURES = [
 export function TrafficSection() {
   const { vm, setSessTab, palette, queryFilters } = useViDashboard();
   const { traffic, status, state } = vm;
-  const surfaceSplit = useSurfaceSplit(queryFilters);
-  const surfaceColor = { web: palette.blue, app: palette.green };
+  const platformSplit = usePlatformSplit(queryFilters);
+  // Android green, iOS blue; any other OS the API reports falls back to the neutral line.
+  const platformColor: Record<string, string> = { Android: palette.green, iOS: palette.blue };
 
   const measureColor =
     state.sessTab === 'views'
@@ -103,25 +104,29 @@ export function TrafficSection() {
         </ChartCard>
 
         <ChartCard
-          eyebrow="Surface split (U7)"
-          title="Web app vs mobile app"
+          eyebrow="Platform split (U7)"
+          title="Android vs iOS"
           // Not INFO['chart.device'] — that entry describes the FM Desktop/Mobile split.
-          purpose="Share of sessions on the Vi web app versus the Vi mobile app, counted from each surface's own events — shows which one employees actually work in."
+          purpose="Share of sessions per mobile platform, taken from the os_breakdown inside device_split. Both platforms are always listed, so a zero reads as nobody on that platform rather than as missing data."
         >
           <Guard
-            status={{ loading: surfaceSplit.isLoading, error: surfaceSplit.error }}
-            empty={surfaceSplit.rows.length === 0}
-            emptyLabel="No surface breakdown for this filter set."
+            status={{ loading: platformSplit.isLoading, error: platformSplit.error }}
+            empty={platformSplit.rows.length === 0}
+            emptyLabel="No platform breakdown for this filter set."
           >
             <div className="hbars">
-              {surfaceSplit.rows.map((row) => (
-                <div className="role" key={row.surface}>
+              {platformSplit.rows.map((row) => (
+                <div
+                  className="role"
+                  key={row.label}
+                  title={`${row.label}: ${row.sessions.toLocaleString()} sessions · ${row.users.toLocaleString()} users`}
+                >
                   <div className="rn">{row.label}</div>
                   <div className="rbar">
                     <i
                       style={{
                         width: `${Math.round(row.share * 100)}%`,
-                        background: surfaceColor[row.surface],
+                        background: platformColor[row.os] ?? palette.line,
                       }}
                     />
                   </div>
