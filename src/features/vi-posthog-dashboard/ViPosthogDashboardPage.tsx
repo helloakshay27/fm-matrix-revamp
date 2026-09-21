@@ -37,7 +37,7 @@ function DashboardLayout() {
           <div className="page-head">
             <h2>{PAGE_TITLES[page]}</h2>
             <p className="page-sub">
-              Vi my Workspace · {vm.scopeLabel} · {vm.range.from} → {vm.range.to}
+              Vi my Workspace · {vm.range.from} → {vm.range.to}
             </p>
           </div>
 

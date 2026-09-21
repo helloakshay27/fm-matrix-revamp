@@ -1,15 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import type { DateRange, Tier } from '@/features/posthog-dashboard/data/constants';
+import type { DateRange } from '@/features/posthog-dashboard/data/constants';
 import { useViDashboard, type ViPlatform } from '../context/viDashboardStore';
 
 /**
  * The reference (§7.1, cross-cutting controls) is explicit that Vi my Workspace has no admin
  * scope or persona tier — one product, one persona, employees and contractors undifferentiated.
- * So the FM three-tier selector collapses into a single Circle control here. Tier still exists
- * underneath because the shared `scopeSites`/`normalizeScope` helpers key off it; it just isn't
- * a thing the viewer picks.
+ * There is no Circle control either: mobile-app events carry no site, so `site_id` is never
+ * sent and every metric is tenant-wide. A selector that could only relabel the header, never
+ * filter the numbers under it, is left out rather than shown as if it did something.
  */
-const ALL_CIRCLES = 'all-circles';
 
 const PRESETS: DateRange[] = [7, 30, 90];
 
@@ -36,17 +35,12 @@ const PLATFORMS: { value: ViPlatform; label: string; title: string }[] = [
   { value: 'Android', label: 'Android', title: 'Android only' },
 ];
 
-function circleValue(tier: Tier, scope: string): string {
-  if (tier === 't3' && scope === 'org') return ALL_CIRCLES;
-  return scope;
-}
-
 export function ControlBar() {
   const {
-    vm, setCircle, setDate, setCustomRange, customRange, platform, setPlatform,
+    vm, setDate, setCustomRange, customRange, platform, setPlatform,
     togglePrev, refreshAll, isRefreshing,
   } = useViDashboard();
-  const { state, sites, groups, sitesLoading, traffic } = vm;
+  const { state, traffic } = vm;
 
   const [customOpen, setCustomOpen] = useState(false);
   const [draft, setDraft] = useState({ from: '', to: '' });
@@ -69,47 +63,6 @@ export function ControlBar() {
 
   return (
     <div className="filterbar">
-      <label
-        className="ctrl"
-        title="Circle — labels the view. Mobile-app events carry no site, so site_id is not sent and the metrics below are tenant-wide."
-      >
-        <span className="ic">◎</span>
-        {sitesLoading ? (
-          <span>Loading circles…</span>
-        ) : (
-          <select
-            value={circleValue(state.tier, state.scope)}
-            onChange={(e) => {
-              const v = e.target.value;
-              if (v === ALL_CIRCLES) setCircle('t3', 'org');
-              else if (groups.some((g) => g.id === v)) setCircle('t3', v);
-              else setCircle('t1', v);
-            }}
-          >
-            <option value={ALL_CIRCLES}>All Circles{sites.length ? ` (${sites.length})` : ''}</option>
-            {groups.length > 0 && (
-              <optgroup label="Companies">
-                {groups.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.name} ({g.siteIds.length})
-                  </option>
-                ))}
-              </optgroup>
-            )}
-            {sites.length > 0 && (
-              <optgroup label="Circles / sites">
-                {sites.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </optgroup>
-            )}
-          </select>
-        )}
-        <span className="chev">▾</span>
-      </label>
-
       <div className={`daterange${customOpen ? ' open' : ''}`} ref={dateRef}>
         <button
           type="button"

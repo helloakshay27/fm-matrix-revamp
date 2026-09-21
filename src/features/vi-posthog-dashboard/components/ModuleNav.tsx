@@ -1,54 +1,42 @@
+import { fmtC } from '@/features/posthog-dashboard/data/format';
 import { useViDashboard } from '../context/viDashboardStore';
-import { VI_BUCKETS, findWorkflow, workflowsInBucket } from '../data/workflows';
+import { toModuleLabel } from '../data/usageChart';
 
 /**
- * Workflow selector for Layer 3 — bucket tabs over workflow chips, the structure the Vi
- * catalogue itself defines (see data/workflows.ts).
+ * Module selector for Layer 3 — one chip per entry in the `modules` endpoint's `tree`.
  *
- * This deliberately does NOT list raw `$pathname` modules. The catalogue groups its 304 real
- * events into named workflows under six buckets, and that grouping is what a reader of this
- * dashboard recognises; a flat list of URL segments is an implementation detail of how the
- * events happen to be stored. Picking a workflow sets the `module` the workflow_usage
- * endpoint is queried with, so the cards below follow the selection.
+ * The names are the API's own, not a hand-kept catalogue: under `scope_mode: app` the tree
+ * returns the Vi app's real event groups (`msafe_home`, `vi_home_tab`, `tickets_create`,
+ * `home_post_possession`, …), already ordered by event volume. Picking one sends it as
+ * `module` — and only `module`, since the tree is flat — so every card below, including the
+ * funnel, is the response for exactly that module. The chip shows a tidied label
+ * (toModuleLabel) while the raw key stays in the tooltip and in the request.
  */
 export function ModuleNav() {
-  const { workflow, setWorkflow } = useViDashboard();
+  const { vm, setModule } = useViDashboard();
+  const { modules, state } = vm;
 
-  const current = findWorkflow(workflow);
-  const chips = workflowsInBucket(current.bucket);
+  if (modules.length === 0) return null;
 
   return (
     <div
       className="mnav"
-      title="Choose a workflow — this filter applies to the Workflow Usage section only"
+      title="Choose a module — this filter applies to the Workflow Usage section only"
     >
-      <div className="mnav-buckets">
-        {VI_BUCKETS.map((bucket) => (
-          <button
-            key={bucket}
-            type="button"
-            className={bucket === current.bucket ? 'on' : undefined}
-            // Switching bucket lands on that bucket's first workflow: a bucket is a grouping,
-            // not a selectable scope of its own, so there is no "whole bucket" query to run.
-            onClick={() => setWorkflow(workflowsInBucket(bucket)[0].key)}
-          >
-            {bucket}
-            <span className="mcount">{workflowsInBucket(bucket).length}</span>
-          </button>
-        ))}
-      </div>
-
       <div className="mnav-mods">
         <div className="segbar">
-          {chips.map((wf) => (
+          {modules.map((m) => (
             <button
-              key={wf.key}
+              key={m.name}
               type="button"
-              className={wf.key === workflow ? 'on' : undefined}
-              onClick={() => setWorkflow(wf.key)}
-              title={`${wf.tier === 'modern' ? 'Modern' : 'Legacy GA'} instrumentation · ${wf.steps.join(' → ')}`}
+              className={m.name === state.module ? 'on' : undefined}
+              onClick={() => setModule(m.name)}
+              title={`${m.name} · ${fmtC(m.users)} users · ${fmtC(m.events)} events · ${fmtC(
+                m.sessions,
+              )} sessions`}
             >
-              {wf.name}
+              {toModuleLabel(m.name)}
+              <span className="mcount">{fmtC(m.events)}</span>
             </button>
           ))}
         </div>

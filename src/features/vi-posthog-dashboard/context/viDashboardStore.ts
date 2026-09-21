@@ -14,7 +14,6 @@ import type {
   Tier,
 } from '@/features/posthog-dashboard/data/constants';
 import type { QueryFilters } from '../api/queries';
-import type { DeclaredFunnel } from '../data/declaredFunnel';
 import type { ChartPalette, ViTheme } from '../data/palette';
 import type { PageKey } from '../data/pages';
 
@@ -49,8 +48,6 @@ export interface ViewModel {
   weekTips: { trend: string[]; growth: string[] };
   /** Hover text for each retention cohort row, carrying the cohort size the label drops. */
   retentionRowTitles: string[];
-  /** The selected workflow's catalogue steps, measured against the live event list. */
-  declaredFunnel: DeclaredFunnel;
   siteHealth: SiteHealthData | null;
   flows: FlowsData;
   sites: Site[];
@@ -59,9 +56,12 @@ export interface ViewModel {
   /** Companies the site list groups into — the Regional tier's options. */
   groups: SiteGroup[];
   sitesLoading: boolean;
-  /** Layer-3 module tree, derived server-side from real `$pathname` segments. */
+  /**
+   * Layer-3 module tree. Under the app scope these are the Vi app's own event groups
+   * (`msafe_home`, `tickets_create`, `home_post_possession`, …) and the list is flat —
+   * there is no sub-module tier below it.
+   */
   modules: ModuleOption[];
-  subModules: ModuleOption[];
   status: {
     traffic: SectionStatus;
     adopt: SectionStatus;
@@ -91,16 +91,11 @@ export interface ViDashboardValue {
   /** iOS / Android / All — sent as `os` on every analytics call. */
   platform: ViPlatform;
   setPlatform: (platform: ViPlatform) => void;
-  setModule: (module: string) => void;
-  setSubModule: (subModule: string) => void;
   /**
-   * Selected workflow key from the Vi catalogue (see data/workflows.ts). Layer 3 is
-   * navigated by workflow rather than by raw `$pathname` module: the catalogue's bucket →
-   * workflow grouping is the documented structure, and setting a workflow also sets the
-   * `module` the workflow_usage endpoint is queried with.
+   * Select the Layer-3 module — one name from the tree above, sent as `module` on the
+   * workflow_usage call. No sub-module counterpart: the app-scoped tree is flat.
    */
-  workflow: string;
-  setWorkflow: (key: string) => void;
+  setModule: (module: string) => void;
   setSessTab: (tab: DashboardState['sessTab']) => void;
   togglePrev: () => void;
 
