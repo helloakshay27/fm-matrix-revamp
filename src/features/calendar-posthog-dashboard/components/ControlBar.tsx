@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { RANGE_LABELS, type DateRange, type Device } from '../data/constants';
-import { PROVIDERS } from '../data/sampleData';
 import { useCalendarDashboard } from '../context/calendarDashboardStore';
 
 const PRESETS: DateRange[] = [7, 30, 90];
@@ -12,19 +11,12 @@ const DEVICES: Array<{ key: Device; label: string }> = [
   { key: 'android', label: 'Android' },
 ];
 
-/** Connected-calendar providers, from the real `calendar_account_connected{provider}`. */
-const PROVIDER_OPTIONS = ['All Providers', ...PROVIDERS];
-
 /**
  * Cross-cutting filters.
  *
  * Calendar App is a single-persona product with no site or tier dimension, so where FM Matrix
  * has a scope selector and Vi has a Circle selector, this has none — there is nothing to scope
  * by and the endpoints take no such parameter.
- *
- * The Provider dropdown reads the real `calendar_account_connected{provider}` values. Like the
- * rest of this wireframe it does not requery anything — the Provider-wise breakdown on
- * Adoption & Engagement already lists every provider side by side.
  */
 export function ControlBar() {
   const {
@@ -33,7 +25,6 @@ export function ControlBar() {
   const { range } = vm;
 
   const [preset, setPresetLabel] = useState<DateRange>(30);
-  const [provider, setProvider] = useState(PROVIDER_OPTIONS[0]);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState({ from: range.from, to: range.to });
   const popRef = useRef<HTMLDivElement>(null);
@@ -52,27 +43,29 @@ export function ControlBar() {
 
   return (
     <div className="filterbar">
-      <div className={`daterange${open ? ' open' : ''}`} ref={popRef}>
+      <div className={`daterange${open ? ' open' : ''}`} id="dateRange" ref={popRef}>
         <button
           type="button"
           className="ctrl"
+          id="dateRangeBtn"
           onClick={(e) => {
             e.stopPropagation();
             setDraft({ from: range.from, to: range.to });
             setOpen((o) => !o);
           }}
         >
-          <span className="ic">📅</span>
-          <span>{rangeLabel}</span>
-          <span className="chev">▾</span>
+          <span className="ic">&#128197;</span>
+          <span id="dateRangeLabel">{rangeLabel}</span>
+          <span className="chev">&#9662;</span>
         </button>
-        <div className="daterange-pop">
+        <div className="daterange-pop" id="dateRangePop">
           <div className="dr-presets">
             {PRESETS.map((days) => (
               <button
                 key={days}
                 type="button"
                 className={`dr-preset${!customRange && preset === days ? ' on' : ''}`}
+                data-range={days}
                 onClick={() => {
                   setPreset(days);
                   setPresetLabel(days);
@@ -88,14 +81,16 @@ export function ControlBar() {
             <div className="dr-custom-row">
               <input
                 type="date"
+                id="dateFrom"
                 value={draft.from}
                 max={draft.to || undefined}
                 onChange={(e) => setDraft((d) => ({ ...d, from: e.target.value }))}
                 aria-label="From date"
               />
-              <span className="dr-to">–</span>
+              <span className="dr-to">&ndash;</span>
               <input
                 type="date"
+                id="dateTo"
                 value={draft.to}
                 min={draft.from || undefined}
                 onChange={(e) => setDraft((d) => ({ ...d, to: e.target.value }))}
@@ -104,6 +99,7 @@ export function ControlBar() {
             </div>
             <button
               type="button"
+              id="dateApplyBtn"
               className={`dr-apply${customRange ? ' applied' : ''}`}
               disabled={!draft.from || !draft.to || draft.from > draft.to}
               onClick={() => {
@@ -117,21 +113,12 @@ export function ControlBar() {
         </div>
       </div>
 
-      <label className="ctrl">
-        <span className="ic">📅</span>
-        <select value={provider} onChange={(e) => setProvider(e.target.value)}>
-          {PROVIDER_OPTIONS.map((p) => (
-            <option key={p}>{p}</option>
-          ))}
-        </select>
-        <span className="chev">▾</span>
-      </label>
-
-      <div className="devtoggle" title="Platform">
+      <div className="devtoggle" id="devToggle" title="Platform">
         {DEVICES.map((d) => (
           <button
             key={d.key}
             type="button"
+            data-dev={d.key}
             className={vm.dev === d.key ? 'on' : undefined}
             onClick={() => setDev(d.key)}
           >
@@ -142,22 +129,20 @@ export function ControlBar() {
 
       <button
         type="button"
+        id="prevBtn"
         className={`ctrl${vm.prev ? ' toggle-on' : ''}`}
         onClick={togglePrev}
         title="Overlay the immediately preceding period of equal length"
       >
-        <span className="ic">↺</span> Previous period {vm.prev ? '✓' : ''}
+        <span className="ic">&#8634;</span> Previous period {vm.prev ? '✓' : ''}
       </button>
-
-      {/* No Refresh control: nothing is fetched, so there is nothing to refetch. */}
 
       <div className="spacer" />
 
       <span className="pill" title="Distinct users with an event in the last 30 minutes">
         <span className="dot" />
-        <span>
-          <b>{vm.traffic.tiles.find((t) => t.id === 'recentlyOnline')?.disp ?? '—'}</b>
-          &nbsp;recently online
+        <span id="liveCount">
+          {vm.traffic.tiles.find((t) => t.id === 'recentlyOnline')?.disp ?? '—'} recently online
         </span>
       </span>
     </div>

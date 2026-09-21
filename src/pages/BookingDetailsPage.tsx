@@ -7,6 +7,8 @@ import {
   getLogs,
 } from "@/store/slices/facilityBookingsSlice";
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { isCMContextActive } from "@/utils/posthogHelpers";
 import { ArrowLeft, Logs, Receipt, Ticket } from "lucide-react";
 import { CustomTabs } from "@/components/CustomTabs";
 import { LogsTimeline } from "@/components/LogTimeline";
@@ -84,6 +86,8 @@ export const BookingDetailsPage = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const pulseEvents = usePulseEvents();
+  const cmEvents = useClubManagementEvents();
+  const detailViewedFired = useRef(false);
 
   useEffect(() => {
     pulseEvents.onModuleViewed({
@@ -100,6 +104,10 @@ export const BookingDetailsPage = () => {
         fetchBookingDetails({ baseUrl, token, id })
       ).unwrap();
       setBookings(response);
+      if (isCMContextActive() && !detailViewedFired.current) {
+        detailViewedFired.current = true;
+        cmEvents.detailViewed("Amenity Booking", id, "amenity_booking_details");
+      }
     } catch (error) {
       console.error("Error fetching booking details:", error);
     }
@@ -138,6 +146,9 @@ export const BookingDetailsPage = () => {
         }
       );
       toast.success(`Booking ${id} status updated to ${newStatus}`);
+      if (isCMContextActive()) {
+        cmEvents.statusChanged("Amenity Booking", id, { action: newStatus.toLowerCase() });
+      }
       fetchDetails();
     } catch (error) {
       console.error('Error updating booking status:', error);
@@ -201,6 +212,9 @@ export const BookingDetailsPage = () => {
       );
       toast.success('Booking cancelled successfully!');
       gaEvents.onMyBookingCancelSuccess("employee", id);
+      if (isCMContextActive()) {
+        cmEvents.statusChanged("Amenity Booking", id, { action: "cancelled" });
+      }
       setShowCancelModal(false);
       fetchDetails();
     } catch (error) {

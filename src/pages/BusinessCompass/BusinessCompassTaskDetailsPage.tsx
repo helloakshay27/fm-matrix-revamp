@@ -12,6 +12,7 @@ import {
     Mic,
     MicOff,
     Copy,
+    Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
@@ -877,9 +878,11 @@ const ActivityLog = ({ taskId }: { taskId: string }) => {
     const token = localStorage.getItem("token") || "";
     const [taskStatusLogs, setTaskStatusLogs] = useState<any[]>([]);
     const [userMapping, setUserMapping] = useState<Record<string, string>>({});
+    const [isLoadingLogs, setIsLoadingLogs] = useState(true);
 
     useEffect(() => {
         const fetchLogs = async () => {
+            setIsLoadingLogs(true);
             try {
                 const response = await axios.get(
                     `https://${baseUrl}/business_compass/tasks/${taskId}/activity_logs.json`,
@@ -888,6 +891,8 @@ const ActivityLog = ({ taskId }: { taskId: string }) => {
                 setTaskStatusLogs(response.data?.activity_logs || []);
             } catch (e) {
                 console.error(e);
+            } finally {
+                setIsLoadingLogs(false);
             }
         };
         fetchLogs();
@@ -1011,6 +1016,14 @@ const ActivityLog = ({ taskId }: { taskId: string }) => {
         return { isCreation: false, fields };
     };
 
+    if (isLoadingLogs) {
+        return (
+            <div className="flex items-center justify-center py-12 w-full text-gray-500">
+                <Loader2 className="w-6 h-6 animate-spin" />
+            </div>
+        );
+    }
+
     if (!taskStatusLogs.length) {
         return (
             <div className="text-center py-8 w-full text-gray-500 text-sm">
@@ -1125,6 +1138,7 @@ interface BCTaskDetails {
     description?: string;
     created_at?: string;
     created_by?: string;
+    created_by_name?: string;
     status?: string;
     responsible_person?: string;
     responsible_person_id?: number;
@@ -1652,9 +1666,9 @@ const BusinessCompassTaskDetailsPage = () => {
                             <div className="flex items-center gap-3 text-[#323232] flex-wrap">
                                 <span>
                                     Created By:{" "}
-                                    {typeof taskDetails?.created_by === "string"
-                                        ? taskDetails.created_by
-                                        : (taskDetails?.created_by as any)?.name}
+                                    {typeof taskDetails?.created_by_name === "string"
+                                        ? taskDetails.created_by_name
+                                        : ""}
                                 </span>
                                 <span className="h-6 w-[1px] border border-gray-300"></span>
                                 <span className="flex items-center gap-3">

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -18,6 +18,7 @@ import {
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ticketManagementAPI, UserAccountResponse } from '@/services/ticketManagementAPI';
 import { EditStatusModal } from './modals/EditStatusModal';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import { toast } from 'sonner';
 import { Edit, Trash2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -82,6 +83,10 @@ const fixedStates = [
 
 export const StatusTab: React.FC = () => {
   const dispatch = useDispatch<any>();
+  const analytics = useClubManagementEvents();
+  const listViewFired = useRef(false);
+  const module = 'Ticket Management';
+  const screen = 'Status';
   const { data: statusess = [], loading, fetchLoading, error } = useSelector((state: any) => state.statuses) || {};
   const { accounts = [] } = useSelector((state: any) => state.complaintModes) || {}; // adjust if you have a separate accounts slice
   const [statuses, setStatuses] = useState<StatusType[]>(statusess);
@@ -158,6 +163,10 @@ export const StatusTab: React.FC = () => {
     try {
       const data = await ticketManagementAPI.getStatuses();
       setStatuses(Array.isArray(data) ? data : []);
+      if (!listViewFired.current) {
+        listViewFired.current = true;
+        analytics.listViewed(module, screen, { row_count: Array.isArray(data) ? data.length : 0 });
+      }
     } catch (error) {
       toast.error('Failed to fetch statuses');
       console.error('Error fetching statuses:', error);
@@ -232,6 +241,7 @@ export const StatusTab: React.FC = () => {
 
       await ticketManagementAPI.createStatus(statusData);
       toast.success('Status created successfully!');
+      analytics.created(module, undefined, screen, { entity_type: 'status', entity_name: data.name });
       form.reset();
       fetchStatuses();
     } catch (error) {
@@ -275,6 +285,7 @@ export const StatusTab: React.FC = () => {
 
       if (response.ok) {
         toast.success('Reopen settings saved successfully!');
+        analytics.action('Ticket Management Reopen Settings Saved', { module, screen, period_type: periodType, time_period: timePeriod });
         // Store current tab and refresh page
         localStorage.setItem('ticketManagementActiveTab', 'status');
         setTimeout(() => {
@@ -329,6 +340,7 @@ export const StatusTab: React.FC = () => {
       if (response.ok) {
         setStatuses(statuses.filter(s => s.id !== status.id));
         toast.success('Status deleted successfully!');
+        analytics.deleted(module, status.id, screen, { entity_type: 'status' });
       } else {
         const errorData = await response.json().catch(() => null);
         toast.error(errorData?.message || 'Failed to delete status');

@@ -11,19 +11,10 @@ import { LineChart } from '../components/charts/LineChart';
 import { StackedBarChart } from '../components/charts/StackedBarChart';
 import { useViDashboard } from '../context/viDashboardStore';
 import { toViTiles } from '../data/viMetricIds';
-import {
-  TIER_LABEL,
-  VI_COVERAGE_CAVEAT,
-  VI_LEGACY_EVENTS,
-  VI_MODERN_EVENTS,
-  VI_MODULE_COVERAGE,
-  viLegacyModuleCount,
-  viModernModuleCount,
-} from '../data/instrumentationCoverage';
 
 /** Layer 2 — adoption_engagement, adoption_trend, growth, retention, roles + the site league. */
 export function AdoptionSection() {
-  const { vm, setCircle, palette } = useViDashboard();
+  const { vm, palette } = useViDashboard();
   const { adopt, status, weekTips, retentionRowTitles } = vm;
 
   const retentionCols = adopt.retentionCohorts[0]?.length ?? 0;
@@ -243,81 +234,10 @@ export function AdoptionSection() {
       </div>
 
       {/*
-        Reference card, not a filter — it describes which generation of tracking code exists
-        per module and changes no other number on this page. The reference dashboard also puts
-        per-tier active-user counts and modern/legacy reach percentages here; those are seeded
-        sample data in that wireframe, so they are left out rather than invented. What is real
-        is the module list, each module's tier, and the per-sheet event totals.
+        The Modern-vs-Legacy instrumentation coverage card is hidden: it was a static reference
+        table from the event catalogue, not a measurement, and it filtered nothing. Its data
+        still lives in data/instrumentationCoverage.ts if it is ever wanted back.
       */}
-      <ChartCard
-        className="mt12"
-        eyebrow="Instrumentation coverage · reference"
-        title="Modern vs. Legacy event coverage"
-        purpose="Reference card — not a filter. Vi my Workspace carries two instrumentation generations side by side: Modern (128 events, View/Action/Failure typed, real *_submitted / *_succeeded / *_failed funnels for the fully-instrumented modules) and Legacy (176 older Google-Analytics events, dual-sunk to both PostHog and Firebase, mostly page/click-only for the rest). This card shows both at once so you can see which modules are worth instrumenting properly next; it does not change any other number on the dashboard."
-      >
-        <div className="bmnote crashnote" style={{ marginBottom: 14 }}>
-          <span>&#9888;</span>
-          <div>
-            <b>{VI_COVERAGE_CAVEAT.headline}</b> {VI_COVERAGE_CAVEAT.body}
-          </div>
-        </div>
-
-        <div className="kv" style={{ marginBottom: 16 }}>
-          <div>
-            <div className="k">Modern instrumentation</div>
-            <div className="v" style={{ fontSize: 20 }}>
-              {viModernModuleCount} modules
-            </div>
-            <div className="u">{VI_MODERN_EVENTS} events · view / action / submit / outcome</div>
-          </div>
-          <div>
-            <div className="k">Legacy GA instrumentation</div>
-            <div className="v" style={{ fontSize: 20 }}>
-              {viLegacyModuleCount} modules
-            </div>
-            <div className="u">{VI_LEGACY_EVENTS} events · mostly page / click only</div>
-          </div>
-        </div>
-
-        <table className="pathtbl">
-          <thead>
-            <tr>
-              <th>Module</th>
-              <th>Tier</th>
-              <th>What exists</th>
-            </tr>
-          </thead>
-          <tbody>
-            {VI_MODULE_COVERAGE.map((m) => (
-              <tr key={m.name}>
-                <td>{m.name}</td>
-                <td>
-                  {/* Both = the same feature is documented in each sheet, so it has the full
-                      modern funnel AND the older click events still firing alongside it. */}
-                  <span
-                    className={`status ${
-                      m.tier === 'both'
-                        ? 'st-healthy'
-                        : m.tier === 'modern'
-                          ? 'st-watch'
-                          : 'st-drop'
-                    }`}
-                  >
-                    {TIER_LABEL[m.tier]}
-                  </span>
-                </td>
-                <td>
-                  {m.tier === 'both'
-                    ? 'Full funnel + legacy click events'
-                    : m.tier === 'modern'
-                      ? 'View / action / failure typed events'
-                      : 'Page / click events only — no step-level funnel'}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </ChartCard>
 
       {/*
         Circle-wise breakdown (A12) is hidden: the mobile-app events this dashboard reads

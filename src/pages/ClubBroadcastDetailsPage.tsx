@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2, Printer } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -8,6 +8,7 @@ import { useAppDispatch } from '@/store/hooks';
 import { fetchBroadcastById } from '@/store/slices/broadcastSlice';
 import { format } from 'date-fns';
 import axios from 'axios';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 
 interface BroadcastDetails {
     id?: string;
@@ -28,6 +29,8 @@ export const ClubBroadcastDetailsPage = () => {
     const { id } = useParams();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const cmEvents = useClubManagementEvents();
+    const detailViewedRef = useRef(false);
 
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem("token");
@@ -45,6 +48,10 @@ export const ClubBroadcastDetailsPage = () => {
             try {
                 const response = await dispatch(fetchBroadcastById({ id, baseUrl, token })).unwrap();
                 setBroadcastDetails(response)
+                if (!detailViewedRef.current) {
+                    detailViewedRef.current = true;
+                    cmEvents.detailViewed("Notice", id, "notice_details");
+                }
             } catch (error) {
                 console.log(error)
                 toast.error("Failed to fetch broadcast details")

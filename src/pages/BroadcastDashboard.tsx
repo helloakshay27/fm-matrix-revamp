@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { isCMContextActive } from "@/utils/posthogHelpers";
 import {
   Plus,
   Eye,
@@ -88,6 +90,8 @@ const columns: ColumnConfig[] = [
 
 export const BroadcastDashboard = () => {
   const pulseEvents = usePulseEvents();
+  const cmEvents = useClubManagementEvents();
+  const cmListViewedRef = useRef(false);
 
   useEffect(() => {
     pulseEvents.onModuleViewed({
@@ -96,6 +100,13 @@ export const BroadcastDashboard = () => {
       screen: "pulse_notices",
     });
   }, [pulseEvents]);
+
+  useEffect(() => {
+    if (!cmListViewedRef.current && isCMContextActive()) {
+      cmListViewedRef.current = true;
+      cmEvents.listViewed("Notice", "notice_list");
+    }
+  }, [cmEvents]);
 
   const { shouldShow } = useDynamicPermissions();
   const dispatch = useAppDispatch();
@@ -194,6 +205,10 @@ export const BroadcastDashboard = () => {
 
       toast.success("Notice status updated successfully");
 
+      if (isCMContextActive()) {
+        cmEvents.statusChanged("Notice", item.id, { notice_status: newStatus === 1 ? "published" : "disabled" });
+      }
+
       // Refresh list to ensure consistency
       handlePageChange(pagination.current_page);
     } catch (error) {
@@ -225,6 +240,10 @@ export const BroadcastDashboard = () => {
       ).unwrap();
 
       toast.success("Notice importance status updated successfully");
+
+      if (isCMContextActive()) {
+        cmEvents.statusChanged("Notice", item.id, { is_important: newStatus === 1 });
+      }
 
       // Refresh list to ensure consistency
       handlePageChange(pagination.current_page);
@@ -258,6 +277,10 @@ export const BroadcastDashboard = () => {
 
       toast.success("Show on home screen status updated successfully");
 
+      if (isCMContextActive()) {
+        cmEvents.statusChanged("Notice", item.id, { show_on_home_screen: newStatus === 1 });
+      }
+
       // Refresh list to ensure consistency
       handlePageChange(pagination.current_page);
     } catch (error) {
@@ -289,6 +312,10 @@ export const BroadcastDashboard = () => {
       ).unwrap();
 
       toast.success("Visible after expire status updated successfully");
+
+      if (isCMContextActive()) {
+        cmEvents.statusChanged("Notice", item.id, { visible_after_expire: newStatus === 1 });
+      }
 
       // Refresh list to ensure consistency
       handlePageChange(pagination.current_page);
@@ -465,6 +492,18 @@ export const BroadcastDashboard = () => {
         total_count: response.pagination.total_count,
         total_pages: response.pagination.total_pages,
       }));
+
+      if (isCMContextActive()) {
+        const summary: Record<string, unknown> = {};
+        if (data.status) summary.status = data.status;
+        if (data.created_by) summary.created_by = data.created_by;
+        if (data.created_at) summary.created_at = data.created_at;
+        if (Object.keys(summary).length > 0) {
+          cmEvents.filtered("Notice", "notice_list", summary);
+        } else {
+          cmEvents.filtersReset("Notice", "notice_list");
+        }
+      }
     } catch (error) {
       toast.error("Failed to fetch notices");
     }

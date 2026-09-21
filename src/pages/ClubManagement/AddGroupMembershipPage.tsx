@@ -23,6 +23,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { getFullUrl, getAuthenticatedFetchOptions, API_CONFIG } from '@/config/apiConfig';
 import axios from 'axios';
 import { getToken } from '@/utils/auth';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 
 // Helper function to detect file type
 const getFileType = (filename: string): 'image' | 'pdf' | 'other' => {
@@ -284,6 +285,7 @@ export const AddGroupMembershipPage = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>(); // Get ID from URL for edit mode
     const isEditMode = !!id;
+    const cmEvents = useClubManagementEvents();
 
     // Form state
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -1418,6 +1420,13 @@ export const AddGroupMembershipPage = () => {
 
             const data = await response.json();
             console.log(`Club membership ${isEditMode ? 'updated' : 'created'} successfully:`, data);
+
+            const newId = data?.club_member_allocation?.id ?? data?.id;
+            if (isEditMode) {
+                cmEvents.updated("Group Membership", newId ?? id, "group_membership_edit");
+            } else {
+                cmEvents.created("Group Membership", newId, "group_membership_add");
+            }
 
             toast.success(`Club membership ${isEditMode ? 'updated' : 'added'} successfully`);
             navigate('/club-management/membership/groups');

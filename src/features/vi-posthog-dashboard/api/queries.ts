@@ -17,9 +17,9 @@ import {
   fetchUsageAndDistribution,
   fetchWorkflowUsage,
   type OsType,
+  type ViDeviceSplitRow,
   type ViRangeFilters,
   type ViSurface,
-  type UsageDistributionResponse,
   VI_APP_ID,
 } from './adoptionApi';
 
@@ -31,8 +31,15 @@ export interface QueryFilters {
   to: string;
   /** Platform filter — [] is "All", otherwise ['iOS'] or ['Android']. */
   os: OsType[];
+  /**
+   * The Layer-3 scope: one name straight out of the `modules` tree, sent as `module`.
+   *
+   * There is no sub-module counterpart. Under `scope_mode: app` the tree's names are the
+   * Vi app's own event groups (`msafe_home`, `tickets_create`, `home_post_possession`, …),
+   * which are flat — a second segment only exists for `$pathname`-scoped web modules, and
+   * sending `sub_module` on top of an app module narrows the query to nothing.
+   */
   module: string | null;
-  subModule: string | null;
 }
 
 function ymd(d: Date): string {
@@ -169,111 +176,87 @@ export function useModuleTree(f: QueryFilters) {
   });
 }
 
-/** Sub-modules of the selected module (path segment 2). */
-export function useSubModuleTree(f: QueryFilters) {
-  return useQuery({
-    queryKey: [...ROOT, 'modules', f.module, ...keyBase(f)],
-    queryFn: () => fetchModules({ ...range(f), module: f.module! }),
-    enabled: f.enabled && !!f.module,
-    ...CACHE,
-  });
-}
-
+/**
+ * The selected module's workflow_usage — the funnel, tiles, flows and entry screens behind
+ * Layer 3.
+ *
+ * Only `module` is sent (see QueryFilters.module): the tree these names come from is flat,
+ * so there is no sub-module to pass, and the response's `funnel` block is the real event
+ * sequence for that module.
+ */
 export function useWorkflowUsage(f: QueryFilters) {
   return useQuery({
-    queryKey: [...ROOT, 'workflow_usage', f.module, f.subModule, ...keyBase(f)],
-    queryFn: () =>
-      fetchWorkflowUsage({
-        ...range(f),
-        module: f.module ?? undefined,
-        subModule: f.subModule ?? undefined,
-      }),
+    queryKey: [...ROOT, 'workflow_usage', f.module, ...keyBase(f)],
+    queryFn: () => fetchWorkflowUsage({ ...range(f), module: f.module ?? undefined }),
     enabled: f.enabled && !!f.module,
     ...CACHE,
   });
 }
 
-/**
- * Every custom event fired by the Vi app in the window, with its own user/event/session
- * counts — `workflow_usage` called with NO module, so the server's `scope_mode` falls back
- * to `app` and scopes by the request filters alone.
- *
- * That unscoped call is the only way to see the app's whole event surface: the module-scoped
- * one above filters by `$pathname`, which mobile events do not carry, so it can only ever
- * describe the web app. Two consumers need the app-wide list — the instrumentation coverage
- * table, and the declared-step funnel lookup for mobile-only workflows.
- */
-export function useAppEventFlows(f: QueryFilters) {
-  return useQuery({
-    queryKey: [...ROOT, 'workflow_usage', 'app-flows', ...keyBase(f)],
-    queryFn: () => fetchWorkflowUsage(range(f)),
-    enabled: f.enabled,
-    ...CACHE,
-  });
-}
-
-/** One surface's slice of the web-vs-app split. */
-export interface SurfaceSplitRow {
-  surface: ViSurface;
+/** One row of the platform split — one OS out of the response. */
+export interface PlatformSplitRow {
+  os: string;
   label: string;
   users: number;
   sessions: number;
-  /** 0..1 share of sessions across the two platforms. */
+  /** 0..1 share of all sessions in the period. */
   share: number;
 }
 
+/** Both platforms are always drawn, so a zero reads as "nobody on iOS", not as missing data. */
+const PLATFORMS_SHOWN = ['Android', 'iOS'] as const;
+
 /**
- * Web app vs mobile app share, for the "where sessions come from" card.
+ * Android vs iOS share of sessions, read off one response's `device_split` block.
  *
- * The two surfaces are not two values of one property: the mobile app is identified by
- * `app_id`, the web app by its host, and an event carries one or the other but never both.
- * So there is no single response to read the split off — it takes one call per surface.
+ * The split lives in the `os_breakdown` nested under each device row, so the rows are
+ * flattened and summed per OS across devices: an OS row's own `session_share` is its share of
+ * ITS DEVICE, which would read 100% for Android on a Mobile-only response and say nothing
+ * about the period. The share below is recomputed against `total_sessions` instead.
  *
- * These two deliberately step outside the dashboard's own scoping (which pins every other
- * query to the mobile app): comparing the surfaces is the whole point of the card, so it
- * cannot be filtered to one of them. The platform toggle is left out of the key for the
- * same reason.
+ * One unpinned call — tenant host and `project_code` only, no `app_id` and no pinned
+ * `device_type`. The platform toggle is deliberately left out of the key: comparing the
+ * platforms is the whole point of the card, so it must not be filtered to one of them.
  */
-export function useSurfaceSplit(f: QueryFilters) {
-  const mk = (surface: ViSurface) => ({
-    queryKey: [...ROOT, 'usage_and_distribution', 'surface-split', surface, f.from, f.to],
-    queryFn: () =>
-      fetchUsageAndDistribution({ from: f.from, to: f.to, surface }),
+export function usePlatformSplit(f: QueryFilters) {
+  const q = useQuery({
+    queryKey: [...ROOT, 'usage_and_distribution', 'platform-split', f.from, f.to],
+    queryFn: () => fetchUsageAndDistribution({ from: f.from, to: f.to, surface: 'web' }),
     enabled: f.enabled,
     ...CACHE,
   });
 
-  const web = useQuery(mk('web'));
-  const app = useQuery(mk('app'));
+  const rows = useMemo<PlatformSplitRow[]>(() => {
+    const split = q.data?.device_split;
+    const devices = (split?.devices ?? []) as ViDeviceSplitRow[];
+    if (devices.length === 0) return [];
 
-  const rows = useMemo<SurfaceSplitRow[]>(() => {
-    const sessionsOf = (d: UsageDistributionResponse | undefined) =>
-      d?.device_split.total_sessions ?? 0;
-    const usersOf = (d: UsageDistributionResponse | undefined) =>
-      (d?.device_split.devices ?? []).reduce((n, x) => n + x.users, 0);
+    const totals = new Map<string, { users: number; sessions: number }>();
+    for (const d of devices) {
+      for (const o of d.os_breakdown ?? []) {
+        const t = totals.get(o.os) ?? { users: 0, sessions: 0 };
+        totals.set(o.os, { users: t.users + o.users, sessions: t.sessions + o.sessions });
+      }
+    }
+    if (totals.size === 0) return [];
 
-    const counts = [
-      {
-        surface: 'web' as const,
-        label: 'Web app',
-        users: usersOf(web.data),
-        sessions: sessionsOf(web.data),
-      },
-      {
-        surface: 'app' as const,
-        label: 'Mobile app',
-        users: usersOf(app.data),
-        sessions: sessionsOf(app.data),
-      },
-    ];
-    const total = counts.reduce((n, c) => n + c.sessions, 0);
-    if (!total) return [];
-    return counts.map((c) => ({ ...c, share: c.sessions / total }));
-  }, [web.data, app.data]);
+    // Against the period's own total, so the two bars are shares of the same denominator.
+    let total = split?.total_sessions ?? 0;
+    if (!total) for (const t of totals.values()) total += t.sessions;
 
-  return {
-    rows,
-    isLoading: web.isLoading || app.isLoading,
-    error: (web.error ?? app.error) as Error | null,
-  };
+    // The two known platforms first and always, then anything else the API reported.
+    const names = [...PLATFORMS_SHOWN, ...[...totals.keys()].filter((o) => !PLATFORMS_SHOWN.includes(o as (typeof PLATFORMS_SHOWN)[number]))];
+    return names.map((os) => {
+      const t = totals.get(os) ?? { users: 0, sessions: 0 };
+      return {
+        os,
+        label: os,
+        users: t.users,
+        sessions: t.sessions,
+        share: total > 0 ? t.sessions / total : 0,
+      };
+    });
+  }, [q.data]);
+
+  return { rows, isLoading: q.isLoading, error: q.error as Error | null };
 }

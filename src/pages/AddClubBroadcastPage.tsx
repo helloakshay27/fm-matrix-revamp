@@ -25,10 +25,12 @@ import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { toast } from "sonner";
 import { fetchUserGroups } from "@/store/slices/userGroupSlice";
 import { createBroadcast } from "@/store/slices/broadcastSlice";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 
 export const AddClubBroadcastPage = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const cmEvents = useClubManagementEvents();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const token = localStorage.getItem("token");
@@ -129,7 +131,8 @@ export const AddClubBroadcastPage = () => {
                 formDataToSend.append("noticeboard[files_attached][]", file);
             });
 
-            await dispatch(createBroadcast({ data: formDataToSend, baseUrl, token })).unwrap();
+            const createdBroadcast = await dispatch(createBroadcast({ data: formDataToSend, baseUrl, token })).unwrap();
+            cmEvents.created("Notice", (createdBroadcast as any)?.id ?? (createdBroadcast as any)?.noticeboard?.id, "notice_add");
             toast.success("Broadcast created successfully");
             navigate(-1);
         } catch (error) {

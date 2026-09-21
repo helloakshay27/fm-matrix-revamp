@@ -8,6 +8,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import axios from "axios";
 // Type definitions for Sales Order
 interface SalesOrder {
@@ -160,6 +161,8 @@ const columns: ColumnConfig[] = [
 
 export const InvoiceClubManagementDashboard: React.FC = () => {
     const navigate = useNavigate();
+    const cmEvents = useClubManagementEvents();
+    const listViewedRef = useRef(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
     const [searchTerm, setSearchTerm] = useState('');
@@ -275,6 +278,13 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
         fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
     }, [currentPage, perPage, debouncedSearchQuery, appliedFilters]);
 
+    useEffect(() => {
+        if (!listViewedRef.current) {
+            listViewedRef.current = true;
+            cmEvents.listViewed('Invoice', 'invoice_dashboard');
+        }
+    }, []);
+
     // Fetch lock account to check if invoice approval is enabled
     useEffect(() => {
         const fetchLockAccount = async () => {
@@ -306,6 +316,12 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
             fetchSalesOrderData(1, perPage, '', appliedFilters);
         }
     };
+
+    useEffect(() => {
+        if (debouncedSearchQuery.trim()) {
+            cmEvents.searched('Invoice', debouncedSearchQuery.trim(), 'invoice_dashboard');
+        }
+    }, [debouncedSearchQuery]);
 
     // Handle page change
     const handlePageChange = (page: number) => {
@@ -509,6 +525,7 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
                 }
             );
             toast.success('Invoice deleted successfully!', { duration: 3000 });
+            cmEvents.deleted('Invoice', selectedDeleteId, 'invoice_dashboard');
             setDeleteDialogOpen(false);
             setSelectedDeleteId(null);
             fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
@@ -538,6 +555,7 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
             );
 
             toast.success(response?.data?.message || "Status updated successfully");
+            cmEvents.statusChanged('Invoice', order.id, { action: 'toggle_active' });
             fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
         } catch (error) {
             console.error("Toggle status error:", error);
@@ -572,6 +590,7 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
             }
 
             toast.success(successMsg);
+            cmEvents.statusChanged('Invoice', undefined, { action: 'bulk_status_update', status, invoice_ids: selectedRows });
             setSelectedRows([]);
             fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
         } catch (error) {

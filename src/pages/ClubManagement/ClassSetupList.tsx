@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Eye, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
 import { toast } from "sonner";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -16,7 +17,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
-import { deleteClass, getClasses, type ClassSetup } from "./classSetupMockData";
+import { deleteClass, getClasses, updateClass, type ClassSetup } from "./classSetupMockData";
 
 const columns: ColumnConfig[] = [
   { key: "actions", label: "Actions", sortable: false, hideable: false, draggable: false },
@@ -28,21 +29,19 @@ const columns: ColumnConfig[] = [
   { key: "status", label: "Status", sortable: true, hideable: true, draggable: true },
 ];
 
-const getStatusBadge = (status: string) => (
-  <span
-    className={
-      "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium " +
-      (status === "Active" ? "bg-[#C7EDDA] text-gray-800" : "bg-[#F2C8C4] text-gray-800")
-    }
-  >
-    {status}
-  </span>
-);
-
 const PAGE_SIZE = 10;
 
 export const ClassSetupList = () => {
   const navigate = useNavigate();
+  const cmEvents = useClubManagementEvents();
+  const listViewLogged = useRef(false);
+
+  useEffect(() => {
+    if (listViewLogged.current) return;
+    listViewLogged.current = true;
+    cmEvents.listViewed("Class Setup", "class_setup_list");
+  }, [cmEvents]);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [refreshTick, setRefreshTick] = useState(0);
@@ -66,9 +65,18 @@ export const ClassSetupList = () => {
     setCurrentPage(1);
   };
 
+  const handleToggleStatus = (cls: ClassSetup) => {
+    const nextStatus = cls.status === "Active" ? "Inactive" : "Active";
+    updateClass(cls.id, { ...cls, status: nextStatus });
+    cmEvents.action("Class Setup Status Toggled", { entity_id: cls.id, status: nextStatus });
+    toast.success(`Class marked ${nextStatus}`);
+    setRefreshTick((n) => n + 1);
+  };
+
   const handleConfirmDelete = () => {
     if (!deleteTarget) return;
     deleteClass(deleteTarget.id);
+    cmEvents.deleted("Class Setup", deleteTarget.id, "class_setup_list");
     toast.success("Class deleted successfully!");
     setShowDeleteModal(false);
     setDeleteTarget(null);
@@ -116,7 +124,20 @@ export const ClassSetupList = () => {
     minParticipants: <span className="text-sm text-gray-900">{cls.minParticipants}</span>,
     duration: <span className="text-sm text-gray-600">{cls.duration || "-"}</span>,
     location: <span className="text-sm text-gray-600">{cls.location}</span>,
-    status: <div className="flex items-center">{getStatusBadge(cls.status)}</div>,
+    status: (
+      <button
+        type="button"
+        onClick={() => handleToggleStatus(cls)}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${cls.status === "Active" ? "bg-brand" : "bg-gray-300"
+          }`}
+        title={cls.status === "Active" ? "Active - click to deactivate" : "Inactive - click to activate"}
+      >
+        <span
+          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${cls.status === "Active" ? "translate-x-6" : "translate-x-1"
+            }`}
+        />
+      </button>
+    ),
   });
 
   return (

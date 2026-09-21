@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { API_CONFIG } from '@/config/apiConfig';
 import { PaymentFilterDialog } from '@/components/PaymentFilterDialog';
 import axios from 'axios';
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 
 interface LockPayment {
   id: number;
@@ -70,6 +71,8 @@ interface ApiResponse {
 
 export const PaymentManagementDashboard = () => {
   const navigate = useNavigate();
+  const { listViewed, searched, filtered, exported } = useClubManagementEvents();
+  const viewedRef = useRef(false);
 
   // State management
   const [payments, setPayments] = useState<LockPayment[]>([]);
@@ -106,6 +109,7 @@ export const PaymentManagementDashboard = () => {
       // Add search query
       if (query) {
         url.searchParams.append('q[order_number_or_receipt_number_cont]', query);
+        searched("Payment", query, "payment_list");
       }
 
       console.log('API URL:', url.toString());
@@ -131,6 +135,10 @@ export const PaymentManagementDashboard = () => {
         setTotalCount(data.pagination.total_count);
         setTotalPages(data.pagination.total_pages);
         setCurrentPage(data.pagination.current_page);
+        if (!viewedRef.current) {
+          viewedRef.current = true;
+          listViewed("Payment", "payment_list", { total: data.pagination.total_count });
+        }
         toast.success(`Loaded ${data.lock_payments.length} payments`);
       } else {
         setPayments([]);
@@ -159,6 +167,10 @@ export const PaymentManagementDashboard = () => {
   const handleFilterApply = (newFilters: any) => {
     setFilters(newFilters);
     setCurrentPage(1); // Reset page on filter
+    const activeFilters = Object.entries(newFilters).filter(([, v]) => v && v !== '');
+    if (activeFilters.length > 0) {
+      filtered("Payment", "payment_list", Object.fromEntries(activeFilters));
+    }
   };
 
   // Fetch data when page, search query, or filters change
@@ -187,6 +199,7 @@ export const PaymentManagementDashboard = () => {
       link.remove();
       window.URL.revokeObjectURL(url);
       toast.success('File downloaded successfully');
+      exported("Payment", "xlsx", payments.length, "payment_list");
 
     } catch (error) {
       console.error('Error exporting data:', error);

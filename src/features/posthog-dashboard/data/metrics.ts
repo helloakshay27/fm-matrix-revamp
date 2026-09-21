@@ -539,6 +539,42 @@ export function buildSiteHealth(
   return rows.length ? { rows } : null;
 }
 
+/**
+ * Panchshil Pulse's adoption "site-wise breakdown", sourced from the module tree
+ * instead of the per-site `traffic_session` fan-out (which Connect does NOT do on
+ * its adoption layer). The tree only carries name/users/events/sessions, so the
+ * columns it cannot supply (duration, bounce, trend, status) come back null and
+ * render "–".
+ */
+export interface ModuleHealthRow {
+  name: string;
+  users: number;
+  events: number;
+  sessions: number;
+  durSec: number | null;
+  bounce: number | null;
+  trend: number | null;
+}
+
+export interface ModuleHealthData {
+  rows: ModuleHealthRow[];
+}
+
+export function buildModuleHealth(
+  modules: ModuleOption[]
+): ModuleHealthData | null {
+  const rows: ModuleHealthRow[] = modules.map((m) => ({
+    name: m.name,
+    users: m.users,
+    events: m.events,
+    sessions: m.sessions,
+    durSec: null,
+    bounce: null,
+    trend: null,
+  }));
+  return rows.length ? { rows } : null;
+}
+
 /* ------------------------------------------------------------------ Layer 3 */
 
 export interface FunnelData {

@@ -1,14 +1,19 @@
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react';
-import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect, useRef } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventDetailsTab } from '@/components/EventDetailsTab';
 import EventParticipantsTab from '@/components/EventParticipantsTab';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
+import { isCMContextActive } from '@/utils/posthogHelpers';
 
 
 export const CRMEventDetailsPage = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const cmEvents = useClubManagementEvents();
+  const detailViewedRef = useRef(false);
   const [activeTab, setActiveTab] = useState("details");
   const [loading, setLoading] = useState(true);
 
@@ -16,6 +21,13 @@ export const CRMEventDetailsPage = () => {
     const timer = setTimeout(() => setLoading(false), 1000);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (!loading && !detailViewedRef.current && isCMContextActive()) {
+      detailViewedRef.current = true;
+      cmEvents.detailViewed("Event", id, "event_details");
+    }
+  }, [loading, id, cmEvents]);
 
   if (loading) {
     return (

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Filter, Eye, Pencil } from "lucide-react";
 import { BookingSetupFilterModal } from "@/components/BookingSetupFilterModal";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
@@ -30,6 +31,7 @@ export const BookingSetupClubDashboard = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
+  const cmEvents = useClubManagementEvents();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [bookingSetupData, setBookingSetupData] = useState<BookingSetup[]>([]);
   const [bookingData, setBookingData] = useState([]);
@@ -85,6 +87,9 @@ export const BookingSetupClubDashboard = () => {
         );
         setBookingSetupData(formattedData);
       }
+      cmEvents.listViewed("Amenity Setup", "amenity_setup_list", {
+        count: response.data?.facility_setups?.length,
+      });
     } catch (error) {
       console.error("Error fetching booking setup data:", error);
       toast.error("Failed to fetch booking setup data");
@@ -125,6 +130,10 @@ export const BookingSetupClubDashboard = () => {
         })
       ).unwrap();
 
+      cmEvents.statusChanged("Amenity Setup", id, {
+        screen: "amenity_setup_list",
+        new_status: updatedBooking ? "active" : "inactive",
+      });
       toast.success("Booking status updated successfully!");
       setBookingSetupData((prevData) =>
         prevData.map((booking) =>

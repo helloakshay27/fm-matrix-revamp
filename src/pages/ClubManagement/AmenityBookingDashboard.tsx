@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { format, parse } from 'date-fns';
 import { cn } from '@/lib/utils';
 import axios from 'axios';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@/components/ui/select';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
@@ -107,6 +108,7 @@ const getStatusBadgeVariant = (status: string) => {
 const AmenityBookingListClubDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const cmEvents = useClubManagementEvents();
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
 
@@ -201,6 +203,7 @@ const AmenityBookingListClubDashboard = () => {
         )
       );
       toast.success(`Booking ${bookingId} status updated to ${newStatus}`);
+      cmEvents.statusChanged("Amenity Booking", bookingId, { action: newStatus.toLowerCase() });
     } catch (error) {
       console.error('Error updating booking status:', error);
       toast.error('Failed to update booking status');
@@ -315,6 +318,10 @@ const AmenityBookingListClubDashboard = () => {
       });
       setIsFilterModalOpen(false);
       toast.success('Filters applied successfully');
+      cmEvents.filtered("Amenity Booking", "amenity_booking_list", {
+        facility: filters.facilityName || undefined,
+        status: filters.status || undefined,
+      });
     } catch (error) {
       console.error('Error applying filters:', error);
       toast.error('Failed to apply filters');
@@ -339,6 +346,7 @@ const AmenityBookingListClubDashboard = () => {
       current_page: 1,
     });
     toast.info('Filters reset');
+    cmEvents.filtersReset("Amenity Booking", "amenity_booking_list");
   };
 
   const handleAddBooking = () => {
@@ -724,6 +732,7 @@ const AmenityBookingListClubDashboard = () => {
       window.URL.revokeObjectURL(downloadUrl);
 
       toast.success('Excel file downloaded successfully', { id: loadingToast });
+      cmEvents.exported("Amenity Booking", "xlsx", pagination.total_count, "amenity_booking_list");
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Error downloading file', { id: loadingToast });

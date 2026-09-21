@@ -4,12 +4,12 @@ import { KpiTile } from "../components/common/KpiTile";
 import { LineChart } from "../components/charts/LineChart";
 import { StackedBarChart } from "../components/charts/StackedBarChart";
 import { SectionState } from "../components/common/SectionState";
-import { fmtDurShort, tileToKpi } from "../utils/tileAdapter";
-import { getChartColors } from "../utils/chartColors";
+import { tileToKpi } from "../utils/tileAdapter";
+import { useChartColors } from "../utils/chartColors";
 
 export const AdoptionEngagement: React.FC = () => {
-  const { theme, vm } = usePulseDashboard();
-  const colors = useMemo(() => getChartColors(), [theme]);
+  const { vm } = usePulseDashboard();
+  const colors = useChartColors();
 
   const adopt = vm.adopt;
 
@@ -37,16 +37,6 @@ export const AdoptionEngagement: React.FC = () => {
   );
   const growthLabels = adopt.growthWeeks.map((_, i) => `W${i + 1}`);
 
-  const statusFor = (row: { users: number; bounce: number; trend: number | null }) => {
-    if (row.users === 0 || (row.trend != null && row.trend <= -25)) {
-      return { className: "st-drop", label: "Drop" };
-    }
-    if (row.bounce >= 40 || (row.trend != null && row.trend < 0)) {
-      return { className: "st-watch", label: "Watch" };
-    }
-    return { className: "st-healthy", label: "Healthy" };
-  };
-
   const heatStyle = (val: number) => {
     const t = val / 100;
     const bg = `rgba(${colors.heat}, ${(colors.heatA0 + t * colors.heatA1).toFixed(2)})`;
@@ -73,9 +63,6 @@ export const AdoptionEngagement: React.FC = () => {
       <SectionState status={vm.status.adopt} label="adoption data">
         {/* KPI Tiles */}
         <div className="tiles" style={{ gridTemplateColumns: "repeat(3, 1fr)", marginTop: "16px" }} id="tilesAdoption">
-          <KpiTile
-            {...tileToKpi(adopt.tiles[0], { label: "Seat Utilisation", id: "seatUtil" })}
-          />
           <KpiTile
             {...tileToKpi(adopt.tiles[1], { label: "Stickiness", id: "stickiness" })}
           />
@@ -300,92 +287,6 @@ export const AdoptionEngagement: React.FC = () => {
           </div>
         </div>
       </SectionState>
-
-      {/* Site-wise breakdown table — one traffic_session call for all sites in scope */}
-      <div className="card" style={{ marginTop: "16px" }} id="card-siteWise">
-        <div className="card-head">
-          <div className="charthead">
-            <div>
-              <div className="cr">League table</div>
-              <div className="ct">Site-wise breakdown</div>
-            </div>
-            <span className="info-wrap">
-              <button className="info-btn" type="button" tabIndex={-1}>i</button>
-              <div className="info-pop">
-                <b>Site-wise breakdown</b>
-                One row per site in scope, showing its active users, sessions, average session length and bounce rate, plus the change in active users versus the previous period — ranked busiest first so sites with no events sit at the bottom. Status flags a sudden drop (active users down 25%+), a site to watch, or a healthy site.
-                <div className="sep">
-                  A leaderboard to see which sites are adopting well and which are lagging or dropping and may need attention. There is no per-site endpoint, so each row is its own traffic_session call — the table only loads on the All-sites scope, and rows appear as each call lands.
-                </div>
-              </div>
-            </span>
-          </div>
-        </div>
-        <div className="card-body" id="body-siteWise">
-          {vm.scopedSites.length < 2 ? (
-            <div className="sd">
-              Select a scope with 2+ sites (or All Sites) to compare sites against each other.
-            </div>
-          ) : (
-            <SectionState status={vm.status.siteHealth} label="site breakdown">
-              {vm.siteHealth ? (
-                <div className="tbl-wrap">
-                  <table className="league">
-                    <thead>
-                      <tr>
-                        <th>Site</th>
-                        <th className="num">Active users</th>
-                        <th className="num">Sessions</th>
-                        <th className="num">Avg session</th>
-                        <th className="num">Bounce</th>
-                        <th>Trend</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {vm.siteHealth.rows.map((row, idx) => {
-                        const status = statusFor(row);
-                        const trendSym = row.trend == null || row.trend === 0
-                          ? "→"
-                          : row.trend > 0
-                            ? "↗"
-                            : "↘";
-                        const trendCls = row.trend == null || row.trend === 0
-                          ? "flat"
-                          : row.trend > 0
-                            ? "up"
-                            : "dn";
-
-                        return (
-                          <tr key={idx}>
-                            <td className="strong">{row.name}</td>
-                            <td className="num">{row.users.toLocaleString()}</td>
-                            <td className="num">{row.sessions.toLocaleString()}</td>
-                            <td className="num">{fmtDurShort(row.durSec)}</td>
-                            <td className="num">{Math.round(row.bounce)}%</td>
-                            <td>
-                              <span className={`arrow ${trendCls}`}>
-                                {trendSym}
-                              </span>
-                            </td>
-                            <td>
-                              <span className={`status ${status.className}`}>
-                                {status.label}
-                              </span>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="sd">No site activity in this period.</div>
-              )}
-            </SectionState>
-          )}
-        </div>
-      </div>
     </section>
   );
 };

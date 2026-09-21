@@ -10,7 +10,7 @@ interface CommonImportModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     title: string;
-    entityType: "projects" | "milestones" | "tasks" | "issues";
+    entityType: "projects" | "milestones" | "tasks" | "issues" | "visitors";
     onSampleDownload?: () => void;
     onImport?: () => void;
     isUploading?: boolean;
@@ -47,11 +47,36 @@ export const CommonImportModal: React.FC<CommonImportModalProps> = ({
                 formFieldName: 'tasks_file',
                 sampleFileName: 'sample_task.csv',
             },
+            visitors: {
+                endpoint: '/pms/admin/visitors/bulk_upload_visitors',
+                formFieldName: 'visitor_file',
+                sampleFileName: 'Visitor_Bulk_Upload_Sheet.xlsx',
+            },
         };
         return configs[entityType];
     };
 
     const config = getEntityConfig();
+
+    // Static, build-time sample files served from /public for entity types
+    // that don't need a backend-generated sample.
+    const STATIC_SAMPLE_FILES: Partial<Record<CommonImportModalProps["entityType"], string>> = {
+        visitors: "/Visitor_Bulk_Upload_Sheet.xlsx",
+    };
+
+    const handleSampleDownloadClick = () => {
+        const staticFile = STATIC_SAMPLE_FILES[entityType];
+        if (staticFile) {
+            const link = document.createElement("a");
+            link.href = staticFile;
+            link.download = staticFile.split("/").pop() || "sample.xlsx";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            return;
+        }
+        onSampleDownload?.();
+    };
 
     const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -188,7 +213,7 @@ export const CommonImportModal: React.FC<CommonImportModalProps> = ({
                     {/* Action Buttons */}
                     <div className="flex gap-3">
                         <Button
-                            onClick={onSampleDownload}
+                            onClick={handleSampleDownloadClick}
                             variant="outline"
                             className="flex-1"
                             disabled={isUploading}

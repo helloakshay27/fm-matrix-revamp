@@ -26,10 +26,12 @@ import { useAppDispatch } from "@/store/hooks";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { fetchUserGroups } from "@/store/slices/userGroupSlice";
 import { createEvent } from "@/store/slices/eventSlice";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 
 export const AddClubEventPage = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const cmEvents = useClubManagementEvents();
 
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
@@ -159,7 +161,9 @@ export const AddClubEventPage = () => {
                 formDataToSend.append("noticeboard[files_attached][]", file);
             })
 
-            await dispatch(createEvent({ baseUrl, token, data: formDataToSend })).unwrap();
+            const createdEvent = await dispatch(createEvent({ baseUrl, token, data: formDataToSend })).unwrap();
+
+            cmEvents.created("Event", (createdEvent as any)?.id ?? (createdEvent as any)?.classified?.id, "event_add");
 
             toast.success("Event created successfully");
             navigate(-1);

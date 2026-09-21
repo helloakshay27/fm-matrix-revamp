@@ -30,19 +30,16 @@ import {
 } from '@/features/posthog-dashboard/data/metrics';
 import type { OsType, UsageDistributionResponse } from '../api/adoptionApi';
 import { toCohortLabels, toRoleLabel, toUsageChart, toWeekLabels } from '../data/usageChart';
-import { toDeclaredFunnel } from '../data/declaredFunnel';
 import {
   dateRangeFor,
   useAdoptionEngagement,
   useAdoptionTrend,
   useAllSites,
-  useAppEventFlows,
   useCompanyNames,
   useGrowth,
   useModuleTree,
   useRetention,
   useRoles,
-  useSubModuleTree,
   useTrafficSession,
   useUsageAndDistribution,
   useWorkflowUsage,
@@ -50,7 +47,6 @@ import {
 } from '../api/queries';
 import { paletteFor, type ChartPalette, type ViTheme } from '../data/palette';
 import type { PageKey } from '../data/pages';
-import { VI_WORKFLOWS, findWorkflow } from '../data/workflows';
 import { VI_BM_DEFAULTS } from '../data/viMetricIds';
 import {
   ViDashboardContext,
@@ -115,11 +111,11 @@ const DEFAULT_STATE: DashboardState = {
   date: 30,
   // Unused: the shared state shape requires it, but this dashboard never sends device_type.
   dev: 'all',
-  // Layer 3 is navigated by workflow (see data/workflows.ts), and the selected workflow
-  // is what sets `module` — so this starts on the first workflow's module rather than on
-  // whatever the `$pathname` tree happens to return first.
-  module: VI_WORKFLOWS[0].apiModule,
-  subModule: VI_WORKFLOWS[0].apiSubModule,
+  // Layer 3 is navigated by the `modules` tree, so there is nothing to select until that
+  // tree arrives — an effect below lands on its busiest module. `subModule` is required by
+  // the shared state shape and deliberately stays null: the app-scoped tree is flat.
+  module: null,
+  subModule: null,
   sessTab: 'sessions',
   prev: true,
   // Required by the shared DashboardState shape, and deliberately left at null forever:
@@ -134,7 +130,6 @@ const DEFAULT_STATE: DashboardState = {
 export function ViDashboardProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<DashboardState>(DEFAULT_STATE);
   const [page, setPage] = useState<PageKey>('pgTraffic');
-  const [workflow, setWorkflowKey] = useState<string>(VI_WORKFLOWS[0].key);
   const [theme, setTheme] = useState<ViTheme>(initialTheme);
   const [navCollapsed, setNavCollapsed] = useState(() => readStored(NAV_KEY) === 'collapsed');
   const [benchmarks, setBenchmarks] = useState<Record<string, number | null>>({});
@@ -185,12 +180,8 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
       to,
       os: osParam(platform),
       module: state.module,
-      subModule: state.subModule,
     }),
-    [
-      sitesSettled, from, to, platform,
-      state.module, state.subModule,
-    ],
+    [sitesSettled, from, to, platform, state.module],
   );
 
   /** A disabled query reports isLoading=false, so treat "not started yet" as loading too. */
@@ -206,21 +197,21 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
   const retentionQ = useRetention(filters);
   const rolesQ = useRoles(filters);
   const moduleTreeQ = useModuleTree(filters);
-  const subModuleTreeQ = useSubModuleTree(filters);
   const workflowQ = useWorkflowUsage(filters);
-  // The app-wide event list — mobile events carry no , so the module-scoped query
-  // above cannot see them. See useAppEventFlows.
-  const appFlowsQ = useAppEventFlows(filters);
 
   const modules = useMemo(() => toModuleOptions(moduleTreeQ.data?.tree), [moduleTreeQ.data]);
-  const subModules = useMemo(
-    () => toModuleOptions(subModuleTreeQ.data?.tree),
-    [subModuleTreeQ.data],
-  );
 
-  // No module/sub-module auto-defaulting here on purpose: `module` is derived from the
-  // selected workflow below, and an effect that reset it to modules[0] on every tree
-  // response would fight that and snap the funnel back to an unrelated module.
+  // Land on a module as soon as the tree arrives, and re-land if the current selection is
+  // not in the new tree — changing the date window or platform can drop a module out of it
+  // entirely, and querying a name the tree no longer carries reads empty. The tree is
+  // ordered by events desc, so modules[0] is the busiest one in scope.
+  useEffect(() => {
+    if (modules.length === 0) return;
+    setState((s) => {
+      if (s.module && modules.some((m) => m.name === s.module)) return s;
+      return { ...s, module: modules[0].name, subModule: null };
+    });
+  }, [modules]);
 
   /* ---------------------------------------------------------- the view model */
 
@@ -266,15 +257,14 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
       // Circle-wise breakdown is hidden (see AdoptionSection) and `site_id` is never sent,
       // so there is nothing to build a per-site league from.
       siteHealth: null,
+      // Tiles, the real event-sequence funnel, per-event flows and entry screens, all read
+      // straight off the selected module's workflow_usage response.
       flows: buildFlows(state, workflowQ.data),
-      // Declared catalogue steps measured against the app-wide event list — see toDeclaredFunnel.
-      declaredFunnel: toDeclaredFunnel(findWorkflow(workflow), appFlowsQ.data),
       sites,
       scopedSites,
       groups,
       sitesLoading: sitesQ.isLoading,
       modules,
-      subModules,
       status: {
         traffic: {
           loading: pending || trafficQ.isLoading || usageQ.isLoading,
@@ -312,7 +302,7 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
   },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
-      state, sites, scopedSites, groups, pending, from, to, modules, subModules,
+      state, sites, scopedSites, groups, pending, from, to, modules,
       sitesQ.isLoading,
       trafficQ.data, trafficQ.isLoading, trafficQ.error,
       usageQ.data, usageQ.isLoading, usageQ.error,
@@ -323,7 +313,6 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
       rolesQ.data, rolesQ.isLoading, rolesQ.error,
       moduleTreeQ.data, moduleTreeQ.isLoading, moduleTreeQ.error,
       workflowQ.data, workflowQ.isLoading, workflowQ.error,
-      appFlowsQ.data, appFlowsQ.isLoading, appFlowsQ.error, workflow,
     ],
   );
 
@@ -400,19 +389,11 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
     customRange,
     platform,
     setPlatform,
+    /**
+     * Layer-3 scope. One name from the `modules` tree; `sub_module` is never sent, so the
+     * shared state's `subModule` is cleared alongside it and stays null.
+     */
     setModule: (module) => setState((s) => ({ ...s, module, subModule: null })),
-    setSubModule: (subModule) => setState((s) => ({ ...s, subModule })),
-    workflow,
-    setWorkflow: (key) => {
-      const wf = findWorkflow(key);
-      setWorkflowKey(wf.key);
-      // The endpoint filters by module / sub_module, not by event-step list, so the route
-      // segments the workflow lives under are what actually change the data. Both move
-      // together — a sub_module from the previous module's tree would filter the new one
-      // down to nothing. Both are null for mobile-only workflows, and WorkflowSection
-      // renders those as awaiting data rather than querying and mislabelling the default.
-      setState((s) => ({ ...s, module: wf.apiModule, subModule: wf.apiSubModule }));
-    },
     setSessTab: (sessTab) => setState((s) => ({ ...s, sessTab })),
     togglePrev: () => setState((s) => ({ ...s, prev: !s.prev })),
     page,

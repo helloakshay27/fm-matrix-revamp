@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CategoryTypeTab } from '@/components/ticket-management/CategoryTypeTab';
 import { SubCategoryTab } from '@/components/ticket-management/SubCategoryTab';
@@ -7,9 +7,19 @@ import { StatusTab } from '@/components/ticket-management/StatusTab';
 import { OperationalDaysTab } from '@/components/ticket-management/OperationalDaysTab';
 import { ComplaintModeTab } from '@/components/ticket-management/ComplaintModeTab';
 import { AgingRuleTab } from '@/components/ticket-management/AgingRuleTab';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 
 export const TicketManagementSetupPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('category-type');
+  const analytics = useClubManagementEvents();
+  const pageViewFired = useRef(false);
+
+  useEffect(() => {
+    if (!pageViewFired.current) {
+      pageViewFired.current = true;
+      analytics.listViewed('Ticket Management', 'Ticket Management Setup', { initial_tab: 'category-type' });
+    }
+  }, [analytics]);
 
   useEffect(() => {
     // Check if there's a saved tab in localStorage
@@ -27,7 +37,10 @@ export const TicketManagementSetupPage: React.FC = () => {
         <h1 className="text-2xl font-bold text-gray-900">Ticket Management Setup</h1>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={(tab) => {
+        setActiveTab(tab);
+        analytics.action('Ticket Management Tab Switched', { tab });
+      }} className="w-full">
         <TabsList className="grid w-full grid-cols-5 bg-white border border-gray-200">
           <TabsTrigger
             value="category-type"

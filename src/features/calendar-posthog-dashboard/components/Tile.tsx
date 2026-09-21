@@ -1,30 +1,21 @@
 import type { CSSProperties } from 'react';
 import { InfoButton } from '@/features/analytics-dashboard-shared/components/InfoButton';
-import { useCalendarDashboard } from '../context/calendarDashboardStore';
+import { SkeletonTile } from './Skeleton';
 import type { CalendarTileSpec } from '../data/calendarMetricIds';
 import { kpiInfo } from '../data/kpiInfo';
 
 /**
- * One KPI tile, rendered from the `TileSpec` the shared metrics layer produces. The target
- * row is user-editable and purely local — it never reaches the API.
+ * One KPI tile, rendered from the `TileSpec` the shared metrics layer produces.
+ * The target / benchmark row has been removed per product decision — KPIs are
+ * read-only here and the on/off-target badge is not shown.
  */
 export function Tile({ spec }: { spec: CalendarTileSpec }) {
-  const { getBenchmark, setBenchmark } = useCalendarDashboard();
   const info = kpiInfo(spec.infoLabel);
-  const target = getBenchmark(spec.id);
 
   const dir = spec.delta == null ? 'flat' : spec.delta > 0 ? 'up' : spec.delta < 0 ? 'dn' : 'flat';
   const arrow = dir === 'up' ? '▲' : dir === 'dn' ? '▼' : '—';
   // A fall in a "lower is better" metric is good news, so colour by meaning, not by sign.
   const deltaGood = spec.delta == null ? null : spec.goodUp ? spec.delta >= 0 : spec.delta <= 0;
-
-  let badge: JSX.Element;
-  if (target == null || Number.isNaN(target)) {
-    badge = <span className="bb unset">set a target</span>;
-  } else {
-    const met = spec.goodUp ? spec.raw >= target : spec.raw <= target;
-    badge = <span className={`bb ${met ? 'met' : 'miss'}`}>{met ? '✓ on target' : '✕ off target'}</span>;
-  }
 
   return (
     <div className="tile">
@@ -54,25 +45,6 @@ export function Tile({ spec }: { spec: CalendarTileSpec }) {
         )
       )}
       {spec.sub && <div className="sub2">{spec.sub}</div>}
-      {!spec.noTarget && (
-      <div className="bm">
-        <span className="bl">Target</span>
-        <input
-          className="bmin"
-          type="text"
-          inputMode="decimal"
-          value={target == null || Number.isNaN(target) ? '' : String(target)}
-          placeholder="—"
-          title="Set your own target for this KPI"
-          onChange={(e) => {
-            const v = e.target.value.trim();
-            setBenchmark(spec.id, v === '' ? null : parseFloat(v));
-          }}
-        />
-        {spec.unit && <span className="bu">{spec.unit}</span>}
-        {badge}
-      </div>
-      )}
     </div>
   );
 }
@@ -82,16 +54,30 @@ export function Tiles({
   specs,
   columns,
   style,
+  id,
+  className,
+  loading = false,
 }: {
   specs: CalendarTileSpec[];
   columns: number;
   style?: CSSProperties;
+  id?: string;
+  className?: string;
+  loading?: boolean;
 }) {
   return (
-    <div className="tiles" style={{ gridTemplateColumns: `repeat(${columns},1fr)`, ...style }}>
-      {specs.map((s) => (
-        <Tile key={s.id} spec={s} />
-      ))}
+    <div
+      id={id}
+      className={`tiles${className ? ` ${className}` : ''}`}
+      style={{ gridTemplateColumns: `repeat(${columns},1fr)`, ...style }}
+    >
+      {loading
+        ? Array.from({ length: specs.length || columns }).map((_, i) => (
+            <SkeletonTile key={i} />
+          ))
+        : specs.map((s) => (
+            <Tile key={s.id} spec={s} />
+          ))}
     </div>
   );
 }

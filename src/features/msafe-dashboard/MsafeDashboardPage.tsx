@@ -1,5 +1,6 @@
 import './msafe-dashboard.css';
 import { MsafeDashboardProvider, useMsafeDashboard } from './context/MsafeDashboardContext';
+import type { AccordionKey } from './data/constants';
 import { ViShellBanner } from './components/ViShellBanner';
 import { PageToolbar } from './components/PageToolbar';
 import { CircleManagerFilterBar } from './components/CircleManagerFilterBar';
@@ -18,8 +19,16 @@ import { HeatmapSection } from './sections/HeatmapSection';
 import { MyDashboardSection } from './sections/MyDashboardSection';
 import { Shield } from 'lucide-react';
 
+const SECTION_OPTIONS: { key: Exclude<AccordionKey, null>; label: string }[] = [
+  { key: 'users', label: 'Employee Data' },
+  { key: 'krcc', label: 'KRCC' },
+  { key: 'lmc', label: 'LMC' },
+  { key: 'training', label: 'Training' },
+  { key: 'smt', label: 'SMT' },
+];
+
 function MsafeMain() {
-  const { module, openAcc, setModule } = useMsafeDashboard();
+  const { module, openAcc, setModule, visibleSections, setSectionVisible } = useMsafeDashboard();
 
   const goModule = (key: 'msafe' | 'mydashboard') => {
     setModule(key);
@@ -42,6 +51,19 @@ function MsafeMain() {
           <Shield size={14} />
           M-Safe
         </button>
+
+        <div className="msafe-section-toggles">
+          {SECTION_OPTIONS.map((opt) => (
+            <label key={opt.key} className="msafe-section-toggle">
+              <input
+                type="checkbox"
+                checked={visibleSections.has(opt.key)}
+                onChange={(e) => setSectionVisible(opt.key, e.target.checked)}
+              />
+              {opt.label}
+            </label>
+          ))}
+        </div>
       </nav>
 
       {/* M-Safe content */}
@@ -51,31 +73,41 @@ function MsafeMain() {
       >
         <PageHeader />
         {/* Priority Actions / notification strip hidden per request. <AlertStrip /> */}
-        <KpiOverview />
-        <div
-          id="acc-users"
-          className={`msafe-acc-anchor ${openAcc === 'users' ? 'nav-highlight' : ''}`}
-        >
-          <UsersSection />
-        </div>
-        <div
-          id="acc-krcc"
-          className={`msafe-acc-anchor ${openAcc === 'krcc' ? 'nav-highlight' : ''}`}
-        >
-          <KrccSection />
-        </div>
-        <div
-          id="acc-training"
-          className={`msafe-acc-anchor ${openAcc === 'training' ? 'nav-highlight' : ''}`}
-        >
-          <TrainingSection />
-        </div>
-        <div id="acc-lmc" className={`msafe-acc-anchor ${openAcc === 'lmc' ? 'nav-highlight' : ''}`}>
-          <LmcSection />
-        </div>
-        <div id="acc-smt" className={`msafe-acc-anchor ${openAcc === 'smt' ? 'nav-highlight' : ''}`}>
-          <SmtSection />
-        </div>
+        {visibleSections.has('users') && <KpiOverview />}
+        {visibleSections.has('users') && (
+          <div
+            id="acc-users"
+            className={`msafe-acc-anchor ${openAcc === 'users' ? 'nav-highlight' : ''}`}
+          >
+            <UsersSection />
+          </div>
+        )}
+        {visibleSections.has('krcc') && (
+          <div
+            id="acc-krcc"
+            className={`msafe-acc-anchor ${openAcc === 'krcc' ? 'nav-highlight' : ''}`}
+          >
+            <KrccSection />
+          </div>
+        )}
+        {visibleSections.has('training') && (
+          <div
+            id="acc-training"
+            className={`msafe-acc-anchor ${openAcc === 'training' ? 'nav-highlight' : ''}`}
+          >
+            <TrainingSection />
+          </div>
+        )}
+        {visibleSections.has('lmc') && (
+          <div id="acc-lmc" className={`msafe-acc-anchor ${openAcc === 'lmc' ? 'nav-highlight' : ''}`}>
+            <LmcSection />
+          </div>
+        )}
+        {visibleSections.has('smt') && (
+          <div id="acc-smt" className={`msafe-acc-anchor ${openAcc === 'smt' ? 'nav-highlight' : ''}`}>
+            <SmtSection />
+          </div>
+        )}
         <HeatmapSection />
         <div className="footer">
           M-Safe Dashboard v1 · Wireframe · GoPhygital / Lockated for Vodafone Idea · All data shown is

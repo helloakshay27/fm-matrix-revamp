@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import axios from 'axios';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 
 interface Attachment {
   id: number;
@@ -174,6 +175,8 @@ interface MembershipPlan {
 export const ClubMembershipDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const cmEvents = useClubManagementEvents();
+  const detailViewLogged = useRef(false);
 
   const [membershipData, setMembershipData] = useState<MembershipDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -266,6 +269,10 @@ export const ClubMembershipDetailPage = () => {
 
       const data = await response.json();
       setMembershipData(data);
+      if (!detailViewLogged.current) {
+        detailViewLogged.current = true;
+        cmEvents.detailViewed("Membership", id, "membership_details");
+      }
 
     } catch (error) {
       console.error('Error fetching membership details:', error);
@@ -333,6 +340,7 @@ export const ClubMembershipDetailPage = () => {
       })
 
       toast.success('Status updated successfully');
+      cmEvents.statusChanged("Membership", id, { status: newStatus });
       fetchMembershipDetails();
     } catch (error) {
       console.error('Error updating status:', error);

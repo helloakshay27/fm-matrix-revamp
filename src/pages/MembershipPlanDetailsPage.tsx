@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, User, DollarSign } from "lucide-react";
+import type { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { isCMContextActive } from "@/utils/posthogHelpers";
 import { TextField, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel, ThemeProvider, createTheme } from "@mui/material";
 import { toast } from "sonner";
 import axios from "axios";
@@ -99,6 +102,7 @@ export const MembershipPlanDetailsPage = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const [loading, setLoading] = useState(false);
+  const cmEvents = useClubManagementEvents();
 
   const [amenities, setAmenities] = useState([])
   const [formData, setFormData] = useState({
@@ -179,6 +183,9 @@ export const MembershipPlanDetailsPage = () => {
         createdBy: data.created_by,
         hsnCode: data.hsn_code || "-",
       })
+      if (isCMContextActive()) {
+        cmEvents.detailViewed("Membership Plan", id, "membership_plan_details");
+      }
     } catch (error) {
       console.log(error)
     } finally {

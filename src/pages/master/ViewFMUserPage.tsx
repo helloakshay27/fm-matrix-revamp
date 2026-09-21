@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/store/store';
 import { fetchFMUsers, fetchRoles, fetchSuppliers, fetchUnits, getUserDetails } from '@/store/slices/fmUserSlice';
@@ -102,6 +103,8 @@ export const ViewFMUserPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const dispatch = useDispatch<AppDispatch>();
+  const cmEvents = useClubManagementEvents();
+  const detailViewedRef = useRef(false);
   const { data: entitiesData, loading: entitiesLoading } = useAppSelector((state) => state.entities);
   const { data: suppliers, loading: suppliersLoading } = useAppSelector((state) => state.fetchSuppliers);
   const { data: units, loading: unitsLoading } = useAppSelector((state) => state.fetchUnits);
@@ -249,6 +252,10 @@ export const ViewFMUserPage = () => {
       try {
         const response = await dispatch(getUserDetails({ baseUrl, token, id: Number(id) })).unwrap()
         setUserData(response)
+        if (!detailViewedRef.current) {
+          detailViewedRef.current = true;
+          cmEvents.detailViewed("Staff", id, "staff_details");
+        }
       } catch (error) {
         console.log(error)
       } finally {

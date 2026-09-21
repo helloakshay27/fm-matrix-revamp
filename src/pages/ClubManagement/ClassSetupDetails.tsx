@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,11 +24,13 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 import {
   addTrainerToClass,
   deleteClass,
   getClassById,
   removeTrainerFromClass,
+  updateTrainerStatus,
 } from "./classSetupMockData";
 
 const trainerColumns: ColumnConfig[] = [
@@ -53,8 +55,16 @@ const getStatusBadge = (status: string) => (
 export const ClassSetupDetails = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const cmEvents = useClubManagementEvents();
+  const detailViewLogged = useRef(false);
   const [, forceRefresh] = useState(0);
   const cls = id ? getClassById(id) : undefined;
+
+  useEffect(() => {
+    if (detailViewLogged.current) return;
+    detailViewLogged.current = true;
+    cmEvents.detailViewed("Class Setup", id, "class_setup_details");
+  }, [cmEvents, id]);
 
   const [addTrainerOpen, setAddTrainerOpen] = useState(false);
   const [trainerForm, setTrainerForm] = useState({ name: "", email: "", specialization: "", experience: "" });
@@ -72,6 +82,7 @@ export const ClassSetupDetails = () => {
 
   const handleDelete = () => {
     deleteClass(cls.id);
+    cmEvents.deleted("Class Setup", cls.id, "class_setup_details");
     toast.success("Class deleted successfully!");
     navigate("/club-management/class-setup");
   };
@@ -82,6 +93,7 @@ export const ClassSetupDetails = () => {
       return;
     }
     addTrainerToClass(cls.id, { ...trainerForm, status: "Active" });
+    cmEvents.action("Class Setup Trainer Added", { entity_id: cls.id });
     toast.success("Trainer added successfully!");
     setTrainerForm({ name: "", email: "", specialization: "", experience: "" });
     setAddTrainerOpen(false);
@@ -90,6 +102,15 @@ export const ClassSetupDetails = () => {
 
   const handleRemoveTrainer = (trainerId: string) => {
     removeTrainerFromClass(cls.id, trainerId);
+    cmEvents.action("Class Setup Trainer Removed", { entity_id: cls.id, trainer_id: trainerId });
+    forceRefresh((n) => n + 1);
+  };
+
+  const handleToggleTrainerStatus = (trainerId: string, current: "Active" | "Inactive") => {
+    const nextStatus = current === "Active" ? "Inactive" : "Active";
+    updateTrainerStatus(cls.id, trainerId, nextStatus);
+    cmEvents.action("Class Setup Trainer Status Toggled", { entity_id: cls.id, trainer_id: trainerId, status: nextStatus });
+    toast.success(`Trainer marked ${nextStatus}`);
     forceRefresh((n) => n + 1);
   };
 
@@ -195,7 +216,20 @@ export const ClassSetupDetails = () => {
                 ),
                 specialization: <span className="text-sm text-gray-700">{trainer.specialization}</span>,
                 experience: <span className="text-sm text-gray-700">{trainer.experience}</span>,
-                status: getStatusBadge(trainer.status),
+                status: (
+                  <button
+                    type="button"
+                    onClick={() => handleToggleTrainerStatus(trainer.id, trainer.status)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${trainer.status === "Active" ? "bg-brand" : "bg-gray-300"
+                      }`}
+                    title={trainer.status === "Active" ? "Active - click to deactivate" : "Inactive - click to activate"}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${trainer.status === "Active" ? "translate-x-6" : "translate-x-1"
+                        }`}
+                    />
+                  </button>
+                ),
                 actions: (
                   <div className="flex items-center gap-1">
                     <Button size="icon" variant="ghost" className="h-7 w-7" title="Edit">

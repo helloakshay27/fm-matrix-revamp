@@ -43,12 +43,15 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import axios from "axios";
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { isCMContextActive } from "@/utils/posthogHelpers";
 
 export const AddEventPage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const attachmentInputRef = useRef<HTMLInputElement>(null);
   const pulseEvents = usePulseEvents();
+  const cmEvents = useClubManagementEvents();
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -433,9 +436,13 @@ export const AddEventPage = () => {
         });
       }
 
-      await dispatch(
+      const createdEvent = await dispatch(
         createEvent({ baseUrl, token, data: formDataToSend })
       ).unwrap();
+
+      if (isCMContextActive()) {
+        cmEvents.created("Event", (createdEvent as any)?.id ?? (createdEvent as any)?.classified?.id, "event_add");
+      }
 
       // Clean up localStorage after successful submission
       localStorage.removeItem("eventName");

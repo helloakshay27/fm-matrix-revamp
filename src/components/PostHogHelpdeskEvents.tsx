@@ -1,4 +1,5 @@
 import { usePostHog } from "@posthog/react";
+import { captureCMHelpdeskEvent, resolveHelpdeskProjectContext } from "@/utils/posthogHelpers";
 
 const RELEASE_VERSION = (import.meta.env.VITE_APP_VERSION as string) ?? "dev";
 
@@ -26,8 +27,7 @@ export function useHelpdeskEvents() {
     const orgIdNum = _orgId && !isNaN(Number(_orgId)) ? Number(_orgId) : undefined;
 
     return {
-      project_id: "P-223",
-      project_code: "FM-01",
+      ...resolveHelpdeskProjectContext(),
       site_id: siteIdNum,
       site_name: localStorage.getItem("selectedSiteName") ?? undefined,
       company_id: companyIdNum,
@@ -131,5 +131,77 @@ export function useHelpdeskEvents() {
       ticketId: string | number | null,
       markerType: "flag" | "golden_ticket" | string
     ) => capture("Ticket Flagged / Golden Ticket Marked", ticketId, { marker_type: markerType }),
+  };
+}
+
+/**
+ * Screen-level UI events for the Club Management helpdesk routes
+ * (club-management/helpdesk, /add, /details/:id, /edit/:id).
+ *
+ * These go through captureCMHelpdeskEvent so every event carries the CM project
+ * context (project_code = "CM-01", project_id = "P-238") while reusing the central
+ * capture/context mechanism. Screen-level usage events only — business lifecycle
+ * events ("Ticket Created" etc.) live in useHelpdeskEvents.
+ */
+export function useCMHelpdeskEvents() {
+  const capture = (event: string, ticketId: string | number | null, props: Record<string, unknown> = {}) => {
+    captureCMHelpdeskEvent(event, {
+      ticket_id: ticketId,
+      ...props,
+    });
+  };
+
+  return {
+    onListViewed: (listType: "all" | "analytics") =>
+      capture("Helpdesk List Viewed", null, { list_type: listType }),
+
+    onTicketDetailOpened: (ticketId: string | number, source: string) =>
+      capture("Helpdesk Ticket Viewed", ticketId, { open_source: source }),
+
+    onEditOpened: (ticketId: string | number, source: string) =>
+      capture("Helpdesk Ticket Edit Opened", ticketId, { open_source: source }),
+
+    onTicketUpdated: (
+      ticketId: string | number,
+      props: {
+        status?: string | null;
+        assignee?: string | number | null;
+        priority?: string | null;
+        has_comment?: boolean;
+        cost_involved?: boolean;
+      } = {}
+    ) => capture("Helpdesk Ticket Updated", ticketId, { ...props }),
+
+    onFilterApplied: (filterCount: number, filtersUsed: string[]) =>
+      capture("Helpdesk Filter Applied", null, {
+        filter_count: filterCount,
+        filters_used: filtersUsed,
+      }),
+
+    onSearchPerformed: (queryLength: number, resultCount: number) =>
+      capture("Helpdesk Search Performed", null, {
+        query_length: queryLength,
+        result_count: resultCount,
+        returned_zero: resultCount === 0,
+      }),
+
+    onExport: (fileFormat: string, rowCount: number) =>
+      capture("Helpdesk Exported", null, {
+        file_format: fileFormat,
+        row_count: rowCount,
+      }),
+
+    onGoldenTicketMarked: (ticketIds: Array<string | number>) =>
+      capture("Helpdesk Ticket Golden Ticket Marked", (ticketIds[0] as string | number) ?? null, {
+        ticket_ids: ticketIds,
+        count: ticketIds.length,
+      }),
+
+    onFlagged: (ticketIds: Array<string | number>, flagged: boolean) =>
+      capture("Helpdesk Ticket Flagged", (ticketIds[0] as string | number) ?? null, {
+        ticket_ids: ticketIds,
+        count: ticketIds.length,
+        is_flagged: flagged,
+      }),
   };
 }

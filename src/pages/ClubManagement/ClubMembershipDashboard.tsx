@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Eye, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import { Badge } from "@/components/ui/badge";
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
@@ -51,6 +52,8 @@ interface MembershipData {
 export const ClubMembershipDashboard = () => {
   const navigate = useNavigate();
   const loginState = useSelector((state: RootState) => state.login);
+  const cmEvents = useClubManagementEvents();
+  const listViewLogged = useRef(false);
 
   // State management
   const [memberships, setMemberships] = useState<MembershipData[]>([]);
@@ -172,6 +175,10 @@ export const ClubMembershipDashboard = () => {
         if (data.status_counts) {
           setStatusCounts(data.status_counts);
         }
+        if (!listViewLogged.current) {
+          listViewLogged.current = true;
+          cmEvents.listViewed("Membership", "membership_list");
+        }
         // toast.success(`Loaded ${data.length} members`);
       } else {
         setMemberships([]);
@@ -217,6 +224,8 @@ export const ClubMembershipDashboard = () => {
 
       toast.success('Status updated successfully', { id: loadingToast });
 
+      cmEvents.statusChanged("Membership", item.id, { enabled: checked });
+
       // Update local state to reflect change immediately
       setMemberships(prev => prev.map(m => m.id === item.id ? { ...m, club_member_enabled: checked } : m));
 
@@ -239,6 +248,8 @@ export const ClubMembershipDashboard = () => {
     if (currentSearch === newSearch) {
       return;
     }
+
+    cmEvents.searched("Membership", newSearch, "membership_list");
 
     setFilters(prevFilters => ({
       ...prevFilters,
@@ -398,6 +409,8 @@ export const ClubMembershipDashboard = () => {
 
       toast.success('Excel file downloaded successfully', { id: loadingToast });
 
+      cmEvents.exported("Membership", "Excel", memberships.length, "membership_list");
+
     } catch (error) {
       console.error('Error exporting data:', error);
       toast.error('Failed to export data', { id: loadingToast });
@@ -427,6 +440,7 @@ export const ClubMembershipDashboard = () => {
   // Handle filter apply
   const handleFilterApply = (newFilters: ClubMembershipFilters) => {
     console.log('Applying filters:', newFilters);
+    cmEvents.filtered("Membership", "membership_list", newFilters as unknown as Record<string, unknown>);
     setFilters(prev => ({
       ...newFilters,
       search: prev.search

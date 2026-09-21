@@ -1,12 +1,14 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Pencil, QrCode, Share2, Info, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useAppDispatch } from '@/store/hooks';
 import { fetchEventById, updateEvent } from '@/store/slices/eventSlice';
 import { format } from 'date-fns';
 import { Switch } from '@mui/material';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
+import { isCMContextActive } from '@/utils/posthogHelpers';
 
 
 interface Event {
@@ -46,6 +48,8 @@ export const CommunityEventDetails = () => {
     const dispatch = useAppDispatch();
     const { id } = useParams();
     const navigate = useNavigate();
+    const { detailViewed, statusChanged } = useClubManagementEvents();
+    const viewedRef = useRef(false);
 
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem("token");
@@ -58,6 +62,10 @@ export const CommunityEventDetails = () => {
             try {
                 const response = await dispatch(fetchEventById({ id, baseUrl, token })).unwrap();
                 setEventData(response)
+                if (isCMContextActive() && !viewedRef.current) {
+                    viewedRef.current = true;
+                    detailViewed("Community Event", id, "community_event_details");
+                }
             } catch (error) {
                 console.log(error)
                 toast.error("Failed to fetch event")
@@ -88,6 +96,9 @@ export const CommunityEventDetails = () => {
             ).unwrap();
 
             toast.success("Event status updated successfully");
+            if (isCMContextActive()) {
+                statusChanged("Community Event", id, { active: checked, screen: "community_event_details" });
+            }
         } catch (error) {
             console.error(error);
             toast.error("Failed to update event status");

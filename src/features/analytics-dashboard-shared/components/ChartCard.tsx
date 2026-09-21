@@ -6,6 +6,7 @@ import { InfoButton } from './InfoButton';
  * eyebrow + title + an `i` popover carrying the card's purpose.
  */
 export function ChartCard({
+  id,
   eyebrow,
   title,
   purpose,
@@ -13,6 +14,7 @@ export function ChartCard({
   style,
   children,
 }: {
+  id?: string;
   eyebrow: string;
   title: string;
   purpose: ReactNode;
@@ -21,7 +23,7 @@ export function ChartCard({
   children: ReactNode;
 }) {
   return (
-    <div className={`card${className ? ` ${className}` : ''}`} style={style}>
+    <div id={id} className={`card${className ? ` ${className}` : ''}`} style={style}>
       <div className="card-head">
         <div className="charthead">
           <div>

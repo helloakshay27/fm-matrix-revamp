@@ -565,7 +565,9 @@
 .vi-ph .mnav-buckets button:hover:not(.on){color:var(--ink)}
 .vi-ph .mnav-buckets button.on{color:var(--ink);font-weight:500;border-bottom-color:var(--ink)}
 .vi-ph .mnav-buckets .mcount{font-size:11.5px;font-weight:400;color:var(--faint);margin-left:5px}
-.vi-ph .mnav-mods{display:flex;padding:13px 0 0}
+.vi-ph .mnav-mods{display:flex;padding:0}
+.vi-ph .mnav-mods .mcount{font-size:11px;font-weight:400;color:var(--faint);margin-left:6px}
+.vi-ph .mnav-mods button.on .mcount{color:var(--on-ink);opacity:.7}
 .vi-ph .mnav-mods .segbar{display:inline-flex;flex-wrap:wrap;gap:6px;border:0;background:none;border-radius:0}
 .vi-ph .mnav-mods button{
   font-size:12.5px;font-weight:400;padding:5px 13px;
@@ -734,20 +736,6 @@
 .vi-ph tr.rowlink:hover td{background:var(--surface-2)}
 
 
-/* ---- inline custom date range (§7.1 date picker: presets or a from-to window) ---- */
-.vi-ph .daterange-inline{
-  display:flex;align-items:center;gap:6px;
-  padding:5px 9px;border:1px solid var(--border-2);border-radius:var(--r-sm);
-  background:var(--surface-2);
-}
-.vi-ph .daterange-inline input[type="date"]{
-  font:inherit;font-size:12.5px;color:var(--ink);
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r-xs);padding:3px 6px;
-}
-.vi-ph .dr-cancel{
-  font:inherit;font-size:12.5px;color:var(--muted);
-  background:none;border:0;cursor:pointer;padding:3px 6px;
-}
-.vi-ph .dr-cancel:hover{color:var(--ink)}
+/* The date control is the popover above (.daterange / .daterange-pop); this only adds the
+   disabled state, which the reference has no need for because its Apply never disables. */
 .vi-ph .dr-apply[disabled]{opacity:.45;cursor:not-allowed}

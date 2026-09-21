@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { usePostHog } from "@posthog/react";
+import { resolveHelpdeskProjectContext } from "@/utils/posthogHelpers";
 
 const RELEASE_VERSION = (import.meta.env.VITE_APP_VERSION as string) ?? "dev";
 
@@ -22,8 +23,7 @@ export function PostHogTicketActivity({ event, properties }: PostHogTicketActivi
     const orgIdNum = _orgId && !isNaN(Number(_orgId)) ? Number(_orgId) : undefined;
 
     return {
-      project_id: "P-223",
-      project_code: "FM-01",
+      ...resolveHelpdeskProjectContext(),
       site_id: siteIdNum,
       site_name: localStorage.getItem("selectedSiteName") ?? undefined,
       company_id: companyIdNum,
@@ -41,7 +41,10 @@ export function PostHogTicketActivity({ event, properties }: PostHogTicketActivi
   useEffect(() => {
     if (posthog) {
       const parsedProps = propsString ? JSON.parse(propsString) : {};
-      posthog.capture(event, { ...getCommonContext(), ...parsedProps });
+      posthog.capture(event, {
+        ...getCommonContext(),
+        ...parsedProps,
+      });
     }
   }, [posthog, event, propsString]);
 

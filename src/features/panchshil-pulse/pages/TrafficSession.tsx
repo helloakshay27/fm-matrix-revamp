@@ -4,7 +4,7 @@ import { KpiTile } from "../components/common/KpiTile";
 import { LineChart } from "../components/charts/LineChart";
 import { SectionState } from "../components/common/SectionState";
 import { tileToKpi } from "../utils/tileAdapter";
-import { getChartColors } from "../utils/chartColors";
+import { useChartColors } from "../utils/chartColors";
 
 // Platform labels shown in the device-split card. The API reports Desktop /
 // Mobile groups; Pulse is a mobile-first app so we present those rows as the
@@ -24,8 +24,8 @@ const toMonthLabel = (label: string): string => {
 };
 
 export const TrafficSession: React.FC = () => {
-  const { sessTab, setSessTab, theme, vm } = usePulseDashboard();
-  const colors = useMemo(() => getChartColors(), [theme]);
+  const { sessTab, setSessTab, vm } = usePulseDashboard();
+  const colors = useChartColors();
 
   const t = vm.traffic;
 

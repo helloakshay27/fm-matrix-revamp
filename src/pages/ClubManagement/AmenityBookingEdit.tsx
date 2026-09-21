@@ -11,11 +11,13 @@ import { fetchActiveFacilities } from '@/store/slices/facilitySetupsSlice';
 import { apiClient } from '@/utils/apiClient';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 
 export const AmenityBookingEditPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const cmEvents = useClubManagementEvents();
 
   const { data: fmUsersResponse, loading: fmUsersLoading, error: fmUsersError } = useAppSelector((state) => state.fmUsers);
   const fmUsers = fmUsersResponse?.users || [];
@@ -791,6 +793,7 @@ export const AmenityBookingEditPage = () => {
 
       if (response.status === 200 || response.status === 201) {
         toast.success('Booking updated successfully!');
+        cmEvents.updated("Amenity Booking", id, "amenity_booking_edit");
         navigate(-1);
       }
     } catch (error: any) {

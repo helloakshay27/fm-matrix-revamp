@@ -33,6 +33,7 @@ import {
   PaginationItem,
   PaginationLink,
   PaginationNext,
+  PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import { usePATMEvents } from "@/components/PostHogPATMEvents";
@@ -319,15 +320,15 @@ export const SprintDashboard = () => {
 
   const renderActions = (item: any) => (
     <div className="flex items-center justify-center gap-2">
-      {(shouldShow("Sprint","show") &&
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
-        onClick={() => navigate(`/vas/sprint/details/${item.id}`)}
-      >
-        <Eye className="w-4 h-4" />
-      </Button>
+      {(shouldShow("Sprint", "show") &&
+        <Button
+          size="sm"
+          variant="ghost"
+          className="p-1"
+          onClick={() => navigate(`/vas/sprint/details/${item.id}`)}
+        >
+          <Eye className="w-4 h-4" />
+        </Button>
       )}
       <Button
         size="sm"
@@ -412,7 +413,7 @@ export const SprintDashboard = () => {
   };
 
   const leftActions = (
-    shouldShow("Sprint","create") &&
+    shouldShow("Sprint", "create") &&
     <Button
       className="bg-[#C72030] hover:bg-[#A01020] text-white"
       onClick={() => setAddSprintModalOpen(true)}

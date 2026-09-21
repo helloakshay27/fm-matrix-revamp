@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { format, parseISO } from "date-fns";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -46,6 +46,7 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog";
 import { toast as sonnerToast } from "sonner";
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import axios from "axios";
 import {
     bankMasterListUrl,
@@ -64,6 +65,8 @@ const LINE_ITEM_TYPE_LABELS = {
 export const InvoiceClubManagementDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const cmEvents = useClubManagementEvents();
+    const detailViewedRef = useRef(false);
 
     const [invoiceData, setInvoiceData] = useState(null);
     const [lineItems, setLineItems] = useState([]);
@@ -96,6 +99,13 @@ export const InvoiceClubManagementDetails = () => {
             fetchInvoiceDetails();
         }
     }, [id, baseUrl, token]);
+
+    useEffect(() => {
+        if (id && !detailViewedRef.current) {
+            detailViewedRef.current = true;
+            cmEvents.detailViewed('Invoice', id, 'invoice_details');
+        }
+    }, [id]);
 
     // Resolve the bank selected on the invoice, if any
     useEffect(() => {
@@ -164,6 +174,7 @@ export const InvoiceClubManagementDetails = () => {
                 }
             );
             sonnerToast.success("Invoice deleted successfully");
+            cmEvents.deleted('Invoice', id, 'invoice_details');
             navigate("/club-management/invoice");
         } catch (error) {
             console.error("Error deleting invoice:", error);
@@ -239,6 +250,7 @@ export const InvoiceClubManagementDetails = () => {
             );
 
             sonnerToast.success("Payment recorded successfully");
+            cmEvents.statusChanged('Invoice', id, { action: 'payment_recorded', payment_method: paymentMethod });
             setOpenPaymentModal(false);
             setPaymentMethod("");
             setPaymentNote("");

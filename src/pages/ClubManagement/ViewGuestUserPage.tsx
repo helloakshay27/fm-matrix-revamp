@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/store/store';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import { fetchRoles, fetchSuppliers, fetchUnits, getUserDetails } from '@/store/slices/fmUserSlice';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,6 +59,8 @@ export const ViewGuestUserPage = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const dispatch = useDispatch<AppDispatch>();
+    const cmEvents = useClubManagementEvents();
+    const detailViewedRef = useRef(false);
     const { data: entitiesData, loading: entitiesLoading } = useAppSelector((state) => state.entities);
     const { data: suppliers, loading: suppliersLoading } = useAppSelector((state) => state.fetchSuppliers);
     const { data: units, loading: unitsLoading } = useAppSelector((state) => state.fetchUnits);
@@ -154,6 +157,10 @@ export const ViewGuestUserPage = () => {
             try {
                 const response = await dispatch(getUserDetails({ baseUrl, token, id: Number(id) })).unwrap()
                 setUserData(response)
+                if (!detailViewedRef.current) {
+                    detailViewedRef.current = true;
+                    cmEvents.detailViewed("Guest", id, "guest_details");
+                }
             } catch (error) {
                 console.log(error)
             }

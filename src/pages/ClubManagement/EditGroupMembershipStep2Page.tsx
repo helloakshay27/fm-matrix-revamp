@@ -22,6 +22,7 @@ import dayjs from 'dayjs';
 import { getFullUrl, API_CONFIG } from '@/config/apiConfig';
 import axios from 'axios';
 import { getToken } from '@/utils/auth';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -191,6 +192,7 @@ const createEmptyMember = (idSuffix = ''): MemberData => ({
 export const EditGroupMembershipStep2Page = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
+    const cmEvents = useClubManagementEvents();
 
     const [cardAllocated, setCardAllocated] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -575,6 +577,7 @@ export const EditGroupMembershipStep2Page = () => {
             }
 
             toast.success('Club membership updated successfully');
+            cmEvents.updated("Group Membership", id, "group_membership_edit");
             navigate('/club-management/membership/groups');
         } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Failed to update membership');

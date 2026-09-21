@@ -165,7 +165,7 @@ export const API_CONFIG = {
     // Checklist sample format download
     CHECKLIST_SAMPLE_FORMAT: "/checklist.xlsx",
     // Bulk upload for custom forms
-    CUSTOM_FORMS_BULK_UPLOAD: "/pms/custom_forms/bulk_upload.json",
+    CUSTOM_FORMS_BULK_UPLOAD: "/pms/custom_forms/import_questions.json",
     PATROLLING_IMPORT_CHECKPOINTS: "/patrolling/import_checkpoints.json",
     // Asset dashboard endpoints
     // ASSET_STATISTICS: '/pms/asset_statistics.json',
@@ -272,6 +272,10 @@ export const API_CONFIG = {
     RECENT_SURVEYS: "/survey_mappings/response_list.json?&recent=true",
     // Visitor history export endpoint
     VISITOR_HISTORY_EXPORT: "/pms/admin/visitors/visitors_history.xlsx",
+    // Background visitor history export flow: trigger -> poll status -> download
+    VISITOR_HISTORY_EXPORT_START: "/pms/manage/visitors/visitor_history_export",
+    VISITOR_EXPORT_STATUS: "/pms/manage/visitors/export_status",
+    VISITOR_DOWNLOAD_EXPORT: "/pms/manage/visitors/download_export",
     ASSET_TYPES: "/pms/custom_forms/get_asset_type",
     COMMUNICATION_TEMPLATES: "/communication_templates.json",
     // Vehicle details endpoint

@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/form';
 import { toast } from 'sonner';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import {
   FormControl as MuiFormControl,
   Select as MuiSelect,
@@ -100,6 +101,9 @@ export const EditStatusModal: React.FC<EditStatusModalProps> = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const analytics = useClubManagementEvents();
+  const module = 'Ticket Management';
+  const screen = 'Status';
 
   const form = useForm<StatusFormData>({
     resolver: zodResolver(statusSchema),
@@ -241,6 +245,7 @@ export const EditStatusModal: React.FC<EditStatusModalProps> = ({
       }
 
       toast.success('Status updated successfully');
+      analytics.updated(module, status.id, screen, { entity_type: 'status' });
       onUpdate();
       onOpenChange(false);
     } catch (error) {

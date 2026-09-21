@@ -85,15 +85,22 @@ function asActiveSeats(spec: TileSpec): TileSpec {
   };
 }
 
-/** Rewrites a tile's id and its `(Un)` / `(An)` label suffix to the Vi numbering. */
+/**
+ * Renumbers a tile to the Vi ids and drops the metric id from its visible label.
+ *
+ * The shared builders suffix every label with the FM id — "Active Users (U1)", "Workflow
+ * Adoption (F-adopt)". That id is internal bookkeeping: it tells a reader nothing the label
+ * has not already said, and on the Workflow Usage cards it is most of the line. The id still
+ * lives on the tile as `id` (targets are keyed by it) and as `infoKey`, so the `i` popover
+ * resolves the same formula it always did.
+ */
 function relabel(input: TileSpec): ViTileSpec {
   const spec = input.id === 'A1' ? asActiveSeats(input) : input;
-  const viId = ID_MAP[input.id] ?? input.id;
   return {
     ...spec,
-    id: viId,
+    id: ID_MAP[input.id] ?? input.id,
     infoKey: input.id,
-    label: spec.label.replace(/\(([UAF][\w-]*)\)$/, `(${viId})`),
+    label: spec.label.replace(/\s*\([UAF][\w-]*\)$/, ''),
   };
 }
 

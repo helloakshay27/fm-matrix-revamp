@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2, Printer, Download, File, Trash2, Share2 } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import axios from 'axios';
 import Switch from '@mui/material/Switch';
+import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
+import { isCMContextActive } from '@/utils/posthogHelpers';
 
 interface DocumentDetails {
     id?: number;
@@ -33,6 +35,8 @@ interface DocumentDetails {
 const CommunityDocumentDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { detailViewed, action } = useClubManagementEvents();
+    const viewedRef = useRef(false);
 
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem("token");
@@ -57,6 +61,10 @@ const CommunityDocumentDetails = () => {
                     }
                 );
                 setDocumentDetails(response.data || {});
+                if (isCMContextActive() && !viewedRef.current) {
+                    viewedRef.current = true;
+                    detailViewed("Community Document", id, "community_document_details");
+                }
             } catch (error) {
                 console.log(error);
                 const errorMessage = error.response.data.error
@@ -83,6 +91,9 @@ const CommunityDocumentDetails = () => {
                     }
                 );
                 toast.success("Document deleted successfully");
+                if (isCMContextActive()) {
+                    action("Community Document Deleted", { entity_id: id, screen: "community_document_details" });
+                }
                 navigate('/pulse/community');
             } catch (error) {
                 console.error('Failed to delete document:', error);

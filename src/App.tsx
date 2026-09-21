@@ -2848,6 +2848,16 @@ const DocumentShareLinkPage = lazy(() =>
     default: m.DocumentShareLinkPage,
   }))
 );
+const ViMyworkspaceOccupantPrivacyPolicy = lazy(() =>
+  import("./pages/ViMyworkspaceOccupantPrivacyPolicy").then((m) => ({
+    default: m.ViMyworkspaceOccupantPrivacyPolicy,
+  }))
+);
+const ViMyworkspaceTermsAndConditions = lazy(() =>
+  import("./pages/ViMyworkspaceTermsAndConditions").then((m) => ({
+    default: m.ViMyworkspaceTermsAndConditions,
+  }))
+);
 const GroupConversation = lazy(() => import("./components/GroupConversation"));
 const ChannelTasksAll = lazy(() => import("./pages/ChannelTasksAll"));
 const ChatTaskDetailsPage = lazy(() => import("./pages/ChatTaskDetailsPage"));
@@ -3270,6 +3280,46 @@ const ClassSetupEdit = lazy(() =>
 const ClassSetupDetails = lazy(() =>
   import("./pages/ClubManagement/ClassSetupDetails").then((m) => ({
     default: m.ClassSetupDetails,
+  }))
+);
+const TrainerSetupList = lazy(() =>
+  import("./pages/ClubManagement/TrainerSetupList").then((m) => ({
+    default: m.TrainerSetupList,
+  }))
+);
+const TrainerSetupAdd = lazy(() =>
+  import("./pages/ClubManagement/TrainerSetupAdd").then((m) => ({
+    default: m.TrainerSetupAdd,
+  }))
+);
+const TrainerSetupEdit = lazy(() =>
+  import("./pages/ClubManagement/TrainerSetupEdit").then((m) => ({
+    default: m.TrainerSetupEdit,
+  }))
+);
+const TrainerSetupDetails = lazy(() =>
+  import("./pages/ClubManagement/TrainerSetupDetails").then((m) => ({
+    default: m.TrainerSetupDetails,
+  }))
+);
+const PackageSetupList = lazy(() =>
+  import("./pages/ClubManagement/PackageSetupList").then((m) => ({
+    default: m.PackageSetupList,
+  }))
+);
+const PackageSetupAdd = lazy(() =>
+  import("./pages/ClubManagement/PackageSetupAdd").then((m) => ({
+    default: m.PackageSetupAdd,
+  }))
+);
+const PackageSetupEdit = lazy(() =>
+  import("./pages/ClubManagement/PackageSetupEdit").then((m) => ({
+    default: m.PackageSetupEdit,
+  }))
+);
+const PackageSetupDetails = lazy(() =>
+  import("./pages/ClubManagement/PackageSetupDetails").then((m) => ({
+    default: m.PackageSetupDetails,
   }))
 );
 const BudgetDashboard = lazy(() =>
@@ -3736,6 +3786,15 @@ import SupplierDetailsPage from "./features/PulseSuppliers/pages/SupplierDetails
 import EditSupplierPage from "./features/PulseSuppliers/pages/EditSupplierPage.tsx";
 const ModulesManagement = lazy(
   () => import("./pages/settings/ModulesManagement")
+);
+const GateIntegrationPage = lazy(
+  () => import("./features/gate-integration/pages/GateIntegration")
+);
+const AddGatePage = lazy(
+  () => import("./features/gate-integration/pages/AddGatePage")
+);
+const EditGatePage = lazy(
+  () => import("./features/gate-integration/pages/EditGatePage")
 );
 const InvoiceAdd = lazy(() =>
   import("./pages/ClubManagement/InvoiceAdd").then((m) => ({
@@ -4602,6 +4661,14 @@ function App() {
                             element={<DocumentShareLinkPage />}
                           />
                           <Route
+                            path="/vi-myworkspace/occupant-privacy-policy"
+                            element={<ViMyworkspaceOccupantPrivacyPolicy />}
+                          />
+                          <Route
+                            path="/vi-myworkspace/terms-and-conditions"
+                            element={<ViMyworkspaceTermsAndConditions />}
+                          />
+                          <Route
                             path="/documents/editor/:documentId"
                             element={<OnlyOfficePublicEditorPage />}
                           />
@@ -4752,6 +4819,18 @@ function App() {
                             <Route
                               path="settings/modules"
                               element={<ModulesManagement />}
+                            />
+                            <Route
+                              path="settings/gate-integration"
+                              element={<GateIntegrationPage />}
+                            />
+                            <Route
+                              path="settings/gate-integration/add"
+                              element={<AddGatePage />}
+                            />
+                            <Route
+                              path="settings/gate-integration/edit/:id"
+                              element={<EditGatePage />}
                             />
 
                             {/* <Route
@@ -6943,6 +7022,40 @@ function App() {
                             <Route
                               path="/club-management/class-setup/details/:id"
                               element={<ClassSetupDetails />}
+                            />
+                            {/* Club Management - Trainer Setup */}
+                            <Route
+                              path="/club-management/trainer-setup"
+                              element={<TrainerSetupList />}
+                            />
+                            <Route
+                              path="/club-management/trainer-setup/add"
+                              element={<TrainerSetupAdd />}
+                            />
+                            <Route
+                              path="/club-management/trainer-setup/edit/:id"
+                              element={<TrainerSetupEdit />}
+                            />
+                            <Route
+                              path="/club-management/trainer-setup/details/:id"
+                              element={<TrainerSetupDetails />}
+                            />
+                            {/* Club Management - Package Setup */}
+                            <Route
+                              path="/club-management/package-setup"
+                              element={<PackageSetupList />}
+                            />
+                            <Route
+                              path="/club-management/package-setup/add"
+                              element={<PackageSetupAdd />}
+                            />
+                            <Route
+                              path="/club-management/package-setup/edit/:id"
+                              element={<PackageSetupEdit />}
+                            />
+                            <Route
+                              path="/club-management/package-setup/details/:id"
+                              element={<PackageSetupDetails />}
                             />
                             {/* Club Management - Broadcast */}
                             <Route

@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { isCMContextActive } from "@/utils/posthogHelpers";
 import { TextField, MenuItem } from '@mui/material';
 
 interface PaymentSchedule {
@@ -31,6 +33,8 @@ export const AddPaymentPlan = () => {
 
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
+  const isEdit = !!idInterpreted;
+  const cmEvents = useClubManagementEvents();
 
   // Fetch existing plan data if in edit mode
   useEffect(() => {
@@ -160,6 +164,8 @@ export const AddPaymentPlan = () => {
           }
         );
         toast.success('Payment plan updated successfully', { id: loadingToast });
+        cmEvents.updated("Payment Plan", id, planName, "add_payment_plan_form");
+        cmEvents.updated("Payment Plan", id, planName, "add_payment_plan_modal");
       } else {
         await axios.post(
           `https://${baseUrl}/payment_plans.json`,
@@ -172,6 +178,7 @@ export const AddPaymentPlan = () => {
           }
         );
         toast.success('Payment plan created successfully', { id: loadingToast });
+        cmEvents.created("Payment Plan", planName, "add_payment_plan_form");
       }
 
       navigate('/settings/payment-plan/setup');
