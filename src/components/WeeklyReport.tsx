@@ -144,22 +144,25 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
                 >
                     <ResponsiveContainer width="100%" height="100%">
                         {/* Provide extra margin so outer labels have space and are not clipped */}
-                        <PieChart margin={isPrinting ? { top: 12, right: 48, bottom: 12, left: 48 } : { top: 20, right: 36, bottom: 20, left: 36 }}>
+                        {/* <PieChart margin={isPrinting ? { top: 12, right: 48, bottom: 12, left: 48 } : { top: 20, right: 36, bottom: 20, left: 36 }}> */}
+                        <PieChart margin={{ top: 20, right: 80, bottom: 20, left: 80 }}>
                             <Pie
                                 data={pieData}
                                 dataKey="value"
                                 nameKey="name"
-                                innerRadius={innerRadiusValue}
-                                outerRadius={outerRadiusValue}
+                                innerRadius={0}
+                                outerRadius="70%"
+                                isAnimationActive={false}
                                 stroke="#FFFFFF"
                                 paddingAngle={0}
                                 cx="50%"
                                 cy="50%"
                                 labelLine={false}
-                                label={({ cx, cy, midAngle, percent, index }) => {
+                                label={({ cx, cy, midAngle, percent, index ,outerRadius }) => {
                                     // use a smaller offset for the label radius so text remains within chart bounds
                                     const labelOffset = isPrinting ? 32 : 12;
-                                    const radius = outerRadiusValue + labelOffset;
+                                    // const radius = outerRadiusValue + labelOffset;
+                                    const radius = Number(outerRadius) + 14;
                                     const x = cx + radius * Math.cos(-midAngle * RADIAN);
                                     const y = cy + radius * Math.sin(-midAngle * RADIAN);
                                     const alignRight = x > cx;
