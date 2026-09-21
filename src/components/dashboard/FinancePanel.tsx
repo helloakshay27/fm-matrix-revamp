@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SafetyGridSection, type SafetyGridItem } from "@/components/dashboard/SafetyGridSection";
 import { ANALYTICS_PALETTE } from "@/styles/chartPalette";
 import type { FinanceDashboardData } from "@/hooks/useFmDashboardData";
+import { extractAiInsights } from "@/services/fmDashboardAPI";
 
 // Finance module — dynamically binds the 8 live finance endpoints with tolerant readers
 // and clean fallback/empty states across Overview, Procurement, Invoices, KPIs, GDN, and Wallet tabs.
@@ -323,6 +324,16 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
     }));
   }, [data?.pendingValue]);
 
+  // --- AI insights, read tolerantly (see extractAiInsights() in fmDashboardAPI.ts) ---
+  const financeAlertsAi = extractAiInsights(data?.financeAlertsInsight);
+  const financialIntelligenceAi = extractAiInsights(data?.financialIntelligenceInsight);
+  const billInformationAi = extractAiInsights(data?.billInformationInsight);
+  const overdueInvoicesAi = extractAiInsights(data?.overdueInvoicesInsight);
+  const approvalQueueAi = extractAiInsights(data?.approvalQueueInsight);
+  const poWoGrnSesAi = extractAiInsights(data?.poWoGrnSesInsight);
+
+  const financeAlertChips = financeAlertsAi.items.length ? financeAlertsAi.items : FINANCE_ALERTS;
+
   // --- Overview ---
   const overviewItems: SafetyGridItem[] = [
     {
@@ -381,6 +392,23 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
         />
       ),
     },
+    ...(financialIntelligenceAi.headline || financialIntelligenceAi.items.length
+      ? [
+          {
+            key: "fin-financial-intelligence",
+            layout: { x: 0, y: 3, w: 12, h: 2, minW: 6, minH: 2, isResizable: false, isDraggable: false },
+            content: (
+              <div className="flex items-center gap-2 rounded-lg border border-brand bg-brand-light px-3 py-2 text-brand-body-5 text-brand-text h-full">
+                <span className="flex-shrink-0">✨</span>
+                <span>
+                  <strong className="font-semibold">AI Insight — Financial Intelligence:</strong>{" "}
+                  {financialIntelligenceAi.items[0] ?? financialIntelligenceAi.headline}
+                </span>
+              </div>
+            ),
+          },
+        ]
+      : []),
   ];
 
   // --- Procurement ---
@@ -527,7 +555,10 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
           columns={KPI_STATUS_COLUMNS}
           data={PO_WO_STATUS_ROWS}
           getRowKey={(row) => row.kpi}
-          insight="Building confident-looking performance numbers for a system we've already told you is broken would be dishonest — these stay blocked until the underlying API errors are fixed, not filled with invented figures."
+          insight={
+            poWoGrnSesAi.items[0] ??
+            "Building confident-looking performance numbers for a system we've already told you is broken would be dishonest — these stay blocked until the underlying API errors are fixed, not filled with invented figures."
+          }
           className="h-full no-drag"
         />
       ),
@@ -600,6 +631,7 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
             title="Invoices over 90 days — named"
             subtitle="Overdue invoices requiring immediate escalation"
             rows={overdueInvoiceRows.map(financeOverdueInvoiceRow)}
+            note={overdueInvoicesAi.items[0] ?? undefined}
             className="h-full"
           />
         ) : (
@@ -658,6 +690,9 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
               <p className="text-brand-body-5 text-brand-text-light">
                 {loading ? "Loading…" : "No items in your approval queue for this period."}
               </p>
+            )}
+            {approvalQueueAi.items[0] && (
+              <p className="text-brand-body-5 text-brand-text-light leading-relaxed mt-3">{approvalQueueAi.items[0]}</p>
             )}
           </CardContent>
         </Card>
@@ -822,7 +857,8 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
         <div className="flex items-center gap-2 rounded-lg border border-brand-border bg-white px-3 py-2 text-brand-body-5 text-brand-text-light h-full">
           <span className="flex-shrink-0">ℹ</span>
           <span>
-            <strong className="font-semibold text-brand-text">GDN Records:</strong> Dispatch registers update in sync with procurement dispatches.
+            <strong className="font-semibold text-brand-text">Bill Information:</strong>{" "}
+            {billInformationAi.items[0] ?? "Dispatch registers update in sync with procurement dispatches."}
           </span>
         </div>
       ),
@@ -924,7 +960,7 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
           Finance Alerts
         </div>
         <div className="flex flex-wrap gap-2">
-          {FINANCE_ALERTS.map((alert) => (
+          {financeAlertChips.map((alert) => (
             <span
               key={alert}
               className="rounded-full bg-white px-3 py-1.5 text-brand-body-5 font-semibold text-brand border border-brand/40"
@@ -933,6 +969,9 @@ export function FinancePanel({ activeSection, data, loading = false, visibleKeys
             </span>
           ))}
         </div>
+        {financeAlertsAi.headline && (
+          <p className="text-brand-body-5 text-brand-text-light mt-3">{financeAlertsAi.headline}</p>
+        )}
       </div>
 
       <div ref={registerRef("Overview")} className="scroll-mt-24">

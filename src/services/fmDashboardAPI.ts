@@ -1746,3 +1746,114 @@ export const fetchFinanceApprovalQueue = (params: FmDashboardParams) =>
 
 export const fetchFinanceTopPendingRecords = (params: FmDashboardParams) =>
   fetchFinanceValue(FINANCE_ENDPOINTS.TOP_PENDING_RECORDS, "top_pending_records", params);
+
+// ============================================================================
+// AI Insights (Finance + CRM)
+// ============================================================================
+// 8 endpoints total, per the `cm and finance all apis/{crm,finance}/*AI
+// Insight*.yml` Bruno collection at the repo root — the source of truth for
+// path/method/params, same as the CRM/Finance sections above. None of these
+// have been hit against a live backend (same reachability caveat noted
+// there), so every fetch returns a loosely-typed record and callers pull a
+// headline/bullet list out of it via extractAiInsights() instead of assuming
+// one fixed schema.
+
+export type AiInsightRecord = Record<string, unknown>;
+
+async function fetchAiInsight(endpoint: string, params: FmDashboardParams): Promise<AiInsightRecord> {
+  return fetchFmDashboardJson<AiInsightRecord>(endpoint, params);
+}
+
+const FINANCE_AI_INSIGHT_ENDPOINTS = {
+  FINANCE_ALERTS: "/fm_dashboard/overview/ai_insights.json",
+  FINANCIAL_INTELLIGENCE: "/fm_dashboard/overview/financial_intelligence_ai_insights.json",
+  BILL_INFORMATION: "/fm_dashboard/invoices/bill_information_ai_insights.json",
+  // No site_id param in the reference collection's capture for this one — see Finance's OVERDUE_INVOICES above.
+  OVERDUE_INVOICES: "/fm_dashboard/invoices/ai_insights.json",
+  APPROVAL_QUEUE: "/fm_dashboard/approvals/approval_queue_ai_insights.json",
+  PO_WO_GRN_SES: "/fm_dashboard/procurement/po_wo_ai_insights.json",
+} as const;
+
+export const fetchFinanceAlertsAiInsight = (params: FmDashboardParams) =>
+  fetchAiInsight(FINANCE_AI_INSIGHT_ENDPOINTS.FINANCE_ALERTS, params);
+
+export const fetchFinancialIntelligenceAiInsight = (params: FmDashboardParams) =>
+  fetchAiInsight(FINANCE_AI_INSIGHT_ENDPOINTS.FINANCIAL_INTELLIGENCE, params);
+
+export const fetchBillInformationAiInsight = (params: FmDashboardParams) =>
+  fetchAiInsight(FINANCE_AI_INSIGHT_ENDPOINTS.BILL_INFORMATION, params);
+
+export const fetchOverdueInvoicesAiInsight = (params: FmDashboardParams) =>
+  fetchAiInsight(FINANCE_AI_INSIGHT_ENDPOINTS.OVERDUE_INVOICES, params);
+
+export const fetchApprovalQueueAiInsight = (params: FmDashboardParams) =>
+  fetchAiInsight(FINANCE_AI_INSIGHT_ENDPOINTS.APPROVAL_QUEUE, params);
+
+export const fetchPoWoGrnSesAiInsight = (params: FmDashboardParams) =>
+  fetchAiInsight(FINANCE_AI_INSIGHT_ENDPOINTS.PO_WO_GRN_SES, params);
+
+const CRM_AI_INSIGHT_ENDPOINTS = {
+  CUSTOMERS: "/fm_dashboard/crm/customers/ai_insights.json",
+  EVENTS: "/fm_dashboard/crm/events/ai_insights.json",
+} as const;
+
+export const fetchCustomersAiInsight = (params: FmDashboardParams) =>
+  fetchAiInsight(CRM_AI_INSIGHT_ENDPOINTS.CUSTOMERS, params);
+
+export const fetchEventsAiInsight = (params: FmDashboardParams) =>
+  fetchAiInsight(CRM_AI_INSIGHT_ENDPOINTS.EVENTS, params);
+
+/** Headline + bullet list pulled out of one of the AI-insight endpoints above. */
+export interface AiInsightSummary {
+  headline: string | null;
+  items: string[];
+}
+
+export const EMPTY_AI_INSIGHT: AiInsightSummary = { headline: null, items: [] };
+
+function aiInsightText(value: unknown): string | null {
+  if (typeof value === "string" && value.trim() !== "") return value.trim();
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    const row = value as AiInsightRecord;
+    for (const key of ["message", "insight", "description", "text", "title"]) {
+      const v = row[key];
+      if (typeof v === "string" && v.trim() !== "") return v.trim();
+    }
+  }
+  return null;
+}
+
+/**
+ * Tolerant reader for the AI-insight endpoints — every one of them is
+ * expected to return a differently-shaped envelope, so this unwraps whatever
+ * common envelope/headline/list keys it can find rather than assuming one
+ * fixed schema. Once a real response is confirmed, tighten per-endpoint.
+ */
+export function extractAiInsights(raw: AiInsightRecord | null | undefined): AiInsightSummary {
+  if (!raw || typeof raw !== "object") return EMPTY_AI_INSIGHT;
+
+  let value: AiInsightRecord = raw;
+  for (const key of ["ai_insights", "ai_insight", "insights", "data", "result"]) {
+    const nested = raw[key];
+    if (Array.isArray(nested)) {
+      const items = nested.map(aiInsightText).filter((s): s is string => s !== null);
+      if (items.length) return { headline: null, items };
+    } else if (nested && typeof nested === "object") {
+      value = nested as AiInsightRecord;
+      break;
+    }
+  }
+
+  const headline = aiInsightText(value["headline"]) ?? aiInsightText(value["title"]) ?? aiInsightText(value["summary"]);
+
+  for (const key of ["insights", "items", "recommendations", "messages", "alerts", "points"]) {
+    const list = value[key];
+    if (Array.isArray(list)) {
+      const items = list.map(aiInsightText).filter((s): s is string => s !== null);
+      if (items.length) return { headline, items };
+    }
+  }
+
+  const single = aiInsightText(value["insight"]) ?? aiInsightText(value["message"]) ?? aiInsightText(value["text"]);
+  return { headline, items: single ? [single] : [] };
+}

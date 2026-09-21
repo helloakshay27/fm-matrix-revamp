@@ -116,6 +116,15 @@ import {
   fetchFinanceApprovalQueue,
   fetchFinanceTopPendingRecords,
   type FinanceRecord,
+  fetchFinanceAlertsAiInsight,
+  fetchFinancialIntelligenceAiInsight,
+  fetchBillInformationAiInsight,
+  fetchOverdueInvoicesAiInsight,
+  fetchApprovalQueueAiInsight,
+  fetchPoWoGrnSesAiInsight,
+  fetchCustomersAiInsight,
+  fetchEventsAiInsight,
+  type AiInsightRecord,
 } from "@/services/fmDashboardAPI";
 
 interface UseFmDashboardModuleArgs {
@@ -814,6 +823,9 @@ export interface CrmDashboardData {
   walletOverview: FinanceRecord | FinanceRecord[] | null;
   walletDistribution: FinanceRecord | FinanceRecord[] | null;
   walletTransactions: FinanceRecord | FinanceRecord[] | null;
+  // AI-insight endpoints — see extractAiInsights() in fmDashboardAPI.ts for how these are read.
+  customersInsight: AiInsightRecord | null;
+  eventsInsight: AiInsightRecord | null;
 }
 
 const EMPTY_CRM_DATA: CrmDashboardData = {
@@ -823,6 +835,8 @@ const EMPTY_CRM_DATA: CrmDashboardData = {
   walletOverview: null,
   walletDistribution: null,
   walletTransactions: null,
+  customersInsight: null,
+  eventsInsight: null,
 };
 
 export function useCrmDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
@@ -850,26 +864,43 @@ export function useCrmDashboardData({ siteIds, fromDate, toDate, enabled }: UseF
       fetchCrmWalletOverview(params),
       fetchCrmWalletDistribution(params),
       fetchCrmWalletTransactions(params),
+      fetchCustomersAiInsight(params),
+      fetchEventsAiInsight(params),
     ])
-      .then(([leaseOverview, eventsOverview, broadcastOverview, walletOverview, walletDistribution, walletTransactions]) => {
-        if (cancelled) return;
-        console.log("[useCrmDashboardData] Data loaded successfully:", {
+      .then(
+        ([
           leaseOverview,
           eventsOverview,
           broadcastOverview,
           walletOverview,
           walletDistribution,
           walletTransactions,
-        });
-        setData({
-          leaseOverview,
-          eventsOverview,
-          broadcastOverview,
-          walletOverview,
-          walletDistribution,
-          walletTransactions,
-        });
-      })
+          customersInsight,
+          eventsInsight,
+        ]) => {
+          if (cancelled) return;
+          console.log("[useCrmDashboardData] Data loaded successfully:", {
+            leaseOverview,
+            eventsOverview,
+            broadcastOverview,
+            walletOverview,
+            walletDistribution,
+            walletTransactions,
+            customersInsight,
+            eventsInsight,
+          });
+          setData({
+            leaseOverview,
+            eventsOverview,
+            broadcastOverview,
+            walletOverview,
+            walletDistribution,
+            walletTransactions,
+            customersInsight,
+            eventsInsight,
+          });
+        }
+      )
       .catch((err: unknown) => {
         if (cancelled) return;
         const errorMsg = err instanceof Error ? err.message : "Failed to load CRM dashboard data";
@@ -906,6 +937,13 @@ export interface FinanceDashboardData {
   overdueInvoices: FinanceRecord | FinanceRecord[] | null;
   approvalQueue: FinanceRecord | FinanceRecord[] | null;
   topPendingRecords: FinanceRecord | FinanceRecord[] | null;
+  // AI-insight endpoints — see extractAiInsights() in fmDashboardAPI.ts for how these are read.
+  financeAlertsInsight: AiInsightRecord | null;
+  financialIntelligenceInsight: AiInsightRecord | null;
+  billInformationInsight: AiInsightRecord | null;
+  overdueInvoicesInsight: AiInsightRecord | null;
+  approvalQueueInsight: AiInsightRecord | null;
+  poWoGrnSesInsight: AiInsightRecord | null;
 }
 
 const EMPTY_FINANCE_DATA: FinanceDashboardData = {
@@ -917,6 +955,12 @@ const EMPTY_FINANCE_DATA: FinanceDashboardData = {
   overdueInvoices: null,
   approvalQueue: null,
   topPendingRecords: null,
+  financeAlertsInsight: null,
+  financialIntelligenceInsight: null,
+  billInformationInsight: null,
+  overdueInvoicesInsight: null,
+  approvalQueueInsight: null,
+  poWoGrnSesInsight: null,
 };
 
 export function useFinanceDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
@@ -941,6 +985,12 @@ export function useFinanceDashboardData({ siteIds, fromDate, toDate, enabled }: 
       fetchFinanceOverdueInvoices(params),
       fetchFinanceApprovalQueue(params),
       fetchFinanceTopPendingRecords(params),
+      fetchFinanceAlertsAiInsight(params),
+      fetchFinancialIntelligenceAiInsight(params),
+      fetchBillInformationAiInsight(params),
+      fetchOverdueInvoicesAiInsight(params),
+      fetchApprovalQueueAiInsight(params),
+      fetchPoWoGrnSesAiInsight(params),
     ])
       .then(
         ([
@@ -952,6 +1002,12 @@ export function useFinanceDashboardData({ siteIds, fromDate, toDate, enabled }: 
           overdueInvoices,
           approvalQueue,
           topPendingRecords,
+          financeAlertsInsight,
+          financialIntelligenceInsight,
+          billInformationInsight,
+          overdueInvoicesInsight,
+          approvalQueueInsight,
+          poWoGrnSesInsight,
         ]) => {
           if (cancelled) return;
           setData({
@@ -963,6 +1019,12 @@ export function useFinanceDashboardData({ siteIds, fromDate, toDate, enabled }: 
             overdueInvoices,
             approvalQueue,
             topPendingRecords,
+            financeAlertsInsight,
+            financialIntelligenceInsight,
+            billInformationInsight,
+            overdueInvoicesInsight,
+            approvalQueueInsight,
+            poWoGrnSesInsight,
           });
         }
       )
