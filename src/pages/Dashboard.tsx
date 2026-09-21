@@ -98,6 +98,10 @@ import { TicketAgingClosureFeedbackCard } from "@/components/helpdesk/TicketAgin
 import { TicketPerformanceMetricsCard } from "@/components/helpdesk/TicketPerformanceMetricsCard";
 import { CustomerExperienceFeedbackCard } from "@/components/helpdesk/CustomerExperienceFeedbackCard";
 import { CustomerRatingOverviewCard } from "@/components/helpdesk/CustomerRatingOverviewCard";
+import { UnitCategoryWiseProactiveCard } from "@/components/helpdesk/UnitCategoryWiseProactiveCard";
+import { CommonAreaCategoryWiseCard } from "@/components/helpdesk/CommonAreaCategoryWiseCard";
+import { CommonAreaCategoryWiseProactiveCard } from "@/components/helpdesk/CommonAreaCategoryWiseProactiveCard";
+import { ticketAnalyticsDownloadAPI } from "@/services/ticketAnalyticsDownloadAPI";
 import { AIAssistantWidget } from "@/components/AIAssistantWidget";
 import { DashboardAIAssistant } from "@/components/DashboardAIAssistant";
 import { HelpdeskAnalyticsCard } from "@/components/dashboard/HelpdeskAnalyticsCard";
@@ -113,17 +117,26 @@ import AmountOverviewCard from "@/components/accounting/AmountOverviewCard";
 import AmountClientWiseCard from "@/components/accounting/AmountClientWiseCard";
 import QuickGateOverviewCard from "@/components/quickgate/QuickGateOverviewCard";
 import SiteWiseVisitorsCard from "@/components/quickgate/SiteWiseVisitorsCard";
+import QuickGateGoodsStaffCard from "@/components/quickgate/QuickGateGoodsStaffCard";
 import visitorManagementAnalyticsAPI from "@/services/visitorManagementAnalyticsAPI";
 import VisitorTrendAnalysisCard from "@/components/visitor/VisitorTrendAnalysisCard";
 import checklistManagementAnalyticsAPI from "@/services/checklistManagementAnalyticsAPI";
 import permitToWorkAnalyticsAPI from "@/services/permitToWorkAnalyticsAPI";
 import incidentAnalyticsAPI from "@/services/incidentAnalyticsAPI";
+import IncidentSafetyMetricsCard from "@/components/incident/IncidentSafetyMetricsCard";
+import escalationAnalyticsAPI from "@/services/escalationAnalyticsAPI";
+import EscalationKpiCard from "@/components/escalation/EscalationKpiCard";
+import ServicePartnerEvaluationCard from "@/components/escalation/ServicePartnerEvaluationCard";
+import OccupancySummaryCard from "@/components/occupancy/OccupancySummaryCard";
 import BodyInjuryChartCard from "@/components/incident-analytics/BodyInjuryChartCard";
 import utilityAnalyticsAPI from "@/services/utilityAnalyticsAPI";
 import UtilityConsumptionCard from "@/components/utility/UtilityConsumptionCard";
 import WaterConsumptionCard from "@/components/utility/WaterConsumptionCard";
 import CarbonEmissionCard from "@/components/utility/CarbonEmissionCard";
 import EnergyIntensityCard from "@/components/utility/EnergyIntensityCard";
+import FuelConsumptionCard from "@/components/utility/FuelConsumptionCard";
+import PowerConsumptionTopManagementCard from "@/components/utility/PowerConsumptionTopManagementCard";
+import WaterConsumptionTopManagementCard from "@/components/utility/WaterConsumptionTopManagementCard";
 import { SiteWiseEvConsumptionCard } from "@/components/utility/SiteWiseEvConsumptionCard";
 import { SiteWiseDryWasteSegregationCard } from "@/components/utility/SiteWiseDryWasteSegregationCard";
 import { CumulativePowerWidget } from "@/components/charts/CumulativePowerWidget";
@@ -161,7 +174,9 @@ interface SelectedAnalytic {
   | "incident_management"
   | "utility"
   | "amount_management"
-  | "quickgate_management";
+  | "quickgate_management"
+  | "escalation_management"
+  | "occupancy_management";
   endpoint: string;
   title: string;
 }
@@ -187,6 +202,8 @@ interface DashboardData {
   utility?: any;
   amount_management?: any;
   quickgate_management?: any;
+  escalation_management?: any;
+  occupancy_management?: any;
 }
 
 // Track errors per module/endpoint so we can show error state inside each analytic
@@ -579,6 +596,10 @@ export const Dashboard = () => {
           total_outstanding_amount_client_wise:          { h: 10, minH: 8 },
           visitor_summary:                               { h: 4, minH: 3, maxH: 4 },
           site_wise_visitors:                            { h: 10, minH: 8 },
+          goods_staff_overview:                          { h: 4, minH: 3, maxH: 4 },
+          safety_metrics:                                { h: 4, minH: 3, maxH: 4 },
+          escalation_kpis:                               { h: 4, minH: 3, maxH: 4 },
+          occupancy_summary:                             { h: 4, minH: 3, maxH: 4 },
           parking_allocation_overview:           { h: 10, minH: 8 },
           technical_checklist:                   { h: 10, minH: 8 },
           non_technical_checklist:               { h: 10, minH: 8 },
@@ -591,6 +612,9 @@ export const Dashboard = () => {
           visitor_trend_analysis:                { h: 10, minH: 8 },
           response_tat_performance_quarterly:    { h: 10, minH: 8 },
           resolution_tat_performance_quarterly:  { h: 10, minH: 8 },
+          unit_categorywise_proactive:           { h: 10, minH: 8 },
+          common_area_categorywise:              { h: 10, minH: 8 },
+          common_area_categorywise_proactive:    { h: 10, minH: 8 },
           inventory_overview_summary:            { h: 4, minH: 3, maxH: 4 },
           consumable_inventory_value_quarterly:  { h: 10, minH: 8 },
           status_overview:                       { h: 10, minH: 8 },
@@ -607,6 +631,9 @@ export const Dashboard = () => {
           water_time_series:                     { h: 10, minH: 8 },
           carbon_emission:                       { h: 4, minH: 3, maxH: 4 },
           energy_intensity:                      { h: 4, minH: 3, maxH: 4 },
+          card_fuel_consumption:                 { h: 4, minH: 3, maxH: 4 },
+          power_consumption_top_management:      { h: 8, minH: 6 },
+          water_consumption_top_management:      { h: 5, minH: 4, maxH: 6 },
           site_wise_ev_consumption:              { h: 10, minH: 8 },
           site_wise_dry_waste_segregation:       { h: 10, minH: 8 },
         };
@@ -748,6 +775,9 @@ export const Dashboard = () => {
         'visitor_trend_analysis',
         'response_tat_performance_quarterly',
         'resolution_tat_performance_quarterly',
+        'unit_categorywise_proactive',
+        'common_area_categorywise',
+        'common_area_categorywise_proactive',
         'consumable_inventory_value_quarterly',
         'status_overview',
         'unit_resource_wise',
@@ -767,7 +797,7 @@ export const Dashboard = () => {
       const isCompactCard = compactCards.includes(analytic.endpoint);
       const isTallCard = tallCards.includes(analytic.endpoint);
 
-      const h4Cards = ['engagement_metrics', 'customer_experience_feedback', 'snapshot', 'company_asset_overview', 'inventory_overview_summary', 'revenue_generation_overview', 'amc_contract_summary', 'energy_kpis', 'water_kpis', 'carbon_emission', 'energy_intensity'];
+      const h4Cards = ['engagement_metrics', 'customer_experience_feedback', 'snapshot', 'company_asset_overview', 'inventory_overview_summary', 'revenue_generation_overview', 'amc_contract_summary', 'energy_kpis', 'water_kpis', 'carbon_emission', 'energy_intensity', 'card_fuel_consumption'];
       const h9Cards = ['aging_closure_feedback'];
       const cardH = h4Cards.includes(analytic.endpoint) ? 4 : h9Cards.includes(analytic.endpoint) ? 9 : isCompactCard ? 5 : isTallCard ? 10 : 8;
       const cardMinH = h4Cards.includes(analytic.endpoint) ? 3 : h9Cards.includes(analytic.endpoint) ? 8 : isCompactCard ? 4 : isTallCard ? 8 : 6;
@@ -1535,6 +1565,30 @@ export const Dashboard = () => {
                     )
                   );
                   break;
+                case "unit_categorywise_proactive":
+                  promises.push(
+                    ticketAnalyticsAPI.getUnitCategorywiseProactiveData(
+                      dateRange.from!,
+                      dateRange.to!
+                    )
+                  );
+                  break;
+                case "common_area_categorywise":
+                  promises.push(
+                    ticketAnalyticsAPI.getCommonAreaCategorywiseData(
+                      dateRange.from!,
+                      dateRange.to!
+                    )
+                  );
+                  break;
+                case "common_area_categorywise_proactive":
+                  promises.push(
+                    ticketAnalyticsAPI.getCommonAreaCategorywiseProactiveData(
+                      dateRange.from!,
+                      dateRange.to!
+                    )
+                  );
+                  break;
               }
             }
             break;
@@ -1944,6 +1998,14 @@ export const Dashboard = () => {
                     )
                   );
                   break;
+                case "card_fuel_consumption":
+                  promises.push(
+                    utilityAnalyticsAPI.getFuelConsumption(
+                      dateRange.from,
+                      dateRange.to
+                    )
+                  );
+                  break;
                 default:
                   promises.push(Promise.resolve(null));
               }
@@ -2008,9 +2070,95 @@ export const Dashboard = () => {
                     )
                   );
                   break;
+                case "safety_metrics":
+                  promises.push(
+                    incidentAnalyticsAPI.getSafetyMetrics(
+                      dateRange.from,
+                      dateRange.to
+                    )
+                  );
+                  break;
+                case "cause_wise_incidents":
+                  promises.push(
+                    incidentAnalyticsAPI.getCauseWiseIncidents(
+                      dateRange.from,
+                      dateRange.to
+                    )
+                  );
+                  break;
                 default:
                   promises.push(Promise.resolve(null));
               }
+            }
+            break;
+          case "escalation_management":
+            for (const analytic of analytics) {
+              const cachedOk =
+                (lastFetchedKey as any)?.[module]?.[analytic.endpoint] ===
+                dateKey &&
+                (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
+              if (cachedOk) {
+                promises.push(
+                  Promise.resolve(
+                    (dashboardData as any)[module][analytic.endpoint]
+                  )
+                );
+                continue;
+              }
+              const failedSameRange =
+                (lastFailedKey as any)?.[module]?.[analytic.endpoint] ===
+                dateKey &&
+                ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ??
+                  null) != null;
+              if (failedSameRange) {
+                promises.push(Promise.reject(SKIP_RETRY));
+                continue;
+              }
+              toLoad[module] = toLoad[module] || {};
+              toLoad[module][analytic.endpoint] = true;
+              switch (analytic.endpoint) {
+                case "escalation_kpis":
+                  promises.push(
+                    escalationAnalyticsAPI.getEscalationKpis(
+                      dateRange.from,
+                      dateRange.to
+                    )
+                  );
+                  break;
+                case "zone_wise":
+                  promises.push(
+                    escalationAnalyticsAPI.getZoneWise(
+                      dateRange.from,
+                      dateRange.to
+                    )
+                  );
+                  break;
+                case "category_wise":
+                  promises.push(
+                    escalationAnalyticsAPI.getCategoryWise(
+                      dateRange.from,
+                      dateRange.to
+                    )
+                  );
+                  break;
+                case "service_partner_evaluation":
+                  promises.push(
+                    escalationAnalyticsAPI.getServicePartnerEvaluation(
+                      dateRange.from,
+                      dateRange.to
+                    )
+                  );
+                  break;
+                default:
+                  promises.push(Promise.resolve(null));
+              }
+            }
+            break;
+          case "occupancy_management":
+            for (const analytic of analytics) {
+              toLoad[module] = toLoad[module] || {};
+              toLoad[module][analytic.endpoint] = true;
+              promises.push(Promise.resolve(null));
             }
             break;
         }
@@ -3301,6 +3449,29 @@ export const Dashboard = () => {
                 />
               </SortableChartItem>
             );
+          case "goods_staff_overview":
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <QuickGateGoodsStaffCard
+                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
+                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                />
+              </SortableChartItem>
+            );
+          default:
+            return null;
+        }
+      case "occupancy_management":
+        switch (analytic.endpoint) {
+          case "occupancy_summary":
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <OccupancySummaryCard
+                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
+                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                />
+              </SortableChartItem>
+            );
           default:
             return null;
         }
@@ -3548,6 +3719,75 @@ export const Dashboard = () => {
                     try {
                       toast.info('Preparing download...');
                       await helpdeskAnalyticsAPI.downloadTATPerformanceQuarterly(dateRange.from, dateRange.to);
+                      toast.success('Download completed successfully');
+                    } catch (error) {
+                      console.error('Download failed:', error);
+                      toast.error('Failed to download data');
+                    }
+                  }}
+                />
+              </SortableChartItem>
+            );
+          }
+          case "unit_categorywise_proactive": {
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <UnitCategoryWiseProactiveCard
+                  data={rawData}
+                  onDownload={async () => {
+                    if (!dateRange?.from || !dateRange?.to) {
+                      toast.error('Please select a date range');
+                      return;
+                    }
+                    try {
+                      toast.info('Preparing download...');
+                      await ticketAnalyticsDownloadAPI.downloadUnitCategorywiseProactiveData(dateRange.from, dateRange.to);
+                      toast.success('Download completed successfully');
+                    } catch (error) {
+                      console.error('Download failed:', error);
+                      toast.error('Failed to download data');
+                    }
+                  }}
+                />
+              </SortableChartItem>
+            );
+          }
+          case "common_area_categorywise": {
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <CommonAreaCategoryWiseCard
+                  data={rawData}
+                  onDownload={async () => {
+                    if (!dateRange?.from || !dateRange?.to) {
+                      toast.error('Please select a date range');
+                      return;
+                    }
+                    try {
+                      toast.info('Preparing download...');
+                      await ticketAnalyticsDownloadAPI.downloadCommonAreaCategorywiseData(dateRange.from, dateRange.to);
+                      toast.success('Download completed successfully');
+                    } catch (error) {
+                      console.error('Download failed:', error);
+                      toast.error('Failed to download data');
+                    }
+                  }}
+                />
+              </SortableChartItem>
+            );
+          }
+          case "common_area_categorywise_proactive": {
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <CommonAreaCategoryWiseProactiveCard
+                  data={rawData}
+                  onDownload={async () => {
+                    if (!dateRange?.from || !dateRange?.to) {
+                      toast.error('Please select a date range');
+                      return;
+                    }
+                    try {
+                      toast.info('Preparing download...');
+                      await ticketAnalyticsDownloadAPI.downloadCommonAreaCategorywiseProactiveData(dateRange.from, dateRange.to);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -4141,6 +4381,32 @@ export const Dashboard = () => {
               </SortableChartItem>
             );
           }
+          case "card_fuel_consumption": {
+            const rawData = (dashboardData as any)?.utility?.[analytic.endpoint];
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <FuelConsumptionCard data={rawData} />
+              </SortableChartItem>
+            );
+          }
+          case "power_consumption_top_management":
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <PowerConsumptionTopManagementCard
+                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
+                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                />
+              </SortableChartItem>
+            );
+          case "water_consumption_top_management":
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <WaterConsumptionTopManagementCard
+                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
+                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                />
+              </SortableChartItem>
+            );
           case "site_wise_ev_consumption": {
             const rawData = (dashboardData as any)?.utility?.[analytic.endpoint];
             const handleEvDownload = async () => {
@@ -4437,6 +4703,131 @@ export const Dashboard = () => {
               />
             );
           }
+          case "safety_metrics":
+            return (
+              <IncidentSafetyMetricsCard data={rawData} loading={rawData == null} />
+            );
+          case "cause_wise_incidents": {
+            // Unlike top_categories/status_summary, this endpoint's `response` is
+            // an array of { name, y } pairs (name can be null for "uncategorized"),
+            // not a flat { category: count } object — buildIncidentPieData expects
+            // the latter, so it's mapped directly here instead.
+            const causeRows: { name: string | null; y: number }[] = Array.isArray(rawData?.response)
+              ? rawData.response
+              : [];
+            const causeData = causeRows
+              .filter((row) => typeof row?.y === "number" && row.y > 0)
+              .map((row, i) => ({
+                name: row.name && row.name.trim() !== "" ? row.name : "Uncategorized",
+                value: row.y,
+                color: PIE_COLORS_INC[i % PIE_COLORS_INC.length],
+              }));
+            return (
+              <AssetAnalyticsCard
+                title="Primary Root Cause Category"
+                type="categoryWise"
+                data={causeData}
+                dateRange={defaultRange}
+                info="Incidents grouped by primary root cause category"
+                onDownload={async () => {
+                  if (!dateRange?.from || !dateRange?.to) return;
+                  try {
+                    await incidentAnalyticsAPI.downloadCauseWiseIncidents(dateRange.from, dateRange.to);
+                    toast.success("Downloaded successfully");
+                  } catch {
+                    toast.error("Failed to download");
+                  }
+                }}
+              />
+            );
+          }
+          default:
+            return null;
+        }
+      }
+
+      case "escalation_management": {
+        const ESC_COLORS = ["#DA7756", "#6B9BCC", "#798C5E", "#EDC488", "#CECBF6", "#9EC8BA", "#E7848E"];
+
+        const defaultRange = assetDateRange || {
+          startDate: new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
+          endDate: new Date(),
+        };
+
+        // escalation_kpis/zone_wise/category_wise haven't been hit against a live
+        // backend from this environment. Incident's cause_wise_incidents (a sibling
+        // "_dashboard" pie/category endpoint, confirmed live) returns `response` as
+        // an array of { name, y } pairs rather than a flat { key: count } object, so
+        // that shape is tried first here too, falling back to a flat object.
+        const buildEscalationRows = (raw: any): { name: string; value: number }[] => {
+          const respVal = raw?.response ?? raw;
+          if (Array.isArray(respVal)) {
+            return respVal
+              .filter((row: any) => typeof row?.y === "number" && row.y > 0)
+              .map((row: any) => ({
+                name: row.name && String(row.name).trim() !== "" ? String(row.name) : "Uncategorized",
+                value: row.y,
+              }));
+          }
+          if (respVal && typeof respVal === "object") {
+            return Object.entries(respVal)
+              .filter(([, v]) => typeof v === "number" && (v as number) > 0)
+              .map(([key, v]) => ({
+                name: key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+                value: v as number,
+              }));
+          }
+          return [];
+        };
+
+        switch (analytic.endpoint) {
+          case "escalation_kpis":
+            return <EscalationKpiCard data={rawData} loading={rawData == null} />;
+          case "zone_wise":
+            return (
+              <AssetAnalyticsCard
+                title="Zone Escalations"
+                type="groupWise"
+                data={buildEscalationRows(rawData)}
+                dateRange={defaultRange}
+                info="Escalations grouped by zone"
+                onDownload={async () => {
+                  if (!dateRange?.from || !dateRange?.to) return;
+                  try {
+                    await escalationAnalyticsAPI.downloadZoneWise(dateRange.from, dateRange.to);
+                    toast.success("Downloaded successfully");
+                  } catch {
+                    toast.error("Failed to download");
+                  }
+                }}
+              />
+            );
+          case "category_wise": {
+            const categoryData = buildEscalationRows(rawData).map((d, i) => ({
+              ...d,
+              color: ESC_COLORS[i % ESC_COLORS.length],
+            }));
+            return (
+              <AssetAnalyticsCard
+                title="Category Wise Executive Escalations"
+                type="categoryWise"
+                data={categoryData}
+                dateRange={defaultRange}
+                info="Executive escalations grouped by category"
+                onDownload={async () => {
+                  if (!dateRange?.from || !dateRange?.to) return;
+                  try {
+                    await escalationAnalyticsAPI.downloadCategoryWise(dateRange.from, dateRange.to);
+                    toast.success("Downloaded successfully");
+                  } catch {
+                    toast.error("Failed to download");
+                  }
+                }}
+              />
+            );
+          }
+          case "service_partner_evaluation":
+            return <ServicePartnerEvaluationCard data={rawData} />;
           default:
             return null;
         }

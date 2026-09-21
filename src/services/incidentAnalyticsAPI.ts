@@ -84,6 +84,37 @@ const incidentAnalyticsAPI = {
       `incident-rca-${fmt(fromDate)}-to-${fmt(toDate)}.xlsx`
     );
   },
+
+  // Per the "New FM Dashboard Collection" Bruno/Postman collection at the repo
+  // root — its `/incident/safety_metrics` and `/incident/Primary Root Cause
+  // Category` requests hit these same `/incident_dashboard/*` routes with a
+  // `site_id` param, so it's added here the same opt-in way Quick Gate's
+  // cards already read the selected site (falls back to none — every-site
+  // scope — when nothing is selected yet).
+  async getSafetyMetrics(fromDate: Date, toDate: Date) {
+    const siteId = localStorage.getItem('selectedSiteId') || '';
+    return get(
+      buildUrl('/incident_dashboard/safety_metrics.json', fromDate, toDate, siteId ? { site_id: siteId } : {})
+    );
+  },
+
+  async getCauseWiseIncidents(fromDate: Date, toDate: Date) {
+    const siteId = localStorage.getItem('selectedSiteId') || '';
+    return get(
+      buildUrl('/incident_dashboard/cause_wise_incidents.json', fromDate, toDate, siteId ? { site_id: siteId } : {})
+    );
+  },
+
+  async downloadCauseWiseIncidents(fromDate: Date, toDate: Date) {
+    const siteId = localStorage.getItem('selectedSiteId') || '';
+    return download(
+      buildUrl('/incident_dashboard/cause_wise_incidents.json', fromDate, toDate, {
+        export: 'true',
+        ...(siteId ? { site_id: siteId } : {}),
+      }),
+      `incident-primary-root-cause-${fmt(fromDate)}-to-${fmt(toDate)}.xlsx`
+    );
+  },
 };
 
 export default incidentAnalyticsAPI;

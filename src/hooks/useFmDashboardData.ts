@@ -110,6 +110,15 @@ import {
   fetchFinanceApprovalQueue,
   fetchFinanceTopPendingRecords,
   type FinanceRecord,
+  fetchFinanceAlertsAiInsight,
+  fetchFinancialIntelligenceAiInsight,
+  fetchBillInformationAiInsight,
+  fetchOverdueInvoicesAiInsight,
+  fetchApprovalQueueAiInsight,
+  fetchPoWoGrnSesAiInsight,
+  fetchCustomersAiInsight,
+  fetchEventsAiInsight,
+  type AiInsightRecord,
 } from "@/services/fmDashboardAPI";
 
 interface UseFmDashboardModuleArgs {
@@ -798,6 +807,114 @@ export function useIncidentsDashboardData({ siteIds, fromDate, toDate, enabled }
 }
 
 // ============================================================================
+// CRM
+// ============================================================================
+
+export interface CrmDashboardData {
+  leaseOverview: FinanceRecord | FinanceRecord[] | null;
+  eventsOverview: FinanceRecord | FinanceRecord[] | null;
+  broadcastOverview: FinanceRecord | FinanceRecord[] | null;
+  walletOverview: FinanceRecord | FinanceRecord[] | null;
+  walletDistribution: FinanceRecord | FinanceRecord[] | null;
+  walletTransactions: FinanceRecord | FinanceRecord[] | null;
+  // AI-insight endpoints — see extractAiInsights() in fmDashboardAPI.ts for how these are read.
+  customersInsight: AiInsightRecord | null;
+  eventsInsight: AiInsightRecord | null;
+}
+
+const EMPTY_CRM_DATA: CrmDashboardData = {
+  leaseOverview: null,
+  eventsOverview: null,
+  broadcastOverview: null,
+  walletOverview: null,
+  walletDistribution: null,
+  walletTransactions: null,
+  customersInsight: null,
+  eventsInsight: null,
+};
+
+export function useCrmDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+  const [data, setData] = useState<CrmDashboardData>(EMPTY_CRM_DATA);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const siteIdsKey = siteIds.join(",");
+
+  useEffect(() => {
+    console.log("[useCrmDashboardData] enabled:", enabled, "siteIds:", siteIds, "fromDate:", fromDate, "toDate:", toDate);
+    if (!enabled || siteIds.length === 0) {
+      console.log("[useCrmDashboardData] Skipping: enabled=", enabled, "siteIds.length=", siteIds.length);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    console.log("[useCrmDashboardData] Starting fetch with params:", { siteIds, fromDate, toDate });
+    const params = { siteIds, fromDate, toDate };
+    Promise.all([
+      fetchCrmLeaseOverview(params),
+      fetchCrmEventsOverview(params),
+      fetchCrmBroadcastOverview(params),
+      fetchCrmWalletOverview(params),
+      fetchCrmWalletDistribution(params),
+      fetchCrmWalletTransactions(params),
+      fetchCustomersAiInsight(params),
+      fetchEventsAiInsight(params),
+    ])
+      .then(
+        ([
+          leaseOverview,
+          eventsOverview,
+          broadcastOverview,
+          walletOverview,
+          walletDistribution,
+          walletTransactions,
+          customersInsight,
+          eventsInsight,
+        ]) => {
+          if (cancelled) return;
+          console.log("[useCrmDashboardData] Data loaded successfully:", {
+            leaseOverview,
+            eventsOverview,
+            broadcastOverview,
+            walletOverview,
+            walletDistribution,
+            walletTransactions,
+            customersInsight,
+            eventsInsight,
+          });
+          setData({
+            leaseOverview,
+            eventsOverview,
+            broadcastOverview,
+            walletOverview,
+            walletDistribution,
+            walletTransactions,
+            customersInsight,
+            eventsInsight,
+          });
+        }
+      )
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        const errorMsg = err instanceof Error ? err.message : "Failed to load CRM dashboard data";
+        console.error("[useCrmDashboardData] Error:", errorMsg, err);
+        setError(errorMsg);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, siteIdsKey, fromDate, toDate]);
+
+  return { data, loading, error };
+}
+
+// ============================================================================
 // Finance
 // ============================================================================
 // See the file-header comment above fetchFinanceValue in fmDashboardAPI.ts —
@@ -814,6 +931,13 @@ export interface FinanceDashboardData {
   overdueInvoices: FinanceRecord | FinanceRecord[] | null;
   approvalQueue: FinanceRecord | FinanceRecord[] | null;
   topPendingRecords: FinanceRecord | FinanceRecord[] | null;
+  // AI-insight endpoints — see extractAiInsights() in fmDashboardAPI.ts for how these are read.
+  financeAlertsInsight: AiInsightRecord | null;
+  financialIntelligenceInsight: AiInsightRecord | null;
+  billInformationInsight: AiInsightRecord | null;
+  overdueInvoicesInsight: AiInsightRecord | null;
+  approvalQueueInsight: AiInsightRecord | null;
+  poWoGrnSesInsight: AiInsightRecord | null;
 }
 
 const EMPTY_FINANCE_DATA: FinanceDashboardData = {
@@ -825,6 +949,12 @@ const EMPTY_FINANCE_DATA: FinanceDashboardData = {
   overdueInvoices: null,
   approvalQueue: null,
   topPendingRecords: null,
+  financeAlertsInsight: null,
+  financialIntelligenceInsight: null,
+  billInformationInsight: null,
+  overdueInvoicesInsight: null,
+  approvalQueueInsight: null,
+  poWoGrnSesInsight: null,
 };
 
 export function useFinanceDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
@@ -849,6 +979,12 @@ export function useFinanceDashboardData({ siteIds, fromDate, toDate, enabled }: 
       fetchFinanceOverdueInvoices(params),
       fetchFinanceApprovalQueue(params),
       fetchFinanceTopPendingRecords(params),
+      fetchFinanceAlertsAiInsight(params),
+      fetchFinancialIntelligenceAiInsight(params),
+      fetchBillInformationAiInsight(params),
+      fetchOverdueInvoicesAiInsight(params),
+      fetchApprovalQueueAiInsight(params),
+      fetchPoWoGrnSesAiInsight(params),
     ])
       .then(
         ([
@@ -860,6 +996,12 @@ export function useFinanceDashboardData({ siteIds, fromDate, toDate, enabled }: 
           overdueInvoices,
           approvalQueue,
           topPendingRecords,
+          financeAlertsInsight,
+          financialIntelligenceInsight,
+          billInformationInsight,
+          overdueInvoicesInsight,
+          approvalQueueInsight,
+          poWoGrnSesInsight,
         ]) => {
           if (cancelled) return;
           setData({
@@ -871,6 +1013,12 @@ export function useFinanceDashboardData({ siteIds, fromDate, toDate, enabled }: 
             overdueInvoices,
             approvalQueue,
             topPendingRecords,
+            financeAlertsInsight,
+            financialIntelligenceInsight,
+            billInformationInsight,
+            overdueInvoicesInsight,
+            approvalQueueInsight,
+            poWoGrnSesInsight,
           });
         }
       )

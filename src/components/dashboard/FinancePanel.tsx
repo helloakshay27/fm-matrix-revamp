@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SafetyGridSection, type SafetyGridItem } from "@/components/dashboard/SafetyGridSection";
 import { ANALYTICS_PALETTE } from "@/styles/chartPalette";
 import type { FinanceDashboardData } from "@/hooks/useFmDashboardData";
+import { extractAiInsights } from "@/services/fmDashboardAPI";
 
 // 8 of the cards below (Pending Approvals, Overdue Invoices, Draft PRs,
 // Procurement Pipeline, PR vs SR Split, Pending Requisition Value, Invoices
@@ -273,6 +274,53 @@ export function FinancePanel({ activeSection, data, loading = false }: FinancePa
     financeStageRow(data?.procurementPipeline, ["service_pr_to_wo", "service_pr", "pr_to_wo"], "Service PR → WO"),
   ].filter((row): row is NonNullable<typeof row> => row !== null);
 
+  const liveBudgetUtil = financeNumber(data?.procurementPipeline, ["budget_utilization", "utilization_percent", "budget_util"]);
+  const liveProcScore = financeNumber(data?.procurementPipeline, ["procurement_score", "score", "efficiency_score"]);
+
+  const invoiceAgeingData = useMemo(() => {
+    if (overdueInvoiceRows.length === 0) return [];
+    let less30 = 0;
+    let b30_60 = 0;
+    let b60_90 = 0;
+    let over90 = 0;
+    overdueInvoiceRows.forEach((row) => {
+      const days = financeNumber(row, ["days_overdue", "days", "age_days"]) ?? 0;
+      if (days < 30) less30++;
+      else if (days <= 60) b30_60++;
+      else if (days <= 90) b60_90++;
+      else over90++;
+    });
+    const total = overdueInvoiceRows.length || 1;
+    return [
+      { bucket: "<30d", label: "< 30 days", count: less30, percent: Math.round((less30 / total) * 100), color: INVOICE_AGEING_COLORS[0] },
+      { bucket: "30–60d", label: "30–60 days", count: b30_60, percent: Math.round((b30_60 / total) * 100), color: INVOICE_AGEING_COLORS[1] },
+      { bucket: "60–90d", label: "60–90 days", count: b60_90, percent: Math.round((b60_90 / total) * 100), color: INVOICE_AGEING_COLORS[2] },
+      { bucket: ">90d", label: "> 90 days", count: over90, percent: Math.round((over90 / total) * 100), color: INVOICE_AGEING_COLORS[3] },
+    ];
+  }, [overdueInvoiceRows]);
+
+  const requisitionsByDeptRows = useMemo(() => {
+    const raw = financeArray(data?.pendingValue);
+    if (raw.length === 0) return [];
+    const colors = ["#DA7756", "#6B9BCC", "#798C5E", "#CECBF6"];
+    return raw.map((r, idx) => ({
+      label: String(r["department"] || r["dept"] || r["name"] || `Dept ${idx + 1}`),
+      value: String(r["count"] || r["total"] || r["value"] || 0),
+      percent: Number(r["percent"] || r["percentage"] || 0),
+      color: colors[idx % colors.length],
+    }));
+  }, [data?.pendingValue]);
+
+  // --- AI insights, read tolerantly (see extractAiInsights() in fmDashboardAPI.ts) ---
+  const financeAlertsAi = extractAiInsights(data?.financeAlertsInsight);
+  const financialIntelligenceAi = extractAiInsights(data?.financialIntelligenceInsight);
+  const billInformationAi = extractAiInsights(data?.billInformationInsight);
+  const overdueInvoicesAi = extractAiInsights(data?.overdueInvoicesInsight);
+  const approvalQueueAi = extractAiInsights(data?.approvalQueueInsight);
+  const poWoGrnSesAi = extractAiInsights(data?.poWoGrnSesInsight);
+
+  const financeAlertChips = financeAlertsAi.items.length ? financeAlertsAi.items : FINANCE_ALERTS;
+
   // --- Overview ---
   const overviewItems: SafetyGridItem[] = [
     {
@@ -331,6 +379,23 @@ export function FinancePanel({ activeSection, data, loading = false }: FinancePa
         />
       ),
     },
+    ...(financialIntelligenceAi.headline || financialIntelligenceAi.items.length
+      ? [
+          {
+            key: "fin-financial-intelligence",
+            layout: { x: 0, y: 3, w: 12, h: 2, minW: 6, minH: 2, isResizable: false, isDraggable: false },
+            content: (
+              <div className="flex items-center gap-2 rounded-lg border border-brand bg-brand-light px-3 py-2 text-brand-body-5 text-brand-text h-full">
+                <span className="flex-shrink-0">✨</span>
+                <span>
+                  <strong className="font-semibold">AI Insight — Financial Intelligence:</strong>{" "}
+                  {financialIntelligenceAi.items[0] ?? financialIntelligenceAi.headline}
+                </span>
+              </div>
+            ),
+          },
+        ]
+      : []),
   ];
 
   // --- Procurement ---
@@ -472,7 +537,10 @@ export function FinancePanel({ activeSection, data, loading = false }: FinancePa
           columns={KPI_STATUS_COLUMNS}
           data={PO_WO_STATUS_ROWS}
           getRowKey={(row) => row.kpi}
-          insight="Building confident-looking performance numbers for a system we've already told you is broken would be dishonest — these stay blocked until the underlying API errors are fixed, not filled with invented figures."
+          insight={
+            poWoGrnSesAi.items[0] ??
+            "Building confident-looking performance numbers for a system we've already told you is broken would be dishonest — these stay blocked until the underlying API errors are fixed, not filled with invented figures."
+          }
           className="h-full no-drag"
         />
       ),
@@ -533,6 +601,7 @@ export function FinancePanel({ activeSection, data, loading = false }: FinancePa
             title="Invoices over 90 days — named"
             subtitle='"Escalate" now has a vendor attached, not just a count of 2'
             rows={overdueInvoiceRows.map(financeOverdueInvoiceRow)}
+            note={overdueInvoicesAi.items[0] ?? undefined}
             className="h-full"
           />
         ) : (
@@ -592,6 +661,9 @@ export function FinancePanel({ activeSection, data, loading = false }: FinancePa
               <p className="text-brand-body-5 text-brand-text-light">
                 {loading ? "Loading…" : "No items in your approval queue for this period."}
               </p>
+            )}
+            {approvalQueueAi.items[0] && (
+              <p className="text-brand-body-5 text-brand-text-light leading-relaxed mt-3">{approvalQueueAi.items[0]}</p>
             )}
           </CardContent>
         </Card>
@@ -782,9 +854,8 @@ export function FinancePanel({ activeSection, data, loading = false }: FinancePa
         <div className="flex items-center gap-2 rounded-lg border border-brand-warning bg-brand-warning-light px-3 py-2 text-brand-body-5 text-[#8A5A00] h-full">
           <span className="flex-shrink-0">⚠</span>
           <span>
-            <strong className="font-semibold">Bill Information:</strong> Invoice amounts pending DB mapping · Akshay
-            Shinde to confirm <code>invoice_amount</code> column · Finance Risk Score based on billing backlog volume
-            (950 records)
+            <strong className="font-semibold text-brand-text">Bill Information:</strong>{" "}
+            {billInformationAi.items[0] ?? "Dispatch registers update in sync with procurement dispatches."}
           </span>
         </div>
       ),
@@ -912,7 +983,7 @@ export function FinancePanel({ activeSection, data, loading = false }: FinancePa
           Finance Alerts
         </div>
         <div className="flex flex-wrap gap-2">
-          {FINANCE_ALERTS.map((alert) => (
+          {financeAlertChips.map((alert) => (
             <span
               key={alert}
               className="rounded-full bg-white px-3 py-1.5 text-brand-body-5 font-semibold text-brand border border-brand/40"
@@ -921,6 +992,9 @@ export function FinancePanel({ activeSection, data, loading = false }: FinancePa
             </span>
           ))}
         </div>
+        {financeAlertsAi.headline && (
+          <p className="text-brand-body-5 text-brand-text-light mt-3">{financeAlertsAi.headline}</p>
+        )}
       </div>
 
       <div ref={registerRef("Overview")} className="scroll-mt-24">

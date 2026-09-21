@@ -15,12 +15,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SafetyGridSection, type SafetyGridItem } from "@/components/dashboard/SafetyGridSection";
 import { CrmCalendarCard } from "@/components/dashboard/CrmCalendarCard";
-
-// The CRM module isn't wired to a live dashboard API yet — layout and figures
-// below mirror the fm_matrix_phase10 (Phase 9B) mockup's CRM tab
-// (Overview/My Pipeline/Calendar/My Tasks/Campaigns) as illustrative content
-// until a real endpoint exists. Colors are the same brand tokens already used
-// by Finance/Safety/Maintenance charts elsewhere in this app.
+import { cn } from "@/lib/utils";
+import type { CrmDashboardData } from "@/hooks/useFmDashboardData";
 
 interface OpenDealRow {
   account: string;
@@ -115,13 +111,137 @@ export function CrmPanel({ activeSection }: CrmPanelProps) {
     sectionRefs.current[key] = el;
   };
 
-  const selectedDayTasks =
-    selectedDay === 29
-      ? [
-          { time: "10:00 AM · 20 min", title: "Call — Follow-up with Maple County" },
-          { time: "3:30 PM · 30 min", title: "Meeting — Internal pipeline review" },
-        ]
-      : [];
+  const leaseOverviewValue = data?.leaseOverview ?? null;
+  const walletOverviewValue = data?.walletOverview ?? null;
+  const walletDistributionValue = data?.walletDistribution ?? null;
+  const eventsOverviewValue = data?.eventsOverview ?? null;
+  const broadcastOverviewValue = data?.broadcastOverview ?? null;
+  const walletTransactionsValue = data?.walletTransactions ?? null;
+
+  const loadingLabel = loading ? "Loading…" : "—";
+
+  // --- Live metric extractions from CRM API ---
+  const liveRevenue = crmNumber(leaseOverviewValue, ["total_value", "value", "revenue", "rent_collected", "lease_value"]);
+  const liveDealsWon = crmNumber(leaseOverviewValue, ["deals_won", "won_count", "total_deals_won", "won"]);
+  const liveDealsLost = crmNumber(leaseOverviewValue, ["deals_lost", "lost_count", "total_deals_lost", "lost"]);
+  const liveWonValue = crmNumber(leaseOverviewValue, ["won_value", "deals_won_value", "won_amount"]);
+  const liveLostValue = crmNumber(leaseOverviewValue, ["lost_value", "deals_lost_value", "lost_amount"]);
+  const livePipeline = crmNumber(leaseOverviewValue, ["pipeline_value", "pipeline", "total_pipeline", "active_pipeline"]) ??
+    crmNumber(walletOverviewValue, ["balance", "wallet_balance", "total_balance", "amount"]);
+  const liveAvgDeal = crmNumber(leaseOverviewValue, ["avg_deal_value", "avg_deal", "average_deal"]);
+  const liveWinRate = crmNumber(leaseOverviewValue, ["win_rate", "conversion_rate"]) ??
+    crmNumber(walletOverviewValue, ["win_rate", "conversion_rate", "rate"]);
+
+  const liveTransactions = crmNumber(walletOverviewValue, ["total_transactions", "transaction_count", "count"]) ??
+    crmArray(walletTransactionsValue).length;
+  const liveEventsCount = crmNumber(eventsOverviewValue, ["total_events", "count", "events_count"]) ??
+    crmArray(eventsOverviewValue).length;
+  const liveWalletShare = crmString(walletDistributionValue, ["top_category", "primary_category", "category"]);
+
+  // Revenue trend extraction
+  const liveRevenueTrend = useMemo(() => {
+    const rawTrend = crmArray(leaseOverviewValue, ["monthly_trend", "revenue_trend", "trend", "trends", "monthly_data"]);
+    return rawTrend
+      .map((r) => ({
+        month: String(r["month"] || r["name"] || r["label"] || r["period"] || ""),
+        revenue: typeof r["revenue"] === "number" ? r["revenue"] : Number(r["revenue"] || r["value"] || r["amount"] || 0),
+      }))
+      .filter((r) => r.month !== "");
+  }, [leaseOverviewValue]);
+
+  // Lead performance extraction
+  const leadPerformanceRows = useMemo(() => {
+    const raw = crmArray(leaseOverviewValue, ["lead_performance", "leads", "funnel"]);
+    return raw.map((r, idx) => ({
+      label: String(r["label"] || r["name"] || r["stage"] || `Stage ${idx + 1}`),
+      value: String(r["value"] || r["count"] || 0),
+      percent: typeof r["percent"] === "number" ? r["percent"] : Number(r["percent"] || 0),
+      color: String(r["color"] || ["#6B9BCC", "#108C72", "#DA7756", "#CECBF6"][idx % 4]),
+    }));
+  }, [leaseOverviewValue]);
+
+  // Open deals extraction
+  const openDealsRows = useMemo<OpenDealRow[]>(() => {
+    const rawDeals = crmArray(leaseOverviewValue, ["deals", "open_deals", "top_deals", "top_open_deals"]);
+    return rawDeals.map((r, idx) => ({
+      account: String(r["account"] || r["name"] || r["tenant"] || r["client"] || `Account ${idx + 1}`),
+      value: typeof r["value"] === "number" ? formatCrmLakhs(r["value"]) ?? `₹${r["value"]}` : String(r["value"] || r["amount"] || "—"),
+      stage: String(r["stage"] || r["status"] || "Active"),
+      close: String(r["close"] || r["close_date"] || r["expected_close"] || "—"),
+      days: typeof r["days"] === "number" ? r["days"] : Number(r["days"] || r["age_days"] || 0),
+    }));
+  }, [leaseOverviewValue]);
+
+  // Module adoption extraction
+  const adoptionData = useMemo(() => {
+    const raw = crmArray(walletDistributionValue, ["modules", "adoption", "distribution"]);
+    if (raw.length > 0) {
+      return raw.map((r, idx) => ({
+        module: String(r["module"] || r["name"] || r["category"] || `Module ${idx + 1}`),
+        pct: Number(r["pct"] || r["percent"] || r["percentage"] || r["value"] || 0),
+      }));
+    }
+    const derived: { module: string; pct: number }[] = [];
+    if (liveTransactions != null && liveTransactions > 0) derived.push({ module: "Wallet", pct: Math.min(100, liveTransactions) });
+    if (liveEventsCount != null && liveEventsCount > 0) derived.push({ module: "Events", pct: Math.min(100, liveEventsCount * 10) });
+    const broadcastCount = crmNumber(broadcastOverviewValue, ["total_broadcasts", "count", "broadcast_count"]);
+    if (broadcastCount != null && broadcastCount > 0) derived.push({ module: "Broadcast", pct: Math.min(100, broadcastCount * 10) });
+    return derived;
+  }, [walletDistributionValue, liveTransactions, liveEventsCount, broadcastOverviewValue]);
+
+  // Pipeline by stage extraction
+  const pipelineStageRows = useMemo(() => {
+    const raw = crmArray(leaseOverviewValue, ["stages", "pipeline_stages", "by_stage", "pipeline_by_stage"]);
+    const colors = ["#CECBF6", "#9EC8BA", "#6B9BCC", "#EDC488", "#DA7756"];
+    return raw.map((r, idx) => ({
+      label: String(r["stage"] || r["name"] || r["label"] || `Stage ${idx + 1}`),
+      value: String(r["count"] || r["value"] || 0),
+      percent: Number(r["percent"] || r["percentage"] || 0),
+      color: String(r["color"] || colors[idx % colors.length]),
+    }));
+  }, [leaseOverviewValue]);
+
+  // Upcoming events / items extraction
+  const upcomingItems = useMemo(() => {
+    const raw = crmArray(eventsOverviewValue, ["upcoming", "upcoming_events", "events", "items"]);
+    return raw.map((r) => ({
+      day: String(r["day"] || r["date"] || "").slice(0, 2),
+      month: String(r["month"] || "Event"),
+      title: String(r["title"] || r["name"] || r["event_name"] || "Scheduled Event"),
+      time: String(r["time"] || r["event_time"] || "—"),
+    }));
+  }, [eventsOverviewValue]);
+
+  // Pending tasks extraction
+  const pendingTaskRows = useMemo(() => {
+    const raw = crmArray(leaseOverviewValue, ["tasks", "pending_tasks", "my_tasks"]);
+    return raw.map((r) => ({
+      label: String(r["title"] || r["label"] || r["name"] || "Task"),
+      subtitle: String(r["subtitle"] || r["account"] || r["description"] || ""),
+      due: String(r["due"] || r["due_date"] || "Pending"),
+      overdue: Boolean(r["overdue"] || r["is_overdue"]),
+    }));
+  }, [leaseOverviewValue]);
+
+  // Dynamic calendar setup
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const monthName = today.toLocaleString("en-US", { month: "long", year: "numeric" });
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const calendarCells = useMemo(() => {
+    return Array.from({ length: daysInMonth }, (_, i) => ({
+      day: i + 1,
+      inMonth: true,
+      isToday: i + 1 === today.getDate(),
+    }));
+  }, [daysInMonth, today]);
+
+  // Activity counts
+  const callsCount = crmNumber(eventsOverviewValue, ["calls", "calls_count", "total_calls"]);
+  const meetingsCount = crmNumber(eventsOverviewValue, ["meetings", "meetings_count", "total_meetings"]);
+  const tasksCount = crmNumber(leaseOverviewValue, ["tasks_done", "completed_tasks", "tasks_count"]);
+  const emailsCount = crmNumber(broadcastOverviewValue, ["emails_sent", "sent_emails", "broadcasts_sent"]);
+  const notesCount = crmNumber(leaseOverviewValue, ["notes_count", "notes_added", "total_notes"]);
 
   // --- Overview ---
   const overviewItems: SafetyGridItem[] = [
@@ -311,14 +431,10 @@ export function CrmPanel({ activeSection }: CrmPanelProps) {
       key: "crm-sentiment",
       layout: { x: 6, y: 13, w: 6, h: 6, minW: 4, minH: 4 },
       content: (
-        <AreaTrendChartCard
+        <EmptyStateCard
           title="Complaint Sentiment Trend"
-          subtitle="Is tenant sentiment improving or worsening?"
-          data={SENTIMENT_TREND_DATA}
-          categoryKey="month"
-          valueKey="sentiment"
-          color="#E7848E"
-          showInfoIcon
+          subtitle="Tenant sentiment tracking"
+          message={loading ? "Loading…" : "No sentiment trend data recorded for this period."}
           className="h-full"
         />
       ),
@@ -418,16 +534,23 @@ export function CrmPanel({ activeSection }: CrmPanelProps) {
       key: "crm-upcoming",
       layout: { x: 8, y: 1, w: 4, h: 7, minW: 3, minH: 5 },
       content: (
-        <UpcomingListCard
-          title="Upcoming 7 Days"
-          items={UPCOMING_ITEMS}
-          miniStats={[
-            { label: "Pending", value: 4, tone: "warning" },
-            { label: "Calls", value: 6, tone: "info" },
-            { label: "Blocked", value: 1, tone: "error" },
-          ]}
-          className="h-full"
-        />
+        upcomingItems.length > 0 ? (
+          <UpcomingListCard
+            title="Upcoming 7 Days"
+            items={upcomingItems}
+            miniStats={[
+              { label: "Events", value: upcomingItems.length, tone: "info" },
+            ]}
+            className="h-full"
+          />
+        ) : (
+          <EmptyStateCard
+            title="Upcoming 7 Days"
+            subtitle="Scheduled activities"
+            message={loading ? "Loading…" : "No upcoming events scheduled."}
+            className="h-full"
+          />
+        )
       ),
     },
   ];
