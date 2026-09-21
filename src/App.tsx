@@ -2698,6 +2698,11 @@ const GoPhygitalBusinessCard = lazy(() =>
     default: m.GoPhygitalBusinessCard,
   }))
 );
+const ViUpdateDetailsPage = lazy(() =>
+  import("./pages/mobile/ViUpdateDetailsPage").then((m) => ({
+    default: m.ViUpdateDetailsPage,
+  }))
+);
 const CompanyPartnersSetupDashboard = lazy(() =>
   import("./pages/CompanyPartnersSetupDashboard").then((m) => ({
     default: m.CompanyPartnersSetupDashboard,
@@ -10210,6 +10215,10 @@ function App() {
                           <Route
                             path="/gophygital-business-card"
                             element={<GoPhygitalBusinessCard />}
+                          />
+                          <Route
+                            path="/vi-update-details"
+                            element={<ViUpdateDetailsPage />}
                           />
 
                           {/* Quick Links Routes */}
