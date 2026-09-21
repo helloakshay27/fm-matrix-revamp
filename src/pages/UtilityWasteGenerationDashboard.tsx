@@ -41,6 +41,8 @@ const fmt = (n: number) =>
     : n >= 1_000
     ? `${(n / 1_000).toFixed(1)}K`
     : `${n}`;
+const kg = (n?: number | null) =>
+  n == null ? '—' : `${Number(n).toLocaleString('en-IN')} KG`;
 
 // Palette for dynamic categories
 const CHART_PALETTE = [
@@ -170,6 +172,7 @@ const UtilityWasteGenerationDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [showMoreKpis, setShowMoreKpis] = useState(false);
 
   // API states
   const [wasteGenerations, setWasteGenerations] = useState<WasteGeneration[]>([]);
@@ -398,6 +401,30 @@ useEffect(() => {
 
   const handleView = (id: number) => navigate(`/maintenance/waste/generation/${id}`);
 
+  const extraKpiCards = [
+    {
+      label: 'Wet Waste',
+      value: kg(listCounts?.wet_waste),
+      icon: <Percent className="w-6 h-6 text-[#C72030]" />,
+    },
+    {
+      label: 'Dry Waste',
+      value: kg(listCounts?.dry_waste),
+      icon: <Package className="w-6 h-6 text-[#C72030]" />,
+    },
+    {
+      label: 'Hazardous Waste',
+      value: kg(listCounts?.hazardous_waste),
+      icon: <Activity className="w-6 h-6 text-[#C72030]" />,
+    },
+    ...(listCounts?.category_counts ?? []).map((category) => ({
+      label: category.label,
+      value: kg(category.value),
+      icon: <Leaf className="w-6 h-6 text-[#C72030]" />,
+      recycled: kg(category.recycled_value),
+    })),
+  ];
+
   return (
     <>
       <div className="p-4 sm:p-6 bg-gray-50 min-h-screen">
@@ -420,44 +447,70 @@ useEffect(() => {
           <TabsContent value="list" className="mt-6 space-y-6">
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-              {[
-                {
-                  label: 'Total Waste',
-                  value: listCounts ? `${listCounts.total_waste.toLocaleString('en-IN')} KG` : '—',
-                  icon: <Trash2 className="w-6 h-6 text-[#C72030]" />,
-                },
-                {
-                  label: 'Total Recycled',
-                  value: listCounts ? `${listCounts.recycling_percentage}%` : '—',
-                  icon: <RefreshCw className="w-6 h-6 text-[#C72030]" />,
-                },
-                {
-                  label: 'Wet Waste',
-                  value: listCounts ? `${listCounts.total_recycled.toLocaleString('en-IN')} KG` : '—',
-                  icon: <Percent className="w-6 h-6 text-[#C72030]" />,
-                },
-                {
-                  label: 'Dry Waste',
-                  value: listCounts ? `${listCounts.dry_waste.toLocaleString('en-IN')} KG` : '—',
-                  icon: <Package className="w-6 h-6 text-[#C72030]" />,
-                },
-                {
-                  label: 'Hazardous Waste',
-                  value: listCounts ? `${listCounts.hazardous_waste.toLocaleString('en-IN')} KG` : '—',
-                  icon: <Activity className="w-6 h-6 text-[#C72030]" />,
-                },
-              ].map((card, i) => (
-                <div key={i} className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 hover:shadow-lg transition-shadow duration-300">
-                  <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center shrink-0">
-                    {isLoading ? <Loader2 className="animate-spin w-6 h-6 text-[#C72030]" /> : card.icon}
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {[
+                  {
+                    label: 'Total Waste',
+                    value: kg(listCounts?.total_waste),
+                    icon: <Trash2 className="w-6 h-6 text-[#C72030]" />,
+                  },
+                  {
+                    label: 'Total Recycled',
+                    value: listCounts?.recycling_percentage != null ? `${listCounts.recycling_percentage}%` : '—',
+                    icon: <RefreshCw className="w-6 h-6 text-[#C72030]" />,
+                  },
+                ].map((card, i) => (
+                  <div key={i} className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 hover:shadow-lg transition-shadow duration-300">
+                    <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center shrink-0">
+                      {isLoading ? <Loader2 className="animate-spin w-6 h-6 text-[#C72030]" /> : card.icon}
+                    </div>
+                    <div>
+                      <div className="text-2xl font-semibold text-[#1A1A1A]">{isLoading ? '…' : card.value}</div>
+                      <div className="text-sm font-medium text-[#1A1A1A]">{card.label}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-2xl font-semibold text-[#1A1A1A]">{isLoading ? '…' : card.value}</div>
-                    <div className="text-sm font-medium text-[#1A1A1A]">{card.label}</div>
-                  </div>
+                ))}
+              </div>
+
+              {extraKpiCards.length > 0 && (
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowMoreKpis((prev) => !prev)}
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-white border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    {showMoreKpis ? 'Hide KPIs' : 'More KPIs'}
+                    <span className="text-xs">{showMoreKpis ? '−' : '+'}</span>
+                  </button>
+
+                  {showMoreKpis && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                      {extraKpiCards.map((card, index) => (
+                        <div
+                          key={`${card.label}-${index}`}
+                          className="bg-[#F6F4EE] p-5 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] border border-[#E4E0D8]"
+                        >
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center shrink-0">
+                              {card.icon}
+                            </div>
+                            <div className="text-xs font-semibold uppercase tracking-wide text-[#6B6B6B]">
+                              {card.label}
+                            </div>
+                          </div>
+                          <div className="text-2xl font-semibold text-[#1A1A1A]">{card.value}</div>
+                          {'recycled' in card && card.recycled ? (
+                            <div className="mt-2 text-sm text-[#4B5563]">
+                              Recycled: {card.recycled}
+                            </div>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              ))}
+              )}
             </div>
 
             {/* Table */}
