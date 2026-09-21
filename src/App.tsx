@@ -3282,6 +3282,46 @@ const ClassSetupDetails = lazy(() =>
     default: m.ClassSetupDetails,
   }))
 );
+const TrainerSetupList = lazy(() =>
+  import("./pages/ClubManagement/TrainerSetupList").then((m) => ({
+    default: m.TrainerSetupList,
+  }))
+);
+const TrainerSetupAdd = lazy(() =>
+  import("./pages/ClubManagement/TrainerSetupAdd").then((m) => ({
+    default: m.TrainerSetupAdd,
+  }))
+);
+const TrainerSetupEdit = lazy(() =>
+  import("./pages/ClubManagement/TrainerSetupEdit").then((m) => ({
+    default: m.TrainerSetupEdit,
+  }))
+);
+const TrainerSetupDetails = lazy(() =>
+  import("./pages/ClubManagement/TrainerSetupDetails").then((m) => ({
+    default: m.TrainerSetupDetails,
+  }))
+);
+const PackageSetupList = lazy(() =>
+  import("./pages/ClubManagement/PackageSetupList").then((m) => ({
+    default: m.PackageSetupList,
+  }))
+);
+const PackageSetupAdd = lazy(() =>
+  import("./pages/ClubManagement/PackageSetupAdd").then((m) => ({
+    default: m.PackageSetupAdd,
+  }))
+);
+const PackageSetupEdit = lazy(() =>
+  import("./pages/ClubManagement/PackageSetupEdit").then((m) => ({
+    default: m.PackageSetupEdit,
+  }))
+);
+const PackageSetupDetails = lazy(() =>
+  import("./pages/ClubManagement/PackageSetupDetails").then((m) => ({
+    default: m.PackageSetupDetails,
+  }))
+);
 const BudgetDashboard = lazy(() =>
   import("./pages/ClubManagement/BudgetDashboard").then((m) => ({
     default: m.BudgetDashboard,
@@ -6964,6 +7004,40 @@ function App() {
                             <Route
                               path="/club-management/class-setup/details/:id"
                               element={<ClassSetupDetails />}
+                            />
+                            {/* Club Management - Trainer Setup */}
+                            <Route
+                              path="/club-management/trainer-setup"
+                              element={<TrainerSetupList />}
+                            />
+                            <Route
+                              path="/club-management/trainer-setup/add"
+                              element={<TrainerSetupAdd />}
+                            />
+                            <Route
+                              path="/club-management/trainer-setup/edit/:id"
+                              element={<TrainerSetupEdit />}
+                            />
+                            <Route
+                              path="/club-management/trainer-setup/details/:id"
+                              element={<TrainerSetupDetails />}
+                            />
+                            {/* Club Management - Package Setup */}
+                            <Route
+                              path="/club-management/package-setup"
+                              element={<PackageSetupList />}
+                            />
+                            <Route
+                              path="/club-management/package-setup/add"
+                              element={<PackageSetupAdd />}
+                            />
+                            <Route
+                              path="/club-management/package-setup/edit/:id"
+                              element={<PackageSetupEdit />}
+                            />
+                            <Route
+                              path="/club-management/package-setup/details/:id"
+                              element={<PackageSetupDetails />}
                             />
                             {/* Club Management - Broadcast */}
                             <Route

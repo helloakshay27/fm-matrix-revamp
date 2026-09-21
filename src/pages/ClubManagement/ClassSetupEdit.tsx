@@ -28,6 +28,8 @@ export const ClassSetupEdit = () => {
       duration: existing.duration,
       trainer: existing.trainer,
       status: existing.status,
+      startTime: existing.startTime || "",
+      endTime: existing.endTime || "",
       description: existing.description,
     });
   }, [id, navigate]);

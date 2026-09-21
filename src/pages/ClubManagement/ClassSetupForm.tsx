@@ -1,9 +1,36 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Checkbox, ListItemText } from "@mui/material";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { TimePicker } from "@mui/x-date-pickers/TimePicker";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "dayjs";
 import { ArrowLeft, ClipboardList, Upload, Paperclip, X } from "lucide-react";
 import { toast } from "sonner";
 import { LOCATIONS, TRAINERS, type ClassSetup } from "./classSetupMockData";
+
+// The native <input type="time"> picker's popup (hour/minute/AM-PM wheel columns) is
+// browser/OS chrome and can't be recolored via CSS - swapping to MUI X's TimePicker
+// renders that popup in React instead, so its selected-state highlight (and the clock
+// toggle icon) can actually be themed to the brand orange.
+const timePickerSlotProps = {
+  textField: { fullWidth: true as const, variant: "outlined" as const },
+  openPickerButton: { sx: { color: "#DA7756" } },
+  digitalClockSectionItem: {
+    // The section item carries two separately-generated classes (this slot's override,
+    // and MuiMenuItem's own default `.Mui-selected` blue) with equal specificity - source
+    // order decides the tie, and MenuItem's tends to win. `!important` forces this one through.
+    sx: {
+      "&.Mui-selected": {
+        backgroundColor: "#DA7756 !important",
+        color: "#fff !important",
+      },
+      "&.Mui-selected:hover, &.Mui-selected:focus": {
+        backgroundColor: "#c9673f !important",
+      },
+    },
+  },
+};
 
 // Matches the Section pattern used by CreditNoteClubAdd/Edit (bg-[#F6F4EE] header bar,
 // circular bg-[#E5E0D3] icon badge in the brand red) so Class Setup's Add/Edit pages look
@@ -53,6 +80,49 @@ const fieldStyles = {
   },
 };
 
+// TimePicker's field renders as MuiPickersOutlinedInput/MuiPickersInputBase, a different
+// component from the plain OutlinedInput `fieldStyles` above targets. Its `InputProps.sx`
+// scopes directly onto that root element itself, so these rules stay top-level (`&...`) -
+// nesting them under another "& .MuiPickersOutlinedInput-root" selector (as fieldStyles
+// briefly did) asks for a descendant with that class, which doesn't exist since the class
+// is already on the element sx is attached to, so it silently matched nothing.
+const timePickerFieldSx = {
+  height: "45px",
+  backgroundColor: "#fff",
+  borderRadius: "4px",
+  "& .MuiPickersOutlinedInput-notchedOutline": {
+    borderColor: "#ddd",
+  },
+  "&:hover .MuiPickersOutlinedInput-notchedOutline": {
+    borderColor: "#DA7756",
+  },
+  // MUI ships its own focus rule for this outline scoped to `.Mui-focused:not(.Mui-error)`,
+  // which is one specificity unit ahead of a plain `.Mui-focused` override (the `:not()`
+  // counts same as a class) and wins the cascade regardless of source order - `!important`
+  // is the only way to reliably beat it. Using the brand orange directly (not the legacy
+  // #C72030 red) since this class isn't caught by theme.css's global #C72030->orange remap.
+  "&.Mui-focused .MuiPickersOutlinedInput-notchedOutline": {
+    borderColor: "#DA7756 !important",
+  },
+  // The blue ring on focus isn't the fieldset border above - it's the browser's native
+  // a11y focus outline on the sections container (a [role="group"] with tabIndex), which
+  // MUI leaves unstyled. The orange fieldset border already shows focus state, so drop it.
+  "&.Mui-focused": {
+    outline: "none",
+  },
+  // Empty state shows the format tokens ("hh:mm aa") as a placeholder - this only matches
+  // this sectioned field (no other field type has these classes), so it's a no-op elsewhere;
+  // digits are untouched, only the letters (placeholder tokens, and the real "am"/"pm") get
+  // capitalized. The color/opacity match is so the mask reads as a placeholder (like every
+  // other field's grey hint text) instead of full-strength text.
+  "& .MuiPickersSectionList-sectionContent": {
+    textTransform: "uppercase",
+    '&[aria-valuetext="Empty"]': {
+      color: "rgba(0, 0, 0, 0.42)",
+    },
+  },
+};
+
 // The required-field asterisk is a sibling of the input inside the same FormControl/TextField
 // root, not a descendant of the input itself - so this has to go on the component's own top-level
 // `sx`, not nested inside `InputProps.sx` (which only scopes to the input root).
@@ -69,8 +139,10 @@ export interface ClassSetupFormState {
   maxCapacity: string;
   location: string;
   duration: string;
-  trainer: string;
+  trainer: string[];
   status: "Active" | "Inactive";
+  startTime: string;
+  endTime: string;
   description: string;
 }
 
@@ -81,8 +153,10 @@ export const emptyClassSetupForm: ClassSetupFormState = {
   maxCapacity: "",
   location: "",
   duration: "",
-  trainer: "",
+  trainer: [],
   status: "Active",
+  startTime: "",
+  endTime: "",
   description: "",
 };
 
@@ -137,11 +211,14 @@ export const ClassSetupForm = ({
       duration: form.duration,
       trainer: form.trainer,
       status: form.status,
+      startTime: form.startTime,
+      endTime: form.endTime,
       description: form.description,
     });
   };
 
   return (
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
     <div className="p-6 space-y-6 relative">
       <header className="mb-4">
         <button
@@ -245,16 +322,21 @@ export const ClassSetupForm = ({
             <FormControl fullWidth variant="outlined" sx={{ "& .MuiInputBase-root": fieldStyles }}>
               <InputLabel shrink>Trainer</InputLabel>
               <MuiSelect
+                multiple
                 value={form.trainer}
-                onChange={(e) => setField("trainer", e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setField("trainer", typeof value === "string" ? value.split(",") : value);
+                }}
                 label="Trainer"
                 notched
                 displayEmpty
+                renderValue={(selected) => (selected.length > 0 ? selected.join(", ") : "Select trainer...")}
               >
-                <MenuItem value="">Select trainer...</MenuItem>
                 {TRAINERS.map((t) => (
                   <MenuItem key={t} value={t}>
-                    {t}
+                    <Checkbox checked={form.trainer.includes(t)} sx={{ color: "#DA7756", "&.Mui-checked": { color: "#DA7756" } }} />
+                    <ListItemText primary={t} />
                   </MenuItem>
                 ))}
               </MuiSelect>
@@ -271,6 +353,59 @@ export const ClassSetupForm = ({
                 <MenuItem value="Inactive">Inactive</MenuItem>
               </MuiSelect>
             </FormControl>
+            {/* MUI's sectioned time field only paints its "HH:MM AA" format mask once
+                focused - blank at rest, which reads as broken next to every other field's
+                always-visible grey hint. A custom overlay (hidden the moment the field gets
+                focus, via group-focus-within) fills that resting-state gap without touching
+                MUI's own placeholder/typing behavior once the user is actually in the field. */}
+            <div className="relative group">
+              <TimePicker
+                label="Start Time"
+                // enableAccessibleFieldDOMStructure={false} (legacy single-<input> field, needed
+                // for a literal placeholder string) crashes under this project's React version
+                // (useTimeField's internal useTimeout hook throws on mount) - stick with the
+                // default sectioned field.
+                value={form.startTime ? dayjs(form.startTime, "HH:mm") : null}
+                onChange={(newValue) => setField("startTime", newValue?.isValid() ? newValue.format("HH:mm") : "")}
+                slotProps={{
+                  ...timePickerSlotProps,
+                  textField: {
+                    ...timePickerSlotProps.textField,
+                    required: true,
+                    sx: requiredLabelSx,
+                    slotProps: { inputLabel: { shrink: true } },
+                    InputProps: { sx: timePickerFieldSx },
+                  },
+                }}
+              />
+              {!form.startTime && (
+                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-black/40 group-focus-within:hidden">
+                  HH:MM AA
+                </span>
+              )}
+            </div>
+            <div className="relative group">
+              <TimePicker
+                label="End Time"
+                value={form.endTime ? dayjs(form.endTime, "HH:mm") : null}
+                onChange={(newValue) => setField("endTime", newValue?.isValid() ? newValue.format("HH:mm") : "")}
+                slotProps={{
+                  ...timePickerSlotProps,
+                  textField: {
+                    ...timePickerSlotProps.textField,
+                    required: true,
+                    sx: requiredLabelSx,
+                    slotProps: { inputLabel: { shrink: true } },
+                    InputProps: { sx: timePickerFieldSx },
+                  },
+                }}
+              />
+              {!form.endTime && (
+                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-black/40 group-focus-within:hidden">
+                  HH:MM AA
+                </span>
+              )}
+            </div>
 
             <div className="md:col-span-3">
               <div className="relative">
@@ -293,10 +428,11 @@ export const ClassSetupForm = ({
           </div>
         </Section>
 
-        {/* Attachment - compact "Upload Files" button + a list of attached file chips,
-            matching AddTicketDashboard's "Add Attachments" section rather than a large dropzone. */}
+        {/* Attachment - large "Upload Image" dropzone matching the Figma (dashed box,
+            upload icon, "Choose a file or drag & drop it here", centered Browse button). */}
         <Section title="Attachment" icon={<Paperclip className="w-4 h-4" />}>
-          <div className="space-y-3">
+          <div className="max-w-sm">
+            <div className="text-sm font-medium mb-2">Upload Image</div>
             <input
               type="file"
               multiple
@@ -304,33 +440,35 @@ export const ClassSetupForm = ({
               className="hidden"
               id="class-setup-file-upload"
             />
-            <Button
-              type="button"
-              onClick={() => document.getElementById("class-setup-file-upload")?.click()}
-              variant="outline"
-              size="sm"
-              className="border-dashed border-2 border-gray-300 hover:border-gray-400 text-gray-600 bg-white hover:bg-gray-50"
+            <label
+              htmlFor="class-setup-file-upload"
+              className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300 rounded-md py-5 cursor-pointer hover:border-brand transition-colors"
             >
-              <Upload className="w-4 h-4 mr-2" />
-              Upload Files
-            </Button>
-
-            {attachedFiles.length > 0 && (
-              <div className="space-y-2">
-                {attachedFiles.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded border">
-                    <div className="flex items-center gap-2">
-                      <Paperclip className="w-4 h-4 text-gray-500" />
-                      <span>{file.name}</span>
-                    </div>
-                    <Button type="button" variant="ghost" size="sm" onClick={() => removeFile(index)}>
-                      <X className="w-3 h-3" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
+              <Upload className="w-5 h-5 text-gray-400" />
+              <span className="text-sm text-gray-500 text-center">
+                Choose a file or drag &amp; drop it here
+              </span>
+              <span className="mt-1 px-5 py-1.5 text-sm font-medium text-brand bg-gray-100 hover:bg-gray-200">
+                Browse
+              </span>
+            </label>
           </div>
+
+          {attachedFiles.length > 0 && (
+            <div className="space-y-2 mt-4">
+              {attachedFiles.map((file, index) => (
+                <div key={index} className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded border">
+                  <div className="flex items-center gap-2">
+                    <Paperclip className="w-4 h-4 text-gray-500" />
+                    <span>{file.name}</span>
+                  </div>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => removeFile(index)}>
+                    <X className="w-3 h-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </Section>
       </div>
 
@@ -352,5 +490,6 @@ export const ClassSetupForm = ({
         </Button>
       </div>
     </div>
+    </LocalizationProvider>
   );
 };

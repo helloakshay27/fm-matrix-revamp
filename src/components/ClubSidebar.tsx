@@ -77,6 +77,26 @@ const modulesByPackage = {
             "/club-management/class-setup/details",
           ],
         },
+        {
+          name: "Trainer setup",
+          href: "/club-management/trainer-setup",
+          color: "text-[#1a1a1a]",
+          additionalRoutes: [
+            "/club-management/trainer-setup/add",
+            "/club-management/trainer-setup/edit",
+            "/club-management/trainer-setup/details",
+          ],
+        },
+        {
+          name: "Package setup",
+          href: "/club-management/package-setup",
+          color: "text-[#1a1a1a]",
+          additionalRoutes: [
+            "/club-management/package-setup/add",
+            "/club-management/package-setup/edit",
+            "/club-management/package-setup/details",
+          ],
+        },
       ],
     },
     {
