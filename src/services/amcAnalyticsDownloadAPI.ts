@@ -66,108 +66,108 @@ const downloadFile = async (url: string, filename: string): Promise<void> => {
 
 export const amcAnalyticsDownloadAPI = {
   // Download AMC status overview data
-  async downloadAMCStatusData(fromDate: Date, toDate: Date): Promise<void> {
-    const siteId = getCurrentSiteId();
+  async downloadAMCStatusData(fromDate: Date, toDate: Date, siteId?: string): Promise<void> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${siteId}&amcs_stats=true&export=amcs_stats&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${resolvedSiteId}&amcs_stats=true&export=amcs_stats&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
     const filename = `amc_status_report_${fromDateStr}_to_${toDateStr}.xlsx`;
 
     await downloadFile(url, filename);
   },
 
   // Download AMC type distribution data
-  async downloadAMCTypeDistribution(fromDate: Date, toDate: Date): Promise<void> {
-    const siteId = getCurrentSiteId();
+  async downloadAMCTypeDistribution(fromDate: Date, toDate: Date, siteId?: string): Promise<void> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${siteId}&breakdown_vs_preventive=true&export=breakdown_vs_preventive_visits&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${resolvedSiteId}&breakdown_vs_preventive=true&export=breakdown_vs_preventive_visits&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
     const filename = `amc_type_distribution_${fromDateStr}_to_${toDateStr}.xlsx`;
 
     await downloadFile(url, filename);
   },
 
   // Download AMC expiry analysis data
-  async downloadAMCExpiryAnalysis(fromDate: Date, toDate: Date): Promise<void> {
-    const siteId = getCurrentSiteId();
+  async downloadAMCExpiryAnalysis(fromDate: Date, toDate: Date, siteId?: string): Promise<void> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${siteId}&amcs_expiry_stats=true&export=amcs_expiry_stats&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${resolvedSiteId}&amcs_expiry_stats=true&export=amcs_expiry_stats&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
     const filename = `amc_expiry_analysis_${fromDateStr}_to_${toDateStr}.xlsx`;
 
     await downloadFile(url, filename);
   },
 
   // Download AMC service tracking data
-  async downloadAMCServiceTracking(fromDate: Date, toDate: Date): Promise<void> {
-    const siteId = getCurrentSiteId();
+  async downloadAMCServiceTracking(fromDate: Date, toDate: Date, siteId?: string): Promise<void> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${siteId}&service_tracking=true&export=service_tracking&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${resolvedSiteId}&service_tracking=true&export=service_tracking&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
     const filename = `amc_service_tracking_${fromDateStr}_to_${toDateStr}.xlsx`;
 
     await downloadFile(url, filename);
   },
 
   // Download AMC vendor performance data
-  async downloadAMCVendorPerformance(fromDate: Date, toDate: Date): Promise<void> {
-    const siteId = getCurrentSiteId();
+  async downloadAMCVendorPerformance(fromDate: Date, toDate: Date, siteId?: string): Promise<void> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `/pms/asset_amcs/download_vendor_performance.xlsx?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/asset_amcs/download_vendor_performance.xlsx?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
     const filename = `amc_vendor_performance_${fromDateStr}_to_${toDateStr}.xlsx`;
 
     await downloadFile(url, filename);
   },
 
   // Download AMC compliance report data
-  async downloadAMCComplianceReport(fromDate: Date, toDate: Date): Promise<void> {
-    const siteId = getCurrentSiteId();
+  async downloadAMCComplianceReport(fromDate: Date, toDate: Date, siteId?: string): Promise<void> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `/pms/asset_amcs/download_compliance_report.xlsx?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/asset_amcs/download_compliance_report.xlsx?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
     const filename = `amc_compliance_report_${fromDateStr}_to_${toDateStr}.xlsx`;
 
     await downloadFile(url, filename);
   },
 
   // Download AMC unit resource wise data
-  async downloadAMCUnitResourceWise(fromDate: Date, toDate: Date): Promise<void> {
-    const siteId = getCurrentSiteId();
+  async downloadAMCUnitResourceWise(fromDate: Date, toDate: Date, siteId?: string): Promise<void> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${siteId}&amcs_unit_resource_wise=true&export=amcs_unit_resource_wise&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${resolvedSiteId}&amcs_unit_resource_wise=true&export=amcs_unit_resource_wise&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
     const filename = `amc_unit_resource_wise_${fromDateStr}_to_${toDateStr}.xlsx`;
 
     await downloadFile(url, filename);
   },
 
   // Download AMC service stats data
-  async downloadAMCServiceStats(fromDate: Date, toDate: Date): Promise<void> {
-    const siteId = getCurrentSiteId();
+  async downloadAMCServiceStats(fromDate: Date, toDate: Date, siteId?: string): Promise<void> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${siteId}&service_stats=true&export=service_stats&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${resolvedSiteId}&service_stats=true&export=service_stats&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
     const filename = `amc_service_stats_${fromDateStr}_to_${toDateStr}.xlsx`;
 
     await downloadFile(url, filename);
   },
 
   // Download AMC coverage by location data
-  async downloadAMCCoverageByLocation(fromDate: Date, toDate: Date): Promise<void> {
-    const siteId = getCurrentSiteId();
+  async downloadAMCCoverageByLocation(fromDate: Date, toDate: Date, siteId?: string): Promise<void> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${siteId}&coverage_by_location=true&export=coverage_by_location&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${resolvedSiteId}&coverage_by_location=true&export=coverage_by_location&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
     const filename = `amc_coverage_by_location_${fromDateStr}_to_${toDateStr}.xlsx`;
 
     await downloadFile(url, filename);

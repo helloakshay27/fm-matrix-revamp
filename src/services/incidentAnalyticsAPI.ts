@@ -37,50 +37,59 @@ const download = async (url: string, filename: string) => {
 };
 
 const incidentAnalyticsAPI = {
-  async getStatusSummary(fromDate: Date, toDate: Date) {
-    return get(buildUrl('/incident_dashboard/status_summary.json', fromDate, toDate));
+  async getStatusSummary(fromDate: Date, toDate: Date, siteId?: string) {
+    const resolvedSiteId = siteId || localStorage.getItem('selectedSiteId') || '';
+    return get(buildUrl('/incident_dashboard/status_summary.json', fromDate, toDate, resolvedSiteId ? { site_id: resolvedSiteId } : {}));
   },
 
-  async getLevelWise(fromDate: Date, toDate: Date) {
-    return get(buildUrl('/incident_dashboard/level_wise.json', fromDate, toDate));
+  async getLevelWise(fromDate: Date, toDate: Date, siteId?: string) {
+    const resolvedSiteId = siteId || localStorage.getItem('selectedSiteId') || '';
+    return get(buildUrl('/incident_dashboard/level_wise.json', fromDate, toDate, resolvedSiteId ? { site_id: resolvedSiteId } : {}));
   },
 
-  async getTopCategories(fromDate: Date, toDate: Date) {
-    return get(buildUrl('/incident_dashboard/top_categories.json', fromDate, toDate));
+  async getTopCategories(fromDate: Date, toDate: Date, siteId?: string) {
+    const resolvedSiteId = siteId || localStorage.getItem('selectedSiteId') || '';
+    return get(buildUrl('/incident_dashboard/top_categories.json', fromDate, toDate, resolvedSiteId ? { site_id: resolvedSiteId } : {}));
   },
 
-  async getRcaData(fromDate: Date, toDate: Date, page = 1) {
-    return get(buildUrl('/incident_dashboard/rca_data.json', fromDate, toDate, { page: String(page) }));
+  async getRcaData(fromDate: Date, toDate: Date, page = 1, siteId?: string) {
+    const resolvedSiteId = siteId || localStorage.getItem('selectedSiteId') || '';
+    return get(buildUrl('/incident_dashboard/rca_data.json', fromDate, toDate, { page: String(page), ...(resolvedSiteId ? { site_id: resolvedSiteId } : {}) }));
   },
 
-  async getBodyInjuryChart(fromDate: Date, toDate: Date) {
-    return get(buildUrl('/incident_dashboard/body_injury_chart.json', fromDate, toDate));
+  async getBodyInjuryChart(fromDate: Date, toDate: Date, siteId?: string) {
+    const resolvedSiteId = siteId || localStorage.getItem('selectedSiteId') || '';
+    return get(buildUrl('/incident_dashboard/body_injury_chart.json', fromDate, toDate, resolvedSiteId ? { site_id: resolvedSiteId } : {}));
   },
 
-  async downloadStatusSummary(fromDate: Date, toDate: Date) {
+  async downloadStatusSummary(fromDate: Date, toDate: Date, siteId?: string) {
+    const resolvedSiteId = siteId || localStorage.getItem('selectedSiteId') || '';
     return download(
-      buildUrl('/incident_dashboard/status_summary.json', fromDate, toDate, { export: 'true' }),
+      buildUrl('/incident_dashboard/status_summary.json', fromDate, toDate, { export: 'true', ...(resolvedSiteId ? { site_id: resolvedSiteId } : {}) }),
       `incident-status-${fmt(fromDate)}-to-${fmt(toDate)}.xlsx`
     );
   },
 
-  async downloadLevelWise(fromDate: Date, toDate: Date) {
+  async downloadLevelWise(fromDate: Date, toDate: Date, siteId?: string) {
+    const resolvedSiteId = siteId || localStorage.getItem('selectedSiteId') || '';
     return download(
-      buildUrl('/incident_dashboard/level_wise.json', fromDate, toDate, { export: 'true' }),
+      buildUrl('/incident_dashboard/level_wise.json', fromDate, toDate, { export: 'true', ...(resolvedSiteId ? { site_id: resolvedSiteId } : {}) }),
       `incident-level-wise-${fmt(fromDate)}-to-${fmt(toDate)}.xlsx`
     );
   },
 
-  async downloadTopCategories(fromDate: Date, toDate: Date) {
+  async downloadTopCategories(fromDate: Date, toDate: Date, siteId?: string) {
+    const resolvedSiteId = siteId || localStorage.getItem('selectedSiteId') || '';
     return download(
-      buildUrl('/incident_dashboard/top_categories.json', fromDate, toDate, { export: 'true' }),
+      buildUrl('/incident_dashboard/top_categories.json', fromDate, toDate, { export: 'true', ...(resolvedSiteId ? { site_id: resolvedSiteId } : {}) }),
       `incident-top-categories-${fmt(fromDate)}-to-${fmt(toDate)}.xlsx`
     );
   },
 
-  async downloadRcaData(fromDate: Date, toDate: Date) {
+  async downloadRcaData(fromDate: Date, toDate: Date, siteId?: string) {
+    const resolvedSiteId = siteId || localStorage.getItem('selectedSiteId') || '';
     return download(
-      buildUrl('/incident_dashboard/rca_data.json', fromDate, toDate, { export: 'true' }),
+      buildUrl('/incident_dashboard/rca_data.json', fromDate, toDate, { export: 'true', ...(resolvedSiteId ? { site_id: resolvedSiteId } : {}) }),
       `incident-rca-${fmt(fromDate)}-to-${fmt(toDate)}.xlsx`
     );
   },
@@ -91,26 +100,26 @@ const incidentAnalyticsAPI = {
   // `site_id` param, so it's added here the same opt-in way Quick Gate's
   // cards already read the selected site (falls back to none — every-site
   // scope — when nothing is selected yet).
-  async getSafetyMetrics(fromDate: Date, toDate: Date) {
-    const siteId = localStorage.getItem('selectedSiteId') || '';
+  async getSafetyMetrics(fromDate: Date, toDate: Date, siteId?: string) {
+    const resolvedSiteId = siteId || localStorage.getItem('selectedSiteId') || '';
     return get(
-      buildUrl('/incident_dashboard/safety_metrics.json', fromDate, toDate, siteId ? { site_id: siteId } : {})
+      buildUrl('/incident_dashboard/safety_metrics.json', fromDate, toDate, resolvedSiteId ? { site_id: resolvedSiteId } : {})
     );
   },
 
-  async getCauseWiseIncidents(fromDate: Date, toDate: Date) {
-    const siteId = localStorage.getItem('selectedSiteId') || '';
+  async getCauseWiseIncidents(fromDate: Date, toDate: Date, siteId?: string) {
+    const resolvedSiteId = siteId || localStorage.getItem('selectedSiteId') || '';
     return get(
-      buildUrl('/incident_dashboard/cause_wise_incidents.json', fromDate, toDate, siteId ? { site_id: siteId } : {})
+      buildUrl('/incident_dashboard/cause_wise_incidents.json', fromDate, toDate, resolvedSiteId ? { site_id: resolvedSiteId } : {})
     );
   },
 
-  async downloadCauseWiseIncidents(fromDate: Date, toDate: Date) {
-    const siteId = localStorage.getItem('selectedSiteId') || '';
+  async downloadCauseWiseIncidents(fromDate: Date, toDate: Date, siteId?: string) {
+    const resolvedSiteId = siteId || localStorage.getItem('selectedSiteId') || '';
     return download(
       buildUrl('/incident_dashboard/cause_wise_incidents.json', fromDate, toDate, {
         export: 'true',
-        ...(siteId ? { site_id: siteId } : {}),
+        ...(resolvedSiteId ? { site_id: resolvedSiteId } : {}),
       }),
       `incident-primary-root-cause-${fmt(fromDate)}-to-${fmt(toDate)}.xlsx`
     );

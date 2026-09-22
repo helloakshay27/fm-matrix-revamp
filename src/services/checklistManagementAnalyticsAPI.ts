@@ -40,17 +40,20 @@ export type TopOverdueChecklistMatrix = {
   }>;
 };
 
+const getSiteId = () => localStorage.getItem('selectedSiteId') || '';
+
 const checklistManagementAnalyticsAPI = {
-  async getSiteWiseChecklist(fromDate: Date, toDate: Date): Promise<any> {
+  async getSiteWiseChecklist(fromDate: Date, toDate: Date, siteId?: string): Promise<any> {
     const start = fmt(fromDate);
     const end = fmt(toDate);
-    const url = `/api/pms/reports/site_wise_checklist?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/api/pms/reports/site_wise_checklist.json?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
     const resp = await apiClient.get(url);
     return resp.data;
   },
 
-  async getChecklistProgressRows(fromDate: Date, toDate: Date): Promise<ChecklistProgressDetailRow[]> {
-    const data = await this.getSiteWiseChecklist(fromDate, toDate);
+  async getChecklistProgressRows(fromDate: Date, toDate: Date, siteId?: string): Promise<ChecklistProgressDetailRow[]> {
+    const data = await this.getSiteWiseChecklist(fromDate, toDate, siteId);
     const root = data?.data ?? data ?? {};
     
     // The API now returns checklist_progress array directly with current_period, previous_period, and difference
@@ -64,8 +67,8 @@ const checklistManagementAnalyticsAPI = {
     return rows;
   },
 
-  async getTopOverdueChecklistMatrix(fromDate: Date, toDate: Date): Promise<TopOverdueChecklistMatrix> {
-    const data = await this.getSiteWiseChecklist(fromDate, toDate);
+  async getTopOverdueChecklistMatrix(fromDate: Date, toDate: Date, siteId?: string): Promise<TopOverdueChecklistMatrix> {
+    const data = await this.getSiteWiseChecklist(fromDate, toDate, siteId);
     const root = data?.data ?? data ?? {};
     const top10 = root?.top_10_overdue_checklists ?? {};
     const categories: string[] = Array.isArray(top10?.categories) ? top10.categories : [];
@@ -80,10 +83,11 @@ const checklistManagementAnalyticsAPI = {
     return { categories, siteRows };
   },
 
-  async downloadSiteWiseChecklist(fromDate: Date, toDate: Date): Promise<void> {
+  async downloadSiteWiseChecklist(fromDate: Date, toDate: Date, siteId?: string): Promise<void> {
     const start = fmt(fromDate);
     const end = fmt(toDate);
-    const url = `/export_site_wise_checklist/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/export_site_wise_checklist/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
     
     const response = await apiClient.get(url, {
       responseType: 'blob',

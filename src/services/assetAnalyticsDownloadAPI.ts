@@ -27,12 +27,12 @@ const getBaseUrl = (): string => {
 // Download functionality for asset analytics
 export const assetAnalyticsDownloadAPI = {
   // Download group-wise assets data
-  downloadGroupWiseAssetsData: async (fromDate: Date, toDate: Date): Promise<void> => {
-    const siteId = getCurrentSiteId();
+  downloadGroupWiseAssetsData: async (fromDate: Date, toDate: Date, siteId?: string): Promise<void> => {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&assets_group_count_by_name=true&export=group_wise`;
+    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&assets_group_count_by_name=true&export=group_wise`;
     try {
       console.log("Fetching group-wise assets from:", url);
       
@@ -88,12 +88,12 @@ export const assetAnalyticsDownloadAPI = {
   },
 
   // Download category-wise assets data
-  downloadCategoryWiseAssetsData: async (fromDate: Date, toDate: Date): Promise<void> => {
-    const siteId = getCurrentSiteId();
+  downloadCategoryWiseAssetsData: async (fromDate: Date, toDate: Date, siteId?: string): Promise<void> => {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&asset_categorywise=true&export=category_wise`;
+    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&asset_categorywise=true&export=category_wise`;
     console.log("Fetching category-wise assets from:", url);
     console.log("Fetching category-wise assets from:", url);
     try {
@@ -124,12 +124,12 @@ export const assetAnalyticsDownloadAPI = {
   },
 
   // Download asset distributions data
-  downloadAssetDistributionsData: async (fromDate: Date, toDate: Date): Promise<void> => {
-    const siteId = getCurrentSiteId();
+  downloadAssetDistributionsData: async (fromDate: Date, toDate: Date, siteId?: string): Promise<void> => {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&assets_distribution=true&export=distribution
+    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&assets_distribution=true&export=distribution
 `;
     console.log("Fetching asset distributions from:", url);
     try {
@@ -160,12 +160,12 @@ export const assetAnalyticsDownloadAPI = {
   },
 
   // Download assets in use data
-  downloadAssetsInUseData: async (fromDate: Date, toDate: Date): Promise<void> => {
-    const siteId = getCurrentSiteId();
+  downloadAssetsInUseData: async (fromDate: Date, toDate: Date, siteId?: string): Promise<void> => {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `${getBaseUrl()}/pms/assets/card_assets_in_use_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
+    const url = `${getBaseUrl()}/pms/assets/card_assets_in_use_download.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
     console.log("Fetching assets in use from:", url);
     try {
       const response = await fetch(url, {
@@ -195,12 +195,12 @@ export const assetAnalyticsDownloadAPI = {
   },
 
   // Download asset statistics card data
-  downloadCardAssetsInBreakdown: async (fromDate: Date, toDate: Date): Promise<void> => {
-    const siteId = getCurrentSiteId();
+  downloadCardAssetsInBreakdown: async (fromDate: Date, toDate: Date, siteId?: string): Promise<void> => {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&assets_in_breakdown=true&export=assets_in_breakdown`;
+    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&assets_in_breakdown=true&export=assets_in_breakdown`;
     
     try {
       const response = await fetch(url, {
@@ -229,12 +229,12 @@ export const assetAnalyticsDownloadAPI = {
     }
   },
 
-  downloadCardCriticalAssetsInBreakdown: async (fromDate: Date, toDate: Date): Promise<void> => {
-    const siteId = getCurrentSiteId();
+  downloadCardCriticalAssetsInBreakdown: async (fromDate: Date, toDate: Date, siteId?: string): Promise<void> => {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&critical_assets_breakdown=true&export=critical_breakdown`;
+    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&critical_assets_breakdown=true&export=critical_breakdown`;
     
     try {
       const response = await fetch(url, {
@@ -263,12 +263,12 @@ export const assetAnalyticsDownloadAPI = {
     }
   },
 
-  downloadCardAssetsInUse: async (fromDate: Date, toDate: Date): Promise<void> => {
-    const siteId = getCurrentSiteId();
+  downloadCardAssetsInUse: async (fromDate: Date, toDate: Date, siteId?: string): Promise<void> => {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&assets_in_use=true&export=assets_in_use`;
+    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&assets_in_use=true&export=assets_in_use`;
     
     try {
       const response = await fetch(url, {
@@ -297,12 +297,12 @@ export const assetAnalyticsDownloadAPI = {
     }
   },
 
-  downloadCardTotalAssets: async (fromDate: Date, toDate: Date): Promise<void> => {
-    const siteId = getCurrentSiteId();
+  downloadCardTotalAssets: async (fromDate: Date, toDate: Date, siteId?: string): Promise<void> => {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&total_assets=true&export=total_assets`;
+    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&total_assets=true&export=total_assets`;
     
     try {
       const response = await fetch(url, {
@@ -331,12 +331,12 @@ export const assetAnalyticsDownloadAPI = {
     }
   },
 
-  downloadCardPPMConductAssets: async (fromDate: Date, toDate: Date): Promise<void> => {
-    const siteId = getCurrentSiteId();
+  downloadCardPPMConductAssets: async (fromDate: Date, toDate: Date, siteId?: string): Promise<void> => {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&ppm_overdue_assets=true&export=ppm_overdue`;
+    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&ppm_overdue_assets=true&export=ppm_overdue`;
     
     try {
       const response = await fetch(url, {
@@ -365,12 +365,12 @@ export const assetAnalyticsDownloadAPI = {
     }
   },
 
-  downloadCardAMCAssets: async (fromDate: Date, toDate: Date): Promise<void> => {
-    const siteId = getCurrentSiteId();
+  downloadCardAMCAssets: async (fromDate: Date, toDate: Date, siteId?: string): Promise<void> => {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&amc_assets=true&export=amc_asstes`;
+    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&amc_assets=true&export=amc_asstes`;
     
     try {
       const response = await fetch(url, {

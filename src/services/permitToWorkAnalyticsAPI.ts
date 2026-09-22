@@ -12,31 +12,31 @@ const getSiteId = () =>
   new URLSearchParams(window.location.search).get('site_id') || '';
 
 const permitToWorkAnalyticsAPI = {
-  async getSiteWisePermitsReport(fromDate: Date, toDate: Date) {
-    const siteId = getSiteId();
+  async getSiteWisePermitsReport(fromDate: Date, toDate: Date, siteId?: string) {
+    const resolvedSiteId = siteId || getSiteId();
     const from = fmt(fromDate);
     const to = fmt(toDate);
-    const url = `${API_CONFIG.BASE_URL}/pms/permits/site_wise_permits_report.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
+    const url = `${API_CONFIG.BASE_URL}/pms/permits/site_wise_permits_report.json?site_id=${resolvedSiteId}&from_date=${from}&to_date=${to}`;
     const resp = await fetch(url, { method: 'GET', headers: { Authorization: getAuthHeader() } });
     if (!resp.ok) throw new Error('Failed to fetch site-wise permits report');
     return resp.json();
   },
 
-  async getPermitsStatusData(fromDate: Date, toDate: Date) {
-    const siteId = getSiteId();
+  async getPermitsStatusData(fromDate: Date, toDate: Date, siteId?: string) {
+    const resolvedSiteId = siteId || getSiteId();
     const from = fmt(fromDate);
     const to = fmt(toDate);
-    const url = `${API_CONFIG.BASE_URL}/pms/permits/permits_status_data.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
+    const url = `${API_CONFIG.BASE_URL}/pms/permits/permits_status_data.json?site_id=${resolvedSiteId}&from_date=${from}&to_date=${to}`;
     const resp = await fetch(url, { method: 'GET', headers: { Authorization: getAuthHeader() } });
     if (!resp.ok) throw new Error('Failed to fetch permits status data');
     return resp.json();
   },
 
-  async downloadSiteWisePermits(fromDate: Date, toDate: Date) {
-    const siteId = getSiteId();
+  async downloadSiteWisePermits(fromDate: Date, toDate: Date, siteId?: string) {
+    const resolvedSiteId = siteId || getSiteId();
     const from = fmt(fromDate);
     const to = fmt(toDate);
-    const url = `${API_CONFIG.BASE_URL}/pms/permits/site_wise_permits_download.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
+    const url = `${API_CONFIG.BASE_URL}/pms/permits/site_wise_permits_download.json?site_id=${resolvedSiteId}&from_date=${from}&to_date=${to}`;
     const resp = await fetch(url, { method: 'GET', headers: { Authorization: getAuthHeader() } });
     if (!resp.ok) throw new Error('Download failed');
     const blob = await resp.blob();
@@ -49,11 +49,11 @@ const permitToWorkAnalyticsAPI = {
     window.URL.revokeObjectURL(link.href);
   },
 
-  async downloadPermitsStatus(fromDate: Date, toDate: Date) {
-    const siteId = getSiteId();
+  async downloadPermitsStatus(fromDate: Date, toDate: Date, siteId?: string) {
+    const resolvedSiteId = siteId || getSiteId();
     const from = fmt(fromDate);
     const to = fmt(toDate);
-    const url = `${API_CONFIG.BASE_URL}/pms/permits/permits_status_download.json?site_id=${siteId}&from_date=${from}&to_date=${to}`;
+    const url = `${API_CONFIG.BASE_URL}/pms/permits/permits_status_download.json?site_id=${resolvedSiteId}&from_date=${from}&to_date=${to}`;
     const resp = await fetch(url, { method: 'GET', headers: { Authorization: getAuthHeader() } });
     if (!resp.ok) throw new Error('Download failed');
     const blob = await resp.blob();

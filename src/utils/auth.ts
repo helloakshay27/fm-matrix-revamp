@@ -261,7 +261,7 @@ export const logoutUser = async (): Promise<void> => {
     if (!baseUrl || !token) return;
 
     const base = normalizeBaseUrl(baseUrl);
-    const url = `${base.replace(/\/+$/, "")}/logout`;
+    const url = `${base.replace(/\/+$/, "")}/logout.json`;
 
     await fetch(url, {
       method: "POST",
@@ -296,7 +296,7 @@ const isViSite =
 const isFmSite =
   hostname === "fm-uat.gophygital.work" ||
   hostname === "fm.gophygital.work" ||
-  hostname === "fm-matrix.lockated.com";
+  hostname === "fm-matrix.lockated.com"
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 

@@ -266,7 +266,7 @@ export const DashboardHeader = () => {
             {!isRestrictedUser && userId !== 189005 && (
               <button
                 onClick={() => (window.location.href = "/")}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#C72030] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
               >
                 <Home className="w-4 h-4" />
                 Home
@@ -278,7 +278,7 @@ export const DashboardHeader = () => {
               location.pathname === "/dashboard-executive" ? (
                 <button
                   onClick={() => (window.location.href = "/dashboard")}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#C72030] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
                   <ChartAreaIcon className="w-4 h-4" />
                   Dashboard
@@ -287,7 +287,7 @@ export const DashboardHeader = () => {
                 <>
                   <button
                     onClick={() => (window.location.href = "/dashboard-executive")}
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#C72030] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                   >
                     <ChartAreaIcon className="w-4 h-4" />
                     Dashboard Executive
@@ -305,7 +305,7 @@ export const DashboardHeader = () => {
           <div className="flex items-center gap-3 pr-6 border-r border-[#D5DbDB]">
             {/* Project Dropdown */}
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-2 text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors">
+              <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-2 text-[#C72030] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors">
                 <Building2 className="w-4 h-4" />
                 {projectLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -337,7 +337,7 @@ export const DashboardHeader = () => {
 
             {(location.pathname === "/dashboard" || location.pathname === "/pulse/analytics") && (
               <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-2 text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors">
+                <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-2 text-[#C72030] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors">
                   <MapPin className="w-4 h-4" />
                   {siteLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

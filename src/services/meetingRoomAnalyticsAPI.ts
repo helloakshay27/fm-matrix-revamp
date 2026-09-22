@@ -46,12 +46,12 @@ export const meetingRoomAnalyticsAPI = {
 
 
   // Single API returns both revenue overview and center performance
-  async getMeetingRoomPerformance(fromDate: Date, toDate: Date): Promise<{ revenue_overview: MeetingRoomRevenueOverview | null; center_performance: MeetingRoomCenterPerformanceRow[] }>{
+  async getMeetingRoomPerformance(fromDate: Date, toDate: Date, siteId?: string): Promise<{ revenue_overview: MeetingRoomRevenueOverview | null; center_performance: MeetingRoomCenterPerformanceRow[] }>{
     const start = formatDate(fromDate);
     const end = formatDate(toDate);
-    const siteId = getSelectedSiteId();
+    const resolvedSiteId = siteId ?? getSelectedSiteId();
 
-    const url = `/api/pms/reports/meeting_room_day_pass_performance?site_id=${siteId}&start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const url = `/api/pms/reports/meeting_room_day_pass_performance.json?site_id=${resolvedSiteId}&start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
     const resp = await apiClient.get(url);
     const payload = resp.data;
     const data = payload?.data ?? payload ?? {};
@@ -62,29 +62,29 @@ export const meetingRoomAnalyticsAPI = {
     return { revenue_overview, center_performance };
   },
 
-  async getMeetingRoomRevenueOverview(fromDate: Date, toDate: Date): Promise<MeetingRoomRevenueOverview | null> {
-    const { revenue_overview } = await this.getMeetingRoomPerformance(fromDate, toDate);
+  async getMeetingRoomRevenueOverview(fromDate: Date, toDate: Date, siteId?: string): Promise<MeetingRoomRevenueOverview | null> {
+    const { revenue_overview } = await this.getMeetingRoomPerformance(fromDate, toDate, siteId);
     return revenue_overview;
   },
 
-  async getMeetingRoomCenterPerformance(fromDate: Date, toDate: Date): Promise<MeetingRoomCenterPerformanceRow[]> {
-    const { center_performance } = await this.getMeetingRoomPerformance(fromDate, toDate);
+  async getMeetingRoomCenterPerformance(fromDate: Date, toDate: Date, siteId?: string): Promise<MeetingRoomCenterPerformanceRow[]> {
+    const { center_performance } = await this.getMeetingRoomPerformance(fromDate, toDate, siteId);
     return center_performance;
   },
 
-  async getCenterWiseMeetingRoomUtilization(fromDate: Date, toDate: Date): Promise<any> {
+  async getCenterWiseMeetingRoomUtilization(fromDate: Date, toDate: Date, siteId?: string): Promise<any> {
     const start = formatDate(fromDate);
     const end = formatDate(toDate);
-    const siteId = getSelectedSiteId();
-    const url = `/api/pms/reports/center_wise_meeting_room_utilization?site_id=${siteId}&start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSelectedSiteId();
+    const url = `/api/pms/reports/center_wise_meeting_room_utilization.json?site_id=${resolvedSiteId}&start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
     const resp = await apiClient.get(url);
     return resp.data;
   },
 
   // Quarterly TAT performance by center – Response
-  async getResponseTATPerformanceQuarterly(): Promise<Array<{ site: string; responseLast: number; responseCurrent: number }>> {
-    const siteId = getSelectedSiteId();
-    const url = `/api/pms/reports/response_tat_performance_quarterly?site_id=${siteId}`;
+  async getResponseTATPerformanceQuarterly(siteId?: string): Promise<Array<{ site: string; responseLast: number; responseCurrent: number }>> {
+    const resolvedSiteId = siteId ?? getSelectedSiteId();
+    const url = `/api/pms/reports/response_tat_performance_quarterly.json?site_id=${resolvedSiteId}`;
     const resp = await apiClient.get(url);
     const payload = resp.data;
     const perf = payload?.data?.performance_data
@@ -118,9 +118,9 @@ export const meetingRoomAnalyticsAPI = {
   },
 
   // Quarterly TAT performance by center – Resolution
-  async getResolutionTATPerformanceQuarterly(): Promise<Array<{ site: string; resolutionLast: number; resolutionCurrent: number }>> {
-    const siteId = getSelectedSiteId();
-    const url = `/api/pms/reports/resolution_tat_performance_quarterly?site_id=${siteId}`;
+  async getResolutionTATPerformanceQuarterly(siteId?: string): Promise<Array<{ site: string; resolutionLast: number; resolutionCurrent: number }>> {
+    const resolvedSiteId = siteId ?? getSelectedSiteId();
+    const url = `/api/pms/reports/resolution_tat_performance_quarterly.json?site_id=${resolvedSiteId}`;
     const resp = await apiClient.get(url);
     const payload = resp.data;
     const perf = payload?.data?.performance_data

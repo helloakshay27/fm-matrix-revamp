@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
-import viBusinessCardBg from "../../assets/Vi-businesscard (2).png";
+import viBusinessCardBg from "../../assets/vi new (1).png";
 import baseClient from "@/utils/withoutTokenBase";
 
 interface SocialLink {
@@ -276,7 +276,7 @@ END:VCARD`;
               percentage of the banner box so it scales proportionally at any width */}
           <div
             className="absolute"
-            style={{ left: "10%", width: "20%", top: "46%" }}
+            style={{ left: "14%", width: "23%", top: "58%" }}
           >
             <div
               className="w-full aspect-square overflow-hidden"

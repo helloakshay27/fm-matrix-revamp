@@ -14,11 +14,14 @@ export type VisitorTrendRow = {
   current: number;
 };
 
+const getSiteId = () => localStorage.getItem('selectedSiteId') || '';
+
 const visitorManagementAnalyticsAPI = {
-  async getVisitorTrendAnalysis(fromDate: Date, toDate: Date): Promise<VisitorTrendRow[]> {
+  async getVisitorTrendAnalysis(fromDate: Date, toDate: Date, siteId?: string): Promise<VisitorTrendRow[]> {
     const start = fmt(fromDate);
     const end = fmt(toDate);
-    const url = `/api/pms/reports/visitor_trend_analysis?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/api/pms/reports/visitor_trend_analysis.json?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
     const resp = await apiClient.get(url);
     const payload = resp.data;
     const root = payload?.data ?? payload ?? {};

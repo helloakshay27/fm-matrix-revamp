@@ -171,9 +171,9 @@ const getAccessToken = (): string => {
 
 // Asset Analytics API
 export const assetAnalyticsAPI = {
-  async getGroupWiseAssets(fromDate: Date, toDate: Date): Promise<AssetGroupWiseData> {
-    const siteId = getCurrentSiteId();
-    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&assets_group_count_by_name=true`;
+  async getGroupWiseAssets(fromDate: Date, toDate: Date, siteId?: string): Promise<AssetGroupWiseData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
+    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${resolvedSiteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&assets_group_count_by_name=true`;
 
     const response = await fetch(url, {
       headers: {
@@ -206,11 +206,11 @@ export const assetAnalyticsAPI = {
     return data;
   },
 
-  async getAssetStatus(fromDate: Date, toDate: Date): Promise<AssetStatusData> {
-    const siteId = getCurrentSiteId();
+  async getAssetStatus(fromDate: Date, toDate: Date, siteId?: string): Promise<AssetStatusData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     
     // Use the new assets_status endpoint
-    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?assets_status=true&site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`;
+    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?assets_status=true&site_id=${resolvedSiteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`;
 
     const response = await fetch(url, {
       headers: {
@@ -230,10 +230,10 @@ export const assetAnalyticsAPI = {
     return data.assets_statistics?.status || data;
   },
 
-  async getAssetDistribution(fromDate: Date, toDate: Date): Promise<AssetDistributionData> {
-    const siteId = getCurrentSiteId();
+  async getAssetDistribution(fromDate: Date, toDate: Date, siteId?: string): Promise<AssetDistributionData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     
-    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&assets_distribution=true`;
+    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${resolvedSiteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&assets_distribution=true`;
     
     const response = await fetch(url, {
       headers: {
@@ -265,11 +265,11 @@ export const assetAnalyticsAPI = {
     return data;
   },
 
-  async getAssetStatistics(fromDate: Date, toDate: Date): Promise<AssetStatisticsData> {
-    const siteId = getCurrentSiteId();
+  async getAssetStatistics(fromDate: Date, toDate: Date, siteId?: string): Promise<AssetStatisticsData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     
     // Note: The API endpoint has "statictics" (not "statistics") - this appears to be the correct endpoint
-    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&total_assets=true&assets_in_use=true&assets_in_breakdown=true&critical_assets_breakdown=true&ppm_overdue_assets=true&amc_assets=true`;
+    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${resolvedSiteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&total_assets=true&assets_in_use=true&assets_in_breakdown=true&critical_assets_breakdown=true&ppm_overdue_assets=true&amc_assets=true`;
     
     const response = await fetch(url, {
       headers: {
@@ -289,10 +289,10 @@ export const assetAnalyticsAPI = {
     return data.assets_statistics || data;
   },
 
-  async getAssetBreakdown(fromDate: Date, toDate: Date): Promise<AssetBreakdownData> {
-    const siteId = getCurrentSiteId();
+  async getAssetBreakdown(fromDate: Date, toDate: Date, siteId?: string): Promise<AssetBreakdownData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     
-    const url = `${API_CONFIG.BASE_URL}/pms/assets/asset_breakdown.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`;
+    const url = `${API_CONFIG.BASE_URL}/pms/assets/asset_breakdown.json?site_id=${resolvedSiteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`;
     
     const response = await fetch(url, {
       headers: {
@@ -310,11 +310,11 @@ export const assetAnalyticsAPI = {
     return data;
   },
 
-  async getCategoryWiseAssets(fromDate: Date, toDate: Date): Promise<CategoryWiseAssetsData> {
-    const siteId = getCurrentSiteId();
+  async getCategoryWiseAssets(fromDate: Date, toDate: Date, siteId?: string): Promise<CategoryWiseAssetsData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     
     try {
-      const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&asset_categorywise=true`;
+      const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${resolvedSiteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&asset_categorywise=true`;
       
       const response = await fetch(url, {
         headers: {
