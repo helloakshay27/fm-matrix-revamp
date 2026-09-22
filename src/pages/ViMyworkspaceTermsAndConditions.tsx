@@ -1,4 +1,4 @@
-import viLogo from '@/assets/vimyworkspace-logo.png';
+import viLogo from '@/assets/vi-logo.jpeg';
 
 export function ViMyworkspaceTermsAndConditions() {
   return (

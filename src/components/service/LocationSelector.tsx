@@ -112,55 +112,73 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     loading,
   } = useSelector((state: RootState) => state.serviceLocation);
 
-  const lastAppliedBuildingId = useRef<number | null>(null);
+  const lastAppliedValues = useRef<string>('');
 
   // Apply initialValues to Redux store (for edit mode pre-population)
   useEffect(() => {
-    if (!initialValues?.buildingId) return;
-    if (initialValues.buildingId === lastAppliedBuildingId.current) return;
-    lastAppliedBuildingId.current = initialValues.buildingId;
+    if (!initialValues) return;
+    const valuesKey = JSON.stringify(initialValues);
+    if (valuesKey === lastAppliedValues.current) return;
+    lastAppliedValues.current = valuesKey;
 
     if (initialValues.siteId) {
       dispatch(setSelectedSite(initialValues.siteId));
       dispatch(fetchBuildings(initialValues.siteId));
     }
-    dispatch(setSelectedBuilding(initialValues.buildingId));
-    dispatch(fetchWings(initialValues.buildingId));
-    dispatch(fetchAreas({ buildingId: initialValues.buildingId, wingId: initialValues.wingId }));
-    dispatch(fetchFloors(initialValues.buildingId));
-    dispatch(fetchRooms(initialValues.buildingId));
+    if (initialValues.buildingId) {
+      dispatch(setSelectedBuilding(initialValues.buildingId));
+      dispatch(fetchWings(initialValues.buildingId));
+      dispatch(fetchAreas({ buildingId: initialValues.buildingId, wingId: initialValues.wingId || undefined }));
+      dispatch(fetchFloors(initialValues.buildingId));
+      dispatch(fetchRooms(initialValues.buildingId));
+    } else {
+      dispatch(fetchWings());
+      dispatch(fetchAreas());
+      dispatch(fetchFloors());
+      dispatch(fetchRooms());
+    }
 
-    if (initialValues.wingId) dispatch(setSelectedWing(initialValues.wingId));
-    if (initialValues.areaId) dispatch(setSelectedArea(initialValues.areaId));
-    if (initialValues.floorId) dispatch(setSelectedFloor(initialValues.floorId));
-    if (initialValues.roomId) dispatch(setSelectedRoom(initialValues.roomId));
+    if (initialValues.wingId !== undefined) dispatch(setSelectedWing(initialValues.wingId));
+    if (initialValues.areaId !== undefined) dispatch(setSelectedArea(initialValues.areaId));
+    if (initialValues.floorId !== undefined) dispatch(setSelectedFloor(initialValues.floorId));
+    if (initialValues.roomId !== undefined) dispatch(setSelectedRoom(initialValues.roomId));
     if (initialValues.groupId) {
       dispatch(setSelectedGroup(initialValues.groupId));
       dispatch(fetchSubGroups(initialValues.groupId));
+    } else {
+      dispatch(fetchSubGroups());
     }
-    if (initialValues.subGroupId) dispatch(setSelectedSubGroup(initialValues.subGroupId));
-  }, [initialValues?.buildingId]);
+    if (initialValues.subGroupId !== undefined) dispatch(setSelectedSubGroup(initialValues.subGroupId));
+  }, [initialValues, dispatch]);
 
-  // Load sites and groups on component mount, and auto-select user's site
+  // Load sites, groups, wings, areas, floors, rooms on component mount, and auto-select user's site
   useEffect(() => {
     dispatch(fetchSites());
     dispatch(fetchGroups());
+    dispatch(fetchSubGroups());
+    dispatch(fetchWings());
+    dispatch(fetchAreas());
+    dispatch(fetchFloors());
+    dispatch(fetchRooms());
 
-    // Auto-set site based on user's current site (skip if initialValues will handle it)
-    if (initialValues?.siteId || initialValues?.buildingId) return;
     const userSiteId = localStorage.getItem('selectedSiteId') || localStorage.getItem('siteId');
-    if (userSiteId && !selectedSiteId) {
+    if (userSiteId && !selectedSiteId && !initialValues?.siteId) {
       const siteId = Number(userSiteId);
       dispatch(setSelectedSite(siteId));
       dispatch(fetchBuildings(siteId));
     }
-  }, [dispatch, selectedSiteId]);
+  }, [dispatch]);
 
   useEffect(() => {
     if (resetTrigger) {
       dispatch(clearAllSelections());
       dispatch(fetchSites());
       dispatch(fetchGroups());
+      dispatch(fetchSubGroups());
+      dispatch(fetchWings());
+      dispatch(fetchAreas());
+      dispatch(fetchFloors());
+      dispatch(fetchRooms());
     }
   }, [resetTrigger, dispatch]);
 
@@ -198,48 +216,40 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
   };
 
   const handleBuildingChange = (buildingId: number) => {
-    dispatch(setSelectedBuilding(buildingId)); // resets wing/area/floor/room in Redux
+    dispatch(setSelectedBuilding(buildingId || null));
     if (buildingId) {
       dispatch(fetchWings(buildingId));
-      dispatch(fetchAreas({ buildingId })); // load areas without wing filter
-      // floors/rooms load only after area/floor is selected
+      dispatch(fetchAreas({ buildingId }));
+      dispatch(fetchFloors(buildingId));
+      dispatch(fetchRooms(buildingId));
     }
   };
 
   const handleWingChange = (wingId: number) => {
-    dispatch(setSelectedWing(wingId)); // resets area/floor/room in Redux
-    if (selectedBuildingId) {
-      dispatch(fetchAreas({ buildingId: selectedBuildingId, wingId: wingId || undefined }));
-    }
+    dispatch(setSelectedWing(wingId || null));
   };
 
   const handleAreaChange = (areaId: number) => {
-    dispatch(setSelectedArea(areaId)); // resets floor/room in Redux
-    if (selectedBuildingId) {
-      dispatch(fetchFloors(selectedBuildingId));
-    }
+    dispatch(setSelectedArea(areaId || null));
   };
 
   const handleFloorChange = (floorId: number) => {
-    dispatch(setSelectedFloor(floorId)); // resets room in Redux
-    if (selectedBuildingId) {
-      dispatch(fetchRooms(selectedBuildingId));
-    }
+    dispatch(setSelectedFloor(floorId || null));
   };
 
   const handleRoomChange = (roomId: number) => {
-    dispatch(setSelectedRoom(roomId));
+    dispatch(setSelectedRoom(roomId || null));
   };
 
   const handleGroupChange = (groupId: number) => {
-    dispatch(setSelectedGroup(groupId));
+    dispatch(setSelectedGroup(groupId || null));
     if (groupId) {
       dispatch(fetchSubGroups(groupId));
     }
   };
 
   const handleSubGroupChange = (subGroupId: number) => {
-    dispatch(setSelectedSubGroup(subGroupId));
+    dispatch(setSelectedSubGroup(subGroupId || null));
   };
 
   return (
@@ -257,8 +267,11 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             displayEmpty
             value={selectedBuildingId || ''}
             onChange={(e) => handleBuildingChange(Number(e.target.value))}
+            onOpen={() => {
+              if (!buildings.length && selectedSiteId) dispatch(fetchBuildings(selectedSiteId));
+            }}
             sx={fieldStyles}
-            disabled={loading.buildings}
+            disabled={disabled || loading.buildings}
           >
             <MenuItem value="">
               <em>Select Building</em>
@@ -288,8 +301,13 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             displayEmpty
             value={selectedWingId || ''}
             onChange={(e) => handleWingChange(Number(e.target.value))}
+            onOpen={() => {
+              if (!wings.length) {
+                dispatch(selectedBuildingId ? fetchWings(selectedBuildingId) : fetchWings());
+              }
+            }}
             sx={fieldStyles}
-            disabled={!selectedBuildingId || loading.wings}
+            disabled={disabled || loading.wings}
           >
             <MenuItem value="">
               <em>Select Wing</em>
@@ -319,8 +337,13 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             displayEmpty
             value={selectedAreaId || ''}
             onChange={(e) => handleAreaChange(Number(e.target.value))}
+            onOpen={() => {
+              if (!areas.length) {
+                dispatch(selectedBuildingId ? fetchAreas({ buildingId: selectedBuildingId }) : fetchAreas());
+              }
+            }}
             sx={fieldStyles}
-            disabled={!selectedBuildingId || loading.areas}
+            disabled={disabled || loading.areas}
           >
             <MenuItem value="">
               <em>Select Area</em>
@@ -350,8 +373,13 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             displayEmpty
             value={selectedFloorId || ''}
             onChange={(e) => handleFloorChange(Number(e.target.value))}
+            onOpen={() => {
+              if (!floors.length) {
+                dispatch(selectedBuildingId ? fetchFloors(selectedBuildingId) : fetchFloors());
+              }
+            }}
             sx={fieldStyles}
-            disabled={!selectedAreaId || loading.floors}
+            disabled={disabled || loading.floors}
           >
             <MenuItem value="">
               <em>Select Floor</em>
@@ -382,8 +410,13 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             displayEmpty
             value={selectedRoomId || ''}
             onChange={(e) => handleRoomChange(Number(e.target.value))}
+            onOpen={() => {
+              if (!rooms.length) {
+                dispatch(selectedBuildingId ? fetchRooms(selectedBuildingId) : fetchRooms());
+              }
+            }}
             sx={fieldStyles}
-            disabled={!selectedFloorId || loading.rooms}
+            disabled={disabled || loading.rooms}
           >
             <MenuItem value="">
               <em>Select Room</em>
@@ -410,8 +443,11 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             displayEmpty
             value={selectedGroupId || ''}
             onChange={(e) => handleGroupChange(Number(e.target.value))}
+            onOpen={() => {
+              if (!groups.length) dispatch(fetchGroups());
+            }}
             sx={fieldStyles}
-            disabled={loading.groups}
+            disabled={disabled || loading.groups}
           >
             <MenuItem value="">
               <em>Select Group</em>
@@ -438,8 +474,13 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             displayEmpty
             value={selectedSubGroupId || ''}
             onChange={(e) => handleSubGroupChange(Number(e.target.value))}
+            onOpen={() => {
+              if (!subGroups.length) {
+                dispatch(selectedGroupId ? fetchSubGroups(selectedGroupId) : fetchSubGroups());
+              }
+            }}
             sx={fieldStyles}
-            disabled={!selectedGroupId || loading.subGroups}
+            disabled={disabled || loading.subGroups}
           >
             <MenuItem value="">
               <em>Select Sub-Group</em>
