@@ -158,12 +158,14 @@ const siteSlice = createSlice({
             action.payload.selected_site.id.toString()
           );
         }
-        // Store all site IDs as comma-separated string in localStorage
+        // Store all site IDs as comma-separated string in localStorage.
+        // Uses the dashboard's own key (not the shared `selectedSiteId`) since
+        // this only fires for the "all sites" executive dashboard view.
         if (Array.isArray(action.payload.sites) && location.pathname.includes("/dashboard-executive")) {
           const allSiteIds = action.payload.sites
             .map((site: any) => site.id)
             .join(",");
-          localStorage.setItem("selectedSiteId", allSiteIds);
+          localStorage.setItem("selecteSiteIdsDashboard", allSiteIds);
         }
       })
       .addCase(fetchAllowedSites.rejected, (state, action) => {

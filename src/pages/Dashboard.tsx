@@ -28,10 +28,19 @@ import {
   Home,
   AlertCircle,
   GripVertical,
+  MapPin,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { fetchAllowedSites, Site } from "@/services/sitesAPI";
 import { StatsCard } from "@/components/StatsCard";
 import { Sidebar } from "@/components/Sidebar";
 import { UnifiedAnalyticsSelector } from "@/components/dashboard/UnifiedAnalyticsSelector";
@@ -494,6 +503,16 @@ export const Dashboard = () => {
     from: new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
     to: new Date(),
   });
+  const [allowedSites, setAllowedSites] = useState<Site[]>([]);
+  const [selectedSite, setSelectedSite] = useState<string>(() => {
+    const stored = localStorage.getItem("selecteSiteIdsDashboard");
+    return stored && !stored.includes(",") ? stored : "all";
+  });
+  const [sitesLoading, setSitesLoading] = useState(false);
+  const activeSiteIds =
+    selectedSite === "all"
+      ? allowedSites.map((s) => s.id).join(",")
+      : selectedSite;
   const [dashboardData, setDashboardData] = useState<DashboardData>({
     tickets: null,
     tasks: null,
@@ -556,86 +575,86 @@ export const Dashboard = () => {
         // Per-endpoint config: h=default, minH=minimum, maxH=maximum allowed (for compact cards)
         const cardConfig: Record<string, { h: number; minH: number; maxH?: number }> = {
           // compact stat-box cards — cap at maxH=6 so oversized saved layouts shrink
-          engagement_metrics:            { h: 4, minH: 3, maxH: 4 },
-          snapshot:                      { h: 4, minH: 3, maxH: 4 },
-          customer_experience_feedback:  { h: 4, minH: 3, maxH: 4 },
-          revenue_generation_overview:   { h: 4, minH: 3, maxH: 4 },
-          amc_contract_summary:          { h: 4, minH: 3, maxH: 4 },
-          company_asset_overview:        { h: 4, minH: 3, maxH: 4 },
+          engagement_metrics: { h: 4, minH: 3, maxH: 4 },
+          snapshot: { h: 4, minH: 3, maxH: 4 },
+          customer_experience_feedback: { h: 4, minH: 3, maxH: 4 },
+          revenue_generation_overview: { h: 4, minH: 3, maxH: 4 },
+          amc_contract_summary: { h: 4, minH: 3, maxH: 4 },
+          company_asset_overview: { h: 4, minH: 3, maxH: 4 },
           // default chart/mixed cards
-          customer_rating_overview:      { h: 8, minH: 6 },
-          type_distribution:             { h: 8, minH: 6 },
-          ticket_status:                 { h: 8, minH: 6 },
-          tickets_proactive_reactive:    { h: 8, minH: 6 },
-          asset_status:                  { h: 8, minH: 6 },
-          group_wise:                    { h: 8, minH: 6 },
-          category_wise:                 { h: 8, minH: 6 },
-          expiry_analysis:               { h: 8, minH: 6 },
-          service_stats:                 { h: 8, minH: 6 },
+          customer_rating_overview: { h: 8, minH: 6 },
+          type_distribution: { h: 8, minH: 6 },
+          ticket_status: { h: 8, minH: 6 },
+          tickets_proactive_reactive: { h: 8, minH: 6 },
+          asset_status: { h: 8, minH: 6 },
+          group_wise: { h: 8, minH: 6 },
+          category_wise: { h: 8, minH: 6 },
+          expiry_analysis: { h: 8, minH: 6 },
+          service_stats: { h: 8, minH: 6 },
           // tall table cards
-          site_wise_adoption_rate:               { h: 10, minH: 8 },
-          center_performance_overview:           { h: 10, minH: 8 },
-          ticket_aging_matrix:                   { h: 10, minH: 8 },
-          tickets_categorywise:                  { h: 10, minH: 8 },
-          unit_categorywise:                     { h: 10, minH: 8 },
-          tickets_unit_categorywise:             { h: 10, minH: 8 },
-          response_tat:                          { h: 10, minH: 8 },
-          tickets_response_tat:                  { h: 10, minH: 8 },
-          resolution_tat:                        { h: 10, minH: 8 },
-          tickets_resolution_tat:                { h: 10, minH: 8 },
-          cm_progress_quarterly:                 { h: 10, minH: 8 },
-          cm_overdue_centerwise:                 { h: 10, minH: 8 },
-          center_assets_downtime:                { h: 10, minH: 8 },
-          highest_maintenance_assets:            { h: 10, minH: 8 },
-          amc_contract_expiry_90:                { h: 10, minH: 8 },
-          amc_contract_expired:                  { h: 10, minH: 8 },
-          top_consumables_center:                { h: 10, minH: 8 },
-          inventory_overstock_top10:             { h: 10, minH: 8 },
-          parking_statistics:                    { h: 10, minH: 8 },
-          top_management_total_amount:                   { h: 4, minH: 3, maxH: 4 },
-          total_outstanding_amount_client_wise:          { h: 10, minH: 8 },
-          visitor_summary:                               { h: 4, minH: 3, maxH: 4 },
-          site_wise_visitors:                            { h: 10, minH: 8 },
-          goods_staff_overview:                          { h: 4, minH: 3, maxH: 4 },
-          safety_metrics:                                { h: 4, minH: 3, maxH: 4 },
-          escalation_kpis:                               { h: 4, minH: 3, maxH: 4 },
-          occupancy_summary:                             { h: 4, minH: 3, maxH: 4 },
-          parking_allocation_overview:           { h: 10, minH: 8 },
-          technical_checklist:                   { h: 10, minH: 8 },
-          non_technical_checklist:               { h: 10, minH: 8 },
-          top_ten_checklist:                     { h: 10, minH: 8 },
-          site_wise_checklist:                   { h: 10, minH: 8 },
-          ticket_performance_metrics:            { h: 10, minH: 8 },
-          aging_closure_feedback:                { h: 9, minH: 8, maxH: 9 },
-          center_wise_meeting_room_utilization:  { h: 10, minH: 8 },
-          asset_statistics:                      { h: 10, minH: 8 },
-          visitor_trend_analysis:                { h: 10, minH: 8 },
-          response_tat_performance_quarterly:    { h: 10, minH: 8 },
-          resolution_tat_performance_quarterly:  { h: 10, minH: 8 },
-          unit_categorywise_proactive:           { h: 10, minH: 8 },
-          common_area_categorywise:              { h: 10, minH: 8 },
-          common_area_categorywise_proactive:    { h: 10, minH: 8 },
-          inventory_overview_summary:            { h: 4, minH: 3, maxH: 4 },
-          consumable_inventory_value_quarterly:  { h: 10, minH: 8 },
-          status_overview:                       { h: 10, minH: 8 },
-          unit_resource_wise:                    { h: 10, minH: 8 },
-          service_tracking:                      { h: 10, minH: 8 },
-          coverage_by_location:                  { h: 10, minH: 8 },
-          vendor_performance:                    { h: 10, minH: 8 },
-          energy_kpis:                           { h: 4, minH: 3, maxH: 4 },
-          sub_meter_sources:                     { h: 10, minH: 8 },
-          site_wise_power:                       { h: 10, minH: 8 },
-          water_kpis:                            { h: 4, minH: 3, maxH: 4 },
-          source_breakdown:                      { h: 10, minH: 8 },
-          site_wise_water:                       { h: 10, minH: 8 },
-          water_time_series:                     { h: 10, minH: 8 },
-          carbon_emission:                       { h: 4, minH: 3, maxH: 4 },
-          energy_intensity:                      { h: 4, minH: 3, maxH: 4 },
-          card_fuel_consumption:                 { h: 4, minH: 3, maxH: 4 },
-          power_consumption_top_management:      { h: 8, minH: 6 },
-          water_consumption_top_management:      { h: 5, minH: 4, maxH: 6 },
-          site_wise_ev_consumption:              { h: 10, minH: 8 },
-          site_wise_dry_waste_segregation:       { h: 10, minH: 8 },
+          site_wise_adoption_rate: { h: 10, minH: 8 },
+          center_performance_overview: { h: 10, minH: 8 },
+          ticket_aging_matrix: { h: 10, minH: 8 },
+          tickets_categorywise: { h: 10, minH: 8 },
+          unit_categorywise: { h: 10, minH: 8 },
+          tickets_unit_categorywise: { h: 10, minH: 8 },
+          response_tat: { h: 10, minH: 8 },
+          tickets_response_tat: { h: 10, minH: 8 },
+          resolution_tat: { h: 10, minH: 8 },
+          tickets_resolution_tat: { h: 10, minH: 8 },
+          cm_progress_quarterly: { h: 10, minH: 8 },
+          cm_overdue_centerwise: { h: 10, minH: 8 },
+          center_assets_downtime: { h: 10, minH: 8 },
+          highest_maintenance_assets: { h: 10, minH: 8 },
+          amc_contract_expiry_90: { h: 10, minH: 8 },
+          amc_contract_expired: { h: 10, minH: 8 },
+          top_consumables_center: { h: 10, minH: 8 },
+          inventory_overstock_top10: { h: 10, minH: 8 },
+          parking_statistics: { h: 10, minH: 8 },
+          top_management_total_amount: { h: 4, minH: 3, maxH: 4 },
+          total_outstanding_amount_client_wise: { h: 10, minH: 8 },
+          visitor_summary: { h: 4, minH: 3, maxH: 4 },
+          site_wise_visitors: { h: 10, minH: 8 },
+          goods_staff_overview: { h: 4, minH: 3, maxH: 4 },
+          safety_metrics: { h: 4, minH: 3, maxH: 4 },
+          escalation_kpis: { h: 4, minH: 3, maxH: 4 },
+          occupancy_summary: { h: 4, minH: 3, maxH: 4 },
+          parking_allocation_overview: { h: 10, minH: 8 },
+          technical_checklist: { h: 10, minH: 8 },
+          non_technical_checklist: { h: 10, minH: 8 },
+          top_ten_checklist: { h: 10, minH: 8 },
+          site_wise_checklist: { h: 10, minH: 8 },
+          ticket_performance_metrics: { h: 10, minH: 8 },
+          aging_closure_feedback: { h: 9, minH: 8, maxH: 9 },
+          center_wise_meeting_room_utilization: { h: 10, minH: 8 },
+          asset_statistics: { h: 10, minH: 8 },
+          visitor_trend_analysis: { h: 10, minH: 8 },
+          response_tat_performance_quarterly: { h: 10, minH: 8 },
+          resolution_tat_performance_quarterly: { h: 10, minH: 8 },
+          unit_categorywise_proactive: { h: 10, minH: 8 },
+          common_area_categorywise: { h: 10, minH: 8 },
+          common_area_categorywise_proactive: { h: 10, minH: 8 },
+          inventory_overview_summary: { h: 4, minH: 3, maxH: 4 },
+          consumable_inventory_value_quarterly: { h: 10, minH: 8 },
+          status_overview: { h: 10, minH: 8 },
+          unit_resource_wise: { h: 10, minH: 8 },
+          service_tracking: { h: 10, minH: 8 },
+          coverage_by_location: { h: 10, minH: 8 },
+          vendor_performance: { h: 10, minH: 8 },
+          energy_kpis: { h: 4, minH: 3, maxH: 4 },
+          sub_meter_sources: { h: 10, minH: 8 },
+          site_wise_power: { h: 10, minH: 8 },
+          water_kpis: { h: 4, minH: 3, maxH: 4 },
+          source_breakdown: { h: 10, minH: 8 },
+          site_wise_water: { h: 10, minH: 8 },
+          water_time_series: { h: 10, minH: 8 },
+          carbon_emission: { h: 4, minH: 3, maxH: 4 },
+          energy_intensity: { h: 4, minH: 3, maxH: 4 },
+          card_fuel_consumption: { h: 4, minH: 3, maxH: 4 },
+          power_consumption_top_management: { h: 8, minH: 6 },
+          water_consumption_top_management: { h: 5, minH: 4, maxH: 6 },
+          site_wise_ev_consumption: { h: 10, minH: 8 },
+          site_wise_dry_waste_segregation: { h: 10, minH: 8 },
         };
 
         const migratedLayout = parsedLayout.map((item: GridLayout.Layout) => {
@@ -675,14 +694,15 @@ export const Dashboard = () => {
       }
     }
     // If site_id or access_token are present in the URL, persist them to localStorage
-    // so the asset analytics service will use the same payload when fetching dashboard cards.
+    // so the dashboard's own site selection (a dedicated key, since the shared
+    // `selectedSiteId` key is already used by other pages) is seeded from the URL.
     try {
       const params = new URLSearchParams(window.location.search);
       const siteIdParam = params.get('site_id');
       const accessTokenParam = params.get('access_token');
       if (siteIdParam) {
-        console.log(`Setting selectedSiteId from URL param: ${siteIdParam}`);
-        localStorage.setItem('selectedSiteId', siteIdParam);
+        console.log(`Setting selecteSiteIdsDashboard from URL param: ${siteIdParam}`);
+        localStorage.setItem('selecteSiteIdsDashboard', siteIdParam);
       }
       if (accessTokenParam) {
         console.log(`Setting access_token from URL param: [REDACTED]`);
@@ -695,6 +715,44 @@ export const Dashboard = () => {
     // Mark initial mount as complete
     isInitialMount.current = false;
   }, [storagePrefix]);
+
+  // Load allowed sites for the current user and default-select their current site
+  useEffect(() => {
+    let cancelled = false;
+    const userId =
+      localStorage.getItem("userId") ??
+      localStorage.getItem("user_id") ??
+      "";
+    if (!userId) {
+      setSitesLoading(false);
+      return;
+    }
+    setSitesLoading(true);
+    fetchAllowedSites(userId)
+      .then((res) => {
+        if (cancelled) return;
+        const sites = res.sites ?? [];
+        setAllowedSites(sites);
+        if (sites.length > 0) {
+          const stored = localStorage.getItem("selecteSiteIdsDashboard");
+          const valid =
+            stored &&
+            !stored.includes(",") &&
+            sites.some((s) => String(s.id) === stored);
+          setSelectedSite(valid ? stored : "all");
+        }
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error("Failed to fetch allowed sites:", err);
+      })
+      .finally(() => {
+        if (!cancelled) setSitesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Update chart order and generate layout only for new cards when selected analytics change
   useEffect(() => {
@@ -850,7 +908,7 @@ export const Dashboard = () => {
         const day = String(d.getDate()).padStart(2, "0");
         return `${year}-${month}-${day}`;
       };
-      const dateKey = `${toKey(dateRange.from)}_${toKey(dateRange.to)}`;
+      const dateKey = `${toKey(dateRange.from)}_${toKey(dateRange.to)}&site_${selectedSite}`;
 
       // Group analytics by module to minimize API calls
       const moduleGroups = selectedAnalytics.reduce((groups, analytic) => {
@@ -895,7 +953,8 @@ export const Dashboard = () => {
                   promises.push(
                     ticketAnalyticsAPI.getTicketsCategorywiseData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -903,7 +962,8 @@ export const Dashboard = () => {
                   promises.push(
                     ticketAnalyticsAPI.getTicketStatusData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -911,7 +971,8 @@ export const Dashboard = () => {
                   promises.push(
                     ticketAnalyticsAPI.getTicketStatusData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -919,7 +980,8 @@ export const Dashboard = () => {
                   promises.push(
                     ticketAnalyticsAPI.getTicketAgingMatrix(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -928,7 +990,8 @@ export const Dashboard = () => {
                   promises.push(
                     ticketAnalyticsAPI.getUnitCategorywiseData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -937,7 +1000,8 @@ export const Dashboard = () => {
                   promises.push(
                     ticketAnalyticsAPI.getResponseTATData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -946,7 +1010,8 @@ export const Dashboard = () => {
                   promises.push(
                     ticketAnalyticsAPI.getResolutionTATReportData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -984,7 +1049,8 @@ export const Dashboard = () => {
                   promises.push(
                     taskAnalyticsAPI.getTechnicalChecklistData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -992,7 +1058,8 @@ export const Dashboard = () => {
                   promises.push(
                     taskAnalyticsAPI.getNonTechnicalChecklistData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1000,7 +1067,8 @@ export const Dashboard = () => {
                   promises.push(
                     taskAnalyticsAPI.getTopTenChecklistData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1008,7 +1076,8 @@ export const Dashboard = () => {
                   promises.push(
                     taskAnalyticsAPI.getSiteWiseChecklistData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1046,7 +1115,8 @@ export const Dashboard = () => {
                   promises.push(
                     amcAnalyticsAPI.getAMCStatusSummary(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1054,7 +1124,8 @@ export const Dashboard = () => {
                   promises.push(
                     amcAnalyticsAPI.getAMCTypeDistribution(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1062,7 +1133,8 @@ export const Dashboard = () => {
                   promises.push(
                     amcAnalyticsAPI.getAMCUnitResourceWise(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1070,7 +1142,8 @@ export const Dashboard = () => {
                   promises.push(
                     amcAnalyticsAPI.getAMCServiceStats(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1078,7 +1151,8 @@ export const Dashboard = () => {
                   promises.push(
                     amcAnalyticsAPI.getAMCExpiryAnalysis(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1086,7 +1160,8 @@ export const Dashboard = () => {
                   promises.push(
                     amcAnalyticsAPI.getAMCServiceTracking(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1094,7 +1169,8 @@ export const Dashboard = () => {
                   promises.push(
                     amcAnalyticsAPI.getAMCCoverageByLocation(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1102,7 +1178,8 @@ export const Dashboard = () => {
                   promises.push(
                     amcAnalyticsAPI.getAMCVendorPerformance(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1111,7 +1188,8 @@ export const Dashboard = () => {
                   promises.push(
                     amcAnalyticsAPI.getAMCStatusData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1149,7 +1227,8 @@ export const Dashboard = () => {
                   promises.push(
                     inventoryAnalyticsAPI.getItemsStatus(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1157,7 +1236,8 @@ export const Dashboard = () => {
                   promises.push(
                     inventoryAnalyticsAPI.getCategoryWise(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1165,7 +1245,8 @@ export const Dashboard = () => {
                   promises.push(
                     inventoryAnalyticsAPI.getGreenConsumption(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1173,7 +1254,8 @@ export const Dashboard = () => {
                   promises.push(
                     inventoryAnalyticsAPI.getAgingMatrix(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1181,7 +1263,8 @@ export const Dashboard = () => {
                   promises.push(
                     inventoryAnalyticsAPI.getLowStockItems(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1189,7 +1272,8 @@ export const Dashboard = () => {
                   promises.push(
                     inventoryAnalyticsAPI.getHighValueItems(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1227,7 +1311,8 @@ export const Dashboard = () => {
                   promises.push(
                     scheduleAnalyticsAPI.getScheduleOverview(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1235,7 +1320,8 @@ export const Dashboard = () => {
                   promises.push(
                     scheduleAnalyticsAPI.getScheduleCompletion(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1243,7 +1329,8 @@ export const Dashboard = () => {
                   promises.push(
                     scheduleAnalyticsAPI.getResourceUtilization(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1281,7 +1368,8 @@ export const Dashboard = () => {
                   promises.push(
                     assetAnalyticsAPI.getAssetStatus(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1289,7 +1377,8 @@ export const Dashboard = () => {
                   promises.push(
                     assetAnalyticsAPI.getAssetStatistics(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1297,7 +1386,8 @@ export const Dashboard = () => {
                   promises.push(
                     assetAnalyticsAPI.getGroupWiseAssets(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1305,7 +1395,8 @@ export const Dashboard = () => {
                   promises.push(
                     assetAnalyticsAPI.getCategoryWiseAssets(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1313,7 +1404,8 @@ export const Dashboard = () => {
                   promises.push(
                     assetAnalyticsAPI.getAssetDistribution(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1350,7 +1442,8 @@ export const Dashboard = () => {
                   promises.push(
                     meetingRoomAnalyticsAPI.getMeetingRoomRevenueOverview(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1358,7 +1451,8 @@ export const Dashboard = () => {
                   promises.push(
                     meetingRoomAnalyticsAPI.getMeetingRoomCenterPerformance(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1366,18 +1460,19 @@ export const Dashboard = () => {
                   promises.push(
                     meetingRoomAnalyticsAPI.getCenterWiseMeetingRoomUtilization(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
                 case "response_tat_performance_quarterly":
                   promises.push(
-                    meetingRoomAnalyticsAPI.getResponseTATPerformanceQuarterly()
+                    meetingRoomAnalyticsAPI.getResponseTATPerformanceQuarterly(activeSiteIds)
                   );
                   break;
                 case "resolution_tat_performance_quarterly":
                   promises.push(
-                    meetingRoomAnalyticsAPI.getResolutionTATPerformanceQuarterly()
+                    meetingRoomAnalyticsAPI.getResolutionTATPerformanceQuarterly(activeSiteIds)
                   );
                   break;
               }
@@ -1411,14 +1506,15 @@ export const Dashboard = () => {
               switch (analytic.endpoint) {
                 case "engagement_metrics":
                   promises.push(
-                    communityAnalyticsAPI.getCommunityEngagementMetrics()
+                    communityAnalyticsAPI.getCommunityEngagementMetrics(activeSiteIds)
                   );
                   break;
                 case "site_wise_adoption_rate":
                   promises.push(
                     communityAnalyticsAPI.getSiteWiseAdoptionRate(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1457,7 +1553,8 @@ export const Dashboard = () => {
                   promises.push(
                     assetManagementAnalyticsAPI.getAssetOverview(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1465,7 +1562,8 @@ export const Dashboard = () => {
                   promises.push(
                     assetManagementAnalyticsAPI.getHighestMaintenanceAssets(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1475,7 +1573,8 @@ export const Dashboard = () => {
                   promises.push(
                     assetManagementAnalyticsAPI.getAmcContractSummary(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1512,7 +1611,8 @@ export const Dashboard = () => {
                   promises.push(
                     helpdeskAnalyticsAPI.getHelpdeskSnapshot(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1520,7 +1620,8 @@ export const Dashboard = () => {
                   promises.push(
                     helpdeskAnalyticsAPI.getAgingClosureFeedbackOverview(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1528,7 +1629,8 @@ export const Dashboard = () => {
                   promises.push(
                     helpdeskAnalyticsAPI.getTicketPerformanceMetrics(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1536,7 +1638,8 @@ export const Dashboard = () => {
                   promises.push(
                     helpdeskAnalyticsAPI.getCustomerExperienceFeedback(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1545,7 +1648,8 @@ export const Dashboard = () => {
                   promises.push(
                     helpdeskAnalyticsAPI.getCustomerExperienceFeedback(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1553,7 +1657,8 @@ export const Dashboard = () => {
                   promises.push(
                     helpdeskAnalyticsAPI.getResponseTATQuarterly(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1561,7 +1666,8 @@ export const Dashboard = () => {
                   promises.push(
                     helpdeskAnalyticsAPI.getResolutionTATQuarterly(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1569,7 +1675,8 @@ export const Dashboard = () => {
                   promises.push(
                     ticketAnalyticsAPI.getUnitCategorywiseProactiveData(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1577,7 +1684,8 @@ export const Dashboard = () => {
                   promises.push(
                     ticketAnalyticsAPI.getCommonAreaCategorywiseData(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1585,7 +1693,8 @@ export const Dashboard = () => {
                   promises.push(
                     ticketAnalyticsAPI.getCommonAreaCategorywiseProactiveData(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1623,7 +1732,8 @@ export const Dashboard = () => {
                   promises.push(
                     inventoryManagementAnalyticsAPI.getInventoryOverstockReport(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1631,7 +1741,8 @@ export const Dashboard = () => {
                   promises.push(
                     inventoryManagementAnalyticsAPI.getCenterWiseConsumables(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1639,7 +1750,8 @@ export const Dashboard = () => {
                   promises.push(
                     inventoryManagementAnalyticsAPI.getConsumableInventoryComparison(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1647,7 +1759,8 @@ export const Dashboard = () => {
                   promises.push(
                     inventoryAnalyticsAPI.getConsumptionReportGreen(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1655,7 +1768,8 @@ export const Dashboard = () => {
                   promises.push(
                     inventoryAnalyticsAPI.getConsumptionReportNonGreen(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1695,7 +1809,8 @@ export const Dashboard = () => {
                   promises.push(
                     parkingManagementAnalyticsAPI.getParkingAllocationOverview(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1746,7 +1861,8 @@ export const Dashboard = () => {
                   promises.push(
                     visitorManagementAnalyticsAPI.getVisitorTrendAnalysis(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1783,7 +1899,8 @@ export const Dashboard = () => {
                   promises.push(
                     checklistManagementAnalyticsAPI.getChecklistProgressRows(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1791,7 +1908,8 @@ export const Dashboard = () => {
                   promises.push(
                     checklistManagementAnalyticsAPI.getTopOverdueChecklistMatrix(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1829,7 +1947,7 @@ export const Dashboard = () => {
                 case "top_surveys":
                   toLoad[module] = toLoad[module] || {};
                   toLoad[module][analytic.endpoint] = true;
-                  promises.push(surveyAnalyticsAPI.getRealSurveyAnalytics());
+                  promises.push(surveyAnalyticsAPI.getRealSurveyAnalytics(activeSiteIds));
                   break;
                 default:
                   promises.push(Promise.resolve(null));
@@ -1866,7 +1984,8 @@ export const Dashboard = () => {
                   promises.push(
                     permitToWorkAnalyticsAPI.getSiteWisePermitsReport(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1874,7 +1993,8 @@ export const Dashboard = () => {
                   promises.push(
                     permitToWorkAnalyticsAPI.getPermitsStatusData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1914,7 +2034,8 @@ export const Dashboard = () => {
                   promises.push(
                     utilityAnalyticsAPI.getEnergyKPIs(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1922,7 +2043,8 @@ export const Dashboard = () => {
                   promises.push(
                     utilityAnalyticsAPI.getSubMeterSources(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1930,7 +2052,8 @@ export const Dashboard = () => {
                   promises.push(
                     utilityAnalyticsAPI.getSiteWisePower(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1938,7 +2061,8 @@ export const Dashboard = () => {
                   promises.push(
                     utilityAnalyticsAPI.getWaterKPIs(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1946,7 +2070,8 @@ export const Dashboard = () => {
                   promises.push(
                     utilityAnalyticsAPI.getWaterSourceBreakdown(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1954,7 +2079,8 @@ export const Dashboard = () => {
                   promises.push(
                     utilityAnalyticsAPI.getSiteWiseWater(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1962,7 +2088,8 @@ export const Dashboard = () => {
                   promises.push(
                     utilityAnalyticsAPI.getWaterTimeSeries(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1970,7 +2097,8 @@ export const Dashboard = () => {
                   promises.push(
                     utilityAnalyticsAPI.getCarbonEmissionScopes(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1978,7 +2106,8 @@ export const Dashboard = () => {
                   promises.push(
                     utilityAnalyticsAPI.getEnergyIntensity(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1986,7 +2115,8 @@ export const Dashboard = () => {
                   promises.push(
                     utilityAnalyticsAPI.getSiteWiseEvConsumption(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1994,7 +2124,8 @@ export const Dashboard = () => {
                   promises.push(
                     utilityAnalyticsAPI.getSiteWiseDryWasteSegregation(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -2002,7 +2133,8 @@ export const Dashboard = () => {
                   promises.push(
                     utilityAnalyticsAPI.getFuelConsumption(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -2042,7 +2174,8 @@ export const Dashboard = () => {
                   promises.push(
                     incidentAnalyticsAPI.getTopCategories(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -2050,7 +2183,8 @@ export const Dashboard = () => {
                   promises.push(
                     incidentAnalyticsAPI.getStatusSummary(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -2058,7 +2192,8 @@ export const Dashboard = () => {
                   promises.push(
                     incidentAnalyticsAPI.getLevelWise(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -2066,7 +2201,9 @@ export const Dashboard = () => {
                   promises.push(
                     incidentAnalyticsAPI.getRcaData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      1,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -2074,7 +2211,8 @@ export const Dashboard = () => {
                   promises.push(
                     incidentAnalyticsAPI.getSafetyMetrics(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -2082,7 +2220,8 @@ export const Dashboard = () => {
                   promises.push(
                     incidentAnalyticsAPI.getCauseWiseIncidents(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -2121,7 +2260,8 @@ export const Dashboard = () => {
                   promises.push(
                     escalationAnalyticsAPI.getEscalationKpis(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -2129,7 +2269,8 @@ export const Dashboard = () => {
                   promises.push(
                     escalationAnalyticsAPI.getZoneWise(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -2137,7 +2278,8 @@ export const Dashboard = () => {
                   promises.push(
                     escalationAnalyticsAPI.getCategoryWise(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -2145,7 +2287,8 @@ export const Dashboard = () => {
                   promises.push(
                     escalationAnalyticsAPI.getServicePartnerEvaluation(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -2317,7 +2460,7 @@ export const Dashboard = () => {
     if (selectedAnalytics.length > 0 && dateRange?.from && dateRange?.to) {
       fetchAnalyticsData();
     }
-  }, [selectedAnalytics, dateRange]);
+  }, [selectedAnalytics, dateRange, selectedSite]);
 
   const handleAnalyticsSelectionChange = (analytics: SelectedAnalytic[]) => {
     setSelectedAnalytics(analytics);
@@ -2336,6 +2479,13 @@ export const Dashboard = () => {
 
   const handleDateRangeChange = (range: DateRange | undefined) => {
     setDateRange(range);
+  };
+
+  const handleSiteChange = (value: string) => {
+    setSelectedSite(value);
+    const siteIds =
+      value === "all" ? allowedSites.map((s) => s.id).join(",") : value;
+    localStorage.setItem("selecteSiteIdsDashboard", siteIds);
   };
 
   const handleDragEnd = (event: any) => {
@@ -2794,7 +2944,8 @@ export const Dashboard = () => {
                     if (dateRange?.from && dateRange?.to) {
                       await amcAnalyticsDownloadAPI.downloadAMCStatusData(
                         dateRange.from,
-                        dateRange.to
+                        dateRange.to,
+                        activeSiteIds
                       );
                     }
                   }}
@@ -2810,7 +2961,8 @@ export const Dashboard = () => {
                     if (dateRange?.from && dateRange?.to) {
                       await amcAnalyticsDownloadAPI.downloadAMCTypeDistribution(
                         dateRange.from,
-                        dateRange.to
+                        dateRange.to,
+                        activeSiteIds
                       );
                     }
                   }}
@@ -2826,7 +2978,8 @@ export const Dashboard = () => {
                     if (dateRange?.from && dateRange?.to) {
                       await amcAnalyticsDownloadAPI.downloadAMCUnitResourceWise(
                         dateRange.from,
-                        dateRange.to
+                        dateRange.to,
+                        activeSiteIds
                       );
                     }
                   }}
@@ -2842,7 +2995,8 @@ export const Dashboard = () => {
                     if (dateRange?.from && dateRange?.to) {
                       await amcAnalyticsDownloadAPI.downloadAMCServiceStats(
                         dateRange.from,
-                        dateRange.to
+                        dateRange.to,
+                        activeSiteIds
                       );
                     }
                   }}
@@ -2858,7 +3012,8 @@ export const Dashboard = () => {
                     if (dateRange?.from && dateRange?.to) {
                       await amcAnalyticsDownloadAPI.downloadAMCExpiryAnalysis(
                         dateRange.from,
-                        dateRange.to
+                        dateRange.to,
+                        activeSiteIds
                       );
                     }
                   }}
@@ -2874,7 +3029,8 @@ export const Dashboard = () => {
                     if (dateRange?.from && dateRange?.to) {
                       await amcAnalyticsDownloadAPI.downloadAMCServiceTracking(
                         dateRange.from,
-                        dateRange.to
+                        dateRange.to,
+                        activeSiteIds
                       );
                     }
                   }}
@@ -2890,7 +3046,8 @@ export const Dashboard = () => {
                     if (dateRange?.from && dateRange?.to) {
                       await amcAnalyticsDownloadAPI.downloadAMCCoverageByLocation(
                         dateRange.from,
-                        dateRange.to
+                        dateRange.to,
+                        activeSiteIds
                       );
                     }
                   }}
@@ -2906,7 +3063,8 @@ export const Dashboard = () => {
                     if (dateRange?.from && dateRange?.to) {
                       await amcAnalyticsDownloadAPI.downloadAMCVendorPerformance(
                         dateRange.from,
-                        dateRange.to
+                        dateRange.to,
+                        activeSiteIds
                       );
                     }
                   }}
@@ -3191,7 +3349,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await assetManagementAnalyticsAPI.downloadAssetOverview(dateRange.from, dateRange.to);
+                      await assetManagementAnalyticsAPI.downloadAssetOverview(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3214,7 +3372,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await assetManagementAnalyticsAPI.downloadAssetOverview(dateRange.from, dateRange.to);
+                      await assetManagementAnalyticsAPI.downloadAssetOverview(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3237,7 +3395,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await assetManagementAnalyticsAPI.downloadAmcOverview(dateRange.from, dateRange.to);
+                      await assetManagementAnalyticsAPI.downloadAmcOverview(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3260,7 +3418,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await assetManagementAnalyticsAPI.downloadAmcOverview(dateRange.from, dateRange.to);
+                      await assetManagementAnalyticsAPI.downloadAmcOverview(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3302,7 +3460,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await inventoryManagementAnalyticsAPI.downloadInventoryOverstockReport(dateRange.from, dateRange.to);
+                      await inventoryManagementAnalyticsAPI.downloadInventoryOverstockReport(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3325,7 +3483,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await inventoryManagementAnalyticsAPI.downloadCenterWiseConsumables(dateRange.from, dateRange.to);
+                      await inventoryManagementAnalyticsAPI.downloadCenterWiseConsumables(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3358,7 +3516,8 @@ export const Dashboard = () => {
                     try {
                       await inventoryManagementAnalyticsAPI.downloadConsumableInventoryComparison(
                         dateRange.from,
-                        dateRange.to
+                        dateRange.to,
+                        activeSiteIds
                       );
                       toast.dismiss();
                       toast.success("Download completed successfully");
@@ -3481,9 +3640,9 @@ export const Dashboard = () => {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <ExecutiveParkingStatsCard
-                    startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                    endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
-                  />
+                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
+                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                />
               </SortableChartItem>
             );
           case "parking_allocation_overview":
@@ -3533,7 +3692,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await checklistManagementAnalyticsAPI.downloadSiteWiseChecklist(dateRange.from, dateRange.to);
+                      await checklistManagementAnalyticsAPI.downloadSiteWiseChecklist(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3558,7 +3717,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await checklistManagementAnalyticsAPI.downloadSiteWiseChecklist(dateRange.from, dateRange.to);
+                      await checklistManagementAnalyticsAPI.downloadSiteWiseChecklist(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3599,7 +3758,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await helpdeskAnalyticsAPI.downloadTicketAgingClosureEfficiency(dateRange.from, dateRange.to);
+                      await helpdeskAnalyticsAPI.downloadTicketAgingClosureEfficiency(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3622,7 +3781,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await helpdeskAnalyticsAPI.downloadTicketPerformanceMetrics(dateRange.from, dateRange.to);
+                      await helpdeskAnalyticsAPI.downloadTicketPerformanceMetrics(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3652,7 +3811,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await helpdeskAnalyticsAPI.downloadCustomerExperienceFeedback(dateRange.from, dateRange.to);
+                      await helpdeskAnalyticsAPI.downloadCustomerExperienceFeedback(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3685,7 +3844,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await helpdeskAnalyticsAPI.downloadTATPerformanceQuarterly(dateRange.from, dateRange.to);
+                      await helpdeskAnalyticsAPI.downloadTATPerformanceQuarterly(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3718,7 +3877,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await helpdeskAnalyticsAPI.downloadTATPerformanceQuarterly(dateRange.from, dateRange.to);
+                      await helpdeskAnalyticsAPI.downloadTATPerformanceQuarterly(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3741,7 +3900,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await ticketAnalyticsDownloadAPI.downloadUnitCategorywiseProactiveData(dateRange.from, dateRange.to);
+                      await ticketAnalyticsDownloadAPI.downloadUnitCategorywiseProactiveData(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3764,7 +3923,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await ticketAnalyticsDownloadAPI.downloadCommonAreaCategorywiseData(dateRange.from, dateRange.to);
+                      await ticketAnalyticsDownloadAPI.downloadCommonAreaCategorywiseData(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3787,7 +3946,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await ticketAnalyticsDownloadAPI.downloadCommonAreaCategorywiseProactiveData(dateRange.from, dateRange.to);
+                      await ticketAnalyticsDownloadAPI.downloadCommonAreaCategorywiseProactiveData(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -4027,7 +4186,7 @@ export const Dashboard = () => {
                 onDownload={async () => {
                   if (!dateRange?.from || !dateRange?.to) return;
                   try {
-                    await permitToWorkAnalyticsAPI.downloadSiteWisePermits(dateRange.from, dateRange.to);
+                    await permitToWorkAnalyticsAPI.downloadSiteWisePermits(dateRange.from, dateRange.to, activeSiteIds);
                     toast.success("Downloaded successfully");
                   } catch {
                     toast.error("Failed to download");
@@ -4046,7 +4205,7 @@ export const Dashboard = () => {
                 onDownload={async () => {
                   if (!dateRange?.from || !dateRange?.to) return;
                   try {
-                    await permitToWorkAnalyticsAPI.downloadPermitsStatus(dateRange.from, dateRange.to);
+                    await permitToWorkAnalyticsAPI.downloadPermitsStatus(dateRange.from, dateRange.to, activeSiteIds);
                     toast.success("Downloaded successfully");
                   } catch {
                     toast.error("Failed to download");
@@ -4091,7 +4250,7 @@ export const Dashboard = () => {
             }
             const handleSubMeterDownload = async () => {
               if (!dateRange?.from || !dateRange?.to) return;
-              const siteId = localStorage.getItem('selectedSiteId') || '';
+              const siteId = activeSiteIds;
               const fmt = (d: Date) => {
                 const y = d.getFullYear();
                 const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -4149,7 +4308,7 @@ export const Dashboard = () => {
             ];
             const handleSiteWiseDownload = async () => {
               if (!dateRange?.from || !dateRange?.to) return;
-              const siteId = localStorage.getItem('selectedSiteId') || '';
+              const siteId = activeSiteIds;
               const fmt = (d: Date) => {
                 const y = d.getFullYear();
                 const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -4219,7 +4378,7 @@ export const Dashboard = () => {
             ];
             const handleSourceDownload = async () => {
               if (!dateRange?.from || !dateRange?.to) return;
-              const siteId = localStorage.getItem('selectedSiteId') || '';
+              const siteId = activeSiteIds;
               const fmt = (d: Date) => {
                 const y = d.getFullYear();
                 const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -4276,7 +4435,7 @@ export const Dashboard = () => {
             ];
             const handleSiteWiseWaterDownload = async () => {
               if (!dateRange?.from || !dateRange?.to) return;
-              const siteId = localStorage.getItem('selectedSiteId') || '';
+              const siteId = activeSiteIds;
               const fmt = (d: Date) => {
                 const y = d.getFullYear();
                 const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -4329,7 +4488,7 @@ export const Dashboard = () => {
             }));
             const handleTimeSeriesDownload = async () => {
               if (!dateRange?.from || !dateRange?.to) return;
-              const siteId = localStorage.getItem('selectedSiteId') || '';
+              const siteId = activeSiteIds;
               const fmt = (d: Date) => {
                 const y = d.getFullYear();
                 const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -4411,7 +4570,7 @@ export const Dashboard = () => {
             const rawData = (dashboardData as any)?.utility?.[analytic.endpoint];
             const handleEvDownload = async () => {
               if (!dateRange?.from || !dateRange?.to) return;
-              const siteId = localStorage.getItem('selectedSiteId') || '';
+              const siteId = activeSiteIds;
               const fmt = (d: Date) => {
                 const y = d.getFullYear();
                 const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -4448,7 +4607,7 @@ export const Dashboard = () => {
             const rawData = (dashboardData as any)?.utility?.[analytic.endpoint];
             const handleWasteDownload = async () => {
               if (!dateRange?.from || !dateRange?.to) return;
-              const siteId = localStorage.getItem('selectedSiteId') || '';
+              const siteId = activeSiteIds;
               const fmt = (d: Date) => {
                 const y = d.getFullYear();
                 const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -4524,7 +4683,7 @@ export const Dashboard = () => {
                 onDownload={async () => {
                   if (!dateRange?.from || !dateRange?.to) return;
                   try {
-                    await incidentAnalyticsAPI.downloadTopCategories(dateRange.from, dateRange.to);
+                    await incidentAnalyticsAPI.downloadTopCategories(dateRange.from, dateRange.to, activeSiteIds);
                     toast.success("Downloaded successfully");
                   } catch {
                     toast.error("Failed to download");
@@ -4542,12 +4701,12 @@ export const Dashboard = () => {
             };
             const statusData = rawData?.response
               ? Object.entries(rawData.response)
-                  .filter(([, val]) => typeof val === "number" && (val as number) > 0)
-                  .map(([key, val]) => ({
-                    name: key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
-                    value: val as number,
-                    color: STATUS_COLORS[key] || "#9E9E9E",
-                  }))
+                .filter(([, val]) => typeof val === "number" && (val as number) > 0)
+                .map(([key, val]) => ({
+                  name: key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
+                  value: val as number,
+                  color: STATUS_COLORS[key] || "#9E9E9E",
+                }))
               : [];
             return (
               <AssetAnalyticsCard
@@ -4559,7 +4718,7 @@ export const Dashboard = () => {
                 onDownload={async () => {
                   if (!dateRange?.from || !dateRange?.to) return;
                   try {
-                    await incidentAnalyticsAPI.downloadStatusSummary(dateRange.from, dateRange.to);
+                    await incidentAnalyticsAPI.downloadStatusSummary(dateRange.from, dateRange.to, activeSiteIds);
                     toast.success("Downloaded successfully");
                   } catch {
                     toast.error("Failed to download");
@@ -4579,7 +4738,7 @@ export const Dashboard = () => {
                 onDownload={async () => {
                   if (!dateRange?.from || !dateRange?.to) return;
                   try {
-                    await incidentAnalyticsAPI.downloadLevelWise(dateRange.from, dateRange.to);
+                    await incidentAnalyticsAPI.downloadLevelWise(dateRange.from, dateRange.to, activeSiteIds);
                     toast.success("Downloaded successfully");
                   } catch {
                     toast.error("Failed to download");
@@ -4622,7 +4781,7 @@ export const Dashboard = () => {
                     onClick={async () => {
                       if (!dateRange?.from || !dateRange?.to) return;
                       try {
-                        await incidentAnalyticsAPI.downloadRcaData(dateRange.from, dateRange.to);
+                        await incidentAnalyticsAPI.downloadRcaData(dateRange.from, dateRange.to, activeSiteIds);
                         toast.success("Downloaded successfully");
                       } catch {
                         toast.error("Failed to download");
@@ -4634,53 +4793,53 @@ export const Dashboard = () => {
                   </button> */}
                 </div>
                 {rcaRows.length === 0 ? (
-                    <div className="py-12 text-center text-sm text-gray-400">No RCA data found.</div>
-                  ) : (
-                    <div className="rounded-xl overflow-hidden border border-gray-200 mx-4 mb-4 mt-2">
+                  <div className="py-12 text-center text-sm text-gray-400">No RCA data found.</div>
+                ) : (
+                  <div className="rounded-xl overflow-hidden border border-gray-200 mx-4 mb-4 mt-2">
                     <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr>
-                          <th className="px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center" style={{ backgroundColor: "#D97655" }}>Sr.</th>
-                          {RCA_COLS.map(c => (
-                            <th key={c.key} className="px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center" style={{ backgroundColor: "#D97655" }}>{c.label}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rcaRows.slice(0, 20).map((row, idx) => (
-                          <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? "#ffffff" : "#F6F4EE" }}>
-                            <td className="px-4 py-3 text-left text-gray-500 font-medium text-xs border-b border-gray-100 whitespace-nowrap">{idx + 1}</td>
-                            {RCA_COLS.map(c => {
-                              const val = row[c.key] ?? null;
-                              if (c.key === "incident_level_name") {
-                                return (
-                                  <td key={c.key} className="px-4 py-3 text-left whitespace-nowrap border-b border-gray-100">
-                                    {val ? <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${getLevelBadgeClass(val)}`}>{val}</span> : <span className="text-gray-400">-</span>}
-                                  </td>
-                                );
-                              }
-                              if (c.key === "incident_status_raw") {
-                                return (
-                                  <td key={c.key} className="px-4 py-3 text-left whitespace-nowrap border-b border-gray-100">
-                                    {val ? <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${getStatusBadgeClass(val)}`}>{val.replace(/_/g, " ").replace(/\b\w/g, (ch: string) => ch.toUpperCase())}</span> : <span className="text-gray-400">-</span>}
-                                  </td>
-                                );
-                              }
-                              const isLong = ["incident_description", "incident_rca_text"].includes(c.key);
-                              return (
-                                <td key={c.key} className={`px-4 py-3 text-left text-gray-700 text-xs border-b border-gray-100 ${isLong ? "max-w-[180px]" : "whitespace-nowrap"}`}>
-                                  {val ? (isLong ? <span title={val} className="block truncate">{val}</span> : val) : <span className="text-gray-400">-</span>}
-                                </td>
-                              );
-                            })}
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr>
+                            <th className="px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center" style={{ backgroundColor: "#D97655" }}>Sr.</th>
+                            {RCA_COLS.map(c => (
+                              <th key={c.key} className="px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center" style={{ backgroundColor: "#D97655" }}>{c.label}</th>
+                            ))}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {rcaRows.slice(0, 20).map((row, idx) => (
+                            <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? "#ffffff" : "#F6F4EE" }}>
+                              <td className="px-4 py-3 text-left text-gray-500 font-medium text-xs border-b border-gray-100 whitespace-nowrap">{idx + 1}</td>
+                              {RCA_COLS.map(c => {
+                                const val = row[c.key] ?? null;
+                                if (c.key === "incident_level_name") {
+                                  return (
+                                    <td key={c.key} className="px-4 py-3 text-left whitespace-nowrap border-b border-gray-100">
+                                      {val ? <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${getLevelBadgeClass(val)}`}>{val}</span> : <span className="text-gray-400">-</span>}
+                                    </td>
+                                  );
+                                }
+                                if (c.key === "incident_status_raw") {
+                                  return (
+                                    <td key={c.key} className="px-4 py-3 text-left whitespace-nowrap border-b border-gray-100">
+                                      {val ? <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${getStatusBadgeClass(val)}`}>{val.replace(/_/g, " ").replace(/\b\w/g, (ch: string) => ch.toUpperCase())}</span> : <span className="text-gray-400">-</span>}
+                                    </td>
+                                  );
+                                }
+                                const isLong = ["incident_description", "incident_rca_text"].includes(c.key);
+                                return (
+                                  <td key={c.key} className={`px-4 py-3 text-left text-gray-700 text-xs border-b border-gray-100 ${isLong ? "max-w-[180px]" : "whitespace-nowrap"}`}>
+                                    {val ? (isLong ? <span title={val} className="block truncate">{val}</span> : val) : <span className="text-gray-400">-</span>}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-                    </div>
-                  )}
+                  </div>
+                )}
                 {rcaRows.length > 20 && (
                   <div className="px-4 py-3 border-t border-gray-100 text-xs text-gray-400 text-center">
                     Showing first 20 of {rcaRows.length} records — export for full data
@@ -4732,7 +4891,7 @@ export const Dashboard = () => {
                 onDownload={async () => {
                   if (!dateRange?.from || !dateRange?.to) return;
                   try {
-                    await incidentAnalyticsAPI.downloadCauseWiseIncidents(dateRange.from, dateRange.to);
+                    await incidentAnalyticsAPI.downloadCauseWiseIncidents(dateRange.from, dateRange.to, activeSiteIds);
                     toast.success("Downloaded successfully");
                   } catch {
                     toast.error("Failed to download");
@@ -4794,7 +4953,7 @@ export const Dashboard = () => {
                 onDownload={async () => {
                   if (!dateRange?.from || !dateRange?.to) return;
                   try {
-                    await escalationAnalyticsAPI.downloadZoneWise(dateRange.from, dateRange.to);
+                    await escalationAnalyticsAPI.downloadZoneWise(dateRange.from, dateRange.to, activeSiteIds);
                     toast.success("Downloaded successfully");
                   } catch {
                     toast.error("Failed to download");
@@ -4817,7 +4976,7 @@ export const Dashboard = () => {
                 onDownload={async () => {
                   if (!dateRange?.from || !dateRange?.to) return;
                   try {
-                    await escalationAnalyticsAPI.downloadCategoryWise(dateRange.from, dateRange.to);
+                    await escalationAnalyticsAPI.downloadCategoryWise(dateRange.from, dateRange.to, activeSiteIds);
                     toast.success("Downloaded successfully");
                   } catch {
                     toast.error("Failed to download");
@@ -4998,6 +5157,23 @@ export const Dashboard = () => {
               </Button> */}
 
                   <div className="flex items-center gap-4">
+                    <Select
+                      value={selectedSite}
+                      onValueChange={handleSiteChange}
+                      disabled={sitesLoading}
+                    >
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Select Site" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Sites</SelectItem>
+                        {allowedSites.map((site) => (
+                          <SelectItem key={site.id} value={String(site.id)}>
+                            {site.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <UnifiedDateRangeFilter
                       dateRange={dateRange}
                       onDateRangeChange={handleDateRangeChange}

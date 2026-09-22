@@ -49,39 +49,49 @@ const siteIdExtra = (): Record<string, string> => {
 
 const escalationAnalyticsAPI = {
   // The collection's capture for this one also pins `type=pie_chart`.
-  async getEscalationKpis(fromDate: Date, toDate: Date) {
+  async getEscalationKpis(fromDate: Date, toDate: Date, siteId?: string) {
     return get(
       buildUrl('/escalation_dashboard/escalation_kpis.json', fromDate, toDate, {
         type: 'pie_chart',
-        ...siteIdExtra(),
+        ...(siteId ? { site_id: siteId } : siteIdExtra()),
       })
     );
   },
 
-  async getZoneWise(fromDate: Date, toDate: Date) {
-    return get(buildUrl('/escalation_dashboard/zone_wise.json', fromDate, toDate, siteIdExtra()));
-  },
-
-  async getCategoryWise(fromDate: Date, toDate: Date) {
-    return get(buildUrl('/escalation_dashboard/category_wise.json', fromDate, toDate, siteIdExtra()));
-  },
-
-  async getServicePartnerEvaluation(fromDate: Date, toDate: Date) {
+  async getZoneWise(fromDate: Date, toDate: Date, siteId?: string) {
     return get(
-      buildUrl('/escalation_dashboard/service_partner_evaluation.json', fromDate, toDate, siteIdExtra())
+      buildUrl('/escalation_dashboard/zone_wise.json', fromDate, toDate, siteId ? { site_id: siteId } : siteIdExtra())
     );
   },
 
-  async downloadZoneWise(fromDate: Date, toDate: Date) {
+  async getCategoryWise(fromDate: Date, toDate: Date, siteId?: string) {
+    return get(
+      buildUrl('/escalation_dashboard/category_wise.json', fromDate, toDate, siteId ? { site_id: siteId } : siteIdExtra())
+    );
+  },
+
+  async getServicePartnerEvaluation(fromDate: Date, toDate: Date, siteId?: string) {
+    return get(
+      buildUrl('/escalation_dashboard/service_partner_evaluation.json', fromDate, toDate, siteId ? { site_id: siteId } : siteIdExtra())
+    );
+  },
+
+  async downloadZoneWise(fromDate: Date, toDate: Date, siteId?: string) {
     return download(
-      buildUrl('/escalation_dashboard/zone_wise.json', fromDate, toDate, { export: 'true', ...siteIdExtra() }),
+      buildUrl('/escalation_dashboard/zone_wise.json', fromDate, toDate, {
+        export: 'true',
+        ...(siteId ? { site_id: siteId } : siteIdExtra()),
+      }),
       `escalation-zone-wise-${fmt(fromDate)}-to-${fmt(toDate)}.xlsx`
     );
   },
 
-  async downloadCategoryWise(fromDate: Date, toDate: Date) {
+  async downloadCategoryWise(fromDate: Date, toDate: Date, siteId?: string) {
     return download(
-      buildUrl('/escalation_dashboard/category_wise.json', fromDate, toDate, { export: 'true', ...siteIdExtra() }),
+      buildUrl('/escalation_dashboard/category_wise.json', fromDate, toDate, {
+        export: 'true',
+        ...(siteId ? { site_id: siteId } : siteIdExtra()),
+      }),
       `escalation-category-wise-${fmt(fromDate)}-to-${fmt(toDate)}.xlsx`
     );
   },

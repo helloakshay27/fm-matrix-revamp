@@ -2,45 +2,45 @@ import { API_CONFIG } from '@/config/apiConfig';
 
 // Real Survey Analytics API Response Interface
 export interface SurveyAnalyticsResponse {
-  analytics: {
-    // Core counts
-    total_surveys?: number;
-    total_responses?: number;
-    positive_responses?: number;
-    negative_responses?: number;
-    neutral_responses?: number;
-    complaints_count?: number;
+    analytics: {
+        // Core counts
+        total_surveys?: number;
+        total_responses?: number;
+        positive_responses?: number;
+        negative_responses?: number;
+        neutral_responses?: number;
+        complaints_count?: number;
 
-    // CSAT and timing
-    csat?: number;
-    avg_closure_days?: number;
-    avg_closure_time?: string;
-    tat_achieved?: number;
+        // CSAT and timing
+        csat?: number;
+        avg_closure_days?: number;
+        avg_closure_time?: string;
+        tat_achieved?: number;
 
-    // Top surveys (legacy/new)
-    top_surveys?: Array<{
-      survey_id: number;
-      survey_name: string;
-      response_count: number;
-      positive_responses?: number;
-      negative_responses?: number;
-      neutral_responses?: number;
-      complaints_count?: number;
-    }>;
+        // Top surveys (legacy/new)
+        top_surveys?: Array<{
+            survey_id: number;
+            survey_name: string;
+            response_count: number;
+            positive_responses?: number;
+            negative_responses?: number;
+            neutral_responses?: number;
+            complaints_count?: number;
+        }>;
 
-    // New fields from analytics response
-    complaint_statuses?: Array<{ status: string; count: number }>;
-    icon_categories?: Array<{ icon_category: string; count: number }>;
-    emoji_options?: Array<{ option_id: number | null; option_name: string | null; count: number }>;
-    survey_responses?: Array<{ survey_id: number; survey_name: string; total_responses: number }>;
+        // New fields from analytics response
+        complaint_statuses?: Array<{ status: string; count: number }>;
+        icon_categories?: Array<{ icon_category: string; count: number }>;
+        emoji_options?: Array<{ option_id: number | null; option_name: string | null; count: number }>;
+        survey_responses?: Array<{ survey_id: number; survey_name: string; total_responses: number }>;
 
-    // Optional legacy field
-    most_raised_category?: {
-      category_key: string;
-      category_label: string;
-      complaint_count: number;
+        // Optional legacy field
+        most_raised_category?: {
+            category_key: string;
+            category_label: string;
+            complaint_count: number;
+        };
     };
-  };
 }
 
 // Mock Survey Analytics API (keeping for fallback)
@@ -100,7 +100,7 @@ class SurveyAnalyticsAPI {
 
     async getSurveyStatistics(fromDate: Date, toDate: Date): Promise<SurveyStatisticsData> {
         await this.delay(500); // Simulate API delay
-        
+
         return {
             total_surveys: 45,
             total_responses: 320,
@@ -115,7 +115,7 @@ class SurveyAnalyticsAPI {
 
     async getSurveyStatus(fromDate: Date, toDate: Date): Promise<SurveyStatusData> {
         await this.delay(300);
-        
+
         return {
             info: {
                 total_active_surveys: 25,
@@ -127,7 +127,7 @@ class SurveyAnalyticsAPI {
 
     async getSurveyDistribution(fromDate: Date, toDate: Date): Promise<SurveyDistributionData> {
         await this.delay(400);
-        
+
         return {
             success: 1,
             message: 'Success',
@@ -146,7 +146,7 @@ class SurveyAnalyticsAPI {
 
     async getTypeWiseSurveys(fromDate: Date, toDate: Date): Promise<TypeWiseSurveysData> {
         await this.delay(350);
-        
+
         return {
             info: 'Type-wise survey distribution',
             type_wise_surveys: [
@@ -160,7 +160,7 @@ class SurveyAnalyticsAPI {
 
     async getCategoryWiseSurveys(fromDate: Date, toDate: Date): Promise<CategoryWiseSurveysData> {
         await this.delay(400);
-        
+
         return {
             categories: [
                 { category_name: 'Satisfaction', survey_count: 25 },
@@ -173,9 +173,10 @@ class SurveyAnalyticsAPI {
     }
 
     // Real API Integration
-    async getRealSurveyAnalytics(): Promise<SurveyAnalyticsResponse> {
+    async getRealSurveyAnalytics(siteId?: string): Promise<SurveyAnalyticsResponse> {
         try {
-            const response = await fetch(`${API_CONFIG.BASE_URL}/pms/admin/snag_checklists/survey_details.json?analytics=true`, {
+            const resolvedSiteId = siteId || localStorage.getItem('selectedSiteId') || '';
+            const response = await fetch(`${API_CONFIG.BASE_URL}/pms/admin/snag_checklists/survey_details.json?analytics=true&site_id=${resolvedSiteId}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
