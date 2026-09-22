@@ -7,68 +7,77 @@ const formatDate = (d: Date) => {
   return `${y}-${m}-${day}`;
 };
 
+const getSiteId = () => localStorage.getItem('selectedSiteId') || '';
+
 export const helpdeskAnalyticsAPI = {
-  async getHelpdeskSnapshot(fromDate: Date, toDate: Date): Promise<any> {
+  async getHelpdeskSnapshot(fromDate: Date, toDate: Date, siteId?: string): Promise<any> {
     const start = formatDate(fromDate);
     const end = formatDate(toDate);
-    const url = `/api/pms/reports/helpdesk_management_snapshot?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/api/pms/reports/helpdesk_management_snapshot.json?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
     const resp = await apiClient.get(url);
     return resp.data;
   },
 
-  async getTicketAgingClosureEfficiency(fromDate: Date, toDate: Date): Promise<any> {
+  async getTicketAgingClosureEfficiency(fromDate: Date, toDate: Date, siteId?: string): Promise<any> {
     const start = formatDate(fromDate);
     const end = formatDate(toDate);
-    const url = `/api/pms/reports/ticket_aging_closure_efficiency?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/api/pms/reports/ticket_aging_closure_efficiency.json?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
     const resp = await apiClient.get(url);
     return resp.data;
   },
 
-  async getCustomerExperienceFeedback(fromDate: Date, toDate: Date): Promise<any> {
+  async getCustomerExperienceFeedback(fromDate: Date, toDate: Date, siteId?: string): Promise<any> {
     const start = formatDate(fromDate);
     const end = formatDate(toDate);
-    const url = `/api/pms/reports/customer_experience_feedback?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/api/pms/reports/customer_experience_feedback.json?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
     const resp = await apiClient.get(url);
     return resp.data;
   },
 
-  async getTicketPerformanceMetrics(fromDate: Date, toDate: Date): Promise<any> {
+  async getTicketPerformanceMetrics(fromDate: Date, toDate: Date, siteId?: string): Promise<any> {
     const start = formatDate(fromDate);
     const end = formatDate(toDate);
-    const url = `/api/pms/reports/ticket_performance_metrics?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/api/pms/reports/ticket_performance_metrics.json?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
     const resp = await apiClient.get(url);
     return resp.data;
   },
 
   // Convenience wrapper to return both datasets together
-  async getAgingClosureFeedbackOverview(fromDate: Date, toDate: Date): Promise<{ agingClosure: any; feedback: any; }> {
+  async getAgingClosureFeedbackOverview(fromDate: Date, toDate: Date, siteId?: string): Promise<{ agingClosure: any; feedback: any; }> {
     const [agingClosure, feedback] = await Promise.all([
-      this.getTicketAgingClosureEfficiency(fromDate, toDate),
-      this.getCustomerExperienceFeedback(fromDate, toDate),
+      this.getTicketAgingClosureEfficiency(fromDate, toDate, siteId),
+      this.getCustomerExperienceFeedback(fromDate, toDate, siteId),
     ]);
     return { agingClosure, feedback };
   },
 
-  async getResponseTATQuarterly(fromDate: Date, toDate: Date): Promise<any> {
+  async getResponseTATQuarterly(fromDate: Date, toDate: Date, siteId?: string): Promise<any> {
     const start = formatDate(fromDate);
     const end = formatDate(toDate);
-    const url = `/api/pms/reports/response_tat_performance_quarterly?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/api/pms/reports/response_tat_performance_quarterly.json?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
     const resp = await apiClient.get(url);
     return resp.data;
   },
 
-  async getResolutionTATQuarterly(fromDate: Date, toDate: Date): Promise<any> {
+  async getResolutionTATQuarterly(fromDate: Date, toDate: Date, siteId?: string): Promise<any> {
     const start = formatDate(fromDate);
     const end = formatDate(toDate);
-    const url = `/api/pms/reports/resolution_tat_performance_quarterly?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/api/pms/reports/resolution_tat_performance_quarterly.json?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
     const resp = await apiClient.get(url);
     return resp.data;
   },
 
-  async downloadTicketAgingClosureEfficiency(fromDate: Date, toDate: Date): Promise<void> {
+  async downloadTicketAgingClosureEfficiency(fromDate: Date, toDate: Date, siteId?: string): Promise<void> {
     const start = formatDate(fromDate);
     const end = formatDate(toDate);
-    const url = `/ticket_aging_closure_efficiency/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/ticket_aging_closure_efficiency/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
 
     const response = await apiClient.get(url, {
       responseType: 'blob',
@@ -90,10 +99,11 @@ export const helpdeskAnalyticsAPI = {
     window.URL.revokeObjectURL(downloadUrl);
   },
 
-  async downloadTicketPerformanceMetrics(fromDate: Date, toDate: Date): Promise<void> {
+  async downloadTicketPerformanceMetrics(fromDate: Date, toDate: Date, siteId?: string): Promise<void> {
     const start = formatDate(fromDate);
     const end = formatDate(toDate);
-    const url = `/ticket_performance_metrics/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/ticket_performance_metrics/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
 
     const response = await apiClient.get(url, {
       responseType: 'blob',
@@ -115,10 +125,11 @@ export const helpdeskAnalyticsAPI = {
     window.URL.revokeObjectURL(downloadUrl);
   },
 
-  async downloadCustomerExperienceFeedback(fromDate: Date, toDate: Date): Promise<void> {
+  async downloadCustomerExperienceFeedback(fromDate: Date, toDate: Date, siteId?: string): Promise<void> {
     const start = formatDate(fromDate);
     const end = formatDate(toDate);
-    const url = `/customer_experience_feedback/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/customer_experience_feedback/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
 
     const response = await apiClient.get(url, {
       responseType: 'blob',
@@ -140,10 +151,11 @@ export const helpdeskAnalyticsAPI = {
     window.URL.revokeObjectURL(downloadUrl);
   },
 
-  async downloadTATPerformanceQuarterly(fromDate: Date, toDate: Date): Promise<void> {
+  async downloadTATPerformanceQuarterly(fromDate: Date, toDate: Date, siteId?: string): Promise<void> {
     const start = formatDate(fromDate);
     const end = formatDate(toDate);
-    const url = `/tat-performance-quarterly/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/tat-performance-quarterly/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
 
     const response = await apiClient.get(url, {
       responseType: 'blob',

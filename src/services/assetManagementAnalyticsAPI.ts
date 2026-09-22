@@ -8,35 +8,41 @@ const fmt = (d: Date) => {
   return `${y}-${m}-${day}`;
 };
 
+const getSiteId = () => localStorage.getItem('selectedSiteId') || '';
+
 export const assetManagementAnalyticsAPI = {
-  async getAssetOverview(fromDate: Date, toDate: Date): Promise<any> {
+  async getAssetOverview(fromDate: Date, toDate: Date, siteId?: string): Promise<any> {
     const start = fmt(fromDate);
     const end = fmt(toDate);
-    const url = `/api/pms/reports/asset_overview?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/api/pms/reports/asset_overview.json?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
     const resp = await apiClient.get(url);
     return resp.data;
   },
 
-  async getHighestMaintenanceAssets(fromDate: Date, toDate: Date): Promise<any> {
+  async getHighestMaintenanceAssets(fromDate: Date, toDate: Date, siteId?: string): Promise<any> {
     const start = fmt(fromDate);
     const end = fmt(toDate);
-    const url = `/api/pms/reports/highest_maintenance_assets?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/api/pms/reports/highest_maintenance_assets.json?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
     const resp = await apiClient.get(url);
     return resp.data;
   },
 
-  async getAmcContractSummary(fromDate: Date, toDate: Date): Promise<any> {
+  async getAmcContractSummary(fromDate: Date, toDate: Date, siteId?: string): Promise<any> {
     const start = fmt(fromDate);
     const end = fmt(toDate);
-    const url = `/api/pms/reports/amc_contract_summary?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/api/pms/reports/amc_contract_summary.json?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
     const resp = await apiClient.get(url);
     return resp.data;
   },
 
-  async downloadAssetOverview(fromDate: Date, toDate: Date): Promise<void> {
+  async downloadAssetOverview(fromDate: Date, toDate: Date, siteId?: string): Promise<void> {
     const start = fmt(fromDate);
     const end = fmt(toDate);
-    const url = `/export_asset_overview/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/export_asset_overview/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
     
     const response = await apiClient.get(url, {
       responseType: 'blob',
@@ -58,10 +64,11 @@ export const assetManagementAnalyticsAPI = {
     window.URL.revokeObjectURL(downloadUrl);
   },
 
-  async downloadAmcOverview(fromDate: Date, toDate: Date): Promise<void> {
+  async downloadAmcOverview(fromDate: Date, toDate: Date, siteId?: string): Promise<void> {
     const start = fmt(fromDate);
     const end = fmt(toDate);
-    const url = `/export_amc_overview/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/export_amc_overview/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
     
     const response = await apiClient.get(url, {
       responseType: 'blob',

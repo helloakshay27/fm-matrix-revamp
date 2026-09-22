@@ -159,22 +159,21 @@ const formatDateForAPI = (date: Date): string => {
 };
 
 const getCurrentSiteId = (): string => {
-  return localStorage.getItem('selectedSiteId') || 
-         new URLSearchParams(window.location.search).get('site_id');
+  return localStorage.getItem('selectedSiteId') ||
+    new URLSearchParams(window.location.search).get('site_id');
 };
 
 const getAccessToken = (): string => {
-  return localStorage.getItem('access_token') || 
-         API_CONFIG.TOKEN || 
-         'BcN-zqYejFbQ2jnNorpCGRoVfdzPHcgQRP1bw8jQJYQ';
+  return localStorage.getItem('access_token') ||
+    API_CONFIG.TOKEN ||
+    'BcN-zqYejFbQ2jnNorpCGRoVfdzPHcgQRP1bw8jQJYQ';
 };
 
 // Asset Analytics API
 export const assetAnalyticsAPI = {
-  async getGroupWiseAssets(fromDate: Date, toDate: Date): Promise<AssetGroupWiseData> {
-    const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
-    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&access_token=${accessToken}&assets_group_count_by_name=true`;
+  async getGroupWiseAssets(fromDate: Date, toDate: Date, siteId?: string): Promise<AssetGroupWiseData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
+    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${resolvedSiteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&assets_group_count_by_name=true`;
 
     const response = await fetch(url, {
       headers: {
@@ -189,7 +188,7 @@ export const assetAnalyticsAPI = {
 
     const data = await response.json();
     console.log('Group wise assets API response:', data);
-    
+
     // Transform the new response structure to maintain backward compatibility
     if (data.assets_statistics?.assets_group_count_by_name) {
       return {
@@ -203,16 +202,15 @@ export const assetAnalyticsAPI = {
         info: `Total groups: ${data.assets_statistics.assets_group_count_by_name.length}`
       };
     }
-    
+
     return data;
   },
 
-  async getAssetStatus(fromDate: Date, toDate: Date): Promise<AssetStatusData> {
-    const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
-    
+  async getAssetStatus(fromDate: Date, toDate: Date, siteId?: string): Promise<AssetStatusData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
+
     // Use the new assets_status endpoint
-    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?assets_status=true&site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&access_token=${accessToken}`;
+    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?assets_status=true&site_id=${resolvedSiteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`;
 
     const response = await fetch(url, {
       headers: {
@@ -227,17 +225,16 @@ export const assetAnalyticsAPI = {
 
     const data = await response.json();
     console.log('Asset status API response:', data);
-    
+
     // Extract the status data from the response
     return data.assets_statistics?.status || data;
   },
 
-  async getAssetDistribution(fromDate: Date, toDate: Date): Promise<AssetDistributionData> {
-    const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
-    
-    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&access_token=${accessToken}&assets_distribution=true`;
-    
+  async getAssetDistribution(fromDate: Date, toDate: Date, siteId?: string): Promise<AssetDistributionData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
+
+    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${resolvedSiteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&assets_distribution=true`;
+
     const response = await fetch(url, {
       headers: {
         'Authorization': getAuthHeader(),
@@ -251,7 +248,7 @@ export const assetAnalyticsAPI = {
 
     const data = await response.json();
     console.log('Asset distributions API response:', data);
-    
+
     // Transform the new response structure to maintain backward compatibility
     if (data.assets_statistics?.assets_distribution) {
       return {
@@ -264,17 +261,16 @@ export const assetAnalyticsAPI = {
         }
       };
     }
-    
+
     return data;
   },
 
-  async getAssetStatistics(fromDate: Date, toDate: Date): Promise<AssetStatisticsData> {
-    const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
-    
+  async getAssetStatistics(fromDate: Date, toDate: Date, siteId?: string): Promise<AssetStatisticsData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
+
     // Note: The API endpoint has "statictics" (not "statistics") - this appears to be the correct endpoint
-    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&access_token=${accessToken}&total_assets=true&assets_in_use=true&assets_in_breakdown=true&critical_assets_breakdown=true&ppm_overdue_assets=true&amc_assets=true`;
-    
+    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${resolvedSiteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&total_assets=true&assets_in_use=true&assets_in_breakdown=true&critical_assets_breakdown=true&ppm_overdue_assets=true&amc_assets=true`;
+
     const response = await fetch(url, {
       headers: {
         'Authorization': getAuthHeader(),
@@ -288,17 +284,16 @@ export const assetAnalyticsAPI = {
 
     const data = await response.json();
     console.log('Asset statistics API response:', data);
-    
+
     // Extract the assets_statistics from the response
     return data.assets_statistics || data;
   },
 
-  async getAssetBreakdown(fromDate: Date, toDate: Date): Promise<AssetBreakdownData> {
-    const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
-    
-    const url = `${API_CONFIG.BASE_URL}/pms/assets/asset_breakdown.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&access_token=${accessToken}`;
-    
+  async getAssetBreakdown(fromDate: Date, toDate: Date, siteId?: string): Promise<AssetBreakdownData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
+
+    const url = `${API_CONFIG.BASE_URL}/pms/assets/asset_breakdown.json?site_id=${resolvedSiteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`;
+
     const response = await fetch(url, {
       headers: {
         'Authorization': getAuthHeader(),
@@ -315,13 +310,12 @@ export const assetAnalyticsAPI = {
     return data;
   },
 
-  async getCategoryWiseAssets(fromDate: Date, toDate: Date): Promise<CategoryWiseAssetsData> {
-    const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
-    
+  async getCategoryWiseAssets(fromDate: Date, toDate: Date, siteId?: string): Promise<CategoryWiseAssetsData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
+
     try {
-      const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&access_token=${accessToken}&asset_categorywise=true`;
-      
+      const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${resolvedSiteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&asset_categorywise=true`;
+
       const response = await fetch(url, {
         headers: {
           'Authorization': getAuthHeader(),
@@ -335,12 +329,12 @@ export const assetAnalyticsAPI = {
 
       const data = await response.json();
       console.log('Category wise assets API response:', data);
-      
+
       // Transform the new API response structure to maintain backward compatibility
       if (data.assets_statistics?.asset_categorywise) {
         const assetCounts = data.assets_statistics.asset_categorywise.map(item => item.count);
         const totalAssets = assetCounts.reduce((sum, count) => sum + Number(count), 0);
-        
+
         const categories = data.assets_statistics.asset_categorywise.map(item => {
           const count = Number(item.count);
           return {
@@ -349,18 +343,18 @@ export const assetAnalyticsAPI = {
             percentage: totalAssets > 0 ? Math.round((count / totalAssets) * 100) : 0
           };
         });
-        
+
         return {
           ...data,
           categories
         };
       }
-      
+
       // Legacy support for old structure
       if (data.asset_type_category_counts) {
         const assetCounts = Object.values(data.asset_type_category_counts) as number[];
         const totalAssets = assetCounts.reduce((sum, count) => sum + Number(count), 0);
-        
+
         const categories = Object.entries(data.asset_type_category_counts).map(([categoryName, assetCount]) => {
           const count = Number(assetCount);
           return {
@@ -369,10 +363,10 @@ export const assetAnalyticsAPI = {
             percentage: totalAssets > 0 ? Math.round((count / totalAssets) * 100) : 0
           };
         });
-        
+
         return { categories };
       }
-      
+
       return data;
     } catch (error) {
       console.error('Error fetching category wise assets:', error);
