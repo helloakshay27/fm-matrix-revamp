@@ -1,4 +1,4 @@
-// unifiedselector   // new comment //
+// unifiedselector // new comment //
 import React, { useState } from "react";
 import {
   ChevronDown,
@@ -23,29 +23,31 @@ import { useLocation } from "react-router-dom";
 
 interface SelectedAnalytic {
   id: string;
+
   module:
-    | "tickets"
-    | "tasks"
-    | "schedule"
-    | "inventory"
-    | "amc"
-    | "assets"
-    | "meeting_room"
-    | "community"
-    | "helpdesk"
-    | "asset_management"
-    | "inventory_management"
-    | "parking_management"
-    | "visitor_management"
-    | "checklist_management"
-    | "surveys"
-    | "permit_to_work"
-    | "incident_management"
-    | "utility"
-    | "amount_management"
-    | "quickgate_management"
-    | "escalation_management"
-    | "occupancy_management";
+  "tickets" |
+  "tasks" |
+  "schedule" |
+  "inventory" |
+  "amc" |
+  "assets" |
+  "meeting_room" |
+  "community" |
+  "helpdesk" |
+  "asset_management" |
+  "inventory_management" |
+  "parking_management" |
+  "visitor_management" |
+  "checklist_management" |
+  "surveys" |
+  "permit_to_work" |
+  "incident_management" |
+  "utility" |
+  "amount_management" |
+  "quickgate_management" |
+  "escalation_management" |
+  "occupancy_management";
+
   endpoint: string;
   title: string;
 }
@@ -56,7 +58,7 @@ interface UnifiedAnalyticsSelectorProps {
 }
 
 // Analytics for regular dashboard (/dashboard)
-const dashboardAnalyticsOptions = {
+export const dashboardAnalyticsOptions = {
   tickets: {
     icon: Activity,
     label: "Tickets",
@@ -97,7 +99,7 @@ const dashboardAnalyticsOptions = {
         endpoint: "resolution_tat",
         label: "Resolution TAT Report",
       },
-     
+
     ],
   },
   assets: {
@@ -256,7 +258,7 @@ const dashboardAnalyticsOptions = {
 } as const;
 
 // Analytics for executive dashboard (/dashboard-executive)
-const executiveAnalyticsOptions = {
+export const executiveAnalyticsOptions = {
   community: {
     icon: BarChart3,
     label: "Community Programs",
@@ -316,51 +318,87 @@ const executiveAnalyticsOptions = {
         endpoint: "unit_categorywise_proactive",
         label: "Unit Category-wise Tickets (Proactive)",
       },
+      // {
+      //   id: "helpdesk_common_area_categorywise",
+      //   endpoint: "common_area_categorywise",
+      //   label: "Common Area Category-wise Tickets",
+      // },
+      // {
+      //   id: "helpdesk_common_area_categorywise_proactive",
+      //   endpoint: "common_area_categorywise_proactive",
+      //   label: "Common Area Category-wise Tickets (Proactive)",
+      // },
       {
-        id: "helpdesk_common_area_categorywise",
-        endpoint: "common_area_categorywise",
-        label: "Common Area Category-wise Tickets",
+        id: "tickets_categorywise",
+        endpoint: "tickets_categorywise",
+        label: "Category-wise Tickets",
+        module: "tickets",
       },
       {
-        id: "helpdesk_common_area_categorywise_proactive",
-        endpoint: "common_area_categorywise_proactive",
-        label: "Common Area Category-wise Tickets (Proactive)",
+        id: "ticket_status",
+        endpoint: "ticket_status",
+        label: "Ticket Status Overview",
+        module: "tickets",
+      },
+      {
+        id: "tickets_proactive_reactive",
+        endpoint: "tickets_proactive_reactive",
+        label: "Proactive/Reactive Tickets",
+        module: "tickets",
+      },
+      {
+        id: "ticket_aging_matrix",
+        endpoint: "ticket_aging_matrix",
+        label: "Ticket Aging Matrix",
+        module: "tickets",
+      },
+      {
+        id: "response_tat",
+        endpoint: "response_tat",
+        label: "Response TAT Report",
+        module: "tickets",
+      },
+      {
+        id: "resolution_tat",
+        endpoint: "resolution_tat",
+        label: "Resolution TAT Report",
+        module: "tickets",
       },
     ],
   },
 
-  // asset_management: {
-  //   icon: Package,
-  //   label: "Asset Management",
-  //   color: "#06B6D4",
-  //   options: [
-  //     {
-  //       id: "am_company_asset_overview",
-  //       endpoint: "company_asset_overview",
-  //       label: "Company Wise Asset Overview",
-  //     },
-  //     {
-  //       id: "am_center_assets_downtime",
-  //       endpoint: "center_assets_downtime",
-  //       label: "Center Wise – Assets And Downtime Metrics",
-  //     },
-  //     {
-  //       id: "am_highest_maintenance_assets",
-  //       endpoint: "highest_maintenance_assets",
-  //       label: "Assets With Highest Maintenance Spend",
-  //     },
-  //     // {
-  //     //   id: "am_amc_contract_summary",
-  //     //   endpoint: "amc_contract_summary",
-  //     //   label: "AMC Contract Summary",
-  //     // },
-  //     {
-  //       id: "am_amc_contract_expiry_90",
-  //       endpoint: "amc_contract_expiry_90",
-  //       label: "AMC Contract Summary – Expiry in Days",
-  //     },
-  //   ],
-  // },
+  asset_management: {
+    icon: Package,
+    label: "Asset Management",
+    color: "#06B6D4",
+    options: [
+      {
+        id: "am_company_asset_overview",
+        endpoint: "company_asset_overview",
+        label: "Company Wise Asset Overview",
+      },
+      {
+        id: "am_center_assets_downtime",
+        endpoint: "center_assets_downtime",
+        label: "Center Wise – Assets And Downtime Metrics",
+      },
+      {
+        id: "am_highest_maintenance_assets",
+        endpoint: "highest_maintenance_assets",
+        label: "Assets With Highest Maintenance Spend",
+      },
+      // {
+      //   id: "am_amc_contract_summary",
+      //   endpoint: "amc_contract_summary",
+      //   label: "AMC Contract Summary",
+      // },
+      // {
+      //   id: "am_amc_contract_expiry_90",
+      //   endpoint: "amc_contract_expiry_90",
+      //   label: "AMC Contract Summary – Expiry in Days",
+      // },
+    ],
+  },
 
   inventory_management: {
     icon: Package,
@@ -377,7 +415,7 @@ const executiveAnalyticsOptions = {
       //   endpoint: "inventory_overstock_top10",
       //   label: "Overstock Analysis – Top 10 Items",
       // },
-       {
+      {
         id: "consumables_top_center",
         endpoint: "top_consumables_center",
         label: "Top Consumables – Centre-wise Overview",
@@ -401,24 +439,48 @@ const executiveAnalyticsOptions = {
   },
 
 
-  // checklist_management: {
-  //   icon: CheckSquare,
-  //   label: "Checklist Management",
-  //   color: "#C4B89D",
-  //   options: [
-  //     {
-  //       id: "cm_progress_quarterly",
-  //       endpoint: "cm_progress_quarterly",
-  //       label: "Checklist Progress Status – Center-Wise Comparison",
-  //     },
-  //     {
-  //       id: "cm_overdue_centerwise",
-  //       endpoint: "cm_overdue_centerwise",
-  //       label:
-  //         "Top 10 Overdue Checklists – Center-wise Contribution Comparison",
-  //     },
-  //   ],
-  // },
+  checklist_management: {
+    icon: CheckSquare,
+    label: "Checklist Management",
+    color: "#C4B89D",
+    options: [
+      {
+        id: "technical_checklist",
+        endpoint: "technical_checklist",
+        label: "Technical Checklist",
+        module: "tasks",
+      },
+      {
+        id: "non_technical_checklist",
+        endpoint: "non_technical_checklist",
+        label: "Non-Technical Checklist",
+        module: "tasks",
+      },
+      {
+        id: "top_ten_checklist",
+        endpoint: "top_ten_checklist",
+        label: "Top 10 Checklist",
+        module: "tasks",
+      },
+      {
+        id: "site_wise_checklist",
+        endpoint: "site_wise_checklist",
+        label: "Site-wise Checklist",
+        module: "tasks",
+      },
+      // {
+      //   id: "cm_progress_quarterly",
+      //   endpoint: "cm_progress_quarterly",
+      //   label: "Checklist Progress Status – Center-Wise Comparison",
+      // },
+      // {
+      //   id: "cm_overdue_centerwise",
+      //   endpoint: "cm_overdue_centerwise",
+      //   label:
+      //     "Top 10 Overdue Checklists – Center-wise Contribution Comparison",
+      // },
+    ],
+  },
 
   permit_to_work: {
     icon: BarChart3,
@@ -686,8 +748,8 @@ export const UnifiedAnalyticsSelector: React.FC<
   const location = useLocation();
 
   // Determine which analytics options to use based on the current path
-  const analyticsOptions = location.pathname.includes('/dashboard-executive') 
-    ? executiveAnalyticsOptions 
+  const analyticsOptions = location.pathname.includes('/dashboard-executive')
+    ? executiveAnalyticsOptions
     : dashboardAnalyticsOptions;
 
   const isAnalyticSelected = (moduleKey: string, optionId: string): boolean => {
@@ -707,7 +769,7 @@ export const UnifiedAnalyticsSelector: React.FC<
       // Add to selection
       const newAnalytic: SelectedAnalytic = {
         id: analyticId,
-        module: moduleKey as any,
+        module: (option.module ?? moduleKey) as any,
         endpoint: option.endpoint,
         title: option.label,
       };
@@ -718,35 +780,31 @@ export const UnifiedAnalyticsSelector: React.FC<
   const selectAllForModule = (moduleKey: string, selected: boolean) => {
     const module = analyticsOptions[moduleKey as keyof typeof analyticsOptions] as any;
     if (!module) return;
-    
+
     const moduleOptions = module.options;
+    // Match by option id, not analytic.module: a group can hold options from another module
+    const optionIds = new Set(moduleOptions.map((option: any) => option.id));
+    const filteredAnalytics = selectedAnalytics.filter(
+      (analytic) => !optionIds.has(analytic.id)
+    );
 
     if (selected) {
-      // Add all options from this module
-      const newAnalytics = moduleOptions.map((option) => ({
+      const newAnalytics = moduleOptions.map((option: any) => ({
         id: option.id,
-        module: moduleKey as any,
+        module: (option.module ?? moduleKey) as any,
         endpoint: option.endpoint,
         title: option.label,
       }));
-
-      // Remove existing analytics from this module and add new ones
-      const filteredAnalytics = selectedAnalytics.filter(
-        (analytic) => analytic.module !== moduleKey
-      );
       onSelectionChange([...filteredAnalytics, ...newAnalytics]);
     } else {
-      // Remove all options from this module
-      onSelectionChange(
-        selectedAnalytics.filter((analytic) => analytic.module !== moduleKey)
-      );
+      onSelectionChange(filteredAnalytics);
     }
   };
 
   const getModuleSelectionState = (moduleKey: string) => {
     const module = analyticsOptions[moduleKey as keyof typeof analyticsOptions] as any;
     if (!module) return "none";
-    
+
     const moduleOptions = module.options;
     const selectedCount = moduleOptions.filter((option: any) =>
       isAnalyticSelected(moduleKey, option.id)
@@ -869,7 +927,7 @@ export const UnifiedAnalyticsSelector: React.FC<
                 size="sm"
                 onClick={() => setIsOpen(false)}
                 className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
+                variant="ghost"
               >
                 Apply
               </Button>

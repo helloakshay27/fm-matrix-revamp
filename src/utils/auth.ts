@@ -261,7 +261,7 @@ export const logoutUser = async (): Promise<void> => {
     if (!baseUrl || !token) return;
 
     const base = normalizeBaseUrl(baseUrl);
-    const url = `${base.replace(/\/+$/, "")}/logout`;
+    const url = `${base.replace(/\/+$/, "")}/logout.json`;
 
     await fetch(url, {
       method: "POST",
