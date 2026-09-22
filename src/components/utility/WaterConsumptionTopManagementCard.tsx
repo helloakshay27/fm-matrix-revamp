@@ -219,7 +219,7 @@ const WaterConsumptionTopManagementCard: React.FC<WaterConsumptionTopManagementC
                   </UITooltip>
                 </TooltipProvider>
                 <Download
-                  className="w-4 h-4 cursor-pointer opacity-80 hover:opacity-100 transition-opacity"
+                  className="tile-download w-4 h-4 cursor-pointer opacity-80 hover:opacity-100 transition-opacity"
                   style={{ color: tile.color }}
                   onClick={() => downloadTileCsv(tile.label, tile.unit, value)}
                 />

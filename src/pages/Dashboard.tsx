@@ -29,6 +29,9 @@ import {
   AlertCircle,
   GripVertical,
   MapPin,
+  LayoutDashboard,
+  Save,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,8 +46,20 @@ import {
 import { fetchAllowedSites, Site } from "@/services/sitesAPI";
 import { StatsCard } from "@/components/StatsCard";
 import { Sidebar } from "@/components/Sidebar";
-import { UnifiedAnalyticsSelector } from "@/components/dashboard/UnifiedAnalyticsSelector";
+import {
+  UnifiedAnalyticsSelector,
+  dashboardAnalyticsOptions,
+  executiveAnalyticsOptions,
+} from "@/components/dashboard/UnifiedAnalyticsSelector";
 import { UnifiedDateRangeFilter } from "@/components/dashboard/UnifiedDateRangeFilter";
+import { AddToDashboardButton } from "@/components/dashboard/AddToDashboardButton";
+import { useMyDashboardStore } from "@/stores/myDashboardStore";
+import {
+  fetchDashboardLayouts,
+  createDashboardLayout,
+  updateDashboardLayout,
+  deleteDashboardLayout,
+} from "@/services/dashboardLayoutAPI";
 import { TicketAnalyticsCard } from "@/components/dashboard/TicketAnalyticsCard";
 import { TaskAnalyticsCard } from "@/components/TaskAnalyticsCard";
 import { AMCAnalyticsCard } from "@/components/AMCAnalyticsCard";
@@ -534,6 +549,203 @@ export const Dashboard = () => {
   const [layouts, setLayouts] = useState<GridLayout.Layout[]>([]);
   const isInitialMount = React.useRef(true);
 
+  // --- My Dashboard (pinned cards, persisted server-side via /dashboard_layouts) ---
+  const [dashboardTab, setDashboardTab] = useState<"build" | "my-dashboard">("build");
+  const myDashboardCards = useMyDashboardStore((s) => s.cards);
+  const addMyDashboardCard = useMyDashboardStore((s) => s.addCard);
+  const setMyDashboardServerId = useMyDashboardStore((s) => s.setServerId);
+  const updateMyDashboardCardLayout = useMyDashboardStore((s) => s.updateCardLayout);
+  const markMyDashboardSaved = useMyDashboardStore((s) => s.markSaved);
+  const [isSavingMyDashboard, setIsSavingMyDashboard] = useState(false);
+  // "regular"/"executive" chart_code prefix so pinning the same analytic id from
+  // /dashboard and /dashboard-executive never collide on the shared backend rows.
+  const myDashboardChartPrefix = `${storagePrefix}_`;
+
+  // Flat id -> {module, endpoint, title} lookup built from the same catalog
+  // UnifiedAnalyticsSelector uses, so a chart_code fetched from the server (saved from
+  // another browser/session) can be turned back into a renderable SelectedAnalytic.
+  const analyticsCatalogById = React.useMemo(() => {
+    const catalog: Record<string, { module: SelectedAnalytic["module"]; endpoint: string; title: string }> = {};
+    const source = isExecutiveDashboard ? executiveAnalyticsOptions : dashboardAnalyticsOptions;
+    Object.entries(source).forEach(([moduleKey, moduleDef]) => {
+      (moduleDef as unknown as { options: { id: string; endpoint: string; label: string; module?: string }[] }).options.forEach((option) => {
+        catalog[option.id] = {
+          module: (option.module ?? moduleKey) as SelectedAnalytic["module"],
+          endpoint: option.endpoint,
+          title: option.label,
+        };
+      });
+    });
+    return catalog;
+  }, [isExecutiveDashboard]);
+
+  // My Dashboard cards re-expressed as SelectedAnalytic so they can be run through the
+  // same renderAnalyticsCard/fetchAnalyticsData machinery as the Build Dashboard tab.
+  const pinnedAnalytics: SelectedAnalytic[] = React.useMemo(
+    () =>
+      myDashboardCards.map((card) => ({
+        id: card.chartId,
+        module: card.moduleKey as SelectedAnalytic["module"],
+        endpoint: card.subTab,
+        title: card.label,
+      })),
+    [myDashboardCards]
+  );
+
+  const myDashboardLayout: GridLayout.Layout[] = React.useMemo(
+    () =>
+      myDashboardCards.map((card) => {
+        const [xStr, yStr] = card.position.split(",");
+        return {
+          i: card.chartId,
+          x: Number(xStr) || 0,
+          y: Number(yStr) || 0,
+          w: Number(card.width) || 12,
+          h: Number(card.height) || 8,
+          minW: 4,
+          minH: 3,
+        };
+      }),
+    [myDashboardCards]
+  );
+
+  // Mirrors RevampDashboardPage's handleMyDashboardMaintenanceLayoutChange: updates local state
+  // immediately, and PATCHes /dashboard_layouts/{id} right away so a drag/resize on My Dashboard
+  // doesn't sit unsaved until the next explicit "Save Dashboard" click. A card that was pinned in
+  // this session and never saved yet has no serverId — POST it once here instead of silently
+  // skipping the API call, so the very first drag on a brand-new card also persists.
+  const handleMyDashboardLayoutPersist = (layout: GridLayout.Layout[]) => {
+    layout.forEach((item) => {
+      const card = myDashboardCards.find((c) => c.chartId === item.i);
+      if (!card) return;
+      const height = String(item.h);
+      const width = String(item.w);
+      const position = `${item.x},${item.y}`;
+      if (height === card.height && width === card.width && position === card.position) return;
+      updateMyDashboardCardLayout(item.i, { height, width, position });
+
+      const payload = { chart_code: card.chartId, height, width, position };
+      const persist = card.serverId
+        ? updateDashboardLayout(card.serverId, payload)
+        : createDashboardLayout(payload).then((saved) => {
+          setMyDashboardServerId(card.chartId, saved.id);
+          return saved;
+        });
+      persist.catch((error) => {
+        console.error(`Failed to save layout for ${card.chartId}:`, error);
+      });
+    });
+  };
+
+  const getCurrentUserId = (): number | null => {
+    const raw = localStorage.getItem("userId") ?? localStorage.getItem("user_id");
+    const id = Number(raw);
+    return raw && !Number.isNaN(id) ? id : null;
+  };
+
+  // Fetch this user's persisted /dashboard_layouts as soon as My Dashboard opens, and rebuild
+  // any card saved from another browser/session that isn't in local storage yet — classifying
+  // its module/endpoint from the analytics catalog since the backend row only stores chart_code.
+  useEffect(() => {
+    if (dashboardTab !== "my-dashboard") return;
+    const userId = getCurrentUserId();
+    if (!userId) return;
+    let cancelled = false;
+    fetchDashboardLayouts(userId)
+      .then((rows) => {
+        if (cancelled) return;
+        const localChartIds = new Set(myDashboardCards.map((c) => c.chartId));
+        const seenThisRun = new Set<string>();
+        rows.forEach((row) => {
+          if (!row.chart_code || !row.chart_code.startsWith(myDashboardChartPrefix)) return;
+          if (seenThisRun.has(row.chart_code)) return;
+          seenThisRun.add(row.chart_code);
+
+          if (localChartIds.has(row.chart_code)) {
+            setMyDashboardServerId(row.chart_code, row.id);
+            return;
+          }
+
+          const analyticId = row.chart_code.slice(myDashboardChartPrefix.length);
+          const classified = analyticsCatalogById[analyticId];
+          if (!classified) {
+            console.warn(`My Dashboard: chart_code "${row.chart_code}" doesn't match any known analytic — skipping.`);
+            return;
+          }
+          addMyDashboardCard({
+            chartId: row.chart_code,
+            label: classified.title,
+            moduleKey: classified.module,
+            subTab: classified.endpoint,
+            height: row.height ?? "8",
+            width: row.width ?? "12",
+            position: row.position ?? "0,0",
+          });
+          setMyDashboardServerId(row.chart_code, row.id);
+        });
+      })
+      .catch((error) => console.error("Error fetching dashboard layouts:", error));
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dashboardTab, myDashboardChartPrefix]);
+
+  const handleSaveMyDashboard = async () => {
+    const userId = getCurrentUserId();
+    if (!userId) {
+      toast.error("Could not determine the logged-in user — please log in again.");
+      return;
+    }
+    setIsSavingMyDashboard(true);
+    try {
+      // Only "my" existing rows — show/update/destroy aren't scoped to the caller server-side,
+      // so an unfiltered GET here would let another user's same-chart_code row get matched.
+      const existing = await fetchDashboardLayouts(userId);
+      const existingByChartCode = new Map(existing.map((row) => [row.chart_code, row]));
+      const localChartCodes = new Set(myDashboardCards.map((c) => c.chartId));
+
+      const upserts = await Promise.allSettled(
+        myDashboardCards.map(async (card) => {
+          const payload = {
+            chart_code: card.chartId,
+            height: card.height,
+            width: card.width,
+            position: card.position,
+          };
+          const match = existingByChartCode.get(card.chartId);
+          const saved = match
+            ? await updateDashboardLayout(match.id, payload)
+            : await createDashboardLayout(payload);
+          setMyDashboardServerId(card.chartId, saved.id);
+        })
+      );
+
+      // Rows for cards the user has since removed locally — clean them up server-side too.
+      const deletions = await Promise.allSettled(
+        existing
+          .filter((row) => row.chart_code?.startsWith(myDashboardChartPrefix) && !localChartCodes.has(row.chart_code))
+          .map((row) => deleteDashboardLayout(row.id))
+      );
+
+      const failedUpserts = upserts.filter((r) => r.status === "rejected").length;
+      const failedDeletions = deletions.filter((r) => r.status === "rejected").length;
+      if (failedUpserts || failedDeletions) {
+        toast.error(
+          `Dashboard saved with ${failedUpserts + failedDeletions} error(s) — some cards may not have synced.`
+        );
+      } else {
+        toast.success("Dashboard saved");
+      }
+      markMyDashboardSaved();
+    } catch (error) {
+      console.error("Error saving dashboard:", error);
+      toast.error("Failed to save dashboard. Please try again.");
+    } finally {
+      setIsSavingMyDashboard(false);
+    }
+  };
+
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -889,7 +1101,22 @@ export const Dashboard = () => {
 
   // Fetch analytics data based on selections and date range
   const fetchAnalyticsData = async () => {
-    if (!dateRange?.from || !dateRange?.to || selectedAnalytics.length === 0)
+    // Union of the Build Dashboard selection and whatever's pinned to My Dashboard (deduped by
+    // module+endpoint) — so a card pinned from another session still gets its data fetched even
+    // when it isn't part of the current Build Dashboard selection.
+    const analyticsToFetch: SelectedAnalytic[] = [...selectedAnalytics];
+    const seenModuleEndpoint = new Set(
+      selectedAnalytics.map((a) => `${a.module}:${a.endpoint}`)
+    );
+    pinnedAnalytics.forEach((a) => {
+      const key = `${a.module}:${a.endpoint}`;
+      if (!seenModuleEndpoint.has(key)) {
+        seenModuleEndpoint.add(key);
+        analyticsToFetch.push(a);
+      }
+    });
+
+    if (!dateRange?.from || !dateRange?.to || analyticsToFetch.length === 0)
       return;
 
     try {
@@ -911,7 +1138,7 @@ export const Dashboard = () => {
       const dateKey = `${toKey(dateRange.from)}_${toKey(dateRange.to)}&site_${selectedSite}`;
 
       // Group analytics by module to minimize API calls
-      const moduleGroups = selectedAnalytics.reduce((groups, analytic) => {
+      const moduleGroups = analyticsToFetch.reduce((groups, analytic) => {
         if (!groups[analytic.module]) groups[analytic.module] = [];
         groups[analytic.module].push(analytic);
         return groups;
@@ -2455,12 +2682,16 @@ export const Dashboard = () => {
     }
   };
 
-  // Fetch data when selections or date range changes
+  // Fetch data when selections, pinned My Dashboard cards, or date range changes
   useEffect(() => {
-    if (selectedAnalytics.length > 0 && dateRange?.from && dateRange?.to) {
+    if (
+      (selectedAnalytics.length > 0 || pinnedAnalytics.length > 0) &&
+      dateRange?.from &&
+      dateRange?.to
+    ) {
       fetchAnalyticsData();
     }
-  }, [selectedAnalytics, dateRange, selectedSite]);
+  }, [selectedAnalytics, pinnedAnalytics, dateRange, selectedSite]);
 
   const handleAnalyticsSelectionChange = (analytics: SelectedAnalytic[]) => {
     setSelectedAnalytics(analytics);
@@ -5064,6 +5295,12 @@ export const Dashboard = () => {
             min-height: 0;
           }
 
+          /* Keep each card's own download control to the left of the Add to Dashboard button (top-right) */
+          .analytics-card-wrapper svg.lucide-download:not(button svg):not(.tile-download),
+          .analytics-card-wrapper button:has(svg.lucide-download) {
+            margin-right: 1.75rem;
+          }
+
           /* Placeholder styling for resize */
           .react-grid-placeholder {
             background: #e5e7eb !important;
@@ -5188,97 +5425,236 @@ export const Dashboard = () => {
             </div>
           </div>
 
-          {/* Summary Stats */}
-          <div className="p-6">
-            {/* Asset Summary Stats Row */}
-            {summaryStats.totalAssets > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <StatsCard
-                  title="Total Assets"
-                  value={summaryStats.totalAssets}
-                  icon={<Package className="w-6 h-6" />}
-                />
-              </div>
-            )}
+          {/* Build Dashboard / My Dashboard */}
+          <Tabs value={dashboardTab} onValueChange={(v) => setDashboardTab(v as "build" | "my-dashboard")}>
+            <div className="px-6 pt-4 bg-white border-b border-analytics-border">
+              <TabsList className="bg-transparent p-0 gap-4">
+                <TabsTrigger
+                  value="build"
+                  className="rounded-none border-b-2 border-transparent pb-2 data-[state=active]:border-brand data-[state=active]:text-brand data-[state=active]:font-semibold data-[state=inactive]:text-gray-500"
+                >
+                  Dashboard
+                </TabsTrigger>
+                <TabsTrigger
+                  value="my-dashboard"
+                  className="flex items-center gap-2 rounded-none border-b-2 border-transparent pb-2 data-[state=active]:border-brand data-[state=active]:text-brand data-[state=active]:font-semibold data-[state=inactive]:text-gray-500"
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  My Dashboard
+                  {myDashboardCards.length > 0 && (
+                    <span className="ml-1 rounded-full bg-brand-light px-1.5 py-0.5 text-xs text-brand">
+                      {myDashboardCards.length}
+                    </span>
+                  )}
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-            <div className="flex gap-6">
-              {/* Main Content Area */}
-              <div className="flex-1">
-                {selectedAnalytics.length === 0 ? (
-                  <Card className="p-8 text-center">
-                    <div className="flex flex-col items-center gap-4">
-                      <BarChart3 className="w-16 h-16 text-analytics-muted" />
-                      <div>
-                        <h3 className="text-lg font-medium text-analytics-text mb-2">
-                          No Analytics Selected
-                        </h3>
-                        <p className="text-analytics-muted mb-4">
-                          Select analytics from different modules to start viewing
-                          your dashboard
-                        </p>
-                        <Button
-                          onClick={() => {
-                            const selector = document.querySelector(
-                              "[data-analytics-selector]"
-                            ) as HTMLButtonElement;
-                            selector?.click();
-                          }}
-                          variant="outline"
-                        >
-                          Select Analytics
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                ) : (
-                  <div className="relative w-full">
-                    <ResponsiveGridLayout
-                      className="layout"
-                      layouts={{ lg: effectiveLayouts }}
-                      onLayoutChange={(layout) => handleLayoutChange(layout)}
-                      onDragStop={(layout) => persistLayout(layout)}
-                      onResizeStop={(layout) => persistLayout(layout)}
-                      breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-                      cols={{ lg: 12, md: 12, sm: 12, xs: 12, xxs: 12 }}
-                      rowHeight={48}
-                      margin={[12, 12]}
-                      resizeHandles={["se"]}
-                      containerPadding={[0, 0]}
-                      compactType="vertical"
-                      isDraggable={true}
-                      isResizable={true}
-                    >
-                      {/* Analytics Cards */}
-                      {chartOrder.map((chartId) => {
-                        const analytic = selectedAnalytics.find(
-                          (a) => a.id === chartId
-                        );
-                        if (!analytic) return null;
-
-                        const perCardLoading =
-                          !!loadingMap?.[analytic.module]?.[analytic.endpoint];
-
-                        return (
-                          <div key={analytic.id} className="analytics-card-wrapper">
-                            <SectionLoader loading={perCardLoading} className="flex-1">
-                              <div className="analytics-card-content">
-                                {renderAnalyticsCard(analytic)}
-                              </div>
-                            </SectionLoader>
-                          </div>
-                        );
-                      })}
-                    </ResponsiveGridLayout>
+            {/* Summary Stats */}
+            <TabsContent value="build" className="mt-0">
+              <div className="p-6">
+                {/* Asset Summary Stats Row */}
+                {summaryStats.totalAssets > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <StatsCard
+                      title="Total Assets"
+                      value={summaryStats.totalAssets}
+                      icon={<Package className="w-6 h-6" />}
+                    />
                   </div>
                 )}
-              </div>
 
-              {/* Recent Updates Sidebar - Always Visible */}
-              <div className="flex-shrink-0 self-stretch">
-                <RecentUpdatedSidebar />
+                <div className="flex gap-6">
+                  {/* Main Content Area */}
+                  <div className="flex-1">
+                    {selectedAnalytics.length === 0 ? (
+                      <Card className="p-8 text-center">
+                        <div className="flex flex-col items-center gap-4">
+                          <BarChart3 className="w-16 h-16 text-analytics-muted" />
+                          <div>
+                            <h3 className="text-lg font-medium text-analytics-text mb-2">
+                              No Analytics Selected
+                            </h3>
+                            <p className="text-analytics-muted mb-4">
+                              Select analytics from different modules to start viewing
+                              your dashboard
+                            </p>
+                            <Button
+                              onClick={() => {
+                                const selector = document.querySelector(
+                                  "[data-analytics-selector]"
+                                ) as HTMLButtonElement;
+                                selector?.click();
+                              }}
+                              variant="outline"
+                            >
+                              Select Analytics
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ) : (
+                      <div className="relative w-full">
+                        <ResponsiveGridLayout
+                          className="layout"
+                          layouts={{ lg: effectiveLayouts }}
+                          onLayoutChange={(layout) => handleLayoutChange(layout)}
+                          onDragStop={(layout) => persistLayout(layout)}
+                          onResizeStop={(layout) => persistLayout(layout)}
+                          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+                          cols={{ lg: 12, md: 12, sm: 12, xs: 12, xxs: 12 }}
+                          rowHeight={48}
+                          margin={[12, 12]}
+                          resizeHandles={["se"]}
+                          containerPadding={[0, 0]}
+                          compactType="vertical"
+                          isDraggable={true}
+                          isResizable={true}
+                        >
+                          {/* Analytics Cards */}
+                          {chartOrder.map((chartId) => {
+                            const analytic = selectedAnalytics.find(
+                              (a) => a.id === chartId
+                            );
+                            if (!analytic) return null;
+
+                            const perCardLoading =
+                              !!loadingMap?.[analytic.module]?.[analytic.endpoint];
+                            const layoutItem = effectiveLayouts.find(
+                              (l) => l.i === analytic.id
+                            );
+
+                            return (
+                              <div key={analytic.id} className="analytics-card-wrapper relative">
+                                <AddToDashboardButton
+                                  chartId={`${myDashboardChartPrefix}${analytic.id}`}
+                                  moduleKey={analytic.module}
+                                  subTab={analytic.endpoint}
+                                  label={analytic.title}
+                                  height={String(layoutItem?.h ?? 8)}
+                                  width={String(layoutItem?.w ?? 12)}
+                                  position={`${layoutItem?.x ?? 0},${layoutItem?.y ?? 0}`}
+                                />
+                                <SectionLoader loading={perCardLoading} className="flex-1">
+                                  <div className="analytics-card-content">
+                                    {renderAnalyticsCard(analytic)}
+                                  </div>
+                                </SectionLoader>
+                              </div>
+                            );
+                          })}
+                        </ResponsiveGridLayout>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Recent Updates Sidebar - Always Visible */}
+                  <div className="flex-shrink-0 self-stretch">
+                    <RecentUpdatedSidebar />
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            </TabsContent>
+
+            <TabsContent value="my-dashboard" className="mt-0">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-sm text-analytics-muted">
+                    Cards you've added from Build Dashboard, in one place.
+                  </p>
+                  <Button
+                    onClick={handleSaveMyDashboard}
+                    disabled={isSavingMyDashboard || myDashboardCards.length === 0}
+                    className="bg-brand hover:bg-brand-hover text-white flex items-center gap-2"
+                  >
+                    {isSavingMyDashboard ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    Save Dashboard
+                  </Button>
+                </div>
+
+                <div className="flex gap-6">
+                  <div className="flex-1">
+                    {myDashboardCards.length === 0 ? (
+                      <Card className="p-8 text-center">
+                        <div className="flex flex-col items-center gap-4">
+                          <LayoutDashboard className="w-16 h-16 text-analytics-muted" />
+                          <div>
+                            <h3 className="text-lg font-medium text-analytics-text mb-2">
+                              No cards on My Dashboard yet
+                            </h3>
+                            <p className="text-analytics-muted mb-4">
+                              Click the + on any card in Build Dashboard to pin it here.
+                            </p>
+                            <Button
+                              onClick={() => setDashboardTab("build")}
+                              variant="outline"
+                            >
+                              Go to Build Dashboard
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ) : (
+                      <div className="relative w-full">
+                        <ResponsiveGridLayout
+                          className="layout"
+                          layouts={{ lg: myDashboardLayout }}
+                          onDragStop={handleMyDashboardLayoutPersist}
+                          onResizeStop={handleMyDashboardLayoutPersist}
+                          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+                          cols={{ lg: 12, md: 12, sm: 12, xs: 12, xxs: 12 }}
+                          rowHeight={48}
+                          margin={[12, 12]}
+                          resizeHandles={["se"]}
+                          containerPadding={[0, 0]}
+                          compactType="vertical"
+                          isDraggable={true}
+                          isResizable={true}
+                        >
+                          {myDashboardCards.map((card) => {
+                            const analytic = pinnedAnalytics.find(
+                              (a) => a.id === card.chartId
+                            );
+                            if (!analytic) return null;
+
+                            const perCardLoading =
+                              !!loadingMap?.[analytic.module]?.[analytic.endpoint];
+
+                            return (
+                              <div key={card.chartId} className="analytics-card-wrapper relative">
+                                <AddToDashboardButton
+                                  chartId={card.chartId}
+                                  moduleKey={card.moduleKey}
+                                  subTab={card.subTab}
+                                  label={card.label}
+                                  height={card.height}
+                                  width={card.width}
+                                  position={card.position}
+                                />
+                                <SectionLoader loading={perCardLoading} className="flex-1">
+                                  <div className="analytics-card-content">
+                                    {renderAnalyticsCard(analytic)}
+                                  </div>
+                                </SectionLoader>
+                              </div>
+                            );
+                          })}
+                        </ResponsiveGridLayout>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-shrink-0 self-stretch">
+                    <RecentUpdatedSidebar />
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
 
