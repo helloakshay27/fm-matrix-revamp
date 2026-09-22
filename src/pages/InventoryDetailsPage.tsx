@@ -176,9 +176,10 @@ export const InventoryDetailsPage = () => {
     return () => { aborted = true; };
   }, [inventoryData]);
 
-  // Fetch feeds immediately on page load (once) instead of waiting for history tab
+  // Fetch feeds immediately on page load (once per id) instead of waiting for history tab
   useEffect(() => {
-    if (!id || feedsLoading || feeds.length > 0) return;
+    if (!id) return;
+    let aborted = false;
     const fetchFeeds = async () => {
       try {
         setFeedsLoading(true);
@@ -193,16 +194,20 @@ export const InventoryDetailsPage = () => {
         });
         if (!resp.ok) throw new Error('Failed to fetch history');
         const data = await resp.json();
+        if (aborted) return;
         setFeeds(Array.isArray(data) ? data : []);
       } catch (e: any) {
-        console.error('Feeds fetch error', e);
-        setFeedsError('Failed to load history');
+        if (!aborted) {
+          console.error('Feeds fetch error', e);
+          setFeedsError('Failed to load history');
+        }
       } finally {
-        setFeedsLoading(false);
+        if (!aborted) setFeedsLoading(false);
       }
     };
     fetchFeeds();
-  }, [id, feedsLoading, feeds.length]);
+    return () => { aborted = true; };
+  }, [id]);
 
   const handleBack = () => {
     navigate('/maintenance/inventory');
