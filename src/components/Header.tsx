@@ -613,7 +613,7 @@ export const Header = () => {
                   Dashboard
                 </button>
               )}
-              {!isViSite && (
+              {/* {!isViSite && (
                 <button
                   onClick={() =>
                     (window.location.href = "/dashboard-executive")
@@ -623,7 +623,7 @@ export const Header = () => {
                   <ChartAreaIcon className="w-4 h-4" />
                   Executive Dashboard
                 </button>
-              )}
+              )} */}
 
               {canShowMSafeDashboard && (
                 <button
