@@ -4,9 +4,6 @@ import {
   Line,
   BarChart,
   Bar,
-  PieChart,
-  Pie,
-  Cell,
   XAxis,
   YAxis,
   Tooltip,
@@ -34,6 +31,15 @@ const C = {
   orange: "#EDC488",
   teal: "#9EC8BA",
 };
+
+// Notice Status split bar — Active/Inactive/Expired.
+const NOTICE_STATUS_COLORS = { active: "#77CEC1", inactive: "#B387E9", expired: "#84ACE0" };
+
+// Notices by Site grouped bars — Total/Active/Expired.
+const SITE_BAR_COLORS = { total: "#4E8FE5", active: "#EBA366", expired: "#178562" };
+
+// Weekly Active Broadcasts trend line.
+const BROADCAST_LINE_COLOR = "#178562";
 
 
 // Builds a CSS conic-gradient string for a donut chart from value/color
@@ -101,6 +107,7 @@ export function PulseNotices({ filters }: Props) {
   const [noticeFeed, setNoticeFeed] = useState<NoticeboardDetailsResponse | null>(null);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [noticeSearch, setNoticeSearch] = useState("");
 
   const pulseEvents = usePulseEvents();
 
@@ -154,9 +161,9 @@ export function PulseNotices({ filters }: Props) {
   // Real data for the Notice Status split bar.
   const statusSegments = noticeOverview
     ? [
-      { name: "Active", value: noticeOverview.kpis.active_notices, color: C.blue },
-      { name: "Inactive", value: noticeOverview.kpis.inactive_notices, color: C.red },
-      { name: "Expired", value: noticeOverview.kpis.expired_notices, color: "color-mix(in srgb, var(--color-error) 70%, black)" },
+      { name: "Active", value: noticeOverview.kpis.active_notices, color: NOTICE_STATUS_COLORS.active },
+      { name: "Inactive", value: noticeOverview.kpis.inactive_notices, color: NOTICE_STATUS_COLORS.inactive },
+      { name: "Expired", value: noticeOverview.kpis.expired_notices, color: NOTICE_STATUS_COLORS.expired },
     ]
     : [];
   const statusTotal = statusSegments.reduce((sum, s) => sum + s.value, 0) || 1;
@@ -192,7 +199,7 @@ export function PulseNotices({ filters }: Props) {
               label: "Total Notices",
               value: noticeOverview.kpis.total_notices,
               // Real count, not a fabricated period-over-period delta.
-              badge: { text: `${noticeOverview.kpis.inactive_notices} Inactive`, variant: "neutral" as const },
+              badge: { text: `${noticeOverview.kpis.inactive_notices} Inactive`, variant: "success" as const },
             },
             { label: "Active", value: noticeOverview.kpis.active_notices, badge: { text: "On Air", variant: "success" as const } },
             { label: "Expired", value: noticeOverview.kpis.expired_notices, badge: { text: "Cleared", variant: "neutral" as const } },
@@ -244,33 +251,25 @@ export function PulseNotices({ filters }: Props) {
         {noticeOverview && (
           <div className="pd-growth-card pd-growth-card--notice-status">
             <div className="pd-panel-title">Notice Status</div>
-            <div className="pd-growth-chart-inner pd-donut-card-body">
-              <ResponsiveContainer width={110} height={110}>
-                <PieChart>
-                  <Pie
-                    data={statusSegments}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius={32}
-                    outerRadius={50}
-                    paddingAngle={2}
-                  >
-                    {statusSegments.map((s) => (
-                      <Cell key={s.name} fill={s.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="pd-donut-legend">
+            <div className="pd-growth-chart-inner pd-notice-status-body">
+              <div className="pd-notice-status-split">
                 {statusSegments.map((s) => (
-                  <div key={s.name} className="pd-donut-legend-item">
-                    <span className="pd-donut-legend-dot" style={{ background: s.color }} />
-                    <span className="pd-donut-legend-name">{s.name}</span>
-                    <span className="pd-donut-legend-value">
-                      {s.value} ({Math.round((s.value / statusTotal) * 100)}%)
-                    </span>
-                  </div>
+                  <div
+                    key={s.name}
+                    className="pd-notice-status-seg"
+                    style={{ flexGrow: s.value || 0.0001, background: s.color }}
+                  />
+                ))}
+              </div>
+              <div className="pd-notice-status-legend">
+                {statusSegments.map((s) => (
+                  <span key={s.name} className="pd-notice-status-legend-item">
+                    <span
+                      className="pd-notice-status-legend-swatch"
+                      style={{ background: s.color }}
+                    />
+                    {s.name} ({Math.round((s.value / statusTotal) * 100)}%)
+                  </span>
                 ))}
               </div>
             </div>
@@ -288,9 +287,9 @@ export function PulseNotices({ filters }: Props) {
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip />
                   <Legend wrapperStyle={{ fontSize: 10 }} />
-                  <Bar dataKey="Total" fill={C.orange} radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="Active" fill={C.blue} radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="Expired" fill={C.red} radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="Total" fill={SITE_BAR_COLORS.total} radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="Active" fill={SITE_BAR_COLORS.active} radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="Expired" fill={SITE_BAR_COLORS.expired} radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -316,7 +315,7 @@ export function PulseNotices({ filters }: Props) {
                   type="monotone"
                   dataKey="total"
                   name="Total"
-                  stroke={C.teal}
+                  stroke={BROADCAST_LINE_COLOR}
                   strokeWidth={2}
                   dot={false}
                   activeDot={{ r: 3 }}
@@ -330,7 +329,14 @@ export function PulseNotices({ filters }: Props) {
       {noticeFeed && (
         <div className="pd-tbl-card">
           <div className="pd-tbl-header">
-            <span className="pd-tbl-title">Official Noticeboard feed</span>
+            <span className="pd-tbl-title pd-tbl-title--plain">Official Noticeboard feed</span>
+            <input
+              type="text"
+              className="pd-tbl-search-input"
+              placeholder="Search notices..."
+              value={noticeSearch}
+              onChange={(e) => setNoticeSearch(e.target.value)}
+            />
           </div>
           <div className="pd-tbl-wrap">
             <table className="pd-table">
@@ -345,40 +351,44 @@ export function PulseNotices({ filters }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {noticeFeed.notices.map((n) => (
-                  <tr key={n.id}>
-                    <td className="pd-num">{n.serial}</td>
-                    <td style={{ fontWeight: 500, maxWidth: 260 }}>
-                      {n.notice_heading}
-                    </td>
-                    <td
-                      style={{
-                        maxWidth: 320,
-                        color: "var(--color-text-light)",
-                        fontSize: 12,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                      title={n.notice_text}
-                    >
-                      {n.notice_text || "—"}
-                    </td>
-                    <td>{n.site_name}</td>
-                    <td style={{ fontSize: 12, whiteSpace: "nowrap" }}>
-                      {fmtDate(n.created_at)}
-                    </td>
-                    <td>
-                      {n.is_important ? (
-                        <span className="pd-badge pd-badge-warn">
-                          Important
-                        </span>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {noticeFeed.notices
+                  .filter((n) =>
+                    n.notice_heading.toLowerCase().includes(noticeSearch.trim().toLowerCase())
+                  )
+                  .map((n) => (
+                    <tr key={n.id}>
+                      <td className="pd-num">{n.serial}</td>
+                      <td style={{ fontWeight: 500, maxWidth: 260 }}>
+                        {n.notice_heading}
+                      </td>
+                      <td
+                        style={{
+                          maxWidth: 320,
+                          color: "var(--color-text-light)",
+                          fontSize: 12,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                        title={n.notice_text}
+                      >
+                        {n.notice_text || "—"}
+                      </td>
+                      <td>{n.site_name}</td>
+                      <td style={{ fontSize: 12, whiteSpace: "nowrap" }}>
+                        {fmtDate(n.created_at)}
+                      </td>
+                      <td>
+                        {n.is_important ? (
+                          <span className="pd-badge pd-badge-warn">
+                            Important
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>

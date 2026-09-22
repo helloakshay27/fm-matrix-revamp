@@ -25,13 +25,30 @@ import type { PulseFilters, RideOverviewResponse, RideRoutesTrafficResponse } fr
 const C = {
   green: "#798C5E",
   blue: "#6B9BCC",
-  orange: "#EDC488",
+  orange: "#D88F50",
   red: "#E7848E",
-  purple: "#CECBF6",
-  teal: "#9EC8BA",
+  purple: "#C9AEEB",
+  teal: "#15A476",
 };
 
-const PEAK_HOUR_COLOR = { morning: "#DA8B6B", evening: "#798C5E" };
+const PEAK_HOUR_COLOR = { morning: "#F58220", evening: "#178562" };
+
+// Ride Completion & Cancellation Rate donut.
+const RIDE_COMPLETION_COLORS = { completed: "#5DB297", cancelled: "#BD92EF" };
+
+// Fades each Peak Hours bar toward its period's base color by how busy that
+// hour is relative to the busiest hour in the same period (morning/evening),
+// so the peak hour reads as fully saturated and quieter hours fade out —
+// using the real `rides` values already in peakHoursData, no new data needed.
+function peakHourBarColor(
+  period: "morning" | "evening",
+  rides: number,
+  maxRidesInPeriod: number
+) {
+  const ratio = maxRidesInPeriod > 0 ? rides / maxRidesInPeriod : 1;
+  const opacity = 0.35 + 0.65 * ratio;
+  return `color-mix(in srgb, ${PEAK_HOUR_COLOR[period]} ${Math.round(opacity * 100)}%, white)`;
+}
 
 const ROUTE_VOLUME_WIDTH: Record<"high" | "med" | "low", number> = { high: 3, med: 2.25, low: 1.25 };
 const ROUTE_VOLUME_OPACITY: Record<"high" | "med" | "low", number> = { high: 1, med: 0.65, low: 0.35 };
@@ -194,6 +211,15 @@ function deriveColumns(rows: Row[]): string[] {
 const ISO_DATE_RE =
   /^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2})?(\.\d+)?(Z|[+-]\d{2}:?\d{2})?)?$/;
 
+// Dynamic-column tables (Top Drivers / Rides / Reported Rides) don't have a
+// fixed "name" field to search on, so this matches against every visible
+// column's stringified value instead.
+function rowMatchesSearch(row: Row, columns: string[], search: string): boolean {
+  const term = search.trim().toLowerCase();
+  if (!term) return true;
+  return columns.some((c) => String(row[c] ?? "").toLowerCase().includes(term));
+}
+
 function formatCell(v: unknown, key?: string): string {
   if (v === null || v === undefined || v === "") return "—";
   if (typeof v === "number") return v.toLocaleString();
@@ -238,6 +264,9 @@ export function PulseCarpool({ filters }: Props) {
   const [ridesPage, setRidesPage] = useState(1);
   const [reportsPage, setReportsPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [driverSearch, setDriverSearch] = useState("");
+  const [rideSearch, setRideSearch] = useState("");
+  const [reportedSearch, setReportedSearch] = useState("");
 
   useEffect(() => {
     setRidesPage(1);
@@ -352,6 +381,10 @@ export function PulseCarpool({ filters }: Props) {
   const peakHoursData = rideOverview
     ? rideOverview.peak_hours.hours.map((h) => ({ hour: h.label, rides: h.rides, period: h.period }))
     : [];
+  const maxRidesByPeriod = {
+    morning: Math.max(0, ...peakHoursData.filter((d) => d.period === "morning").map((d) => d.rides)),
+    evening: Math.max(0, ...peakHoursData.filter((d) => d.period === "evening").map((d) => d.rides)),
+  };
 
   const rideCompletion = rideOverview
     ? {
@@ -417,7 +450,7 @@ export function PulseCarpool({ filters }: Props) {
                     type="monotone"
                     dataKey="rides_offered"
                     name="Rides Offered"
-                    stroke={C.blue}
+                    stroke={C.purple}
                     strokeWidth={2}
                     dot={{ r: 2 }}
                   />
@@ -433,7 +466,7 @@ export function PulseCarpool({ filters }: Props) {
                     type="monotone"
                     dataKey="seats_filled"
                     name="Seats Filled"
-                    stroke={C.green}
+                    stroke={C.teal}
                     strokeWidth={2}
                     dot={{ r: 2 }}
                   />
@@ -472,7 +505,10 @@ export function PulseCarpool({ filters }: Props) {
                   <Tooltip />
                   <Bar dataKey="rides" radius={[3, 3, 0, 0]}>
                     {peakHoursData.map((d, i) => (
-                      <Cell key={`${d.hour}-${i}`} fill={PEAK_HOUR_COLOR[d.period]} />
+                      <Cell
+                        key={`${d.hour}-${i}`}
+                        fill={peakHourBarColor(d.period, d.rides, maxRidesByPeriod[d.period])}
+                      />
                     ))}
                   </Bar>
                 </BarChart>
@@ -559,7 +595,7 @@ export function PulseCarpool({ filters }: Props) {
                 <div
                   className="pd-donut pd-donut-2xl"
                   style={{
-                    background: `conic-gradient(#108C72 0% ${rideCompletion.completed_pct}%, var(--color-error) ${rideCompletion.completed_pct}% 100%)`,
+                    background: `conic-gradient(${RIDE_COMPLETION_COLORS.completed} 0% ${rideCompletion.completed_pct}%, ${RIDE_COMPLETION_COLORS.cancelled} ${rideCompletion.completed_pct}% 100%)`,
                   }}
                 />
                 <div className="pd-donut-center">
@@ -569,12 +605,12 @@ export function PulseCarpool({ filters }: Props) {
               </div>
               <div className="pd-donut-legend">
                 <div className="pd-donut-legend-item">
-                  <span className="pd-donut-legend-dot" style={{ background: "#108C72" }} />
+                  <span className="pd-donut-legend-dot" style={{ background: RIDE_COMPLETION_COLORS.completed }} />
                   <span className="pd-donut-legend-name">Completed</span>
                   <span className="pd-donut-legend-value">{rideCompletion.completed_count}</span>
                 </div>
                 <div className="pd-donut-legend-item">
-                  <span className="pd-donut-legend-dot" style={{ background: "var(--color-error)" }} />
+                  <span className="pd-donut-legend-dot" style={{ background: RIDE_COMPLETION_COLORS.cancelled }} />
                   <span className="pd-donut-legend-name">Cancelled</span>
                   <span className="pd-donut-legend-value">{rideCompletion.cancelled_count}</span>
                 </div>
@@ -634,7 +670,14 @@ export function PulseCarpool({ filters }: Props) {
       {topDriverRows.length > 0 && (
         <div className="pd-tbl-card" style={{ marginBottom: 20 }}>
           <div className="pd-tbl-header">
-            <span className="pd-tbl-title">Top 10 Drivers</span>
+            <span className="pd-tbl-title pd-tbl-title--plain">Top 10 Drivers</span>
+            <input
+              type="text"
+              className="pd-tbl-search-input"
+              placeholder="Search drivers..."
+              value={driverSearch}
+              onChange={(e) => setDriverSearch(e.target.value)}
+            />
           </div>
           <div className="pd-tbl-wrap">
             <table className="pd-table">
@@ -646,15 +689,17 @@ export function PulseCarpool({ filters }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {topDriverRows.map((row, i) => (
-                  <tr key={String(row.id ?? row.driver_id ?? i)}>
-                    {topDriverColumns.map((c) => (
-                      <td key={c}>
-                        {c === "company" ? selectedCompanyName : formatCell(row[c], c)}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
+                {topDriverRows
+                  .filter((row) => rowMatchesSearch(row, topDriverColumns, driverSearch))
+                  .map((row, i) => (
+                    <tr key={String(row.id ?? row.driver_id ?? i)}>
+                      {topDriverColumns.map((c) => (
+                        <td key={c}>
+                          {c === "company" ? selectedCompanyName : formatCell(row[c], c)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>
@@ -664,7 +709,14 @@ export function PulseCarpool({ filters }: Props) {
       {rideRows.length > 0 && (
         <div className="pd-tbl-card" style={{ marginBottom: 20 }}>
           <div className="pd-tbl-header">
-            <span className="pd-tbl-title">Rides</span>
+            <span className="pd-tbl-title pd-tbl-title--plain">Rides</span>
+            <input
+              type="text"
+              className="pd-tbl-search-input"
+              placeholder="Search rides..."
+              value={rideSearch}
+              onChange={(e) => setRideSearch(e.target.value)}
+            />
           </div>
           <div className="pd-tbl-wrap">
             <table className="pd-table">
@@ -676,13 +728,15 @@ export function PulseCarpool({ filters }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {rideRows.map((row, i) => (
-                  <tr key={String(row.id ?? i)}>
-                    {rideColumns.map((c) => (
-                      <td key={c}>{formatCell(row[c], c)}</td>
-                    ))}
-                  </tr>
-                ))}
+                {rideRows
+                  .filter((row) => rowMatchesSearch(row, rideColumns, rideSearch))
+                  .map((row, i) => (
+                    <tr key={String(row.id ?? i)}>
+                      {rideColumns.map((c) => (
+                        <td key={c}>{formatCell(row[c], c)}</td>
+                      ))}
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>
@@ -721,7 +775,14 @@ export function PulseCarpool({ filters }: Props) {
       {reportedRows.length > 0 && (
         <div className="pd-tbl-card">
           <div className="pd-tbl-header">
-            <span className="pd-tbl-title">Reported Rides</span>
+            <span className="pd-tbl-title pd-tbl-title--plain">Reported Rides</span>
+            <input
+              type="text"
+              className="pd-tbl-search-input"
+              placeholder="Search reports..."
+              value={reportedSearch}
+              onChange={(e) => setReportedSearch(e.target.value)}
+            />
           </div>
           <div className="pd-tbl-wrap">
             <table className="pd-table">
@@ -733,13 +794,15 @@ export function PulseCarpool({ filters }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {reportedRows.map((row, i) => (
-                  <tr key={String(row.id ?? i)}>
-                    {reportedColumns.map((c) => (
-                      <td key={c}>{formatCell(row[c], c)}</td>
-                    ))}
-                  </tr>
-                ))}
+                {reportedRows
+                  .filter((row) => rowMatchesSearch(row, reportedColumns, reportedSearch))
+                  .map((row, i) => (
+                    <tr key={String(row.id ?? i)}>
+                      {reportedColumns.map((c) => (
+                        <td key={c}>{formatCell(row[c], c)}</td>
+                      ))}
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>

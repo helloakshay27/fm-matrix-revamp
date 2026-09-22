@@ -167,7 +167,7 @@
 }
 
 .pulse-shell .ps-fsel-trigger .ps-fsel-icon {
-  color: #798C5E;
+  color: #108C72;
   flex-shrink: 0;
   transition: color .15s;
 }
@@ -356,7 +356,9 @@
 }
 
 @keyframes ps-alerts-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .pulse-shell .ps-alerts-carousel {
@@ -379,7 +381,7 @@
 
 /* Fades the row's edges so it reads as scrollable, without touching the
    nav buttons — they're absolutely-positioned siblings of this wrapper. */
-.pulse-shell .ps-alerts-carousel > div:first-child {
+.pulse-shell .ps-alerts-carousel>div:first-child {
   -webkit-mask-image: linear-gradient(to right, transparent 0, black 24px, black calc(100% - 24px), transparent 100%);
   mask-image: linear-gradient(to right, transparent 0, black 24px, black calc(100% - 24px), transparent 100%);
 }
@@ -469,8 +471,13 @@
   background: var(--color-primary) !important;
 }
 
-.pulse-shell .ps-alerts-prev { left: 2px !important; }
-.pulse-shell .ps-alerts-next { right: 2px !important; }
+.pulse-shell .ps-alerts-prev {
+  left: 2px !important;
+}
+
+.pulse-shell .ps-alerts-next {
+  right: 2px !important;
+}
 
 /* ── Tab bar ──────────────────────────────────────────────────────────── */
 .pulse-shell .ps-tabbar {

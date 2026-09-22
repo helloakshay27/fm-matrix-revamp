@@ -33,9 +33,15 @@ const C = {
   orange: "#EDC488",
   purple: "#CECBF6",
   teal: "#9EC8BA",
-  eventsPaid: "#BF2B2B",
-  eventsComplimentary: "#CE6868",
+  eventsPaid: "#84ACE0",
+  eventsComplimentary: "#B387E9",
 };
+
+// Events by Category bars — cycles teal / blue / purple per row.
+const CATEGORY_BAR_COLORS = ["#77CEC1", "#6C9CD9", "#CDB3EC"];
+
+// Revenue by Event bars — cycles orange / teal per row.
+const REVENUE_BAR_ROW_COLORS = ["#E0985C", "#77CEC1"];
 
 interface Props {
   filters: PulseFilters;
@@ -133,9 +139,9 @@ export function PulseEvents({ filters }: Props) {
             {[
               { label: "Total Events", value: eventsOverview.event_status.total_events, badge: { text: "No Change", variant: "neutral" as const } },
               { label: "Upcoming", value: eventsOverview.event_status.upcoming_events, badge: { text: "--", variant: "neutral" as const } },
-              { label: "Past", value: eventsOverview.event_status.past_events, badge: { text: "Completed", variant: "info" as const } },
+              { label: "Past", value: eventsOverview.event_status.past_events, badge: { text: "Completed", variant: "success" as const } },
               { label: "Complimentary", value: eventsOverview.event_status.complimentary_events, badge: { text: "Free", variant: "info" as const } },
-              { label: "Paid", value: eventsOverview.event_status.paid_events, badge: { text: "Premium", variant: "warning" as const } },
+              { label: "Paid", value: eventsOverview.event_status.paid_events, badge: { text: "Premium", variant: "premium" as const } },
             ].map((item) => (
               <div key={item.label} className="pd-kpi-card pd-kpi-card--badged">
                 <div className="pd-kpi-main">
@@ -182,7 +188,7 @@ export function PulseEvents({ filters }: Props) {
                 badge:
                   eventsOverview.registration_metrics.registration_rate > 0
                     ? { text: "Active", variant: "success" as const }
-                    : { text: "Pending Activity", variant: "warning" as const },
+                    : { text: "Pending Activity", variant: "danger" as const },
               },
             ].map((item) => (
               <div key={item.label} className="pd-kpi-card pd-kpi-card--badged">
@@ -204,13 +210,11 @@ export function PulseEvents({ filters }: Props) {
           <div className="pd-panel-title">Revenue by event</div>
           <div className="pd-event-revenue-total">
             ₹{(eventsBreakup?.revenue_by_event.total_revenue ?? 0).toLocaleString("en-IN")}
-            <span className="pd-kpi-badge pd-kpi-badge-info" style={{ marginLeft: 10 }}>
-              Paid events only
-            </span>
+            <span className="pd-event-revenue-badge">Paid events only</span>
           </div>
         </div>
         <div className="pd-event-revenue-list pd-event-revenue-list--scroll">
-          {(eventsBreakup?.revenue_by_event.events ?? []).map((e) => {
+          {(eventsBreakup?.revenue_by_event.events ?? []).map((e, i) => {
             const total = eventsBreakup?.revenue_by_event.total_revenue || 0;
             return (
               <div key={e.name} className="pd-event-revenue-row">
@@ -225,6 +229,7 @@ export function PulseEvents({ filters }: Props) {
                     className="pd-event-revenue-fill"
                     style={{
                       width: total > 0 ? `${(e.revenue / total) * 100}%` : "0%",
+                      background: REVENUE_BAR_ROW_COLORS[i % REVENUE_BAR_ROW_COLORS.length],
                     }}
                   />
                 </span>
@@ -256,8 +261,8 @@ export function PulseEvents({ filters }: Props) {
                       <span
                         className="pd-hbar-fill"
                         style={{
-                          width: `${(cat.count / maxCount) * 100}%`,
-                          background: [C.orange, C.teal, C.purple][i % 3],
+                          width: `${Math.max(4, (cat.count / maxCount) * 100)}%`,
+                          background: CATEGORY_BAR_COLORS[i % CATEGORY_BAR_COLORS.length],
                         }}
                         data-tooltip={`${label}: ${cat.count} events (${cat.percentage}%)`}
                       />
@@ -275,24 +280,38 @@ export function PulseEvents({ filters }: Props) {
         {eventsOverview && (
           <div className="pd-growth-card">
             <div className="pd-panel-title">Events Overview</div>
-            <div className="pd-growth-chart-inner pd-events-split">
-              <div
-                className="pd-events-split-seg"
-                style={{
-                  flexGrow: eventsOverview.event_status.paid_events || 0.0001,
-                  background: C.eventsPaid,
-                }}
-              >
-                Paid ({eventsOverview.event_status.paid_events})
+            <div className="pd-growth-chart-inner pd-events-overview-body">
+              <div className="pd-events-split">
+                <div
+                  className="pd-events-split-seg"
+                  style={{
+                    flexGrow: eventsOverview.event_status.paid_events || 0.0001,
+                    background: C.eventsPaid,
+                  }}
+                />
+                <div
+                  className="pd-events-split-seg"
+                  style={{
+                    flexGrow: eventsOverview.event_status.complimentary_events || 0.0001,
+                    background: C.eventsComplimentary,
+                  }}
+                />
               </div>
-              <div
-                className="pd-events-split-seg"
-                style={{
-                  flexGrow: eventsOverview.event_status.complimentary_events || 0.0001,
-                  background: C.eventsComplimentary,
-                }}
-              >
-                Complimentary ({eventsOverview.event_status.complimentary_events})
+              <div className="pd-events-split-legend">
+                <span className="pd-events-split-legend-item">
+                  <span
+                    className="pd-events-split-legend-swatch"
+                    style={{ background: C.eventsComplimentary }}
+                  />
+                  Complimentary ({eventsOverview.event_status.complimentary_events})
+                </span>
+                <span className="pd-events-split-legend-item">
+                  <span
+                    className="pd-events-split-legend-swatch"
+                    style={{ background: C.eventsPaid }}
+                  />
+                  Paid ({eventsOverview.event_status.paid_events})
+                </span>
               </div>
             </div>
           </div>

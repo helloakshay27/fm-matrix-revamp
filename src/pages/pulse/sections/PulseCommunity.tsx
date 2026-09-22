@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
   Legend,
+  LabelList,
 } from "recharts";
 import { MessageCircle, ArrowUp, ArrowDown, User } from "lucide-react";
 import {
@@ -51,11 +52,42 @@ const STATIC_RETENTION_FUNNEL = [
   { label: "Engaged", pct: 47 },
   { label: "Retained", pct: 34 },
 ];
-// Lightest at the top of the funnel, darkening toward "Retained".
-const RETENTION_COLORS = STATIC_RETENTION_FUNNEL.map(
-  (_, i) =>
-    `color-mix(in srgb, var(--color-secondary-teal) ${100 - (i / (STATIC_RETENTION_FUNNEL.length - 1)) * 100}%, var(--color-growth-solid) ${(i / (STATIC_RETENTION_FUNNEL.length - 1)) * 100}%)`
-);
+// Lightest at the top of the funnel, solid purple at "Retained".
+const RETENTION_COLORS = ["#8052B833", "#8052B866", "#8052B899", "#8052B8CC", "#8052B8"];
+
+// Community Member Status Breakdown stacked bars.
+const STATUS_BREAKDOWN_COLORS = { approved: "#16976E", pending: "#4E8FE5", rejected: "#EBA366" };
+
+// Community Participation Trend bar + line.
+const PARTICIPATION_TREND_COLORS = { totalParticipants: "#BE95F0", activeContributors: "#CE6913" };
+
+// Only the last point in a trend gets a value label (matches the reference
+// design's single "420" / "185" callout on the most recent month).
+function lastPointLabel(color: string, dy: number, lastIndex: number) {
+  return (props: { x?: number; y?: number; width?: number; value?: number; index?: number }) => {
+    const { x = 0, y = 0, width = 0, value, index } = props;
+    if (index !== lastIndex) return null;
+    return (
+      <text
+        x={x + width / 2}
+        y={y + dy}
+        textAnchor="middle"
+        fontSize={13}
+        fontWeight={700}
+        fill={color}
+      >
+        {value}
+      </text>
+    );
+  };
+}
+
+// Community Engagement Rate donut ring.
+const ENGAGEMENT_RING_COLOR = "#5DB297";
+const NOT_ENGAGED_RING_COLOR = "#BD92EF";
+
+// New Members This Month sparkline stroke.
+const NEW_MEMBERS_SPARK_COLOR = "#E29758";
 
 // Static placeholder — no backing API yet for per-member activity.
 const STATIC_MOST_ACTIVE_MEMBER = { name: "Rahul S.", events: 20 };
@@ -251,16 +283,16 @@ export function PulseCommunity({ filters }: Props) {
                     align="right"
                     wrapperStyle={{ fontSize: 10 }}
                     payload={[
-                      { value: "Approved", type: "square", color: C.blue },
-                      { value: "Pending", type: "square", color: C.graphRed },
-                      { value: "Rejected", type: "square", color: C.lightPink },
+                      { value: "Approved", type: "square", color: STATUS_BREAKDOWN_COLORS.approved },
+                      { value: "Pending", type: "square", color: STATUS_BREAKDOWN_COLORS.pending },
+                      { value: "Rejected", type: "square", color: STATUS_BREAKDOWN_COLORS.rejected },
                     ]}
                   />
-                  <Bar dataKey="Rejected" fill={C.lightPink} stackId="members" />
-                  <Bar dataKey="Pending" fill={C.graphRed} stackId="members" />
+                  <Bar dataKey="Rejected" fill={STATUS_BREAKDOWN_COLORS.rejected} stackId="members" />
+                  <Bar dataKey="Pending" fill={STATUS_BREAKDOWN_COLORS.pending} stackId="members" />
                   <Bar
                     dataKey="Approved"
-                    fill={C.blue}
+                    fill={STATUS_BREAKDOWN_COLORS.approved}
                     stackId="members"
                     radius={[4, 4, 0, 0]}
                   />
@@ -287,17 +319,35 @@ export function PulseCommunity({ filters }: Props) {
                   <Legend wrapperStyle={{ fontSize: 10 }} />
                   <Bar
                     dataKey="Total Participants"
-                    fill={C.gray}
+                    fill={PARTICIPATION_TREND_COLORS.totalParticipants}
                     radius={[4, 4, 0, 0]}
-                    barSize={28}
-                  />
+                    barSize={32}
+                  >
+                    <LabelList
+                      dataKey="Total Participants"
+                      content={lastPointLabel(
+                        PARTICIPATION_TREND_COLORS.totalParticipants,
+                        -8,
+                        participationTrendData.length - 1
+                      )}
+                    />
+                  </Bar>
                   <Line
                     type="monotone"
                     dataKey="Active Contributors"
-                    stroke={C.red}
+                    stroke={PARTICIPATION_TREND_COLORS.activeContributors}
                     strokeWidth={2}
-                    dot={{ r: 5, fill: C.red, strokeWidth: 0 }}
-                  />
+                    dot={{ r: 5, fill: "#fff", stroke: PARTICIPATION_TREND_COLORS.activeContributors, strokeWidth: 3 }}
+                  >
+                    <LabelList
+                      dataKey="Active Contributors"
+                      content={lastPointLabel(
+                        PARTICIPATION_TREND_COLORS.activeContributors,
+                        -14,
+                        participationTrendData.length - 1
+                      )}
+                    />
+                  </Line>
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
@@ -343,7 +393,7 @@ export function PulseCommunity({ filters }: Props) {
                 <div
                   className="pd-donut pd-donut-xl"
                   style={{
-                    background: `conic-gradient(var(--color-primary) 0% ${engagement.engagement_rate}%, var(--color-bg) ${engagement.engagement_rate}% 100%)`,
+                    background: `conic-gradient(${ENGAGEMENT_RING_COLOR} 0% ${engagement.engagement_rate}%, ${NOT_ENGAGED_RING_COLOR} ${engagement.engagement_rate}% 100%)`,
                   }}
                 />
                 <div className="pd-donut-center">
@@ -353,12 +403,12 @@ export function PulseCommunity({ filters }: Props) {
               </div>
               <div className="pd-donut-legend">
                 <div className="pd-donut-legend-item">
-                  <span className="pd-donut-legend-dot" style={{ background: "var(--color-primary)" }} />
+                  <span className="pd-donut-legend-dot" style={{ background: ENGAGEMENT_RING_COLOR }} />
                   <span className="pd-donut-legend-name">Engaged</span>
                   <span className="pd-donut-legend-value">{engagement.engaged_members}</span>
                 </div>
                 <div className="pd-donut-legend-item">
-                  <span className="pd-donut-legend-dot" style={{ background: "var(--color-bg)", border: "1px solid var(--color-border-subtle)" }} />
+                  <span className="pd-donut-legend-dot" style={{ background: NOT_ENGAGED_RING_COLOR }} />
                   <span className="pd-donut-legend-name">Not engaged</span>
                   <span className="pd-donut-legend-value">{engagement.not_engaged_members}</span>
                 </div>
@@ -383,7 +433,7 @@ export function PulseCommunity({ filters }: Props) {
               <div className="pd-stat-spark-chart">
                 <svg width="117" height="68" viewBox="0 0 117 68" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <g clip-path="url(#clip0_2565_8137)">
-                    <path d="M1.58203 2.61523L1.58203 41.1922C1.58203 42.6189 1.58203 56.2387 1.58203 62.3923C1.58203 64.0492 2.92301 65.3845 4.57987 65.3845C7.59933 65.3845 12.1061 65.3845 14.2307 65.3845H115.42M102.771 23.5383L71.1496 40.9742L45.8523 27.0255L20.555 50.9998" stroke="#DA7756" stroke-width="3.2" stroke-linecap="round" />
+                    <path d="M1.58203 2.61523L1.58203 41.1922C1.58203 42.6189 1.58203 56.2387 1.58203 62.3923C1.58203 64.0492 2.92301 65.3845 4.57987 65.3845C7.59933 65.3845 12.1061 65.3845 14.2307 65.3845H115.42M102.771 23.5383L71.1496 40.9742L45.8523 27.0255L20.555 50.9998" stroke={NEW_MEMBERS_SPARK_COLOR} stroke-width="3.2" stroke-linecap="round" />
                   </g>
                   <defs>
                     <clipPath id="clip0_2565_8137">

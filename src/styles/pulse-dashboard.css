@@ -100,11 +100,35 @@
   white-space: nowrap;
 }
 
-.pulse-db .pd-kpi-badge-success { background: rgba(137, 247, 231, .35); color: #0A7A6A; }
-.pulse-db .pd-kpi-badge-warning { background: rgba(237, 196, 136, .30); color: #8B6914; }
-.pulse-db .pd-kpi-badge-info    { background: rgba(107, 155, 204, .18); color: #2F5C86; }
-.pulse-db .pd-kpi-badge-neutral { background: var(--color-bg); color: var(--color-text-light); }
-.pulse-db .pd-kpi-badge-danger  { background: rgba(231, 132, 142, .18); color: #C0303D; }
+.pulse-db .pd-kpi-badge-success {
+  background: #E6F4EA;
+  color: #108C72;
+}
+
+.pulse-db .pd-kpi-badge-warning {
+  background: rgba(237, 196, 136, .30);
+  color: #8B6914;
+}
+
+.pulse-db .pd-kpi-badge-info {
+  background: rgba(107, 155, 204, .18);
+  color: #2F5C86;
+}
+
+.pulse-db .pd-kpi-badge-neutral {
+  background: var(--color-bg);
+  color: var(--color-text-light);
+}
+
+.pulse-db .pd-kpi-badge-danger {
+  background: rgba(231, 132, 142, .18);
+  color: #C0303D;
+}
+
+.pulse-db .pd-kpi-badge-premium {
+  background: rgba(216, 143, 80, .18);
+  color: #D88F50;
+}
 
 /* ── Charts ───────────────────────────────────────────────────────────── */
 .pulse-db .pd-charts-row {
@@ -130,17 +154,47 @@
    396/374/334px widths as flex-grow ratios so the row fills its container;
    CO2 Savings is pinned to a literal 200px instead — at ratio-based sizing
    it could shrink thinner than its 116px ring + padding need, clipping it. */
-.pulse-db .pd-growth-card--carpool-rides-trend  { flex: 396 1 0; }
-.pulse-db .pd-growth-card--carpool-trust-ratings { flex: 374 1 0; }
-.pulse-db .pd-growth-card--carpool-co2-savings  { flex: 0 0 200px; }
-.pulse-db .pd-growth-card--carpool-peak-hours   { flex: 334 1 0; }
+.pulse-db .pd-growth-card--carpool-rides-trend {
+  flex: 396 1 0;
+}
+
+.pulse-db .pd-growth-card--carpool-trust-ratings {
+  flex: 374 1 0;
+}
+
+.pulse-db .pd-growth-card--carpool-co2-savings {
+  flex: 0 0 200px;
+}
+
+.pulse-db .pd-growth-card--carpool-peak-hours {
+  flex: 334 1 0;
+}
 
 /* Carpool's 2nd 4-card row — 474/333/308/189px widths, 14.28px radius,
    0.89px border (matches PulseUsers' .pd-mini-chart-card--site numbers). */
-.pulse-db .pd-growth-card--carpool-routes       { flex: 474 1 0; border-radius: 14.28px; border: 4px solid #6B9BCCBF; }
-.pulse-db .pd-growth-card--carpool-completion   { flex: 333 1 0; border-radius: 14.28px; border-width: 0.89px; }
-.pulse-db .pd-growth-card--carpool-match-success { flex: 308 1 0; border-radius: 14.28px; border-width: 0.89px; }
-.pulse-db .pd-growth-card--carpool-satisfaction { flex: 189 1 0; border-radius: 14.28px; border-width: 0.89px; }
+.pulse-db .pd-growth-card--carpool-routes {
+  flex: 474 1 0;
+  border-radius: 14.28px;
+  border: 4px solid #6B9BCCBF;
+}
+
+.pulse-db .pd-growth-card--carpool-completion {
+  flex: 333 1 0;
+  border-radius: 14.28px;
+  border-width: 0.89px;
+}
+
+.pulse-db .pd-growth-card--carpool-match-success {
+  flex: 308 1 0;
+  border-radius: 14.28px;
+  border-width: 0.89px;
+}
+
+.pulse-db .pd-growth-card--carpool-satisfaction {
+  flex: 189 1 0;
+  border-radius: 14.28px;
+  border-width: 0.89px;
+}
 
 /* ── CO2 Savings ring + shared small stat row (also reused by the
    condensed Trust & Ratings card) ─────────────────────────────────────── */
@@ -346,11 +400,35 @@
   border-color: var(--pulse-card-border);
 }
 
-.pulse-db .pd-mini-chart-card--growth    { flex: 352 1 0;              border-radius: 16.25px; border-width: 1.02px; }
-.pulse-db .pd-mini-chart-card--logins    { flex: 294 1 0;              border-radius: 16px;    border-width: 1px; }
-.pulse-db .pd-mini-chart-card--breakdown { flex: 251 1 0;              border-radius: 16.41px; border-width: 1.03px; }
-.pulse-db .pd-mini-chart-card--gender    { flex: 206 1 0;              border-radius: 16.41px; border-width: 1.03px; }
-.pulse-db .pd-mini-chart-card--site      { flex: 241.02734375 1 0;     border-radius: 14.28px; border-width: 0.89px; }
+.pulse-db .pd-mini-chart-card--growth {
+  flex: 352 1 0;
+  border-radius: 16.25px;
+  border-width: 1.02px;
+}
+
+.pulse-db .pd-mini-chart-card--logins {
+  flex: 294 1 0;
+  border-radius: 16px;
+  border-width: 1px;
+}
+
+.pulse-db .pd-mini-chart-card--breakdown {
+  flex: 251 1 0;
+  border-radius: 16.41px;
+  border-width: 1.03px;
+}
+
+.pulse-db .pd-mini-chart-card--gender {
+  flex: 206 1 0;
+  border-radius: 16.41px;
+  border-width: 1.03px;
+}
+
+.pulse-db .pd-mini-chart-card--site {
+  flex: 241.02734375 1 0;
+  border-radius: 14.28px;
+  border-width: 0.89px;
+}
 
 .pulse-db .pd-mini-chart-inner {
   flex: 1;
@@ -738,8 +816,8 @@
 .pulse-db .pd-hbar-list {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 6px;
+  justify-content: center;
+  gap: 10px;
   position: relative;
 }
 
@@ -763,13 +841,16 @@
 
 .pulse-db .pd-hbar-track {
   flex: 1;
-  height: 16px;
+  height: 6px;
+  border-radius: 100px;
+  background: var(--color-bg);
+  overflow: hidden;
 }
 
 .pulse-db .pd-hbar-fill {
   display: block;
   height: 100%;
-  border-radius: 2px;
+  border-radius: 100px;
   background: var(--color-secondary-teal);
 }
 
@@ -793,8 +874,23 @@
 .pulse-db .pd-event-revenue-total {
   display: flex;
   align-items: center;
-  font-size: 20px;
-  font-weight: 700;
+  gap: 10px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--color-text);
+}
+
+.pulse-db .pd-event-revenue-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 18px;
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--color-secondary-purple);
   color: var(--color-text);
 }
 
@@ -873,23 +969,85 @@
 }
 
 /* ── Events Overview — two-segment proportional split bar (pure CSS) ──── */
+.pulse-db .pd-events-overview-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+}
+
 .pulse-db .pd-events-split {
   display: flex;
-  height: 100%;
+  height: 40px;
   border-radius: var(--radius-md);
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .pulse-db .pd-events-split-seg {
+  min-width: 0;
+}
+
+.pulse-db .pd-events-split-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--color-text-light);
+}
+
+.pulse-db .pd-events-split-legend-item {
   display: flex;
   align-items: center;
+  gap: 6px;
+}
+
+.pulse-db .pd-events-split-legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* ── Notice Status — three-segment proportional split bar (pure CSS) ──── */
+.pulse-db .pd-notice-status-body {
+  display: flex;
+  flex-direction: column;
   justify-content: center;
+  gap: 14px;
+}
+
+.pulse-db .pd-notice-status-split {
+  display: flex;
+  height: 32px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.pulse-db .pd-notice-status-seg {
   min-width: 0;
-  padding: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
-  text-align: center;
+}
+
+.pulse-db .pd-notice-status-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--color-text-light);
+}
+
+.pulse-db .pd-notice-status-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pulse-db .pd-notice-status-legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
 }
 
 /* ── Utilization By Facility — pure CSS horizontal progress list ──────── */
@@ -897,6 +1055,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  height: 100%;
   gap: 16px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -1165,9 +1324,17 @@
   flex-shrink: 0;
 }
 
-.pulse-db .pd-gender-legend-dot-male { background: var(--color-error); }
-.pulse-db .pd-gender-legend-dot-female { background: color-mix(in srgb, var(--color-error) 55%, black); }
-.pulse-db .pd-gender-legend-dot-unspecified { background: var(--color-text-light); }
+.pulse-db .pd-gender-legend-dot-male {
+  background: #EBA366;
+}
+
+.pulse-db .pd-gender-legend-dot-female {
+  background: #42AD8B;
+}
+
+.pulse-db .pd-gender-legend-dot-unspecified {
+  background: var(--color-text-light);
+}
 
 .pulse-db .pd-chart-card {
   background: var(--color-card-white);
@@ -1335,8 +1502,8 @@
   font-weight: 700;
   padding: 3px 9px;
   border-radius: 100px;
-  background: var(--color-success-bg);
-  color: var(--color-success-solid);
+  background: #EBFAF5;
+  color: #15A476;
 }
 
 /* Down-trend variant — same shape, red instead of green. */
@@ -1524,17 +1691,32 @@
 .pulse-db .pd-ring {
   position: absolute;
   border-radius: 50%;
-  background: conic-gradient(
-    var(--ring-color) calc(var(--pct) * 1%),
-    var(--color-bg) 0
-  );
+  background: conic-gradient(var(--ring-color) calc(var(--pct) * 1%),
+      var(--color-bg) 0);
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 14px), #000 calc(100% - 14px));
   mask: radial-gradient(farthest-side, transparent calc(100% - 14px), #000 calc(100% - 14px));
 }
 
-.pulse-db .pd-ring-0 { width: 150px; height: 150px; top: 0; left: 0; }
-.pulse-db .pd-ring-1 { width: 114px; height: 114px; top: 18px; left: 18px; }
-.pulse-db .pd-ring-2 { width: 78px; height: 78px; top: 36px; left: 36px; }
+.pulse-db .pd-ring-0 {
+  width: 150px;
+  height: 150px;
+  top: 0;
+  left: 0;
+}
+
+.pulse-db .pd-ring-1 {
+  width: 114px;
+  height: 114px;
+  top: 18px;
+  left: 18px;
+}
+
+.pulse-db .pd-ring-2 {
+  width: 78px;
+  height: 78px;
+  top: 36px;
+  left: 36px;
+}
 
 .pulse-db .pd-ring-legend {
   display: flex;
@@ -1589,6 +1771,16 @@
   min-width: 0;
 }
 
+/* Wraps .pd-org-cell to carry the flex-grow sizing and the hover tooltip
+   (data-tooltip). It must NOT have overflow:hidden - the tooltip bubble is
+   an absolutely-positioned ::after anchored to this element and would get
+   clipped by an overflow:hidden on the very same box. */
+.pulse-db .pd-org-cell-wrap {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+}
+
 .pulse-db .pd-org-cell {
   display: flex;
   flex-direction: column;
@@ -1598,6 +1790,7 @@
   min-height: 0;
   overflow: hidden;
   border-radius: 5px;
+  flex: 1;
 }
 
 .pulse-db .pd-org-cell-name {
@@ -1896,10 +2089,25 @@
   flex-shrink: 0;
 }
 
-.pulse-db .pd-badge-yes  { background: rgba(137, 247, 231, .35); color: #0A7A6A; }
-.pulse-db .pd-badge-no   { background: rgba(231, 132, 142, .18); color: #C0303D; }
-.pulse-db .pd-badge-pub  { background: rgba(206, 203, 246, .35); color: #4A3F9F; }
-.pulse-db .pd-badge-warn { background: rgba(237, 196, 136, .30); color: #8B6914; }
+.pulse-db .pd-badge-yes {
+  background: #E6F4EA;
+  color: #108C72;
+}
+
+.pulse-db .pd-badge-no {
+  background: #FCE8E6;
+  color: #E7848E;
+}
+
+.pulse-db .pd-badge-pub {
+  background: rgba(206, 203, 246, .35);
+  color: #4A3F9F;
+}
+
+.pulse-db .pd-badge-warn {
+  background: #FEF7E0;
+  color: #8B6914;
+}
 
 /* Solid-fill status pill without the leading dot, e.g. the Status column
    in the Entity Management Directory. */
@@ -1907,8 +2115,15 @@
   display: none;
 }
 
-.pulse-db .pd-badge--flat.pd-badge-yes { background: var(--color-success-bg); color: var(--color-success-solid); }
-.pulse-db .pd-badge--flat.pd-badge-no  { background: var(--color-error-bg); color: var(--color-error); }
+.pulse-db .pd-badge--flat.pd-badge-yes {
+  background: #E6F4EA;
+  color: #108C72;
+}
+
+.pulse-db .pd-badge--flat.pd-badge-no {
+  background: #FCE8E6;
+  color: #E7848E;
+}
 
 /* A plain neutral pill (no leading dot) for descriptive/categorical values,
    e.g. the Type column in the Entity Management Directory. */
@@ -1920,9 +2135,9 @@
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border-subtle);
-  color: var(--color-text-light);
+  background: #E5E3DB;
+  border: none;
+  color: #666666;
 }
 
 /* ── Pagination ───────────────────────────────────────────────────────── */
@@ -1993,9 +2208,20 @@
   flex-shrink: 0;
 }
 
-.pulse-db .pd-ranked-pos-1 { background: rgba(237, 196, 136, .30); color: #8B6914; }
-.pulse-db .pd-ranked-pos-2 { background: var(--color-bg); color: var(--color-text); }
-.pulse-db .pd-ranked-pos-3 { background: rgba(206, 203, 246, .35); color: #4A3F9F; }
+.pulse-db .pd-ranked-pos-1 {
+  background: #FAEEE3;
+  color: #D88F50;
+}
+
+.pulse-db .pd-ranked-pos-2 {
+  background: #E5E3DB;
+  color: #666666;
+}
+
+.pulse-db .pd-ranked-pos-3 {
+  background: #EFE9F6;
+  color: #AC77EB;
+}
 
 .pulse-db .pd-ranked-name {
   flex: 1;
@@ -2071,7 +2297,9 @@
   transition: background .15s;
 }
 
-.pulse-db .pd-apply-btn:hover { background: var(--color-primary-hover); }
+.pulse-db .pd-apply-btn:hover {
+  background: var(--color-primary-hover);
+}
 
 /* ── Site dropdown ────────────────────────────────────────────────────── */
 .pulse-db .pd-site-dropdown {
@@ -2118,7 +2346,9 @@
   color: var(--color-text);
 }
 
-.pulse-db .pd-site-option:hover { background: var(--color-bg); }
+.pulse-db .pd-site-option:hover {
+  background: var(--color-bg);
+}
 
 .pulse-db .pd-site-option input[type="checkbox"] {
   width: 15px;
@@ -2149,11 +2379,14 @@
 }
 
 @keyframes pd-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ── Responsive ───────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
+
   .pulse-db .pd-charts-row,
   .pulse-db .pd-charts-row-3 {
     grid-template-columns: 1fr;
