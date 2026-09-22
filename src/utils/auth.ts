@@ -251,6 +251,29 @@ export const fetchLockAccount = async (): Promise<void> => {
   }
 };
 
+// Notify the backend of logout (VAPT Web-5.14/5.24: session must be
+// invalidated server-side, not just cleared client-side). Best-effort —
+// must be called before clearAuth() removes the token it needs.
+export const logoutUser = async (): Promise<void> => {
+  try {
+    const baseUrl = localStorage.getItem(AUTH_KEYS.BASE_URL);
+    const token = localStorage.getItem(AUTH_KEYS.TOKEN);
+    if (!baseUrl || !token) return;
+
+    const base = normalizeBaseUrl(baseUrl);
+    const url = `${base.replace(/\/+$/, "")}/logout`;
+
+    await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  } catch {
+    // Silently fail - client-side state is cleared regardless via clearAuth()
+  }
+};
+
 // Clear all auth data
 export const clearAuth = (): void => {
   localStorage.removeItem(AUTH_KEYS.USER);
@@ -268,18 +291,18 @@ const isViSite =
   hostname.includes("vi-web.gophygital.work") ||
   hostname.includes("web.gophygital.work") ||
   hostname.includes("lockated.gophygital.work") ||
-  hostname.includes("community.gophygital.work") ;
+  hostname.includes("community.gophygital.work")
 
 const isFmSite =
   hostname === "fm-uat.gophygital.work" ||
   hostname === "fm.gophygital.work" ||
-  hostname === "fm-matrix.lockated.com"|| hostname === "localhost"
+  hostname === "fm-matrix.lockated.com";
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
 const isPulseSite = hostname === "pulse.lockated.com";
 
-const isPanchshilUatSite = hostname === "pulse-uat.panchshil.com";
+const isPanchshilUatSite = hostname === "pulse-uat.panchshil.com" || hostname === "localhost";
 
 const isPanchshilPulseProd = hostname === "pulse.panchshil.com";
 
