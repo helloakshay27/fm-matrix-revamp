@@ -26,26 +26,25 @@ import {
 } from "@/services/pulseDashboardApi";
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
+// Monthly Enrollment Growth line color.
 const C = {
-  green: "#798C5E",
-  red: "#E49191",
-  blue: "#6B9BCC",
-  orange: "#EDC488",
+  orange: "#D88F50",
 };
 
-
-
 const TENANT_COLOR_PALETTE: { bg: string; text: string }[] = [
-  { bg: "var(--color-info)", text: "#fff" },
-  { bg: "var(--color-primary)", text: "#fff" },
-  { bg: "var(--color-secondary-teal)", text: "var(--color-text)" },
-  { bg: "var(--color-warning)", text: "var(--color-text)" },
-  { bg: "var(--color-error)", text: "#fff" },
-  { bg: "var(--color-growth-solid)", text: "#fff" },
-  { bg: "rgba(107, 155, 204, 0.55)", text: "var(--color-text)" },
+  { bg: "#3C8FFB", text: "#2C2C2C" },
+  { bg: "#E5A36A", text: "#2C2C2C" },
+  { bg: "#A987D3", text: "#2C2C2C" },
+  { bg: "#F87709", text: "#2C2C2C" },
+  { bg: "#15A476", text: "#2C2C2C" },
+  { bg: "#77CEC1", text: "#2C2C2C" },
+  { bg: "#6AA6F4", text: "#2C2C2C" },
 ];
 
 const MAX_ORG_MEMBER_CELLS = 8;
+// Minimum share of a 2-row column's height the smaller row is allowed to
+// shrink to, so its label + value never get clipped.
+const MIN_ROW_FRACTION = 0.38;
 
 function groupIntoTreemapColumns<T>(items: T[]): T[][] {
   if (items.length === 0) return [];
@@ -89,7 +88,20 @@ export function PulseCustomers({ filters }: Props) {
       weight: Math.max(t.users_count, sizeFloor),
       ...TENANT_COLOR_PALETTE[i % TENANT_COLOR_PALETTE.length],
     }));
-    return groupIntoTreemapColumns(sorted);
+    const columns = groupIntoTreemapColumns(sorted);
+    // A 2-row column's smaller entry can otherwise end up too short to fit
+    // its label + value (text gets clipped) - guarantee each row at least
+    // MIN_ROW_FRACTION of the column's height, regardless of the actual
+    // count ratio between the two.
+    columns.forEach((column) => {
+      if (column.length !== 2) return;
+      const [a, b] = column; // pre-sorted descending, so a.weight >= b.weight
+      const minorShare = b.weight / (a.weight + b.weight);
+      if (minorShare < MIN_ROW_FRACTION) {
+        b.weight = (MIN_ROW_FRACTION / (1 - MIN_ROW_FRACTION)) * a.weight;
+      }
+    });
+    return columns;
   }, [tenantsDetails]);
 
   useEffect(() => {
@@ -188,7 +200,7 @@ export function PulseCustomers({ filters }: Props) {
                   type="monotone"
                   dataKey="count"
                   name="Customers"
-                  stroke="var(--color-primary)"
+                  stroke={C.orange}
                   strokeWidth={2}
                   dot={{ r: 3 }}
                 />
@@ -218,16 +230,17 @@ export function PulseCustomers({ filters }: Props) {
                   {column.map((cell) => (
                     <div
                       key={cell.name}
-                      className="pd-org-cell"
-                      style={{
-                        background: cell.bg,
-                        color: cell.text,
-                        flexGrow: cell.weight,
-                        flexBasis: 0,
-                      }}
+                      className="pd-org-cell-wrap"
+                      data-tooltip={`${cell.name}: ${cell.value} members`}
+                      style={{ flexGrow: cell.weight, flexBasis: 0 }}
                     >
-                      <span className="pd-org-cell-name">{cell.name}</span>
-                      <span className="pd-org-cell-value">{cell.value}</span>
+                      <div
+                        className="pd-org-cell"
+                        style={{ background: cell.bg, color: cell.text }}
+                      >
+                        <span className="pd-org-cell-name">{cell.name}</span>
+                        <span className="pd-org-cell-value">{cell.value}</span>
+                      </div>
                     </div>
                   ))}
                 </div>

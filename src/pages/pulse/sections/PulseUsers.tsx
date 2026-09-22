@@ -24,15 +24,16 @@ import {
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 const C = {
-  green: "#798C5E",
-  blue: "#6B9BCC",
-  orange: "#EDC488",
-  purple: "#CECBF6",
-  teal: "#9EC8BA",
-  pink: "#E7848E",
+  green: "#15A476",
+  blue: "#4E8FE5",
+  orange: "#E5A36A",
+  purple: "#AC77EB",
+  teal: "#42AD8B",
+  peach: "#EBA366",
+  lavender: "#C8AEE7",
 };
 
-const USER_TYPE_COLOR_PALETTE = [C.orange, C.blue, C.pink, C.purple, C.teal, C.green];
+const USER_TYPE_COLOR_PALETTE = [C.green, C.orange, C.purple, C.blue, C.teal, C.peach];
 
 const GENDER_DOLL_WIDTH = 68.8889;
 const GENDER_DOLL_HEIGHT = 155;
@@ -57,6 +58,7 @@ export function PulseUsers({ filters }: Props) {
   const [users, setUsers] = useState<UsersDetailsResponse | null>(null);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [userSearch, setUserSearch] = useState("");
 
   useEffect(() => {
     pulseEvents.onUserListViewed();
@@ -117,7 +119,7 @@ export function PulseUsers({ filters }: Props) {
     })) ?? [];
   const growthSeries = [
     { key: "users" as const, name: "Users", color: "var(--color-primary)" },
-    { key: "admins" as const, name: "Admins", color: C.purple },
+    { key: "admins" as const, name: "Admins", color: C.lavender },
     { key: "occupants" as const, name: "Occupants", color: C.teal },
   ];
 
@@ -253,13 +255,10 @@ export function PulseUsers({ filters }: Props) {
                     <rect x="0" y="0" width={GENDER_DOLL_WIDTH} height={maleBandHeight} />
                   </clipPath>
                   <g clipPath="url(#pd-gender-doll-clip-female)">
-                    <path
-                      d={GENDER_DOLL_PATH}
-                      fill="color-mix(in srgb, var(--color-error) 55%, black)"
-                    />
+                    <path d={GENDER_DOLL_PATH} fill={C.teal} />
                   </g>
                   <g clipPath="url(#pd-gender-doll-clip-male)">
-                    <path d={GENDER_DOLL_PATH} fill="var(--color-error)" />
+                    <path d={GENDER_DOLL_PATH} fill={C.peach} />
                   </g>
                 </svg>
               </div>
@@ -283,8 +282,14 @@ export function PulseUsers({ filters }: Props) {
       {users && (
         <div className="pd-tbl-card">
           <div className="pd-tbl-header">
-            <span className="pd-tbl-title">User Details</span>
-            <div className="pd-sub-tabs" />
+            <span className="pd-tbl-title pd-tbl-title--plain">User Details</span>
+            <input
+              type="text"
+              className="pd-tbl-search-input"
+              placeholder="Search users..."
+              value={userSearch}
+              onChange={(e) => setUserSearch(e.target.value)}
+            />
           </div>
           <div className="pd-tbl-wrap">
             <table className="pd-table">
@@ -298,7 +303,11 @@ export function PulseUsers({ filters }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {users.users.map((u) => (
+                {users.users
+                  .filter((u) =>
+                    u.name.toLowerCase().includes(userSearch.trim().toLowerCase())
+                  )
+                  .map((u) => (
                   <tr key={u.id}>
                     <td className="pd-num">{u.serial}</td>
                     <td style={{ fontWeight: 500 }}>{u.name}</td>
