@@ -97,7 +97,7 @@ export const AMCTypeDistributionCard: React.FC<
 
       <div className="flex-1 overflow-auto p-5">
         {data && data.length > 0 ? (
-          <div className="bg-gray-50 rounded-lg p-4">
+          <div className="relative bg-gray-50 rounded-lg p-4">
             <ResponsiveContainer width="100%" height={320}>
               <PieChart>
                 <Pie
@@ -132,6 +132,14 @@ export const AMCTypeDistributionCard: React.FC<
                 />
               </PieChart>
             </ResponsiveContainer>
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-900">
+                  {(data.reduce((sum, item) => sum + (item.count || 0), 0)).toLocaleString()}
+                </div>
+                <div className="text-xs text-gray-500">Total</div>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="text-center py-8 text-gray-500">

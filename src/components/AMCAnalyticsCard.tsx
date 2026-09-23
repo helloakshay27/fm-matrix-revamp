@@ -39,9 +39,11 @@ export const AMCAnalyticsCard: React.FC<AMCAnalyticsCardProps> = ({
           { name: 'Inactive', value: data.inactive_amc || 0, fill: ANALYTICS_PALETTE[2] },
         ];
         
+        const statusTotal = statusData.reduce((s, d) => s + d.value, 0);
+
         return (
           <div className="space-y-4">
-            <div className="h-64">
+            <div className="relative h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -59,6 +61,12 @@ export const AMCAnalyticsCard: React.FC<AMCAnalyticsCardProps> = ({
                   <Tooltip />
                 </PieChart>
               </ResponsiveContainer>
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-gray-900">{statusTotal.toLocaleString()}</div>
+                  <div className="text-xs text-gray-500">Total</div>
+                </div>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="flex items-center gap-2">

@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, BarChart3 } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, Label, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
 interface AssetDistributionCardProps {
   data: any;
@@ -101,6 +101,23 @@ export const AssetDistributionCard: React.FC<AssetDistributionCardProps> = ({ da
                     {chartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
+                    <Label
+                      content={({ viewBox }: any) => {
+                        const { cx, cy } = viewBox;
+                        const total = itAssets + nonItAssets;
+                        return (
+                          <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle">
+                            <tspan x={cx} y={cy - 6} className="fill-gray-900" style={{ fontSize: '18px', fontWeight: 700 }}>
+                              {total.toLocaleString()}
+                            </tspan>
+                            <tspan x={cx} y={cy + 12} className="fill-muted-foreground" style={{ fontSize: '10px' }}>
+                              Total
+                            </tspan>
+                          </text>
+                        );
+                      }}
+                      position="center"
+                    />
                   </Pie>
                   <Tooltip />
                   <Legend />

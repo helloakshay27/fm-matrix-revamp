@@ -7,6 +7,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  Label,
   BarChart,
   Bar,
   XAxis,
@@ -37,6 +38,22 @@ const PIE_COLORS = [
   "#DA7756",
   "#798C5E",
 ];
+
+const renderCenterTotalLabel = (total: number) => {
+  return ({ viewBox }: any) => {
+    const { cx, cy } = viewBox;
+    return (
+      <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle">
+        <tspan x={cx} y={cy - 6} className="fill-gray-900" style={{ fontSize: '20px', fontWeight: 700 }}>
+          {total.toLocaleString()}
+        </tspan>
+        <tspan x={cx} y={cy + 14} className="fill-gray-500" style={{ fontSize: '11px' }}>
+          Total
+        </tspan>
+      </text>
+    );
+  };
+};
 
 export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
   title,
@@ -94,6 +111,7 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
 
       case 'categoryWise': {
         const palette = PIE_COLORS;
+        const total = data.reduce((sum: number, d: any) => sum + (Number(d.value) || 0), 0);
         return (
           <ResponsiveContainer width="100%" height={320}>
             <PieChart>
@@ -116,6 +134,7 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
                     fill={entry.color || palette[index % palette.length]}
                   />
                 ))}
+                <Label content={renderCenterTotalLabel(total)} position="center" />
               </Pie>
               <Tooltip
                 formatter={(value: any, _name: any, props: any) => [
@@ -135,7 +154,8 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
         );
       }
 
-      case 'statusDistribution':
+      case 'statusDistribution': {
+        const total = data.reduce((sum: number, d: any) => sum + (Number(d.value) || 0), 0);
         return (
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -158,8 +178,9 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
                     fill={entry.color || PIE_COLORS[index % PIE_COLORS.length]}
                   />
                 ))}
+                <Label content={renderCenterTotalLabel(total)} position="center" />
               </Pie>
-              <Tooltip 
+              <Tooltip
                 formatter={(value) => [value, 'Count']}
                 contentStyle={{
                   backgroundColor: '#FFFFFF',
@@ -171,8 +192,10 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
             </PieChart>
           </ResponsiveContainer>
         );
+      }
 
-      case 'assetDistributions':
+      case 'assetDistributions': {
+        const total = data.reduce((sum: number, d: any) => sum + (Number(d.value) || 0), 0);
         return (
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -195,8 +218,9 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
                     fill={entry.color || PIE_COLORS[index % PIE_COLORS.length]}
                   />
                 ))}
+                <Label content={renderCenterTotalLabel(total)} position="center" />
               </Pie>
-              <Tooltip 
+              <Tooltip
                 formatter={(value) => [value, 'Count']}
                 contentStyle={{
                   backgroundColor: '#FFFFFF',
@@ -208,6 +232,7 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
             </PieChart>
           </ResponsiveContainer>
         );
+      }
 
       default:
         return (
