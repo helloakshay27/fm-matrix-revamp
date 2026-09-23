@@ -128,6 +128,7 @@
     "react-select": "^5.10.2",
     "react-xarrows": "^2.0.2",
     "recharts": "^2.15.4",
+    "remark-gfm": "^4.0.1",
     "sonner": "^1.5.0",
     "swiper": "^12.0.3",
     "tailwind-merge": "^2.5.2",
