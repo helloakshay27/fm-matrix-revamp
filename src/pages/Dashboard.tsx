@@ -5432,12 +5432,6 @@ export const Dashboard = () => {
             <div className="px-6 pt-4 bg-white border-b border-analytics-border">
               <TabsList className="bg-transparent p-0 gap-4">
                 <TabsTrigger
-                  value="build"
-                  className="rounded-none border-b-2 border-transparent pb-2 data-[state=active]:border-brand data-[state=active]:text-brand data-[state=active]:font-semibold data-[state=inactive]:text-gray-500"
-                >
-                  Dashboard
-                </TabsTrigger>
-                <TabsTrigger
                   value="my-dashboard"
                   className="flex items-center gap-2 rounded-none border-b-2 border-transparent pb-2 data-[state=active]:border-brand data-[state=active]:text-brand data-[state=active]:font-semibold data-[state=inactive]:text-gray-500"
                 >
@@ -5448,6 +5442,12 @@ export const Dashboard = () => {
                       {myDashboardCards.length}
                     </span>
                   )}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="build"
+                  className="rounded-none border-b-2 border-transparent pb-2 data-[state=active]:border-brand data-[state=active]:text-brand data-[state=active]:font-semibold data-[state=inactive]:text-gray-500"
+                >
+                  Dashboard
                 </TabsTrigger>
               </TabsList>
             </div>
