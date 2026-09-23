@@ -120,6 +120,8 @@ export const Header = () => {
     loading: siteLoading,
   } = useSelector((state: RootState) => state.site);
 
+  const isPanchshilOrg = localStorage.getItem("org_id") === "63";
+
   const hostname = window.location.hostname;
 
   // Check if it's Oman site
@@ -604,7 +606,8 @@ export const Header = () => {
           {/* Dashboard Button */}
           {!isRestrictedUser && (
             <div className="hidden lg:flex items-center gap-2">
-              {!isViSite && (
+              {/* Hidden for the Club tenant - only "Club Dashboard" should show there. */}
+              {!isViSite && !isPanchshilOrg && (
                 <button
                   onClick={() => (window.location.href = "/dashboard")}
                   className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
@@ -621,7 +624,7 @@ export const Header = () => {
                   className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
                   <ChartAreaIcon className="w-4 h-4" />
-                  Executive Dashboard
+                  {isPanchshilOrg ? "Dashboard" : "Executive Dashboard"}
                 </button>
               )} */}
 
@@ -811,7 +814,8 @@ export const Header = () => {
                 align="end"
                 className="!w-[calc(100vw-1rem)] max-w-[18rem] bg-white border border-[#D5DbDB] shadow-lg sm:!w-64"
               >
-                {!isViSite && (
+                {/* Hidden for the Club tenant - only "Club Dashboard" should show there. */}
+                {!isViSite && !isPanchshilOrg && (
                   <DropdownMenuItem
                     onClick={() => (window.location.href = "/dashboard")}
                   >
@@ -826,7 +830,7 @@ export const Header = () => {
                     }
                   >
                     <ChartAreaIcon className="w-4 h-4 mr-2" />
-                    Executive Dashboard
+                    {isPanchshilOrg ? "Dashboard" : "Executive Dashboard"}
                   </DropdownMenuItem>
                 )}
                 {/* {canShowMSafeDashboard && (
