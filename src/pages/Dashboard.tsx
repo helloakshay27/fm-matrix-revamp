@@ -128,6 +128,8 @@ import { CommonAreaCategoryWiseProactiveCard } from "@/components/helpdesk/Commo
 import { ticketAnalyticsDownloadAPI } from "@/services/ticketAnalyticsDownloadAPI";
 import { AIAssistantWidget } from "@/components/AIAssistantWidget";
 import { DashboardAIAssistant } from "@/components/DashboardAIAssistant";
+import { AiAssistantChat } from "@/components/dashboard/AiAssistantChat";
+import { format as formatDate } from "date-fns";
 import { HelpdeskAnalyticsCard } from "@/components/dashboard/HelpdeskAnalyticsCard";
 import MeetingRoomUtilizationCard from "@/components/meeting-room/MeetingRoomUtilizationCard";
 import { RevenueGenerationOverviewCard } from "@/components/meeting-room/RevenueGenerationOverviewCard";
@@ -475,7 +477,7 @@ const SortableChartItem = ({
       style={style}
       {...attributes}
       onPointerDown={handlePointerDown}
-      className={`cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md group ${className ?? ""
+      className={`relative cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md group ${className ?? ""
         }`}
     >
       {children}
@@ -5663,6 +5665,21 @@ export const Dashboard = () => {
         <DashboardAIAssistant />
       ) : (
         <AIAssistantWidget />
+      )}
+
+      {/* Natural-language querying of the data behind this dashboard.
+          Bottom-LEFT so it does not collide with DashboardAIAssistant (bottom-right).
+          Executive dashboard only — it is scoped to the ED schema reference files. */}
+      {isExecutiveDashboard && (
+        <AiAssistantChat
+          siteIds={
+            activeSiteIds
+              ? activeSiteIds.split(",").map((s) => s.trim()).filter(Boolean)
+              : []
+          }
+          fromDate={dateRange?.from ? formatDate(dateRange.from, "yyyy-MM-dd") : undefined}
+          toDate={dateRange?.to ? formatDate(dateRange.to, "yyyy-MM-dd") : undefined}
+        />
       )}
     </>
   );
