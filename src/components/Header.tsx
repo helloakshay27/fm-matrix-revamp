@@ -825,8 +825,8 @@ export const Header = () => {
                 )}
                 {!isViSite && (
                   <DropdownMenuItem
-                    onClick={() =>
-                      (window.location.href = "/dashboard-executive")
+                    onClick={() => isPanchshilOrg ? (window.location.href = "/dashboard-executive") :
+                      (window.location.href = "/dashboard")
                     }
                   >
                     <ChartAreaIcon className="w-4 h-4 mr-2" />
