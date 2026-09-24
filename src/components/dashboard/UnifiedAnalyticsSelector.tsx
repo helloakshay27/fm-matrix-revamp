@@ -313,11 +313,11 @@ export const executiveAnalyticsOptions = {
         endpoint: "resolution_tat_performance_quarterly",
         label: "Resolution TAT Performance",
       },
-      {
-        id: "helpdesk_unit_categorywise_proactive",
-        endpoint: "unit_categorywise_proactive",
-        label: "Unit Category-wise Tickets (Proactive)",
-      },
+      // {
+      //   id: "helpdesk_unit_categorywise_proactive",
+      //   endpoint: "unit_categorywise_proactive",
+      //   label: "Unit Category-wise Tickets (Proactive)",
+      // },
       // {
       //   id: "helpdesk_common_area_categorywise",
       //   endpoint: "common_area_categorywise",
@@ -569,7 +569,7 @@ export const executiveAnalyticsOptions = {
       {
         id: "amount_client_wise",
         endpoint: "total_outstanding_amount_client_wise",
-        label: "Client-wise Outstanding",
+        label: "Site-wise Outstanding",
       },
     ],
   },
@@ -703,11 +703,11 @@ export const executiveAnalyticsOptions = {
         endpoint: "card_fuel_consumption",
         label: "Fuel Consumption",
       },
-      {
-        id: "utility_power_consumption_top_management",
-        endpoint: "power_consumption_top_management",
-        label: "Power Consumption Top Management",
-      },
+      // {
+      //   id: "utility_power_consumption_top_management",
+      //   endpoint: "power_consumption_top_management",
+      //   label: "Power Consumption Top Management",
+      // },
       {
         id: "utility_water_consumption_top_management",
         endpoint: "water_consumption_top_management",
@@ -817,6 +817,19 @@ export const UnifiedAnalyticsSelector: React.FC<
 
   const getTotalSelectedCount = () => selectedAnalytics.length;
 
+  const selectAllAnalytics = () => {
+    const allAnalytics: SelectedAnalytic[] = Object.entries(analyticsOptions).flatMap(
+      ([moduleKey, module]) =>
+        (module as any).options.map((option: any) => ({
+          id: option.id,
+          module: (option.module ?? moduleKey) as any,
+          endpoint: option.endpoint,
+          title: option.label,
+        }))
+    );
+    onSelectionChange(allAnalytics);
+  };
+
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
@@ -915,6 +928,14 @@ export const UnifiedAnalyticsSelector: React.FC<
               {getTotalSelectedCount()} analytics selected
             </span>
             <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={selectAllAnalytics}
+                className="text-analytics-muted hover:text-analytics-text"
+              >
+                Select All
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"

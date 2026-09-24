@@ -92,7 +92,7 @@ const AmountClientWiseCard: React.FC<AmountClientWiseCardProps> = ({
             letterSpacing: "0%",
           }}
         >
-          Client-wise Outstanding Amount
+          Site-wise Outstanding Amount
         </h3>
         <RefreshCw
           className={`w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors ${loading ? "animate-spin" : ""}`}

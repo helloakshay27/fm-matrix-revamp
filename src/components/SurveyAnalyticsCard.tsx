@@ -246,14 +246,13 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
             </div>
           </div>
         )}
-        {/* Only show total in center for smaller pie charts (outerRadius <= 80) */}
-        {/* {outerRadius <= 80 && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-lg font-semibold text-gray-700">Total: {total}</div>
-            </div>
+        {/* Center total */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-gray-900">{total.toLocaleString()}</div>
+            <div className="text-xs text-gray-500">Total</div>
           </div>
-        )} */}
+        </div>
       </div>
     );
   };

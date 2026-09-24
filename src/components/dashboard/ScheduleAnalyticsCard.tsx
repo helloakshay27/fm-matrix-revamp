@@ -51,10 +51,12 @@ export const ScheduleAnalyticsCard: React.FC<ScheduleAnalyticsCardProps> = ({ ti
             { name: 'Yearly', value: data.schedule_breakdown.yearly || 0 }
           ] : [];
 
+          const overviewTotal = overviewData.reduce((sum, item) => sum + (item.value || 0), 0);
+
           return (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <div className="relative">
                   <ResponsiveContainer width="100%" height={200}>
                     <PieChart>
                       <Pie
@@ -73,6 +75,12 @@ export const ScheduleAnalyticsCard: React.FC<ScheduleAnalyticsCardProps> = ({ ti
                       <Tooltip />
                     </PieChart>
                   </ResponsiveContainer>
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="text-center">
+                      <div className="text-xl font-bold text-analytics-text">{overviewTotal.toLocaleString()}</div>
+                      <div className="text-[10px] text-analytics-muted">Total</div>
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="space-y-3">

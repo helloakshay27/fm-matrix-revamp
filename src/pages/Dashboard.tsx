@@ -128,6 +128,8 @@ import { CommonAreaCategoryWiseProactiveCard } from "@/components/helpdesk/Commo
 import { ticketAnalyticsDownloadAPI } from "@/services/ticketAnalyticsDownloadAPI";
 import { AIAssistantWidget } from "@/components/AIAssistantWidget";
 import { DashboardAIAssistant } from "@/components/DashboardAIAssistant";
+import { AiAssistantChat } from "@/components/dashboard/AiAssistantChat";
+import { format as formatDate } from "date-fns";
 import { HelpdeskAnalyticsCard } from "@/components/dashboard/HelpdeskAnalyticsCard";
 import MeetingRoomUtilizationCard from "@/components/meeting-room/MeetingRoomUtilizationCard";
 import { RevenueGenerationOverviewCard } from "@/components/meeting-room/RevenueGenerationOverviewCard";
@@ -153,6 +155,7 @@ import EscalationKpiCard from "@/components/escalation/EscalationKpiCard";
 import ServicePartnerEvaluationCard from "@/components/escalation/ServicePartnerEvaluationCard";
 import OccupancySummaryCard from "@/components/occupancy/OccupancySummaryCard";
 import BodyInjuryChartCard from "@/components/incident-analytics/BodyInjuryChartCard";
+import ChartAiInsights from "@/components/dashboard/ChartAiInsights";
 import utilityAnalyticsAPI from "@/services/utilityAnalyticsAPI";
 import UtilityConsumptionCard from "@/components/utility/UtilityConsumptionCard";
 import WaterConsumptionCard from "@/components/utility/WaterConsumptionCard";
@@ -475,7 +478,7 @@ const SortableChartItem = ({
       style={style}
       {...attributes}
       onPointerDown={handlePointerDown}
-      className={`cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md group ${className ?? ""
+      className={`relative cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md group ${className ?? ""
         }`}
     >
       {children}
@@ -528,6 +531,27 @@ export const Dashboard = () => {
     selectedSite === "all"
       ? allowedSites.map((s) => s.id).join(",")
       : selectedSite;
+
+  // What the AI Insights button on each chart analyses: the sites and period currently
+  // selected. Memoised on primitives, not the objects — otherwise every render hands
+  // the button a new object and it refetches.
+  const insightScope = React.useMemo(() => {
+    const d = (x?: Date) =>
+      x
+        ? `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(
+            x.getDate()
+          ).padStart(2, "0")}`
+        : undefined;
+    return {
+      siteIds: String(activeSiteIds || "")
+        .split(",")
+        .map((v) => v.trim())
+        .filter(Boolean),
+      fromDate: d(dateRange?.from),
+      toDate: d(dateRange?.to),
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSiteIds, dateRange?.from?.getTime(), dateRange?.to?.getTime()]);
   const [dashboardData, setDashboardData] = useState<DashboardData>({
     tickets: null,
     tasks: null,
@@ -547,6 +571,25 @@ export const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [chartOrder, setChartOrder] = useState<string[]>([]);
   const [layouts, setLayouts] = useState<GridLayout.Layout[]>([]);
+
+  // Rendered height (px) of each chart's open AI Insights panel, keyed by layout id.
+  // react-grid-layout gives every item a FIXED height, so without this the panel is
+  // either clipped or overlaps the chart below. effectiveLayouts turns these into extra
+  // rows, and the card grows and shrinks as the panel opens, loads and collapses.
+  const [insightHeights, setInsightHeights] = useState<Record<string, number>>({});
+  const handleInsightHeight = React.useCallback((chartId: string, px: number) => {
+    setInsightHeights((prev) => {
+      const next = Math.round(px);
+      // Ignore sub-row jitter, or a ResizeObserver feedback loop re-renders forever.
+      if (Math.abs((prev[chartId] ?? 0) - next) < 8) return prev;
+      if (next <= 0) {
+        if (!(chartId in prev)) return prev;
+        const { [chartId]: _drop, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [chartId]: next };
+    });
+  }, []);
   const isInitialMount = React.useRef(true);
 
   // --- My Dashboard (pinned cards, persisted server-side via /dashboard_layouts) ---
@@ -5228,7 +5271,20 @@ export const Dashboard = () => {
     }
   };
 
-  const effectiveLayouts = layouts || [];
+  // Grid geometry from the ResponsiveGridLayout below: rowHeight 48, vertical margin 12.
+  const ROW_H = 48;
+  const ROW_GAP = 12;
+
+  const effectiveLayouts = React.useMemo(() => {
+    const base = layouts || [];
+    if (!Object.keys(insightHeights).length) return base;
+    return base.map((item) => {
+      const px = insightHeights[item.i];
+      if (!px) return item;
+      const extraRows = Math.ceil((px + ROW_GAP) / (ROW_H + ROW_GAP));
+      return { ...item, h: item.h + extraRows };
+    });
+  }, [layouts, insightHeights]);
 
   return (
     <>
@@ -5430,12 +5486,6 @@ export const Dashboard = () => {
             <div className="px-6 pt-4 bg-white border-b border-analytics-border">
               <TabsList className="bg-transparent p-0 gap-4">
                 <TabsTrigger
-                  value="build"
-                  className="rounded-none border-b-2 border-transparent pb-2 data-[state=active]:border-brand data-[state=active]:text-brand data-[state=active]:font-semibold data-[state=inactive]:text-gray-500"
-                >
-                  Dashboard
-                </TabsTrigger>
-                <TabsTrigger
                   value="my-dashboard"
                   className="flex items-center gap-2 rounded-none border-b-2 border-transparent pb-2 data-[state=active]:border-brand data-[state=active]:text-brand data-[state=active]:font-semibold data-[state=inactive]:text-gray-500"
                 >
@@ -5446,6 +5496,12 @@ export const Dashboard = () => {
                       {myDashboardCards.length}
                     </span>
                   )}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="build"
+                  className="rounded-none border-b-2 border-transparent pb-2 data-[state=active]:border-brand data-[state=active]:text-brand data-[state=active]:font-semibold data-[state=inactive]:text-gray-500"
+                >
+                  Dashboard
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -5525,7 +5581,7 @@ export const Dashboard = () => {
                             );
 
                             return (
-                              <div key={analytic.id} className="analytics-card-wrapper relative">
+                              <div key={analytic.id} className="analytics-card-wrapper relative overflow-visible">
                                 <AddToDashboardButton
                                   chartId={`${myDashboardChartPrefix}${analytic.id}`}
                                   moduleKey={analytic.module}
@@ -5540,6 +5596,20 @@ export const Dashboard = () => {
                                     {renderAnalyticsCard(analytic)}
                                   </div>
                                 </SectionLoader>
+                                {/* Mounted AFTER the chart on purpose: the collapsible
+                                    findings panel renders in normal flow below it, while
+                                    its toggle is absolutely positioned onto the heading
+                                    row beside the "+". `endpoint` IS the chart_code the
+                                    backend catalogue is keyed on — `id` is a chartId and
+                                    matches nothing. */}
+                                <ChartAiInsights
+                                  chartCode={analytic.endpoint}
+                                  chartId={analytic.id}
+                                  siteIds={insightScope.siteIds}
+                                  fromDate={insightScope.fromDate}
+                                  toDate={insightScope.toDate}
+                                  onHeightChange={handleInsightHeight}
+                                />
                               </div>
                             );
                           })}
@@ -5625,7 +5695,7 @@ export const Dashboard = () => {
                               !!loadingMap?.[analytic.module]?.[analytic.endpoint];
 
                             return (
-                              <div key={card.chartId} className="analytics-card-wrapper relative">
+                              <div key={card.chartId} className="analytics-card-wrapper relative overflow-visible">
                                 <AddToDashboardButton
                                   chartId={card.chartId}
                                   moduleKey={card.moduleKey}
@@ -5640,6 +5710,20 @@ export const Dashboard = () => {
                                     {renderAnalyticsCard(analytic)}
                                   </div>
                                 </SectionLoader>
+                                {/* Mounted AFTER the chart on purpose: the collapsible
+                                    findings panel renders in normal flow below it, while
+                                    its toggle is absolutely positioned onto the heading
+                                    row beside the "+". `endpoint` IS the chart_code the
+                                    backend catalogue is keyed on — `id` is a chartId and
+                                    matches nothing. */}
+                                <ChartAiInsights
+                                  chartCode={analytic.endpoint}
+                                  chartId={analytic.id}
+                                  siteIds={insightScope.siteIds}
+                                  fromDate={insightScope.fromDate}
+                                  toDate={insightScope.toDate}
+                                  onHeightChange={handleInsightHeight}
+                                />
                               </div>
                             );
                           })}
@@ -5663,6 +5747,21 @@ export const Dashboard = () => {
         <DashboardAIAssistant />
       ) : (
         <AIAssistantWidget />
+      )}
+
+      {/* Natural-language querying of the data behind this dashboard.
+          Bottom-LEFT so it does not collide with DashboardAIAssistant (bottom-right).
+          Executive dashboard only — it is scoped to the ED schema reference files. */}
+      {isExecutiveDashboard && (
+        <AiAssistantChat
+          siteIds={
+            activeSiteIds
+              ? activeSiteIds.split(",").map((s) => s.trim()).filter(Boolean)
+              : []
+          }
+          fromDate={dateRange?.from ? formatDate(dateRange.from, "yyyy-MM-dd") : undefined}
+          toDate={dateRange?.to ? formatDate(dateRange.to, "yyyy-MM-dd") : undefined}
+        />
       )}
     </>
   );

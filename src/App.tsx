@@ -2947,6 +2947,11 @@ const ProjectTypes = lazy(() => import("./pages/ProjectTypes"));
 const ProjectTags = lazy(() => import("./pages/ProjectTags"));
 const BusinessCard = lazy(() => import("./pages/mobile/BusinessCard"));
 const AskAI = lazy(() => import("./pages/AskAI"));
+// AI Framework — agents, the prompt playground, and the run trace.
+// const AiAgentsPage = lazy(() => import("./features/ai-framework/AgentsPage"));
+const AiChargesPage = lazy(() => import("./pages/AiChargesPage"));
+// const AiAgentBuilderPage = lazy(() => import("./features/ai-framework/AgentBuilderPage"));
+// const AiPlaygroundPage = lazy(() => import("./features/ai-framework/PlaygroundPage"));
 const MinutesOfMeeting = lazy(() => import("./pages/MinutesOfMeeting"));
 const AddMoMPage = lazy(() => import("./pages/AddMoMPage"));
 const EditMoMPage = lazy(() => import("./pages/EditMoMPage"));
@@ -4530,7 +4535,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-          (response[0]?.currency as string | undefined)
+            (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -5311,6 +5316,23 @@ function App() {
                               element={<BusinessCard />}
                             />
                             <Route path="/ask-ai" element={<AskAI />} />
+
+                            {/* AI Framework. `/ai/agents/new` is declared before
+                                `/ai/agents/:id` so "new" is not read as an id. */}
+                            <Route path="/ai/charges" element={<AiChargesPage />} />
+                            {/* <Route path="/ai/agents" element={<AiAgentsPage />} /> */}
+                            {/* <Route
+                              path="/ai/agents/new"
+                              element={<AiAgentBuilderPage />}
+                            /> */}
+                            {/* <Route
+                              path="/ai/agents/:id"
+                              element={<AiAgentBuilderPage />}
+                            /> */}
+                            {/* <Route
+                              path="/ai/playground"
+                              element={<AiPlaygroundPage />}
+                            /> */}
                             <Route
                               path="/vas/channels/tasks/:id"
                               element={<ChatTaskDetailsPage />}
@@ -5794,7 +5816,7 @@ function App() {
                               path="/crm/broadcast"
                               element={
                                 hostname === "vi-web.gophygital.work" ||
-                                hostname === "localhost" ? (
+                                  hostname === "localhost" ? (
                                   <ClubBroadcastDashboard />
                                 ) : (
                                   <BroadcastDashboard />
@@ -5805,7 +5827,7 @@ function App() {
                               path="/crm/broadcast/add"
                               element={
                                 hostname === "vi-web.gophygital.work" ||
-                                hostname === "localhost" ? (
+                                  hostname === "localhost" ? (
                                   <AddClubBroadcastPage />
                                 ) : (
                                   <AddBroadcastPage />
@@ -5816,7 +5838,7 @@ function App() {
                               path="/crm/broadcast/details/:id"
                               element={
                                 hostname === "vi-web.gophygital.work" ||
-                                hostname === "localhost" ? (
+                                  hostname === "localhost" ? (
                                   <ClubBroadcastDetailsPage />
                                 ) : (
                                   <BroadcastDetailsPage />
