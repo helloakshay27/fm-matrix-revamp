@@ -58,6 +58,9 @@ export const SiteWiseDryWasteSegregationCard: React.FC<SiteWiseDryWasteSegregati
   const getCategoryColor = (cat: string, idx: number) =>
     CATEGORY_COLORS[cat] || FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
 
+  const thCls = 'px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center';
+  const tdCls = 'px-4 py-3 text-sm text-left border-b border-gray-100';
+
   const handleDownload = () => {
     const csvContent = [
       ["Site", ...categories],
@@ -95,67 +98,90 @@ export const SiteWiseDryWasteSegregationCard: React.FC<SiteWiseDryWasteSegregati
         )}
       </div>
 
-      <div className="flex-1 p-5 overflow-auto">
+      <div className="flex-1 p-5 flex flex-col overflow-auto">
         {!data || chartData.length === 0 ? (
           <div className="h-full flex items-center justify-center text-analytics-muted">
             No data available
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-end gap-4 mb-4 text-sm flex-wrap">
-              {categories.map((cat, idx) => (
-                <div key={cat} className="flex items-center gap-2">
-                  <div
-                    className="w-4 h-4 rounded"
-                    style={{ backgroundColor: getCategoryColor(cat, idx) }}
+            {/* Stacked Bar Chart — fixed height */}
+            <div className="h-64 flex-shrink-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={chartData}
+                  margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
+                  barSize={24}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                  <XAxis
+                    dataKey="site"
+                    angle={-45}
+                    textAnchor="end"
+                    height={70}
+                    tick={{ fill: '#9CA3AF', fontSize: 10 }}
+                    axisLine={false}
+                    tickLine={false}
+                    interval={0}
                   />
-                  <span className="text-xs">{cat}</span>
-                </div>
-              ))}
+                  <YAxis
+                    tick={{ fill: '#9CA3AF', fontSize: 10 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                  {categories.map((cat, idx) => (
+                    <Bar
+                      key={cat}
+                      dataKey={cat}
+                      stackId="a"
+                      fill={getCategoryColor(cat, idx)}
+                      name={cat}
+                      radius={idx === categories.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                      minPointSize={3}
+                    />
+                  ))}
+                </BarChart>
+              </ResponsiveContainer>
             </div>
 
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart
-                data={chartData}
-                margin={{ top: 10, right: 10, left: 20, bottom: 60 }}
-                barSize={24}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                <XAxis
-                  dataKey="site"
-                  angle={-45}
-                  textAnchor="end"
-                  height={65}
-                  tick={{ fill: '#9CA3AF', fontSize: 10 }}
-                  axisLine={false}
-                  tickLine={false}
-                  interval={0}
-                />
-                <YAxis
-                  tick={{ fill: '#9CA3AF', fontSize: 10 }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Tooltip
-                  contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }}
-                />
-                {categories.map((cat, idx) => (
-                  <Bar
-                    key={cat}
-                    dataKey={cat}
-                    fill={getCategoryColor(cat, idx)}
-                    name={cat}
-                    radius={[4, 4, 0, 0]}
-                  />
-                ))}
-              </BarChart>
-            </ResponsiveContainer>
-
-            <div className="p-3 rounded-md">
-              <p className="text-xs text-gray-700">
-                <span className="font-semibold">Note:</span> The bar graph represents dry waste segregation (in KG) broken down by site and waste category.
-              </p>
+            {/* Scrollable table */}
+            <div className="flex-1 overflow-auto mt-3">
+              <div className="rounded-xl overflow-hidden border border-gray-200">
+                <table className="w-full text-sm min-w-[360px] border-collapse">
+                  <thead className="sticky top-0 z-10">
+                    <tr>
+                      <th className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Site</th>
+                      {categories.map((cat) => (
+                        <th key={cat} className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>{cat}</th>
+                      ))}
+                      <th className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {chartData.map((row, index) => {
+                      const total = categories.reduce((sum, cat) => sum + (Number(row[cat]) || 0), 0);
+                      return (
+                        <tr key={row.site} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
+                          <td className={`${tdCls} font-medium text-gray-800`}>{row.site}</td>
+                          {categories.map((cat) => (
+                            <td key={cat} className={tdCls}>{row[cat] ?? 0}</td>
+                          ))}
+                          <td className={`${tdCls} font-semibold`}>{total}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
+
+            <p className="text-xs text-gray-500 mt-2">
+              <span className="font-semibold">Note:</span> Waste segregation is measured in KG, broken down by site and waste category.
+            </p>
           </>
         )}
       </div>

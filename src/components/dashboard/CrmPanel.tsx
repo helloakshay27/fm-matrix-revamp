@@ -17,6 +17,7 @@ import { SafetyGridSection, type SafetyGridItem } from "@/components/dashboard/S
 import { CrmCalendarCard } from "@/components/dashboard/CrmCalendarCard";
 import { cn } from "@/lib/utils";
 import type { CrmDashboardData } from "@/hooks/useFmDashboardData";
+import { extractAiInsights } from "@/services/fmDashboardAPI";
 
 interface OpenDealRow {
   account: string;
@@ -133,6 +134,10 @@ export function CrmPanel({ activeSection, data, loading = false, visibleKeys }: 
   const eventsOverviewValue = data?.eventsOverview ?? null;
   const broadcastOverviewValue = data?.broadcastOverview ?? null;
   const walletTransactionsValue = data?.walletTransactions ?? null;
+
+  // --- AI insights, read tolerantly (see extractAiInsights() in fmDashboardAPI.ts) ---
+  const customersAi = extractAiInsights(data?.customersInsight);
+  const eventsAi = extractAiInsights(data?.eventsInsight);
 
   const loadingLabel = loading ? "Loading…" : "—";
 
@@ -476,12 +481,30 @@ export function CrmPanel({ activeSection, data, loading = false, visibleKeys }: 
       key: "crm-sentiment",
       layout: { x: 6, y: 13, w: 6, h: 6, minW: 4, minH: 4 },
       content: (
-        <EmptyStateCard
-          title="Complaint Sentiment Trend"
-          subtitle="Tenant sentiment tracking"
-          message={loading ? "Loading…" : "No sentiment trend data recorded for this period."}
-          className="h-full"
-        />
+        customersAi.items.length || customersAi.headline ? (
+          <Card className="border-brand-border h-full overflow-auto">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-brand-body-3 font-semibold text-brand-text">Customers — AI Insight</CardTitle>
+              {customersAi.headline && <p className="text-brand-body-5 text-brand-text-light">{customersAi.headline}</p>}
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 list-disc pl-4">
+                {customersAi.items.map((item, idx) => (
+                  <li key={idx} className="text-brand-body-5 text-brand-text leading-relaxed">
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        ) : (
+          <EmptyStateCard
+            title="Customers — AI Insight"
+            subtitle="Tenant sentiment & engagement"
+            message={loading ? "Loading…" : "No AI insight available for this period."}
+            className="h-full"
+          />
+        )
       ),
     },
     {
@@ -586,23 +609,30 @@ export function CrmPanel({ activeSection, data, loading = false, visibleKeys }: 
       key: "crm-upcoming",
       layout: { x: 8, y: 1, w: 4, h: 7, minW: 3, minH: 5 },
       content: (
-        upcomingItems.length > 0 ? (
-          <UpcomingListCard
-            title="Upcoming 7 Days"
-            items={upcomingItems}
-            miniStats={[
-              { label: "Events", value: upcomingItems.length, tone: "info" },
-            ]}
-            className="h-full"
-          />
-        ) : (
-          <EmptyStateCard
-            title="Upcoming 7 Days"
-            subtitle="Scheduled activities"
-            message={loading ? "Loading…" : "No upcoming events scheduled."}
-            className="h-full"
-          />
-        )
+        <div className="h-full flex flex-col gap-2">
+          {upcomingItems.length > 0 ? (
+            <UpcomingListCard
+              title="Upcoming 7 Days"
+              items={upcomingItems}
+              miniStats={[
+                { label: "Events", value: upcomingItems.length, tone: "info" },
+              ]}
+              className="flex-1 min-h-0"
+            />
+          ) : (
+            <EmptyStateCard
+              title="Upcoming 7 Days"
+              subtitle="Scheduled activities"
+              message={loading ? "Loading…" : "No upcoming events scheduled."}
+              className="flex-1 min-h-0"
+            />
+          )}
+          {(eventsAi.items[0] || loading) && (
+            <p className="text-brand-body-5 text-brand-text-light leading-relaxed px-1">
+              {eventsAi.items[0] ?? (loading ? "Loading AI insight…" : "")}
+            </p>
+          )}
+        </div>
       ),
     },
   ];

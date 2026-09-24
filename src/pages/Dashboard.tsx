@@ -28,14 +28,38 @@ import {
   Home,
   AlertCircle,
   GripVertical,
+  MapPin,
+  LayoutDashboard,
+  Save,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { fetchAllowedSites, Site } from "@/services/sitesAPI";
 import { StatsCard } from "@/components/StatsCard";
 import { Sidebar } from "@/components/Sidebar";
-import { UnifiedAnalyticsSelector } from "@/components/dashboard/UnifiedAnalyticsSelector";
+import {
+  UnifiedAnalyticsSelector,
+  dashboardAnalyticsOptions,
+  executiveAnalyticsOptions,
+} from "@/components/dashboard/UnifiedAnalyticsSelector";
 import { UnifiedDateRangeFilter } from "@/components/dashboard/UnifiedDateRangeFilter";
+import { AddToDashboardButton } from "@/components/dashboard/AddToDashboardButton";
+import { useMyDashboardStore } from "@/stores/myDashboardStore";
+import {
+  fetchDashboardLayouts,
+  createDashboardLayout,
+  updateDashboardLayout,
+  deleteDashboardLayout,
+} from "@/services/dashboardLayoutAPI";
 import { TicketAnalyticsCard } from "@/components/dashboard/TicketAnalyticsCard";
 import { TaskAnalyticsCard } from "@/components/TaskAnalyticsCard";
 import { AMCAnalyticsCard } from "@/components/AMCAnalyticsCard";
@@ -98,8 +122,14 @@ import { TicketAgingClosureFeedbackCard } from "@/components/helpdesk/TicketAgin
 import { TicketPerformanceMetricsCard } from "@/components/helpdesk/TicketPerformanceMetricsCard";
 import { CustomerExperienceFeedbackCard } from "@/components/helpdesk/CustomerExperienceFeedbackCard";
 import { CustomerRatingOverviewCard } from "@/components/helpdesk/CustomerRatingOverviewCard";
+import { UnitCategoryWiseProactiveCard } from "@/components/helpdesk/UnitCategoryWiseProactiveCard";
+import { CommonAreaCategoryWiseCard } from "@/components/helpdesk/CommonAreaCategoryWiseCard";
+import { CommonAreaCategoryWiseProactiveCard } from "@/components/helpdesk/CommonAreaCategoryWiseProactiveCard";
+import { ticketAnalyticsDownloadAPI } from "@/services/ticketAnalyticsDownloadAPI";
 import { AIAssistantWidget } from "@/components/AIAssistantWidget";
 import { DashboardAIAssistant } from "@/components/DashboardAIAssistant";
+import { AiAssistantChat } from "@/components/dashboard/AiAssistantChat";
+import { format as formatDate } from "date-fns";
 import { HelpdeskAnalyticsCard } from "@/components/dashboard/HelpdeskAnalyticsCard";
 import MeetingRoomUtilizationCard from "@/components/meeting-room/MeetingRoomUtilizationCard";
 import { RevenueGenerationOverviewCard } from "@/components/meeting-room/RevenueGenerationOverviewCard";
@@ -113,17 +143,27 @@ import AmountOverviewCard from "@/components/accounting/AmountOverviewCard";
 import AmountClientWiseCard from "@/components/accounting/AmountClientWiseCard";
 import QuickGateOverviewCard from "@/components/quickgate/QuickGateOverviewCard";
 import SiteWiseVisitorsCard from "@/components/quickgate/SiteWiseVisitorsCard";
+import QuickGateGoodsStaffCard from "@/components/quickgate/QuickGateGoodsStaffCard";
 import visitorManagementAnalyticsAPI from "@/services/visitorManagementAnalyticsAPI";
 import VisitorTrendAnalysisCard from "@/components/visitor/VisitorTrendAnalysisCard";
 import checklistManagementAnalyticsAPI from "@/services/checklistManagementAnalyticsAPI";
 import permitToWorkAnalyticsAPI from "@/services/permitToWorkAnalyticsAPI";
 import incidentAnalyticsAPI from "@/services/incidentAnalyticsAPI";
+import IncidentSafetyMetricsCard from "@/components/incident/IncidentSafetyMetricsCard";
+import escalationAnalyticsAPI from "@/services/escalationAnalyticsAPI";
+import EscalationKpiCard from "@/components/escalation/EscalationKpiCard";
+import ServicePartnerEvaluationCard from "@/components/escalation/ServicePartnerEvaluationCard";
+import OccupancySummaryCard from "@/components/occupancy/OccupancySummaryCard";
 import BodyInjuryChartCard from "@/components/incident-analytics/BodyInjuryChartCard";
+import ChartAiInsights from "@/components/dashboard/ChartAiInsights";
 import utilityAnalyticsAPI from "@/services/utilityAnalyticsAPI";
 import UtilityConsumptionCard from "@/components/utility/UtilityConsumptionCard";
 import WaterConsumptionCard from "@/components/utility/WaterConsumptionCard";
 import CarbonEmissionCard from "@/components/utility/CarbonEmissionCard";
 import EnergyIntensityCard from "@/components/utility/EnergyIntensityCard";
+import FuelConsumptionCard from "@/components/utility/FuelConsumptionCard";
+import PowerConsumptionTopManagementCard from "@/components/utility/PowerConsumptionTopManagementCard";
+import WaterConsumptionTopManagementCard from "@/components/utility/WaterConsumptionTopManagementCard";
 import { SiteWiseEvConsumptionCard } from "@/components/utility/SiteWiseEvConsumptionCard";
 import { SiteWiseDryWasteSegregationCard } from "@/components/utility/SiteWiseDryWasteSegregationCard";
 import { CumulativePowerWidget } from "@/components/charts/CumulativePowerWidget";
@@ -161,7 +201,9 @@ interface SelectedAnalytic {
   | "incident_management"
   | "utility"
   | "amount_management"
-  | "quickgate_management";
+  | "quickgate_management"
+  | "escalation_management"
+  | "occupancy_management";
   endpoint: string;
   title: string;
 }
@@ -187,6 +229,8 @@ interface DashboardData {
   utility?: any;
   amount_management?: any;
   quickgate_management?: any;
+  escalation_management?: any;
+  occupancy_management?: any;
 }
 
 // Track errors per module/endpoint so we can show error state inside each analytic
@@ -434,7 +478,7 @@ const SortableChartItem = ({
       style={style}
       {...attributes}
       onPointerDown={handlePointerDown}
-      className={`cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md group ${className ?? ""
+      className={`relative cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md group ${className ?? ""
         }`}
     >
       {children}
@@ -477,6 +521,37 @@ export const Dashboard = () => {
     from: new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
     to: new Date(),
   });
+  const [allowedSites, setAllowedSites] = useState<Site[]>([]);
+  const [selectedSite, setSelectedSite] = useState<string>(() => {
+    const stored = localStorage.getItem("selecteSiteIdsDashboard");
+    return stored && !stored.includes(",") ? stored : "all";
+  });
+  const [sitesLoading, setSitesLoading] = useState(false);
+  const activeSiteIds =
+    selectedSite === "all"
+      ? allowedSites.map((s) => s.id).join(",")
+      : selectedSite;
+
+  // What the AI Insights button on each chart analyses: the sites and period currently
+  // selected. Memoised on primitives, not the objects — otherwise every render hands
+  // the button a new object and it refetches.
+  const insightScope = React.useMemo(() => {
+    const d = (x?: Date) =>
+      x
+        ? `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(
+            x.getDate()
+          ).padStart(2, "0")}`
+        : undefined;
+    return {
+      siteIds: String(activeSiteIds || "")
+        .split(",")
+        .map((v) => v.trim())
+        .filter(Boolean),
+      fromDate: d(dateRange?.from),
+      toDate: d(dateRange?.to),
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSiteIds, dateRange?.from?.getTime(), dateRange?.to?.getTime()]);
   const [dashboardData, setDashboardData] = useState<DashboardData>({
     tickets: null,
     tasks: null,
@@ -496,7 +571,223 @@ export const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [chartOrder, setChartOrder] = useState<string[]>([]);
   const [layouts, setLayouts] = useState<GridLayout.Layout[]>([]);
+
+  // Rendered height (px) of each chart's open AI Insights panel, keyed by layout id.
+  // react-grid-layout gives every item a FIXED height, so without this the panel is
+  // either clipped or overlaps the chart below. effectiveLayouts turns these into extra
+  // rows, and the card grows and shrinks as the panel opens, loads and collapses.
+  const [insightHeights, setInsightHeights] = useState<Record<string, number>>({});
+  const handleInsightHeight = React.useCallback((chartId: string, px: number) => {
+    setInsightHeights((prev) => {
+      const next = Math.round(px);
+      // Ignore sub-row jitter, or a ResizeObserver feedback loop re-renders forever.
+      if (Math.abs((prev[chartId] ?? 0) - next) < 8) return prev;
+      if (next <= 0) {
+        if (!(chartId in prev)) return prev;
+        const { [chartId]: _drop, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [chartId]: next };
+    });
+  }, []);
   const isInitialMount = React.useRef(true);
+
+  // --- My Dashboard (pinned cards, persisted server-side via /dashboard_layouts) ---
+  const [dashboardTab, setDashboardTab] = useState<"build" | "my-dashboard">("build");
+  const myDashboardCards = useMyDashboardStore((s) => s.cards);
+  const addMyDashboardCard = useMyDashboardStore((s) => s.addCard);
+  const setMyDashboardServerId = useMyDashboardStore((s) => s.setServerId);
+  const updateMyDashboardCardLayout = useMyDashboardStore((s) => s.updateCardLayout);
+  const markMyDashboardSaved = useMyDashboardStore((s) => s.markSaved);
+  const [isSavingMyDashboard, setIsSavingMyDashboard] = useState(false);
+  // "regular"/"executive" chart_code prefix so pinning the same analytic id from
+  // /dashboard and /dashboard-executive never collide on the shared backend rows.
+  const myDashboardChartPrefix = `${storagePrefix}_`;
+
+  // Flat id -> {module, endpoint, title} lookup built from the same catalog
+  // UnifiedAnalyticsSelector uses, so a chart_code fetched from the server (saved from
+  // another browser/session) can be turned back into a renderable SelectedAnalytic.
+  const analyticsCatalogById = React.useMemo(() => {
+    const catalog: Record<string, { module: SelectedAnalytic["module"]; endpoint: string; title: string }> = {};
+    const source = isExecutiveDashboard ? executiveAnalyticsOptions : dashboardAnalyticsOptions;
+    Object.entries(source).forEach(([moduleKey, moduleDef]) => {
+      (moduleDef as unknown as { options: { id: string; endpoint: string; label: string; module?: string }[] }).options.forEach((option) => {
+        catalog[option.id] = {
+          module: (option.module ?? moduleKey) as SelectedAnalytic["module"],
+          endpoint: option.endpoint,
+          title: option.label,
+        };
+      });
+    });
+    return catalog;
+  }, [isExecutiveDashboard]);
+
+  // My Dashboard cards re-expressed as SelectedAnalytic so they can be run through the
+  // same renderAnalyticsCard/fetchAnalyticsData machinery as the Build Dashboard tab.
+  const pinnedAnalytics: SelectedAnalytic[] = React.useMemo(
+    () =>
+      myDashboardCards.map((card) => ({
+        id: card.chartId,
+        module: card.moduleKey as SelectedAnalytic["module"],
+        endpoint: card.subTab,
+        title: card.label,
+      })),
+    [myDashboardCards]
+  );
+
+  const myDashboardLayout: GridLayout.Layout[] = React.useMemo(
+    () =>
+      myDashboardCards.map((card) => {
+        const [xStr, yStr] = card.position.split(",");
+        return {
+          i: card.chartId,
+          x: Number(xStr) || 0,
+          y: Number(yStr) || 0,
+          w: Number(card.width) || 12,
+          h: Number(card.height) || 8,
+          minW: 4,
+          minH: 3,
+        };
+      }),
+    [myDashboardCards]
+  );
+
+  // Mirrors RevampDashboardPage's handleMyDashboardMaintenanceLayoutChange: updates local state
+  // immediately, and PATCHes /dashboard_layouts/{id} right away so a drag/resize on My Dashboard
+  // doesn't sit unsaved until the next explicit "Save Dashboard" click. A card that was pinned in
+  // this session and never saved yet has no serverId — POST it once here instead of silently
+  // skipping the API call, so the very first drag on a brand-new card also persists.
+  const handleMyDashboardLayoutPersist = (layout: GridLayout.Layout[]) => {
+    layout.forEach((item) => {
+      const card = myDashboardCards.find((c) => c.chartId === item.i);
+      if (!card) return;
+      const height = String(item.h);
+      const width = String(item.w);
+      const position = `${item.x},${item.y}`;
+      if (height === card.height && width === card.width && position === card.position) return;
+      updateMyDashboardCardLayout(item.i, { height, width, position });
+
+      const payload = { chart_code: card.chartId, height, width, position };
+      const persist = card.serverId
+        ? updateDashboardLayout(card.serverId, payload)
+        : createDashboardLayout(payload).then((saved) => {
+          setMyDashboardServerId(card.chartId, saved.id);
+          return saved;
+        });
+      persist.catch((error) => {
+        console.error(`Failed to save layout for ${card.chartId}:`, error);
+      });
+    });
+  };
+
+  const getCurrentUserId = (): number | null => {
+    const raw = localStorage.getItem("userId") ?? localStorage.getItem("user_id");
+    const id = Number(raw);
+    return raw && !Number.isNaN(id) ? id : null;
+  };
+
+  // Fetch this user's persisted /dashboard_layouts as soon as My Dashboard opens, and rebuild
+  // any card saved from another browser/session that isn't in local storage yet — classifying
+  // its module/endpoint from the analytics catalog since the backend row only stores chart_code.
+  useEffect(() => {
+    if (dashboardTab !== "my-dashboard") return;
+    const userId = getCurrentUserId();
+    if (!userId) return;
+    let cancelled = false;
+    fetchDashboardLayouts(userId)
+      .then((rows) => {
+        if (cancelled) return;
+        const localChartIds = new Set(myDashboardCards.map((c) => c.chartId));
+        const seenThisRun = new Set<string>();
+        rows.forEach((row) => {
+          if (!row.chart_code || !row.chart_code.startsWith(myDashboardChartPrefix)) return;
+          if (seenThisRun.has(row.chart_code)) return;
+          seenThisRun.add(row.chart_code);
+
+          if (localChartIds.has(row.chart_code)) {
+            setMyDashboardServerId(row.chart_code, row.id);
+            return;
+          }
+
+          const analyticId = row.chart_code.slice(myDashboardChartPrefix.length);
+          const classified = analyticsCatalogById[analyticId];
+          if (!classified) {
+            console.warn(`My Dashboard: chart_code "${row.chart_code}" doesn't match any known analytic — skipping.`);
+            return;
+          }
+          addMyDashboardCard({
+            chartId: row.chart_code,
+            label: classified.title,
+            moduleKey: classified.module,
+            subTab: classified.endpoint,
+            height: row.height ?? "8",
+            width: row.width ?? "12",
+            position: row.position ?? "0,0",
+          });
+          setMyDashboardServerId(row.chart_code, row.id);
+        });
+      })
+      .catch((error) => console.error("Error fetching dashboard layouts:", error));
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dashboardTab, myDashboardChartPrefix]);
+
+  const handleSaveMyDashboard = async () => {
+    const userId = getCurrentUserId();
+    if (!userId) {
+      toast.error("Could not determine the logged-in user — please log in again.");
+      return;
+    }
+    setIsSavingMyDashboard(true);
+    try {
+      // Only "my" existing rows — show/update/destroy aren't scoped to the caller server-side,
+      // so an unfiltered GET here would let another user's same-chart_code row get matched.
+      const existing = await fetchDashboardLayouts(userId);
+      const existingByChartCode = new Map(existing.map((row) => [row.chart_code, row]));
+      const localChartCodes = new Set(myDashboardCards.map((c) => c.chartId));
+
+      const upserts = await Promise.allSettled(
+        myDashboardCards.map(async (card) => {
+          const payload = {
+            chart_code: card.chartId,
+            height: card.height,
+            width: card.width,
+            position: card.position,
+          };
+          const match = existingByChartCode.get(card.chartId);
+          const saved = match
+            ? await updateDashboardLayout(match.id, payload)
+            : await createDashboardLayout(payload);
+          setMyDashboardServerId(card.chartId, saved.id);
+        })
+      );
+
+      // Rows for cards the user has since removed locally — clean them up server-side too.
+      const deletions = await Promise.allSettled(
+        existing
+          .filter((row) => row.chart_code?.startsWith(myDashboardChartPrefix) && !localChartCodes.has(row.chart_code))
+          .map((row) => deleteDashboardLayout(row.id))
+      );
+
+      const failedUpserts = upserts.filter((r) => r.status === "rejected").length;
+      const failedDeletions = deletions.filter((r) => r.status === "rejected").length;
+      if (failedUpserts || failedDeletions) {
+        toast.error(
+          `Dashboard saved with ${failedUpserts + failedDeletions} error(s) — some cards may not have synced.`
+        );
+      } else {
+        toast.success("Dashboard saved");
+      }
+      markMyDashboardSaved();
+    } catch (error) {
+      console.error("Error saving dashboard:", error);
+      toast.error("Failed to save dashboard. Please try again.");
+    } finally {
+      setIsSavingMyDashboard(false);
+    }
+  };
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -539,76 +830,86 @@ export const Dashboard = () => {
         // Per-endpoint config: h=default, minH=minimum, maxH=maximum allowed (for compact cards)
         const cardConfig: Record<string, { h: number; minH: number; maxH?: number }> = {
           // compact stat-box cards — cap at maxH=6 so oversized saved layouts shrink
-          engagement_metrics:            { h: 4, minH: 3, maxH: 4 },
-          snapshot:                      { h: 4, minH: 3, maxH: 4 },
-          customer_experience_feedback:  { h: 4, minH: 3, maxH: 4 },
-          revenue_generation_overview:   { h: 4, minH: 3, maxH: 4 },
-          amc_contract_summary:          { h: 4, minH: 3, maxH: 4 },
-          company_asset_overview:        { h: 4, minH: 3, maxH: 4 },
+          engagement_metrics: { h: 4, minH: 3, maxH: 4 },
+          snapshot: { h: 4, minH: 3, maxH: 4 },
+          customer_experience_feedback: { h: 4, minH: 3, maxH: 4 },
+          revenue_generation_overview: { h: 4, minH: 3, maxH: 4 },
+          amc_contract_summary: { h: 4, minH: 3, maxH: 4 },
+          company_asset_overview: { h: 4, minH: 3, maxH: 4 },
           // default chart/mixed cards
-          customer_rating_overview:      { h: 8, minH: 6 },
-          type_distribution:             { h: 8, minH: 6 },
-          ticket_status:                 { h: 8, minH: 6 },
-          tickets_proactive_reactive:    { h: 8, minH: 6 },
-          asset_status:                  { h: 8, minH: 6 },
-          group_wise:                    { h: 8, minH: 6 },
-          category_wise:                 { h: 8, minH: 6 },
-          expiry_analysis:               { h: 8, minH: 6 },
-          service_stats:                 { h: 8, minH: 6 },
+          customer_rating_overview: { h: 8, minH: 6 },
+          type_distribution: { h: 8, minH: 6 },
+          ticket_status: { h: 8, minH: 6 },
+          tickets_proactive_reactive: { h: 8, minH: 6 },
+          asset_status: { h: 8, minH: 6 },
+          group_wise: { h: 8, minH: 6 },
+          category_wise: { h: 8, minH: 6 },
+          expiry_analysis: { h: 8, minH: 6 },
+          service_stats: { h: 8, minH: 6 },
           // tall table cards
-          site_wise_adoption_rate:               { h: 10, minH: 8 },
-          center_performance_overview:           { h: 10, minH: 8 },
-          ticket_aging_matrix:                   { h: 10, minH: 8 },
-          tickets_categorywise:                  { h: 10, minH: 8 },
-          unit_categorywise:                     { h: 10, minH: 8 },
-          tickets_unit_categorywise:             { h: 10, minH: 8 },
-          response_tat:                          { h: 10, minH: 8 },
-          tickets_response_tat:                  { h: 10, minH: 8 },
-          resolution_tat:                        { h: 10, minH: 8 },
-          tickets_resolution_tat:                { h: 10, minH: 8 },
-          cm_progress_quarterly:                 { h: 10, minH: 8 },
-          cm_overdue_centerwise:                 { h: 10, minH: 8 },
-          center_assets_downtime:                { h: 10, minH: 8 },
-          highest_maintenance_assets:            { h: 10, minH: 8 },
-          amc_contract_expiry_90:                { h: 10, minH: 8 },
-          amc_contract_expired:                  { h: 10, minH: 8 },
-          top_consumables_center:                { h: 10, minH: 8 },
-          inventory_overstock_top10:             { h: 10, minH: 8 },
-          parking_statistics:                    { h: 10, minH: 8 },
-          top_management_total_amount:                   { h: 4, minH: 3, maxH: 4 },
-          total_outstanding_amount_client_wise:          { h: 10, minH: 8 },
-          visitor_summary:                               { h: 4, minH: 3, maxH: 4 },
-          site_wise_visitors:                            { h: 10, minH: 8 },
-          parking_allocation_overview:           { h: 10, minH: 8 },
-          technical_checklist:                   { h: 10, minH: 8 },
-          non_technical_checklist:               { h: 10, minH: 8 },
-          top_ten_checklist:                     { h: 10, minH: 8 },
-          site_wise_checklist:                   { h: 10, minH: 8 },
-          ticket_performance_metrics:            { h: 10, minH: 8 },
-          aging_closure_feedback:                { h: 9, minH: 8, maxH: 9 },
-          center_wise_meeting_room_utilization:  { h: 10, minH: 8 },
-          asset_statistics:                      { h: 10, minH: 8 },
-          visitor_trend_analysis:                { h: 10, minH: 8 },
-          response_tat_performance_quarterly:    { h: 10, minH: 8 },
-          resolution_tat_performance_quarterly:  { h: 10, minH: 8 },
-          inventory_overview_summary:            { h: 4, minH: 3, maxH: 4 },
-          consumable_inventory_value_quarterly:  { h: 10, minH: 8 },
-          status_overview:                       { h: 10, minH: 8 },
-          unit_resource_wise:                    { h: 10, minH: 8 },
-          service_tracking:                      { h: 10, minH: 8 },
-          coverage_by_location:                  { h: 10, minH: 8 },
-          vendor_performance:                    { h: 10, minH: 8 },
-          energy_kpis:                           { h: 4, minH: 3, maxH: 4 },
-          sub_meter_sources:                     { h: 10, minH: 8 },
-          site_wise_power:                       { h: 10, minH: 8 },
-          water_kpis:                            { h: 4, minH: 3, maxH: 4 },
-          source_breakdown:                      { h: 10, minH: 8 },
-          site_wise_water:                       { h: 10, minH: 8 },
-          water_time_series:                     { h: 10, minH: 8 },
-          carbon_emission:                       { h: 4, minH: 3, maxH: 4 },
-          energy_intensity:                      { h: 4, minH: 3, maxH: 4 },
-          site_wise_ev_consumption:              { h: 10, minH: 8 },
-          site_wise_dry_waste_segregation:       { h: 10, minH: 8 },
+          site_wise_adoption_rate: { h: 10, minH: 8 },
+          center_performance_overview: { h: 10, minH: 8 },
+          ticket_aging_matrix: { h: 10, minH: 8 },
+          tickets_categorywise: { h: 10, minH: 8 },
+          unit_categorywise: { h: 10, minH: 8 },
+          tickets_unit_categorywise: { h: 10, minH: 8 },
+          response_tat: { h: 10, minH: 8 },
+          tickets_response_tat: { h: 10, minH: 8 },
+          resolution_tat: { h: 10, minH: 8 },
+          tickets_resolution_tat: { h: 10, minH: 8 },
+          cm_progress_quarterly: { h: 10, minH: 8 },
+          cm_overdue_centerwise: { h: 10, minH: 8 },
+          center_assets_downtime: { h: 10, minH: 8 },
+          highest_maintenance_assets: { h: 10, minH: 8 },
+          amc_contract_expiry_90: { h: 10, minH: 8 },
+          amc_contract_expired: { h: 10, minH: 8 },
+          top_consumables_center: { h: 10, minH: 8 },
+          inventory_overstock_top10: { h: 10, minH: 8 },
+          parking_statistics: { h: 10, minH: 8 },
+          top_management_total_amount: { h: 4, minH: 3, maxH: 4 },
+          total_outstanding_amount_client_wise: { h: 10, minH: 8 },
+          visitor_summary: { h: 4, minH: 3, maxH: 4 },
+          site_wise_visitors: { h: 10, minH: 8 },
+          goods_staff_overview: { h: 4, minH: 3, maxH: 4 },
+          safety_metrics: { h: 4, minH: 3, maxH: 4 },
+          escalation_kpis: { h: 4, minH: 3, maxH: 4 },
+          occupancy_summary: { h: 4, minH: 3, maxH: 4 },
+          parking_allocation_overview: { h: 10, minH: 8 },
+          technical_checklist: { h: 10, minH: 8 },
+          non_technical_checklist: { h: 10, minH: 8 },
+          top_ten_checklist: { h: 10, minH: 8 },
+          site_wise_checklist: { h: 10, minH: 8 },
+          ticket_performance_metrics: { h: 10, minH: 8 },
+          aging_closure_feedback: { h: 9, minH: 8, maxH: 9 },
+          center_wise_meeting_room_utilization: { h: 10, minH: 8 },
+          asset_statistics: { h: 10, minH: 8 },
+          visitor_trend_analysis: { h: 10, minH: 8 },
+          response_tat_performance_quarterly: { h: 10, minH: 8 },
+          resolution_tat_performance_quarterly: { h: 10, minH: 8 },
+          unit_categorywise_proactive: { h: 10, minH: 8 },
+          common_area_categorywise: { h: 10, minH: 8 },
+          common_area_categorywise_proactive: { h: 10, minH: 8 },
+          inventory_overview_summary: { h: 4, minH: 3, maxH: 4 },
+          consumable_inventory_value_quarterly: { h: 10, minH: 8 },
+          status_overview: { h: 10, minH: 8 },
+          unit_resource_wise: { h: 10, minH: 8 },
+          service_tracking: { h: 10, minH: 8 },
+          coverage_by_location: { h: 10, minH: 8 },
+          vendor_performance: { h: 10, minH: 8 },
+          energy_kpis: { h: 4, minH: 3, maxH: 4 },
+          sub_meter_sources: { h: 10, minH: 8 },
+          site_wise_power: { h: 10, minH: 8 },
+          water_kpis: { h: 4, minH: 3, maxH: 4 },
+          source_breakdown: { h: 10, minH: 8 },
+          site_wise_water: { h: 10, minH: 8 },
+          water_time_series: { h: 10, minH: 8 },
+          carbon_emission: { h: 4, minH: 3, maxH: 4 },
+          energy_intensity: { h: 4, minH: 3, maxH: 4 },
+          card_fuel_consumption: { h: 4, minH: 3, maxH: 4 },
+          power_consumption_top_management: { h: 8, minH: 6 },
+          water_consumption_top_management: { h: 5, minH: 4, maxH: 6 },
+          site_wise_ev_consumption: { h: 10, minH: 8 },
+          site_wise_dry_waste_segregation: { h: 10, minH: 8 },
         };
 
         const migratedLayout = parsedLayout.map((item: GridLayout.Layout) => {
@@ -648,14 +949,15 @@ export const Dashboard = () => {
       }
     }
     // If site_id or access_token are present in the URL, persist them to localStorage
-    // so the asset analytics service will use the same payload when fetching dashboard cards.
+    // so the dashboard's own site selection (a dedicated key, since the shared
+    // `selectedSiteId` key is already used by other pages) is seeded from the URL.
     try {
       const params = new URLSearchParams(window.location.search);
       const siteIdParam = params.get('site_id');
       const accessTokenParam = params.get('access_token');
       if (siteIdParam) {
-        console.log(`Setting selectedSiteId from URL param: ${siteIdParam}`);
-        localStorage.setItem('selectedSiteId', siteIdParam);
+        console.log(`Setting selecteSiteIdsDashboard from URL param: ${siteIdParam}`);
+        localStorage.setItem('selecteSiteIdsDashboard', siteIdParam);
       }
       if (accessTokenParam) {
         console.log(`Setting access_token from URL param: [REDACTED]`);
@@ -668,6 +970,44 @@ export const Dashboard = () => {
     // Mark initial mount as complete
     isInitialMount.current = false;
   }, [storagePrefix]);
+
+  // Load allowed sites for the current user and default-select their current site
+  useEffect(() => {
+    let cancelled = false;
+    const userId =
+      localStorage.getItem("userId") ??
+      localStorage.getItem("user_id") ??
+      "";
+    if (!userId) {
+      setSitesLoading(false);
+      return;
+    }
+    setSitesLoading(true);
+    fetchAllowedSites(userId)
+      .then((res) => {
+        if (cancelled) return;
+        const sites = res.sites ?? [];
+        setAllowedSites(sites);
+        if (sites.length > 0) {
+          const stored = localStorage.getItem("selecteSiteIdsDashboard");
+          const valid =
+            stored &&
+            !stored.includes(",") &&
+            sites.some((s) => String(s.id) === stored);
+          setSelectedSite(valid ? stored : "all");
+        }
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error("Failed to fetch allowed sites:", err);
+      })
+      .finally(() => {
+        if (!cancelled) setSitesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Update chart order and generate layout only for new cards when selected analytics change
   useEffect(() => {
@@ -748,6 +1088,9 @@ export const Dashboard = () => {
         'visitor_trend_analysis',
         'response_tat_performance_quarterly',
         'resolution_tat_performance_quarterly',
+        'unit_categorywise_proactive',
+        'common_area_categorywise',
+        'common_area_categorywise_proactive',
         'consumable_inventory_value_quarterly',
         'status_overview',
         'unit_resource_wise',
@@ -767,7 +1110,7 @@ export const Dashboard = () => {
       const isCompactCard = compactCards.includes(analytic.endpoint);
       const isTallCard = tallCards.includes(analytic.endpoint);
 
-      const h4Cards = ['engagement_metrics', 'customer_experience_feedback', 'snapshot', 'company_asset_overview', 'inventory_overview_summary', 'revenue_generation_overview', 'amc_contract_summary', 'energy_kpis', 'water_kpis', 'carbon_emission', 'energy_intensity'];
+      const h4Cards = ['engagement_metrics', 'customer_experience_feedback', 'snapshot', 'company_asset_overview', 'inventory_overview_summary', 'revenue_generation_overview', 'amc_contract_summary', 'energy_kpis', 'water_kpis', 'carbon_emission', 'energy_intensity', 'card_fuel_consumption'];
       const h9Cards = ['aging_closure_feedback'];
       const cardH = h4Cards.includes(analytic.endpoint) ? 4 : h9Cards.includes(analytic.endpoint) ? 9 : isCompactCard ? 5 : isTallCard ? 10 : 8;
       const cardMinH = h4Cards.includes(analytic.endpoint) ? 3 : h9Cards.includes(analytic.endpoint) ? 8 : isCompactCard ? 4 : isTallCard ? 8 : 6;
@@ -801,7 +1144,22 @@ export const Dashboard = () => {
 
   // Fetch analytics data based on selections and date range
   const fetchAnalyticsData = async () => {
-    if (!dateRange?.from || !dateRange?.to || selectedAnalytics.length === 0)
+    // Union of the Build Dashboard selection and whatever's pinned to My Dashboard (deduped by
+    // module+endpoint) — so a card pinned from another session still gets its data fetched even
+    // when it isn't part of the current Build Dashboard selection.
+    const analyticsToFetch: SelectedAnalytic[] = [...selectedAnalytics];
+    const seenModuleEndpoint = new Set(
+      selectedAnalytics.map((a) => `${a.module}:${a.endpoint}`)
+    );
+    pinnedAnalytics.forEach((a) => {
+      const key = `${a.module}:${a.endpoint}`;
+      if (!seenModuleEndpoint.has(key)) {
+        seenModuleEndpoint.add(key);
+        analyticsToFetch.push(a);
+      }
+    });
+
+    if (!dateRange?.from || !dateRange?.to || analyticsToFetch.length === 0)
       return;
 
     try {
@@ -820,10 +1178,10 @@ export const Dashboard = () => {
         const day = String(d.getDate()).padStart(2, "0");
         return `${year}-${month}-${day}`;
       };
-      const dateKey = `${toKey(dateRange.from)}_${toKey(dateRange.to)}`;
+      const dateKey = `${toKey(dateRange.from)}_${toKey(dateRange.to)}&site_${selectedSite}`;
 
       // Group analytics by module to minimize API calls
-      const moduleGroups = selectedAnalytics.reduce((groups, analytic) => {
+      const moduleGroups = analyticsToFetch.reduce((groups, analytic) => {
         if (!groups[analytic.module]) groups[analytic.module] = [];
         groups[analytic.module].push(analytic);
         return groups;
@@ -865,7 +1223,8 @@ export const Dashboard = () => {
                   promises.push(
                     ticketAnalyticsAPI.getTicketsCategorywiseData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -873,7 +1232,8 @@ export const Dashboard = () => {
                   promises.push(
                     ticketAnalyticsAPI.getTicketStatusData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -881,7 +1241,8 @@ export const Dashboard = () => {
                   promises.push(
                     ticketAnalyticsAPI.getTicketStatusData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -889,7 +1250,8 @@ export const Dashboard = () => {
                   promises.push(
                     ticketAnalyticsAPI.getTicketAgingMatrix(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -898,7 +1260,8 @@ export const Dashboard = () => {
                   promises.push(
                     ticketAnalyticsAPI.getUnitCategorywiseData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -907,7 +1270,8 @@ export const Dashboard = () => {
                   promises.push(
                     ticketAnalyticsAPI.getResponseTATData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -916,7 +1280,8 @@ export const Dashboard = () => {
                   promises.push(
                     ticketAnalyticsAPI.getResolutionTATReportData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -954,7 +1319,8 @@ export const Dashboard = () => {
                   promises.push(
                     taskAnalyticsAPI.getTechnicalChecklistData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -962,7 +1328,8 @@ export const Dashboard = () => {
                   promises.push(
                     taskAnalyticsAPI.getNonTechnicalChecklistData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -970,7 +1337,8 @@ export const Dashboard = () => {
                   promises.push(
                     taskAnalyticsAPI.getTopTenChecklistData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -978,7 +1346,8 @@ export const Dashboard = () => {
                   promises.push(
                     taskAnalyticsAPI.getSiteWiseChecklistData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1016,7 +1385,8 @@ export const Dashboard = () => {
                   promises.push(
                     amcAnalyticsAPI.getAMCStatusSummary(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1024,7 +1394,8 @@ export const Dashboard = () => {
                   promises.push(
                     amcAnalyticsAPI.getAMCTypeDistribution(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1032,7 +1403,8 @@ export const Dashboard = () => {
                   promises.push(
                     amcAnalyticsAPI.getAMCUnitResourceWise(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1040,7 +1412,8 @@ export const Dashboard = () => {
                   promises.push(
                     amcAnalyticsAPI.getAMCServiceStats(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1048,7 +1421,8 @@ export const Dashboard = () => {
                   promises.push(
                     amcAnalyticsAPI.getAMCExpiryAnalysis(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1056,7 +1430,8 @@ export const Dashboard = () => {
                   promises.push(
                     amcAnalyticsAPI.getAMCServiceTracking(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1064,7 +1439,8 @@ export const Dashboard = () => {
                   promises.push(
                     amcAnalyticsAPI.getAMCCoverageByLocation(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1072,7 +1448,8 @@ export const Dashboard = () => {
                   promises.push(
                     amcAnalyticsAPI.getAMCVendorPerformance(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1081,7 +1458,8 @@ export const Dashboard = () => {
                   promises.push(
                     amcAnalyticsAPI.getAMCStatusData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1119,7 +1497,8 @@ export const Dashboard = () => {
                   promises.push(
                     inventoryAnalyticsAPI.getItemsStatus(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1127,7 +1506,8 @@ export const Dashboard = () => {
                   promises.push(
                     inventoryAnalyticsAPI.getCategoryWise(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1135,7 +1515,8 @@ export const Dashboard = () => {
                   promises.push(
                     inventoryAnalyticsAPI.getGreenConsumption(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1143,7 +1524,8 @@ export const Dashboard = () => {
                   promises.push(
                     inventoryAnalyticsAPI.getAgingMatrix(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1151,7 +1533,8 @@ export const Dashboard = () => {
                   promises.push(
                     inventoryAnalyticsAPI.getLowStockItems(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1159,7 +1542,8 @@ export const Dashboard = () => {
                   promises.push(
                     inventoryAnalyticsAPI.getHighValueItems(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1197,7 +1581,8 @@ export const Dashboard = () => {
                   promises.push(
                     scheduleAnalyticsAPI.getScheduleOverview(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1205,7 +1590,8 @@ export const Dashboard = () => {
                   promises.push(
                     scheduleAnalyticsAPI.getScheduleCompletion(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1213,7 +1599,8 @@ export const Dashboard = () => {
                   promises.push(
                     scheduleAnalyticsAPI.getResourceUtilization(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1251,7 +1638,8 @@ export const Dashboard = () => {
                   promises.push(
                     assetAnalyticsAPI.getAssetStatus(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1259,7 +1647,8 @@ export const Dashboard = () => {
                   promises.push(
                     assetAnalyticsAPI.getAssetStatistics(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1267,7 +1656,8 @@ export const Dashboard = () => {
                   promises.push(
                     assetAnalyticsAPI.getGroupWiseAssets(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1275,7 +1665,8 @@ export const Dashboard = () => {
                   promises.push(
                     assetAnalyticsAPI.getCategoryWiseAssets(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1283,7 +1674,8 @@ export const Dashboard = () => {
                   promises.push(
                     assetAnalyticsAPI.getAssetDistribution(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1320,7 +1712,8 @@ export const Dashboard = () => {
                   promises.push(
                     meetingRoomAnalyticsAPI.getMeetingRoomRevenueOverview(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1328,7 +1721,8 @@ export const Dashboard = () => {
                   promises.push(
                     meetingRoomAnalyticsAPI.getMeetingRoomCenterPerformance(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1336,18 +1730,19 @@ export const Dashboard = () => {
                   promises.push(
                     meetingRoomAnalyticsAPI.getCenterWiseMeetingRoomUtilization(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
                 case "response_tat_performance_quarterly":
                   promises.push(
-                    meetingRoomAnalyticsAPI.getResponseTATPerformanceQuarterly()
+                    meetingRoomAnalyticsAPI.getResponseTATPerformanceQuarterly(activeSiteIds)
                   );
                   break;
                 case "resolution_tat_performance_quarterly":
                   promises.push(
-                    meetingRoomAnalyticsAPI.getResolutionTATPerformanceQuarterly()
+                    meetingRoomAnalyticsAPI.getResolutionTATPerformanceQuarterly(activeSiteIds)
                   );
                   break;
               }
@@ -1381,14 +1776,15 @@ export const Dashboard = () => {
               switch (analytic.endpoint) {
                 case "engagement_metrics":
                   promises.push(
-                    communityAnalyticsAPI.getCommunityEngagementMetrics()
+                    communityAnalyticsAPI.getCommunityEngagementMetrics(activeSiteIds)
                   );
                   break;
                 case "site_wise_adoption_rate":
                   promises.push(
                     communityAnalyticsAPI.getSiteWiseAdoptionRate(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1427,7 +1823,8 @@ export const Dashboard = () => {
                   promises.push(
                     assetManagementAnalyticsAPI.getAssetOverview(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1435,7 +1832,8 @@ export const Dashboard = () => {
                   promises.push(
                     assetManagementAnalyticsAPI.getHighestMaintenanceAssets(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1445,7 +1843,8 @@ export const Dashboard = () => {
                   promises.push(
                     assetManagementAnalyticsAPI.getAmcContractSummary(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1482,7 +1881,8 @@ export const Dashboard = () => {
                   promises.push(
                     helpdeskAnalyticsAPI.getHelpdeskSnapshot(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1490,7 +1890,8 @@ export const Dashboard = () => {
                   promises.push(
                     helpdeskAnalyticsAPI.getAgingClosureFeedbackOverview(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1498,7 +1899,8 @@ export const Dashboard = () => {
                   promises.push(
                     helpdeskAnalyticsAPI.getTicketPerformanceMetrics(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1506,7 +1908,8 @@ export const Dashboard = () => {
                   promises.push(
                     helpdeskAnalyticsAPI.getCustomerExperienceFeedback(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1515,7 +1918,8 @@ export const Dashboard = () => {
                   promises.push(
                     helpdeskAnalyticsAPI.getCustomerExperienceFeedback(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1523,7 +1927,8 @@ export const Dashboard = () => {
                   promises.push(
                     helpdeskAnalyticsAPI.getResponseTATQuarterly(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1531,7 +1936,35 @@ export const Dashboard = () => {
                   promises.push(
                     helpdeskAnalyticsAPI.getResolutionTATQuarterly(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
+                    )
+                  );
+                  break;
+                case "unit_categorywise_proactive":
+                  promises.push(
+                    ticketAnalyticsAPI.getUnitCategorywiseProactiveData(
+                      dateRange.from!,
+                      dateRange.to!,
+                      activeSiteIds
+                    )
+                  );
+                  break;
+                case "common_area_categorywise":
+                  promises.push(
+                    ticketAnalyticsAPI.getCommonAreaCategorywiseData(
+                      dateRange.from!,
+                      dateRange.to!,
+                      activeSiteIds
+                    )
+                  );
+                  break;
+                case "common_area_categorywise_proactive":
+                  promises.push(
+                    ticketAnalyticsAPI.getCommonAreaCategorywiseProactiveData(
+                      dateRange.from!,
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1569,7 +2002,8 @@ export const Dashboard = () => {
                   promises.push(
                     inventoryManagementAnalyticsAPI.getInventoryOverstockReport(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1577,7 +2011,8 @@ export const Dashboard = () => {
                   promises.push(
                     inventoryManagementAnalyticsAPI.getCenterWiseConsumables(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1585,7 +2020,8 @@ export const Dashboard = () => {
                   promises.push(
                     inventoryManagementAnalyticsAPI.getConsumableInventoryComparison(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1593,7 +2029,8 @@ export const Dashboard = () => {
                   promises.push(
                     inventoryAnalyticsAPI.getConsumptionReportGreen(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1601,7 +2038,8 @@ export const Dashboard = () => {
                   promises.push(
                     inventoryAnalyticsAPI.getConsumptionReportNonGreen(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1641,7 +2079,8 @@ export const Dashboard = () => {
                   promises.push(
                     parkingManagementAnalyticsAPI.getParkingAllocationOverview(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1692,7 +2131,8 @@ export const Dashboard = () => {
                   promises.push(
                     visitorManagementAnalyticsAPI.getVisitorTrendAnalysis(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1729,7 +2169,8 @@ export const Dashboard = () => {
                   promises.push(
                     checklistManagementAnalyticsAPI.getChecklistProgressRows(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1737,7 +2178,8 @@ export const Dashboard = () => {
                   promises.push(
                     checklistManagementAnalyticsAPI.getTopOverdueChecklistMatrix(
                       dateRange.from!,
-                      dateRange.to!
+                      dateRange.to!,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1775,7 +2217,7 @@ export const Dashboard = () => {
                 case "top_surveys":
                   toLoad[module] = toLoad[module] || {};
                   toLoad[module][analytic.endpoint] = true;
-                  promises.push(surveyAnalyticsAPI.getRealSurveyAnalytics());
+                  promises.push(surveyAnalyticsAPI.getRealSurveyAnalytics(activeSiteIds));
                   break;
                 default:
                   promises.push(Promise.resolve(null));
@@ -1812,7 +2254,8 @@ export const Dashboard = () => {
                   promises.push(
                     permitToWorkAnalyticsAPI.getSiteWisePermitsReport(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1820,7 +2263,8 @@ export const Dashboard = () => {
                   promises.push(
                     permitToWorkAnalyticsAPI.getPermitsStatusData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1860,7 +2304,8 @@ export const Dashboard = () => {
                   promises.push(
                     utilityAnalyticsAPI.getEnergyKPIs(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1868,7 +2313,8 @@ export const Dashboard = () => {
                   promises.push(
                     utilityAnalyticsAPI.getSubMeterSources(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1876,7 +2322,8 @@ export const Dashboard = () => {
                   promises.push(
                     utilityAnalyticsAPI.getSiteWisePower(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1884,7 +2331,8 @@ export const Dashboard = () => {
                   promises.push(
                     utilityAnalyticsAPI.getWaterKPIs(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1892,7 +2340,8 @@ export const Dashboard = () => {
                   promises.push(
                     utilityAnalyticsAPI.getWaterSourceBreakdown(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1900,7 +2349,8 @@ export const Dashboard = () => {
                   promises.push(
                     utilityAnalyticsAPI.getSiteWiseWater(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1908,7 +2358,8 @@ export const Dashboard = () => {
                   promises.push(
                     utilityAnalyticsAPI.getWaterTimeSeries(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1916,7 +2367,8 @@ export const Dashboard = () => {
                   promises.push(
                     utilityAnalyticsAPI.getCarbonEmissionScopes(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1924,7 +2376,8 @@ export const Dashboard = () => {
                   promises.push(
                     utilityAnalyticsAPI.getEnergyIntensity(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1932,7 +2385,8 @@ export const Dashboard = () => {
                   promises.push(
                     utilityAnalyticsAPI.getSiteWiseEvConsumption(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1940,7 +2394,17 @@ export const Dashboard = () => {
                   promises.push(
                     utilityAnalyticsAPI.getSiteWiseDryWasteSegregation(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
+                    )
+                  );
+                  break;
+                case "card_fuel_consumption":
+                  promises.push(
+                    utilityAnalyticsAPI.getFuelConsumption(
+                      dateRange.from,
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1980,7 +2444,8 @@ export const Dashboard = () => {
                   promises.push(
                     incidentAnalyticsAPI.getTopCategories(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1988,7 +2453,8 @@ export const Dashboard = () => {
                   promises.push(
                     incidentAnalyticsAPI.getStatusSummary(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -1996,7 +2462,8 @@ export const Dashboard = () => {
                   promises.push(
                     incidentAnalyticsAPI.getLevelWise(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
@@ -2004,13 +2471,107 @@ export const Dashboard = () => {
                   promises.push(
                     incidentAnalyticsAPI.getRcaData(
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
+                      1,
+                      activeSiteIds
+                    )
+                  );
+                  break;
+                case "safety_metrics":
+                  promises.push(
+                    incidentAnalyticsAPI.getSafetyMetrics(
+                      dateRange.from,
+                      dateRange.to,
+                      activeSiteIds
+                    )
+                  );
+                  break;
+                case "cause_wise_incidents":
+                  promises.push(
+                    incidentAnalyticsAPI.getCauseWiseIncidents(
+                      dateRange.from,
+                      dateRange.to,
+                      activeSiteIds
                     )
                   );
                   break;
                 default:
                   promises.push(Promise.resolve(null));
               }
+            }
+            break;
+          case "escalation_management":
+            for (const analytic of analytics) {
+              const cachedOk =
+                (lastFetchedKey as any)?.[module]?.[analytic.endpoint] ===
+                dateKey &&
+                (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
+              if (cachedOk) {
+                promises.push(
+                  Promise.resolve(
+                    (dashboardData as any)[module][analytic.endpoint]
+                  )
+                );
+                continue;
+              }
+              const failedSameRange =
+                (lastFailedKey as any)?.[module]?.[analytic.endpoint] ===
+                dateKey &&
+                ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ??
+                  null) != null;
+              if (failedSameRange) {
+                promises.push(Promise.reject(SKIP_RETRY));
+                continue;
+              }
+              toLoad[module] = toLoad[module] || {};
+              toLoad[module][analytic.endpoint] = true;
+              switch (analytic.endpoint) {
+                case "escalation_kpis":
+                  promises.push(
+                    escalationAnalyticsAPI.getEscalationKpis(
+                      dateRange.from,
+                      dateRange.to,
+                      activeSiteIds
+                    )
+                  );
+                  break;
+                case "zone_wise":
+                  promises.push(
+                    escalationAnalyticsAPI.getZoneWise(
+                      dateRange.from,
+                      dateRange.to,
+                      activeSiteIds
+                    )
+                  );
+                  break;
+                case "category_wise":
+                  promises.push(
+                    escalationAnalyticsAPI.getCategoryWise(
+                      dateRange.from,
+                      dateRange.to,
+                      activeSiteIds
+                    )
+                  );
+                  break;
+                case "service_partner_evaluation":
+                  promises.push(
+                    escalationAnalyticsAPI.getServicePartnerEvaluation(
+                      dateRange.from,
+                      dateRange.to,
+                      activeSiteIds
+                    )
+                  );
+                  break;
+                default:
+                  promises.push(Promise.resolve(null));
+              }
+            }
+            break;
+          case "occupancy_management":
+            for (const analytic of analytics) {
+              toLoad[module] = toLoad[module] || {};
+              toLoad[module][analytic.endpoint] = true;
+              promises.push(Promise.resolve(null));
             }
             break;
         }
@@ -2164,12 +2725,16 @@ export const Dashboard = () => {
     }
   };
 
-  // Fetch data when selections or date range changes
+  // Fetch data when selections, pinned My Dashboard cards, or date range changes
   useEffect(() => {
-    if (selectedAnalytics.length > 0 && dateRange?.from && dateRange?.to) {
+    if (
+      (selectedAnalytics.length > 0 || pinnedAnalytics.length > 0) &&
+      dateRange?.from &&
+      dateRange?.to
+    ) {
       fetchAnalyticsData();
     }
-  }, [selectedAnalytics, dateRange]);
+  }, [selectedAnalytics, pinnedAnalytics, dateRange, selectedSite]);
 
   const handleAnalyticsSelectionChange = (analytics: SelectedAnalytic[]) => {
     setSelectedAnalytics(analytics);
@@ -2188,6 +2753,13 @@ export const Dashboard = () => {
 
   const handleDateRangeChange = (range: DateRange | undefined) => {
     setDateRange(range);
+  };
+
+  const handleSiteChange = (value: string) => {
+    setSelectedSite(value);
+    const siteIds =
+      value === "all" ? allowedSites.map((s) => s.id).join(",") : value;
+    localStorage.setItem("selecteSiteIdsDashboard", siteIds);
   };
 
   const handleDragEnd = (event: any) => {
@@ -2646,7 +3218,8 @@ export const Dashboard = () => {
                     if (dateRange?.from && dateRange?.to) {
                       await amcAnalyticsDownloadAPI.downloadAMCStatusData(
                         dateRange.from,
-                        dateRange.to
+                        dateRange.to,
+                        activeSiteIds
                       );
                     }
                   }}
@@ -2662,7 +3235,8 @@ export const Dashboard = () => {
                     if (dateRange?.from && dateRange?.to) {
                       await amcAnalyticsDownloadAPI.downloadAMCTypeDistribution(
                         dateRange.from,
-                        dateRange.to
+                        dateRange.to,
+                        activeSiteIds
                       );
                     }
                   }}
@@ -2678,7 +3252,8 @@ export const Dashboard = () => {
                     if (dateRange?.from && dateRange?.to) {
                       await amcAnalyticsDownloadAPI.downloadAMCUnitResourceWise(
                         dateRange.from,
-                        dateRange.to
+                        dateRange.to,
+                        activeSiteIds
                       );
                     }
                   }}
@@ -2694,7 +3269,8 @@ export const Dashboard = () => {
                     if (dateRange?.from && dateRange?.to) {
                       await amcAnalyticsDownloadAPI.downloadAMCServiceStats(
                         dateRange.from,
-                        dateRange.to
+                        dateRange.to,
+                        activeSiteIds
                       );
                     }
                   }}
@@ -2710,7 +3286,8 @@ export const Dashboard = () => {
                     if (dateRange?.from && dateRange?.to) {
                       await amcAnalyticsDownloadAPI.downloadAMCExpiryAnalysis(
                         dateRange.from,
-                        dateRange.to
+                        dateRange.to,
+                        activeSiteIds
                       );
                     }
                   }}
@@ -2726,7 +3303,8 @@ export const Dashboard = () => {
                     if (dateRange?.from && dateRange?.to) {
                       await amcAnalyticsDownloadAPI.downloadAMCServiceTracking(
                         dateRange.from,
-                        dateRange.to
+                        dateRange.to,
+                        activeSiteIds
                       );
                     }
                   }}
@@ -2742,7 +3320,8 @@ export const Dashboard = () => {
                     if (dateRange?.from && dateRange?.to) {
                       await amcAnalyticsDownloadAPI.downloadAMCCoverageByLocation(
                         dateRange.from,
-                        dateRange.to
+                        dateRange.to,
+                        activeSiteIds
                       );
                     }
                   }}
@@ -2758,7 +3337,8 @@ export const Dashboard = () => {
                     if (dateRange?.from && dateRange?.to) {
                       await amcAnalyticsDownloadAPI.downloadAMCVendorPerformance(
                         dateRange.from,
-                        dateRange.to
+                        dateRange.to,
+                        activeSiteIds
                       );
                     }
                   }}
@@ -3043,7 +3623,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await assetManagementAnalyticsAPI.downloadAssetOverview(dateRange.from, dateRange.to);
+                      await assetManagementAnalyticsAPI.downloadAssetOverview(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3066,7 +3646,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await assetManagementAnalyticsAPI.downloadAssetOverview(dateRange.from, dateRange.to);
+                      await assetManagementAnalyticsAPI.downloadAssetOverview(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3089,7 +3669,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await assetManagementAnalyticsAPI.downloadAmcOverview(dateRange.from, dateRange.to);
+                      await assetManagementAnalyticsAPI.downloadAmcOverview(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3112,7 +3692,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await assetManagementAnalyticsAPI.downloadAmcOverview(dateRange.from, dateRange.to);
+                      await assetManagementAnalyticsAPI.downloadAmcOverview(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3154,7 +3734,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await inventoryManagementAnalyticsAPI.downloadInventoryOverstockReport(dateRange.from, dateRange.to);
+                      await inventoryManagementAnalyticsAPI.downloadInventoryOverstockReport(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3177,7 +3757,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await inventoryManagementAnalyticsAPI.downloadCenterWiseConsumables(dateRange.from, dateRange.to);
+                      await inventoryManagementAnalyticsAPI.downloadCenterWiseConsumables(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3210,7 +3790,8 @@ export const Dashboard = () => {
                     try {
                       await inventoryManagementAnalyticsAPI.downloadConsumableInventoryComparison(
                         dateRange.from,
-                        dateRange.to
+                        dateRange.to,
+                        activeSiteIds
                       );
                       toast.dismiss();
                       toast.success("Download completed successfully");
@@ -3301,6 +3882,29 @@ export const Dashboard = () => {
                 />
               </SortableChartItem>
             );
+          case "goods_staff_overview":
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <QuickGateGoodsStaffCard
+                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
+                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                />
+              </SortableChartItem>
+            );
+          default:
+            return null;
+        }
+      case "occupancy_management":
+        switch (analytic.endpoint) {
+          case "occupancy_summary":
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <OccupancySummaryCard
+                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
+                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                />
+              </SortableChartItem>
+            );
           default:
             return null;
         }
@@ -3310,9 +3914,9 @@ export const Dashboard = () => {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <ExecutiveParkingStatsCard
-                    startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                    endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
-                  />
+                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
+                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                />
               </SortableChartItem>
             );
           case "parking_allocation_overview":
@@ -3362,7 +3966,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await checklistManagementAnalyticsAPI.downloadSiteWiseChecklist(dateRange.from, dateRange.to);
+                      await checklistManagementAnalyticsAPI.downloadSiteWiseChecklist(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3387,7 +3991,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await checklistManagementAnalyticsAPI.downloadSiteWiseChecklist(dateRange.from, dateRange.to);
+                      await checklistManagementAnalyticsAPI.downloadSiteWiseChecklist(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3428,7 +4032,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await helpdeskAnalyticsAPI.downloadTicketAgingClosureEfficiency(dateRange.from, dateRange.to);
+                      await helpdeskAnalyticsAPI.downloadTicketAgingClosureEfficiency(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3451,7 +4055,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await helpdeskAnalyticsAPI.downloadTicketPerformanceMetrics(dateRange.from, dateRange.to);
+                      await helpdeskAnalyticsAPI.downloadTicketPerformanceMetrics(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3481,7 +4085,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await helpdeskAnalyticsAPI.downloadCustomerExperienceFeedback(dateRange.from, dateRange.to);
+                      await helpdeskAnalyticsAPI.downloadCustomerExperienceFeedback(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3514,7 +4118,7 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await helpdeskAnalyticsAPI.downloadTATPerformanceQuarterly(dateRange.from, dateRange.to);
+                      await helpdeskAnalyticsAPI.downloadTATPerformanceQuarterly(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3547,7 +4151,76 @@ export const Dashboard = () => {
                     }
                     try {
                       toast.info('Preparing download...');
-                      await helpdeskAnalyticsAPI.downloadTATPerformanceQuarterly(dateRange.from, dateRange.to);
+                      await helpdeskAnalyticsAPI.downloadTATPerformanceQuarterly(dateRange.from, dateRange.to, activeSiteIds);
+                      toast.success('Download completed successfully');
+                    } catch (error) {
+                      console.error('Download failed:', error);
+                      toast.error('Failed to download data');
+                    }
+                  }}
+                />
+              </SortableChartItem>
+            );
+          }
+          case "unit_categorywise_proactive": {
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <UnitCategoryWiseProactiveCard
+                  data={rawData}
+                  onDownload={async () => {
+                    if (!dateRange?.from || !dateRange?.to) {
+                      toast.error('Please select a date range');
+                      return;
+                    }
+                    try {
+                      toast.info('Preparing download...');
+                      await ticketAnalyticsDownloadAPI.downloadUnitCategorywiseProactiveData(dateRange.from, dateRange.to, activeSiteIds);
+                      toast.success('Download completed successfully');
+                    } catch (error) {
+                      console.error('Download failed:', error);
+                      toast.error('Failed to download data');
+                    }
+                  }}
+                />
+              </SortableChartItem>
+            );
+          }
+          case "common_area_categorywise": {
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <CommonAreaCategoryWiseCard
+                  data={rawData}
+                  onDownload={async () => {
+                    if (!dateRange?.from || !dateRange?.to) {
+                      toast.error('Please select a date range');
+                      return;
+                    }
+                    try {
+                      toast.info('Preparing download...');
+                      await ticketAnalyticsDownloadAPI.downloadCommonAreaCategorywiseData(dateRange.from, dateRange.to, activeSiteIds);
+                      toast.success('Download completed successfully');
+                    } catch (error) {
+                      console.error('Download failed:', error);
+                      toast.error('Failed to download data');
+                    }
+                  }}
+                />
+              </SortableChartItem>
+            );
+          }
+          case "common_area_categorywise_proactive": {
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <CommonAreaCategoryWiseProactiveCard
+                  data={rawData}
+                  onDownload={async () => {
+                    if (!dateRange?.from || !dateRange?.to) {
+                      toast.error('Please select a date range');
+                      return;
+                    }
+                    try {
+                      toast.info('Preparing download...');
+                      await ticketAnalyticsDownloadAPI.downloadCommonAreaCategorywiseProactiveData(dateRange.from, dateRange.to, activeSiteIds);
                       toast.success('Download completed successfully');
                     } catch (error) {
                       console.error('Download failed:', error);
@@ -3787,7 +4460,7 @@ export const Dashboard = () => {
                 onDownload={async () => {
                   if (!dateRange?.from || !dateRange?.to) return;
                   try {
-                    await permitToWorkAnalyticsAPI.downloadSiteWisePermits(dateRange.from, dateRange.to);
+                    await permitToWorkAnalyticsAPI.downloadSiteWisePermits(dateRange.from, dateRange.to, activeSiteIds);
                     toast.success("Downloaded successfully");
                   } catch {
                     toast.error("Failed to download");
@@ -3806,7 +4479,7 @@ export const Dashboard = () => {
                 onDownload={async () => {
                   if (!dateRange?.from || !dateRange?.to) return;
                   try {
-                    await permitToWorkAnalyticsAPI.downloadPermitsStatus(dateRange.from, dateRange.to);
+                    await permitToWorkAnalyticsAPI.downloadPermitsStatus(dateRange.from, dateRange.to, activeSiteIds);
                     toast.success("Downloaded successfully");
                   } catch {
                     toast.error("Failed to download");
@@ -3851,7 +4524,7 @@ export const Dashboard = () => {
             }
             const handleSubMeterDownload = async () => {
               if (!dateRange?.from || !dateRange?.to) return;
-              const siteId = localStorage.getItem('selectedSiteId') || '';
+              const siteId = activeSiteIds;
               const fmt = (d: Date) => {
                 const y = d.getFullYear();
                 const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -3909,7 +4582,7 @@ export const Dashboard = () => {
             ];
             const handleSiteWiseDownload = async () => {
               if (!dateRange?.from || !dateRange?.to) return;
-              const siteId = localStorage.getItem('selectedSiteId') || '';
+              const siteId = activeSiteIds;
               const fmt = (d: Date) => {
                 const y = d.getFullYear();
                 const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -3979,7 +4652,7 @@ export const Dashboard = () => {
             ];
             const handleSourceDownload = async () => {
               if (!dateRange?.from || !dateRange?.to) return;
-              const siteId = localStorage.getItem('selectedSiteId') || '';
+              const siteId = activeSiteIds;
               const fmt = (d: Date) => {
                 const y = d.getFullYear();
                 const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -4036,7 +4709,7 @@ export const Dashboard = () => {
             ];
             const handleSiteWiseWaterDownload = async () => {
               if (!dateRange?.from || !dateRange?.to) return;
-              const siteId = localStorage.getItem('selectedSiteId') || '';
+              const siteId = activeSiteIds;
               const fmt = (d: Date) => {
                 const y = d.getFullYear();
                 const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -4089,7 +4762,7 @@ export const Dashboard = () => {
             }));
             const handleTimeSeriesDownload = async () => {
               if (!dateRange?.from || !dateRange?.to) return;
-              const siteId = localStorage.getItem('selectedSiteId') || '';
+              const siteId = activeSiteIds;
               const fmt = (d: Date) => {
                 const y = d.getFullYear();
                 const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -4141,11 +4814,37 @@ export const Dashboard = () => {
               </SortableChartItem>
             );
           }
+          case "card_fuel_consumption": {
+            const rawData = (dashboardData as any)?.utility?.[analytic.endpoint];
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <FuelConsumptionCard data={rawData} />
+              </SortableChartItem>
+            );
+          }
+          case "power_consumption_top_management":
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <PowerConsumptionTopManagementCard
+                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
+                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                />
+              </SortableChartItem>
+            );
+          case "water_consumption_top_management":
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <WaterConsumptionTopManagementCard
+                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
+                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                />
+              </SortableChartItem>
+            );
           case "site_wise_ev_consumption": {
             const rawData = (dashboardData as any)?.utility?.[analytic.endpoint];
             const handleEvDownload = async () => {
               if (!dateRange?.from || !dateRange?.to) return;
-              const siteId = localStorage.getItem('selectedSiteId') || '';
+              const siteId = activeSiteIds;
               const fmt = (d: Date) => {
                 const y = d.getFullYear();
                 const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -4182,7 +4881,7 @@ export const Dashboard = () => {
             const rawData = (dashboardData as any)?.utility?.[analytic.endpoint];
             const handleWasteDownload = async () => {
               if (!dateRange?.from || !dateRange?.to) return;
-              const siteId = localStorage.getItem('selectedSiteId') || '';
+              const siteId = activeSiteIds;
               const fmt = (d: Date) => {
                 const y = d.getFullYear();
                 const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -4258,7 +4957,7 @@ export const Dashboard = () => {
                 onDownload={async () => {
                   if (!dateRange?.from || !dateRange?.to) return;
                   try {
-                    await incidentAnalyticsAPI.downloadTopCategories(dateRange.from, dateRange.to);
+                    await incidentAnalyticsAPI.downloadTopCategories(dateRange.from, dateRange.to, activeSiteIds);
                     toast.success("Downloaded successfully");
                   } catch {
                     toast.error("Failed to download");
@@ -4276,12 +4975,12 @@ export const Dashboard = () => {
             };
             const statusData = rawData?.response
               ? Object.entries(rawData.response)
-                  .filter(([, val]) => typeof val === "number" && (val as number) > 0)
-                  .map(([key, val]) => ({
-                    name: key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
-                    value: val as number,
-                    color: STATUS_COLORS[key] || "#9E9E9E",
-                  }))
+                .filter(([, val]) => typeof val === "number" && (val as number) > 0)
+                .map(([key, val]) => ({
+                  name: key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
+                  value: val as number,
+                  color: STATUS_COLORS[key] || "#9E9E9E",
+                }))
               : [];
             return (
               <AssetAnalyticsCard
@@ -4293,7 +4992,7 @@ export const Dashboard = () => {
                 onDownload={async () => {
                   if (!dateRange?.from || !dateRange?.to) return;
                   try {
-                    await incidentAnalyticsAPI.downloadStatusSummary(dateRange.from, dateRange.to);
+                    await incidentAnalyticsAPI.downloadStatusSummary(dateRange.from, dateRange.to, activeSiteIds);
                     toast.success("Downloaded successfully");
                   } catch {
                     toast.error("Failed to download");
@@ -4313,7 +5012,7 @@ export const Dashboard = () => {
                 onDownload={async () => {
                   if (!dateRange?.from || !dateRange?.to) return;
                   try {
-                    await incidentAnalyticsAPI.downloadLevelWise(dateRange.from, dateRange.to);
+                    await incidentAnalyticsAPI.downloadLevelWise(dateRange.from, dateRange.to, activeSiteIds);
                     toast.success("Downloaded successfully");
                   } catch {
                     toast.error("Failed to download");
@@ -4356,7 +5055,7 @@ export const Dashboard = () => {
                     onClick={async () => {
                       if (!dateRange?.from || !dateRange?.to) return;
                       try {
-                        await incidentAnalyticsAPI.downloadRcaData(dateRange.from, dateRange.to);
+                        await incidentAnalyticsAPI.downloadRcaData(dateRange.from, dateRange.to, activeSiteIds);
                         toast.success("Downloaded successfully");
                       } catch {
                         toast.error("Failed to download");
@@ -4368,53 +5067,53 @@ export const Dashboard = () => {
                   </button> */}
                 </div>
                 {rcaRows.length === 0 ? (
-                    <div className="py-12 text-center text-sm text-gray-400">No RCA data found.</div>
-                  ) : (
-                    <div className="rounded-xl overflow-hidden border border-gray-200 mx-4 mb-4 mt-2">
+                  <div className="py-12 text-center text-sm text-gray-400">No RCA data found.</div>
+                ) : (
+                  <div className="rounded-xl overflow-hidden border border-gray-200 mx-4 mb-4 mt-2">
                     <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr>
-                          <th className="px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center" style={{ backgroundColor: "#D97655" }}>Sr.</th>
-                          {RCA_COLS.map(c => (
-                            <th key={c.key} className="px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center" style={{ backgroundColor: "#D97655" }}>{c.label}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rcaRows.slice(0, 20).map((row, idx) => (
-                          <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? "#ffffff" : "#F6F4EE" }}>
-                            <td className="px-4 py-3 text-left text-gray-500 font-medium text-xs border-b border-gray-100 whitespace-nowrap">{idx + 1}</td>
-                            {RCA_COLS.map(c => {
-                              const val = row[c.key] ?? null;
-                              if (c.key === "incident_level_name") {
-                                return (
-                                  <td key={c.key} className="px-4 py-3 text-left whitespace-nowrap border-b border-gray-100">
-                                    {val ? <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${getLevelBadgeClass(val)}`}>{val}</span> : <span className="text-gray-400">-</span>}
-                                  </td>
-                                );
-                              }
-                              if (c.key === "incident_status_raw") {
-                                return (
-                                  <td key={c.key} className="px-4 py-3 text-left whitespace-nowrap border-b border-gray-100">
-                                    {val ? <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${getStatusBadgeClass(val)}`}>{val.replace(/_/g, " ").replace(/\b\w/g, (ch: string) => ch.toUpperCase())}</span> : <span className="text-gray-400">-</span>}
-                                  </td>
-                                );
-                              }
-                              const isLong = ["incident_description", "incident_rca_text"].includes(c.key);
-                              return (
-                                <td key={c.key} className={`px-4 py-3 text-left text-gray-700 text-xs border-b border-gray-100 ${isLong ? "max-w-[180px]" : "whitespace-nowrap"}`}>
-                                  {val ? (isLong ? <span title={val} className="block truncate">{val}</span> : val) : <span className="text-gray-400">-</span>}
-                                </td>
-                              );
-                            })}
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr>
+                            <th className="px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center" style={{ backgroundColor: "#D97655" }}>Sr.</th>
+                            {RCA_COLS.map(c => (
+                              <th key={c.key} className="px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center" style={{ backgroundColor: "#D97655" }}>{c.label}</th>
+                            ))}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {rcaRows.slice(0, 20).map((row, idx) => (
+                            <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? "#ffffff" : "#F6F4EE" }}>
+                              <td className="px-4 py-3 text-left text-gray-500 font-medium text-xs border-b border-gray-100 whitespace-nowrap">{idx + 1}</td>
+                              {RCA_COLS.map(c => {
+                                const val = row[c.key] ?? null;
+                                if (c.key === "incident_level_name") {
+                                  return (
+                                    <td key={c.key} className="px-4 py-3 text-left whitespace-nowrap border-b border-gray-100">
+                                      {val ? <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${getLevelBadgeClass(val)}`}>{val}</span> : <span className="text-gray-400">-</span>}
+                                    </td>
+                                  );
+                                }
+                                if (c.key === "incident_status_raw") {
+                                  return (
+                                    <td key={c.key} className="px-4 py-3 text-left whitespace-nowrap border-b border-gray-100">
+                                      {val ? <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${getStatusBadgeClass(val)}`}>{val.replace(/_/g, " ").replace(/\b\w/g, (ch: string) => ch.toUpperCase())}</span> : <span className="text-gray-400">-</span>}
+                                    </td>
+                                  );
+                                }
+                                const isLong = ["incident_description", "incident_rca_text"].includes(c.key);
+                                return (
+                                  <td key={c.key} className={`px-4 py-3 text-left text-gray-700 text-xs border-b border-gray-100 ${isLong ? "max-w-[180px]" : "whitespace-nowrap"}`}>
+                                    {val ? (isLong ? <span title={val} className="block truncate">{val}</span> : val) : <span className="text-gray-400">-</span>}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-                    </div>
-                  )}
+                  </div>
+                )}
                 {rcaRows.length > 20 && (
                   <div className="px-4 py-3 border-t border-gray-100 text-xs text-gray-400 text-center">
                     Showing first 20 of {rcaRows.length} records — export for full data
@@ -4437,6 +5136,131 @@ export const Dashboard = () => {
               />
             );
           }
+          case "safety_metrics":
+            return (
+              <IncidentSafetyMetricsCard data={rawData} loading={rawData == null} />
+            );
+          case "cause_wise_incidents": {
+            // Unlike top_categories/status_summary, this endpoint's `response` is
+            // an array of { name, y } pairs (name can be null for "uncategorized"),
+            // not a flat { category: count } object — buildIncidentPieData expects
+            // the latter, so it's mapped directly here instead.
+            const causeRows: { name: string | null; y: number }[] = Array.isArray(rawData?.response)
+              ? rawData.response
+              : [];
+            const causeData = causeRows
+              .filter((row) => typeof row?.y === "number" && row.y > 0)
+              .map((row, i) => ({
+                name: row.name && row.name.trim() !== "" ? row.name : "Uncategorized",
+                value: row.y,
+                color: PIE_COLORS_INC[i % PIE_COLORS_INC.length],
+              }));
+            return (
+              <AssetAnalyticsCard
+                title="Primary Root Cause Category"
+                type="categoryWise"
+                data={causeData}
+                dateRange={defaultRange}
+                info="Incidents grouped by primary root cause category"
+                onDownload={async () => {
+                  if (!dateRange?.from || !dateRange?.to) return;
+                  try {
+                    await incidentAnalyticsAPI.downloadCauseWiseIncidents(dateRange.from, dateRange.to, activeSiteIds);
+                    toast.success("Downloaded successfully");
+                  } catch {
+                    toast.error("Failed to download");
+                  }
+                }}
+              />
+            );
+          }
+          default:
+            return null;
+        }
+      }
+
+      case "escalation_management": {
+        const ESC_COLORS = ["#DA7756", "#6B9BCC", "#798C5E", "#EDC488", "#CECBF6", "#9EC8BA", "#E7848E"];
+
+        const defaultRange = assetDateRange || {
+          startDate: new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
+          endDate: new Date(),
+        };
+
+        // escalation_kpis/zone_wise/category_wise haven't been hit against a live
+        // backend from this environment. Incident's cause_wise_incidents (a sibling
+        // "_dashboard" pie/category endpoint, confirmed live) returns `response` as
+        // an array of { name, y } pairs rather than a flat { key: count } object, so
+        // that shape is tried first here too, falling back to a flat object.
+        const buildEscalationRows = (raw: any): { name: string; value: number }[] => {
+          const respVal = raw?.response ?? raw;
+          if (Array.isArray(respVal)) {
+            return respVal
+              .filter((row: any) => typeof row?.y === "number" && row.y > 0)
+              .map((row: any) => ({
+                name: row.name && String(row.name).trim() !== "" ? String(row.name) : "Uncategorized",
+                value: row.y,
+              }));
+          }
+          if (respVal && typeof respVal === "object") {
+            return Object.entries(respVal)
+              .filter(([, v]) => typeof v === "number" && (v as number) > 0)
+              .map(([key, v]) => ({
+                name: key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+                value: v as number,
+              }));
+          }
+          return [];
+        };
+
+        switch (analytic.endpoint) {
+          case "escalation_kpis":
+            return <EscalationKpiCard data={rawData} loading={rawData == null} />;
+          case "zone_wise":
+            return (
+              <AssetAnalyticsCard
+                title="Zone Escalations"
+                type="groupWise"
+                data={buildEscalationRows(rawData)}
+                dateRange={defaultRange}
+                info="Escalations grouped by zone"
+                onDownload={async () => {
+                  if (!dateRange?.from || !dateRange?.to) return;
+                  try {
+                    await escalationAnalyticsAPI.downloadZoneWise(dateRange.from, dateRange.to, activeSiteIds);
+                    toast.success("Downloaded successfully");
+                  } catch {
+                    toast.error("Failed to download");
+                  }
+                }}
+              />
+            );
+          case "category_wise": {
+            const categoryData = buildEscalationRows(rawData).map((d, i) => ({
+              ...d,
+              color: ESC_COLORS[i % ESC_COLORS.length],
+            }));
+            return (
+              <AssetAnalyticsCard
+                title="Category Wise Executive Escalations"
+                type="categoryWise"
+                data={categoryData}
+                dateRange={defaultRange}
+                info="Executive escalations grouped by category"
+                onDownload={async () => {
+                  if (!dateRange?.from || !dateRange?.to) return;
+                  try {
+                    await escalationAnalyticsAPI.downloadCategoryWise(dateRange.from, dateRange.to, activeSiteIds);
+                    toast.success("Downloaded successfully");
+                  } catch {
+                    toast.error("Failed to download");
+                  }
+                }}
+              />
+            );
+          }
+          case "service_partner_evaluation":
+            return <ServicePartnerEvaluationCard data={rawData} />;
           default:
             return null;
         }
@@ -4447,7 +5271,20 @@ export const Dashboard = () => {
     }
   };
 
-  const effectiveLayouts = layouts || [];
+  // Grid geometry from the ResponsiveGridLayout below: rowHeight 48, vertical margin 12.
+  const ROW_H = 48;
+  const ROW_GAP = 12;
+
+  const effectiveLayouts = React.useMemo(() => {
+    const base = layouts || [];
+    if (!Object.keys(insightHeights).length) return base;
+    return base.map((item) => {
+      const px = insightHeights[item.i];
+      if (!px) return item;
+      const extraRows = Math.ceil((px + ROW_GAP) / (ROW_H + ROW_GAP));
+      return { ...item, h: item.h + extraRows };
+    });
+  }, [layouts, insightHeights]);
 
   return (
     <>
@@ -4512,6 +5349,12 @@ export const Dashboard = () => {
             flex: 1;
             overflow: auto;
             min-height: 0;
+          }
+
+          /* Keep each card's own download control to the left of the Add to Dashboard button (top-right) */
+          .analytics-card-wrapper svg.lucide-download:not(button svg):not(.tile-download),
+          .analytics-card-wrapper button:has(svg.lucide-download) {
+            margin-right: 1.75rem;
           }
 
           /* Placeholder styling for resize */
@@ -4607,6 +5450,23 @@ export const Dashboard = () => {
               </Button> */}
 
                   <div className="flex items-center gap-4">
+                    <Select
+                      value={selectedSite}
+                      onValueChange={handleSiteChange}
+                      disabled={sitesLoading}
+                    >
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Select Site" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Sites</SelectItem>
+                        {allowedSites.map((site) => (
+                          <SelectItem key={site.id} value={String(site.id)}>
+                            {site.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <UnifiedDateRangeFilter
                       dateRange={dateRange}
                       onDateRangeChange={handleDateRangeChange}
@@ -4621,97 +5481,264 @@ export const Dashboard = () => {
             </div>
           </div>
 
-          {/* Summary Stats */}
-          <div className="p-6">
-            {/* Asset Summary Stats Row */}
-            {summaryStats.totalAssets > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <StatsCard
-                  title="Total Assets"
-                  value={summaryStats.totalAssets}
-                  icon={<Package className="w-6 h-6" />}
-                />
-              </div>
-            )}
+          {/* Build Dashboard / My Dashboard */}
+          <Tabs value={dashboardTab} onValueChange={(v) => setDashboardTab(v as "build" | "my-dashboard")}>
+            <div className="px-6 pt-4 bg-white border-b border-analytics-border">
+              <TabsList className="bg-transparent p-0 gap-4">
+                <TabsTrigger
+                  value="my-dashboard"
+                  className="flex items-center gap-2 rounded-none border-b-2 border-transparent pb-2 data-[state=active]:border-brand data-[state=active]:text-brand data-[state=active]:font-semibold data-[state=inactive]:text-gray-500"
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  My Dashboard
+                  {myDashboardCards.length > 0 && (
+                    <span className="ml-1 rounded-full bg-brand-light px-1.5 py-0.5 text-xs text-brand">
+                      {myDashboardCards.length}
+                    </span>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="build"
+                  className="rounded-none border-b-2 border-transparent pb-2 data-[state=active]:border-brand data-[state=active]:text-brand data-[state=active]:font-semibold data-[state=inactive]:text-gray-500"
+                >
+                  Dashboard
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-            <div className="flex gap-6">
-              {/* Main Content Area */}
-              <div className="flex-1">
-                {selectedAnalytics.length === 0 ? (
-                  <Card className="p-8 text-center">
-                    <div className="flex flex-col items-center gap-4">
-                      <BarChart3 className="w-16 h-16 text-analytics-muted" />
-                      <div>
-                        <h3 className="text-lg font-medium text-analytics-text mb-2">
-                          No Analytics Selected
-                        </h3>
-                        <p className="text-analytics-muted mb-4">
-                          Select analytics from different modules to start viewing
-                          your dashboard
-                        </p>
-                        <Button
-                          onClick={() => {
-                            const selector = document.querySelector(
-                              "[data-analytics-selector]"
-                            ) as HTMLButtonElement;
-                            selector?.click();
-                          }}
-                          variant="outline"
-                        >
-                          Select Analytics
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                ) : (
-                  <div className="relative w-full">
-                    <ResponsiveGridLayout
-                      className="layout"
-                      layouts={{ lg: effectiveLayouts }}
-                      onLayoutChange={(layout) => handleLayoutChange(layout)}
-                      onDragStop={(layout) => persistLayout(layout)}
-                      onResizeStop={(layout) => persistLayout(layout)}
-                      breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-                      cols={{ lg: 12, md: 12, sm: 12, xs: 12, xxs: 12 }}
-                      rowHeight={48}
-                      margin={[12, 12]}
-                      resizeHandles={["se"]}
-                      containerPadding={[0, 0]}
-                      compactType="vertical"
-                      isDraggable={true}
-                      isResizable={true}
-                    >
-                      {/* Analytics Cards */}
-                      {chartOrder.map((chartId) => {
-                        const analytic = selectedAnalytics.find(
-                          (a) => a.id === chartId
-                        );
-                        if (!analytic) return null;
-
-                        const perCardLoading =
-                          !!loadingMap?.[analytic.module]?.[analytic.endpoint];
-
-                        return (
-                          <div key={analytic.id} className="analytics-card-wrapper">
-                            <SectionLoader loading={perCardLoading} className="flex-1">
-                              <div className="analytics-card-content">
-                                {renderAnalyticsCard(analytic)}
-                              </div>
-                            </SectionLoader>
-                          </div>
-                        );
-                      })}
-                    </ResponsiveGridLayout>
+            {/* Summary Stats */}
+            <TabsContent value="build" className="mt-0">
+              <div className="p-6">
+                {/* Asset Summary Stats Row */}
+                {summaryStats.totalAssets > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <StatsCard
+                      title="Total Assets"
+                      value={summaryStats.totalAssets}
+                      icon={<Package className="w-6 h-6" />}
+                    />
                   </div>
                 )}
-              </div>
 
-              {/* Recent Updates Sidebar - Always Visible */}
-              <div className="flex-shrink-0 self-stretch">
-                <RecentUpdatedSidebar />
+                <div className="flex gap-6">
+                  {/* Main Content Area */}
+                  <div className="flex-1">
+                    {selectedAnalytics.length === 0 ? (
+                      <Card className="p-8 text-center">
+                        <div className="flex flex-col items-center gap-4">
+                          <BarChart3 className="w-16 h-16 text-analytics-muted" />
+                          <div>
+                            <h3 className="text-lg font-medium text-analytics-text mb-2">
+                              No Analytics Selected
+                            </h3>
+                            <p className="text-analytics-muted mb-4">
+                              Select analytics from different modules to start viewing
+                              your dashboard
+                            </p>
+                            <Button
+                              onClick={() => {
+                                const selector = document.querySelector(
+                                  "[data-analytics-selector]"
+                                ) as HTMLButtonElement;
+                                selector?.click();
+                              }}
+                              variant="outline"
+                            >
+                              Select Analytics
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ) : (
+                      <div className="relative w-full">
+                        <ResponsiveGridLayout
+                          className="layout"
+                          layouts={{ lg: effectiveLayouts }}
+                          onLayoutChange={(layout) => handleLayoutChange(layout)}
+                          onDragStop={(layout) => persistLayout(layout)}
+                          onResizeStop={(layout) => persistLayout(layout)}
+                          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+                          cols={{ lg: 12, md: 12, sm: 12, xs: 12, xxs: 12 }}
+                          rowHeight={48}
+                          margin={[12, 12]}
+                          resizeHandles={["se"]}
+                          containerPadding={[0, 0]}
+                          compactType="vertical"
+                          isDraggable={true}
+                          isResizable={true}
+                        >
+                          {/* Analytics Cards */}
+                          {chartOrder.map((chartId) => {
+                            const analytic = selectedAnalytics.find(
+                              (a) => a.id === chartId
+                            );
+                            if (!analytic) return null;
+
+                            const perCardLoading =
+                              !!loadingMap?.[analytic.module]?.[analytic.endpoint];
+                            const layoutItem = effectiveLayouts.find(
+                              (l) => l.i === analytic.id
+                            );
+
+                            return (
+                              <div key={analytic.id} className="analytics-card-wrapper relative overflow-visible">
+                                <AddToDashboardButton
+                                  chartId={`${myDashboardChartPrefix}${analytic.id}`}
+                                  moduleKey={analytic.module}
+                                  subTab={analytic.endpoint}
+                                  label={analytic.title}
+                                  height={String(layoutItem?.h ?? 8)}
+                                  width={String(layoutItem?.w ?? 12)}
+                                  position={`${layoutItem?.x ?? 0},${layoutItem?.y ?? 0}`}
+                                />
+                                <SectionLoader loading={perCardLoading} className="flex-1">
+                                  <div className="analytics-card-content">
+                                    {renderAnalyticsCard(analytic)}
+                                  </div>
+                                </SectionLoader>
+                                {/* Mounted AFTER the chart on purpose: the collapsible
+                                    findings panel renders in normal flow below it, while
+                                    its toggle is absolutely positioned onto the heading
+                                    row beside the "+". `endpoint` IS the chart_code the
+                                    backend catalogue is keyed on — `id` is a chartId and
+                                    matches nothing. */}
+                                <ChartAiInsights
+                                  chartCode={analytic.endpoint}
+                                  chartId={analytic.id}
+                                  siteIds={insightScope.siteIds}
+                                  fromDate={insightScope.fromDate}
+                                  toDate={insightScope.toDate}
+                                  onHeightChange={handleInsightHeight}
+                                />
+                              </div>
+                            );
+                          })}
+                        </ResponsiveGridLayout>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Recent Updates Sidebar - Always Visible */}
+                  <div className="flex-shrink-0 self-stretch">
+                    <RecentUpdatedSidebar />
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            </TabsContent>
+
+            <TabsContent value="my-dashboard" className="mt-0">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-sm text-analytics-muted">
+                    Cards you've added from Build Dashboard, in one place.
+                  </p>
+                  <Button
+                    onClick={handleSaveMyDashboard}
+                    disabled={isSavingMyDashboard || myDashboardCards.length === 0}
+                    className="bg-brand hover:bg-brand-hover text-white flex items-center gap-2"
+                  >
+                    {isSavingMyDashboard ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    Save Dashboard
+                  </Button>
+                </div>
+
+                <div className="flex gap-6">
+                  <div className="flex-1">
+                    {myDashboardCards.length === 0 ? (
+                      <Card className="p-8 text-center">
+                        <div className="flex flex-col items-center gap-4">
+                          <LayoutDashboard className="w-16 h-16 text-analytics-muted" />
+                          <div>
+                            <h3 className="text-lg font-medium text-analytics-text mb-2">
+                              No cards on My Dashboard yet
+                            </h3>
+                            <p className="text-analytics-muted mb-4">
+                              Click the + on any card in Build Dashboard to pin it here.
+                            </p>
+                            <Button
+                              onClick={() => setDashboardTab("build")}
+                              variant="outline"
+                            >
+                              Go to Build Dashboard
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ) : (
+                      <div className="relative w-full">
+                        <ResponsiveGridLayout
+                          className="layout"
+                          layouts={{ lg: myDashboardLayout }}
+                          onDragStop={handleMyDashboardLayoutPersist}
+                          onResizeStop={handleMyDashboardLayoutPersist}
+                          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+                          cols={{ lg: 12, md: 12, sm: 12, xs: 12, xxs: 12 }}
+                          rowHeight={48}
+                          margin={[12, 12]}
+                          resizeHandles={["se"]}
+                          containerPadding={[0, 0]}
+                          compactType="vertical"
+                          isDraggable={true}
+                          isResizable={true}
+                        >
+                          {myDashboardCards.map((card) => {
+                            const analytic = pinnedAnalytics.find(
+                              (a) => a.id === card.chartId
+                            );
+                            if (!analytic) return null;
+
+                            const perCardLoading =
+                              !!loadingMap?.[analytic.module]?.[analytic.endpoint];
+
+                            return (
+                              <div key={card.chartId} className="analytics-card-wrapper relative overflow-visible">
+                                <AddToDashboardButton
+                                  chartId={card.chartId}
+                                  moduleKey={card.moduleKey}
+                                  subTab={card.subTab}
+                                  label={card.label}
+                                  height={card.height}
+                                  width={card.width}
+                                  position={card.position}
+                                />
+                                <SectionLoader loading={perCardLoading} className="flex-1">
+                                  <div className="analytics-card-content">
+                                    {renderAnalyticsCard(analytic)}
+                                  </div>
+                                </SectionLoader>
+                                {/* Mounted AFTER the chart on purpose: the collapsible
+                                    findings panel renders in normal flow below it, while
+                                    its toggle is absolutely positioned onto the heading
+                                    row beside the "+". `endpoint` IS the chart_code the
+                                    backend catalogue is keyed on — `id` is a chartId and
+                                    matches nothing. */}
+                                <ChartAiInsights
+                                  chartCode={analytic.endpoint}
+                                  chartId={analytic.id}
+                                  siteIds={insightScope.siteIds}
+                                  fromDate={insightScope.fromDate}
+                                  toDate={insightScope.toDate}
+                                  onHeightChange={handleInsightHeight}
+                                />
+                              </div>
+                            );
+                          })}
+                        </ResponsiveGridLayout>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-shrink-0 self-stretch">
+                    <RecentUpdatedSidebar />
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
 
@@ -4720,6 +5747,21 @@ export const Dashboard = () => {
         <DashboardAIAssistant />
       ) : (
         <AIAssistantWidget />
+      )}
+
+      {/* Natural-language querying of the data behind this dashboard.
+          Bottom-LEFT so it does not collide with DashboardAIAssistant (bottom-right).
+          Executive dashboard only — it is scoped to the ED schema reference files. */}
+      {isExecutiveDashboard && (
+        <AiAssistantChat
+          siteIds={
+            activeSiteIds
+              ? activeSiteIds.split(",").map((s) => s.trim()).filter(Boolean)
+              : []
+          }
+          fromDate={dateRange?.from ? formatDate(dateRange.from, "yyyy-MM-dd") : undefined}
+          toDate={dateRange?.to ? formatDate(dateRange.to, "yyyy-MM-dd") : undefined}
+        />
       )}
     </>
   );

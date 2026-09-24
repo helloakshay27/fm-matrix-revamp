@@ -110,30 +110,40 @@ export const fetchAllBuildings = createAsyncThunk<Building[], number>(
   }
 );
 
-export const fetchWings = createAsyncThunk<Wing[], number>(
+export const fetchWings = createAsyncThunk<Wing[], number | void | undefined>(
   'serviceLocation/fetchWings',
-  async (buildingId: number) => {
-    const response = await axios.get(`${API_CONFIG.BASE_URL}/pms/buildings/${buildingId}/wings.json`, {
+  async (buildingId) => {
+    const url = buildingId
+      ? `${API_CONFIG.BASE_URL}/pms/buildings/${buildingId}/wings.json`
+      : `${API_CONFIG.BASE_URL}/pms/wings.json`;
+    const response = await axios.get(url, {
       params: { access_token: API_CONFIG.TOKEN }
     });
     return response.data.wings || [];
   }
 );
 
-export const fetchAreas = createAsyncThunk<Area[], { buildingId: number; wingId?: number }>(
+export const fetchAreas = createAsyncThunk<Area[], { buildingId?: number; wingId?: number } | void | undefined>(
   'serviceLocation/fetchAreas',
-  async ({ buildingId, wingId }) => {
+  async (paramsObj) => {
+    const { buildingId, wingId } = paramsObj || {};
     const params: Record<string, any> = { access_token: API_CONFIG.TOKEN };
     if (wingId) params.wing_id = wingId;
-    const response = await axios.get(`${API_CONFIG.BASE_URL}/pms/buildings/${buildingId}/areas.json`, { params });
+    const url = buildingId
+      ? `${API_CONFIG.BASE_URL}/pms/buildings/${buildingId}/areas.json`
+      : `${API_CONFIG.BASE_URL}/pms/areas.json`;
+    const response = await axios.get(url, { params });
     return response.data.areas || [];
   }
 );
 
-export const fetchFloors = createAsyncThunk<Floor[], number>(
+export const fetchFloors = createAsyncThunk<Floor[], number | void | undefined>(
   'serviceLocation/fetchFloors',
-  async (buildingId: number) => {
-    const response = await axios.get(`${API_CONFIG.BASE_URL}/pms/buildings/${buildingId}/floors.json`, {
+  async (buildingId) => {
+    const url = buildingId
+      ? `${API_CONFIG.BASE_URL}/pms/buildings/${buildingId}/floors.json`
+      : `${API_CONFIG.BASE_URL}/pms/floors.json`;
+    const response = await axios.get(url, {
       params: { access_token: API_CONFIG.TOKEN }
     });
     return response.data.floors || [];
@@ -152,10 +162,13 @@ export const fetchGroups = createAsyncThunk<Group[]>(
   }
 );
 
-export const fetchSubGroups = createAsyncThunk<SubGroup[], number>(
+export const fetchSubGroups = createAsyncThunk<SubGroup[], number | void | undefined>(
   'serviceLocation/fetchSubGroups',
-  async (groupId: number) => {
-    const response = await axios.get(`${API_CONFIG.BASE_URL}/pms/assets/get_asset_group_sub_group.json?group_id=${groupId}`, {
+  async (groupId) => {
+    const url = groupId
+      ? `${API_CONFIG.BASE_URL}/pms/assets/get_asset_group_sub_group.json?group_id=${groupId}`
+      : `${API_CONFIG.BASE_URL}/pms/assets/get_asset_group_sub_group.json`;
+    const response = await axios.get(url, {
       params: { access_token: API_CONFIG.TOKEN }
     });
     console.log('SubGroups API Response:', response.data);
@@ -164,10 +177,13 @@ export const fetchSubGroups = createAsyncThunk<SubGroup[], number>(
   }
 );
 
-export const fetchRooms = createAsyncThunk<Room[], number>(
+export const fetchRooms = createAsyncThunk<Room[], number | void | undefined>(
   'serviceLocation/fetchRooms',
-  async (buildingId: number) => {
-    const response = await axios.get(`${API_CONFIG.BASE_URL}/pms/buildings/${buildingId}/rooms.json`, {
+  async (buildingId) => {
+    const url = buildingId
+      ? `${API_CONFIG.BASE_URL}/pms/buildings/${buildingId}/rooms.json`
+      : `${API_CONFIG.BASE_URL}/pms/rooms.json`;
+    const response = await axios.get(url, {
       params: { access_token: API_CONFIG.TOKEN }
     });
     return response.data.rooms || [];
@@ -210,62 +226,25 @@ const serviceLocationSlice = createSlice({
   reducers: {
     setSelectedSite: (state, action: PayloadAction<number | null>) => {
       state.selectedSiteId = action.payload;
-      state.selectedBuildingId = null;
-      state.selectedWingId = null;
-      state.selectedAreaId = null;
-      state.selectedFloorId = null;
-      state.selectedRoomId = null;
-      state.buildings = [];
-      state.wings = [];
-      state.areas = [];
-      state.floors = [];
-      state.rooms = [];
     },
 
     setSelectedBuilding: (state, action: PayloadAction<number | null>) => {
       state.selectedBuildingId = action.payload;
-      // Reset dependent selections
-      state.selectedWingId = null;
-      state.selectedAreaId = null;
-      state.selectedFloorId = null;
-      state.selectedRoomId = null;
-      state.wings = [];
-      state.areas = [];
-      state.floors = [];
-      state.rooms = [];
     },
     setSelectedWing: (state, action: PayloadAction<number | null>) => {
       state.selectedWingId = action.payload;
-      // Reset dependent selections
-      state.selectedAreaId = null;
-      state.selectedFloorId = null;
-      state.selectedRoomId = null;
-      state.areas = [];
-      state.floors = [];
-      state.rooms = [];
     },
     setSelectedArea: (state, action: PayloadAction<number | null>) => {
       state.selectedAreaId = action.payload;
-      // Reset dependent selections
-      state.selectedFloorId = null;
-      state.selectedRoomId = null;
-      state.floors = [];
-      state.rooms = [];
     },
     setSelectedFloor: (state, action: PayloadAction<number | null>) => {
       state.selectedFloorId = action.payload;
-      // Reset dependent selections
-      state.selectedRoomId = null;
-      state.rooms = [];
     },
     setSelectedRoom: (state, action: PayloadAction<number | null>) => {
       state.selectedRoomId = action.payload;
     },
     setSelectedGroup: (state, action: PayloadAction<number | null>) => {
       state.selectedGroupId = action.payload;
-      // Reset dependent selections
-      state.selectedSubGroupId = null;
-      state.subGroups = [];
     },
     setSelectedSubGroup: (state, action: PayloadAction<number | null>) => {
       state.selectedSubGroupId = action.payload;

@@ -33,13 +33,13 @@ import {
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 const C = {
-  green: "#798C5E",
+  green: "#32B188",
   red: "#E7848E",
-  blue: "#6B9BCC",
-  orange: "#EDC488",
-  gray: "#D3D1C7",
-  teal: "#9EC8BA",
-  purple: "#CECBF6",
+  blue: "#6C9CD9",
+  orange: "#E2AE81",
+  gray: "#D5DBDB",
+  teal: "#77CEC1",
+  purple: "#A679DE",
 };
 
 // Static placeholder — no backing API yet for booking-source attribution.
@@ -50,9 +50,45 @@ const STATIC_BOOKING_SOURCE = [
   { name: "Other", pct: 19, color: C.orange },
 ];
 
-// Cycled by position to color the Booking Status / Payment Channels donuts —
-// both are arbitrary-length breakdowns from the API, not fixed categories.
-const DONUT_COLOR_PALETTE = [C.green, C.orange, C.red, C.blue, C.purple, C.teal, C.gray];
+// Cycled by position to color the Booking Status / Payment Channels donuts
+// for any category that isn't recognized by name (see statusColor/
+// paymentChannelColor below) — both are arbitrary-length breakdowns from the
+// API, not fixed categories.
+const DONUT_COLOR_PALETTE = [C.green, C.orange, C.purple, C.blue, C.red, C.teal, C.gray];
+
+// Booking Status / Payment Channels segments are colored by matching the
+// category name rather than plain array position — the two donuts have
+// different item counts, so index-based cycling alone can't give "confirmed"
+// and "UPI/NetBanking" the same green and "cancelled"/"wallet" the same
+// purple at the same time. Falls back to positional cycling for anything
+// unrecognized (e.g. a "failed" status).
+function statusColor(status: string, index: number) {
+  const s = status.toLowerCase();
+  if (s.includes("confirm")) return C.green;
+  if (s.includes("pend")) return C.orange;
+  if (s.includes("cancel")) return C.purple;
+  if (s.includes("fail")) return C.red;
+  return DONUT_COLOR_PALETTE[index % DONUT_COLOR_PALETTE.length];
+}
+
+function paymentChannelColor(method: string, index: number) {
+  const m = method.toLowerCase();
+  if (m.includes("upi") || m.includes("net")) return C.green;
+  if (m.includes("wallet")) return C.purple;
+  return DONUT_COLOR_PALETTE[index % DONUT_COLOR_PALETTE.length];
+}
+
+// Revenue by Amenity bars — same purple at 5 increasing opacity steps,
+// lightest for the largest (first) row down to solid for the smallest.
+const REVENUE_BAR_COLORS = ["#8052B833", "#8052B866", "#8052B899", "#8052B8CC", "#8052B8"];
+
+// Utilization By Facility — one brand color per row, cycling if there are more rows.
+const UTIL_BAR_COLORS = [
+  "var(--color-primary)",
+  "var(--color-secondary-teal)",
+  "var(--color-info)",
+  "var(--color-secondary-purple)",
+];
 
 // "payment failed" -> "Payment Failed", "pay_on_facility" -> "Pay On Facility",
 // but short all-caps codes like "NA" are left alone.
@@ -120,6 +156,7 @@ export function PulseAmenities({ filters }: Props) {
   const [facilityUtil, setFacilityUtil] = useState<FacilityUtilizationOverview | null>(null);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [bookingSearch, setBookingSearch] = useState("");
 
   const pulseEvents = usePulseEvents();
 
@@ -200,7 +237,7 @@ export function PulseAmenities({ filters }: Props) {
     (b, i) => ({
       name: humanizeLabel(b.status),
       value: b.count,
-      color: DONUT_COLOR_PALETTE[i % DONUT_COLOR_PALETTE.length],
+      color: statusColor(b.status, i),
     })
   );
   const bookingStatusTotal = facilitiesOverview?.booking_status.total ?? 0;
@@ -210,7 +247,7 @@ export function PulseAmenities({ filters }: Props) {
     (p, i) => ({
       name: humanizeLabel(p.payment_method),
       value: p.count,
-      color: DONUT_COLOR_PALETTE[i % DONUT_COLOR_PALETTE.length],
+      color: paymentChannelColor(p.payment_method, i),
     })
   );
   const paymentChannelsTotal = facilitiesOverview?.payment_channels.total ?? 0;
@@ -220,10 +257,9 @@ export function PulseAmenities({ filters }: Props) {
   }));
   // The API can return multiple rows per facility name (distinct bookable
   // slot groups), so index into the key rather than assuming unique names.
-  const utilRows = (facilityUtil?.utilisation_by_facility.facilities ?? []).map((f, i) => ({
+  const utilRows = (facilityUtil?.utilisation_by_facility.facilities ?? []).map((f) => ({
     name: f.name,
     pct: f.utilisation_percentage,
-    color: DONUT_COLOR_PALETTE[i % DONUT_COLOR_PALETTE.length],
   }));
 
   // Shared renderer for the two donut-with-center-total cards below (Booking
@@ -253,7 +289,10 @@ export function PulseAmenities({ filters }: Props) {
                   <Cell key={seg.name} fill={seg.color} fillOpacity={0.8} />
                 ))}
               </Pie>
-              <Tooltip />
+              {/* allowEscapeViewBox + offset - the 136px hitbox is smaller than the
+                  tooltip box, so by default Recharts clamps it to fit inside and it
+                  ends up covering the center total no matter where you hover. */}
+              <Tooltip allowEscapeViewBox={{ x: true, y: true }} offset={14} wrapperStyle={{ zIndex: 50 }} />
             </PieChart>
           </ResponsiveContainer>
           <div className="pd-donut-center">
@@ -394,7 +433,7 @@ export function PulseAmenities({ filters }: Props) {
           "Utilisation Trend",
           [
             { key: "new", name: "New", color: "var(--color-primary)" },
-            { key: "returning", name: "Returning", color: C.purple },
+            { key: "returning", name: "Returning", color: "#C9AEEB" },
           ],
           utilPoints,
           facilityUtil?.utilisation_trend.growth_percentage ?? 0,
@@ -403,8 +442,8 @@ export function PulseAmenities({ filters }: Props) {
         {renderTrendCard(
           "Bookable vs Requestable",
           [
-            { key: "bookable", name: "Bookable", color: C.teal },
-            { key: "requestable", name: "Requestable", color: C.orange },
+            { key: "bookable", name: "Bookable", color: "#5DB297" },
+            { key: "requestable", name: "Requestable", color: "#EAB588" },
           ],
           utilPoints,
           facilityUtil?.bookable_vs_requestable.growth_percentage ?? 0,
@@ -456,12 +495,14 @@ export function PulseAmenities({ filters }: Props) {
                   <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={formatCompactCurrency} />
                   <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={90} />
                   <Tooltip formatter={(v: number) => formatCompactCurrency(v)} />
-                  <Bar
-                    dataKey="value"
-                    name="Revenue"
-                    fill="var(--color-secondary-teal)"
-                    radius={[0, 3, 3, 0]}
-                  />
+                  <Bar dataKey="value" name="Revenue" radius={[0, 3, 3, 0]}>
+                    {revenueRows.map((r, i) => (
+                      <Cell
+                        key={`${r.name}-${i}`}
+                        fill={REVENUE_BAR_COLORS[i % REVENUE_BAR_COLORS.length]}
+                      />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -469,25 +510,25 @@ export function PulseAmenities({ filters }: Props) {
 
           <div className="pd-growth-card">
             <div className="pd-panel-title">Utilization By Facility</div>
-            <div className="pd-growth-chart-inner" style={{ overflowY: "auto" }}>
-              <ResponsiveContainer width="100%" height={Math.max(160, utilRows.length * 28)}>
-                <BarChart data={utilRows} layout="vertical" margin={{ left: 8 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                  <XAxis
-                    type="number"
-                    domain={[0, 100]}
-                    tick={{ fontSize: 10 }}
-                    tickFormatter={(v: number) => `${v}%`}
-                  />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={100} />
-                  <Tooltip formatter={(v: number) => `${v}%`} />
-                  <Bar dataKey="pct" name="Utilization" radius={[0, 3, 3, 0]}>
-                    {utilRows.map((r, i) => (
-                      <Cell key={`${r.name}-${i}`} fill={r.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="pd-growth-chart-inner">
+              <div className="pd-util-list">
+                {utilRows.map((row, i) => (
+                  <div className="pd-util-row" key={`${row.name}-${i}`}>
+                    <span className="pd-util-label" title={row.name}>
+                      {row.name}
+                    </span>
+                    <span className="pd-util-track">
+                      <span
+                        className="pd-util-fill"
+                        style={{
+                          width: `${Math.min(100, Math.max(0, row.pct))}%`,
+                          background: UTIL_BAR_COLORS[i % UTIL_BAR_COLORS.length],
+                        }}
+                      />
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -681,7 +722,14 @@ export function PulseAmenities({ filters }: Props) {
       {bookingLogs && (
         <div className="pd-tbl-card">
           <div className="pd-tbl-header">
-            <span className="pd-tbl-title">Facility Bookings Log</span>
+            <span className="pd-tbl-title pd-tbl-title--plain">Facility Bookings Log</span>
+            <input
+              type="text"
+              className="pd-tbl-search-input"
+              placeholder="Search bookings..."
+              value={bookingSearch}
+              onChange={(e) => setBookingSearch(e.target.value)}
+            />
           </div>
           <div className="pd-tbl-wrap">
             <table className="pd-table">
@@ -697,7 +745,11 @@ export function PulseAmenities({ filters }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {bookingLogs.bookings.map((b) => (
+                {bookingLogs.bookings
+                  .filter((b) =>
+                    b.facility_name.toLowerCase().includes(bookingSearch.trim().toLowerCase())
+                  )
+                  .map((b) => (
                   <tr key={b.id}>
                     <td className="pd-num">{b.serial}</td>
                     <td style={{ fontWeight: 500 }}>{b.facility_name}</td>

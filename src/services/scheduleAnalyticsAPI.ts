@@ -78,13 +78,13 @@ const getAccessToken = (): string => {
 
 export const scheduleAnalyticsAPI = {
   // Get schedule overview data
-  async getScheduleOverview(fromDate: Date, toDate: Date): Promise<ScheduleOverviewData> {
-    const siteId = getCurrentSiteId();
+  async getScheduleOverview(fromDate: Date, toDate: Date, siteId?: string): Promise<ScheduleOverviewData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
     
-    const url = `${API_CONFIG.BASE_URL}/pms/schedule_analytics/overview.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
+    const url = `${API_CONFIG.BASE_URL}/pms/schedule_analytics/overview.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
     
     const response = await fetch(url, {
       method: 'GET',
@@ -102,13 +102,13 @@ export const scheduleAnalyticsAPI = {
   },
 
   // Get schedule completion data
-  async getScheduleCompletion(fromDate: Date, toDate: Date): Promise<ScheduleCompletionData> {
-    const siteId = getCurrentSiteId();
+  async getScheduleCompletion(fromDate: Date, toDate: Date, siteId?: string): Promise<ScheduleCompletionData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
     
-    const url = `${API_CONFIG.BASE_URL}/pms/schedule_analytics/completion.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
+    const url = `${API_CONFIG.BASE_URL}/pms/schedule_analytics/completion.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
     
     const response = await fetch(url, {
       method: 'GET',
@@ -126,13 +126,13 @@ export const scheduleAnalyticsAPI = {
   },
 
   // Get resource utilization data
-  async getResourceUtilization(fromDate: Date, toDate: Date): Promise<ResourceUtilizationData> {
-    const siteId = getCurrentSiteId();
+  async getResourceUtilization(fromDate: Date, toDate: Date, siteId?: string): Promise<ResourceUtilizationData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
     
-    const url = `${API_CONFIG.BASE_URL}/pms/schedule_analytics/resource_utilization.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
+    const url = `${API_CONFIG.BASE_URL}/pms/schedule_analytics/resource_utilization.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
     
     const response = await fetch(url, {
       method: 'GET',

@@ -14,11 +14,14 @@ export type ParkingAllocationRow = {
   Vacant: number;
 };
 
+const getSiteId = () => localStorage.getItem('selectedSiteId') || '';
+
 const parkingManagementAnalyticsAPI = {
-  async getParkingAllocationOverview(fromDate: Date, toDate: Date): Promise<ParkingAllocationRow[]> {
+  async getParkingAllocationOverview(fromDate: Date, toDate: Date, siteId?: string): Promise<ParkingAllocationRow[]> {
     const start = formatDate(fromDate);
     const end = formatDate(toDate);
-    const url = `/api/pms/reports/parking_date_site_wise?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/api/pms/reports/parking_date_site_wise.json?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
     const resp = await apiClient.get(url);
     const payload = resp.data;
     const root = payload?.data ?? payload ?? {};

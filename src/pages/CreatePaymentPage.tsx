@@ -481,16 +481,52 @@ export const CreatePaymentPage: React.FC = () => {
           timeout: 30000,
         });
         const raw = res.data;
-        const allBills: LockAccountBill[] = Array.isArray(raw)
+        const allBills: any[] = Array.isArray(raw)
           ? raw
           : Array.isArray(raw?.lock_account_bills)
             ? raw.lock_account_bills
             : Array.isArray(raw?.data)
               ? raw.data
               : [];
-        const vendorBills = allBills.filter(
-          (b) => String(b.pms_supplier_id) === String(vendorId)
+
+        const selectedSupp = suppliers.find(
+          (s) => String(s.id) === String(vendorId)
         );
+
+        const vendorBills = allBills.filter((b: any) => {
+          const bSupplierId =
+            b.pms_supplier_id ??
+            b.supplier_id ??
+            b.vendor_id ??
+            b.pms_supplier?.id ??
+            b.supplier?.id;
+          if (bSupplierId != null && String(bSupplierId) === String(vendorId)) {
+            return true;
+          }
+
+          if (selectedSupp) {
+            const bName = (
+              b.vendor_name ||
+              b.contact_name ||
+              b.supplier_name ||
+              b.supplier?.name ||
+              b.supplier?.company_name ||
+              ""
+            )
+              .toLowerCase()
+              .trim();
+            const sName = (selectedSupp.name || "").toLowerCase().trim();
+            const sCompany = (selectedSupp.company_name || "")
+              .toLowerCase()
+              .trim();
+
+            if (bName && (bName === sName || bName === sCompany)) {
+              return true;
+            }
+          }
+
+          return false;
+        });
         setBills(vendorBills);
       } catch (err) {
         console.error("Failed to fetch bills:", err);
@@ -504,7 +540,7 @@ export const CreatePaymentPage: React.FC = () => {
         setBillsLoading(false);
       }
     },
-    [accountingClient, authToken, ensureLockAccountId]
+    [accountingClient, authToken, ensureLockAccountId, suppliers]
   );
 
   // Convert a File to base64 string
@@ -709,13 +745,20 @@ export const CreatePaymentPage: React.FC = () => {
     0
   );
   const getBillAmountDue = useCallback(
-    (bill: LockAccountBill) =>
-      parseAmountValue(
+    (bill: any) => {
+      const bal = parseAmountValue(
         bill.balance_due ??
+          bill.balance_amount ??
           bill.amount_due ??
-          bill.due_amount ??
-          bill.total_amount
-      ),
+          bill.due_amount
+      );
+      if (bal > 0) return bal;
+
+      const status = String(bill.status || "").toLowerCase();
+      if (status === "paid") return 0;
+
+      return parseAmountValue(bill.total_amount ?? bill.amount);
+    },
     [parseAmountValue]
   );
   const vendorAmountDue = bills.reduce(
@@ -727,43 +770,157 @@ export const CreatePaymentPage: React.FC = () => {
     "grid w-full grid-cols-[1.15fr_1fr_1fr_1.05fr_1.05fr_1.4fr_1.2fr] gap-4";
   const paymentDateInputValue = date ? format(date, "yyyy-MM-dd") : "";
 
-  const handlePaymentAmountChange = useCallback(
-    (value: string) => {
+  const handlePaymentAmountChange = useCallback((value: string) => {
+    // Only allow digits and optionally a single decimal point
+    if (value === "" || /^\d*\.?\d*$/.test(value)) {
       setAmount(value);
       setPayFullAmount(false);
+    }
+  }, []);
 
-      const numericAmount = parseFloat(value);
-      setReflectPaymentPromptOpen(
-        activeTab === "bill_payment" &&
-          bills.length > 0 &&
-          !billsLoading &&
-          Number.isFinite(numericAmount) &&
-          numericAmount > 0
-      );
-    },
-    [activeTab, bills.length, billsLoading]
-  );
+  const handlePaymentAmountKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (e.key === "Enter") {
+      (e.target as HTMLInputElement).blur();
+      return;
+    }
+
+    // Allow navigation, deletion, clipboard shortcuts
+    if (
+      [
+        "Backspace",
+        "Delete",
+        "Tab",
+        "Escape",
+        "ArrowLeft",
+        "ArrowRight",
+        "ArrowUp",
+        "ArrowDown",
+        "Home",
+        "End",
+      ].includes(e.key) ||
+      ((e.ctrlKey || e.metaKey) &&
+        ["a", "c", "v", "x"].includes(e.key.toLowerCase()))
+    ) {
+      return;
+    }
+
+    // Allow decimal point only once
+    if (e.key === ".") {
+      const input = e.target as HTMLInputElement;
+      const hasSelection =
+        input.selectionStart !== null &&
+        input.selectionEnd !== null &&
+        input.selectionStart !== input.selectionEnd;
+      if (amount.includes(".") && !hasSelection) {
+        e.preventDefault();
+      }
+      return;
+    }
+
+    // Disallow anything that is not a digit 0-9
+    if (!/^\d$/.test(e.key)) {
+      e.preventDefault();
+    }
+  };
+
+  const handlePaymentAmountBlur = useCallback(() => {
+    const numericAmount = parseFloat(amount);
+    if (
+      activeTab === "bill_payment" &&
+      bills.length > 0 &&
+      !billsLoading &&
+      Number.isFinite(numericAmount) &&
+      numericAmount > 0 &&
+      Math.abs(totalApplied - numericAmount) > 0.001
+    ) {
+      setTimeout(() => {
+        setReflectPaymentPromptOpen(true);
+      }, 150);
+    }
+  }, [activeTab, amount, bills.length, billsLoading, totalApplied]);
 
   const applyPaymentAmountToBills = useCallback(() => {
     let remainingAmount = parseFloat(amount) || 0;
 
-    setAppliedAmounts(
-      bills.reduce<Record<number, string>>((acc, bill) => {
-        if (remainingAmount <= 0) {
-          acc[bill.id] = "";
-          return acc;
-        }
+    const nextApplied: Record<number, string> = {};
+    for (const bill of bills) {
+      if (remainingAmount <= 0) {
+        nextApplied[bill.id] = "";
+        continue;
+      }
+      const amountDue = getBillAmountDue(bill);
+      const rowAmount = Math.min(remainingAmount, amountDue);
+      nextApplied[bill.id] = rowAmount > 0 ? rowAmount.toFixed(2) : "";
+      remainingAmount -= rowAmount;
+    }
 
-        const amountDue = getBillAmountDue(bill);
-        const rowAmount = Math.min(remainingAmount, amountDue);
-        acc[bill.id] = rowAmount > 0 ? rowAmount.toFixed(2) : "";
-        remainingAmount -= rowAmount;
-        return acc;
-      }, {})
+    setAppliedAmounts(nextApplied);
+
+    const nextTotal = Object.values(nextApplied).reduce(
+      (sum, v) => sum + (parseFloat(v) || 0),
+      0
     );
-    setPayFullAmount(false);
+    if (vendorAmountDue > 0 && Math.abs(nextTotal - vendorAmountDue) < 0.01) {
+      setPayFullAmount(true);
+    } else {
+      setPayFullAmount(false);
+    }
     setReflectPaymentPromptOpen(false);
-  }, [amount, bills, getBillAmountDue]);
+  }, [amount, bills, getBillAmountDue, vendorAmountDue]);
+
+  const handleClearAppliedAmounts = useCallback(() => {
+    setAppliedAmounts({});
+    setPayFullAmount(false);
+    setAmount("");
+  }, []);
+
+  const handleBillPaymentChange = useCallback(
+    (billId: number, val: string) => {
+      if (val !== "" && !/^\d*\.?\d*$/.test(val)) return;
+      setPayFullAmount(false);
+      setAppliedAmounts((prev) => {
+        const next = { ...prev, [billId]: val };
+        const nextTotal = Object.values(next).reduce(
+          (sum, v) => sum + (parseFloat(v) || 0),
+          0
+        );
+        setAmount(nextTotal > 0 ? nextTotal.toFixed(2) : "");
+        if (
+          vendorAmountDue > 0 &&
+          Math.abs(nextTotal - vendorAmountDue) < 0.01
+        ) {
+          setPayFullAmount(true);
+        }
+        return next;
+      });
+    },
+    [vendorAmountDue]
+  );
+
+  const handleBillPayInFull = useCallback(
+    (bill: any) => {
+      const full = getBillAmountDue(bill).toFixed(2);
+      setPayFullAmount(false);
+      setAppliedAmounts((prev) => {
+        const next = { ...prev, [bill.id]: full };
+        const nextTotal = Object.values(next).reduce(
+          (sum, v) => sum + (parseFloat(v) || 0),
+          0
+        );
+        setAmount(nextTotal > 0 ? nextTotal.toFixed(2) : "");
+        if (
+          vendorAmountDue > 0 &&
+          Math.abs(nextTotal - vendorAmountDue) < 0.01
+        ) {
+          setPayFullAmount(true);
+        }
+        return next;
+      });
+    },
+    [getBillAmountDue, vendorAmountDue]
+  );
 
   const handleBillPaymentDateChange = useCallback((value: string) => {
     if (!value) return;
@@ -775,7 +932,8 @@ export const CreatePaymentPage: React.FC = () => {
       align="start"
       side="bottom"
       sideOffset={6}
-      className="w-[290px] rounded-md border border-gray-200 bg-white p-0 shadow-lg"
+      onOpenAutoFocus={(e) => e.preventDefault()}
+      className="w-[290px] rounded-md border border-gray-200 bg-white p-0 shadow-lg z-50"
     >
       <div className="px-3 py-4 text-xs leading-5 text-gray-600">
         Would you like this amount to be reflected in the Payment field?
@@ -1066,6 +1224,7 @@ export const CreatePaymentPage: React.FC = () => {
                             activeTab === "bill_payment" &&
                             reflectPaymentPromptOpen
                           }
+                          onOpenChange={setReflectPaymentPromptOpen}
                         >
                           <PopoverTrigger asChild>
                             <div className="flex items-center h-[38px] border border-gray-300 rounded-md px-3 bg-white focus-within:ring-1 focus-within:ring-gray-950 focus-within:border-gray-950 transition-colors shadow-sm">
@@ -1073,10 +1232,18 @@ export const CreatePaymentPage: React.FC = () => {
                                 INR
                               </span>
                               <input
+                                type="text"
+                                inputMode="decimal"
+                                placeholder="0.00"
                                 value={amount}
                                 onChange={(e) =>
                                   handlePaymentAmountChange(e.target.value)
                                 }
+                                onBlur={handlePaymentAmountBlur}
+                                onFocus={() =>
+                                  setReflectPaymentPromptOpen(false)
+                                }
+                                onKeyDown={handlePaymentAmountKeyDown}
                                 className="flex-1 w-full outline-none text-sm bg-transparent"
                               />
                             </div>
@@ -1619,10 +1786,7 @@ export const CreatePaymentPage: React.FC = () => {
                         <button
                           type="button"
                           className="text-brand text-xs hover:underline"
-                          onClick={() => {
-                            setAppliedAmounts({});
-                            setPayFullAmount(false);
-                          }}
+                          onClick={handleClearAppliedAmounts}
                         >
                           Clear Applied Amount
                         </button>
@@ -1721,26 +1885,23 @@ export const CreatePaymentPage: React.FC = () => {
                                   step="0.01"
                                   placeholder="0"
                                   value={appliedAmounts[bill.id] ?? ""}
-                                  onChange={(e) => {
-                                    setPayFullAmount(false);
-                                    setAppliedAmounts((prev) => ({
-                                      ...prev,
-                                      [bill.id]: e.target.value,
-                                    }));
+                                  onKeyDown={(e) => {
+                                    if (["e", "E", "+", "-"].includes(e.key)) {
+                                      e.preventDefault();
+                                    }
                                   }}
+                                  onChange={(e) =>
+                                    handleBillPaymentChange(
+                                      bill.id,
+                                      e.target.value
+                                    )
+                                  }
                                   className="h-8 w-28 rounded border border-gray-300 bg-white px-2 text-right text-xs text-gray-700 focus:outline-none focus:border-blue-400"
                                 />
                                 <button
                                   type="button"
                                   className="mt-1 text-[11px] text-brand hover:underline"
-                                  onClick={() => {
-                                    setPayFullAmount(false);
-                                    setAppliedAmounts((prev) => ({
-                                      ...prev,
-                                      [bill.id]:
-                                        getBillAmountDue(bill).toFixed(2),
-                                    }));
-                                  }}
+                                  onClick={() => handleBillPayInFull(bill)}
                                 >
                                   Pay in Full
                                 </button>
@@ -1812,154 +1973,61 @@ export const CreatePaymentPage: React.FC = () => {
                     </span>
                   </div>
                   <div className="p-5">
-                    <div className="flex justify-end mb-2">
-                      <button
-                        type="button"
-                        className="text-brand text-xs hover:underline"
-                        onClick={() => {
-                          setAppliedAmounts({});
-                          setPayFullAmount(false);
+                    <textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      className="w-full min-h-[96px] border border-gray-300 p-3 text-sm rounded-[4px] resize-y placeholder-gray-400 focus:outline-none focus:border-gray-900"
+                      placeholder="Enter any notes for the customer"
+                    />
+                  </div>
+                </div>
+
+                {/* ── ATTACH FILES ── */}
+                <div className="border border-gray-200 mt-6 bg-white">
+                  <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-200">
+                    <Paperclip
+                      className="w-[18px] h-[18px] text-[#db4a4a]"
+                      strokeWidth={2}
+                    />
+                    <span className="text-[13px] font-bold tracking-wide text-[#333]">
+                      ATTACH FILES
+                    </span>
+                  </div>
+                  <div className="p-5">
+                    <div className="border border-dashed border-gray-300 p-12 text-center bg-white hover:bg-gray-50 transition-colors">
+                      <input
+                        type="file"
+                        id="file-upload"
+                        multiple
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files || []);
+                          if (attachmentFiles.length + files.length > 10) {
+                            sonnerToast.error("Maximum 10 files allowed.");
+                            return;
+                          }
+                          setAttachmentFiles((prev) => [...prev, ...files]);
                         }}
+                        className="hidden"
+                        accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+                      />
+                      <label
+                        htmlFor="file-upload"
+                        className="cursor-pointer flex flex-col items-center justify-center m-0"
                       >
-                        Clear Applied Amount
-                      </button>
-                    </div>
-
-                    {/* Table Header */}
-                    <div className="w-full">
-                      <div
-                        className={`${billTableGridClass} border-b border-gray-300 pb-2 text-xs font-medium text-gray-500`}
-                      >
-                        <div>Date</div>
-                        <div>Bill#</div>
-                        <div>PO#</div>
-                        <div className="text-right">Bill Amount</div>
-                        <div className="text-right">Amount Due</div>
-                        <div className="flex items-center justify-end gap-1 text-right">
-                          Payment Made on <Info className="h-3 w-3" />
-                        </div>
-                        <div className="text-right">Payment</div>
-                      </div>
-
-                      {/* Loading */}
-                      {billsLoading && (
-                        <div className="w-full py-10 text-center text-sm text-gray-500">
-                          Loading bills...
-                        </div>
-                      )}
-
-                      {!billsLoading && billsError && (
-                        <div className="w-full py-10 text-center text-sm text-gray-700 border-b border-gray-200">
-                          <div>{billsError}</div>
-                          {selectedVendor && (
-                            <button
-                              type="button"
-                              className="mt-3 text-brand text-xs hover:underline"
-                              onClick={() => fetchBills(selectedVendor)}
-                            >
-                              Retry
-                            </button>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Empty State */}
-                      {!billsLoading && !billsError && bills.length === 0 && (
-                        <div className="w-full py-12 text-center text-gray-800 text-sm border-b border-gray-200">
-                          {selectedVendor
-                            ? "There are no bills for this vendor."
-                            : "Select a vendor to view bills."}
-                        </div>
-                      )}
-
-                      {/* Bill Rows */}
-                      {!billsLoading &&
-                        !billsError &&
-                        bills.map((bill) => (
-                          <div
-                            key={bill.id}
-                            className={`${billTableGridClass} border-b border-gray-100 py-3 text-sm items-start hover:bg-gray-50 transition-colors`}
-                          >
-                            <div className="text-gray-800 text-xs">
-                              <div>
-                                {bill.bill_date
-                                  ? new Date(bill.bill_date).toLocaleDateString(
-                                      "en-GB"
-                                    )
-                                  : "-"}
-                              </div>
-                              {bill.due_date && (
-                                <div className="mt-1 text-[10px] text-gray-500">
-                                  Due Date:{" "}
-                                  {new Date(bill.due_date).toLocaleDateString(
-                                    "en-GB"
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                            <div>
-                              <span className="text-gray-800 font-medium text-xs">
-                                {bill.bill_number || "-"}
-                              </span>
-                              {bill.subject && (
-                                <div className="text-[10px] text-gray-400 truncate">
-                                  {bill.subject}
-                                </div>
-                              )}
-                            </div>
-                            <div className="text-gray-600 text-xs">
-                              {bill.order_number || "-"}
-                            </div>
-                            <div className="text-right text-gray-800 text-xs font-medium">
-                              {formatAmountValue(bill.total_amount)}
-                            </div>
-                            <div className="text-right text-gray-800 text-xs">
-                              {getBillAmountDue(bill).toFixed(2)}
-                            </div>
-                            <div className="flex justify-end">
-                              <input
-                                type="date"
-                                value={paymentDateInputValue}
-                                onChange={(e) =>
-                                  handleBillPaymentDateChange(e.target.value)
-                                }
-                                className="h-8 w-36 rounded border border-gray-300 bg-white px-2 text-right text-xs text-gray-700 focus:outline-none focus:border-blue-400"
-                              />
-                            </div>
-                            <div className="flex flex-col items-end">
-                              <input
-                                type="number"
-                                min="0"
-                                max={getBillAmountDue(bill)}
-                                step="0.01"
-                                placeholder="0"
-                                value={appliedAmounts[bill.id] ?? ""}
-                                onChange={(e) => {
-                                  setPayFullAmount(false);
-                                  setAppliedAmounts((prev) => ({
-                                    ...prev,
-                                    [bill.id]: e.target.value,
-                                  }));
-                                }}
-                                className="h-8 w-28 rounded border border-gray-300 bg-white px-2 text-right text-xs text-gray-700 focus:outline-none focus:border-blue-400"
-                              />
-                              <button
-                                type="button"
-                                className="mt-1 text-[11px] text-brand hover:underline"
-                                onClick={() => {
-                                  setPayFullAmount(false);
-                                  setAppliedAmounts((prev) => ({
-                                    ...prev,
-                                    [bill.id]:
-                                      getBillAmountDue(bill).toFixed(2),
-                                  }));
-                                }}
-                              >
-                                Pay in Full
-                              </button>
-                            </div>
-                          </div>
-                        ))}
+                        <CloudUpload className="w-8 h-8 text-[#98a2b3] mb-3" />
+                        <Typography
+                          variant="body2"
+                          className="text-[#344054] font-semibold mb-1"
+                        >
+                          Upload File
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          className="text-[#667085]"
+                        >
+                          You can upload a maximum of 10 files, 5MB each
+                        </Typography>
+                      </label>
                     </div>
 
                     {attachmentFiles.length > 0 && (

@@ -49,7 +49,7 @@ const columns = [
   { key: 'actions', label: 'Action' },
   { key: 'id', label: 'Id' },
   { key: 'dispatch_datetime', label: 'Dispatch Date & Time' },
-  { key: 'waste_category', label: 'Waste Category' },
+  { key: 'category_names', label: 'Waste Category' },
   { key: 'waste_type', label: 'Waste Type' },
   { key: 'total_generated_kg', label: 'Total Generated Weight (KG)' },
   { key: 'dispatch_weight_kg', label: 'Dispatch Weight (KG)' },
@@ -112,8 +112,8 @@ const toDispatchRecordView = (item: WasteDispatch): DispatchRecord => {
   return {
     id: item.id.toString(),
     dispatchId: item.id.toString(),
-    wasteItem: '-',
-    category: '-',
+    wasteItem: item.waste_type ? item.waste_type.replace(/\b\w/g, (c) => c.toUpperCase()) : '-',
+    category: item.category_names || '-',
     dispatchWeight: item.dispatch_weight_kg != null
       ? `${item.dispatch_weight_kg} KG`
       : (item.dispatch_weight_ltr != null ? `${item.dispatch_weight_ltr} L` : '-'),
@@ -123,7 +123,7 @@ const toDispatchRecordView = (item: WasteDispatch): DispatchRecord => {
     dispatchDate: item.dispatch_date || '-',
     // manifestNumber: item.waste_transfer_note || '-',
     status: item.approval_status || '-',
-    site: '-',
+    site: item.source_site?.name || '-',
     weightEntries: [],
     dispatchTime: timePart,
     totalGeneratedWeightKg: null,

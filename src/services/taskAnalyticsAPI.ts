@@ -88,15 +88,15 @@ export const getCurrentSiteId = (): string => {
 
 // Task Analytics API Functions
 export const taskAnalyticsAPI = {
-  getTechnicalChecklistData: async (fromDate: Date, toDate: Date): Promise<TechnicalChecklistResponse> => {
+  getTechnicalChecklistData: async (fromDate: Date, toDate: Date, siteId?: string): Promise<TechnicalChecklistResponse> => {
     const token = getToken();
-    const siteId = getSelectedSiteId();
+    const resolvedSiteId = siteId ?? getSelectedSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
     
     
-    const url = getFullUrl(`/pms/custom_forms/chart_technical_checklist_monthly.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`);
+    const url = getFullUrl(`/pms/custom_forms/chart_technical_checklist_monthly.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`);
     
     const response = await fetch(url, {
       method: 'GET',
@@ -113,13 +113,13 @@ export const taskAnalyticsAPI = {
     return response.json();
   },
 
-  getNonTechnicalChecklistData: async (fromDate: Date, toDate: Date): Promise<NonTechnicalChecklistResponse> => {
+  getNonTechnicalChecklistData: async (fromDate: Date, toDate: Date, siteId?: string): Promise<NonTechnicalChecklistResponse> => {
     const token = getToken();
-    const siteId = getCurrentSiteId();
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = getFullUrl(`/pms/custom_forms/chart_non_technical_checklist_monthly.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`);
+    const url = getFullUrl(`/pms/custom_forms/chart_non_technical_checklist_monthly.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`);
     
     const response = await fetch(url, {
       method: 'GET',
@@ -136,13 +136,13 @@ export const taskAnalyticsAPI = {
     return response.json();
   },
 
-  getTopTenChecklistData: async (fromDate: Date, toDate: Date): Promise<TopTenChecklistResponse> => {
+  getTopTenChecklistData: async (fromDate: Date, toDate: Date, siteId?: string): Promise<TopTenChecklistResponse> => {
     const token = getToken();
-    const siteId = getCurrentSiteId();
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = getFullUrl(`/pms/custom_forms/top_ten_checklist.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`);
+    const url = getFullUrl(`/pms/custom_forms/top_ten_checklist.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`);
     
     const response = await fetch(url, {
       method: 'GET',
@@ -159,13 +159,13 @@ export const taskAnalyticsAPI = {
     return response.json();
   },
 
-  getSiteWiseChecklistData: async (fromDate: Date, toDate: Date): Promise<SiteWiseChecklistResponse> => {
+  getSiteWiseChecklistData: async (fromDate: Date, toDate: Date, siteId?: string): Promise<SiteWiseChecklistResponse> => {
     const token = getToken();
-    const siteId = getCurrentSiteId();
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = getFullUrl(`/pms/custom_forms/site_wise_checklist.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`);
+    const url = getFullUrl(`/pms/custom_forms/site_wise_checklist.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`);
     
     const response = await fetch(url, {
       method: 'GET',

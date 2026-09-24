@@ -257,13 +257,13 @@ const getBaseUrl = (): string => {
 // Inventory Analytics API
 export const inventoryAnalyticsAPI = {
   // Get inventory cost over month data
-  async getInventoryCostOverMonth(fromDate: Date, toDate: Date): Promise<InventoryCostOverMonthData> {
-    const siteId = getCurrentSiteId();
+  async getInventoryCostOverMonth(fromDate: Date, toDate: Date, siteId?: string): Promise<InventoryCostOverMonthData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/inventories/card_inventory_cost_over_month.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/card_inventory_cost_over_month.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
 
     const response = await fetch(url);
     if (!response.ok) {
@@ -272,13 +272,13 @@ export const inventoryAnalyticsAPI = {
     return response.json();
   },
   // Get inventory consumption non-green data
-  async getInventoryConsumptionNonGreen(fromDate: Date, toDate: Date): Promise<InventoryConsumptionNonGreenData> {
-    const siteId = getCurrentSiteId();
+  async getInventoryConsumptionNonGreen(fromDate: Date, toDate: Date, siteId?: string): Promise<InventoryConsumptionNonGreenData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/inventories/get_inventory_consumption_non_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/get_inventory_consumption_non_green.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
 
     const response = await fetch(url);
     if (!response.ok) {
@@ -287,13 +287,13 @@ export const inventoryAnalyticsAPI = {
     return response.json();
   },
   // Get items status data (active/inactive/critical)
-  async getItemsStatus(fromDate: Date, toDate: Date): Promise<ItemsStatusData> {
-    const siteId = getCurrentSiteId();
+  async getItemsStatus(fromDate: Date, toDate: Date, siteId?: string): Promise<ItemsStatusData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/inventories/items_status.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/items_status.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
 
     const response = await fetch(url);
     if (!response.ok) {
@@ -303,13 +303,13 @@ export const inventoryAnalyticsAPI = {
   },
 
   // Get category-wise items data
-  async getCategoryWise(fromDate: Date, toDate: Date): Promise<CategoryWiseData> {
-    const siteId = getCurrentSiteId();
+  async getCategoryWise(fromDate: Date, toDate: Date, siteId?: string): Promise<CategoryWiseData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/inventories/category_wise_items.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/category_wise_items.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
 
     const response = await fetch(url);
     if (!response.ok) {
@@ -319,13 +319,13 @@ export const inventoryAnalyticsAPI = {
   },
 
   // Get green consumption data
-  async getGreenConsumption(fromDate: Date, toDate: Date): Promise<GreenConsumptionData> {
-    const siteId = getCurrentSiteId();
+  async getGreenConsumption(fromDate: Date, toDate: Date, siteId?: string): Promise<GreenConsumptionData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/inventories/inventory_consumption_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/inventory_consumption_green.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
 
     const response = await fetch(url);
     if (!response.ok) {
@@ -335,13 +335,13 @@ export const inventoryAnalyticsAPI = {
   },
 
   // Get consumption report green data
-  async getConsumptionReportGreen(fromDate: Date, toDate: Date): Promise<any> {
-    const siteId = getCurrentSiteId();
+  async getConsumptionReportGreen(fromDate: Date, toDate: Date, siteId?: string): Promise<any> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/inventories/consumption_report_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/consumption_report_green.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
 
     const response = await fetch(url);
     if (!response.ok) {
@@ -351,13 +351,13 @@ export const inventoryAnalyticsAPI = {
   },
 
   // Get consumption report non-green data
-  async getConsumptionReportNonGreen(fromDate: Date, toDate: Date): Promise<any> {
-    const siteId = getCurrentSiteId();
+  async getConsumptionReportNonGreen(fromDate: Date, toDate: Date, siteId?: string): Promise<any> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/inventories/consumption_report_non_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/consumption_report_non_green.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
 
     const response = await fetch(url);
     if (!response.ok) {
@@ -367,13 +367,13 @@ export const inventoryAnalyticsAPI = {
   },
 
   // Get minimum stock non-green data
-  async getCurrentMinimumStockNonGreen(fromDate: Date, toDate: Date): Promise<any> {
-    const siteId = getCurrentSiteId();
+  async getCurrentMinimumStockNonGreen(fromDate: Date, toDate: Date, siteId?: string): Promise<any> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/inventories/current_minimum_stock_non_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/current_minimum_stock_non_green.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
 
     const response = await fetch(url);
     if (!response.ok) {
@@ -383,13 +383,13 @@ export const inventoryAnalyticsAPI = {
   },
 
   // Get minimum stock green data
-  async getCurrentMinimumStockGreen(fromDate: Date, toDate: Date): Promise<any> {
-    const siteId = getCurrentSiteId();
+  async getCurrentMinimumStockGreen(fromDate: Date, toDate: Date, siteId?: string): Promise<any> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/inventories/current_minimum_stock_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/current_minimum_stock_green.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
 
     const response = await fetch(url);
     if (!response.ok) {
@@ -399,83 +399,83 @@ export const inventoryAnalyticsAPI = {
   },
 
   // Get inventory aging matrix
-  async getAgingMatrix(fromDate: Date, toDate: Date): Promise<InventoryAgingMatrix> {
-    const siteId = getCurrentSiteId();
+  async getAgingMatrix(fromDate: Date, toDate: Date, siteId?: string): Promise<InventoryAgingMatrix> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const response = await fetch(
-      `/analytics/inventory/aging_matrix.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`
+      `/analytics/inventory/aging_matrix.json?site_id=${resolvedSiteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`
     );
     if (!response.ok) throw new Error('Failed to fetch aging matrix data');
     return response.json();
   },
 
   // Get low stock items
-  async getLowStockItems(fromDate: Date, toDate: Date): Promise<LowStockData> {
-    const siteId = getCurrentSiteId();
+  async getLowStockItems(fromDate: Date, toDate: Date, siteId?: string): Promise<LowStockData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const response = await fetch(
-      `/analytics/inventory/low_stock_items.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`
+      `/analytics/inventory/low_stock_items.json?site_id=${resolvedSiteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`
     );
     if (!response.ok) throw new Error('Failed to fetch low stock items data');
     return response.json();
   },
 
   // Get high value items
-  async getHighValueItems(fromDate: Date, toDate: Date): Promise<HighValueData> {
-    const siteId = getCurrentSiteId();
+  async getHighValueItems(fromDate: Date, toDate: Date, siteId?: string): Promise<HighValueData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const response = await fetch(
-      `/analytics/inventory/high_value_items.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`
+      `/analytics/inventory/high_value_items.json?site_id=${resolvedSiteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`
     );
     if (!response.ok) throw new Error('Failed to fetch high value items data');
     return response.json();
   },
 
   // Get consumable items
-  async getConsumableItems(fromDate: Date, toDate: Date): Promise<ConsumableData> {
-    const siteId = getCurrentSiteId();
+  async getConsumableItems(fromDate: Date, toDate: Date, siteId?: string): Promise<ConsumableData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const response = await fetch(
-      `/analytics/inventory/consumable_items.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`
+      `/analytics/inventory/consumable_items.json?site_id=${resolvedSiteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`
     );
     if (!response.ok) throw new Error('Failed to fetch consumable items data');
     return response.json();
   },
 
   // Get non-consumable items
-  async getNonConsumableItems(fromDate: Date, toDate: Date): Promise<NonConsumableData> {
-    const siteId = getCurrentSiteId();
+  async getNonConsumableItems(fromDate: Date, toDate: Date, siteId?: string): Promise<NonConsumableData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const response = await fetch(
-      `/analytics/inventory/non_consumable_items.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`
+      `/analytics/inventory/non_consumable_items.json?site_id=${resolvedSiteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`
     );
     if (!response.ok) throw new Error('Failed to fetch non-consumable items data');
     return response.json();
   },
 
   // Get critical priority items
-  async getCriticalPriorityItems(fromDate: Date, toDate: Date): Promise<CriticalPriorityData> {
-    const siteId = getCurrentSiteId();
+  async getCriticalPriorityItems(fromDate: Date, toDate: Date, siteId?: string): Promise<CriticalPriorityData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const response = await fetch(
-      `/analytics/inventory/critical_priority_items.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`
+      `/analytics/inventory/critical_priority_items.json?site_id=${resolvedSiteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`
     );
     if (!response.ok) throw new Error('Failed to fetch critical priority items data');
     return response.json();
   },
 
   // Get maintenance due items
-  async getMaintenanceDueItems(fromDate: Date, toDate: Date): Promise<MaintenanceDueData> {
-    const siteId = getCurrentSiteId();
+  async getMaintenanceDueItems(fromDate: Date, toDate: Date, siteId?: string): Promise<MaintenanceDueData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const response = await fetch(
-      `/analytics/inventory/maintenance_due_items.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`
+      `/analytics/inventory/maintenance_due_items.json?site_id=${resolvedSiteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`
     );
     if (!response.ok) throw new Error('Failed to fetch maintenance due items data');
     return response.json();
   },
 
   // Get inventory consumption over site data
-  async getInventoryConsumptionOverSite(fromDate: Date, toDate: Date): Promise<InventoryConsumptionOverSiteData> {
-    const siteId = getCurrentSiteId();
+  async getInventoryConsumptionOverSite(fromDate: Date, toDate: Date, siteId?: string): Promise<InventoryConsumptionOverSiteData> {
+    const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/inventories/inventory_consumption_over_site.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/inventory_consumption_over_site.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
 
     const response = await fetch(url);
     if (!response.ok) {

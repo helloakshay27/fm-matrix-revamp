@@ -12,7 +12,7 @@ import { PulseAiAlerts } from "./PulseAiAlerts";
 import { PulseGreeting } from "./PulseGreeting";
 import "@/styles/pulse-dashboard.css";
 import "@/styles/pulse-shell.css";
-import { DashboardHeader } from "@/components/DashboardHeader";
+import { PulseDashboardHeader } from "./PulseDashboardHeader";
 import { UnifiedDateRangeFilter } from "@/components/dashboard/UnifiedDateRangeFilter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SlidersHorizontal, MapPin, X } from "lucide-react";
@@ -148,7 +148,7 @@ export function PulseDashboardPage() {
   return (
     <>
       <div className="bg-white border-b border-analytics-border">
-        <DashboardHeader />
+        <PulseDashboardHeader />
       </div>
 
       <div className="pulse-shell">

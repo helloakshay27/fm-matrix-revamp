@@ -8,32 +8,38 @@ const fmt = (d: Date) => {
   return `${y}-${m}-${day}`;
 };
 
+const getSiteId = () => localStorage.getItem('selectedSiteId') || '';
+
 export const inventoryManagementAnalyticsAPI = {
-  async getInventoryOverstockReport(fromDate: Date, toDate: Date): Promise<any> {
+  async getInventoryOverstockReport(fromDate: Date, toDate: Date, siteId?: string): Promise<any> {
     const start = fmt(fromDate);
     const end = fmt(toDate);
-    const url = `/api/pms/reports/inventory_overstock_report?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/api/pms/reports/inventory_overstock_report.json?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
     const resp = await apiClient.get(url);
     return resp.data;
   },
-  async getCenterWiseConsumables(fromDate: Date, toDate: Date): Promise<any> {
+  async getCenterWiseConsumables(fromDate: Date, toDate: Date, siteId?: string): Promise<any> {
     const start = fmt(fromDate);
     const end = fmt(toDate);
-    const url = `/api/pms/reports/center_wise_consumables?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/api/pms/reports/center_wise_consumables.json?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
     const resp = await apiClient.get(url);
     return resp.data;
   },
-  async getConsumableInventoryComparison(fromDate: Date, toDate: Date): Promise<any> {
+  async getConsumableInventoryComparison(fromDate: Date, toDate: Date, siteId?: string): Promise<any> {
     const start = fmt(fromDate);
     const end = fmt(toDate);
-    const url = `/api/pms/reports/consumable_inventory_comparison?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/api/pms/reports/consumable_inventory_comparison.json?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
     const resp = await apiClient.get(url);
     return resp.data;
   },
-  async downloadInventoryOverstockReport(fromDate: Date, toDate: Date): Promise<Blob> {
+  async downloadInventoryOverstockReport(fromDate: Date, toDate: Date, siteId?: string): Promise<Blob> {
     const start = fmt(fromDate);
     const end = fmt(toDate);
-    const url = `/export_inventory_overstock_report/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/export_inventory_overstock_report/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
     const resp = await apiClient.get(url, {
       responseType: 'blob',
     });
@@ -51,10 +57,11 @@ export const inventoryManagementAnalyticsAPI = {
     
     return blob;
   },
-  async downloadCenterWiseConsumables(fromDate: Date, toDate: Date): Promise<Blob> {
+  async downloadCenterWiseConsumables(fromDate: Date, toDate: Date, siteId?: string): Promise<Blob> {
     const start = fmt(fromDate);
     const end = fmt(toDate);
-    const url = `/export_center_wise_consumables/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/export_center_wise_consumables/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
     const resp = await apiClient.get(url, {
       responseType: 'blob',
     });
@@ -72,10 +79,11 @@ export const inventoryManagementAnalyticsAPI = {
     
     return blob;
   },
-  async downloadConsumableInventoryComparison(fromDate: Date, toDate: Date): Promise<Blob> {
+  async downloadConsumableInventoryComparison(fromDate: Date, toDate: Date, siteId?: string): Promise<Blob> {
     const start = fmt(fromDate);
     const end = fmt(toDate);
-    const url = `/export_consumable_inventory_comparison/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/export_consumable_inventory_comparison/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
     const resp = await apiClient.get(url, {
       responseType: 'blob',
     });

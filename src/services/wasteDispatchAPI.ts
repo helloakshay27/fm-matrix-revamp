@@ -57,6 +57,22 @@ export interface WasteDispatchRecycleEntry {
 
 // A single waste dispatch record, as returned by GET /pms/waste_dispatches.json.
 // Field names mirror the pms_waste_dispatch create payload below.
+export interface WasteDispatchLogChange {
+  field: string;
+  old_value?: unknown;
+  new_value?: unknown;
+}
+
+export interface WasteDispatchLog {
+  id: number;
+  log_type: string;
+  changed_by?: string | null;
+  changed_by_id?: number | null;
+  created_at?: string | null;
+  changes?: WasteDispatchLogChange[];
+  raw_changed_attr?: Record<string, [unknown, unknown]>;
+}
+
 export interface WasteDispatch {
   id: number;
   waste_generation_ids?: number[];
@@ -95,6 +111,7 @@ export interface WasteDispatch {
   category_names?: string | null;
   commodity_names?: string | null;
   waste_generations?: WasteDispatchGeneration[];
+  logs?: WasteDispatchLog[];
   attachments?: unknown[];
   recycle_entry?: WasteDispatchRecycleEntry | null;
 }

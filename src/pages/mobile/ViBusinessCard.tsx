@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
-import viBusinessCardBg from "../../assets/VI-businesscard.png";
+import viBusinessCardBg from "../../assets/vi new (1).png";
 import baseClient from "@/utils/withoutTokenBase";
 
 interface SocialLink {
@@ -252,23 +252,19 @@ END:VCARD`;
 
   return (
     <div
-      className="h-screen bg-gray-50 overflow-y-auto"
+      className="min-h-screen w-full bg-white overflow-y-auto"
       style={{
         fontFamily:
           '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
       }}
     >
-      <div className="w-full h-full pt-[130px]">
-        {/* Business Card */}
-        <div
-          className="relative bg-white overflow-hidden w-full"
-          style={{
-            boxShadow: "0 10px 40px rgba(0, 0, 0, 0.1)",
-            borderRadius: "0",
-          }}
-        >
-          {/* Decorative background image */}
-          <div className="absolute top-0 left-0 w-full h-[240px] overflow-hidden pointer-events-none">
+      {/* Business Card */}
+      <div className="relative bg-white w-full border border-gray-200">
+        {/* Banner: sized to the source image's own aspect ratio (1551x1014) so the full
+            logo and ribbon art always show uncropped, and scales fluidly with card width
+            at any screen size instead of being clipped by a fixed pixel height. */}
+        <div className="relative w-full">
+          <div className="w-full aspect-[1551/1014] overflow-hidden">
             <img
               src={viBusinessCardBg}
               alt="VI Business Card Background"
@@ -276,34 +272,39 @@ END:VCARD`;
             />
           </div>
 
-          {/* Content Section */}
-          <div className="relative z-10">
-            {/* Profile Image - Positioned inside VI background area */}
-            <div className="absolute top-[130px] left-12">
-              <div
-                className="w-[100px] h-[100px] overflow-hidden"
-                style={{
-                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.25)",
-                  border: "5px solid white",
-                }}
-              >
-                {userData.profileImage ? (
-                  <img
-                    src={userData.profileImage}
-                    alt={userData.name}
-                    className="w-full h-full object-cover"
-                    style={{ imageRendering: "-webkit-optimize-contrast" }}
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                    <UserIcon className="w-12 h-12 text-gray-500" />
-                  </div>
-                )}
-              </div>
+          {/* Profile Image - sits inside the lower-left of the banner, sized/positioned as a
+              percentage of the banner box so it scales proportionally at any width */}
+          <div
+            className="absolute"
+            style={{ left: "14%", width: "23%", top: "58%" }}
+          >
+            <div
+              className="w-full aspect-square overflow-hidden"
+              style={{
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.25)",
+                border: "5px solid white",
+              }}
+            >
+              {userData.profileImage ? (
+                <img
+                  src={userData.profileImage}
+                  alt={userData.name}
+                  className="w-full h-full object-cover"
+                  style={{ imageRendering: "-webkit-optimize-contrast" }}
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                  <UserIcon className="w-1/2 h-1/2 text-gray-500" />
+                </div>
+              )}
             </div>
+          </div>
+        </div>
 
-            {/* Contact Information */}
-            <div className="pt-[240px] pb-8">
+        {/* Content Section */}
+        <div className="relative z-10">
+          {/* Contact Information */}
+          <div className="pt-4 pb-8 w-full">
               {/* Name and Designation */}
               <div
                 className="flex items-start gap-3 mb-4 py-3 px-6"
@@ -538,7 +539,6 @@ END:VCARD`;
         >
           Save Contact
         </button> */}
-      </div>
     </div>
   );
 };

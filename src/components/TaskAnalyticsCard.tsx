@@ -7,6 +7,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
   ResponsiveContainer,
   Cell,
 } from "recharts";
@@ -31,10 +32,11 @@ interface TaskAnalyticsCardProps {
   };
 }
 
-// Guideline bar colors
+// Guideline bar colors — kept visually distinct so each stacked segment
+// (even a small one) is distinguishable, not just the two largest by value.
 const CHART_COLORS = {
-  primary: "#9EC8BA", // Open     — teal
-  secondary: "#76CDC1", // Closed   — teal-light
+  primary: "#6B9BCC", // Open     — blue
+  secondary: "#798C5E", // Closed   — olive green
   tertiary: "#CDCAF5", // WIP      — purple-light
   overdue: "#E39090", // Overdue  — pink
 };
@@ -154,6 +156,7 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                     fill={CHART_COLORS.primary}
                     name="Open"
                     radius={[0, 0, 0, 0]}
+                    minPointSize={3}
                   />
                   <Bar
                     dataKey="closed"
@@ -161,6 +164,7 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                     fill={CHART_COLORS.secondary}
                     name="Closed"
                     radius={[0, 0, 0, 0]}
+                    minPointSize={3}
                   />
                   <Bar
                     dataKey="work_in_progress"
@@ -168,6 +172,7 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                     fill={CHART_COLORS.tertiary}
                     name="Work in Progress"
                     radius={[0, 0, 0, 0]}
+                    minPointSize={3}
                   />
                   <Bar
                     dataKey="overdue"
@@ -175,6 +180,7 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                     fill={CHART_COLORS.overdue}
                     name="Overdue"
                     radius={[4, 4, 0, 0]}
+                    minPointSize={3}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -336,7 +342,7 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
         return (
           <div className="flex flex-col h-full">
             {/* Stacked Bar Chart — fixed height */}
-            <div className="h-52 flex-shrink-0">
+            <div className="h-64 flex-shrink-0">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={chartData}
@@ -350,16 +356,22 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                   <XAxis
                     dataKey="site"
                     fontSize={10}
+                    angle={-45}
+                    textAnchor="end"
+                    height={70}
+                    interval={0}
                     padding={{ left: 30, right: 20 }}
                   />
                   <YAxis width={40} />
                   <Tooltip cursor={{ fill: "rgba(180,180,180,0.15)" }} />
+                  <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
                   <Bar
                     dataKey="open"
                     stackId="a"
                     fill={CHART_COLORS.primary}
                     name="Open"
                     radius={[0, 0, 0, 0]}
+                    minPointSize={3}
                   />
                   <Bar
                     dataKey="closed"
@@ -367,6 +379,7 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                     fill={CHART_COLORS.secondary}
                     name="Closed"
                     radius={[0, 0, 0, 0]}
+                    minPointSize={3}
                   />
                   <Bar
                     dataKey="work_in_progress"
@@ -374,6 +387,7 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                     fill={CHART_COLORS.tertiary}
                     name="Work in Progress"
                     radius={[0, 0, 0, 0]}
+                    minPointSize={3}
                   />
                   <Bar
                     dataKey="overdue"
@@ -381,6 +395,7 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                     fill={CHART_COLORS.overdue}
                     name="Overdue"
                     radius={[4, 4, 0, 0]}
+                    minPointSize={3}
                   />
                 </BarChart>
               </ResponsiveContainer>

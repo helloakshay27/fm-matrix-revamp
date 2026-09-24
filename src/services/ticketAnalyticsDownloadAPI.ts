@@ -18,13 +18,13 @@ const getCurrentSiteId = (): string => {
 // Download functionality for different ticket analytics chart types
 export const ticketAnalyticsDownloadAPI = {
   // Download ticket aging matrix data
-  downloadTicketAgingMatrixData: async (fromDate: Date, toDate: Date): Promise<void> => {
-    const siteId = getCurrentSiteId();
+  downloadTicketAgingMatrixData: async (fromDate: Date, toDate: Date, siteId?: string): Promise<void> => {
+    const resolvedSiteId = siteId || getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
     const endpoint = `${API_CONFIG.BASE_URL}/pms/admin/complaints/ticket_ageing_matrix_downloads.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
+    const url = `${endpoint}?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
     try {
       const response = await fetch(url, {
@@ -57,13 +57,13 @@ export const ticketAnalyticsDownloadAPI = {
   },
 
   // Download ticket status data
-  downloadTicketStatusData: async (fromDate: Date, toDate: Date): Promise<void> => {
-    const siteId = getCurrentSiteId();
+  downloadTicketStatusData: async (fromDate: Date, toDate: Date, siteId?: string): Promise<void> => {
+    const resolvedSiteId = siteId || getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
     const endpoint = `${API_CONFIG.BASE_URL}/pms/admin/complaints/chart_ticket_status_downloads.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
+    const url = `${endpoint}?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
     try {
       const response = await fetch(url, {
@@ -93,13 +93,13 @@ export const ticketAnalyticsDownloadAPI = {
   },
 
   // Download tickets categorywise data
-  downloadTicketsCategorywiseData: async (fromDate: Date, toDate: Date): Promise<void> => {
-    const siteId = getCurrentSiteId();
+  downloadTicketsCategorywiseData: async (fromDate: Date, toDate: Date, siteId?: string): Promise<void> => {
+    const resolvedSiteId = siteId || getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
     const endpoint = `${API_CONFIG.BASE_URL}/pms/admin/complaints/chart_unit_categorywise_downloads.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
+    const url = `${endpoint}?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
     try {
       const response = await fetch(url, {
@@ -129,13 +129,13 @@ export const ticketAnalyticsDownloadAPI = {
   },
 
   // Download unit category-wise data
-  downloadProactiveCategorywiseData: async (fromDate: Date, toDate: Date): Promise<void> => {
-    const siteId = getCurrentSiteId();
+  downloadProactiveCategorywiseData: async (fromDate: Date, toDate: Date, siteId?: string): Promise<void> => {
+    const resolvedSiteId = siteId || getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
     const endpoint = `${API_CONFIG.BASE_URL}/pms/admin/complaints/tickets_categorywise_proactive_reactive_export.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
+    const url = `${endpoint}?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
     try {
       const response = await fetch(url, {
@@ -167,13 +167,13 @@ export const ticketAnalyticsDownloadAPI = {
 
 
 
-  downloadUnitCategorywiseData: async (fromDate: Date, toDate: Date): Promise<void> => {
-    const siteId = getCurrentSiteId();
+  downloadUnitCategorywiseData: async (fromDate: Date, toDate: Date, siteId?: string): Promise<void> => {
+    const resolvedSiteId = siteId || getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
     const endpoint = `${API_CONFIG.BASE_URL}/pms/admin/complaints/chart_unit_categorywise_downloads.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
+    const url = `${endpoint}?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
     try {
       const response = await fetch(url, {
@@ -202,14 +202,119 @@ export const ticketAnalyticsDownloadAPI = {
     }
   },
 
+  downloadUnitCategorywiseProactiveData: async (fromDate: Date, toDate: Date, siteId?: string): Promise<void> => {
+    const resolvedSiteId = siteId || getCurrentSiteId();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+
+    const endpoint = `${API_CONFIG.BASE_URL}/pms/admin/complaints/chart_unit_categorywise_proactive_downloads.json`;
+    const url = `${endpoint}?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to download unit category-wise (proactive) data: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `unit-categorywise-proactive-tickets-${fromDateStr}-to-${toDateStr}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error downloading unit category-wise (proactive) data:', error);
+      throw error;
+    }
+  },
+
+  downloadCommonAreaCategorywiseData: async (fromDate: Date, toDate: Date, siteId?: string): Promise<void> => {
+    const resolvedSiteId = siteId || getCurrentSiteId();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+
+    const endpoint = `${API_CONFIG.BASE_URL}/pms/admin/complaints/chart_common_area_categorywise_downloads.json`;
+    const url = `${endpoint}?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to download common area category-wise data: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `common-area-categorywise-tickets-${fromDateStr}-to-${toDateStr}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error downloading common area category-wise data:', error);
+      throw error;
+    }
+  },
+
+  downloadCommonAreaCategorywiseProactiveData: async (fromDate: Date, toDate: Date, siteId?: string): Promise<void> => {
+    const resolvedSiteId = siteId || getCurrentSiteId();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+
+    const endpoint = `${API_CONFIG.BASE_URL}/pms/admin/complaints/chart_common_area_categorywise_proactive_downloads.json`;
+    const url = `${endpoint}?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to download common area category-wise (proactive) data: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `common-area-categorywise-proactive-tickets-${fromDateStr}-to-${toDateStr}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error downloading common area category-wise (proactive) data:', error);
+      throw error;
+    }
+  },
+
   // Download resolution TAT data
-  downloadResolutionTATData: async (fromDate: Date, toDate: Date): Promise<void> => {
-    const siteId = getCurrentSiteId();
+  downloadResolutionTATData: async (fromDate: Date, toDate: Date, siteId?: string): Promise<void> => {
+    const resolvedSiteId = siteId || getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
     const endpoint = `${API_CONFIG.BASE_URL}/pms/admin/complaints/chart_resolution_tat_downloads.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
+    const url = `${endpoint}?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
     try {
       const response = await fetch(url, {
@@ -239,13 +344,13 @@ export const ticketAnalyticsDownloadAPI = {
   },
 
   // Download response TAT data
-  downloadResponseTATData: async (fromDate: Date, toDate: Date): Promise<void> => {
-    const siteId = getCurrentSiteId();
+  downloadResponseTATData: async (fromDate: Date, toDate: Date, siteId?: string): Promise<void> => {
+    const resolvedSiteId = siteId || getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
     const endpoint = `${API_CONFIG.BASE_URL}/pms/admin/complaints/chart_response_tat_downloads.json`;
-    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
+    const url = `${endpoint}?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
     try {
       const response = await fetch(url, {

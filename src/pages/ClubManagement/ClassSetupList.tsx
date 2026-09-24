@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { Plus, Eye, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
@@ -17,7 +18,6 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
-import { deleteClass, getClasses, updateClass, type ClassSetup } from "./classSetupMockData";
 
 const columns: ColumnConfig[] = [
   { key: "actions", label: "Actions", sortable: false, hideable: false, draggable: false },
@@ -29,7 +29,20 @@ const columns: ColumnConfig[] = [
   { key: "status", label: "Status", sortable: true, hideable: true, draggable: true },
 ];
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 20;
+
+// Row shape the list renders - mapped from whatever GET /pms/admin/club_classes
+// actually returns (session_type/duration_minutes/etc.), not the older mock
+// ClassSetup shape.
+interface ClassRow {
+  id: string;
+  className: string;
+  maxCapacity: number;
+  minParticipants: number;
+  duration: string;
+  location: string;
+  status: "Active" | "Inactive";
+}
 
 export const ClassSetupList = () => {
   const navigate = useNavigate();
@@ -44,46 +57,106 @@ export const ClassSetupList = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [refreshTick, setRefreshTick] = useState(0);
-  const [deleteTarget, setDeleteTarget] = useState<ClassSetup | null>(null);
+  const [reloadTick, setReloadTick] = useState(0);
+  const [deleteTarget, setDeleteTarget] = useState<ClassRow | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [rows, setRows] = useState<ClassRow[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const allClasses = useMemo(() => getClasses(), [refreshTick]);
+  useEffect(() => {
+    const fetchClasses = async () => {
+      setIsLoading(true);
+      try {
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
+        const res = await axios.get(`https://${baseUrl}/pms/admin/club_classes.json`, {
+          params: { page: currentPage, per_page: PAGE_SIZE },
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
+        const data = res.data;
+        const list = Array.isArray(data) ? data : data?.club_classes ?? data?.data ?? [];
+        const totalCount =
+          data?.total_count ?? data?.pagination?.total_count ?? list.length;
+        const apiTotalPages =
+          data?.total_pages ??
+          data?.pagination?.total_pages ??
+          Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+        setRows(
+          list.map((c: any) => ({
+            id: String(c.id),
+            className: c.name ?? "-",
+            maxCapacity: c.max_capacity ?? 0,
+            minParticipants: c.min_capacity ?? 0,
+            duration: c.duration_minutes != null ? `${c.duration_minutes} min` : "-",
+            location: c.location ?? "-",
+            status: String(c.status).toLowerCase() === "active" ? "Active" : "Inactive",
+          }))
+        );
+        setTotalPages(apiTotalPages);
+        setTotalRecords(totalCount);
+      } catch (err) {
+        console.error("Failed to fetch class list", err);
+        toast.error("Failed to load classes");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchClasses();
+  }, [currentPage, reloadTick]);
+
+  // The list endpoint takes page/per_page only (no search param), so search
+  // filters within the current page's 20 rows rather than across the whole set.
   const filtered = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
-    if (!q) return allClasses;
-    return allClasses.filter((c) => c.className.toLowerCase().includes(q));
-  }, [allClasses, searchTerm]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const page = Math.min(currentPage, totalPages);
-  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    if (!q) return rows;
+    return rows.filter((c) => c.className.toLowerCase().includes(q));
+  }, [rows, searchTerm]);
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
-    setCurrentPage(1);
   };
 
-  const handleToggleStatus = (cls: ClassSetup) => {
+  const handleToggleStatus = async (cls: ClassRow) => {
     const nextStatus = cls.status === "Active" ? "Inactive" : "Active";
-    updateClass(cls.id, { ...cls, status: nextStatus });
-    cmEvents.action("Class Setup Status Toggled", { entity_id: cls.id, status: nextStatus });
-    toast.success(`Class marked ${nextStatus}`);
-    setRefreshTick((n) => n + 1);
+    try {
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `https://${baseUrl}/pms/admin/club_classes/${cls.id}.json`,
+        { club_class: { status: nextStatus.toLowerCase() } },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setRows((prev) => prev.map((r) => (r.id === cls.id ? { ...r, status: nextStatus } : r)));
+      cmEvents.action("Class Setup Status Toggled", { entity_id: cls.id, status: nextStatus });
+      toast.success(`Class marked ${nextStatus}`);
+    } catch (err) {
+      toast.error("Failed to update status");
+    }
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
-    deleteClass(deleteTarget.id);
-    cmEvents.deleted("Class Setup", deleteTarget.id, "class_setup_list");
-    toast.success("Class deleted successfully!");
-    setShowDeleteModal(false);
-    setDeleteTarget(null);
-    setRefreshTick((n) => n + 1);
+    try {
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
+      await axios.delete(`https://${baseUrl}/pms/admin/club_classes/${deleteTarget.id}.json`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      cmEvents.deleted("Class Setup", deleteTarget.id, "class_setup_list");
+      toast.success("Class deleted successfully!");
+      setShowDeleteModal(false);
+      setDeleteTarget(null);
+      setReloadTick((n) => n + 1);
+    } catch (err) {
+      toast.error("Failed to delete class");
+    }
   };
 
-  const renderRow = (cls: ClassSetup) => ({
+  const renderRow = (cls: ClassRow) => ({
     actions: (
       <div className="flex items-center gap-2">
         <button
@@ -147,7 +220,7 @@ export const ClassSetupList = () => {
       </header>
 
       <EnhancedTaskTable
-        data={pageRows}
+        data={filtered}
         columns={columns}
         renderRow={renderRow}
         storageKey="class-setup-list-v1"
@@ -156,7 +229,7 @@ export const ClassSetupList = () => {
         searchTerm={searchTerm}
         onSearchChange={handleSearch}
         searchPlaceholder="Search class..."
-        emptyMessage="No classes found"
+        emptyMessage={isLoading ? "Loading classes..." : "No classes found"}
         leftActions={
           <Button
             className="fm-button-fix fm-button-brand px-8 py-2"
@@ -167,13 +240,13 @@ export const ClassSetupList = () => {
         }
       />
 
-      {filtered.length > 0 && (
+      {totalRecords > 0 && (
         <TicketPagination
-          currentPage={page}
+          currentPage={currentPage}
           totalPages={totalPages}
-          totalRecords={filtered.length}
+          totalRecords={totalRecords}
           perPage={PAGE_SIZE}
-          isLoading={false}
+          isLoading={isLoading}
           onPageChange={setCurrentPage}
           onPerPageChange={() => {}}
         />

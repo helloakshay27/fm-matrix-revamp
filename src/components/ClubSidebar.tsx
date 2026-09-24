@@ -65,42 +65,6 @@ const modulesByPackage = {
       additionalRoutes: ["/club-management/group-membership"],
     },
     {
-      name: "Setup",
-      icon: Wrench,
-      subItems: [
-        {
-          name: "Class setup",
-          href: "/club-management/class-setup",
-          color: "text-[#1a1a1a]",
-          additionalRoutes: [
-            "/club-management/class-setup/add",
-            "/club-management/class-setup/edit",
-            "/club-management/class-setup/details",
-          ],
-        },
-        {
-          name: "Trainer setup",
-          href: "/club-management/trainer-setup",
-          color: "text-[#1a1a1a]",
-          additionalRoutes: [
-            "/club-management/trainer-setup/add",
-            "/club-management/trainer-setup/edit",
-            "/club-management/trainer-setup/details",
-          ],
-        },
-        {
-          name: "Package setup",
-          href: "/club-management/package-setup",
-          color: "text-[#1a1a1a]",
-          additionalRoutes: [
-            "/club-management/package-setup/add",
-            "/club-management/package-setup/edit",
-            "/club-management/package-setup/details",
-          ],
-        },
-      ],
-    },
-    {
       name: "User Management",
       icon: Users,
       href: "/club-management/users",
@@ -939,6 +903,54 @@ const modulesByPackage = {
         "/settings/vas/booking-club/setup/edit",
       ],
     },
+    // Moved here from modulesByPackage["Club Management"] - Class/Trainer/Package
+    // Setup now live under Settings, next to Amenities Setup.
+    {
+      name: "Setup",
+      icon: Wrench,
+      subItems: [
+        {
+          name: "Class setup",
+          href: "/club-management/class-setup",
+          color: "text-[#1a1a1a]",
+          additionalRoutes: [
+            "/club-management/class-setup/add",
+            "/club-management/class-setup/edit",
+            "/club-management/class-setup/details",
+          ],
+        },
+        {
+          name: "Shift",
+          href: "/settings/account/shift",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Roster",
+          href: "/settings/account/roster",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Trainer setup",
+          href: "/club-management/trainer-setup",
+          color: "text-[#1a1a1a]",
+          additionalRoutes: [
+            "/club-management/trainer-setup/add",
+            "/club-management/trainer-setup/edit",
+            "/club-management/trainer-setup/details",
+          ],
+        },
+        {
+          name: "Package setup",
+          href: "/club-management/package-setup",
+          color: "text-[#1a1a1a]",
+          additionalRoutes: [
+            "/club-management/package-setup/add",
+            "/club-management/package-setup/edit",
+            "/club-management/package-setup/details",
+          ],
+        },
+      ],
+    },
     {
       name: "Membership Plan Setup",
       icon: ClipboardList,
@@ -1190,33 +1202,6 @@ export const ClubSidebar: React.FC = () => {
 
     const currentPath = location.pathname;
 
-    // LayoutContext derives a section name from the URL globally (e.g. any
-    // "/pulse/*" route becomes "Pulse Privilege" for the Pulse tenant sidebar).
-    // Some of those routes (Club Privilege > Service / Service Category) are
-    // actually nested under this sidebar's "Settings" package, so when the
-    // context hands us a section we don't recognize, resolve the real owning
-    // package from the current path instead of silently falling back to
-    // "Club Management".
-    const isKnownSection = Object.prototype.hasOwnProperty.call(
-      modulesByPackage,
-      currentSection
-    );
-
-    if (!isKnownSection) {
-      const owningPackage = Object.entries(modulesByPackage).find(
-        ([, items]) =>
-          collectHrefs(items).some(
-            (href) => currentPath === href || currentPath.startsWith(href + "/")
-          )
-      )?.[0];
-
-      if (owningPackage) {
-        lastNavigatedSection.current = null;
-        setCurrentSection(owningPackage);
-        return;
-      }
-    }
-
     const sectionModules =
       modulesByPackage[currentSection as keyof typeof modulesByPackage] || [];
     const sectionHrefs = collectHrefs(sectionModules);
@@ -1224,6 +1209,30 @@ export const ClubSidebar: React.FC = () => {
     const belongsToSection = sectionHrefs.some(
       (href) => currentPath === href || currentPath.startsWith(href + "/")
     );
+
+    // LayoutContext derives a section name from the URL globally (e.g. any
+    // "/pulse/*" route becomes "Pulse Privilege" for the Pulse tenant sidebar),
+    // and some pages keep an older URL prefix (e.g. Class/Trainer/Package Setup
+    // still live under "/club-management/...") even after being re-parented to
+    // a different package's sidebar section (e.g. "Master"/Settings). So
+    // whenever the current section doesn't own this path - whether or not
+    // `currentSection` itself is even a recognized key - look up the real
+    // owning package from the current path and switch there instead of
+    // silently bouncing to the (wrong) current section's default page.
+    if (!belongsToSection) {
+      const owningPackage = Object.entries(modulesByPackage).find(
+        ([, items]) =>
+          collectHrefs(items).some(
+            (href) => currentPath === href || currentPath.startsWith(href + "/")
+          )
+      )?.[0];
+
+      if (owningPackage && owningPackage !== currentSection) {
+        lastNavigatedSection.current = null;
+        setCurrentSection(owningPackage);
+        return;
+      }
+    }
 
     // Only navigate if we're on a route that doesn't belong to the new section
     // and we haven't already navigated for this section switch (prevents loops)

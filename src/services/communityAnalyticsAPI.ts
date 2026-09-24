@@ -30,17 +30,21 @@ export interface SiteAdoptionRateResponse {
   [k: string]: any;
 }
 
+const getSiteId = () => localStorage.getItem('selectedSiteId') || '';
+
 export const communityAnalyticsAPI = {
-  async getCommunityEngagementMetrics(): Promise<CommunityEngagementMetrics | null> {
-    const url = `/api/pms/reports/device_platform_statistics`;
+  async getCommunityEngagementMetrics(siteId?: string): Promise<CommunityEngagementMetrics | null> {
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/api/pms/reports/device_platform_statistics.json?site_id=${resolvedSiteId}`;
     const resp = await apiClient.get(url);
     return resp.data;
   },
 
-  async getSiteWiseAdoptionRate(fromDate: Date, toDate: Date): Promise<SiteAdoptionRateResponse | null> {
+  async getSiteWiseAdoptionRate(fromDate: Date, toDate: Date, siteId?: string): Promise<SiteAdoptionRateResponse | null> {
     const start = formatDate(fromDate);
     const end = formatDate(toDate);
-    const url = `/api/pms/reports/site_wise_adoption_rate?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resolvedSiteId = siteId ?? getSiteId();
+    const url = `/api/pms/reports/site_wise_adoption_rate.json?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
     const resp = await apiClient.get(url);
     return resp.data;
   },

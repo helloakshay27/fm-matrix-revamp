@@ -142,10 +142,13 @@ export const SiteWisePowerConsumptionChart: React.FC<SiteWisePowerChartProps> = 
 
             <XAxis
               dataKey={xAxisKey}
-              tick={{ fontSize: 12, fill: '#6B7280' }}
+              tick={{ fontSize: 11, fill: '#6B7280' }}
               axisLine={{ stroke: '#D1D5DB' }}
               tickLine={false}
-              dy={10}
+              angle={-45}
+              textAnchor="end"
+              height={90}
+              interval={0}
             />
 
             <YAxis
