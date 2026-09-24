@@ -144,6 +144,7 @@ export interface PulseDashboardContextProps {
   benchmarks: Record<string, number | null>;
   updateBenchmark: (id: string, value: number | null) => void;
   vm: PulseViewModel;
+  queryFilters: QueryFilters;
   refreshAll: () => void;
   isRefreshing: boolean;
 }
@@ -338,6 +339,7 @@ export const PulseDashboardProvider: React.FC<{
       // the site list for the scope label/UI, but never forward it as a filter:
       // an empty array makes buildQuery drop the `site_id` param entirely.
       siteIds: [],
+      allowEmptySites: true,
       devices: deviceParam(dev),
       dev: pulseDev(dev),
       licensedSeats: null,
@@ -598,6 +600,7 @@ export const PulseDashboardProvider: React.FC<{
         benchmarks,
         updateBenchmark,
         vm,
+        queryFilters: filters,
         refreshAll,
         isRefreshing,
       }}

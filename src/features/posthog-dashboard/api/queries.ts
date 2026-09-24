@@ -5,6 +5,7 @@ import {
   fetchGrowth,
   fetchModules,
   fetchRetention,
+  fetchRecentActiveUsers,
   fetchRoles,
   fetchTrafficSession,
   fetchUsageAndDistribution,
@@ -15,6 +16,22 @@ import {
 } from './adoptionApi';
 import { GROWTH_WEEKS, RETENTION_WEEKS, TREND_WEEKS } from '../data/constants';
 import { fetchAllSites, fetchCompanyNames } from './sitesApi';
+import {
+  fetchApprovalQueue,
+  fetchBroadcastOverview,
+  fetchDraftPrs,
+  fetchEventsOverview,
+  fetchLeaseOverview,
+  fetchOverdueInvoices,
+  fetchPendingApprovals,
+  fetchPendingRequisitionValue,
+  fetchPrSrSplit,
+  fetchProcurementPipeline,
+  fetchTopPendingRecords,
+  fetchWalletDistribution,
+  fetchWalletOverview,
+  fetchWalletTransactions,
+} from './dashboardApi';
 
 /** All Layer-1/2/3 calls share these; one object keeps every query key in step. */
 export interface QueryFilters {
@@ -31,6 +48,10 @@ export interface QueryFilters {
   subModule: string | null;
   /** Incremented only by an explicit dashboard load/refresh action. */
   requestId?: number;
+  /** Auth token for FM API calls */
+  token: string;
+  /** Some tenants, such as Pulse, intentionally scope by project instead of site_id. */
+  allowEmptySites?: boolean;
 }
 
 function ymd(d: Date): string {
@@ -71,6 +92,25 @@ const keyBase = (f: QueryFilters) => [
   f.devices.join(','),
   f.requestId ?? 0,
 ];
+
+/** Query key components for FM Matrix API calls (token, site_id, date range). */
+const fmKey = (f: QueryFilters) => [
+  f.token,
+  f.siteIds.join(','),
+  f.from,
+  f.to,
+  f.requestId ?? 0,
+];
+
+/** Parameters for FM Matrix API endpoints. */
+function fmParams(f: QueryFilters) {
+  return {
+    token: f.token,
+    site_id: f.siteIds.length === 1 ? f.siteIds[0] : undefined,
+    from_date: f.from,
+    to_date: f.to,
+  };
+}
 
 /** Every site on the tenant — drives the scope dropdown and the site-wise fan-out. */
 export function useAllSites(enabled = true) {
@@ -173,6 +213,15 @@ export function useRoles(f: QueryFilters) {
   });
 }
 
+export function useRecentActiveUsers(f: QueryFilters) {
+  return useQuery({
+    queryKey: ['fm-adoption', 'recent_active_users', ...keyBase(f)],
+    queryFn: () => fetchRecentActiveUsers(range(f)),
+    enabled: f.enabled && (f.allowEmptySites === true || f.siteIds.length > 0),
+    ...CACHE,
+  });
+}
+
 /** Top-level module tree (path segment 1) — drives the module nav. */
 export function useModuleTree(f: QueryFilters) {
   return useQuery({
@@ -215,6 +264,29 @@ export function useWorkflowUsage(
     enabled: f.enabled && (!requireModule || !!f.module),
     ...CACHE,
   });
+}
+
+/** FM Matrix CRM and procurement widgets. Each endpoint gets its own cache entry so a
+ * partial backend failure does not blank the rest of the dashboard. */
+export function useFmDashboardQueries(f: QueryFilters) {
+  const options = { enabled: f.enabled && !!f.token && f.siteIds.length > 0, ...CACHE };
+  const tokenOnlyOptions = { enabled: f.enabled && !!f.token, ...CACHE };
+  return {
+    leaseOverview: useQuery({ queryKey: ['fm-dashboard', 'lease-overview', ...fmKey(f)], queryFn: () => fetchLeaseOverview(fmParams(f)), ...options }),
+    eventsOverview: useQuery({ queryKey: ['fm-dashboard', 'events-overview', ...fmKey(f)], queryFn: () => fetchEventsOverview(fmParams(f)), ...options }),
+    broadcastOverview: useQuery({ queryKey: ['fm-dashboard', 'broadcast-overview', ...fmKey(f)], queryFn: () => fetchBroadcastOverview(fmParams(f)), ...options }),
+    walletOverview: useQuery({ queryKey: ['fm-dashboard', 'wallet-overview', ...fmKey(f)], queryFn: () => fetchWalletOverview(fmParams(f)), ...options }),
+    walletDistribution: useQuery({ queryKey: ['fm-dashboard', 'wallet-distribution', ...fmKey(f)], queryFn: () => fetchWalletDistribution(fmParams(f)), ...options }),
+    walletTransactions: useQuery({ queryKey: ['fm-dashboard', 'wallet-transactions', ...fmKey(f)], queryFn: () => fetchWalletTransactions(fmParams(f)), ...options }),
+    pendingApprovals: useQuery({ queryKey: ['fm-dashboard', 'pending-approvals', ...fmKey(f)], queryFn: () => fetchPendingApprovals(fmParams(f)), ...options }),
+    draftPrs: useQuery({ queryKey: ['fm-dashboard', 'draft-prs', ...fmKey(f)], queryFn: () => fetchDraftPrs(fmParams(f)), ...options }),
+    procurementPipeline: useQuery({ queryKey: ['fm-dashboard', 'procurement-pipeline', ...fmKey(f)], queryFn: () => fetchProcurementPipeline(fmParams(f)), ...options }),
+    pendingRequisitionValue: useQuery({ queryKey: ['fm-dashboard', 'pending-requisition-value', ...fmKey(f)], queryFn: () => fetchPendingRequisitionValue(fmParams(f)), ...options }),
+    prSrSplit: useQuery({ queryKey: ['fm-dashboard', 'pr-sr-split', ...fmKey(f)], queryFn: () => fetchPrSrSplit(fmParams(f)), ...options }),
+    overdueInvoices: useQuery({ queryKey: ['fm-dashboard', 'overdue-invoices', f.token], queryFn: () => fetchOverdueInvoices({ token: f.token }), ...tokenOnlyOptions }),
+    approvalQueue: useQuery({ queryKey: ['fm-dashboard', 'approval-queue', ...fmKey(f)], queryFn: () => fetchApprovalQueue(fmParams(f)), ...options }),
+    topPendingRecords: useQuery({ queryKey: ['fm-dashboard', 'top-pending-records', ...fmKey(f)], queryFn: () => fetchTopPendingRecords(fmParams(f)), ...options }),
+  };
 }
 
 export interface SiteLeagueEntry {

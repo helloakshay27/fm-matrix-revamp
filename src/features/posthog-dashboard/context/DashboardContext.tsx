@@ -90,6 +90,8 @@ export interface ViewModel {
   /** `generated_at` of the Layer-1 response — the freshness stamp shown in the header. */
   generatedAt: string | null;
   range: { from: string; to: string };
+  filters: QueryFilters;
+  filtersSettled: boolean;
 }
 
 interface InfoPopoverState {
@@ -344,6 +346,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       },
       generatedAt: trafficQ.data?.meta.generated_at ?? null,
       range: { from, to },
+      filters,
+      filtersSettled: sitesSettled,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -355,6 +359,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       sitesQ.error,
       from,
       to,
+      filters,
+      sitesSettled,
       modules,
       subModules,
       trafficQ.data,
