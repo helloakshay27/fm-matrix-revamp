@@ -4,6 +4,9 @@ import { toast } from "sonner";
 import { getTrainerById, updateTrainer } from "./trainerSetupMockData";
 import { TrainerSetupForm, emptyTrainerSetupForm, type TrainerSetupFormState } from "./TrainerSetupForm";
 
+// Existing mock records predate the availability/slot/roster fields, so fall back to the
+// blank form's defaults for anything missing rather than crash on undefined.
+
 export const TrainerSetupEdit = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -25,6 +28,14 @@ export const TrainerSetupEdit = () => {
       contactNumber: existing.contactNumber,
       status: existing.status,
       bio: existing.bio,
+      slot: existing.slot ?? emptyTrainerSetupForm.slot,
+      roster: existing.roster ?? emptyTrainerSetupForm.roster,
+      availabilitySlots: existing.availabilitySlots ?? emptyTrainerSetupForm.availabilitySlots,
+      bookableSlotsPerDay: existing.bookableSlotsPerDay ?? emptyTrainerSetupForm.bookableSlotsPerDay,
+      bookingAllowedBefore: existing.bookingAllowedBefore ?? emptyTrainerSetupForm.bookingAllowedBefore,
+      advanceBooking: existing.advanceBooking ?? emptyTrainerSetupForm.advanceBooking,
+      canCancelBefore: existing.canCancelBefore ?? emptyTrainerSetupForm.canCancelBefore,
+      facilityBookedTimes: existing.facilityBookedTimes ?? emptyTrainerSetupForm.facilityBookedTimes,
     });
   }, [id, navigate]);
 

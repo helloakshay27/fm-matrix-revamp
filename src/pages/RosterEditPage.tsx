@@ -388,11 +388,39 @@ export const RosterEditPage: React.FC = () => {
     }
   };
 
-  // Fetch Departments
+  // Fetch Departments - the Club tenant (reached via ClubSidebar's "Roster" link,
+  // even though the URL itself is the shared /settings/account/roster route) uses
+  // its own /pms/departments.json endpoint instead of the shared department_compass
+  // one every other tenant on this page uses via departmentService.
+  const isClubContext =
+    window.location.hostname === "club.lockated.com" ||
+    window.location.hostname === "recess-club.panchshil.com" ||
+    sessionStorage.getItem("isClubManagementSession") === "1";
+
   const fetchDepartments = async () => {
     setLoadingDepartments(true);
     try {
-      const departmentData = await departmentService.fetchDepartments();
+      let departmentData: Department[];
+      if (isClubContext) {
+        const apiUrl = getFullUrl("/pms/departments.json");
+        const response = await fetch(apiUrl, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: getAuthHeader(),
+          },
+        });
+        if (!response.ok) throw new Error(`Failed to fetch departments: ${response.status}`);
+        const data = await response.json();
+        const depts: Department[] = data.departments || data || [];
+        departmentData = depts.map((d) => ({
+          ...d,
+          department_name: d.name || d.department_name || "N/A",
+        }));
+      } else {
+        departmentData = await departmentService.fetchDepartments();
+      }
       setDepartments(departmentData);
     } catch (error) {
       console.error("Error fetching departments:", error);

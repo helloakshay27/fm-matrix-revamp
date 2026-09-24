@@ -10,6 +10,24 @@ export interface TrainerCredential {
   url: string;
 }
 
+export interface TimeValue {
+  hour: string;
+  minute: string;
+}
+
+export interface DurationValue {
+  day: string;
+  hour: string;
+  minute: string;
+}
+
+export interface TrainerAvailabilitySlot {
+  startTime: TimeValue;
+  endTime: TimeValue;
+  concurrentSlots: string;
+  slotBy: number;
+}
+
 export interface TrainerSetup {
   id: string;
   name: string;
@@ -21,6 +39,16 @@ export interface TrainerSetup {
   bio: string;
   imageUrl?: string;
   credentials: TrainerCredential[];
+  // Preferred session-slot duration and shift roster - optional so existing
+  // mock records don't need backfilling.
+  slot?: string;
+  roster?: string;
+  availabilitySlots?: TrainerAvailabilitySlot[];
+  bookableSlotsPerDay?: string;
+  bookingAllowedBefore?: DurationValue;
+  advanceBooking?: DurationValue;
+  canCancelBefore?: DurationValue;
+  facilityBookedTimes?: string;
 }
 
 let trainers: TrainerSetup[] = [
@@ -184,4 +212,29 @@ export const SPECIALIZATIONS = [
   "Ashtanga & Vinyasa Yoga",
   "Athletic Conditioning",
   "Pre/Post Natal Fitness",
+];
+
+// Session-slot duration options - mirrors the "Slot by" list used on the
+// Amenity Booking Setup facility timings section.
+export const SLOT_DURATION_OPTIONS = [
+  { value: "15", label: "15 Minutes" },
+  { value: "30", label: "Half hour" },
+  { value: "45", label: "45 Minutes" },
+  { value: "60", label: "1 hour" },
+  { value: "90", label: "1 and a half hours" },
+  { value: "120", label: "2 hours" },
+  { value: "150", label: "2 and a half hours" },
+  { value: "180", label: "3 hours" },
+  { value: "210", label: "3 and a half hours" },
+  { value: "240", label: "4 hours" },
+  { value: "270", label: "4 and a half hours" },
+];
+
+export const ROSTER_OPTIONS = [
+  "Morning Shift",
+  "Afternoon Shift",
+  "Evening Shift",
+  "Full Day",
+  "Weekday Only",
+  "Weekend Only",
 ];

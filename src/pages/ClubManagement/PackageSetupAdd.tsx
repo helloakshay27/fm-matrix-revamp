@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { addPackage, defaultTiersForNew, tierTotal } from "./packageSetupMockData";
-import { PackageSetupForm } from "./PackageSetupForm";
+import { addPackage, tierTotal } from "./packageSetupMockData";
+import { PackageSetupForm, emptyPackageSetupForm } from "./PackageSetupForm";
 
 export const PackageSetupAdd = () => {
   const navigate = useNavigate();
@@ -10,21 +10,22 @@ export const PackageSetupAdd = () => {
     <PackageSetupForm
       pageTitle="Package Setup"
       backLabel="Back to Package Setup List"
-      initialValues={{ classActivity: "", tiers: defaultTiersForNew() }}
+      initialValues={emptyPackageSetupForm}
       submitLabel="Save"
       submittingLabel="Saving..."
       onBack={() => navigate("/club-management/package-setup")}
-      onSubmit={({ classActivity, tiers }) => {
-        const first = tiers[0];
+      onSubmit={({ classActivity, memberTiers, nonMemberTiers }) => {
+        const primary = memberTiers[0] ?? nonMemberTiers[0];
         const created = addPackage({
           name: `${classActivity} Package`,
           classActivity,
-          packageType: "Member",
-          sessions: first?.credits || 1,
-          price: first ? tierTotal(first) : 0,
+          packageType: memberTiers.length > 0 ? "Member" : "Non-Member",
+          sessions: primary?.credits || 1,
+          price: primary ? tierTotal(primary) : 0,
           validity: "1 Month",
           status: "Active",
-          tiers,
+          memberTiers,
+          nonMemberTiers,
         });
         toast.success("Package created successfully!");
         navigate(`/club-management/package-setup/details/${created.id}`);

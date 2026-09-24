@@ -6,30 +6,77 @@
 export interface PricingTier {
   id: string;
   label: string;
+  packageType: string;
   credits: number;
+  // Days the credits stay valid for, counted from the purchase date.
+  validityDays: number;
   price: number;
   gstPercent: number;
+  priceMember: number;
+  priceHotelGuest: number;
+  priceNonMember: number;
+  cgstRate: number;
+  sgstRate: number;
+  hsnCode: string;
 }
 
 export interface PackageSetup {
   id: string;
   name: string;
   classActivity: string;
+  // Which tier group currently drives the list/details summary fields below
+  // (sessions/price) - a package can carry both member and non-member pricing at once.
   packageType: "Member" | "Non-Member";
   sessions: number;
   price: number;
   validity: string;
   status: "Active" | "Inactive";
-  tiers: PricingTier[];
+  memberTiers: PricingTier[];
+  nonMemberTiers: PricingTier[];
 }
 
-const defaultTiers = (): PricingTier[] => [
-  { id: "tier-1", label: "Single session", credits: 1, price: 1000, gstPercent: 18 },
-  { id: "tier-2", label: "4-class bundle", credits: 4, price: 3600, gstPercent: 18 },
-  { id: "tier-3", label: "8-class bundle", credits: 8, price: 6800, gstPercent: 18 },
-  { id: "tier-4", label: "12-class bundle", credits: 12, price: 9600, gstPercent: 18 },
-  { id: "tier-5", label: "16-class bundle", credits: 16, price: 12200, gstPercent: 18 },
+const defaultMemberTiers = (): PricingTier[] => [
+  createTier("tier-m1", "Single session", "single_session", 1, 45, 1000, 1250, 1500),
+  createTier("tier-m2", "4-class bundle", "4_class_bundle", 4, 90, 3600, 4500, 5400),
+  createTier("tier-m3", "8-class bundle", "8_class_bundle", 8, 120, 6800, 8500, 10200),
+  createTier("tier-m4", "12-class bundle", "12_class_bundle", 12, 240, 9600, 12000, 14400),
+  createTier("tier-m5", "16-class bundle", "16_class_bundle", 16, 365, 12200, 15250, 18300),
 ];
+
+const defaultNonMemberTiers = (): PricingTier[] => [
+  createTier("tier-n1", "Single session", "single_session", 1, 45, 1000, 1250, 2000),
+  createTier("tier-n2", "4-class bundle", "4_class_bundle", 4, 90, 3600, 4500, 4000),
+  createTier("tier-n3", "8-class bundle", "8_class_bundle", 8, 100, 6800, 8500, 7500),
+  createTier("tier-n4", "12-class bundle", "12_class_bundle", 12, 120, 9600, 12000, 10000),
+  createTier("tier-n5", "16-class bundle", "16_class_bundle", 16, 150, 12200, 15250, 12500),
+];
+
+function createTier(
+  id: string,
+  label: string,
+  packageType: string,
+  credits: number,
+  validityDays: number,
+  priceMember: number,
+  priceHotelGuest: number,
+  priceNonMember: number
+): PricingTier {
+  return {
+    id,
+    label,
+    packageType,
+    credits,
+    validityDays,
+    price: priceMember,
+    gstPercent: 18,
+    priceMember,
+    priceHotelGuest,
+    priceNonMember,
+    cgstRate: 9,
+    sgstRate: 9,
+    hsnCode: "999723",
+  };
+}
 
 let packages: PackageSetup[] = [
   {
@@ -41,7 +88,8 @@ let packages: PackageSetup[] = [
     price: 3999,
     validity: "1 Month",
     status: "Active",
-    tiers: defaultTiers(),
+    memberTiers: defaultMemberTiers(),
+    nonMemberTiers: defaultNonMemberTiers(),
   },
   {
     id: "2",
@@ -52,7 +100,8 @@ let packages: PackageSetup[] = [
     price: 4499,
     validity: "1 Month",
     status: "Active",
-    tiers: defaultTiers(),
+    memberTiers: defaultMemberTiers(),
+    nonMemberTiers: defaultNonMemberTiers(),
   },
   {
     id: "3",
@@ -63,7 +112,8 @@ let packages: PackageSetup[] = [
     price: 8499,
     validity: "2 Months",
     status: "Active",
-    tiers: defaultTiers(),
+    memberTiers: defaultMemberTiers(),
+    nonMemberTiers: defaultNonMemberTiers(),
   },
   {
     id: "4",
@@ -74,7 +124,8 @@ let packages: PackageSetup[] = [
     price: 5999,
     validity: "1 Month",
     status: "Inactive",
-    tiers: defaultTiers(),
+    memberTiers: defaultMemberTiers(),
+    nonMemberTiers: defaultNonMemberTiers(),
   },
   {
     id: "5",
@@ -85,7 +136,8 @@ let packages: PackageSetup[] = [
     price: 11999,
     validity: "3 Months",
     status: "Active",
-    tiers: defaultTiers(),
+    memberTiers: defaultMemberTiers(),
+    nonMemberTiers: defaultNonMemberTiers(),
   },
   {
     id: "6",
@@ -96,7 +148,8 @@ let packages: PackageSetup[] = [
     price: 15999,
     validity: "2 Months",
     status: "Active",
-    tiers: defaultTiers(),
+    memberTiers: defaultMemberTiers(),
+    nonMemberTiers: defaultNonMemberTiers(),
   },
 ];
 
@@ -125,7 +178,8 @@ extra.forEach((name, i) => {
     price: 2999 + i * 500,
     validity: `${1 + (i % 3)} Month${i % 3 === 0 ? "" : "s"}`,
     status: i % 5 === 0 ? "Inactive" : "Active",
-    tiers: defaultTiers(),
+    memberTiers: defaultMemberTiers(),
+    nonMemberTiers: defaultNonMemberTiers(),
   });
 });
 packages = packages.slice(0, 18);
@@ -156,20 +210,53 @@ export function deletePackage(id: string): void {
 }
 
 export function newTier(): PricingTier {
-  return { id: `tier-${Date.now()}`, label: "", credits: 0, price: 0, gstPercent: 18 };
+  return {
+    id: `tier-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    label: "8-Class Bundle",
+    packageType: "8_class_bundle",
+    credits: 8,
+    validityDays: 60,
+    price: 6400,
+    gstPercent: 18,
+    priceMember: 6400,
+    priceHotelGuest: 8000,
+    priceNonMember: 9600,
+    cgstRate: 9,
+    sgstRate: 9,
+    hsnCode: "999723",
+  };
 }
 
-// Fresh copy of the standard bundle tiers with unique ids, for pre-filling the Add form.
-export function defaultTiersForNew(): PricingTier[] {
-  return defaultTiers().map((t, i) => ({ ...t, id: `tier-new-${Date.now()}-${i}` }));
+// Blank starting point for the Add form - no sample values, only field placeholders.
+export function blankTier(): PricingTier {
+  return {
+    id: `tier-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    label: "",
+    packageType: "",
+    credits: 0,
+    validityDays: 0,
+    price: 0,
+    gstPercent: 0,
+    priceMember: 0,
+    priceHotelGuest: 0,
+    priceNonMember: 0,
+    cgstRate: 0,
+    sgstRate: 0,
+    hsnCode: "",
+  };
+}
+
+export function tierBasePrice(tier: PricingTier): number {
+  return tier.priceMember ?? tier.price ?? 0;
 }
 
 export function gstAmount(tier: PricingTier): number {
-  return Math.round((tier.price * tier.gstPercent) / 100);
+  const taxRate = (tier.cgstRate ?? 0) + (tier.sgstRate ?? 0) || tier.gstPercent || 0;
+  return Math.round((tierBasePrice(tier) * taxRate) / 100);
 }
 
 export function tierTotal(tier: PricingTier): number {
-  return tier.price + gstAmount(tier);
+  return tierBasePrice(tier) + gstAmount(tier);
 }
 
 // Classes a package can be attached to - mirrors classSetupMockData's names.
@@ -185,3 +272,11 @@ export const PACKAGE_CLASSES = [
 
 export const PACKAGE_TYPES: PackageSetup["packageType"][] = ["Member", "Non-Member"];
 export const PACKAGE_VALIDITIES = ["1 Month", "2 Months", "3 Months", "6 Months", "12 Months"];
+
+export const PACKAGE_TIER_TYPES = [
+  { value: "single_session", label: "Single Session" },
+  { value: "4_class_bundle", label: "4-Class Bundle" },
+  { value: "8_class_bundle", label: "8-Class Bundle" },
+  { value: "12_class_bundle", label: "12-Class Bundle" },
+  { value: "16_class_bundle", label: "16-Class Bundle" },
+];

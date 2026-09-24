@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
 import { toast } from "sonner";
-import { getClassById, updateClass } from "./classSetupMockData";
-import { ClassSetupForm, emptyClassSetupForm, type ClassSetupFormState } from "./ClassSetupForm";
+import { ClassSetupForm, type ClassSetupFormState } from "./ClassSetupForm";
+import type { ClassSetup } from "./classSetupMockData";
 import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+
+// "group"/"private", "pilates"/"yoga" -> "Group"/"Private", "Pilates"/"Yoga" -
+// matches CLASS_TYPES/ACTIVITY_TYPES exactly so the Select shows the right option.
+const titleCase = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "");
 
 export const ClassSetupEdit = () => {
   const navigate = useNavigate();
@@ -13,44 +18,99 @@ export const ClassSetupEdit = () => {
 
   useEffect(() => {
     if (!id) return;
-    const existing = getClassById(id);
-    if (!existing) {
-      toast.error("Class not found");
-      navigate("/club-management/class-setup");
-      return;
-    }
-    setInitialValues({
-      className: existing.className,
-      amountPerPerson: existing.amountPerPerson,
-      minParticipants: String(existing.minParticipants),
-      maxCapacity: String(existing.maxCapacity),
-      location: existing.location,
-      duration: existing.duration,
-      trainer: existing.trainer,
-      status: existing.status,
-      startTime: existing.startTime || "",
-      endTime: existing.endTime || "",
-      description: existing.description,
-    });
+    const fetchClass = async () => {
+      try {
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
+        const res = await axios.get(`https://${baseUrl}/pms/admin/club_classes/${id}.json`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const c = res.data?.club_class ?? res.data;
+
+        setInitialValues({
+          className: c.name ?? "",
+          classType: titleCase(c.session_type),
+          activityType: titleCase(c.activity_type),
+          amountPerPerson: "",
+          minParticipants: String(c.min_capacity ?? ""),
+          maxCapacity: String(c.max_capacity ?? ""),
+          location: c.location ?? "",
+          duration: c.duration_minutes != null ? String(c.duration_minutes) : "",
+          trainer: (c.trainer_ids ?? []).map(String),
+          status: String(c.status).toLowerCase() === "active" ? "Active" : "Inactive",
+          startTime: "",
+          endTime: "",
+          description: "",
+        });
+      } catch (err) {
+        console.error("Failed to fetch class", err);
+        toast.error("Class not found");
+        navigate("/club-management/class-setup");
+      }
+    };
+    fetchClass();
   }, [id, navigate]);
 
   if (!initialValues) return null;
+
+  const handleSubmit = async (payload: Omit<ClassSetup, "id" | "trainers">, attachedFiles: File[]) => {
+    if (!id) return;
+    try {
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
+      const url = `https://${baseUrl}/pms/admin/club_classes/${id}.json`;
+
+      const classFields: Record<string, unknown> = {
+        name: payload.className,
+        session_type: String(payload.classType).toLowerCase(),
+        activity_type: String(payload.activityType).toLowerCase(),
+        max_capacity: payload.maxCapacity,
+        min_capacity: payload.minParticipants,
+        duration_minutes: parseInt(String(payload.duration), 10) || 0,
+        status: String(payload.status).toLowerCase(),
+        bundle_eligible: true,
+        trainer_ids: payload.trainer,
+        location: payload.location,
+      };
+
+      if (attachedFiles.length > 0) {
+        const formData = new FormData();
+        Object.entries(classFields).forEach(([key, value]) => {
+          if (Array.isArray(value)) {
+            value.forEach((item) => formData.append(`club_class[${key}][]`, String(item)));
+          } else {
+            formData.append(`club_class[${key}]`, String(value));
+          }
+        });
+        attachedFiles.forEach((file) => {
+          formData.append("club_class[images][]", file);
+        });
+        await axios.put(url, formData, { headers: { Authorization: `Bearer ${token}` } });
+      } else {
+        await axios.put(
+          url,
+          { club_class: classFields },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+
+      cmEvents.updated("Class Setup", id, "class_setup_edit");
+      toast.success("Class updated successfully!");
+      navigate("/club-management/class-setup");
+    } catch (err) {
+      toast.error("Failed to update class");
+    }
+  };
 
   return (
     <ClassSetupForm
       pageTitle="Edit Class Setup"
       backLabel="Back to Class Setup List"
-      initialValues={initialValues ?? emptyClassSetupForm}
+      initialValues={initialValues}
       submitLabel="Update"
       submittingLabel="Updating..."
       onBack={() => navigate("/club-management/class-setup")}
-      onSubmit={(payload) => {
-        if (!id) return;
-        updateClass(id, payload);
-        cmEvents.updated("Class Setup", id, "class_setup_edit");
-        toast.success("Class updated successfully!");
-        navigate(`/club-management/class-setup/details/${id}`);
-      }}
+      onSubmit={handleSubmit}
     />
   );
 };

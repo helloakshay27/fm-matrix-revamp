@@ -1,9 +1,29 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
-import { ArrowLeft, UserRound, Paperclip, Upload, X } from "lucide-react";
+import { ArrowLeft, CalendarDays, UserRound, Paperclip, Upload, X } from "lucide-react";
 import { toast } from "sonner";
-import { SPECIALIZATIONS, type TrainerSetup } from "./trainerSetupMockData";
+import {
+  ROSTER_OPTIONS,
+  SLOT_DURATION_OPTIONS,
+  SPECIALIZATIONS,
+  type DurationValue,
+  type TrainerAvailabilitySlot,
+  type TrainerSetup,
+} from "./trainerSetupMockData";
+
+const blankDuration = (): DurationValue => ({ day: "", hour: "", minute: "" });
+
+const blankAvailabilitySlot = (): TrainerAvailabilitySlot => ({
+  startTime: { hour: "00", minute: "00" },
+  endTime: { hour: "00", minute: "00" },
+  concurrentSlots: "",
+  slotBy: 15,
+});
+
+// Allows only positive integers, matching the pattern used on the Amenity Booking Setup form.
+const isPositiveIntegerInput = (value: string) => value === "" || /^[1-9]\d*$/.test(value);
+const isDigitsInput = (value: string) => value === "" || /^\d+$/.test(value);
 
 // Matches the Section pattern used by CreditNoteClubAdd/Edit and ClassSetupForm (bg-[#F6F4EE]
 // header bar, circular bg-[#E5E0D3] icon badge in the brand red).
@@ -54,6 +74,14 @@ export interface TrainerSetupFormState {
   contactNumber: string;
   status: "Active" | "Inactive";
   bio: string;
+  slot: string;
+  roster: string;
+  availabilitySlots: TrainerAvailabilitySlot[];
+  bookableSlotsPerDay: string;
+  bookingAllowedBefore: DurationValue;
+  advanceBooking: DurationValue;
+  canCancelBefore: DurationValue;
+  facilityBookedTimes: string;
 }
 
 export const emptyTrainerSetupForm: TrainerSetupFormState = {
@@ -64,6 +92,14 @@ export const emptyTrainerSetupForm: TrainerSetupFormState = {
   contactNumber: "",
   status: "Active",
   bio: "",
+  slot: "",
+  roster: "",
+  availabilitySlots: [blankAvailabilitySlot()],
+  bookableSlotsPerDay: "",
+  bookingAllowedBefore: blankDuration(),
+  advanceBooking: blankDuration(),
+  canCancelBefore: blankDuration(),
+  facilityBookedTimes: "",
 };
 
 interface TrainerSetupFormProps {
@@ -133,7 +169,18 @@ export const TrainerSetupForm = ({
   onBack,
   onSubmit,
 }: TrainerSetupFormProps) => {
-  const [form, setForm] = useState<TrainerSetupFormState>(initialValues);
+  // Defensively backfill any field a caller's initialValues left undefined (e.g. a stale
+  // pre-existing record from before availability/slot/roster existed) so nothing here
+  // ever reads .map()/.day etc. off undefined. A plain object spread wouldn't be enough -
+  // a key present with value `undefined` still overwrites the default.
+  const [form, setForm] = useState<TrainerSetupFormState>({
+    ...emptyTrainerSetupForm,
+    ...initialValues,
+    availabilitySlots: initialValues.availabilitySlots ?? emptyTrainerSetupForm.availabilitySlots,
+    bookingAllowedBefore: initialValues.bookingAllowedBefore ?? emptyTrainerSetupForm.bookingAllowedBefore,
+    advanceBooking: initialValues.advanceBooking ?? emptyTrainerSetupForm.advanceBooking,
+    canCancelBefore: initialValues.canCancelBefore ?? emptyTrainerSetupForm.canCancelBefore,
+  });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [certFile, setCertFile] = useState<File | null>(null);
   const [contractFile, setContractFile] = useState<File | null>(null);
@@ -141,6 +188,18 @@ export const TrainerSetupForm = ({
 
   const setField = <K extends keyof TrainerSetupFormState>(key: K, value: TrainerSetupFormState[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
+
+  const addAvailabilitySlot = () =>
+    setForm((f) => ({ ...f, availabilitySlots: [...(f.availabilitySlots ?? []), blankAvailabilitySlot()] }));
+
+  const removeAvailabilitySlot = (index: number) =>
+    setForm((f) => ({ ...f, availabilitySlots: (f.availabilitySlots ?? []).filter((_, i) => i !== index) }));
+
+  const patchAvailabilitySlot = (index: number, patch: Partial<TrainerAvailabilitySlot>) =>
+    setForm((f) => ({
+      ...f,
+      availabilitySlots: (f.availabilitySlots ?? []).map((slot, i) => (i === index ? { ...slot, ...patch } : slot)),
+    }));
 
   const handleSubmit = () => {
     if (
@@ -164,6 +223,14 @@ export const TrainerSetupForm = ({
       status: form.status,
       bio: form.bio.trim(),
       imageUrl: imageFile ? imageFile.name : "",
+      slot: form.slot,
+      roster: form.roster,
+      availabilitySlots: form.availabilitySlots,
+      bookableSlotsPerDay: form.bookableSlotsPerDay,
+      bookingAllowedBefore: form.bookingAllowedBefore,
+      advanceBooking: form.advanceBooking,
+      canCancelBefore: form.canCancelBefore,
+      facilityBookedTimes: form.facilityBookedTimes,
     });
   };
 
@@ -263,6 +330,52 @@ export const TrainerSetupForm = ({
               </MuiSelect>
             </FormControl>
 
+            <FormControl fullWidth variant="outlined" sx={{ "& .MuiInputBase-root": fieldStyles }}>
+              <InputLabel shrink>Slot</InputLabel>
+              <MuiSelect
+                value={form.slot}
+                onChange={(e) => setField("slot", e.target.value as string)}
+                label="Slot"
+                notched
+                displayEmpty
+                renderValue={(selected) =>
+                  selected
+                    ? SLOT_DURATION_OPTIONS.find((opt) => opt.value === selected)?.label ?? String(selected)
+                    : "Select slot"
+                }
+              >
+                <MenuItem value="" disabled>
+                  Select slot
+                </MenuItem>
+                {SLOT_DURATION_OPTIONS.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
+
+            <FormControl fullWidth variant="outlined" sx={{ "& .MuiInputBase-root": fieldStyles }}>
+              <InputLabel shrink>Roster</InputLabel>
+              <MuiSelect
+                value={form.roster}
+                onChange={(e) => setField("roster", e.target.value as string)}
+                label="Roster"
+                notched
+                displayEmpty
+                renderValue={(selected) => (selected ? String(selected) : "Select roster")}
+              >
+                <MenuItem value="" disabled>
+                  Select roster
+                </MenuItem>
+                {ROSTER_OPTIONS.map((opt) => (
+                  <MenuItem key={opt} value={opt}>
+                    {opt}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
+
             {/* <div className="md:col-span-3">
               <div className="relative">
                 <textarea
@@ -281,6 +394,329 @@ export const TrainerSetupForm = ({
               </div>
               <div className="mt-1 text-right text-xs text-gray-400">{form.bio.length}/500</div>
             </div> */}
+          </div>
+        </Section>
+
+        <Section title="Facility Operational Timings & Booking" icon={<CalendarDays className="w-5 h-5" />}>
+          <div>
+            <Button
+              type="button"
+              onClick={addAvailabilitySlot}
+              className="bg-purple-600 hover:bg-purple-700 mb-4"
+            >
+              Add
+            </Button>
+
+            {/* Fixed column widths (rather than grid-cols-5's equal fr tracks) so the
+                two-select time cells have room to breathe; the wrapper scrolls instead
+                of squeezing columns on narrow viewports. */}
+            <div className="overflow-x-auto">
+              <div
+                className="grid gap-2 mb-2 text-sm font-medium text-gray-600 min-w-max"
+                style={{ gridTemplateColumns: "200px 200px 140px 180px 90px" }}
+              >
+                <div>Start Time</div>
+                <div>End Time</div>
+                <div>Concurrent Slots</div>
+                <div>Slot by</div>
+                <div>Action</div>
+              </div>
+
+              {/* Slot Rows */}
+              {(form.availabilitySlots ?? []).map((slot, index) => (
+                <div
+                  key={index}
+                  className="grid gap-2 mb-2 min-w-max"
+                  style={{ gridTemplateColumns: "200px 200px 140px 180px 90px" }}
+                >
+                  <div className="flex gap-1">
+                    <FormControl size="small" sx={{ minWidth: 88 }}>
+                      <MuiSelect
+                        value={slot.startTime.hour}
+                        onChange={(e) =>
+                          patchAvailabilitySlot(index, {
+                            startTime: { ...slot.startTime, hour: e.target.value as string },
+                          })
+                        }
+                      >
+                        {Array.from({ length: 24 }, (_, i) => (
+                          <MenuItem key={i} value={i.toString().padStart(2, "0")}>
+                            {i.toString().padStart(2, "0")}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                    <FormControl size="small" sx={{ minWidth: 88 }}>
+                      <MuiSelect
+                        value={slot.startTime.minute}
+                        onChange={(e) =>
+                          patchAvailabilitySlot(index, {
+                            startTime: { ...slot.startTime, minute: e.target.value as string },
+                          })
+                        }
+                      >
+                        {Array.from({ length: 60 }, (_, i) => (
+                          <MenuItem key={i} value={i.toString().padStart(2, "0")}>
+                            {i.toString().padStart(2, "0")}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+
+                  <div className="flex gap-1">
+                    <FormControl size="small" sx={{ minWidth: 88 }}>
+                      <MuiSelect
+                        value={slot.endTime.hour}
+                        onChange={(e) =>
+                          patchAvailabilitySlot(index, {
+                            endTime: { ...slot.endTime, hour: e.target.value as string },
+                          })
+                        }
+                      >
+                        {Array.from({ length: 24 }, (_, i) => (
+                          <MenuItem key={i} value={i.toString().padStart(2, "0")}>
+                            {i.toString().padStart(2, "0")}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                    <FormControl size="small" sx={{ minWidth: 88 }}>
+                      <MuiSelect
+                        value={slot.endTime.minute}
+                        onChange={(e) =>
+                          patchAvailabilitySlot(index, {
+                            endTime: { ...slot.endTime, minute: e.target.value as string },
+                          })
+                        }
+                      >
+                        {Array.from({ length: 60 }, (_, i) => (
+                          <MenuItem key={i} value={i.toString().padStart(2, "0")}>
+                            {i.toString().padStart(2, "0")}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+
+                  <TextField
+                    size="small"
+                    value={slot.concurrentSlots}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (isPositiveIntegerInput(value)) {
+                        patchAvailabilitySlot(index, { concurrentSlots: value });
+                      }
+                    }}
+                    variant="outlined"
+                  />
+
+                  <FormControl size="small" sx={{ minWidth: 160 }}>
+                    <MuiSelect
+                      value={slot.slotBy}
+                      onChange={(e) => patchAvailabilitySlot(index, { slotBy: Number(e.target.value) })}
+                    >
+                      <MenuItem value={15}>15 Minutes</MenuItem>
+                      <MenuItem value={30}>Half hour</MenuItem>
+                      <MenuItem value={45}>45 Minutes</MenuItem>
+                      <MenuItem value={60}>1 hour</MenuItem>
+                      <MenuItem value={90}>1 and a half hours</MenuItem>
+                      <MenuItem value={120}>2 hours</MenuItem>
+                      <MenuItem value={150}>2 and a half hours</MenuItem>
+                      <MenuItem value={180}>3 hours</MenuItem>
+                      <MenuItem value={210}>3 and a half hours</MenuItem>
+                      <MenuItem value={240}>4 hours</MenuItem>
+                      <MenuItem value={270}>4 and a half hours</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => removeAvailabilitySlot(index)}
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-3 mt-4">
+              <label className="text-sm font-medium text-gray-700">Bookable Slots Per Day</label>
+              <TextField
+                size="small"
+                value={form.bookableSlotsPerDay}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (isPositiveIntegerInput(value)) setField("bookableSlotsPerDay", value);
+                }}
+                variant="outlined"
+              />
+            </div>
+
+            <div className="space-y-4 mt-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700">Booking Allowed before :</label>
+                <p className="text-sm text-gray-600 mb-2">(Enter Time: DD Days, HH Hours, MM Minutes)</p>
+                <div className="flex gap-2 items-center">
+                  <TextField
+                    placeholder="Day"
+                    size="small"
+                    style={{ width: "80px" }}
+                    variant="outlined"
+                    value={form.bookingAllowedBefore.day}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (isDigitsInput(value)) {
+                        setField("bookingAllowedBefore", { ...form.bookingAllowedBefore, day: value });
+                      }
+                    }}
+                  />
+                  <span>DD</span>
+                  <TextField
+                    placeholder="Hour"
+                    size="small"
+                    style={{ width: "80px" }}
+                    variant="outlined"
+                    value={form.bookingAllowedBefore.hour}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (isDigitsInput(value)) {
+                        setField("bookingAllowedBefore", { ...form.bookingAllowedBefore, hour: value });
+                      }
+                    }}
+                  />
+                  <span>HH</span>
+                  <TextField
+                    placeholder="Mins"
+                    size="small"
+                    style={{ width: "80px" }}
+                    variant="outlined"
+                    value={form.bookingAllowedBefore.minute}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (isDigitsInput(value)) {
+                        setField("bookingAllowedBefore", { ...form.bookingAllowedBefore, minute: value });
+                      }
+                    }}
+                  />
+                  <span>MM</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700">Advance Booking :</label>
+                <div className="flex gap-2 items-center">
+                  <TextField
+                    placeholder="Day"
+                    size="small"
+                    style={{ width: "80px" }}
+                    variant="outlined"
+                    value={form.advanceBooking.day}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (isDigitsInput(value)) {
+                        setField("advanceBooking", { ...form.advanceBooking, day: value });
+                      }
+                    }}
+                  />
+                  <span>DD</span>
+                  <TextField
+                    placeholder="Hour"
+                    size="small"
+                    style={{ width: "80px" }}
+                    variant="outlined"
+                    value={form.advanceBooking.hour}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (isDigitsInput(value)) {
+                        setField("advanceBooking", { ...form.advanceBooking, hour: value });
+                      }
+                    }}
+                  />
+                  <span>HH</span>
+                  <TextField
+                    placeholder="Mins"
+                    size="small"
+                    style={{ width: "80px" }}
+                    variant="outlined"
+                    value={form.advanceBooking.minute}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (isDigitsInput(value)) {
+                        setField("advanceBooking", { ...form.advanceBooking, minute: value });
+                      }
+                    }}
+                  />
+                  <span>MM</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700">Can Cancel Before Schedule :</label>
+                <div className="flex gap-2 items-center">
+                  <TextField
+                    placeholder="Day"
+                    size="small"
+                    style={{ width: "80px" }}
+                    variant="outlined"
+                    value={form.canCancelBefore.day}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (isDigitsInput(value)) {
+                        setField("canCancelBefore", { ...form.canCancelBefore, day: value });
+                      }
+                    }}
+                  />
+                  <span>DD</span>
+                  <TextField
+                    placeholder="Hour"
+                    size="small"
+                    style={{ width: "80px" }}
+                    variant="outlined"
+                    value={form.canCancelBefore.hour}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (isDigitsInput(value)) {
+                        setField("canCancelBefore", { ...form.canCancelBefore, hour: value });
+                      }
+                    }}
+                  />
+                  <span>HH</span>
+                  <TextField
+                    placeholder="Mins"
+                    size="small"
+                    style={{ width: "80px" }}
+                    variant="outlined"
+                    value={form.canCancelBefore.minute}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (isDigitsInput(value)) {
+                        setField("canCancelBefore", { ...form.canCancelBefore, minute: value });
+                      }
+                    }}
+                  />
+                  <span>MM</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 text-sm text-gray-600 mt-4">
+              <span>Facility can be booked</span>
+              <TextField
+                value={form.facilityBookedTimes}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (isPositiveIntegerInput(value)) setField("facilityBookedTimes", value);
+                }}
+                variant="outlined"
+                size="small"
+                style={{ width: "80px" }}
+              />
+              <span>times per day by User</span>
+            </div>
           </div>
         </Section>
 
