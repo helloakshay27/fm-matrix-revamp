@@ -12,6 +12,7 @@ import {
   fetchGrowth,
   fetchModules,
   fetchRetention,
+  fetchRecentActiveUsers,
   fetchRoles,
   fetchTrafficSession,
   fetchUsageAndDistribution,
@@ -161,6 +162,15 @@ export function useRoles(f: QueryFilters) {
   return useQuery({
     queryKey: [...ROOT, 'roles', ...keyBase(f)],
     queryFn: () => fetchRoles(range(f)),
+    enabled: f.enabled,
+    ...CACHE,
+  });
+}
+
+export function useRecentActiveUsers(f: QueryFilters) {
+  return useQuery({
+    queryKey: [...ROOT, 'recent_active_users', ...keyBase(f)],
+    queryFn: () => fetchRecentActiveUsers(range(f)),
     enabled: f.enabled,
     ...CACHE,
   });

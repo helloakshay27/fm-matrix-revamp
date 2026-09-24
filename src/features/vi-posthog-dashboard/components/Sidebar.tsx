@@ -1,5 +1,6 @@
 import { useViDashboard } from '../context/viDashboardStore';
 import { PAGE_TITLES, type PageKey } from '../data/pages';
+import { RecentActivitySidebar } from './RecentActivitySidebar';
 
 const NAV_ICONS: Record<PageKey, JSX.Element> = {
   pgTraffic: (
@@ -27,7 +28,7 @@ const NAV_ICONS: Record<PageKey, JSX.Element> = {
 const ORDER: PageKey[] = ['pgTraffic', 'pgAdopt', 'pgFlows'];
 
 export function Sidebar() {
-  const { page, setPage } = useViDashboard();
+  const { page, setPage, queryFilters } = useViDashboard();
 
   return (
     <aside className="sidebar">
@@ -56,6 +57,7 @@ export function Sidebar() {
           ))}
         </div>
       </nav>
+      <RecentActivitySidebar filters={queryFilters} />
     </aside>
   );
 }

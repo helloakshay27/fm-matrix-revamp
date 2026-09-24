@@ -12,6 +12,7 @@ import { AdoptionSection } from './sections/AdoptionSection';
 import { WorkflowSection } from './sections/WorkflowSection';
 import { FmDashboardSection } from './sections/FmDashboardSection';
 import type { DashboardState } from './data/metrics';
+import { RecentActivitySidebar } from './components/RecentActivitySidebar';
 
 const PAGES: { key: DashboardState['activePage']; title: string; icon: JSX.Element }[] = [
   // { key: 'pgFm', title: 'FM Matrix dashboards', icon: <span aria-hidden="true">▦</span> },
@@ -76,6 +77,7 @@ function DashboardLayout() {
               ))}
             </div>
           </nav>
+          <RecentActivitySidebar filters={vm.filters} filtersSettled={vm.filtersSettled} />
         </aside>
 
         <main className="main">
