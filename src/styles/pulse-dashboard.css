@@ -57,7 +57,7 @@
 .pulse-db .pd-kpi-label {
   font-size: 13px;
   font-weight: 500;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: .06em;
   color: var(--color-text-light);
 }
@@ -71,11 +71,23 @@
 /* ── KPI card modifier — label-over-value with an optional trailing badge,
    e.g. "+8" / "10%". Opt-in via an extra class so the default column-reverse
    .pd-kpi-card used elsewhere is untouched. ──────────────────────────────── */
+/* Stacked layout: label spans the full card width on top, value + badge
+   share the row below — so long labels (e.g. "Paid Registrations") don't
+   wrap into the badge's column. .pd-kpi-main is flattened into the grid. */
 .pulse-db .pd-kpi-card--badged {
-  flex-direction: row;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 6px;
+}
+
+.pulse-db .pd-kpi-card--badged .pd-kpi-main {
+  display: contents;
+}
+
+.pulse-db .pd-kpi-card--badged .pd-kpi-label {
+  grid-column: 1 / -1;
 }
 
 .pulse-db .pd-kpi-main {
@@ -1347,8 +1359,8 @@
 .pulse-db .pd-chart-title {
   font-size: 11px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .08em;
+  text-transform: none;
+  letter-spacing: normal;
   color: var(--color-text);
   margin-bottom: 14px;
   padding-bottom: 10px;
@@ -1883,8 +1895,8 @@
 .pulse-db .pd-subsection-title {
   font-size: 13px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: .5px;
+  text-transform: none;
+  letter-spacing: normal;
   color: var(--color-text-light);
   margin-bottom: 10px;
   margin-top: 4px;
@@ -1933,8 +1945,8 @@
 .pulse-db .pd-tbl-title {
   font-size: 11px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .08em;
+  text-transform: none;
+  letter-spacing: normal;
   color: var(--color-text);
 }
 
@@ -1993,11 +2005,11 @@
 }
 
 .pulse-db .pd-table th {
-  text-align: left;
+  text-align: center;
   padding: 10px 14px;
   font-size: 10px;
   font-weight: 700;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: .06em;
   color: #798C5E;
   background: var(--color-bg);
@@ -2006,6 +2018,7 @@
 }
 
 .pulse-db .pd-table td {
+  text-align: center;
   padding: 10px 14px;
   border-bottom: 1px solid var(--color-border-subtle);
   color: var(--color-text);
@@ -2014,7 +2027,7 @@
 
 .pulse-db .pd-table th.pd-num,
 .pulse-db .pd-table td.pd-num {
-  text-align: right;
+  text-align: center;
   font-variant-numeric: tabular-nums;
 }
 
@@ -2072,6 +2085,7 @@
 .pulse-db .pd-badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
   padding: 2px 9px;
   border-radius: var(--radius-full);
@@ -2111,7 +2125,12 @@
 
 /* Solid-fill status pill without the leading dot, e.g. the Status column
    in the Entity Management Directory. */
+.pulse-db .pd-badge--flat {
+  gap: 0;
+}
+
 .pulse-db .pd-badge--flat::before {
+  content: none;
   display: none;
 }
 
@@ -2130,6 +2149,7 @@
 .pulse-db .pd-chip {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   padding: 3px 10px;
   border-radius: var(--radius-full);
   font-size: 11px;

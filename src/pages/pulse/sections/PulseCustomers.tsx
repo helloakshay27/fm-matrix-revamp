@@ -298,13 +298,11 @@ export function PulseCustomers({ filters }: Props) {
                     <tr key={t.id}>
                       <td className="pd-num">{t.serial}</td>
                       <td style={{ fontWeight: 500 }}>{t.name}</td>
-                      <td>
-                        <span className="pd-chip">{t.type ?? "—"}</span>
-                      </td>
+                      <td>{t.type ?? "—"}</td>
                       <td>{t.site_name}</td>
                       <td>
                         <span
-                          className={`pd-badge pd-badge--flat ${t.active ? "pd-badge-yes" : "pd-badge-no"}`}
+                          className={`pd-badge ${t.active ? "pd-badge-yes" : "pd-badge-no"}`}
                         >
                           {t.status}
                         </span>
