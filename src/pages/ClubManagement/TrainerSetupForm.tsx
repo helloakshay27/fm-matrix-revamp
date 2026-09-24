@@ -68,6 +68,7 @@ const requiredLabelSx = {
 
 export interface TrainerSetupFormState {
   name: string;
+  email: string;
   specialization: string;
   experience: string;
   ratePerSession: string;
@@ -86,6 +87,7 @@ export interface TrainerSetupFormState {
 
 export const emptyTrainerSetupForm: TrainerSetupFormState = {
   name: "",
+  email: "",
   specialization: "",
   experience: "",
   ratePerSession: "",
@@ -109,7 +111,11 @@ interface TrainerSetupFormProps {
   submitLabel: string;
   submittingLabel: string;
   onBack: () => void;
-  onSubmit: (payload: Omit<TrainerSetup, "id" | "credentials">) => void;
+  onSubmit: (payload: Omit<TrainerSetup, "id" | "credentials"> & { email: string }, files: {
+    image: File | null;
+    certificate: File | null;
+    contract: File | null;
+  }) => void | Promise<void>;
 }
 
 const UploadZone = ({
@@ -176,6 +182,7 @@ export const TrainerSetupForm = ({
   const [form, setForm] = useState<TrainerSetupFormState>({
     ...emptyTrainerSetupForm,
     ...initialValues,
+    email: initialValues.email ?? emptyTrainerSetupForm.email,
     availabilitySlots: initialValues.availabilitySlots ?? emptyTrainerSetupForm.availabilitySlots,
     bookingAllowedBefore: initialValues.bookingAllowedBefore ?? emptyTrainerSetupForm.bookingAllowedBefore,
     advanceBooking: initialValues.advanceBooking ?? emptyTrainerSetupForm.advanceBooking,
@@ -216,6 +223,7 @@ export const TrainerSetupForm = ({
     setIsSubmitting(true);
     onSubmit({
       name: form.name.trim(),
+      email: form.email.trim(),
       specialization: form.specialization.trim(),
       experience: form.experience.trim(),
       ratePerSession: form.ratePerSession.trim(),
@@ -231,7 +239,7 @@ export const TrainerSetupForm = ({
       advanceBooking: form.advanceBooking,
       canCancelBefore: form.canCancelBefore,
       facilityBookedTimes: form.facilityBookedTimes,
-    });
+    }, { image: imageFile, certificate: certFile, contract: contractFile });
   };
 
   return (
@@ -260,6 +268,17 @@ export const TrainerSetupForm = ({
               fullWidth
               variant="outlined"
               sx={requiredLabelSx}
+              slotProps={{ inputLabel: { shrink: true } }}
+              InputProps={{ sx: fieldStyles }}
+            />
+            <TextField
+              label="Email"
+              type="email"
+              placeholder="e.g. trainer@example.com"
+              value={form.email}
+              onChange={(e) => setField("email", e.target.value)}
+              fullWidth
+              variant="outlined"
               slotProps={{ inputLabel: { shrink: true } }}
               InputProps={{ sx: fieldStyles }}
             />

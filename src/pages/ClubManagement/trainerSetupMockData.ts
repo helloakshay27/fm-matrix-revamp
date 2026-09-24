@@ -31,6 +31,7 @@ export interface TrainerAvailabilitySlot {
 export interface TrainerSetup {
   id: string;
   name: string;
+  email?: string;
   specialization: string;
   experience: string;
   ratePerSession: string;
@@ -49,6 +50,56 @@ export interface TrainerSetup {
   advanceBooking?: DurationValue;
   canCancelBefore?: DurationValue;
   facilityBookedTimes?: string;
+}
+
+export function mapTrainerApiData(raw: any): TrainerSetup {
+  const trainer = raw?.trainer ?? raw?.data ?? raw;
+  const facilitySlot = Array.isArray(trainer?.facility_slot_attributes)
+    ? trainer.facility_slot_attributes[0]
+    : trainer?.facility_slot_attributes;
+  const credentials = trainer?.credentials ?? trainer?.certificates ?? trainer?.attachments ?? [];
+
+  return {
+    id: String(trainer?.id ?? ""),
+    name: trainer?.name ?? trainer?.full_name ?? "",
+    email: trainer?.email ?? "",
+    specialization: trainer?.specialization ?? "",
+    experience: String(trainer?.experience ?? trainer?.experience_years ?? ""),
+    ratePerSession: String(trainer?.rate_per_session ?? trainer?.ratePerSession ?? ""),
+    contactNumber: trainer?.mobile ?? trainer?.contact_number ?? "",
+    status: String(trainer?.status).toLowerCase() === "inactive" ? "Inactive" : "Active",
+    bio: trainer?.bio ?? "",
+    imageUrl: trainer?.image_url ?? trainer?.image ?? "",
+    credentials: Array.isArray(credentials)
+      ? credentials.map((credential: any, index: number) => ({
+          id: String(credential.id ?? index),
+          name: credential.name ?? credential.file_name ?? credential.filename ?? "Attachment",
+          size: credential.size ?? "",
+          url: credential.url ?? credential.file_url ?? "",
+        }))
+      : [],
+    slot: trainer?.slot ?? "",
+    roster: trainer?.roster ?? trainer?.user_roaster_id ?? "",
+    availabilitySlots: facilitySlot
+      ? [{
+          startTime: {
+            hour: String(facilitySlot.start_hour ?? 0).padStart(2, "0"),
+            minute: String(facilitySlot.start_min ?? 0).padStart(2, "0"),
+          },
+          endTime: {
+            hour: String(facilitySlot.end_hour ?? 0).padStart(2, "0"),
+            minute: String(facilitySlot.end_min ?? 0).padStart(2, "0"),
+          },
+          concurrentSlots: String(facilitySlot.concurrent_slots ?? ""),
+          slotBy: Number(facilitySlot.slot_by ?? 15),
+        }]
+      : undefined,
+    bookableSlotsPerDay: trainer?.bookable_slots_per_day ?? "",
+    bookingAllowedBefore: trainer?.booking_allowed_before,
+    advanceBooking: trainer?.advance_booking,
+    canCancelBefore: trainer?.can_cancel_before,
+    facilityBookedTimes: trainer?.facility_booked_times ?? "",
+  };
 }
 
 let trainers: TrainerSetup[] = [

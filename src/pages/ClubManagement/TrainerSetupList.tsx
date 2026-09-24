@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Eye, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
 import { toast } from "sonner";
+import { apiClient } from "@/utils/apiClient";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -16,7 +17,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
-import { deleteTrainer, getTrainers, updateTrainer, type TrainerSetup } from "./trainerSetupMockData";
+import { deleteTrainer, updateTrainer, type TrainerSetup } from "./trainerSetupMockData";
 
 const columns: ColumnConfig[] = [
   { key: "actions", label: "Actions", sortable: false, hideable: false, draggable: false },
@@ -35,10 +36,62 @@ export const TrainerSetupList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [refreshTick, setRefreshTick] = useState(0);
+  const [allTrainers, setAllTrainers] = useState<TrainerSetup[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [totalRecords, setTotalRecords] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState<TrainerSetup | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const allTrainers = useMemo(() => getTrainers(), [refreshTick]);
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchTrainers = async () => {
+      setIsLoading(true);
+      try {
+        const response = await apiClient.get("/pms/admin/trainers.json?page=1&per_page=20");
+        const responseData = response.data;
+        const records = Array.isArray(responseData)
+          ? responseData
+          : responseData?.trainers ?? responseData?.data ?? responseData?.records ?? [];
+        const trainers: TrainerSetup[] = records.map((trainer: any) => ({
+          id: String(trainer.id),
+          name: trainer.name ?? trainer.full_name ?? "",
+          email: trainer.email ?? "",
+          specialization: trainer.specialization ?? "",
+          experience: trainer.experience ?? trainer.experience_years ?? "",
+          ratePerSession: String(trainer.rate_per_session ?? trainer.ratePerSession ?? ""),
+          contactNumber: trainer.mobile ?? trainer.contact_number ?? "",
+          status: String(trainer.status).toLowerCase() === "inactive" ? "Inactive" : "Active",
+          bio: trainer.bio ?? "",
+          imageUrl: trainer.image_url ?? trainer.image ?? "",
+          credentials: trainer.credentials ?? [],
+        }));
+        if (isMounted) {
+          setAllTrainers(trainers);
+          setTotalRecords(
+            responseData?.meta?.total_count ??
+              responseData?.total_count ??
+              responseData?.pagination?.total_count ??
+              trainers.length
+          );
+        }
+      } catch (error) {
+        console.error("Failed to fetch trainers", error);
+        if (isMounted) {
+          setAllTrainers([]);
+          setTotalRecords(0);
+          toast.error("Failed to load trainers");
+        }
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    fetchTrainers();
+    return () => {
+      isMounted = false;
+    };
+  }, [refreshTick]);
 
   const filtered = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
@@ -49,7 +102,7 @@ export const TrainerSetupList = () => {
     );
   }, [allTrainers, searchTerm]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil((searchTerm ? filtered.length : totalRecords) / PAGE_SIZE));
   const page = Math.min(currentPage, totalPages);
   const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -162,9 +215,9 @@ export const TrainerSetupList = () => {
         <TicketPagination
           currentPage={page}
           totalPages={totalPages}
-          totalRecords={filtered.length}
+          totalRecords={searchTerm ? filtered.length : totalRecords}
           perPage={PAGE_SIZE}
-          isLoading={false}
+          isLoading={isLoading}
           onPageChange={setCurrentPage}
           onPerPageChange={() => {}}
         />

@@ -15,6 +15,11 @@ interface TrainerOption {
   name: string;
 }
 
+export interface SelectedTrainer {
+  name: string;
+  value: number;
+}
+
 // The native <input type="time"> picker's popup (hour/minute/AM-PM wheel columns) is
 // browser/OS chrome and can't be recolored via CSS - swapping to MUI X's TimePicker
 // renders that popup in React instead, so its selected-state highlight (and the clock
@@ -138,6 +143,12 @@ const requiredLabelSx = {
   },
 };
 
+const isNonNegativeInteger = (value: string) => value === "" || /^\d+$/.test(value);
+const isNonNegativeDuration = (value: string) => !value.includes("-");
+const preventNegativeSign = (event: React.KeyboardEvent<HTMLInputElement>) => {
+  if (event.key === "-") event.preventDefault();
+};
+
 export interface ClassSetupFormState {
   className: string;
   classType: string;
@@ -177,7 +188,10 @@ interface ClassSetupFormProps {
   submitLabel: string;
   submittingLabel: string;
   onBack: () => void;
-  onSubmit: (payload: Omit<ClassSetup, "id" | "trainers">, attachedFiles: File[]) => void | Promise<void>;
+  onSubmit: (
+    payload: Omit<ClassSetup, "id" | "trainers"> & { selectedTrainers: SelectedTrainer[] },
+    attachedFiles: File[]
+  ) => void | Promise<void>;
 }
 
 export const ClassSetupForm = ({
@@ -208,7 +222,7 @@ export const ClassSetupForm = ({
           : res.data?.trainers ?? res.data?.data ?? [];
         setTrainers(
           list.map((t: any) => ({
-            id: String(t.id),
+            id: String(t.value ?? t.id),
             name: t.name ?? t.full_name ?? `Trainer ${t.id}`,
           }))
         );
@@ -243,6 +257,11 @@ export const ClassSetupForm = ({
       return;
     }
 
+    if (Number(form.maxCapacity) < Number(form.minParticipants)) {
+      toast.error("Maximum person must not be less than minimum person");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await onSubmit(
@@ -256,6 +275,10 @@ export const ClassSetupForm = ({
           location: form.location,
           duration: form.duration,
           trainer: form.trainer,
+          selectedTrainers: form.trainer.map((id) => {
+            const trainer = trainers.find((option) => option.id === id);
+            return { name: trainer?.name ?? "", value: Number(id) };
+          }),
           status: form.status,
           startTime: form.startTime,
           endTime: form.endTime,
@@ -366,7 +389,11 @@ export const ClassSetupForm = ({
               type="number"
               placeholder="Enter minimum"
               value={form.minParticipants}
-              onChange={(e) => setField("minParticipants", e.target.value)}
+              onKeyDown={preventNegativeSign}
+              onChange={(e) => {
+                if (isNonNegativeInteger(e.target.value)) setField("minParticipants", e.target.value);
+              }}
+              inputProps={{ min: 0, step: 1 }}
               fullWidth
               variant="outlined"
               sx={requiredLabelSx}
@@ -380,7 +407,11 @@ export const ClassSetupForm = ({
               type="number"
               placeholder="Enter maximum"
               value={form.maxCapacity}
-              onChange={(e) => setField("maxCapacity", e.target.value)}
+              onKeyDown={preventNegativeSign}
+              onChange={(e) => {
+                if (isNonNegativeInteger(e.target.value)) setField("maxCapacity", e.target.value);
+              }}
+              inputProps={{ min: 0, step: 1 }}
               fullWidth
               variant="outlined"
               sx={requiredLabelSx}
@@ -399,9 +430,13 @@ export const ClassSetupForm = ({
             />
             <TextField
               label="Duration"
+              type="text"
               placeholder="Eg. 50 min."
               value={form.duration}
-              onChange={(e) => setField("duration", e.target.value)}
+              onKeyDown={preventNegativeSign}
+              onChange={(e) => {
+                if (isNonNegativeDuration(e.target.value)) setField("duration", e.target.value);
+              }}
               fullWidth
               variant="outlined"
               slotProps={{ inputLabel: { shrink: true } }}

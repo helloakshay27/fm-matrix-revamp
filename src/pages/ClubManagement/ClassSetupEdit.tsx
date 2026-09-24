@@ -36,7 +36,9 @@ export const ClassSetupEdit = () => {
           maxCapacity: String(c.max_capacity ?? ""),
           location: c.location ?? "",
           duration: c.duration_minutes != null ? String(c.duration_minutes) : "",
-          trainer: (c.trainer_ids ?? []).map(String),
+          trainer: (c.trainers ?? c.trainer_ids ?? []).map((trainer: any) =>
+            String(typeof trainer === "object" ? trainer.value : trainer)
+          ),
           status: String(c.status).toLowerCase() === "active" ? "Active" : "Inactive",
           startTime: "",
           endTime: "",
@@ -53,7 +55,7 @@ export const ClassSetupEdit = () => {
 
   if (!initialValues) return null;
 
-  const handleSubmit = async (payload: Omit<ClassSetup, "id" | "trainers">, attachedFiles: File[]) => {
+  const handleSubmit = async (payload: Omit<ClassSetup, "id" | "trainers"> & { selectedTrainers: { name: string; value: number }[] }, attachedFiles: File[]) => {
     if (!id) return;
     try {
       const baseUrl = localStorage.getItem("baseUrl");
@@ -69,14 +71,19 @@ export const ClassSetupEdit = () => {
         duration_minutes: parseInt(String(payload.duration), 10) || 0,
         status: String(payload.status).toLowerCase(),
         bundle_eligible: true,
-        trainer_ids: payload.trainer,
+        trainers: payload.selectedTrainers,
         location: payload.location,
       };
 
       if (attachedFiles.length > 0) {
         const formData = new FormData();
         Object.entries(classFields).forEach(([key, value]) => {
-          if (Array.isArray(value)) {
+          if (key === "trainers" && Array.isArray(value)) {
+            value.forEach((trainer, index) => {
+              formData.append(`club_class[trainers][${index}][name]`, trainer.name);
+              formData.append(`club_class[trainers][${index}][value]`, String(trainer.value));
+            });
+          } else if (Array.isArray(value)) {
             value.forEach((item) => formData.append(`club_class[${key}][]`, String(item)));
           } else {
             formData.append(`club_class[${key}]`, String(value));
