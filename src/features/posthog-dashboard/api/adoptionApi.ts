@@ -105,6 +105,19 @@ export interface RangeFilters {
   dev?: string;
 }
 
+export interface RecentActiveUser {
+  user_id: string;
+  display_name: string;
+  path: string | null;
+  last_event: string | null;
+  minutes_ago: number | null;
+  site_name: string | null;
+}
+
+export interface RecentActiveUsersResponse {
+  users: RecentActiveUser[];
+}
+
 /** Filters for the three look-back endpoints (adoption_trend / growth / retention). */
 export interface WeeklyFilters {
   to: string; // YYYY-MM-DD
@@ -151,6 +164,23 @@ const get = async <T>(endpoint: string, pairs: Array<[string, string | string[] 
   const { data } = await analyticsClient.get<T>(url);
   return data;
 };
+
+export const RECENT_ACTIVE_USERS_EXPORT_ENDPOINT = '/fm/adoption/recent_active_users.xlsx';
+
+export const fetchRecentActiveUsers = (f: RangeFilters) =>
+  get<RecentActiveUsersResponse>('recent_active_users', [
+    ...rangeParams(f),
+    ['limit', 10],
+  ]);
+
+export async function downloadRecentActiveUsers(f: RangeFilters): Promise<Blob> {
+  const qs = buildQuery([...rangeParams(f), ['limit', 10]]);
+  const response = await analyticsClient.get<Blob>(
+    `${RECENT_ACTIVE_USERS_EXPORT_ENDPOINT}${qs ? `?${qs}` : ''}`,
+    { responseType: 'blob' },
+  );
+  return response.data;
+}
 
 /* Shared param slices ---------------------------------------------------- */
 

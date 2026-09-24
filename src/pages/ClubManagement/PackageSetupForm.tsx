@@ -1,14 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
-import { ArrowLeft, Package as PackageIcon, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Package as PackageIcon } from "lucide-react";
 import { toast } from "sonner";
 import {
   PACKAGE_CLASSES,
-  gstAmount,
-  newTier,
-  tierTotal,
-  type PackageSetup,
+  PACKAGE_TIER_TYPES,
+  blankTier,
   type PricingTier,
 } from "./packageSetupMockData";
 
@@ -51,16 +49,78 @@ const requiredLabelSx = {
   "& .MuiFormLabel-asterisk": { color: "#DA7756" },
 };
 
-const inr = (n: number) => "₹" + n.toLocaleString("en-IN");
+// Blocks typing/pasting the "-" sign so number fields can't go negative
+// (the `min: 0` attribute alone only affects the spinner, not typed input).
+const blockNegativeKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  if (e.key === "-" || e.key === "e") e.preventDefault();
+};
+
+const toNonNegative = (value: string): number => Math.max(0, Number(value) || 0);
+
+// Numeric tier fields are edited as `number | ""` so a genuinely empty field keeps
+// showing its placeholder, while a value the user actually set to 0 still renders as "0"
+// (a plain `number` state can't tell those two cases apart).
+type NumericTierField =
+  | "credits"
+  | "validityDays"
+  | "priceMember"
+  | "priceHotelGuest"
+  | "priceNonMember"
+  | "cgstRate"
+  | "sgstRate";
+
+type TierDraft = Omit<PricingTier, NumericTierField | "price" | "gstPercent"> & {
+  [K in NumericTierField]: number | "";
+};
+
+const toDraft = (t: PricingTier): TierDraft => ({
+  ...t,
+  credits: t.credits,
+  validityDays: t.validityDays,
+  priceMember: t.priceMember,
+  priceHotelGuest: t.priceHotelGuest,
+  priceNonMember: t.priceNonMember,
+  cgstRate: t.cgstRate,
+  sgstRate: t.sgstRate,
+});
+
+const blankDraft = (): TierDraft => ({
+  ...toDraft({ ...blankTier() }),
+  credits: "",
+  validityDays: "",
+  priceMember: "",
+  priceHotelGuest: "",
+  priceNonMember: "",
+  cgstRate: "",
+  sgstRate: "",
+});
+
+const draftToTier = (d: TierDraft): PricingTier => {
+  const priceMember = Number(d.priceMember) || 0;
+  return {
+    ...d,
+    credits: Number(d.credits) || 0,
+    validityDays: Number(d.validityDays) || 0,
+    priceMember,
+    priceHotelGuest: Number(d.priceHotelGuest) || 0,
+    priceNonMember: Number(d.priceNonMember) || 0,
+    cgstRate: Number(d.cgstRate) || 0,
+    sgstRate: Number(d.sgstRate) || 0,
+    price: priceMember,
+    gstPercent: (Number(d.cgstRate) || 0) + (Number(d.sgstRate) || 0),
+  };
+};
 
 export interface PackageSetupFormState {
   classActivity: string;
-  tiers: PricingTier[];
+  memberTiers: PricingTier[];
+  nonMemberTiers: PricingTier[];
 }
 
 export const emptyPackageSetupForm: PackageSetupFormState = {
   classActivity: "",
-  tiers: [],
+  memberTiers: [blankTier()],
+  nonMemberTiers: [],
 };
 
 interface PackageSetupFormProps {
@@ -72,7 +132,8 @@ interface PackageSetupFormProps {
   onBack: () => void;
   onSubmit: (payload: {
     classActivity: string;
-    tiers: PricingTier[];
+    memberTiers: PricingTier[];
+    nonMemberTiers: PricingTier[];
   }) => void;
 }
 
@@ -86,31 +147,19 @@ export const PackageSetupForm = ({
   onSubmit,
 }: PackageSetupFormProps) => {
   const [classActivity, setClassActivity] = useState(initialValues.classActivity);
-  const [tiers, setTiers] = useState<PricingTier[]>(initialValues.tiers);
-  const [draft, setDraft] = useState({ label: "", price: "", gstPercent: "" });
+  const [tier, setTier] = useState<TierDraft>(
+    initialValues.memberTiers[0] ? toDraft(initialValues.memberTiers[0]) : blankDraft()
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const patchTier = (id: string, patch: Partial<PricingTier>) =>
-    setTiers((rows) => rows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+  const patchTier = (patch: Partial<TierDraft>) => setTier((prev) => ({ ...prev, ...patch }));
 
-  const removeTier = (id: string) => setTiers((rows) => rows.filter((r) => r.id !== id));
-
-  const addDraftTier = () => {
-    if (!draft.label.trim()) {
-      toast.error("Enter a package name for the new pricing row");
-      return;
-    }
-    setTiers((rows) => [
-      ...rows,
-      {
-        ...newTier(),
-        label: draft.label.trim(),
-        price: Number(draft.price) || 0,
-        gstPercent: Number(draft.gstPercent) || 18,
-      },
-    ]);
-    setDraft({ label: "", price: "", gstPercent: "" });
-  };
+  // Empty input keeps the field blank (placeholder shows); anything typed is clamped to >= 0.
+  const handleNumberChange =
+    (field: NumericTierField) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      const raw = e.target.value;
+      patchTier({ [field]: raw === "" ? "" : toNonNegative(raw) } as Partial<TierDraft>);
+    };
 
   const handleSubmit = () => {
     if (!classActivity) {
@@ -118,7 +167,7 @@ export const PackageSetupForm = ({
       return;
     }
     setIsSubmitting(true);
-    onSubmit({ classActivity, tiers });
+    onSubmit({ classActivity, memberTiers: [draftToTier(tier)], nonMemberTiers: [] });
   };
 
   return (
@@ -136,7 +185,7 @@ export const PackageSetupForm = ({
       </header>
 
       <Section title="Package Details" icon={<PackageIcon className="w-5 h-5" />}>
-        <div className="max-w-sm mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <FormControl
             fullWidth
             variant="outlined"
@@ -161,131 +210,144 @@ export const PackageSetupForm = ({
               ))}
             </MuiSelect>
           </FormControl>
-        </div>
 
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
-            <h3 className="font-semibold text-gray-900">Club member pricing</h3>
-          </div>
+          <TextField
+            label="Package"
+            placeholder="Enter package name"
+            value={tier.label}
+            onChange={(e) => patchTier({ label: e.target.value })}
+            fullWidth
+            variant="outlined"
+            slotProps={{ inputLabel: { shrink: true } }}
+            InputProps={{ sx: fieldStyles }}
+          />
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gray-50 text-left text-gray-500 border-b border-gray-200">
-                  <th className="px-4 py-2 font-medium">Package</th>
-                  <th className="px-4 py-2 font-medium w-40">Price (₹)</th>
-                  <th className="px-4 py-2 font-medium w-28">GST %</th>
-                  <th className="px-4 py-2 font-medium w-32 text-right">Total</th>
-                  <th className="px-4 py-2 font-medium w-12" />
-                </tr>
-              </thead>
-              <tbody>
-                {/* New pricing tier draft row */}
-                <tr className="border-b border-gray-100">
-                  <td className="px-4 py-2">
-                    <input
-                      className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:border-[#DA7756] focus:outline-none focus:ring-1 focus:ring-[#DA7756]"
-                      placeholder="Enter package name"
-                      value={draft.label}
-                      onChange={(e) => setDraft((d) => ({ ...d, label: e.target.value }))}
-                    />
-                  </td>
-                  <td className="px-4 py-2">
-                    <input
-                      type="number"
-                      className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:border-[#DA7756] focus:outline-none focus:ring-1 focus:ring-[#DA7756]"
-                      placeholder="Enter Price"
-                      value={draft.price}
-                      onChange={(e) => setDraft((d) => ({ ...d, price: e.target.value }))}
-                    />
-                  </td>
-                  <td className="px-4 py-2">
-                    <input
-                      type="number"
-                      className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:border-[#DA7756] focus:outline-none focus:ring-1 focus:ring-[#DA7756]"
-                      placeholder="Enter %"
-                      value={draft.gstPercent}
-                      onChange={(e) => setDraft((d) => ({ ...d, gstPercent: e.target.value }))}
-                    />
-                  </td>
-                  <td className="px-4 py-2 text-right text-gray-500">
-                    {inr(
-                      (Number(draft.price) || 0) +
-                        Math.round(((Number(draft.price) || 0) * (Number(draft.gstPercent) || 0)) / 100)
-                    )}
-                  </td>
-                  <td className="px-4 py-2 text-right">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="fm-button-fix px-3"
-                      onClick={addDraftTier}
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                  </td>
-                </tr>
+          <FormControl fullWidth variant="outlined" sx={{ "& .MuiInputBase-root": fieldStyles }}>
+            <InputLabel shrink>Package Type</InputLabel>
+            <MuiSelect
+              value={tier.packageType}
+              onChange={(e) => patchTier({ packageType: e.target.value as string })}
+              label="Package Type"
+              notched
+              displayEmpty
+              renderValue={(selected) =>
+                selected
+                  ? PACKAGE_TIER_TYPES.find((type) => type.value === selected)?.label ?? String(selected)
+                  : "Select package type"
+              }
+            >
+              <MenuItem value="" disabled>
+                Select package type
+              </MenuItem>
+              {PACKAGE_TIER_TYPES.map((type) => (
+                <MenuItem key={type.value} value={type.value}>
+                  {type.label}
+                </MenuItem>
+              ))}
+            </MuiSelect>
+          </FormControl>
 
-                {tiers.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-6 text-center text-gray-400">
-                      No pricing tiers yet. Add one above.
-                    </td>
-                  </tr>
-                ) : (
-                  tiers.map((tier) => (
-                    <tr key={tier.id} className="border-b border-gray-100 last:border-0">
-                      <td className="px-4 py-2">
-                        <input
-                          className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:border-[#DA7756] focus:outline-none focus:ring-1 focus:ring-[#DA7756]"
-                          value={tier.label}
-                          onChange={(e) => patchTier(tier.id, { label: e.target.value })}
-                        />
-                        <input
-                          className="mt-1 w-28 border border-gray-200 rounded-md px-2 py-1 text-xs text-gray-500 focus:border-[#DA7756] focus:outline-none focus:ring-1 focus:ring-[#DA7756]"
-                          type="number"
-                          value={tier.credits}
-                          onChange={(e) => patchTier(tier.id, { credits: Number(e.target.value) || 0 })}
-                          placeholder="credits"
-                        />
-                      </td>
-                      <td className="px-4 py-2 align-top">
-                        <input
-                          type="number"
-                          className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:border-[#DA7756] focus:outline-none focus:ring-1 focus:ring-[#DA7756]"
-                          value={tier.price}
-                          onChange={(e) => patchTier(tier.id, { price: Number(e.target.value) || 0 })}
-                        />
-                        <div className="mt-1 text-xs text-gray-400">GST {inr(gstAmount(tier))}</div>
-                      </td>
-                      <td className="px-4 py-2 align-top">
-                        <input
-                          type="number"
-                          className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:border-[#DA7756] focus:outline-none focus:ring-1 focus:ring-[#DA7756]"
-                          value={tier.gstPercent}
-                          onChange={(e) => patchTier(tier.id, { gstPercent: Number(e.target.value) || 0 })}
-                        />
-                      </td>
-                      <td className="px-4 py-2 text-right font-medium text-gray-900 align-top">
-                        {inr(tierTotal(tier))}
-                      </td>
-                      <td className="px-4 py-2 text-right align-top">
-                        <button
-                          type="button"
-                          onClick={() => removeTier(tier.id)}
-                          className="p-1 text-red-500 hover:bg-red-50 rounded"
-                          title="Remove tier"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <TextField
+            label="No. of Classes"
+            type="number"
+            placeholder="Enter number of classes"
+            value={tier.credits}
+            onChange={handleNumberChange("credits")}
+            fullWidth
+            variant="outlined"
+            slotProps={{ inputLabel: { shrink: true } }}
+            InputProps={{ sx: fieldStyles }}
+            inputProps={{ min: 0, onKeyDown: blockNegativeKey }}
+          />
+
+          <TextField
+            label="Validity Days (from purchase)"
+            type="number"
+            placeholder="Enter validity in days"
+            value={tier.validityDays}
+            onChange={handleNumberChange("validityDays")}
+            fullWidth
+            variant="outlined"
+            slotProps={{ inputLabel: { shrink: true } }}
+            InputProps={{ sx: fieldStyles }}
+            inputProps={{ min: 0, onKeyDown: blockNegativeKey }}
+          />
+
+          <TextField
+            label="Price Member (₹)"
+            type="number"
+            placeholder="Enter member price"
+            value={tier.priceMember}
+            onChange={handleNumberChange("priceMember")}
+            fullWidth
+            variant="outlined"
+            slotProps={{ inputLabel: { shrink: true } }}
+            InputProps={{ sx: fieldStyles }}
+            inputProps={{ min: 0, onKeyDown: blockNegativeKey }}
+          />
+
+          <TextField
+            label="Hotel Guest (₹)"
+            type="number"
+            placeholder="Enter hotel guest price"
+            value={tier.priceHotelGuest}
+            onChange={handleNumberChange("priceHotelGuest")}
+            fullWidth
+            variant="outlined"
+            slotProps={{ inputLabel: { shrink: true } }}
+            InputProps={{ sx: fieldStyles }}
+            inputProps={{ min: 0, onKeyDown: blockNegativeKey }}
+          />
+
+          <TextField
+            label="Non Member (₹)"
+            type="number"
+            placeholder="Enter non-member price"
+            value={tier.priceNonMember}
+            onChange={handleNumberChange("priceNonMember")}
+            fullWidth
+            variant="outlined"
+            slotProps={{ inputLabel: { shrink: true } }}
+            InputProps={{ sx: fieldStyles }}
+            inputProps={{ min: 0, onKeyDown: blockNegativeKey }}
+          />
+
+          <TextField
+            label="CGST %"
+            type="number"
+            placeholder="Enter CGST %"
+            value={tier.cgstRate}
+            onChange={handleNumberChange("cgstRate")}
+            fullWidth
+            variant="outlined"
+            slotProps={{ inputLabel: { shrink: true } }}
+            InputProps={{ sx: fieldStyles }}
+            inputProps={{ min: 0, max: 100, onKeyDown: blockNegativeKey }}
+          />
+
+          <TextField
+            label="SGST %"
+            type="number"
+            placeholder="Enter SGST %"
+            value={tier.sgstRate}
+            onChange={handleNumberChange("sgstRate")}
+            fullWidth
+            variant="outlined"
+            slotProps={{ inputLabel: { shrink: true } }}
+            InputProps={{ sx: fieldStyles }}
+            inputProps={{ min: 0, max: 100, onKeyDown: blockNegativeKey }}
+          />
+
+          <TextField
+            label="HSN Code"
+            placeholder="Enter HSN code"
+            value={tier.hsnCode}
+            onChange={(e) => patchTier({ hsnCode: e.target.value })}
+            fullWidth
+            variant="outlined"
+            slotProps={{ inputLabel: { shrink: true } }}
+            InputProps={{ sx: fieldStyles }}
+          />
         </div>
       </Section>
 

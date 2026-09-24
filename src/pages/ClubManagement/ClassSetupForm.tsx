@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Checkbox, ListItemText } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -7,7 +8,17 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
 import { ArrowLeft, ClipboardList, Upload, Paperclip, X } from "lucide-react";
 import { toast } from "sonner";
-import { LOCATIONS, TRAINERS, type ClassSetup } from "./classSetupMockData";
+import { CLASS_TYPES, ACTIVITY_TYPES, type ClassSetup } from "./classSetupMockData";
+
+interface TrainerOption {
+  id: string;
+  name: string;
+}
+
+export interface SelectedTrainer {
+  name: string;
+  value: number;
+}
 
 // The native <input type="time"> picker's popup (hour/minute/AM-PM wheel columns) is
 // browser/OS chrome and can't be recolored via CSS - swapping to MUI X's TimePicker
@@ -132,8 +143,16 @@ const requiredLabelSx = {
   },
 };
 
+const isNonNegativeInteger = (value: string) => value === "" || /^\d+$/.test(value);
+const isNonNegativeDuration = (value: string) => !value.includes("-");
+const preventNegativeSign = (event: React.KeyboardEvent<HTMLInputElement>) => {
+  if (event.key === "-") event.preventDefault();
+};
+
 export interface ClassSetupFormState {
   className: string;
+  classType: string;
+  activityType: string;
   amountPerPerson: string;
   minParticipants: string;
   maxCapacity: string;
@@ -148,6 +167,8 @@ export interface ClassSetupFormState {
 
 export const emptyClassSetupForm: ClassSetupFormState = {
   className: "",
+  classType: "",
+  activityType: "",
   amountPerPerson: "",
   minParticipants: "",
   maxCapacity: "",
@@ -167,7 +188,10 @@ interface ClassSetupFormProps {
   submitLabel: string;
   submittingLabel: string;
   onBack: () => void;
-  onSubmit: (payload: Omit<ClassSetup, "id" | "trainers">) => void;
+  onSubmit: (
+    payload: Omit<ClassSetup, "id" | "trainers"> & { selectedTrainers: SelectedTrainer[] },
+    attachedFiles: File[]
+  ) => void | Promise<void>;
 }
 
 export const ClassSetupForm = ({
@@ -182,6 +206,32 @@ export const ClassSetupForm = ({
   const [form, setForm] = useState<ClassSetupFormState>(initialValues);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [trainers, setTrainers] = useState<TrainerOption[]>([]);
+
+  useEffect(() => {
+    const fetchTrainers = async () => {
+      try {
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
+        const res = await axios.get(
+          `https://${baseUrl}/pms/admin/club_classes/trainer_list.json`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const list = Array.isArray(res.data)
+          ? res.data
+          : res.data?.trainers ?? res.data?.data ?? [];
+        setTrainers(
+          list.map((t: any) => ({
+            id: String(t.value ?? t.id),
+            name: t.name ?? t.full_name ?? `Trainer ${t.id}`,
+          }))
+        );
+      } catch (err) {
+        console.error("Failed to fetch trainer list", err);
+      }
+    };
+    fetchTrainers();
+  }, []);
 
   const setField = <K extends keyof ClassSetupFormState>(key: K, value: ClassSetupFormState[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -195,26 +245,52 @@ export const ClassSetupForm = ({
     setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = () => {
-    if (!form.className.trim() || !form.minParticipants || !form.maxCapacity || !form.location) {
+  const handleSubmit = async () => {
+    if (
+      !form.className.trim() ||
+      !form.classType ||
+      !form.activityType ||
+      !form.minParticipants ||
+      !form.maxCapacity
+    ) {
       toast.error("Please fill all required fields");
       return;
     }
 
+    if (Number(form.maxCapacity) < Number(form.minParticipants)) {
+      toast.error("Maximum person must not be less than minimum person");
+      return;
+    }
+
     setIsSubmitting(true);
-    onSubmit({
-      className: form.className.trim(),
-      amountPerPerson: form.amountPerPerson,
-      minParticipants: Number(form.minParticipants),
-      maxCapacity: Number(form.maxCapacity),
-      location: form.location,
-      duration: form.duration,
-      trainer: form.trainer,
-      status: form.status,
-      startTime: form.startTime,
-      endTime: form.endTime,
-      description: form.description,
-    });
+    try {
+      await onSubmit(
+        {
+          className: form.className.trim(),
+          classType: form.classType,
+          activityType: form.activityType,
+          amountPerPerson: form.amountPerPerson,
+          minParticipants: Number(form.minParticipants),
+          maxCapacity: Number(form.maxCapacity),
+          location: form.location,
+          duration: form.duration,
+          trainer: form.trainer,
+          selectedTrainers: form.trainer.map((id) => {
+            const trainer = trainers.find((option) => option.id === id);
+            return { name: trainer?.name ?? "", value: Number(id) };
+          }),
+          status: form.status,
+          startTime: form.startTime,
+          endTime: form.endTime,
+          description: form.description,
+        },
+        attachedFiles
+      );
+    } finally {
+      // A failed submit (rejected promise) must re-enable the button - a
+      // successful one navigates away, so this becomes a harmless no-op there.
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -247,7 +323,57 @@ export const ClassSetupForm = ({
               slotProps={{ inputLabel: { shrink: true } }}
               InputProps={{ sx: fieldStyles }}
             />
-            <TextField
+            <FormControl
+              fullWidth
+              variant="outlined"
+              required
+              sx={{ "& .MuiInputBase-root": fieldStyles, ...requiredLabelSx }}
+            >
+              <InputLabel shrink>Class Type</InputLabel>
+              <MuiSelect
+                value={form.classType}
+                onChange={(e) => setField("classType", e.target.value)}
+                label="Class Type"
+                notched
+                displayEmpty
+                renderValue={(selected) => (selected ? String(selected) : "Select class type...")}
+              >
+                <MenuItem value="" disabled>
+                  Select class type...
+                </MenuItem>
+                {CLASS_TYPES.map((type) => (
+                  <MenuItem key={type} value={type}>
+                    {type}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
+            <FormControl
+              fullWidth
+              variant="outlined"
+              required
+              sx={{ "& .MuiInputBase-root": fieldStyles, ...requiredLabelSx }}
+            >
+              <InputLabel shrink>Activity Type</InputLabel>
+              <MuiSelect
+                value={form.activityType}
+                onChange={(e) => setField("activityType", e.target.value)}
+                label="Activity Type"
+                notched
+                displayEmpty
+                renderValue={(selected) => (selected ? String(selected) : "Select activity type...")}
+              >
+                <MenuItem value="" disabled>
+                  Select activity type...
+                </MenuItem>
+                {ACTIVITY_TYPES.map((type) => (
+                  <MenuItem key={type} value={type}>
+                    {type}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
+            {/* <TextField
               label="Amount per person"
               placeholder="Enter Amount"
               value={form.amountPerPerson}
@@ -256,14 +382,18 @@ export const ClassSetupForm = ({
               variant="outlined"
               slotProps={{ inputLabel: { shrink: true } }}
               InputProps={{ sx: fieldStyles }}
-            />
+            /> */}
             <TextField
               label="Minimum person"
               required
               type="number"
               placeholder="Enter minimum"
               value={form.minParticipants}
-              onChange={(e) => setField("minParticipants", e.target.value)}
+              onKeyDown={preventNegativeSign}
+              onChange={(e) => {
+                if (isNonNegativeInteger(e.target.value)) setField("minParticipants", e.target.value);
+              }}
+              inputProps={{ min: 0, step: 1 }}
               fullWidth
               variant="outlined"
               sx={requiredLabelSx}
@@ -277,42 +407,36 @@ export const ClassSetupForm = ({
               type="number"
               placeholder="Enter maximum"
               value={form.maxCapacity}
-              onChange={(e) => setField("maxCapacity", e.target.value)}
+              onKeyDown={preventNegativeSign}
+              onChange={(e) => {
+                if (isNonNegativeInteger(e.target.value)) setField("maxCapacity", e.target.value);
+              }}
+              inputProps={{ min: 0, step: 1 }}
               fullWidth
               variant="outlined"
               sx={requiredLabelSx}
               slotProps={{ inputLabel: { shrink: true } }}
               InputProps={{ sx: fieldStyles }}
             />
-            <FormControl
+            <TextField
+              label="Location"
+              placeholder="Enter location"
+              value={form.location}
+              onChange={(e) => setField("location", e.target.value)}
               fullWidth
               variant="outlined"
-              required
-              sx={{ "& .MuiInputBase-root": fieldStyles, ...requiredLabelSx }}
-            >
-              <InputLabel shrink>Location</InputLabel>
-              <MuiSelect
-                value={form.location}
-                onChange={(e) => setField("location", e.target.value)}
-                label="Location"
-                notched
-                displayEmpty
-              >
-                <MenuItem value="" disabled>
-                  Select location...
-                </MenuItem>
-                {LOCATIONS.map((loc) => (
-                  <MenuItem key={loc} value={loc}>
-                    {loc}
-                  </MenuItem>
-                ))}
-              </MuiSelect>
-            </FormControl>
+              slotProps={{ inputLabel: { shrink: true } }}
+              InputProps={{ sx: fieldStyles }}
+            />
             <TextField
               label="Duration"
+              type="text"
               placeholder="Eg. 50 min."
               value={form.duration}
-              onChange={(e) => setField("duration", e.target.value)}
+              onKeyDown={preventNegativeSign}
+              onChange={(e) => {
+                if (isNonNegativeDuration(e.target.value)) setField("duration", e.target.value);
+              }}
               fullWidth
               variant="outlined"
               slotProps={{ inputLabel: { shrink: true } }}
@@ -331,12 +455,19 @@ export const ClassSetupForm = ({
                 label="Trainer"
                 notched
                 displayEmpty
-                renderValue={(selected) => (selected.length > 0 ? selected.join(", ") : "Select trainer...")}
+                renderValue={(selected) =>
+                  selected.length > 0
+                    ? selected
+                        .map((id) => trainers.find((t) => t.id === id)?.name)
+                        .filter(Boolean)
+                        .join(", ")
+                    : "Select trainer..."
+                }
               >
-                {TRAINERS.map((t) => (
-                  <MenuItem key={t} value={t}>
-                    <Checkbox checked={form.trainer.includes(t)} sx={{ color: "#DA7756", "&.Mui-checked": { color: "#DA7756" } }} />
-                    <ListItemText primary={t} />
+                {trainers.map((t) => (
+                  <MenuItem key={t.id} value={t.id}>
+                    <Checkbox checked={form.trainer.includes(t.id)} sx={{ color: "#DA7756", "&.Mui-checked": { color: "#DA7756" } }} />
+                    <ListItemText primary={t.name} />
                   </MenuItem>
                 ))}
               </MuiSelect>
@@ -358,13 +489,9 @@ export const ClassSetupForm = ({
                 always-visible grey hint. A custom overlay (hidden the moment the field gets
                 focus, via group-focus-within) fills that resting-state gap without touching
                 MUI's own placeholder/typing behavior once the user is actually in the field. */}
-            <div className="relative group">
+            {/* <div className="relative group">
               <TimePicker
                 label="Start Time"
-                // enableAccessibleFieldDOMStructure={false} (legacy single-<input> field, needed
-                // for a literal placeholder string) crashes under this project's React version
-                // (useTimeField's internal useTimeout hook throws on mount) - stick with the
-                // default sectioned field.
                 value={form.startTime ? dayjs(form.startTime, "HH:mm") : null}
                 onChange={(newValue) => setField("startTime", newValue?.isValid() ? newValue.format("HH:mm") : "")}
                 slotProps={{
@@ -383,8 +510,8 @@ export const ClassSetupForm = ({
                   HH:MM AA
                 </span>
               )}
-            </div>
-            <div className="relative group">
+            </div> */}
+            {/* <div className="relative group">
               <TimePicker
                 label="End Time"
                 value={form.endTime ? dayjs(form.endTime, "HH:mm") : null}
@@ -405,7 +532,7 @@ export const ClassSetupForm = ({
                   HH:MM AA
                 </span>
               )}
-            </div>
+            </div> */}
 
             <div className="md:col-span-3">
               <div className="relative">

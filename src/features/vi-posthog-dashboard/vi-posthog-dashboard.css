@@ -217,6 +217,22 @@
 .vi-ph .nav-item.on .ni-ic{color:var(--ink)}
 .vi-ph .nav-item .ni-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
+.vi-ph .recent-activity{margin:28px 10px 0;padding-top:18px;border-top:1px solid var(--border)}
+.vi-ph .recent-activity-head{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.vi-ph .recent-activity-head h2{flex:1;margin:0;font-size:13px;font-weight:500;color:var(--ink-2)}
+.vi-ph .recent-activity-download{width:26px;height:26px}
+.vi-ph .recent-activity-download:disabled{opacity:.45;cursor:not-allowed}
+.vi-ph .recent-activity-download svg{width:15px;height:15px}
+.vi-ph .recent-activity-state{margin:0;font-size:12px;line-height:1.5;color:var(--muted)}
+.vi-ph .recent-activity-list{display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.vi-ph .recent-activity-user{display:grid;gap:3px;min-width:0}
+.vi-ph .recent-activity-user-main{display:grid;gap:1px;min-width:0}
+.vi-ph .recent-activity-user-main strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:500;color:var(--ink)}
+.vi-ph .recent-activity-user-main span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--muted)}
+.vi-ph .recent-activity-meta{display:flex;justify-content:space-between;gap:6px;font-size:10px;color:var(--faint)}
+.vi-ph .recent-activity-meta span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vi-ph .recent-activity-meta time{white-space:nowrap}
+
 .vi-ph.nav-collapsed{--sidebar-w:var(--sidebar-rail)}
 .vi-ph.nav-collapsed .sidebar{padding:34px 11px 48px;overflow:visible}
 .vi-ph.nav-collapsed .brandmark{
@@ -225,6 +241,7 @@
 .vi-ph.nav-collapsed .brandmark .bm-full{display:none}
 .vi-ph.nav-collapsed .brandmark .bm-mini{display:inline}
 .vi-ph.nav-collapsed .brandmark-sub,.vi-ph.nav-collapsed .nav-label,.vi-ph.nav-collapsed .nav-item .ni-t{display:none}
+.vi-ph.nav-collapsed .recent-activity{display:none}
 .vi-ph.nav-collapsed .nav-item{justify-content:center;padding:10px 0;gap:0}
 .vi-ph.nav-collapsed .nav-group{margin-bottom:10px}
 .vi-ph.nav-collapsed .nav-group+.nav-group{

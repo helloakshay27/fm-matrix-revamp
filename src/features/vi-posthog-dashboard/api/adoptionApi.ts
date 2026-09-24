@@ -142,6 +142,19 @@ export interface ViWeeklyFilters extends Omit<WeeklyFilters, 'devices' | 'siteId
   os?: OsType[];
 }
 
+export interface RecentActiveUser {
+  user_id: string;
+  display_name: string;
+  path: string | null;
+  last_event: string | null;
+  minutes_ago: number | null;
+  site_name: string | null;
+}
+
+export interface RecentActiveUsersResponse {
+  users: RecentActiveUser[];
+}
+
 /**
  * The Vi web host. Kept for reference/reporting only — it is NOT sent as a filter (see
  * VI_APP_ID above); mobile-app events carry no host, so filtering on it drops all of them.
@@ -202,6 +215,27 @@ async function get<T>(path: string, params: Record<string, string>): Promise<T> 
   const qs = new URLSearchParams({ ...params, project_code: VI_PROJECT_CODE }).toString();
   const res = await client.get<T>(`/fm/adoption/${path}?${qs}`);
   return res.data;
+}
+
+export const RECENT_ACTIVE_USERS_EXPORT_ENDPOINT = '/fm/adoption/recent_active_users.xlsx';
+
+export const fetchRecentActiveUsers = (f: ViRangeFilters) =>
+  get<RecentActiveUsersResponse>('recent_active_users', {
+    ...rangeParams(f),
+    limit: '10',
+  });
+
+export async function downloadRecentActiveUsers(f: ViRangeFilters): Promise<Blob> {
+  const qs = new URLSearchParams({
+    ...rangeParams(f),
+    project_code: VI_PROJECT_CODE,
+    limit: '10',
+  });
+  const response = await client.get<Blob>(
+    `${RECENT_ACTIVE_USERS_EXPORT_ENDPOINT}?${qs.toString()}`,
+    { responseType: 'blob' },
+  );
+  return response.data;
 }
 
 /* ------------------------------------------------------------------ Layer 1 */

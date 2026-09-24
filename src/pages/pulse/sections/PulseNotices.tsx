@@ -329,7 +329,7 @@ export function PulseNotices({ filters }: Props) {
       {noticeFeed && (
         <div className="pd-tbl-card">
           <div className="pd-tbl-header">
-            <span className="pd-tbl-title pd-tbl-title--plain">Official Noticeboard feed</span>
+            <span className="pd-tbl-title pd-tbl-title--plain">Official Noticeboard Feed</span>
             <input
               type="text"
               className="pd-tbl-search-input"

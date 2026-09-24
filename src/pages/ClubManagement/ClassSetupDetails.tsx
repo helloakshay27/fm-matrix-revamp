@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -11,6 +11,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+} from "@mui/material";
 import {
   ArrowLeft,
   Plus,
@@ -25,19 +31,29 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
-import {
-  addTrainerToClass,
-  deleteClass,
-  getClassById,
-  removeTrainerFromClass,
-  updateTrainerStatus,
-} from "./classSetupMockData";
+
+interface TrainerOption {
+  id: string;
+  name: string;
+}
+
+interface ClassDetail {
+  id: string;
+  className: string;
+  classType: string;
+  activityType: string;
+  maxCapacity: number;
+  minParticipants: number;
+  durationMinutes: number;
+  location: string;
+  status: "Active" | "Inactive";
+  trainerIds: string[];
+}
+
+const titleCase = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "");
 
 const trainerColumns: ColumnConfig[] = [
   { key: "trainerName", label: "Trainer Name", sortable: true, hideable: true, draggable: true },
-  { key: "specialization", label: "Specialization", sortable: true, hideable: true, draggable: true },
-  { key: "experience", label: "Experience", sortable: true, hideable: true, draggable: true },
-  { key: "status", label: "Status", sortable: true, hideable: true, draggable: true },
   { key: "actions", label: "Actions", sortable: false, hideable: false, draggable: false },
 ];
 
@@ -57,8 +73,61 @@ export const ClassSetupDetails = () => {
   const { id } = useParams<{ id: string }>();
   const cmEvents = useClubManagementEvents();
   const detailViewLogged = useRef(false);
-  const [, forceRefresh] = useState(0);
-  const cls = id ? getClassById(id) : undefined;
+
+  const [cls, setCls] = useState<ClassDetail | null>(null);
+  const [trainerDirectory, setTrainerDirectory] = useState<TrainerOption[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+  const [addTrainerOpen, setAddTrainerOpen] = useState(false);
+  const [selectedNewTrainer, setSelectedNewTrainer] = useState("");
+
+  useEffect(() => {
+    if (!id) return;
+    const fetchAll = async () => {
+      setIsLoading(true);
+      try {
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
+        const headers = { Authorization: `Bearer ${token}` };
+
+        const [classRes, trainerRes] = await Promise.all([
+          axios.get(`https://${baseUrl}/pms/admin/club_classes/${id}.json`, { headers }),
+          axios.get(`https://${baseUrl}/pms/admin/club_classes/trainer_list.json`, { headers }),
+        ]);
+
+        const c = classRes.data?.club_class ?? classRes.data;
+        setCls({
+          id: String(c.id),
+          className: c.name ?? "",
+          classType: titleCase(c.session_type),
+          activityType: titleCase(c.activity_type),
+          maxCapacity: c.max_capacity ?? 0,
+          minParticipants: c.min_capacity ?? 0,
+          durationMinutes: c.duration_minutes ?? 0,
+          location: c.location ?? "",
+          status: String(c.status).toLowerCase() === "active" ? "Active" : "Inactive",
+          trainerIds: (c.trainer_ids ?? []).map(String),
+        });
+
+        const trainerData = trainerRes.data;
+        const list = Array.isArray(trainerData)
+          ? trainerData
+          : trainerData?.trainers ?? trainerData?.data ?? [];
+        setTrainerDirectory(
+          list.map((t: any) => ({
+            id: String(t.id),
+            name: t.name ?? t.full_name ?? `Trainer ${t.id}`,
+          }))
+        );
+      } catch (err) {
+        console.error("Failed to fetch class details", err);
+        setNotFound(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchAll();
+  }, [id]);
 
   useEffect(() => {
     if (detailViewLogged.current) return;
@@ -66,10 +135,43 @@ export const ClassSetupDetails = () => {
     cmEvents.detailViewed("Class Setup", id, "class_setup_details");
   }, [cmEvents, id]);
 
-  const [addTrainerOpen, setAddTrainerOpen] = useState(false);
-  const [trainerForm, setTrainerForm] = useState({ name: "", email: "", specialization: "", experience: "" });
+  const persistTrainerIds = async (nextTrainerIds: string[]) => {
+    if (!cls) return false;
+    try {
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
+      const url = `https://${baseUrl}/pms/admin/club_classes/${cls.id}.json`;
+      await axios.put(
+        url,
+        {
+          club_class: {
+            name: cls.className,
+            session_type: cls.classType.toLowerCase(),
+            activity_type: cls.activityType.toLowerCase(),
+            max_capacity: cls.maxCapacity,
+            min_capacity: cls.minParticipants,
+            duration_minutes: cls.durationMinutes,
+            location: cls.location,
+            status: cls.status.toLowerCase(),
+            bundle_eligible: true,
+            trainer_ids: nextTrainerIds,
+          },
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setCls((prev) => (prev ? { ...prev, trainerIds: nextTrainerIds } : prev));
+      return true;
+    } catch (err) {
+      toast.error("Failed to update assigned trainers");
+      return false;
+    }
+  };
 
-  if (!cls) {
+  if (isLoading) {
+    return <div className="p-6 text-gray-500">Loading...</div>;
+  }
+
+  if (notFound || !cls) {
     return (
       <div className="p-6">
         <p className="text-gray-500">Class not found.</p>
@@ -80,39 +182,48 @@ export const ClassSetupDetails = () => {
     );
   }
 
-  const handleDelete = () => {
-    deleteClass(cls.id);
-    cmEvents.deleted("Class Setup", cls.id, "class_setup_details");
-    toast.success("Class deleted successfully!");
-    navigate("/club-management/class-setup");
+  const handleDelete = async () => {
+    try {
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
+      await axios.delete(`https://${baseUrl}/pms/admin/club_classes/${cls.id}.json`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      cmEvents.deleted("Class Setup", cls.id, "class_setup_details");
+      toast.success("Class deleted successfully!");
+      navigate("/club-management/class-setup");
+    } catch (err) {
+      toast.error("Failed to delete class");
+    }
   };
 
-  const handleAddTrainer = () => {
-    if (!trainerForm.name.trim()) {
-      toast.error("Trainer name is required");
+  const handleAddTrainer = async () => {
+    if (!selectedNewTrainer) {
+      toast.error("Select a trainer to add");
       return;
     }
-    addTrainerToClass(cls.id, { ...trainerForm, status: "Active" });
-    cmEvents.action("Class Setup Trainer Added", { entity_id: cls.id });
-    toast.success("Trainer added successfully!");
-    setTrainerForm({ name: "", email: "", specialization: "", experience: "" });
-    setAddTrainerOpen(false);
-    forceRefresh((n) => n + 1);
+    const ok = await persistTrainerIds([...cls.trainerIds, selectedNewTrainer]);
+    if (ok) {
+      cmEvents.action("Class Setup Trainer Added", { entity_id: cls.id });
+      toast.success("Trainer added successfully!");
+      setSelectedNewTrainer("");
+      setAddTrainerOpen(false);
+    }
   };
 
-  const handleRemoveTrainer = (trainerId: string) => {
-    removeTrainerFromClass(cls.id, trainerId);
-    cmEvents.action("Class Setup Trainer Removed", { entity_id: cls.id, trainer_id: trainerId });
-    forceRefresh((n) => n + 1);
+  const handleRemoveTrainer = async (trainerId: string) => {
+    const ok = await persistTrainerIds(cls.trainerIds.filter((tid) => tid !== trainerId));
+    if (ok) {
+      cmEvents.action("Class Setup Trainer Removed", { entity_id: cls.id, trainer_id: trainerId });
+      toast.success("Trainer removed");
+    }
   };
 
-  const handleToggleTrainerStatus = (trainerId: string, current: "Active" | "Inactive") => {
-    const nextStatus = current === "Active" ? "Inactive" : "Active";
-    updateTrainerStatus(cls.id, trainerId, nextStatus);
-    cmEvents.action("Class Setup Trainer Status Toggled", { entity_id: cls.id, trainer_id: trainerId, status: nextStatus });
-    toast.success(`Trainer marked ${nextStatus}`);
-    forceRefresh((n) => n + 1);
-  };
+  const assignedTrainers = cls.trainerIds.map((tid) => ({
+    id: tid,
+    name: trainerDirectory.find((t) => t.id === tid)?.name ?? `Trainer ${tid}`,
+  }));
+  const availableTrainers = trainerDirectory.filter((t) => !cls.trainerIds.includes(t.id));
 
   return (
     <div className="min-h-screen bg-white p-6">
@@ -164,15 +275,12 @@ export const ClassSetupDetails = () => {
           </CardHeader>
           <CardContent className="p-6 bg-white space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <InfoCard icon={<ClipboardList className="w-4 h-4" />} label="Class Type" value={cls.classType || "-"} />
+              <InfoCard icon={<ClipboardList className="w-4 h-4" />} label="Activity Type" value={cls.activityType || "-"} />
               <InfoCard icon={<Users className="w-4 h-4" />} label="Max Capacity" value={`${cls.maxCapacity} Participants`} />
               <InfoCard icon={<UserCheck className="w-4 h-4" />} label="Min Participants" value={`${cls.minParticipants} Participants`} />
-              <InfoCard icon={<Timer className="w-4 h-4" />} label="Duration" value={cls.duration || "-"} />
-              <InfoCard icon={<MapPin className="w-4 h-4" />} label="Location" value={cls.location} />
-            </div>
-
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Class Description</h3>
-              <p className="text-sm text-gray-600 leading-relaxed">{cls.description || "No description provided."}</p>
+              <InfoCard icon={<Timer className="w-4 h-4" />} label="Duration" value={`${cls.durationMinutes} min`} />
+              <InfoCard icon={<MapPin className="w-4 h-4" />} label="Location" value={cls.location || "-"} />
             </div>
           </CardContent>
         </Card>
@@ -196,55 +304,31 @@ export const ClassSetupDetails = () => {
           </CardHeader>
           <CardContent className="p-4 bg-white">
             <EnhancedTaskTable
-              data={cls.trainers}
+              data={assignedTrainers}
               columns={trainerColumns}
               storageKey="class-setup-trainers-v1"
               hideTableExport={true}
               hideTableSearch={true}
               emptyMessage="No trainers assigned yet"
-              renderRow={(trainer) => ({
+              renderRow={(trainer: { id: string; name: string }) => ({
                 trainerName: (
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-[#F2EEE9] flex items-center justify-center text-xs font-medium text-gray-600">
                       {trainer.name.slice(0, 1)}
                     </div>
-                    <div>
-                      <div className="font-medium text-gray-900">{trainer.name}</div>
-                      <div className="text-xs text-gray-500">{trainer.email}</div>
-                    </div>
+                    <div className="font-medium text-gray-900">{trainer.name}</div>
                   </div>
-                ),
-                specialization: <span className="text-sm text-gray-700">{trainer.specialization}</span>,
-                experience: <span className="text-sm text-gray-700">{trainer.experience}</span>,
-                status: (
-                  <button
-                    type="button"
-                    onClick={() => handleToggleTrainerStatus(trainer.id, trainer.status)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${trainer.status === "Active" ? "bg-brand" : "bg-gray-300"
-                      }`}
-                    title={trainer.status === "Active" ? "Active - click to deactivate" : "Inactive - click to activate"}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${trainer.status === "Active" ? "translate-x-6" : "translate-x-1"
-                        }`}
-                    />
-                  </button>
                 ),
                 actions: (
-                  <div className="flex items-center gap-1">
-                    <Button size="icon" variant="ghost" className="h-7 w-7" title="Edit">
-                      <Pencil className="w-4 h-4 text-gray-600" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7"
-                      title="Remove"
-                      onClick={() => handleRemoveTrainer(trainer.id)}
-                    >
-                      <Trash2 className="w-4 h-4 text-red-500" />
-                    </Button>
-                  </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7"
+                    title="Remove"
+                    onClick={() => handleRemoveTrainer(trainer.id)}
+                  >
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                  </Button>
                 ),
               })}
             />
@@ -257,24 +341,25 @@ export const ClassSetupDetails = () => {
           <DialogHeader>
             <DialogTitle>Add Trainer</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <label className="text-xs text-gray-500 mb-1 block">Name</label>
-              <Input value={trainerForm.name} onChange={(e) => setTrainerForm((f) => ({ ...f, name: e.target.value }))} placeholder="Trainer name" />
-            </div>
-            <div>
-              <label className="text-xs text-gray-500 mb-1 block">Email</label>
-              <Input value={trainerForm.email} onChange={(e) => setTrainerForm((f) => ({ ...f, email: e.target.value }))} placeholder="trainer@recess.club" />
-            </div>
-            <div>
-              <label className="text-xs text-gray-500 mb-1 block">Specialization</label>
-              <Input value={trainerForm.specialization} onChange={(e) => setTrainerForm((f) => ({ ...f, specialization: e.target.value }))} placeholder="e.g. Pilates, Yoga" />
-            </div>
-            <div>
-              <label className="text-xs text-gray-500 mb-1 block">Experience</label>
-              <Input value={trainerForm.experience} onChange={(e) => setTrainerForm((f) => ({ ...f, experience: e.target.value }))} placeholder="e.g. 4 years" />
-            </div>
-          </div>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel shrink>Trainer</InputLabel>
+            <MuiSelect
+              value={selectedNewTrainer}
+              onChange={(e) => setSelectedNewTrainer(e.target.value)}
+              label="Trainer"
+              notched
+              displayEmpty
+            >
+              <MenuItem value="" disabled>
+                Select trainer...
+              </MenuItem>
+              {availableTrainers.map((t) => (
+                <MenuItem key={t.id} value={t.id}>
+                  {t.name}
+                </MenuItem>
+              ))}
+            </MuiSelect>
+          </FormControl>
           <div className="flex justify-end gap-2 mt-4">
             <Button variant="outline" onClick={() => setAddTrainerOpen(false)}>
               Cancel

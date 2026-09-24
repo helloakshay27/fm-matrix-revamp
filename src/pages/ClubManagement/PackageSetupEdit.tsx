@@ -19,7 +19,8 @@ export const PackageSetupEdit = () => {
     }
     setInitialValues({
       classActivity: existing.classActivity,
-      tiers: existing.tiers.map((t) => ({ ...t })),
+      memberTiers: existing.memberTiers.map((t) => ({ ...t })),
+      nonMemberTiers: existing.nonMemberTiers.map((t) => ({ ...t })),
     });
   }, [id, navigate]);
 
@@ -33,17 +34,19 @@ export const PackageSetupEdit = () => {
       submitLabel="Update"
       submittingLabel="Updating..."
       onBack={() => navigate("/club-management/package-setup")}
-      onSubmit={({ classActivity, tiers }) => {
+      onSubmit={({ classActivity, memberTiers, nonMemberTiers }) => {
         if (!id) return;
         const existing = getPackageById(id);
         if (!existing) return;
-        const first = tiers[0];
+        const primary = memberTiers[0] ?? nonMemberTiers[0];
         updatePackage(id, {
           ...existing,
           classActivity,
-          tiers,
-          sessions: first?.credits || existing.sessions,
-          price: first ? tierTotal(first) : existing.price,
+          memberTiers,
+          nonMemberTiers,
+          packageType: memberTiers.length > 0 ? "Member" : "Non-Member",
+          sessions: primary?.credits || existing.sessions,
+          price: primary ? tierTotal(primary) : existing.price,
         });
         toast.success("Package updated successfully!");
         navigate(`/club-management/package-setup/details/${id}`);

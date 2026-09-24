@@ -487,7 +487,7 @@ export function PulseAmenities({ filters }: Props) {
           )}
 
           <div className="pd-growth-card">
-            <div className="pd-panel-title">Revenue by Amenity</div>
+            <div className="pd-panel-title">Revenue By Amenity</div>
             <div className="pd-growth-chart-inner" style={{ overflowY: "auto" }}>
               <ResponsiveContainer width="100%" height={Math.max(160, revenueRows.length * 28)}>
                 <BarChart data={revenueRows} layout="vertical" margin={{ left: 8 }}>
@@ -750,28 +750,28 @@ export function PulseAmenities({ filters }: Props) {
                     b.facility_name.toLowerCase().includes(bookingSearch.trim().toLowerCase())
                   )
                   .map((b) => (
-                  <tr key={b.id}>
-                    <td className="pd-num">{b.serial}</td>
-                    <td style={{ fontWeight: 500 }}>{b.facility_name}</td>
-                    <td>{b.tenant || "—"}</td>
-                    <td>
-                      {new Date(b.booking_date).toLocaleDateString("en-GB", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </td>
-                    <td>{formatDuration(b.duration_minutes)}</td>
-                    <td>
-                      <span className={`pd-badge ${bookingStatusBadgeClass(b.current_status)}`}>
-                        {humanizeLabel(b.current_status)}
-                      </span>
-                    </td>
-                    <td className="pd-num pd-revenue">
-                      ₹{b.amount_paid.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-                    </td>
-                  </tr>
-                ))}
+                    <tr key={b.id}>
+                      <td className="pd-num">{b.serial}</td>
+                      <td style={{ fontWeight: 500 }}>{b.facility_name}</td>
+                      <td>{b.tenant || "—"}</td>
+                      <td>
+                        {new Date(b.booking_date).toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </td>
+                      <td>{formatDuration(b.duration_minutes)}</td>
+                      <td>
+                        <span className={`pd-badge ${bookingStatusBadgeClass(b.current_status)}`}>
+                          {humanizeLabel(b.current_status)}
+                        </span>
+                      </td>
+                      <td className="pd-num pd-revenue">
+                        ₹{b.amount_paid.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>

@@ -17,3 +17,11 @@ export function pct(x: number, d = 0): string {
 export function pctVal(x: number | null | undefined, d = 1): string {
   return x == null ? '—' : x.toFixed(d) + '%';
 }
+
+export function formatRelativeActivityTime(minutesAgo: number | null): string {
+  if (minutesAgo == null || minutesAgo < 1) return 'just now';
+  if (minutesAgo < 60) return `${Math.floor(minutesAgo)}m ago`;
+  if (minutesAgo < 1440) return `${Math.floor(minutesAgo / 60)}h ago`;
+  if (minutesAgo < 43200) return `${Math.floor(minutesAgo / 1440)}d ago`;
+  return `${Math.floor(minutesAgo / 43200)}mo ago`;
+}

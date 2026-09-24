@@ -10,9 +10,28 @@ export interface TrainerCredential {
   url: string;
 }
 
+export interface TimeValue {
+  hour: string;
+  minute: string;
+}
+
+export interface DurationValue {
+  day: string;
+  hour: string;
+  minute: string;
+}
+
+export interface TrainerAvailabilitySlot {
+  startTime: TimeValue;
+  endTime: TimeValue;
+  concurrentSlots: string;
+  slotBy: number;
+}
+
 export interface TrainerSetup {
   id: string;
   name: string;
+  email?: string;
   specialization: string;
   experience: string;
   ratePerSession: string;
@@ -21,6 +40,66 @@ export interface TrainerSetup {
   bio: string;
   imageUrl?: string;
   credentials: TrainerCredential[];
+  // Preferred session-slot duration and shift roster - optional so existing
+  // mock records don't need backfilling.
+  slot?: string;
+  roster?: string;
+  availabilitySlots?: TrainerAvailabilitySlot[];
+  bookableSlotsPerDay?: string;
+  bookingAllowedBefore?: DurationValue;
+  advanceBooking?: DurationValue;
+  canCancelBefore?: DurationValue;
+  facilityBookedTimes?: string;
+}
+
+export function mapTrainerApiData(raw: any): TrainerSetup {
+  const trainer = raw?.trainer ?? raw?.data ?? raw;
+  const facilitySlot = Array.isArray(trainer?.facility_slot_attributes)
+    ? trainer.facility_slot_attributes[0]
+    : trainer?.facility_slot_attributes;
+  const credentials = trainer?.credentials ?? trainer?.certificates ?? trainer?.attachments ?? [];
+
+  return {
+    id: String(trainer?.id ?? ""),
+    name: trainer?.name ?? trainer?.full_name ?? "",
+    email: trainer?.email ?? "",
+    specialization: trainer?.specialization ?? "",
+    experience: String(trainer?.experience ?? trainer?.experience_years ?? ""),
+    ratePerSession: String(trainer?.rate_per_session ?? trainer?.ratePerSession ?? ""),
+    contactNumber: trainer?.mobile ?? trainer?.contact_number ?? "",
+    status: String(trainer?.status).toLowerCase() === "inactive" ? "Inactive" : "Active",
+    bio: trainer?.bio ?? "",
+    imageUrl: trainer?.image_url ?? trainer?.image ?? "",
+    credentials: Array.isArray(credentials)
+      ? credentials.map((credential: any, index: number) => ({
+          id: String(credential.id ?? index),
+          name: credential.name ?? credential.file_name ?? credential.filename ?? "Attachment",
+          size: credential.size ?? "",
+          url: credential.url ?? credential.file_url ?? "",
+        }))
+      : [],
+    slot: trainer?.slot ?? "",
+    roster: trainer?.roster ?? trainer?.user_roaster_id ?? "",
+    availabilitySlots: facilitySlot
+      ? [{
+          startTime: {
+            hour: String(facilitySlot.start_hour ?? 0).padStart(2, "0"),
+            minute: String(facilitySlot.start_min ?? 0).padStart(2, "0"),
+          },
+          endTime: {
+            hour: String(facilitySlot.end_hour ?? 0).padStart(2, "0"),
+            minute: String(facilitySlot.end_min ?? 0).padStart(2, "0"),
+          },
+          concurrentSlots: String(facilitySlot.concurrent_slots ?? ""),
+          slotBy: Number(facilitySlot.slot_by ?? 15),
+        }]
+      : undefined,
+    bookableSlotsPerDay: trainer?.bookable_slots_per_day ?? "",
+    bookingAllowedBefore: trainer?.booking_allowed_before,
+    advanceBooking: trainer?.advance_booking,
+    canCancelBefore: trainer?.can_cancel_before,
+    facilityBookedTimes: trainer?.facility_booked_times ?? "",
+  };
 }
 
 let trainers: TrainerSetup[] = [
@@ -184,4 +263,29 @@ export const SPECIALIZATIONS = [
   "Ashtanga & Vinyasa Yoga",
   "Athletic Conditioning",
   "Pre/Post Natal Fitness",
+];
+
+// Session-slot duration options - mirrors the "Slot by" list used on the
+// Amenity Booking Setup facility timings section.
+export const SLOT_DURATION_OPTIONS = [
+  { value: "15", label: "15 Minutes" },
+  { value: "30", label: "Half hour" },
+  { value: "45", label: "45 Minutes" },
+  { value: "60", label: "1 hour" },
+  { value: "90", label: "1 and a half hours" },
+  { value: "120", label: "2 hours" },
+  { value: "150", label: "2 and a half hours" },
+  { value: "180", label: "3 hours" },
+  { value: "210", label: "3 and a half hours" },
+  { value: "240", label: "4 hours" },
+  { value: "270", label: "4 and a half hours" },
+];
+
+export const ROSTER_OPTIONS = [
+  "Morning Shift",
+  "Afternoon Shift",
+  "Evening Shift",
+  "Full Day",
+  "Weekday Only",
+  "Weekend Only",
 ];

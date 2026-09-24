@@ -236,6 +236,22 @@ html[data-theme="dark"] #themeBtn .i-sun{display:block}
 .nav-item .ni-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nav-item .nav-count{margin-left:auto;font-size:12px;color:var(--faint);font-weight:400}
 
+.recent-activity{margin:28px 10px 0;padding-top:18px;border-top:1px solid var(--border)}
+.recent-activity-head{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.recent-activity-head h2{flex:1;margin:0;font-size:13px;font-weight:500;color:var(--ink-2)}
+.recent-activity-download{width:26px;height:26px}
+.recent-activity-download:disabled{opacity:.45;cursor:not-allowed}
+.recent-activity-download svg{width:15px;height:15px}
+.recent-activity-state{margin:0;font-size:12px;line-height:1.5;color:var(--muted)}
+.recent-activity-list{display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.recent-activity-user{display:grid;gap:3px;min-width:0}
+.recent-activity-user-main{display:grid;gap:1px;min-width:0}
+.recent-activity-user-main strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:500;color:var(--ink)}
+.recent-activity-user-main span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--muted)}
+.recent-activity-meta{display:flex;justify-content:space-between;gap:6px;font-size:10px;color:var(--faint)}
+.recent-activity-meta span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.recent-activity-meta time{white-space:nowrap}
+
 /* ---- collapsed rail ---- */
 html.nav-collapsed{--sidebar-w:var(--sidebar-rail)}
 /* overflow must open up or the hover tooltips get clipped by the rail */
@@ -248,6 +264,7 @@ html.nav-collapsed .brandmark .bm-mini{display:inline}
 html.nav-collapsed .brandmark-sub,
 html.nav-collapsed .nav-label,
 html.nav-collapsed .nav-item .ni-t{display:none}
+html.nav-collapsed .recent-activity{display:none}
 html.nav-collapsed .nav-item{justify-content:center;padding:10px 0;gap:0}
 html.nav-collapsed .nav-group{margin-bottom:10px}
 html.nav-collapsed .nav-group+.nav-group{

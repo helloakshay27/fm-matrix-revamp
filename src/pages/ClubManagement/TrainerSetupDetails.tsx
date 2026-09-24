@@ -1,10 +1,12 @@
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
 import { ArrowLeft, Pencil, Trash2, UserRound, Paperclip, FileText, Download } from "lucide-react";
 import { toast } from "sonner";
-import { deleteTrainer, getTrainerById } from "./trainerSetupMockData";
+import { deleteTrainer, mapTrainerApiData, type TrainerSetup } from "./trainerSetupMockData";
+import { apiClient } from "@/utils/apiClient";
 
 const getStatusBadge = (status: string) => (
   <span
@@ -35,7 +37,24 @@ const fieldStyles = {
 export const TrainerSetupDetails = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const trainer = id ? getTrainerById(id) : undefined;
+  const [trainer, setTrainer] = useState<TrainerSetup | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!id) return;
+    apiClient
+      .get(`/pms/admin/trainers/${id}.json`)
+      .then((response) => setTrainer(mapTrainerApiData(response.data)))
+      .catch((error) => {
+        console.error("Failed to load trainer", error);
+        toast.error("Trainer not found");
+      })
+      .finally(() => setIsLoading(false));
+  }, [id]);
+
+  if (isLoading) {
+    return <div className="p-6 text-gray-500">Loading trainer...</div>;
+  }
 
   if (!trainer) {
     return (
@@ -160,6 +179,15 @@ export const TrainerSetupDetails = () => {
               <TextField
                 label="Contact Number"
                 value={trainer.contactNumber}
+                disabled
+                fullWidth
+                variant="outlined"
+                slotProps={{ inputLabel: { shrink: true } }}
+                InputProps={{ sx: fieldStyles }}
+              />
+              <TextField
+                label="Email"
+                value={trainer.email ?? ""}
                 disabled
                 fullWidth
                 variant="outlined"

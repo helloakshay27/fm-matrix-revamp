@@ -213,6 +213,24 @@ html[data-theme="dark"] #themeBtn .i-sun{display:block}
 .nav-item.on .ni-ic{color:var(--ink)}
 .nav-item .ni-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
+/* Recent activity keeps the sidebar's quiet, compact hierarchy. */
+.recent-activity{margin:38px 10px 0;padding-top:0}
+.recent-activity-head{display:flex;align-items:center;gap:6px;margin-bottom:14px}
+.recent-activity-head h2{flex:1;margin:0;color:var(--faint);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.recent-activity-download{width:24px;height:24px;color:var(--ink-2)}
+.recent-activity-download:hover{background:var(--surface-2);color:var(--ink)}
+.recent-activity-download:disabled{opacity:.45;cursor:not-allowed}
+.recent-activity-download svg{width:15px;height:15px}
+.recent-activity-state{margin:0;color:var(--faint);font-size:12px;line-height:1.5}
+.recent-activity-list{display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.recent-activity-user{display:grid;gap:3px;min-width:0}
+.recent-activity-user-main{display:grid;gap:1px;min-width:0}
+.recent-activity-user-main strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);font-size:12px;font-weight:500}
+.recent-activity-user-main span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:11px}
+.recent-activity-meta{display:flex;justify-content:space-between;gap:6px;color:var(--faint);font-size:10px}
+.recent-activity-meta span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.recent-activity-meta time{white-space:nowrap}
+
 html.nav-collapsed{--sidebar-w:var(--sidebar-rail)}
 html.nav-collapsed .sidebar{padding:34px 11px 48px;overflow:visible}
 html.nav-collapsed .brandmark{
@@ -223,6 +241,7 @@ html.nav-collapsed .brandmark .bm-mini{display:inline}
 html.nav-collapsed .brandmark-sub,
 html.nav-collapsed .nav-label,
 html.nav-collapsed .nav-item .ni-t{display:none}
+html.nav-collapsed .recent-activity{display:none}
 html.nav-collapsed .nav-item{justify-content:center;padding:10px 0;gap:0}
 html.nav-collapsed .nav-group{margin-bottom:10px}
 html.nav-collapsed .nav-group+.nav-group{
