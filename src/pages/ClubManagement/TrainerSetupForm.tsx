@@ -307,7 +307,7 @@ export const TrainerSetupForm = ({
               InputProps={{ sx: fieldStyles }}
             />
 
-            <TextField
+            {/* <TextField
               label="Rate per Session (₹)"
               required
               placeholder="e.g. 95"
@@ -318,7 +318,7 @@ export const TrainerSetupForm = ({
               sx={requiredLabelSx}
               slotProps={{ inputLabel: { shrink: true } }}
               InputProps={{ sx: fieldStyles }}
-            />
+            /> */}
             <TextField
               label="Contact Number"
               required
