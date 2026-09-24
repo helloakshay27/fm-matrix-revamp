@@ -302,8 +302,8 @@
 .pulse-shell .ps-alerts-title {
   font-size: 12px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .08em;
+  text-transform: none;
+  letter-spacing: normal;
   color: var(--color-text);
 }
 
