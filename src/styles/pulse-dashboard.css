@@ -2025,6 +2025,13 @@
   vertical-align: middle;
 }
 
+.pulse-db .pd-table td.pd-td-truncate {
+  max-width: 400px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .pulse-db .pd-table th.pd-num,
 .pulse-db .pd-table td.pd-num {
   text-align: center;
