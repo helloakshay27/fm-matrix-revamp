@@ -172,6 +172,8 @@ type Pagination = {
   per_page: number;
 };
 
+const TRUNCATED_LOCATION_COLUMNS = new Set(["start_location", "end_location"]);
+
 function titleCase(key: string): string {
   return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
@@ -329,7 +331,16 @@ export function PulseCarpool({ filters }: Props) {
   const selectedCompanyName = localStorage.getItem("selectedCompany") ?? "—";
 
   const rideRows = firstArray(rides, "rides");
-  const rideColumns = deriveColumns(rideRows);
+  const rideColumns = (() => {
+    const cols = deriveColumns(rideRows).filter(
+      (c) => c !== "driver_id" && c !== "vehicle_id" && c !== "site_id" && c !== "price"
+    );
+    if (!rideRows.some((r) => "price" in (r ?? {}))) return cols;
+    const fuelIdx = cols.indexOf("fuel_type");
+    const insertAt = fuelIdx === -1 ? cols.length : fuelIdx + 1;
+    return [...cols.slice(0, insertAt), "price", ...cols.slice(insertAt)];
+  })();
+  const rideColumnLabels: Record<string, string> = { price: "Revenue" };
   const ridePagination = paginationOf(rides);
   const rideStartIdx = ridePagination
     ? (ridePagination.current_page - 1) * ridePagination.per_page
@@ -369,7 +380,7 @@ export function PulseCarpool({ filters }: Props) {
         { label: "Completed Rides", value: rideOverview.kpis.completed_rides.toLocaleString() },
         { label: "Seats Offered", value: rideOverview.kpis.seats_offered.toLocaleString() },
         { label: "Seats Filled", value: rideOverview.kpis.seats_filled.toLocaleString() },
-        { label: "Seats Utilization", value: rideOverview.kpis.seats_utilization.toFixed(2) },
+        { label: "Revenue", value: rideOverview.kpis.total_rides_revenue.toFixed(2) },
         { label: "Ride Distance (km)", value: rideOverview.kpis.ride_distance_in_km.toLocaleString() },
       ]
       : [];
@@ -723,7 +734,7 @@ export function PulseCarpool({ filters }: Props) {
               <thead>
                 <tr>
                   {rideColumns.map((c) => (
-                    <th key={c}>{titleCase(c)}</th>
+                    <th key={c}>{rideColumnLabels[c] ?? titleCase(c)}</th>
                   ))}
                 </tr>
               </thead>
@@ -732,9 +743,16 @@ export function PulseCarpool({ filters }: Props) {
                   .filter((row) => rowMatchesSearch(row, rideColumns, rideSearch))
                   .map((row, i) => (
                     <tr key={String(row.id ?? i)}>
-                      {rideColumns.map((c) => (
-                        <td key={c}>{formatCell(row[c], c)}</td>
-                      ))}
+                      {rideColumns.map((c) => {
+                        const value = formatCell(row[c], c);
+                        return TRUNCATED_LOCATION_COLUMNS.has(c) ? (
+                          <td key={c} className="pd-td-truncate" title={value}>
+                            {value}
+                          </td>
+                        ) : (
+                          <td key={c}>{value}</td>
+                        );
+                      })}
                     </tr>
                   ))}
               </tbody>
@@ -798,9 +816,16 @@ export function PulseCarpool({ filters }: Props) {
                   .filter((row) => rowMatchesSearch(row, reportedColumns, reportedSearch))
                   .map((row, i) => (
                     <tr key={String(row.id ?? i)}>
-                      {reportedColumns.map((c) => (
-                        <td key={c}>{formatCell(row[c], c)}</td>
-                      ))}
+                      {reportedColumns.map((c) => {
+                        const value = formatCell(row[c], c);
+                        return TRUNCATED_LOCATION_COLUMNS.has(c) ? (
+                          <td key={c} className="pd-td-truncate" title={value}>
+                            {value}
+                          </td>
+                        ) : (
+                          <td key={c}>{value}</td>
+                        );
+                      })}
                     </tr>
                   ))}
               </tbody>
