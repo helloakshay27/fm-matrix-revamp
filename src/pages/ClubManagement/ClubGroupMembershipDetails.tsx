@@ -592,7 +592,7 @@ export const ClubGroupMembershipDetails = () => {
   const renderStatusBadge = () => {
     if (!membershipData) return null;
 
-    const { start_date, end_date } = membershipData;
+    const { start_date, end_date, status } = membershipData;
 
     if (!start_date && !end_date) {
       return (
@@ -610,9 +610,19 @@ export const ClubGroupMembershipDetails = () => {
       );
     }
 
+    const normalizedStatus = (status || '').toLowerCase();
+    const statusStyles: Record<string, string> = {
+      approved: 'bg-green-100 text-green-800 border-green-200',
+      pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      cancelled: 'bg-gray-100 text-gray-800 border-gray-200',
+      expired: 'bg-red-100 text-red-800 border-red-200',
+    };
+
     return (
-      <Badge className="bg-green-100 text-green-800 border-green-200">
-        Approved
+      <Badge className={statusStyles[normalizedStatus] || 'bg-gray-100 text-gray-800 border-gray-200'}>
+        {normalizedStatus
+          ? normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1)
+          : '-'}
       </Badge>
     );
   };
