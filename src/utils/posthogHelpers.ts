@@ -1,7 +1,11 @@
 import posthog from "posthog-js";
 import { getUser } from "@/utils/auth";
+import { FM_ADOPTION_PROJECT_CODE } from "@/config/fmAdoptionTenant";
 
 const RELEASE_VERSION = (import.meta.env.VITE_APP_VERSION as string) ?? "dev";
+
+/** Panchshil Pulse project code — shared with the `/fm/adoption/*` read path. */
+const PULSE_PROJECT_CODE = FM_ADOPTION_PROJECT_CODE;
 
 /**
  * Fire a generic PostHog event with standard platform/release context.
@@ -65,7 +69,7 @@ export const capturePulseEvent = (
   event: string,
   props: Record<string, unknown> = {}
 ) => {
-  capturePostHogEvent(event, { project_code: "TEP-01", project_id: undefined, ...props });
+  capturePostHogEvent(event, { project_code: PULSE_PROJECT_CODE, project_id: undefined, ...props });
 };
 
 /**
@@ -191,6 +195,66 @@ export const resolveCMProjectContext = (): {
 
 /** Keep the existing helpdesk-facing name working — it now covers the whole CM surface. */
 export const resolveHelpdeskProjectContext = resolveCMProjectContext;
+
+/**
+ * True when the route belongs to the Panchshil Pulse app (/pulse/*).
+ *
+ * Route-prefix only, deliberately. `isPulseShell()` in PostHogPulseEvents also
+ * treats "selected company 305" as the Pulse shell, but that is a company-level
+ * heuristic, not a route: reusing it here would start stamping TEP-01 on
+ * non-Pulse screens a Pulse-company user happens to open inside the FM shell.
+ */
+export const isPulseRoutePath = (pathname: string): boolean =>
+  pathname === "/pulse" || pathname.startsWith("/pulse/");
+
+export interface ProjectContext {
+  project_code: string;
+  project_id: string | undefined;
+}
+
+/**
+ * Project context for the Panchshil Pulse app.
+ *
+ * `project_id` is intentionally undefined (not P-223, not P-238): Pulse
+ * identifies itself by project code only, and leaving a foreign project_id on
+ * the event would let a project_id-scoped query pull Pulse traffic into the
+ * wrong bucket. Matches capturePulseEvent, which neutralises project_id the
+ * same way.
+ */
+export const resolvePulseProjectContext = (): ProjectContext => ({
+  project_code: PULSE_PROJECT_CODE,
+  project_id: undefined,
+});
+
+/**
+ * Project context for the current route, covering all three apps: Club
+ * Management (CM-01), Panchshil Pulse (TEP-01) and FM Matrix (FM-01).
+ *
+ * This is the resolver the $pageview capture must use, so the code stamped on
+ * a pageview always matches the app that pageview belongs to. It previously used
+ * resolveHelpdeskProjectContext(), which knew only about CM and FM and so
+ * labelled every /pulse/* pageview FM-01 — making Pulse's screen views invisible
+ * to any TEP-01-scoped query.
+ *
+ * Resolution order (first match wins):
+ *  1. A Club Management route (/club-management/*)               → CM-01
+ *  2. A shared screen reached from a CM-originated flow           → CM-01
+ *  3. A Pulse route (/pulse/*)                                   → TEP-01
+ *  4. Everything else (FM Matrix)                                → FM-01
+ *
+ * CM is deliberately checked before Pulse: the shared-screen family includes
+ * /pulse/notices, /pulse/events and /pulse/community, so a CM-originated flow
+ * landing on one of those must keep reporting CM-01. Every other /pulse/* route
+ * previously fell through to FM-01 and is the only behaviour that changes here.
+ */
+export const resolveProjectContext = (): ProjectContext => {
+  const cm = resolveCMProjectContext();
+  if (cm.project_code === "CM-01") return cm;
+
+  return isPulseRoutePath(window.location.pathname || "")
+    ? resolvePulseProjectContext()
+    : cm;
+};
 
 /**
  * True when the current route should report Club Management analytics. Use this
