@@ -375,7 +375,7 @@ END:VCARD`;
                 </div>
                 <div className="flex-1">
                   <a
-                    href={userData.website}
+                    href={userData.website.startsWith("http") ? userData.website : `https://${userData.website}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-[14px] break-all"
