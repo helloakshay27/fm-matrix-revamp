@@ -380,7 +380,7 @@ export function PulseCarpool({ filters }: Props) {
         { label: "Completed Rides", value: rideOverview.kpis.completed_rides.toLocaleString() },
         { label: "Seats Offered", value: rideOverview.kpis.seats_offered.toLocaleString() },
         { label: "Seats Filled", value: rideOverview.kpis.seats_filled.toLocaleString() },
-        { label: "Revenue", value: rideOverview.kpis.total_rides_revenue.toFixed(2) },
+        { label: "Revenue", value: `₹ ${rideOverview.kpis.total_rides_revenue?.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
         { label: "Ride Distance (km)", value: rideOverview.kpis.ride_distance_in_km.toLocaleString() },
       ]
       : [];
