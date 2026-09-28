@@ -74,9 +74,13 @@ function deviceParam(dev: Dev): DeviceType[] {
 /* Pulse's platform selector maps onto the Connect-style platform values used to
    build the single `os`/`device_type` API param (see getDeviceInfo): the iOS
    button sends "ios" → `os=ios`, the Mobile/Android button sends "android" →
-   `os=Android`, and "all" sends `device_type=Desktop,Mobile` so every platform's
-   usage is included. No `dev` value is ever sent — only the resulting
-   os/device_type param. */
+   `device_type=mobile` (the API's mobile filter, covering Android AND iOS), and
+   "all" sends nothing at all, so the param is omitted and the API aggregates
+   every platform. The old behaviour returned `device_type=mobile` for "all",
+   which contradicted the label — "All" was filtered down to mobile only. No
+   `dev` value is ever sent over the wire, only the resulting os/device_type
+   param. Note the `dev` enum value behind the button labelled "iOS" is
+   "desktop"; `pulseDev` below is what gives that button its iOS meaning. */
 function pulseDev(dev: Dev): string {
   if (dev === "desktop") return "ios";
   if (dev === "mobile") return "android";
