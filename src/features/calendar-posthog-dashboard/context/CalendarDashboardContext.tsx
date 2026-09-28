@@ -663,6 +663,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
   const value = useMemo<CalendarDashboardValue>(
     () => ({
       vm,
+      queryFilters,
       provider, setProvider,
       setPreset, setCustomRange, customRange, setDev, setSessTab,
       workflow, setWorkflow, togglePrev,
@@ -678,7 +679,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
       refetch,
     }),
     [
-      vm, provider, setProvider, setPreset, setCustomRange, customRange, setDev, setSessTab,
+      vm, queryFilters, provider, setProvider, setPreset, setCustomRange, customRange, setDev, setSessTab,
       workflow, setWorkflow, togglePrev, selectedModule, setSelectedModule, modulesList,
       page, theme, toggleTheme, navCollapsed, toggleNav, getBenchmark, setBenchmark,
       isLive, isLoading, trafficLoading, adoptLoading, flowsLoading, refetch,

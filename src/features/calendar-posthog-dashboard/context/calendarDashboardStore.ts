@@ -35,6 +35,7 @@ export interface ViewModel {
 
 export interface CalendarDashboardValue {
   vm: ViewModel;
+  queryFilters: CalendarQueryFilters;
 
   /** filters */
   provider: string;

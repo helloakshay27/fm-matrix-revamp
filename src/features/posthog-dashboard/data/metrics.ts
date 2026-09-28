@@ -394,20 +394,6 @@ export function buildAdopt(
 
   const tiles: TileSpec[] = [
     {
-      id: 'A1',
-      label: 'Seat Utilisation (A1)',
-      disp: pctVal(seat?.value),
-      delta: deltaOf(seat?.delta_pct),
-      goodUp: true,
-      sub: seat
-        ? seat.licensed_seats
-          ? `${fmtC(seat.used_seats)} / ${fmtC(seat.licensed_seats)} seats`
-          : `${fmtC(seat.used_seats)} active · set licensed seats`
-        : 'no data',
-      raw: round1(seat?.value ?? 0),
-      unit: '%',
-    },
-    {
       id: 'A2',
       label: 'Stickiness (A2)',
       disp: pctVal(stick?.value),
@@ -446,7 +432,7 @@ export function buildAdopt(
       sub: 'modules in use',
       raw: breadth?.in_use ?? 0,
     },
-  ];
+  ].filter((tile) => tile.id !== 'A1');
 
   // The API omits weeks with no activity — rebuild the full window so the line stays evenly spaced.
   const curWeeks = weekRange(to, TREND_WEEKS);
