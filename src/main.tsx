@@ -14,16 +14,16 @@ import { PostHogPageView } from "./components/PostHogPageView.tsx";
 // registerServiceWorker();
 
 // Apply Lockated Brand Theme and color patch on live and local environments
-if (
-  window.location.hostname === "fm-matrix.lockated.com" ||
-  window.location.hostname === "lockated.gophygital.work" ||
-  window.location.hostname === "localhost"
-) {
-  import("./styles/theme.css"); // Lockated Brand Theme - Edit this file for global color changes
-  // Initialise runtime color patcher — overrides MUI inline styles and any
-  // legacy #C72030 / #C62828 colors injected via sx props or inline styles.
-  initColorPatch();
-}
+// if (
+//   window.location.hostname === "fm-matrix.lockated.com" ||
+//   window.location.hostname === "lockated.gophygital.work" ||
+//   window.location.hostname === "localhost"
+// ) {
+import("./styles/theme.css"); // Lockated Brand Theme - Edit this file for global color changes
+// Initialise runtime color patcher — overrides MUI inline styles and any
+// legacy #C72030 / #C62828 colors injected via sx props or inline styles.
+initColorPatch();
+// }
 
 const posthogOptions = {
   api_host: import.meta.env.VITE_POSTHOG_HOST,

@@ -582,15 +582,15 @@ export const Header = () => {
             </div>
           )}
 
-          {/* {isPulseSite && (
+          {isPulseSite && (
             <button
               onClick={() => navigate("/pulse/analytics")}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#C72030] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors border border-[#D5DbDB]"
             >
               <Home className="w-4 h-4" />
               Pulse Dashboard
             </button>
-          )} */}
+          )}
 
           {/* Project Dropdown */}
         </div>
