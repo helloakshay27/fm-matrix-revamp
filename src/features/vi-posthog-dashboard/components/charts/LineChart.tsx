@@ -1,6 +1,10 @@
-import { useRef, useState } from 'react';
-import { useViDashboard } from '../../context/viDashboardStore';
+import { useContext, useRef, useState } from 'react';
+import { ViDashboardContext } from '../../context/viDashboardStore';
 import { fmtC } from '@/features/posthog-dashboard/data/format';
+import type { ChartPalette } from '../../data/palette';
+
+/** The palette entries this chart reads; any dashboard palette that has them will do. */
+type LineChartPalette = Pick<ChartPalette, 'ink' | 'faint' | 'grid' | 'line' | 'blue' | 'fill' | 'onHeat'>;
 
 /**
  * House-style single-series line chart: no chart frame, no horizontal rules, faint vertical
@@ -19,6 +23,8 @@ export function LineChart({
   color,
   fill,
   pctScale,
+  palette: paletteProp,
+  showPrev: showPrevProp,
 }: {
   cur: number[];
   prev?: number[] | null;
@@ -28,13 +34,28 @@ export function LineChart({
   color?: string;
   fill?: string;
   pctScale?: boolean;
+  /**
+   * Chart colours. Defaults to the Vi store's palette, so callers inside Vi are unaffected;
+   * another dashboard that shows this same trend card passes its own palette in rather than
+   * rendering a second, differently-styled copy of the chart.
+   */
+  palette?: LineChartPalette;
+  /**
+   * Whether the previous-period comparison is drawn. Defaults to the ControlBar's "Previous
+   * period" toggle on the Vi dashboard state; a dashboard with its own toggle passes it in.
+   */
+  showPrev?: boolean;
 }) {
   // The comparison overlay is driven by the ControlBar's "Previous period" toggle, which
   // lives on the dashboard state — there is no top-level `prev` on the context value.
-  const { vm, palette } = useViDashboard();
+  const vi = useContext(ViDashboardContext);
   const svgRef = useRef<SVGSVGElement>(null);
   const [hover, setHover] = useState<number | null>(null);
-  const showPrev = vm.state.prev;
+  const palette = paletteProp ?? vi?.palette;
+  if (!palette) {
+    throw new Error('LineChart needs a `palette` prop outside <ViDashboardProvider>');
+  }
+  const showPrev = showPrevProp ?? vi?.state.prev ?? false;
   const stroke = color ?? palette.blue;
   const area = fill ?? palette.fill;
 
