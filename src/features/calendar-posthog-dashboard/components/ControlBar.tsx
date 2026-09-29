@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { useIsFetching, useQueryClient } from '@tanstack/react-query';
+import { RefreshCw } from 'lucide-react';
 import { RANGE_LABELS, type DateRange, type Device } from '../data/constants';
 import { useCalendarDashboard } from '../context/calendarDashboardStore';
+import { CALENDAR_APP_ID } from '../api/adoptionApi';
 
 const PRESETS: DateRange[] = [7, 30, 90];
 
@@ -19,6 +22,9 @@ const DEVICES: Array<{ key: Device; label: string }> = [
  * by and the endpoints take no such parameter.
  */
 export function ControlBar() {
+  const queryClient = useQueryClient();
+  const calendarQueryKey = ['calendar-adoption', 'app', CALENDAR_APP_ID] as const;
+  const isRefreshing = useIsFetching({ queryKey: calendarQueryKey }) > 0;
   const {
     vm, setPreset, setCustomRange, customRange, setDev, togglePrev,
   } = useCalendarDashboard();
@@ -135,6 +141,21 @@ export function ControlBar() {
         title="Overlay the immediately preceding period of equal length"
       >
         <span className="ic">&#8634;</span> Previous period {vm.prev ? '✓' : ''}
+      </button>
+
+      <button
+        type="button"
+        className="ctrl refresh-data-btn"
+        aria-label="Refresh dashboard data"
+        aria-busy={isRefreshing}
+        title={isRefreshing ? 'Refreshing dashboard data' : 'Refresh dashboard data'}
+        disabled={isRefreshing}
+        onClick={() => {
+          void queryClient.invalidateQueries({ queryKey: calendarQueryKey, refetchType: 'active' });
+        }}
+      >
+        <RefreshCw aria-hidden="true" />
+        Refresh
       </button>
 
       <div className="spacer" />

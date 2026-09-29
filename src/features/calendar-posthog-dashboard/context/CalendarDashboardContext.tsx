@@ -154,10 +154,15 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
   const modulesQuery = useModules(queryFilters);              // Layer 3 — base (no module filter, gives pill list)
   const workflowQuery = useWorkflowUsage(workflowFilters);   // Layer 3 — filtered by selectedModule
 
-  const trafficLoading = trafficQuery.isLoading || usageQuery.isLoading;
+  const trafficLoading =
+    trafficQuery.isLoading || trafficQuery.isFetching || usageQuery.isLoading || usageQuery.isFetching;
   const adoptLoading =
-    adoptQuery.isLoading || trendQuery.isLoading || growthQuery.isLoading || retentionQuery.isLoading;
-  const flowsLoading = workflowQuery.isLoading || modulesQuery.isLoading;
+    adoptQuery.isLoading || adoptQuery.isFetching ||
+    trendQuery.isLoading || trendQuery.isFetching ||
+    growthQuery.isLoading || growthQuery.isFetching ||
+    retentionQuery.isLoading || retentionQuery.isFetching;
+  const flowsLoading =
+    workflowQuery.isLoading || workflowQuery.isFetching || modulesQuery.isLoading || modulesQuery.isFetching;
   const isLoading = trafficLoading || adoptLoading || flowsLoading;
   const isLive = Boolean(trafficQuery.data || adoptQuery.data || workflowQuery.data);
 
