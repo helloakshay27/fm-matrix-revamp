@@ -39,7 +39,7 @@ const BookingCalenderView = () => {
 
     const getFacilities = async () => {
         try {
-            const response = await axios.get(`https://${baseUrl}/pms/admin/facility_setups.json?q[fac_type_eq]=${bookingType}`, {
+            const response = await axios.get(`https://${baseUrl}/pms/admin/facility_setups.json?q[fac_type_eq]=${bookingType}&q[active_eq]=1`, {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }

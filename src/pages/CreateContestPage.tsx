@@ -310,7 +310,8 @@ export const CreateContestPage: React.FC = () => {
     },
   ];
 
-  const contestTypes = ["Spin", "Random", "Special Discount"];
+  //const contestTypes = ["Spin", "Random", "Special Discount"];
+    const contestTypes = ["Special Discount"];
 
   // Helper function to calculate base probability for each offer
   const calculateBaseProbability = (): number => {

@@ -6,12 +6,36 @@ import {
   fetchBookingDetails,
   getLogs,
 } from "@/store/slices/facilityBookingsSlice";
-import { ArrowLeft, Logs, Ticket } from "lucide-react";
+import { ArrowLeft, Logs, Receipt, Ticket } from "lucide-react";
 import { CustomTabs } from "@/components/CustomTabs";
 import { LogsTimeline } from "@/components/LogTimeline";
 import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import axios from "axios";
 import { toast } from "sonner";
+
+const formatCurrency = (value?: number | null) =>
+  typeof value === "number" ? `₹${value.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "-";
+
+const getTaxAmounts = (bookings: FacilityBookingDetails | null) => {
+  const total = bookings?.total ?? bookings?.amount_full;
+  const subTotal = bookings?.sub_total;
+  const gstRate = bookings?.gst;
+  const sgstRate = bookings?.sgst;
+
+  if (total == null || subTotal == null || gstRate == null || sgstRate == null || gstRate + sgstRate <= 0) {
+    return { cgstAmount: null as number | null, sgstAmount: null as number | null };
+  }
+
+  const taxableAmount = subTotal - (bookings?.discount ?? 0);
+  const totalTaxAmount = total - taxableAmount;
+  const rateSum = gstRate + sgstRate;
+
+  return {
+    cgstAmount: totalTaxAmount * (gstRate / rateSum),
+    sgstAmount: totalTaxAmount * (sgstRate / rateSum),
+  };
+};
 
 export const BookingDetailsPage = () => {
   const { id } = useParams();
@@ -87,6 +111,8 @@ export const BookingDetailsPage = () => {
 
   console.log(logs)
 
+  const { cgstAmount, sgstAmount } = getTaxAmounts(bookings);
+
   const tabs = [
     {
       value: "details",
@@ -100,154 +126,213 @@ export const BookingDetailsPage = () => {
             <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">BOOKING DETAILS</h3>
           </div>
           <div
-            className="grid grid-cols-3 gap-8 px-3"
+            className="grid grid-cols-3 gap-x-8 gap-y-4 px-3"
           >
+            <div className="flex items-start">
+              <span className="text-gray-500 min-w-[140px]">Booking ID</span>
+              <span className="text-gray-500 mx-2">:</span>
+              <span className="text-gray-900 font-medium">
+                {bookings?.id}
+              </span>
+            </div>
 
-            <div className="space-y-4">
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Booking ID</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {bookings?.id}
-                </span>
-              </div>
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Comment</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium truncate max-w-[170px] overflow-hidden whitespace-nowrap" title={bookings?.comment}>
-                  {bookings?.comment}
-                </span>
-              </div>
-              {/* <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Status</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className={`text-gray-900 px-2 py-[2px] flex items-center gap-2 text-sm ${bookings?.current_status === "Cancelled"
-                  ? "bg-red-100"
-                  : bookings?.current_status === "Confirmed"
-                    ? "bg-green-100"
-                    : "bg-yellow-100"
-                  }`} title={bookings?.comment} style={{ borderRadius: "4px" }}>
-                  <span className={`rounded-full w-2 h-2 inline-block ${bookings?.current_status === "Cancelled"
-                    ? "bg-[#D92E14]"
-                    : bookings?.current_status === "Confirmed"
-                      ? "bg-[#16B364]"
-                      : "bg-[#D9CA20]"
-                    }`}></span>
-                  {bookings?.current_status}
-                </span>
-              </div> */}
+            <div className="flex items-start">
+              <span className="text-gray-500 min-w-[140px]">Booked by</span>
+              <span className="text-gray-500 mx-2">:</span>
+              <span className="text-gray-900 font-medium">
+                {bookings?.created_by_name}
+              </span>
+            </div>
 
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Status</span>
-                <span className="text-gray-500 mx-2">:</span>
+            <div className="flex items-start">
+              <span className="text-gray-500 min-w-[140px]">Schedule Slot</span>
+              <span className="text-gray-500 mx-2">:</span>
+              <span className="text-gray-900 font-medium truncate max-w-[170px] overflow-hidden whitespace-nowrap" title={bookings?.show_schedule_24_hour}>
+                {bookings?.show_schedule_24_hour}
+              </span>
+            </div>
 
-                <Select
-                  value={bookings?.current_status}
-                  onValueChange={(newStatus) => handleStatusChange(newStatus)}
-                >
-                  <SelectTrigger className="border-none bg-transparent p-0 h-auto [&>svg]:hidden">
-                    <div
-                      className={`text-gray-900 px-2 py-[2px] flex items-center gap-2 text-sm cursor-pointer ${bookings?.current_status === "Cancelled"
-                        ? "bg-red-100"
+            <div className="flex items-start">
+              <span className="text-gray-500 min-w-[140px]">Comment</span>
+              <span className="text-gray-500 mx-2">:</span>
+              <span className="text-gray-900 font-medium truncate max-w-[170px] overflow-hidden whitespace-nowrap" title={bookings?.comment}>
+                {bookings?.comment}
+              </span>
+            </div>
+
+            <div className="flex items-start">
+              <span className="text-gray-500 min-w-[140px]">Scheduled Date</span>
+              <span className="text-gray-500 mx-2">:</span>
+              <span className="text-gray-900 font-medium">
+                {bookings?.startdate.split(" ")[0]}
+              </span>
+            </div>
+
+            <div className="flex items-start">
+              <span className="text-gray-500 min-w-[140px]">Booked On</span>
+              <span className="text-gray-500 mx-2">:</span>
+              <span className="text-gray-900 font-medium">
+                {bookings?.created_at?.split(" ")[0] || "-"}
+              </span>
+            </div>
+
+            <div className="flex items-start">
+              <span className="text-gray-500 min-w-[140px]">Status</span>
+              <span className="text-gray-500 mx-2">:</span>
+
+              <Select
+                value={bookings?.current_status}
+                onValueChange={(newStatus) => handleStatusChange(newStatus)}
+              >
+                <SelectTrigger className="border-none bg-transparent p-0 h-auto [&>svg]:hidden">
+                  <div
+                    className={`text-gray-900 px-2 py-[2px] flex items-center gap-2 text-sm cursor-pointer ${bookings?.current_status === "Cancelled"
+                      ? "bg-red-100"
+                      : bookings?.current_status === "Confirmed"
+                        ? "bg-green-100"
+                        : "bg-yellow-100"
+                      }`}
+                    style={{ borderRadius: "4px" }}
+                    title={bookings?.comment}
+                  >
+                    <span
+                      className={`rounded-full w-2 h-2 inline-block ${bookings?.current_status === "Cancelled"
+                        ? "bg-[#D92E14]"
                         : bookings?.current_status === "Confirmed"
-                          ? "bg-green-100"
-                          : "bg-yellow-100"
+                          ? "bg-[#16B364]"
+                          : "bg-[#D9CA20]"
                         }`}
-                      style={{ borderRadius: "4px" }}
-                      title={bookings?.comment}
-                    >
-                      <span
-                        className={`rounded-full w-2 h-2 inline-block ${bookings?.current_status === "Cancelled"
-                          ? "bg-[#D92E14]"
-                          : bookings?.current_status === "Confirmed"
-                            ? "bg-[#16B364]"
-                            : "bg-[#D9CA20]"
-                          }`}
-                      ></span>
-                      {bookings?.current_status}
-                    </div>
-                  </SelectTrigger>
-                  {
-                    bookings?.fac_type === "Request" && <SelectContent>
-                      <SelectItem value="Pending">
-                        Pending
-                      </SelectItem>
+                    ></span>
+                    {bookings?.current_status}
+                  </div>
+                </SelectTrigger>
+                {
+                  bookings?.fac_type === "Request" && <SelectContent>
+                    <SelectItem value="Pending">
+                      Pending
+                    </SelectItem>
 
-                      <SelectItem value="Confirmed">
-                        Confirmed
-                      </SelectItem>
+                    <SelectItem value="Confirmed">
+                      Confirmed
+                    </SelectItem>
 
-                      <SelectItem value="Cancelled">
-                        Cancelled
-                      </SelectItem>
-                    </SelectContent>
-                  }
-                </Select>
-              </div>
-
-
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Payment Method</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {bookings?.payment_method === "NA" ? "Complimentory" : bookings?.payment_method}
-                </span>
-              </div>
+                    <SelectItem value="Cancelled">
+                      Cancelled
+                    </SelectItem>
+                  </SelectContent>
+                }
+              </Select>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Booked by</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {bookings?.created_by_name}
-                </span>
-              </div>
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">CGST</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {bookings?.gst || "-"}
-                </span>
-              </div>
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Scheduled Date</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {bookings?.startdate.split(" ")[0]}
-                </span>
-              </div>
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Amount</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {bookings?.amount_full ?? "-"}
-                </span>
-              </div>
+            <div className="flex items-start">
+              <span className="text-gray-500 min-w-[140px]">Payment Method</span>
+              <span className="text-gray-500 mx-2">:</span>
+              <span className="text-gray-900 font-medium">
+                {bookings?.payment_method === "NA" ? "Complimentory" : bookings?.payment_method}
+              </span>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      value: "charges",
+      label: "Charges",
+      content: (
+        <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <Receipt className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CHARGES DETAILS</h3>
+          </div>
+
+          <div className="px-3 space-y-6">
+            <div className="border rounded-md overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead>Particulars</TableHead>
+                    <TableHead className="text-right">Qty</TableHead>
+                    <TableHead className="text-right">Rate</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell className="font-medium text-gray-900">
+                      Facility Charge{bookings?.charge_type ? ` (${bookings.charge_type})` : ""}
+                    </TableCell>
+                    <TableCell className="text-right">1</TableCell>
+                    <TableCell className="text-right">{formatCurrency(bookings?.facility_charge)}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(bookings?.facility_charge)}</TableCell>
+                  </TableRow>
+                  {bookings?.facility_booking_accessories?.map(({ facility_booking_accessory: acc }) => (
+                    <TableRow key={acc.id}>
+                      <TableCell className="text-gray-900">{acc.name}</TableCell>
+                      <TableCell className="text-right">{acc.quantity}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(acc.price)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(acc.total)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Schedule Slot</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium truncate max-w-[170px] overflow-hidden whitespace-nowrap" title={bookings?.show_schedule_24_hour}>
-                  {bookings?.show_schedule_24_hour}
-                </span>
-              </div>
+            <div className="flex justify-end">
+              <div className="w-full max-w-sm space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500">Sub Total</span>
+                  <span className="text-gray-900 font-medium">{formatCurrency(bookings?.sub_total)}</span>
+                </div>
 
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">SGST</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {bookings?.sgst || "-"}
-                </span>
-              </div>
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Booked On</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {bookings?.sgst || "-"}
-                </span>
+                {!!bookings?.discount && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">
+                      Discount{bookings?.coupon?.code ? ` (${bookings.coupon.code})` : ""}
+                    </span>
+                    <span className="text-brand-error font-medium">- {formatCurrency(bookings.discount)}</span>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500">CGST {bookings?.gst != null ? `(${bookings.gst}%)` : ""}</span>
+                  <span className="text-gray-900 font-medium">{formatCurrency(cgstAmount)}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500">SGST {bookings?.sgst != null ? `(${bookings.sgst}%)` : ""}</span>
+                  <span className="text-gray-900 font-medium">{formatCurrency(sgstAmount)}</span>
+                </div>
+
+                <div className="border-t pt-2 flex items-center justify-between">
+                  <span className="text-gray-900 font-semibold">Total</span>
+                  <span className="text-gray-900 font-semibold">
+                    {formatCurrency(bookings?.total ?? bookings?.amount_full)}
+                  </span>
+                </div>
+
+                {/* <div className="flex items-center justify-between text-sm pt-2">
+                  <span className="text-gray-500">Payment Method</span>
+                  <span className="text-gray-900 font-medium">
+                    {bookings?.payment_method === "NA" ? "Complimentary" : bookings?.payment_method || "-"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500">Payment Status</span>
+                  <span className="text-gray-900 font-medium">{bookings?.payment_status || "-"}</span>
+                </div>
+                {bookings?.amount_paid != null && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">Amount Paid</span>
+                    <span className="text-gray-900 font-medium">{formatCurrency(bookings.amount_paid)}</span>
+                  </div>
+                )}
+                {bookings?.deposit_amount != null && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">Deposit Amount</span>
+                    <span className="text-gray-900 font-medium">{formatCurrency(bookings.deposit_amount)}</span>
+                  </div>
+                )} */}
               </div>
             </div>
           </div>
