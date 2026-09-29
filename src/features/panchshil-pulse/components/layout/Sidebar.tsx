@@ -1,8 +1,11 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import { RecentActivitySidebar } from "../../../posthog-dashboard/components/RecentActivitySidebar";
+import { usePulseDashboard } from "../../contexts/PulseDashboardContext";
 
 export const Sidebar: React.FC = () => {
   const location = useLocation();
+  const { queryFilters } = usePulseDashboard();
 
   const getNavItemClass = (path: string) => {
     return `nav-item${location.pathname === path ? ' on' : ''}`;
@@ -86,6 +89,7 @@ export const Sidebar: React.FC = () => {
           </Link>
         </div>
       </nav>
+      <RecentActivitySidebar filters={queryFilters} filtersSettled={queryFilters.enabled} />
     </aside>
   );
 };

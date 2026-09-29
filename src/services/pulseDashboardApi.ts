@@ -810,6 +810,7 @@ export interface RideOverviewResponse {
     seats_filled: number;
     seats_utilization: number;
     ride_distance_in_km: number;
+    total_rides_revenue: number;
   };
   rides_trend: {
     growth_percentage: number;

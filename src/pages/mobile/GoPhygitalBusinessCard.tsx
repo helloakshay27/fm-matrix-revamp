@@ -17,8 +17,7 @@ import {
   Download,
   ChevronDown,
   ChevronUp,
-  Instagram,
-  Linkedin,
+  Link2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
@@ -83,13 +82,6 @@ interface ApiResponse {
 // so the same card design gets visibly bigger instead of floating small in empty space.
 const s = (px: number) => `calc(${px}px * var(--cs))`;
 
-const WhatsAppIcon: React.FC<{ className?: string; style?: React.CSSProperties }> = ({ className, style }) => (
-  <svg viewBox="0 0 24 24" className={className} style={style} fill="#25D366">
-    <path d="M12.004 2.003c-5.514 0-9.997 4.483-9.997 9.997 0 1.762.463 3.484 1.343 4.997l-1.427 5.212 5.339-1.398a9.955 9.955 0 0 0 4.742 1.186h.004c5.514 0 9.997-4.483 9.997-9.997 0-2.67-1.04-5.181-2.928-7.07a9.935 9.935 0 0 0-7.073-2.927zm.001 18.29a8.28 8.28 0 0 1-4.223-1.156l-.303-.18-3.146.824.84-3.065-.198-.314a8.264 8.264 0 0 1-1.268-4.4c0-4.573 3.72-8.293 8.302-8.293a8.24 8.24 0 0 1 5.867 2.43 8.24 8.24 0 0 1 2.428 5.868c0 4.573-3.72 8.293-8.3 8.293z" />
-    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-  </svg>
-);
-
 const GoPhygitalLogo: React.FC = () => (
   <img
     src={goPhygitalLogo}
@@ -99,17 +91,6 @@ const GoPhygitalLogo: React.FC = () => (
   />
 );
 
-const socialIconFor = (title?: string) => {
-  const t = (title || "").toLowerCase();
-  const style = { width: s(18), height: s(18) };
-  if (t.includes("whatsapp")) return <WhatsAppIcon style={style} />;
-  if (t.includes("linkedin"))
-    return <Linkedin style={{ ...style, color: "#0A66C2" }} fill="#0A66C2" />;
-  if (t.includes("instagram"))
-    return <Instagram style={{ ...style, color: "#E1306C" }} />;
-  return <Globe style={{ ...style, color: "#EA5B2E" }} />;
-};
-
 export const GoPhygitalBusinessCard: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [userData, setUserData] = useState<UserCardData | null>(null);
@@ -117,6 +98,7 @@ export const GoPhygitalBusinessCard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"basic" | "detailed">("basic");
   const [socialExpanded, setSocialExpanded] = useState(false);
+  const [extraExpanded, setExtraExpanded] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const source = searchParams.get("source") || "";
@@ -178,7 +160,7 @@ export const GoPhygitalBusinessCard: React.FC = () => {
         }
 
         const response = await fetch(
-          `https://live-api.gophygital.work/pms/users/user_info.json?${params.toString()}`
+          `https://live-api.gophygital.work/pms/users/user_info_by_enc_id.json?${params.toString()}`
         );
 
         if (!response.ok) {
@@ -291,59 +273,115 @@ END:VCARD`;
     );
   }
 
-  const allSocial = [...(userData.socialLinks || []), ...(userData.extraLinks || [])];
-  const visibleSocial = socialExpanded ? allSocial : allSocial.slice(0, 3);
-
   const SocialCard = () =>
-    allSocial.length > 0 ? (
+    (userData.socialLinks || []).length > 0 ? (
       <div
-        className="gp-social-card bg-white flex items-center flex-wrap"
+        className="gp-social-card bg-white"
         style={{
           marginTop: s(12),
-          gap: s(12),
           paddingLeft: s(24),
           paddingRight: s(24),
           paddingTop: s(16),
           paddingBottom: s(16),
         }}
       >
-        <span
-          className="font-semibold flex-shrink-0"
-          style={{ color: "#1a1a1a", fontSize: s(14) }}
-        >
-          Social links
-        </span>
-        <div className="flex-1 flex items-center justify-end flex-wrap" style={{ gap: s(8) }}>
-          {visibleSocial.map((item, index) => (
-            <a
-              key={index}
-              href={item.link.startsWith("http") ? item.link : `https://${item.link}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-full bg-white flex items-center justify-center flex-shrink-0"
-              style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.15)", width: s(32), height: s(32) }}
-              title={item.title}
-            >
-              {socialIconFor(item.title)}
-            </a>
-          ))}
-        </div>
         <button
           onClick={() => setSocialExpanded((v) => !v)}
-          className="flex-shrink-0"
-          style={{ padding: s(4) }}
-          aria-label="Toggle all social links"
+          className="w-full flex items-center justify-between"
+          aria-label="Toggle share socials"
         >
-          {allSocial.length > 3 ? (
-            socialExpanded ? (
-              <ChevronUp style={{ width: s(18), height: s(18), color: "#4B5563" }} />
-            ) : (
-              <ChevronDown style={{ width: s(18), height: s(18), color: "#4B5563" }} />
-            )
+          <span
+            className="font-semibold"
+            style={{ color: "#1a1a1a", fontSize: s(14) }}
+          >
+            Share socials
+          </span>
+          {socialExpanded ? (
+            <ChevronUp style={{ width: s(18), height: s(18), color: "#4B5563" }} />
           ) : (
             <ChevronDown style={{ width: s(18), height: s(18), color: "#4B5563" }} />
           )}
         </button>
+        {socialExpanded && (
+          <div className="flex flex-col" style={{ marginTop: s(12), gap: s(10) }}>
+            {(userData.socialLinks || []).map((item, index) => (
+              <a
+                key={`social-${index}`}
+                href={item.link.startsWith("http") ? item.link : `https://${item.link}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center"
+                style={{ gap: s(10) }}
+              >
+                <span
+                  className="rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ width: s(32), height: s(32), backgroundColor: "#EEF0FB" }}
+                >
+                  <Share2 style={{ width: s(16), height: s(16), color: "#4B5563" }} />
+                </span>
+                <span style={{ color: "#1a1a1a", fontSize: s(14) }} className="capitalize">
+                  {item.title}
+                </span>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+    ) : null;
+
+  const ExtraLinksCard = () =>
+    (userData.extraLinks || []).length > 0 ? (
+      <div
+        className="gp-social-card bg-white"
+        style={{
+          marginTop: s(12),
+          paddingLeft: s(24),
+          paddingRight: s(24),
+          paddingTop: s(16),
+          paddingBottom: s(16),
+        }}
+      >
+        <button
+          onClick={() => setExtraExpanded((v) => !v)}
+          className="w-full flex items-center justify-between"
+          aria-label="Toggle extra links"
+        >
+          <span
+            className="font-semibold"
+            style={{ color: "#1a1a1a", fontSize: s(14) }}
+          >
+            Extra links
+          </span>
+          {extraExpanded ? (
+            <ChevronUp style={{ width: s(18), height: s(18), color: "#4B5563" }} />
+          ) : (
+            <ChevronDown style={{ width: s(18), height: s(18), color: "#4B5563" }} />
+          )}
+        </button>
+        {extraExpanded && (
+          <div className="flex flex-col" style={{ marginTop: s(12), gap: s(10) }}>
+            {(userData.extraLinks || []).map((item, index) => (
+              <a
+                key={`extra-${index}`}
+                href={item.link.startsWith("http") ? item.link : `https://${item.link}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center"
+                style={{ gap: s(10) }}
+              >
+                <span
+                  className="rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ width: s(32), height: s(32), backgroundColor: "#EEF0FB" }}
+                >
+                  <Link2 style={{ width: s(16), height: s(16), color: "#4B5563" }} />
+                </span>
+                <span style={{ color: "#1a1a1a", fontSize: s(14) }}>
+                  {item.title || item.link}
+                </span>
+              </a>
+            ))}
+          </div>
+        )}
       </div>
     ) : null;
 
@@ -592,6 +630,7 @@ END:VCARD`;
         </div>
 
         <SocialCard />
+        <ExtraLinksCard />
       </div>
     </div>
   );

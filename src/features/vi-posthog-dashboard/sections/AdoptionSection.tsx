@@ -56,7 +56,7 @@ export function AdoptionSection() {
         >
           <LineChart
             cur={adopt.trendChart.cur}
-            prev={adopt.trendChart.prev.length ? adopt.trendChart.prev : null}
+            prev={adopt?.trendChart?.prev?.length ? adopt.trendChart.prev : null}
             labels={adopt.trendChart.labels}
             tipLabels={weekTips.trend}
             color={palette.blue}
@@ -66,7 +66,7 @@ export function AdoptionSection() {
             <span>
               <i style={{ background: palette.blue }} /> Weekly active employees
             </span>
-            {adopt.trendChart.prev.length > 0 && (
+            {(adopt?.trendChart?.prev?.length ?? 0) > 0 && (
               <span>
                 <i className="dash" /> Previous period
               </span>

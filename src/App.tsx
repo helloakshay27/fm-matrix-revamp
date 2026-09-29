@@ -2906,6 +2906,9 @@ const DashboardMobile = lazy(() =>
 );
 const SafetyCheckAudit = lazy(() => import("./pages/SafetyCheckAudit"));
 const MsafeCirlce = lazy(() => import("./pages/MsafeCirlce"));
+const MsafeCircleEmailConfig = lazy(
+  () => import("./pages/MsafeCircleEmailConfig")
+);
 const TicketJobSheetPage = lazy(() =>
   import("./pages/TicketJobSheetPage").then((m) => ({
     default: m.TicketJobSheetPage,
@@ -7464,6 +7467,10 @@ function App() {
                             <Route
                               path="/safety/m-safe/circle"
                               element={<MsafeCirlce />}
+                            />
+                            <Route
+                              path="/settings/circle-email-config"
+                              element={<MsafeCircleEmailConfig />}
                             />
                             {/* CRM Routes */}
                             <Route

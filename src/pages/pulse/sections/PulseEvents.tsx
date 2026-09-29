@@ -207,7 +207,7 @@ export function PulseEvents({ filters }: Props) {
 
       <div className="pd-chart-card pd-chart-card--event-revenue" style={{ marginBottom: 20 }}>
         <div className="pd-event-revenue-header">
-          <div className="pd-panel-title">Revenue by event</div>
+          <div className="pd-panel-title">Revenue By Event</div>
           <div className="pd-event-revenue-total">
             ₹{(eventsBreakup?.revenue_by_event.total_revenue ?? 0).toLocaleString("en-IN")}
             <span className="pd-event-revenue-badge">Paid events only</span>
@@ -242,7 +242,7 @@ export function PulseEvents({ filters }: Props) {
       <div className="pd-growth-row">
         {eventsBreakup && eventsBreakup.category_breakdown.length > 0 && (
           <div className="pd-growth-card">
-            <div className="pd-panel-title">Events by Category</div>
+            <div className="pd-panel-title">Events By Category</div>
             <div className="pd-growth-chart-inner pd-hbar-list">
               {eventsBreakup.category_breakdown.map((cat, i) => {
                 const maxCount = Math.max(
@@ -458,11 +458,9 @@ export function PulseEvents({ filters }: Props) {
                       <td className="pd-num">{e.serial}</td>
                       <td style={{ fontWeight: 500 }}>{e.title}</td>
                       <td>
-                        <span className="pd-chip">
-                          {e.category
-                            ? e.category[0].toUpperCase() + e.category.slice(1)
-                            : "—"}
-                        </span>
+                        {e.category
+                          ? e.category[0].toUpperCase() + e.category.slice(1)
+                          : "—"}
                       </td>
                       <td>
                         {new Date(e.from_time).toLocaleDateString("en-GB", {
@@ -474,8 +472,7 @@ export function PulseEvents({ filters }: Props) {
                       <td>{e.site_name}</td>
                       <td>
                         <span
-                          className={`pd-badge pd-badge--flat ${e.is_paid ? "pd-badge-no" : "pd-badge-yes"
-                            }`}
+                          className={`pd-badge ${e.is_paid ? "pd-badge-no" : "pd-badge-yes"}`}
                         >
                           {e.is_paid ? "Paid" : "Complimentary"}
                         </span>

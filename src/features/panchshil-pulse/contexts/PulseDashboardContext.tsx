@@ -9,6 +9,7 @@ import React, {
 import { useIsFetching } from "@tanstack/react-query";
 import { useLocation } from "react-router-dom";
 import { BM_DEFAULTS } from "../data/sampleData";
+import { adaptPulseWorkflowUsage } from "../utils/workflowAdapter";
 import {
   DEFAULT_STATE,
   buildTraffic,
@@ -73,9 +74,13 @@ function deviceParam(dev: Dev): DeviceType[] {
 /* Pulse's platform selector maps onto the Connect-style platform values used to
    build the single `os`/`device_type` API param (see getDeviceInfo): the iOS
    button sends "ios" → `os=ios`, the Mobile/Android button sends "android" →
-   `os=Android`, and "all" sends `device_type=Desktop,Mobile` so every platform's
-   usage is included. No `dev` value is ever sent — only the resulting
-   os/device_type param. */
+   `device_type=mobile` (the API's mobile filter, covering Android AND iOS), and
+   "all" sends nothing at all, so the param is omitted and the API aggregates
+   every platform. The old behaviour returned `device_type=mobile` for "all",
+   which contradicted the label — "All" was filtered down to mobile only. No
+   `dev` value is ever sent over the wire, only the resulting os/device_type
+   param. Note the `dev` enum value behind the button labelled "iOS" is
+   "desktop"; `pulseDev` below is what gives that button its iOS meaning. */
 function pulseDev(dev: Dev): string {
   if (dev === "desktop") return "ios";
   if (dev === "mobile") return "android";
@@ -139,6 +144,7 @@ export interface PulseDashboardContextProps {
   benchmarks: Record<string, number | null>;
   updateBenchmark: (id: string, value: number | null) => void;
   vm: PulseViewModel;
+  queryFilters: QueryFilters;
   refreshAll: () => void;
   isRefreshing: boolean;
 }
@@ -330,6 +336,7 @@ export const PulseDashboardProvider: React.FC<{
       // the site list for the scope label/UI, but never forward it as a filter:
       // an empty array makes buildQuery drop the `site_id` param entirely.
       siteIds: [],
+      allowEmptySites: true,
       devices: deviceParam(dev),
       dev: pulseDev(dev),
       licensedSeats: null,
@@ -458,7 +465,12 @@ export const PulseDashboardProvider: React.FC<{
         rolesQ.data
       ),
       siteHealth: buildModuleHealth(modules),
-      flows: buildFlows(dashState, workflowQ.data),
+      // Pulse's top-level Layer 3 KPIs/funnel come back empty; the adapter
+      // promotes the matching `panchshil_pulse` record from `workflows[]` first.
+      flows: buildFlows(
+        dashState,
+        adaptPulseWorkflowUsage(workflowQ.data, subModule ?? module)
+      ),
       sites,
       scopedSites,
       groups,
@@ -515,6 +527,7 @@ export const PulseDashboardProvider: React.FC<{
       modules,
       subModules,
       module,
+      subModule,
       trafficQ.data,
       trafficQ.isLoading,
       trafficQ.error,
@@ -584,6 +597,7 @@ export const PulseDashboardProvider: React.FC<{
         benchmarks,
         updateBenchmark,
         vm,
+        queryFilters: filters,
         refreshAll,
         isRefreshing,
       }}

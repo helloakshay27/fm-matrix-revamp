@@ -18,7 +18,7 @@ import type {
  * Calendar App Adoption Analytics API client.
  *
  * Base URL : VITE_CALENDAR_ADOPTION_API_URL or VITE_FM_ADOPTION_API_URL (default https://posthog-api.lockated.com)
- * Scope    : app_id=29 & appid=29 (passed in place of project_code / web url)
+ * Scope    : app_id=29 (passed in place of project_code / web url)
  * ------------------------------------------------------------------------- */
 
 export const ANALYTICS_BASE_URL =
@@ -167,3 +167,36 @@ export type {
   WeeklyFilters,
   WorkflowUsageResponse,
 };
+
+export interface RecentActiveUser {
+  user_id: string;
+  display_name: string;
+  path: string | null;
+  last_event: string | null;
+  minutes_ago: number | null;
+  site_name: string | null;
+}
+
+export interface RecentActiveUsersResponse {
+  users: RecentActiveUser[];
+}
+
+export const RECENT_ACTIVE_USERS_EXPORT_ENDPOINT = '/fm/adoption/recent_active_users.xlsx';
+
+export const fetchRecentActiveUsers = (f: CalendarRangeFilters) =>
+  get<RecentActiveUsersResponse>('recent_active_users', {
+    ...rangeParams(f),
+    limit: '10',
+  });
+
+export async function downloadRecentActiveUsers(f: CalendarRangeFilters): Promise<Blob> {
+  const qs = new URLSearchParams({
+    ...rangeParams(f),
+    limit: '10',
+  });
+  const response = await client.get<Blob>(
+    `${RECENT_ACTIVE_USERS_EXPORT_ENDPOINT}?${qs.toString()}`,
+    { responseType: 'blob' },
+  );
+  return response.data;
+}

@@ -28,13 +28,27 @@ import {
   UserCheck,
   ClipboardList,
   GraduationCap,
+  Paperclip,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { resolveAttachmentUrl, type ClassAttachment } from "./classSetupMockData";
 
 interface TrainerOption {
   id: string;
   name: string;
+}
+
+interface AssignedTrainer {
+  id: string;
+  name: string;
+  mobile: string;
+  email: string;
+  specialization: string;
+  trainerType: string;
+  status: string;
+  shiftTimings: string;
 }
 
 interface ClassDetail {
@@ -47,14 +61,23 @@ interface ClassDetail {
   durationMinutes: number;
   location: string;
   status: "Active" | "Inactive";
-  trainerIds: string[];
+  trainers: AssignedTrainer[];
+  attachments: ClassAttachment[];
 }
 
 const titleCase = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "");
+const formatLabel = (s?: string) =>
+  s ? s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "-";
 
 const trainerColumns: ColumnConfig[] = [
   { key: "trainerName", label: "Trainer Name", sortable: true, hideable: true, draggable: true },
-  { key: "actions", label: "Actions", sortable: false, hideable: false, draggable: false },
+  { key: "mobile", label: "Mobile", sortable: true, hideable: true, draggable: true },
+  { key: "email", label: "Email", sortable: true, hideable: true, draggable: true },
+  { key: "specialization", label: "Specialization", sortable: true, hideable: true, draggable: true },
+  { key: "trainerType", label: "Trainer Type", sortable: true, hideable: true, draggable: true },
+  { key: "status", label: "Status", sortable: true, hideable: true, draggable: true },
+  { key: "shiftTimings", label: "Shift Timings", sortable: true, hideable: true, draggable: true },
+  // { key: "actions", label: "Actions", sortable: false, hideable: false, draggable: false },
 ];
 
 const getStatusBadge = (status: string) => (
@@ -81,6 +104,41 @@ export const ClassSetupDetails = () => {
   const [addTrainerOpen, setAddTrainerOpen] = useState(false);
   const [selectedNewTrainer, setSelectedNewTrainer] = useState("");
 
+  const fetchClassDetail = async () => {
+    const baseUrl = localStorage.getItem("baseUrl");
+    const token = localStorage.getItem("token");
+    const res = await axios.get(`https://${baseUrl}/pms/admin/club_classes/${id}.json`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const c = res.data?.club_class ?? res.data;
+    setCls({
+      id: String(c.id),
+      className: c.name ?? "",
+      classType: titleCase(c.session_type),
+      activityType: titleCase(c.activity_type),
+      maxCapacity: c.max_capacity ?? 0,
+      minParticipants: c.min_capacity ?? 0,
+      durationMinutes: c.duration_minutes ?? 0,
+      location: c.location ?? "",
+      status: String(c.status).toLowerCase() === "active" ? "Active" : "Inactive",
+      trainers: (c.trainers ?? []).map((t: any) => ({
+        id: String(t.id),
+        name: t.name ?? t.full_name ?? `Trainer ${t.id}`,
+        mobile: t.mobile ?? "",
+        email: t.email ?? "",
+        specialization: t.specialization ?? "",
+        trainerType: t.trainer_type ?? "",
+        status: t.status ?? "",
+        shiftTimings: t.shift_timings ?? "",
+      })),
+      attachments: (c.attachments ?? []).map((a: any) => ({
+        id: String(a.id),
+        name: a.file_name ?? a.name ?? "Attachment",
+        url: a.url ?? "",
+      })),
+    });
+  };
+
   useEffect(() => {
     if (!id) return;
     const fetchAll = async () => {
@@ -90,24 +148,10 @@ export const ClassSetupDetails = () => {
         const token = localStorage.getItem("token");
         const headers = { Authorization: `Bearer ${token}` };
 
-        const [classRes, trainerRes] = await Promise.all([
-          axios.get(`https://${baseUrl}/pms/admin/club_classes/${id}.json`, { headers }),
+        const [, trainerRes] = await Promise.all([
+          fetchClassDetail(),
           axios.get(`https://${baseUrl}/pms/admin/club_classes/trainer_list.json`, { headers }),
         ]);
-
-        const c = classRes.data?.club_class ?? classRes.data;
-        setCls({
-          id: String(c.id),
-          className: c.name ?? "",
-          classType: titleCase(c.session_type),
-          activityType: titleCase(c.activity_type),
-          maxCapacity: c.max_capacity ?? 0,
-          minParticipants: c.min_capacity ?? 0,
-          durationMinutes: c.duration_minutes ?? 0,
-          location: c.location ?? "",
-          status: String(c.status).toLowerCase() === "active" ? "Active" : "Inactive",
-          trainerIds: (c.trainer_ids ?? []).map(String),
-        });
 
         const trainerData = trainerRes.data;
         const list = Array.isArray(trainerData)
@@ -154,12 +198,14 @@ export const ClassSetupDetails = () => {
             location: cls.location,
             status: cls.status.toLowerCase(),
             bundle_eligible: true,
-            trainer_ids: nextTrainerIds,
+            trainer_ids: nextTrainerIds.map((tid) => Number(tid)),
           },
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setCls((prev) => (prev ? { ...prev, trainerIds: nextTrainerIds } : prev));
+      // Re-fetch so the table picks up the newly-added trainer's full profile
+      // (mobile/email/specialization/...) rather than the id-only directory entry.
+      await fetchClassDetail();
       return true;
     } catch (err) {
       toast.error("Failed to update assigned trainers");
@@ -202,7 +248,7 @@ export const ClassSetupDetails = () => {
       toast.error("Select a trainer to add");
       return;
     }
-    const ok = await persistTrainerIds([...cls.trainerIds, selectedNewTrainer]);
+    const ok = await persistTrainerIds([...cls.trainers.map((t) => t.id), selectedNewTrainer]);
     if (ok) {
       cmEvents.action("Class Setup Trainer Added", { entity_id: cls.id });
       toast.success("Trainer added successfully!");
@@ -212,18 +258,19 @@ export const ClassSetupDetails = () => {
   };
 
   const handleRemoveTrainer = async (trainerId: string) => {
-    const ok = await persistTrainerIds(cls.trainerIds.filter((tid) => tid !== trainerId));
+    const ok = await persistTrainerIds(
+      cls.trainers.filter((t) => t.id !== trainerId).map((t) => t.id)
+    );
     if (ok) {
       cmEvents.action("Class Setup Trainer Removed", { entity_id: cls.id, trainer_id: trainerId });
       toast.success("Trainer removed");
     }
   };
 
-  const assignedTrainers = cls.trainerIds.map((tid) => ({
-    id: tid,
-    name: trainerDirectory.find((t) => t.id === tid)?.name ?? `Trainer ${tid}`,
-  }));
-  const availableTrainers = trainerDirectory.filter((t) => !cls.trainerIds.includes(t.id));
+  const assignedTrainers = cls.trainers;
+  const availableTrainers = trainerDirectory.filter(
+    (t) => !cls.trainers.some((assigned) => assigned.id === t.id)
+  );
 
   return (
     <div className="min-h-screen bg-white p-6">
@@ -245,7 +292,7 @@ export const ClassSetupDetails = () => {
             </h1>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          {/* <div className="flex items-center gap-2 flex-wrap">
             <Button
               size="sm"
               variant="outline"
@@ -263,7 +310,7 @@ export const ClassSetupDetails = () => {
               <Pencil className="h-4 w-4" />
               Edit Class
             </Button>
-          </div>
+          </div> */}
         </div>
 
         <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
@@ -286,6 +333,39 @@ export const ClassSetupDetails = () => {
         </Card>
 
         <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
+          <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center gap-3 space-y-0 p-4">
+            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
+              <Paperclip className="h-4 w-4" />
+            </div>
+            <CardTitle className="text-lg font-semibold text-gray-800">Attachments</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 bg-white">
+            {cls.attachments.length > 0 ? (
+              <div className="space-y-2">
+                {cls.attachments.map((attachment) => (
+                  <a
+                    key={attachment.id}
+                    href={resolveAttachmentUrl(attachment.url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download
+                    className="flex items-center justify-between text-sm p-2 bg-[#F6F4EE] rounded border border-gray-200 hover:border-brand transition-colors"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Paperclip className="w-4 h-4 text-gray-500 shrink-0" />
+                      <span className="truncate text-gray-900">{attachment.name}</span>
+                    </div>
+                    <Download className="w-4 h-4 text-gray-500 shrink-0" />
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-gray-500">No attachments</div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
           <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center justify-between gap-3 space-y-0 p-4">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
@@ -293,24 +373,24 @@ export const ClassSetupDetails = () => {
               </div>
               <CardTitle className="text-lg font-semibold text-gray-800">Assigned Trainers</CardTitle>
             </div>
-            <Button
+            {/* <Button
               size="sm"
               className="fm-button-fix fm-button-brand"
               onClick={() => setAddTrainerOpen(true)}
             >
               <Plus className="w-4 h-4 mr-1" />
               Add Trainer
-            </Button>
+            </Button> */}
           </CardHeader>
           <CardContent className="p-4 bg-white">
             <EnhancedTaskTable
               data={assignedTrainers}
               columns={trainerColumns}
-              storageKey="class-setup-trainers-v1"
+              storageKey="class-setup-trainers-v2"
               hideTableExport={true}
               hideTableSearch={true}
               emptyMessage="No trainers assigned yet"
-              renderRow={(trainer: { id: string; name: string }) => ({
+              renderRow={(trainer: AssignedTrainer) => ({
                 trainerName: (
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-[#F2EEE9] flex items-center justify-center text-xs font-medium text-gray-600">
@@ -319,6 +399,14 @@ export const ClassSetupDetails = () => {
                     <div className="font-medium text-gray-900">{trainer.name}</div>
                   </div>
                 ),
+                mobile: trainer.mobile || "-",
+                email: trainer.email || "-",
+                specialization: trainer.specialization || "-",
+                trainerType: formatLabel(trainer.trainerType),
+                status: getStatusBadge(
+                  trainer.status.toLowerCase() === "active" ? "Active" : "Inactive"
+                ),
+                shiftTimings: trainer.shiftTimings || "-",
                 actions: (
                   <Button
                     size="icon"

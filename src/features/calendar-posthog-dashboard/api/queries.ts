@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   fetchAdoptionEngagement,
   fetchAdoptionTrend,
+  fetchRecentActiveUsers,
   fetchGrowth,
   fetchModules,
   fetchRetention,
@@ -166,6 +167,21 @@ export function useWorkflowUsage(f: CalendarQueryFilters) {
         provider: f.provider,
         module: f.module ?? undefined,
         subModule: f.subModule ?? undefined,
+      }),
+    enabled: f.enabled !== false,
+    ...CACHE,
+  });
+}
+
+export function useRecentActiveUsers(f: CalendarQueryFilters) {
+  return useQuery({
+    queryKey: [...ROOT, 'recent_active_users', ...keyBase(f)],
+    queryFn: () =>
+      fetchRecentActiveUsers({
+        from: f.from,
+        to: f.to,
+        os: f.os,
+        provider: f.provider,
       }),
     enabled: f.enabled !== false,
     ...CACHE,

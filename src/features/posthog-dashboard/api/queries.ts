@@ -5,6 +5,7 @@ import {
   fetchGrowth,
   fetchModules,
   fetchRetention,
+  fetchRecentActiveUsers,
   fetchRoles,
   fetchTrafficSession,
   fetchUsageAndDistribution,
@@ -49,6 +50,8 @@ export interface QueryFilters {
   requestId?: number;
   /** Auth token for FM API calls */
   token: string;
+  /** Some tenants, such as Pulse, intentionally scope by project instead of site_id. */
+  allowEmptySites?: boolean;
 }
 
 function ymd(d: Date): string {
@@ -206,6 +209,15 @@ export function useRoles(f: QueryFilters) {
     queryKey: ['fm-adoption', 'roles', ...keyBase(f)],
     queryFn: () => fetchRoles(range(f)),
     enabled: f.enabled,
+    ...CACHE,
+  });
+}
+
+export function useRecentActiveUsers(f: QueryFilters) {
+  return useQuery({
+    queryKey: ['fm-adoption', 'recent_active_users', ...keyBase(f)],
+    queryFn: () => fetchRecentActiveUsers(range(f)),
+    enabled: f.enabled && (f.allowEmptySites === true || f.siteIds.length > 0),
     ...CACHE,
   });
 }

@@ -6,18 +6,19 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
-import { ArrowLeft, ClipboardList, Upload, Paperclip, X } from "lucide-react";
+import { ArrowLeft, ClipboardList, Upload, Paperclip, Download, X } from "lucide-react";
 import { toast } from "sonner";
-import { CLASS_TYPES, ACTIVITY_TYPES, type ClassSetup } from "./classSetupMockData";
+import {
+  CLASS_TYPES,
+  ACTIVITY_TYPES,
+  resolveAttachmentUrl,
+  type ClassSetup,
+  type ClassAttachment,
+} from "./classSetupMockData";
 
 interface TrainerOption {
   id: string;
   name: string;
-}
-
-export interface SelectedTrainer {
-  name: string;
-  value: number;
 }
 
 // The native <input type="time"> picker's popup (hour/minute/AM-PM wheel columns) is
@@ -163,6 +164,9 @@ export interface ClassSetupFormState {
   startTime: string;
   endTime: string;
   description: string;
+  // Attachments already saved on the class (edit only) - shown as a preselected,
+  // downloadable list alongside the upload dropzone for newly added files.
+  existingAttachments: ClassAttachment[];
 }
 
 export const emptyClassSetupForm: ClassSetupFormState = {
@@ -179,6 +183,7 @@ export const emptyClassSetupForm: ClassSetupFormState = {
   startTime: "",
   endTime: "",
   description: "",
+  existingAttachments: [],
 };
 
 interface ClassSetupFormProps {
@@ -189,7 +194,7 @@ interface ClassSetupFormProps {
   submittingLabel: string;
   onBack: () => void;
   onSubmit: (
-    payload: Omit<ClassSetup, "id" | "trainers"> & { selectedTrainers: SelectedTrainer[] },
+    payload: Omit<ClassSetup, "id" | "trainers">,
     attachedFiles: File[]
   ) => void | Promise<void>;
 }
@@ -275,10 +280,6 @@ export const ClassSetupForm = ({
           location: form.location,
           duration: form.duration,
           trainer: form.trainer,
-          selectedTrainers: form.trainer.map((id) => {
-            const trainer = trainers.find((option) => option.id === id);
-            return { name: trainer?.name ?? "", value: Number(id) };
-          }),
           status: form.status,
           startTime: form.startTime,
           endTime: form.endTime,
@@ -558,6 +559,28 @@ export const ClassSetupForm = ({
         {/* Attachment - large "Upload Image" dropzone matching the Figma (dashed box,
             upload icon, "Choose a file or drag & drop it here", centered Browse button). */}
         <Section title="Attachment" icon={<Paperclip className="w-4 h-4" />}>
+          {form.existingAttachments.length > 0 && (
+            <div className="space-y-2 mb-4">
+              <div className="text-sm font-medium">Existing Attachments</div>
+              {form.existingAttachments.map((attachment) => (
+                <a
+                  key={attachment.id}
+                  href={resolveAttachmentUrl(attachment.url)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download
+                  className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded border hover:border-brand transition-colors"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Paperclip className="w-4 h-4 text-gray-500 shrink-0" />
+                    <span className="truncate">{attachment.name}</span>
+                  </div>
+                  <Download className="w-4 h-4 text-gray-500 shrink-0" />
+                </a>
+              ))}
+            </div>
+          )}
+
           <div className="max-w-sm">
             <div className="text-sm font-medium mb-2">Upload Image</div>
             <input

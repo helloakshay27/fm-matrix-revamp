@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import posthog from "posthog-js";
 import { RecessClubLogo } from "./RecessClubLogo";
 import recessLogo from "../assets/recess-logo";
+import pulseLogo from "/pulse_logo.png";
 import { useIsMobile } from "../hooks/use-mobile";
 import mobileLogo from "../assets/logo-2.png";
 import { isMobileUiSite } from "../utils/mobileUiSites";
@@ -134,14 +135,14 @@ export const Header = () => {
   const isWebSite = hostname.includes("web.gophygital.work") && !isViSite;
 
   const isClubSite =
-    hostname === "club.lockated.com" || hostname.includes("localhost") || hostname === "recess-club.panchshil.com";
+    hostname === "club.lockated.com" || hostname === "recess-club.panchshil.com";
   const org_id = localStorage.getItem("org_id");
 
   const isPulseSite =
     hostname === "pulse.lockated.com" ||
     hostname.includes("pulse-uat.panchshil.com") ||
     hostname.includes("pulse.panchshil.com") ||
-    org_id === "90";
+    org_id === "90" || hostname.includes("localhost")
 
   const isLocalhost =
     hostname.includes("localhost") ||
@@ -591,9 +592,9 @@ export const Header = () => {
               />
             ) : isPulseSite ? (
               <img
-                src="https://www.panchshil.com/assets/images/home/logo.png"
+                src={pulseLogo}
                 alt="Pulse Logo"
-                className={logoClassName}
+                className="h-9 w-auto max-w-full object-contain md:h-11"
               />
             ) : goPhygitalMobile ? (
               <img

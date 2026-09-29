@@ -84,7 +84,7 @@ export function TrafficSection() {
           >
             <LineChart
               cur={traffic.chart.cur}
-              prev={traffic.chart.prev.length ? traffic.chart.prev : null}
+              prev={traffic?.chart?.prev?.length ? traffic.chart.prev : null}
               labels={traffic.chart.labels}
               color={measureColor}
               fill={measureFill}
@@ -94,7 +94,7 @@ export function TrafficSection() {
                 <i style={{ background: measureColor }} />{' '}
                 {MEASURES.find((m) => m.key === state.sessTab)?.label}
               </span>
-              {traffic.chart.prev.length > 0 && (
+              {(traffic?.chart?.prev?.length ?? 0) > 0 && (
                 <span>
                   <i className="dash" /> Previous period
                 </span>

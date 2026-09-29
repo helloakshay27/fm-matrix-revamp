@@ -1,5 +1,8 @@
 import axios from 'axios';
-import { FM_ADOPTION_TENANT_URL } from '@/config/fmAdoptionTenant';
+import {
+  FM_ADOPTION_TENANT_URL,
+  FM_ADOPTION_PROJECT_CODE,
+} from '@/config/fmAdoptionTenant';
 
 
 /* ---------------------------------------------------------------------------
@@ -32,8 +35,12 @@ export const ANALYTICS_TENANT = FM_ADOPTION_TENANT_URL;
 /* Panchshil Pulse project code — passed statically, mirroring the per-brand
    project_code mechanism used by Panchshil Connect. Pulse Usage Analytics
    identifies the Pulse/TEP context using project_code=TEP-01 ONLY; no
-   project_id is ever sent for Pulse (never P-238, never P-223). */
-export const ANALYTICS_PROJECT_CODE = 'TEP-01';
+   project_id is ever sent for Pulse (never P-238, never P-223).
+   Resolved from src/config/fmAdoptionTenant.ts (override:
+   VITE_FM_ADOPTION_PROJECT_CODE) so this read scope and the project_code
+   stamped on Pulse events by src/utils/posthogHelpers.ts can never diverge —
+   a mismatch makes every TEP-01-scoped metric come back empty. */
+export const ANALYTICS_PROJECT_CODE = FM_ADOPTION_PROJECT_CODE;
 
 /* The Panchshil Pulse tenant switches the request construction onto the
    Connect pattern: it sends `project_code` (never the `url`/`base_url`)
@@ -43,14 +50,36 @@ export const ANALYTICS_PROJECT_CODE = 'TEP-01';
 const IS_PULSE = ANALYTICS_TENANT.includes('pulse');
 
 /**
- * Platform filter → the API's single platform param, copied from Panchshil
- * Connect's getDeviceInfo: "ios" sends { os: "ios" }, "android" sends
- * { os: "Android" }, everything else ("all") sends { device_type: "mobile" }.
+ * Platform filter → the API's single platform param. Used only on the Pulse
+ * request path (`IS_PULSE`); every other tenant keeps the shared
+ * `device_type: devices` array behaviour in rangeParams/weeklyParams.
+ *
+ *   "all"      → nothing at all, so the param is omitted and the API aggregates
+ *                every platform. It must not name a platform: the param is a
+ *                narrowing filter, and returning `device_type: 'mobile'` for
+ *                "all" silently discarded every non-mobile event. For
+ *                Pulse/TEP-01 the overwhelming majority of sessions are
+ *                desktop-browser sessions, so "All" was returning only a single
+ *                stray mobile session. An empty object contributes no pairs to
+ *                buildQuery, which skips undefined and empty values.
+ *   "ios"      → { os: 'ios' }, iOS only. The comparison is case-insensitive
+ *                server-side, so the lowercase value is deliberate.
+ *   "android"  → { device_type: 'mobile' }, the API's mobile device filter,
+ *                which covers Android AND iOS. The `os` param is a single exact
+ *                $os_name match, so the platform token could only ever express
+ *                one OS at a time — mapping it to `os: 'Android'` made Pulse's
+ *                "Mobile" selection mean "Android only", which contradicts the
+ *                button's own `title="Mobile only"` and under-reports as soon
+ *                as any iOS traffic exists. Verified against a data set holding
+ *                both platforms: os=Android → 12 users / 16 sessions and
+ *                os=iOS → 4 users / 6 sessions, while device_type=mobile → 15
+ *                users / 22 sessions, matching the Mobile bucket of the API's
+ *                own os_breakdown.
  */
 export const getDeviceInfo = (dev?: string): Record<string, string> => {
   if (dev === 'ios') return { os: 'ios' };
-  if (dev === 'android') return { os: 'Android' };
-  return { device_type: 'mobile' };
+  if (dev === 'android') return { device_type: 'mobile' };
+  return {};
 };
 
 const analyticsClient = axios.create({
@@ -105,6 +134,19 @@ export interface RangeFilters {
   dev?: string;
 }
 
+export interface RecentActiveUser {
+  user_id: string;
+  display_name: string;
+  path: string | null;
+  last_event: string | null;
+  minutes_ago: number | null;
+  site_name: string | null;
+}
+
+export interface RecentActiveUsersResponse {
+  users: RecentActiveUser[];
+}
+
 /** Filters for the three look-back endpoints (adoption_trend / growth / retention). */
 export interface WeeklyFilters {
   to: string; // YYYY-MM-DD
@@ -151,6 +193,23 @@ const get = async <T>(endpoint: string, pairs: Array<[string, string | string[] 
   const { data } = await analyticsClient.get<T>(url);
   return data;
 };
+
+export const RECENT_ACTIVE_USERS_EXPORT_ENDPOINT = '/fm/adoption/recent_active_users.xlsx';
+
+export const fetchRecentActiveUsers = (f: RangeFilters) =>
+  get<RecentActiveUsersResponse>('recent_active_users', [
+    ...rangeParams(f),
+    ['limit', 10],
+  ]);
+
+export async function downloadRecentActiveUsers(f: RangeFilters): Promise<Blob> {
+  const qs = buildQuery([...rangeParams(f), ['limit', 10]]);
+  const response = await analyticsClient.get<Blob>(
+    `${RECENT_ACTIVE_USERS_EXPORT_ENDPOINT}${qs ? `?${qs}` : ''}`,
+    { responseType: 'blob' },
+  );
+  return response.data;
+}
 
 /* Shared param slices ---------------------------------------------------- */
 

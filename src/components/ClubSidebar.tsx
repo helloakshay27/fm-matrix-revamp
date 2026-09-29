@@ -906,11 +906,11 @@ const modulesByPackage = {
     // Moved here from modulesByPackage["Club Management"] - Class/Trainer/Package
     // Setup now live under Settings, next to Amenities Setup.
     {
-      name: "Setup",
+      name: "Class Setup",
       icon: Wrench,
       subItems: [
         {
-          name: "Class setup",
+          name: "Class ",
           href: "/club-management/class-setup",
           color: "text-[#1a1a1a]",
           additionalRoutes: [
@@ -930,7 +930,7 @@ const modulesByPackage = {
           color: "text-[#1a1a1a]",
         },
         {
-          name: "Trainer setup",
+          name: "Trainer",
           href: "/club-management/trainer-setup",
           color: "text-[#1a1a1a]",
           additionalRoutes: [
@@ -940,7 +940,7 @@ const modulesByPackage = {
           ],
         },
         {
-          name: "Package setup",
+          name: "Package",
           href: "/club-management/package-setup",
           color: "text-[#1a1a1a]",
           additionalRoutes: [

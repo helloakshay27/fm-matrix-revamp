@@ -274,9 +274,16 @@ export function PulseCommunity({ filters }: Props) {
             </div>
             <div className="pd-growth-chart-inner">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={breakdownData} margin={{ top: 8 }} barSize={40}>
+                <BarChart data={breakdownData} margin={{ top: 8, bottom: 8 }} barSize={40}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fontSize: 10 }}
+                    interval={0}
+                    angle={-30}
+                    textAnchor="end"
+                    height={80}
+                  />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip />
                   <Legend
