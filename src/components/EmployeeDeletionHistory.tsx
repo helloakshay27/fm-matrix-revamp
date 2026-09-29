@@ -201,7 +201,7 @@ const EmployeeDeletionHistory: React.FC = () => {
   };
 
   const renderActions = (item: TableRow) =>
-    shouldShow('M Safe', 'show') ? (
+    shouldShow('Employee Deletion History', 'show') ? (
       <Button
         type="button"
         variant="ghost"

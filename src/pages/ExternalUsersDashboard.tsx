@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { useNavigate,useLocation} from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Users, UserCheck, Clock, Shield, Eye, Trash2, Plus, UploadIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,7 +32,7 @@ interface ExternalUser {
   designation: string;
   employee_id: string;
   created_by_id: number;
-  access_level: number; 
+  access_level: number;
   user_type: string;
   lock_user_permission_status: string;
   face_added: boolean | string;
@@ -226,20 +226,20 @@ export const ExternalUsersDashboard = () => {
   const getStatusBadge = (status: string) => {
     if (!status) return pillBadge('#f3f4f6', '#6b7280', 'Unknown');
     switch (status.toLowerCase()) {
-      case 'approved':  return pillBadge('#dcfce7', '#15803d', 'Approved');
-      case 'pending':   return pillBadge('#fff3e0', '#da7756', 'Pending');
-      case 'rejected':  return pillBadge('#fee2e2', '#dc2626', 'Deactivated');
-      default:          return pillBadge('#f3f4f6', '#6b7280', status);
+      case 'approved': return pillBadge('#dcfce7', '#15803d', 'Approved');
+      case 'pending': return pillBadge('#fff3e0', '#da7756', 'Pending');
+      case 'rejected': return pillBadge('#fee2e2', '#dc2626', 'Deactivated');
+      default: return pillBadge('#f3f4f6', '#6b7280', status);
     }
   };
 
   const getTypeBadge = (type: string) => {
     if (!type) return pillBadge('#f3f4f6', '#6b7280', 'Unknown');
     switch (type.toLowerCase()) {
-      case 'external':   return pillBadge('#fff3e0', '#da7756', 'External');
+      case 'external': return pillBadge('#fff3e0', '#da7756', 'External');
       case 'contractor': return pillBadge('#f3e8ff', '#7e22ce', 'Contractor');
-      case 'vendor':     return pillBadge('#dbeafe', '#1d4ed8', 'Vendor');
-      default:           return pillBadge('#f3f4f6', '#6b7280', type);
+      case 'vendor': return pillBadge('#dbeafe', '#1d4ed8', 'Vendor');
+      default: return pillBadge('#f3f4f6', '#6b7280', type);
     }
   };
 
@@ -362,7 +362,7 @@ export const ExternalUsersDashboard = () => {
 
   const renderActions = (user: ExternalUser) => (
     <div className="flex items-center justify-center gap-2">
-      {shouldShow("Non FTE Users", "show") && (
+      {shouldShow("External User (NON FTE)", "show") && (
         <Button
           variant="ghost"
           size="sm"
@@ -572,7 +572,7 @@ export const ExternalUsersDashboard = () => {
 
   const handleCancelDelete = () => setConfirmDeleteUser(null);
 
- useEffect(() => {
+  useEffect(() => {
     navigate(`${location.pathname}?page=${page}`, { replace: true });
   }, [page]);
 
@@ -657,7 +657,7 @@ export const ExternalUsersDashboard = () => {
             data={externalUsers || []}
             leftActions={
               <div className="flex gap-2">
-                {canSeeActionButton && shouldShow("Non FTE Users", "create") && (
+                {canSeeActionButton && shouldShow("External User (NON FTE)", "create") && (
                   <Button
                     onClick={handleActionClick}
                     className="fm-button-fix fm-button-brand px-4 py-2"
@@ -667,7 +667,7 @@ export const ExternalUsersDashboard = () => {
                     Action
                   </Button>
                 )}
-                {shouldShow("Non FTE Users", "destroy") && (
+                {shouldShow("External User (NON FTE)", "destroy") && (
                   <Button
                     onClick={() => navigate('/safety/m-safe/external-users/multiple-delete')}
                     className="fm-button-fix fm-button-brand px-4 py-2"
