@@ -9,6 +9,7 @@ import React, {
 import { useIsFetching } from "@tanstack/react-query";
 import { useLocation } from "react-router-dom";
 import { BM_DEFAULTS } from "../data/sampleData";
+import { adaptPulseWorkflowUsage } from "../utils/workflowAdapter";
 import {
   DEFAULT_STATE,
   buildTraffic,
@@ -461,7 +462,12 @@ export const PulseDashboardProvider: React.FC<{
         rolesQ.data
       ),
       siteHealth: buildModuleHealth(modules),
-      flows: buildFlows(dashState, workflowQ.data),
+      // Pulse's top-level Layer 3 KPIs/funnel come back empty; the adapter
+      // promotes the matching `panchshil_pulse` record from `workflows[]` first.
+      flows: buildFlows(
+        dashState,
+        adaptPulseWorkflowUsage(workflowQ.data, subModule ?? module)
+      ),
       sites,
       scopedSites,
       groups,
@@ -518,6 +524,7 @@ export const PulseDashboardProvider: React.FC<{
       modules,
       subModules,
       module,
+      subModule,
       trafficQ.data,
       trafficQ.isLoading,
       trafficQ.error,

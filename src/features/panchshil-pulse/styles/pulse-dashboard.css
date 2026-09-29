@@ -523,7 +523,12 @@ table.crashtbl tbody tr:hover{background:var(--surface-2)}
 .seeall:hover{background:var(--surface-2)}
 
 /* ============ (i) EXPLAIN POPOVER ============ */
-.info-wrap{position:absolute;top:14px;right:14px;z-index:6}
+/* No z-index here on purpose: `position:absolute` + `z-index` would make .info-wrap a
+   stacking context and trap .info-pop's z-index:60 inside it, where it could only compete
+   with its own button - every other card's .info-wrap also sat at z-index:6, so a later
+   card in the DOM (i.e. the one below) won the tie and painted its (i) over the open tooltip.
+   With z-index:auto the tooltip's 60 is compared in the shared ancestor context and wins. */
+.info-wrap{position:absolute;top:14px;right:14px}
 .info-btn{
   width:18px;height:18px;border-radius:50%;
   border:1px solid var(--border-2);background:var(--surface);color:var(--faint);

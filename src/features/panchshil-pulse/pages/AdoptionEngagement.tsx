@@ -1,14 +1,17 @@
 import React, { useMemo } from "react";
 import { usePulseDashboard } from "../contexts/PulseDashboardContext";
 import { KpiTile } from "../components/common/KpiTile";
-import { LineChart } from "../components/charts/LineChart";
-import { StackedBarChart } from "../components/charts/StackedBarChart";
+// The trend chart is Vi My Workspace's, reused as-is (same hover readout) rather than
+// reimplemented here. `toWeekLabels` is its heading formatter, so the hover card reads the same.
+import { LineChart } from "@/features/vi-posthog-dashboard/components/charts/LineChart";
+import { StackedBarChart } from "@/features/vi-posthog-dashboard/components/charts/StackedBarChart";
+import { toWeekLabels } from "@/features/vi-posthog-dashboard/data/usageChart";
 import { SectionState } from "../components/common/SectionState";
 import { tileToKpi } from "../utils/tileAdapter";
 import { getChartColors } from "../utils/chartColors";
 
 export const AdoptionEngagement: React.FC = () => {
-  const { theme, vm } = usePulseDashboard();
+  const { theme, vm, prev: showPrev } = usePulseDashboard();
   const colors = useMemo(() => getChartColors(), [theme]);
 
   const adopt = vm.adopt;
@@ -19,9 +22,10 @@ export const AdoptionEngagement: React.FC = () => {
   const trendPrev = adopt.trendChart.prev.length ? adopt.trendChart.prev : undefined;
 
   // x-axis ticks arrive as "M/D" week-start dates (e.g. 7/13). Display them as
-  // positional week labels (W1, W3, ...) for the 8-week window. The underlying
-  // dates/data and the number of visible tick positions are unchanged.
-  const trendLabels = adopt.trendChart.labels.map((_, i) => `W${i + 1}`);
+  // positional week labels (W1, W3, ...) for the 8-week window; the dates come
+  // back in `tips` for the hover card. The underlying dates/data and the number
+  // of visible tick positions are unchanged.
+  const trendLabels = toWeekLabels(adopt.trendChart.labels);
 
   const growthSeries = useMemo(
     () => [
@@ -35,7 +39,10 @@ export const AdoptionEngagement: React.FC = () => {
     () => ({ label: "Dormant", data: adopt.growthWeeks.map(w => w.dorm), color: colors.red }),
     [adopt.growthWeeks, colors]
   );
-  const growthLabels = adopt.growthWeeks.map((_, i) => `W${i + 1}`);
+  // The axis numbers the weeks (W1..W6) and the week each number stands for comes back in
+  // `tips` for the hover card — the same split Vi My Workspace makes, and the same axis
+  // labels this chart already showed.
+  const growthLabels = toWeekLabels(adopt.growthWeeks.map(w => w.label));
 
   const heatStyle = (val: number) => {
     const t = val / 100;
@@ -64,16 +71,16 @@ export const AdoptionEngagement: React.FC = () => {
         {/* KPI Tiles */}
         <div className="tiles" style={{ gridTemplateColumns: "repeat(3, 1fr)", marginTop: "16px" }} id="tilesAdoption">
           <KpiTile
-            {...tileToKpi(adopt.tiles[1], { label: "Stickiness", id: "stickiness" })}
+            {...tileToKpi(adopt.tiles[0], { label: "Stickiness", id: "stickiness" })}
           />
           <KpiTile
-            {...tileToKpi(adopt.tiles[2], { label: "Adoption Trend", noTarget: true })}
+            {...tileToKpi(adopt.tiles[1], { label: "Adoption Trend", noTarget: true })}
           />
           <KpiTile
-            {...tileToKpi(adopt.tiles[3], { label: "14-Day Activation", id: "activation14" })}
+            {...tileToKpi(adopt.tiles[2], { label: "14-Day Activation", id: "activation14" })}
           />
           <KpiTile
-            {...tileToKpi(adopt.tiles[4], { label: "Module Breadth", id: "moduleBreadth2", noTarget: true })}
+            {...tileToKpi(adopt.tiles[3], { label: "Module Breadth", id: "moduleBreadth2", noTarget: true })}
           />
         </div>
 
@@ -101,7 +108,12 @@ export const AdoptionEngagement: React.FC = () => {
             <LineChart
               cur={adopt.trendChart.cur}
               prev={trendPrev}
-              opts={{ labels: trendLabels, color: colors.blue, fill: colors.fill, metric: "Weekly active users" }}
+              labels={trendLabels.axis}
+              tipLabels={trendLabels.tips}
+              color={colors.blue}
+              fill={colors.fill}
+              palette={colors}
+              showPrev={showPrev}
             />
             <div className="legend">
               <span>
@@ -139,9 +151,11 @@ export const AdoptionEngagement: React.FC = () => {
             </div>
             <div className="card-body" id="body-growthAcct">
               <StackedBarChart
-                labels={growthLabels}
+                labels={growthLabels.axis}
+                tipLabels={growthLabels.tips}
                 series={growthSeries}
                 negSeries={growthNeg}
+                palette={colors}
               />
               <div className="legend">
                 <span><i style={{ background: colors.blue }}></i> New</span>

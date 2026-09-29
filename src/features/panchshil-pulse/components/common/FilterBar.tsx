@@ -7,7 +7,6 @@ export const FilterBar: React.FC = () => {
   const {
     dev, setDev,
     prev, setPrev,
-    project, setProject,
     range, setRange,
     rangeLabel, setRangeLabel,
     rangeFrom, setRangeFrom,
@@ -145,20 +144,6 @@ export const FilterBar: React.FC = () => {
         </div>
       </div>
 
-      {/* Project selector — populated from the tenant site list */}
-      <label className="ctrl">
-        <span className="ic">&#127959;</span>
-        <select value={project} onChange={(e) => setProject(e.target.value)} id="projectSel">
-          <option value="all">All Sites</option>
-          {vm.sites.map(s => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-        <span className="chev">&#9662;</span>
-      </label>
-
       {/* Platform/Device toggle — devices are the API's Desktop / Mobile values */}
       <div className="devtoggle" id="devToggle" title="Platform">
         <button
@@ -179,7 +164,7 @@ export const FilterBar: React.FC = () => {
           title="Mobile only"
           onClick={() => setDev("mobile")}
         >
-          Mobile
+          Android
         </button>
       </div>
 
