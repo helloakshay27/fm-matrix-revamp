@@ -7,16 +7,23 @@ import { PulseAmenities } from "./sections/PulseAmenities";
 import { PulseEvents } from "./sections/PulseEvents";
 import { PulseNotices } from "./sections/PulseNotices";
 import { PulseCommunity } from "./sections/PulseCommunity";
+import { PulseCarpool } from "./sections/PulseCarpool";
+import { PulseAiAlerts } from "./PulseAiAlerts";
+import { PulseGreeting } from "./PulseGreeting";
 import "@/styles/pulse-dashboard.css";
-import { DashboardHeader } from "@/components/DashboardHeader";
+import "@/styles/pulse-shell.css";
+import { PulseDashboardHeader } from "./PulseDashboardHeader";
 import { UnifiedDateRangeFilter } from "@/components/dashboard/UnifiedDateRangeFilter";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SlidersHorizontal, MapPin, X } from "lucide-react";
+import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
 type DateRange = {
   from?: Date;
   to?: Date;
 };
 
-type Section = "customers" | "users" | "amenities" | "events" | "notices" | "community";
+type Section = "customers" | "users" | "amenities" | "events" | "notices" | "community" | "carpool";
 
 const SECTIONS: { key: Section; label: string }[] = [
   { key: "customers", label: "Customers" },
@@ -25,7 +32,18 @@ const SECTIONS: { key: Section; label: string }[] = [
   { key: "events", label: "Events" },
   { key: "notices", label: "Notices" },
   { key: "community", label: "Community" },
+  { key: "carpool", label: "Carpool" },
 ];
+
+const SECTION_META: Record<Section, { title: string; subtitle: string }> = {
+  customers: { title: "Customers Dashboard", subtitle: "Entities onboarded across Panchshil estates" },
+  users: { title: "Users Dashboard", subtitle: "Users active across Panchshil estates" },
+  amenities: { title: "Amenities Dashboard", subtitle: "Amenity usage across Panchshil estates" },
+  events: { title: "Events Dashboard", subtitle: "Events hosted across Panchshil estates" },
+  notices: { title: "Notices Dashboard", subtitle: "Notices published across Panchshil estates" },
+  community: { title: "Community Dashboard", subtitle: "Community engagement across Panchshil estates" },
+  carpool: { title: "Carpool Dashboard", subtitle: "Carpool rides across Panchshil estates" },
+};
 
 function getDefaultDates() {
   const now = new Date();
@@ -35,8 +53,22 @@ function getDefaultDates() {
 }
 
 export function PulseDashboardPage() {
-  const { selectedSite, sites } = useAppSelector((state) => state.site);
+  const pulseEvents = usePulseEvents();
+  const { sites } = useAppSelector((state) => state.site);
   const [activeSection, setActiveSection] = useState<Section>("customers");
+
+  // Dropdown-driven site selection for this dashboard ("all" or a specific site id)
+  const [siteSelection, setSiteSelection] = useState<string>(() => {
+    const storedSiteId = localStorage.getItem("selectedSiteId");
+    return storedSiteId || "all";
+  });
+
+  const allSiteIds = (() => {
+    const stored = localStorage.getItem("allSiteIds");
+    if (stored) return stored.split(",").filter(Boolean).map(Number);
+    return sites.map((s) => s.id);
+  })();
+
   const [filters, setFilters] = useState<PulseFilters>(() => {
     const storedSiteId = localStorage.getItem("selectedSiteId");
     return {
@@ -55,104 +87,134 @@ export function PulseDashboardPage() {
   const handleDateRangeChange = (range: DateRange | undefined) => {
     setDateRange(range);
     if (range?.from && range?.to) {
+      const fromDate = range.from!.toISOString().split("T")[0];
+      const toDate = range.to!.toISOString().split("T")[0];
       setFilters((f) => ({
         ...f,
-        fromDate: range.from!.toISOString().split("T")[0],
-        toDate: range.to!.toISOString().split("T")[0],
+        fromDate,
+        toDate,
       }));
+      pulseEvents.onDashboardDateFilterChanged(fromDate, toDate);
     }
   };
 
-  // Sync siteIds from localStorage whenever the selected site changes
+  // Recompute siteIds whenever the dashboard's own site dropdown changes:
+  // a specific site sends just that id, "all" sends every allowed site id.
   useEffect(() => {
-    const storedSiteId = localStorage.getItem("selectedSiteId");
-    const siteIds = storedSiteId ? [Number(storedSiteId)] : [];
+    const siteIds = siteSelection === "all" ? allSiteIds : [Number(siteSelection)];
     setFilters((f) => ({ ...f, siteIds }));
-  }, [selectedSite]);
+  }, [siteSelection, sites]);
 
-  const allSiteIds = (() => {
-    const stored = localStorage.getItem("allSiteIds");
-    if (stored) return stored.split(",").filter(Boolean).map(Number);
-    return sites.map((s) => s.id);
-  })();
+  useEffect(() => {
+    pulseEvents.onDashboardViewed();
+  }, [pulseEvents]);
+
+  const handleSiteChange = (value: string) => {
+    setSiteSelection(value);
+    const siteName = value === "all" ? "All Sites" : sites.find((s) => String(s.id) === value)?.name;
+    pulseEvents.onDashboardSiteFilterChanged(
+      value === "all" ? "all" : Number(value),
+      siteName
+    );
+  };
+
+  const handleSectionChange = (section: Section) => {
+    if (section !== activeSection) {
+      pulseEvents.onDashboardSectionViewed(section);
+    }
+    setActiveSection(section);
+  };
+
+  const handleResetFilters = () => {
+    setSiteSelection("all");
+    const { fromDate, toDate } = getDefaultDates();
+    setDateRange({ from: new Date(fromDate), to: new Date(toDate) });
+    setFilters((f) => ({ ...f, fromDate, toDate }));
+    pulseEvents.onDashboardFiltersReset();
+  };
+
+  const todayLabel = new Date().toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
+  const defaultDates = getDefaultDates();
+  const hasActiveFilters =
+    siteSelection !== "all" ||
+    filters.fromDate !== defaultDates.fromDate ||
+    filters.toDate !== defaultDates.toDate;
 
   return (
     <>
       <div className="bg-white border-b border-analytics-border">
-        <DashboardHeader />
+        <PulseDashboardHeader />
       </div>
 
-      <div className="bg-white ">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="bg-white border-b border-analytics-border">
-              <div className="px-6 py-4">
-                <h1 className="text-lg font-bold text-gray-900">
-                  Pulse Analytics
-                </h1>
-              </div>
-            </div>
-            <div className="flex items-center justify-end">
+      <div className="pulse-shell">
+        {/* Dashboard header */}
+        <div className="ps-dash-header">
+          <div className="ps-dash-titlewrap">
+            <div className="ps-dash-title">{SECTION_META[activeSection].title}</div>
+            <div className="ps-dash-subtitle">{SECTION_META[activeSection].subtitle}</div>
+          </div>
 
-              <div className="flex items-center gap-4">
-                <UnifiedDateRangeFilter
-                  dateRange={dateRange}
-                  onDateRangeChange={handleDateRangeChange}
-                />
-              </div>
+          <div className="ps-dash-actions">
+            <Select value={siteSelection} onValueChange={setSiteSelection}>
+              <SelectTrigger className="ps-fsel-trigger">
+                <MapPin size={13} className="ps-fsel-icon" />
+                <SelectValue placeholder="Select Site" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Sites</SelectItem>
+                {sites.map((site) => (
+                  <SelectItem key={site.id} value={String(site.id)}>
+                    {site.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <div className="ps-dash-date-wrap">
+              <UnifiedDateRangeFilter
+                dateRange={dateRange}
+                onDateRangeChange={handleDateRangeChange}
+              />
             </div>
+
+            {hasActiveFilters && (
+              <button type="button" className="ps-dash-reset" onClick={handleResetFilters}>
+                Reset
+              </button>
+            )}
           </div>
         </div>
-      </div>
-      <div className="pulse-db p-6">
-        {/* <div className="flex items-center justify-between mb-5">
-          <h1 className="text-2xl font-bold text-gray-900">Pulse Analytics</h1>
-        </div>
 
-        <div className="pd-filter-bar">
-          <div className="pd-filter-field">
-            <span className="pd-filter-label">From</span>
-            <input
-              type="date"
-              className="pd-filter-input"
-              value={filters.fromDate}
-              onChange={(e) => setFilters((f) => ({ ...f, fromDate: e.target.value }))}
-            />
-          </div>
-          <div className="pd-filter-field">
-            <span className="pd-filter-label">To</span>
-            <input
-              type="date"
-              className="pd-filter-input"
-              value={filters.toDate}
-              onChange={(e) => setFilters((f) => ({ ...f, toDate: e.target.value }))}
-            />
-          </div>
-        </div> */}
+        {/* <PulseAiAlerts filters={filters} /> */}
 
         {/* Section tabs */}
-        <div className="flex gap-1 mb-6 border-b border-gray-200 overflow-x-auto pb-px">
+        <div className="ps-tabbar">
           {SECTIONS.map((s) => (
             <button
               key={s.key}
               type="button"
-              onClick={() => setActiveSection(s.key)}
-              className={`px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px ${activeSection === s.key
-                ? "border-[#DA7756] text-[#DA7756]"
-                : "border-transparent text-gray-500 hover:text-gray-700"
-                }`}
+              onClick={() => handleSectionChange(s.key)}
+              className={`ps-tabbtn${activeSection === s.key ? " active" : ""}`}
             >
               {s.label}
             </button>
           ))}
         </div>
 
-        {activeSection === "customers" && <PulseCustomers filters={filters} />}
-        {activeSection === "users" && <PulseUsers filters={filters} />}
-        {activeSection === "amenities" && <PulseAmenities filters={filters} />}
-        {activeSection === "events" && <PulseEvents filters={filters} />}
-        {activeSection === "notices" && <PulseNotices filters={filters} />}
-        {activeSection === "community" && <PulseCommunity filters={{ ...filters, siteIds: allSiteIds }} />}
+        <div className="pulse-db p-6">
+          {activeSection === "customers" && <PulseCustomers filters={filters} />}
+          {activeSection === "users" && <PulseUsers filters={filters} />}
+          {activeSection === "amenities" && <PulseAmenities filters={filters} />}
+          {activeSection === "events" && <PulseEvents filters={filters} />}
+          {activeSection === "notices" && <PulseNotices filters={filters} />}
+          {activeSection === "community" && <PulseCommunity filters={filters} />}
+          {activeSection === "carpool" && <PulseCarpool filters={filters} />}
+        </div>
       </div>
     </>
   );
