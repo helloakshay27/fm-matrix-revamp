@@ -273,7 +273,7 @@ export const KRCCFormListDashboard = () => {
       case 'action':
         return (
           <div className="flex justify-center gap-1">
-            {shouldShow("KRCC Form", "show") && (
+            {shouldShow("Krcc List", "show") && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -370,15 +370,15 @@ export const KRCCFormListDashboard = () => {
     const token = localStorage.getItem('token');
     if (!baseUrl || !token) {
       toast.error('Missing base URL or token');
-        msafeEvents.onMsafeDownloaded({
-          screen: 'msafe_krcc',
-          source: 'row_pdf',
-          label: 'KRCC Form PDF',
-          file_format: 'pdf',
-          record_id: form.id,
-          succeeded: false,
-          failure_reason: 'missing_credentials',
-        });
+      msafeEvents.onMsafeDownloaded({
+        screen: 'msafe_krcc',
+        source: 'row_pdf',
+        label: 'KRCC Form PDF',
+        file_format: 'pdf',
+        record_id: form.id,
+        succeeded: false,
+        failure_reason: 'missing_credentials',
+      });
       return;
     }
     setDownloading(prev => ({ ...prev, [form.id]: true }));
@@ -483,7 +483,7 @@ export const KRCCFormListDashboard = () => {
       const status = detailJson?.status || '—';
       const createdAt = detailJson?.created_at || null;
       const updatedAt = detailJson?.updated_at || null;
-  // Removed formType display from PDF per latest request (previously: detailJson?.form_details?.form_type)
+      // Removed formType display from PDF per latest request (previously: detailJson?.form_details?.form_type)
       const formDetails = detailJson?.form_details || {};
       const categories = detailJson?.categories || {};
       const topLevelAtts: Array<{ id?: number; url?: string; doctype?: string | null }> = detailJson?.krcc_attachments || [];
@@ -623,7 +623,7 @@ export const KRCCFormListDashboard = () => {
       };
       // If keys array omitted, automatically include all primitive (non-object) keys except attachments
       // Added optional labelOverrides to customize specific field labels per category (e.g., electrical fit_to_work)
-      const buildCatKV = (cat: any, keys?: string[], labelOverrides?: Record<string,string>) => {
+      const buildCatKV = (cat: any, keys?: string[], labelOverrides?: Record<string, string>) => {
         if (!cat) return '';
         let useKeys = keys && keys.length ? keys : Object.keys(cat).filter(k => k !== 'attachments');
         // Sort according to predefined order then fallback alpha
@@ -1037,15 +1037,15 @@ export const KRCCFormListDashboard = () => {
     } catch (e: any) {
       console.error('[KRCC][PDF] Generation error', e);
       toast.error(e?.message || 'Failed to generate PDF');
-        msafeEvents.onMsafeDownloaded({
-          screen: 'msafe_krcc',
-          source: 'row_pdf',
-          label: 'KRCC Form PDF',
-          file_format: 'pdf',
-          record_id: form.id,
-          succeeded: false,
-          failure_reason: e?.message ?? 'pdf_generation_failed',
-        });
+      msafeEvents.onMsafeDownloaded({
+        screen: 'msafe_krcc',
+        source: 'row_pdf',
+        label: 'KRCC Form PDF',
+        file_format: 'pdf',
+        record_id: form.id,
+        succeeded: false,
+        failure_reason: e?.message ?? 'pdf_generation_failed',
+      });
     } finally {
       setDownloading(prev => ({ ...prev, [form.id]: false }));
     }

@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { usePostHog } from "@posthog/react";
 import { getPostHogSuperProperties, normalizeRoute } from "@/utils/posthogContext";
 import {
-  resolveHelpdeskProjectContext,
+  resolveProjectContext,
   isCMRoutePath,
   isCMSharedPath,
   markCMOrigin,
@@ -21,9 +21,10 @@ export function PostHogPageView() {
     // /club-management/* route marks the origin so the shared CM/FM/Pulse screens
     // (tickets, amenities booking, notices, events, community, vendor, booking-club)
     // reached afterwards keep reporting CM-01/P-238 for CM-originated flows. Direct
-    // FM/Pulse visits to the same shared screens stay FM-01/P-223. sessionStorage
-    // survives SPA navigation and reloads within the same tab. Navigating between
-    // shared screens keeps whatever marker is currently set.
+    // FM visits to the shared screens stay FM-01/P-223, and direct Pulse visits to
+    // /pulse/* report TEP-01 (see resolveProjectContext, applied to the capture
+    // below). sessionStorage survives SPA navigation and reloads within the same tab.
+    // Navigating between shared screens keeps whatever marker is currently set.
     if (isCMRoutePath(location.pathname)) {
       markCMOrigin();
     } else if (!isCMSharedPath(location.pathname)) {
@@ -51,9 +52,14 @@ export function PostHogPageView() {
     const _userId = localStorage.getItem("userId") ?? localStorage.getItem("user_id");
     const userIdNum = _userId && !isNaN(Number(_userId)) ? Number(_userId) : undefined;
 
+    // resolveProjectContext() (not the CM/FM-only helpdesk resolver) so the
+    // project_code stamped here matches the app the pageview belongs to:
+    // /club-management/* → CM-01, /pulse/* → TEP-01, everything else → FM-01.
+    // This is the only place a $pageview gets its project code, so it has to
+    // agree with the project_code the Pulse dashboard queries with.
     posthog.capture("$pageview", {
       $current_url: window.location.href,
-      ...resolveHelpdeskProjectContext(),
+      ...resolveProjectContext(),
       site_id: siteIdNum,
       site_name: localStorage.getItem("selectedSiteName") ?? undefined,
       company_id: companyIdNum,

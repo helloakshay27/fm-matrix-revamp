@@ -703,31 +703,27 @@ export const ClubGroupMembershipDashboard = () => {
       const status = item.status?.toLowerCase();
 
       const statusMap = {
-        pending: {
-          label: "Pending",
-          className: "bg-yellow-100 text-yellow-800",
-        },
         approved: {
           label: "Approved",
-          className: "bg-green-100 text-green-800",
+          className: "bg-green-100 text-green-800 border-green-200",
         },
-        rejected: {
-          label: "Rejected",
-          className: "bg-red-100 text-red-800",
-        },
-        draft: {
-          label: "Draft",
-          className: "bg-gray-100 text-gray-800",
+        pending: {
+          label: "Pending",
+          className: "bg-yellow-100 text-yellow-800 border-yellow-200",
         },
         cancelled: {
           label: "Cancelled",
-          className: "bg-slate-100 text-slate-800",
+          className: "bg-gray-100 text-gray-800 border-gray-200",
+        },
+        expired: {
+          label: "Expired",
+          className: "bg-red-100 text-red-800 border-red-200",
         },
       };
 
       const currentStatus = statusMap[status] || {
-        label: "Unknown",
-        className: "bg-gray-500 text-white",
+        label: status ? status.charAt(0).toUpperCase() + status.slice(1) : "-",
+        className: "bg-gray-100 text-gray-800 border-gray-200",
       };
 
       return (

@@ -458,11 +458,9 @@ export function PulseEvents({ filters }: Props) {
                       <td className="pd-num">{e.serial}</td>
                       <td style={{ fontWeight: 500 }}>{e.title}</td>
                       <td>
-                        <span className="pd-chip">
-                          {e.category
-                            ? e.category[0].toUpperCase() + e.category.slice(1)
-                            : "—"}
-                        </span>
+                        {e.category
+                          ? e.category[0].toUpperCase() + e.category.slice(1)
+                          : "—"}
                       </td>
                       <td>
                         {new Date(e.from_time).toLocaleDateString("en-GB", {
@@ -474,8 +472,7 @@ export function PulseEvents({ filters }: Props) {
                       <td>{e.site_name}</td>
                       <td>
                         <span
-                          className={`pd-badge pd-badge--flat ${e.is_paid ? "pd-badge-no" : "pd-badge-yes"
-                            }`}
+                          className={`pd-badge ${e.is_paid ? "pd-badge-no" : "pd-badge-yes"}`}
                         >
                           {e.is_paid ? "Paid" : "Complimentary"}
                         </span>

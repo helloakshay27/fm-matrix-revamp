@@ -152,47 +152,6 @@ export function PulseDashboardPage() {
       </div>
 
       <div className="pulse-shell">
-        {/* <PulseGreeting /> */}
-
-        {/* Filter bar */}
-        {/*
-        <div className="ps-fbar">
-          <div className="ps-flbl">
-            <SlidersHorizontal size={11} />
-            Filters
-          </div>
-
-          <Select value={siteSelection} onValueChange={handleSiteChange}>
-            <SelectTrigger className="ps-fsel-trigger">
-              <MapPin size={13} className="ps-fsel-icon" />
-              <SelectValue placeholder="Select Site" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Sites</SelectItem>
-              {sites.map((site) => (
-                <SelectItem key={site.id} value={String(site.id)}>
-                  {site.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <div className="ps-date-wrap">
-            <UnifiedDateRangeFilter
-              dateRange={dateRange}
-              onDateRangeChange={handleDateRangeChange}
-            />
-          </div>
-
-          {hasActiveFilters && (
-            <button type="button" className="ps-freset" onClick={handleResetFilters}>
-              <X size={11} />
-              Reset
-            </button>
-          )}
-        </div>
-        */}
-
         {/* Dashboard header */}
         <div className="ps-dash-header">
           <div className="ps-dash-titlewrap">

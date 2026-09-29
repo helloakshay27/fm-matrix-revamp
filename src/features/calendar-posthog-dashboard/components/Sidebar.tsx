@@ -1,5 +1,6 @@
 import { useCalendarDashboard } from '../context/calendarDashboardStore';
 import { PAGE_TITLES, type PageKey } from '../data/pages';
+import { RecentActivitySidebar } from './RecentActivitySidebar';
 
 const NAV_ICONS: Record<PageKey, JSX.Element> = {
   pgTraffic: (
@@ -27,7 +28,7 @@ const NAV_ICONS: Record<PageKey, JSX.Element> = {
 const ORDER: PageKey[] = ['pgTraffic', 'pgAdopt', 'pgFlows'];
 
 export function Sidebar() {
-  const { page, setPage } = useCalendarDashboard();
+  const { page, setPage, queryFilters } = useCalendarDashboard();
 
   return (
     <aside className="sidebar">
@@ -57,6 +58,7 @@ export function Sidebar() {
           ))}
         </div>
       </nav>
+      <RecentActivitySidebar filters={queryFilters} />
     </aside>
   );
 }
