@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import recessLogo from "../assets/recess-logo";
+import pulseLogo from "/pulse_logo.png";
 import {
   Bell,
   User,
@@ -469,9 +470,9 @@ export const Header = () => {
               />
             ) : isPulseSite ? (
               <img
-                src="https://www.panchshil.com/assets/images/home/logo.png"
+                src={pulseLogo}
                 alt="Pulse Logo"
-                className={logoClassName}
+                className="h-9 w-auto max-w-full object-contain md:h-11"
               />
             ) : (
               <svg
