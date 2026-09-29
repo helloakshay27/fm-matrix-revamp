@@ -1034,7 +1034,14 @@ const MsafeDashboardPage = lazy(() => import("./features/msafe-dashboard/MsafeDa
 const DashboardMobile = lazy(() => import("./pages/DashboardMobile").then(m => ({ default: m.DashboardMobile })));
 const SafetyCheckAudit = lazy(() => import("./pages/SafetyCheckAudit"));
 const MsafeCirlce = lazy(() => import("./pages/MsafeCirlce"));
-const TicketJobSheetPage = lazy(() => import("./pages/TicketJobSheetPage").then(m => ({ default: m.TicketJobSheetPage })));
+const MsafeCircleEmailConfig = lazy(
+  () => import("./pages/MsafeCircleEmailConfig")
+);
+const TicketJobSheetPage = lazy(() =>
+  import("./pages/TicketJobSheetPage").then((m) => ({
+    default: m.TicketJobSheetPage,
+  }))
+);
 const Sitemap = lazy(() => import("./pages/Sitemap"));
 const BookingList = lazy(() => import("./pages/BookingList"));
 const IframeDashboardMsafe = lazy(() => import("./pages/IframeDashboardMsafe"));
@@ -4351,6 +4358,10 @@ function App() {
                             <Route
                               path="/safety/m-safe/circle"
                               element={<MsafeCirlce />}
+                            />
+                            <Route
+                              path="/settings/circle-email-config"
+                              element={<MsafeCircleEmailConfig />}
                             />
                             {/* CRM Routes */}
                             <Route path="/crm/lead" element={<LeadDashboard />} />
