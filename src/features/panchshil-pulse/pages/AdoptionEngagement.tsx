@@ -1,11 +1,11 @@
 import React, { useMemo } from "react";
 import { usePulseDashboard } from "../contexts/PulseDashboardContext";
 import { KpiTile } from "../components/common/KpiTile";
-// The trend chart is Vi My Workspace's, reused as-is (same hover readout) rather than
-// reimplemented here. `toWeekLabels` is its heading formatter, so the hover card reads the same.
-import { LineChart } from "@/features/vi-posthog-dashboard/components/charts/LineChart";
-import { StackedBarChart } from "@/features/vi-posthog-dashboard/components/charts/StackedBarChart";
-import { toWeekLabels } from "@/features/vi-posthog-dashboard/data/usageChart";
+// The trend charts are ported from Vi My Workspace's (same hover readout) rather than the
+// simpler chart/StackedBarChart pair TrafficSession.tsx uses, which have no tooltip support.
+import { TrendLineChart } from "../components/charts/TrendLineChart";
+import { GrowthStackedBarChart } from "../components/charts/GrowthStackedBarChart";
+import { toWeekLabels } from "../utils/weekLabels";
 import { SectionState } from "../components/common/SectionState";
 import { tileToKpi } from "../utils/tileAdapter";
 import { getChartColors } from "../utils/chartColors";
@@ -105,7 +105,7 @@ export const AdoptionEngagement: React.FC = () => {
             </div>
           </div>
           <div className="card-body" id="body-adoptTrendChart">
-            <LineChart
+            <TrendLineChart
               cur={adopt.trendChart.cur}
               prev={trendPrev}
               labels={trendLabels.axis}
@@ -150,7 +150,7 @@ export const AdoptionEngagement: React.FC = () => {
               </div>
             </div>
             <div className="card-body" id="body-growthAcct">
-              <StackedBarChart
+              <GrowthStackedBarChart
                 labels={growthLabels.axis}
                 tipLabels={growthLabels.tips}
                 series={growthSeries}
