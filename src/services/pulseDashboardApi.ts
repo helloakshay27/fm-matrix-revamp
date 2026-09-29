@@ -1,7 +1,7 @@
 import axios from "axios";
 import { API_CONFIG } from "@/config/apiConfig";
 
-const PULSE_BASE_URL = "https://pulse-uat-api.panchshil.com";
+const PULSE_BASE_URL = "https://pulse-api.panchshil.com";
 
 const pulseClient = axios.create({ baseURL: PULSE_BASE_URL });
 
