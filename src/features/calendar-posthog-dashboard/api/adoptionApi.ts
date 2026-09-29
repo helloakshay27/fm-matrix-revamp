@@ -18,7 +18,7 @@ import type {
  * Calendar App Adoption Analytics API client.
  *
  * Base URL : VITE_CALENDAR_ADOPTION_API_URL or VITE_FM_ADOPTION_API_URL (default https://posthog-api.lockated.com)
- * Scope    : app_id=29 & appid=29 (passed in place of project_code / web url)
+ * Scope    : app_id=29 (passed in place of project_code / web url)
  * ------------------------------------------------------------------------- */
 
 export const ANALYTICS_BASE_URL =

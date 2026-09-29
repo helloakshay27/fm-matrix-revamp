@@ -1,9 +1,22 @@
 import { useEffect, useState } from 'react';
 import { Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { useRecentActiveUsers } from '../api/queries';
 import type { CalendarQueryFilters } from '../api/queries';
 import { formatRelativeActivityTime } from '@/features/posthog-dashboard/data/format';
 import { downloadRecentActiveUsers, type RecentActiveUser } from '../api/adoptionApi';
+
+const ACTIVITY_EXPORT_COLUMNS = [
+  'user_id',
+  'user_name',
+  'email',
+  'device_type',
+  'os',
+  'device_id',
+  'timestamp (IST)',
+  'site_id',
+  'site_name',
+];
 
 function downloadBlob(blob: Blob): void {
   const url = URL.createObjectURL(blob);
@@ -11,7 +24,14 @@ function downloadBlob(blob: Blob): void {
   link.href = url;
   link.download = 'recent-active-users.xlsx';
   link.click();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function downloadEmptyActivitySheet(): void {
+  const worksheet = XLSX.utils.aoa_to_sheet([ACTIVITY_EXPORT_COLUMNS]);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Recent Activity');
+  XLSX.writeFile(workbook, 'recent-active-users.xlsx');
 }
 
 function ActivityUser({ user }: { user: RecentActiveUser }) {
@@ -39,9 +59,13 @@ export function RecentActivitySidebar({ filters }: { filters: CalendarQueryFilte
   }, [usersQuery.error]);
 
   const handleDownload = async () => {
-    if (isDownloading || filters.enabled === false) return;
+    if (isDownloading || filters.enabled === false || usersQuery.isLoading || usersQuery.isFetching) return;
     setIsDownloading(true);
     try {
+      if (usersQuery.isError || !usersQuery.data || users.length === 0) {
+        downloadEmptyActivitySheet();
+        return;
+      }
       const blob = await downloadRecentActiveUsers({
         from: filters.from,
         to: filters.to,
@@ -64,15 +88,17 @@ export function RecentActivitySidebar({ filters }: { filters: CalendarQueryFilte
           type="button"
           className="iconbtn recent-activity-download"
           aria-label="Download recent activity"
-          title="Download recent activity"
-          disabled={isDownloading || filters.enabled === false}
+          title={isDownloading ? 'Preparing recent activity download' : 'Download recent activity'}
+          disabled={isDownloading || filters.enabled === false || usersQuery.isLoading || usersQuery.isFetching}
           onClick={handleDownload}
         >
           <Download aria-hidden="true" />
         </button>
       </div>
-      {filters.enabled === false || usersQuery.isLoading ? (
+      {filters.enabled === false || usersQuery.isLoading || usersQuery.isFetching ? (
         <p className="recent-activity-state">Loading…</p>
+      ) : usersQuery.isError ? (
+        <p className="recent-activity-state">Activity unavailable.</p>
       ) : users.length === 0 ? (
         <p className="recent-activity-state">No recent activity yet.</p>
       ) : (
