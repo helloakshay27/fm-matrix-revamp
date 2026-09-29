@@ -18,6 +18,7 @@ import Spinner from '@/components/common/Spinner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import bio from '@/assets/bio.png';
+import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 
 import { RootState, AppDispatch } from '@/store/store';
 import { fetchInventoryConsumptionHistory } from '@/store/slices/inventoryConsumptionSlice';
@@ -191,11 +192,9 @@ const InventoryConsumptionDashboard = () => {
     'December', 'November', 'October', 'September', 'August', 'July',
     'June', 'May', 'April', 'March', 'February', 'January'
   ];
-  const now = new Date();
-  const currentMonthIndex = now.getMonth(); // 0 = January, 11 = December
-  // Only show months up to and including the current month
+  // Only show months that have data returned from the API
   const monthlyData = allMonths
-    .slice(12 - (currentMonthIndex + 1))
+    .filter(month => monthlyCosts.hasOwnProperty(month))
     .map(month => ({ month, dateRange: getCurrentDateRange(month) }));
 
   // Helper to get start and end date for a month in YYYY-MM-DD (always use current year)
@@ -606,6 +605,11 @@ const InventoryConsumptionDashboard = () => {
   };
 
 
+  const leftActions = (
+    <div className="flex flex-wrap gap-3">
+    </div>
+  );
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -771,6 +775,7 @@ const InventoryConsumptionDashboard = () => {
                               pagination={true}
                               selectable={false}
                               getItemId={(item) => item.id}
+                              leftActions={leftActions}
                             />
                           )}
                         </div>
@@ -785,6 +790,8 @@ const InventoryConsumptionDashboard = () => {
       </div>
       {/* Export Modal */}
       <Dialog open={showExportModal} onOpenChange={setShowExportModal}>
+        <DialogContent>
+          <DialogHeader>
             <DialogTitle>Export Consumption Report</DialogTitle>
             <DialogDescription>Choose a date range for the report.</DialogDescription>
           </DialogHeader>
@@ -829,4 +836,5 @@ const InventoryConsumptionDashboard = () => {
     </div>
   );
 };
+
 export default InventoryConsumptionDashboard;
