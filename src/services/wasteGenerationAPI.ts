@@ -401,6 +401,7 @@ export const createWasteGeneration = async (
 // `id` so the backend can update it in place instead of creating a duplicate;
 // entries without an `id` are new rows added during this edit.
 export interface UpdateWasteGenerationEntriesPayload {
+  waste_generation_id: number;
   pms_waste_generation: {
     wg_date: string;
     vendor_id: number | null;
@@ -412,25 +413,35 @@ export interface UpdateWasteGenerationEntriesPayload {
     recycled_unit?: number;
     remark?: string;
   };
-  waste_entries: (WasteEntryInput & { id?: number })[];
+  waste_entries: WasteEntryUpdateInput[];
 }
 
-// Updates a waste generation record that has one or more category entries,
-// mirroring createWasteGeneration's payload shape and multipart/JSON
-// branching (switches to FormData when any entry carries new attachments).
-//
-// NOTE: the `update_waste` member action is a best guess mirroring
-// create_waste's naming convention — there is no confirmed backend contract
-// for updating a multi-entry record (the sibling wasteDispatchAPI.ts /
-// wasteRecycleEntryAPI.ts only implement create, no update-with-entries).
-// If this 404s or silently drops entries, confirm the real endpoint/payload
-// with backend and adjust this function accordingly.
+export interface WasteEntryValueUpdateInput {
+  id?: number;
+  value: string;
+  _destroy?: boolean;
+}
+
+export interface WasteEntryUpdateInput {
+  id?: number;
+  category_id?: number;
+  commodity_id?: number;
+  uom?: string;
+  values?: WasteEntryValueUpdateInput[];
+  attachments?: File[];
+  signature?: string | null;
+  _destroy?: boolean;
+}
+
+// Saves an edited waste generation through the same create_waste endpoint as
+// creation. The parent and existing entry IDs let the API update the record
+// instead of treating it as a new generation.
 export const updateWasteGenerationWithEntries = async (
   id: number,
   payload: UpdateWasteGenerationEntriesPayload
 ): Promise<CreateWasteGenerationResponse> => {
-  const url = getFullUrl(`/pms/waste_generations/${id}/update_waste`);
-  const { pms_waste_generation, waste_entries } = payload;
+  const url = getFullUrl('/pms/waste_generations/create_waste');
+  const { waste_generation_id, pms_waste_generation, waste_entries } = payload;
 
   console.log('Updating waste generation (with entries) at:', url);
   console.log('Update payload:', payload);
@@ -441,6 +452,7 @@ export const updateWasteGenerationWithEntries = async (
 
   if (hasAttachments) {
     const formData = new FormData();
+    formData.append('waste_generation_id', String(waste_generation_id || id));
     Object.entries(pms_waste_generation).forEach(([key, value]) => {
       if (value === null || value === undefined) return;
       formData.append(`pms_waste_generation[${key}]`, String(value));
@@ -448,10 +460,19 @@ export const updateWasteGenerationWithEntries = async (
 
     waste_entries.forEach((entry, index) => {
       if (entry.id) formData.append(`waste_entries[${index}][id]`, String(entry.id));
-      formData.append(`waste_entries[${index}][category_id]`, String(entry.category_id));
-      formData.append(`waste_entries[${index}][commodity_id]`, String(entry.commodity_id));
-      formData.append(`waste_entries[${index}][uom]`, entry.uom);
-      entry.values.forEach((value) => formData.append(`waste_entries[${index}][values][]`, String(value)));
+      if (entry._destroy) {
+        formData.append(`waste_entries[${index}][_destroy]`, 'true');
+        return;
+      }
+      if (entry.category_id !== undefined) formData.append(`waste_entries[${index}][category_id]`, String(entry.category_id));
+      if (entry.commodity_id !== undefined) formData.append(`waste_entries[${index}][commodity_id]`, String(entry.commodity_id));
+      if (entry.uom) formData.append(`waste_entries[${index}][uom]`, entry.uom);
+      (entry.values ?? []).forEach((value, valueIndex) => {
+        const valuePath = `waste_entries[${index}][values][${valueIndex}]`;
+        if (value.id !== undefined) formData.append(`${valuePath}[id]`, String(value.id));
+        formData.append(`${valuePath}[value]`, value.value);
+        if (value._destroy) formData.append(`${valuePath}[_destroy]`, 'true');
+      });
       (entry.attachments ?? []).forEach((file) => formData.append(`waste_entries[${index}][attachments][]`, file));
       if (entry.signature) formData.append(`waste_entries[${index}][signature]`, entry.signature);
     });
@@ -461,21 +482,18 @@ export const updateWasteGenerationWithEntries = async (
     console.log('Update waste generation (multipart) FormData entries:', Array.from(formData.entries()));
 
     response = await fetch(url, {
-      method: 'PUT',
+      method: 'POST',
       headers: { Authorization: getAuthHeader() },
       body: formData,
     });
   } else {
-    const options = getAuthenticatedFetchOptions('PUT', {
+    const options = getAuthenticatedFetchOptions('POST', {
+      waste_generation_id: waste_generation_id || id,
       pms_waste_generation,
-      waste_entries: waste_entries.map(({ id: entryId, category_id, commodity_id, uom, values, signature }) => ({
-        id: entryId,
-        category_id,
-        commodity_id,
-        uom,
-        values,
-        attachments: [],
-        signature: signature ?? null,
+      waste_entries: waste_entries.map((entry) => ({
+        ...entry,
+        attachments: entry.attachments ?? [],
+        signature: entry.signature ?? null,
       })),
     });
     response = await fetch(url, options);
