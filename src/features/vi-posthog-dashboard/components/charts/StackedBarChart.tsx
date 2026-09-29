@@ -1,12 +1,16 @@
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { fmtC } from '@/features/posthog-dashboard/data/format';
-import { useViDashboard } from '../../context/viDashboardStore';
+import { ViDashboardContext } from '../../context/viDashboardStore';
+import type { ChartPalette } from '../../data/palette';
 
 export interface BarSeries {
   label: string;
   data: number[];
   color: string;
 }
+
+/** The four palette entries this chart reads; any dashboard palette that has them will do. */
+type StackedBarPalette = Pick<ChartPalette, 'ink' | 'faint' | 'line' | 'onHeat'>;
 
 /**
  * Stacked bars with one "below the line" segment — the growth-accounting card. Bars above
@@ -21,15 +25,26 @@ export function StackedBarChart({
   tipLabels,
   series,
   negSeries,
+  palette: paletteProp,
 }: {
   labels: string[];
   /** Per-column hover heading; falls back to the axis label. */
   tipLabels?: string[];
   series: BarSeries[];
   negSeries?: BarSeries;
+  /**
+   * Chart colours. Defaults to the Vi store's palette, so callers inside Vi are unaffected;
+   * another dashboard that shows this same growth-accounting card passes its own palette in
+   * rather than rendering a second, differently-styled copy of the chart.
+   */
+  palette?: StackedBarPalette;
 }) {
-  const { palette } = useViDashboard();
+  const vi = useContext(ViDashboardContext);
   const [hover, setHover] = useState<number | null>(null);
+  const palette = paletteProp ?? vi?.palette;
+  if (!palette) {
+    throw new Error('StackedBarChart needs a `palette` prop outside <ViDashboardProvider>');
+  }
   const W = 600;
   const H = 260;
   const pl = 40;
