@@ -41,7 +41,7 @@ export const MSafeDashboard = () => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [filters, setFilters] = useState({ firstname: '', lastname: '', email: '', mobile: '', cluster: '', cluster_id: '', circle: '', department: '', role: '', report_to_id: '' });
   // const [page, setPage] = useState(1);
- const [page, setPage] = useState(() => {
+  const [page, setPage] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return Number(params.get('page')) || 1;
   });
@@ -132,7 +132,7 @@ export const MSafeDashboard = () => {
         // } else {
         //   setPagination({ current_page: page, total_pages: 1, total_count: users.length });
         // }
-       if (data.pagination) {
+        if (data.pagination) {
           setPagination(prev => ({
             ...prev,
             total_pages: data.pagination.total_pages,
@@ -156,7 +156,7 @@ export const MSafeDashboard = () => {
     fetchUsers();
   }, [page, debouncedSearch, filters]);
 
-useEffect(() => {
+  useEffect(() => {
     navigate(`${location.pathname}?page=${page}`, { replace: true });
   }, [page]);
 
@@ -261,7 +261,7 @@ useEffect(() => {
           </div>
         );
       }
-  // removed Birth Date from UI
+      // removed Birth Date from UI
       case 'joining_date':
         return user.lock_user_permission?.joining_date || user.joining_date || '-';
       case 'status': {
@@ -308,7 +308,7 @@ useEffect(() => {
   const renderActions = (user: FMUser) =>
   (
     <div className="flex items-center justify-center gap-2">
-      {shouldShow("M Safe", "show") && (
+      {shouldShow("Internal User (FTE)", "show") && (
         <Button
           variant="ghost"
           size="sm"
@@ -519,7 +519,7 @@ useEffect(() => {
             renderCell={renderCell} renderActions={renderActions} onSelectAll={handleSelectAll} storageKey="msafe-fm-users" searchTerm={searchTerm} onSearchChange={setSearchTerm} searchPlaceholder="Search..." handleExport={handleExport} analyticsDownloadHandled exportFileName="fm-users" pagination={false} pageSize={10} loading={loading} enableSearch={true} onRowClick={user => console.log('Row clicked:', user)} />
           {!loading && pagination.total_pages > 1 && (
             <div className="flex flex-col items-center gap-2 mt-6">
-            <div className="text-sm text-gray-600">Page {page} of {pagination.total_pages} | Total {pagination.total_count}</div>              <Pagination>
+              <div className="text-sm text-gray-600">Page {page} of {pagination.total_pages} | Total {pagination.total_count}</div>              <Pagination>
                 <PaginationContent>
                   <PaginationItem>
                     <PaginationPrevious className='cursor-pointer' onClick={() => handlePageChange(page - 1)} />
