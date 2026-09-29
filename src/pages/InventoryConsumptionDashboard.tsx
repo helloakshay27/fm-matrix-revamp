@@ -4,6 +4,17 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
 import { Eye, X, ChevronDown, ChevronUp, RefreshCw, Download, Plus } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import Spinner from '@/components/common/Spinner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import bio from '@/assets/bio.png';
@@ -27,6 +38,11 @@ const InventoryConsumptionDashboard = () => {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [categoryData, setCategoryData] = useState<Record<string, { loading: boolean; inventories: any[]; total_cost: number | null }>>({});
   const [showActionPanel, setShowActionPanel] = useState(false);
+  // New date range state for export
+  const [exportStartDate, setExportStartDate] = useState('');
+  const [exportEndDate, setExportEndDate] = useState('');
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exporting, setExporting] = useState(false);
   // New state for monthly costs from API
   const [monthlyCosts, setMonthlyCosts] = useState<Record<string, number>>({});
 
@@ -533,6 +549,41 @@ const InventoryConsumptionDashboard = () => {
     document.body.removeChild(link);
   };
 
+  // Export consumption report as XLSX using provided API
+  const exportConsumptionReport = async (startDate?: string, endDate?: string) => {
+    setExporting(true);
+    try {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      let url = `https://${baseUrl}/pms/inventories/inventory_consumption_history.xlsx`;
+      const params: string[] = [];
+      if (startDate) params.push(`q[start_date]=${startDate}`);
+      if (endDate) params.push(`q[end_date]=${endDate}`);
+      if (params.length) url += `?${params.join('&')}`;
+
+      const response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      const fileName = `inventory_consumption_history${startDate && endDate ? `_${startDate}_to_${endDate}` : ''}.xlsx`;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (err) {
+      console.error('Error exporting consumption report:', err);
+      alert('Failed to export consumption report.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   // Navigate to view page
   // The :id route param is used directly as `resource_id` by the view page
   // (InventoryConsumptionViewPage -> fetchInventoryConsumptionDetails), so it
@@ -563,7 +614,12 @@ const InventoryConsumptionDashboard = () => {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        {/* <h1 className="text-2xl font-bold text-gray-900">Consumption List</h1> */}
+        <h1 className="text-2xl font-bold text-gray-900">Consumption List</h1>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="default" onClick={() => setShowExportModal(true)}>
+            <Download className="w-4 h-4 mr-2" /> Report
+          </Button>
+        </div>
       </div>
 
       {/* Monthly Consumption Boxes */}
@@ -596,6 +652,7 @@ const InventoryConsumptionDashboard = () => {
                 <span className="text-xl font-bold text-red-600">
                   {`${getCurrencySymbol()}${formatNumber(monthlyCosts[m.month] ?? 0)}`}
                 </span>
+                {/* export controls moved to top-level */}
                 {expandedMonth === m.month && (
                   <>
                     <Button
@@ -731,6 +788,42 @@ const InventoryConsumptionDashboard = () => {
           </div>
         ))}
       </div>
+      {/* Export Modal */}
+      <Dialog open={showExportModal} onOpenChange={setShowExportModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Export Consumption Report</DialogTitle>
+            <DialogDescription>Choose a date range for the report.</DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div>
+              <Label htmlFor="exportStart">Start Date</Label>
+              <Input id="exportStart" type="date" value={exportStartDate} onChange={(e) => setExportStartDate(e.target.value)} disabled={exporting} />
+            </div>
+            <div>
+              <Label htmlFor="exportEnd">End Date</Label>
+              <Input id="exportEnd" type="date" value={exportEndDate} onChange={(e) => setExportEndDate(e.target.value)} disabled={exporting} />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <div className="flex gap-2 items-center">
+              <Button size="sm" variant="ghost" onClick={() => setShowExportModal(false)} disabled={exporting}>Cancel</Button>
+              <Button size="sm" variant="default" onClick={async () => {
+                if (exportStartDate && exportEndDate && exportStartDate > exportEndDate) {
+                  alert('Start date cannot be after end date');
+                  return;
+                }
+                await exportConsumptionReport(exportStartDate || undefined, exportEndDate || undefined);
+                setShowExportModal(false);
+              }} disabled={exporting}>
+                {exporting ? (<><Spinner className="mr-2" /> Exporting...</>) : (<><Download className="w-4 h-4 mr-2" /> Export</>)}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {showActionPanel && (
         <SelectionPanel
           onImport={() => {
