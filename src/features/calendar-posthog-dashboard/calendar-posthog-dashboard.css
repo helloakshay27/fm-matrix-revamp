@@ -570,7 +570,8 @@
   box-shadow:var(--shadow-pop);
   z-index:60;display:none;
 }
-.cal-ph .info-wrap:hover .info-pop,.cal-ph .info-wrap:focus-within .info-pop{display:block}
+.cal-ph .info-wrap:hover,.cal-ph .info-wrap.is-open{z-index:70}
+.cal-ph .info-wrap:hover .info-pop,.cal-ph .info-wrap.is-open .info-pop{display:block}
 .cal-ph .info-pop b{color:var(--ink);font-weight:500;display:block;margin-bottom:4px}
 .cal-ph .info-pop .sep{margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
 
