@@ -55,7 +55,7 @@ export function LineChart({
   if (!palette) {
     throw new Error('LineChart needs a `palette` prop outside <ViDashboardProvider>');
   }
-  const showPrev = showPrevProp ?? vi?.state.prev ?? false;
+  const showPrev = showPrevProp ?? vi?.vm?.state?.prev ?? false;
   const stroke = color ?? palette.blue;
   const area = fill ?? palette.fill;
 

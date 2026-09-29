@@ -96,8 +96,8 @@ export function toUsageChart(
   from: string,
   to: string,
 ): TrafficData['chart'] {
-  const cur = usage?.usage_over_time.current ?? [];
-  const prev = usage?.usage_over_time.previous ?? [];
+  const cur = usage?.usage_over_time?.current ?? [];
+  const prev = usage?.usage_over_time?.previous ?? [];
   if (cur.length === 0) return chart;
 
   const days = dayRange(from, to);
@@ -209,13 +209,17 @@ function spellMd(label: string): string | null {
 
 /** The previous period's own months, in order. */
 function bucketPrevMonths(rows: UsageDay[], measure: Measure) {
+  if (!rows || rows.length === 0) return [];
   const days = rows.map((r) => r.day).sort();
+  if (days.length === 0) return [];
   const months = monthRange(monthKey(days[0]), monthKey(days[days.length - 1]));
   return bucket(rows, measure, months, monthKey);
 }
 
 /** The previous period's own days, in order — the API omits inactive ones, so derive the span. */
 function prevDays(rows: UsageDay[]) {
+  if (!rows || rows.length === 0) return [];
   const days = rows.map((r) => r.day).sort();
+  if (days.length === 0) return [];
   return dayRange(days[0], days[days.length - 1]);
 }
