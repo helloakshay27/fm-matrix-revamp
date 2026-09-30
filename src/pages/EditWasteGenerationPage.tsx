@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import { TextField, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
-import { Recycle, ArrowLeft, Plus, Trash2, X } from 'lucide-react';
+import { Recycle, ArrowLeft, Plus, Trash2, X, Eye } from 'lucide-react';
 import {
   fetchBuildings,
   fetchWings,
@@ -20,16 +20,18 @@ import {
   Category,
   OperationalLandlord,
   UpdateWasteGenerationEntriesPayload,
-  WasteEntryInput
+  WasteEntryValueUpdateInput
 } from '@/services/wasteGenerationAPI';
 import { SupplierSearchSelect } from '@/components/SupplierSearchSelect';
 import { FormSearchSelect } from '@/components/FormSearchSelect';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { toast } from 'sonner';
+import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 
 // Already-uploaded file on an existing waste entry — shown read-only (no
 // remove control, since we don't send a "keep vs delete" signal to the API).
 type ExistingAttachment = { url: string; name: string };
+type ExistingBagValue = { id: number; value: string };
 
 // One row in the "Waste Entries" section: a category + commodity with a bag
 // count and overall weight (which gets split evenly across that many bags
@@ -46,6 +48,7 @@ interface WasteEntryRow {
   overallWeight: string;
   attachments: File[];
   existingAttachments: ExistingAttachment[];
+  existingValues: ExistingBagValue[];
 }
 
 let wasteEntryRowSeq = 0;
@@ -58,6 +61,7 @@ const createEmptyWasteEntryRow = (): WasteEntryRow => ({
   overallWeight: '',
   attachments: [],
   existingAttachments: [],
+  existingValues: [],
 });
 
 // Splits `total` evenly across `count` bags (e.g. 50 over 5 bags -> [10,10,10,10,10]).
@@ -95,7 +99,9 @@ const normalizeAttachment = (raw: unknown): ExistingAttachment | null => {
   const explicitName = [record.document_name, record.document_file_name, record.name, record.file_name].find(
     (v): v is string => typeof v === 'string' && v.trim().length > 0
   );
-  const name = explicitName ?? (url.split('/').pop() || 'Attachment').split('?')[0];
+  const fallbackName = (url.split('/').pop() || 'Attachment').split('?')[0];
+  const candidateName = explicitName ?? fallbackName;
+  const name = candidateName.toLowerCase() === 'download' ? 'Attachment' : candidateName;
 
   return { url, name };
 };
@@ -148,6 +154,13 @@ const EditWasteGenerationPage = () => {
   const { toast: reactToast } = useToast();
 
   const [initialLoading, setInitialLoading] = useState(true);
+  const [isAttachmentPreviewOpen, setIsAttachmentPreviewOpen] = useState(false);
+  const [selectedAttachment, setSelectedAttachment] = useState<{
+    id: number;
+    document_name?: string;
+    document_file_name?: string;
+    url: string;
+  } | null>(null);
   const [formData, setFormData] = useState({
     building: '',
     wing: '',
@@ -161,6 +174,7 @@ const EditWasteGenerationPage = () => {
   });
 
   const [wasteEntries, setWasteEntries] = useState<WasteEntryRow[]>([createEmptyWasteEntryRow()]);
+  const [deletedWasteEntryIds, setDeletedWasteEntryIds] = useState<number[]>([]);
 
   // API data state
   const [buildings, setBuildings] = useState<BuildingType[]>([]);
@@ -225,6 +239,10 @@ const EditWasteGenerationPage = () => {
                 existingAttachments: (entry.attachments || [])
                   .map(normalizeAttachment)
                   .filter((a): a is ExistingAttachment => Boolean(a)),
+                existingValues: (entry.waste_bag_details || []).map((value) => ({
+                  id: value.id,
+                  value: value.field_value,
+                })),
               }))
             : [
                 {
@@ -239,6 +257,10 @@ const EditWasteGenerationPage = () => {
                   existingAttachments: (existingData.attachments || [])
                     .map(normalizeAttachment)
                     .filter((a): a is ExistingAttachment => Boolean(a)),
+                  existingValues: (existingData.waste_bag_details || []).map((value) => ({
+                    id: value.id,
+                    value: value.field_value,
+                  })),
                 },
               ];
         setWasteEntries(initialEntries);
@@ -376,7 +398,12 @@ const EditWasteGenerationPage = () => {
   };
 
   const removeWasteEntry = (key: string) => {
-    setWasteEntries(prev => (prev.length > 1 ? prev.filter(entry => entry.key !== key) : prev));
+    if (wasteEntries.length <= 1) return;
+    const removedEntry = wasteEntries.find((entry) => entry.key === key);
+    if (removedEntry?.id) {
+      setDeletedWasteEntryIds((previous) => [...previous, removedEntry.id as number]);
+    }
+    setWasteEntries((previous) => previous.filter((entry) => entry.key !== key));
   };
 
   const updateWasteEntry = (
@@ -468,6 +495,7 @@ const EditWasteGenerationPage = () => {
     setSubmitting(true);
     try {
       const payload: UpdateWasteGenerationEntriesPayload = {
+        waste_generation_id: parseInt(id),
         pms_waste_generation: {
           wg_date: formData.date,
           vendor_id: formData.vendor ? parseInt(formData.vendor) : null,
@@ -479,15 +507,35 @@ const EditWasteGenerationPage = () => {
           recycled_unit: formData.recycledUnit ? parseFloat(formData.recycledUnit) : 0,
           remark: formData.remark || '',
         },
-        waste_entries: wasteEntries.map((entry): WasteEntryInput & { id?: number } => ({
-          id: entry.id,
-          category_id: parseInt(entry.category),
-          commodity_id: parseInt(entry.commodity),
-          uom: entry.uom,
-          values: distributeWeight(parseFloat(entry.overallWeight), parseInt(entry.bagCount, 10)),
-          attachments: entry.attachments,
-          signature: null,
-        })),
+        waste_entries: [
+          ...wasteEntries.map((entry) => {
+            const bagCount = parseInt(entry.bagCount, 10);
+            const values: WasteEntryValueUpdateInput[] = distributeWeight(
+              parseFloat(entry.overallWeight),
+              bagCount
+            ).map((value, index) => ({
+              ...(entry.existingValues[index] ? { id: entry.existingValues[index].id } : {}),
+              value: String(value),
+            }));
+            values.push(
+              ...entry.existingValues.slice(bagCount).map((value) => ({
+                id: value.id,
+                value: value.value,
+                _destroy: true,
+              }))
+            );
+            return {
+              id: entry.id,
+              category_id: parseInt(entry.category),
+              commodity_id: parseInt(entry.commodity),
+              uom: entry.uom,
+              values,
+              attachments: entry.attachments,
+              signature: null,
+            };
+          }),
+          ...deletedWasteEntryIds.map((entryId) => ({ id: entryId, _destroy: true })),
+        ],
       };
 
       console.log('Submitting waste generation update:', payload);
@@ -693,7 +741,7 @@ const EditWasteGenerationPage = () => {
                         Category <span className="text-red-500">*</span>
                       </TableHead>
                       <TableHead className="min-w-[220px] font-semibold text-gray-600">
-                        Commodity <span className="text-red-500">*</span>
+                        Subcategory <span className="text-red-500">*</span>
                       </TableHead>
                       <TableHead className="min-w-[110px] font-semibold text-gray-600">
                         UOM <span className="text-red-500">*</span>
@@ -739,7 +787,7 @@ const EditWasteGenerationPage = () => {
                               MenuProps={selectMenuProps}
                             >
                               <MenuItem value="">
-                                <em>{loadingCommodities ? 'Loading...' : 'Select Commodity'}</em>
+                                <em>{loadingCommodities ? 'Loading...' : 'Select Subcategory'}</em>
                               </MenuItem>
                               {commodityOptions.map((opt) => (
                                 <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
@@ -812,15 +860,28 @@ const EditWasteGenerationPage = () => {
                             {entry.existingAttachments.length > 0 && (
                               <div className="flex flex-wrap gap-1">
                                 {entry.existingAttachments.map((att, attIndex) => (
-                                  <a
+                                  <span
                                     key={`existing-${attIndex}`}
-                                    href={att.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 bg-white border border-gray-300 rounded px-1.5 py-0.5 text-xs text-blue-600 max-w-[160px] hover:underline"
+                                    className="inline-flex items-center gap-1 bg-white border border-gray-300 rounded px-1.5 py-0.5 text-xs text-gray-700 max-w-[160px]"
                                   >
                                     <span className="truncate">{att.name}</span>
-                                  </a>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedAttachment({
+                                          id: attIndex,
+                                          document_name: att.name,
+                                          url: att.url,
+                                        });
+                                        setIsAttachmentPreviewOpen(true);
+                                      }}
+                                      className="shrink-0 text-gray-500 hover:text-brand"
+                                      aria-label={`View ${att.name}`}
+                                      title="View attachment"
+                                    >
+                                      <Eye className="h-3.5 w-3.5" />
+                                    </button>
+                                  </span>
                                 ))}
                               </div>
                             )}
@@ -995,6 +1056,13 @@ const EditWasteGenerationPage = () => {
           </div>
         </div>
       </form>
+      <AttachmentPreviewModal
+        isModalOpen={isAttachmentPreviewOpen}
+        setIsModalOpen={setIsAttachmentPreviewOpen}
+        showDownload={false}
+        selectedDoc={selectedAttachment}
+        setSelectedDoc={setSelectedAttachment}
+      />
     </div>
   );
 };

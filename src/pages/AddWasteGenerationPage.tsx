@@ -587,7 +587,7 @@ const AddWasteGenerationPage = () => {
                         Category <span className="text-red-500">*</span>
                       </TableHead>
                       <TableHead className="min-w-[220px] font-semibold text-gray-600">
-                        Commodity <span className="text-red-500">*</span>
+                        Subcategory <span className="text-red-500">*</span>
                       </TableHead>
                       <TableHead className="min-w-[110px] font-semibold text-gray-600">
                         UOM <span className="text-red-500">*</span>
@@ -633,7 +633,7 @@ const AddWasteGenerationPage = () => {
                               MenuProps={selectMenuProps}
                             >
                               <MenuItem value="">
-                                <em>{loadingCommodities ? 'Loading...' : 'Select Commodity'}</em>
+                                <em>{loadingCommodities ? 'Loading...' : 'Select Subcategory'}</em>
                               </MenuItem>
                               {commodityOptions.map((opt) => (
                                 <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>

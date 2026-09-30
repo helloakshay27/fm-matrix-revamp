@@ -1,7 +1,8 @@
-// No backend API exists for Package Setup yet - this in-memory store stands in for one so
-// the list/add/edit/details pages can be reviewed end-to-end. Swap these functions for
-// real apiClient calls once a package-setup endpoint exists; the page components only
-// depend on this module's exported functions, not on how the data is stored.
+// The list/details pages below still read from this in-memory mock store - swap for real
+// apiClient calls once those endpoints are wired up too. Add/Edit (PackageSetupAdd.tsx /
+// PackageSetupEdit.tsx) already go through the real /pms/admin/packages API directly.
+
+import axios from "axios";
 
 export interface PricingTier {
   id: string;
@@ -259,24 +260,33 @@ export function tierTotal(tier: PricingTier): number {
   return tierBasePrice(tier) + gstAmount(tier);
 }
 
-// Classes a package can be attached to - mirrors classSetupMockData's names.
-export const PACKAGE_CLASSES = [
-  "Reformer Pilates",
-  "Yoga",
-  "HIIT",
-  "Cadillac",
-  "CrossFit",
-  "Private Pilates",
-  "Pickleball",
-];
-
 export const PACKAGE_TYPES: PackageSetup["packageType"][] = ["Member", "Non-Member"];
 export const PACKAGE_VALIDITIES = ["1 Month", "2 Months", "3 Months", "6 Months", "12 Months"];
 
+// Values match the /pms/admin/packages API's package_type enum (e.g. "bundle_8" for an
+// 8-class bundle), not the credits count directly.
 export const PACKAGE_TIER_TYPES = [
   { value: "single_session", label: "Single Session" },
-  { value: "4_class_bundle", label: "4-Class Bundle" },
-  { value: "8_class_bundle", label: "8-Class Bundle" },
-  { value: "12_class_bundle", label: "12-Class Bundle" },
-  { value: "16_class_bundle", label: "16-Class Bundle" },
+  { value: "bundle_4", label: "4-Class Bundle" },
+  { value: "bundle_8", label: "8-Class Bundle" },
+  { value: "bundle_12", label: "12-Class Bundle" },
+  { value: "bundle_16", label: "16-Class Bundle" },
 ];
+
+export interface ClubClassOption {
+  id: string;
+  name: string;
+}
+
+// The class a package attaches to (club_class_id) - fetched from the real class list so
+// the dropdown carries a real id, not just a display name.
+export async function fetchClubClassOptions(): Promise<ClubClassOption[]> {
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
+  const res = await axios.get(`https://${baseUrl}/pms/admin/club_classes.json`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = res.data;
+  const list = Array.isArray(data) ? data : data?.club_classes ?? data?.data ?? [];
+  return list.map((c: any) => ({ id: String(c.id), name: c.name ?? `Class ${c.id}` }));
+}

@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { updateTrainer, mapTrainerApiData } from "./trainerSetupMockData";
+import { mapTrainerApiData } from "./trainerSetupMockData";
 import { TrainerSetupForm, emptyTrainerSetupForm, type TrainerSetupFormState } from "./TrainerSetupForm";
+import { buildTrainerFormData, buildTrainerRequest } from "./trainerSetupApi";
 import { apiClient } from "@/utils/apiClient";
 
 // Existing mock records predate the availability/slot/roster fields, so fall back to the
@@ -21,15 +22,17 @@ export const TrainerSetupEdit = () => {
         const existing = mapTrainerApiData(response.data);
         if (!existing.id) throw new Error("Trainer not found");
         setInitialValues({
-          name: existing.name,
+          firstName: existing.firstName ?? "",
+          lastName: existing.lastName ?? "",
           email: existing.email ?? emptyTrainerSetupForm.email,
           specialization: existing.specialization,
           experience: existing.experience,
           ratePerSession: existing.ratePerSession,
           contactNumber: existing.contactNumber,
+          emergencyContact: existing.emergencyContact ?? "",
           status: existing.status,
           bio: existing.bio,
-          slot: existing.slot ?? emptyTrainerSetupForm.slot,
+          shift: existing.shift ?? emptyTrainerSetupForm.shift,
           roster: existing.roster ?? emptyTrainerSetupForm.roster,
           availabilitySlots: existing.availabilitySlots ?? emptyTrainerSetupForm.availabilitySlots,
           bookableSlotsPerDay: existing.bookableSlotsPerDay ?? emptyTrainerSetupForm.bookableSlotsPerDay,
@@ -37,6 +40,8 @@ export const TrainerSetupEdit = () => {
           advanceBooking: existing.advanceBooking ?? emptyTrainerSetupForm.advanceBooking,
           canCancelBefore: existing.canCancelBefore ?? emptyTrainerSetupForm.canCancelBefore,
           facilityBookedTimes: existing.facilityBookedTimes ?? emptyTrainerSetupForm.facilityBookedTimes,
+          existingAttachments: existing.credentials,
+          existingTrainerImageUrl: existing.trainerImageUrl ?? existing.imageUrl ?? "",
         });
       } catch (error) {
         console.error("Failed to load trainer", error);
@@ -57,11 +62,21 @@ export const TrainerSetupEdit = () => {
       submitLabel="Update"
       submittingLabel="Updating..."
       onBack={() => navigate("/club-management/trainer-setup")}
-      onSubmit={(payload) => {
+      onSubmit={async (payload, files) => {
         if (!id) return;
-        updateTrainer(id, payload);
-        toast.success("Trainer updated successfully!");
-        navigate(`/club-management/trainer-setup/details/${id}`);
+        const trainer = buildTrainerRequest(payload);
+        const hasAttachments = Boolean(files.image || files.certificate || files.contract);
+        try {
+          await apiClient.put(
+            `/pms/admin/trainers/${id}.json`,
+            hasAttachments ? buildTrainerFormData(trainer, files) : { trainer }
+          );
+          toast.success("Trainer updated successfully!");
+          navigate("/club-management/trainer-setup");
+        } catch (error) {
+          console.error("Failed to update trainer", error);
+          toast.error("Failed to update trainer");
+        }
       }}
     />
   );

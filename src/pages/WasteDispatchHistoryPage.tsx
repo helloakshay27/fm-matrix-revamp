@@ -80,7 +80,9 @@ const renderDispatchCell = (item: WasteDispatch, key: string) => {
     }
     return [item.dispatch_date, timePart].filter(Boolean).join(' ') || '-';
   }
-  if (key === 'waste_category') return item.category_names || '-';
+  if (key === 'category_names' || key === 'waste_category') {
+    return item.commodity_names || item.category_names || '-';
+  }
   if (key === 'waste_type') return item.waste_type ? item.waste_type.replace(/\b\w/g, (c) => c.toUpperCase()) : '-';
   if (key === 'total_generated_kg') return item.total_waste_captured_kg != null ? `${item.total_waste_captured_kg} KG` : '-';
   if (key === 'dispatch_weight_kg') return item.dispatch_weight_kg != null ? `${item.dispatch_weight_kg} KG` : '-';

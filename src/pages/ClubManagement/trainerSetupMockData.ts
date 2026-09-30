@@ -31,18 +31,25 @@ export interface TrainerAvailabilitySlot {
 export interface TrainerSetup {
   id: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   email?: string;
   specialization: string;
   experience: string;
   ratePerSession: string;
   contactNumber: string;
+  emergencyContact?: string;
   status: "Active" | "Inactive";
   bio: string;
   imageUrl?: string;
   credentials: TrainerCredential[];
+  trainerImageUrl?: string;
+  trainerType?: string;
+  shiftTimings?: string;
+  facilitySlotId?: string;
   // Preferred session-slot duration and shift roster - optional so existing
   // mock records don't need backfilling.
-  slot?: string;
+  shift?: string;
   roster?: string;
   availabilitySlots?: TrainerAvailabilitySlot[];
   bookableSlotsPerDay?: string;
@@ -54,32 +61,65 @@ export interface TrainerSetup {
 
 export function mapTrainerApiData(raw: any): TrainerSetup {
   const trainer = raw?.trainer ?? raw?.data ?? raw;
-  const facilitySlot = Array.isArray(trainer?.facility_slot_attributes)
+  const fullName = String(trainer?.name ?? trainer?.full_name ?? "").trim();
+  const nameParts = fullName.split(/\s+/).filter(Boolean);
+  const firstName = String(trainer?.first_name ?? nameParts[0] ?? "");
+  const lastName = String(trainer?.last_name ?? nameParts.slice(1).join(" ") ?? "");
+  const facilitySlot = trainer?.facility_slot ?? (Array.isArray(trainer?.facility_slot_attributes)
     ? trainer.facility_slot_attributes[0]
-    : trainer?.facility_slot_attributes;
-  const credentials = trainer?.credentials ?? trainer?.certificates ?? trainer?.attachments ?? [];
+    : trainer?.facility_slot_attributes);
+  const credentials = [
+    ...(Array.isArray(trainer?.attachments) ? trainer.attachments : []),
+    ...(Array.isArray(trainer?.certificates) ? trainer.certificates : []),
+    ...(Array.isArray(trainer?.contracts) ? trainer.contracts : []),
+    ...(Array.isArray(trainer?.credentials) ? trainer.credentials : []),
+  ].filter((credential, index, all) =>
+    all.findIndex((item) => String(item.id ?? item.file_name ?? item.name) === String(credential.id ?? credential.file_name ?? credential.name)) === index
+  );
+  const durationParts = (parts: any, flat: any, dayKey: string, hourKey: string, minuteKey: string, fallback?: any) => ({
+    day: String(parts?.day ?? flat?.[dayKey] ?? fallback?.day ?? ""),
+    hour: String(parts?.hour ?? flat?.[hourKey] ?? fallback?.hour ?? ""),
+    minute: String(parts?.min ?? parts?.minute ?? flat?.[minuteKey] ?? fallback?.minute ?? ""),
+  });
+  const attachmentUrl = (value: unknown) => {
+    if (!value) return "";
+    const url = String(value);
+    try {
+      const decoded = decodeURIComponent(url);
+      return decoded.startsWith("//") ? `https:${decoded}` : decoded;
+    } catch {
+      return url;
+    }
+  };
+  const trainerImage = trainer?.trainer_image ?? trainer?.image_url ?? trainer?.image;
 
   return {
     id: String(trainer?.id ?? ""),
-    name: trainer?.name ?? trainer?.full_name ?? "",
+    name: [firstName, lastName].filter(Boolean).join(" ") || fullName,
+    firstName,
+    lastName,
     email: trainer?.email ?? "",
     specialization: trainer?.specialization ?? "",
     experience: String(trainer?.experience ?? trainer?.experience_years ?? ""),
     ratePerSession: String(trainer?.rate_per_session ?? trainer?.ratePerSession ?? ""),
     contactNumber: trainer?.mobile ?? trainer?.contact_number ?? "",
+    emergencyContact: trainer?.emergency_contact ?? "",
+    trainerType: String(trainer?.trainer_type ?? ""),
+    shiftTimings: String(trainer?.shift_timings ?? ""),
     status: String(trainer?.status).toLowerCase() === "inactive" ? "Inactive" : "Active",
     bio: trainer?.bio ?? "",
-    imageUrl: trainer?.image_url ?? trainer?.image ?? "",
+    imageUrl: attachmentUrl(typeof trainerImage === "object" ? trainerImage?.url : trainerImage),
+    trainerImageUrl: attachmentUrl(typeof trainerImage === "object" ? trainerImage?.url : trainerImage),
     credentials: Array.isArray(credentials)
       ? credentials.map((credential: any, index: number) => ({
           id: String(credential.id ?? index),
           name: credential.name ?? credential.file_name ?? credential.filename ?? "Attachment",
           size: credential.size ?? "",
-          url: credential.url ?? credential.file_url ?? "",
+          url: attachmentUrl(credential.url ?? credential.file_url ?? ""),
         }))
       : [],
-    slot: trainer?.slot ?? "",
-    roster: trainer?.roster ?? trainer?.user_roaster_id ?? "",
+    shift: String(trainer?.user_shift_id ?? trainer?.shift_id ?? trainer?.shift ?? ""),
+    roster: String(trainer?.user_roaster_id ?? trainer?.roster_id ?? trainer?.roster ?? ""),
     availabilitySlots: facilitySlot
       ? [{
           startTime: {
@@ -90,15 +130,18 @@ export function mapTrainerApiData(raw: any): TrainerSetup {
             hour: String(facilitySlot.end_hour ?? 0).padStart(2, "0"),
             minute: String(facilitySlot.end_min ?? 0).padStart(2, "0"),
           },
-          concurrentSlots: String(facilitySlot.concurrent_slots ?? ""),
-          slotBy: Number(facilitySlot.slot_by ?? 15),
+          concurrentSlots: String(facilitySlot.concurrent_slots ?? facilitySlot.max_bookings ?? ""),
+          slotBy: Number(facilitySlot.slot_by ?? facilitySlot.breakminutes ?? 15),
         }]
       : undefined,
-    bookableSlotsPerDay: trainer?.bookable_slots_per_day ?? "",
-    bookingAllowedBefore: trainer?.booking_allowed_before,
-    advanceBooking: trainer?.advance_booking,
-    canCancelBefore: trainer?.can_cancel_before,
-    facilityBookedTimes: trainer?.facility_booked_times ?? "",
+    facilitySlotId: facilitySlot?.id != null ? String(facilitySlot.id) : "",
+    bookableSlotsPerDay: String(facilitySlot?.bookable_slot_count ?? trainer?.bookable_slots_per_day ?? ""),
+    bookingAllowedBefore: durationParts(facilitySlot?.book_before_parts, facilitySlot, "book_before_day", "book_before_hour", "book_before_min", trainer?.booking_allowed_before),
+    advanceBooking: durationParts(facilitySlot?.advance_booking_parts, facilitySlot, "advance_booking_day", "advance_booking_hour", "advance_booking_min", trainer?.advance_booking),
+    canCancelBefore: durationParts(facilitySlot?.cancel_parts, facilitySlot, "cancel_day", "cancel_hour", "cancel_min", trainer?.can_cancel_before),
+    facilityBookedTimes: String(
+      facilitySlot?.max_bookings_per_user_per_day ?? trainer?.max_bookings_per_user_per_day ?? trainer?.facility_booked_times ?? ""
+    ),
   };
 }
 
@@ -265,27 +308,3 @@ export const SPECIALIZATIONS = [
   "Pre/Post Natal Fitness",
 ];
 
-// Session-slot duration options - mirrors the "Slot by" list used on the
-// Amenity Booking Setup facility timings section.
-export const SLOT_DURATION_OPTIONS = [
-  { value: "15", label: "15 Minutes" },
-  { value: "30", label: "Half hour" },
-  { value: "45", label: "45 Minutes" },
-  { value: "60", label: "1 hour" },
-  { value: "90", label: "1 and a half hours" },
-  { value: "120", label: "2 hours" },
-  { value: "150", label: "2 and a half hours" },
-  { value: "180", label: "3 hours" },
-  { value: "210", label: "3 and a half hours" },
-  { value: "240", label: "4 hours" },
-  { value: "270", label: "4 and a half hours" },
-];
-
-export const ROSTER_OPTIONS = [
-  "Morning Shift",
-  "Afternoon Shift",
-  "Evening Shift",
-  "Full Day",
-  "Weekday Only",
-  "Weekend Only",
-];

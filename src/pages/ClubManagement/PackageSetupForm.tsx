@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
 import { ArrowLeft, Package as PackageIcon } from "lucide-react";
 import { toast } from "sonner";
 import {
-  PACKAGE_CLASSES,
   PACKAGE_TIER_TYPES,
   blankTier,
+  fetchClubClassOptions,
+  type ClubClassOption,
   type PricingTier,
 } from "./packageSetupMockData";
 
@@ -112,15 +113,20 @@ const draftToTier = (d: TierDraft): PricingTier => {
 };
 
 export interface PackageSetupFormState {
+  // The selected club_class_id, as a string.
   classActivity: string;
   memberTiers: PricingTier[];
   nonMemberTiers: PricingTier[];
+  extensionAllowed: boolean;
+  maxExtensionDays: number | "";
 }
 
 export const emptyPackageSetupForm: PackageSetupFormState = {
   classActivity: "",
   memberTiers: [blankTier()],
   nonMemberTiers: [],
+  extensionAllowed: true,
+  maxExtensionDays: "",
 };
 
 interface PackageSetupFormProps {
@@ -134,6 +140,8 @@ interface PackageSetupFormProps {
     classActivity: string;
     memberTiers: PricingTier[];
     nonMemberTiers: PricingTier[];
+    extensionAllowed: boolean;
+    maxExtensionDays: number;
   }) => void;
 }
 
@@ -147,10 +155,22 @@ export const PackageSetupForm = ({
   onSubmit,
 }: PackageSetupFormProps) => {
   const [classActivity, setClassActivity] = useState(initialValues.classActivity);
+  const [classOptions, setClassOptions] = useState<ClubClassOption[]>([]);
+  const [extensionAllowed, setExtensionAllowed] = useState(initialValues.extensionAllowed);
+  const [maxExtensionDays, setMaxExtensionDays] = useState<number | "">(initialValues.maxExtensionDays);
   const [tier, setTier] = useState<TierDraft>(
     initialValues.memberTiers[0] ? toDraft(initialValues.memberTiers[0]) : blankDraft()
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetchClubClassOptions()
+      .then(setClassOptions)
+      .catch((error) => {
+        console.error("Failed to load classes", error);
+        toast.error("Failed to load classes");
+      });
+  }, []);
 
   const patchTier = (patch: Partial<TierDraft>) => setTier((prev) => ({ ...prev, ...patch }));
 
@@ -167,7 +187,13 @@ export const PackageSetupForm = ({
       return;
     }
     setIsSubmitting(true);
-    onSubmit({ classActivity, memberTiers: [draftToTier(tier)], nonMemberTiers: [] });
+    onSubmit({
+      classActivity,
+      memberTiers: [draftToTier(tier)],
+      nonMemberTiers: [],
+      extensionAllowed,
+      maxExtensionDays: Number(maxExtensionDays) || 0,
+    });
   };
 
   return (
@@ -199,13 +225,18 @@ export const PackageSetupForm = ({
               label="Select Class"
               notched
               displayEmpty
+              renderValue={(selected) =>
+                selected
+                  ? classOptions.find((c) => c.id === selected)?.name ?? String(selected)
+                  : "Select class"
+              }
             >
               <MenuItem value="" disabled>
                 Select class
               </MenuItem>
-              {PACKAGE_CLASSES.map((c) => (
-                <MenuItem key={c} value={c}>
-                  {c}
+              {classOptions.map((c) => (
+                <MenuItem key={c.id} value={c.id}>
+                  {c.name}
                 </MenuItem>
               ))}
             </MuiSelect>
@@ -347,6 +378,36 @@ export const PackageSetupForm = ({
             variant="outlined"
             slotProps={{ inputLabel: { shrink: true } }}
             InputProps={{ sx: fieldStyles }}
+          />
+
+          <FormControl fullWidth variant="outlined" sx={{ "& .MuiInputBase-root": fieldStyles }}>
+            <InputLabel shrink>Extension Allowed</InputLabel>
+            <MuiSelect
+              value={extensionAllowed ? "yes" : "no"}
+              onChange={(e) => setExtensionAllowed(e.target.value === "yes")}
+              label="Extension Allowed"
+              notched
+            >
+              <MenuItem value="yes">Yes</MenuItem>
+              <MenuItem value="no">No</MenuItem>
+            </MuiSelect>
+          </FormControl>
+
+          <TextField
+            label="Max Extension Days"
+            type="number"
+            placeholder="Enter max extension days"
+            value={maxExtensionDays}
+            onChange={(e) => {
+              const raw = e.target.value;
+              setMaxExtensionDays(raw === "" ? "" : toNonNegative(raw));
+            }}
+            disabled={!extensionAllowed}
+            fullWidth
+            variant="outlined"
+            slotProps={{ inputLabel: { shrink: true } }}
+            InputProps={{ sx: fieldStyles }}
+            inputProps={{ min: 0, onKeyDown: blockNegativeKey }}
           />
         </div>
       </Section>
