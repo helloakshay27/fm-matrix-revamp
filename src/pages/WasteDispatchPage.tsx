@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Truck, Trash2, RefreshCw, Droplet, Package, Activity } from 'lucide-react';
+import { ArrowLeft, Truck, Trash2, RefreshCw, Droplet, Package, Activity, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TextField, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
 import { toast } from 'sonner';
@@ -217,6 +217,7 @@ const WasteDispatchPage: React.FC = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAttachmentFile(e.target.files?.[0] ?? null);
+    e.target.value = '';
   };
 
   const handleBack = () => navigate('/maintenance/waste/generation');
@@ -711,6 +712,17 @@ const WasteDispatchPage: React.FC = () => {
               <input type="file" className="hidden" onChange={handleFileChange} />
             </label>
             <span className="text-sm text-gray-500">{attachmentFile?.name || 'No file chosen'}</span>
+            {attachmentFile && (
+              <button
+                type="button"
+                onClick={() => setAttachmentFile(null)}
+                className="text-gray-500 hover:text-red-600"
+                aria-label="Remove attachment"
+                title="Remove attachment"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
         </div>
 
