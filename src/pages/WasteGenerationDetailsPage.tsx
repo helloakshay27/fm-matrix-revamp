@@ -444,15 +444,19 @@ export const WasteGenerationDetailsPage = () => {
   // Table 1.2 — Waste Detail breakdown. Multi-category records (created via
   // `waste_entries`) carry one row per category in `categories`; legacy
   // single-category records fall back to the one flat category on the record.
-  // There's no per-category recycled amount in the API — only a record-level
-  // total — so Recycle Weight is only shown on the legacy single-row case.
+  // The API provides a record-level recycled amount, so split it evenly across
+  // category rows just like dispatch weight.
   const wasteDetailTableRows =
     wasteData.categories && wasteData.categories.length > 0
       ? (() => {
+          const totalRecycledWeight = Number(wasteData.recycled_unit) || 0;
           const entries = wasteData.categories.map((entry) => ({
             category: entry.category?.category_name || "-",
             totalWeight: entry.waste_unit != null ? `${entry.waste_unit} ${entry.uom || "kg"}` : "-",
-            recycleWeight: "-",
+            recycleWeight:
+              totalRecycledWeight > 0
+                ? `${(totalRecycledWeight / wasteData.categories.length).toFixed(2)} kg`
+                : "-",
           }));
 
           const totalDispatchWeight =
