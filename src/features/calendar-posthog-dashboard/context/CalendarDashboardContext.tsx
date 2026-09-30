@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { dateRangeFor } from '@/features/analytics-dashboard-shared/dateRange';
 import { paletteFor, type DashboardTheme } from '@/features/analytics-dashboard-shared/palette';
+import type { UsageDistributionResponse, WorkflowUsageResponse } from '@/features/posthog-dashboard/api/adoptionApi';
 import { BM_DEFAULTS, type DateRange, type Device } from '../data/constants';
 import type { PageKey } from '../data/pages';
 import {
@@ -34,6 +35,28 @@ import {
 import type { CalendarOsType } from '../api/adoptionApi';
 import type { CalendarTileSpec } from '../data/calendarMetricIds';
 import type { GrowthWeek } from '../data/sampleData';
+
+type CalendarDeviceSplitRow = UsageDistributionResponse['device_split']['devices'][number] & {
+  os_breakdown?: Array<{
+    os: string;
+    users: number;
+    sessions: number;
+    session_share: number;
+  }>;
+};
+
+type CalendarDeclaredWorkflow = {
+  flow_key: string;
+  steps?: Array<{
+    step: string;
+    reach?: number;
+    drop_pct?: number | null;
+  }>;
+};
+
+type CalendarWorkflowUsage = WorkflowUsageResponse & {
+  workflows?: CalendarDeclaredWorkflow[];
+};
 
 const THEME_KEY = 'calendar-theme';
 const NAV_KEY = 'calendar-nav';
@@ -222,7 +245,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
     const sessionsCur = currentDays.map((cd) => cd.sessions);
     const sessionsPrev = prevDays.map((pd) => pd.sessions);
 
-    const osBreakdown = u?.device_split?.devices?.[0]?.os_breakdown ?? [];
+    const osBreakdown = (u?.device_split?.devices as CalendarDeviceSplitRow[] | undefined)?.[0]?.os_breakdown ?? [];
     const platformRows = osBreakdown.map((item) => ({
       label: item.os,
       share: (item.session_share ?? 0) / 100,
@@ -294,6 +317,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
         label: 'Session Duration',
         disp: t ? formatDuration(t.avg_session_seconds) : '—',
         raw: t ? t.avg_session_seconds / 60 : 0,
+        delta: d?.avg_session_seconds ?? null,
         sub: 'per session',
         infoKey: 'avgSessionDur',
         infoLabel: 'Session Duration',
@@ -323,6 +347,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
         label: 'Recently Online',
         disp: t ? t.recently_online.toLocaleString() : '—',
         raw: t ? t.recently_online : 0,
+        delta: null,
         sub: 'active in last 30 min',
         infoKey: 'recentlyOnline',
         infoLabel: 'Recently Online',
@@ -345,7 +370,6 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
   const adopt = useMemo<AdoptionSample>(() => {
     const a = adoptQuery.data;
 
-    const seatVal = a?.seat_utilisation?.value ?? 0;
     const stickVal = a?.stickiness?.value ?? 0;
     const trendVal = a?.adoption_trend?.value ?? 0;
     const actVal = a?.activation?.value ?? 0;
@@ -354,21 +378,11 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
 
     const tiles: CalendarTileSpec[] = [
       {
-        id: 'seatUtil',
-        label: 'Seat Utilisation',
-        disp: a ? `${Math.round(seatVal)}%` : '—',
-        raw: seatVal,
-        sub: 'active / registered accounts',
-        unit: '%',
-        goodUp: true,
-        infoKey: 'seatUtil',
-        infoLabel: 'Seat Utilisation',
-      },
-      {
         id: 'stickiness',
         label: 'Stickiness (DAU/MAU)',
         disp: a ? `${Math.round(stickVal)}%` : '—',
         raw: stickVal,
+        delta: a?.stickiness?.delta_pct ?? null,
         sub: 'daily engagement depth',
         unit: '%',
         goodUp: true,
@@ -380,6 +394,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
         label: 'Adoption Trend',
         disp: a ? `${trendVal >= 0 ? '+' : ''}${Math.round(trendVal)}%` : '—',
         raw: trendVal,
+        delta: null,
         sub: 'vs prior 8 weeks',
         unit: '%',
         goodUp: true,
@@ -391,6 +406,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
         label: '14-Day Activation',
         disp: a ? `${Math.round(actVal)}%` : '—',
         raw: actVal,
+        delta: a?.activation?.delta_pct ?? null,
         sub: 'new users active day 14',
         unit: '%',
         goodUp: true,
@@ -402,6 +418,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
         label: 'Module Breadth (≥2)',
         disp: a ? `${breadthInUse} / ${breadthTotal}` : '—',
         raw: breadthInUse,
+        delta: null,
         sub: 'modules in use',
         goodUp: true,
         noTarget: true,
@@ -488,7 +505,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
 
   /* Layer 3: Workflow strictly from live API */
   const flows = useMemo<WorkflowSample>(() => {
-    const wf = workflowQuery.data;
+    const wf = workflowQuery.data as CalendarWorkflowUsage | undefined;
     const curWf = findWorkflow(workflow);
     const k = wf?.kpis;
 
@@ -503,6 +520,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
         label: 'Module Adoption',
         disp: k?.f_adopt?.value != null ? `${Math.round(k.f_adopt.value)}%` : '—',
         raw: k?.f_adopt?.value ?? 0,
+        delta: k?.f_adopt?.delta_pct ?? null,
         sub: 'users entering workflow',
         unit: '%',
         goodUp: true,
@@ -515,6 +533,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
         label: 'Completion Rate',
         disp: k?.f_comp?.value != null ? `${Math.round(k.f_comp.value)}%` : '—',
         raw: k?.f_comp?.value ?? 0,
+        delta: k?.f_comp?.delta_pct ?? null,
         sub: 'entrants completing flow',
         unit: '%',
         goodUp: true,
@@ -527,6 +546,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
         label: 'Biggest Step Drop',
         disp: k?.f_step?.value != null ? `${Math.round(k.f_step.value)}%` : '—',
         raw: k?.f_step?.value ?? 0,
+        delta: k?.f_step?.delta_pct ?? null,
         sub: 'highest single drop-off',
         unit: '%',
         goodUp: false,
@@ -539,6 +559,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
         label: 'Usage Volume',
         disp: k?.f_vol?.value != null ? k.f_vol.value.toLocaleString() : '—',
         raw: k?.f_vol?.value ?? 0,
+        delta: k?.f_vol?.delta_pct ?? null,
         sub: 'workflow completions',
         goodUp: true,
         noTarget: true,
@@ -547,12 +568,12 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
       },
     ];
 
-    let funnel: { step: string; ofEntrants: number; dropPct?: number }[] = [];
+    let funnel: { step: string; ofEntrants: number; dropPct: number | null }[] = [];
     if (wf?.funnel && wf.funnel.length > 0) {
       funnel = wf.funnel.map((s) => ({
         step: s.step.replace(/_/g, ' '),
         ofEntrants: Math.round(s.reach ?? 100),
-        dropPct: s.drop_pct != null ? Math.round(s.drop_pct) : undefined,
+        dropPct: s.drop_pct != null ? Math.round(s.drop_pct) : null,
       }));
     } else if (wf?.workflows && wf.workflows.length > 0) {
       const activeWorkflow = wf.workflows.find((w) => w.flow_key === workflow) ?? wf.workflows[0];
@@ -560,7 +581,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
         funnel = activeWorkflow.steps.map((s) => ({
           step: s.step.replace(/_/g, ' '),
           ofEntrants: s.reach != null ? Math.round(s.reach) : 100,
-          dropPct: s.drop_pct != null ? Math.round(s.drop_pct) : undefined,
+          dropPct: s.drop_pct != null ? Math.round(s.drop_pct) : null,
         }));
       }
     }
