@@ -64,6 +64,22 @@ const modulesByPackage = {
       additionalRoutes: ["/club-management/group-membership"],
     },
     {
+      name: "Class Purchase",
+      icon: ShoppingCart,
+      subItems: [
+        {
+          name: "Class Purchase",
+          href: "/club-management/class-purchase",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Booking",
+          href: "/club-management/class-booking",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
+    {
       name: "User Management",
       icon: Users,
       href: "/club-management/users",

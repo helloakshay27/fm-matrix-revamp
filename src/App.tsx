@@ -3335,6 +3335,41 @@ const PackageSetupDetails = lazy(() =>
     default: m.PackageSetupDetails,
   }))
 );
+const ClassPurchaseList = lazy(() =>
+  import("./pages/ClubManagement/ClassPurchaseList").then((m) => ({
+    default: m.ClassPurchaseList,
+  }))
+);
+const ClassPurchaseAdd = lazy(() =>
+  import("./pages/ClubManagement/ClassPurchaseAdd").then((m) => ({
+    default: m.ClassPurchaseAdd,
+  }))
+);
+const ClassPurchaseDetails = lazy(() =>
+  import("./pages/ClubManagement/ClassPurchaseDetails").then((m) => ({
+    default: m.ClassPurchaseDetails,
+  }))
+);
+const ClassPurchaseEdit = lazy(() =>
+  import("./pages/ClubManagement/ClassPurchaseEdit").then((m) => ({
+    default: m.ClassPurchaseEdit,
+  }))
+);
+const ClassBookingList = lazy(() =>
+  import("./pages/ClubManagement/ClassBookingList").then((m) => ({
+    default: m.ClassBookingList,
+  }))
+);
+const ClassBookingAdd = lazy(() =>
+  import("./pages/ClubManagement/ClassBookingAdd").then((m) => ({
+    default: m.ClassBookingAdd,
+  }))
+);
+const ClassBookingDetails = lazy(() =>
+  import("./pages/ClubManagement/ClassBookingDetails").then((m) => ({
+    default: m.ClassBookingDetails,
+  }))
+);
 const BudgetDashboard = lazy(() =>
   import("./pages/ClubManagement/BudgetDashboard").then((m) => ({
     default: m.BudgetDashboard,
@@ -7068,6 +7103,36 @@ function App() {
                             <Route
                               path="/club-management/package-setup/details/:id"
                               element={<PackageSetupDetails />}
+                            />
+                            {/* Club Management - Class Purchase */}
+                            <Route
+                              path="/club-management/class-purchase"
+                              element={<ClassPurchaseList />}
+                            />
+                            <Route
+                              path="/club-management/class-purchase/add"
+                              element={<ClassPurchaseAdd />}
+                            />
+                            <Route
+                              path="/club-management/class-purchase/edit/:id"
+                              element={<ClassPurchaseEdit />}
+                            />
+                            <Route
+                              path="/club-management/class-purchase/:id"
+                              element={<ClassPurchaseDetails />}
+                            />
+                            {/* Club Management - Class Booking */}
+                            <Route
+                              path="/club-management/class-booking"
+                              element={<ClassBookingList />}
+                            />
+                            <Route
+                              path="/club-management/class-booking/add"
+                              element={<ClassBookingAdd />}
+                            />
+                            <Route
+                              path="/club-management/class-booking/:id"
+                              element={<ClassBookingDetails />}
                             />
                             {/* Club Management - Broadcast */}
                             <Route
