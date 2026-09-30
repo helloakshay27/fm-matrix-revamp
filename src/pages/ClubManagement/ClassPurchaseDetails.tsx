@@ -9,7 +9,17 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
+import { TextField, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { apiClient } from "@/utils/apiClient";
 import {
@@ -22,6 +32,31 @@ import {
   type ClassPurchaseDetail,
   type PurchaseStatus,
 } from "./classPurchaseApi";
+
+const fieldStyles = {
+  height: "45px",
+  backgroundColor: "#fff",
+  borderRadius: "4px",
+  "& .MuiOutlinedInput-root": {
+    height: "45px",
+    "& fieldset": { borderColor: "#ddd" },
+    "&:hover fieldset": { borderColor: "#C72030" },
+    "&.Mui-focused fieldset": { borderColor: "#C72030" },
+  },
+  "& .MuiInputLabel-root": { "&.Mui-focused": { color: "#C72030" } },
+};
+
+const menuProps = {
+  anchorOrigin: { vertical: "bottom" as const, horizontal: "left" as const },
+  transformOrigin: { vertical: "top" as const, horizontal: "left" as const },
+  PaperProps: {
+    className: "disable-mui-select-search",
+    style: { maxHeight: 300, zIndex: 1500 },
+    onWheel: (e: React.WheelEvent) => e.stopPropagation(),
+    onMouseDown: (e: React.MouseEvent) => e.stopPropagation(),
+  },
+  MenuListProps: { "data-disable-mui-select-search": "true" } as Record<string, string>,
+};
 
 const badgeClass = (variant: "green" | "yellow" | "gray" | "red") =>
   ({
@@ -63,8 +98,8 @@ export const ClassPurchaseDetails = () => {
   const [newTill, setNewTill] = useState("");
   const [extendReason, setExtendReason] = useState("");
 
-  const [showStatus, setShowStatus] = useState(false);
   const [nextStatus, setNextStatus] = useState<PurchaseStatus>("active");
+  const [showCancel, setShowCancel] = useState(false);
 
   const load = async () => {
     if (!id) return;
@@ -117,7 +152,6 @@ export const ClassPurchaseDetails = () => {
     try {
       await updateClassPurchaseStatus(purchase.id, { status: nextStatus });
       toast.success("Status updated");
-      setShowStatus(false);
       load();
     } catch (error) {
       console.error("Failed to update status", error);
@@ -149,11 +183,11 @@ export const ClassPurchaseDetails = () => {
   };
 
   const handleCancel = async () => {
-    if (!window.confirm("Cancel this purchase? This cannot be undone.")) return;
     setActionBusy(true);
     try {
       await cancelClassPurchase(purchase.id);
       toast.success("Purchase cancelled");
+      setShowCancel(false);
       load();
     } catch (error) {
       console.error("Failed to cancel purchase", error);
@@ -187,7 +221,7 @@ export const ClassPurchaseDetails = () => {
         <div className="flex items-center gap-3 flex-wrap">
           <h1 className="text-2xl font-bold">Purchase #{purchase.id}</h1>
           {paymentBadge(purchase.paymentStatus)}
-          {statusBadge(purchase.status)}
+          {/* {statusBadge(purchase.status)} */}
         </div>
       </div>
 
@@ -223,22 +257,59 @@ export const ClassPurchaseDetails = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate(`/club-management/class-booking?purchase_id=${purchase.id}`)}
+            onClick={() => navigate(`/club-management/class-booking`)}
           >
             View Bookings
           </Button>
         </div>
-        <div className="p-4 bg-white space-y-2">
+        <div className="p-4 bg-white space-y-4">
+         
+
           {purchase.members.length === 0 ? (
             <p className="text-sm text-gray-500">No members recorded.</p>
           ) : (
-            purchase.members.map((m) => (
-              <div key={m.id} className="flex items-center justify-between border border-gray-200 rounded-md p-3">
-                <span className="text-sm font-medium text-gray-900">{m.userName}</span>
-                <span className="text-xs text-gray-500 capitalize">{m.relationshipToBuyer}</span>
-              </div>
-            ))
+            <div className="space-y-2">
+              {purchase.members.map((m) => (
+                <div key={m.id} className="flex items-center justify-between border border-gray-200 rounded-md p-3">
+                  <span className="text-sm font-medium text-gray-900">{m.userName}</span>
+                  <span className="text-xs text-gray-500 capitalize">{m.relationshipToBuyer}</span>
+                </div>
+              ))}
+            </div>
           )}
+
+           <div className="flex flex-wrap items-end gap-3">
+            <FormControl variant="outlined" sx={{ minWidth: 220 }}>
+              <InputLabel shrink sx={{ backgroundColor: "white", px: 1 }}>
+                Status <span style={{ color: "#C72030" }}>*</span>
+              </InputLabel>
+              <Select
+                value={nextStatus}
+                onChange={(e) => setNextStatus(e.target.value as PurchaseStatus)}
+                displayEmpty
+                label="Status *"
+                sx={fieldStyles}
+                MenuProps={{
+                  ...menuProps,
+                  PaperProps: {
+                    ...menuProps.PaperProps,
+                    style: { ...menuProps.PaperProps.style, maxHeight: 300 },
+                  },
+                }}
+              >
+                <MenuItem value="active">Active</MenuItem>
+                <MenuItem value="expired">Expired</MenuItem>
+                <MenuItem value="cancelled">Cancelled</MenuItem>
+              </Select>
+            </FormControl>
+            <Button
+              onClick={handleStatusChange}
+              disabled={actionBusy || nextStatus === purchase.status}
+              className="fm-button-fix fm-button-brand"
+            >
+              Update Status
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -248,16 +319,13 @@ export const ClassPurchaseDetails = () => {
             <CheckCircle2 className="w-4 h-4" /> Mark as Paid
           </Button>
         )}
-        <Button variant="outline" onClick={() => setShowStatus(true)} disabled={actionBusy}>
-          Status
-        </Button>
         <Button variant="outline" onClick={() => setShowExtend(true)} disabled={actionBusy} className="gap-2">
           <CalendarClock className="w-4 h-4" /> Extend Validity
         </Button>
         {purchase.status !== "cancelled" && (
           <Button
             variant="outline"
-            onClick={handleCancel}
+            onClick={() => setShowCancel(true)}
             disabled={actionBusy}
             className="gap-2 border-red-300 text-red-600 hover:bg-red-50"
           >
@@ -284,15 +352,24 @@ export const ClassPurchaseDetails = () => {
               variant="outlined"
               slotProps={{ inputLabel: { shrink: true } }}
             />
-            <TextField
-              label="Reason"
-              value={extendReason}
-              onChange={(e) => setExtendReason(e.target.value)}
-              fullWidth
-              multiline
-              rows={2}
-              variant="outlined"
-            />
+            <div>
+              <div className="relative">
+                <textarea
+                  className="peer w-full rounded-md border border-gray-300 p-3 focus:border-[#DA7756] focus:outline-none focus:ring-1 focus:ring-[#DA7756] resize-y"
+                  rows={4}
+                  value={extendReason}
+                  onChange={(e) => {
+                    if (e.target.value.length <= 500) setExtendReason(e.target.value);
+                  }}
+                  placeholder="Enter Reason"
+                  maxLength={500}
+                />
+                <label className="absolute -top-2 left-3 bg-white px-1 text-xs font-normal text-black/60 peer-focus:text-[#DA7756]">
+                  Reason
+                </label>
+              </div>
+              <div className="mt-1 text-right text-xs text-gray-400">{extendReason.length}/500</div>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowExtend(false)}>
@@ -305,34 +382,29 @@ export const ClassPurchaseDetails = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showStatus} onOpenChange={setShowStatus}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Change Status</DialogTitle>
-          </DialogHeader>
-          <FormControl fullWidth variant="outlined">
-            <InputLabel shrink>Status</InputLabel>
-            <MuiSelect
-              value={nextStatus}
-              onChange={(e) => setNextStatus(e.target.value as PurchaseStatus)}
-              label="Status"
-              notched
+      <AlertDialog open={showCancel} onOpenChange={setShowCancel}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Purchase</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cancel this purchase? This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={actionBusy}>No</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleCancel();
+              }}
+              disabled={actionBusy}
+              className="btn-delete-confirm"
             >
-              <MenuItem value="active">Active</MenuItem>
-              <MenuItem value="expired">Expired</MenuItem>
-              <MenuItem value="cancelled">Cancelled</MenuItem>
-            </MuiSelect>
-          </FormControl>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowStatus(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleStatusChange} disabled={actionBusy} className="fm-button-fix fm-button-brand">
-              Update
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              Yes, Cancel Purchase
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

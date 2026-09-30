@@ -3,7 +3,17 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, CalendarClock, Ban, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
+import { TextField } from "@mui/material";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
   cancelClassBooking,
@@ -45,6 +55,9 @@ export const ClassBookingDetails = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [actionBusy, setActionBusy] = useState(false);
+
+  const [showCancel, setShowCancel] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
 
   const [showReschedule, setShowReschedule] = useState(false);
   const [newDate, setNewDate] = useState("");
@@ -100,12 +113,12 @@ export const ClassBookingDetails = () => {
   }
 
   const handleCancel = async () => {
-    const reason = window.prompt("Reason for cancelling this booking:");
-    if (reason === null) return;
     setActionBusy(true);
     try {
-      await cancelClassBooking(booking.id, reason);
+      await cancelClassBooking(booking.id, cancelReason);
       toast.success("Booking cancelled");
+      setShowCancel(false);
+      setCancelReason("");
       load();
     } catch (error) {
       console.error("Failed to cancel booking", error);
@@ -137,9 +150,10 @@ export const ClassBookingDetails = () => {
       toast.success("Booking rescheduled");
       setShowReschedule(false);
       navigate(`/club-management/class-booking/${rescheduled.id}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to reschedule booking", error);
-      toast.error("Failed to reschedule booking");
+      const message = error?.response?.data?.errors?.join(", ") || "Failed to reschedule booking";
+      toast.error(message);
     } finally {
       setActionBusy(false);
     }
@@ -194,7 +208,7 @@ export const ClassBookingDetails = () => {
           <>
             <Button
               variant="outline"
-              onClick={handleCancel}
+              onClick={() => setShowCancel(true)}
               disabled={actionBusy}
               className="gap-2 border-red-300 text-red-600 hover:bg-red-50"
             >
@@ -222,26 +236,50 @@ export const ClassBookingDetails = () => {
               variant="outlined"
               slotProps={{ inputLabel: { shrink: true } }}
             />
-            <FormControl fullWidth variant="outlined" disabled={!newDate || loadingSlots}>
-              <InputLabel shrink>New slot</InputLabel>
-              <MuiSelect
-                value={newSlotId}
-                onChange={(e) => setNewSlotId(e.target.value as number)}
-                label="New slot"
-                notched
-                displayEmpty
-              >
-                <MenuItem value="" disabled>
-                  {newDate ? "Select slot" : "Pick a date first"}
-                </MenuItem>
-                {slots.map((slot) => (
-                  <MenuItem key={slot.id} value={slot.id} disabled={slot.available <= 0}>
-                    {slot.label}
-                    {slot.available <= 0 ? " (full)" : ""}
-                  </MenuItem>
-                ))}
-              </MuiSelect>
-            </FormControl>
+            <div>
+              <h2 className="text-sm font-semibold mb-2">
+                New Slot<span className="text-red-500"> *</span>
+              </h2>
+              {slots.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {slots.map((slot) => {
+                    const isFull = slot.available <= 0;
+                    const isSelected = newSlotId === slot.id;
+                    return (
+                      <div
+                        key={slot.id}
+                        className={`flex items-center space-x-2 p-3 border rounded-lg ${
+                          isFull ? "bg-red-50 opacity-60 border-red-300" : "hover:bg-gray-50"
+                        } ${isSelected ? "border-[#C72030] ring-1 ring-[#C72030]" : ""}`}
+                      >
+                        <input
+                          type="checkbox"
+                          id={`reschedule-slot-${slot.id}`}
+                          checked={isSelected}
+                          onChange={() => setNewSlotId(isSelected ? "" : slot.id)}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                          disabled={isFull}
+                        />
+                        <Label
+                          htmlFor={`reschedule-slot-${slot.id}`}
+                          className={`cursor-pointer text-sm font-medium flex items-center gap-2 ${isFull ? "text-red-600" : ""}`}
+                        >
+                          {slot.label}
+                          {isFull && (
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-600">Full</span>
+                          )}
+                        </Label>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm">
+                  {newDate ? "No slots available for the selected date" : "Pick a date first"}
+                </p>
+              )}
+              {loadingSlots && <p className="text-sm text-gray-500 mt-2">Loading slots...</p>}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowReschedule(false)}>
@@ -253,6 +291,45 @@ export const ClassBookingDetails = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={showCancel} onOpenChange={setShowCancel}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Booking</AlertDialogTitle>
+          </AlertDialogHeader>
+          <div>
+            <div className="relative">
+              <textarea
+                className="peer w-full rounded-md border border-gray-300 p-3 focus:border-[#DA7756] focus:outline-none focus:ring-1 focus:ring-[#DA7756] resize-y"
+                rows={4}
+                value={cancelReason}
+                onChange={(e) => {
+                  if (e.target.value.length <= 500) setCancelReason(e.target.value);
+                }}
+                placeholder="Enter Reason"
+                maxLength={500}
+              />
+              <label className="absolute -top-2 left-3 bg-white px-1 text-xs font-normal text-black/60 peer-focus:text-[#DA7756]">
+                Reason
+              </label>
+            </div>
+            <div className="mt-1 text-right text-xs text-gray-400">{cancelReason.length}/500</div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={actionBusy}>No</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleCancel();
+              }}
+              disabled={actionBusy}
+              className="btn-delete-confirm"
+            >
+              Yes, Cancel Booking
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

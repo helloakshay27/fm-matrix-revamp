@@ -68,7 +68,7 @@ const modulesByPackage = {
       icon: ShoppingCart,
       subItems: [
         {
-          name: "Class Purchase",
+          name: "Purchase",
           href: "/club-management/class-purchase",
           color: "text-[#1a1a1a]",
         },
