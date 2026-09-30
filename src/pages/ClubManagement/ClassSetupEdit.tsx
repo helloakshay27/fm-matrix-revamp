@@ -35,7 +35,7 @@ export const ClassSetupEdit = () => {
           minParticipants: String(c.min_capacity ?? ""),
           maxCapacity: String(c.max_capacity ?? ""),
           location: c.location ?? "",
-          duration: c.duration_minutes != null ? String(c.duration_minutes) : "",
+          duration: c.duration_minutes != null ? `${c.duration_minutes} min` : "",
           trainer: (c.trainers ?? c.trainer_ids ?? []).map((trainer: any) =>
             String(typeof trainer === "object" ? trainer.id : trainer)
           ),

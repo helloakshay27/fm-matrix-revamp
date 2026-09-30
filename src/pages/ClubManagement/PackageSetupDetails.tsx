@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -7,13 +9,22 @@ import { ArrowLeft, Pencil, Trash2, Package as PackageIcon, Users } from "lucide
 import { toast } from "sonner";
 import {
   PACKAGE_TIER_TYPES,
-  deletePackage,
-  getPackageById,
+  fetchClubClassOptions,
   gstAmount,
   tierBasePrice,
   tierTotal,
   type PricingTier,
 } from "./packageSetupMockData";
+
+interface PackageDetail {
+  id: string;
+  name: string;
+  className: string;
+  status: "Active" | "Inactive";
+  sessions: number;
+  validityDays: number;
+  tier: PricingTier;
+}
 
 const getStatusBadge = (status: string) => (
   <span
@@ -39,11 +50,9 @@ const tierColumns: ColumnConfig[] = [
   { key: "cgstRate", label: "CGST %", sortable: true, hideable: true, draggable: true },
   { key: "sgstRate", label: "SGST %", sortable: true, hideable: true, draggable: true },
   { key: "hsnCode", label: "HSN Code", sortable: true, hideable: true, draggable: true },
-  { key: "price", label: "Price (₹)", sortable: true, hideable: true, draggable: true },
-  { key: "gstPercent", label: "GST %", sortable: true, hideable: true, draggable: true },
-  { key: "gstAmount", label: "GST Amount", sortable: false, hideable: true, draggable: true },
-  { key: "total", label: "Total", sortable: false, hideable: true, draggable: true },
-].filter((column) => column.key !== "price" && column.key !== "gstPercent");
+  // { key: "gstAmount", label: "GST Amount", sortable: false, hideable: true, draggable: true },
+  // { key: "total", label: "Total", sortable: false, hideable: true, draggable: true },
+];
 
 const PricingTierReadTable = ({
   title,
@@ -93,8 +102,8 @@ const PricingTierReadTable = ({
           cgstRate: <span className="text-sm text-gray-700">{tier.cgstRate ?? 0}%</span>,
           sgstRate: <span className="text-sm text-gray-700">{tier.sgstRate ?? 0}%</span>,
           hsnCode: <span className="text-sm text-gray-700">{tier.hsnCode || "-"}</span>,
-          gstAmount: <span className="text-sm text-gray-600">{inr(gstAmount(tier))}</span>,
-          total: <span className="text-sm font-semibold text-gray-900">{inr(tierTotal(tier))}</span>,
+          // gstAmount: <span className="text-sm text-gray-600">{inr(gstAmount(tier))}</span>,
+          // total: <span className="text-sm font-semibold text-gray-900">{inr(tierTotal(tier))}</span>,
         })}
       />
     </CardContent>
@@ -104,9 +113,64 @@ const PricingTierReadTable = ({
 export const PackageSetupDetails = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const pkg = id ? getPackageById(id) : undefined;
+  const [pkg, setPkg] = useState<PackageDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
-  if (!pkg) {
+  useEffect(() => {
+    if (!id) return;
+    const fetchPackage = async () => {
+      setIsLoading(true);
+      try {
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
+        const [pkgRes, classOptions] = await Promise.all([
+          axios.get(`https://${baseUrl}/pms/admin/packages/${id}.json`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetchClubClassOptions().catch(() => []),
+        ]);
+        const p = pkgRes.data?.package ?? pkgRes.data;
+        const classId = String(p.club_class_id ?? "");
+
+        setPkg({
+          id: String(p.id),
+          name: p.name ?? "",
+          className: p.club_class?.name ?? classOptions.find((c) => c.id === classId)?.name ?? classId,
+          status: (p.active ?? true) ? "Active" : "Inactive",
+          sessions: p.credits ?? 0,
+          validityDays: p.validity_days ?? 0,
+          tier: {
+            id: String(p.id),
+            label: p.name ?? "",
+            packageType: p.package_type ?? "",
+            credits: p.credits ?? 0,
+            validityDays: p.validity_days ?? 0,
+            price: p.price_member ?? 0,
+            gstPercent: (p.cgst_rate ?? 0) + (p.sgst_rate ?? 0),
+            priceMember: p.price_member ?? 0,
+            priceHotelGuest: p.price_hotel_guest ?? 0,
+            priceNonMember: p.price_non_member ?? 0,
+            cgstRate: p.cgst_rate ?? 0,
+            sgstRate: p.sgst_rate ?? 0,
+            hsnCode: p.hsn_code ?? "",
+          },
+        });
+      } catch (error) {
+        console.error("Failed to load package", error);
+        setNotFound(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchPackage();
+  }, [id]);
+
+  if (isLoading) {
+    return <div className="p-6 text-gray-500">Loading...</div>;
+  }
+
+  if (notFound || !pkg) {
     return (
       <div className="p-6">
         <p className="text-gray-500">Package not found.</p>
@@ -117,10 +181,19 @@ export const PackageSetupDetails = () => {
     );
   }
 
-  const handleDelete = () => {
-    deletePackage(pkg.id);
-    toast.success("Package deleted successfully!");
-    navigate("/club-management/package-setup");
+  const handleDelete = async () => {
+    try {
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
+      await axios.delete(`https://${baseUrl}/pms/admin/packages/${pkg.id}.json`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Package deleted successfully!");
+      navigate("/club-management/package-setup");
+    } catch (error) {
+      console.error("Failed to delete package", error);
+      toast.error("Failed to delete package");
+    }
   };
 
   return (
@@ -143,7 +216,7 @@ export const PackageSetupDetails = () => {
             </h1>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          {/* <div className="flex items-center gap-2 flex-wrap">
             <Button
               size="sm"
               variant="outline"
@@ -161,7 +234,7 @@ export const PackageSetupDetails = () => {
               <Pencil className="h-4 w-4" />
               Edit Details
             </Button>
-          </div>
+          </div> */}
         </div>
 
         <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
@@ -173,10 +246,13 @@ export const PackageSetupDetails = () => {
           </CardHeader>
           <CardContent className="p-6 bg-white">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <ReadOnlyField label="Class / Activity" value={pkg.classActivity} />
-              <ReadOnlyField label="Package Type" value={pkg.packageType} />
+              <ReadOnlyField label="Class / Activity" value={pkg.className} />
+              <ReadOnlyField
+                label="Package Type"
+                value={PACKAGE_TIER_TYPES.find((t) => t.value === pkg.tier.packageType)?.label ?? pkg.tier.packageType}
+              />
               <ReadOnlyField label="Sessions" value={`${pkg.sessions} Sessions`} />
-              <ReadOnlyField label="Validity" value={pkg.validity} />
+              <ReadOnlyField label="Validity" value={`${pkg.validityDays} days`} />
             </div>
           </CardContent>
         </Card>
@@ -185,7 +261,7 @@ export const PackageSetupDetails = () => {
           title="Club member pricing"
           icon={<Users className="h-4 w-4" />}
           storageKey="package-setup-details-member-tiers-v1"
-          tiers={pkg.memberTiers}
+          tiers={[pkg.tier]}
         />
       </div>
     </div>
