@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { Plus, Eye, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
@@ -16,7 +17,26 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
-import { deletePackage, getPackages, updatePackage, type PackageSetup } from "./packageSetupMockData";
+import { PACKAGE_TIER_TYPES, fetchClubClassOptions, type ClubClassOption } from "./packageSetupMockData";
+
+interface PackageRow {
+  id: string;
+  name: string;
+  classId: string;
+  className: string;
+  packageType: string;
+  credits: number;
+  validityDays: number;
+  priceMember: number;
+  priceHotelGuest: number;
+  priceNonMember: number;
+  cgstRate: number;
+  sgstRate: number;
+  hsnCode: string;
+  extensionAllowed: boolean;
+  maxExtensionDays: number;
+  active: boolean;
+}
 
 const columns: ColumnConfig[] = [
   { key: "actions", label: "Actions", sortable: false, hideable: false, draggable: false },
@@ -24,57 +44,155 @@ const columns: ColumnConfig[] = [
   { key: "classActivity", label: "Class/Activity", sortable: true, hideable: true, draggable: true },
   { key: "packageType", label: "Package Type", sortable: true, hideable: true, draggable: true },
   { key: "sessions", label: "Sessions", sortable: true, hideable: true, draggable: true },
-  { key: "price", label: "Price", sortable: true, hideable: true, draggable: true },
+  { key: "priceMember", label: "Price Member", sortable: true, hideable: true, draggable: true },
+  { key: "priceHotelGuest", label: "Hotel Guest", sortable: true, hideable: true, draggable: true },
+  { key: "priceNonMember", label: "Non Member", sortable: true, hideable: true, draggable: true },
   { key: "validity", label: "Validity", sortable: true, hideable: true, draggable: true },
   { key: "status", label: "Status", sortable: true, hideable: true, draggable: true },
 ];
 
-const PAGE_SIZE = 10;
+const packageTypeLabel = (value: string) =>
+  PACKAGE_TIER_TYPES.find((t) => t.value === value)?.label ?? value;
+
+const PAGE_SIZE = 20;
 
 export const PackageSetupList = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [refreshTick, setRefreshTick] = useState(0);
-  const [deleteTarget, setDeleteTarget] = useState<PackageSetup | null>(null);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [rows, setRows] = useState<PackageRow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [classOptions, setClassOptions] = useState<ClubClassOption[]>([]);
+  const [deleteTarget, setDeleteTarget] = useState<PackageRow | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const allPackages = useMemo(() => getPackages(), [refreshTick]);
+  useEffect(() => {
+    fetchClubClassOptions()
+      .then(setClassOptions)
+      .catch((error) => console.error("Failed to load classes", error));
+  }, []);
 
-  const filtered = useMemo(() => {
+  const fetchPackages = async () => {
+    setIsLoading(true);
+    try {
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`https://${baseUrl}/pms/admin/packages.json`, {
+        params: { page: currentPage, per_page: PAGE_SIZE },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = res.data;
+      const list = Array.isArray(data) ? data : data?.packages ?? data?.data ?? [];
+      const totalCount = data?.total_count ?? data?.pagination?.total_count ?? list.length;
+      const apiTotalPages =
+        data?.total_pages ?? data?.pagination?.total_pages ?? Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+      setRows(
+        list.map((p: any) => {
+          const classId = String(p.club_class_id ?? "");
+          return {
+            id: String(p.id),
+            name: p.name ?? "-",
+            classId,
+            className: p.club_class?.name ?? classOptions.find((c) => c.id === classId)?.name ?? classId,
+            packageType: p.package_type ?? "",
+            credits: p.credits ?? 0,
+            validityDays: p.validity_days ?? 0,
+            priceMember: p.price_member ?? 0,
+            priceHotelGuest: p.price_hotel_guest ?? 0,
+            priceNonMember: p.price_non_member ?? 0,
+            cgstRate: p.cgst_rate ?? 0,
+            sgstRate: p.sgst_rate ?? 0,
+            hsnCode: p.hsn_code ?? "",
+            extensionAllowed: p.extension_allowed ?? true,
+            maxExtensionDays: p.max_extension_days ?? 0,
+            active: p.active ?? true,
+          };
+        })
+      );
+      setTotalPages(apiTotalPages);
+      setTotalRecords(totalCount);
+    } catch (error) {
+      console.error("Failed to fetch package list", error);
+      toast.error("Failed to load packages");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPackages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
+
+  // The API doesn't expose a name search param, so this only narrows the page already
+  // fetched rather than querying the server.
+  const visibleRows = (() => {
     const q = searchTerm.trim().toLowerCase();
-    if (!q) return allPackages;
-    return allPackages.filter(
-      (p) => p.name.toLowerCase().includes(q) || p.classActivity.toLowerCase().includes(q)
+    if (!q) return rows;
+    return rows.filter(
+      (r) => r.name.toLowerCase().includes(q) || r.className.toLowerCase().includes(q)
     );
-  }, [allPackages, searchTerm]);
+  })();
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const page = Math.min(currentPage, totalPages);
-  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const handleSearch = (term: string) => setSearchTerm(term);
 
-  const handleSearch = (term: string) => {
-    setSearchTerm(term);
-    setCurrentPage(1);
+  const handleToggleStatus = async (pkg: PackageRow) => {
+    try {
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
+      await axios.patch(
+        `https://${baseUrl}/pms/admin/packages/${pkg.id}.json`,
+        {
+          package: {
+            club_class_id: Number(pkg.classId),
+            name: pkg.name,
+            package_type: pkg.packageType,
+            credits: pkg.credits,
+            validity_days: pkg.validityDays,
+            extension_allowed: pkg.extensionAllowed,
+            max_extension_days: pkg.maxExtensionDays,
+            price_member: pkg.priceMember,
+            price_hotel_guest: pkg.priceHotelGuest,
+            price_non_member: pkg.priceNonMember,
+            cgst_rate: pkg.cgstRate,
+            sgst_rate: pkg.sgstRate,
+            hsn_code: pkg.hsnCode,
+            active: !pkg.active,
+          },
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(`Package marked ${!pkg.active ? "Active" : "Inactive"}`);
+      fetchPackages();
+    } catch (error) {
+      console.error("Failed to update package status", error);
+      toast.error("Failed to update package status");
+    }
   };
 
-  const handleToggleStatus = (pkg: PackageSetup) => {
-    const nextStatus = pkg.status === "Active" ? "Inactive" : "Active";
-    updatePackage(pkg.id, { ...pkg, status: nextStatus });
-    toast.success(`Package marked ${nextStatus}`);
-    setRefreshTick((n) => n + 1);
-  };
-
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
-    deletePackage(deleteTarget.id);
-    toast.success("Package deleted successfully!");
-    setShowDeleteModal(false);
-    setDeleteTarget(null);
-    setRefreshTick((n) => n + 1);
+    try {
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
+      await axios.delete(`https://${baseUrl}/pms/admin/packages/${deleteTarget.id}.json`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Package deleted successfully!");
+      setShowDeleteModal(false);
+      setDeleteTarget(null);
+      fetchPackages();
+    } catch (error) {
+      console.error("Failed to delete package", error);
+      toast.error("Failed to delete package");
+    }
   };
 
-  const renderRow = (pkg: PackageSetup) => ({
+  const renderRow = (pkg: PackageRow) => ({
     actions: (
       <div className="flex items-center gap-2">
         <button
@@ -111,21 +229,23 @@ export const PackageSetupList = () => {
         {pkg.name}
       </div>
     ),
-    classActivity: <span className="text-sm text-gray-700">{pkg.classActivity}</span>,
-    packageType: <span className="text-sm text-gray-700">{pkg.packageType}</span>,
-    sessions: <span className="text-sm text-gray-900">{pkg.sessions} Sessions</span>,
-    price: <span className="text-sm text-gray-900">₹{pkg.price.toLocaleString("en-IN")}</span>,
-    validity: <span className="text-sm text-gray-600">{pkg.validity}</span>,
+    classActivity: <span className="text-sm text-gray-700">{pkg.className}</span>,
+    packageType: <span className="text-sm text-gray-700">{packageTypeLabel(pkg.packageType)}</span>,
+    sessions: <span className="text-sm text-gray-900">{pkg.credits} Sessions</span>,
+    priceMember: <span className="text-sm text-gray-900">₹{pkg.priceMember.toLocaleString("en-IN")}</span>,
+    priceHotelGuest: <span className="text-sm text-gray-900">₹{pkg.priceHotelGuest.toLocaleString("en-IN")}</span>,
+    priceNonMember: <span className="text-sm text-gray-900">₹{pkg.priceNonMember.toLocaleString("en-IN")}</span>,
+    validity: <span className="text-sm text-gray-600">{pkg.validityDays} days</span>,
     status: (
       <button
         type="button"
         onClick={() => handleToggleStatus(pkg)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${pkg.status === "Active" ? "bg-brand" : "bg-gray-300"
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${pkg.active ? "bg-brand" : "bg-gray-300"
           }`}
-        title={pkg.status === "Active" ? "Active - click to deactivate" : "Inactive - click to activate"}
+        title={pkg.active ? "Active - click to deactivate" : "Inactive - click to activate"}
       >
         <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${pkg.status === "Active" ? "translate-x-6" : "translate-x-1"
+          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${pkg.active ? "translate-x-6" : "translate-x-1"
             }`}
         />
       </button>
@@ -139,16 +259,16 @@ export const PackageSetupList = () => {
       </header>
 
       <EnhancedTaskTable
-        data={pageRows}
+        data={visibleRows}
         columns={columns}
         renderRow={renderRow}
-        storageKey="package-setup-list-v1"
+        storageKey="package-setup-list-v2"
         hideTableExport={true}
         enableSearch={true}
         searchTerm={searchTerm}
         onSearchChange={handleSearch}
         searchPlaceholder="Search packages..."
-        emptyMessage="No packages found"
+        emptyMessage={isLoading ? "Loading..." : "No packages found"}
         leftActions={
           <Button
             className="fm-button-fix fm-button-brand px-8 py-2"
@@ -159,13 +279,13 @@ export const PackageSetupList = () => {
         }
       />
 
-      {filtered.length > 0 && (
+      {totalRecords > 0 && (
         <TicketPagination
-          currentPage={page}
+          currentPage={currentPage}
           totalPages={totalPages}
-          totalRecords={filtered.length}
+          totalRecords={totalRecords}
           perPage={PAGE_SIZE}
-          isLoading={false}
+          isLoading={isLoading}
           onPageChange={setCurrentPage}
           onPerPageChange={() => {}}
         />

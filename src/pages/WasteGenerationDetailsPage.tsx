@@ -24,6 +24,7 @@ import {
   FileCheck,
   Trash2,
   Paperclip,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -712,11 +713,12 @@ export const WasteGenerationDetailsPage = () => {
                       <span className="text-sm font-medium text-gray-700 truncate">{attachment.name}</span>
                       <a
                         href={attachment.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-[#C72030] text-sm font-medium hover:underline"
+                        download={attachment.name}
+                        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded text-brand hover:bg-brand-selected"
+                        aria-label={`Download ${attachment.name}`}
+                        title={`Download ${attachment.name}`}
                       >
-                        Open
+                        <Download className="h-4 w-4" />
                       </a>
                     </div>
                   </div>

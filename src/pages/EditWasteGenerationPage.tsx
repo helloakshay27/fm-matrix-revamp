@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import { TextField, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
-import { Recycle, ArrowLeft, Plus, Trash2, X } from 'lucide-react';
+import { Recycle, ArrowLeft, Plus, Trash2, X, Eye } from 'lucide-react';
 import {
   fetchBuildings,
   fetchWings,
@@ -26,6 +26,7 @@ import { SupplierSearchSelect } from '@/components/SupplierSearchSelect';
 import { FormSearchSelect } from '@/components/FormSearchSelect';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { toast } from 'sonner';
+import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 
 // Already-uploaded file on an existing waste entry — shown read-only (no
 // remove control, since we don't send a "keep vs delete" signal to the API).
@@ -98,7 +99,9 @@ const normalizeAttachment = (raw: unknown): ExistingAttachment | null => {
   const explicitName = [record.document_name, record.document_file_name, record.name, record.file_name].find(
     (v): v is string => typeof v === 'string' && v.trim().length > 0
   );
-  const name = explicitName ?? (url.split('/').pop() || 'Attachment').split('?')[0];
+  const fallbackName = (url.split('/').pop() || 'Attachment').split('?')[0];
+  const candidateName = explicitName ?? fallbackName;
+  const name = candidateName.toLowerCase() === 'download' ? 'Attachment' : candidateName;
 
   return { url, name };
 };
@@ -151,6 +154,13 @@ const EditWasteGenerationPage = () => {
   const { toast: reactToast } = useToast();
 
   const [initialLoading, setInitialLoading] = useState(true);
+  const [isAttachmentPreviewOpen, setIsAttachmentPreviewOpen] = useState(false);
+  const [selectedAttachment, setSelectedAttachment] = useState<{
+    id: number;
+    document_name?: string;
+    document_file_name?: string;
+    url: string;
+  } | null>(null);
   const [formData, setFormData] = useState({
     building: '',
     wing: '',
@@ -850,15 +860,28 @@ const EditWasteGenerationPage = () => {
                             {entry.existingAttachments.length > 0 && (
                               <div className="flex flex-wrap gap-1">
                                 {entry.existingAttachments.map((att, attIndex) => (
-                                  <a
+                                  <span
                                     key={`existing-${attIndex}`}
-                                    href={att.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 bg-white border border-gray-300 rounded px-1.5 py-0.5 text-xs text-blue-600 max-w-[160px] hover:underline"
+                                    className="inline-flex items-center gap-1 bg-white border border-gray-300 rounded px-1.5 py-0.5 text-xs text-gray-700 max-w-[160px]"
                                   >
                                     <span className="truncate">{att.name}</span>
-                                  </a>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedAttachment({
+                                          id: attIndex,
+                                          document_name: att.name,
+                                          url: att.url,
+                                        });
+                                        setIsAttachmentPreviewOpen(true);
+                                      }}
+                                      className="shrink-0 text-gray-500 hover:text-brand"
+                                      aria-label={`View ${att.name}`}
+                                      title="View attachment"
+                                    >
+                                      <Eye className="h-3.5 w-3.5" />
+                                    </button>
+                                  </span>
                                 ))}
                               </div>
                             )}
@@ -1033,6 +1056,13 @@ const EditWasteGenerationPage = () => {
           </div>
         </div>
       </form>
+      <AttachmentPreviewModal
+        isModalOpen={isAttachmentPreviewOpen}
+        setIsModalOpen={setIsAttachmentPreviewOpen}
+        showDownload={false}
+        selectedDoc={selectedAttachment}
+        setSelectedDoc={setSelectedAttachment}
+      />
     </div>
   );
 };
