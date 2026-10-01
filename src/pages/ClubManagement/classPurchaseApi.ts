@@ -495,7 +495,12 @@ export interface SlotTimeOption {
   id: number;
   label: string;
   available: number;
+  isBooked: boolean;
 }
+
+// "14:5" -> "14:05" - formats the API's separate hour/minute ints as 24-hour time.
+const formatHourMinute = (hour: number, minute: number): string =>
+  `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 
 export async function fetchAvailableSlotTimes(
   trainerId: string,
@@ -507,11 +512,19 @@ export async function fetchAvailableSlotTimes(
   });
   const data = res.data;
   const list = Array.isArray(data) ? data : data?.slot_times ?? data?.data ?? [];
-  return list.map((s: any) => ({
-    id: Number(s.id),
-    label: s.label ?? s.timing ?? s.time ?? `Slot ${s.id}`,
-    available: s.available ?? 0,
-  }));
+  return list.map((s: any) => {
+    const available = s.available ?? (s.is_booked ? 0 : 1);
+    const hasHourMinute = s.start_hour != null && s.end_hour != null;
+    const timeRangeLabel = hasHourMinute
+      ? `${formatHourMinute(s.start_hour, s.start_minute ?? 0)} to ${formatHourMinute(s.end_hour, s.end_minute ?? 0)}`
+      : undefined;
+    return {
+      id: Number(s.id),
+      label: s.ampm ?? s.label ?? timeRangeLabel ?? s.timing ?? s.time ?? `Slot ${s.id}`,
+      available,
+      isBooked: s.is_booked ?? available <= 0,
+    };
+  });
 }
 
 // Purchases usable as the source for a new booking: paid, active, with sessions left.
