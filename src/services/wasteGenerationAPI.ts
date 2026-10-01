@@ -18,12 +18,18 @@ export interface Category {
   category_name: string;
   category_type: string;
   tag_type: string;
+  parent_id?: number | null;
 }
 
 export interface OperationalLandlord {
   id: number;
   category_name: string;
   tag_type: string;
+}
+
+export interface Entity {
+  id: number;
+  name: string;
 }
 
 export interface CreatedBy {
@@ -188,6 +194,7 @@ export interface CreateWasteGenerationPayload {
     recycled_unit: number;
     remark?: string;
     device_id?: string;
+    entity_id?: number | null;
   };
   waste_entries: WasteEntryInput[];
 }
@@ -412,6 +419,7 @@ export interface UpdateWasteGenerationEntriesPayload {
     agency_name: string;
     recycled_unit?: number;
     remark?: string;
+    entity_id?: number | null;
   };
   waste_entries: WasteEntryUpdateInput[];
 }
@@ -736,6 +744,41 @@ export const fetchCategories = async (): Promise<Category[]> => {
   }
 };
 
+// API function to fetch subcategories (tag_type=Category) scoped to a single
+// parent Category (commodity) id, so the Subcategory dropdown only ever shows
+// options belonging to whichever Category a row has selected.
+export const fetchSubcategoriesByParent = async (parentId: number): Promise<Category[]> => {
+  try {
+    const url = getFullUrl(`/pms/generic_tags.json?q[tag_type_eq]=Category&q[parent_id]=${parentId}`);
+
+    console.log('Fetching subcategories for parent from:', url);
+
+    const options = getAuthenticatedFetchOptions('GET');
+    const response = await fetch(url, options);
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return [];
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Generic tags API response (subcategories by parent):', data);
+
+    if (!Array.isArray(data)) return [];
+
+    return data.filter((tag) => {
+      const hasName = tag.category_name && tag.category_name.trim() !== '';
+      const isActive = tag.active === true;
+      return hasName && isActive;
+    });
+  } catch (error) {
+    console.error('Error fetching subcategories by parent:', error);
+    return [];
+  }
+};
+
 // API function to fetch operational landlords
 export const fetchOperationalLandlords = async (): Promise<OperationalLandlord[]> => {
   try {
@@ -775,6 +818,34 @@ export const fetchOperationalLandlords = async (): Promise<OperationalLandlord[]
     return [];
   } catch (error) {
     console.error('Error fetching operational landlords:', error);
+    // Return empty array instead of throwing error for optional data
+    return [];
+  }
+};
+
+// API function to fetch entities (used for the "Customer" dropdown)
+export const fetchEntities = async (): Promise<Entity[]> => {
+  try {
+    const url = getFullUrl('/entities.json');
+
+    console.log('Fetching entities from:', url);
+
+    const options = getAuthenticatedFetchOptions('GET');
+    const response = await fetch(url, options);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Entities API response:', data);
+
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.entities)) return data.entities;
+
+    return [];
+  } catch (error) {
+    console.error('Error fetching entities:', error);
     // Return empty array instead of throwing error for optional data
     return [];
   }
