@@ -15,6 +15,9 @@ export const AdoptionEngagement: React.FC = () => {
   const colors = useChartColors();
 
   const adopt = vm.adopt;
+  // Look tiles up by id, not index — buildAdopt also emits A1 (Seat Utilisation),
+  // which Pulse doesn't show, so positional access shifted every tile by one.
+  const tile = (id: string) => adopt.tiles.find(t => t.id === id)!;
 
   // Retention heat columns — reference layout shows Week 0 through Week 5.
   const retentionCols = 6;
@@ -71,16 +74,16 @@ export const AdoptionEngagement: React.FC = () => {
         {/* KPI Tiles */}
         <div className="tiles" style={{ gridTemplateColumns: "repeat(3, 1fr)", marginTop: "16px" }} id="tilesAdoption">
           <KpiTile
-            {...tileToKpi(adopt.tiles[0], { label: "Stickiness", id: "stickiness" })}
+            {...tileToKpi(tile("A2"), { label: "Stickiness", id: "stickiness" })}
           />
           <KpiTile
-            {...tileToKpi(adopt.tiles[1], { label: "Adoption Trend", noTarget: true })}
+            {...tileToKpi(tile("A3"), { label: "Adoption Trend", noTarget: true })}
           />
           <KpiTile
-            {...tileToKpi(adopt.tiles[2], { label: "14-Day Activation", id: "activation14" })}
+            {...tileToKpi(tile("A5"), { label: "14-Day Activation", id: "activation14" })}
           />
           <KpiTile
-            {...tileToKpi(adopt.tiles[3], { label: "Module Breadth", id: "moduleBreadth2", noTarget: true })}
+            {...tileToKpi(tile("A6"), { label: "Module Breadth", id: "moduleBreadth2", noTarget: true })}
           />
         </div>
 
