@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
-import { ArrowLeft, Pencil, Trash2, UserRound, Paperclip, FileText, Download } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, UserRound, CalendarDays, Paperclip, FileText, Download } from "lucide-react";
 import { toast } from "sonner";
 import { deleteTrainer, mapTrainerApiData, type TrainerSetup } from "./trainerSetupMockData";
 import { apiClient } from "@/utils/apiClient";
@@ -32,6 +32,28 @@ const fieldStyles = {
     },
     "& fieldset": { borderColor: "#ddd" },
   },
+};
+
+const ReadOnlyField = ({ label, value }: { label: string; value: string | number | undefined }) => (
+  <TextField
+    label={label}
+    value={value === undefined || value === "" ? "—" : value}
+    disabled
+    fullWidth
+    variant="outlined"
+    slotProps={{ inputLabel: { shrink: true } }}
+    InputProps={{ sx: fieldStyles }}
+  />
+);
+
+const formatDuration = (duration?: TrainerSetup["bookingAllowedBefore"]) => {
+  if (!duration) return "—";
+  const parts = [
+    duration.day ? `${duration.day} day${duration.day === "1" ? "" : "s"}` : "",
+    duration.hour ? `${duration.hour} hour${duration.hour === "1" ? "" : "s"}` : "",
+    duration.minute ? `${duration.minute} minute${duration.minute === "1" ? "" : "s"}` : "",
+  ].filter(Boolean);
+  return parts.join(", ") || "0";
 };
 
 export const TrainerSetupDetails = () => {
@@ -93,7 +115,7 @@ export const TrainerSetupDetails = () => {
             </h1>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          {/* <div className="flex items-center gap-2 flex-wrap">
             <Button
               size="sm"
               variant="outline"
@@ -111,7 +133,7 @@ export const TrainerSetupDetails = () => {
               <Pencil className="h-4 w-4" />
               Edit Details
             </Button>
-          </div>
+          </div> */}
         </div>
 
         <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
@@ -168,15 +190,6 @@ export const TrainerSetupDetails = () => {
                 InputProps={{ sx: fieldStyles }}
               />
               <TextField
-                label="Rate per Session (₹)"
-                value={trainer.ratePerSession}
-                disabled
-                fullWidth
-                variant="outlined"
-                slotProps={{ inputLabel: { shrink: true } }}
-                InputProps={{ sx: fieldStyles }}
-              />
-              <TextField
                 label="Contact Number"
                 value={trainer.contactNumber}
                 disabled
@@ -194,6 +207,8 @@ export const TrainerSetupDetails = () => {
                 slotProps={{ inputLabel: { shrink: true } }}
                 InputProps={{ sx: fieldStyles }}
               />
+              <ReadOnlyField label="Emergency Contact" value={trainer.emergencyContact} />
+              <ReadOnlyField label="Shift Timings" value={trainer.shiftTimings} />
               <FormControl fullWidth variant="outlined" disabled sx={{ "& .MuiInputBase-root": fieldStyles }}>
                 <InputLabel shrink>Status</InputLabel>
                 <MuiSelect value={trainer.status} label="Status" notched>
@@ -203,12 +218,27 @@ export const TrainerSetupDetails = () => {
               </FormControl>
             </div>
 
-            {/* {trainer.bio && (
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Bio</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">{trainer.bio}</p>
-              </div>
-            )} */}
+          </CardContent>
+        </Card>
+
+        <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
+          <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center gap-3 space-y-0 p-4">
+            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
+              <CalendarDays className="h-4 w-4" />
+            </div>
+            <CardTitle className="text-lg font-semibold text-gray-800">Facility Operational Timings &amp; Booking</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 gap-6 bg-white p-6 md:grid-cols-3">
+            <ReadOnlyField label="Facility Slot ID" value={trainer.facilitySlotId} />
+            <ReadOnlyField label="Start Time" value={trainer.availabilitySlots?.[0] ? `${trainer.availabilitySlots[0].startTime.hour}:${trainer.availabilitySlots[0].startTime.minute}` : ""} />
+            <ReadOnlyField label="End Time" value={trainer.availabilitySlots?.[0] ? `${trainer.availabilitySlots[0].endTime.hour}:${trainer.availabilitySlots[0].endTime.minute}` : ""} />
+            <ReadOnlyField label="Concurrent Slots" value={trainer.availabilitySlots?.[0]?.concurrentSlots} />
+            <ReadOnlyField label="Slot Duration (Minutes)" value={trainer.availabilitySlots?.[0]?.slotBy} />
+            <ReadOnlyField label="Bookable Slots Per Day" value={trainer.bookableSlotsPerDay} />
+            <ReadOnlyField label="Booking Allowed Before" value={formatDuration(trainer.bookingAllowedBefore)} />
+            <ReadOnlyField label="Advance Booking" value={formatDuration(trainer.advanceBooking)} />
+            <ReadOnlyField label="Can Cancel Before Schedule" value={formatDuration(trainer.canCancelBefore)} />
+            <ReadOnlyField label="Max Bookings Per User Per Day" value={trainer.facilityBookedTimes} />
           </CardContent>
         </Card>
 

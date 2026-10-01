@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
-import { ArrowLeft, CalendarDays, UserRound, Paperclip, Upload, X } from "lucide-react";
+import { ArrowLeft, CalendarDays, UserRound, Paperclip, Upload, Download, X } from "lucide-react";
 import { toast } from "sonner";
+import { apiClient } from "@/utils/apiClient";
 import {
-  ROSTER_OPTIONS,
-  SLOT_DURATION_OPTIONS,
   SPECIALIZATIONS,
   type DurationValue,
   type TrainerAvailabilitySlot,
+  type TrainerCredential,
   type TrainerSetup,
 } from "./trainerSetupMockData";
 
@@ -24,6 +24,27 @@ const blankAvailabilitySlot = (): TrainerAvailabilitySlot => ({
 // Allows only positive integers, matching the pattern used on the Amenity Booking Setup form.
 const isPositiveIntegerInput = (value: string) => value === "" || /^[1-9]\d*$/.test(value);
 const isDigitsInput = (value: string) => value === "" || /^\d+$/.test(value);
+
+interface SetupOption {
+  id: string;
+  label: string;
+}
+
+const mapSetupOptions = (responseData: any, collectionKeys: string[], labelKeys: string[]): SetupOption[] => {
+  const source = responseData?.data && !Array.isArray(responseData.data) ? responseData.data : responseData;
+  const items = Array.isArray(source)
+    ? source
+    : collectionKeys.map((key) => source?.[key]).find(Array.isArray) ??
+      (Array.isArray(source?.data) ? source.data : []);
+
+  return items
+    .filter((item: any) => item && (item.id ?? item.value ?? item.user_roaster_id ?? item.user_shift_id) != null)
+    .map((item: any) => {
+      const id = item.id ?? item.value ?? item.user_roaster_id ?? item.user_shift_id;
+      const label = labelKeys.map((key) => item[key]).find((value) => value != null && String(value).trim());
+      return { id: String(id), label: String(label ?? `#${id}`) };
+    });
+};
 
 // Matches the Section pattern used by CreditNoteClubAdd/Edit and ClassSetupForm (bg-[#F6F4EE]
 // header bar, circular bg-[#E5E0D3] icon badge in the brand red).
@@ -67,15 +88,17 @@ const requiredLabelSx = {
 };
 
 export interface TrainerSetupFormState {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   specialization: string;
   experience: string;
   ratePerSession: string;
   contactNumber: string;
+  emergencyContact: string;
   status: "Active" | "Inactive";
   bio: string;
-  slot: string;
+  shift: string;
   roster: string;
   availabilitySlots: TrainerAvailabilitySlot[];
   bookableSlotsPerDay: string;
@@ -83,18 +106,22 @@ export interface TrainerSetupFormState {
   advanceBooking: DurationValue;
   canCancelBefore: DurationValue;
   facilityBookedTimes: string;
+  existingAttachments?: TrainerCredential[];
+  existingTrainerImageUrl?: string;
 }
 
 export const emptyTrainerSetupForm: TrainerSetupFormState = {
-  name: "",
+  firstName: "",
+  lastName: "",
   email: "",
   specialization: "",
   experience: "",
   ratePerSession: "",
   contactNumber: "",
+  emergencyContact: "",
   status: "Active",
   bio: "",
-  slot: "",
+  shift: "",
   roster: "",
   availabilitySlots: [blankAvailabilitySlot()],
   bookableSlotsPerDay: "",
@@ -182,8 +209,19 @@ export const TrainerSetupForm = ({
   const [form, setForm] = useState<TrainerSetupFormState>({
     ...emptyTrainerSetupForm,
     ...initialValues,
+    firstName: initialValues.firstName ?? emptyTrainerSetupForm.firstName,
+    lastName: initialValues.lastName ?? emptyTrainerSetupForm.lastName,
     email: initialValues.email ?? emptyTrainerSetupForm.email,
+    specialization: initialValues.specialization ?? emptyTrainerSetupForm.specialization,
+    experience: initialValues.experience ?? emptyTrainerSetupForm.experience,
+    ratePerSession: initialValues.ratePerSession ?? emptyTrainerSetupForm.ratePerSession,
+    contactNumber: initialValues.contactNumber ?? emptyTrainerSetupForm.contactNumber,
+    emergencyContact: initialValues.emergencyContact ?? emptyTrainerSetupForm.emergencyContact,
+    bio: initialValues.bio ?? emptyTrainerSetupForm.bio,
+    shift: initialValues.shift ?? emptyTrainerSetupForm.shift,
+    roster: initialValues.roster ?? emptyTrainerSetupForm.roster,
     availabilitySlots: initialValues.availabilitySlots ?? emptyTrainerSetupForm.availabilitySlots,
+    bookableSlotsPerDay: initialValues.bookableSlotsPerDay ?? emptyTrainerSetupForm.bookableSlotsPerDay,
     bookingAllowedBefore: initialValues.bookingAllowedBefore ?? emptyTrainerSetupForm.bookingAllowedBefore,
     advanceBooking: initialValues.advanceBooking ?? emptyTrainerSetupForm.advanceBooking,
     canCancelBefore: initialValues.canCancelBefore ?? emptyTrainerSetupForm.canCancelBefore,
@@ -192,6 +230,44 @@ export const TrainerSetupForm = ({
   const [certFile, setCertFile] = useState<File | null>(null);
   const [contractFile, setContractFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [roasterOptions, setRoasterOptions] = useState<SetupOption[]>([]);
+  const [shiftOptions, setShiftOptions] = useState<SetupOption[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadSetupOptions = async () => {
+      const [roastersResult, shiftsResult] = await Promise.allSettled([
+        apiClient.get("/pms/admin/user_roasters.json"),
+        apiClient.get("/pms/admin/user_shifts.json"),
+      ]);
+
+      if (!isMounted) return;
+
+      if (roastersResult.status === "fulfilled") {
+        setRoasterOptions(
+          mapSetupOptions(roastersResult.value.data, ["user_roasters", "roasters", "data"], ["name", "template", "template_name", "roaster_name", "title", "user_roaster_name"])
+        );
+      } else {
+        console.error("Failed to load trainer roasters", roastersResult.reason);
+        toast.error("Failed to load roasters");
+      }
+
+      if (shiftsResult.status === "fulfilled") {
+        setShiftOptions(
+          mapSetupOptions(shiftsResult.value.data, ["user_shifts", "shifts", "data"], ["timings", "name", "shift_name", "title"])
+        );
+      } else {
+        console.error("Failed to load trainer shifts", shiftsResult.reason);
+        toast.error("Failed to load shifts");
+      }
+    };
+
+    void loadSetupOptions();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const setField = <K extends keyof TrainerSetupFormState>(key: K, value: TrainerSetupFormState[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -210,28 +286,44 @@ export const TrainerSetupForm = ({
 
   const handleSubmit = () => {
     if (
-      !form.name.trim() ||
+      !form.firstName.trim() ||
+      !form.lastName.trim() ||
       !form.specialization.trim() ||
       !form.experience.trim() ||
-      !form.ratePerSession.trim() ||
       !form.contactNumber.trim()
     ) {
       toast.error("Please fill all required fields");
       return;
     }
 
+    if (!/^\d{10}$/.test(form.contactNumber)) {
+      toast.error("Contact number must be exactly 10 digits");
+      return;
+    }
+    if (form.emergencyContact && !/^\d{10}$/.test(form.emergencyContact)) {
+      toast.error("Emergency contact must be exactly 10 digits");
+      return;
+    }
+    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
     setIsSubmitting(true);
     onSubmit({
-      name: form.name.trim(),
+      name: `${form.firstName.trim()} ${form.lastName.trim()}`,
+      firstName: form.firstName.trim(),
+      lastName: form.lastName.trim(),
       email: form.email.trim(),
       specialization: form.specialization.trim(),
       experience: form.experience.trim(),
       ratePerSession: form.ratePerSession.trim(),
       contactNumber: form.contactNumber.trim(),
+      emergencyContact: form.emergencyContact.trim(),
       status: form.status,
       bio: form.bio.trim(),
       imageUrl: imageFile ? imageFile.name : "",
-      slot: form.slot,
+      shift: form.shift,
       roster: form.roster,
       availabilitySlots: form.availabilitySlots,
       bookableSlotsPerDay: form.bookableSlotsPerDay,
@@ -260,11 +352,23 @@ export const TrainerSetupForm = ({
         <Section title="Trainer Details" icon={<UserRound className="w-5 h-5" />}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <TextField
-              label="Trainer Name"
+              label="First Name"
               required
-              placeholder="e.g. Elena Rostova"
-              value={form.name}
-              onChange={(e) => setField("name", e.target.value)}
+              placeholder="Enter first name"
+              value={form.firstName}
+              onChange={(e) => setField("firstName", e.target.value)}
+              fullWidth
+              variant="outlined"
+              sx={requiredLabelSx}
+              slotProps={{ inputLabel: { shrink: true } }}
+              InputProps={{ sx: fieldStyles }}
+            />
+            <TextField
+              label="Last Name"
+              required
+              placeholder="Enter last name"
+              value={form.lastName}
+              onChange={(e) => setField("lastName", e.target.value)}
               fullWidth
               variant="outlined"
               sx={requiredLabelSx}
@@ -274,7 +378,7 @@ export const TrainerSetupForm = ({
             <TextField
               label="Email"
               type="email"
-              placeholder="e.g. trainer@example.com"
+              placeholder="abc@gmail.com"
               value={form.email}
               onChange={(e) => setField("email", e.target.value)}
               fullWidth
@@ -322,13 +426,25 @@ export const TrainerSetupForm = ({
             <TextField
               label="Contact Number"
               required
-              placeholder="e.g. +1 (555) 012-4432"
+              placeholder="Enter contact"
               value={form.contactNumber}
-              onChange={(e) => setField("contactNumber", e.target.value)}
+              onChange={(e) => setField("contactNumber", e.target.value.replace(/\D/g, "").slice(0, 10))}
               fullWidth
               variant="outlined"
               sx={requiredLabelSx}
               slotProps={{ inputLabel: { shrink: true } }}
+              inputProps={{ inputMode: "numeric", maxLength: 10 }}
+              InputProps={{ sx: fieldStyles }}
+            />
+            <TextField
+              label="Emergency Contact"
+              placeholder="Enter emergency contact"
+              value={form.emergencyContact}
+              onChange={(e) => setField("emergencyContact", e.target.value.replace(/\D/g, "").slice(0, 10))}
+              fullWidth
+              variant="outlined"
+              slotProps={{ inputLabel: { shrink: true } }}
+              inputProps={{ inputMode: "numeric", maxLength: 10 }}
               InputProps={{ sx: fieldStyles }}
             />
             <FormControl
@@ -350,25 +466,23 @@ export const TrainerSetupForm = ({
             </FormControl>
 
             <FormControl fullWidth variant="outlined" sx={{ "& .MuiInputBase-root": fieldStyles }}>
-              <InputLabel shrink>Slot</InputLabel>
+              <InputLabel shrink>Shift</InputLabel>
               <MuiSelect
-                value={form.slot}
-                onChange={(e) => setField("slot", e.target.value as string)}
-                label="Slot"
+                value={form.shift}
+                onChange={(e) => setField("shift", e.target.value as string)}
+                label="Shift"
                 notched
                 displayEmpty
                 renderValue={(selected) =>
-                  selected
-                    ? SLOT_DURATION_OPTIONS.find((opt) => opt.value === selected)?.label ?? String(selected)
-                    : "Select slot"
+                  selected ? shiftOptions.find((option) => option.id === selected)?.label ?? String(selected) : "Select shift"
                 }
               >
                 <MenuItem value="" disabled>
-                  Select slot
+                  Select shift
                 </MenuItem>
-                {SLOT_DURATION_OPTIONS.map((opt) => (
-                  <MenuItem key={opt.value} value={opt.value}>
-                    {opt.label}
+                {shiftOptions.map((option) => (
+                  <MenuItem key={option.id} value={option.id}>
+                    {option.label}
                   </MenuItem>
                 ))}
               </MuiSelect>
@@ -382,14 +496,18 @@ export const TrainerSetupForm = ({
                 label="Roster"
                 notched
                 displayEmpty
-                renderValue={(selected) => (selected ? String(selected) : "Select roster")}
+                renderValue={(selected) =>
+                  selected
+                    ? roasterOptions.find((option) => option.id === String(selected))?.label ?? String(selected)
+                    : "Select roster"
+                }
               >
                 <MenuItem value="" disabled>
                   Select roster
                 </MenuItem>
-                {ROSTER_OPTIONS.map((opt) => (
-                  <MenuItem key={opt} value={opt}>
-                    {opt}
+                {roasterOptions.map((option) => (
+                  <MenuItem key={option.id} value={option.id}>
+                    {option.label}
                   </MenuItem>
                 ))}
               </MuiSelect>
@@ -740,6 +858,46 @@ export const TrainerSetupForm = ({
         </Section>
 
         <Section title="Attachments & Files" icon={<Paperclip className="w-4 h-4" />}>
+          {(initialValues.existingTrainerImageUrl || initialValues.existingAttachments?.length) ? (
+            <div className="mb-4 space-y-2">
+              <div className="text-sm font-medium">Existing Attachments</div>
+              {initialValues.existingTrainerImageUrl && (
+                <a
+                  href={initialValues.existingTrainerImageUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between rounded border bg-gray-50 p-2 text-sm transition-colors hover:border-brand"
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <Paperclip className="h-4 w-4 shrink-0 text-gray-500" />
+                    <img src={initialValues.existingTrainerImageUrl} alt="Current trainer" className="h-8 w-8 rounded object-cover" />
+                    <span className="truncate">Current trainer image</span>
+                  </span>
+                  <Download className="h-4 w-4 shrink-0 text-gray-500" />
+                </a>
+              )}
+              {!!initialValues.existingAttachments?.length && (
+                <div className="space-y-2">
+                  {initialValues.existingAttachments.map((attachment) => (
+                    <a
+                      key={attachment.id}
+                      href={attachment.url || undefined}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download
+                      className="flex items-center justify-between rounded border bg-gray-50 p-2 text-sm transition-colors hover:border-brand"
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        <Paperclip className="h-4 w-4 shrink-0 text-gray-500" />
+                        <span className="truncate">{attachment.name}</span>
+                      </span>
+                      <Download className="h-4 w-4 shrink-0 text-gray-500" />
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : null}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <UploadZone
               id="trainer-image-upload"

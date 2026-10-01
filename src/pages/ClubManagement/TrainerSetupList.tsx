@@ -24,7 +24,6 @@ const columns: ColumnConfig[] = [
   { key: "name", label: "Trainer Name", sortable: true, hideable: true, draggable: true },
   { key: "specialization", label: "Specialization", sortable: true, hideable: true, draggable: true },
   { key: "experience", label: "Experience", sortable: true, hideable: true, draggable: true },
-  { key: "ratePerSession", label: "Rate / Session", sortable: true, hideable: true, draggable: true },
   { key: "contactNumber", label: "Contact Number", sortable: true, hideable: true, draggable: true },
   { key: "status", label: "Status", sortable: true, hideable: true, draggable: true },
 ];
@@ -55,7 +54,9 @@ export const TrainerSetupList = () => {
           : responseData?.trainers ?? responseData?.data ?? responseData?.records ?? [];
         const trainers: TrainerSetup[] = records.map((trainer: any) => ({
           id: String(trainer.id),
-          name: trainer.name ?? trainer.full_name ?? "",
+          name:
+            [trainer.first_name, trainer.last_name].filter(Boolean).join(" ") ||
+            (trainer.name ?? trainer.full_name ?? ""),
           email: trainer.email ?? "",
           specialization: trainer.specialization ?? "",
           experience: trainer.experience ?? trainer.experience_years ?? "",
