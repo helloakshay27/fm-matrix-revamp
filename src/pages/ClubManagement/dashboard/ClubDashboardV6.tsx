@@ -11,7 +11,8 @@ type Persona = 'branch' | 'super';
 
 const ClubDashboardV6: React.FC = () => {
   const [selected, setSelected] = useState<Persona | null>(null);
-  const [entered, setEntered] = useState<Persona | null>(null);
+  // Persona-selection screen skipped for now - go straight to Branch Manager on dashboard click.
+  const [entered, setEntered] = useState<Persona | null>('branch');
   const cmEvents = useClubManagementEvents();
   const dashboardViewLogged = useRef(false);
 
@@ -30,7 +31,8 @@ const ClubDashboardV6: React.FC = () => {
   return (
     <div className="club-dashboard-v6">
       <DrillProvider>
-        {!entered && <PersonaScreen selected={selected} onSelect={setSelected} onEnter={enter} />}
+        {/* Initial persona-selection screen commented out for now - dashboard opens straight to Branch Manager. */}
+        {/* {!entered && <PersonaScreen selected={selected} onSelect={setSelected} onEnter={enter} />} */}
         {entered === 'branch' && <BranchManagerDashboard onSwitchRole={switchRole} />}
         {entered === 'super' && <SuperAdminDashboard onSwitchRole={switchRole} />}
         {/* Floating green "AI Insights" button commented out for now. */}
