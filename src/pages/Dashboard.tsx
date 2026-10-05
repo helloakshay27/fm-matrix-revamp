@@ -60,6 +60,7 @@ import {
   updateDashboardLayout,
   deleteDashboardLayout,
 } from "@/services/dashboardLayoutAPI";
+import { PatrollingCard } from "@/components/dashboard/PatrollingSection";
 import { TicketAnalyticsCard } from "@/components/dashboard/TicketAnalyticsCard";
 import { TaskAnalyticsCard } from "@/components/TaskAnalyticsCard";
 import { AMCAnalyticsCard } from "@/components/AMCAnalyticsCard";
@@ -202,7 +203,8 @@ interface SelectedAnalytic {
   | "amount_management"
   | "quickgate_management"
   | "escalation_management"
-  | "occupancy_management";
+  | "occupancy_management"
+  | "patrolling";
   endpoint: string;
   title: string;
 }
@@ -2817,6 +2819,21 @@ export const Dashboard = () => {
         | undefined;
       return modErrs ? modErrs[a.endpoint] ?? null : null;
     };
+
+    // Patrolling cards fetch their own data (see PatrollingCard), bypassing dashboardData.
+    if (analytic.module === "patrolling") {
+      return (
+        <SortableChartItem key={analytic.id} id={analytic.id}>
+          <PatrollingCard
+            endpoint={analytic.endpoint}
+            title={analytic.title}
+            siteIds={activeSiteIds ? activeSiteIds.split(",").map((s) => s.trim()).filter(Boolean) : []}
+            fromDate={dateRange?.from ? formatDate(dateRange.from, "yyyy-MM-dd") : undefined}
+            toDate={dateRange?.to ? formatDate(dateRange.to, "yyyy-MM-dd") : undefined}
+          />
+        </SortableChartItem>
+      );
+    }
 
     const errorMessage = errorFor(analytic);
     if (errorMessage) {
@@ -5521,6 +5538,7 @@ export const Dashboard = () => {
                             if (!analytic) return null;
 
                             const perCardLoading =
+                              analytic.module !== "patrolling" &&
                               !!loadingMap?.[analytic.module]?.[analytic.endpoint];
                             const layoutItem = effectiveLayouts.find(
                               (l) => l.i === analytic.id
@@ -5548,6 +5566,7 @@ export const Dashboard = () => {
                         </ResponsiveGridLayout>
                       </div>
                     )}
+
                   </div>
 
                   {/* Recent Updates Sidebar - Always Visible */}
@@ -5624,6 +5643,7 @@ export const Dashboard = () => {
                             if (!analytic) return null;
 
                             const perCardLoading =
+                              analytic.module !== "patrolling" &&
                               !!loadingMap?.[analytic.module]?.[analytic.endpoint];
 
                             return (
