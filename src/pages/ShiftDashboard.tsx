@@ -38,6 +38,29 @@ interface ApiResponse {
   };
 }
 
+const normalizeShiftTimings = (timings: string | undefined | null): string => {
+  if (!timings || typeof timings !== 'string') return 'Not specified';
+
+  const timeSegments = timings.split(/\s+to\s+/i);
+
+  const normalizedSegments = timeSegments.map((segment) => {
+    const match = segment.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!match) return segment.trim();
+
+    let hour = Number(match[1]);
+    const minutes = match[2];
+    const period = match[3].toUpperCase();
+
+    if (hour === 0 && period === 'AM') {
+      hour = 12;
+    }
+
+    return `${String(hour)}:${minutes} ${period}`;
+  });
+
+  return normalizedSegments.join(' to ');
+};
+
 // Column configuration for the enhanced table
 const columns: ColumnConfig[] = [
   {
@@ -218,7 +241,7 @@ export const ShiftDashboard = () => {
       // Transform API data to match our interface
       const transformedData: ShiftItem[] = (data.user_shifts || []).map((item: any) => ({
         id: item.id,
-        timings: item.timings || 'Not specified',
+        timings: normalizeShiftTimings(item.timings || 'Not specified'),
         totalHours: item.total_hour || 0,
         checkInMargin: item.check_in_margin || '0h:0m',
         createdOn: item.created_at || 'Not available', // Use the already formatted date string

@@ -21,9 +21,59 @@ const blankAvailabilitySlot = (): TrainerAvailabilitySlot => ({
   slotBy: 15,
 });
 
+const downloadAttachment = async (url: string, fileName = "download") => {
+  if (!url) return;
+
+  try {
+    const response = await fetch(url, { credentials: "include" });
+    if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = blobUrl;
+    anchor.download = fileName;
+    anchor.style.display = "none";
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(blobUrl);
+    return;
+  } catch (error) {
+    console.warn("Direct blob download failed, falling back to anchor navigation:", error);
+  }
+
+  const fallback = document.createElement("a");
+  fallback.href = url;
+  fallback.download = fileName;
+  fallback.target = "_self";
+  fallback.rel = "noopener noreferrer";
+  fallback.style.display = "none";
+  document.body.appendChild(fallback);
+  fallback.click();
+  document.body.removeChild(fallback);
+};
+
 // Allows only positive integers, matching the pattern used on the Amenity Booking Setup form.
 const isPositiveIntegerInput = (value: string) => value === "" || /^[1-9]\d*$/.test(value);
 const isDigitsInput = (value: string) => value === "" || /^\d+$/.test(value);
+const isAlphabeticNameInput = (value: string) => value === "" || /^[A-Za-z\s.'-]+$/.test(value);
+const isAlphabeticName = (value: string) => /^[A-Za-z\s.'-]+$/.test(value.trim());
+
+const normalizeShiftTimingLabel = (value: string): string => {
+  if (!value || typeof value !== "string") return value;
+
+  const normalized = value
+    .split(/\s+to\s+/i)
+    .map((segment) => {
+      const match = segment.trim().match(/^00:(\d{2})\s*(AM|PM)$/i);
+      if (!match) return segment.trim();
+      return `12:${match[1]} ${match[2].toUpperCase()}`;
+    })
+    .join(" to ");
+
+  return normalized || value;
+};
 
 interface SetupOption {
   id: string;
@@ -41,7 +91,8 @@ const mapSetupOptions = (responseData: any, collectionKeys: string[], labelKeys:
     .filter((item: any) => item && (item.id ?? item.value ?? item.user_roaster_id ?? item.user_shift_id) != null)
     .map((item: any) => {
       const id = item.id ?? item.value ?? item.user_roaster_id ?? item.user_shift_id;
-      const label = labelKeys.map((key) => item[key]).find((value) => value != null && String(value).trim());
+      const rawLabel = labelKeys.map((key) => item[key]).find((value) => value != null && String(value).trim());
+      const label = typeof rawLabel === "string" ? normalizeShiftTimingLabel(rawLabel) : rawLabel;
       return { id: String(id), label: String(label ?? `#${id}`) };
     });
 };
@@ -296,6 +347,11 @@ export const TrainerSetupForm = ({
       return;
     }
 
+    if (!isAlphabeticName(form.firstName) || !isAlphabeticName(form.lastName)) {
+      toast.error("First name and last name should contain only alphabetic characters");
+      return;
+    }
+
     if (!/^\d{10}$/.test(form.contactNumber)) {
       toast.error("Contact number must be exactly 10 digits");
       return;
@@ -356,7 +412,12 @@ export const TrainerSetupForm = ({
               required
               placeholder="Enter first name"
               value={form.firstName}
-              onChange={(e) => setField("firstName", e.target.value)}
+              onChange={(e) => {
+                const nextValue = e.target.value;
+                if (isAlphabeticNameInput(nextValue)) {
+                  setField("firstName", nextValue);
+                }
+              }}
               fullWidth
               variant="outlined"
               sx={requiredLabelSx}
@@ -368,7 +429,12 @@ export const TrainerSetupForm = ({
               required
               placeholder="Enter last name"
               value={form.lastName}
-              onChange={(e) => setField("lastName", e.target.value)}
+              onChange={(e) => {
+                const nextValue = e.target.value;
+                if (isAlphabeticNameInput(nextValue)) {
+                  setField("lastName", nextValue);
+                }
+              }}
               fullWidth
               variant="outlined"
               sx={requiredLabelSx}
@@ -862,11 +928,10 @@ export const TrainerSetupForm = ({
             <div className="mb-4 space-y-2">
               <div className="text-sm font-medium">Existing Attachments</div>
               {initialValues.existingTrainerImageUrl && (
-                <a
-                  href={initialValues.existingTrainerImageUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between rounded border bg-gray-50 p-2 text-sm transition-colors hover:border-brand"
+                <button
+                  type="button"
+                  onClick={() => downloadAttachment(initialValues.existingTrainerImageUrl!, "current-trainer-image")}
+                  className="flex w-full items-center justify-between rounded border bg-gray-50 p-2 text-left text-sm transition-colors hover:border-brand"
                 >
                   <span className="flex min-w-0 items-center gap-2">
                     <Paperclip className="h-4 w-4 shrink-0 text-gray-500" />
@@ -874,25 +939,23 @@ export const TrainerSetupForm = ({
                     <span className="truncate">Current trainer image</span>
                   </span>
                   <Download className="h-4 w-4 shrink-0 text-gray-500" />
-                </a>
+                </button>
               )}
               {!!initialValues.existingAttachments?.length && (
                 <div className="space-y-2">
                   {initialValues.existingAttachments.map((attachment) => (
-                    <a
+                    <button
                       key={attachment.id}
-                      href={attachment.url || undefined}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      download
-                      className="flex items-center justify-between rounded border bg-gray-50 p-2 text-sm transition-colors hover:border-brand"
+                      type="button"
+                      onClick={() => downloadAttachment(attachment.url || "", attachment.name || "attachment")}
+                      className="flex w-full items-center justify-between rounded border bg-gray-50 p-2 text-left text-sm transition-colors hover:border-brand"
                     >
                       <span className="flex min-w-0 items-center gap-2">
                         <Paperclip className="h-4 w-4 shrink-0 text-gray-500" />
                         <span className="truncate">{attachment.name}</span>
                       </span>
                       <Download className="h-4 w-4 shrink-0 text-gray-500" />
-                    </a>
+                    </button>
                   ))}
                 </div>
               )}
