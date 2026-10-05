@@ -1376,6 +1376,14 @@ const modulesByPackage = {
       ],
     },
     {
+      name: "Transport",
+      icon: Truck,
+      href: "/settings/transport",
+      subItems: [
+        { name: "Suppliers", href: "/settings/transport/suppliers" },
+      ],
+    },
+    {
       name: "Value Added Services",
       icon: Star,
       href: "/settings/vas",
