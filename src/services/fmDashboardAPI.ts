@@ -1857,3 +1857,33 @@ export function extractAiInsights(raw: AiInsightRecord | null | undefined): AiIn
   const single = aiInsightText(value["insight"]) ?? aiInsightText(value["message"]) ?? aiInsightText(value["text"]);
   return { headline, items: single ? [single] : [] };
 }
+
+// ============================================================================
+// Patrolling
+// ============================================================================
+
+export const PATROLLING_ENDPOINTS = [
+  "patrolling_overview",
+  "patrolling_status_distribution",
+  "patrolling_trend",
+  "patrolling_guard_performance",
+  "patrolling_location_analysis",
+  "patrolling_tickets_by_category",
+  "patrolling_ticket_link_and_staff",
+  "patrolling_completion_by_shift",
+] as const;
+
+export type PatrollingEndpoint = (typeof PATROLLING_ENDPOINTS)[number];
+
+/** Raw response — inner shape varies per endpoint, so the UI normalises it defensively. */
+export type PatrollingResponse = Record<string, unknown>;
+
+export function fetchPatrolling(
+  endpoint: PatrollingEndpoint,
+  params: FmDashboardParams
+): Promise<PatrollingResponse> {
+  return fetchFmDashboardJson<PatrollingResponse>(
+    `/fm_dashboard/patrolling/${endpoint}.json`,
+    params
+  );
+}

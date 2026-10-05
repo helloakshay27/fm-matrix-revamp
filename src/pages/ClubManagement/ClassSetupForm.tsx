@@ -144,6 +144,39 @@ const requiredLabelSx = {
   },
 };
 
+const downloadAttachment = async (url: string, fileName = "download") => {
+  if (!url) return;
+
+  try {
+    const response = await fetch(url, { credentials: "include" });
+    if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = blobUrl;
+    anchor.download = fileName;
+    anchor.style.display = "none";
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(blobUrl);
+    return;
+  } catch (error) {
+    console.warn("Direct blob download failed, falling back to anchor navigation:", error);
+  }
+
+  const fallback = document.createElement("a");
+  fallback.href = url;
+  fallback.download = fileName;
+  fallback.target = "_self";
+  fallback.rel = "noopener noreferrer";
+  fallback.style.display = "none";
+  document.body.appendChild(fallback);
+  fallback.click();
+  document.body.removeChild(fallback);
+};
+
 const isNonNegativeInteger = (value: string) => value === "" || /^\d+$/.test(value);
 const isNonNegativeDuration = (value: string) => !value.includes("-");
 const preventNegativeSign = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -563,20 +596,18 @@ export const ClassSetupForm = ({
             <div className="space-y-2 mb-4">
               <div className="text-sm font-medium">Existing Attachments</div>
               {form.existingAttachments.map((attachment) => (
-                <a
+                <button
                   key={attachment.id}
-                  href={resolveAttachmentUrl(attachment.url)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  download
-                  className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded border hover:border-brand transition-colors"
+                  type="button"
+                  onClick={() => downloadAttachment(resolveAttachmentUrl(attachment.url), attachment.name || "class-attachment")}
+                  className="flex w-full items-center justify-between text-left text-sm p-2 bg-gray-50 rounded border hover:border-brand transition-colors"
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <Paperclip className="w-4 h-4 text-gray-500 shrink-0" />
                     <span className="truncate">{attachment.name}</span>
                   </div>
                   <Download className="w-4 h-4 text-gray-500 shrink-0" />
-                </a>
+                </button>
               ))}
             </div>
           )}

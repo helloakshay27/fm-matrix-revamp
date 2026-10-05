@@ -9,6 +9,7 @@ import {
   Settings,
   CheckSquare,
   Zap,
+  Footprints,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,7 +47,8 @@ interface SelectedAnalytic {
   "amount_management" |
   "quickgate_management" |
   "escalation_management" |
-  "occupancy_management";
+  "occupancy_management" |
+  "patrolling";
 
   endpoint: string;
   title: string;
@@ -259,6 +261,7 @@ export const dashboardAnalyticsOptions = {
 
 // Analytics for executive dashboard (/dashboard-executive)
 export const executiveAnalyticsOptions = {
+ 
   community: {
     icon: BarChart3,
     label: "Community Programs",
@@ -553,6 +556,22 @@ export const executiveAnalyticsOptions = {
         endpoint: "parking_statistics",
         label: "Parking Statistics Overview",
       },
+    ],
+  },
+
+   patrolling: {
+    icon: Footprints,
+    label: "Patrolling",
+    color: "#DAD6C9",
+    options: [
+      { id: "patrolling_overview", endpoint: "patrolling_overview", label: "Patrolling Overview" },
+      { id: "patrolling_status_distribution", endpoint: "patrolling_status_distribution", label: "Status Distribution" },
+      { id: "patrolling_trend", endpoint: "patrolling_trend", label: "Patrolling Trend" },
+      { id: "patrolling_guard_performance", endpoint: "patrolling_guard_performance", label: "Guard Performance" },
+      { id: "patrolling_location_analysis", endpoint: "patrolling_location_analysis", label: "Location Analysis" },
+      { id: "patrolling_tickets_by_category", endpoint: "patrolling_tickets_by_category", label: "Tickets by Category" },
+      { id: "patrolling_ticket_link_and_staff", endpoint: "patrolling_ticket_link_and_staff", label: "Ticket Link & Staff" },
+      { id: "patrolling_completion_by_shift", endpoint: "patrolling_completion_by_shift", label: "Completion by Shift" },
     ],
   },
 

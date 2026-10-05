@@ -99,6 +99,9 @@ export default function MsafeCircleEmailConfig() {
   const [emailId, setEmailId] = useState("");
   const [active, setActive] = useState(true);
   const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterCircle, setFilterCircle] = useState("");
+  const [filterActive, setFilterActive] = useState<"all" | "active" | "inactive">("all");
 
   const apiRoot = getApiRoot();
   const companyId = localStorage.getItem("selectedCompanyId") || "";
@@ -146,6 +149,22 @@ export default function MsafeCircleEmailConfig() {
       })),
     [configs, clusterNames]
   );
+
+  const filteredRows = useMemo(
+    () => rows.filter((row) => {
+      if (filterCircle && String(row.cluster_id) !== filterCircle) return false;
+      if (filterActive === "active" && !row.active) return false;
+      if (filterActive === "inactive" && row.active) return false;
+      return true;
+    }),
+    [rows, filterCircle, filterActive]
+  );
+
+  const clearFilters = () => {
+    setFilterCircle("");
+    setFilterActive("all");
+    setFilterOpen(false);
+  };
 
   const resetDialog = () => {
     setDialogOpen(false);
@@ -310,17 +329,67 @@ export default function MsafeCircleEmailConfig() {
   return (
     <div className="p-6">
       <EnhancedTable
-        data={rows}
+        data={filteredRows}
         columns={columns}
         renderCell={renderCell}
         renderActions={renderActions}
         leftActions={leftActions}
+        onFilterClick={() => setFilterOpen(true)}
         storageKey="msafe-circle-email-config-table"
         loading={loading}
         enableSearch
         searchPlaceholder="Search circle or email ID..."
         emptyMessage="No circle email configurations found"
       />
+
+      <Dialog open={filterOpen} onClose={() => setFilterOpen(false)} maxWidth="xs" fullWidth>
+        <DialogContent>
+          <h2 className="mb-4 mt-1 text-lg font-semibold text-gray-900">Filter</h2>
+          <div className="space-y-4">
+            <FormControl fullWidth>
+              <InputLabel id="filter-circle-label">Circle</InputLabel>
+              <Select
+                labelId="filter-circle-label"
+                value={filterCircle}
+                label="Circle"
+                onChange={(event) => setFilterCircle(String(event.target.value))}
+                sx={fieldStyles}
+              >
+                <MenuItem value="">All</MenuItem>
+                {clusters.map((cluster) => (
+                  <MenuItem key={cluster.id} value={cluster.id}>{cluster.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth>
+              <InputLabel id="filter-active-label">Active</InputLabel>
+              <Select
+                labelId="filter-active-label"
+                value={filterActive}
+                label="Active"
+                onChange={(event) => setFilterActive(event.target.value as "all" | "active" | "inactive")}
+                sx={fieldStyles}
+              >
+                <MenuItem value="all">All</MenuItem>
+                <MenuItem value="active">Active</MenuItem>
+                <MenuItem value="inactive">Inactive</MenuItem>
+              </Select>
+            </FormControl>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={clearFilters}>
+                Clear
+              </Button>
+              <Button
+                type="button"
+                className="fm-button-fix fm-button-brand"
+                onClick={() => setFilterOpen(false)}
+              >
+                Apply
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={dialogOpen} onClose={resetDialog} maxWidth="sm" fullWidth>
         <DialogContent>

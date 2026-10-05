@@ -148,16 +148,6 @@ const RecycleEntryPage: React.FC = () => {
   const recycledQuantityKg = useMemo(() => parseNum(formData.recycledQuantityKg), [formData.recycledQuantityKg]);
   const recycledQuantityLtr = useMemo(() => parseNum(formData.recycledQuantityLtr), [formData.recycledQuantityLtr]);
 
-  const wastageKg = useMemo(() => {
-    if (selectedRecord?.dispatchWeightKg == null || recycledQuantityKg == null) return null;
-    return Math.max(selectedRecord.dispatchWeightKg - recycledQuantityKg, 0);
-  }, [selectedRecord, recycledQuantityKg]);
-
-  const wastageLtr = useMemo(() => {
-    if (selectedRecord?.dispatchWeightLtr == null || recycledQuantityLtr == null) return null;
-    return Math.max(selectedRecord.dispatchWeightLtr - recycledQuantityLtr, 0);
-  }, [selectedRecord, recycledQuantityLtr]);
-
   const handleChange = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -308,7 +298,7 @@ const RecycleEntryPage: React.FC = () => {
       </CardShell>
 
       {/* Summary cards — both units shown together in each card */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <div className="border border-gray-200 rounded-lg p-4 border-l-4 border-l-gray-400 bg-white">
           <p className="text-xs text-gray-500 mb-1">Dispatch Quantity</p>
           <p className="text-lg font-bold text-gray-900">
@@ -319,12 +309,6 @@ const RecycleEntryPage: React.FC = () => {
           <p className="text-xs text-gray-500 mb-1">Recycled Quantity</p>
           <p className="text-lg font-bold text-gray-900">
             {formatDual(recycledQuantityKg, recycledQuantityLtr)}
-          </p>
-        </div>
-        <div className="border border-gray-200 rounded-lg p-4 border-l-4 border-l-red-600 bg-white">
-          <p className="text-xs text-gray-500 mb-1">Wastage / Loss</p>
-          <p className="text-lg font-bold text-gray-900">
-            {formatDual(wastageKg, wastageLtr)}
           </p>
         </div>
       </div>

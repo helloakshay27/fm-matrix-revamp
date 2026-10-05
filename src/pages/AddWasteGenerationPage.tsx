@@ -2,15 +2,16 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
-import { TextField, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent, RadioGroup, FormControlLabel, Radio } from '@mui/material';
 import { Recycle, ArrowLeft, Plus, Trash2, X } from 'lucide-react';
 import {
   fetchBuildings,
   fetchWings,
   fetchAreas,
   fetchCommodities,
-  fetchCategories,
+  fetchSubcategoriesByParent,
   fetchOperationalLandlords,
+  fetchEntities,
   createWasteGeneration,
   Building as BuildingType,
   Wing,
@@ -18,6 +19,7 @@ import {
   Commodity,
   Category,
   OperationalLandlord,
+  Entity,
   WasteEntryInput
 } from '@/services/wasteGenerationAPI';
 import { SupplierSearchSelect } from '@/components/SupplierSearchSelect';
@@ -108,6 +110,9 @@ const AddWasteGenerationPage = () => {
   const navigate = useNavigate();
   const { toast: reactToast } = useToast();
 
+  const [generatorType, setGeneratorType] = useState<'self' | 'customer'>('self');
+  const [customerId, setCustomerId] = useState('');
+
   const [formData, setFormData] = useState({
     building: '',
     wing: '',
@@ -127,16 +132,21 @@ const AddWasteGenerationPage = () => {
   const [wings, setWings] = useState<Wing[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
   const [commodities, setCommodities] = useState<Commodity[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  // Subcategories are fetched per selected Category (commodity) via
+  // q[parent_id]=<id>, so they're cached here keyed by that parent's id
+  // rather than loaded as one flat list up front.
+  const [subcategoriesByParent, setSubcategoriesByParent] = useState<Record<string, Category[]>>({});
+  const [loadingSubcategoryParents, setLoadingSubcategoryParents] = useState<Record<string, boolean>>({});
   const [operationalLandlords, setOperationalLandlords] = useState<OperationalLandlord[]>([]);
+  const [entities, setEntities] = useState<Entity[]>([]);
 
   // Loading states
   const [loadingBuildings, setLoadingBuildings] = useState(false);
   const [loadingWings, setLoadingWings] = useState(false);
   const [loadingAreas, setLoadingAreas] = useState(false);
   const [loadingCommodities, setLoadingCommodities] = useState(false);
-  const [loadingCategories, setLoadingCategories] = useState(false);
   const [loadingOperationalLandlords, setLoadingOperationalLandlords] = useState(false);
+  const [loadingEntities, setLoadingEntities] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   // Fetch all dropdowns data on component mount
@@ -169,19 +179,6 @@ const AddWasteGenerationPage = () => {
         setLoadingCommodities(false);
       }
 
-      // Fetch categories
-      setLoadingCategories(true);
-      try {
-        const categoriesData = await fetchCategories();
-        console.log('Categories data received:', categoriesData);
-        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-        setCategories([]);
-        toast.error('Failed to load categories');
-      } finally {
-        setLoadingCategories(false);
-      }
 
       // Fetch operational landlords
       setLoadingOperationalLandlords(true);
@@ -195,6 +192,19 @@ const AddWasteGenerationPage = () => {
         toast.error('Failed to load operational landlords');
       } finally {
         setLoadingOperationalLandlords(false);
+      }
+
+      // Fetch entities (for the Customer dropdown)
+      setLoadingEntities(true);
+      try {
+        const entitiesData = await fetchEntities();
+        setEntities(Array.isArray(entitiesData) ? entitiesData : []);
+      } catch (error) {
+        console.error('Error fetching entities:', error);
+        setEntities([]);
+        toast.error('Failed to load customers');
+      } finally {
+        setLoadingEntities(false);
       }
     };
 
@@ -280,8 +290,36 @@ const AddWasteGenerationPage = () => {
       return;
     }
     setWasteEntries(prev =>
-      prev.map(entry => (entry.key === key ? { ...entry, [field]: value } : entry))
+      prev.map(entry => {
+        if (entry.key !== key) return entry;
+        // Subcategory options depend on which Category (commodity) is selected,
+        // so changing the parent Category clears any previously chosen Subcategory.
+        if (field === 'commodity') {
+          return { ...entry, commodity: value, category: '' };
+        }
+        return { ...entry, [field]: value };
+      })
     );
+
+    if (field === 'commodity' && value) {
+      loadSubcategoriesForParent(value);
+    }
+  };
+
+  // Fetches and caches the Subcategory list for a given parent Category
+  // (commodity) id, skipping the call if it's already cached or in flight.
+  const loadSubcategoriesForParent = async (parentId: string) => {
+    if (subcategoriesByParent[parentId] || loadingSubcategoryParents[parentId]) return;
+    setLoadingSubcategoryParents(prev => ({ ...prev, [parentId]: true }));
+    try {
+      const data = await fetchSubcategoriesByParent(parseInt(parentId, 10));
+      setSubcategoriesByParent(prev => ({ ...prev, [parentId]: Array.isArray(data) ? data : [] }));
+    } catch (error) {
+      console.error('Error fetching subcategories for parent:', error);
+      toast.error('Failed to load subcategories');
+    } finally {
+      setLoadingSubcategoryParents(prev => ({ ...prev, [parentId]: false }));
+    }
   };
 
   const addAttachments = (key: string, files: FileList | null) => {
@@ -317,6 +355,11 @@ const AddWasteGenerationPage = () => {
       return;
     }
 
+    if (formData.date > new Date().toISOString().split('T')[0]) {
+      toast.error("Validation Error: Date cannot be a future date.");
+      return;
+    }
+
     if (!formData.vendor) {
       toast.error("Validation Error: Vendor is required.");
       return;
@@ -334,11 +377,11 @@ const AddWasteGenerationPage = () => {
 
     for (const entry of wasteEntries) {
       if (!entry.category) {
-        toast.error("Validation Error: Category is required for every waste entry.");
+        toast.error("Validation Error: Subcategory is required for every waste entry.");
         return;
       }
       if (!entry.commodity) {
-        toast.error("Validation Error: Commodity is required for every waste entry.");
+        toast.error("Validation Error: Category is required for every waste entry.");
         return;
       }
       if (!entry.uom.trim()) {
@@ -378,6 +421,7 @@ const AddWasteGenerationPage = () => {
           agency_name: formData.agencyName || '',
           // recycled_unit: formData.recycledUnit ? parseFloat(formData.recycledUnit) : 0,
           remark: formData.remark || '',
+          entity_id: generatorType === 'customer' && customerId ? parseInt(customerId) : null,
         },
         waste_entries: wasteEntries.map((entry): WasteEntryInput => ({
           category_id: parseInt(entry.category),
@@ -427,14 +471,13 @@ const AddWasteGenerationPage = () => {
       })),
     [commodities]
   );
-  const categoryOptions = useMemo(
-    () =>
-      categories.map((c) => ({
-        value: c.id.toString(),
-        label: c.category_name,
-      })),
-    [categories]
-  );
+  // Subcategory options come from the per-parent cache populated by
+  // loadSubcategoriesForParent (API call scoped to q[parent_id]=<commodityId>).
+  const getSubcategoryOptions = (commodityId: string) =>
+    (subcategoriesByParent[commodityId] || []).map((c) => ({
+      value: c.id.toString(),
+      label: c.category_name,
+    }));
   const operationalLandlordOptions = useMemo(
     () =>
       operationalLandlords
@@ -444,6 +487,16 @@ const AddWasteGenerationPage = () => {
           label: String(l.category_name).trim(),
         })),
     [operationalLandlords]
+  );
+  const customerOptions = useMemo(
+    () =>
+      entities
+        .filter((e) => e?.id != null && String(e.name || '').trim() !== '')
+        .map((e) => ({
+          value: String(e.id),
+          label: String(e.name).trim(),
+        })),
+    [entities]
   );
 
   return (
@@ -472,6 +525,43 @@ const AddWasteGenerationPage = () => {
             </h2>
           </div>
           <div className="p-6 space-y-10">
+            {/* Generator Type */}
+            <div className="space-y-4">
+              <RadioGroup
+                row
+                value={generatorType}
+                onChange={(e) => setGeneratorType(e.target.value as 'self' | 'customer')}
+              >
+                <FormControlLabel value="self" control={<Radio />} label="Self" />
+                <FormControlLabel value="customer" control={<Radio />} label="Customer" />
+              </RadioGroup>
+
+              {generatorType === 'customer' && (
+                <div className="max-w-sm">
+                  <FormControl fullWidth disabled={loadingEntities}>
+                    <InputLabel shrink id="customer-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                      Customer
+                    </InputLabel>
+                    <Select
+                      labelId="customer-label"
+                      value={customerId}
+                      onChange={(e: SelectChangeEvent<string>) => setCustomerId(e.target.value)}
+                      displayEmpty
+                      sx={fieldStyles}
+                      MenuProps={selectMenuProps}
+                    >
+                      <MenuItem value="">
+                        <em>{loadingEntities ? 'Loading...' : 'Select Customer'}</em>
+                      </MenuItem>
+                      {customerOptions.map((opt) => (
+                        <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
+              )}
+            </div>
+
             {/* Location Details Section */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-10">
               <FormControl fullWidth disabled={loadingBuildings}>
@@ -560,6 +650,9 @@ const AddWasteGenerationPage = () => {
                   inputLabel: {
                     shrink: true,
                   },
+                  htmlInput: {
+                    max: new Date().toISOString().split('T')[0],
+                  },
                 }}
                 // InputProps={{
                 //   sx: fieldStyles,
@@ -605,25 +698,6 @@ const AddWasteGenerationPage = () => {
                         <TableCell className="pt-4 text-sm text-gray-600">{entryIndex + 1}</TableCell>
 
                         <TableCell className="p-2 align-top">
-                          <FormControl fullWidth size="small" disabled={loadingCategories}>
-                            <Select
-                              value={entry.category}
-                              onChange={(e: SelectChangeEvent<string>) => updateWasteEntry(entry.key, 'category', e.target.value)}
-                              displayEmpty
-                              sx={tableFieldStyles}
-                              MenuProps={selectMenuProps}
-                            >
-                              <MenuItem value="">
-                                <em>{loadingCategories ? 'Loading...' : 'Select Category'}</em>
-                              </MenuItem>
-                              {categoryOptions.map((opt) => (
-                                <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-                        </TableCell>
-
-                        <TableCell className="p-2 align-top">
                           <FormControl fullWidth size="small" disabled={loadingCommodities}>
                             <Select
                               value={entry.commodity}
@@ -633,9 +707,34 @@ const AddWasteGenerationPage = () => {
                               MenuProps={selectMenuProps}
                             >
                               <MenuItem value="">
-                                <em>{loadingCommodities ? 'Loading...' : 'Select Subcategory'}</em>
+                                <em>{loadingCommodities ? 'Loading...' : 'Select Category'}</em>
                               </MenuItem>
                               {commodityOptions.map((opt) => (
+                                <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </TableCell>
+
+                        <TableCell className="p-2 align-top">
+                          <FormControl fullWidth size="small" disabled={!entry.commodity || loadingSubcategoryParents[entry.commodity]}>
+                            <Select
+                              value={entry.category}
+                              onChange={(e: SelectChangeEvent<string>) => updateWasteEntry(entry.key, 'category', e.target.value)}
+                              displayEmpty
+                              sx={tableFieldStyles}
+                              MenuProps={selectMenuProps}
+                            >
+                              <MenuItem value="">
+                                <em>
+                                  {!entry.commodity
+                                    ? 'Select Category first'
+                                    : loadingSubcategoryParents[entry.commodity]
+                                    ? 'Loading...'
+                                    : 'Select Subcategory'}
+                                </em>
+                              </MenuItem>
+                              {getSubcategoryOptions(entry.commodity).map((opt) => (
                                 <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
                               ))}
                             </Select>
@@ -676,17 +775,6 @@ const AddWasteGenerationPage = () => {
                               InputLabelProps={{ shrink: true }}
                             />
                           </div>
-                          {(() => {
-                            const count = parseInt(entry.bagCount, 10);
-                            const total = parseFloat(entry.overallWeight);
-                            if (!(count > 0) || !(total > 0)) return null;
-                            const perBag = distributeWeight(total, count);
-                            return (
-                              <p className="text-xs text-gray-500 mt-1.5 max-w-[280px] break-words">
-                                {count} bag{count > 1 ? 's' : ''}: {perBag.join(', ')} {entry.uom || ''}
-                              </p>
-                            );
-                          })()}
                         </TableCell>
 
                         <TableCell className="p-2 align-top">

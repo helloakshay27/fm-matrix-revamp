@@ -46,6 +46,55 @@ const ReadOnlyField = ({ label, value }: { label: string; value: string | number
   />
 );
 
+const downloadAttachment = async (url: string, fileName = "download") => {
+  if (!url) return;
+
+  try {
+    const response = await fetch(url, { credentials: "include" });
+    if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = blobUrl;
+    anchor.download = fileName;
+    anchor.style.display = "none";
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(blobUrl);
+    return;
+  } catch (error) {
+    console.warn("Direct blob download failed, falling back to anchor navigation:", error);
+  }
+
+  const fallback = document.createElement("a");
+  fallback.href = url;
+  fallback.download = fileName;
+  fallback.target = "_self";
+  fallback.rel = "noopener noreferrer";
+  fallback.style.display = "none";
+  document.body.appendChild(fallback);
+  fallback.click();
+  document.body.removeChild(fallback);
+};
+
+const normalizeShiftTimingLabel = (value: string | number | undefined): string | number | undefined => {
+  if (value === undefined || value === null || value === "") return value;
+
+  const str = String(value);
+  const normalized = str
+    .split(/\s+to\s+/i)
+    .map((segment) => {
+      const match = segment.trim().match(/^00:(\d{2})\s*(AM|PM)$/i);
+      if (!match) return segment.trim();
+      return `12:${match[1]} ${match[2].toUpperCase()}`;
+    })
+    .join(" to ");
+
+  return normalized || value;
+};
+
 const formatDuration = (duration?: TrainerSetup["bookingAllowedBefore"]) => {
   if (!duration) return "—";
   const parts = [
@@ -208,7 +257,7 @@ export const TrainerSetupDetails = () => {
                 InputProps={{ sx: fieldStyles }}
               />
               <ReadOnlyField label="Emergency Contact" value={trainer.emergencyContact} />
-              <ReadOnlyField label="Shift Timings" value={trainer.shiftTimings} />
+              <ReadOnlyField label="Shift Timings" value={normalizeShiftTimingLabel(trainer.shiftTimings)} />
               <FormControl fullWidth variant="outlined" disabled sx={{ "& .MuiInputBase-root": fieldStyles }}>
                 <InputLabel shrink>Status</InputLabel>
                 <MuiSelect value={trainer.status} label="Status" notched>
@@ -269,14 +318,14 @@ export const TrainerSetupDetails = () => {
                         <div className="text-xs text-gray-400">{cred.size}</div>
                       </div>
                     </div>
-                    <a
-                      href={cred.url || undefined}
-                      download
+                    <button
+                      type="button"
+                      onClick={() => downloadAttachment(cred.url || "", cred.name || "trainer-credential")}
                       className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded shrink-0"
                       title="Download"
                     >
                       <Download className="w-4 h-4" />
-                    </a>
+                    </button>
                   </div>
                 ))}
               </div>

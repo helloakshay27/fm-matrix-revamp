@@ -69,6 +69,39 @@ const titleCase = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1).toL
 const formatLabel = (s?: string) =>
   s ? s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "-";
 
+const downloadAttachment = async (url: string, fileName = "download") => {
+  if (!url) return;
+
+  try {
+    const response = await fetch(url, { credentials: "include" });
+    if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = blobUrl;
+    anchor.download = fileName;
+    anchor.style.display = "none";
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(blobUrl);
+    return;
+  } catch (error) {
+    console.warn("Direct blob download failed, falling back to anchor navigation:", error);
+  }
+
+  const fallback = document.createElement("a");
+  fallback.href = url;
+  fallback.download = fileName;
+  fallback.target = "_self";
+  fallback.rel = "noopener noreferrer";
+  fallback.style.display = "none";
+  document.body.appendChild(fallback);
+  fallback.click();
+  document.body.removeChild(fallback);
+};
+
 const trainerColumns: ColumnConfig[] = [
   { key: "trainerName", label: "Trainer Name", sortable: true, hideable: true, draggable: true },
   { key: "mobile", label: "Mobile", sortable: true, hideable: true, draggable: true },
@@ -343,20 +376,18 @@ export const ClassSetupDetails = () => {
             {cls.attachments.length > 0 ? (
               <div className="space-y-2">
                 {cls.attachments.map((attachment) => (
-                  <a
+                  <button
                     key={attachment.id}
-                    href={resolveAttachmentUrl(attachment.url)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    download
-                    className="flex items-center justify-between text-sm p-2 bg-[#F6F4EE] rounded border border-gray-200 hover:border-brand transition-colors"
+                    type="button"
+                    onClick={() => downloadAttachment(resolveAttachmentUrl(attachment.url), attachment.name || "class-attachment")}
+                    className="flex w-full items-center justify-between text-left text-sm p-2 bg-[#F6F4EE] rounded border border-gray-200 hover:border-brand transition-colors"
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <Paperclip className="w-4 h-4 text-gray-500 shrink-0" />
                       <span className="truncate text-gray-900">{attachment.name}</span>
                     </div>
                     <Download className="w-4 h-4 text-gray-500 shrink-0" />
-                  </a>
+                  </button>
                 ))}
               </div>
             ) : (

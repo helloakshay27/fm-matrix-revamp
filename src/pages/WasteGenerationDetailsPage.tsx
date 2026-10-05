@@ -511,8 +511,8 @@ export const WasteGenerationDetailsPage = () => {
   ];
 
   const bagDetailsFields: Field[] = [
-    { label: "Category", value: wasteData.category?.category_name },
-    { label: "Subcategory", value: wasteData.commodity?.category_name },
+    { label: "Subcategory", value: wasteData.category?.category_name },
+    { label: "Category", value: wasteData.commodity?.category_name },
     { label: "No. of Bags", value: totalBagCount != null ? totalBagCount.toString() : undefined },
     { label: "Device", value: wasteData.device_id != null ? wasteData.device_id.toString() : undefined },
     { label: "Status", value: wasteData.status || undefined },

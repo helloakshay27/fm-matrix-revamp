@@ -161,10 +161,22 @@ const isMuiOverlayTarget = (target: EventTarget | null) =>
     ".MuiPopover-root, .MuiModal-root, .MuiMenu-root"
   );
 
+// The "Commodity" and "Category" tag_type values are the backend's naming and
+// stay as-is in state/API calls, but the UI now displays them one level up:
+// Commodity -> Category, Category -> Subcategory.
+const tabDisplayLabel = (tab: string) =>
+  tab === "Commodity" ? "Category" : tab === "Category" ? "Subcategory" : tab;
+
 const commodityColumns: ColumnConfig[] = [
   {
+    key: "icon",
+    label: "Icon",
+    sortable: false,
+    defaultVisible: true,
+  },
+  {
     key: "category_name",
-    label: "Commodity",
+    label: "Category",
     sortable: true,
     defaultVisible: true,
   },
@@ -185,20 +197,26 @@ const commodityColumns: ColumnConfig[] = [
 
 const categoryColumns: ColumnConfig[] = [
   {
+    key: "icon",
+    label: "Icon",
+    sortable: false,
+    defaultVisible: true,
+  },
+  {
     key: "parent_name",
-    label: "Parent Commodity",
+    label: "Parent Category",
     sortable: true,
     defaultVisible: true,
   },
   {
     key: "category_name",
-    label: "Category",
+    label: "Subcategory",
     sortable: true,
     defaultVisible: true,
   },
   {
     key: "category_type",
-    label: "Category Type",
+    label: "UOM",
     sortable: true,
     defaultVisible: true,
   },
@@ -413,7 +431,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
 
   const handleCommoditySubmit = async () => {
     if (!commodityInput.trim()) {
-      sonnerToast.error("Please enter a commodity name");
+      sonnerToast.error("Please enter a category name");
       return;
     }
 
@@ -441,18 +459,18 @@ export const UtilityWasteGenerationSetupDashboard = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to add commodity");
+        throw new Error("Failed to add category");
       }
 
       setCommodityInput("");
       setCommodityCustomerEnabled(false);
       setCommodityIconFile(null);
       setIsAddCommodityModalOpen(false);
-      sonnerToast.success("Commodity added successfully");
+      sonnerToast.success("Category added successfully");
       loadData();
     } catch (error) {
       console.error("Error adding commodity:", error);
-      sonnerToast.error("Failed to add commodity");
+      sonnerToast.error("Failed to add category");
     } finally {
       setSubmitting(false);
     }
@@ -494,7 +512,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to add category");
+        throw new Error("Failed to add subcategory");
       }
 
       setCategoryInputs({
@@ -505,11 +523,11 @@ export const UtilityWasteGenerationSetupDashboard = () => {
         iconFile: null,
       });
       setIsAddCategoryModalOpen(false);
-      sonnerToast.success("Category added successfully");
+      sonnerToast.success("Subcategory added successfully");
       loadData();
     } catch (error) {
       console.error("Error adding category:", error);
-      sonnerToast.error("Failed to add category");
+      sonnerToast.error("Failed to add subcategory");
     } finally {
       setSubmitting(false);
     }
@@ -763,6 +781,20 @@ export const UtilityWasteGenerationSetupDashboard = () => {
     columnKey: string
   ) => {
     switch (columnKey) {
+      case "icon": {
+        // Only commodityColumns/categoryColumns declare this key, so item is
+        // always CommodityData | CategoryData here, never LandlordData.
+        const { url, name } = getTagIconDetails(item as CommodityData | CategoryData);
+        return url ? (
+          <img
+            src={url}
+            alt={name || item.category_name}
+            className="h-8 w-8 rounded object-cover border border-gray-200"
+          />
+        ) : (
+          "-"
+        );
+      }
       case "category_name":
         return <span className="font-medium">{item.category_name}</span>;
       case "parent_name":
@@ -827,8 +859,8 @@ export const UtilityWasteGenerationSetupDashboard = () => {
         type="button"
         variant="ghost"
         size="icon"
-        title={`Edit ${activeTab.toLowerCase()}`}
-        aria-label={`Edit ${activeTab.toLowerCase()}`}
+        title={`Edit ${tabDisplayLabel(activeTab).toLowerCase()}`}
+        aria-label={`Edit ${tabDisplayLabel(activeTab).toLowerCase()}`}
         onClick={() => openEditTag(item as CommodityData | CategoryData)}
       >
         <Pencil className="h-4 w-4" />
@@ -847,9 +879,9 @@ export const UtilityWasteGenerationSetupDashboard = () => {
     >
       <Plus className="w-4 h-4 mr-2" />
       {activeTab === "Commodity"
-        ? "Add Commodity"
+        ? "Add Category"
         : activeTab === "Category"
-          ? "Add Category"
+          ? "Add Subcategory"
           : "Add Landlord/Tenant"}
     </Button>
   ) : null;
@@ -881,7 +913,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              {tab}
+              {tabDisplayLabel(tab)}
             </button>
           ))}
         </div>
@@ -927,13 +959,13 @@ export const UtilityWasteGenerationSetupDashboard = () => {
       >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Add New Commodity</DialogTitle>
-            <DialogDescription>Enter commodity details below</DialogDescription>
+            <DialogTitle>Add New Category</DialogTitle>
+            <DialogDescription>Enter category details below</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <TextField
-              label="Commodity*"
-              placeholder="Enter commodity name"
+              label="Category*"
+              placeholder="Enter category name"
               value={commodityInput}
               onChange={(e) => setCommodityInput(e.target.value)}
               fullWidth
@@ -1017,13 +1049,13 @@ export const UtilityWasteGenerationSetupDashboard = () => {
           }}
         >
           <DialogHeader>
-            <DialogTitle>Add New Category</DialogTitle>
-            <DialogDescription>Enter category details below</DialogDescription>
+            <DialogTitle>Add New Subcategory</DialogTitle>
+            <DialogDescription>Enter subcategory details below</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <FormControl fullWidth variant="outlined">
               <InputLabel id="parent-commodity-label" shrink>
-                Parent Commodity*
+                Parent Category*
               </InputLabel>
               <MuiSelect
                 labelId="parent-commodity-label"
@@ -1034,14 +1066,14 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                     parent_id: e.target.value as string,
                   }))
                 }
-                label="Parent Commodity*"
+                label="Parent Category*"
                 displayEmpty
                 notched
                 sx={fieldStyles}
                 MenuProps={selectMenuProps}
               >
                 <MenuItem value="">
-                  <em>Select Parent Commodity</em>
+                  <em>Select Parent Category</em>
                 </MenuItem>
                 {commodities.map((commodity) => (
                   <MenuItem key={commodity.id} value={commodity.id.toString()}>
@@ -1052,8 +1084,8 @@ export const UtilityWasteGenerationSetupDashboard = () => {
             </FormControl>
 
             <TextField
-              label="Category Name*"
-              placeholder="Enter category name"
+              label="Subcategory Name*"
+              placeholder="Enter subcategory name"
               value={categoryInputs.category_name}
               onChange={(e) =>
                 setCategoryInputs((prev) => ({
@@ -1068,8 +1100,8 @@ export const UtilityWasteGenerationSetupDashboard = () => {
             />
 
             <TextField
-              label="Category Type*"
-              placeholder="Enter category type"
+              label="UOM*"
+              placeholder="Enter UOM"
               value={categoryInputs.category_type}
               onChange={(e) =>
                 setCategoryInputs((prev) => ({
@@ -1164,7 +1196,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
         >
           <DialogHeader>
             <DialogTitle>
-              Edit {editingTag?.tagType === "Category" ? "Category" : "Commodity"}
+              Edit {tabDisplayLabel(editingTag?.tagType || "")}
             </DialogTitle>
             <DialogDescription>Update tag details below</DialogDescription>
           </DialogHeader>
@@ -1173,7 +1205,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
               {editingTag.tagType === "Category" && (
                 <FormControl fullWidth variant="outlined">
                   <InputLabel id="edit-parent-commodity-label" shrink>
-                    Parent Commodity*
+                    Parent Category*
                   </InputLabel>
                   <MuiSelect
                     labelId="edit-parent-commodity-label"
@@ -1185,14 +1217,14 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                           : prev
                       )
                     }
-                    label="Parent Commodity*"
+                    label="Parent Category*"
                     displayEmpty
                     notched
                     sx={fieldStyles}
                     MenuProps={selectMenuProps}
                   >
                     <MenuItem value="">
-                      <em>Select Parent Commodity</em>
+                      <em>Select Parent Category</em>
                     </MenuItem>
                     {commodities.map((commodity) => (
                       <MenuItem key={commodity.id} value={commodity.id.toString()}>
@@ -1203,7 +1235,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                 </FormControl>
               )}
               <TextField
-                label={`${editingTag.tagType}*`}
+                label={`${tabDisplayLabel(editingTag.tagType)}*`}
                 value={editingTag.category_name}
                 onChange={(e) =>
                   setEditingTag((prev) =>
@@ -1217,7 +1249,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
               />
               {editingTag.tagType === "Category" && (
                 <TextField
-                  label="Category Type*"
+                  label="UOM*"
                   value={editingTag.category_type}
                   onChange={(e) =>
                     setEditingTag((prev) =>
