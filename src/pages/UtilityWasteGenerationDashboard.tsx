@@ -555,7 +555,7 @@ useEffect(() => {
                       <Loader2 className="animate-spin w-5 h-5 text-[#C72030]" />
                     ) : (
                       <div className="text-xl font-semibold">
-                        {item.value !== null ? `${item.value.toLocaleString('en-IN')} kg` : '—'}
+                        {item.value != null ? `${item.value.toLocaleString('en-IN')} kg` : '—'}
                       </div>
                     )}
                     <div className="text-sm font-medium text-[#1A1A1A]">{item.label}</div>
