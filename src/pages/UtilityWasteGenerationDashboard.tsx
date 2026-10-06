@@ -146,7 +146,7 @@ const SiteDetailModal: React.FC<SiteDetailModalProps> = ({ siteName, siteData, o
         {siteData.map(({ category, value }) => (
           <div key={category} className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-3">
             <span className="text-sm font-medium text-gray-700">{category}</span>
-            <span className="text-sm font-semibold text-gray-900">{value.toLocaleString('en-IN')} kg</span>
+            <span className="text-sm font-semibold text-gray-900">{(value ?? 0).toLocaleString('en-IN')} kg</span>
           </div>
         ))}
       </div>
