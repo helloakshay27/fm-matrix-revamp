@@ -35,14 +35,19 @@ export const ClassSetupEdit = () => {
           minParticipants: String(c.min_capacity ?? ""),
           maxCapacity: String(c.max_capacity ?? ""),
           location: c.location ?? "",
-          duration: c.duration_minutes != null ? String(c.duration_minutes) : "",
+          duration: c.duration_minutes != null ? `${c.duration_minutes} min` : "",
           trainer: (c.trainers ?? c.trainer_ids ?? []).map((trainer: any) =>
-            String(typeof trainer === "object" ? trainer.value : trainer)
+            String(typeof trainer === "object" ? trainer.id : trainer)
           ),
           status: String(c.status).toLowerCase() === "active" ? "Active" : "Inactive",
           startTime: "",
           endTime: "",
-          description: "",
+          description: c.description ?? "",
+          existingAttachments: (c.attachments ?? []).map((attachment: any) => ({
+            id: String(attachment.id),
+            name: attachment.file_name ?? attachment.name ?? "Attachment",
+            url: attachment.url ?? "",
+          })),
         });
       } catch (err) {
         console.error("Failed to fetch class", err);
@@ -55,7 +60,7 @@ export const ClassSetupEdit = () => {
 
   if (!initialValues) return null;
 
-  const handleSubmit = async (payload: Omit<ClassSetup, "id" | "trainers"> & { selectedTrainers: { name: string; value: number }[] }, attachedFiles: File[]) => {
+  const handleSubmit = async (payload: Omit<ClassSetup, "id" | "trainers">, attachedFiles: File[]) => {
     if (!id) return;
     try {
       const baseUrl = localStorage.getItem("baseUrl");
@@ -71,26 +76,22 @@ export const ClassSetupEdit = () => {
         duration_minutes: parseInt(String(payload.duration), 10) || 0,
         status: String(payload.status).toLowerCase(),
         bundle_eligible: true,
-        trainers: payload.selectedTrainers,
+        trainer_ids: payload.trainer.map((trainerId) => Number(trainerId)),
         location: payload.location,
+        description: payload.description,
       };
 
       if (attachedFiles.length > 0) {
         const formData = new FormData();
         Object.entries(classFields).forEach(([key, value]) => {
-          if (key === "trainers" && Array.isArray(value)) {
-            value.forEach((trainer, index) => {
-              formData.append(`club_class[trainers][${index}][name]`, trainer.name);
-              formData.append(`club_class[trainers][${index}][value]`, String(trainer.value));
-            });
-          } else if (Array.isArray(value)) {
+          if (Array.isArray(value)) {
             value.forEach((item) => formData.append(`club_class[${key}][]`, String(item)));
           } else {
             formData.append(`club_class[${key}]`, String(value));
           }
         });
         attachedFiles.forEach((file) => {
-          formData.append("club_class[images][]", file);
+          formData.append("attachments[]", file);
         });
         await axios.put(url, formData, { headers: { Authorization: `Bearer ${token}` } });
       } else {

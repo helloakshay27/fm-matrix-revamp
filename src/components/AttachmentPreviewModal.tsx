@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 interface AttachmentPreviewModalProps {
   isModalOpen: boolean;
   setIsModalOpen: (isOpen: boolean) => void;
+  showDownload?: boolean;
   selectedDoc: {
     id: number;
     document_name?: string;
@@ -27,6 +28,7 @@ interface AttachmentPreviewModalProps {
 export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
   isModalOpen,
   setIsModalOpen,
+  showDownload = true,
   selectedDoc,
   setSelectedDoc,
 }) => {
@@ -165,13 +167,15 @@ export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
                 className="max-w-full max-h-96 object-contain"
               />
             </div>
-            <Button
-              onClick={handleDownload}
-              className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Download File
-            </Button>
+            {showDownload && (
+              <Button
+                onClick={handleDownload}
+                className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download File
+              </Button>
+            )}
           </div>
         );
 
@@ -185,15 +189,17 @@ export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
                 title={selectedDoc.document_name || selectedDoc.document_file_name || 'PDF Document'}
               />
             </div>
-            <div className="flex justify-center">
-              <Button
-                onClick={handleDownload}
-                className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download File
-              </Button>
-            </div>
+            {showDownload && (
+              <div className="flex justify-center">
+                <Button
+                  onClick={handleDownload}
+                  className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download File
+                </Button>
+              </div>
+            )}
           </div>
         );
 
@@ -212,13 +218,15 @@ export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
             <p className="text-gray-600 mb-4">
               Preview not available for this file type
             </p>
-            <Button
-              onClick={handleDownload}
-              className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Download File
-            </Button>
+            {showDownload && (
+              <Button
+                onClick={handleDownload}
+                className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download File
+              </Button>
+            )}
           </div>
         );
     }

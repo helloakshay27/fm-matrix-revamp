@@ -24,6 +24,7 @@ import {
   FileCheck,
   Trash2,
   Paperclip,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -444,15 +445,19 @@ export const WasteGenerationDetailsPage = () => {
   // Table 1.2 — Waste Detail breakdown. Multi-category records (created via
   // `waste_entries`) carry one row per category in `categories`; legacy
   // single-category records fall back to the one flat category on the record.
-  // There's no per-category recycled amount in the API — only a record-level
-  // total — so Recycle Weight is only shown on the legacy single-row case.
+  // The API provides a record-level recycled amount, so split it evenly across
+  // category rows just like dispatch weight.
   const wasteDetailTableRows =
     wasteData.categories && wasteData.categories.length > 0
       ? (() => {
+          const totalRecycledWeight = Number(wasteData.recycled_unit) || 0;
           const entries = wasteData.categories.map((entry) => ({
             category: entry.category?.category_name || "-",
             totalWeight: entry.waste_unit != null ? `${entry.waste_unit} ${entry.uom || "kg"}` : "-",
-            recycleWeight: "-",
+            recycleWeight:
+              totalRecycledWeight > 0
+                ? `${(totalRecycledWeight / wasteData.categories.length).toFixed(2)} kg`
+                : "-",
           }));
 
           const totalDispatchWeight =
@@ -506,8 +511,8 @@ export const WasteGenerationDetailsPage = () => {
   ];
 
   const bagDetailsFields: Field[] = [
-    { label: "Category", value: wasteData.category?.category_name },
-    { label: "Subcategory", value: wasteData.commodity?.category_name },
+    { label: "Subcategory", value: wasteData.category?.category_name },
+    { label: "Category", value: wasteData.commodity?.category_name },
     { label: "No. of Bags", value: totalBagCount != null ? totalBagCount.toString() : undefined },
     { label: "Device", value: wasteData.device_id != null ? wasteData.device_id.toString() : undefined },
     { label: "Status", value: wasteData.status || undefined },
@@ -708,11 +713,12 @@ export const WasteGenerationDetailsPage = () => {
                       <span className="text-sm font-medium text-gray-700 truncate">{attachment.name}</span>
                       <a
                         href={attachment.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-[#C72030] text-sm font-medium hover:underline"
+                        download={attachment.name}
+                        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded text-brand hover:bg-brand-selected"
+                        aria-label={`Download ${attachment.name}`}
+                        title={`Download ${attachment.name}`}
                       >
-                        Open
+                        <Download className="h-4 w-4" />
                       </a>
                     </div>
                   </div>

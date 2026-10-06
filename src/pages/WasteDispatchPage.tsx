@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Truck, Trash2, RefreshCw, Droplet, Package, Activity } from 'lucide-react';
+import { ArrowLeft, Truck, Trash2, RefreshCw, Droplet, Package, Activity, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TextField, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
 import { toast } from 'sonner';
@@ -190,6 +190,16 @@ const WasteDispatchPage: React.FC = () => {
     [items]
   );
 
+  // Pre-fill Dispatch Weight (Kg) with the total waste captured so the field
+  // starts at the max allowed value - still editable, just not blank by default.
+  useEffect(() => {
+    if (totalCaptured > 0) {
+      setFormData((prev) =>
+        prev.dispatchWeightKg ? prev : { ...prev, dispatchWeightKg: String(totalCaptured) }
+      );
+    }
+  }, [totalCaptured]);
+
   // Summary cards scoped to just the selected items (client-side, since
   // dispatch has no aggregation API yet).
   const summaryCards = useMemo(() => {
@@ -217,6 +227,7 @@ const WasteDispatchPage: React.FC = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAttachmentFile(e.target.files?.[0] ?? null);
+    e.target.value = '';
   };
 
   const handleBack = () => navigate('/maintenance/waste/generation');
@@ -234,10 +245,6 @@ const WasteDispatchPage: React.FC = () => {
       toast.error('Validation Error: Vendor / Facility Name is required.');
       return;
     }
-    if (!formData.vehicleNumber) {
-      toast.error('Validation Error: Vehicle Number is required.');
-      return;
-    }
     if (!formData.dispatchDate) {
       toast.error('Validation Error: Dispatch Date is required.');
       return;
@@ -248,10 +255,6 @@ const WasteDispatchPage: React.FC = () => {
     }
     if (parseFloat(formData.dispatchWeightKg) > totalCaptured) {
       toast.error('Dispatch Weight (Kg) cannot exceed total waste captured for the selected items.');
-      return;
-    }
-    if (!formData.disposalMethodKg) {
-      toast.error('Validation Error: Disposal Method (Kg) is required.');
       return;
     }
     if (!authorizeBy.department && !authorizeBy.user) {
@@ -439,7 +442,7 @@ const WasteDispatchPage: React.FC = () => {
             </FormControl>
 
             <TextField
-              label={<span>Vehicle Number <span className="text-red-500">*</span></span>}
+              label="Vehicle Number"
               placeholder="e.g. MH-04-AB-1234"
               value={formData.vehicleNumber}
               onChange={(e) => handleChange('vehicleNumber', e.target.value)}
@@ -509,13 +512,19 @@ const WasteDispatchPage: React.FC = () => {
                 onChange={(e) => handleChange('dispatchWeightKg', e.target.value)}
                 fullWidth
                 variant="outlined"
-                inputProps={{ min: '0' }}
+                error={parseFloat(formData.dispatchWeightKg) > totalCaptured}
+                helperText={
+                  parseFloat(formData.dispatchWeightKg) > totalCaptured
+                    ? `Cannot exceed total waste captured (${totalCaptured.toLocaleString('en-IN')} KG)`
+                    : undefined
+                }
+                inputProps={{ min: '0', max: totalCaptured }}
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
               />
               <FormControl fullWidth>
                 <InputLabel shrink id="disposal-method-kg-label" sx={{ backgroundColor: 'white', px: 1 }}>
-                  Disposal Method <span className="text-red-500">*</span>
+                  Disposal Method
                 </InputLabel>
                 <Select
                   labelId="disposal-method-kg-label"
@@ -711,6 +720,17 @@ const WasteDispatchPage: React.FC = () => {
               <input type="file" className="hidden" onChange={handleFileChange} />
             </label>
             <span className="text-sm text-gray-500">{attachmentFile?.name || 'No file chosen'}</span>
+            {attachmentFile && (
+              <button
+                type="button"
+                onClick={() => setAttachmentFile(null)}
+                className="text-gray-500 hover:text-red-600"
+                aria-label="Remove attachment"
+                title="Remove attachment"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
         </div>
 

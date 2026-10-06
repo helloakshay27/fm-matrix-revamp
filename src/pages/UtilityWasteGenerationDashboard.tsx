@@ -172,7 +172,6 @@ const UtilityWasteGenerationDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [showMoreKpis, setShowMoreKpis] = useState(false);
 
   // API states
   const [wasteGenerations, setWasteGenerations] = useState<WasteGeneration[]>([]);
@@ -473,44 +472,6 @@ useEffect(() => {
                 ))}
               </div>
 
-              {extraKpiCards.length > 0 && (
-                <div className="space-y-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowMoreKpis((prev) => !prev)}
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-white border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                  >
-                    {showMoreKpis ? 'Hide KPIs' : 'More KPIs'}
-                    <span className="text-xs">{showMoreKpis ? '−' : '+'}</span>
-                  </button>
-
-                  {showMoreKpis && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                      {extraKpiCards.map((card, index) => (
-                        <div
-                          key={`${card.label}-${index}`}
-                          className="bg-[#F6F4EE] p-5 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] border border-[#E4E0D8]"
-                        >
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center shrink-0">
-                              {card.icon}
-                            </div>
-                            <div className="text-xs font-semibold uppercase tracking-wide text-[#6B6B6B]">
-                              {card.label}
-                            </div>
-                          </div>
-                          <div className="text-2xl font-semibold text-[#1A1A1A]">{card.value}</div>
-                          {'recycled' in card && card.recycled ? (
-                            <div className="mt-2 text-sm text-[#4B5563]">
-                              Recycled: {card.recycled}
-                            </div>
-                          ) : null}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
 
             {/* Table */}
@@ -642,6 +603,33 @@ useEffect(() => {
                 </div>
               ))}
             </div>
+
+            {/* Per-category KPI cards (moved here from the "More KPIs" toggle on the Waste List tab) */}
+            {extraKpiCards.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+                {extraKpiCards.map((card, index) => (
+                  <div
+                    key={`${card.label}-${index}`}
+                    className="bg-[#F6F4EE] p-5 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] border border-[#E4E0D8]"
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center shrink-0">
+                        {card.icon}
+                      </div>
+                      <div className="text-xs font-semibold uppercase tracking-wide text-[#6B6B6B]">
+                        {card.label}
+                      </div>
+                    </div>
+                    <div className="text-2xl font-semibold text-[#1A1A1A]">{card.value}</div>
+                    {'recycled' in card && card.recycled ? (
+                      <div className="mt-2 text-sm text-[#4B5563]">
+                        Recycled: {card.recycled}
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Bar Chart */}
             <div className="w-full mt-6 animate-in fade-in duration-300">

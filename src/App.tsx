@@ -2906,6 +2906,9 @@ const DashboardMobile = lazy(() =>
 );
 const SafetyCheckAudit = lazy(() => import("./pages/SafetyCheckAudit"));
 const MsafeCirlce = lazy(() => import("./pages/MsafeCirlce"));
+const MsafeCircleEmailConfig = lazy(
+  () => import("./pages/MsafeCircleEmailConfig")
+);
 const TicketJobSheetPage = lazy(() =>
   import("./pages/TicketJobSheetPage").then((m) => ({
     default: m.TicketJobSheetPage,
@@ -3330,6 +3333,41 @@ const PackageSetupEdit = lazy(() =>
 const PackageSetupDetails = lazy(() =>
   import("./pages/ClubManagement/PackageSetupDetails").then((m) => ({
     default: m.PackageSetupDetails,
+  }))
+);
+const ClassPurchaseList = lazy(() =>
+  import("./pages/ClubManagement/ClassPurchaseList").then((m) => ({
+    default: m.ClassPurchaseList,
+  }))
+);
+const ClassPurchaseAdd = lazy(() =>
+  import("./pages/ClubManagement/ClassPurchaseAdd").then((m) => ({
+    default: m.ClassPurchaseAdd,
+  }))
+);
+const ClassPurchaseDetails = lazy(() =>
+  import("./pages/ClubManagement/ClassPurchaseDetails").then((m) => ({
+    default: m.ClassPurchaseDetails,
+  }))
+);
+const ClassPurchaseEdit = lazy(() =>
+  import("./pages/ClubManagement/ClassPurchaseEdit").then((m) => ({
+    default: m.ClassPurchaseEdit,
+  }))
+);
+const ClassBookingList = lazy(() =>
+  import("./pages/ClubManagement/ClassBookingList").then((m) => ({
+    default: m.ClassBookingList,
+  }))
+);
+const ClassBookingAdd = lazy(() =>
+  import("./pages/ClubManagement/ClassBookingAdd").then((m) => ({
+    default: m.ClassBookingAdd,
+  }))
+);
+const ClassBookingDetails = lazy(() =>
+  import("./pages/ClubManagement/ClassBookingDetails").then((m) => ({
+    default: m.ClassBookingDetails,
   }))
 );
 const BudgetDashboard = lazy(() =>
@@ -3796,6 +3834,12 @@ import SupplierDetailsPage from "./features/PulseSuppliers/pages/SupplierDetails
 import EditSupplierPage from "./features/PulseSuppliers/pages/EditSupplierPage.tsx";
 const ModulesManagement = lazy(
   () => import("./pages/settings/ModulesManagement")
+);
+const TransportSuppliersPage = lazy(
+  () => import("./features/transport-suppliers/pages/TransportSuppliers")
+);
+const TransportSupplierDetailsPage = lazy(
+  () => import("./features/transport-suppliers/pages/TransportSupplierDetailsPage")
 );
 const GateIntegrationPage = lazy(
   () => import("./features/gate-integration/pages/GateIntegration")
@@ -7066,6 +7110,36 @@ function App() {
                               path="/club-management/package-setup/details/:id"
                               element={<PackageSetupDetails />}
                             />
+                            {/* Club Management - Class Purchase */}
+                            <Route
+                              path="/club-management/class-purchase"
+                              element={<ClassPurchaseList />}
+                            />
+                            <Route
+                              path="/club-management/class-purchase/add"
+                              element={<ClassPurchaseAdd />}
+                            />
+                            <Route
+                              path="/club-management/class-purchase/edit/:id"
+                              element={<ClassPurchaseEdit />}
+                            />
+                            <Route
+                              path="/club-management/class-purchase/:id"
+                              element={<ClassPurchaseDetails />}
+                            />
+                            {/* Club Management - Class Booking */}
+                            <Route
+                              path="/club-management/class-booking"
+                              element={<ClassBookingList />}
+                            />
+                            <Route
+                              path="/club-management/class-booking/add"
+                              element={<ClassBookingAdd />}
+                            />
+                            <Route
+                              path="/club-management/class-booking/:id"
+                              element={<ClassBookingDetails />}
+                            />
                             {/* Club Management - Broadcast */}
                             <Route
                               path="/club-management/broadcast"
@@ -7437,6 +7511,10 @@ function App() {
                             <Route
                               path="/safety/m-safe/circle"
                               element={<MsafeCirlce />}
+                            />
+                            <Route
+                              path="/settings/circle-email-config"
+                              element={<MsafeCircleEmailConfig />}
                             />
                             {/* CRM Routes */}
                             <Route
@@ -8517,6 +8595,15 @@ function App() {
                             <Route
                               path="/security/visitor/employee/details/:id"
                               element={<VisitorDetailsPageEmployee />}
+                            />
+                            {/* Settings > Transport Routes */}
+                            <Route
+                              path="/settings/transport/suppliers"
+                              element={<TransportSuppliersPage />}
+                            />
+                            <Route
+                              path="/settings/transport/suppliers/:id"
+                              element={<TransportSupplierDetailsPage />}
                             />
                             <Route
                               path="/settings/visitor-management/setup"

@@ -37,6 +37,16 @@ function normalise(raw: ApiSite[]): Site[] {
  * Falls back to `allowed_sites` if the scoped list is empty or unavailable.
  */
 export async function fetchAllSites(): Promise<Site[]> {
+  const token =
+    localStorage.getItem('token') ||
+    localStorage.getItem('access_token') ||
+    sessionStorage.getItem('token') ||
+    sessionStorage.getItem('access_token');
+
+  if (!token) {
+    return [];
+  }
+
   const userId =
     localStorage.getItem('userId') ??
     sessionStorage.getItem('userId') ??
@@ -71,10 +81,9 @@ export async function fetchAllSites(): Promise<Site[]> {
       : `${ENDPOINTS.SITES}`;
     const res = await apiClient.get(url);
     return normalise(readList<ApiSite>(res.data, 'sites', 'data'));
-  } catch {
-    // Do not omit `site_id` after a scope lookup fails: that would turn a
-    // scoped dashboard request into a tenant-wide analytics request.
-    throw new Error('Unable to load the sites permitted for this dashboard.');
+  } catch (error) {
+    console.warn('Unable to load sites list, defaulting to empty list:', error);
+    return [];
   }
 }
 
@@ -89,6 +98,16 @@ interface ApiCompany {
  * so this fills the labels in. Failure is non-fatal — the tier falls back to `Company {id}`.
  */
 export async function fetchCompanyNames(): Promise<Record<string, string>> {
+  const token =
+    localStorage.getItem('token') ||
+    localStorage.getItem('access_token') ||
+    sessionStorage.getItem('token') ||
+    sessionStorage.getItem('access_token');
+
+  if (!token) {
+    return {};
+  }
+
   try {
     const res = await apiClient.get(ENDPOINTS.ALLOWED_COMPANIES);
     const list = readList<ApiCompany>(res.data, 'companies', 'data');

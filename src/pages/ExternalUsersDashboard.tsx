@@ -507,7 +507,12 @@ export const ExternalUsersDashboard = () => {
       const baseUrl = localStorage.getItem('baseUrl');
       const token = localStorage.getItem('token');
       if (!baseUrl || !token) throw new Error('Missing base URL or token');
-      const url = isViSite ? `${baseUrl}/pms/users/${user.id}/update_vi_user` : `https://${baseUrl}/pms/users/${user.id}/update_vi_user`;
+      const apiBaseUrl = isViSite
+        ? "https://live-api.gophygital.work"
+        : baseUrl.startsWith("http")
+          ? baseUrl.replace(/\/+$/, "")
+          : `https://${baseUrl.replace(/\/+$/, "")}`;
+      const url = `${apiBaseUrl}/pms/users/${user.id}/update_vi_user`;
       const payload = {
         user: {
           lock_user_permissions_attributes: [

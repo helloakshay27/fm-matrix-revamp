@@ -21,6 +21,7 @@ import {
   Star,
   Circle,
   Database,
+  Mail,
 } from "lucide-react";
 
 interface ModuleItem {
@@ -269,6 +270,11 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
       icon: Circle,
       name: "Circle",
       href: "/safety/m-safe/circle",
+    },
+    {
+      icon: Mail,
+      name: "Circle Email Config",
+      href: "/settings/circle-email-config",
     },
   ],
 };

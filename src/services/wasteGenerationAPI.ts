@@ -18,12 +18,18 @@ export interface Category {
   category_name: string;
   category_type: string;
   tag_type: string;
+  parent_id?: number | null;
 }
 
 export interface OperationalLandlord {
   id: number;
   category_name: string;
   tag_type: string;
+}
+
+export interface Entity {
+  id: number;
+  name: string;
 }
 
 export interface CreatedBy {
@@ -188,6 +194,7 @@ export interface CreateWasteGenerationPayload {
     recycled_unit: number;
     remark?: string;
     device_id?: string;
+    entity_id?: number | null;
   };
   waste_entries: WasteEntryInput[];
 }
@@ -401,6 +408,7 @@ export const createWasteGeneration = async (
 // `id` so the backend can update it in place instead of creating a duplicate;
 // entries without an `id` are new rows added during this edit.
 export interface UpdateWasteGenerationEntriesPayload {
+  waste_generation_id: number;
   pms_waste_generation: {
     wg_date: string;
     vendor_id: number | null;
@@ -411,26 +419,37 @@ export interface UpdateWasteGenerationEntriesPayload {
     agency_name: string;
     recycled_unit?: number;
     remark?: string;
+    entity_id?: number | null;
   };
-  waste_entries: (WasteEntryInput & { id?: number })[];
+  waste_entries: WasteEntryUpdateInput[];
 }
 
-// Updates a waste generation record that has one or more category entries,
-// mirroring createWasteGeneration's payload shape and multipart/JSON
-// branching (switches to FormData when any entry carries new attachments).
-//
-// NOTE: the `update_waste` member action is a best guess mirroring
-// create_waste's naming convention — there is no confirmed backend contract
-// for updating a multi-entry record (the sibling wasteDispatchAPI.ts /
-// wasteRecycleEntryAPI.ts only implement create, no update-with-entries).
-// If this 404s or silently drops entries, confirm the real endpoint/payload
-// with backend and adjust this function accordingly.
+export interface WasteEntryValueUpdateInput {
+  id?: number;
+  value: string;
+  _destroy?: boolean;
+}
+
+export interface WasteEntryUpdateInput {
+  id?: number;
+  category_id?: number;
+  commodity_id?: number;
+  uom?: string;
+  values?: WasteEntryValueUpdateInput[];
+  attachments?: File[];
+  signature?: string | null;
+  _destroy?: boolean;
+}
+
+// Saves an edited waste generation through the same create_waste endpoint as
+// creation. The parent and existing entry IDs let the API update the record
+// instead of treating it as a new generation.
 export const updateWasteGenerationWithEntries = async (
   id: number,
   payload: UpdateWasteGenerationEntriesPayload
 ): Promise<CreateWasteGenerationResponse> => {
-  const url = getFullUrl(`/pms/waste_generations/${id}/update_waste`);
-  const { pms_waste_generation, waste_entries } = payload;
+  const url = getFullUrl('/pms/waste_generations/create_waste');
+  const { waste_generation_id, pms_waste_generation, waste_entries } = payload;
 
   console.log('Updating waste generation (with entries) at:', url);
   console.log('Update payload:', payload);
@@ -441,6 +460,7 @@ export const updateWasteGenerationWithEntries = async (
 
   if (hasAttachments) {
     const formData = new FormData();
+    formData.append('waste_generation_id', String(waste_generation_id || id));
     Object.entries(pms_waste_generation).forEach(([key, value]) => {
       if (value === null || value === undefined) return;
       formData.append(`pms_waste_generation[${key}]`, String(value));
@@ -448,10 +468,19 @@ export const updateWasteGenerationWithEntries = async (
 
     waste_entries.forEach((entry, index) => {
       if (entry.id) formData.append(`waste_entries[${index}][id]`, String(entry.id));
-      formData.append(`waste_entries[${index}][category_id]`, String(entry.category_id));
-      formData.append(`waste_entries[${index}][commodity_id]`, String(entry.commodity_id));
-      formData.append(`waste_entries[${index}][uom]`, entry.uom);
-      entry.values.forEach((value) => formData.append(`waste_entries[${index}][values][]`, String(value)));
+      if (entry._destroy) {
+        formData.append(`waste_entries[${index}][_destroy]`, 'true');
+        return;
+      }
+      if (entry.category_id !== undefined) formData.append(`waste_entries[${index}][category_id]`, String(entry.category_id));
+      if (entry.commodity_id !== undefined) formData.append(`waste_entries[${index}][commodity_id]`, String(entry.commodity_id));
+      if (entry.uom) formData.append(`waste_entries[${index}][uom]`, entry.uom);
+      (entry.values ?? []).forEach((value, valueIndex) => {
+        const valuePath = `waste_entries[${index}][values][${valueIndex}]`;
+        if (value.id !== undefined) formData.append(`${valuePath}[id]`, String(value.id));
+        formData.append(`${valuePath}[value]`, value.value);
+        if (value._destroy) formData.append(`${valuePath}[_destroy]`, 'true');
+      });
       (entry.attachments ?? []).forEach((file) => formData.append(`waste_entries[${index}][attachments][]`, file));
       if (entry.signature) formData.append(`waste_entries[${index}][signature]`, entry.signature);
     });
@@ -461,21 +490,18 @@ export const updateWasteGenerationWithEntries = async (
     console.log('Update waste generation (multipart) FormData entries:', Array.from(formData.entries()));
 
     response = await fetch(url, {
-      method: 'PUT',
+      method: 'POST',
       headers: { Authorization: getAuthHeader() },
       body: formData,
     });
   } else {
-    const options = getAuthenticatedFetchOptions('PUT', {
+    const options = getAuthenticatedFetchOptions('POST', {
+      waste_generation_id: waste_generation_id || id,
       pms_waste_generation,
-      waste_entries: waste_entries.map(({ id: entryId, category_id, commodity_id, uom, values, signature }) => ({
-        id: entryId,
-        category_id,
-        commodity_id,
-        uom,
-        values,
-        attachments: [],
-        signature: signature ?? null,
+      waste_entries: waste_entries.map((entry) => ({
+        ...entry,
+        attachments: entry.attachments ?? [],
+        signature: entry.signature ?? null,
       })),
     });
     response = await fetch(url, options);
@@ -718,6 +744,41 @@ export const fetchCategories = async (): Promise<Category[]> => {
   }
 };
 
+// API function to fetch subcategories (tag_type=Category) scoped to a single
+// parent Category (commodity) id, so the Subcategory dropdown only ever shows
+// options belonging to whichever Category a row has selected.
+export const fetchSubcategoriesByParent = async (parentId: number): Promise<Category[]> => {
+  try {
+    const url = getFullUrl(`/pms/generic_tags.json?q[tag_type_eq]=Category&q[parent_id]=${parentId}`);
+
+    console.log('Fetching subcategories for parent from:', url);
+
+    const options = getAuthenticatedFetchOptions('GET');
+    const response = await fetch(url, options);
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return [];
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Generic tags API response (subcategories by parent):', data);
+
+    if (!Array.isArray(data)) return [];
+
+    return data.filter((tag) => {
+      const hasName = tag.category_name && tag.category_name.trim() !== '';
+      const isActive = tag.active === true;
+      return hasName && isActive;
+    });
+  } catch (error) {
+    console.error('Error fetching subcategories by parent:', error);
+    return [];
+  }
+};
+
 // API function to fetch operational landlords
 export const fetchOperationalLandlords = async (): Promise<OperationalLandlord[]> => {
   try {
@@ -757,6 +818,34 @@ export const fetchOperationalLandlords = async (): Promise<OperationalLandlord[]
     return [];
   } catch (error) {
     console.error('Error fetching operational landlords:', error);
+    // Return empty array instead of throwing error for optional data
+    return [];
+  }
+};
+
+// API function to fetch entities (used for the "Customer" dropdown)
+export const fetchEntities = async (): Promise<Entity[]> => {
+  try {
+    const url = getFullUrl('/entities.json');
+
+    console.log('Fetching entities from:', url);
+
+    const options = getAuthenticatedFetchOptions('GET');
+    const response = await fetch(url, options);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Entities API response:', data);
+
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.entities)) return data.entities;
+
+    return [];
+  } catch (error) {
+    console.error('Error fetching entities:', error);
     // Return empty array instead of throwing error for optional data
     return [];
   }

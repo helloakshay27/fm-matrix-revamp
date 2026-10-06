@@ -565,7 +565,8 @@
   box-shadow:var(--shadow-pop);
   z-index:60;display:none;
 }
-.vi-ph .info-wrap:hover .info-pop,.vi-ph .info-wrap:focus-within .info-pop{display:block}
+.vi-ph .info-wrap:hover,.vi-ph .info-wrap.is-open{z-index:70}
+.vi-ph .info-wrap:hover .info-pop,.vi-ph .info-wrap.is-open .info-pop{display:block}
 .vi-ph .info-pop b{color:var(--ink);font-weight:500;display:block;margin-bottom:4px}
 .vi-ph .info-pop .sep{margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
 
