@@ -384,46 +384,91 @@ export const MaterialPRDashboard = () => {
     }
   };
 
+  // const renderActions = (item: any) => {
+  //   return (
+  //     <div className="flex gap-2">
+  //       {
+  //         shouldShow("Material PR", "show") && (
+  //           <Button
+  //             size="sm"
+  //             variant="ghost"
+  //             className="p-1"
+  //             onClick={(e) => {
+  //               e.stopPropagation();
+  //               navigate(`/finance/material-pr/details/${item.id}`, {
+  //                 state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+  //               });
+  //             }}
+  //           >
+  //             <Eye className="w-4 h-4" />
+  //           </Button>
+  //         )
+  //       }
+
+  //       {
+  //         shouldShow("Material PR", "update") && item.canEditAll && <Button
+  //           size="sm"
+  //           variant="ghost"
+  //           className="p-1"
+  //           onClick={(e) => {
+  //             e.stopPropagation();
+  //             navigate(`/finance/material-pr/edit/${item.id}`, {
+  //               state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+  //             });
+  //           }}
+  //         >
+  //           <Edit className="w-4 h-4" />
+  //         </Button>
+  //       }
+  //     </div>
+  //   )
+  // };
+
+
   const renderActions = (item: any) => {
-    return (
-      <div className="flex gap-2">
-        {
-          shouldShow("Material PR", "show") && (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="p-1"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/finance/material-pr/details/${item.id}`, {
-                  state: { returnTo: buildReturnToPath(location.pathname, location.search) },
-                });
-              }}
-            >
-              <Eye className="w-4 h-4" />
-            </Button>
-          )
-        }
+  const disabled = item.activeInactive === false;
+  return (
+    <div className="flex gap-2" data-actions>
+      {shouldShow("Material PR", "show") && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className={`p-1 ${disabled ? "opacity-50" : ""}`}
+          disabled={disabled}
+          title={disabled ? "PR inactive" : "View"}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (disabled) return;
+            navigate(`/finance/material-pr/details/${item.id}`, {
+              state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+            });
+          }}
+        >
+          <Eye className="w-4 h-4" />
+        </Button>
+      )}
 
-        {
-          shouldShow("Material PR", "update") && item.canEditAll && <Button
-            size="sm"
-            variant="ghost"
-            className="p-1"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/finance/material-pr/edit/${item.id}`, {
-                state: { returnTo: buildReturnToPath(location.pathname, location.search) },
-              });
-            }}
-          >
-            <Edit className="w-4 h-4" />
-          </Button>
-        }
-      </div>
-    )
-  };
-
+      {shouldShow("Material PR", "update") && item.canEditAll && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className={`p-1 ${disabled ? "opacity-50" : ""}`}
+          disabled={disabled}
+          title={disabled ? "PR inactive" : "Edit"}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (disabled) return;
+            navigate(`/finance/material-pr/edit/${item.id}`, {
+              state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+            });
+          }}
+        >
+          <Edit className="w-4 h-4" />
+        </Button>
+      )}
+    </div>
+  );
+};
   const handleRefresh = () => {
     cache.invalidatePattern(`${CACHE_PREFIX}*`);
     fetchData();
@@ -608,6 +653,10 @@ export const MaterialPRDashboard = () => {
         columns={columns}
         renderCell={renderCell}
         renderActions={renderActions}
+        isRowDisabled={(item: any) => item.activeInactive === false || item.allLevelApproved === false}
+        rowClassName={(item: any) =>
+          item.activeInactive === false || item.allLevelApproved === false ? "opacity-60 pointer-events-none" : ""
+        }
         storageKey="material-pr-dashboard-columns-v2"
         className="min-w-[1000px]"
         emptyMessage="No material PR data available"

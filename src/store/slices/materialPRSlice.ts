@@ -4,20 +4,35 @@ import createApiSlice from "../api/apiSlice"
 
 export const getSuppliers = createAsyncThunk(
     'getSuppliers',
-    async ({ baseUrl, token }: { baseUrl: string, token: string }, { rejectWithValue }) => {
+    async (
+        { baseUrl, token, plantCode, companyCode }: { baseUrl: string; token: string; plantCode?: string; companyCode?: string },
+        { rejectWithValue }
+    ) => {
         try {
-            const response = await axios.get(`https://${baseUrl}/pms/purchase_orders/get_suppliers.json`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
+            const params = new URLSearchParams();
+            const resolvedPlantCode = plantCode || companyCode;
+
+            if (resolvedPlantCode) {
+                params.set('plant_code', String(resolvedPlantCode));
+                params.set('company_code', String(resolvedPlantCode));
+            }
+
+            const queryString = params.toString();
+            const response = await axios.get(
+                `https://${baseUrl}/pms/purchase_orders/get_suppliers.json${queryString ? `?${queryString}` : ''}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
                 }
-            })
-            return response.data
+            );
+            return response.data;
         } catch (error) {
-            const message = error.response?.data?.error || error.error || 'Failed to get suppliers'
-            return rejectWithValue(message)
+            const message = error.response?.data?.error || error.error || 'Failed to get suppliers';
+            return rejectWithValue(message);
         }
     }
-)
+);
 
 export const getPlantDetails = createAsyncThunk(
     'getPlantDetails',
