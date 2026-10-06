@@ -402,7 +402,7 @@ useEffect(() => {
               {[
                 {
                   label: 'Total Waste',
-                  value: listCounts ? `${listCounts.total_waste.toLocaleString('en-IN')} KG` : '—',
+                  value: listCounts?.total_waste != null ? `${listCounts.total_waste.toLocaleString('en-IN')} KG` : '—',
                   icon: <Trash2 className="w-6 h-6 text-[#C72030]" />,
                 },
                 {
@@ -412,17 +412,17 @@ useEffect(() => {
                 },
                 {
                   label: 'Wet Waste',
-                  value: listCounts ? `${listCounts.total_recycled.toLocaleString('en-IN')} KG` : '—',
+                  value: listCounts?.total_recycled != null ? `${listCounts.total_recycled.toLocaleString('en-IN')} KG` : '—',
                   icon: <Percent className="w-6 h-6 text-[#C72030]" />,
                 },
                 {
                   label: 'Dry Waste',
-                  value: listCounts ? `${listCounts.dry_waste.toLocaleString('en-IN')} KG` : '—',
+                  value: listCounts?.dry_waste != null ? `${listCounts.dry_waste.toLocaleString('en-IN')} KG` : '—',
                   icon: <Package className="w-6 h-6 text-[#C72030]" />,
                 },
                 {
                   label: 'Hazardous Waste',
-                  value: listCounts ? `${listCounts.hazardous_waste.toLocaleString('en-IN')} KG` : '—',
+                  value: listCounts?.hazardous_waste != null ? `${listCounts.hazardous_waste.toLocaleString('en-IN')} KG` : '—',
                   icon: <Activity className="w-6 h-6 text-[#C72030]" />,
                 },
               ].map((card, i) => (
@@ -495,7 +495,7 @@ useEffect(() => {
                 }
                 if (key === 'status') return item.status || '-';
                 if (key === 'device_id') return item.device_id != null ? item.device_id.toString() : '-';
-                if (key === 'remarks') return (item as Record<string, unknown>).remarks as string || '-';
+                if (key === 'remarks') return (item as unknown as Record<string, unknown>).remarks as string || '-';
                 return '-';
               }}
               getItemId={(item) => item.id.toString()}
