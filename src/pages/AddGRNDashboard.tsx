@@ -7,6 +7,7 @@ import {
   Select as MuiSelect,
   MenuItem,
   CircularProgress,
+  Select,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -89,6 +90,8 @@ interface Attachment {
   document_name: string;
   document_file_name: string;
 }
+const isTrue = (val: unknown) =>
+  val === true || val === "true" || val === 1 || val === "1";
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
@@ -213,16 +216,61 @@ export const AddGRNDashboard = () => {
     }
   };
 
+  // const fetchItem = async (id: number) => {
+  //   try {
+  //     const response = await dispatch(fetchItemDetails({ baseUrl, token, id })).unwrap();
+  //     setGrnDetails((prev) => ({
+  //       ...prev,
+  //       purchaseOrder: id,
+  //       relatedTo: response.related_to,
+  //       invoiceAmount: response.total_amount || "",
+  //     }))
+  //     const updatedInventoryDetails = response.pms_po_inventories.map((item: any) => {
+  //       const inventoryItem = {
+  //         ...item,
+  //         inventoryType: item.inventory.id,
+  //         itemNo: item.item_no || "",
+  //         rate: item.rate || "",
+  //         cgstRate: item.cgst_rate || "",
+  //         cgstAmount: item.cgst_amount || "",
+  //         sgstRate: item.sgst_rate || "",
+  //         sgstAmount: item.sgst_amount || "",
+  //         igstRate: item.igst_rate || "",
+  //         igstAmount: item.igst_amount || "",
+  //         tcsRate: item.tcs_rate || "",
+  //         tcsAmount: item.tcs_amount || "",
+  //         totalTaxes: item.taxable_value || "",
+  //         amount: item.total_value || "",
+  //         totalAmount: "",
+  //         expectedQuantity: item.quantity || "",
+  //         receivedQuantity: "",
+  //         approvedQuantity: "",
+  //         rejectedQuantity: "",
+  //         batch: item.batch || [],
+  //       };
+  //       return calculateInventoryTaxes(inventoryItem);
+  //     });
+  //     setInventoryDetails(updatedInventoryDetails);
+  //   } catch (error: any) {
+  //     toast.error(error.message || "Failed to fetch item details.");
+  //   }
+  // };
+
   const fetchItem = async (id: number) => {
-    try {
-      const response = await dispatch(fetchItemDetails({ baseUrl, token, id })).unwrap();
-      setGrnDetails((prev) => ({
-        ...prev,
-        purchaseOrder: id,
-        relatedTo: response.related_to,
-        invoiceAmount: response.total_amount || "",
-      }))
-      const updatedInventoryDetails = response.pms_po_inventories.map((item: any) => {
+  try {
+    const response = await dispatch(fetchItemDetails({ baseUrl, token, id })).unwrap();
+    setGrnDetails((prev) => ({
+      ...prev,
+      purchaseOrder: id,
+      relatedTo: response.related_to,
+      invoiceAmount: response.total_amount || "",
+    }));
+
+    const updatedInventoryDetails = (response.pms_po_inventories || [])
+     .filter(
+    (item: any) => !isTrue(item.deleted) && !isTrue(item.delivery_completion)
+  )
+      .map((item: any) => {
         const inventoryItem = {
           ...item,
           inventoryType: item.inventory.id,
@@ -247,11 +295,46 @@ export const AddGRNDashboard = () => {
         };
         return calculateInventoryTaxes(inventoryItem);
       });
-      setInventoryDetails(updatedInventoryDetails);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to fetch item details.");
-    }
-  };
+
+    if (updatedInventoryDetails.length === 0) {
+  toast.error("No pending items available for GRN in this Purchase Order");
+}
+
+    setInventoryDetails(updatedInventoryDetails);
+  } catch (error: any) {
+    toast.error(error.message || "Failed to fetch item details.");
+  }
+};
+
+// const updatedInventoryDetails = (response.pms_po_inventories || [])
+//   .filter((item: any) => !isDeletedItem(item.deleted))
+//   .map((item: any) => {
+//     const inventoryItem = {
+//       ...item,
+//       inventoryType: item.inventory.id,
+//       itemNo: item.item_no || "",
+//       rate: item.rate || "",
+//       cgstRate: item.cgst_rate || "",
+//       cgstAmount: item.cgst_amount || "",
+//       sgstRate: item.sgst_rate || "",
+//       sgstAmount: item.sgst_amount || "",
+//       igstRate: item.igst_rate || "",
+//       igstAmount: item.igst_amount || "",
+//       tcsRate: item.tcs_rate || "",
+//       tcsAmount: item.tcs_amount || "",
+//       totalTaxes: item.taxable_value || "",
+//       amount: item.total_value || "",
+//       totalAmount: "",
+//       expectedQuantity: item.quantity || "",
+//       receivedQuantity: "",
+//       approvedQuantity: "",
+//       rejectedQuantity: "",
+//       batch: item.batch || [],
+//     };
+//     return calculateInventoryTaxes(inventoryItem);
+//   });
+
+// setInventoryDetails(updatedInventoryDetails);
 
   const calculateInventoryTaxes = (item: InventoryItem): InventoryItem => {
     const rate = parseFloat(item.rate) || 0;
@@ -528,7 +611,10 @@ export const AddGRNDashboard = () => {
       },
       attachments: selectedFiles,
     };
-
+    if (inventoryDetails.length === 0) {
+  toast.error("No inventory items to submit");
+  return false;
+}
     setIsSubmitting(true);
     try {
       await dispatch(createGRN({ data: payload, baseUrl, token })).unwrap();
@@ -626,7 +712,7 @@ export const AddGRNDashboard = () => {
               sx={{ mt: 1 }}
             />
 
-            <TextField
+            {/* <TextField
               label="Invoice Type"
               placeholder="Enter Invoice Type"
               value={invoiceType}
@@ -636,7 +722,26 @@ export const AddGRNDashboard = () => {
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
               sx={{ mt: 1 }}
-            />
+            /> */}
+
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+  <InputLabel shrink>Invoice Type</InputLabel>
+  <MuiSelect
+    label="Invoice Type"
+    value={invoiceType}
+    onChange={(e) => setInvoiceType(e.target.value as string)}
+    displayEmpty
+    sx={fieldStyles}
+  >
+    <MenuItem value="">
+      <em>Select Invoice Type</em>
+    </MenuItem>
+    <MenuItem value="CR">CR-Credit Note</MenuItem>
+    <MenuItem value="CV">CV-Cash Voucher</MenuItem>
+    <MenuItem value="DR">DR-Debit Note</MenuItem>
+    <MenuItem value="IV">IV-Invoice</MenuItem>
+  </MuiSelect>
+</FormControl>
 
             <TextField
               label="Related To"

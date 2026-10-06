@@ -448,23 +448,50 @@ export const AddMaterialPRDashboard = () => {
     initialTask(fetchStorageLocationOptions);
   }, []);
 
+  const fetchSuppliersForPlant = async (plantId: string) => {
+    try {
+      const selectedPlant = plantDetails.find((plant) => String(plant.id) === String(plantId));
+      const resolvedPlantCode = selectedPlant?.company_code || selectedPlant?.sale_org_code || selectedPlant?.plant_name || "";
+      const response = await dispatch(
+        getSuppliers({
+          baseUrl,
+          token,
+          plantCode: resolvedPlantCode,
+          companyCode: selectedPlant?.company_code || "",
+        })
+      ).unwrap();
+      setSuppliers(Array.isArray(response?.suppliers) ? response.suppliers : Array.isArray(response) ? response : []);
+    } catch (error) {
+      console.log(error);
+      toast.dismiss();
+      toast.error(error);
+    }
+  };
+
   const handleSupplierChange = (e) => {
     const { name, value } = e.target;
     if (value) markSection("supplier");
     setSupplierDetails((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handlePlantDetailsChange = (e) => {
+  const handlePlantDetailsChange = async (e) => {
     const { name, value } = e.target;
-    setSupplierDetails((prev) => ({ ...prev, [name]: value }));
+    setSupplierDetails((prev) => ({ ...prev, [name]: value, supplier: "" }));
     dispatch(changePlantDetails({ baseUrl, id: value, token }));
+
+    if (value) {
+      await fetchSuppliersForPlant(value);
+    } else {
+      const response = await dispatch(getSuppliers({ baseUrl, token })).unwrap();
+      setSuppliers(Array.isArray(response?.suppliers) ? response.suppliers : Array.isArray(response) ? response : []);
+    }
   };
 
   useEffect(() => {
     if (supplierDetails.plantDetail) {
-      handlePlantDetailsChange({ target: { name: "plantDetail", value: supplierDetails.plantDetail } });
+      dispatch(changePlantDetails({ baseUrl, id: supplierDetails.plantDetail, token }));
     }
-  }, [supplierDetails.plantDetail]);
+  }, [supplierDetails.plantDetail, dispatch, baseUrl, token]);
 
   const handleItemChange = (id, field, value) => {
     setItems((prevItems) =>
@@ -854,27 +881,6 @@ export const AddMaterialPRDashboard = () => {
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Supplier*</InputLabel>
-                <MuiSelect
-                  label="Supplier*"
-                  name="supplier"
-                  value={supplierDetails.supplier}
-                  onChange={handleSupplierChange}
-                  displayEmpty
-                  sx={fieldStyles}
-                >
-                  <MenuItem value="">
-                    <em>Select Supplier</em>
-                  </MenuItem>
-                  {suppliers.map((supplier) => (
-                    <MenuItem key={supplier.id} value={supplier.id}>
-                      {supplier.name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
-
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel shrink>Plant Detail*</InputLabel>
                 <MuiSelect
                   label="Plant Detail*"
@@ -885,11 +891,32 @@ export const AddMaterialPRDashboard = () => {
                   sx={fieldStyles}
                 >
                   <MenuItem value="">
-                    <em>Select Plant Detail</em>
+                    <em>Select SAP Plant</em>
                   </MenuItem>
                   {plantDetails.map((plantDetail) => (
                     <MenuItem key={plantDetail.id} value={plantDetail.id}>
                       {plantDetail.plant_name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }} disabled={!supplierDetails.plantDetail}>
+                <InputLabel shrink>Supplier*</InputLabel>
+                <MuiSelect
+                  label="Supplier*"
+                  name="supplier"
+                  value={supplierDetails.supplier}
+                  onChange={handleSupplierChange}
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="">
+                    <em>{supplierDetails.plantDetail ? "Select Supplier" : "Select SAP plant first"}</em>
+                  </MenuItem>
+                  {suppliers.map((supplier) => (
+                    <MenuItem key={supplier.id} value={supplier.id}>
+                      {supplier.name}
                     </MenuItem>
                   ))}
                 </MuiSelect>

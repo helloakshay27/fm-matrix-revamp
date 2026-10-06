@@ -23,6 +23,7 @@ import {
   ClipboardList,
   Images,
   Loader2,
+  CheckCircle2
 } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
 import { useEffect, useState } from "react";
@@ -66,6 +67,12 @@ interface Attachment {
 }
 
 const boqColumns: ColumnConfig[] = [
+{
+  key: "delivery_completion",
+  label: "Delivery Completion",
+  sortable: true,
+  draggable: true,
+},
   { key: "sno", label: "S.No", sortable: true, draggable: true },
   { key: "boq_details", label: "BOQ Details", sortable: true, draggable: true },
   { key: "quantity", label: "Quantity", sortable: true, draggable: true },
@@ -192,7 +199,8 @@ const debitCreditColumns: ColumnConfig[] = [
   { key: "created_by", label: "Created By", sortable: true, draggable: true },
   { key: "attachments", label: "Attachments", sortable: true, draggable: true },
 ];
-
+const isTrue = (val: unknown) =>
+  val === true || val === "true" || val === 1 || val === "1";
 const formatIndian = (val: string | number | null | undefined): string => {
   if (val === "" || val === null || val === undefined) return "-";
   const n = parseFloat(String(val));
@@ -500,6 +508,55 @@ export const WODetailsPage = () => {
       setPrinting(false);
     }
   };
+  const boqTableData = (workOrder.inventories || []).map((item: any) => ({
+  ...item,
+  deleted: isTrue(item.deleted),
+  delivery_completion: isTrue(item.delivery_completion),
+}));
+const renderBoqCell = (item: any, columnKey: string) => {
+  if (columnKey === "delivery_completion") {
+    return item.delivery_completion ? (
+      <span
+        className="inline-flex items-center text-green-600"
+        title="Delivery Completed"
+      >
+        <CheckCircle2 className="w-5 h-5" />
+      </span>
+    ) : (
+      "-"
+    );
+  }
+
+  const amountKeys = [
+    "rate",
+    "cgst_amount",
+    "sgst_amount",
+    "igst_amount",
+    "tcs_amount",
+    "tax_amount",
+    "total_amount",
+  ];
+
+  let content: any = item[columnKey];
+  if (amountKeys.includes(columnKey)) {
+    content = <span className="font-medium">{formatIndian(item[columnKey])}</span>;
+  } else if (columnKey === "expected_date") {
+    content = (
+      <span className="font-medium">
+        {item[columnKey] ? format(item[columnKey], "dd/MM/yyyy") : "-"}
+      </span>
+    );
+  }
+
+  if (item.deleted) {
+    return (
+      <span className="text-gray-400 line-through opacity-60 select-none">
+        {content ?? "-"}
+      </span>
+    );
+  }
+  return content;
+};
 
   if (loading) {
     return (
@@ -838,21 +895,7 @@ export const WODetailsPage = () => {
             pageSize={10}
             emptyMessage="No BOQ data available"
             className="min-w-[1200px] h-max"
-            renderCell={(item, columnKey) => {
-              const amountKeys = ["rate", "cgst_amount", "sgst_amount", "igst_amount", "tcs_amount", "tax_amount", "total_amount"];
-              if (amountKeys.includes(columnKey)) {
-                return <span className="font-medium">{formatIndian(item[columnKey])}</span>;
-              } else if (columnKey === "expected_date") {
-                return (
-                  <span className="font-medium">
-                    {item[columnKey]
-                      ? format(item[columnKey], "dd/MM/yyyy")
-                      : "-"}
-                  </span>
-                );
-              }
-              return item[columnKey];
-            }}
+            renderCell={renderBoqCell}
           />
         </div>
 

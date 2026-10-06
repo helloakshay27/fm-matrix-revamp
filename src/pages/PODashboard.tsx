@@ -463,37 +463,47 @@ export const PODashboard = () => {
   };
 
   const renderActions = (item: any) => (
-    <div className="flex gap-2">
-      {
-        shouldShow("PO", "show") && (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="p-1"
-            onClick={() => navigate(`/finance/po/details/${item.id}`, {
-              state: { returnTo: buildReturnToPath(location.pathname, location.search) },
-            })}
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
-        )
-      }
+    <div className="flex gap-2" data-actions>
+      {(() => {
+        const disabled = item.activeInactive === false;
+        return (
+          <>
+            {shouldShow("PO", "show") && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className={`p-1 ${disabled ? 'opacity-50' : ''}`}
+                onClick={() => !disabled && navigate(`/finance/po/details/${item.id}`, {
+                  state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+                })}
+                disabled={disabled}
+                title={disabled ? 'PO inactive' : 'View'}
+              >
+                <Eye className="w-4 h-4" />
+              </Button>
+            )}
 
-      {
-        shouldShow("PO", "update") && item.allLevelApproved === null && <Button
-          size="sm"
-          variant="ghost"
-          className="p-1"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/finance/po/edit/${item.id}`, {
-              state: { returnTo: buildReturnToPath(location.pathname, location.search) },
-            });
-          }}
-        >
-          <Edit className="w-4 h-4" />
-        </Button>
-      }
+            {shouldShow("PO", "update") && item.allLevelApproved === null && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className={`p-1 ${disabled ? 'opacity-50' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (disabled) return;
+                  navigate(`/finance/po/edit/${item.id}`, {
+                    state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+                  });
+                }}
+                disabled={disabled}
+                title={disabled ? 'PO inactive' : 'Edit'}
+              >
+                <Edit className="w-4 h-4" />
+              </Button>
+            )}
+          </>
+        );
+      })()}
     </div>
   );
 
@@ -684,6 +694,8 @@ export const PODashboard = () => {
         columns={columns}
         renderCell={renderCell}
         renderActions={renderActions}
+        isRowDisabled={(item: any) => item.activeInactive === false}
+        rowClassName={(item: any) => item.activeInactive === false ? 'opacity-60 pointer-events-none' : ''}
         storageKey="po-dashboard-columns"
         className="min-w-[1100px]"
         emptyMessage="No purchase orders found"

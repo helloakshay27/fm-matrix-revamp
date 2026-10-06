@@ -37,6 +37,20 @@ interface PlantDetail {
     name?: string;
 }
 
+interface PaymentDetail {
+    id?: number;
+    status?: string | null;
+    payment_mode?: string | null;
+    transaction_number?: string | null;
+    amount?: number | string | null;
+    payment_date?: string | null;
+    note?: string | null;
+    billdesk_number?: string | null;
+    ponumber?: string | null;
+    vendorcode?: string | null;
+    grnyear?: string | null;
+    created_at?: string | null;
+}
 interface WOInvoiceInventory {
     sr_no?: number;
     boq_details?: string;
@@ -113,6 +127,7 @@ interface Invoice {
     debit_notes?: DebitNote[];
     external_api_calls?: ExternalApiCall[];
     billdesk_detail?: BillDeskDetail;
+    payment_details?: PaymentDetail[];
 }
 
 interface ExternalApiCall {
@@ -148,6 +163,21 @@ const boqTableColumns: ColumnConfig[] = [
         sortable: true,
         draggable: true,
     },
+];
+
+const paymentDetailsColumns: ColumnConfig[] = [
+    { key: "id", label: "ID", sortable: true, draggable: true },
+    { key: "billdesk_number", label: "Billdesk Number", sortable: true, draggable: true },
+    { key: "status", label: "Status", sortable: true, draggable: true },
+    { key: "payment_mode", label: "Payment Mode", sortable: true, draggable: true },
+    { key: "transaction_number", label: "Transaction No.", sortable: true, draggable: true },
+    { key: "amount", label: "Amount", sortable: true, draggable: true },
+    { key: "payment_date", label: "Payment Date", sortable: true, draggable: true },
+    { key: "ponumber", label: "PO Number", sortable: true, draggable: true },
+    { key: "vendorcode", label: "Vendor Code", sortable: true, draggable: true },
+    { key: "grnyear", label: "GRN Year", sortable: true, draggable: true },
+    { key: "note", label: "Note", sortable: true, draggable: true },
+    { key: "created_at", label: "Created At", sortable: true, draggable: true },
 ];
 
 const debitNoteDetailsColumns: ColumnConfig[] = [
@@ -880,6 +910,38 @@ export const InvoiceDetails = () => {
                     )}
                 </CardContent>
             </Card>
+
+            {/* Payment Details */}
+<div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+    <div className="flex items-center gap-3 pb-3">
+        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <ScrollText className="w-4 h-4" />
+        </div>
+        <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Payment Details</h3>
+    </div>
+    <div className="overflow-x-auto">
+        <EnhancedTable
+            data={invoice?.payment_details || []}
+            columns={paymentDetailsColumns}
+            renderCell={(item, columnKey) => {
+                if (columnKey === "amount") return formatIndian(item[columnKey]);
+                if (columnKey === "payment_date" || columnKey === "created_at") {
+                    return item[columnKey] ? formatDate(item[columnKey]) : "-";
+                }
+                return item[columnKey] ?? "-";
+            }}
+            storageKey="invoice-payment-details-table"
+            hideColumnsButton={true}
+            hideTableExport={true}
+            hideTableSearch={true}
+            exportFileName="payment-details"
+            pagination={true}
+            pageSize={10}
+            emptyMessage="No payment details available"
+            className="h-max"
+        />
+    </div>
+</div>
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
                 <div className="flex items-center gap-3 pb-3">
