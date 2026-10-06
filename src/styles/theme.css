@@ -4801,3 +4801,75 @@ html body .MuiOutlinedInput-root.Mui-focused {
   box-shadow: 0 0 0 4px var(--color-input-focus-ring) !important;
   border-radius: var(--radius-input);
 }
+
+/* Dashboard/stat card glyphs use neutral ink, not legacy orange accents. */
+html body [class*="bg-[#C4B89D54]"] svg,
+html body [class*="bg-[#CDCAF5]"] svg,
+html body [class*="bg-[#76CDC180]"] svg,
+html body [class*="bg-[#E3909060]"] svg,
+html body [class*="bg-[#85BDF660]"] svg,
+html body [class*="bg-[#FFDD9480]"] svg,
+html body [class*="bg-[#E6DDCF]"] svg,
+html body .figma-card-icon {
+  color: var(--color-text) !important;
+  stroke: currentColor !important;
+  fill: #ffffff !important;
+}
+
+/* Normalize legacy orange icon glyphs across create/edit pages and FM. */
+html body #root svg[class~="text-[#DA7756]" i]:not(.recharts-surface),
+html body #root [class~="text-[#DA7756]" i] svg:not(.recharts-surface),
+html body #root svg[color="#DA7756" i]:not(.recharts-surface),
+html body #root svg[style*="color: #DA7756" i]:not(.recharts-surface),
+html body #root svg[style*="color:#DA7756" i]:not(.recharts-surface),
+html body #root svg[style*="color: rgb(217, 119, 87)" i]:not(.recharts-surface),
+html body #root svg[style*="color:rgb(217, 119, 87)" i]:not(.recharts-surface) {
+  color: var(--color-text) !important;
+  stroke: currentColor !important;
+  fill: #ffffff !important;
+}
+
+html body #root svg:not(.recharts-surface):not([class*="recharts"]) [stroke="#DA7756" i],
+html body #root svg:not(.recharts-surface):not([class*="recharts"]) [fill="#DA7756" i],
+html body #root svg[stroke="#DA7756" i]:not(.recharts-surface),
+html body #root svg[fill="#DA7756" i]:not(.recharts-surface) {
+  color: var(--color-text) !important;
+  stroke: var(--color-text) !important;
+  fill: #ffffff !important;
+}
+
+/* Primary action icons stay white even when legacy SVG paths hardcode red. */
+html body button.bg-brand svg,
+html body button[class~="bg-brand"] svg {
+  color: #ffffff !important;
+}
+html body button.bg-brand svg [fill="#C72030" i],
+html body button[class~="bg-brand"] svg [fill="#C72030" i],
+html body button.bg-brand svg [fill="#C62828" i],
+html body button[class~="bg-brand"] svg [fill="#C62828" i] {
+  fill: #ffffff !important;
+}
+
+/* Asset details View QR uses a custom SVG with this unique viewBox. */
+html body #root button svg[viewBox="0 0 14 15"],
+html body #root button svg[viewBox="0 0 14 15"] path {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* QR dialog Download uses the shared outline Button but renders as a CTA. */
+html body [role="dialog"]:has(img[alt$="QR Code"]) button:has(svg.lucide-download) {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #ffffff !important;
+}
+html body [role="dialog"]:has(img[alt$="QR Code"]) button:has(svg.lucide-download):hover {
+  background-color: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+  color: #ffffff !important;
+}
+html body [role="dialog"]:has(img[alt$="QR Code"]) button:has(svg.lucide-download) svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
