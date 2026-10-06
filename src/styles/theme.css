@@ -11,95 +11,109 @@
 :root {
   /* =====================
      PRIMARY COLORS
+     — updated to match the "asset-management" reference mockup's palette
      ===================== */
-  --color-primary: #da7756;
-  --color-primary-rgb: 218, 119, 86;
-  --color-primary-hover: rgba(218, 119, 86, 0.85);
-  --color-primary-light: rgba(218, 119, 86, 0.15);
-  --color-primary-selected: rgba(218, 119, 86, 0.08);
+  --color-primary: #1a1a18;
+  --color-primary-rgb: 26, 26, 24;
+  --color-primary-hover: #12100e; /* wireframe .btn.p:hover */
+  --color-primary-light: rgba(26, 26, 24, 0.08);
+  --color-primary-selected: rgba(26, 26, 24, 0.05);
+
+  /* Accent (coral) — links, count badges, highlights. Separate from the
+     primary ink so buttons and accents can be changed independently. */
+  /* Button corner radius — wireframe .btn { border-radius: 8px } */
+  --radius-button: 8px;
+  /* Form-field corner radius — wireframe .inp { border-radius: 12px } */
+  --radius-input: 12px;
+  /* Focus state of form fields: softened ink border + faint halo (one place to tune) */
+  --color-input-focus-border: var(--color-primary); /* 1px ink border */
+  --color-input-focus-ring: transparent; /* rounded halo removed; focus = 1px ink border only */
+
+  --color-accent: #d97757;
+  --color-accent-rgb: 217, 119, 87;
 
   /* Background & Text */
-  --color-bg: #f6f4ee;
-  --color-bg-rgb: 246, 244, 238;
-  --color-text: #2c2c2c;
-  --color-text-rgb: 44, 44, 44;
-  --color-text-light: #888780;
+  --color-bg: #fdfdfb;
+  --color-bg-rgb: 253, 253, 251;
+  --color-text: #1a1a18;
+  --color-text-rgb: 26, 26, 24;
+  --color-text-light: rgba(26, 26, 24, 0.68);
 
   /* =====================
      SECONDARY COLORS
      ===================== */
-  /* Green Olive */
-  --color-secondary-green: #798c5e;
-  --color-secondary-green-rgb: 121, 140, 94;
-  --color-secondary-green-light: rgba(121, 140, 94, 0.15);
-  --color-secondary-green-bg: rgba(121, 140, 94, 0.3);
+  /* Green (mapped to the mockup's solid "growth" green) */
+  --color-secondary-green: #12a150;
+  --color-secondary-green-rgb: 18, 161, 80;
+  --color-secondary-green-light: #e0f7ea;
+  --color-secondary-green-bg: #e0f7ea;
 
-  /* Purple/Lavender */
-  --color-secondary-purple: #cecbf6;
-  --color-secondary-purple-rgb: 206, 203, 246;
-  --color-secondary-purple-light: rgba(206, 203, 246, 0.3);
-  --color-secondary-purple-bg: rgba(206, 203, 246, 0.3);
+  /* Purple (mapped to the mockup's solid "purple" accent + its pale lavender tile tint) */
+  --color-secondary-purple: #5a4be0;
+  --color-secondary-purple-rgb: 90, 75, 224;
+  --color-secondary-purple-light: #eeebff;
+  --color-secondary-purple-bg: #eeebff;
 
-  /* Teal/Mint */
-  --color-secondary-teal: #9ec8ba;
-  --color-secondary-teal-rgb: 158, 200, 186;
-  --color-secondary-teal-light: rgba(158, 200, 186, 0.3);
-  --color-secondary-teal-bg: rgba(158, 200, 186, 0.3);
+  /* Teal — no direct teal in the mockup; mapped to its "info" blue solid + pale blue tile tint */
+  --color-secondary-teal: #2f6fe0;
+  --color-secondary-teal-rgb: 47, 111, 224;
+  --color-secondary-teal-light: #dbe7ff;
+  --color-secondary-teal-bg: #dbe7ff;
 
   /* =====================
      TERTIARY / SEMANTIC COLORS
      ===================== */
-  --color-info: #6b9bcc;
-  --color-info-rgb: 107, 155, 204;
-  --color-disabled: #d3d1c7;
-  --color-muted: #d3d1c7;
-  --color-tags: #cecbf6;
-  --color-danger: #e49191;
-  --color-danger-light: #f8dada;
-  --color-warning: #edc488;
-  --color-warning-light: #f8e4c7;
-  --color-growth: rgba(16, 140, 114, 0.3);
-  --color-growth-solid: #108c72;
+  --color-info: #2f6fe0;
+  --color-info-rgb: 47, 111, 224;
+  --color-disabled: rgba(26, 26, 24, 0.3);
+  --color-muted: rgba(26, 26, 24, 0.3);
+  --color-tags: #eeebff;
+  --color-danger: #e5484d;
+  --color-danger-light: #fbdcdc;
+  --color-warning: #f2a312;
+  --color-warning-light: #fff2d6;
+  --color-growth: rgba(18, 161, 80, 0.3);
+  --color-growth-solid: #12a150;
 
   /* =====================
      STATUS COLORS
      ===================== */
-  --color-success: #89f7e7;
-  --color-success-solid: #798c5e;
-  --color-success-bg: rgba(121, 140, 94, 0.15);
-  --color-error: #e7848e;
-  --color-error-bg: rgba(231, 132, 142, 0.15);
+  --color-success: #e0f7ea;
+  --color-success-solid: #12a150;
+  --color-success-bg: rgba(18, 161, 80, 0.15);
+  --color-error: #a32126;
+  --color-error-bg: rgba(229, 72, 77, 0.12);
   --color-exception: #aab9c5;
 
   /* =====================
      SURFACE & BORDER COLORS
      ===================== */
-  --color-card-border: #c4b89d;
-  --color-card-bg: #f6f4ee;
+  --color-card-border: rgba(26, 26, 24, 0.09);
+  --color-card-bg: #ffffff;
   --color-card-white: #ffffff;
-  --color-border-subtle: #d5dbdb;
-  --color-divider: #e5e5e5;
-  --pulse-card-border: #E5E3DB;
+  --color-border-subtle: rgba(26, 26, 24, 0.08);
+  --color-divider: #ebe9e2;
+  --pulse-card-border: #ebe9e2;
 
-  /* Sidebar */
+  /* Sidebar — no counterpart in the mockup (its sidebar uses plain canvas bg), left unchanged */
   --color-sidebar: #c4b89d;
   --color-sidebar-hover: rgba(196, 184, 157, 0.5);
 
   /* =====================
      GRADIENT TOKENS
      ===================== */
-  --gradient-highlight: radial-gradient(circle, #f6f4ee 0%, #2c2c2c 100%);
-  --gradient-primary: linear-gradient(135deg, #da7756 0%, #c4b89d 100%);
-  --gradient-card: linear-gradient(180deg, #ffffff 0%, #f6f4ee 100%);
+  --gradient-highlight: radial-gradient(circle, #fdfdfb 0%, #1a1a18 100%);
+  --gradient-primary: linear-gradient(135deg, var(--color-accent) 0%, #efede6 100%);
+  --gradient-card: linear-gradient(180deg, #ffffff 0%, #fdfdfb 100%);
 
   /* =====================
      SHADOW TOKENS
      ===================== */
-  --shadow-sm: 0px 1px 2px 0px rgba(44, 44, 44, 0.06);
-  --shadow-md: 0px 4px 8px 0px rgba(44, 44, 44, 0.1);
-  --shadow-lg: 0px 4px 16px 0px rgba(44, 44, 44, 0.12);
-  --shadow-xl: 0px 8px 24px 0px rgba(44, 44, 44, 0.15);
-  --shadow-card: 0px 2px 8px rgba(196, 184, 157, 0.15);
+  --shadow-sm: 0px 1px 2px 0px rgba(26, 26, 24, 0.06);
+  --shadow-md: 0px 4px 8px 0px rgba(26, 26, 24, 0.1);
+  --shadow-lg: 0px 4px 16px 0px rgba(26, 26, 24, 0.12);
+  --shadow-xl: 0px 8px 24px 0px rgba(26, 26, 24, 0.15);
+  --shadow-card: 0px 2px 8px rgba(26, 26, 24, 0.08);
 
   /* =====================
      TYPOGRAPHY
@@ -850,7 +864,7 @@ svg.text-red-500.fill-red-500 {
 /* Hover bg with opacity - rgba version */
 [class*="hover:bg-[#C72030]/10"]:hover,
 .hover\:bg-\[\#C72030\]\/10:hover {
-  background-color: rgba(218, 119, 86, 0.1) !important;
+  background-color: rgba(var(--color-accent-rgb), 0.1) !important;
 }
 
 .hover\:text-\[\#C72030\]:hover,
@@ -1332,7 +1346,7 @@ path[stroke="#c72030"] {
 }
 
 .location-stepper-line {
-  background: rgba(218, 119, 86, 0.68) !important;
+  background: rgba(var(--color-accent-rgb), 0.68) !important;
 }
 
 .location-step-dot {
@@ -1702,27 +1716,27 @@ header a[class*="text-[#C72030]"] {
 
 /* ===== CHART COLOR PALETTE VARIABLES ===== */
 :root {
-  /* Secondary Chart Colors */
-  --chart-green-olive: #798c5e;
-  --chart-green-olive-hover: rgba(121, 140, 94, 0.85);
-  --chart-purple: #cecbf6;
-  --chart-purple-hover: rgba(206, 203, 246, 0.7);
-  --chart-teal: #9ec8ba;
-  --chart-teal-hover: rgba(158, 200, 186, 0.7);
+  /* Secondary Chart Colors — kept in sync with the :root tokens above */
+  --chart-green-olive: #12a150;
+  --chart-green-olive-hover: rgba(18, 161, 80, 0.85);
+  --chart-purple: #5a4be0;
+  --chart-purple-hover: rgba(90, 75, 224, 0.7);
+  --chart-teal: #2f6fe0;
+  --chart-teal-hover: rgba(47, 111, 224, 0.7);
 
   /* Tertiary/Semantic Chart Colors */
-  --chart-info: #6b9bcc;
-  --chart-disabled: #d3d1c7;
-  --chart-tags: #cecbf6;
-  --chart-danger: #e49191;
-  --chart-warning: #edc488;
-  --chart-growth: rgba(16, 140, 114, 0.3);
-  --chart-growth-solid: #108c72;
+  --chart-info: #2f6fe0;
+  --chart-disabled: rgba(26, 26, 24, 0.3);
+  --chart-tags: #eeebff;
+  --chart-danger: #e5484d;
+  --chart-warning: #f2a312;
+  --chart-growth: rgba(18, 161, 80, 0.3);
+  --chart-growth-solid: #12a150;
 
   /* Surface Colors */
-  --chart-border: #c4b89d;
-  --chart-card-bg: #f6f4ee;
-  --chart-divider: #d5dbdb;
+  --chart-border: rgba(26, 26, 24, 0.09);
+  --chart-card-bg: #ffffff;
+  --chart-divider: #ebe9e2;
 }
 
 /* ===== RECHARTS / SVG CHART COLOR OVERRIDES ===== */
@@ -3336,7 +3350,7 @@ button[title="Filter"] {
 /* Filter hover */
 button[class*="hover:bg-[#C72030]/10"]:hover,
 button[title="Filter"]:hover {
-  background-color: rgba(218, 119, 86, 0.1) !important;
+  background-color: rgba(var(--color-accent-rgb), 0.1) !important;
 }
 
 /* Columns visibility & Export / Download buttons — uniform brand styling */
@@ -3348,7 +3362,7 @@ button[title="Exporting..."] {
 }
 button[title="Columns"]:hover,
 button[title="Export"]:hover {
-  background-color: rgba(218, 119, 86, 0.1) !important;
+  background-color: rgba(var(--color-accent-rgb), 0.1) !important;
   border-color: var(--color-primary) !important;
   color: var(--color-primary) !important;
 }
@@ -3420,7 +3434,7 @@ button[class*="hover:text-red-700"]:not([aria-label*="delete"]):not(
 /* IssueFilterModal calendar/search icon: text-red-400 → muted brand */
 .absolute.text-red-400,
 [class*="text-red-400"] {
-  color: var(--color-primary-light, rgba(218, 119, 86, 0.6)) !important;
+  color: var(--color-primary-light, rgba(var(--color-accent-rgb), 0.6)) !important;
 }
 
 /* Dashboard survey chart: hardcoded #C72030 array colour handled by JS patcher,
@@ -3446,22 +3460,22 @@ button[class*="hover:text-red-700"]:not([aria-label*="delete"]):not(
 
 /* Step indicator circles */
 .bg-\[\#C72030\] {
-  background-color: #da7756 !important;
+  background-color: var(--color-primary) !important;
 }
 
 /* Hover border on org cards */
 .hover\:border-\[\#C72030\]:hover {
-  border-color: #da7756 !important;
+  border-color: var(--color-primary) !important;
 }
 
 /* Org card icon background tint */
 .bg-\[\#C72030\].bg-opacity-10 {
-  background-color: rgba(218, 119, 86, 0.1) !important;
+  background-color: rgba(var(--color-accent-rgb), 0.1) !important;
 }
 
 /* Org card Building2 icon + any text-[#C72030] not already overridden */
 .text-\[\#C72030\] {
-  color: #da7756 !important;
+  color: var(--color-primary) !important;
 }
 
 /* Inline style: border-color / color on email input focus */
@@ -3469,22 +3483,24 @@ button[class*="hover:text-red-700"]:not([aria-label*="delete"]):not(
 [style*="borderColor:#C72030"],
 [style*='color: "#C72030"'],
 [style*="color:#C72030"] {
-  border-color: #da7756 !important;
-  color: #da7756 !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
 }
 
-/* Primary action buttons on login page */
+/* Primary action buttons on login page — mockup's .btn.p uses ink (#1A1A18),
+   not the coral accent (that's reserved for links/badges — see asset-management
+   reference: a{color:var(--accent)} vs .btn.p{background:var(--ink)}) */
 button.bg-\[\#C72030\],
 button[class~="bg-[#C72030]"] {
-  background-color: #da7756 !important;
+  background-color: var(--color-primary) !important;
 }
 button.hover\:bg-\[\#a81c29\]:hover,
 button[class*="hover:bg-[#a81c29]"]:hover {
-  background-color: #c45f40 !important;
+  background-color: var(--color-primary-hover) !important;
 }
 button.hover\:text-\[\#a81c29\]:hover,
 button[class*="hover:text-[#a81c29]"]:hover {
-  color: #c45f40 !important;
+  color: #1a1a18 !important;
 }
 
 /* ============================================================
@@ -3500,9 +3516,9 @@ button[class*="hover:text-[#a81c29]"]:hover {
 }
 
 [data-daily-report-tabs] [role="tab"][data-state="active"] {
-  background-color: #da7756 !important;
+  background-color: var(--color-primary) !important;
   color: #ffffff !important;
-  box-shadow: 0 1px 4px rgba(218, 119, 86, 0.25) !important;
+  box-shadow: 0 1px 4px rgba(var(--color-accent-rgb), 0.25) !important;
 }
 
 [data-daily-report-tabs] [role="tab"][data-state="inactive"] {
@@ -3522,7 +3538,7 @@ button[class*="hover:text-[#a81c29]"]:hover {
 [style*='color: "#C72030"'],
 [style*="color: #C62828"],
 [style*="color:#C62828"] {
-  color: #da7756 !important;
+  color: var(--color-primary) !important;
 }
 
 /* Inline style: background-color */
@@ -3532,7 +3548,7 @@ button[class*="hover:text-[#a81c29]"]:hover {
 [style*="background-color:#C62828"],
 [style*="backgroundColor: '#C72030'"],
 [style*='backgroundColor: "#C72030"'] {
-  background-color: #da7756 !important;
+  background-color: var(--color-primary) !important;
 }
 
 /* Inline style: border-color */
@@ -3541,7 +3557,7 @@ button[class*="hover:text-[#a81c29]"]:hover {
 [style*="borderColor: '#C72030'"],
 [style*='borderColor: "#C72030"'],
 [style*="borderColor:#C72030"] {
-  border-color: #da7756 !important;
+  border-color: var(--color-primary) !important;
 }
 
 /* ============================================================
@@ -3553,15 +3569,15 @@ button[class*="hover:text-[#a81c29]"]:hover {
 [class*="checkbox"][data-state="checked"],
 input[type="checkbox"]:checked,
 .peer[data-state="checked"] {
-  background-color: #da7756 !important;
-  border-color: #da7756 !important;
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
 }
 
 /* Radio group checked */
 [data-state="checked"].data-\[state\=checked\]\:border-\[\#C72030\],
 .border-\[\#C72030\],
 [class*="border-[#C72030]"] {
-  border-color: #da7756 !important;
+  border-color: var(--color-primary) !important;
 }
 
 /* accentColor inline style for native checkboxes */
@@ -3570,50 +3586,50 @@ input[type="checkbox"]:checked,
 [style*="accentColor:#C72030"],
 [style*="accent-color: #C72030"],
 [style*="accent-color:#C72030"] {
-  accent-color: #da7756 !important;
+  accent-color: var(--color-primary) !important;
 }
 
 /* Calendar selected day — solid brand only (exclude /10 tint circles) */
 .rdp-day_selected,
 [class*="day_selected"],
 .bg-\[\#C72030\].text-white.rounded-full {
-  background-color: #da7756 !important;
+  background-color: var(--color-primary) !important;
   color: #ffffff !important;
 }
 
 /* Calendar today border */
 .border-\[\#C72030\].rounded-full,
 [class*="border-[#C72030]"].rounded-full {
-  border-color: #da7756 !important;
-  color: #da7756 !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
 }
 
 /* Pagination active page */
 .bg-\[\#C72030\].text-white.font-semibold,
 [class*="bg-[#C72030]"].text-white {
-  background-color: #da7756 !important;
+  background-color: var(--color-primary) !important;
 }
 
 /* heading.tsx primary variant */
 .text-\[\#C72030\]:not([data-semantic-colors] *) {
-  color: #da7756 !important;
+  color: var(--color-primary) !important;
 }
 
 /* ============================================================
    MAINTENANCE TICKET ADD PAGE — buttons, icons, inputs
    ============================================================ */
 
-/* Submit button bg-red-600 */
+/* Submit button bg-red-600 — ink primary, per mockup's .btn.p */
 button.bg-red-600,
 button[class*="bg-red-600"] {
-  background-color: #da7756 !important;
-  border-color: #da7756 !important;
+  background-color: #1a1a18 !important;
+  border-color: #1a1a18 !important;
 }
 button.bg-red-600:hover,
 button[class*="bg-red-600"]:hover,
 button.hover\:bg-red-700:hover,
 button[class*="hover:bg-red-700"]:hover {
-  background-color: #c45f40 !important;
+  background-color: #12100e !important;
 }
 
 /* SVG fill="C72030" — handled by JS patcher; add CSS fallback for path elements */
@@ -3621,13 +3637,13 @@ path[fill="#C72030"],
 path[fill="#C62828"],
 circle[fill="#C72030"],
 rect[fill="#C72030"] {
-  fill: #da7756 !important;
+  fill: var(--color-primary) !important;
 }
 
 /* SVG color attribute (Lucide icons passed color prop) */
 svg[color="#C72030"] *,
 [color="#C72030"] {
-  color: #da7756 !important;
+  color: var(--color-primary) !important;
 }
 
 /* ============================================================
@@ -3636,42 +3652,42 @@ svg[color="#C72030"] *,
 
 /* Active state: bg-white text-[#C72030] → brand */
 .bg-white.text-\[\#C72030\] {
-  color: #da7756 !important;
+  color: var(--color-primary) !important;
 }
 
 /* Notification / solid avatar dots — exact solid bg only, not /10 tints */
 .bg-\[\#C72030\].rounded-full {
-  background-color: #da7756 !important;
+  background-color: var(--color-accent) !important;
 }
 
 /* Avatar circle solid bg-[#C72030] only — not bg-[#C72030]/10 tints */
 .w-8.h-8.bg-\[\#C72030\].rounded-full,
 .w-10.h-10.bg-\[\#C72030\].rounded-full {
-  background-color: #da7756 !important;
+  background-color: var(--color-accent) !important;
 }
 
 /* Light brand tint for icon wells (page headers, section badges) */
 .bg-\[\#C72030\]\/10 {
-  background-color: rgba(218, 119, 86, 0.1) !important;
+  background-color: rgba(var(--color-accent-rgb), 0.1) !important;
 }
 
 /* Hover bg-[#C72030] on list items */
 .hover\:bg-\[\#C72030\]:hover,
 [class*="hover:bg-[#C72030]"]:hover {
-  background-color: #da7756 !important;
-  border-color: #da7756 !important;
+  background-color: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
 }
 
 /* hover:border-[#C72030] */
 .hover\:border-\[\#C72030\]:hover,
 [class*="hover:border-[#C72030]"]:hover {
-  border-color: #da7756 !important;
+  border-color: var(--color-primary) !important;
 }
 
 /* hover:text-[#A01020] */
 .hover\:text-\[\#A01020\]:hover,
 [class*="hover:text-[#A01020]"]:hover {
-  color: #c45f40 !important;
+  color: #c26040 !important;
 }
 
 /* ============================================================
@@ -3683,13 +3699,13 @@ svg[color="#C72030"] *,
 .recharts-bar-rectangle path[fill="#C62828"],
 .recharts-rectangle[fill="#C72030"],
 .recharts-rectangle[fill="#C62828"] {
-  fill: #da7756 !important;
+  fill: var(--color-primary) !important;
 }
 
 /* Recharts legend icon */
 .recharts-legend-icon[fill="#C72030"],
 svg .recharts-symbols [fill="#C72030"] {
-  fill: #da7756 !important;
+  fill: var(--color-primary) !important;
 }
 
 /* ===========================================
@@ -3723,7 +3739,7 @@ button[title="Filter"]:hover,
 button[title="Columns"]:hover,
 button[title="Export"]:hover,
 button[title="Exporting..."]:hover {
-  background-color: rgba(218, 119, 86, 0.08) !important;
+  background-color: rgba(var(--color-accent-rgb), 0.08) !important;
   border-color: var(--color-primary) !important;
   color: var(--color-primary) !important;
 }
@@ -3906,26 +3922,26 @@ circle[fill="#AF8260"],
 
 /* --- Card & Border old colors (background/border overrides) --- */
 
-/* #FBF6EE → #F6F4EE (brand bg) */
+/* #FBF6EE → #FDFDFB (brand bg) */
 [style*="background-color:#FBF6EE"],
 [style*="background-color: #FBF6EE"],
 [style*="background:#FBF6EE"],
 [style*="background: #FBF6EE"] {
-  background-color: #f6f4ee !important;
+  background-color: #fdfdfb !important;
 }
 .bg-\[\#FBF6EE\] {
-  background-color: #f6f4ee !important;
+  background-color: #fdfdfb !important;
 }
 
-/* #E6DDCD → #F6F4EE (brand bg) */
+/* #E6DDCD → #FDFDFB (brand bg) */
 [style*="background-color:#E6DDCD"],
 [style*="background-color: #E6DDCD"],
 [style*="background:#E6DDCD"],
 [style*="background: #E6DDCD"] {
-  background-color: #f6f4ee !important;
+  background-color: #fdfdfb !important;
 }
 .bg-\[\#E6DDCD\] {
-  background-color: #f6f4ee !important;
+  background-color: #fdfdfb !important;
 }
 .border-\[\#E6DDCD\],
 [class*="border-[#E6DDCD]"] {
@@ -4005,4 +4021,783 @@ h2.text-brand-accent,
 h3.text-brand-accent,
 span.text-brand-accent {
   color: var(--color-primary) !important;
+}
+
+/* ============================================================
+   TABLE HEADER SURFACE — design-team wireframe (asset-management)
+   Raw <thead> tables that hardcode a grey header class render the
+   same #F5F4F0 header as EnhancedTable / ui/table.
+   ============================================================ */
+thead.bg-gray-50, thead.bg-gray-100, thead[class*="bg-muted"],
+thead.bg-gray-50 > tr, thead.bg-gray-100 > tr, thead[class*="bg-muted"] > tr,
+thead.bg-gray-50 th, thead.bg-gray-100 th, thead[class*="bg-muted"] th {
+  background-color: #F5F4F0 !important;
+}
+
+
+/* ============================================================
+   DESIGN-TEAM WIREFRAME SKIN — asset-management reference
+   Global header / module bar / sidebar / stat cards / tables.
+   Colors only (plus sidebar/tab pill shape) — no component edits.
+   Kept LAST so it wins over the legacy override layers above.
+   Wireframe tokens: ink #1A1A18, canvas #FDFDFB, surface #F5F4F0,
+   hover #F7F6F2, line rgba(26,26,24,.08), accent #D97757.
+   ============================================================ */
+
+/* ---------- Shared hairline border (header, sidebar, tables, cards) ---------- */
+html body .border-\[\#D5DbDB\],
+html body .border-\[\#d5dbdb\] {
+  border-color: rgba(26, 26, 24, 0.08) !important;
+}
+
+/* ---------- Top header ---------- */
+html body header.fixed.top-0 {
+  background-color: #fdfdfb !important;
+  border-bottom: 1px solid rgba(26, 26, 24, 0.08) !important;
+  box-shadow: none !important;
+}
+
+/* Dashboard / Executive Dashboard links: grey → ink on hover, no red */
+html body header.fixed.top-0 button[class*="hover:bg-[#f6f4ee]"] {
+  color: rgba(26, 26, 24, 0.62) !important;
+  transition: all 0.16s;
+}
+html body header.fixed.top-0 button[class*="hover:bg-[#f6f4ee]"]:hover {
+  background-color: #f7f6f2 !important;
+  color: #1a1a18 !important;
+}
+
+/* Project / site selectors → rounded pill (≥768px) */
+@media (min-width: 768px) {
+  html body header.fixed.top-0 button[aria-label="Select project"],
+  html body header.fixed.top-0 button[aria-label="Select site"] {
+    height: 36px !important;
+    padding: 0 12px 0 10px !important;
+    border-radius: 999px !important;
+    border: 1px solid rgba(26, 26, 24, 0.08) !important;
+    background-color: #ffffff !important;
+    color: #1a1a18 !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+  }
+  html body header.fixed.top-0 button[aria-label="Select project"]:hover,
+  html body header.fixed.top-0 button[aria-label="Select site"]:hover {
+    border-color: rgba(26, 26, 24, 0.28) !important;
+  }
+}
+
+/* Notification bell → bordered square button, grey icon */
+html body header.fixed.top-0 button[aria-label="Notifications"] {
+  border: 1px solid rgba(26, 26, 24, 0.08) !important;
+  background-color: #ffffff !important;
+  border-radius: 8px !important;
+}
+html body header.fixed.top-0 button[aria-label="Notifications"]:hover {
+  border-color: rgba(26, 26, 24, 0.28) !important;
+}
+html body header.fixed.top-0 button[aria-label="Notifications"] svg {
+  color: rgba(26, 26, 24, 0.68) !important;
+}
+html body header.fixed.top-0 [class*="bg-[#DA7756]"] {
+  background-color: var(--color-accent) !important;
+  color: #ffffff !important;
+}
+
+/* Profile avatar → surface grey */
+html body header.fixed.top-0 [class*="bg-[#C4b89D]"] {
+  background-color: #f5f4f0 !important;
+}
+
+/* ---------- Module bar (Transitioning / Maintenance / Safety …) ---------- */
+html body div.fixed.top-16.h-12[style*="246, 244, 238"] {
+  background-color: #fdfdfb !important;
+  border-bottom-color: rgba(26, 26, 24, 0.08) !important;
+}
+html body div.fixed.top-16.h-12 button.flex-shrink-0 {
+  padding: 7px 12px !important;
+  border-radius: 8px !important;
+  border-bottom: none !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  opacity: 1 !important;
+  color: rgba(26, 26, 24, 0.55) !important;
+  transition: all 0.16s;
+}
+html body div.fixed.top-16.h-12 button.flex-shrink-0:hover {
+  background-color: #f7f6f2 !important;
+  color: #1a1a18 !important;
+}
+html body div.fixed.top-16.h-12 button.flex-shrink-0.border-b-2 {
+  background-color: rgba(26, 26, 24, 0.07) !important;
+  color: #1a1a18 !important;
+  font-weight: 600 !important;
+}
+
+/* ---------- Sidebar ---------- */
+html body div.fixed.left-0.top-0[class*="bg-[#f6f4ee]"] {
+  background-color: #fdfdfb !important;
+  border-right-color: rgba(26, 26, 24, 0.06) !important;
+}
+/* Section label ("MAINTENANCE") */
+html body div.fixed.left-0.top-0[class*="bg-[#f6f4ee]"] h3.uppercase {
+  font-size: 10.5px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.07em !important;
+  color: rgba(26, 26, 24, 0.38) !important;
+  opacity: 1 !important;
+}
+/* Items: 13.5px, 10px radius, grey text */
+html body div.fixed.left-0.top-0[class*="bg-[#f6f4ee]"] nav button.rounded-lg {
+  border-radius: 10px !important;
+  font-size: 13.5px !important;
+  padding-top: 9px !important;
+  padding-bottom: 9px !important;
+}
+html body div.fixed.left-0.top-0[class*="bg-[#f6f4ee]"] nav button .text-\[\#1a1a1a\],
+html body div.fixed.left-0.top-0[class*="bg-[#f6f4ee]"] nav button {
+  font-weight: 500;
+}
+html body div.fixed.left-0.top-0[class*="bg-[#f6f4ee]"] .hover\:bg-\[\#DBC2A9\]:hover {
+  background-color: #f7f6f2 !important;
+}
+html body div.fixed.left-0.top-0[class*="bg-[#f6f4ee]"] .bg-\[\#f0e8dc\] {
+  background-color: rgba(26, 26, 24, 0.07) !important;
+  box-shadow: none !important;
+}
+/* Active item: the red left bar becomes a soft full-row pill */
+html body div.fixed.left-0.top-0[class*="bg-[#f6f4ee]"] div.absolute.left-0.top-0.bottom-0[class*="bg-[#C72030]"] {
+  inset: 0 !important;
+  width: auto !important;
+  border-radius: 10px !important;
+  background-color: rgba(26, 26, 24, 0.07) !important;
+  z-index: -1;
+  pointer-events: none;
+}
+/* Count badge on menu items → accent */
+html body div.fixed.left-0.top-0[class*="bg-[#f6f4ee]"] span.rounded-full[class*="bg-[#C72030]"] {
+  background-color: var(--color-accent) !important;
+}
+
+/* ---------- Stat cards (AssetStats / StatsCard / any bg-[#F6F4EE] tile) ---------- */
+html body .bg-\[\#F6F4EE\],
+html body .bg-\[\#f6f4ee\],
+html body [class*="bg-[#F6F4EE]"],
+html body [class*="bg-[#f6f4ee]"] {
+  background-color: #f5f4f0 !important;
+}
+/* …but the fixed chrome keeps the canvas colour set above */
+html body header.fixed.top-0,
+html body div.fixed.left-0.top-0[class*="bg-[#f6f4ee]"],
+html body div.fixed.top-16.h-12[style*="246, 244, 238"] {
+  background-color: #fdfdfb !important;
+}
+/* Icon tile → white, soft-ink icon */
+html body .bg-\[\#C4B89D54\],
+html body [class*="bg-[#C4B89D54]"] {
+  background-color: #ffffff !important;
+  border-radius: 10px !important;
+}
+html body .bg-\[\#C4B89D54\] svg,
+html body .bg-\[\#C4B89D54\] span,
+html body [class*="bg-[#C4B89D54]"] svg,
+html body [class*="bg-[#C4B89D54]"] span {
+  color: rgba(26, 26, 24, 0.68) !important;
+}
+/* Value stays ink, label softens */
+html body [class*="bg-[#F6F4EE]"] .text-sm.font-medium,
+html body [class*="bg-[#f6f4ee]"] .text-xs.font-medium,
+html body [class*="bg-[#F6F4EE]"] .text-xs.font-medium {
+  color: rgba(26, 26, 24, 0.68) !important;
+}
+
+/* ---------- Tables ---------- */
+html body table th:not(.analytics-header),
+html body thead th:not(.analytics-header),
+html body [class*="table"] th:not(.analytics-header) {
+  background-color: #f5f4f0 !important;
+  color: rgba(26, 26, 24, 0.48) !important;
+  border-bottom: 1px solid rgba(26, 26, 24, 0.08) !important;
+  font-weight: 600 !important;
+}
+html body table td:not(:first-child),
+html body tbody td:not(:first-child) {
+  color: rgba(26, 26, 24, 0.68) !important;
+}
+html body table td,
+html body tbody td {
+  border-color: rgba(26, 26, 24, 0.08) !important;
+}
+html body table tbody tr:hover,
+html body [class*="table"] tbody tr:hover {
+  background-color: #f7f6f2 !important;
+}
+html body table.item-table-no-hover tbody tr:hover {
+  background-color: transparent !important;
+}
+
+
+/* ============================================================
+   PRIMARY ACTION BUTTONS (Add / Action / Submit …) — ONE SOURCE
+   Every filled primary button, whichever legacy class it still
+   carries (bg-brand, bg-[#C72030], bg-[#DA7756]…), resolves to
+   --color-primary, and every hover variant to --color-primary-hover.
+   Change those two tokens in :root and all buttons follow.
+   ============================================================ */
+html body button.bg-brand,
+html body button[class*="bg-[#C72030]"],
+html body button[class*="bg-[#DA7756]"],
+html body button[class*="bg-[#da7756]"],
+html body a.bg-brand[class*="text-white"],
+html body [role="button"].bg-brand {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #ffffff !important;
+}
+html body button.bg-brand svg,
+html body button[class*="bg-[#C72030]"] svg,
+html body button[class*="bg-[#DA7756]"] svg,
+html body button[class*="bg-[#da7756]"] svg {
+  color: #ffffff !important;
+}
+html body button.bg-brand:hover,
+html body button.hover\:bg-brand-hover:hover,
+html body button[class*="hover:bg-[#C72030]"]:hover,
+html body button[class*="hover:bg-[#A01020]"]:hover,
+html body button[class*="hover:bg-[#A01828]"]:hover,
+html body button[class*="hover:bg-[#DA7756]"]:hover,
+html body button[class*="hover:bg-[#C45F40]"]:hover,
+html body button[class*="bg-[#C72030]"]:hover,
+html body button[class*="bg-[#DA7756]"]:hover,
+html body button[class*="bg-[#da7756]"]:hover,
+html body a.bg-brand:hover,
+html body [role="button"].bg-brand:hover {
+  background-color: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+  color: #ffffff !important;
+}
+
+/* ---------- Button corner radius (wireframe .btn = 8px) ---------- */
+html body button.bg-brand,
+html body button[class*="bg-[#C72030]"],
+html body button[class*="bg-[#DA7756]"],
+html body button[class*="bg-[#da7756]"],
+html body button.fm-button-fix,
+html body a.fm-button-fix,
+html body [role="button"].fm-button-fix,
+html body a.bg-brand[class*="text-white"],
+html body [role="button"].bg-brand {
+  border-radius: var(--radius-button) !important;
+}
+
+/* ============================================================
+   SEGMENTED TABS (e.g. "Asset List | Analytics") — wireframe .seg
+   Every Tabs list that uses the white bordered "grid w-full" look
+   becomes the design-team pill switcher: tinted track, white
+   raised active segment, grey inactive. No component edits.
+   ============================================================ */
+html body [role="tablist"][class*="bg-white"][class*="border-gray-200"] {
+  display: inline-flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px !important;
+  width: fit-content !important;
+  max-width: 100%;
+  height: auto !important;
+  padding: 3px !important;
+  background-color: rgba(26, 26, 24, 0.055) !important;
+  border: none !important;
+  border-radius: 12px !important;
+}
+html body [role="tablist"][class*="bg-white"][class*="border-gray-200"] [role="tab"] {
+  flex: none;
+  gap: 7px !important;
+  padding: 8px 16px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  background-color: transparent !important;
+  color: rgba(26, 26, 24, 0.55) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+  transition: all 0.16s;
+}
+html body [role="tablist"][class*="bg-white"][class*="border-gray-200"] [role="tab"]:hover {
+  color: #1a1a18 !important;
+}
+html body [role="tablist"][class*="bg-white"][class*="border-gray-200"] [role="tab"][data-state="active"] {
+  background-color: #ffffff !important;
+  color: #1a1a18 !important;
+  box-shadow: 0 1px 2px rgba(26, 26, 24, 0.1), 0 0 0 1px rgba(26, 26, 24, 0.05) !important;
+}
+
+/* ============================================================
+   DATA TABLE STRUCTURE — wireframe .tw / .tr
+   Rounded 16px shell, tinted uppercase header (10.5px / 700 /
+   .09em tracking), airy 12.5px rows with hairline separators,
+   rounded-square checkboxes and soft tinted status pills.
+   Applies to EnhancedTable and every plain <table>.
+   ============================================================ */
+
+/* Shell around EnhancedTable */
+html body div.bg-white.rounded-lg:has(> .table-container) {
+  border: 1px solid rgba(26, 26, 24, 0.09) !important;
+  border-radius: 16px !important;
+  overflow: hidden;
+}
+
+/* Header cells */
+html body table thead th:not(.analytics-header),
+html body table th:not(.analytics-header) {
+  height: auto !important;
+  padding: 12px 16px !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.09em !important;
+  text-transform: uppercase !important;
+  line-height: 1.4 !important;
+  color: rgba(26, 26, 24, 0.48) !important;
+  background-color: #f5f4f0 !important;
+  border-bottom: none !important;
+}
+
+/* Body cells */
+html body table tbody td {
+  padding: 13px 16px !important;
+  font-size: 12.5px !important;
+  line-height: 1.4;
+  color: rgba(26, 26, 24, 0.68) !important;
+  border-bottom: 1px solid rgba(26, 26, 24, 0.08) !important;
+}
+html body table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+html body table tbody tr.bg-blue-50,
+html body table tbody tr.bg-blue-50 > td {
+  background-color: rgba(26, 26, 24, 0.04) !important;
+}
+
+/* Checkboxes: 18px rounded square, ink when checked */
+html body button[role="checkbox"] {
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 5px !important;
+  border: 1.5px solid rgba(26, 26, 24, 0.22) !important;
+  background-color: transparent !important;
+  color: #ffffff !important;
+}
+html body button[role="checkbox"][data-state="checked"],
+html body button[role="checkbox"][data-state="indeterminate"] {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+/* Status pills (StatusBadge / status-badge variants), keyed by their legacy fill */
+html body [class*="bg-[#C7EDDA]"][class*="border-[#C7EDDA]"],
+html body [class*="bg-[#F2EBC9]"][class*="border-[#F2EBC9]"],
+html body [class*="bg-[#F2C8C4]"][class*="border-[#F2C8C4]"],
+html body [class*="bg-[#DBE7FF]"][class*="border-[#DBE7FF]"],
+html body [class*="bg-[#D5DbDB]"][class*="border-[#D5DbDB]"] {
+  width: auto !important;
+  min-width: 0 !important;
+  height: auto !important;
+  padding: 4px 8px 4px 11px !important;
+  border: none !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  gap: 5px;
+}
+html body [class*="bg-[#C7EDDA]"][class*="border-[#C7EDDA]"] {
+  background-color: rgba(18, 161, 80, 0.12) !important;
+  color: #0e7f3f !important;
+}
+html body [class*="bg-[#F2EBC9]"][class*="border-[#F2EBC9]"] {
+  background-color: rgba(242, 163, 18, 0.3) !important;
+  color: #8a5b00 !important;
+}
+html body [class*="bg-[#F2C8C4]"][class*="border-[#F2C8C4]"] {
+  background-color: rgba(229, 72, 77, 0.12) !important;
+  color: #a32126 !important;
+}
+html body [class*="bg-[#D5DbDB]"][class*="border-[#D5DbDB]"] {
+  background-color: #f5f4f0 !important;
+  color: rgba(26, 26, 24, 0.68) !important;
+}
+html body [class*="bg-[#DBE7FF]"][class*="border-[#DBE7FF]"] {
+  background-color: rgba(47, 111, 224, 0.12) !important;
+  color: #2556b0 !important;
+}
+
+/* ============================================================
+   TABLE HEADER — specificity boost
+   Older layers above use `[class*="table"] th:not(.analytics-header)`
+   (0,2,1), which beat the header rules written earlier and kept the
+   old 48px / sentence-case header. Doubling the :not() lifts this
+   one above all of them. Wireframe .tr.h: 11px 20px, 10.5px / 700 /
+   .09em uppercase, surface #F5F4F0, no divider under the header.
+   ============================================================ */
+html body table thead th:not(.analytics-header):not(.analytics-header),
+html body table th:not(.analytics-header):not(.analytics-header),
+html body [class*="table"] th:not(.analytics-header):not(.analytics-header) {
+  height: auto !important;
+  padding: 11px 16px !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.09em !important;
+  text-transform: uppercase !important;
+  line-height: 1.4 !important;
+  color: rgba(26, 26, 24, 0.48) !important;
+  background-color: #f5f4f0 !important;
+  border-bottom: none !important;
+}
+/* Header label / sort-arrow wrappers must follow the th, not their own sizes */
+html body table thead th:not(.analytics-header) > *,
+html body table thead th:not(.analytics-header) span,
+html body table thead th:not(.analytics-header) div {
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  letter-spacing: inherit !important;
+  text-transform: inherit !important;
+  color: inherit !important;
+}
+
+/* Row separators + cell rhythm (wireframe .tr: 13px 20px, 1px rgba(26,26,24,.08)) */
+html body table tbody tr td:not([colspan]),
+html body [class*="table"] tbody tr td:not([colspan]) {
+  padding-top: 13px !important;
+  padding-bottom: 13px !important;
+  border-bottom: 1px solid rgba(26, 26, 24, 0.08) !important;
+}
+html body table tbody tr:last-child td:not([colspan]) {
+  border-bottom: none !important;
+}
+
+/* ============================================================
+   ADD / CREATE FORM PAGES — wireframe card sections
+   "ASSET CATEGORY", "ATTACHMENTS" … section cards used a coral left
+   bar, coral heading and coral icon chip. Now: hairline-bordered
+   16px card, ink heading, grey icon chip, soft upload dropzone.
+   Keyed on the legacy section classes so every Add* page follows.
+   ============================================================ */
+
+/* Card shell */
+html body div:has(> [class*="border-l-4"][class*="border-l-[#DA7756]"]),
+html body div:has(> [class*="border-l-4"][class*="border-l-[#C72030]"]) {
+  border: 1px solid rgba(26, 26, 24, 0.09) !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
+  overflow: hidden;
+}
+/* Coral left bar → none */
+html body [class*="border-l-4"][class*="border-l-[#DA7756]"],
+html body [class*="border-l-4"][class*="border-l-[#C72030]"] {
+  border-left-width: 0 !important;
+}
+/* Section title: ink, 14px semibold */
+html body [class*="border-l-4"][class*="border-l-[#DA7756]"] [class*="text-[#DA7756]"],
+html body [class*="border-l-4"][class*="border-l-[#C72030]"] [class*="text-[#C72030]"] {
+  color: var(--color-text) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em;
+}
+/* Icon chip: coral disc → soft grey */
+html body [class*="border-l-4"][class*="border-l-[#DA7756]"] span[class*="bg-[#DA7756]"],
+html body [class*="border-l-4"][class*="border-l-[#C72030]"] span[class*="bg-[#C72030]"] {
+  background-color: #f5f4f0 !important;
+  color: rgba(26, 26, 24, 0.68) !important;
+}
+
+/* Remaining coral text on forms (labels, links, "Choose File") → primary ink */
+html body .text-\[\#DA7756\],
+html body [class*="text-[#DA7756]"] {
+  color: var(--color-primary) !important;
+}
+
+/* Upload dropzones — wireframe .dropzone */
+html body .border-dashed.border-gray-300,
+html body .border-dashed.border-gray-200 {
+  border-width: 2px !important;
+  border-color: #ebe9e2 !important;
+  border-radius: 12px !important;
+  background-color: transparent;
+  transition: all 0.16s;
+}
+html body .border-dashed.border-gray-300:hover,
+html body .border-dashed.border-gray-200:hover {
+  border-color: rgba(26, 26, 24, 0.28) !important;
+  background-color: #fdfdfb;
+}
+html body .border-dashed button[class*="bg-[#f6f4ee]"],
+html body .border-dashed button[class*="bg-[#F6F4EE]"] {
+  background-color: #f5f4f0 !important;
+  border-radius: 8px !important;
+  font-weight: 600;
+}
+html body .border-dashed button svg {
+  color: currentColor !important;
+}
+
+/* Coral focus rings → ink ring */
+html body [class*="focus:ring-[#DA7756]"]:focus {
+  --tw-ring-color: rgba(var(--color-primary-rgb), 0.25) !important;
+  border-color: var(--color-primary) !important;
+}
+
+/* ============================================================
+   SEGMENTED TABS — extended to every plain / grey tab list
+   (Asset details: "Asset Info | AMC Details | …" and the inner
+   "Analytics | Asset Details" switcher). Excludes lists that opt out
+   of a track (transparent underline tabs, rounded-full pills).
+   ============================================================ */
+html body [role="tablist"]:is(
+    [class*="bg-gray-50"],
+    :not([class*="bg-"]):not([class*="border"]):not([class*="rounded-full"]):not([class*="rounded-none"])
+  ) {
+  display: inline-flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px !important;
+  width: fit-content !important;
+  max-width: 100%;
+  height: auto !important;
+  padding: 3px !important;
+  background-color: rgba(26, 26, 24, 0.055) !important;
+  border: none !important;
+  border-radius: 12px !important;
+}
+html body [role="tablist"]:is(
+    [class*="bg-gray-50"],
+    :not([class*="bg-"]):not([class*="border"]):not([class*="rounded-full"]):not([class*="rounded-none"])
+  ) [role="tab"] {
+  flex: none !important;
+  min-width: 0;
+  gap: 7px !important;
+  padding: 8px 16px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  background-color: transparent !important;
+  color: rgba(26, 26, 24, 0.55) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+  transition: all 0.16s;
+}
+html body [role="tablist"]:is(
+    [class*="bg-gray-50"],
+    :not([class*="bg-"]):not([class*="border"]):not([class*="rounded-full"]):not([class*="rounded-none"])
+  ) [role="tab"]:hover {
+  color: #1a1a18 !important;
+}
+html body [role="tablist"]:is(
+    [class*="bg-gray-50"],
+    :not([class*="bg-"]):not([class*="border"]):not([class*="rounded-full"]):not([class*="rounded-none"])
+  ) [role="tab"][data-state="active"] {
+  background-color: #ffffff !important;
+  color: #1a1a18 !important;
+  box-shadow: 0 1px 2px rgba(26, 26, 24, 0.1), 0 0 0 1px rgba(26, 26, 24, 0.05) !important;
+}
+
+/* ============================================================
+   LEGACY BEIGE / GREY SURFACES → wireframe surface + hairline
+   (detail-page section bars, panels, dividers)
+   ============================================================ */
+html body .bg-\[\#E5E0D3\],
+html body .bg-\[\#F6F7F7\] {
+  background-color: #f5f4f0 !important;
+}
+html body .bg-\[\#EDEAE3\] {
+  background-color: #efede6 !important;
+}
+html body .border-\[\#D9D9D9\],
+html body .border-\[\#EDEAE3\] {
+  border-color: rgba(26, 26, 24, 0.08) !important;
+}
+
+/* ============================================================
+   DETAIL PAGES — stat tiles, icon chips, selected rings, switchers
+   ============================================================ */
+/* Selected-state rings that were hard red */
+html body .ring-red-600,
+html body .ring-red-500,
+html body [class*="ring-[#C72030]"] {
+  --tw-ring-color: var(--color-primary) !important;
+}
+html body .border-red-600,
+html body .border-red-500 {
+  border-color: var(--color-primary) !important;
+}
+/* Icon chips with inline beige fill → white chip, soft-ink icon (wireframe .pic) */
+html body [style*="237, 234, 227"] {
+  background: #ffffff !important;
+  border-radius: 10px !important;
+}
+html body [style*="237, 234, 227"] svg,
+html body [style*="237, 234, 227"] svg path,
+html body [style*="237, 234, 227"] svg circle {
+  stroke: rgba(26, 26, 24, 0.68) !important;
+  color: rgba(26, 26, 24, 0.68) !important;
+}
+html body [style*="237, 234, 227"] svg [fill="#C72030"] {
+  fill: rgba(26, 26, 24, 0.68) !important;
+}
+html body .bg-white\/20 svg,
+html body .bg-white\/20 {
+  color: rgba(26, 26, 24, 0.68) !important;
+}
+/* Switcher triggers must not stretch full width / stack */
+html body [role="tablist"] [role="tab"].w-full {
+  width: auto !important;
+}
+
+/* ============================================================
+   DETAIL PAGES — drop the outer white card around the tab set
+   The wireframe lays tabs and content straight on the canvas.
+   Targets any white bordered card whose direct child is a Tabs root
+   holding a tablist (Asset details, and every detail page built alike).
+   ============================================================ */
+html body div.bg-white.rounded-lg.border:has(> [data-orientation="horizontal"] > [role="tablist"]) {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+/* ============================================================
+   DETAIL PAGES — alignment & card surfaces (wireframe asset details)
+   Tab panels no longer inset their content, so the inner switcher,
+   config card and tiles share the left edge of the tab bar.
+   ============================================================ */
+html body [role="tabpanel"][class*="p-4"][class*="sm:p-6"] {
+  padding: 20px 0 0 !important;
+}
+/* Big shadowed content cards → white hairline card, 16px radius */
+html body div.rounded-xl.border.shadow-lg {
+  background-color: #ffffff !important;
+  border: 1px solid rgba(26, 26, 24, 0.09) !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
+}
+html body div.rounded-xl.border.shadow-lg .border-gray-300 {
+  border-color: rgba(26, 26, 24, 0.08) !important;
+}
+/* Stat tiles on detail pages: hairline instead of heavy border, 16px corners */
+html body div.border.bg-\[\#F6F4EE\] {
+  border: none !important;
+  border-radius: 16px !important;
+}
+
+/* ============================================================
+   MODULE BAR (Transitioning … Accounting) — wireframe .modrow
+   Tabs sit left-aligned in a tight row (2px gap, 7px 12px pills)
+   instead of being spread edge-to-edge; bar is 48px with a hairline.
+   Also clears the grey spacer strip above the sidebar section label.
+   ============================================================ */
+html body div.fixed.top-16.h-12 > div {
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+}
+html body div.fixed.top-16.h-12 div.flex[class*="justify-"] {
+  justify-content: flex-start !important;
+  width: max-content !important;
+  max-width: none !important;
+  gap: 2px !important;
+}
+html body div.fixed.top-16.h-12 div.flex[class*="justify-"] > button {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+html body div.fixed.top-16.h-12 button.flex-shrink-0 {
+  height: auto !important;
+  line-height: 1.4;
+}
+/* Sidebar: empty spacer above the section label was picking up the grey surface */
+html body div.fixed.left-0.top-0 > div > div.w-full.h-4,
+html body div.fixed.left-0.top-0 div.w-full.h-4[class*="bg-[#f6f4ee]"] {
+  background-color: transparent !important;
+  border: none !important;
+}
+
+/* ============================================================
+   PRIMARY BUTTONS — disabled state (e.g. login "Continue")
+   A disabled primary button stays the primary ink colour at reduced
+   opacity with a clearly readable white label, and does not lift.
+   ============================================================ */
+html body button[class*="bg-[#C72030]"]:disabled,
+html body button.bg-brand:disabled,
+html body button[class*="bg-[#DA7756]"]:disabled {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+html body button[class*="bg-[#C72030]"]:disabled:hover,
+html body button.bg-brand:disabled:hover {
+  background-color: var(--color-primary) !important;
+}
+/* Login-page primary buttons: full-width, 12px radius, 600 label */
+html body button[class*="bg-[#C72030]"][class*="w-full"][class*="h-12"] {
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em;
+  color: #ffffff !important;
+}
+
+
+/* ============================================================
+   FORM FIELD RADIUS — consistent with the 16px cards
+   MUI outlined fields (TextField / Select / Autocomplete / pickers),
+   shadcn inputs, textareas and select triggers all share one token.
+   ============================================================ */
+html body .MuiOutlinedInput-root,
+html body .MuiOutlinedInput-notchedOutline,
+html body .MuiInputBase-root.MuiOutlinedInput-root,
+html body .MuiAutocomplete-inputRoot {
+  border-radius: var(--radius-input) !important;
+}
+html body input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not(.MuiInputBase-input):not(.MuiSelect-nativeInput),
+html body textarea:not(.MuiInputBase-input),
+html body select,
+html body button[role="combobox"] {
+  border-radius: var(--radius-input) !important;
+}
+/* Floating-label notch must follow the larger radius cleanly */
+html body .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline legend {
+  max-width: 100%;
+}
+
+
+/* ============================================================
+   FORM FIELD FOCUS — softer than full ink
+   Previously focus used the solid primary ink + 2px ring, which read
+   as a heavy black box. Now a mid-grey border with a faint halo.
+   ============================================================ */
+html body input:not([type="checkbox"]):not([type="radio"]):focus,
+html body input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+html body textarea:focus,
+html body textarea:focus-visible,
+html body select:focus,
+html body button[role="combobox"]:focus,
+html body button[role="combobox"][data-state="open"] {
+  border-color: var(--color-input-focus-border) !important;
+  box-shadow: 0 0 0 4px var(--color-input-focus-ring) !important;
+  --tw-ring-color: transparent !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+  --tw-ring-offset-width: 0px !important;
+  outline: none !important;
+}
+html body .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline,
+html body .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-input-focus-border) !important;
+  border-width: 1px !important;
+}
+html body .MuiOutlinedInput-root.Mui-focused {
+  box-shadow: 0 0 0 4px var(--color-input-focus-ring) !important;
+  border-radius: var(--radius-input);
 }
