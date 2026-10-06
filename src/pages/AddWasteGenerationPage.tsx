@@ -2,32 +2,89 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
-import { TextField, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
-import { Recycle, ArrowLeft } from 'lucide-react';
+import { TextField, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent, RadioGroup, FormControlLabel, Radio } from '@mui/material';
+import { Recycle, ArrowLeft, Plus, Trash2, X } from 'lucide-react';
 import {
   fetchBuildings,
   fetchWings,
   fetchAreas,
   fetchCommodities,
-  fetchCategories,
+  fetchSubcategoriesByParent,
   fetchOperationalLandlords,
+  fetchEntities,
   createWasteGeneration,
   Building as BuildingType,
   Wing,
   Area,
   Commodity,
   Category,
-  OperationalLandlord
+  OperationalLandlord,
+  Entity,
+  WasteEntryInput
 } from '@/services/wasteGenerationAPI';
 import { SupplierSearchSelect } from '@/components/SupplierSearchSelect';
 import { FormSearchSelect } from '@/components/FormSearchSelect';
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { toast } from 'sonner';
+
+// One row in the "Waste Entries" section: a category + commodity with a bag
+// count and overall weight (which gets split evenly across that many bags
+// before being sent as the `values` array the create_waste API expects),
+// plus attachments.
+interface WasteEntryRow {
+  key: string;
+  category: string;
+  commodity: string;
+  uom: string;
+  bagCount: string;
+  overallWeight: string;
+  attachments: File[];
+}
+
+let wasteEntryRowSeq = 0;
+const createEmptyWasteEntryRow = (): WasteEntryRow => ({
+  key: `entry-${++wasteEntryRowSeq}`,
+  category: '',
+  commodity: '',
+  uom: 'Kg',
+  bagCount: '1',
+  overallWeight: '',
+  attachments: [],
+});
+
+// Splits `total` evenly across `count` bags (e.g. 50 over 5 bags -> [10,10,10,10,10]).
+// Rounds each share to 2 decimals and folds any rounding remainder into the
+// last bag so the values always sum back to exactly `total`.
+const distributeWeight = (total: number, count: number): number[] => {
+  if (count <= 0 || !(total >= 0)) return [];
+  const share = Math.floor((total / count) * 100) / 100;
+  const values = Array(count).fill(share);
+  const remainder = Math.round((total - share * count) * 100) / 100;
+  values[values.length - 1] = Math.round((values[values.length - 1] + remainder) * 100) / 100;
+  return values;
+};
 
 // Field styles for Material-UI components
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
   '& .MuiInputBase-input, & .MuiSelect-select': {
     padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+};
+
+// Compact variant of fieldStyles for inputs/selects placed inside the
+// Waste Entries table cells, where the column header already acts as the label
+const tableFieldStyles = {
+  height: 40,
+  backgroundColor: 'white',
+  '& .MuiInputBase-input': {
+    padding: '8px 10px',
+  },
+  // Select needs extra right padding to leave room for its dropdown arrow —
+  // reusing the plain-input padding above collapses that gap, so the arrow
+  // ends up overlapping long placeholder text like "Select Commodity".
+  '& .MuiSelect-select': {
+    padding: '8px 32px 8px 10px',
   },
 };
 
@@ -53,37 +110,43 @@ const AddWasteGenerationPage = () => {
   const navigate = useNavigate();
   const { toast: reactToast } = useToast();
 
+  const [generatorType, setGeneratorType] = useState<'self' | 'customer'>('self');
+  const [customerId, setCustomerId] = useState('');
+
   const [formData, setFormData] = useState({
     building: '',
     wing: '',
     area: '',
     date: '',
     vendor: '',
-    commodity: '',
-    category: '',
     operationalName: '',
     agencyName: '',
-    generatedUnit: '',
-    recycledUnit: '0',
-    uom: 'KG',
-    typeOfWaste: ''
+    // recycledUnit: '0',
+    remark: '',
   });
+
+  const [wasteEntries, setWasteEntries] = useState<WasteEntryRow[]>([createEmptyWasteEntryRow()]);
 
   // API data state
   const [buildings, setBuildings] = useState<BuildingType[]>([]);
   const [wings, setWings] = useState<Wing[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
   const [commodities, setCommodities] = useState<Commodity[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  // Subcategories are fetched per selected Category (commodity) via
+  // q[parent_id]=<id>, so they're cached here keyed by that parent's id
+  // rather than loaded as one flat list up front.
+  const [subcategoriesByParent, setSubcategoriesByParent] = useState<Record<string, Category[]>>({});
+  const [loadingSubcategoryParents, setLoadingSubcategoryParents] = useState<Record<string, boolean>>({});
   const [operationalLandlords, setOperationalLandlords] = useState<OperationalLandlord[]>([]);
+  const [entities, setEntities] = useState<Entity[]>([]);
 
   // Loading states
   const [loadingBuildings, setLoadingBuildings] = useState(false);
   const [loadingWings, setLoadingWings] = useState(false);
   const [loadingAreas, setLoadingAreas] = useState(false);
   const [loadingCommodities, setLoadingCommodities] = useState(false);
-  const [loadingCategories, setLoadingCategories] = useState(false);
   const [loadingOperationalLandlords, setLoadingOperationalLandlords] = useState(false);
+  const [loadingEntities, setLoadingEntities] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   // Fetch all dropdowns data on component mount
@@ -116,19 +179,6 @@ const AddWasteGenerationPage = () => {
         setLoadingCommodities(false);
       }
 
-      // Fetch categories
-      setLoadingCategories(true);
-      try {
-        const categoriesData = await fetchCategories();
-        console.log('Categories data received:', categoriesData);
-        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-        setCategories([]);
-        toast.error('Failed to load categories');
-      } finally {
-        setLoadingCategories(false);
-      }
 
       // Fetch operational landlords
       setLoadingOperationalLandlords(true);
@@ -142,6 +192,19 @@ const AddWasteGenerationPage = () => {
         toast.error('Failed to load operational landlords');
       } finally {
         setLoadingOperationalLandlords(false);
+      }
+
+      // Fetch entities (for the Customer dropdown)
+      setLoadingEntities(true);
+      try {
+        const entitiesData = await fetchEntities();
+        setEntities(Array.isArray(entitiesData) ? entitiesData : []);
+      } catch (error) {
+        console.error('Error fetching entities:', error);
+        setEntities([]);
+        toast.error('Failed to load customers');
+      } finally {
+        setLoadingEntities(false);
       }
     };
 
@@ -199,16 +262,9 @@ const AddWasteGenerationPage = () => {
   }, [formData.wing]);
 
   const handleInputChange = (field: string, value: string) => {
-
- if (
-    (field === "generatedUnit" || field === "recycledUnit") &&
-    Number(value) < 0
-  ) {
-    return;
-  }
-
-
-
+    if (field === "recycledUnit" && Number(value) < 0) {
+      return;
+    }
 
     setFormData(prev => ({
       ...prev,
@@ -216,14 +272,77 @@ const AddWasteGenerationPage = () => {
     }));
   };
 
-  // if (!formData.building || !formData.vendor || !formData.commodity || !formData.category || !formData.operationalName || !formData.generatedUnit || !formData.date) {
-  //   reactToast({
-  //     title: "Error",
-  //     description: "Please fill in all required fields",
-  //     variant: "destructive"
-  //   });
-  //   return;
-  // }
+  // Waste entry (category row) helpers
+  const addWasteEntry = () => {
+    setWasteEntries(prev => [...prev, createEmptyWasteEntryRow()]);
+  };
+
+  const removeWasteEntry = (key: string) => {
+    setWasteEntries(prev => (prev.length > 1 ? prev.filter(entry => entry.key !== key) : prev));
+  };
+
+  const updateWasteEntry = (
+    key: string,
+    field: 'category' | 'commodity' | 'uom' | 'bagCount' | 'overallWeight',
+    value: string
+  ) => {
+    if ((field === 'bagCount' || field === 'overallWeight') && Number(value) < 0) {
+      return;
+    }
+    setWasteEntries(prev =>
+      prev.map(entry => {
+        if (entry.key !== key) return entry;
+        // Subcategory options depend on which Category (commodity) is selected,
+        // so changing the parent Category clears any previously chosen Subcategory.
+        if (field === 'commodity') {
+          return { ...entry, commodity: value, category: '' };
+        }
+        return { ...entry, [field]: value };
+      })
+    );
+
+    if (field === 'commodity' && value) {
+      loadSubcategoriesForParent(value);
+    }
+  };
+
+  // Fetches and caches the Subcategory list for a given parent Category
+  // (commodity) id, skipping the call if it's already cached or in flight.
+  const loadSubcategoriesForParent = async (parentId: string) => {
+    if (subcategoriesByParent[parentId] || loadingSubcategoryParents[parentId]) return;
+    setLoadingSubcategoryParents(prev => ({ ...prev, [parentId]: true }));
+    try {
+      const data = await fetchSubcategoriesByParent(parseInt(parentId, 10));
+      setSubcategoriesByParent(prev => ({ ...prev, [parentId]: Array.isArray(data) ? data : [] }));
+    } catch (error) {
+      console.error('Error fetching subcategories for parent:', error);
+      toast.error('Failed to load subcategories');
+    } finally {
+      setLoadingSubcategoryParents(prev => ({ ...prev, [parentId]: false }));
+    }
+  };
+
+  const addAttachments = (key: string, files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setWasteEntries(prev =>
+      prev.map(entry =>
+        entry.key === key ? { ...entry, attachments: [...entry.attachments, ...Array.from(files)] } : entry
+      )
+    );
+  };
+
+  const removeAttachment = (key: string, index: number) => {
+    setWasteEntries(prev =>
+      prev.map(entry =>
+        entry.key === key ? { ...entry, attachments: entry.attachments.filter((_, i) => i !== index) } : entry
+      )
+    );
+  };
+
+  const totalGeneratedUnit = useMemo(
+    () => wasteEntries.reduce((sum, entry) => sum + (parseFloat(entry.overallWeight) || 0), 0),
+    [wasteEntries]
+  );
 
   const handleSave = async () => {
     if (!formData.building) {
@@ -236,18 +355,13 @@ const AddWasteGenerationPage = () => {
       return;
     }
 
+    if (formData.date > new Date().toISOString().split('T')[0]) {
+      toast.error("Validation Error: Date cannot be a future date.");
+      return;
+    }
+
     if (!formData.vendor) {
       toast.error("Validation Error: Vendor is required.");
-      return;
-    }
-
-    if (!formData.commodity) {
-      toast.error("Validation Error: Commodity is required.");
-      return;
-    }
-
-    if (!formData.category) {
-      toast.error("Validation Error: Category is required.");
       return;
     }
 
@@ -256,50 +370,67 @@ const AddWasteGenerationPage = () => {
       return;
     }
 
-    if (!formData.generatedUnit) {
-      toast.error("Validation Error: Generated Unit is required.");
+    if (wasteEntries.length === 0) {
+      toast.error("Validation Error: At least one waste category entry is required.");
       return;
     }
 
-    if (parseFloat(formData.generatedUnit) <= 0) {
-      toast.error("Validation Error: Generated Unit must be greater than 0.");
-      return;
+    for (const entry of wasteEntries) {
+      if (!entry.category) {
+        toast.error("Validation Error: Subcategory is required for every waste entry.");
+        return;
+      }
+      if (!entry.commodity) {
+        toast.error("Validation Error: Category is required for every waste entry.");
+        return;
+      }
+      if (!entry.uom.trim()) {
+        toast.error("Validation Error: UOM is required for every waste entry.");
+        return;
+      }
+      if (!entry.bagCount || parseInt(entry.bagCount, 10) <= 0) {
+        toast.error("Validation Error: Bag Count must be at least 1 for every waste entry.");
+        return;
+      }
+      if (!entry.overallWeight || parseFloat(entry.overallWeight) <= 0) {
+        toast.error("Validation Error: Overall Weight must be greater than 0 for every waste entry.");
+        return;
+      }
     }
 
-    if (formData.recycledUnit && parseFloat(formData.recycledUnit) < 0) {
-      toast.error("Validation Error: Recycled Unit cannot be negative.");
-      return;
-    }
+    // if (formData.recycledUnit && parseFloat(formData.recycledUnit) < 0) {
+    //   toast.error("Validation Error: Recycled Unit cannot be negative.");
+    //   return;
+    // }
 
-    if (
-      parseFloat(formData.recycledUnit || "0") >
-      parseFloat(formData.generatedUnit)
-    ) {
-      toast.error("Validation Error: Recycled Unit cannot be greater than Generated Unit.");
-      return;
-    }
-    // continue with API call...
-
-
+    // if (parseFloat(formData.recycledUnit || "0") > totalGeneratedUnit) {
+    //   toast.error("Validation Error: Recycled Unit cannot be greater than total Generated Unit.");
+    //   return;
+    // }
 
     setSubmitting(true);
     try {
       const payload = {
         pms_waste_generation: {
+          wg_date: formData.date,
+          vendor_id: formData.vendor ? parseInt(formData.vendor) : null,
+          operational_landlord_id: parseInt(formData.operationalName),
           building_id: parseInt(formData.building),
           wing_id: formData.wing ? parseInt(formData.wing) : null,
           area_id: formData.area ? parseInt(formData.area) : null,
-          vendor_id: formData.vendor ? parseInt(formData.vendor) : null,
-          commodity_id: parseInt(formData.commodity),
-          category_id: parseInt(formData.category),
-          operational_landlord_id: parseInt(formData.operationalName),
           agency_name: formData.agencyName || '',
-          waste_unit: parseFloat(formData.generatedUnit),
-          recycled_unit: formData.recycledUnit ? parseFloat(formData.recycledUnit) : 0,
-          wg_date: formData.date,
-          uom: formData.uom || '',
-          type_of_waste: formData.typeOfWaste || ''
-        }
+          // recycled_unit: formData.recycledUnit ? parseFloat(formData.recycledUnit) : 0,
+          remark: formData.remark || '',
+          entity_id: generatorType === 'customer' && customerId ? parseInt(customerId) : null,
+        },
+        waste_entries: wasteEntries.map((entry): WasteEntryInput => ({
+          category_id: parseInt(entry.category),
+          commodity_id: parseInt(entry.commodity),
+          uom: entry.uom,
+          values: distributeWeight(parseFloat(entry.overallWeight), parseInt(entry.bagCount, 10)),
+          attachments: entry.attachments,
+          signature: null,
+        })),
       };
 
       console.log('Submitting waste generation data:', payload);
@@ -340,14 +471,13 @@ const AddWasteGenerationPage = () => {
       })),
     [commodities]
   );
-  const categoryOptions = useMemo(
-    () =>
-      categories.map((c) => ({
-        value: c.id.toString(),
-        label: c.category_name,
-      })),
-    [categories]
-  );
+  // Subcategory options come from the per-parent cache populated by
+  // loadSubcategoriesForParent (API call scoped to q[parent_id]=<commodityId>).
+  const getSubcategoryOptions = (commodityId: string) =>
+    (subcategoriesByParent[commodityId] || []).map((c) => ({
+      value: c.id.toString(),
+      label: c.category_name,
+    }));
   const operationalLandlordOptions = useMemo(
     () =>
       operationalLandlords
@@ -357,6 +487,16 @@ const AddWasteGenerationPage = () => {
           label: String(l.category_name).trim(),
         })),
     [operationalLandlords]
+  );
+  const customerOptions = useMemo(
+    () =>
+      entities
+        .filter((e) => e?.id != null && String(e.name || '').trim() !== '')
+        .map((e) => ({
+          value: String(e.id),
+          label: String(e.name).trim(),
+        })),
+    [entities]
   );
 
   return (
@@ -385,6 +525,43 @@ const AddWasteGenerationPage = () => {
             </h2>
           </div>
           <div className="p-6 space-y-10">
+            {/* Generator Type */}
+            <div className="space-y-4">
+              <RadioGroup
+                row
+                value={generatorType}
+                onChange={(e) => setGeneratorType(e.target.value as 'self' | 'customer')}
+              >
+                <FormControlLabel value="self" control={<Radio />} label="Self" />
+                <FormControlLabel value="customer" control={<Radio />} label="Customer" />
+              </RadioGroup>
+
+              {generatorType === 'customer' && (
+                <div className="max-w-sm">
+                  <FormControl fullWidth disabled={loadingEntities}>
+                    <InputLabel shrink id="customer-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                      Customer
+                    </InputLabel>
+                    <Select
+                      labelId="customer-label"
+                      value={customerId}
+                      onChange={(e: SelectChangeEvent<string>) => setCustomerId(e.target.value)}
+                      displayEmpty
+                      sx={fieldStyles}
+                      MenuProps={selectMenuProps}
+                    >
+                      <MenuItem value="">
+                        <em>{loadingEntities ? 'Loading...' : 'Select Customer'}</em>
+                      </MenuItem>
+                      {customerOptions.map((opt) => (
+                        <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
+              )}
+            </div>
+
             {/* Location Details Section */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-10">
               <FormControl fullWidth disabled={loadingBuildings}>
@@ -473,6 +650,9 @@ const AddWasteGenerationPage = () => {
                   inputLabel: {
                     shrink: true,
                   },
+                  htmlInput: {
+                    max: new Date().toISOString().split('T')[0],
+                  },
                 }}
                 // InputProps={{
                 //   sx: fieldStyles,
@@ -482,89 +662,190 @@ const AddWasteGenerationPage = () => {
             </div>
 
             {/* Waste Details Section */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-10">
-              {/* Vendor — uses virtualized SupplierSearchSelect to handle large record sets without freezing */}
-              <SupplierSearchSelect
-                value={formData.vendor}
-                onChange={(vendorId) => handleInputChange('vendor', vendorId)}
-                label={<span>Vendor <span style={{ color: '#C72030' }}>*</span></span>}
-                size="schedule"
-                error={false}
-              />
+           
 
-              <FormControl fullWidth disabled={loadingCommodities}>
-                <InputLabel shrink id="commodity-label" sx={{ backgroundColor: 'white', px: 1 }}>
-                  Commodity <span className="text-red-500">*</span>
-                </InputLabel>
-                <Select
-                  labelId="commodity-label"
-                  value={formData.commodity}
-                  onChange={(e: SelectChangeEvent<string>) => handleInputChange('commodity', e.target.value)}
-                  displayEmpty
-                  sx={fieldStyles}
-                  MenuProps={selectMenuProps}
-                >
-                  <MenuItem value="">
-                    <em>{loadingCommodities ? 'Loading...' : 'Select Commodity'}</em>
-                  </MenuItem>
-                  {commodityOptions.map((opt) => (
-                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+            {/* Waste Entries — one table row per category, each with its own
+                commodity, UOM, a dynamic list of bag weights, and attachments */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base font-semibold text-gray-900">Waste Entries</h3>
+              </div>
 
-              <FormControl fullWidth disabled={loadingCategories}>
-                <InputLabel shrink id="category-label" sx={{ backgroundColor: 'white', px: 1 }}>
-                  Category <span className="text-red-500">*</span>
-                </InputLabel>
-                <Select
-                  labelId="category-label"
-                  value={formData.category}
-                  onChange={(e: SelectChangeEvent<string>) => handleInputChange('category', e.target.value)}
-                  displayEmpty
-                  sx={fieldStyles}
-                  MenuProps={selectMenuProps}
-                >
-                  <MenuItem value="">
-                    <em>{loadingCategories ? 'Loading...' : 'Select Category'}</em>
-                  </MenuItem>
-                  {categoryOptions.map((opt) => (
-                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <TextField
-                fullWidth
-                label="UOM"
-                variant="outlined"
-                value={formData.uom}
-                onChange={(e) => handleInputChange('uom', e.target.value)}
-                placeholder="Enter UOM"
-                // sx={{ '& .MuiInputBase-root': fieldStyles }}
-                sx={fieldStyles}
-                InputLabelProps={{ shrink: true }}
-              />
-            </div>
+              <div className="border border-gray-200 rounded-md overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-gray-50">
+                    <TableRow className="border-b-gray-200 hover:bg-gray-50">
+                      <TableHead className="w-12 font-semibold text-gray-600">Sr. No.</TableHead>
+                      <TableHead className="min-w-[220px] font-semibold text-gray-600">
+                        Category <span className="text-red-500">*</span>
+                      </TableHead>
+                      <TableHead className="min-w-[220px] font-semibold text-gray-600">
+                        Subcategory <span className="text-red-500">*</span>
+                      </TableHead>
+                      <TableHead className="min-w-[110px] font-semibold text-gray-600">
+                        UOM <span className="text-red-500">*</span>
+                      </TableHead>
+                      <TableHead className="min-w-[280px] font-semibold text-gray-600">
+                        Bags / Weights <span className="text-red-500">*</span>
+                      </TableHead>
+                      <TableHead className="min-w-[220px] font-semibold text-gray-600">Attachments</TableHead>
+                      <TableHead className="w-10"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {wasteEntries.map((entry, entryIndex) => (
+                      <TableRow key={entry.key} className="border-b-gray-200 hover:bg-transparent align-top">
+                        <TableCell className="pt-4 text-sm text-gray-600">{entryIndex + 1}</TableCell>
 
-            {/* Additional Waste Details */}
-            <div className="">
+                        <TableCell className="p-2 align-top">
+                          <FormControl fullWidth size="small" disabled={loadingCommodities}>
+                            <Select
+                              value={entry.commodity}
+                              onChange={(e: SelectChangeEvent<string>) => updateWasteEntry(entry.key, 'commodity', e.target.value)}
+                              displayEmpty
+                              sx={tableFieldStyles}
+                              MenuProps={selectMenuProps}
+                            >
+                              <MenuItem value="">
+                                <em>{loadingCommodities ? 'Loading...' : 'Select Category'}</em>
+                              </MenuItem>
+                              {commodityOptions.map((opt) => (
+                                <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </TableCell>
 
+                        <TableCell className="p-2 align-top">
+                          <FormControl fullWidth size="small" disabled={!entry.commodity || loadingSubcategoryParents[entry.commodity]}>
+                            <Select
+                              value={entry.category}
+                              onChange={(e: SelectChangeEvent<string>) => updateWasteEntry(entry.key, 'category', e.target.value)}
+                              displayEmpty
+                              sx={tableFieldStyles}
+                              MenuProps={selectMenuProps}
+                            >
+                              <MenuItem value="">
+                                <em>
+                                  {!entry.commodity
+                                    ? 'Select Category first'
+                                    : loadingSubcategoryParents[entry.commodity]
+                                    ? 'Loading...'
+                                    : 'Select Subcategory'}
+                                </em>
+                              </MenuItem>
+                              {getSubcategoryOptions(entry.commodity).map((opt) => (
+                                <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </TableCell>
 
-              {/* <TextField
-                fullWidth
-                label="Type of Waste"
-                variant="outlined"
-                value={formData.typeOfWaste}
-                onChange={(e) => handleInputChange('typeOfWaste', e.target.value)}
-                placeholder="Enter type of waste"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
-                InputLabelProps={{ shrink: true }}
-              /> */}
+                        <TableCell className="p-2 align-top">
+                          <TextField
+                            fullWidth
+                            variant="outlined"
+                            value={entry.uom}
+                            onChange={(e) => updateWasteEntry(entry.key, 'uom', e.target.value)}
+                            placeholder="UOM"
+                            sx={tableFieldStyles}
+                          />
+                        </TableCell>
+
+                        <TableCell className="p-2 align-top">
+                          <div className="flex items-start gap-2">
+                            <TextField
+                              type="number"
+                              label="Bag Count"
+                              value={entry.bagCount}
+                              onChange={(e) => updateWasteEntry(entry.key, 'bagCount', e.target.value)}
+                              variant="outlined"
+                              inputProps={{ min: '1', step: '1' }}
+                              sx={{ width: 100, ...tableFieldStyles }}
+                              InputLabelProps={{ shrink: true }}
+                            />
+                            <TextField
+                              type="number"
+                              label="Overall Weight"
+                              value={entry.overallWeight}
+                              onChange={(e) => updateWasteEntry(entry.key, 'overallWeight', e.target.value)}
+                              variant="outlined"
+                              inputProps={{ min: '0' }}
+                              sx={{ width: 120, ...tableFieldStyles }}
+                              InputLabelProps={{ shrink: true }}
+                            />
+                          </div>
+                        </TableCell>
+
+                        <TableCell className="p-2 align-top">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="inline-flex h-10 w-full items-center justify-center bg-gray-100 border border-gray-300 rounded px-3 text-xs text-gray-900 cursor-pointer hover:bg-gray-200">
+                              Choose File(s)
+                              <input
+                                type="file"
+                                multiple
+                                className="hidden"
+                                onChange={(e) => {
+                                  addAttachments(entry.key, e.target.files);
+                                  e.target.value = '';
+                                }}
+                              />
+                            </label>
+                            {entry.attachments.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {entry.attachments.map((file, fileIndex) => (
+                                  <span
+                                    key={fileIndex}
+                                    className="inline-flex items-center gap-1 bg-white border border-gray-300 rounded px-1.5 py-0.5 text-xs text-gray-700 max-w-[160px]"
+                                  >
+                                    <span className="truncate">{file.name}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeAttachment(entry.key, fileIndex)}
+                                      className="text-gray-400 hover:text-red-600 shrink-0"
+                                      aria-label="Remove attachment"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+
+                        <TableCell className="p-2 pt-4 text-center">
+                          {wasteEntries.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeWasteEntry(entry.key)}
+                              className="text-gray-400 hover:text-red-600 transition-colors"
+                              aria-label="Remove category"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addWasteEntry}
+                className="mt-3 border-brand text-brand hover:bg-brand-selected hover:text-brand"
+              >
+                <Plus className="w-4 h-4 mr-1" /> Add Category
+              </Button>
             </div>
 
             {/* Organization Details Section */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-10">
-              <div className="md:col-span-2 min-w-0">
+              <div className="min-w-0">
                 <FormSearchSelect
                   label={
                     <span>
@@ -594,33 +875,33 @@ const AddWasteGenerationPage = () => {
                   },
                 }}
                 sx={fieldStyles}
-              // InputProps={{
-              //   sx: fieldStyles,
-              // }}
               />
 
               <TextField
-                // label="Generated Unit*"
-                label={<span>Generated Unit <span className="text-red-500">*</span></span>}
+                label="Total Generated Unit"
                 type="number"
-                placeholder="Enter Unit"
-                value={formData.generatedUnit}
-                onChange={(e) => handleInputChange('generatedUnit', e.target.value)}
+                value={totalGeneratedUnit}
                 fullWidth
                 variant="outlined"
-                inputProps={{ min: "0" }}
+                disabled
                 slotProps={{
                   inputLabel: {
                     shrink: true,
                   },
                 }}
                 sx={fieldStyles}
-              // InputProps={{
-              //   sx: fieldStyles,
-              // }}
               />
 
-              <TextField
+              {/* Vendor — uses virtualized SupplierSearchSelect to handle large record sets without freezing */}
+              <SupplierSearchSelect
+                value={formData.vendor}
+                onChange={(vendorId) => handleInputChange('vendor', vendorId)}
+                label={<span>Vendor <span style={{ color: '#C72030' }}>*</span></span>}
+                size="schedule"
+                error={false}
+              />
+
+              {/* <TextField
                 label="Recycled Unit"
                 type="number"
                 placeholder="0"
@@ -635,10 +916,44 @@ const AddWasteGenerationPage = () => {
                   },
                 }}
                 sx={fieldStyles}
-              // InputProps={{
-              //   sx: fieldStyles,
-              // }}
-              />
+              /> */}
+
+              <div className="md:col-span-4">
+                <TextField
+                  label="Remark"
+                  placeholder="Enter remark"
+                  value={formData.remark}
+                  onChange={(e) => handleInputChange('remark', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  multiline
+                  rows={4}
+                  sx={{
+                    mt: 1,
+                    "& .MuiOutlinedInput-root": {
+                      height: "auto !important",
+                      padding: "2px !important",
+                      display: "flex",
+                    },
+                    "& .MuiInputBase-input[aria-hidden='true']": {
+                      flex: 0,
+                      width: 0,
+                      height: 0,
+                      padding: "0 !important",
+                      margin: 0,
+                      display: "none",
+                    },
+                    "& .MuiInputBase-input": {
+                      resize: "none !important",
+                    },
+                  }}
+                  slotProps={{
+                    inputLabel: {
+                      shrink: true,
+                    },
+                  }}
+                />
+              </div>
             </div>
           </div>
 

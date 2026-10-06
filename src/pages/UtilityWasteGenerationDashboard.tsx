@@ -41,6 +41,8 @@ const fmt = (n: number) =>
     : n >= 1_000
     ? `${(n / 1_000).toFixed(1)}K`
     : `${n}`;
+const kg = (n?: number | null) =>
+  n == null ? '—' : `${Number(n).toLocaleString('en-IN')} KG`;
 
 // Palette for dynamic categories
 const CHART_PALETTE = [
@@ -206,35 +208,46 @@ const UtilityWasteGenerationDashboard = () => {
   // ── API callers ──────────────────────────────────────────────────────────
   const getSiteId = () => localStorage.getItem('selectedSiteId') || '';
 
-  const fetchKpis = async (fromDate: string, toDate: string) => {
+  const fetchKpis = async (fromDate: string, toDate: string, signal?: AbortSignal) => {
     setKpiLoading(true);
     try {
       const siteId = getSiteId();
       const url = `${API_CONFIG.BASE_URL}/utility_dashboard/waste_kpis.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}`;
-      const res = await fetch(url, { headers: { Authorization: getAuthHeader(), 'Content-Type': 'application/json' } });
+      const res = await fetch(url, {
+        headers: { Authorization: getAuthHeader(), 'Content-Type': 'application/json' },
+        signal,
+      });
       if (!res.ok) throw new Error('KPI fetch failed');
       const json = await res.json();
+      // Ignore a response for a filter that's no longer the applied one — without this,
+      // a slower older request could resolve after a newer one and overwrite it with
+      // stale data that doesn't match the currently-selected date range.
+      if (signal?.aborted) return;
       if (json.success && json.response) setKpiData(json.response);
     } catch (e) {
-      console.error(e);
+      if ((e as Error).name !== 'AbortError') console.error(e);
     } finally {
-      setKpiLoading(false);
+      if (!signal?.aborted) setKpiLoading(false);
     }
   };
 
-  const fetchChartData = async (fromDate: string, toDate: string) => {
+  const fetchChartData = async (fromDate: string, toDate: string, signal?: AbortSignal) => {
     setChartLoading(true);
     try {
       const siteId = getSiteId();
       const url = `${API_CONFIG.BASE_URL}/utility_dashboard/site_wise_dry_waste_segregation.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}`;
-      const res = await fetch(url, { headers: { Authorization: getAuthHeader(), 'Content-Type': 'application/json' } });
+      const res = await fetch(url, {
+        headers: { Authorization: getAuthHeader(), 'Content-Type': 'application/json' },
+        signal,
+      });
       if (!res.ok) throw new Error('Chart fetch failed');
       const json = await res.json();
+      if (signal?.aborted) return;
       if (json.success && json.response) setChartRaw(json.response);
     } catch (e) {
-      console.error(e);
+      if ((e as Error).name !== 'AbortError') console.error(e);
     } finally {
-      setChartLoading(false);
+      if (!signal?.aborted) setChartLoading(false);
     }
   };
 
@@ -298,9 +311,14 @@ const UtilityWasteGenerationDashboard = () => {
 useEffect(() => {
   const from = format(analyticsStart, "yyyy-MM-dd");
   const to = format(analyticsEnd, "yyyy-MM-dd");
+  const controller = new AbortController();
 
-  fetchKpis(from, to);
-  fetchChartData(from, to);
+  fetchKpis(from, to, controller.signal);
+  fetchChartData(from, to, controller.signal);
+
+  // Cancel any still-in-flight request for the previous filter so its response
+  // (once it does arrive) can never overwrite the data for the newly applied one.
+  return () => controller.abort();
 }, [analyticsStart, analyticsEnd]);
 
   const loadWasteGenerations = async (page: number = 1, filters?: WasteGenerationFilters) => {
@@ -329,7 +347,12 @@ useEffect(() => {
   const handleApplyFilters = (filters: WasteGenerationFilters) => { setActiveFilters(filters); setCurrentPage(1); };
 
   const handleSelectAll = (checked: boolean) => {
-    setSelectedItems(checked ? wasteGenerations.map((item) => item.id.toString()) : []);
+    // Already-dispatched rows are locked (see isRowDisabled on the table below)
+    // and must never end up in selectedItems, or "select all" would let them
+    // be dispatched a second time.
+    setSelectedItems(
+      checked ? wasteGenerations.filter((item) => !item.dispatch_status).map((item) => item.id.toString()) : []
+    );
   };
 
   const handleSelectItem = (itemId: string, checked: boolean) => {
@@ -350,12 +373,13 @@ useEffect(() => {
       const queryParts: string[] = [];
       if (filters.commodity_id_eq) queryParts.push(`q[commodity_id_eq]=${encodeURIComponent(filters.commodity_id_eq)}`);
       if (filters.category_id_eq) queryParts.push(`q[category_id_eq]=${encodeURIComponent(filters.category_id_eq)}`);
-      if (filters.date_range) queryParts.push(`q[date_range]=${encodeURIComponent(filters.date_range)}`);
-      if (filters.created_by_firstname_or_lastname_cont) queryParts.push(`q[created_by_firstname_or_lastname_cont]=${encodeURIComponent(filters.created_by_firstname_or_lastname_cont)}`);
+      if (filters.wg_date_gteq) queryParts.push(`q[wg_date_gteq]=${encodeURIComponent(filters.wg_date_gteq)}`);
+      if (filters.wg_date_lteq) queryParts.push(`q[wg_date_lteq]=${encodeURIComponent(filters.wg_date_lteq)}`);
+      if (filters.user_name) queryParts.push(`q[user_name]=${encodeURIComponent(filters.user_name)}`);
       if (filters.entity_id_eq) queryParts.push(`q[entity_id_eq]=${encodeURIComponent(filters.entity_id_eq)}`);
-      if (filters.resource_type_eq) queryParts.push(`q[resource_type_eq]=${encodeURIComponent(filters.resource_type_eq)}`);
-      if (filters.status_eq) queryParts.push(`q[status_eq]=${encodeURIComponent(filters.status_eq)}`);
-      if (filters.devise_id_cont) queryParts.push(`q[devise_id_cont]=${encodeURIComponent(filters.devise_id_cont)}`);
+      if (filters.user_type) queryParts.push(`q[user_type]=${encodeURIComponent(filters.user_type)}`);
+      if (filters.status_cont) queryParts.push(`q[status_cont]=${encodeURIComponent(filters.status_cont)}`);
+      if (filters.device_id_cont) queryParts.push(`q[device_id_cont]=${encodeURIComponent(filters.device_id_cont)}`);
       const queryString = queryParts.join('&');
       const url = getFullUrl(`/pms/waste_generations.xlsx?${queryString}`);
       const response = await fetch(url, getAuthenticatedFetchOptions('GET'));
@@ -375,6 +399,30 @@ useEffect(() => {
   };
 
   const handleView = (id: number) => navigate(`/maintenance/waste/generation/${id}`);
+
+  const extraKpiCards = [
+    {
+      label: 'Wet Waste',
+      value: kg(listCounts?.wet_waste),
+      icon: <Percent className="w-6 h-6 text-[#C72030]" />,
+    },
+    {
+      label: 'Dry Waste',
+      value: kg(listCounts?.dry_waste),
+      icon: <Package className="w-6 h-6 text-[#C72030]" />,
+    },
+    {
+      label: 'Hazardous Waste',
+      value: kg(listCounts?.hazardous_waste),
+      icon: <Activity className="w-6 h-6 text-[#C72030]" />,
+    },
+    ...(listCounts?.category_counts ?? []).map((category) => ({
+      label: category.label,
+      value: kg(category.value),
+      icon: <Leaf className="w-6 h-6 text-[#C72030]" />,
+      recycled: kg(category.recycled_value),
+    })),
+  ];
 
   return (
     <>
@@ -398,44 +446,32 @@ useEffect(() => {
           <TabsContent value="list" className="mt-6 space-y-6">
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-              {[
-                {
-                  label: 'Total Waste',
-                  value: listCounts?.total_waste != null ? `${listCounts.total_waste.toLocaleString('en-IN')} KG` : '—',
-                  icon: <Trash2 className="w-6 h-6 text-[#C72030]" />,
-                },
-                {
-                  label: 'Total Recycled',
-                  value: listCounts ? `${listCounts.recycling_percentage}%` : '—',
-                  icon: <RefreshCw className="w-6 h-6 text-[#C72030]" />,
-                },
-                {
-                  label: 'Wet Waste',
-                  value: listCounts?.total_recycled != null ? `${listCounts.total_recycled.toLocaleString('en-IN')} KG` : '—',
-                  icon: <Percent className="w-6 h-6 text-[#C72030]" />,
-                },
-                {
-                  label: 'Dry Waste',
-                  value: listCounts?.dry_waste != null ? `${listCounts.dry_waste.toLocaleString('en-IN')} KG` : '—',
-                  icon: <Package className="w-6 h-6 text-[#C72030]" />,
-                },
-                {
-                  label: 'Hazardous Waste',
-                  value: listCounts?.hazardous_waste != null ? `${listCounts.hazardous_waste.toLocaleString('en-IN')} KG` : '—',
-                  icon: <Activity className="w-6 h-6 text-[#C72030]" />,
-                },
-              ].map((card, i) => (
-                <div key={i} className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 hover:shadow-lg transition-shadow duration-300">
-                  <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center shrink-0">
-                    {isLoading ? <Loader2 className="animate-spin w-6 h-6 text-[#C72030]" /> : card.icon}
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {[
+                  {
+                    label: 'Total Waste',
+                    value: kg(listCounts?.total_waste),
+                    icon: <Trash2 className="w-6 h-6 text-[#C72030]" />,
+                  },
+                  {
+                    label: 'Total Recycled',
+                    value: listCounts?.recycling_percentage != null ? `${listCounts.recycling_percentage}%` : '—',
+                    icon: <RefreshCw className="w-6 h-6 text-[#C72030]" />,
+                  },
+                ].map((card, i) => (
+                  <div key={i} className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 hover:shadow-lg transition-shadow duration-300">
+                    <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center shrink-0">
+                      {isLoading ? <Loader2 className="animate-spin w-6 h-6 text-[#C72030]" /> : card.icon}
+                    </div>
+                    <div>
+                      <div className="text-2xl font-semibold text-[#1A1A1A]">{isLoading ? '…' : card.value}</div>
+                      <div className="text-sm font-medium text-[#1A1A1A]">{card.label}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-2xl font-semibold text-[#1A1A1A]">{isLoading ? '…' : card.value}</div>
-                    <div className="text-sm font-medium text-[#1A1A1A]">{card.label}</div>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
+
             </div>
 
             {/* Table */}
@@ -483,8 +519,8 @@ useEffect(() => {
                 if (key === 'client_name') return item.client_name || item.vendor?.company_name || item.agency_name || '-';
                 if (key === 'user_name') return item.user_name || item.created_by?.full_name || '-';
                 if (key === 'email') return item.created_by?.email || '-';
-                if (key === 'waste_category') return item.category?.category_name || '-';
-                if (key === 'total_bags') return item.bag_counts != null ? item.bag_counts.toString() : '-';
+                if (key === 'waste_category') return item.category_names || item.category?.category_name || '-';
+                if (key === 'total_bags') return (item.total_bag_count ?? item.bag_counts) != null ? String(item.total_bag_count ?? item.bag_counts) : '-';
                 // The API doesn't distinguish Kg vs Ltr — waste_unit is assumed to be
                 // in Kg (matching how this figure is labeled everywhere else in the app).
                 if (key === 'quantity_kg') return item.waste_unit != null ? `${item.waste_unit}` : '-';
@@ -495,7 +531,7 @@ useEffect(() => {
                 }
                 if (key === 'status') return item.status || '-';
                 if (key === 'device_id') return item.device_id != null ? item.device_id.toString() : '-';
-                if (key === 'remarks') return (item as unknown as Record<string, unknown>).remarks as string || '-';
+                if (key === 'remarks') return item.remark || '-';
                 return '-';
               }}
               getItemId={(item) => item.id.toString()}
@@ -503,6 +539,10 @@ useEffect(() => {
               selectedItems={selectedItems}
               onSelectAll={handleSelectAll}
               onSelectItem={handleSelectItem}
+              // Once a waste generation has been dispatched, it can no longer be
+              // selected for another dispatch — the row is locked to view-only.
+              isRowDisabled={(item: WasteGeneration) => !!item.dispatch_status}
+              rowClassName={(item: WasteGeneration) => (item.dispatch_status ? 'opacity-60 bg-gray-50/50' : '')}
               onSearchChange={setSearchTerm}
               onFilterClick={() => setIsFilterModalOpen(true)}
               enableExport={true}
@@ -563,6 +603,33 @@ useEffect(() => {
                 </div>
               ))}
             </div>
+
+            {/* Per-category KPI cards (moved here from the "More KPIs" toggle on the Waste List tab) */}
+            {extraKpiCards.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+                {extraKpiCards.map((card, index) => (
+                  <div
+                    key={`${card.label}-${index}`}
+                    className="bg-[#F6F4EE] p-5 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] border border-[#E4E0D8]"
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center shrink-0">
+                        {card.icon}
+                      </div>
+                      <div className="text-xs font-semibold uppercase tracking-wide text-[#6B6B6B]">
+                        {card.label}
+                      </div>
+                    </div>
+                    <div className="text-2xl font-semibold text-[#1A1A1A]">{card.value}</div>
+                    {'recycled' in card && card.recycled ? (
+                      <div className="mt-2 text-sm text-[#4B5563]">
+                        Recycled: {card.recycled}
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Bar Chart */}
             <div className="w-full mt-6 animate-in fade-in duration-300">

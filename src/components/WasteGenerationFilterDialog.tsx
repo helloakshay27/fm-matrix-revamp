@@ -42,7 +42,7 @@ interface WasteGenerationFilterDialogProps {
 
 const USER_TYPE_OPTIONS = [
   { value: 'FM', label: 'FM' },
-  { value: 'Client', label: 'Client' },
+  { value: 'Client User', label: 'Client User' },
 ];
 
 
@@ -164,28 +164,26 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
   const set = (field: keyof Filters, value: string) =>
     setFilters(prev => ({ ...prev, [field]: value }));
 
-  const formatDate = (dateStr: string): string => {
-    const [y, m, d] = dateStr.split('-');
-    return `${d}/${m}/${y}`;
-  };
+  // ISO date strings (YYYY-MM-DD, the native <input type="date"> format) compare
+  // correctly with a plain string comparison, so no Date parsing is needed here.
+  const dateRangeInvalid = Boolean(filters.fromDate && filters.toDate && filters.fromDate > filters.toDate);
 
   const buildApiFilters = (): WasteGenerationFilters => {
     const f: WasteGenerationFilters = {};
-    if (filters.fromDate && filters.toDate) {
-      f.date_range = `${formatDate(filters.fromDate)} - ${formatDate(filters.toDate)}`;
-    }
-    if (filters.userName) f.created_by_firstname_or_lastname_cont = filters.userName;
+    if (filters.fromDate) f.wg_date_gteq = filters.fromDate;
+    if (filters.toDate) f.wg_date_lteq = filters.toDate;
+    if (filters.userName) f.user_name = filters.userName;
     if (filters.customerId) f.entity_id_eq = filters.customerId;
-    if (filters.userType) f.resource_type_eq = filters.userType;
+    if (filters.userType) f.user_type = filters.userType;
     if (filters.categoryId) f.commodity_id_eq = filters.categoryId;
     if (filters.subcategoryId) f.category_id_eq = filters.subcategoryId;
-    if (filters.status) f.status_eq = filters.status;
-    if (filters.deviceTabId) f.devise_id_cont = filters.deviceTabId;
+    if (filters.status) f.status_cont = filters.status;
+    if (filters.deviceTabId) f.device_id_cont = filters.deviceTabId;
     return f;
   };
 
   const handleSubmit = () => {
-    if (filters.fromDate && filters.toDate && filters.fromDate > filters.toDate) {
+    if (dateRangeInvalid) {
       toast.error('From Date cannot be later than To Date.');
       return;
     }
@@ -242,7 +240,10 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
                 onChange={e => set('fromDate', e.target.value)}
                 fullWidth
                 variant="outlined"
+                error={dateRangeInvalid}
+                helperText={dateRangeInvalid ? 'From Date cannot be later than To Date.' : ' '}
                 slotProps={{ inputLabel: { shrink: true } }}
+                inputProps={filters.toDate ? { max: filters.toDate } : undefined}
                 InputProps={{ sx: fieldStyles }}
               />
               <TextField
@@ -252,7 +253,10 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
                 onChange={e => set('toDate', e.target.value)}
                 fullWidth
                 variant="outlined"
+                error={dateRangeInvalid}
+                helperText={dateRangeInvalid ? 'To Date cannot be earlier than From Date.' : ' '}
                 slotProps={{ inputLabel: { shrink: true } }}
+                inputProps={filters.fromDate ? { min: filters.fromDate } : undefined}
                 InputProps={{ sx: fieldStyles }}
               />
             </div>
@@ -397,7 +401,8 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
           <div className="mt-8 flex justify-end gap-2 border-t border-gray-200 pt-6">
             <Button
               onClick={handleSubmit}
-              className="fm-button-fix fm-button-brand px-4 py-2"
+              disabled={dateRangeInvalid}
+              className="fm-button-fix fm-button-brand px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Apply Filter
             </Button>
