@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { X, MoveRight, QrCode, Download, Trash2, Loader2 } from "lucide-react";
+import { X, MoveRight, QrCode, Download, Trash2, Loader2, ListChecks } from "lucide-react";
 import { getFullUrl, getAuthHeader, ENDPOINTS } from "@/config/apiConfig";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,6 +19,7 @@ interface LocationSelectionPanelProps {
   onDownload: () => void;
   onDispose: () => void;
   onClearSelection: () => void;
+  onAssignChecklist?: () => void;
 }
 
 export const LocationSelectionPanel: React.FC<LocationSelectionPanelProps> = ({
@@ -29,6 +30,7 @@ export const LocationSelectionPanel: React.FC<LocationSelectionPanelProps> = ({
   onDownload,
   onDispose,
   onClearSelection,
+  onAssignChecklist,
 }) => {
   const navigate = useNavigate();
   const [isMoveLoading, setIsMoveLoading] = useState(false);
@@ -180,6 +182,18 @@ export const LocationSelectionPanel: React.FC<LocationSelectionPanelProps> = ({
             )}
             <span className="text-xs text-gray-600">Print QR</span>
           </Button>
+
+          {onAssignChecklist && (
+            <Button
+              onClick={onAssignChecklist}
+              variant="ghost"
+              size="sm"
+              className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
+            >
+              <ListChecks className="w-6 h-6 text-black" />
+              <span className="text-xs text-gray-600">Assign Checklist</span>
+            </Button>
+          )}
 
           {/* <Button
             onClick={handleDownload}
