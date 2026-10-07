@@ -38,9 +38,18 @@ import { fetchRooms } from '@/store/slices/roomsSlice';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 
+const priorityOptions = [
+  { label: "P1 - Critical", value: "p1" },
+  { label: "P2 - Very High", value: "p2" },
+  { label: "P3 - High", value: "p3" },
+  { label: "P4 - Medium", value: "p4" },
+  { label: "P5 - Low", value: "p5" },
+];
+
 const subCategorySchema = z.object({
   name: z.string().min(1, 'Subcategory name is required'),
   category: z.string().min(1, 'Category selection is required'),
+  priority: z.string().optional(),
   customerEnabled: z.boolean(),
   building: z.boolean(),
   wing: z.boolean(),
@@ -56,6 +65,7 @@ interface SubCategoryType {
   name: string;
   active?: number | null;
   customer_enabled?: boolean | null;
+  priority?: string | null;
   helpdesk_category_id: number;
   helpdesk_category_name: string;
   icon_url: string;
@@ -158,6 +168,7 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
     defaultValues: {
       name: '',
       category: '',
+      priority: '',
       customerEnabled: false,
       building: false,
       wing: false,
@@ -176,23 +187,14 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
       dispatch(fetchZones());
       dispatch(fetchRooms());
       fetchEngineers();
-      fetchSubCategoryDetails();
     }
-  }, [open, dispatch, subCategory?.id]);
+  }, [open, dispatch]);
 
   useEffect(() => {
-    if (subCategory && open && !loadedSubCategory) {
-      // Reset state when opening modal with new subcategory
-      setTags(['']);
-      setSelectedEngineers([]);
-      setSelectedBuildings([]);
-      setSelectedWings([]);
-      setSelectedZones([]);
-      setSelectedFloors([]);
-      setSelectedRooms([]);
-      setIconFile(null);
+    if (open && subCategory) {
+      populateForm(subCategory);
     }
-  }, [subCategory, open, loadedSubCategory]);
+  }, [open, subCategory]);
 
   const fetchEngineers = async () => {
     try {
@@ -208,61 +210,32 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
     }
   };
 
-  const fetchSubCategoryDetails = async () => {
-    if (!subCategory?.id) return;
-    
-    try {
-      setIsLoading(true);
-      const response = await ticketManagementAPI.getSubCategories();
-      const subCategories = response?.sub_categories || [];
-      const foundSubCategory = subCategories.find((sub: SubCategoryType) => 
-        sub.id.toString() === subCategory.id.toString()
-      );
-      
-      if (foundSubCategory) {
-        setLoadedSubCategory(foundSubCategory);
-        
-        // Update form with actual data
-        form.reset({
-          name: foundSubCategory.name,
-          category: foundSubCategory.helpdesk_category_id.toString(),
-          customerEnabled: foundSubCategory.customer_enabled || false,
-          building: foundSubCategory.location_config?.building_enabled || false,
-          wing: foundSubCategory.location_config?.wing_enabled || false,
-          floor: foundSubCategory.location_config?.floor_enabled || false,
-          zone: foundSubCategory.location_config?.zone_enabled || false,
-          room: foundSubCategory.location_config?.room_enabled || false,
-        });
+  // The row passed in comes from the same list API, so it already has every field we need
+  const populateForm = (sub: SubCategoryType) => {
+    const toIds = (ids?: (string | number)[] | null) => (ids || []).map(id => Number(id));
 
-        // Set selected engineers
-        if (foundSubCategory.complaint_worker?.assign_to) {
-          const engineerIds = foundSubCategory.complaint_worker.assign_to.map(id => parseInt(id));
-          setSelectedEngineers(engineerIds);
-        }
+    setLoadedSubCategory(sub);
+    setTags(['']);
+    setIconFile(null);
 
-        // Set selected locations
-        if (foundSubCategory.location_config?.building_ids) {
-          setSelectedBuildings(foundSubCategory.location_config.building_ids.map(id => parseInt(id)));
-        }
-        if (foundSubCategory.location_config?.wing_ids) {
-          setSelectedWings(foundSubCategory.location_config.wing_ids.map(id => parseInt(id)));
-        }
-        if (foundSubCategory.location_config?.floor_ids) {
-          setSelectedFloors(foundSubCategory.location_config.floor_ids.map(id => parseInt(id)));
-        }
-        if (foundSubCategory.location_config?.zone_ids) {
-          setSelectedZones(foundSubCategory.location_config.zone_ids.map(id => parseInt(id)));
-        }
-        if (foundSubCategory.location_config?.room_ids) {
-          setSelectedRooms(foundSubCategory.location_config.room_ids.map(id => parseInt(id)));
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching sub-category details:', error);
-      toast.error('Failed to load sub-category details');
-    } finally {
-      setIsLoading(false);
-    }
+    form.reset({
+      name: sub.name || '',
+      category: sub.helpdesk_category_id?.toString() || '',
+      priority: sub.priority?.toLowerCase() || '',
+      customerEnabled: !!sub.customer_enabled,
+      building: !!sub.location_config?.building_enabled,
+      wing: !!sub.location_config?.wing_enabled,
+      floor: !!sub.location_config?.floor_enabled,
+      zone: !!sub.location_config?.zone_enabled,
+      room: !!sub.location_config?.room_enabled,
+    });
+
+    setSelectedEngineers(toIds(sub.complaint_worker?.assign_to));
+    setSelectedBuildings(toIds(sub.location_config?.building_ids));
+    setSelectedWings(toIds(sub.location_config?.wing_ids));
+    setSelectedFloors(toIds(sub.location_config?.floor_ids));
+    setSelectedZones(toIds(sub.location_config?.zone_ids));
+    setSelectedRooms(toIds(sub.location_config?.room_ids));
   };
 
   const addTag = () => {
@@ -317,6 +290,7 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
     const data: SubCategoryFormData = {
       category: form.getValues('category'),
       name: form.getValues('name'),
+      priority: form.getValues('priority') || '',
       customerEnabled: form.getValues('customerEnabled'),
       building: form.getValues('building'),
       wing: form.getValues('wing'),
@@ -341,7 +315,8 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
       formData.append('helpdesk_category_id', data.category);
       formData.append('name', data.name);
       formData.append('helpdesk_sub_category[customer_enabled]', data.customerEnabled ? '1' : '0');
-      
+      formData.append('helpdesk_sub_category[priority]', data.priority || '');
+
       // Location enabled flags
       formData.append('location_enabled[building]', data.building.toString());
       formData.append('location_enabled[wing]', data.wing.toString());
@@ -403,6 +378,7 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
       const updatedSubCategory: SubCategoryType = {
         ...currentSubCategory,
         name: data.name,
+        priority: data.priority,
         customer_enabled: data.customerEnabled,
         location_config: {
           ...currentSubCategory.location_config,
@@ -574,6 +550,32 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
                   <FormControl>
                     <Input placeholder="Enter subcategory name" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Priority */}
+            <FormField
+              control={form.control}
+              name="priority"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Priority</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select priority" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {priorityOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

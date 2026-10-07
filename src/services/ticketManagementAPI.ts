@@ -80,6 +80,7 @@ export interface SupplierOption {
 export interface SubCategoryFormData {
   helpdesk_category_id: number;
   customer_enabled: boolean;
+  priority?: string;
   icon?: File;
   sub_category_tags: string[];
   location_enabled: {
@@ -749,6 +750,7 @@ export const ticketManagementAPI = {
 
     formData.append('helpdesk_sub_category[helpdesk_category_id]', data.helpdesk_category_id.toString());
     formData.append('helpdesk_sub_category[customer_enabled]', data.customer_enabled ? '1' : '0');
+    formData.append('helpdesk_sub_category[priority]', data.priority || '');
 
     if (data.icon) {
       formData.append('helpdesk_sub_category[icon]', data.icon);
