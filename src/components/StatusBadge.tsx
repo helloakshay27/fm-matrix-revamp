@@ -49,7 +49,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
         return "bg-[#F2C8C4] text-black border border-[#F2C8C4]"; // soft status red
       case "in_storage":
       case "in store":
-        return "bg-[#F2EBC9] text-black border border-[#F2EBC9]"; // calm pending yellow
+        return "bg-[#DBE7FF] text-black border border-[#DBE7FF]"; // blue tint — styled in theme.css
       case "disposed":
         return "bg-[#D5DbDB] text-black border border-[#D5DbDB]"; // neutral light gray
       default:

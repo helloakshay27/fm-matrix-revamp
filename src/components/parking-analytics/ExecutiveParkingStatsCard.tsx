@@ -5,6 +5,8 @@ import { getFullUrl, getAuthenticatedFetchOptions } from "@/config/apiConfig";
 interface ExecutiveParkingStatsCardProps {
   startDate?: string;
   endDate?: string;
+  /** Comma-separated site ids from the dashboard filter; falls back to localStorage. */
+  siteIds?: string;
 }
 
 interface ApiResponse {
@@ -80,6 +82,7 @@ const fmt = (val: number | undefined | null) => (val ?? 0).toLocaleString();
 const ExecutiveParkingStatsCard: React.FC<ExecutiveParkingStatsCardProps> = ({
   startDate,
   endDate,
+  siteIds,
 }) => {
   const [apiData, setApiData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -89,7 +92,7 @@ const ExecutiveParkingStatsCard: React.FC<ExecutiveParkingStatsCardProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const siteId = localStorage.getItem("selectedSiteId") || "";
+      const siteId = siteIds || localStorage.getItem("selectedSiteId") || "";
       const fromDate = startDate || "2020-01-01";
       const toDate = endDate || new Date().toISOString().split("T")[0];
 
@@ -108,7 +111,7 @@ const ExecutiveParkingStatsCard: React.FC<ExecutiveParkingStatsCardProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, siteIds]);
 
   useEffect(() => {
     fetchData();

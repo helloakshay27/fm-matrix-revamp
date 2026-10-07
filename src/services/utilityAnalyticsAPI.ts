@@ -71,6 +71,17 @@ const utilityAnalyticsAPI = {
     return resp.data;
   },
 
+  /** Scope 2 (grid electricity) emission for the Carbon Emission card -> { success, message, response: <kg CO2> } */
+  async getCarbonEmissionScopeTwo(fromDate: Date, toDate: Date, siteId?: string): Promise<any> {
+    const start = formatDate(fromDate);
+    const end = formatDate(toDate);
+    // siteId is the comma-separated list of active sites (every site for "All Sites", one id for a single site)
+    const resolvedSiteId = siteId || localStorage.getItem('selectedSiteId') || '';
+    const url = `/utility_dashboard/card_carbon_emission_scopetwo.json?site_id=${encodeURIComponent(resolvedSiteId)}&from_date=${encodeURIComponent(start)}&to_date=${encodeURIComponent(end)}`;
+    const resp = await apiClient.get(url);
+    return resp.data;
+  },
+
   async getEnergyIntensity(fromDate: Date, toDate: Date, siteId?: string): Promise<any> {
     const start = formatDate(fromDate);
     const end = formatDate(toDate);

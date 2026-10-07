@@ -17,6 +17,8 @@ const BAR_COLORS = ["#9EC8BA", "#8E7BE0", "#DA7756", "#798C5E", "#EDC488"];
 interface SiteWiseVisitorsCardProps {
   startDate?: string;
   endDate?: string;
+  /** Comma-separated site ids from the dashboard filter; falls back to localStorage. */
+  siteIds?: string;
 }
 
 interface ApiResponse {
@@ -28,6 +30,7 @@ interface ApiResponse {
 const SiteWiseVisitorsCard: React.FC<SiteWiseVisitorsCardProps> = ({
   startDate,
   endDate,
+  siteIds,
 }) => {
   const [apiData, setApiData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,7 +40,7 @@ const SiteWiseVisitorsCard: React.FC<SiteWiseVisitorsCardProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const siteId = localStorage.getItem("selectedSiteId") || "";
+      const siteId = siteIds || localStorage.getItem("selectedSiteId") || "";
       const fromDate = startDate || "2020-01-01";
       const toDate = endDate || new Date().toISOString().split("T")[0];
 
@@ -58,7 +61,7 @@ const SiteWiseVisitorsCard: React.FC<SiteWiseVisitorsCardProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, siteIds]);
 
   useEffect(() => {
     fetchData();

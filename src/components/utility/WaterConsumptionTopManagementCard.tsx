@@ -11,6 +11,8 @@ import { getFullUrl, getAuthenticatedFetchOptions } from "@/config/apiConfig";
 interface WaterConsumptionTopManagementCardProps {
   startDate?: string;
   endDate?: string;
+  /** Comma-separated site ids from the dashboard filter; falls back to localStorage. */
+  siteIds?: string;
 }
 
 type ApiRecord = Record<string, unknown>;
@@ -113,6 +115,7 @@ function downloadTileCsv(label: string, unit: string, value: number) {
 const WaterConsumptionTopManagementCard: React.FC<WaterConsumptionTopManagementCardProps> = ({
   startDate,
   endDate,
+  siteIds,
 }) => {
   const [rawByKey, setRawByKey] = useState<Record<string, unknown>>({});
   const [loading, setLoading] = useState(true);
@@ -122,7 +125,7 @@ const WaterConsumptionTopManagementCard: React.FC<WaterConsumptionTopManagementC
     setLoading(true);
     setError(null);
     try {
-      const siteId = localStorage.getItem("selectedSiteId") || "";
+      const siteId = siteIds || localStorage.getItem("selectedSiteId") || "";
       const fromDate = startDate || "2020-01-01";
       const toDate = endDate || new Date().toISOString().split("T")[0];
       const params = new URLSearchParams({ from_date: fromDate, to_date: toDate });
@@ -148,7 +151,7 @@ const WaterConsumptionTopManagementCard: React.FC<WaterConsumptionTopManagementC
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, siteIds]);
 
   useEffect(() => {
     fetchData();

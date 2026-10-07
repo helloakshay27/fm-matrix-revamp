@@ -75,10 +75,10 @@ const CustomStepConnector = styled(StepConnector)(({ theme }) => ({
 
 const CustomStep = styled(Step)(({ theme }) => ({
   '& .MuiStepLabel-root .Mui-completed': {
-    color: '#da7756',
+    color: 'var(--color-primary)',
   },
   '& .MuiStepLabel-root .Mui-active': {
-    color: '#da7756',
+    color: 'var(--color-primary)',
   },
   '& .MuiStepLabel-label': {
     fontSize: '14px',
@@ -88,24 +88,24 @@ const CustomStep = styled(Step)(({ theme }) => ({
 }));
 
 const RedButton = styled(MuiButton)(({ theme }) => ({
-  backgroundColor: '#da7756',
+  backgroundColor: 'var(--color-primary)',
   color: 'white !important',
   borderRadius: 0,
   textTransform: 'none',
   padding: '8px 16px',
   fontFamily: 'Work Sans, sans-serif',
   fontWeight: 500,
-  boxShadow: '0 2px 4px rgba(218, 119, 86, 0.2)',
+  boxShadow: '0 2px 4px rgba(var(--color-primary-rgb), 0.08)',
   '&:hover': {
-    backgroundColor: '#C4623C',
-    boxShadow: '0 4px 8px rgba(218, 119, 86, 0.3)',
+    backgroundColor: 'var(--color-primary-hover)',
+    boxShadow: '0 4px 8px rgba(var(--color-primary-rgb), 0.12)',
   },
 }));
 RedButton.defaultProps = { color: 'inherit' };
 
 const DraftButton = styled(MuiButton)(({ theme }) => ({
   backgroundColor: '#e7e3d9',
-  color: '#da7756',
+  color: 'var(--color-primary)',
   borderRadius: 0,
   textTransform: 'none',
   padding: '8px 16px',
@@ -132,8 +132,8 @@ const SectionHeader = styled(Box)(({ theme }) => ({
 }));
 
 const RedIcon = styled(Settings)(({ theme }) => ({
-  color: '#D42F2F',
-  backgroundColor: '#D42F2F',
+  color: '#fff',
+  backgroundColor: 'var(--color-primary)',
   borderRadius: '50%',
   padding: '8px',
   fontSize: '32px',
@@ -150,16 +150,16 @@ const fieldStyles = {
       borderColor: '#ddd',
     },
     '&:hover fieldset': {
-      borderColor: '#da7756',
+      borderColor: 'var(--color-primary)',
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#da7756',
+      borderColor: 'var(--color-primary)',
     },
   },
   '& .MuiInputLabel-root': {
     fontSize: '14px',
     '&.Mui-focused': {
-      color: '#da7756',
+      color: 'var(--color-primary)',
     },
   },
 };
@@ -3493,7 +3493,7 @@ export const AddSchedulePage = () => {
             }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Box sx={{
-                  backgroundColor: '#da7756',
+                  backgroundColor: 'var(--color-primary)',
                   borderRadius: '50%',
                   width: '32px',
                   height: '32px',
@@ -3504,7 +3504,7 @@ export const AddSchedulePage = () => {
                 }}>
                   <Cog size={16} color="white" />
                 </Box>
-                <Typography variant="h6" sx={{ fontWeight: 600, color: '#da7756', textTransform: 'uppercase' }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
                   Basic Configuration
                 </Typography>
               </Box>
@@ -3519,14 +3519,14 @@ export const AddSchedulePage = () => {
                     startIcon={<Edit />}
                     onClick={() => handleStepClick(stepIndex)}
                     sx={{
-                      color: '#da7756',
-                      borderColor: '#da7756',
+                      color: 'var(--color-primary)',
+                      borderColor: 'var(--color-primary)',
                       fontSize: '12px',
                       padding: '4px 12px',
                       minWidth: 'auto',
                       '&:hover': {
-                        borderColor: '#da7756',
-                        backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                        borderColor: 'var(--color-primary)',
+                        backgroundColor: 'var(--color-primary-light)'
                       }
                     }}
                   >
@@ -3551,7 +3551,7 @@ export const AddSchedulePage = () => {
                   value="PPM"
                   control={
                     <Radio
-                      sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                      sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                       disabled={stepIndex < activeStep && editingStep !== stepIndex}
                     />
                   }
@@ -3561,7 +3561,7 @@ export const AddSchedulePage = () => {
                   value="AMC"
                   control={
                     <Radio
-                      sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                      sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                       disabled={stepIndex < activeStep && editingStep !== stepIndex}
                     />
                   }
@@ -3571,7 +3571,7 @@ export const AddSchedulePage = () => {
                   value="Preparedness"
                   control={
                     <Radio
-                      sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                      sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                       disabled={stepIndex < activeStep && editingStep !== stepIndex}
                     />
                   }
@@ -3581,7 +3581,7 @@ export const AddSchedulePage = () => {
                   value="Hoto"
                   control={
                     <Radio
-                      sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                      sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                       disabled={stepIndex < activeStep && editingStep !== stepIndex}
                     />
                   }
@@ -3591,7 +3591,7 @@ export const AddSchedulePage = () => {
                   value="Routine"
                   control={
                     <Radio
-                      sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                      sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                       disabled={stepIndex < activeStep && editingStep !== stepIndex}
                     />
                   }
@@ -3601,7 +3601,7 @@ export const AddSchedulePage = () => {
                   value="Audit"
                   control={
                     <Radio
-                      sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                      sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                       disabled={stepIndex < activeStep && editingStep !== stepIndex}
                     />
                   }
@@ -3786,16 +3786,16 @@ export const AddSchedulePage = () => {
                   // startIcon={<AttachFile />}
                   onClick={addAttachment}
                   sx={{
-                    borderColor: '#da7756',
-                    color: '#da7756',
+                    borderColor: 'var(--color-primary)',
+                    color: 'var(--color-primary)',
                     textTransform: 'none',
                     fontFamily: 'Work Sans, sans-serif',
                     fontWeight: 500,
                     borderRadius: '0',
                     padding: '8px 16px',
                     '&:hover': {
-                      borderColor: '#C4623C',
-                      backgroundColor: 'rgba(199, 32, 48, 0.04)',
+                      borderColor: 'var(--color-primary-hover)',
+                      backgroundColor: 'var(--color-primary-light)',
                     },
                   }}
                 >
@@ -3816,16 +3816,16 @@ export const AddSchedulePage = () => {
                   disabled={stepIndex < activeStep && editingStep !== stepIndex}
                   onClick={addAttachment}
                   sx={{
-                    borderColor: '#da7756',
-                    color: '#da7756',
+                    borderColor: 'var(--color-primary)',
+                    color: 'var(--color-primary)',
                     textTransform: 'none',
                     fontFamily: 'Work Sans, sans-serif',
                     fontWeight: 500,
                     borderRadius: '0',
                     padding: '8px 16px',
                     '&:hover': {
-                      borderColor: '#C4623C',
-                      backgroundColor: 'rgba(199, 32, 48, 0.04)',
+                      borderColor: 'var(--color-primary-hover)',
+                      backgroundColor: 'var(--color-primary-light)',
                     },
                   }}
                 >
@@ -3877,7 +3877,7 @@ export const AddSchedulePage = () => {
               mb: 3
             }}>
               <Box sx={{
-                backgroundColor: '#da7756',
+                backgroundColor: 'var(--color-primary)',
                 borderRadius: '50%',
                 width: '32px',
                 height: '32px',
@@ -3887,7 +3887,7 @@ export const AddSchedulePage = () => {
               }}>
                 <Cog size={16} color="white" />
               </Box>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#da7756', textTransform: 'uppercase' }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
                 Schedule Setup
               </Typography>
             </Box>
@@ -3910,7 +3910,7 @@ export const AddSchedulePage = () => {
                             value="Individual"
                             control={
                               <Radio
-                                sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                                sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                 disabled={stepIndex < activeStep && editingStep !== stepIndex}
                               />
                             }
@@ -3921,7 +3921,7 @@ export const AddSchedulePage = () => {
                             value="Asset Group"
                             control={
                               <Radio
-                                sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                                sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                 disabled={stepIndex < activeStep && editingStep !== stepIndex}
                               />
                             }
@@ -3930,7 +3930,7 @@ export const AddSchedulePage = () => {
 
                           {/* <FormControlLabel 
                     value="Branching" 
-                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }} />} 
+                    control={<Radio sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />} 
                     label="Branching" 
                   /> */}
                         </RadioGroup>)}
@@ -3953,7 +3953,7 @@ export const AddSchedulePage = () => {
                     value="active"
                     control={
                       <Radio
-                        sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                        sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                         disabled={stepIndex < activeStep && editingStep !== stepIndex}
                       />
                     }
@@ -3963,7 +3963,7 @@ export const AddSchedulePage = () => {
                     value="inactive"
                     control={
                       <Radio
-                        sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                        sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                         disabled={stepIndex < activeStep && editingStep !== stepIndex}
                       />
                     }
@@ -3977,14 +3977,14 @@ export const AddSchedulePage = () => {
                     startIcon={<Edit />}
                     onClick={() => handleStepClick(stepIndex)}
                     sx={{
-                      color: '#da7756',
-                      borderColor: '#da7756',
+                      color: 'var(--color-primary)',
+                      borderColor: 'var(--color-primary)',
                       fontSize: '12px',
                       padding: '4px 12px',
                       minWidth: 'auto',
                       '&:hover': {
-                        borderColor: '#da7756',
-                        backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                        borderColor: 'var(--color-primary)',
+                        backgroundColor: 'var(--color-primary-light)'
                       }
                     }}
                   >
@@ -4138,7 +4138,7 @@ export const AddSchedulePage = () => {
                                           }));
                                         }}
                                         onClick={e => e.stopPropagation()}
-                                        style={{ cursor: 'pointer', width: '15px', height: '15px', accentColor: '#da7756' }}
+                                        style={{ cursor: 'pointer', width: '15px', height: '15px', accentColor: 'var(--color-primary)' }}
                                       />
                                     </td>
                                   )}
@@ -4160,7 +4160,7 @@ export const AddSchedulePage = () => {
                             </table>
                           </Box>
                           {formData.asset.length > 0 && (
-                            <Typography variant="caption" sx={{ mt: 1, display: 'block', color: '#da7756', fontWeight: 500 }}>
+                            <Typography variant="caption" sx={{ mt: 1, display: 'block', color: 'var(--color-primary)', fontWeight: 500 }}>
                               {formData.asset.length} asset{formData.asset.length > 1 ? 's' : ''} selected
                               {displayAssets.length < indivFilteredAssets.length && (
                                 <span style={{ color: '#888', marginLeft: 8 }}>
@@ -5247,8 +5247,8 @@ export const AddSchedulePage = () => {
           <div>
             {/* Header Outside the Box */}
             <div className="flex justify-between items-center p-6">
-              <div className="flex items-center gap-2 text-[#da7756] text-lg font-semibold" style={{ textTransform: 'uppercase' }}>
-                <span className="bg-[#da7756] text-white rounded-full w-8 h-8 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm">
+              <div className="flex items-center gap-2 text-[var(--color-primary)] text-lg font-semibold" style={{ textTransform: 'uppercase' }}>
+                <span className="bg-[var(--color-primary)] text-white rounded-full w-8 h-8 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm">
                   <Cog className="w-6 h-6" />
                 </span>
                 QUESTION SETUP
@@ -5256,7 +5256,7 @@ export const AddSchedulePage = () => {
 
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1">
-                  <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${createNew ? 'bg-[#da7756]' : 'bg-gray-300'}`}>
+                  <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${createNew ? 'bg-[var(--color-primary)]' : 'bg-gray-300'}`}>
                     <input
                       type="checkbox"
                       checked={createNew}
@@ -5275,7 +5275,7 @@ export const AddSchedulePage = () => {
                   <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Create Template</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${weightage ? 'bg-[#da7756]' : 'bg-gray-300'}`}>
+                  <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${weightage ? 'bg-[var(--color-primary)]' : 'bg-gray-300'}`}>
                     <input
                       type="checkbox"
                       checked={weightage}
@@ -5287,7 +5287,7 @@ export const AddSchedulePage = () => {
                   <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Weightage</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${autoTicket ? 'bg-[#da7756]' : 'bg-gray-300'}`}>
+                  <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${autoTicket ? 'bg-[var(--color-primary)]' : 'bg-gray-300'}`}>
                     <input
                       type="checkbox"
                       checked={autoTicket}
@@ -5307,14 +5307,14 @@ export const AddSchedulePage = () => {
                     startIcon={<Edit />}
                     onClick={() => handleStepClick(stepIndex)}
                     sx={{
-                      color: '#da7756',
-                      borderColor: '#da7756',
+                      color: 'var(--color-primary)',
+                      borderColor: 'var(--color-primary)',
                       fontSize: '12px',
                       padding: '4px 12px',
                       minWidth: 'auto',
                       '&:hover': {
-                        borderColor: '#da7756',
-                        backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                        borderColor: 'var(--color-primary)',
+                        backgroundColor: 'var(--color-primary-light)'
                       }
                     }}
                   >
@@ -5375,7 +5375,7 @@ export const AddSchedulePage = () => {
                         value="checklist"
                         control={
                           <Radio
-                            sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                            sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                             disabled={stepIndex < activeStep && editingStep !== stepIndex}
                           />
                         }
@@ -5385,7 +5385,7 @@ export const AddSchedulePage = () => {
                         value="question"
                         control={
                           <Radio
-                            sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                            sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                             disabled={stepIndex < activeStep && editingStep !== stepIndex}
                           />
                         }
@@ -5447,7 +5447,7 @@ export const AddSchedulePage = () => {
                     {questionSections.length > 1 && (
                       <IconButton
                         onClick={() => removeQuestionSection(section.id)}
-                        sx={{ color: '#da7756' }}
+                        sx={{ color: 'var(--color-primary)' }}
                       >
                         <Close />
                       </IconButton>
@@ -5477,7 +5477,7 @@ export const AddSchedulePage = () => {
                               value="checklist"
                               control={
                                 <Radio
-                                  sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                                  sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                   disabled={stepIndex < activeStep && editingStep !== stepIndex}
                                 />
                               }
@@ -5487,7 +5487,7 @@ export const AddSchedulePage = () => {
                               value="question"
                               control={
                                 <Radio
-                                  sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                                  sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                   disabled={stepIndex < activeStep && editingStep !== stepIndex}
                                 />
                               }
@@ -5654,7 +5654,7 @@ export const AddSchedulePage = () => {
                               backgroundColor: 'rgba(255, 255, 255, 0.8)',
                               '&:hover': {
                                 backgroundColor: 'rgba(255, 255, 255, 1)',
-                                color: '#da7756'
+                                color: 'var(--color-primary)'
                               }
                             }}
                             size="small"
@@ -5670,7 +5670,7 @@ export const AddSchedulePage = () => {
                                   disabled={stepIndex < activeStep && editingStep !== stepIndex}
                                   checked={task.mandatory}
                                   onChange={(e) => updateTaskInSection(section.id, task.id, 'mandatory', e.target.checked)}
-                                  sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                                  sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                 />
                               }
                               label="Mandatory"
@@ -5681,7 +5681,7 @@ export const AddSchedulePage = () => {
                                   disabled={stepIndex < activeStep && editingStep !== stepIndex}
                                   checked={task.helpText}
                                   onChange={(e) => updateTaskInSection(section.id, task.id, 'helpText', e.target.checked)}
-                                  sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                                  sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                 />
                               }
                               label="Help Text"
@@ -5699,7 +5699,7 @@ export const AddSchedulePage = () => {
                                     }
                                   }}
                                   disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                                  sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                                  sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                 />
                               }
                               label="Reading"
@@ -5711,7 +5711,7 @@ export const AddSchedulePage = () => {
                                     checked={task.rating}
                                     disabled={stepIndex < activeStep && editingStep !== stepIndex}
                                     onChange={(e) => updateTaskInSection(section.id, task.id, 'rating', e.target.checked)}
-                                    sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                                    sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                   />
                                 }
                                 label="Rating"
@@ -5828,14 +5828,14 @@ export const AddSchedulePage = () => {
                                   onClick={() => addHelpTextAttachment(section.id, task.id)}
                                   disabled={stepIndex < activeStep && editingStep !== stepIndex}
                                   sx={{
-                                    color: '#da7756',
-                                    borderColor: '#da7756',
+                                    color: 'var(--color-primary)',
+                                    borderColor: 'var(--color-primary)',
                                     fontSize: '12px',
                                     padding: '4px 8px',
                                     minWidth: 'auto',
                                     '&:hover': {
-                                      borderColor: '#da7756',
-                                      backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                      borderColor: 'var(--color-primary)',
+                                      backgroundColor: 'var(--color-primary-light)'
                                     }
                                   }}
                                 >
@@ -5936,7 +5936,7 @@ export const AddSchedulePage = () => {
                                     <IconButton
                                       size="small"
                                       onClick={() => removeDropdownValue(section.id, task.id, valueIndex)}
-                                      sx={{ color: '#da7756' }}
+                                      sx={{ color: 'var(--color-primary)' }}
                                     >
                                       <Close />
                                     </IconButton>
@@ -5951,13 +5951,13 @@ export const AddSchedulePage = () => {
                                   startIcon={<Add />}
                                   onClick={() => addDropdownValue(section.id, task.id)}
                                   sx={{
-                                    color: '#da7756',
-                                    borderColor: '#da7756',
+                                    color: 'var(--color-primary)',
+                                    borderColor: 'var(--color-primary)',
                                     fontSize: '12px',
                                     padding: '4px 12px',
                                     '&:hover': {
-                                      borderColor: '#da7756',
-                                      backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                      borderColor: 'var(--color-primary)',
+                                      backgroundColor: 'var(--color-primary-light)'
                                     }
                                   }}
                                 >
@@ -5991,7 +5991,7 @@ export const AddSchedulePage = () => {
                                   <Radio
                                     checked={valueIndex === 0} // First option selected by default
                                     name={`radio-${section.id}-${task.id}`}
-                                    sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                                    sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                   />
 
                                   <TextField
@@ -6029,7 +6029,7 @@ export const AddSchedulePage = () => {
                                     <IconButton
                                       size="small"
                                       onClick={() => removeRadioValue(section.id, task.id, valueIndex)}
-                                      sx={{ color: '#da7756' }}
+                                      sx={{ color: 'var(--color-primary)' }}
                                     >
                                       <Close />
                                     </IconButton>
@@ -6044,13 +6044,13 @@ export const AddSchedulePage = () => {
                                   startIcon={<Add />}
                                   onClick={() => addRadioValue(section.id, task.id)}
                                   sx={{
-                                    color: '#da7756',
-                                    borderColor: '#da7756',
+                                    color: 'var(--color-primary)',
+                                    borderColor: 'var(--color-primary)',
                                     fontSize: '12px',
                                     padding: '4px 12px',
                                     '&:hover': {
-                                      borderColor: '#da7756',
-                                      backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                      borderColor: 'var(--color-primary)',
+                                      backgroundColor: 'var(--color-primary-light)'
                                     }
                                   }}
                                 >
@@ -6084,7 +6084,7 @@ export const AddSchedulePage = () => {
                                   <Checkbox
                                     checked={task.checkboxSelectedStates?.[valueIndex] || false}
                                     onChange={(e) => updateCheckboxSelectedState(section.id, task.id, valueIndex, e.target.checked)}
-                                    sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                                    sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                   />
 
                                   <TextField
@@ -6106,7 +6106,7 @@ export const AddSchedulePage = () => {
                                     <IconButton
                                       size="small"
                                       onClick={() => removeCheckboxValue(section.id, task.id, valueIndex)}
-                                      sx={{ color: '#da7756' }}
+                                      sx={{ color: 'var(--color-primary)' }}
                                     >
                                       <Close />
                                     </IconButton>
@@ -6121,13 +6121,13 @@ export const AddSchedulePage = () => {
                                   startIcon={<Add />}
                                   onClick={() => addCheckboxValue(section.id, task.id)}
                                   sx={{
-                                    color: '#da7756',
-                                    borderColor: '#da7756',
+                                    color: 'var(--color-primary)',
+                                    borderColor: 'var(--color-primary)',
                                     fontSize: '12px',
                                     padding: '4px 12px',
                                     '&:hover': {
-                                      borderColor: '#da7756',
-                                      backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                      borderColor: 'var(--color-primary)',
+                                      backgroundColor: 'var(--color-primary-light)'
                                     }
                                   }}
                                 >
@@ -6172,7 +6172,7 @@ export const AddSchedulePage = () => {
                                   <Typography
                                     variant="body2"
                                     sx={{
-                                      color: '#da7756',
+                                      color: 'var(--color-primary)',
                                       cursor: 'pointer',
                                       fontSize: '12px',
                                       minWidth: 'auto'
@@ -6191,13 +6191,13 @@ export const AddSchedulePage = () => {
                                   startIcon={<Add />}
                                   onClick={() => addOptionsInputsValue(section.id, task.id)}
                                   sx={{
-                                    color: '#da7756',
-                                    borderColor: '#da7756',
+                                    color: 'var(--color-primary)',
+                                    borderColor: 'var(--color-primary)',
                                     fontSize: '12px',
                                     padding: '4px 12px',
                                     '&:hover': {
-                                      borderColor: '#da7756',
-                                      backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                      borderColor: 'var(--color-primary)',
+                                      backgroundColor: 'var(--color-primary-light)'
                                     }
                                   }}
                                 >
@@ -6255,7 +6255,7 @@ export const AddSchedulePage = () => {
                   <div className="flex justify-end mt-4 gap-4">
                     <button
                       onClick={() => addTaskToSection(section.id)}
-                      className="flex items-center gap-1 text-[#da7756] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
+                      className="flex items-center gap-1 text-[var(--color-primary)] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
                       style={{ fontFamily: 'Work Sans, sans-serif' }}
                     >
                       <Add className="w-4 h-4" />
@@ -6264,7 +6264,7 @@ export const AddSchedulePage = () => {
                     {(questionSections.length === 1 || sectionIndex === questionSections.length - 1) && (
                       <button
                         onClick={addQuestionSection}
-                        className="flex items-center gap-1 text-[#da7756] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
+                        className="flex items-center gap-1 text-[var(--color-primary)] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
                         style={{ fontFamily: 'Work Sans, sans-serif' }}
                       >
                         <Add className="w-4 h-4" />
@@ -6336,9 +6336,9 @@ export const AddSchedulePage = () => {
       case 4: // Mapping
         return (
           <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-            <div className="border-l-4 border-l-[#da7756] p-4 sm:p-6 bg-white">
-              <div className="flex items-center gap-2 text-[#da7756] text-sm sm:text-base font-semibold mb-6" style={{ textTransform: 'uppercase' }}>
-                <span className="bg-[#da7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+            <div className="border-l-4 border-l-[var(--color-primary)] p-4 sm:p-6 bg-white">
+              <div className="flex items-center gap-2 text-[var(--color-primary)] text-sm sm:text-base font-semibold mb-6" style={{ textTransform: 'uppercase' }}>
+                <span className="bg-[var(--color-primary)] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                   <Cog className="w-3 h-3 sm:w-4 sm:h-4" />
                 </span>
                 MAPPING
@@ -6367,7 +6367,7 @@ export const AddSchedulePage = () => {
       {activeStep > 0 && (
         <button
           onClick={handleBack}
-          className="border border-[#da7756] text-[#da7756] px-6 py-2 rounded-md hover:bg-[#da7756] hover:text-white transition-colors text-sm sm:text-base"
+          className="border border-[var(--color-primary)] text-[var(--color-primary)] px-6 py-2 rounded-md hover:bg-[var(--color-primary)] hover:text-white transition-colors text-sm sm:text-base"
           style={{ fontFamily: 'Work Sans, sans-serif' }}
         >
           Back
@@ -6638,8 +6638,8 @@ export const AddSchedulePage = () => {
                 sx={{
                   cursor: 'pointer',
                   backgroundColor: 'white',
-                  color: (index === activeStep || completedSteps.includes(index)) ? '#da7756' : '#C4B89D',
-                  border: `2px solid ${(index === activeStep || completedSteps.includes(index)) ? '#da7756' : '#C4B89D'}`,
+                  color: (index === activeStep || completedSteps.includes(index)) ? 'var(--color-primary)' : '#C4B89D',
+                  border: `2px solid ${(index === activeStep || completedSteps.includes(index)) ? 'var(--color-primary)' : '#C4B89D'}`,
                   fontWeight: (index === activeStep) ? 600 : 500,
                   padding: '12px 20px',
                   fontSize: '13px',
@@ -6696,7 +6696,7 @@ export const AddSchedulePage = () => {
             <button
               onClick={handleBack}
               disabled={isSubmitting}
-              className="border border-[#da7756] text-[#da7756] px-6 py-2 rounded-md hover:bg-[#da7756] hover:text-white transition-colors text-sm sm:text-base disabled:opacity-50"
+              className="border border-[var(--color-primary)] text-[var(--color-primary)] px-6 py-2 rounded-md hover:bg-[var(--color-primary)] hover:text-white transition-colors text-sm sm:text-base disabled:opacity-50"
               style={{ fontFamily: 'Work Sans, sans-serif' }}
             >
               Back
@@ -6769,7 +6769,7 @@ export const AddSchedulePage = () => {
       >
         <DialogTitle
           style={{
-            backgroundColor: '#da7756',
+            backgroundColor: 'var(--color-primary)',
             color: 'white',
             fontFamily: 'Work Sans, sans-serif',
             fontWeight: 600,

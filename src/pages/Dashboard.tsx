@@ -156,7 +156,7 @@ import EscalationKpiCard from "@/components/escalation/EscalationKpiCard";
 import ServicePartnerEvaluationCard from "@/components/escalation/ServicePartnerEvaluationCard";
 import OccupancySummaryCard from "@/components/occupancy/OccupancySummaryCard";
 import BodyInjuryChartCard from "@/components/incident-analytics/BodyInjuryChartCard";
-import ChartAiInsights from "@/components/dashboard/ChartAiInsights";
+// import ChartAiInsights from "@/components/dashboard/ChartAiInsights"; // AI Insights disabled for now
 import utilityAnalyticsAPI from "@/services/utilityAnalyticsAPI";
 import UtilityConsumptionCard from "@/components/utility/UtilityConsumptionCard";
 import WaterConsumptionCard from "@/components/utility/WaterConsumptionCard";
@@ -501,12 +501,25 @@ const SectionLoader: React.FC<{
       </div>
       {loading && (
         <div className="absolute inset-0 z-20 rounded-lg bg-white flex items-center justify-center pointer-events-none">
-          <div className="h-8 w-8 rounded-full border-2 border-gray-200 border-t-[#C72030] animate-spin" />
+          <div className="h-8 w-8 rounded-full border-2 border-gray-200 border-t-[#da7756] animate-spin" />
         </div>
       )}
     </div>
   );
 };
+
+/**
+ * Executive dashboard only: the analytics cards and their services turn the range into
+ * YYYY-MM-DD with `date.toISOString().split("T")[0]`, which converts to UTC first. A picked
+ * local-midnight date in a timezone ahead of UTC (IST) therefore goes out as the PREVIOUS day
+ * (30/09 -> 2025-09-29). Pinning each bound to 12:00 UTC of the chosen calendar day makes the
+ * UTC date and the local date identical, so every card sends exactly what was picked, with no
+ * per-card changes. (Correct for timezones from UTC-12 to UTC+11.)
+ */
+const pinToCalendarDay = (d?: Date): Date | undefined =>
+  d ? new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0)) : d;
+const pinRange = (r?: DateRange): DateRange | undefined =>
+  r ? { ...r, from: pinToCalendarDay(r.from), to: pinToCalendarDay(r.to) } : r;
 
 export const Dashboard = () => {
   const navigate = useNavigate();
@@ -519,9 +532,12 @@ export const Dashboard = () => {
   const [selectedAnalytics, setSelectedAnalytics] = useState<
     SelectedAnalytic[]
   >([]);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
-    to: new Date(),
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
+    const initial: DateRange = {
+      from: new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
+      to: new Date(),
+    };
+    return isExecutiveDashboard ? pinRange(initial) : initial;
   });
   const [allowedSites, setAllowedSites] = useState<Site[]>([]);
   const [selectedSite, setSelectedSite] = useState<string>(() => {
@@ -935,7 +951,11 @@ export const Dashboard = () => {
 
     if (savedAnalytics) {
       try {
-        const parsedAnalytics = JSON.parse(savedAnalytics);
+        // Re-derive module from the catalog: asset cards saved under
+        // "asset_management" earlier must run under "assets" to be fetched.
+        const parsedAnalytics = (JSON.parse(savedAnalytics) as SelectedAnalytic[]).map((a) =>
+          analyticsCatalogById[a.id] ? { ...a, module: analyticsCatalogById[a.id].module } : a
+        );
         console.log("✅ Parsed saved analytics:", parsedAnalytics);
         setSelectedAnalytics(parsedAnalytics);
         // Pre-mark every saved analytic as loading so the spinner shows
@@ -2366,12 +2386,37 @@ export const Dashboard = () => {
                   );
                   break;
                 case "carbon_emission":
+                  // Scope 1 keeps the existing carbon_emission_scopes endpoint; Scope 2 now comes from
+                  // card_carbon_emission_scopetwo (falls back to the old scope2 value if that call fails).
                   promises.push(
-                    utilityAnalyticsAPI.getCarbonEmissionScopes(
-                      dateRange.from,
-                      dateRange.to,
-                      activeSiteIds
-                    )
+                    Promise.all([
+                      utilityAnalyticsAPI.getCarbonEmissionScopes(
+                        dateRange.from,
+                        dateRange.to,
+                        activeSiteIds
+                      ),
+                      utilityAnalyticsAPI
+                        .getCarbonEmissionScopeTwo(
+                          dateRange.from,
+                          dateRange.to,
+                          activeSiteIds
+                        )
+                        .catch((err: unknown) => {
+                          // No fallback to the old scope2 value: show 0 and log, never wrong data.
+                          console.error("[carbon_emission] card_carbon_emission_scopetwo failed", err);
+                          return null;
+                        }),
+                    ]).then(([scopes, scopeTwo]) => {
+                      const root = scopes?.data ?? scopes ?? {};
+                      const kpi = root?.response ?? root ?? {};
+                      // no `data` key on purpose: the card reads data?.data ?? data
+                      return {
+                        response: {
+                          ...kpi,
+                          scope2: scopeTwo?.response ?? 0,
+                        },
+                      };
+                    })
                   );
                   break;
                 case "energy_intensity":
@@ -2480,12 +2525,22 @@ export const Dashboard = () => {
                   );
                   break;
                 case "safety_metrics":
+                  // LTIR / Zero Incident Days come from incident_kpis; merged
+                  // under `incident_kpis` so the other tiles are untouched.
                   promises.push(
-                    incidentAnalyticsAPI.getSafetyMetrics(
-                      dateRange.from,
-                      dateRange.to,
-                      activeSiteIds
-                    )
+                    Promise.all([
+                      incidentAnalyticsAPI.getSafetyMetrics(
+                        dateRange.from,
+                        dateRange.to,
+                        activeSiteIds
+                      ),
+                      incidentAnalyticsAPI
+                        .getIncidentKpis(dateRange.from, dateRange.to, activeSiteIds)
+                        .catch(() => null),
+                    ]).then(([safety, kpis]) => ({
+                      ...(safety ?? {}),
+                      incident_kpis: kpis?.data ?? null,
+                    }))
                   );
                   break;
                 case "cause_wise_incidents":
@@ -2754,7 +2809,7 @@ export const Dashboard = () => {
   };
 
   const handleDateRangeChange = (range: DateRange | undefined) => {
-    setDateRange(range);
+    setDateRange(isExecutiveDashboard ? pinRange(range) : range);
   };
 
   const handleSiteChange = (value: string) => {
@@ -3862,6 +3917,7 @@ export const Dashboard = () => {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <AmountOverviewCard
+                  siteIds={activeSiteIds}
                   startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
                   endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
                 />
@@ -3871,6 +3927,7 @@ export const Dashboard = () => {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <AmountClientWiseCard
+                  siteIds={activeSiteIds}
                   startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
                   endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
                 />
@@ -3885,6 +3942,7 @@ export const Dashboard = () => {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <QuickGateOverviewCard
+                  siteIds={activeSiteIds}
                   startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
                   endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
                 />
@@ -3894,6 +3952,7 @@ export const Dashboard = () => {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <SiteWiseVisitorsCard
+                  siteIds={activeSiteIds}
                   startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
                   endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
                 />
@@ -3903,6 +3962,7 @@ export const Dashboard = () => {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <QuickGateGoodsStaffCard
+                  siteIds={activeSiteIds}
                   startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
                   endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
                 />
@@ -3917,6 +3977,7 @@ export const Dashboard = () => {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <OccupancySummaryCard
+                  siteIds={activeSiteIds}
                   startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
                   endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
                 />
@@ -3931,6 +3992,7 @@ export const Dashboard = () => {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <ExecutiveParkingStatsCard
+                  siteIds={activeSiteIds}
                   startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
                   endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
                 />
@@ -4843,6 +4905,7 @@ export const Dashboard = () => {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <PowerConsumptionTopManagementCard
+                  siteIds={activeSiteIds}
                   startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
                   endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
                 />
@@ -4852,6 +4915,7 @@ export const Dashboard = () => {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <WaterConsumptionTopManagementCard
+                  siteIds={activeSiteIds}
                   startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
                   endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
                 />
@@ -5150,6 +5214,7 @@ export const Dashboard = () => {
               <BodyInjuryChartCard
                 startDate={startDate}
                 endDate={endDate}
+                siteIds={activeSiteIds}
               />
             );
           }
@@ -5620,6 +5685,7 @@ export const Dashboard = () => {
                                     row beside the "+". `endpoint` IS the chart_code the
                                     backend catalogue is keyed on — `id` is a chartId and
                                     matches nothing. */}
+                                {/* AI Insights disabled for now — re-enable by uncommenting this block and the import.
                                 <ChartAiInsights
                                   chartCode={analytic.endpoint}
                                   chartId={analytic.id}
@@ -5628,6 +5694,7 @@ export const Dashboard = () => {
                                   toDate={insightScope.toDate}
                                   onHeightChange={handleInsightHeight}
                                 />
+                                */}
                               </div>
                             );
                           })}
@@ -5736,6 +5803,7 @@ export const Dashboard = () => {
                                     row beside the "+". `endpoint` IS the chart_code the
                                     backend catalogue is keyed on — `id` is a chartId and
                                     matches nothing. */}
+                                {/* AI Insights disabled for now — re-enable by uncommenting this block and the import.
                                 <ChartAiInsights
                                   chartCode={analytic.endpoint}
                                   chartId={analytic.id}
@@ -5744,6 +5812,7 @@ export const Dashboard = () => {
                                   toDate={insightScope.toDate}
                                   onHeightChange={handleInsightHeight}
                                 />
+                                */}
                               </div>
                             );
                           })}
