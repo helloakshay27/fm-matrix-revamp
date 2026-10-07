@@ -407,26 +407,30 @@ useEffect(() => {
   const extraKpiCards = [
     {
       label: 'Wet Waste',
-      value: kg(listCounts?.wet_waste),
+      rawValue: listCounts?.wet_waste,
       icon: <Percent className="w-6 h-6 text-[#C72030]" />,
     },
     {
       label: 'Dry Waste',
-      value: kg(listCounts?.dry_waste),
+      rawValue: listCounts?.dry_waste,
       icon: <Package className="w-6 h-6 text-[#C72030]" />,
     },
     {
       label: 'Hazardous Waste',
-      value: kg(listCounts?.hazardous_waste),
+      rawValue: listCounts?.hazardous_waste,
       icon: <Activity className="w-6 h-6 text-[#C72030]" />,
     },
     ...(listCounts?.category_counts ?? []).map((category) => ({
       label: category.label,
-      value: kg(category.value),
+      rawValue: category.value,
       icon: <Leaf className="w-6 h-6 text-[#C72030]" />,
       recycled: kg(category.recycled_value),
     })),
-  ];
+  ]
+    // Only show cards the API actually has a figure for - drop the
+    // "—" placeholders instead of rendering empty cards.
+    .filter((card) => card.rawValue != null)
+    .map((card) => ({ ...card, value: kg(card.rawValue) }));
 
   return (
     <>
@@ -591,7 +595,7 @@ useEffect(() => {
               {[
                 { label: 'Total Waste Generated', value: kpiData?.total_waste ?? null, icon: <Trash2 className="w-6 h-6 text-[#C72030]" /> },
                 { label: 'Total Recycled',         value: kpiData?.total_recycled ?? null, icon: <RefreshCw className="w-6 h-6 text-[#C72030]" /> },
-                { label: 'Dry Waste',              value: kpiData?.dry_waste ?? null, icon: <Leaf className="w-6 h-6 text-[#C72030]" /> },
+                // { label: 'Dry Waste',              value: kpiData?.dry_waste ?? null, icon: <Leaf className="w-6 h-6 text-[#C72030]" /> },
                 { label: 'Hazardous',              value: kpiData?.hazardous_waste ?? null, icon: <Activity className="w-6 h-6 text-[#C72030]" /> },
               ].map((item, i) => (
                 <div key={i} className="relative bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 hover:shadow-lg transition-all duration-300 min-h-[88px]">
