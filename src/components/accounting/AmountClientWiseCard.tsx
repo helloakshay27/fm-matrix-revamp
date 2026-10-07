@@ -5,6 +5,8 @@ import { getFullUrl, getAuthenticatedFetchOptions } from "@/config/apiConfig";
 interface AmountClientWiseCardProps {
   startDate?: string;
   endDate?: string;
+  /** Comma-separated site ids from the dashboard filter; falls back to localStorage. */
+  siteIds?: string;
 }
 
 interface ClientRow {
@@ -44,6 +46,7 @@ const HEADERS = [
 const AmountClientWiseCard: React.FC<AmountClientWiseCardProps> = ({
   startDate,
   endDate,
+  siteIds,
 }) => {
   const [rows, setRows] = useState<ClientRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,7 +56,7 @@ const AmountClientWiseCard: React.FC<AmountClientWiseCardProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const siteId = localStorage.getItem("selectedSiteId") || "";
+      const siteId = siteIds || localStorage.getItem("selectedSiteId") || "";
       const fromDate = startDate || "2020-01-01";
       const toDate = endDate || new Date().toISOString().split("T")[0];
 
@@ -74,7 +77,7 @@ const AmountClientWiseCard: React.FC<AmountClientWiseCardProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, siteIds]);
 
   useEffect(() => {
     fetchData();

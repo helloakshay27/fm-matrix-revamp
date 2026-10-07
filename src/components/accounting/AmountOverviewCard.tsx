@@ -11,6 +11,8 @@ import { getFullUrl, getAuthenticatedFetchOptions } from "@/config/apiConfig";
 interface AmountOverviewCardProps {
   startDate?: string;
   endDate?: string;
+  /** Comma-separated site ids from the dashboard filter; falls back to localStorage. */
+  siteIds?: string;
 }
 
 interface ApiResponse {
@@ -39,6 +41,7 @@ const formatINR = (n: number | null | undefined): string => {
 const AmountOverviewCard: React.FC<AmountOverviewCardProps> = ({
   startDate,
   endDate,
+  siteIds,
 }) => {
   const [apiData, setApiData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,7 +51,7 @@ const AmountOverviewCard: React.FC<AmountOverviewCardProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const siteId = localStorage.getItem("selectedSiteId") || "";
+      const siteId = siteIds || localStorage.getItem("selectedSiteId") || "";
       const fromDate = startDate || "2020-01-01";
       const toDate = endDate || new Date().toISOString().split("T")[0];
 
@@ -69,7 +72,7 @@ const AmountOverviewCard: React.FC<AmountOverviewCardProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, siteIds]);
 
   useEffect(() => {
     fetchData();

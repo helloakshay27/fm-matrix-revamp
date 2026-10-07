@@ -1,16 +1,21 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import humanBodyImg from "@/assets/human_body.png";
+import incidentAnalyticsAPI from "@/services/incidentAnalyticsAPI";
 
 interface BodyInjuryChartCardProps {
+  /** YYYY-MM-DD */
   startDate?: string;
+  /** YYYY-MM-DD */
   endDate?: string;
+  /** Comma-separated site ids from the dashboard filter (all sites, or the single selected one). */
+  siteIds?: string;
 }
 
-const STATIC_PERCENTAGES: Record<string, number> = {
-  Head: 15.8,
-  Arms: 15.8,
-  Neck: 10.5,
-  Tongue: 10.5,
+/** "2025-01-01" -> local Date (new Date("2025-01-01") would parse as UTC). */
+const parseYMD = (s?: string): Date => {
+  if (!s) return new Date();
+  const [y, m, d] = s.split("-").map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
 };
 
 // ── Coordinate space ──────────────────────────────────────────────────────────
@@ -104,8 +109,43 @@ const getMarkerColor = (pct: number): string => {
   return "#D1D5DB";
 };
 
-const BodyInjuryChartCard: React.FC<BodyInjuryChartCardProps> = () => {
-  const percentages = STATIC_PERCENTAGES;
+const BodyInjuryChartCard: React.FC<BodyInjuryChartCardProps> = ({
+  startDate,
+  endDate,
+  siteIds,
+}) => {
+  const [percentages, setPercentages] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // GET /incident_dashboard/body_injury_chart.json -> { response: <image url>, percentage: { Head: 14.29, ... } }
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    incidentAnalyticsAPI
+      .getBodyInjuryChart(parseYMD(startDate), parseYMD(endDate), siteIds)
+      .then((res: any) => {
+        if (cancelled) return;
+        const raw = res?.percentage ?? res?.data?.percentage ?? {};
+        const mapped: Record<string, number> = {};
+        Object.entries(raw).forEach(([part, value]) => {
+          const n = Number(value);
+          if (Number.isFinite(n)) mapped[part] = n;
+        });
+        setPercentages(mapped);
+      })
+      .catch((e: unknown) => {
+        if (cancelled) return;
+        setPercentages({});
+        setError(e instanceof Error ? e.message : "Failed to load body injury data");
+      })
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [startDate, endDate, siteIds]);
+
   const sortedEntries = Object.entries(percentages).sort((a, b) => b[1] - a[1]);
 
   return (
@@ -119,11 +159,10 @@ const BodyInjuryChartCard: React.FC<BodyInjuryChartCardProps> = () => {
             Body Injury Map
           </h3>
           <p
-            className="text-brand-body-5 text-brand-green leading-relaxed mt-1"
+            className="text-xs text-gray-500 mt-1"
             style={{ fontFamily: "Work Sans, sans-serif" }}
           >
-            Real category structure · matches reference style — outline figure
-            with leader-line callouts
+            Share of reported injuries by body part
           </p>
         </div>
       </div>
@@ -248,23 +287,21 @@ const BodyInjuryChartCard: React.FC<BodyInjuryChartCardProps> = () => {
                   })}
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-gray-100">
-                  <div className="text-xs font-semibold text-gray-900 mb-1">
-                    Injury types (not a body location)
-                  </div>
-                  <div className="text-xs text-brand-green mb-2">
-                    Cut 5.3% · Burn 5.3% · Fracture 5.3%
-                  </div>
-                  <p className="text-xs text-brand-green leading-relaxed">
-                    Rebuilt with a proper anatomical body outline — verified by rendering the SVG
-                    before committing it, not guessed blind. Head and Arms are tied as the top
-                    locations, not a single dominant one.
-                  </p>
-                </div>
+
               </div>
             )}
 
-        {sortedEntries.length === 0 && (
+        {loading && (
+          <div className="flex items-center justify-center h-16 text-sm text-gray-400">
+            Loading body injury data…
+          </div>
+        )}
+        {!loading && error && (
+          <div className="flex items-center justify-center h-16 text-sm text-red-500">
+            {error}
+          </div>
+        )}
+        {!loading && !error && sortedEntries.length === 0 && (
           <div className="flex items-center justify-center h-16 text-sm text-gray-400">
             No injury data available
           </div>
