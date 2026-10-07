@@ -53,6 +53,7 @@ import { toast } from "sonner";
 import { DeletePatrollingModal } from "@/components/DeletePatrollingModal";
 import { TicketPagination } from "@/components/TicketPagination";
 import { CheckpointFilterDialog } from "@/components/CheckpointFilterDialog";
+import { AssignChecklistDialog } from "@/components/AssignChecklistDialog";
 import {
   CheckpointFilters,
   EMPTY_CP_FILTERS,
@@ -152,6 +153,8 @@ interface CheckpointData {
   area_name?: string;
   estimated_time_minutes: number;
   snag_checklist_id?: number | null;
+  checklist_id?: number | null;
+  checklist_name?: string | null;
   schedule_ids?: number[];
   created_at: string;
   updated_at: string;
@@ -205,6 +208,7 @@ interface SortableCheckpointRowProps {
     area_name: string;
     floor_name: string;
     room_name: string;
+    checklist_name: string;
     location_qr_code_url: string | null;
     created_at: string;
   };
@@ -287,6 +291,7 @@ export const PatrollingDetailPage: React.FC = () => {
   // Checkpoint table: selection state for EnhancedTable + LocationSelectionPanel
   const [selectedCheckpointIds, setSelectedCheckpointIds] = useState<number[]>([]);
   const [selectedCheckpointObjects, setSelectedCheckpointObjects] = useState<CheckpointData[]>([]);
+  const [isAssignChecklistOpen, setIsAssignChecklistOpen] = useState(false);
 
   // Checkpoint table: search + column sort
   const [checkpointSearch, setCheckpointSearch] = useState("");
@@ -680,6 +685,7 @@ export const PatrollingDetailPage: React.FC = () => {
     area_name: string;
     floor_name: string;
     room_name: string;
+    checklist_name: string;
     location_qr_code_url: string | null;
     created_at: string;
   }
@@ -693,6 +699,7 @@ export const PatrollingDetailPage: React.FC = () => {
     { key: "area_name", label: "Area", sortable: false, draggable: false, defaultVisible: true },
     { key: "floor_name", label: "Floor", sortable: false, draggable: false, defaultVisible: true },
     { key: "room_name", label: "Room", sortable: false, draggable: false, defaultVisible: true },
+    { key: "checklist_name", label: "Checklist", sortable: false, draggable: false, defaultVisible: true },
     { key: "location_qr_code_url", label: "QR Code", sortable: false, draggable: false, defaultVisible: true },
     { key: "created_at", label: "Created On", sortable: true, draggable: false, defaultVisible: true },
   ];
@@ -708,6 +715,7 @@ export const PatrollingDetailPage: React.FC = () => {
       area_name: cp.area_name || "—",
       floor_name: cp.floor_name || "—",
       room_name: cp.room_name || "—",
+      checklist_name: cp.checklist_name || "—",
       location_qr_code_url: cp.location_qr_code_url || null,
       created_at: cp.created_at,
     }));
@@ -735,7 +743,8 @@ export const PatrollingDetailPage: React.FC = () => {
             r.wing_name.toLowerCase().includes(q) ||
             r.area_name.toLowerCase().includes(q) ||
             r.floor_name.toLowerCase().includes(q) ||
-            r.room_name.toLowerCase().includes(q)
+            r.room_name.toLowerCase().includes(q) ||
+            r.checklist_name.toLowerCase().includes(q)
         )
       : [...checkpointTableData];
 
@@ -1849,8 +1858,23 @@ export const PatrollingDetailPage: React.FC = () => {
                     onDownload={() => {}}
                     onDispose={() => {}}
                     onClearSelection={handleClearCheckpointSelection}
+                    onAssignChecklist={
+                      shouldShow("Patrolling", "update")
+                        ? () => setIsAssignChecklistOpen(true)
+                        : undefined
+                    }
                   />
                 )}
+
+                <AssignChecklistDialog
+                  open={isAssignChecklistOpen}
+                  onOpenChange={setIsAssignChecklistOpen}
+                  checkpointIds={selectedCheckpointIds}
+                  onAssigned={() => {
+                    handleClearCheckpointSelection();
+                    if (id) fetchPatrollingDetail(parseInt(id));
+                  }}
+                />
 
                 {/* Search bar + Filter button — above table */}
                 <div className="mb-3 flex items-center justify-between gap-2 flex-wrap">
@@ -1984,6 +2008,7 @@ export const PatrollingDetailPage: React.FC = () => {
                               { key: "area_name", label: "Area", sortable: false, minW: "min-w-28" },
                               { key: "floor_name", label: "Floor", sortable: false, minW: "min-w-28" },
                               { key: "room_name", label: "Room", sortable: false, minW: "min-w-28" },
+                              { key: "checklist_name", label: "Checklist", sortable: false, minW: "min-w-36" },
                               { key: "location_qr_code_url", label: "QR Code", sortable: false, minW: "min-w-28" },
                               { key: "created_at", label: "Created On", sortable: true, minW: "min-w-36" },
                             ] as { key: string; label: string; sortable: boolean; minW: string }[]).map((col) => (
@@ -2013,7 +2038,7 @@ export const PatrollingDetailPage: React.FC = () => {
                         <TableBody>
                           {paginatedCheckpointData.length === 0 ? (
                             <TableRow>
-                              <TableCell colSpan={12} className="text-center py-8 text-gray-500">
+                              <TableCell colSpan={13} className="text-center py-8 text-gray-500">
                                 {checkpointSearch || activeCpFilterCount > 0
                                   ? `No checkpoints match the current filters`
                                   : "No checkpoints available"}
@@ -2035,6 +2060,7 @@ export const PatrollingDetailPage: React.FC = () => {
                                 <TableCell className="p-3 text-sm text-gray-600">{renderCheckpointCell(item, "area_name")}</TableCell>
                                 <TableCell className="p-3 text-sm text-gray-600">{renderCheckpointCell(item, "floor_name")}</TableCell>
                                 <TableCell className="p-3 text-sm text-gray-600">{renderCheckpointCell(item, "room_name")}</TableCell>
+                                <TableCell className="p-3 text-sm text-gray-600">{renderCheckpointCell(item, "checklist_name")}</TableCell>
                                 <TableCell className="p-3">{renderCheckpointCell(item, "location_qr_code_url")}</TableCell>
                                 <TableCell className="p-3">{renderCheckpointCell(item, "created_at")}</TableCell>
                               </SortableCheckpointRow>
