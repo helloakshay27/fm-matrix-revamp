@@ -729,7 +729,7 @@ export const EditInventoryPage = () => {
             className="w-full flex items-center justify-between p-4 text-left"
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm font-bold">
+              <div className="w-8 h-8 bg-[#111111] text-white rounded-full flex items-center justify-center text-sm font-bold">
                 1
               </div>
               <h2 className="text-lg font-semibold text-[#DA7756] uppercase">INVENTORY DETAILS</h2>
@@ -1244,7 +1244,7 @@ export const EditInventoryPage = () => {
             className="w-full flex items-center justify-between p-4 text-left"
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm font-bold">
+              <div className="w-8 h-8 bg-[#111111] text-white rounded-full flex items-center justify-center text-sm font-bold">
                 2
               </div>
               <h2 className="text-lg font-semibold text-[#DA7756] uppercase">TAX DETAILS</h2>

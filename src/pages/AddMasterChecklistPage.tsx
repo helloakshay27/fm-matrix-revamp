@@ -26,7 +26,7 @@ const fieldStyles = {
       borderColor: '#1A1A1A',
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#da7756',
+      borderColor: 'var(--color-primary)',
       borderWidth: 2,
     },
   },
@@ -34,7 +34,7 @@ const fieldStyles = {
     color: '#666666',
     fontSize: '16px',
     '&.Mui-focused': {
-      color: '#da7756',
+      color: 'var(--color-primary)',
     },
     '&.MuiInputLabel-shrink': {
       transform: 'translate(14px, -9px) scale(0.75)',
@@ -223,7 +223,7 @@ export const AddMasterChecklistPage = () => {
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="bg-white border rounded-lg p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 bg-[#da7756] text-white rounded-full flex items-center justify-center text-sm">1</div>
+            <div className="w-6 h-6 bg-[var(--color-primary)] text-white rounded-full flex items-center justify-center text-sm">1</div>
             <h2 className="font-semibold text-lg">Basic Info</h2>
           </div>
 
@@ -298,7 +298,7 @@ export const AddMasterChecklistPage = () => {
           <div key={section.id} className="bg-white border rounded-lg p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-[#da7756] text-white rounded-full flex items-center justify-center text-sm">2</div>
+                <div className="w-6 h-6 bg-[var(--color-primary)] text-white rounded-full flex items-center justify-center text-sm">2</div>
                 <h2 className="font-semibold text-lg">Task</h2>
               </div>
               {taskSections.length > 1 && (
@@ -307,7 +307,7 @@ export const AddMasterChecklistPage = () => {
                   variant="ghost"
                   size="sm"
                   onClick={() => removeTaskSection(section.id)}
-                  className="text-[#da7756]"
+                  className="text-[var(--color-primary)]"
                 >
                   <X className="w-4 h-4" />
                 </Button>
@@ -408,7 +408,7 @@ export const AddMasterChecklistPage = () => {
               <button
                 type="button"
                 onClick={() => addQuestion(section.id)}
-                style={{ backgroundColor: '#da7756' }}
+                style={{ backgroundColor: 'var(--color-primary)' }}
                 className="text-white rounded-md h-10 px-4 text-sm font-medium flex items-center gap-2 hover:opacity-90 transition-opacity"
               >
                 <Plus className="w-4 h-4" /> Add Question
@@ -421,7 +421,7 @@ export const AddMasterChecklistPage = () => {
           <button
             type="button"
             onClick={addTaskSection}
-            style={{ backgroundColor: '#da7756' }}
+            style={{ backgroundColor: 'var(--color-primary)' }}
             className="text-white rounded-md h-10 px-5 text-sm font-medium flex items-center gap-2 hover:opacity-90 transition-opacity"
           >
             <Plus className="w-4 h-4" /> Add Task
@@ -429,7 +429,7 @@ export const AddMasterChecklistPage = () => {
 
           <button
             type="submit"
-            style={{ backgroundColor: '#da7756' }}
+            style={{ backgroundColor: 'var(--color-primary)' }}
             className="text-white rounded-md h-10 px-6 text-sm font-semibold hover:opacity-90 transition-opacity"
           >
             Submit

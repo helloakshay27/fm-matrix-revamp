@@ -249,7 +249,7 @@ export const ViewOperationalAuditSchedulePage = () => {
                                 <CardHeader className="pb-4 lg:pb-6">
                                     <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
                                         <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                            <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                                            <FileText className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
                                         </div>
                                         <span className="uppercase tracking-wide">Basic Configuration</span>
                                     </CardTitle>
@@ -348,7 +348,7 @@ export const ViewOperationalAuditSchedulePage = () => {
                                 <CardHeader className="pb-4 lg:pb-6">
                                     <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
                                         <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                            <Box className="w-6 h-6" style={{ color: '#C72030' }} />
+                                            <Box className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
                                         </div>
                                         <span className="uppercase tracking-wide">Task Information</span>
                                     </CardTitle>
@@ -379,7 +379,7 @@ export const ViewOperationalAuditSchedulePage = () => {
                                     <CardHeader className="pb-4 lg:pb-6">
                                         <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
                                             <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                                <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                                                <FileText className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
                                             </div>
                                             <span className="uppercase tracking-wide">Task Details</span>
                                         </CardTitle>
@@ -468,7 +468,7 @@ export const ViewOperationalAuditSchedulePage = () => {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
                                     <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                        <Clock className="w-6 h-6" style={{ color: '#C72030' }} />
+                                        <Clock className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
                                     </div>
                                     <span className="uppercase tracking-wide">Time Setup</span>
                                 </CardTitle>
@@ -559,7 +559,7 @@ export const ViewOperationalAuditSchedulePage = () => {
                                 <CardHeader className="pb-4 lg:pb-6">
                                     <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
                                         <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                            <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                                            <FileText className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
                                         </div>
                                         <span className="uppercase tracking-wide">Schedule Configuration</span>
                                     </CardTitle>
@@ -664,7 +664,7 @@ export const ViewOperationalAuditSchedulePage = () => {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
                                     <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                        <Link className="w-6 h-6" style={{ color: '#C72030' }} />
+                                        <Link className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
                                     </div>
                                     <span className="uppercase tracking-wide">Association</span>
                                 </CardTitle>
@@ -725,7 +725,7 @@ export const ViewOperationalAuditSchedulePage = () => {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
                                     <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                        <Mail className="w-6 h-6" style={{ color: '#C72030' }} />
+                                        <Mail className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
                                     </div>
                                     <span className="uppercase tracking-wide">Email Trigger Rules</span>
                                 </CardTitle>
@@ -767,7 +767,7 @@ export const ViewOperationalAuditSchedulePage = () => {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
                                     <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                        <MapPin className="w-6 h-6" style={{ color: '#C72030' }} />
+                                        <MapPin className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
                                     </div>
                                     <span className="uppercase tracking-wide">Asset Mapping List</span>
                                 </CardTitle>

@@ -31,7 +31,7 @@ import { assetService, Asset, AssetGroup, AssetSubGroup, EmailRule, User as User
 
 // Styled Components
 const RedButton = styled(MuiButton)(({ theme }) => ({
-  backgroundColor: '#da7756',
+  backgroundColor: 'var(--color-primary)',
   color: 'white !important',
   borderRadius: 0,
   textTransform: 'none',
@@ -39,15 +39,15 @@ const RedButton = styled(MuiButton)(({ theme }) => ({
   fontFamily: 'Work Sans, sans-serif',
   fontWeight: 500,
   '&:hover': {
-    backgroundColor: '#C4623C',
-    boxShadow: '0 4px 8px rgba(218, 119, 86, 0.3)',
+    backgroundColor: 'var(--color-primary-hover)',
+    boxShadow: '0 4px 8px rgba(var(--color-primary-rgb), 0.3)',
   },
 }));
 RedButton.defaultProps = { color: 'inherit' };
 
 const DraftButton = styled(MuiButton)(({ theme }) => ({
   backgroundColor: '#e7e3d9',
-  color: '#da7756',
+  color: 'var(--color-primary)',
   borderRadius: 0,
   textTransform: 'none',
   padding: '10px 24px',
@@ -76,7 +76,7 @@ const SectionHeader = styled(Box)(({ theme }) => ({
 
 const RedIcon = styled(Settings)(({ theme }) => ({
   color: '#fff',
-  backgroundColor: '#da7756',
+  backgroundColor: 'var(--color-primary)',
   borderRadius: '50%',
   padding: '8px',
   fontSize: '32px',
@@ -89,16 +89,16 @@ const fieldStyles = {
       borderColor: '#ddd',
     },
     '&:hover fieldset': {
-      borderColor: '#da7756',
+      borderColor: 'var(--color-primary)',
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#da7756',
+      borderColor: 'var(--color-primary)',
     },
   },
   '& .MuiInputLabel-root': {
     fontSize: '14px',
     '&.Mui-focused': {
-      color: '#da7756',
+      color: 'var(--color-primary)',
     },
   },
 };
@@ -1646,8 +1646,8 @@ export const AddOperationalAuditSchedulePage = () => {
                   sx={{
                     cursor: 'pointer',
                     backgroundColor: 'white',
-                    color: (index === activeStep || completedSteps.includes(index)) ? '#da7756' : '#C4B89D',
-                    border: `2px solid ${(index === activeStep || completedSteps.includes(index)) ? '#da7756' : '#C4B89D'}`,
+                    color: (index === activeStep || completedSteps.includes(index)) ? 'var(--color-primary)' : '#C4B89D',
+                    border: `2px solid ${(index === activeStep || completedSteps.includes(index)) ? 'var(--color-primary)' : '#C4B89D'}`,
                     fontWeight: (index === activeStep) ? 600 : 500,
                     padding: '12px 20px',
                     fontSize: '13px',
@@ -1696,7 +1696,7 @@ export const AddOperationalAuditSchedulePage = () => {
           <SectionCard>
             <SectionHeader>
               <RedIcon />
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#da7756', fontFamily: 'Work Sans, sans-serif' }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: 'var(--color-primary)', fontFamily: 'Work Sans, sans-serif' }}>
                 BASIC INFO
               </Typography>
               {/* <Typography variant="caption" sx={{ ml: 'auto', color: '#666' }}>
@@ -1709,10 +1709,10 @@ export const AddOperationalAuditSchedulePage = () => {
                 Schedule For
               </Typography>
               <MuiRadioGroup row value={scheduleFor} onChange={(e) => handleScheduleForChange(e.target.value)}>
-                <FormControlLabel value="Asset" control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }} />} label="Asset" />
-                <FormControlLabel value="Service" control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }} />} label="Service" />
-                <FormControlLabel value="Supplier" control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }} />} label="Vendor" />
-                <FormControlLabel value="Training" control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }} />} label="Training" />
+                <FormControlLabel value="Asset" control={<Radio sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />} label="Asset" />
+                <FormControlLabel value="Service" control={<Radio sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />} label="Service" />
+                <FormControlLabel value="Supplier" control={<Radio sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />} label="Vendor" />
+                <FormControlLabel value="Training" control={<Radio sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />} label="Training" />
               </MuiRadioGroup>
             </Box> */}
 
@@ -1867,7 +1867,7 @@ export const AddOperationalAuditSchedulePage = () => {
                   {taskSections.length > 1 && (
                     <IconButton
                       onClick={() => removeTaskSection(section.id)}
-                      sx={{ color: '#da7756' }}
+                      sx={{ color: 'var(--color-primary)' }}
                       size="small"
                     >
                       <Close />
@@ -1923,7 +1923,7 @@ export const AddOperationalAuditSchedulePage = () => {
                     {section.tasks.length > 1 && (
                       <IconButton
                         onClick={() => removeTaskFromSection(section.id, task.id)}
-                        sx={{ position: 'absolute', top: 8, right: 8, color: '#da7756' }}
+                        sx={{ position: 'absolute', top: 8, right: 8, color: 'var(--color-primary)' }}
                         size="small"
                       >
                         <Close fontSize="small" />
@@ -1937,7 +1937,7 @@ export const AddOperationalAuditSchedulePage = () => {
                           <MuiCheckbox
                             checked={task.mandatory}
                             onChange={(e) => updateTaskInSection(section.id, task.id, 'mandatory', e.target.checked)}
-                            sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                            sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                           />
                         }
                         label="Mandatory"
@@ -1947,7 +1947,7 @@ export const AddOperationalAuditSchedulePage = () => {
                           <MuiCheckbox
                             checked={task.helpText}
                             onChange={(e) => updateTaskInSection(section.id, task.id, 'helpText', e.target.checked)}
-                            sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                            sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                           />
                         }
                         label="Help Text"
@@ -1957,7 +1957,7 @@ export const AddOperationalAuditSchedulePage = () => {
                           <MuiCheckbox
                             checked={task.reading}
                             onChange={(e) => updateTaskInSection(section.id, task.id, 'reading', e.target.checked)}
-                            sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                            sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                           />
                         }
                         label="Reading"
@@ -2089,7 +2089,7 @@ export const AddOperationalAuditSchedulePage = () => {
                                 <IconButton
                                   size="small"
                                   onClick={() => removeDropdownValue(section.id, task.id, valueIndex)}
-                                  sx={{ color: '#da7756' }}
+                                  sx={{ color: 'var(--color-primary)' }}
                                 >
                                   <Close />
                                 </IconButton>
@@ -2104,13 +2104,13 @@ export const AddOperationalAuditSchedulePage = () => {
                               startIcon={<Add />}
                               onClick={() => addDropdownValue(section.id, task.id)}
                               sx={{
-                                color: '#da7756',
-                                borderColor: '#da7756',
+                                color: 'var(--color-primary)',
+                                borderColor: 'var(--color-primary)',
                                 fontSize: '12px',
                                 padding: '4px 12px',
                                 '&:hover': {
-                                  borderColor: '#da7756',
-                                  backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                  borderColor: 'var(--color-primary)',
+                                  backgroundColor: 'var(--color-primary-light)'
                                 }
                               }}
                             >
@@ -2144,7 +2144,7 @@ export const AddOperationalAuditSchedulePage = () => {
                               <Radio
                                 checked={valueIndex === 0}
                                 name={`radio-${section.id}-${task.id}`}
-                                sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                                sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                               />
 
                               <TextField
@@ -2180,7 +2180,7 @@ export const AddOperationalAuditSchedulePage = () => {
                                 <IconButton
                                   size="small"
                                   onClick={() => removeRadioValue(section.id, task.id, valueIndex)}
-                                  sx={{ color: '#da7756' }}
+                                  sx={{ color: 'var(--color-primary)' }}
                                 >
                                   <Close />
                                 </IconButton>
@@ -2195,13 +2195,13 @@ export const AddOperationalAuditSchedulePage = () => {
                               startIcon={<Add />}
                               onClick={() => addRadioValue(section.id, task.id)}
                               sx={{
-                                color: '#da7756',
-                                borderColor: '#da7756',
+                                color: 'var(--color-primary)',
+                                borderColor: 'var(--color-primary)',
                                 fontSize: '12px',
                                 padding: '4px 12px',
                                 '&:hover': {
-                                  borderColor: '#da7756',
-                                  backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                  borderColor: 'var(--color-primary)',
+                                  backgroundColor: 'var(--color-primary-light)'
                                 }
                               }}
                             >
@@ -2235,7 +2235,7 @@ export const AddOperationalAuditSchedulePage = () => {
                               <MuiCheckbox
                                 checked={task.checkboxSelectedStates?.[valueIndex] || false}
                                 onChange={(e) => updateCheckboxSelectedState(section.id, task.id, valueIndex, e.target.checked)}
-                                sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                                sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                               />
 
                               <TextField
@@ -2256,7 +2256,7 @@ export const AddOperationalAuditSchedulePage = () => {
                                 <IconButton
                                   size="small"
                                   onClick={() => removeCheckboxValue(section.id, task.id, valueIndex)}
-                                  sx={{ color: '#da7756' }}
+                                  sx={{ color: 'var(--color-primary)' }}
                                 >
                                   <Close />
                                 </IconButton>
@@ -2271,13 +2271,13 @@ export const AddOperationalAuditSchedulePage = () => {
                               startIcon={<Add />}
                               onClick={() => addCheckboxValue(section.id, task.id)}
                               sx={{
-                                color: '#da7756',
-                                borderColor: '#da7756',
+                                color: 'var(--color-primary)',
+                                borderColor: 'var(--color-primary)',
                                 fontSize: '12px',
                                 padding: '4px 12px',
                                 '&:hover': {
-                                  borderColor: '#da7756',
-                                  backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                  borderColor: 'var(--color-primary)',
+                                  backgroundColor: 'var(--color-primary-light)'
                                 }
                               }}
                             >
@@ -2320,7 +2320,7 @@ export const AddOperationalAuditSchedulePage = () => {
                               <Typography
                                 variant="body2"
                                 sx={{
-                                  color: '#da7756',
+                                  color: 'var(--color-primary)',
                                   cursor: 'pointer',
                                   fontSize: '12px',
                                   minWidth: 'auto'
@@ -2339,13 +2339,13 @@ export const AddOperationalAuditSchedulePage = () => {
                               startIcon={<Add />}
                               onClick={() => addOptionsInputsValue(section.id, task.id)}
                               sx={{
-                                color: '#da7756',
-                                borderColor: '#da7756',
+                                color: 'var(--color-primary)',
+                                borderColor: 'var(--color-primary)',
                                 fontSize: '12px',
                                 padding: '4px 12px',
                                 '&:hover': {
-                                  borderColor: '#da7756',
-                                  backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                  borderColor: 'var(--color-primary)',
+                                  backgroundColor: 'var(--color-primary-light)'
                                 }
                               }}
                             >
@@ -2363,7 +2363,7 @@ export const AddOperationalAuditSchedulePage = () => {
                     variant="outlined"
                     onClick={() => addTaskToSection(section.id)}
                     startIcon={<Add />}
-                    sx={{ borderColor: '#da7756', color: '#da7756', '&:hover': { borderColor: '#C4623C', backgroundColor: 'rgba(199, 32, 48, 0.04)' } }}
+                    sx={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)', '&:hover': { borderColor: 'var(--color-primary-hover)', backgroundColor: 'var(--color-primary-light)' } }}
                   >
                     Add Question
                   </MuiButton>
@@ -2378,10 +2378,10 @@ export const AddOperationalAuditSchedulePage = () => {
                 startIcon={<Add />}
                 onClick={addTaskSection}
                 sx={{
-                  backgroundColor: '#da7756',
+                  backgroundColor: 'var(--color-primary)',
                   color: 'white',
                   '&:hover': {
-                    backgroundColor: '#C4623C'
+                    backgroundColor: 'var(--color-primary-hover)'
                   }
                 }}
               >
@@ -2402,7 +2402,7 @@ export const AddOperationalAuditSchedulePage = () => {
               mb: 3
             }}>
               <Box sx={{
-                backgroundColor: '#da7756',
+                backgroundColor: 'var(--color-primary)',
                 borderRadius: '50%',
                 width: '32px',
                 height: '32px',
@@ -2412,7 +2412,7 @@ export const AddOperationalAuditSchedulePage = () => {
               }}>
                 <Cog size={16} color="white" />
               </Box>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#da7756', textTransform: 'uppercase' }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
                 Schedule Setup
               </Typography>
             </Box>
@@ -2431,12 +2431,12 @@ export const AddOperationalAuditSchedulePage = () => {
                     >
                       <FormControlLabel
                         value="Individual"
-                        control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }} />}
+                        control={<Radio sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                         label="Individual"
                       />
                       <FormControlLabel
                         value="Asset Group"
-                        control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }} />}
+                        control={<Radio sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                         label="Asset Group"
                       />
                     </MuiRadioGroup>
@@ -2457,12 +2457,12 @@ export const AddOperationalAuditSchedulePage = () => {
                 >
                   <FormControlLabel
                     value="active"
-                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }} />}
+                    control={<Radio sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                     label="Active"
                   />
                   <FormControlLabel
                     value="inactive"
-                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }} />}
+                    control={<Radio sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                     label="Inactive"
                   />
                 </MuiRadioGroup>
