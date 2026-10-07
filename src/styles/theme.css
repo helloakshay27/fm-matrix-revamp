@@ -5195,3 +5195,157 @@ html body [role="dialog"] [class*="border-b-[#"][class*="border-b"],
 html body [class*="fixed"][class*="right-0"] [class*="border-b-2"] {
   border-bottom: 1px solid var(--color-line) !important;
 }
+
+/* Sprint details page icons use the page-specific FolderKanban icon as scope. */
+html body main:has(svg.lucide-folder-kanban) svg:not(.recharts-surface) {
+  color: var(--color-text) !important;
+  stroke: currentColor !important;
+}
+
+html body main:has(svg.lucide-folder-kanban) button[class*="text-[#E95420]"] {
+  color: var(--color-text) !important;
+}
+html body main:has(svg.lucide-folder-kanban) button[class*="text-[#E95420]"] > span.absolute {
+  background-color: var(--color-text) !important;
+}
+html body main:has(svg.lucide-folder-kanban) button[class*="text-[#323232]"] {
+  color: var(--color-ink-48) !important;
+}
+html body main:has(svg.lucide-folder-kanban) button[class*="text-[#323232]"]:hover {
+  color: var(--color-ink-48) !important;
+}
+
+html body [role="dialog"]:has(hr[class*="border-[#E95420]"])
+  hr[class*="border-[#E95420]"] {
+  border-color: var(--color-text) !important;
+}
+
+/* Project task details: keep page icons on the ink palette. */
+html body main:has(svg.lucide-copy) svg:not(.recharts-surface) {
+  color: var(--color-text) !important;
+  stroke: currentColor !important;
+}
+
+/* Workflow Status: black primary trigger with a readable white label/icon. */
+html body main:has(svg.lucide-copy)
+  button[role="combobox"][class*="bg-[#C72030]"] {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #ffffff !important;
+}
+html body main:has(svg.lucide-copy)
+  button[role="combobox"][class*="bg-[#C72030]"] * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+html body main:has(svg.lucide-copy)
+  button[role="combobox"][class*="bg-[#C72030]"] svg {
+  color: #ffffff !important;
+  stroke: currentColor !important;
+}
+
+/* Legacy orange section icons resolve to black ink. */
+html body #root main svg[color="#E95420" i],
+html body #root main svg[stroke="#E95420" i] {
+  color: var(--color-text) !important;
+  stroke: currentColor !important;
+}
+
+/* Red-outline Cancel buttons use black text on their light background. */
+html body #root main button[class*="border-[#C72030]" i]:not([class*="bg-[#C72030]" i]),
+html body #root main button[class*="border-[#C72030]" i]:not([class*="bg-[#C72030]" i]) * {
+  color: var(--color-text) !important;
+  -webkit-text-fill-color: var(--color-text) !important;
+}
+
+/* Issue detail tabs: active tab in ink, inactive tabs in muted grey. */
+html body #root main div[class*="gap-10"][class*="overflow-x-auto"]
+  > div[class*="text-[14px]"][class*="border-[#E95420]"] {
+  color: var(--color-text) !important;
+  border-color: var(--color-text) !important;
+}
+html body #root main div[class*="gap-10"][class*="overflow-x-auto"]
+  > div[class*="text-[14px]"]:not([class*="border-[#E95420]"]) {
+  color: var(--color-ink-48) !important;
+}
+
+/* Notification count badge: black background with a white count. */
+html body header.fixed.top-0 button[aria-label="Notifications"]
+  [class*="bg-[#DA7756]"] {
+  background-color: var(--color-primary) !important;
+  color: #ffffff !important;
+}
+
+/* Location Account company logo dropzone outer border. */
+html body #root main [role="tabpanel"][id$="-content-company"]
+  > div [class~="border-orange-300"] {
+  border-color: var(--color-text) !important;
+}
+
+/* User profile fallback avatar: replace amber tones with black and grey. */
+html body #root main div[class*="bg-gradient-to-br"][class*="from-amber-200"][class*="to-amber-300"] {
+  background-image: linear-gradient(
+    to bottom right,
+    var(--color-primary) 0%,
+    var(--color-ink-48) 100%
+  ) !important;
+}
+html body #root main div[class*="bg-gradient-to-br"][class*="from-amber-200"][class*="to-amber-300"]
+  > div.bg-amber-100 {
+  background-color: var(--color-surface) !important;
+}
+html body #root main div[class*="bg-gradient-to-br"][class*="from-amber-200"][class*="to-amber-300"]
+  > div.bg-amber-100 > div.bg-amber-50 {
+  background-color: var(--color-hover) !important;
+}
+
+/* VI user profile initials circle: replace coral gradient with black. */
+html body #root main
+  div[class*="bg-gradient-to-br"][class*="from-[#DA7756]"][class*="to-[#b85a3d]"] {
+  background-color: var(--color-primary) !important;
+  background-image: none !important;
+}
+
+/* Add Gate number badge in the TAB CONFIGURATION header. */
+html body #root main form.space-y-6
+  > div.bg-white.rounded-lg.border.border-gray-200.overflow-hidden
+  > div.px-6.py-4[class*="bg-[#F2EEE9]"]
+  > div[class*="bg-[#C72030]"][class*="rounded-full"] {
+  background-color: var(--color-primary) !important;
+  color: #ffffff !important;
+}
+
+/* Payments Made create form: red section icons use black ink. */
+html body #root main:has([role="tab"][class*="data-[state=active]:text-red-700"])
+  svg[class*="text-[#db4a4a]" i] {
+  color: var(--color-primary) !important;
+  stroke: currentColor !important;
+}
+
+/* Vendor Name select outline and dropdown arrow. */
+html body #root main:has([role="tab"][class*="data-[state=active]:text-red-700"])
+  div[class~="bg-[#f9f9fa]"] > div.mt-2 .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-primary) !important;
+}
+html body #root main:has([role="tab"][class*="data-[state=active]:text-red-700"])
+  div[class~="bg-[#f9f9fa]"] > div.mt-2 .MuiOutlinedInput-root:hover
+  .MuiOutlinedInput-notchedOutline,
+html body #root main:has([role="tab"][class*="data-[state=active]:text-red-700"])
+  div[class~="bg-[#f9f9fa]"] > div.mt-2 .MuiOutlinedInput-root.Mui-focused
+  .MuiOutlinedInput-notchedOutline,
+html body #root main:has([role="tab"][class*="data-[state=active]:text-red-700"])
+  div[class~="bg-[#f9f9fa]"] > div.mt-2 .MuiOutlinedInput-root.Mui-error
+  .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-primary) !important;
+}
+html body #root main:has([role="tab"][class*="data-[state=active]:text-red-700"])
+  div[class~="bg-[#f9f9fa]"] > div.mt-2 .MuiSelect-icon {
+  color: var(--color-primary) !important;
+}
+
+/* Selected Bill Payment tab: black label and underline. */
+html body #root main
+  [role="tab"][data-state="active"][class*="data-[state=active]:text-red-700"] {
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
