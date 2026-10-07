@@ -178,6 +178,7 @@ const UtilityWasteGenerationDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilters, setActiveFilters] = useState<WasteGenerationFilters>({});
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [listCounts, setListCounts] = useState<WasteGenerationCounts | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -326,9 +327,11 @@ useEffect(() => {
       setIsLoading(true);
       const response = await fetchWasteGenerations(page, filters);
       setWasteGenerations(response.waste_generations || []);
+      setTotalPages(response.pagination?.total_pages || 1);
       if (response.counts) setListCounts(response.counts);
     } catch (err) {
       setWasteGenerations([]);
+      setTotalPages(1);
     } finally {
       setIsLoading(false);
     }
@@ -339,6 +342,7 @@ useEffect(() => {
   }, [currentPage, activeFilters]);
 
   // Handlers
+  const handlePageChange = (page: number) => setCurrentPage(page);
   const handleActionClick = () => setShowActionPanel(!showActionPanel);
   const handleClearSelection = () => {
     setShowActionPanel(false);
@@ -548,6 +552,10 @@ useEffect(() => {
               enableExport={true}
               onExport={handleExport}
               isExporting={isExporting}
+              pagination={true}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
               leftActions={
                 shouldShow("Waste Generation", "show") ? (
                   <Button className="bg-[#C72030] text-white rounded-none" onClick={handleActionClick}>
