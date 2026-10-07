@@ -1125,7 +1125,7 @@ export const InventoryDetailsPage = () => {
                   <div className="flex justify-center">
                     <button
                       onClick={handleDownload}
-                      className="mt-2 px-4 mb-5 py-2 bg-[#f6f4ee] text-[#a81a27] rounded transition-colors text-sm font-medium flex items-center justify-center"
+                      className="mt-2 px-4 mb-5 py-2 bg-[#111111] text-white rounded transition-colors text-sm font-medium flex items-center justify-center"
                       disabled={downloading}
                     >
                       {downloading ? (

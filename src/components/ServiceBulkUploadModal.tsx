@@ -160,18 +160,18 @@ export const ServiceBulkUploadModal = ({ isOpen, onClose }: ServiceBulkUploadMod
 
           <div className="flex justify-between">
             <Button
-              variant="outline"
               onClick={handleDownloadSample}
-              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
               disabled={isLoading}
+              style={{ backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-primary)', color: '#ffffff' }}
+              className="!text-white [&_*]:!text-white"
             >
               Download Sample Format
             </Button>
             <Button
               onClick={handleImport}
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:bg-[#C72030]/90"
               disabled={isLoading}
+              style={{ backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-primary)', color: '#ffffff' }}
+              className="!text-white [&_*]:!text-white"
             >
               {isLoading ? 'Importing...' : 'Import'}
             </Button>
