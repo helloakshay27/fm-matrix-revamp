@@ -132,18 +132,29 @@ export const ViewSelectionModal: React.FC<ViewSelectionModalProps> = ({
             type="button"
             aria-pressed={selectedView === "admin"}
             onClick={() => setSelectedView("admin")}
-            className={`relative min-h-[244px] rounded-lg border-2 p-6 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/35 ${
+            style={
               selectedView === "admin"
-                ? "border-[#DA7756] bg-[#fff6f2] shadow-[0_10px_20px_rgba(218,119,86,0.18)]"
+                ? { borderColor: "var(--color-primary)", outline: "none" }
+                : {}
+            }
+            className={`relative min-h-[244px] rounded-lg border-2 p-6 transition-all duration-300 focus-visible:outline-none ${
+              selectedView === "admin"
+                ? "bg-[#fff6f2] shadow-[0_10px_20px_rgba(0,0,0,0.12)]"
                 : "border-[#e1e5ea] bg-white hover:border-[#d4d9e1] hover:shadow-md"
             }`}
           >
             <div className="flex h-full flex-col items-center justify-center space-y-4 text-center">
               <div
-                className={`flex h-20 w-20 items-center justify-center rounded-full ${
+                style={
                   selectedView === "admin"
-                    ? "bg-[#DA7756] text-white"
-                    : "bg-[#f3f4f6] text-[#4b5563]"
+                    ? {
+                        backgroundColor: "var(--color-primary)",
+                        color: "white",
+                      }
+                    : {}
+                }
+                className={`flex h-20 w-20 items-center justify-center rounded-full ${
+                  selectedView === "admin" ? "" : "bg-[#f3f4f6] text-[#4b5563]"
                 }`}
               >
                 <Shield className="h-10 w-10" strokeWidth={2.4} />
@@ -157,7 +168,10 @@ export const ViewSelectionModal: React.FC<ViewSelectionModalProps> = ({
                 </p>
               </div>
               {selectedView === "admin" && (
-                <div className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-[#DA7756] text-white">
+                <div
+                  className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full text-white"
+                  style={{ backgroundColor: "var(--color-primary)" }}
+                >
                   <Check className="h-4 w-4" strokeWidth={3} />
                 </div>
               )}
@@ -169,17 +183,30 @@ export const ViewSelectionModal: React.FC<ViewSelectionModalProps> = ({
             type="button"
             aria-pressed={selectedView === "employee"}
             onClick={() => setSelectedView("employee")}
-            className={`relative min-h-[244px] rounded-lg border-2 p-6 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/35 ${
+            style={
               selectedView === "employee"
-                ? "border-[#DA7756] bg-[#fff6f2] shadow-[0_10px_20px_rgba(218,119,86,0.18)]"
+                ? { borderColor: "var(--color-primary)", outline: "none" }
+                : {}
+            }
+            className={`relative min-h-[244px] rounded-lg border-2 p-6 transition-all duration-300 focus-visible:outline-none ${
+              selectedView === "employee"
+                ? "bg-[#fff6f2] shadow-[0_10px_20px_rgba(0,0,0,0.12)]"
                 : "border-[#e1e5ea] bg-white hover:border-[#d4d9e1] hover:shadow-md"
             }`}
           >
             <div className="flex h-full flex-col items-center justify-center space-y-4 text-center">
               <div
+                style={
+                  selectedView === "employee"
+                    ? {
+                        backgroundColor: "var(--color-primary)",
+                        color: "white",
+                      }
+                    : {}
+                }
                 className={`flex h-20 w-20 items-center justify-center rounded-full ${
                   selectedView === "employee"
-                    ? "bg-[#DA7756] text-white"
+                    ? ""
                     : "bg-[#f3f4f6] text-[#4b5563]"
                 }`}
               >
@@ -195,7 +222,10 @@ export const ViewSelectionModal: React.FC<ViewSelectionModalProps> = ({
                 </p>
               </div>
               {selectedView === "employee" && (
-                <div className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-[#DA7756] text-white">
+                <div
+                  className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full text-white"
+                  style={{ backgroundColor: "var(--color-primary)" }}
+                >
                   <Check className="h-4 w-4" strokeWidth={3} />
                 </div>
               )}
@@ -208,14 +238,18 @@ export const ViewSelectionModal: React.FC<ViewSelectionModalProps> = ({
           <Button
             onClick={() => selectedView && handleViewSelection(selectedView)}
             disabled={!selectedView}
-            className={`h-12 min-w-[188px] rounded-none px-8 text-[19px] font-bold transition-all duration-300 ${
+            className={`h-12 min-w-[188px] rounded-none px-8 text-[19px] font-bold text-white transition-all duration-300 ${
               selectedView
-                ? "!bg-[#F2EEE9] !text-[#111111] shadow-[0_8px_16px_rgba(17,24,39,0.12)] hover:!bg-[#ece3dc] [&_svg]:!text-[#DA7756]"
+                ? "shadow-[0_8px_16px_rgba(0,0,0,0.18)] hover:opacity-90"
                 : "cursor-not-allowed !bg-gray-200 !text-gray-400 [&_svg]:!text-gray-400"
             }`}
+            style={selectedView ? { backgroundColor: "var(--color-primary)" } : {}}
           >
             Continue
-            <ArrowRight className="ml-2 h-5 w-5" strokeWidth={2.5} />
+            <ArrowRight
+              className="ml-2 h-5 w-5 text-white"
+              strokeWidth={2.5}
+            />
           </Button>
         </div>
 
