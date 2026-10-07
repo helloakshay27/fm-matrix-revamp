@@ -16,9 +16,10 @@
  *     conflicts.
  */
 
-const BRAND_PRIMARY = "#da7756";
-const BRAND_HOVER = "#c9664a";
-const BRAND_LIGHT = "rgba(218,119,86,0.08)";
+// Read from theme.css tokens so the patcher never drifts from the theme.
+const BRAND_PRIMARY = "var(--color-primary)";
+const BRAND_HOVER = "var(--color-primary-hover)";
+const BRAND_LIGHT = "var(--color-primary-light)";
 
 // Legacy colours to replace (as they appear in inline style="" attributes)
 const OLD_HEX = ["#C72030", "#c72030", "#C62828", "#c62828", "#B71C1C", "#b71c1c", "#A01020", "#a01020"];
@@ -48,7 +49,7 @@ function buildPatchCSS(): string {
         rules.push(`
 [style*="${old}"] {
   background-color: transparent !important;
-  border-color: ${BRAND_PRIMARY} !important;
+  border-color: var(--color-line) !important;
 }`);
 
         // Elements that ARE a solid-fill button (they keep bg)

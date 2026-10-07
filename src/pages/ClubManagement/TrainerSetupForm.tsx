@@ -469,11 +469,15 @@ export const TrainerSetupForm = ({
               required
               placeholder="e.g. 5"
               value={form.experience}
-              onChange={(e) => setField("experience", e.target.value)}
+              onChange={(e) => setField("experience", e.target.value.replace(/\D/g, ""))}
+              onKeyDown={(e) => {
+                if (["-", "+", "e", "E", "."].includes(e.key)) e.preventDefault();
+              }}
               fullWidth
               variant="outlined"
               sx={requiredLabelSx}
               slotProps={{ inputLabel: { shrink: true } }}
+              inputProps={{ inputMode: "numeric", pattern: "[0-9]*", min: 0 }}
               InputProps={{ sx: fieldStyles }}
             />
 

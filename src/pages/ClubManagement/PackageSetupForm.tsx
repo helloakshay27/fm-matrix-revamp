@@ -58,6 +58,9 @@ const blockNegativeKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
 
 const toNonNegative = (value: string): number => Math.max(0, Number(value) || 0);
 
+// HSN codes are 4, 6 or 8 digits; anything else (e.g. 12, 123, 12345) is incomplete.
+const isValidHsn = (code: string) => /^(\d{4}|\d{6}|\d{8})$/.test(code);
+
 // Numeric tier fields are edited as `number | ""` so a genuinely empty field keeps
 // showing its placeholder, while a value the user actually set to 0 still renders as "0"
 // (a plain `number` state can't tell those two cases apart).
@@ -174,6 +177,9 @@ export const PackageSetupForm = ({
 
   const patchTier = (patch: Partial<TierDraft>) => setTier((prev) => ({ ...prev, ...patch }));
 
+  // A taxable package (any CGST/SGST) must carry an HSN code.
+  const hsnRequired = Number(tier.cgstRate) > 0 || Number(tier.sgstRate) > 0;
+
   // Empty input keeps the field blank (placeholder shows); anything typed is clamped to >= 0.
   const handleNumberChange =
     (field: NumericTierField) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -184,6 +190,30 @@ export const PackageSetupForm = ({
   const handleSubmit = () => {
     if (!classActivity) {
       toast.error("Please select a class");
+      return;
+    }
+    if (!tier.label.trim()) {
+      toast.error("Please enter package name");
+      return;
+    }
+    if (!tier.packageType) {
+      toast.error("Please select package type");
+      return;
+    }
+    if (!(Number(tier.credits) > 0)) {
+      toast.error("Please enter number of classes");
+      return;
+    }
+    if (hsnRequired && !tier.hsnCode) {
+      toast.error("Please enter HSN code");
+      return;
+    }
+    if (tier.hsnCode && !isValidHsn(tier.hsnCode)) {
+      toast.error("HSN code must be 4, 6 or 8 digits");
+      return;
+    }
+    if (extensionAllowed && !(Number(maxExtensionDays) > 0)) {
+      toast.error("Please enter max extension days");
       return;
     }
     setIsSubmitting(true);
@@ -247,13 +277,20 @@ export const PackageSetupForm = ({
             placeholder="Enter package name"
             value={tier.label}
             onChange={(e) => patchTier({ label: e.target.value })}
+            required
             fullWidth
             variant="outlined"
+            sx={requiredLabelSx}
             slotProps={{ inputLabel: { shrink: true } }}
             InputProps={{ sx: fieldStyles }}
           />
 
-          <FormControl fullWidth variant="outlined" sx={{ "& .MuiInputBase-root": fieldStyles }}>
+          <FormControl
+            fullWidth
+            variant="outlined"
+            required
+            sx={{ "& .MuiInputBase-root": fieldStyles, ...requiredLabelSx }}
+          >
             <InputLabel shrink>Package Type</InputLabel>
             <MuiSelect
               value={tier.packageType}
@@ -284,8 +321,10 @@ export const PackageSetupForm = ({
             placeholder="Enter number of classes"
             value={tier.credits}
             onChange={handleNumberChange("credits")}
+            required
             fullWidth
             variant="outlined"
+            sx={requiredLabelSx}
             slotProps={{ inputLabel: { shrink: true } }}
             InputProps={{ sx: fieldStyles }}
             inputProps={{ min: 0, onKeyDown: blockNegativeKey }}
@@ -373,9 +412,17 @@ export const PackageSetupForm = ({
             label="HSN Code"
             placeholder="Enter HSN code"
             value={tier.hsnCode}
-            onChange={(e) => patchTier({ hsnCode: e.target.value })}
+            onChange={(e) => patchTier({ hsnCode: e.target.value.replace(/\D/g, "").slice(0, 8) })}
+            required={hsnRequired}
+            error={!!tier.hsnCode && !isValidHsn(tier.hsnCode)}
+            helperText={tier.hsnCode && !isValidHsn(tier.hsnCode) ? "HSN code must be 4, 6 or 8 digits" : undefined}
             fullWidth
             variant="outlined"
+            sx={{
+              ...requiredLabelSx,
+              "& .MuiFormHelperText-root.Mui-error, & .MuiInputLabel-root.Mui-error": { color: "var(--color-primary)" },
+              "& .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline": { borderColor: "var(--color-primary)" },
+            }}
             slotProps={{ inputLabel: { shrink: true } }}
             InputProps={{ sx: fieldStyles }}
           />
@@ -403,8 +450,10 @@ export const PackageSetupForm = ({
               setMaxExtensionDays(raw === "" ? "" : toNonNegative(raw));
             }}
             disabled={!extensionAllowed}
+            required={extensionAllowed}
             fullWidth
             variant="outlined"
+            sx={requiredLabelSx}
             slotProps={{ inputLabel: { shrink: true } }}
             InputProps={{ sx: fieldStyles }}
             inputProps={{ min: 0, onKeyDown: blockNegativeKey }}
