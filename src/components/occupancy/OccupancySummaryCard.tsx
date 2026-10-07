@@ -119,10 +119,10 @@ const OccupancySummaryCard: React.FC<OccupancySummaryCardProps> = ({ startDate, 
       const qs = params.toString();
 
       const [fitoutRes, usersRes, downloadsRes, occupancyRes] = await Promise.all([
-        fetch(`${getFullUrl("/occupany_dashboard/get_fitout_flat")}?${qs}`, getAuthenticatedFetchOptions()),
-        fetch(`${getFullUrl("/occupany_dashboard/get_total_users")}?${qs}`, getAuthenticatedFetchOptions()),
-        fetch(`${getFullUrl("/occupany_dashboard/get_total_downloads")}?${qs}`, getAuthenticatedFetchOptions()),
-        fetch(`${getFullUrl("/occupany_dashboard/get_flat_occupancy")}?${qs}`, getAuthenticatedFetchOptions()),
+        fetch(`${getFullUrl("/occupany_dashboard/get_fitout_flat.json")}?${qs}`, getAuthenticatedFetchOptions()),
+        fetch(`${getFullUrl("/occupany_dashboard/get_total_users.json")}?${qs}`, getAuthenticatedFetchOptions()),
+        fetch(`${getFullUrl("/occupany_dashboard/get_total_downloads.json")}?${qs}`, getAuthenticatedFetchOptions()),
+        fetch(`${getFullUrl("/occupany_dashboard/get_flat_occupancy.json")}?${qs}`, getAuthenticatedFetchOptions()),
       ]);
 
       if (!fitoutRes.ok) throw new Error(`HTTP ${fitoutRes.status}`);
