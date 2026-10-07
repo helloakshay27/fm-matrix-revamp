@@ -107,6 +107,15 @@ const incidentAnalyticsAPI = {
     );
   },
 
+  // Feeds only the LTIR and Zero Incident Days tiles of the Incident Summary
+  // card — the other tiles come from safety_metrics.
+  async getIncidentKpis(fromDate: Date, toDate: Date, siteId?: string) {
+    const resolvedSiteId = siteId || localStorage.getItem('selectedSiteId') || '';
+    return get(
+      buildUrl('/incident_dashboard/incident_kpis.json', fromDate, toDate, resolvedSiteId ? { site_id: resolvedSiteId } : {})
+    );
+  },
+
   async getCauseWiseIncidents(fromDate: Date, toDate: Date, siteId?: string) {
     const resolvedSiteId = siteId || localStorage.getItem('selectedSiteId') || '';
     return get(

@@ -5,6 +5,8 @@ import { getFullUrl, getAuthenticatedFetchOptions } from "@/config/apiConfig";
 interface OccupancySummaryCardProps {
   startDate?: string;
   endDate?: string;
+  /** Comma-separated site ids from the dashboard filter; falls back to localStorage. */
+  siteIds?: string;
 }
 
 type ApiRecord = Record<string, unknown>;
@@ -96,7 +98,7 @@ function findByKeyword(rows: NameValueRow[], keywords: string[], excludeKeywords
   return row ? row.value : 0;
 }
 
-const OccupancySummaryCard: React.FC<OccupancySummaryCardProps> = ({ startDate, endDate }) => {
+const OccupancySummaryCard: React.FC<OccupancySummaryCardProps> = ({ startDate, endDate, siteIds }) => {
   const [fitoutData, setFitoutData] = useState<unknown>(null);
   const [usersData, setUsersData] = useState<unknown>(null);
   const [downloadsData, setDownloadsData] = useState<unknown>(null);
@@ -108,7 +110,7 @@ const OccupancySummaryCard: React.FC<OccupancySummaryCardProps> = ({ startDate, 
     setLoading(true);
     setError(null);
     try {
-      const siteId = localStorage.getItem("selectedSiteId") || "";
+      const siteId = siteIds || localStorage.getItem("selectedSiteId") || "";
       const fromDate = startDate || "2020-01-01";
       const toDate = endDate || new Date().toISOString().split("T")[0];
 
@@ -144,7 +146,7 @@ const OccupancySummaryCard: React.FC<OccupancySummaryCardProps> = ({ startDate, 
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, siteIds]);
 
   useEffect(() => {
     fetchData();

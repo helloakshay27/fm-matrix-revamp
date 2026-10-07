@@ -261,7 +261,33 @@ export const dashboardAnalyticsOptions = {
 
 // Analytics for executive dashboard (/dashboard-executive)
 export const executiveAnalyticsOptions = {
- 
+  // assets: {
+  //   icon: Package,
+  //   label: "Assets",
+  //   color: "#06B6D4",
+  //   options: [
+  //     {
+  //       id: "assets_status",
+  //       endpoint: "asset_status",
+  //       label: "Asset Status Distribution",
+  //     },
+  //     {
+  //       id: "assets_statistics",
+  //       endpoint: "asset_statistics",
+  //       label: "Asset Statistics Overview",
+  //     },
+  //     {
+  //       id: "assets_group_wise",
+  //       endpoint: "group_wise",
+  //       label: "Assets Group-Wise",
+  //     },
+  //     {
+  //       id: "assets_category_wise",
+  //       endpoint: "category_wise",
+  //       label: "Category Wise Assets",
+  //     },
+  //   ],
+  // },
   community: {
     icon: BarChart3,
     label: "Community Programs",
@@ -284,7 +310,7 @@ export const executiveAnalyticsOptions = {
     label: "Helpdesk Management",
     color: "#DAD6C9",
     options: [
-      { id: "helpdesk_snapshot", endpoint: "snapshot", label: "Snapshot" },
+      // { id: "helpdesk_snapshot", endpoint: "snapshot", label: "Snapshot" },
       {
         id: "helpdesk_aging_closure_feedback",
         endpoint: "aging_closure_feedback",
@@ -389,6 +415,30 @@ export const executiveAnalyticsOptions = {
         id: "am_highest_maintenance_assets",
         endpoint: "highest_maintenance_assets",
         label: "Assets With Highest Maintenance Spend",
+      },
+      {
+        id: "assets_status",
+        module: "assets",
+        endpoint: "asset_status",
+        label: "Asset Status Distribution",
+      },
+      {
+        id: "assets_statistics",
+        module: "assets",
+        endpoint: "asset_statistics",
+        label: "Asset Statistics Overview",
+      },
+      {
+        id: "assets_group_wise",
+        module: "assets",
+        endpoint: "group_wise",
+        label: "Assets Group-Wise",
+      },
+      {
+        id: "assets_category_wise",
+        module: "assets",
+        endpoint: "category_wise",
+        label: "Category Wise Assets",
       },
       // {
       //   id: "am_amc_contract_summary",
@@ -662,11 +712,11 @@ export const executiveAnalyticsOptions = {
     label: "Utility Consumption",
     color: "#10B981",
     options: [
-      {
-        id: "utility_energy_kpis",
-        endpoint: "energy_kpis",
-        label: "Energy KPIs",
-      },
+      // {
+      //   id: "utility_energy_kpis",
+      //   endpoint: "energy_kpis",
+      //   label: "Energy KPIs",
+      // },
       {
         id: "utility_sub_meter_sources",
         endpoint: "sub_meter_sources",
@@ -722,11 +772,11 @@ export const executiveAnalyticsOptions = {
         endpoint: "card_fuel_consumption",
         label: "Fuel Consumption",
       },
-      // {
-      //   id: "utility_power_consumption_top_management",
-      //   endpoint: "power_consumption_top_management",
-      //   label: "Power Consumption Top Management",
-      // },
+      {
+        id: "utility_power_consumption_top_management",
+        endpoint: "power_consumption_top_management",
+        label: "Power Consumption Top Management",
+      },
       {
         id: "utility_water_consumption_top_management",
         endpoint: "water_consumption_top_management",
