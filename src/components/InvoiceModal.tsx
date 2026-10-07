@@ -29,6 +29,8 @@ import { useAppDispatch } from "@/store/hooks";
 import { useParams } from "react-router-dom";
 import { addWOInvoice, fetchBOQ } from "@/store/slices/workOrderSlice";
 import axios from "axios";
+const isTrue = (val: unknown) =>
+  val === true || val === "true" || val === 1 || val === "1";
 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
     '& .MuiDialog-paper': {
@@ -156,20 +158,36 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
         setAttachmentPreviews(prev => prev.filter(({ file }) => file !== fileToRemove));
     };
 
+    // useEffect(() => {
+    //     const getBoq = async () => {
+    //         try {
+    //             const response = await dispatch(fetchBOQ({ baseUrl, token, id: Number(id) })).unwrap();
+    //             setBoqs(response.inventories);
+    //         } catch (error) {
+    //             console.log(error);
+    //             toast.error(error);
+    //         }
+    //     };
+
+    //     getBoq();
+    // }, [dispatch, baseUrl, token, id]);
+
     useEffect(() => {
-        const getBoq = async () => {
-            try {
-                const response = await dispatch(fetchBOQ({ baseUrl, token, id: Number(id) })).unwrap();
-                setBoqs(response.inventories);
-            } catch (error) {
-                console.log(error);
-                toast.error(error);
-            }
-        };
+    const getBoq = async () => {
+        try {
+            const response = await dispatch(fetchBOQ({ baseUrl, token, id: Number(id) })).unwrap();
+            const available = (response.inventories || []).filter(
+                (item: any) => !isTrue(item.deleted) && !isTrue(item.delivery_completion)
+            );
+            setBoqs(available);
+        } catch (error) {
+            console.log(error);
+            toast.error(error);
+        }
+    };
 
-        getBoq();
-    }, [dispatch, baseUrl, token, id]);
-
+    getBoq();
+}, [dispatch, baseUrl, token, id]);
     useEffect(() => {
         return () => {
             attachmentPreviews.forEach(({ preview }) => {

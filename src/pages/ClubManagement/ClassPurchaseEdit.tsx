@@ -351,7 +351,13 @@ export const ClassPurchaseEdit = () => {
             label="Discount (₹)"
             type="number"
             value={discount}
-            onChange={(e) => setDiscount(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "" || /^\d*\.?\d*$/.test(value)) setDiscount(value);
+            }}
+            onKeyDown={(e) => {
+              if (["-", "+", "e", "E"].includes(e.key)) e.preventDefault();
+            }}
             fullWidth
             variant="outlined"
             inputProps={{ min: 0 }}

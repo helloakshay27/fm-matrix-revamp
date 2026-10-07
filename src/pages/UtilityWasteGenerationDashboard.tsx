@@ -148,7 +148,7 @@ const SiteDetailModal: React.FC<SiteDetailModalProps> = ({ siteName, siteData, o
         {siteData.map(({ category, value }) => (
           <div key={category} className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-3">
             <span className="text-sm font-medium text-gray-700">{category}</span>
-            <span className="text-sm font-semibold text-gray-900">{value.toLocaleString('en-IN')} kg</span>
+            <span className="text-sm font-semibold text-gray-900">{(value ?? 0).toLocaleString('en-IN')} kg</span>
           </div>
         ))}
       </div>
@@ -178,6 +178,7 @@ const UtilityWasteGenerationDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilters, setActiveFilters] = useState<WasteGenerationFilters>({});
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [listCounts, setListCounts] = useState<WasteGenerationCounts | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -326,9 +327,11 @@ useEffect(() => {
       setIsLoading(true);
       const response = await fetchWasteGenerations(page, filters);
       setWasteGenerations(response.waste_generations || []);
+      setTotalPages(response.pagination?.total_pages || 1);
       if (response.counts) setListCounts(response.counts);
     } catch (err) {
       setWasteGenerations([]);
+      setTotalPages(1);
     } finally {
       setIsLoading(false);
     }
@@ -339,6 +342,7 @@ useEffect(() => {
   }, [currentPage, activeFilters]);
 
   // Handlers
+  const handlePageChange = (page: number) => setCurrentPage(page);
   const handleActionClick = () => setShowActionPanel(!showActionPanel);
   const handleClearSelection = () => {
     setShowActionPanel(false);
@@ -403,26 +407,30 @@ useEffect(() => {
   const extraKpiCards = [
     {
       label: 'Wet Waste',
-      value: kg(listCounts?.wet_waste),
+      rawValue: listCounts?.wet_waste,
       icon: <Percent className="w-6 h-6 text-[#C72030]" />,
     },
     {
       label: 'Dry Waste',
-      value: kg(listCounts?.dry_waste),
+      rawValue: listCounts?.dry_waste,
       icon: <Package className="w-6 h-6 text-[#C72030]" />,
     },
     {
       label: 'Hazardous Waste',
-      value: kg(listCounts?.hazardous_waste),
+      rawValue: listCounts?.hazardous_waste,
       icon: <Activity className="w-6 h-6 text-[#C72030]" />,
     },
     ...(listCounts?.category_counts ?? []).map((category) => ({
       label: category.label,
-      value: kg(category.value),
+      rawValue: category.value,
       icon: <Leaf className="w-6 h-6 text-[#C72030]" />,
       recycled: kg(category.recycled_value),
     })),
-  ];
+  ]
+    // Only show cards the API actually has a figure for - drop the
+    // "—" placeholders instead of rendering empty cards.
+    .filter((card) => card.rawValue != null)
+    .map((card) => ({ ...card, value: kg(card.rawValue) }));
 
   return (
     <>
@@ -548,6 +556,10 @@ useEffect(() => {
               enableExport={true}
               onExport={handleExport}
               isExporting={isExporting}
+              pagination={true}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
               leftActions={
                 shouldShow("Waste Generation", "show") ? (
                   <Button className="bg-[#C72030] text-white rounded-none" onClick={handleActionClick}>
@@ -583,7 +595,7 @@ useEffect(() => {
               {[
                 { label: 'Total Waste Generated', value: kpiData?.total_waste ?? null, icon: <Trash2 className="w-6 h-6 text-[#C72030]" /> },
                 { label: 'Total Recycled',         value: kpiData?.total_recycled ?? null, icon: <RefreshCw className="w-6 h-6 text-[#C72030]" /> },
-                { label: 'Dry Waste',              value: kpiData?.dry_waste ?? null, icon: <Leaf className="w-6 h-6 text-[#C72030]" /> },
+                // { label: 'Dry Waste',              value: kpiData?.dry_waste ?? null, icon: <Leaf className="w-6 h-6 text-[#C72030]" /> },
                 { label: 'Hazardous',              value: kpiData?.hazardous_waste ?? null, icon: <Activity className="w-6 h-6 text-[#C72030]" /> },
               ].map((item, i) => (
                 <div key={i} className="relative bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 hover:shadow-lg transition-all duration-300 min-h-[88px]">
@@ -595,7 +607,7 @@ useEffect(() => {
                       <Loader2 className="animate-spin w-5 h-5 text-[#C72030]" />
                     ) : (
                       <div className="text-xl font-semibold">
-                        {item.value !== null ? `${item.value.toLocaleString('en-IN')} kg` : '—'}
+                        {item.value != null ? `${item.value.toLocaleString('en-IN')} kg` : '—'}
                       </div>
                     )}
                     <div className="text-sm font-medium text-[#1A1A1A]">{item.label}</div>

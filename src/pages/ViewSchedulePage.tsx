@@ -32,7 +32,7 @@ const muiFieldStyles = {
       borderColor: '#1A1A1A',
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
+      borderColor: 'var(--color-primary)',
       borderWidth: 2,
     },
     // Disabled state styling
@@ -49,7 +49,7 @@ const muiFieldStyles = {
     color: '#666666',
     fontSize: '16px',
     '&.Mui-focused': {
-      color: '#C72030',
+      color: 'var(--color-primary)',
     },
     '&.MuiInputLabel-shrink': {
       transform: 'translate(14px, -9px) scale(0.75)',
@@ -397,42 +397,42 @@ export const ViewSchedulePage = () => {
 
             <TabsTrigger
               value="task"
-              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[color:var(--color-primary)] border-r border-gray-200 last:border-r-0"
             >
               Task
             </TabsTrigger>
 
             <TabsTrigger
               value="time"
-              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[color:var(--color-primary)] border-r border-gray-200 last:border-r-0"
             >
               Time Setup
             </TabsTrigger>
 
             <TabsTrigger
               value="schedule"
-              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[color:var(--color-primary)] border-r border-gray-200 last:border-r-0"
             >
               Schedule
             </TabsTrigger>
 
             <TabsTrigger
               value="association"
-              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[color:var(--color-primary)] border-r border-gray-200 last:border-r-0"
             >
               Association
             </TabsTrigger>
 
             <TabsTrigger
               value="email"
-              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[color:var(--color-primary)] border-r border-gray-200 last:border-r-0"
             >
               Email Trigger Rules
             </TabsTrigger>
 
             <TabsTrigger
               value="mapping"
-              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[color:var(--color-primary)] border-r border-gray-200 last:border-r-0"
             >
               Asset Mapping List
             </TabsTrigger>
@@ -445,7 +445,7 @@ export const ViewSchedulePage = () => {
                 <CardHeader className="pb-4 lg:pb-6">
                   <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
                     <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                      <FileText className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
                     </div>
                     <span className="uppercase tracking-wide">Basic Configuration</span>
                   </CardTitle>
@@ -636,7 +636,7 @@ export const ViewSchedulePage = () => {
                     <CardHeader className="pb-4 lg:pb-6">
                       <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
                         <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                          <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                          <FileText className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
                         </div>
                         <span className="uppercase tracking-wide">Task Details</span>
                       </CardTitle>
@@ -646,8 +646,8 @@ export const ViewSchedulePage = () => {
                         {groupOrder.map((gid, gi) => (
                           <div key={gid}>
                             {/* Group header */}
-                            <div className="flex items-center gap-2 mb-4 pb-2 border-b-2 border-[#C72030]">
-                              <Layers className="w-4 h-4 text-[#C72030]" />
+                            <div className="flex items-center gap-2 mb-4 pb-2 border-b-2" style={{ borderColor: 'var(--color-primary)' }}>
+                              <Layers className="w-4 h-4" style={{ color: 'var(--color-primary)' }} />
                               <span className="font-semibold text-base text-gray-900 uppercase tracking-wide">
                                 {getGroupName(gid) || `Group ${gi + 1}`}
                               </span>
@@ -813,7 +813,7 @@ export const ViewSchedulePage = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <Clock className="w-6 h-6" style={{ color: '#C72030' }} />
+                    <Clock className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
                   </div>
                   <span className="uppercase tracking-wide">Time Setup</span>
                 </CardTitle>
@@ -914,7 +914,7 @@ export const ViewSchedulePage = () => {
                 <CardHeader className="pb-4 lg:pb-6">
                   <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
                     <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                      <FileText className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
                     </div>
                     <span className="uppercase tracking-wide">Schedule Configuration</span>
                   </CardTitle>
@@ -1021,7 +1021,7 @@ export const ViewSchedulePage = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <Link className="w-6 h-6" style={{ color: '#C72030' }} />
+                    <Link className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
                   </div>
                   <span className="uppercase tracking-wide">Association</span>
                 </CardTitle>
@@ -1086,7 +1086,7 @@ export const ViewSchedulePage = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <Mail className="w-6 h-6" style={{ color: '#C72030' }} />
+                    <Mail className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
                   </div>
                   <span className="uppercase tracking-wide">Email Trigger Rules</span>
                 </CardTitle>
@@ -1130,7 +1130,7 @@ export const ViewSchedulePage = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <MapPin className="w-6 h-6" style={{ color: '#C72030' }} />
+                    <MapPin className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
                   </div>
                   <span className="uppercase tracking-wide">Asset Mapping List</span>
                 </CardTitle>

@@ -3835,6 +3835,12 @@ import EditSupplierPage from "./features/PulseSuppliers/pages/EditSupplierPage.t
 const ModulesManagement = lazy(
   () => import("./pages/settings/ModulesManagement")
 );
+const TransportSuppliersPage = lazy(
+  () => import("./features/transport-suppliers/pages/TransportSuppliers")
+);
+const TransportSupplierDetailsPage = lazy(
+  () => import("./features/transport-suppliers/pages/TransportSupplierDetailsPage")
+);
 const GateIntegrationPage = lazy(
   () => import("./features/gate-integration/pages/GateIntegration")
 );
@@ -8616,6 +8622,15 @@ function App() {
                             <Route
                               path="/security/visitor/employee/details/:id"
                               element={<VisitorDetailsPageEmployee />}
+                            />
+                            {/* Settings > Transport Routes */}
+                            <Route
+                              path="/settings/transport/suppliers"
+                              element={<TransportSuppliersPage />}
+                            />
+                            <Route
+                              path="/settings/transport/suppliers/:id"
+                              element={<TransportSupplierDetailsPage />}
                             />
                             <Route
                               path="/settings/visitor-management/setup"

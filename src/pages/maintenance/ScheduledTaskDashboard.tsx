@@ -1494,13 +1494,14 @@ export const ScheduledTaskDashboard = () => {
               <div className="flex gap-2 items-center">
                 <Button
                   onClick={() => setShowAnalyticsFilter(true)}
-                  className="fm-button-fix fm-button-brand flex items-center gap-2"
+                  className="fm-button-fix flex items-center gap-2"
+                  style={{ backgroundColor: '#111111', borderColor: '#111111', color: '#ffffff' }}
                 >
-                  <CalendarIcon className="w-4 h-4" />
-                  <span className="text-sm font-medium">
+                  <CalendarIcon className="w-4 h-4" style={{ color: '#ffffff' }} />
+                  <span className="text-sm font-medium" style={{ color: '#ffffff' }}>
                     {analyticsDateRange.startDate} - {analyticsDateRange.endDate}
                   </span>
-                  <FilterIcon className="w-4 h-4" />
+                  <FilterIcon className="w-4 h-4" style={{ color: '#ffffff' }} />
                 </Button>
                 <TaskAnalyticsSelector
                   onSelectionChange={handleAnalyticsSelectionChange}

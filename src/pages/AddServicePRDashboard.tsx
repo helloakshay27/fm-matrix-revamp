@@ -117,6 +117,7 @@ export const AddServicePRDashboard = () => {
     {
       id: 1,
       service: "",
+      serviceCode: "",
       productDescription: "",
       glCode: "",
       taxCode: "",
@@ -254,36 +255,42 @@ export const AddServicePRDashboard = () => {
     }
   };
 
-  // Fetch Service Details (UOM) by Service ID
+  // Fetch Service Details by Service ID
   const fetchServiceUOM = async (detailId, serviceId) => {
     try {
       const response = await axios.get(
-        `https://${baseUrl}/pms/services/${serviceId}.json`,
+        `https://${baseUrl}/pms/services/get_service_details?id=${serviceId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-      console.log("Service Details Response:", response.data);
 
-      // Update the detail with the UOM from API
-      if (response.data && response.data.base_uom) {
-        const uom = response.data.base_uom || response.data || "";
-        setDetailsForms((prevForms) =>
-          prevForms.map((form) =>
-            form.id === detailId
-              ? { ...form, uom: uom }
-              : form
-          )
-        );
-        if (uom) {
-          toast.success(`UOM ${uom} loaded successfully`);
-        }
+      const serviceData = response.data?.service || response.data?.data || response.data || {};
+      const uom = serviceData.base_uom || serviceData.uom || serviceData.unit || "";
+      const description = serviceData.description || serviceData.name || "";
+      const serviceCode = serviceData.external_id || serviceData.ext_code || serviceData.service_code || "";
+
+      setDetailsForms((prevForms) =>
+        prevForms.map((form) =>
+          form.id === detailId
+            ? {
+                ...form,
+                uom: uom || form.uom,
+                productDescription: description || form.productDescription,
+                serviceCode: serviceCode || form.serviceCode,
+              }
+            : form
+        )
+      );
+
+      if (uom) {
+        toast.success(`UOM ${uom} loaded successfully`);
       }
     } catch (error) {
-      console.error("Error fetching Service UOM:", error);
-      toast.error("Failed to fetch Service UOM");
+      console.error("Error fetching Service details:", error);
+      toast.error("Failed to fetch Service details");
     }
   };
 
@@ -482,13 +489,33 @@ export const AddServicePRDashboard = () => {
     return () => clearInterval(interval);
   }, [slid, formData, detailsForms, attachedFiles, wbsSelection, overallWbs, token, baseUrl]);
 
+  const fetchSuppliersForPlant = async (plantId: string) => {
+    try {
+      const selectedPlant = plantDetails.find((plant) => String(plant.id) === String(plantId));
+      const resolvedPlantCode = selectedPlant?.company_code || selectedPlant?.sale_org_code || selectedPlant?.plant_name || "";
+      const response = await dispatch(
+        getSuppliers({
+          baseUrl,
+          token,
+          plantCode: resolvedPlantCode,
+          companyCode: selectedPlant?.company_code || "",
+        })
+      ).unwrap();
+      setSuppliers(Array.isArray(response?.suppliers) ? response.suppliers : Array.isArray(response) ? response : []);
+    } catch (error) {
+      console.log(error);
+      toast.dismiss();
+      toast.error(error);
+    }
+  };
+
   useEffect(() => {
     const fetchSuppliers = async () => {
       try {
         const response = await dispatch(
           getSuppliers({ baseUrl, token })
         ).unwrap();
-        setSuppliers(response.suppliers);
+        setSuppliers(Array.isArray(response?.suppliers) ? response.suppliers : Array.isArray(response) ? response : []);
       } catch (error) {
         console.log(error);
         toast.dismiss();
@@ -752,6 +779,7 @@ export const AddServicePRDashboard = () => {
     const newForm = {
       id: newId,
       service: "",
+      serviceCode: "",
       productDescription: "",
       glCode: "",
       taxCode: "",
@@ -782,17 +810,24 @@ export const AddServicePRDashboard = () => {
     }
   };
 
-  const handlePlantDetailsChange = (e) => {
+  const handlePlantDetailsChange = async (e) => {
     const { value } = e.target;
-    setFormData((prev) => ({ ...prev, plantDetail: value }));
+    setFormData((prev) => ({ ...prev, plantDetail: value, contractor: "" }));
     dispatch(changePlantDetails({ baseUrl, id: value, token }));
+
+    if (value) {
+      await fetchSuppliersForPlant(value);
+    } else {
+      const response = await dispatch(getSuppliers({ baseUrl, token })).unwrap();
+      setSuppliers(Array.isArray(response?.suppliers) ? response.suppliers : Array.isArray(response) ? response : []);
+    }
   };
 
   useEffect(() => {
     if (formData.plantDetail) {
-      handlePlantDetailsChange({ target: { name: "plantDetail", value: formData.plantDetail } });
+      dispatch(changePlantDetails({ baseUrl, id: formData.plantDetail, token }));
     }
-  }, [formData.plantDetail]);
+  }, [formData.plantDetail, dispatch, baseUrl, token]);
 
   const removeFile = (indexToRemove) => {
     setAttachedFiles((prev) =>
@@ -1013,26 +1048,6 @@ export const AddServicePRDashboard = () => {
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Select Contractor*</InputLabel>
-                <MuiSelect
-                  label="Select Contractor*"
-                  value={formData.contractor}
-                  onChange={(e) => handleInputChange("contractor", e.target.value)}
-                  displayEmpty
-                  sx={fieldStyles}
-                >
-                  <MenuItem value="">
-                    <em>Select Contractor</em>
-                  </MenuItem>
-                  {suppliers.map((supplier) => (
-                    <MenuItem key={supplier.id} value={supplier.id}>
-                      {supplier.name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
-
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel shrink>Plant Detail*</InputLabel>
                 <MuiSelect
                   label="Plant Detail*"
@@ -1042,11 +1057,31 @@ export const AddServicePRDashboard = () => {
                   sx={fieldStyles}
                 >
                   <MenuItem value="">
-                    <em>Select Plant Id</em>
+                    <em>Select SAP Plant</em>
                   </MenuItem>
                   {plantDetails.map((plantDetail) => (
                     <MenuItem key={plantDetail.id} value={plantDetail.id}>
                       {plantDetail.plant_name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }} disabled={!formData.plantDetail}>
+                <InputLabel shrink>Select Contractor*</InputLabel>
+                <MuiSelect
+                  label="Select Contractor*"
+                  value={formData.contractor}
+                  onChange={(e) => handleInputChange("contractor", e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="">
+                    <em>{formData.plantDetail ? "Select Contractor" : "Select SAP plant first"}</em>
+                  </MenuItem>
+                  {suppliers.map((supplier) => (
+                    <MenuItem key={supplier.id} value={supplier.id}>
+                      {supplier.name}
                     </MenuItem>
                   ))}
                 </MuiSelect>
@@ -1422,6 +1457,26 @@ export const AddServicePRDashboard = () => {
                       ))}
                     </MuiSelect>
                   </FormControl>
+
+                  <TextField
+                    label="SAC Code"
+                    value={detailsData.serviceCode || ""}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ readOnly: true }}
+                    sx={{ ...fieldStyles, mt: 1 }}
+                  />
+
+                  <TextField
+                    label="Base UOM"
+                    value={detailsData.uom || ""}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ readOnly: true }}
+                    sx={{ ...fieldStyles, mt: 1 }}
+                  />
 
                   <TextField
                     label="Product Additional Text*"

@@ -59,24 +59,24 @@ import { assetService } from '@/services/assetService';
 
 // Styled Components
 const RedButton = styled(MuiButton)(({ theme }) => ({
-  backgroundColor: '#DA7756',
+  backgroundColor: 'var(--color-primary)',
   color: '#ffffff !important',
   borderRadius: 4,
   textTransform: 'none',
   padding: '10px 20px',
   fontFamily: 'Work Sans, sans-serif',
   fontWeight: 500,
-  boxShadow: '0 2px 4px rgba(218, 119, 86, 0.2)',
+  boxShadow: '0 2px 4px rgba(var(--color-primary-rgb, 26, 26, 24), 0.2)',
   '&.MuiButton-root': {
     color: '#ffffff !important',
   },
   '&:hover': {
-    backgroundColor: '#DA7756',
+    backgroundColor: 'var(--color-primary-hover)',
     color: '#ffffff !important',
-    boxShadow: '0 2px 4px rgba(218, 119, 86, 0.2)',
+    boxShadow: '0 4px 8px rgba(var(--color-primary-rgb, 26, 26, 24), 0.3)',
   },
   '&.Mui-disabled': {
-    backgroundColor: '#DA7756',
+    backgroundColor: 'var(--color-primary)',
     color: '#ffffff !important',
     opacity: 0.65,
   },
@@ -112,8 +112,8 @@ const SectionHeader = styled(Box)(({ theme }) => ({
 }));
 
 const RedIcon = styled(Settings)(({ theme }) => ({
-  color: '#D42F2F',
-  backgroundColor: '#D42F2F',
+  color: '#fff',
+  backgroundColor: 'var(--color-primary)',
   borderRadius: '50%',
   padding: '8px',
   fontSize: '32px',
@@ -126,16 +126,16 @@ const fieldStyles = {
       borderColor: '#ddd',
     },
     '&:hover fieldset': {
-      borderColor: '#C72030',
+      borderColor: 'var(--color-primary)',
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
+      borderColor: 'var(--color-primary)',
     },
   },
   '& .MuiInputLabel-root': {
     fontSize: '14px',
     '&.Mui-focused': {
-      color: '#C72030',
+      color: 'var(--color-primary)',
     },
   },
   '& .MuiInputBase-input': {
@@ -2414,7 +2414,7 @@ export const EditSchedulePage = () => {
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box sx={{
-            backgroundColor: '#DA7756',
+            backgroundColor: 'var(--color-primary)',
             borderRadius: '50%',
             width: '32px',
             height: '32px',
@@ -2424,7 +2424,7 @@ export const EditSchedulePage = () => {
           }}>
             <Cog size={16} color="white" />
           </Box>
-          <Typography variant="h6" sx={{ fontWeight: 600, color: '#DA7756', textTransform: 'uppercase' }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
             Basic Configuration
           </Typography>
         </Box>
@@ -2450,7 +2450,7 @@ export const EditSchedulePage = () => {
             value="PPM"
             control={
               <Radio
-                sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
+                sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
               />
             }
             label="PPM"
@@ -2459,7 +2459,7 @@ export const EditSchedulePage = () => {
             value="AMC"
             control={
               <Radio
-                sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
+                sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
               />
             }
             label="AMC"
@@ -2468,7 +2468,7 @@ export const EditSchedulePage = () => {
             value="Preparedness"
             control={
               <Radio
-                sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
+                sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
               />
             }
             label="Preparedness"
@@ -2477,7 +2477,7 @@ export const EditSchedulePage = () => {
             value="Routine"
             control={
               <Radio
-                sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
+                sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
               />
             }
             label="Routine"
@@ -2650,16 +2650,16 @@ export const EditSchedulePage = () => {
             variant="outlined"
             onClick={addAttachment}
             sx={{
-              borderColor: '#C72030',
-              color: '#C72030',
+              borderColor: 'var(--color-primary)',
+              color: 'var(--color-primary)',
               textTransform: 'none',
               fontFamily: 'Work Sans, sans-serif',
               fontWeight: 500,
               borderRadius: '0',
               padding: '8px 16px',
               '&:hover': {
-                borderColor: '#B8252F',
-                backgroundColor: 'rgba(199, 32, 48, 0.04)',
+                borderColor: 'var(--color-primary-hover)',
+                backgroundColor: 'rgba(var(--color-primary-rgb, 26, 26, 24), 0.04)',
               },
             }}
           >
@@ -2680,7 +2680,7 @@ export const EditSchedulePage = () => {
         mb: 3
       }}>
         <Box sx={{
-          backgroundColor: '#DA7756',
+          backgroundColor: 'var(--color-primary)',
           borderRadius: '50%',
           width: '32px',
           height: '32px',
@@ -2690,7 +2690,7 @@ export const EditSchedulePage = () => {
         }}>
           <Cog size={16} color="white" />
         </Box>
-        <Typography variant="h6" sx={{ fontWeight: 600, color: '#DA7756', textTransform: 'uppercase' }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
           Schedule Setup
         </Typography>
       </Box>
@@ -2711,7 +2711,7 @@ export const EditSchedulePage = () => {
                   value="Individual"
                   control={
                     <Radio
-                      sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
+                      sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                     />
                   }
                   label="Individual"
@@ -2720,7 +2720,7 @@ export const EditSchedulePage = () => {
                   value="Asset Group"
                   control={
                     <Radio
-                      sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
+                      sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                     />
                   }
                   label="Asset Group"
@@ -2745,7 +2745,7 @@ export const EditSchedulePage = () => {
               value="active"
               control={
                 <Radio
-                  sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
+                  sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                 />
               }
               label="Active"
@@ -2754,7 +2754,7 @@ export const EditSchedulePage = () => {
               value="inactive"
               control={
                 <Radio
-                  sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
+                  sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                 />
               }
               label="Inactive"
@@ -3339,8 +3339,8 @@ export const EditSchedulePage = () => {
     <div>
       {/* Header Outside the Box */}
       <div className="flex justify-between items-center p-6">
-        <div className="flex items-center gap-2 text-lg font-semibold" style={{ textTransform: 'uppercase', color: '#DA7756' }}>
-          <span className="bg-[#DA7756] text-white rounded-full w-8 h-8 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm">
+        <div className="flex items-center gap-2 text-brand text-lg font-semibold" style={{ textTransform: 'uppercase', color: 'var(--color-primary)' }}>
+          <span className="bg-brand text-white rounded-full w-8 h-8 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm" style={{ backgroundColor: 'var(--color-primary)' }}>
             <Cog className="w-6 h-6" />
           </span>
           QUESTION SETUP
@@ -3348,7 +3348,7 @@ export const EditSchedulePage = () => {
 
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1">
-            <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${createNew ? 'bg-[#C72030]' : 'bg-gray-300'}`}>
+            <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${createNew ? 'bg-brand' : 'bg-gray-300'}`} style={createNew ? { backgroundColor: 'var(--color-primary)' } : {}}>
               <input
                 type="checkbox"
                 checked={createNew}
@@ -3367,7 +3367,7 @@ export const EditSchedulePage = () => {
             <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Create Template</span>
           </div>
           <div className="flex items-center gap-1">
-            <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${weightage ? 'bg-[#C72030]' : 'bg-gray-300'}`}>
+            <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${weightage ? 'bg-brand' : 'bg-gray-300'}`} style={weightage ? { backgroundColor: 'var(--color-primary)' } : {}}>
               <input
                 type="checkbox"
                 checked={weightage}
@@ -3379,7 +3379,7 @@ export const EditSchedulePage = () => {
             <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Weightage</span>
           </div>
           <div className="flex items-center gap-1">
-            <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${autoTicket ? 'bg-[#C72030]' : 'bg-gray-300'}`}>
+            <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${autoTicket ? 'bg-brand' : 'bg-gray-300'}`} style={autoTicket ? { backgroundColor: 'var(--color-primary)' } : {}}>
               <input
                 type="checkbox"
                 checked={autoTicket}
@@ -3440,12 +3440,12 @@ export const EditSchedulePage = () => {
               >
                 <FormControlLabel
                   value="checklist"
-                  control={<Radio sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }} />}
+                  control={<Radio sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                   label="Checklist Level"
                 />
                 <FormControlLabel
                   value="question"
-                  control={<Radio sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }} />}
+                  control={<Radio sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                   label="Question Level"
                 />
               </RadioGroup>
@@ -3507,7 +3507,7 @@ export const EditSchedulePage = () => {
               {questionSections.length > 1 && (
                 <IconButton
                   onClick={() => removeQuestionSection(section.id)}
-                  sx={{ color: '#C72030' }}
+                  sx={{ color: 'var(--color-primary)' }}
                 >
                   <Close />
                 </IconButton>
@@ -3605,7 +3605,7 @@ export const EditSchedulePage = () => {
                         backgroundColor: 'rgba(255, 255, 255, 0.8)',
                         '&:hover': {
                           backgroundColor: 'rgba(255, 255, 255, 1)',
-                          color: '#C72030'
+                          color: 'var(--color-primary)'
                         }
                       }}
                       size="small"
@@ -3621,7 +3621,7 @@ export const EditSchedulePage = () => {
                           <Checkbox
                             checked={task.mandatory}
                             onChange={(e) => updateTaskInSection(section.id, task.id, 'mandatory', e.target.checked)}
-                            sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
+                            sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                           />
                         }
                         label="Mandatory"
@@ -3631,7 +3631,7 @@ export const EditSchedulePage = () => {
                           <Checkbox
                             checked={task.helpText}
                             onChange={(e) => updateTaskInSection(section.id, task.id, 'helpText', e.target.checked)}
-                            sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
+                            sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                           />
                         }
                         label="Help Text"
@@ -3647,7 +3647,7 @@ export const EditSchedulePage = () => {
                                 updateTaskInSection(section.id, task.id, 'inputType', 'number');
                               }
                             }}
-                            sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
+                            sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                           />
                         }
                         label="Reading"
@@ -3658,7 +3658,7 @@ export const EditSchedulePage = () => {
                             <Checkbox
                               checked={task.rating}
                               onChange={(e) => updateTaskInSection(section.id, task.id, 'rating', e.target.checked)}
-                              sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
+                              sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                             />
                           }
                           label="Rating"
@@ -3769,14 +3769,14 @@ export const EditSchedulePage = () => {
                             startIcon={<AttachFile />}
                             onClick={() => addHelpTextAttachment(section.id, task.id)}
                             sx={{
-                              color: '#C72030',
-                              borderColor: '#C72030',
+                              color: 'var(--color-primary)',
+                              borderColor: 'var(--color-primary)',
                               fontSize: '12px',
                               padding: '4px 8px',
                               minWidth: 'auto',
                               '&:hover': {
-                                borderColor: '#C72030',
-                                backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                borderColor: 'var(--color-primary)',
+                                backgroundColor: 'var(--color-primary-light)'
                               }
                             }}
                           >
@@ -3883,7 +3883,7 @@ export const EditSchedulePage = () => {
                                   const newValues = task.dropdownValues.filter((_, idx) => idx !== valueIndex);
                                   updateTaskInSection(section.id, task.id, 'dropdownValues', newValues);
                                 }}
-                                sx={{ color: '#C72030' }}
+                                sx={{ color: 'var(--color-primary)' }}
                               >
                                 <Close />
                               </IconButton>
@@ -3900,13 +3900,13 @@ export const EditSchedulePage = () => {
                               updateTaskInSection(section.id, task.id, 'dropdownValues', newValues);
                             }}
                             sx={{
-                              color: '#C72030',
-                              borderColor: '#C72030',
+                              color: 'var(--color-primary)',
+                              borderColor: 'var(--color-primary)',
                               fontSize: '12px',
                               padding: '4px 12px',
                               '&:hover': {
-                                borderColor: '#C72030',
-                                backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                borderColor: 'var(--color-primary)',
+                                backgroundColor: 'var(--color-primary-light)'
                               }
                             }}
                           >
@@ -3940,7 +3940,7 @@ export const EditSchedulePage = () => {
                             <Radio
                               checked={valueIndex === 0} // First option selected by default
                               name={`radio-${section.id}-${task.id}`}
-                              sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
+                              sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                             />
 
                             <TextField
@@ -3986,7 +3986,7 @@ export const EditSchedulePage = () => {
                                   const newValues = task.radioValues.filter((_, idx) => idx !== valueIndex);
                                   updateTaskInSection(section.id, task.id, 'radioValues', newValues);
                                 }}
-                                sx={{ color: '#DA7756' }}
+                                sx={{ color: 'var(--color-primary)' }}
                               >
                                 <Close />
                               </IconButton>
@@ -4004,13 +4004,13 @@ export const EditSchedulePage = () => {
                               updateTaskInSection(section.id, task.id, 'radioValues', newValues);
                             }}
                             sx={{
-                              color: '#DA7756',
-                              borderColor: '#DA7756',
+                              color: 'var(--color-primary)',
+                              borderColor: 'var(--color-primary)',
                               fontSize: '12px',
                               padding: '4px 12px',
                               '&:hover': {
-                                borderColor: '#DA7756',
-                                backgroundColor: 'rgba(218, 119, 86, 0.04)'
+                                borderColor: 'var(--color-primary)',
+                                backgroundColor: 'var(--color-primary-light)'
                               }
                             }}
                           >
@@ -4048,7 +4048,7 @@ export const EditSchedulePage = () => {
                                 newSelectedStates[valueIndex] = e.target.checked;
                                 updateTaskInSection(section.id, task.id, 'checkboxSelectedStates', newSelectedStates);
                               }}
-                              sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
+                              sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                             />
 
                             <TextField
@@ -4078,7 +4078,7 @@ export const EditSchedulePage = () => {
                                   updateTaskInSection(section.id, task.id, 'checkboxValues', newValues);
                                   updateTaskInSection(section.id, task.id, 'checkboxSelectedStates', newSelectedStates);
                                 }}
-                                sx={{ color: '#DA7756' }}
+                                sx={{ color: 'var(--color-primary)' }}
                               >
                                 <Close />
                               </IconButton>
@@ -4098,13 +4098,13 @@ export const EditSchedulePage = () => {
                               updateTaskInSection(section.id, task.id, 'checkboxSelectedStates', newSelectedStates);
                             }}
                             sx={{
-                              color: '#DA7756',
-                              borderColor: '#DA7756',
+                              color: 'var(--color-primary)',
+                              borderColor: 'var(--color-primary)',
                               fontSize: '12px',
                               padding: '4px 12px',
                               '&:hover': {
-                                borderColor: '#DA7756',
-                                backgroundColor: 'rgba(218, 119, 86, 0.04)'
+                                borderColor: 'var(--color-primary)',
+                                backgroundColor: 'var(--color-primary-light)'
                               }
                             }}
                           >
@@ -4153,7 +4153,7 @@ export const EditSchedulePage = () => {
                                   const newValues = task.optionsInputsValues.filter((_, idx) => idx !== valueIndex);
                                   updateTaskInSection(section.id, task.id, 'optionsInputsValues', newValues);
                                 }}
-                                sx={{ color: '#DA7756' }}
+                                sx={{ color: 'var(--color-primary)' }}
                               >
                                 <Close />
                               </IconButton>
@@ -4170,13 +4170,13 @@ export const EditSchedulePage = () => {
                               updateTaskInSection(section.id, task.id, 'optionsInputsValues', newValues);
                             }}
                             sx={{
-                              color: '#DA7756',
-                              borderColor: '#DA7756',
+                              color: 'var(--color-primary)',
+                              borderColor: 'var(--color-primary)',
                               fontSize: '12px',
                               padding: '4px 12px',
                               '&:hover': {
-                                borderColor: '#DA7756',
-                                backgroundColor: 'rgba(218, 119, 86, 0.04)'
+                                borderColor: 'var(--color-primary)',
+                                backgroundColor: 'var(--color-primary-light)'
                               }
                             }}
                           >
@@ -4194,7 +4194,7 @@ export const EditSchedulePage = () => {
             <div className="flex justify-end mt-4 gap-4">
               <button
                 onClick={() => addTaskToSection(section.id)}
-                className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
+                className="flex items-center gap-1 text-brand text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
                 style={{ fontFamily: 'Work Sans, sans-serif' }}
               >
                 <Add className="w-4 h-4" />
@@ -4203,7 +4203,7 @@ export const EditSchedulePage = () => {
               {(questionSections.length === 1 || sectionIndex === questionSections.length - 1) && (
                 <button
                   onClick={addQuestionSection}
-                  className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
+                  className="flex items-center gap-1 text-brand text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
                   style={{ fontFamily: 'Work Sans, sans-serif' }}
                 >
                   <Add className="w-4 h-4" />
@@ -4231,7 +4231,7 @@ export const EditSchedulePage = () => {
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box sx={{
-            backgroundColor: '#DA7756',
+            backgroundColor: 'var(--color-primary)',
             borderRadius: '50%',
             width: '32px',
             height: '32px',
@@ -4241,7 +4241,7 @@ export const EditSchedulePage = () => {
           }}>
             <Cog size={16} color="white" />
           </Box>
-          <Typography variant="h6" sx={{ fontWeight: 600, color: '#DA7756', textTransform: 'uppercase' }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
             Time Setup
           </Typography>
         </Box>
@@ -4252,9 +4252,9 @@ export const EditSchedulePage = () => {
               checked={editTiming}
               onChange={(e) => setEditTiming(e.target.checked)}
               sx={{
-                color: '#DA7756',
+                color: 'var(--color-primary)',
                 '&.Mui-checked': {
-                  color: '#DA7756'
+                  color: 'var(--color-primary)'
                 }
               }}
             />
@@ -4281,9 +4281,9 @@ export const EditSchedulePage = () => {
 
   const renderMapping = () => (
     <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-      <div className="border-l-4 border-l-[#C72030] p-4 sm:p-6 bg-white">
-        <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold mb-6" style={{ textTransform: 'uppercase' }}>
-          <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+      <div className="border-l-4 border-l-brand p-4 sm:p-6 bg-white">
+        <div className="flex items-center gap-2 text-brand text-sm sm:text-base font-semibold mb-6" style={{ textTransform: 'uppercase' }}>
+          <span className="bg-brand text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
             <Cog className="w-3 h-3 sm:w-4 sm:h-4" />
           </span>
           MAPPING

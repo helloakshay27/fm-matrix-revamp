@@ -23,6 +23,7 @@ import {
   ClipboardList,
   Images,
   Loader2,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
@@ -89,6 +90,8 @@ interface PRInventory {
   approved_qty?: number;
   transfer_qty?: number;
   wbs_code?: string;
+  deleted?: boolean | string | number;
+  delivery_completion?: boolean | string | number | null;
 }
 
 interface Attachment {
@@ -178,6 +181,12 @@ interface PODetails {
 
 // Table column configurations
 const inventoryTableColumns: ColumnConfig[] = [
+  {
+  key: "delivery_completion",
+  label: "Delivery Completion",
+  sortable: true,
+  draggable: true,
+},
   { key: "inventory_name", label: "Item", sortable: true, draggable: true },
   {
     key: "sac_hsn_code",
@@ -195,6 +204,7 @@ const inventoryTableColumns: ColumnConfig[] = [
   { key: "unit", label: "Unit", sortable: true, draggable: true },
   { key: "rate", label: "Rate", sortable: true, draggable: true },
   { key: "total_value", label: "Amount", sortable: true, draggable: true },
+  
   // {
   //   key: "approved_qty",
   //   label: "Approved Qty",
@@ -597,6 +607,7 @@ export const PODetailsPage = () => {
     }
   };
 
+  const isDeleted = (val: unknown) => val === true || val === "true" || val === 1 || val === "1";
   const inventoryTableData =
     poDetails.pms_pr_inventories?.map((item, index) => ({
       id: item.id || index,
@@ -611,6 +622,8 @@ export const PODetailsPage = () => {
       total_value: formatIndian(item.total_value),
       approved_qty: item.approved_qty?.toString() || "-",
       transfer_qty: item.transfer_qty?.toString() || "-",
+      deleted: isDeleted(item.deleted),
+      delivery_completion: isDeleted(item.delivery_completion),
     })) || [];
 
   const grnTableData =
@@ -676,13 +689,30 @@ export const PODetailsPage = () => {
       created_by: item.creator_name || "-",
     })) || [];
 
-  const renderCell = (item: any, columnKey: string) => {
-    const value = item[columnKey] ?? "-";
-    if (columnKey === "inventory_name") {
-      return value;
-    }
-    return value;
-  };
+ const renderCell = (item: any, columnKey: string) => {
+  if (columnKey === "delivery_completion") {
+    return item.delivery_completion === true ? (
+      <span
+        className="inline-flex items-center text-green-600"
+        title="Delivery Completed"
+      >
+        <CheckCircle2 className="w-5 h-5" />
+      </span>
+    ) : (
+      "-"
+    );
+  }
+
+  const value = item[columnKey] ?? "-";
+  if (item.deleted === true) {
+    return (
+      <span className="text-gray-400 line-through opacity-60 select-none">
+        {value}
+      </span>
+    );
+  }
+  return value;
+};
 
   if (loading) {
     return (
@@ -1020,6 +1050,8 @@ export const PODetailsPage = () => {
               columns={inventoryTableColumns}
               storageKey="po-items-table"
               hideColumnsButton={true}
+              isRowDisabled={(item: any) => item.deleted === true}
+              rowClassName={(item: any) => item.deleted === true ? 'opacity-100 pointer-events-none' : ''}
               hideTableExport={true}
               hideTableSearch={true}
               exportFileName="po-items-details"

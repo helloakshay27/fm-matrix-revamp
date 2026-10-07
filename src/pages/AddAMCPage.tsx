@@ -1521,11 +1521,11 @@ export const AddAMCPage = () => {
                     cursor: (index > currentStep && !completedSteps.includes(index - 1)) ? 'not-allowed' : 'pointer',
                     width: '187px',
                     height: '40px',
-                    backgroundColor: (index === currentStep || completedSteps.includes(index)) ? '#DA7756' :
+                    backgroundColor: (index === currentStep || completedSteps.includes(index)) ? '#111111' :
                       (index > currentStep && !completedSteps.includes(index - 1)) ? 'rgba(245, 245, 245, 1)' : 'rgba(255, 255, 255, 1)',
                     color: (index === currentStep || completedSteps.includes(index)) ? 'white' :
                       (index > currentStep && !completedSteps.includes(index - 1)) ? 'rgba(150, 150, 150, 1)' : 'rgba(196, 184, 157, 1)',
-                    border: (index === currentStep || completedSteps.includes(index)) ? '2px solid #DA7756' :
+                    border: (index === currentStep || completedSteps.includes(index)) ? '2px solid #111111' :
                       (index > currentStep && !completedSteps.includes(index - 1)) ? '1px solid rgba(200, 200, 200, 1)' : '1px solid rgba(196, 184, 157, 1)',
                     padding: '12px 20px',
                     fontSize: '13px',
@@ -1534,7 +1534,7 @@ export const AddAMCPage = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: index === currentStep ? '0 2px 4px rgba(218, 119, 86, 0.3)' : 'none',
+                    boxShadow: index === currentStep ? '0 2px 4px rgba(17, 17, 17, 0.3)' : 'none',
                     transition: 'all 0.2s ease',
                     fontFamily: 'Work Sans, sans-serif',
                     position: 'relative',
@@ -2850,7 +2850,7 @@ export const AddAMCPage = () => {
               {/* Header above card */}
               <div className="flex items-center mb-4">
                 <Avatar sx={{
-                  bgcolor: '#DA7756',
+                  bgcolor: '#111111',
                   color: 'white',
                   width: 32,
                   height: 32,
@@ -2859,7 +2859,7 @@ export const AddAMCPage = () => {
                 }}>
                   <SettingsOutlinedIcon fontSize="small" />
                 </Avatar>
-                <h2 className="text-[#DA7756]" style={{
+                <h2 className="text-[#111111]" style={{
                   fontFamily: 'Work Sans, sans-serif',
                   fontWeight: 600,
                   fontSize: '26px',
@@ -3814,7 +3814,7 @@ export const AddAMCPage = () => {
               {/* Header above card */}
               <div className="flex items-center mb-4">
                 <Avatar sx={{
-                  bgcolor: '#DA7756',
+                  bgcolor: '#111111',
                   color: 'white',
                   width: 32,
                   height: 32,
@@ -3823,7 +3823,7 @@ export const AddAMCPage = () => {
                 }}>
                   <SettingsOutlinedIcon fontSize="small" />
                 </Avatar>
-                <h2 className="text-[#DA7756]" style={{
+                <h2 className="text-[#111111]" style={{
                   fontFamily: 'Work Sans, sans-serif',
                   fontWeight: 600,
                   fontSize: '26px',
@@ -4047,7 +4047,7 @@ export const AddAMCPage = () => {
             <>
               <div className="flex items-center mb-4">
                 <Avatar sx={{
-                  bgcolor: '#DA7756',
+                  bgcolor: '#111111',
                   color: 'white',
                   width: 32,
                   height: 32,
@@ -4056,7 +4056,7 @@ export const AddAMCPage = () => {
                 }}>
                   <SettingsOutlinedIcon fontSize="small" />
                 </Avatar>
-                <h2 className="text-[#DA7756]" style={{
+                <h2 className="text-[#111111]" style={{
                   fontFamily: 'Work Sans, sans-serif',
                   fontWeight: 600,
                   fontSize: '26px',
@@ -4260,7 +4260,7 @@ export const AddAMCPage = () => {
               {/* Header above card */}
               <div className="flex items-center mb-4">
                 <Avatar sx={{
-                  bgcolor: '#DA7756',
+                  bgcolor: '#111111',
                   color: 'white',
                   width: 32,
                   height: 32,
@@ -4269,7 +4269,7 @@ export const AddAMCPage = () => {
                 }}>
                   <SettingsOutlinedIcon fontSize="small" />
                 </Avatar>
-                <h2 className="text-[#DA7756]" style={{
+                <h2 className="text-[#111111]" style={{
                   fontFamily: 'Work Sans, sans-serif',
                   fontWeight: 600,
                   fontSize: '26px',

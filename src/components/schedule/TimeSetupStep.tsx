@@ -157,10 +157,10 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
       <div className="flex items-center gap-3 mb-6 justify-between">
         {!hideTitle && (
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#C72030] rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-[var(--color-primary)] rounded-full flex items-center justify-center">
               <Settings className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-xl font-semibold text-[#C72030]" style={{ textTransform: 'uppercase' }}>Time Setup</h2>
+            <h2 className="text-xl font-semibold text-[var(--color-primary)]" style={{ textTransform: 'uppercase' }}>Time Setup</h2>
           </div>
         )}
         {disabled && !isEditPage && showEditButton && (
@@ -170,14 +170,14 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
             startIcon={<Edit />}
             onClick={onEdit}
             sx={{
-              color: "#C72030",
-              borderColor: "#C72030",
+              color: "var(--color-primary)",
+              borderColor: "var(--color-primary)",
               fontSize: "12px",
               padding: "4px 12px",
               minWidth: "auto",
               "&:hover": {
-                borderColor: "#C72030",
-                backgroundColor: "rgba(199, 32, 48, 0.04)",
+                borderColor: "var(--color-primary-hover)",
+                backgroundColor: "var(--color-primary-light)",
               },
             }}
           >
@@ -204,22 +204,22 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
               {/* Column Headers */}
               <div className="grid grid-cols-4 border-b border-gray-300">
                 <div className="bg-gray-100 p-4 border-r border-gray-300">
-                  <h4 className="font-medium text-[#C72030] text-center">
+                  <h4 className="font-medium text-[var(--color-primary)] text-center">
                     Hours
                   </h4>
                 </div>
                 <div className="bg-gray-100 p-4 border-r border-gray-300">
-                  <h4 className="font-medium text-[#C72030] text-center">
+                  <h4 className="font-medium text-[var(--color-primary)] text-center">
                     Minutes
                   </h4>
                 </div>
                 <div className="bg-gray-100 p-4 border-r border-gray-300">
-                  <h4 className="font-medium text-[#C72030] text-center">
+                  <h4 className="font-medium text-[var(--color-primary)] text-center">
                     Day
                   </h4>
                 </div>
                 <div className="bg-gray-100 p-4">
-                  <h4 className="font-medium text-[#C72030] text-center">
+                  <h4 className="font-medium text-[var(--color-primary)] text-center">
                     Month
                   </h4>
                 </div>
@@ -257,7 +257,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                           const newHours = checked ? hours : [];
                           onChange?.("selectedHours", newHours);
                         }}
-                        className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                        className="data-[state=checked]:bg-[var(--color-primary)] data-[state=checked]:border-[var(--color-primary)]"
                         disabled={disabled}
                       />
                       <Label htmlFor="select-all-hours" className="text-sm">
@@ -278,7 +278,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                                 : selectedHours.filter((h) => h !== hour);
                               onChange?.("selectedHours", newHours);
                             }}
-                            className="h-4 w-4 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                            className="h-4 w-4 data-[state=checked]:bg-[var(--color-primary)] data-[state=checked]:border-[var(--color-primary)]"
                             disabled={disabled}
                           />
                           <Label htmlFor={`hour-${hour}`} className="text-xs">
@@ -339,7 +339,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                                   : selectedMinutes.filter((m) => m !== minute);
                                 onChange?.("selectedMinutes", newMinutes);
                               }}
-                              className="h-4 w-4 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                              className="h-4 w-4 data-[state=checked]:bg-[var(--color-primary)] data-[state=checked]:border-[var(--color-primary)]"
                               disabled={disabled}
                             />
                             <Label
@@ -444,7 +444,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                               const newWeekdays = checked ? weekdays : [];
                               onChange?.("selectedWeekdays", newWeekdays);
                             }}
-                            className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                            className="data-[state=checked]:bg-[var(--color-primary)] data-[state=checked]:border-[var(--color-primary)]"
                             disabled={disabled}
                           />
                           <Label
@@ -469,7 +469,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                                   : selectedWeekdays.filter((w) => w !== day);
                                 onChange?.("selectedWeekdays", newWeekdays);
                               }}
-                              className="h-4 w-4 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                              className="h-4 w-4 data-[state=checked]:bg-[var(--color-primary)] data-[state=checked]:border-[var(--color-primary)]"
                               disabled={disabled}
                             />
                             <Label
@@ -494,7 +494,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                               const newDays = checked ? days : [];
                               onChange?.("selectedDays", newDays);
                             }}
-                            className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                            className="data-[state=checked]:bg-[var(--color-primary)] data-[state=checked]:border-[var(--color-primary)]"
                             disabled={disabled}
                           />
                           <Label htmlFor="select-all-days" className="text-sm">
@@ -517,7 +517,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                                     : selectedDays.filter((d) => d !== day);
                                   onChange?.("selectedDays", newDays);
                                 }}
-                                className="h-4 w-4 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                                className="h-4 w-4 data-[state=checked]:bg-[var(--color-primary)] data-[state=checked]:border-[var(--color-primary)]"
                                 disabled={disabled}
                               />
                               <Label htmlFor={`day-${day}`} className="text-xs">
@@ -587,7 +587,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                               const newMonths = checked ? months : [];
                               onChange?.("selectedMonths", newMonths);
                             }}
-                            className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                            className="data-[state=checked]:bg-[var(--color-primary)] data-[state=checked]:border-[var(--color-primary)]"
                             disabled={disabled}
                           />
                           <Label
@@ -613,7 +613,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                                     : selectedMonths.filter((m) => m !== month);
                                   onChange?.("selectedMonths", newMonths);
                                 }}
-                                className="h-4 w-4 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                                className="h-4 w-4 data-[state=checked]:bg-[var(--color-primary)] data-[state=checked]:border-[var(--color-primary)]"
                                 disabled={disabled}
                               />
                               <Label

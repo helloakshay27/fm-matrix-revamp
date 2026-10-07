@@ -316,12 +316,12 @@ export const ClassBookingAdd = () => {
                   onChange={(e) => {
                     setSlotTimeIds(e.target.checked ? availableSlotsForSelect.map((s) => s.id) : []);
                   }}
-                  className="w-4 h-4 cursor-pointer text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 disabled:cursor-not-allowed"
+                  className="w-4 h-4 cursor-pointer accent-brand text-brand bg-gray-100 border-gray-300 rounded focus:ring-brand disabled:cursor-not-allowed"
                 />
                 <Label htmlFor="select-all-booking-slots" className="cursor-pointer text-sm font-medium text-gray-700 select-none">
                   Select All
                   {slotTimeIds.length > 0 && (
-                    <span className="ml-1.5 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+                    <span className="ml-1.5 text-xs font-semibold text-brand bg-brand-light border border-brand px-2 py-0.5 rounded-full">
                       {slotTimeIds.length} selected
                     </span>
                   )}
@@ -345,7 +345,7 @@ export const ClassBookingAdd = () => {
                       id={`booking-slot-${slot.id}`}
                       checked={slotTimeIds.includes(slot.id)}
                       onChange={() => toggleSlot(slot.id)}
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                      className="w-4 h-4 accent-brand text-brand bg-gray-100 border-gray-300 rounded focus:ring-brand"
                       disabled={isFull}
                     />
                     <Label

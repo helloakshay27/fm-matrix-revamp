@@ -698,8 +698,8 @@ const InventoryConsumptionViewPage = () => {
                   </div>
 
                 <div className="space-y-4">
-                  <FormControl fullWidth size="small" variant="outlined" required>
-                    <InputLabel shrink sx={{ '& .MuiFormLabel-asterisk': { color: BRAND } }}>
+                  <FormControl fullWidth size="small" variant="outlined">
+                    <InputLabel shrink>
                       Handover To
                     </InputLabel>
                     <Select
@@ -722,7 +722,7 @@ const InventoryConsumptionViewPage = () => {
                   </FormControl>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <FormControl fullWidth size="small" variant="outlined" required>
+                    <FormControl fullWidth size="small" variant="outlined">
                       <InputLabel shrink>Building</InputLabel>
                       <Select
                         value={buildingId}
@@ -744,7 +744,7 @@ const InventoryConsumptionViewPage = () => {
                       </Select>
                     </FormControl>
 
-                    <FormControl fullWidth size="small" variant="outlined" required>
+                    <FormControl fullWidth size="small" variant="outlined">
                       <InputLabel shrink>Wing</InputLabel>
                       <Select
                         value={wingId}
@@ -766,7 +766,7 @@ const InventoryConsumptionViewPage = () => {
                       </Select>
                     </FormControl>
 
-                    <FormControl fullWidth size="small" variant="outlined" required>
+                    <FormControl fullWidth size="small" variant="outlined">
                       <InputLabel shrink>Floor</InputLabel>
                       <Select
                         value={floorId}
@@ -789,7 +789,7 @@ const InventoryConsumptionViewPage = () => {
                     </FormControl>
                   </div>
 
-                  <FormControl fullWidth size="small" variant="outlined" required>
+                  <FormControl fullWidth size="small" variant="outlined">
                     <InputLabel shrink>Area</InputLabel>
                     <Select
                       value={areaId}

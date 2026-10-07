@@ -315,7 +315,7 @@ export const GRNSRNDashboard = () => {
           className="p-1"
           onClick={(e) => {
             e.stopPropagation();
-            navigate(`/finance/grn-srn/edit/${item.id}`, {
+            navigate(`/finance/grn-srn/edit/${item.id}?edit=header`, {
               state: { returnTo: buildReturnToPath(location.pathname, location.search) },
             });
           }}

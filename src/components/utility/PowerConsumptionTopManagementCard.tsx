@@ -11,6 +11,8 @@ import { getFullUrl, getAuthenticatedFetchOptions } from "@/config/apiConfig";
 interface PowerConsumptionTopManagementCardProps {
   startDate?: string;
   endDate?: string;
+  /** Comma-separated site ids from the dashboard filter; falls back to localStorage. */
+  siteIds?: string;
 }
 
 type ApiRecord = Record<string, unknown>;
@@ -112,6 +114,7 @@ function downloadTileCsv(label: string, unit: string, value: number) {
 const PowerConsumptionTopManagementCard: React.FC<PowerConsumptionTopManagementCardProps> = ({
   startDate,
   endDate,
+  siteIds,
 }) => {
   const [rawByKey, setRawByKey] = useState<Record<string, unknown>>({});
   const [loading, setLoading] = useState(true);
@@ -121,7 +124,7 @@ const PowerConsumptionTopManagementCard: React.FC<PowerConsumptionTopManagementC
     setLoading(true);
     setError(null);
     try {
-      const siteId = localStorage.getItem("selectedSiteId") || "";
+      const siteId = siteIds || localStorage.getItem("selectedSiteId") || "";
       const fromDate = startDate || "2020-01-01";
       const toDate = endDate || new Date().toISOString().split("T")[0];
       const params = new URLSearchParams({ from_date: fromDate, to_date: toDate });
@@ -147,7 +150,7 @@ const PowerConsumptionTopManagementCard: React.FC<PowerConsumptionTopManagementC
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, siteIds]);
 
   useEffect(() => {
     fetchData();
