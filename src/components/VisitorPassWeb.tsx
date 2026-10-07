@@ -246,7 +246,7 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
                   <div className="mt-1 text-2xl font-semibold tracking-wider">
                     {otp.split("").join(" ")}
                   </div>
-                  <div className="text-[11px] mt-1 whitespace-normal sm:whitespace-nowrap">
+                  <div className="text-[11px] mt-1 whitespace-normal break-words">
                     Note : Show this QR code or OTP to the guard at the
                     entrance.
                   </div>

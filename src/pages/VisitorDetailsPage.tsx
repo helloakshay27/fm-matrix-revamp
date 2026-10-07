@@ -192,6 +192,15 @@ export const VisitorDetailsPage = () => {
     return value !== null && value !== undefined && value !== "";
   };
 
+  // An exit counts if ANY exit marker is present — the guard's exit time, its display
+  // string, or the master (admin) exit time. guest_exit_time can be null while
+  // master_exit_time_show is set, so checking only one of them left Check-out showing.
+  const hasExited = (v: typeof visitorData): boolean =>
+    !!v &&
+    (hasData(v.guest_exit_time) ||
+      hasData(v.guest_exit_time_show) ||
+      hasData(v.master_exit_time_show));
+
   const formatDateTime = (raw?: string | null): string => {
     if (!raw) return "-";
     const d = new Date(raw);
@@ -404,13 +413,14 @@ export const VisitorDetailsPage = () => {
       const url = getFullUrl(`/pms/admin/visitors/marked_out_visitors.json`);
       const options = getAuthenticatedFetchOptions();
 
-      // Create request body for checkout with current timestamp
+      // Local time with its real UTC offset (the old UTC-time + hardcoded "+05:30"
+      // stamped checkouts 5h30m early).
       const requestBody = {
         gatekeeper: {
-          guest_exit_time: new Date().toISOString().slice(0, 19) + "+05:30",
+          guest_exit_time: getLocalISOString(),
           exit_gate_id: "",
           status: "checked_out",
-          gatekeeper_ids: id,
+          gatekeeper_ids: Number(id),
         },
       };
 
@@ -433,10 +443,14 @@ export const VisitorDetailsPage = () => {
         );
       }
 
+      // { message: "Marked Out Visitors Successfully.", count: 1 }
       const data = await response.json();
+      if (typeof data?.count === "number" && data.count < 1) {
+        throw new Error(data?.message || "No visitor was marked out");
+      }
 
       // Show success toast
-      toast.success("Visitor checked out successfully!");
+      toast.success(data?.message || "Visitor checked out successfully!");
 
       // Refresh visitor data
       window.location.reload();
@@ -528,8 +542,10 @@ export const VisitorDetailsPage = () => {
               </Button>
             )}
 
-            {visitorData.vstatus !== "checked_in" &&
-              visitorData.vstatus !== "checked_out" &&
+            {/* Entry time drives the button: no entry yet → Check-in;
+                entry recorded and no exit yet → Check-out; exit recorded → neither. */}
+            {!visitorData.guest_entry_time &&
+              !hasExited(visitorData) &&
               visitorData.approve === 1 && (
                 <Button
                   onClick={handleCheckIn}
@@ -539,7 +555,7 @@ export const VisitorDetailsPage = () => {
                 </Button>
               )}
 
-            {visitorData.vstatus === "checked_in" && (
+            {!!visitorData.guest_entry_time && !hasExited(visitorData) && (
               <Button
                 onClick={handleCheckOut}
                 className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
