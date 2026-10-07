@@ -68,14 +68,23 @@ function cardInfo(card: ApiRecord | null): string | undefined {
   return undefined;
 }
 
-const METRICS: { label: string; cardKeys: string[] }[] = [
+// LTIR and Zero Incident Days come from /incident_dashboard/incident_kpis.json
+// (merged into the data as `incident_kpis`):
+//   { zero_incident_days: number, ltir: { injuries, work_hours, value }, ... }
+function kpiNumber(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+const METRICS: { label: string; cardKeys: string[]; kpi?: (kpis: ApiRecord | null) => number }[] = [
   {
     label: "LTIR",
-    cardKeys: ["card_LTIR", "get_LTIR", "card_ltir", "card_Ltir"],
+    cardKeys: [],
+    kpi: (kpis) => kpiNumber((kpis?.["ltir"] as ApiRecord | undefined)?.["value"]),
   },
   {
     label: "Zero Incident Days",
-    cardKeys: ["card_ZeroIncidentDays", "get_ZeroIncidentDays", "card_zeroIncidentDays"],
+    cardKeys: [],
+    kpi: (kpis) => kpiNumber(kpis?.["zero_incident_days"]),
   },
   {
     label: "Incident Per Million Sq Ft Per Annum",
@@ -94,11 +103,16 @@ const METRICS: { label: string; cardKeys: string[] }[] = [
 const IncidentSafetyMetricsCard: React.FC<IncidentSafetyMetricsCardProps> = ({ data, loading = false }) => {
   const record = data && typeof data === "object" && !Array.isArray(data) ? (data as ApiRecord) : null;
 
-  const cards = METRICS.map(({ label, cardKeys }) => {
+  const kpis =
+    record?.["incident_kpis"] && typeof record["incident_kpis"] === "object"
+      ? (record["incident_kpis"] as ApiRecord)
+      : null;
+
+  const cards = METRICS.map(({ label, cardKeys, kpi }) => {
     const card = getCard(record, cardKeys);
     return {
       label,
-      value: cardValue(card),
+      value: kpi ? kpi(kpis) : cardValue(card),
       info: cardInfo(card),
     };
   });
