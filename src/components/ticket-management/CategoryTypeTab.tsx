@@ -43,6 +43,7 @@ import {
   ListItemText,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
+import type { EnhancedSelectOption } from '@/utils/enhancedSelectUtils';
 
 const fieldStyles = {
   height: { xs: 36, sm: 40, md: 45 },
@@ -72,9 +73,18 @@ const selectMenuProps = {
   disableEnforceFocus: true,
 };
 
+const priorityOptions: EnhancedSelectOption[] = [
+  { label: "P1 - Critical", value: "p1" },
+  { label: "P2 - Very High", value: "p2" },
+  { label: "P3 - High", value: "p3" },
+  { label: "P4 - Medium", value: "p4" },
+  { label: "P5 - Low", value: "p5" },
+];
+
 const categorySchema = z.object({
   categoryName: z.string().min(1, 'Category name is required'),
   responseTime: z.string().min(1, 'Response time is required'),
+  priority: z.string().optional(),
   customerEnabled: z.boolean(),
   siteId: z.string().min(1, 'Site selection is required'),
   engineerIds: z.array(z.number()).optional(),
@@ -94,6 +104,7 @@ interface CategoryApiResponse {
     doc_type: string;
     selected_icon_url: string;
     tat: string;
+    priority?: string | null;
     assigned_to_names?: string;
     category_email: Array<{
       id: number;
@@ -189,6 +200,7 @@ export const CategoryTypeTab: React.FC = () => {
   const [editVendorEmails, setEditVendorEmails] = useState<string[]>(['']);
   const [editCustomerEnabled, setEditCustomerEnabled] = useState(false);
   const [editSelectedSiteId, setEditSelectedSiteId] = useState<string>('');
+  const [editPriority, setEditPriority] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const analytics = useClubManagementEvents();
   const listViewFired = useRef(false);
@@ -209,6 +221,7 @@ export const CategoryTypeTab: React.FC = () => {
     defaultValues: {
       categoryName: '',
       responseTime: '',
+      priority: '',
       customerEnabled: false,
       siteId: '',
       engineerIds: [],
@@ -341,6 +354,7 @@ export const CategoryTypeTab: React.FC = () => {
     const data: CategoryFormData = {
       categoryName: categoryNameInput.value.trim(),
       responseTime: responseTimeInput.value.trim(),
+      priority: formValues.priority || '',
       customerEnabled: customerEnabled,
       siteId: formValues.siteId,
       engineerIds: formValues.engineerIds || [],
@@ -397,6 +411,7 @@ export const CategoryTypeTab: React.FC = () => {
       formData.append('helpdesk_category[of_phase]', 'pms');
       formData.append('helpdesk_category[name]', data.categoryName);
       formData.append('helpdesk_category[tat]', data.responseTime);
+      formData.append('helpdesk_category[priority]', data.priority || '');
       formData.append('helpdesk_category[customer_enabled]', data.customerEnabled ? '1' : '0');
       
       if (iconFile) {
@@ -569,6 +584,7 @@ export const CategoryTypeTab: React.FC = () => {
     
     setEditIconFile(null);
     setEditCustomerEnabled(!!category.customer_enabled);
+    setEditPriority(category.priority || '');
     setEditVendorEmailEnabled(category.category_email?.length > 0);
     setEditVendorEmails(category.category_email?.length > 0 ? category.category_email.map(e => e.email) : ['']);
     
@@ -639,6 +655,7 @@ export const CategoryTypeTab: React.FC = () => {
       submitFormData.append('helpdesk_category[name]', categoryNameInput?.value || editingCategory.name);
       submitFormData.append('helpdesk_category[customer_enabled]', editCustomerEnabled ? '1' : '0');
       submitFormData.append('helpdesk_category[tat]', responseTimeInput?.value || editingCategory.tat);
+      submitFormData.append('helpdesk_category[priority]', editPriority);
       
       // Add icon if a new one is selected
       if (editIconFile) {
@@ -825,6 +842,7 @@ export const CategoryTypeTab: React.FC = () => {
     { key: 'name', label: 'Category Type', sortable: true },
     { key: 'assign_to_names', label: 'Assignee', sortable: false },
     { key: 'tat', label: 'Response Time', sortable: false },
+    { key: 'priority', label: 'Priority', sortable: false },
     { key: 'category_email', label: 'Vendor Email', sortable: false },
     { key: 'customer_enabled', label: 'Customer Enabled', sortable: false },
     { key: 'icon_url', label: 'Icon', sortable: false },
@@ -866,6 +884,8 @@ export const CategoryTypeTab: React.FC = () => {
         return '--';
       case 'tat':
         return item.tat || '--';
+      case 'priority':
+        return priorityOptions.find(option => option.value === item.priority?.toLowerCase())?.label || item.priority || '--';
       case 'category_email':
         return item.category_email?.length ?
           item.category_email.map(emailObj => emailObj.email).join(', ') : '--';
@@ -961,6 +981,40 @@ export const CategoryTypeTab: React.FC = () => {
                           }}
                           {...field} 
                         />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="priority"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <MuiFormControl fullWidth variant="outlined">
+                          <InputLabel id="add-priority-label" shrink>Priority</InputLabel>
+                          <MuiSelect
+                            labelId="add-priority-label"
+                            label="Priority"
+                            notched
+                            value={field.value || ''}
+                            onChange={(e) => field.onChange(e.target.value as string)}
+                            displayEmpty
+                            sx={fieldStyles}
+                            MenuProps={selectMenuProps}
+                          >
+                            <MenuItem value="">
+                              <em>Select priority</em>
+                            </MenuItem>
+                            {priorityOptions.map((option) => (
+                              <MenuItem key={option.value} value={option.value}>
+                                {option.label}
+                              </MenuItem>
+                            ))}
+                          </MuiSelect>
+                        </MuiFormControl>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1366,6 +1420,29 @@ export const CategoryTypeTab: React.FC = () => {
                     className="w-full bg-white border-gray-300 rounded-md focus-visible:ring-brand focus-visible:border-brand"
                   />
                 </div>
+
+                <MuiFormControl fullWidth variant="outlined">
+                  <InputLabel id="edit-priority-label" shrink>Priority</InputLabel>
+                  <MuiSelect
+                    labelId="edit-priority-label"
+                    label="Priority"
+                    notched
+                    value={editPriority}
+                    onChange={(e) => setEditPriority(e.target.value as string)}
+                    displayEmpty
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    <MenuItem value="">
+                      <em>Select priority</em>
+                    </MenuItem>
+                    {priorityOptions.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </MuiFormControl>
               </div>
 
               <div className="flex items-center space-x-3">

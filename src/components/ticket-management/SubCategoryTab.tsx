@@ -45,6 +45,7 @@ import {
   ListItemText,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
+import type { EnhancedSelectOption } from '@/utils/enhancedSelectUtils';
 
 // Matches the MUI field/menu styling used by the sibling CategoryTypeTab.
 const fieldStyles = {
@@ -73,8 +74,17 @@ const selectMenuProps = {
   disableEnforceFocus: true,
 };
 
+const priorityOptions: EnhancedSelectOption[] = [
+  { label: "P1 - Critical", value: "p1" },
+  { label: "P2 - Very High", value: "p2" },
+  { label: "P3 - High", value: "p3" },
+  { label: "P4 - Medium", value: "p4" },
+  { label: "P5 - Low", value: "p5" },
+];
+
 const subCategorySchema = z.object({
   category: z.string().min(1, 'Category selection is required'),
+  priority: z.string().optional(),
   customerEnabled: z.boolean(),
   building: z.boolean(),
   wing: z.boolean(),
@@ -91,6 +101,7 @@ interface SubCategoryType {
   name: string;
   icon_url: string;
   customer_enabled?: boolean;
+  priority?: string | null;
   location_config: {
     building_enabled: boolean;
     wing_enabled: boolean;
@@ -225,6 +236,7 @@ export const SubCategoryTab: React.FC = () => {
     resolver: zodResolver(subCategorySchema),
     defaultValues: {
       category: '',
+      priority: '',
       customerEnabled: false,
       building: false,
       wing: false,
@@ -323,6 +335,7 @@ export const SubCategoryTab: React.FC = () => {
     // Get the form data
     const data: SubCategoryFormData = {
       category: form.getValues('category'),
+      priority: form.getValues('priority') || '',
       customerEnabled: form.getValues('customerEnabled'),
       building: form.getValues('building'),
       wing: form.getValues('wing'),
@@ -341,6 +354,7 @@ export const SubCategoryTab: React.FC = () => {
       const subCategoryData = {
         helpdesk_category_id: parseInt(data.category),
         customer_enabled: data.customerEnabled,
+        priority: data.priority || '',
         icon: iconFile, // This will be properly handled by the API service as helpdesk_sub_category[icon]
         sub_category_tags: tags.filter(tag => tag.trim()),
         location_enabled: {
@@ -419,6 +433,7 @@ export const SubCategoryTab: React.FC = () => {
     { key: 'id', label: 'S.No', sortable: true },
     { key: 'helpdesk_category_name', label: 'Category Type', sortable: true },
     { key: 'name', label: 'Sub Category', sortable: true },
+    { key: 'priority', label: 'Priority', sortable: false },
     { key: 'building', label: 'Building', sortable: true },
     { key: 'wing', label: 'Wing', sortable: true },
     { key: 'floor', label: 'Floor', sortable: true },
@@ -448,6 +463,8 @@ export const SubCategoryTab: React.FC = () => {
         return item.helpdesk_category_name || '--';
       case 'name':
         return item.name || '--';
+      case 'priority':
+        return priorityOptions.find(option => option.value === item.priority?.toLowerCase())?.label || item.priority || '--';
       case 'id':
         return item.id || '--';
       case 'icon_url':
@@ -678,6 +695,39 @@ export const SubCategoryTab: React.FC = () => {
                                 </MenuItem>
                               ))
                             )}
+                          </MuiSelect>
+                        </MuiFormControl>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="priority"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Priority</FormLabel>
+                      <FormControl>
+                        <MuiFormControl fullWidth size="small">
+                          <MuiSelect
+                            displayEmpty
+                            value={field.value || ''}
+                            onChange={(e) => field.onChange(e.target.value as string)}
+                            onBlur={field.onBlur}
+                            inputRef={field.ref}
+                            sx={fieldStyles}
+                            MenuProps={selectMenuProps}
+                          >
+                            <MenuItem value="">
+                              <em>Select priority</em>
+                            </MenuItem>
+                            {priorityOptions.map((option) => (
+                              <MenuItem key={option.value} value={option.value}>
+                                {option.label}
+                              </MenuItem>
+                            ))}
                           </MuiSelect>
                         </MuiFormControl>
                       </FormControl>
