@@ -240,7 +240,7 @@ export const ViewSelectionModal: React.FC<ViewSelectionModalProps> = ({
             disabled={!selectedView}
             className={`h-12 min-w-[188px] rounded-none px-8 text-[19px] font-bold text-white transition-all duration-300 ${
               selectedView
-                ? "shadow-[0_8px_16px_rgba(0,0,0,0.18)] hover:opacity-90"
+                ? ""
                 : "cursor-not-allowed !bg-gray-200 !text-gray-400 [&_svg]:!text-gray-400"
             }`}
             style={selectedView ? { backgroundColor: "var(--color-primary)" } : {}}
