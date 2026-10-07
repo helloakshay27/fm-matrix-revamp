@@ -1640,7 +1640,7 @@ import { useApiData } from '@/hooks/useApiData';
 
 const CustomStepConnector = styled(StepConnector)(({ theme }) => ({
   '& .MuiStepConnector-line': {
-    borderColor: '#E0E0E0',
+    borderColor: 'rgba(26,26,24,0.2)',
     borderTopWidth: 2,
     borderStyle: 'dotted',
   },
@@ -1651,28 +1651,28 @@ const CustomStepIconRoot = styled('div')<{
 }>(({ theme, ownerState }) => ({
   backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[700] : '#fff',
   zIndex: 1,
-  color: '#A0A0A0',
+  color: 'rgba(26,26,24,0.48)',
   width: 'auto',
   height: 40,
   display: 'flex',
   paddingLeft: '24px',
   paddingRight: '24px',
   borderRadius: '4px',
-  border: '1px solid #E0E0E0',
+  border: '1px solid rgba(26,26,24,0.12)',
   justifyContent: 'center',
   alignItems: 'center',
   fontWeight: 500,
   fontFamily: 'Work Sans, sans-serif',
   fontSize: '14px',
   ...(ownerState.active && {
-    backgroundColor: '#DA7756',
+    backgroundColor: '#1A1A18',
     color: 'white',
-    border: '1px solid #DA7756',
+    border: '1px solid #1A1A18',
   }),
   ...(ownerState.completed && {
-    backgroundColor: '#DA7756',
+    backgroundColor: '#1A1A18',
     color: 'white',
-    border: '1px solid #DA7756',
+    border: '1px solid #1A1A18',
   }),
 }));
 
@@ -1734,7 +1734,8 @@ const DraftButton = styled(MuiButton)(({ theme }) => ({
 
 const SectionCard = styled(Paper)({
   backgroundColor: 'white',
-  boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+  border: '1px solid rgba(26,26,24,0.09)',
+  boxShadow: 'none',
   borderRadius: 0,
   overflow: 'hidden',
   marginBottom: '24px',
@@ -1745,15 +1746,30 @@ const SectionHeader = styled(Box)({
   alignItems: 'center',
   gap: '12px',
   padding: '16px',
-  backgroundColor: '#F6F4EE',
-  borderBottom: '1px solid #E0E0E0',
+  backgroundColor: '#F5F4F0',
+  borderBottom: '1px solid rgba(26,26,24,0.08)',
 });
 
 const SectionTitle = styled('h3')({
   fontSize: '18px',
   fontWeight: 700,
-  color: '#333',
+  color: '#1A1A18',
 });
+
+const VENDOR_FORM_CSS = `
+.vendor-add-page .MuiOutlinedInput-notchedOutline{border-color:rgba(26,26,24,.08)!important}
+.vendor-add-page .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline{border-color:rgba(26,26,24,.28)!important}
+.vendor-add-page .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline{border-color:#1A1A18!important;border-width:1px!important}
+.vendor-add-page .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline{border-color:#E5484D!important}
+.vendor-add-page .MuiInputLabel-root{color:rgba(26,26,24,.48)!important}
+.vendor-add-page .MuiInputLabel-root.Mui-focused{color:#1A1A18!important}
+.vendor-add-page .MuiInputLabel-root.Mui-error{color:#A32126!important}
+.vendor-add-page .MuiInputLabel-root span[style*="red"]{color:#E5484D!important}
+.vendor-add-page .MuiFormHelperText-root.Mui-error{color:#E5484D!important}
+.vendor-add-page .MuiInputBase-input,.vendor-add-page .MuiSelect-select{color:#1A1A18!important}
+.vendor-add-page .MuiInputBase-input::placeholder,.vendor-add-page textarea::placeholder{color:rgba(26,26,24,.3)!important;opacity:1}
+.vendor-add-page .MuiSelect-icon,.vendor-add-page .MuiSvgIcon-root{color:rgba(26,26,24,.48)}
+`;
 
 const steps = [
   'Company Information',
@@ -1772,19 +1788,19 @@ const fieldStyles = {
     height: '40px',
     fontSize: '14px',
     '& fieldset': {
-      borderColor: '#ddd',
+      borderColor: 'rgba(26,26,24,0.08)',
     },
     '&:hover fieldset': {
-      borderColor: '#DA7756',
+      borderColor: 'rgba(26,26,24,0.28)',
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#DA7756',
+      borderColor: '#1A1A18',
     },
   },
   '& .MuiInputLabel-root': {
     fontSize: '14px',
     '&.Mui-focused': {
-      color: '#DA7756',
+      color: '#1A1A18',
     },
   },
 };
@@ -2237,28 +2253,28 @@ export const AddVendorPage = () => {
     const fileNames = currentFiles.map(f => f.name);
 
     return (
-      <div className={`border-2 border-dashed rounded-lg p-6 text-center ${fileNames.length > 0 ? 'border-[#DA7756] bg-[#fef6f4]' : 'border-gray-300'}`}>
-        <p className="text-gray-600 font-medium mb-2">{title}</p>
+      <div className={`border-2 border-dashed rounded-lg p-6 text-center ${fileNames.length > 0 ? 'border-[#1A1A18] bg-[#F5F4F0]' : 'border-[#EBE9E2]'}`}>
+        <p className="text-[rgba(26,26,24,0.68)] font-medium mb-2">{title}</p>
         <label className="cursor-pointer">
           <div className="flex flex-col items-center">
-            <Upload className="w-8 h-8 text-gray-400 mb-2" />
-            <p className="text-sm text-gray-500">Drag & Drop or <span className="text-[#DA7756] font-semibold">Choose Files</span></p>
+            <Upload className="w-8 h-8 text-[rgba(26,26,24,0.38)] mb-2" />
+            <p className="text-sm text-[rgba(26,26,24,0.48)]">Drag & Drop or <span className="text-[#1A1A18] font-semibold">Choose Files</span></p>
           </div>
           <input type="file" multiple className="hidden" onChange={handleFileChange} />
         </label>
         {fileNames.length > 0 ? (
           <div className="mt-3 p-2 bg-white rounded border">
-            <p className="text-xs text-[#DA7756] font-semibold mb-1">{fileNames.length} file(s) selected:</p>
+            <p className="text-xs text-[#1A1A18] font-semibold mb-1">{fileNames.length} file(s) selected:</p>
             <div className="max-h-20 overflow-y-auto">
               {fileNames.map((fileName, index) => (
-                <p key={index} className="text-xs text-gray-700 truncate" title={fileName}>
+                <p key={index} className="text-xs text-[rgba(26,26,24,0.68)] truncate" title={fileName}>
                   📎 {fileName}
                 </p>
               ))}
             </div>
           </div>
         ) : (
-          <p className="text-xs text-gray-400 mt-2">No file chosen</p>
+          <p className="text-xs text-[rgba(26,26,24,0.38)] mt-2">No file chosen</p>
         )}
       </div>
     );
@@ -2270,7 +2286,7 @@ export const AddVendorPage = () => {
         return (
           <SectionCard>
             <SectionHeader>
-              <Building className="text-[#DA7756]" />
+              <Building className="text-[rgba(26,26,24,0.68)]" />
               <SectionTitle>COMPANY INFORMATION</SectionTitle>
             </SectionHeader>
             <Box p={3}>
@@ -2432,7 +2448,7 @@ export const AddVendorPage = () => {
         return (
           <SectionCard>
             <SectionHeader>
-              <MapPin className="text-[#DA7756]" />
+              <MapPin className="text-[rgba(26,26,24,0.68)]" />
               <SectionTitle>ADDRESS</SectionTitle>
             </SectionHeader>
             <Box p={3}>
@@ -2517,7 +2533,7 @@ export const AddVendorPage = () => {
         return (
           <SectionCard>
             <SectionHeader>
-              <Landmark className="text-[#DA7756]" />
+              <Landmark className="text-[rgba(26,26,24,0.68)]" />
               <SectionTitle>BANK DETAILS</SectionTitle>
             </SectionHeader>
             <Box p={3}>
@@ -2560,22 +2576,22 @@ export const AddVendorPage = () => {
         return (
           <SectionCard>
             <SectionHeader>
-              <User className="text-[#DA7756]" />
+              <User className="text-[rgba(26,26,24,0.68)]" />
               <SectionTitle>CONTACT PERSON</SectionTitle>
             </SectionHeader>
             <Box p={3}>
               {contactPersons.map((contact, index) => (
-                <div key={index} className="relative border rounded-lg p-4 mb-4 bg-gray-50">
+                <div key={index} className="relative border border-[rgba(26,26,24,0.09)] rounded-lg p-4 mb-4 bg-[#F5F4F0]">
                   {/* Header with Contact Number and Delete Button */}
                   <div className="flex justify-between items-center mb-4">
-                    <h4 className="text-lg font-semibold text-gray-800">
+                    <h4 className="text-lg font-semibold text-[#1A1A18]">
                       Contact Person {index + 1}
                     </h4>
                     {contactPersons.length > 1 && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2"
+                        className="text-[#E5484D] hover:text-[#A32126] hover:bg-[rgba(229,72,77,0.08)] p-2"
                         onClick={() => removeContactPerson(index)}
                       >
                         <Trash2 className="w-4 h-4" />
@@ -2586,7 +2602,7 @@ export const AddVendorPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {errors[`contact_${index}_general`] && (
                       <div className="col-span-full">
-                        <p className="text-red-500 text-sm mt-1">{errors[`contact_${index}_general`]}</p>
+                        <p className="text-[#E5484D] text-sm mt-1">{errors[`contact_${index}_general`]}</p>
                       </div>
                     )}
                     <TextField
@@ -2654,7 +2670,7 @@ export const AddVendorPage = () => {
         return (
           <SectionCard>
             <SectionHeader>
-              <FileText className="text-[#DA7756]" />
+              <FileText className="text-[rgba(26,26,24,0.68)]" />
               <SectionTitle>KYC DETAILS</SectionTitle>
             </SectionHeader>
             <Box p={3}>
@@ -2706,7 +2722,7 @@ export const AddVendorPage = () => {
         return (
           <SectionCard>
             <SectionHeader>
-              <Upload className="text-[#DA7756]" />
+              <Upload className="text-[rgba(26,26,24,0.68)]" />
               <SectionTitle>ATTACHMENTS</SectionTitle>
             </SectionHeader>
             <Box p={3}>
@@ -2727,22 +2743,23 @@ export const AddVendorPage = () => {
   };
 
   return (
-    <div className="p-6 bg-[#F6F4EE] min-h-screen">
+    <div className="vendor-add-page p-6 bg-[#FDFDFB] min-h-screen">
+      <style>{VENDOR_FORM_CSS}</style>
       {/* Header with Back Button and Breadcrumbs */}
       <div className="mb-6">
-        <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+        <div className="flex items-center space-x-2 text-sm text-[rgba(26,26,24,0.48)] mb-2">
           <button
             onClick={() => navigate('/maintenance/vendor')}
-            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-[#F7F6F2] transition-colors mr-2"
             aria-label="Go back"
           >
-            <ArrowLeft className="w-4 h-4 text-gray-600" />
+            <ArrowLeft className="w-4 h-4 text-[rgba(26,26,24,0.68)]" />
           </button>
           <span>Vendor List</span>
           <span>{">"}</span>
-          <span className="text-gray-900 font-medium">Add New Vendor</span>
+          <span className="text-[#1A1A18] font-medium">Add New Vendor</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">ADD VENDOR</h1>
+        <h1 className="text-2xl font-bold text-[#1A1A18]">ADD VENDOR</h1>
       </div>
 
       <Box sx={{ mb: 4, overflow: 'auto' }}>
@@ -2760,9 +2777,9 @@ export const AddVendorPage = () => {
                 onClick={() => handleStepClick(index)}
                 sx={{
                   cursor: 'pointer',
-                  backgroundColor: (index === activeStep || completedSteps.includes(index)) ? '#DA7756' : 'white',
-                  color: (index === activeStep || completedSteps.includes(index)) ? 'white' : '#C4B89D',
-                  border: `2px solid ${(index === activeStep || completedSteps.includes(index)) ? '#DA7756' : '#C4B89D'}`,
+                  backgroundColor: (index === activeStep || completedSteps.includes(index)) ? '#1A1A18' : 'white',
+                  color: (index === activeStep || completedSteps.includes(index)) ? 'white' : 'rgba(26,26,24,0.48)',
+                  border: `2px solid ${(index === activeStep || completedSteps.includes(index)) ? '#1A1A18' : 'rgba(26,26,24,0.12)'}`,
                   padding: '8px 12px',
                   fontSize: '11px',
                   fontWeight: 500,
@@ -2773,7 +2790,7 @@ export const AddVendorPage = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: index === activeStep ? '0 2px 4px rgba(218, 119, 86, 0.3)' : 'none',
+                  boxShadow: index === activeStep ? '0 2px 4px rgba(26, 26, 24, 0.15)' : 'none',
                   transition: 'all 0.2s ease',
                   fontFamily: 'Work Sans, sans-serif',
                   position: 'relative',
@@ -2792,7 +2809,7 @@ export const AddVendorPage = () => {
                   sx={{
                     width: '30px',
                     height: '2px',
-                    backgroundImage: `repeating-linear-gradient(to right, ${(index < activeStep || completedSteps.includes(index)) ? '#DA7756' : '#C4B89D'} 0px, ${(index < activeStep || completedSteps.includes(index)) ? '#DA7756' : '#C4B89D'} 6px, transparent 6px, transparent 12px)`,
+                    backgroundImage: `repeating-linear-gradient(to right, ${(index < activeStep || completedSteps.includes(index)) ? '#1A1A18' : 'rgba(26,26,24,0.2)'} 0px, ${(index < activeStep || completedSteps.includes(index)) ? '#1A1A18' : 'rgba(26,26,24,0.2)'} 6px, transparent 6px, transparent 12px)`,
                     margin: '0 0px',
                     flexShrink: 0
                   }}
@@ -2808,15 +2825,15 @@ export const AddVendorPage = () => {
       </div>
 
       <div className="flex justify-end gap-4 mt-8">
-        <Button variant="outline" className="fm-button-fix fm-button-brand px-8" disabled={activeStep === 0} onClick={handleBack}>
+        <Button variant="outline" className="fm-button-fix fm-button-brand px-8 !bg-white !text-[#1A1A18] !border-[rgba(26,26,24,0.08)] hover:!border-[rgba(26,26,24,0.28)] disabled:!opacity-50" disabled={activeStep === 0} onClick={handleBack}>
           Back
         </Button>
         {activeStep === steps.length - 1 ? (
-          <Button variant="ghost" className="fm-button-fix fm-button-brand px-8" onClick={handleSave} disabled={isSubmitting}>
+          <Button variant="ghost" className="fm-button-fix fm-button-brand px-8 !bg-[#1A1A18] !text-white !border !border-[#1A1A18] hover:!bg-[#12100E]" onClick={handleSave} disabled={isSubmitting}>
             {isSubmitting ? 'Saving...' : 'Save Vendor'}
           </Button>
         ) : (
-          <Button variant="ghost" className="fm-button-fix fm-button-brand px-8" onClick={handleNext}>
+          <Button variant="ghost" className="fm-button-fix fm-button-brand px-8 !bg-[#1A1A18] !text-white !border !border-[#1A1A18] hover:!bg-[#12100E]" onClick={handleNext}>
             Next
           </Button>
         )}

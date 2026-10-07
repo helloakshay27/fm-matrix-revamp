@@ -32,6 +32,21 @@
   --color-accent: #d97757;
   --color-accent-rgb: 217, 119, 87;
 
+  /* =====================
+     WIREFRAME SURFACE / INK TOKENS (asset-management.html)
+     The GLOBAL LEGACY-COLOUR MAP at the end of this file is written only in
+     terms of these, so retuning them here retunes every mapped page at once.
+     ===================== */
+  --color-surface: #f5f4f0; /* wireframe --surface: card header strips, table heads, chips */
+  --color-hover: #f7f6f2; /* wireframe --hover */
+  --color-line: rgba(26, 26, 24, 0.08); /* wireframe --line */
+  --color-line-card: rgba(26, 26, 24, 0.09); /* wireframe --line9 */
+  --color-ink-68: rgba(26, 26, 24, 0.68);
+  --color-ink-48: rgba(26, 26, 24, 0.48);
+  --color-ink-30: rgba(26, 26, 24, 0.3);
+  --color-numbered-badge-bg: var(--color-primary); /* "1 / 2 / 3" section number discs */
+  --color-numbered-badge-fg: #ffffff;
+
   /* Background & Text */
   --color-bg: #fdfdfb;
   --color-bg-rgb: 253, 253, 251;
@@ -321,11 +336,11 @@ header [class*="DropdownMenuItem"].text-\[\#C72030\],
    =========================================== */
 
 /* Override common bg-primary classes to use CSS variable */
-.bg-primary {
+.bg-primary:not([style*="background"]) {
   background-color: var(--color-primary) !important;
 }
 
-.bg-primary:hover {
+.bg-primary:not([style*="background"]):hover {
   background-color: var(--color-primary-hover) !important;
 }
 
@@ -4872,4 +4887,311 @@ html body [role="dialog"]:has(img[alt$="QR Code"]) button:has(svg.lucide-downloa
 html body [role="dialog"]:has(img[alt$="QR Code"]) button:has(svg.lucide-download) svg {
   color: #ffffff !important;
   stroke: #ffffff !important;
+}
+
+
+/* ============================================================
+   GLOBAL LEGACY-COLOUR MAP  (single place to retune the app)
+   Pages hardcode the old coral / red / beige as Tailwind arbitrary
+   classes (bg-[#DA7756], bg-[#fef6f4], …). Every one of them is
+   mapped here to a token from :root, so editing the tokens above
+   (--color-primary, --color-surface, --color-line, …) restyles all
+   modules — no per-page edits needed.
+   ============================================================ */
+
+/* Coral solids (numbered section discs "1 2 3", step chips, CTAs) → primary */
+html body .bg-\[\#DA7756\],
+html body .bg-\[\#da7756\] {
+  background-color: var(--color-numbered-badge-bg) !important;
+  color: var(--color-numbered-badge-fg) !important;
+}
+html body .hover\:bg-\[\#DA7756\]:hover,
+html body .hover\:bg-\[\#da7756\]:hover,
+html body [class*="hover:bg-[#DA7756]"]:hover,
+html body [class*="hover:bg-[#C4623C]"]:hover {
+  background-color: var(--color-primary-hover) !important;
+}
+html body .border-\[\#DA7756\],
+html body .border-\[\#da7756\],
+html body [class*="border-[#DA7756]"] {
+  border-color: var(--color-primary) !important;
+}
+html body [class*="ring-[#DA7756]"],
+html body [class*="focus:ring-[#DA7756]"]:focus {
+  --tw-ring-color: rgba(var(--color-primary-rgb), 0.25) !important;
+}
+html body [class*="hover:text-[#DA7756]"]:hover {
+  color: var(--color-primary) !important;
+}
+
+/* Coral / peach tints → neutral surface */
+html body .bg-\[\#fef6f4\],
+html body .bg-\[\#fffaf6\],
+html body .bg-\[\#fdf0ea\],
+html body .bg-\[\#FEF6F4\],
+html body .bg-\[\#FFFAF6\],
+html body .bg-\[\#FDF0EA\],
+html body .bg-red-50,
+html body .bg-orange-50 {
+  background-color: var(--color-surface) !important;
+}
+
+/* Card header strips & grey panels: wireframe surface + hairline divider */
+html body .bg-\[\#F6F7F7\],
+html body .bg-gray-50,
+html body .bg-gray-100 {
+  background-color: var(--color-surface);
+}
+html body [class*="border-[#D9D9D9]"],
+html body [class*="border-[#D5DbDB]"],
+html body [class*="border-[#d5dbdb]"],
+html body .border-gray-200,
+html body .border-gray-300 {
+  border-color: var(--color-line) !important;
+}
+
+/* Number discs written as a circle with a coral/red fill, however it's spelled */
+html body [class*="rounded-full"][class*="bg-[#C72030]"],
+html body [class*="rounded-full"][class*="bg-[#DA7756]"] {
+  background-color: var(--color-numbered-badge-bg) !important;
+  color: var(--color-numbered-badge-fg) !important;
+}
+html body [class*="rounded-full"][class*="bg-[#C72030]"] > span,
+html body [class*="rounded-full"][class*="bg-[#DA7756]"] > span,
+html body [class*="rounded-full"][class*="bg-[#C72030]"] svg,
+html body [class*="rounded-full"][class*="bg-[#DA7756]"] svg {
+  color: var(--color-numbered-badge-fg) !important;
+}
+
+/* Section headings that were coral → ink (h1 titles, card titles) */
+html body h1[class*="text-[#DA7756]"],
+html body h2[class*="text-[#DA7756]"],
+html body h3[class*="text-[#DA7756]"],
+html body h2[class*="text-[#C72030]"],
+html body h1[class*="text-[#C72030]"] {
+  color: var(--color-text) !important;
+}
+
+/* Icon-only ghost buttons in table rows (eye / edit / delete) → wireframe .gbtn */
+html body td button[class*="h-8"][class*="w-8"][class*="p-0"]:not([class*=" bg-"]),
+html body td button[class*="h-7"][class*="w-7"][class*="p-0"]:not([class*=" bg-"]) {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  color: var(--color-ink-48) !important;
+  box-shadow: none !important;
+}
+html body td button[class*="h-8"][class*="w-8"][class*="p-0"]:not([class*=" bg-"]) svg,
+html body td button[class*="h-7"][class*="w-7"][class*="p-0"]:not([class*=" bg-"]) svg {
+  color: var(--color-ink-48) !important;
+  stroke: currentColor !important;
+  fill: none !important;
+}
+html body td button[class*="h-8"][class*="w-8"][class*="p-0"]:not([class*=" bg-"]):hover,
+html body td button[class*="h-7"][class*="w-7"][class*="p-0"]:not([class*=" bg-"]):hover {
+  background-color: var(--color-surface) !important;
+  color: var(--color-text) !important;
+}
+html body td button[class*="h-8"][class*="w-8"][class*="p-0"]:not([class*=" bg-"]):hover svg {
+  color: var(--color-text) !important;
+}
+
+/* Disabled form fields: surface fill, soft-ink text (edit pages) */
+html body .MuiOutlinedInput-root.Mui-disabled,
+html body input:disabled:not([type="checkbox"]):not([type="radio"]),
+html body textarea:disabled,
+html body button[role="combobox"]:disabled {
+  background-color: var(--color-surface) !important;
+  -webkit-text-fill-color: var(--color-ink-48) !important;
+}
+html body .MuiOutlinedInput-root.Mui-disabled .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-line) !important;
+}
+
+/* ============================================================
+   TABLES — horizontal hairlines only (wireframe .tr)
+   Rows are separated by a bottom hairline; cells never draw
+   vertical dividers, whatever border classes a page's cells carry.
+   ============================================================ */
+html body .table-container table th,
+html body .table-container table td,
+html body table.enhancedTable th,
+html body table.enhancedTable td {
+  border-left-width: 0 !important;
+  border-right-width: 0 !important;
+}
+
+/* Header only: a crisp 1px white divider between column heads on the
+   surface-grey header row (body rows stay divider-free). */
+html body .table-container table thead th:not(:last-child),
+html body table.enhancedTable thead th:not(:last-child) {
+  border-right: 1px solid #ffffff !important;
+}
+
+/* Same table rules for EnhancedTaskTable (wrapper is div.enhancedTable,
+   not .table-container) — body: no vertical dividers, header: white divider. */
+html body div.enhancedTable table th,
+html body div.enhancedTable table td {
+  border-left-width: 0 !important;
+  border-right-width: 0 !important;
+}
+html body div.enhancedTable table thead th:not(:last-child) {
+  border-right: 1px solid #ffffff !important;
+}
+
+/* Row-action icon buttons (eye / edit / delete in table rows): no filled
+   background at rest, soft-ink icon, grey chip on hover. Matches wireframe .gbtn.
+   Beats the legacy bg-[#C72030] primary-button rules, which also matched
+   "hover:bg-[#C72030]/10" in these buttons' class strings. */
+html body table td button[class*="h-8"][class*="w-8"][class*="p-0"]:not(.bg-brand),
+html body table td button[class*="h-7"][class*="w-7"][class*="p-0"]:not(.bg-brand),
+html body table td button[class*="h-9"][class*="w-9"][class*="p-0"]:not(.bg-brand) {
+  background: transparent !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  color: var(--color-ink-68) !important;
+}
+html body table td button[class*="h-8"][class*="w-8"][class*="p-0"]:not(.bg-brand) svg,
+html body table td button[class*="h-7"][class*="w-7"][class*="p-0"]:not(.bg-brand) svg,
+html body table td button[class*="h-9"][class*="w-9"][class*="p-0"]:not(.bg-brand) svg {
+  color: var(--color-ink-68) !important;
+  stroke: currentColor !important;
+  fill: none !important;
+}
+html body table td button[class*="h-8"][class*="w-8"][class*="p-0"]:not(.bg-brand):hover,
+html body table td button[class*="h-7"][class*="w-7"][class*="p-0"]:not(.bg-brand):hover,
+html body table td button[class*="h-9"][class*="w-9"][class*="p-0"]:not(.bg-brand):hover {
+  background-color: var(--color-surface) !important;
+}
+html body table td button[class*="h-8"][class*="w-8"][class*="p-0"]:not(.bg-brand):hover svg,
+html body table td button[class*="h-7"][class*="w-7"][class*="p-0"]:not(.bg-brand):hover svg,
+html body table td button[class*="h-9"][class*="w-9"][class*="p-0"]:not(.bg-brand):hover svg {
+  color: var(--color-text) !important;
+}
+
+/* ============================================================
+   PAGE CANVAS — every module page sits on the same canvas colour
+   Pages hardcode a beige/grey root (bg-[#F6F4EE], bg-gray-50, bg-[#fafafa]).
+   The stat-card rule above maps those to the grey *surface*, which turned
+   whole pages grey. A page root (full-height wrapper, or the direct child
+   of <main>) is canvas, not surface.
+   ============================================================ */
+html body [class*="min-h-screen"]:is(
+    [class*="bg-[#F6F4EE]"], [class*="bg-[#f6f4ee]"],
+    [class*="bg-[#fafafa]"], [class*="bg-[#FAFAFA]"],
+    [class*="bg-[#F6F7F7]"], .bg-gray-50, .bg-gray-100, .bg-slate-50),
+html body main > :is(
+    [class*="bg-[#F6F4EE]"], [class*="bg-[#f6f4ee]"],
+    [class*="bg-[#fafafa]"], [class*="bg-[#FAFAFA]"], .bg-gray-50),
+html body main > div > :is(
+    [class*="bg-[#F6F4EE]"], [class*="bg-[#f6f4ee]"],
+    [class*="bg-[#fafafa]"], [class*="bg-[#FAFAFA]"], .bg-gray-50) {
+  background-color: var(--color-bg) !important;
+}
+
+/* ============================================================
+   BUTTONS — text must always be readable on the fill
+   1. fm-button-brand (ghost/outline variants forced to the primary fill)
+      carries white text.
+   2. Legacy outline buttons ("Cancel": border-[#C72030] text-[#C72030]
+      hover:bg-[#C72030]/10) were caught by the substring rule for
+      bg-[#C72030] and turned into dark-on-dark. Restore them to a white
+      outline button.
+   ============================================================ */
+html body button[class*="fm-button-brand"],
+html body a[class*="fm-button-brand"] {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #ffffff !important;
+}
+html body button[class*="fm-button-brand"] svg,
+html body a[class*="fm-button-brand"] svg {
+  color: #ffffff !important;
+  stroke: currentColor !important;
+}
+html body button[class*="fm-button-brand"]:hover {
+  background-color: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+  color: #ffffff !important;
+}
+
+html body button:is([class*="border-[#C72030]"], [class*="border-[#DA7756]"], [class*="border-[#da7756]"]):is([class*="text-[#C72030]"], [class*="text-[#DA7756]"], [class*="text-[#da7756]"]) {
+  background-color: #ffffff !important;
+  border: 1px solid var(--color-line) !important;
+  color: var(--color-text) !important;
+}
+html body button:is([class*="border-[#C72030]"], [class*="border-[#DA7756]"], [class*="border-[#da7756]"]):is([class*="text-[#C72030]"], [class*="text-[#DA7756]"], [class*="text-[#da7756]"]):hover {
+  background-color: var(--color-surface) !important;
+  border-color: rgba(26, 26, 24, 0.28) !important;
+  color: var(--color-text) !important;
+}
+html body button:is([class*="border-[#C72030]"], [class*="border-[#DA7756]"], [class*="border-[#da7756]"]):is([class*="text-[#C72030]"], [class*="text-[#DA7756]"], [class*="text-[#da7756]"]) svg {
+  color: var(--color-text) !important;
+}
+
+/* Inline-styled coral/red fills (style={{ backgroundColor: "#C72030" }}) → primary + white label */
+html body button[style*="rgb(199, 32, 48)"],
+html body button[style*="rgb(218, 119, 86)"],
+html body button[style*="#C72030"],
+html body button[style*="#DA7756"] {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #ffffff !important;
+}
+
+/* Section letter / number discs (beige disc + coral glyph) → soft grey disc, ink glyph */
+html body [class*="rounded-full"][class*="bg-[#E5E0D3]"] {
+  background-color: var(--color-surface) !important;
+  color: var(--color-ink-68) !important;
+}
+html body [class*="rounded-full"][class*="bg-[#E5E0D3]"] svg {
+  color: var(--color-ink-68) !important;
+}
+
+/* ============================================================
+   INLINE CORAL (#DA7756) + TAILWIND ORANGE → theme tokens
+   style={{ color: '#da7756' }} / bg-orange-500 etc. were still the old
+   coral. Text/borders/fills now follow --color-primary; the tier/"reward"
+   oranges follow --color-accent so they stay on-palette.
+   ============================================================ */
+html body [style*="color: rgb(218, 119, 86)"],
+html body [style*="color:rgb(218, 119, 86)"],
+html body [style*="color: #da7756" i],
+html body [style*="color:#da7756" i] {
+  color: var(--color-primary) !important;
+}
+html body [style*="background-color: rgb(218, 119, 86)"],
+html body [style*="background: rgb(218, 119, 86)"],
+html body [style*="background-color: #da7756" i],
+html body [style*="background:#da7756" i],
+html body [style*="background: #da7756" i] {
+  background-color: var(--color-primary) !important;
+  color: #ffffff;
+}
+html body [style*="border"][style*="rgb(218, 119, 86)"],
+html body [style*="border"][style*="#da7756" i] {
+  border-color: var(--color-line) !important;
+}
+html body .text-orange-400, html body .text-orange-500,
+html body .text-orange-600, html body .text-orange-700 {
+  color: var(--color-accent) !important;
+}
+html body .bg-orange-400, html body .bg-orange-500, html body .bg-orange-600 {
+  background-color: var(--color-accent) !important;
+  color: #ffffff;
+}
+html body .hover\:bg-orange-600:hover, html body .hover\:bg-orange-500:hover {
+  background-color: var(--color-accent) !important;
+  filter: brightness(0.94);
+}
+html body .border-orange-400, html body .border-orange-500, html body .border-orange-600 {
+  border-color: var(--color-accent) !important;
+}
+
+/* Drawer / dialog title bars: hairline divider, never a coloured rule */
+html body [role="dialog"] [class*="border-b-2"],
+html body [role="dialog"] [class*="border-b-[#"],
+html body [role="dialog"] [class*="border-b-[#"][class*="border-b"],
+html body [class*="fixed"][class*="right-0"] [class*="border-b-2"] {
+  border-bottom: 1px solid var(--color-line) !important;
 }
