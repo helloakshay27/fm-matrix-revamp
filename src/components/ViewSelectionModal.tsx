@@ -238,17 +238,17 @@ export const ViewSelectionModal: React.FC<ViewSelectionModalProps> = ({
           <Button
             onClick={() => selectedView && handleViewSelection(selectedView)}
             disabled={!selectedView}
-            className={`h-12 min-w-[188px] rounded-none px-8 text-[19px] font-bold transition-all duration-300 ${
+            className={`h-12 min-w-[188px] rounded-none px-8 text-[19px] font-bold text-white transition-all duration-300 ${
               selectedView
-                ? "!bg-[#F2EEE9] !text-[#111111] shadow-[0_8px_16px_rgba(17,24,39,0.12)] hover:!bg-[#ece3dc]"
+                ? "shadow-[0_8px_16px_rgba(0,0,0,0.18)] hover:opacity-90"
                 : "cursor-not-allowed !bg-gray-200 !text-gray-400 [&_svg]:!text-gray-400"
             }`}
+            style={selectedView ? { backgroundColor: "var(--color-primary)" } : {}}
           >
             Continue
             <ArrowRight
-              className="ml-2 h-5 w-5"
+              className="ml-2 h-5 w-5 text-white"
               strokeWidth={2.5}
-              style={selectedView ? { color: "var(--color-primary)" } : {}}
             />
           </Button>
         </div>
