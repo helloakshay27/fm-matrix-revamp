@@ -867,6 +867,15 @@ svg.text-red-500.fill-red-500 {
   border-color: var(--color-primary) !important;
 }
 
+/* Section-header accent bar border-[#C72030AD] (alpha red renders pink) -
+   force solid black instead */
+.border-\[\#C72030AD\],
+.border-\[\#c72030ad\],
+[class*="border-[#C72030AD]"],
+[class*="border-[#c72030ad]"] {
+  border-color: #000000 !important;
+}
+
 /* Hover states for legacy red */
 .hover\:bg-\[\#C72030\]:hover,
 .hover\:bg-\[\#c72030\]:hover,
@@ -5114,6 +5123,19 @@ html body button[class*="fm-button-brand"]:hover {
   border-color: var(--color-primary-hover) !important;
   color: #ffffff !important;
 }
+/* Re-assert the white label: the stat-card ink rule above
+   (html body [class*="bg-[#F6F4EE]"] .text-sm.font-medium, 0-3-2) outranks the
+   fm-button-brand rules (0-1-3 / 0-2-1) and repaints brand-button text with
+   rgba(26,26,24,0.68) — ink-on-ink, so the label is invisible at rest and only
+   appears on hover (when the index.css hover rule, 0-4-1, finally wins).
+   Covers every fm-button-brand control carrying shadcn's text-sm/text-xs
+   font-medium label, in any container (e.g. CRM Wallet Point Expiry Edit). */
+html body button[class*="fm-button-brand"].text-sm.font-medium,
+html body button[class*="fm-button-brand"].text-xs.font-medium,
+html body a[class*="fm-button-brand"].text-sm.font-medium,
+html body a[class*="fm-button-brand"].text-xs.font-medium {
+  color: #ffffff !important;
+}
 
 html body button:is([class*="border-[#C72030]"], [class*="border-[#DA7756]"], [class*="border-[#da7756]"]):is([class*="text-[#C72030]"], [class*="text-[#DA7756]"], [class*="text-[#da7756]"]) {
   background-color: #ffffff !important;
@@ -5462,4 +5484,302 @@ html body .border-dashed:is([class*="border-[#C72030]"], [class*="border-[#DA775
 /* MUI text/outlined/contained buttons (dialog actions) share the same radius */
 html body .MuiButton-root {
   border-radius: var(--radius-button) !important;
+}
+
+/* ============================================================
+   PINK/RED SHADOWS (shadow-red-*, shadow-rose-*, shadow-pink-*)
+   Legacy cards/buttons tint their shadow with shadow-red-200 etc.,
+   which renders as a pink glow. Remove that shadow effect globally.
+   ============================================================ */
+[class*="shadow-red-"],
+[class*="shadow-rose-"],
+[class*="shadow-pink-"] {
+  box-shadow: none !important;
+}
+
+/* ============================================================
+   ADD-STYLE PILL BUTTONS ("Add Question", "Add Section", …)
+   Buttons carrying gap-1 + bg-[#f6f4ee] + hover:bg-[#f0ebe0] become a
+   solid black fill with white label and white "+" icon.
+   (gap-1 keeps this scoped to the Add Question/Add Section style and
+   the 3-attribute selector out-specifies the generic
+   [class*="bg-[#f6f4ee]"] .text-sm.font-medium ink rule above; placed
+   last so it also beats the equal-specificity .border-dashed rule.)
+   ============================================================ */
+html body button[class*="gap-1"][class*="bg-[#f6f4ee]"][class*="hover:bg-[#f0ebe0]"],
+html body button[class*="gap-1"][class*="bg-[#F6F4EE]"][class*="hover:bg-[#f0ebe0]"] {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+html body button[class*="gap-1"][class*="bg-[#f6f4ee]"][class*="hover:bg-[#f0ebe0]"]:hover,
+html body button[class*="gap-1"][class*="bg-[#F6F4EE]"][class*="hover:bg-[#f0ebe0]"]:hover {
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
+}
+html body button[class*="gap-1"][class*="bg-[#f6f4ee]"][class*="hover:bg-[#f0ebe0]"] svg,
+html body button[class*="gap-1"][class*="bg-[#F6F4EE]"][class*="hover:bg-[#f0ebe0]"] svg {
+  color: #ffffff !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+/* Permit closure approval actions: both buttons use the same green utility classes. */
+html body #root main .flex.items-center.gap-4.justify-center.mt-4:has(> button.bg-green-600) > button.bg-green-600 {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+html body #root main .flex.items-center.gap-4.justify-center.mt-4:has(> button.bg-green-600) > button.bg-green-600:hover {
+  background-color: #1a1a1a !important;
+}
+
+/* Pending-approvals count pill. */
+html body #root span[class*="min-w-[20px]"][class*="rounded-full"][class*="bg-[#C72030]"] {
+  background-color: #000000 !important;
+}
+
+/* Customer Bills filter dialog Apply button. */
+html body [role="dialog"]:has(input[placeholder="Bill Number Search"]) button[class~="bg-[#F2EEE9]"] {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+html body [role="dialog"]:has(input[placeholder="Bill Number Search"]) button[class~="bg-[#F2EEE9]"]:hover {
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
+}
+
+/* CRM Events: keep unchecked status switches visibly inactive in grey. */
+html body button[role="switch"][class*="data-[state=checked]:bg-green-500"][data-state="unchecked"] {
+  background-color: #9ca3af !important;
+}
+
+/* R Vehicles toolbar Import action: preserve a visible black outline and icon. */
+html body #root main:has(input[placeholder="Search by vehicle number"]) button[title="Import"] {
+  border: 1px solid #000000 !important;
+  border-color: #000000 !important;
+  color: #000000 !important;
+}
+html body #root main:has(input[placeholder="Search by vehicle number"]) button[title="Import"] svg {
+  display: block !important;
+  width: 1rem !important;
+  height: 1rem !important;
+  min-width: 1rem !important;
+  min-height: 1rem !important;
+  flex-shrink: 0 !important;
+  color: #000000 !important;
+  stroke: #000000 !important;
+  stroke-width: 2px !important;
+  fill: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+html body #root main:has(input[placeholder="Search by vehicle number"]) button[title="Import"] svg * {
+  display: initial !important;
+  color: #000000 !important;
+  stroke: #000000 !important;
+  stroke-width: 2px !important;
+  fill: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Visitor table Details action: force the eye icon to render in black. */
+html body #root main button[title="View visitor details"] {
+  color: #000000 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+html body #root main button[title="View visitor details"] svg {
+  display: block !important;
+  width: 1rem !important;
+  height: 1rem !important;
+  min-width: 1rem !important;
+  min-height: 1rem !important;
+  color: #000000 !important;
+  stroke: #000000 !important;
+  stroke-width: 2px !important;
+  fill: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+html body #root main button[title="View visitor details"] svg * {
+  display: initial !important;
+  color: #000000 !important;
+  stroke: #000000 !important;
+  stroke-width: 2px !important;
+  fill: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Work Order attachment dropzone: replace the yellow dashed border with black. */
+html body #root main .border-dashed.border-yellow-400,
+html body #root main .border-dashed.border-yellow-400:hover {
+  border-color: #000000 !important;
+}
+
+/* Material PR details: black Approve action next to the Reject button. */
+html body #root main .flex.items-center.justify-center.gap-4:has(> button.bg-green-600 + button[class*="bg-[#C72030]"]) > button.bg-green-600 {
+  background-color: #000000 !important;
+  border-color: #000000 !important;
+  color: #ffffff !important;
+}
+html body #root main .flex.items-center.justify-center.gap-4:has(> button.bg-green-600 + button[class*="bg-[#C72030]"]) > button.bg-green-600:hover {
+  background-color: #1a1a1a !important;
+  border-color: #1a1a1a !important;
+  color: #ffffff !important;
+}
+
+/* QR Fields Setup: style Existing/Custom Fields like the top-level setup tabs. */
+html body #root main .flex.gap-0.border-b.border-gray-200 {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  width: fit-content !important;
+  padding: 3px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background-color: var(--color-surface) !important;
+}
+html body #root main .flex.gap-0.border-b.border-gray-200 > button {
+  padding: 8px 16px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background-color: transparent !important;
+  color: var(--color-text-light) !important;
+  box-shadow: none !important;
+  white-space: nowrap !important;
+}
+html body #root main .flex.gap-0.border-b.border-gray-200 > button[class~="border-brand"] {
+  background-color: #ffffff !important;
+  color: var(--color-text) !important;
+  box-shadow: 0 1px 2px rgba(26, 26, 24, 0.1), 0 0 0 1px rgba(26, 26, 24, 0.05) !important;
+}
+html body #root main .flex.gap-0.border-b.border-gray-200 > button:not([class~="border-brand"]):hover {
+  color: var(--color-text) !important;
+}
+
+/* CRM Point Expiry rule Edit action: keep its existing text label visible. */
+html body #root main button.fm-button-brand:has(svg.lucide-pen) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  width: max-content !important;
+  min-width: max-content !important;
+  overflow: visible !important;
+  white-space: nowrap !important;
+  font-size: 14px !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+html body #root main button.fm-button-brand:has(svg.lucide-pen) svg {
+  flex-shrink: 0 !important;
+}
+
+/* Waste Generation Setup: match the Category/Subcategory/Landlord tabs to the setup pill tabs. */
+html body #root main .flex.border-b.border-gray-200.bg-white.rounded-t-lg {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  width: fit-content !important;
+  padding: 3px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background-color: var(--color-surface) !important;
+}
+html body #root main .flex.border-b.border-gray-200.bg-white.rounded-t-lg > button {
+  padding: 8px 16px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background-color: transparent !important;
+  color: var(--color-text-light) !important;
+  box-shadow: none !important;
+  white-space: nowrap !important;
+}
+html body #root main .flex.border-b.border-gray-200.bg-white.rounded-t-lg > button[class~="border-brand"] {
+  background-color: #ffffff !important;
+  color: var(--color-text) !important;
+  box-shadow: 0 1px 2px rgba(26, 26, 24, 0.1), 0 0 0 1px rgba(26, 26, 24, 0.05) !important;
+}
+html body #root main .flex.border-b.border-gray-200.bg-white.rounded-t-lg > button:not([class~="border-brand"]):hover {
+  color: var(--color-text) !important;
+}
+
+/* Visitor Management setup: match the four tabs to the compact setup-tab style. */
+html body #root main .bg-white.rounded-lg.border.border-gray-200:has(> .flex.border-b.border-gray-200 > button:nth-child(4)) > .flex.border-b.border-gray-200 {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  width: fit-content !important;
+  max-width: 100% !important;
+  padding: 3px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background-color: var(--color-surface) !important;
+  overflow-x: auto !important;
+}
+html body #root main .bg-white.rounded-lg.border.border-gray-200:has(> .flex.border-b.border-gray-200 > button:nth-child(4)) > .flex.border-b.border-gray-200 > button {
+  flex: 0 0 auto !important;
+  padding: 8px 16px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background-color: transparent !important;
+  color: var(--color-text-light) !important;
+  box-shadow: none !important;
+  white-space: nowrap !important;
+}
+html body #root main .bg-white.rounded-lg.border.border-gray-200:has(> .flex.border-b.border-gray-200 > button:nth-child(4)) > .flex.border-b.border-gray-200 > button[class~="border-brand"] {
+  background-color: #ffffff !important;
+  color: var(--color-text) !important;
+  box-shadow: 0 1px 2px rgba(26, 26, 24, 0.1), 0 0 0 1px rgba(26, 26, 24, 0.05) !important;
+}
+html body #root main .bg-white.rounded-lg.border.border-gray-200:has(> .flex.border-b.border-gray-200 > button:nth-child(4)) > .flex.border-b.border-gray-200 > button:not([class~="border-brand"]):hover {
+  color: var(--color-text) !important;
+}
+
+/* Purchase Order details: keep filled black actions black on hover and focus. */
+html body #root main:has(svg.lucide-shopping-cart) button[style*="rgb(218, 119, 86)"],
+html body #root main:has(svg.lucide-shopping-cart) button[style*="#DA7756"],
+html body #root main:has(svg.lucide-shopping-cart) button[style*="#da7756"],
+html body #root main:has(svg.lucide-shopping-cart) button[class*="bg-[#DA7756]"],
+html body #root main:has(svg.lucide-shopping-cart) button[class*="bg-[#da7756]"] {
+  background-color: #1a1a18 !important;
+  border-color: #1a1a18 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  transition: none !important;
+}
+html body #root main:has(svg.lucide-shopping-cart) button[style*="rgb(218, 119, 86)"]:is(:hover, :focus, :focus-visible),
+html body #root main:has(svg.lucide-shopping-cart) button[style*="#DA7756"]:is(:hover, :focus, :focus-visible),
+html body #root main:has(svg.lucide-shopping-cart) button[style*="#da7756"]:is(:hover, :focus, :focus-visible),
+html body #root main:has(svg.lucide-shopping-cart) button[class*="bg-[#DA7756]"]:is(:hover, :focus, :focus-visible),
+html body #root main:has(svg.lucide-shopping-cart) button[class*="bg-[#da7756]"]:is(:hover, :focus, :focus-visible) {
+  background-color: #1a1a18 !important;
+  border-color: #1a1a18 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  filter: none !important;
+}
+html body #root main:has(svg.lucide-shopping-cart) button[style*="rgb(218, 119, 86)"] svg,
+html body #root main:has(svg.lucide-shopping-cart) button[style*="#DA7756"] svg,
+html body #root main:has(svg.lucide-shopping-cart) button[style*="#da7756"] svg,
+html body #root main:has(svg.lucide-shopping-cart) button[class*="bg-[#DA7756]"] svg,
+html body #root main:has(svg.lucide-shopping-cart) button[class*="bg-[#da7756]"] svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* Invoice Details report heading icon: override its inline red color. */
+html body #root main:has(svg.lucide-notepad-text) svg.lucide-notepad-text {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+html body #root main:has(svg.lucide-notepad-text) svg.lucide-notepad-text * {
+  color: #000000 !important;
+  stroke: #000000 !important;
 }
