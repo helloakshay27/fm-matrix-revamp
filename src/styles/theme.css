@@ -5349,3 +5349,117 @@ html body #root main
   color: var(--color-primary) !important;
   border-color: var(--color-primary) !important;
 }
+
+/* ============================================================
+   BATCH — outline-button radius, primary-button icons, section cards,
+   number discs, plain-button tab bars, stat icon wells, dropzones
+   (all keyed on legacy markup; tune via the :root tokens)
+   ============================================================ */
+
+/* 1. Every text/outline button shares the primary button radius
+   (Reset / Back / Cancel / "Save And Create New Audit" were square). */
+html body button:not([role="tab"]):not([role="combobox"]):not([role="switch"]):not([role="checkbox"]):not([role="radio"]):not([role="option"]):not([class*="rounded-full"]):not([class*="Mui"]):not([data-radix-collection-item]),
+html body a[class*="fm-button-fix"],
+html body [role="button"].fm-button-fix {
+  border-radius: var(--radius-button) !important;
+}
+
+/* 2. Icons inside filled primary buttons (the "+" before Action) must show.
+   Some legacy rules recoloured the glyph to the fill colour. */
+html body button:is(.bg-brand, .bg-primary, [class*="bg-[#C72030]"], [class*="bg-[#DA7756]"], [class*="bg-[#da7756]"], [class*="fm-button-brand"]) svg,
+html body button:is(.bg-brand, .bg-primary, [class*="bg-[#C72030]"], [class*="bg-[#DA7756]"], [class*="bg-[#da7756]"], [class*="fm-button-brand"]) svg * {
+  color: #ffffff !important;
+  stroke: currentColor !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* 3. Section cards: the card is white; only the header strip is the grey surface */
+html body [class*="bg-[#F6F7F7]"][class*="border-[#D9D9D9]"],
+html body [class*="bg-[#F6F7F7]"][class*="mb-6"] {
+  background-color: #ffffff !important;
+}
+
+/* 4. Numbered section discs: always the numbered-badge tokens
+   (the avatar/dot rules for w-8/w-10 discs were winning with coral) */
+html body .w-8.h-8.bg-\[\#C72030\].rounded-full,
+html body .w-10.h-10.bg-\[\#C72030\].rounded-full,
+html body .w-6.h-6.bg-\[\#C72030\].rounded-full,
+html body .w-8.h-8.bg-\[\#DA7756\].rounded-full,
+html body .w-6.h-6.bg-\[\#DA7756\].rounded-full {
+  background-color: var(--color-numbered-badge-bg) !important;
+  color: var(--color-numbered-badge-fg) !important;
+}
+html body .w-8.h-8.bg-\[\#C72030\].rounded-full > *,
+html body .w-10.h-10.bg-\[\#C72030\].rounded-full > *,
+html body .w-6.h-6.bg-\[\#C72030\].rounded-full > * {
+  color: var(--color-numbered-badge-fg) !important;
+}
+
+/* 5. Plain-button tab bars (flex-1 buttons in a bordered strip) → segmented switcher
+   (Survey mapping details: "Survey Information | Questions | Location Details") */
+html body div.flex.w-full.border.overflow-hidden:has(> button.flex-1) {
+  display: inline-flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px !important;
+  width: fit-content !important;
+  max-width: 100%;
+  padding: 3px !important;
+  background-color: rgba(26, 26, 24, 0.055) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  overflow: visible !important;
+}
+html body div.flex.w-full.border.overflow-hidden:has(> button.flex-1) > button {
+  flex: none !important;
+  padding: 8px 16px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  background-color: transparent !important;
+  color: rgba(26, 26, 24, 0.55) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+  transition: all 0.16s;
+}
+html body div.flex.w-full.border.overflow-hidden:has(> button.flex-1) > button:hover {
+  color: var(--color-text) !important;
+}
+html body div.flex.w-full.border.overflow-hidden:has(> button.flex-1) > button[class*="bg-[#C72030]"],
+html body div.flex.w-full.border.overflow-hidden:has(> button.flex-1) > button[class*="bg-brand"] {
+  background-color: #ffffff !important;
+  color: var(--color-text) !important;
+  box-shadow: 0 1px 2px rgba(26, 26, 24, 0.1), 0 0 0 1px rgba(26, 26, 24, 0.05) !important;
+}
+/* A hidden Radix TabsList (kept only to sync state) must stay hidden — the
+   segmented rules above forced it to display as an empty pill. */
+html body [role="tablist"].hidden,
+html body [role="tablist"][class*="hidden"]:not([class*="overflow-hidden"]) {
+  display: none !important;
+}
+
+/* 6. Stat-tile icon wells with a coral tint → white tile, ink glyph (wireframe .pic) */
+html body [class*="bg-[#F6F4EE]"] :is(.w-14.h-14, .w-12.h-12, .w-10.h-10)[class*="bg-[#C72030"],
+html body [class*="bg-[#f6f4ee]"] :is(.w-14.h-14, .w-12.h-12, .w-10.h-10)[class*="bg-[#C72030"] {
+  background-color: #ffffff !important;
+  border-radius: 10px !important;
+}
+html body [class*="bg-[#F6F4EE]"] :is(.w-14.h-14, .w-12.h-12, .w-10.h-10)[class*="bg-[#C72030"] svg,
+html body [class*="bg-[#f6f4ee]"] :is(.w-14.h-14, .w-12.h-12, .w-10.h-10)[class*="bg-[#C72030"] svg {
+  color: var(--color-ink-68) !important;
+  stroke: currentColor !important;
+}
+
+/* 7. Coral/red dashed dropzones → the soft wireframe dropzone */
+html body .border-dashed:is([class*="border-[#C72030]"], [class*="border-[#DA7756]"], [class*="border-red-"]) {
+  border-width: 2px !important;
+  border-color: #ebe9e2 !important;
+  border-radius: 12px !important;
+  background-color: transparent !important;
+}
+
+/* MUI text/outlined/contained buttons (dialog actions) share the same radius */
+html body .MuiButton-root {
+  border-radius: var(--radius-button) !important;
+}
