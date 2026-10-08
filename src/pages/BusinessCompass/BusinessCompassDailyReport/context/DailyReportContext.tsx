@@ -712,6 +712,14 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   };
 
+  // The completed list for a date is loaded by completed_at, so an item completed
+  // right now belongs to today's bucket only — not to the past date being viewed.
+  const upsertCompletedItemIfViewingToday = (item: any) => {
+    if (startDate === new Date().toLocaleDateString("en-CA")) {
+      upsertCompletedItem(item);
+    }
+  };
+
   const removeCompletedItem = (itemId: string) => {
     setCompletedTasksIssuesToday((prev) => prev.filter((i) => i.id !== itemId));
   };
@@ -1604,7 +1612,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
         prev.map((i) => (i.id === item.id ? { ...i, status: "completed" } : i))
       );
       setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: true }));
-      upsertCompletedItem(item);
+      upsertCompletedItemIfViewingToday(item);
 
       if (isTask) {
         await completeTask(apiCtx(), realId, "completed");
@@ -1693,7 +1701,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
         prev.map((i) => (i.id === item.id ? { ...i, status: "completed" } : i))
       );
       setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: true }));
-      upsertCompletedItem(item);
+      upsertCompletedItemIfViewingToday(item);
 
       if (isTask) {
         await completeTask(apiCtx(), realId, "completed");
