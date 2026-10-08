@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, Users, Building2, CalendarCheck2, MessageCircle, ClipboardList, Paperclip, Eye, Maximize2, X, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, User, Users, Building2, CalendarCheck2, MessageCircle, ClipboardList, Paperclip, Eye, Maximize2, X, ChevronLeft, ChevronRight, Image as ImageIcon, Award, ThumbsUp, TrendingUp } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import axios from 'axios';
@@ -20,16 +20,20 @@ const SMTDetailPage = () => {
     other_facility_name?: string | null;
     created_at?: string | null;
     smt_done_date?: string | null;
-    circle_name?: string | null;
+    cluster_name?: string | null;
     zone_id?: number | null;
     work_location?: string | null;
     people_interacted_with?: (string | null)[] | string | null;
+    people_appreciated_with_name?: (string | null)[] | string | null;
     form_details?: Record<string, any> | null;
     key_observations?: string | null;
     responsible_person?: { name?: string | null; email?: string | null; mobile?: string | null } | null;
     smt_user?: { id: number; name?: string | null; email?: string | null; mobile?: string | null; department?: string | null } | null;
     card_attachments?: { url?: string }[];
     other_attachments?: { url?: string }[];
+    smt_attachments?: { url?: string }[];
+    positive_observations?: (string | null)[] | string | null;
+    improvement_areas?: (string | null)[] | string | null;
   };
   const [smtDetails, setSmtDetails] = useState<SmtDetail | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -107,9 +111,8 @@ const SMTDetailPage = () => {
   }, [id]);
 
   // Derived safe values
-  const peopleList = useMemo(() => {
-    const val = smtDetails?.people_interacted_with;
-    if (!val) return [] as string[];
+  const parseNameList = (val: (string | null)[] | string | null | undefined): string[] => {
+    if (!val) return [];
     if (Array.isArray(val)) return val.map((p) => (p || '').toString().trim()).filter((p) => p.length > 0);
     if (typeof val === 'string') {
       const s = val.trim();
@@ -121,8 +124,13 @@ const SMTDetailPage = () => {
       }
       return s.split(/[;,\n]/g).map((x) => x.trim()).filter((x) => x.length > 0);
     }
-    return [] as string[];
-  }, [smtDetails]);
+    return [];
+  };
+
+  const peopleList = useMemo(() => parseNameList(smtDetails?.people_interacted_with), [smtDetails]);
+  const appreciatedList = useMemo(() => parseNameList(smtDetails?.people_appreciated_with_name), [smtDetails]);
+  const positiveObservationsList = useMemo(() => parseNameList(smtDetails?.positive_observations), [smtDetails]);
+  const improvementAreasList = useMemo(() => parseNameList(smtDetails?.improvement_areas), [smtDetails]);
 
   const formDetails = (smtDetails?.form_details || {}) as Record<string, any>;
   const yn = (v: any) => String(v ?? '').toLowerCase() === 'yes' || v === true || v === 'true';
@@ -133,11 +141,15 @@ const SMTDetailPage = () => {
     ofc: yn(formDetails['ofc']),
     health_wellbeing: yn(formDetails['health_well'] || formDetails['health_wellbeing']),
     tool_box_talk: yn(formDetails['tool_box'] || formDetails['tool_box_talk']),
-    thank_you_card: yn(formDetails['thank_you_card']),
   };
 
-  const thankYouCardUrl = (smtDetails?.card_attachments || []).map((a) => a.url).filter(Boolean)[0] || '';
-  const otherImages = (smtDetails?.other_attachments || []).map((a) => a.url).filter(Boolean);
+  // Merged regardless of source - the viewer doesn't care whether an image came
+  // from card_attachments, other_attachments, or smt_attachments.
+  const allAttachments = [
+    ...(smtDetails?.card_attachments || []),
+    ...(smtDetails?.other_attachments || []),
+    ...(smtDetails?.smt_attachments || []),
+  ].map((a) => a.url).filter(Boolean) as string[];
 
   if (loading) {
     return (
@@ -213,7 +225,7 @@ const SMTDetailPage = () => {
             <div className="flex"><span className="text-gray-500 w-40">Function</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{smtDetails.smt_user?.department || '—'}</span></div>
           </div>
           <div className="space-y-3">
-            <div className="flex"><span className="text-gray-500 w-40">Circle</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{smtDetails.circle_name || '—'}</span></div>
+            <div className="flex"><span className="text-gray-500 w-40">Cluster</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{smtDetails.cluster_name || '—'}</span></div>
             <div className="flex"><span className="text-gray-500 w-40">Zone / Work Location</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{smtDetails.work_location || '—'}</span></div>
           </div>
         </div>
@@ -267,6 +279,23 @@ const SMTDetailPage = () => {
         </div>
       </div>
 
+      {/* PEOPLE APPRECIATED - only rendered when the API actually sends this field */}
+      {appreciatedList.length > 0 && (
+        <div className="bg-white rounded-lg border text-[15px] mb-6">
+          <div className="flex p-4 items-center">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-xs mr-3">
+              <Award className="w-5 h-5 text-[#C72030]" />
+            </div>
+            <h2 className="text-lg font-bold">PEOPLE APPRECIATED</h2>
+          </div>
+          <div className="p-4">
+            <ul className="list-decimal ml-6 mt-2 text-gray-900 space-y-1">
+              {appreciatedList.map((person, idx) => (<li key={idx}>{person}</li>))}
+            </ul>
+          </div>
+        </div>
+      )}
+
       {/* TOPICS DISCUSSED */}
       <div className="bg-white rounded-lg border text-[15px] mb-6">
         <div className="flex p-4 items-center">
@@ -284,7 +313,6 @@ const SMTDetailPage = () => {
               { label: 'OFC', value: topics.ofc },
               { label: 'Health & Wellbeing', value: topics.health_wellbeing },
               { label: 'Tool Box Talk', value: topics.tool_box_talk },
-              { label: 'Thank You Card Given', value: topics.thank_you_card },
             ].map(t => (
               <div key={t.label} className="flex items-center justify-between border rounded px-3 py-2 bg-white">
                 <span className="text-sm text-gray-700">{t.label}</span>
@@ -304,57 +332,21 @@ const SMTDetailPage = () => {
           <h2 className="text-lg font-bold">ATTACHMENTS</h2>
         </div>
         <div className="p-4 space-y-6">
-          {/* Thank You Card */}
-          {thankYouCardUrl && (
+          {allAttachments.length > 0 ? (
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-6 w-6 bg-gradient-to-tr from-[#C72030] to-[#e54654] text-white rounded-md flex items-center justify-center shadow-sm">
                   <Paperclip className="h-3.5 w-3.5" />
                 </div>
-                <label className="text-sm font-semibold tracking-wide text-gray-800">Thank You Card</label>
-                <span className="px-1.5 py-0.5 text-[10px] rounded bg-gray-200 text-gray-700 font-medium">1</span>
+                <label className="text-sm font-semibold tracking-wide text-gray-800">Attachments</label>
+                <span className="px-1.5 py-0.5 text-[10px] rounded bg-gray-200 text-gray-700 font-medium">{allAttachments.length}</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
-                <button
-                  type="button"
-                  onClick={() => openPreview([thankYouCardUrl], 0, 'Thank You Card')}
-                  className="relative group/image rounded-lg overflow-hidden bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-[#C72030]/40"
-                >
-                  <div className="aspect-square w-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
-                    <img
-                      src={thankYouCardUrl}
-                      alt="Thank You Card"
-                      loading="lazy"
-                      className="h-full w-full object-cover object-center transition-transform duration-300 group-hover/image:scale-105"
-                    />
-                    <div className="absolute inset-0 opacity-0 group-hover/image:opacity-100 bg-black/40 flex items-center justify-center transition-opacity">
-                      <Maximize2 className="h-5 w-5 text-white" />
-                    </div>
-                  </div>
-                  <div className="p-1.5 text-[11px] font-medium truncate text-gray-700 text-left w-full bg-white/80 backdrop-blur-sm border-t border-gray-100">
-                    Thank You Card
-                  </div>
-                </button>
-              </div>
-            </div>
-          )}
-          
-          {/* Other Images */}
-          {otherImages.length > 0 && (
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="h-6 w-6 bg-gradient-to-tr from-[#C72030] to-[#e54654] text-white rounded-md flex items-center justify-center shadow-sm">
-                  <Paperclip className="h-3.5 w-3.5" />
-                </div>
-                <label className="text-sm font-semibold tracking-wide text-gray-800">Other Images</label>
-                <span className="px-1.5 py-0.5 text-[10px] rounded bg-gray-200 text-gray-700 font-medium">{otherImages.length}</span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
-                {otherImages.map((img, idx) => (
+                {allAttachments.map((img, idx) => (
                   <button
                     key={idx}
                     type="button"
-                    onClick={() => openPreview(otherImages, idx, 'Other Images')}
+                    onClick={() => openPreview(allAttachments, idx, 'Attachments')}
                     className="relative group/image rounded-lg overflow-hidden bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-[#C72030]/40"
                   >
                     <div className="aspect-square w-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
@@ -375,9 +367,7 @@ const SMTDetailPage = () => {
                 ))}
               </div>
             </div>
-          )}
-          
-          {!thankYouCardUrl && otherImages.length === 0 && (
+          ) : (
             <div className="text-gray-400 text-sm">No attachments</div>
           )}
         </div>
@@ -469,6 +459,40 @@ const SMTDetailPage = () => {
           <p className="text-gray-900 whitespace-pre-wrap">{smtDetails.key_observations || '—'}</p>
         </div>
       </div>
+
+      {/* POSITIVE OBSERVATIONS - only rendered when the API actually sends this field */}
+      {positiveObservationsList.length > 0 && (
+        <div className="bg-white rounded-lg border text-[15px] mb-6">
+          <div className="flex p-4 items-center">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-xs mr-3">
+              <ThumbsUp className="w-5 h-5 text-[#C72030]" />
+            </div>
+            <h2 className="text-lg font-bold">POSITIVE OBSERVATIONS</h2>
+          </div>
+          <div className="p-4">
+            <ul className="list-decimal ml-6 mt-2 text-gray-900 space-y-1">
+              {positiveObservationsList.map((item, idx) => (<li key={idx}>{item}</li>))}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {/* IMPROVEMENT AREAS - only rendered when the API actually sends this field */}
+      {improvementAreasList.length > 0 && (
+        <div className="bg-white rounded-lg border text-[15px] mb-6">
+          <div className="flex p-4 items-center">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-xs mr-3">
+              <TrendingUp className="w-5 h-5 text-[#C72030]" />
+            </div>
+            <h2 className="text-lg font-bold">IMPROVEMENT AREAS</h2>
+          </div>
+          <div className="p-4">
+            <ul className="list-decimal ml-6 mt-2 text-gray-900 space-y-1">
+              {improvementAreasList.map((item, idx) => (<li key={idx}>{item}</li>))}
+            </ul>
+          </div>
+        </div>
+      )}
 
       {/* RESPONSIBLE PERSON */}
       <div className="bg-white rounded-lg border text-[15px] mb-6">
