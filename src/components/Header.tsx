@@ -131,10 +131,13 @@ export const Header = () => {
     hostname.includes("lockated.gophygital.work") ||
     hostname.includes("fm-matrix.lockated.com");
 
+  // External-role users (lock_role_name saved at Pulse login) must not see the Pulse dashboard.
+  const isExternalRole = localStorage.getItem("lock_role_name")?.toLowerCase() === "external";
   const isPulseSiteDomain = hostname === "pulse.lockated.com";
   const isPanchshilUatSiteDomain =
     hostname === "pulse-uat.panchshil.com" || hostname === "localhost";
-  const showPulseUsageAnalytics = isPulseSiteDomain || isPanchshilUatSiteDomain;
+  const showPulseUsageAnalytics =
+    (isPulseSiteDomain || isPanchshilUatSiteDomain) && !isExternalRole;
 
   const showExistingPostHogUsageAnalytics =
     isLocalhost || isPulseSiteDomain || hostname === "pulse-uat.panchshil.com";
@@ -1039,47 +1042,51 @@ export const Header = () => {
                 </div>
               )}
 
-              {/* Menu Items */}
-              <div className="py-1">
-                <DropdownMenuItem
-                  onClick={() => navigate("/business-compass/profile")}
-                  className="mx-2 my-1 rounded-md"
-                >
-                  <User className="w-4 h-4 mr-2 text-gray-500" />
-                  <span className="font-medium">My Profile</span>
-                </DropdownMenuItem>
+              {/* Menu Items — hidden for External-role users, who only get Logout */}
+              {!isExternalRole && (
+                <>
+                  <div className="py-1">
+                    <DropdownMenuItem
+                      onClick={() => navigate("/business-compass/profile")}
+                      className="mx-2 my-1 rounded-md"
+                    >
+                      <User className="w-4 h-4 mr-2 text-gray-500" />
+                      <span className="font-medium">My Profile</span>
+                    </DropdownMenuItem>
 
-                {showExistingPostHogUsageAnalytics && (
-                  <DropdownMenuItem
-                    onClick={() =>
-                      (window.location.href = "/posthog-dashboard")
-                    }
-                    className="mx-2 my-1 rounded-md"
-                  >
-                    <Activity className="w-4 h-4 mr-2 text-gray-500" />
-                    <span className="font-medium">Usage Analytics</span>
-                  </DropdownMenuItem>
-                )}
-                {showPulseUsageAnalytics && (
-                  <DropdownMenuItem
-                    onClick={() => navigate("/pulse")}
-                    className="mx-2 my-1 rounded-md"
-                  >
-                    <Activity className="w-4 h-4 mr-2 text-gray-500" />
-                    <span className="font-medium">Usage Analytics</span>
-                  </DropdownMenuItem>
-                )}
+                    {showExistingPostHogUsageAnalytics && (
+                      <DropdownMenuItem
+                        onClick={() =>
+                          (window.location.href = "/posthog-dashboard")
+                        }
+                        className="mx-2 my-1 rounded-md"
+                      >
+                        <Activity className="w-4 h-4 mr-2 text-gray-500" />
+                        <span className="font-medium">Usage Analytics</span>
+                      </DropdownMenuItem>
+                    )}
+                    {showPulseUsageAnalytics && (
+                      <DropdownMenuItem
+                        onClick={() => navigate("/pulse")}
+                        className="mx-2 my-1 rounded-md"
+                      >
+                        <Activity className="w-4 h-4 mr-2 text-gray-500" />
+                        <span className="font-medium">Usage Analytics</span>
+                      </DropdownMenuItem>
+                    )}
 
-                <DropdownMenuItem
-                  onClick={() => navigate("/settings")}
-                  className="mx-2 my-1 rounded-md"
-                >
-                  <Settings className="w-4 h-4 mr-2 text-gray-500" />
-                  <span className="font-medium">Settings</span>
-                </DropdownMenuItem>
-              </div>
+                    <DropdownMenuItem
+                      onClick={() => navigate("/settings")}
+                      className="mx-2 my-1 rounded-md"
+                    >
+                      <Settings className="w-4 h-4 mr-2 text-gray-500" />
+                      <span className="font-medium">Settings</span>
+                    </DropdownMenuItem>
+                  </div>
 
-              <DropdownMenuSeparator className="my-1" />
+                  <DropdownMenuSeparator className="my-1" />
+                </>
+              )}
 
               {/* Logout Button */}
               <div className="p-2">

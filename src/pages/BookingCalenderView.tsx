@@ -39,6 +39,7 @@ const BookingCalenderView = () => {
     const [currentMonth, setCurrentMonth] = useState(initialMonth);
     const [currentYear, setCurrentYear] = useState(initialYear);
     const [showActionPanel, setShowActionPanel] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
 
     const datesContainerRef = useRef<HTMLDivElement | null>(null);
     const dateRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -46,6 +47,12 @@ const BookingCalenderView = () => {
     const facilities = isPulsePath
         ? (bookingType === "bookable" ? bookableFacilities : requestFacilities)
         : legacyFacilities;
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const filteredFacilities = normalizedSearch
+        ? facilities.filter((facility) =>
+            (facility.fac_name || "").toLowerCase().includes(normalizedSearch)
+        )
+        : facilities;
     const showBookableRadio = bookableFacilities.length > 0;
     const showRequestRadio = requestFacilities.length > 0;
 
@@ -388,9 +395,24 @@ const BookingCalenderView = () => {
                 <div className="flex items-center gap-2">
                     <div className="relative max-w-sm">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                        <Input placeholder="Search..." className="pl-10 pr-10" />
+                        <Input
+                            placeholder="Search by facility name..."
+                            className="pl-10 pr-10"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                        {searchTerm && (
+                            <button
+                                type="button"
+                                onClick={() => setSearchTerm("")}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                aria-label="Clear search"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        )}
                     </div>
-                    <Button
+                    {/* <Button
                         variant="outline"
                         size="sm"
                         className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 flex items-center gap-2 !rounded-md"
@@ -400,7 +422,7 @@ const BookingCalenderView = () => {
                     </Button>
                     <Button variant="outline" className="w-[40px] h-[40px] !rounded-md">
                         <Bell className="w-5 h-5" />
-                    </Button>
+                    </Button> */}
                 </div>
             </div>
 
@@ -510,7 +532,12 @@ const BookingCalenderView = () => {
                         </div>
 
                         {/* Facility Rows */}
-                        {facilities?.map((facility) => (
+                        {normalizedSearch && filteredFacilities.length === 0 && (
+                            <div className="sticky left-0 w-full max-w-[calc(100vw-4rem)] py-8 text-center text-sm text-gray-500">
+                                No facilities found matching "{searchTerm.trim()}"
+                            </div>
+                        )}
+                        {filteredFacilities?.map((facility) => (
                             <div key={facility.id} className="flex">
                                 <div className="w-32 flex-shrink-0 border border-gray-300 sticky left-0 z-10 bg-white">
                                     <div className="relative h-16">
