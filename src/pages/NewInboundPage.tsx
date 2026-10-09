@@ -873,29 +873,17 @@ export const NewInboundPage = () => {
                         </section>
                     ))}
 
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <button type="button" onClick={handleAddPackage} className={footerBtnClass}>
-                                <Plus className="h-4 w-4" />
-                                Package
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => navigate('/vas/mailroom/inbound')}
-                                className="inline-flex h-[42px] w-[160px] shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-[var(--color-line)] bg-white px-[22px] text-[13px] font-semibold leading-none text-[var(--color-ink-68)] hover:border-[rgba(26,26,24,0.28)] hover:text-[var(--color-text)]"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <button type="button" onClick={() => setIsAddVendorModalOpen(true)} className={footerBtnClass}>
-                                <Plus className="h-4 w-4" />
-                                Add Vendor
-                            </button>
-                            <button type="submit" disabled={isSubmitting} className={footerBtnClass}>
-                                {isSubmitting ? 'Submitting...' : 'Submit'}
-                            </button>
-                        </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10 }}>
+                        <button
+                            type="button"
+                            onClick={() => navigate('/vas/mailroom/inbound')}
+                            className="inline-flex h-[42px] w-[160px] shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-[var(--color-line)] bg-white px-[22px] text-[13px] font-semibold leading-none text-[var(--color-ink-68)] hover:border-[rgba(26,26,24,0.28)] hover:text-[var(--color-text)]"
+                        >
+                            Cancel
+                        </button>
+                        <button type="submit" disabled={isSubmitting} className={footerBtnClass}>
+                            {isSubmitting ? 'Submitting...' : 'Submit'}
+                        </button>
                     </div>
                 </form>
 
