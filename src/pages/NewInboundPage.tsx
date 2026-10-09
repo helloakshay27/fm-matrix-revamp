@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Upload, Settings, Package, X } from 'lucide-react';
+import { ArrowLeft, Upload, Settings, Package, Plus, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, FormHelperText } from '@mui/material';
@@ -488,73 +486,58 @@ export const NewInboundPage = () => {
     };
 
     const fieldStyles = {
-        height: '40px',
         backgroundColor: '#fff',
-        borderRadius: '4px',
         '& .MuiOutlinedInput-root': {
-            height: '40px',
-            fontSize: '14px',
-            '& fieldset': { borderColor: '#ddd' },
-            '&:hover fieldset': { borderColor: '#da7756' },
-            '&.Mui-focused fieldset': { borderColor: '#da7756' },
-        },
-        '& .MuiInputLabel-root': {
-            fontSize: '14px',
-            '&.Mui-focused': { color: '#da7756' },
+            minHeight: '44px',
+            fontSize: '13.5px',
+            fontWeight: 500,
         },
     };
 
-    return (
-        <div className="min-h-screen" style={{ backgroundColor: '#FAF9F7' }}>
-            <div className="p-6">
-                {/* Header */}
-                <div className="mb-6">
-                    <Button
-                        variant="ghost"
-                        onClick={() => navigate('/vas/mailroom/inbound')}
-                        className="mb-4 flex items-center gap-1 hover:text-gray-800"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        Back to Inbound List
-                    </Button>
-                    <h1
-                        className="text-2xl font-bold text-[#1a1a1a] uppercase"
-                        style={{ fontFamily: 'Work Sans, sans-serif' }}
-                    >
-                        NEW INBOUND
-                    </h1>
-                </div>
+    const footerBtnClass =
+        'inline-flex h-[42px] w-[160px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-[var(--color-primary)] bg-[var(--color-primary)] px-[22px] text-[13px] font-semibold leading-none text-white hover:bg-[var(--color-primary-hover)] disabled:cursor-not-allowed disabled:opacity-50';
 
-                <form onSubmit={handleSubmit}>
-                    {/* Basic Details Section */}
-                    <Card
-                        className="mb-6 border-[#D9D9D9] bg-white shadow-sm"
-                        style={{
-                            borderRadius: '4px',
-                            background: '#FFF',
-                            boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)',
-                        }}
+    return (
+        <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg)' }}>
+            <div style={{ padding: '24px 32px 48px' }}>
+                <button
+                    type="button"
+                    onClick={() => navigate('/vas/mailroom/inbound')}
+                    className="inline-flex items-center gap-1.5 border-0 bg-transparent p-0 text-[12.5px] font-semibold text-[var(--color-ink-48)] hover:text-[var(--color-text)]"
+                    style={{ marginBottom: 12 }}
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back to Inbound List
+                </button>
+                <h1
+                    className="uppercase text-[var(--color-text)]"
+                    style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.015em', lineHeight: 1.2, margin: '0 0 22px' }}
+                >
+                    NEW INBOUND
+                </h1>
+
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                    <section
+                        className="bg-white"
+                        style={{ border: '1px solid var(--color-line-card)', borderRadius: 16, padding: '22px 24px' }}
                     >
-                        <CardHeader className="bg-[#F6F4EE]">
-                            <CardTitle className="text-lg text-black flex items-center">
-                                <div
-                                    className="w-8 h-8 bg-[#da7756] text-white rounded-full flex items-center justify-center mr-2"
-                                    style={{ fontFamily: 'Work Sans, sans-serif' }}
-                                >
-                                    <Settings className="w-5 h-5" />
-                                </div>
-                                <span style={{ fontFamily: 'Work Sans, sans-serif', fontWeight: 600, color: '#da7756' }}>
-                                    BASIC DETAILS
-                                </span>
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
+                            <div
+                                className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-surface)] text-[var(--color-ink-68)]"
+                                style={{ marginRight: 8 }}
+                            >
+                                <Settings className="h-4 w-4" />
+                            </div>
+                            <span style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.4, color: 'var(--color-text)' }}>
+                                BASIC DETAILS
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 14 }}>
                                 {/* Vendor */}
                                 <div>
                                     <FormControl fullWidth variant="outlined" error={!!errors.vendor}>
                                         <InputLabel shrink>
-                                            Vendor <span style={{ color: '#da7756' }}>*</span>
+                                            Vendor <span style={{ color: 'var(--color-danger)' }}>*</span>
                                         </InputLabel>
                                         <MuiSelect
                                             label="Vendor"
@@ -575,14 +558,6 @@ export const NewInboundPage = () => {
                                         </MuiSelect>
                                         {errors.vendor && <FormHelperText>{errors.vendor}</FormHelperText>}
                                     </FormControl>
-                                    <Button
-                                        type="button"
-                                        onClick={() => setIsAddVendorModalOpen(true)}
-                                        variant="ghost"
-                                        className="fm-button-fix fm-button-brand px-4 py-2 mt-2"
-                                    >
-                                        + Add Vendor
-                                    </Button>
                                 </div>
 
                                 {/* Date of Receiving */}
@@ -592,65 +567,54 @@ export const NewInboundPage = () => {
                                         type="date"
                                         label={
                                             <span>
-                                                Date of Receiving <span style={{ color: '#da7756' }}>*</span>
+                                                Date of Receiving <span style={{ color: 'var(--color-danger)' }}>*</span>
                                             </span>
                                         }
                                         value={formData.dateOfReceiving}
                                         onChange={e => handleInputChange('dateOfReceiving', e.target.value)}
                                         InputLabelProps={{ shrink: true }}
-                                        inputProps={{ style: { height: 40 } }}
-                                        sx={{ '& .MuiInputBase-root': { height: 40 } }}
+                                        sx={fieldStyles}
                                         error={!!errors.dateOfReceiving}
                                         helperText={errors.dateOfReceiving}
                                     />
                                 </div>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </section>
 
-                    {/* Package Details Sections */}
                     {packages.map((pkg, index) => (
-                        <Card
+                        <section
                             key={pkg.id}
-                            className="mb-6 border-[#D9D9D9] bg-white shadow-sm"
-                            style={{
-                                borderRadius: '4px',
-                                background: '#FFF',
-                                boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)',
-                            }}
+                            className="bg-white"
+                            style={{ border: '1px solid var(--color-line-card)', borderRadius: 16, padding: '22px 24px' }}
                         >
-                            <CardHeader className="bg-[#F6F4EE]">
-                                <CardTitle className="text-lg text-black flex items-center justify-between">
-                                    <div className="flex items-center">
-                                        <div
-                                            className="w-8 h-8 bg-[#da7756] text-white rounded-full flex items-center justify-center mr-2"
-                                            style={{ fontFamily: 'Work Sans, sans-serif' }}
-                                        >
-                                            <Package className="w-5 h-5" />
-                                        </div>
-                                        <span style={{ fontFamily: 'Work Sans, sans-serif', fontWeight: 600, color: '#da7756' }}>
-                                            PACKAGE DETAILS {packages.length > 1 && `(${index + 1})`}
-                                        </span>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 16 }}>
+                                <div className="flex items-center">
+                                    <div
+                                        className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-surface)] text-[var(--color-ink-68)]"
+                                        style={{ marginRight: 8 }}
+                                    >
+                                        <Package className="h-4 w-4" />
                                     </div>
-                                    {packages.length > 1 && (
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            onClick={() => handleRemovePackage(pkg.id)}
-                                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                                        >
-                                            Remove
-                                        </Button>
-                                    )}
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    <span style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.4, color: 'var(--color-text)' }}>
+                                        PACKAGE DETAILS {packages.length > 1 && `(${index + 1})`}
+                                    </span>
+                                </div>
+                                {packages.length > 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemovePackage(pkg.id)}
+                                        className="inline-flex h-8 items-center justify-center rounded-lg border border-[var(--color-line)] bg-white px-3 text-xs font-semibold text-[var(--color-danger)] hover:bg-[var(--color-surface)]"
+                                    >
+                                        Remove
+                                    </button>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4" style={{ gap: 14 }}>
                                     {/* Recipient */}
                                     <div>
                                         <FormControl fullWidth variant="outlined" error={!!packageErrors[pkg.id]?.recipient}>
                                             <InputLabel shrink>
-                                                Recipient <span style={{ color: '#da7756' }}>*</span>
+                                                Recipient <span style={{ color: 'var(--color-danger)' }}>*</span>
                                             </InputLabel>
                                             <MuiSelect
                                                 label="Recipient"
@@ -681,7 +645,7 @@ export const NewInboundPage = () => {
                                             fullWidth
                                             label={
                                                 <span>
-                                                    Sender <span style={{ color: '#da7756' }}>*</span>
+                                                    Sender <span style={{ color: 'var(--color-danger)' }}>*</span>
                                                 </span>
                                             }
                                             placeholder="Enter Sender's Name"
@@ -742,7 +706,7 @@ export const NewInboundPage = () => {
                                             fullWidth
                                             label={
                                                 <span>
-                                                    Company's Address Line 1 <span style={{ color: '#da7756' }}>*</span>
+                                                    Company's Address Line 1 <span style={{ color: 'var(--color-danger)' }}>*</span>
                                                 </span>
                                             }
                                             placeholder="Enter Company's Address Line 1"
@@ -822,7 +786,7 @@ export const NewInboundPage = () => {
                                     <div>
                                         <FormControl fullWidth variant="outlined" error={!!packageErrors[pkg.id]?.type}>
                                             <InputLabel shrink>
-                                                Type <span style={{ color: '#da7756' }}>*</span>
+                                                Type <span style={{ color: 'var(--color-danger)' }}>*</span>
                                             </InputLabel>
                                             <MuiSelect
                                                 label="Type"
@@ -863,12 +827,21 @@ export const NewInboundPage = () => {
                                         )}
                                     </div>
 
-                                    {/* Attachments */}
-                                    <div className="lg:col-span-4">
-                                        <label className="block text-sm font-medium mb-2 text-[#1a1a1a]">
+                                    <div className="lg:col-span-4" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                        <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-ink-68)' }}>
                                             Attachments
                                         </label>
-                                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center bg-white">
+                                        <div
+                                            style={{
+                                                border: '2px dashed #EBE9E2',
+                                                borderRadius: 12,
+                                                padding: 18,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 10,
+                                                background: '#fff',
+                                            }}
+                                        >
                                             <input
                                                 type="file"
                                                 multiple
@@ -876,75 +849,74 @@ export const NewInboundPage = () => {
                                                 id={`attachments-upload-${pkg.id}`}
                                                 onChange={e => handleFileUpload(pkg.id, e.target.files)}
                                             />
-                                            <div className="flex items-center justify-center gap-2">
-                                                <Button
-                                                    type="button"
-                                                    onClick={() => document.getElementById(`attachments-upload-${pkg.id}`)?.click()}
-                                                    className="!bg-[#da7756] !text-white text-sm"
-                                                >
-                                                    <Upload className="w-4 h-4 mr-2" />
-                                                    Choose file
-                                                </Button>
-                                                <span className="text-sm text-gray-500">
-                                                    {pkg.attachments.length > 0
-                                                        ? `${pkg.attachments.length} file(s) selected`
-                                                        : 'No file chosen'}
-                                                </span>
-                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => document.getElementById(`attachments-upload-${pkg.id}`)?.click()}
+                                                className="inline-flex h-[42px] shrink-0 items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-white px-[22px] text-[13px] font-semibold text-[var(--color-ink-68)] hover:border-[rgba(26,26,24,0.28)] hover:text-[var(--color-text)]"
+                                            >
+                                                <Upload className="h-4 w-4" />
+                                                Choose file
+                                            </button>
+                                            <span style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--color-ink-48)' }}>
+                                                {pkg.attachments.length > 0
+                                                    ? `${pkg.attachments.length} file(s) selected`
+                                                    : 'No file chosen'}
+                                            </span>
                                             {packageErrors[pkg.id]?.attachments && (
-                                                <p className="text-sm text-red-500 mt-2 text-left">
+                                                <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--color-danger)' }}>
                                                     {packageErrors[pkg.id]?.attachments}
-                                                </p>
+                                                </span>
                                             )}
                                         </div>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                        </section>
                     ))}
 
-                    {/* Add Package Button */}
-                    <div className="mb-6 flex justify-start">
-                        <Button
-                            type="button"
-                            onClick={handleAddPackage}
-                           className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
-                        >
-                            + Package
-                        </Button>
-                    </div>
-
-                    {/* Submit Button */}
-                    <div className="flex gap-4 justify-center">
-                        <Button
-                            type="submit"
-                            disabled={isSubmitting}
-                            variant="ghost"
-                            className="fm-button-fix fm-button-brand px-4 py-2"
-                        >
-                            {isSubmitting ? 'Submitting...' : 'Submit'}
-                        </Button>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <button type="button" onClick={handleAddPackage} className={footerBtnClass}>
+                                <Plus className="h-4 w-4" />
+                                Package
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => navigate('/vas/mailroom/inbound')}
+                                className="inline-flex h-[42px] w-[160px] shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-[var(--color-line)] bg-white px-[22px] text-[13px] font-semibold leading-none text-[var(--color-ink-68)] hover:border-[rgba(26,26,24,0.28)] hover:text-[var(--color-text)]"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <button type="button" onClick={() => setIsAddVendorModalOpen(true)} className={footerBtnClass}>
+                                <Plus className="h-4 w-4" />
+                                Add Vendor
+                            </button>
+                            <button type="submit" disabled={isSubmitting} className={footerBtnClass}>
+                                {isSubmitting ? 'Submitting...' : 'Submit'}
+                            </button>
+                        </div>
                     </div>
                 </form>
 
                 {/* Add Vendor Modal */}
                 <Dialog open={isAddVendorModalOpen} onOpenChange={setIsAddVendorModalOpen}>
-                    <DialogContent className="sm:max-w-[425px]">
-                        <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
-                            <DialogTitle className="text-lg font-semibold">Add Vendor</DialogTitle>
+                    <DialogContent className="gap-0 sm:max-w-[580px]" style={{ padding: 28, borderRadius: 24 }}>
+                        <DialogHeader className="flex flex-row items-center justify-between space-y-0 text-left" style={{ marginBottom: 20 }}>
+                            <DialogTitle style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.3 }}>Add Vendor</DialogTitle>
                             <button
+                                type="button"
                                 onClick={() => setIsAddVendorModalOpen(false)}
-                                className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border-0 bg-transparent text-[var(--color-ink-48)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text)]"
+                                aria-label="Close"
                             >
                                 <X className="h-4 w-4" />
-                                <span className="sr-only">Close</span>
                             </button>
                         </DialogHeader>
-                        <div className="space-y-4 py-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="vendorName" className="text-sm font-medium">
-                                    Name <span className="text-red-500">*</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                <Label htmlFor="vendorName" style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-ink-68)' }}>
+                                    Name <span style={{ color: 'var(--color-danger)' }}>*</span>
                                 </Label>
                                 <Input
                                     id="vendorName"
@@ -952,11 +924,11 @@ export const NewInboundPage = () => {
                                     placeholder="Enter Name"
                                     value={vendorName}
                                     onChange={(e) => setVendorName(e.target.value)}
-                                    className="w-full"
+                                    className="h-[44px] min-h-[44px] w-full rounded-xl px-3.5 text-[13.5px] font-medium"
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="trackUrl" className="text-sm font-medium">
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                <Label htmlFor="trackUrl" style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-ink-68)' }}>
                                     Track Url
                                 </Label>
                                 <Input
@@ -965,17 +937,14 @@ export const NewInboundPage = () => {
                                     placeholder="Enter Track Url"
                                     value={trackUrl}
                                     onChange={(e) => setTrackUrl(e.target.value)}
-                                    className="w-full"
+                                    className="h-[44px] min-h-[44px] w-full rounded-xl px-3.5 text-[13.5px] font-medium"
                                 />
                             </div>
                         </div>
-                        <div className="flex justify-end pt-4">
-                            <Button
-                                onClick={handleSubmitVendor}
-                                className="bg-[#532D5F] hover:bg-[#532D5F]/90 text-white"
-                            >
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 24 }}>
+                            <button type="button" onClick={handleSubmitVendor} className={footerBtnClass}>
                                 Submit
-                            </Button>
+                            </button>
                         </div>
                     </DialogContent>
                 </Dialog>

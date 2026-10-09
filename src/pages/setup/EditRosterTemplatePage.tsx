@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { MaterialDatePicker } from "@/components/ui/material-date-picker";
 import { useNavigate, useParams } from 'react-router-dom';
 import { parse } from 'date-fns';
+import { MapPin } from 'lucide-react';
 
 interface RoasterData {
   id: number;
@@ -136,10 +137,10 @@ export const EditRosterTemplatePage = () => {
           {/* Left Side - Form */}
           <div className="flex-1 bg-white rounded-lg border shadow-sm p-6">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 bg-[#FF6B35] rounded-full flex items-center justify-center text-white font-bold">
-                1
+              <div className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center">
+                <MapPin className="w-4 h-4 text-[var(--color-ink-68)]" />
               </div>
-              <h2 className="text-lg font-semibold text-[#FF6B35]">LOCATION DETAILS</h2>
+              <h2 className="text-lg font-semibold text-brand">LOCATION DETAILS</h2>
             </div>
 
             <div className="space-y-6">
@@ -345,7 +346,7 @@ export const EditRosterTemplatePage = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-4 pt-4">
+              <div className="flex justify-center gap-4 pt-4">
                 <Button 
                   onClick={handleSubmit}
                   className="bg-green-600 hover:bg-green-700 text-white px-8"

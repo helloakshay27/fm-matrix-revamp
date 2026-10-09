@@ -374,10 +374,10 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
         <CardHeader className="pb-4 px-6 pt-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-[#C4B89D54] flex items-center justify-center">
-                <Utensils className="w-5 h-5 text-[#C72030]" />
+              <div className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center">
+                <Utensils className="w-4 h-4 text-[var(--color-ink-68)]" />
               </div>
-              <CardTitle className="text-xl font-bold text-[#C72030]">Popular Restaurants</CardTitle>
+              <CardTitle className="text-xl font-bold text-[var(--color-text)]">Popular Restaurants</CardTitle>
             </div>
             <div className="flex items-center gap-2">
               <TooltipProvider>
@@ -388,7 +388,7 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
                       size="sm"
                       className="w-8 h-8 p-0"
                     >
-                      <Info className="w-4 h-4 text-[#C72030]" />
+                      <Info className="w-4 h-4 text-[var(--color-text)]" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent className="bg-gray-900 text-white border-gray-700 max-w-xs">
@@ -409,7 +409,7 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
                 title="Download Popular Restaurants data"
                 disabled={popularRestaurants.length === 0}
               >
-                <Download className="w-4 h-4 text-[#C72030]" />
+                <Download className="w-4 h-4 text-[var(--color-text)]" />
               </Button>
             </div>
           </div>
@@ -418,7 +418,7 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
           {orderStatsLoading ? (
             <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
               <div className="flex flex-col items-center gap-3">
-                <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
+                <Loader2 className="w-8 h-8 animate-spin text-brand" />
                 <span className="text-sm text-gray-600">Loading popular restaurants...</span>
               </div>
             </div>
@@ -534,10 +534,10 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
         <CardHeader className="pb-4 px-6 pt-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-[#C4B89D54] flex items-center justify-center">
-                <CalendarIcon className="w-5 h-5 text-[#C72030]" />
+              <div className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center">
+                <CalendarIcon className="w-4 h-4 text-[var(--color-ink-68)]" />
               </div>
-              <CardTitle className="text-xl font-bold text-[#C72030]">Orders Over Time</CardTitle>
+              <CardTitle className="text-xl font-bold text-[var(--color-text)]">Orders Over Time</CardTitle>
             </div>
             <div className="flex items-center gap-2">
               <TooltipProvider>
@@ -548,7 +548,7 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
                       size="sm"
                       className="w-8 h-8 p-0"
                     >
-                      <Info className="w-4 h-4 text-[#C72030]" />
+                      <Info className="w-4 h-4 text-[var(--color-text)]" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent className="bg-gray-900 text-white border-gray-700 max-w-xs">
@@ -569,7 +569,7 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
                 title="Download Orders Over Time data"
                 disabled={!ordersOverTime || (ordersOverTime.daily?.length === 0 && ordersOverTime.weekly?.length === 0 && ordersOverTime.monthly?.length === 0)}
               >
-                <Download className="w-4 h-4 text-[#C72030]" />
+                <Download className="w-4 h-4 text-[var(--color-text)]" />
               </Button>
             </div>
           </div>
@@ -580,7 +580,7 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
               variant={ordersOverTimeView === 'daily' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setOrdersOverTimeView('daily')}
-              className={ordersOverTimeView === 'daily' ? 'bg-[#C72030] text-white hover:bg-[#C72030]/90' : ''}
+              className={ordersOverTimeView === 'daily' ? 'bg-brand text-white hover:bg-brand-hover' : ''}
             >
               Daily
             </Button>
@@ -588,7 +588,7 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
               variant={ordersOverTimeView === 'weekly' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setOrdersOverTimeView('weekly')}
-              className={ordersOverTimeView === 'weekly' ? 'bg-[#C72030] text-white hover:bg-[#C72030]/90' : ''}
+              className={ordersOverTimeView === 'weekly' ? 'bg-brand text-white hover:bg-brand-hover' : ''}
             >
               Weekly
             </Button>
@@ -596,7 +596,7 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
               variant={ordersOverTimeView === 'monthly' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setOrdersOverTimeView('monthly')}
-              className={ordersOverTimeView === 'monthly' ? 'bg-[#C72030] text-white hover:bg-[#C72030]/90' : ''}
+              className={ordersOverTimeView === 'monthly' ? 'bg-brand text-white hover:bg-brand-hover' : ''}
             >
               Monthly
             </Button>
@@ -606,7 +606,7 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
           {orderStatsLoading ? (
             <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
               <div className="flex flex-col items-center gap-3">
-                <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
+                <Loader2 className="w-8 h-8 animate-spin text-brand" />
                 <span className="text-sm text-gray-600">Loading orders over time...</span>
               </div>
             </div>
@@ -719,11 +719,11 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
     const getColor = (count: number) => {
       if (count === 0) return '#F3F4F6'; // Light gray for no data
       const intensity = count / maxCount;
-      if (intensity < 0.2) return '#FEE2E2'; // Light red
-      if (intensity < 0.4) return '#FECACA'; // Medium light red
-      if (intensity < 0.6) return '#FCA5A5'; // Medium red
-      if (intensity < 0.8) return '#F87171'; // Medium dark red
-      return '#C72030'; // Dark red (brand color)
+      if (intensity < 0.2) return '#F9ECE7'; // Lightest brand tint
+      if (intensity < 0.4) return '#F4D8CE'; // Light brand tint
+      if (intensity < 0.6) return '#EDBBAB'; // Medium brand tint
+      if (intensity < 0.8) return '#E39981'; // Strong brand tint
+      return 'var(--color-accent)'; // Brand accent (coral)
     };
 
     return (
@@ -731,10 +731,10 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
         <CardHeader className="pb-4 px-6 pt-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-[#C4B89D54] flex items-center justify-center">
-                <CalendarIcon className="w-5 h-5 text-[#C72030]" />
+              <div className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center">
+                <CalendarIcon className="w-4 h-4 text-[var(--color-ink-68)]" />
               </div>
-              <CardTitle className="text-xl font-bold text-[#C72030]">Peak Ordering</CardTitle>
+              <CardTitle className="text-xl font-bold text-[var(--color-text)]">Peak Ordering</CardTitle>
             </div>
             <div className="flex items-center gap-2">
               <TooltipProvider>
@@ -745,7 +745,7 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
                       size="sm"
                       className="w-8 h-8 p-0"
                     >
-                      <Info className="w-4 h-4 text-[#C72030]" />
+                      <Info className="w-4 h-4 text-[var(--color-text)]" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent className="bg-gray-900 text-white border-gray-700 max-w-xs">
@@ -766,7 +766,7 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
                 title="Download Peak Ordering data"
                 disabled={!peakOrdering || !peakOrdering.hourly_distribution || peakOrdering.hourly_distribution.length === 0}
               >
-                <Download className="w-4 h-4 text-[#C72030]" />
+                <Download className="w-4 h-4 text-[var(--color-text)]" />
               </Button>
               {peakOrdering?.peak_slots && peakOrdering.peak_slots.length > 0 && (
                 <Button
@@ -777,9 +777,9 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
                   title="Show Peak Slots"
                 >
                   {showPeakSlots ? (
-                    <ChevronDown className="w-4 h-4 text-[#C72030]" />
+                    <ChevronDown className="w-4 h-4 text-[var(--color-text)]" />
                   ) : (
-                    <ChevronRight className="w-4 h-4 text-[#C72030]" />
+                    <ChevronRight className="w-4 h-4 text-[var(--color-text)]" />
                   )}
                 </Button>
               )}
@@ -790,7 +790,7 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
           {orderStatsLoading ? (
             <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
               <div className="flex flex-col items-center gap-3">
-                <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
+                <Loader2 className="w-8 h-8 animate-spin text-brand" />
                 <span className="text-sm text-gray-600">Loading peak ordering data...</span>
               </div>
             </div>
@@ -969,7 +969,7 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
           {/* Icon and Actions Row */}
           <div className="flex items-start justify-between mb-4">
             <div className="w-12 h-12 rounded-lg bg-[#C4B89D54] flex items-center justify-center">
-              <CalendarIcon className="w-6 h-6 text-[#C72030]" />
+              <CalendarIcon className="w-6 h-6 text-[var(--color-text)]" />
             </div>
             <div className="flex items-center gap-1">
               <TooltipProvider>
@@ -1021,7 +1021,7 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
           {/* Icon and Actions Row */}
           <div className="flex items-start justify-between mb-4">
             <div className="w-12 h-12 rounded-lg bg-[#C4B89D54] flex items-center justify-center">
-              <Package className="w-6 h-6 text-[#C72030]" />
+              <Package className="w-6 h-6 text-[var(--color-text)]" />
             </div>
             <div className="flex items-center gap-1">
               <TooltipProvider>
@@ -1054,7 +1054,7 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
                   title="Download Total Orders data"
                   disabled={totalOrdersCount === 0}
                 >
-                  <Download className="w-4 h-4 text-[#C72030]" />
+                  <Download className="w-4 h-4 text-[var(--color-text)]" />
                 </Button>
               )}
             </div>
@@ -1147,13 +1147,13 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
               <Button
                 onClick={() => setIsAnalyticsFilterOpen(true)}
                 variant="outline"
-                className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-orange-50 border-[#da7756]"
+                className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-brand-selected border-gray-200 text-gray-900 [&_svg]:text-gray-700"
               >
-                <CalendarIcon className="w-4 h-4 text-[#da7756]" />
-                <span className="text-sm font-medium text-[#da7756]">
+                <CalendarIcon className="w-4 h-4 text-gray-700" />
+                <span className="text-sm font-medium text-gray-900">
                   {getFormattedDateRange()}
                 </span>
-                <Filter className="w-4 h-4 text-[#da7756]" />
+                <Filter className="w-4 h-4 text-gray-700" />
               </Button>
             )}
 

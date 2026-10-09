@@ -2618,8 +2618,8 @@ h4[class*="text-[#1A1A1A]"],
 
 }
 /* Chart subheadings like "Response TAT", "Resolution TAT" - BLACK */
-.text-center.font-semibold:not(.analytics-header),
-.text-center.font-bold:not(.analytics-header) {
+.text-center.font-semibold:not(.analytics-header):not(button):not(a),
+.text-center.font-bold:not(.analytics-header):not(button):not(a) {
   color: var(--color-text) !important;
 }
 
@@ -2989,9 +2989,9 @@ table.item-table-no-hover tbody tr:hover {
   border-radius: 12px !important;
 }
 
-/* Card hover effect */
+/* Cards stay flat — the wireframe has no drop shadow on surfaces */
 [class*="Card"]:hover {
-  box-shadow: var(--shadow-md) !important;
+  box-shadow: none !important;
 }
 
 /* ===========================================
@@ -5945,6 +5945,118 @@ html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-out
   padding: 0 !important;
   font-size: 13.5px !important;
   font-weight: 500 !important;
+}
+
+/* ============================================================
+   GLOBAL CONTROL SIZE + FLAT SURFACES
+   Matches the asset-management wireframe used on New Inbound /
+   New Outbound / Parking Details:
+     action button  42px tall, 22px side padding, 8px radius
+     text field     44px tall, 12px radius
+     card           16px radius, hairline border, no drop shadow
+   Overlays portaled outside <main> (menus, dialogs) keep their lift.
+   ============================================================ */
+
+/* Page content: no drop shadows on cards, panels, or hover lifts */
+html body main .shadow-sm,
+html body main .shadow,
+html body main .shadow-md,
+html body main .shadow-lg,
+html body main .shadow-xl,
+html body main .shadow-2xl,
+html body main .shadow-inner,
+html body main .shadow-brand-sm,
+html body main .shadow-brand-md,
+html body main .shadow-brand-lg,
+html body main .shadow-brand-xl,
+html body main .shadow-brand-card,
+html body main [class*="shadow-sm"],
+html body main [class*="shadow-md"],
+html body main [class*="shadow-lg"],
+html body main [class*="shadow-xl"],
+html body main [class*="shadow-["],
+html body main [class*="Card"]:hover,
+html body main .stat-card,
+html body main .MuiPaper-root:not([class*="MuiMenu"]):not([class*="MuiPopover"]):not([class*="MuiAutocomplete"]):not([class*="MuiPickers"]):not([class*="MuiDrawer"]) {
+  box-shadow: none !important;
+}
+
+/* Shared cards: 16px corners, hairline, white, flat */
+html body main .shadow-sm.border,
+html body main [class*="shadow-sm"].border,
+html body main .stat-card {
+  border-radius: 16px !important;
+  border-color: var(--color-line-card) !important;
+}
+
+/* Text fields in page content match the 44px wireframe control */
+html body main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="hidden"]):not(.MuiInputBase-input):not(.MuiSelect-nativeInput):not(.seat-count-input),
+html body main button[role="combobox"] {
+  min-height: 44px !important;
+  border-radius: var(--radius-input) !important;
+}
+
+/* Compact counters inside the seat-type table */
+html body main input.seat-count-input {
+  width: 72px !important;
+  min-width: 72px !important;
+  max-width: 72px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 8px !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--color-line) !important;
+  background: #fff !important;
+  text-align: center !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--color-text) !important;
+  box-shadow: none !important;
+}
+
+/* Action buttons: wireframe .btn — 42× padding 22px, no shadow.
+   Square icon buttons (h-8/w-8, p-0) are left alone. */
+html body main button.fm-button-fix:not([class*="w-8"]):not([class*="w-9"]):not([class*="h-8"]):not([class*="h-9"]):not([class*="p-0"]),
+html body main a.fm-button-fix:not([class*="w-8"]):not([class*="w-9"]):not([class*="h-8"]):not([class*="h-9"]):not([class*="p-0"]),
+html body main button.bg-brand:not([class*="w-8"]):not([class*="w-9"]):not([class*="h-8"]):not([class*="h-9"]):not([class*="p-0"]),
+html body main button[class*="fm-button-brand"]:not([class*="w-8"]):not([class*="w-9"]):not([class*="h-8"]):not([class*="h-9"]):not([class*="p-0"]),
+html body main a[class*="fm-button-brand"]:not([class*="w-8"]):not([class*="w-9"]):not([class*="h-8"]):not([class*="h-9"]):not([class*="p-0"]) {
+  min-height: 42px !important;
+  height: 42px !important;
+  padding: 0 22px !important;
+  border-radius: var(--radius-button) !important;
+  box-shadow: none !important;
+  gap: 8px !important;
+  line-height: 1 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+/* Filled buttons keep a white label. A global rule paints
+   .text-center.font-semibold as ink, which hides the label on the
+   ink fill (Close OSR, Schedule, Edit, and every other brand button). */
+html body button.text-center.font-semibold[class*="fm-button-brand"],
+html body button.text-center.font-bold[class*="fm-button-brand"],
+html body a.text-center.font-semibold[class*="fm-button-brand"],
+html body a.text-center.font-bold[class*="fm-button-brand"],
+html body button.text-center.font-semibold.bg-brand,
+html body button.text-center.font-bold.bg-brand,
+html body button.text-center.font-semibold[class*="bg-[#C72030]"],
+html body button.text-center.font-semibold[class*="bg-[#DA7756]"],
+html body button.text-center.font-semibold[class*="bg-[#da7756]"],
+html body button.fm-button-fix.fm-button-brand,
+html body a.fm-button-fix.fm-button-brand,
+html body button.fm-button-fix.fm-button-brand *,
+html body a.fm-button-fix.fm-button-brand * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+html body button.fm-button-fix.fm-button-brand svg,
+html body button.text-center.font-semibold[class*="fm-button-brand"] svg,
+html body button.text-center.font-semibold.bg-brand svg {
+  color: #ffffff !important;
+  stroke: currentColor !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 
 /* ============================================================

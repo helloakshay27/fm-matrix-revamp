@@ -68,19 +68,21 @@ export const UserRoastersDashboard = () => {
         {/* Header */}
         <div className="mb-6">
           <div className="text-sm text-gray-500 mb-2">Space &gt; User Roasters</div>
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-800">USER ROASTERS</h1>
-            {(shouldShow("Roaster","create") && 
-            <Button 
+          <h1 className="text-2xl font-bold text-gray-800">USER ROASTERS</h1>
+        </div>
+
+        {/* Actions */}
+        {shouldShow("Roaster", "create") && (
+          <div className="flex items-center mb-4">
+            <Button
               onClick={handleAddClick}
-              className="fm-button-fix fm-button-brand-solid hover:bg-[#c96546] text-white flex items-center gap-2"
+              className="fm-button-fix fm-button-brand-solid hover:bg-brand-hover text-white flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Add
             </Button>
-            )}
           </div>
-        </div>
+        )}
 
         {/* Table */}
         <div className="bg-white rounded-lg border shadow-sm overflow-hidden">

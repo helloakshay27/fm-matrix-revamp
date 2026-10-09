@@ -18,10 +18,10 @@ const buttonVariants = cva(
         icon: "bg-transparent text-white [&_svg]:text-white",
       },
       size: {
-        default: "h-[28px] sm:h-[36px] px-4 py-1.5",
-        sm: "h-[28px] sm:h-[36px] px-3 py-1 text-xs",
-        lg: "h-[28px] sm:h-[36px] px-6 py-2 text-base",
-        icon: "h-[28px] sm:h-[36px] w-[28px] sm:w-[36px] p-1.5",
+        default: "h-[42px] px-[22px] text-[13px] font-semibold",
+        sm: "h-10 px-[18px] text-xs font-semibold",
+        lg: "h-[42px] px-[22px] text-[13px] font-semibold",
+        icon: "h-9 w-9 p-0",
       },
     },
     defaultVariants: {

@@ -294,19 +294,25 @@ export const OSRDashboard = () => {
         pagination
         pageSize={10}
         leftActions={
-          <div className="flex items-center gap-2">
-            <Button onClick={handleGenerateReceipt} className={brandButtonClass}>
-              <FileText className="w-4 h-4 mr-2" />
-              Generate Receipt
-            </Button>
-            <Button
-              onClick={() => setShowCreateModal(true)}
-              className={brandButtonClass}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add
-            </Button>
-          </div>
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            className={brandButtonClass}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add
+          </Button>
+        }
+        filterAdjacentActions={
+          <Button
+            variant="outline"
+            size="icon"
+            className="!rounded-lg border border-brand text-brand"
+            onClick={handleGenerateReceipt}
+            title="Generate Receipt"
+            aria-label="Generate Receipt"
+          >
+            <FileText className="w-4 h-4" />
+          </Button>
         }
       />
 

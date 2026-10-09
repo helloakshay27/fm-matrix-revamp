@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useNavigate, useParams } from 'react-router-dom';
-import { CirclePlus, CircleMinus, X, Minus } from 'lucide-react';
+import { CirclePlus, CircleMinus, X, Minus, Plus, Upload } from 'lucide-react';
 
 interface SeatTypeConfig {
   name: string;
@@ -52,6 +52,7 @@ export const EditSeatSetupDashboard = () => {
   const [selectedDepartment, setSelectedDepartment] = useState<string>("");
   const [selectedAssignmentSeatType, setSelectedAssignmentSeatType] = useState<string>("");
   const [seatsToAssign, setSeatsToAssign] = useState<string>("");
+  const [floorMapFile, setFloorMapFile] = useState<File | null>(null);
   
   const [seatTypes, setSeatTypes] = useState<SeatTypeConfig[]>([
     { name: "Angular Ws", totalSeats: "0", reservedSeats: "0" },
@@ -508,13 +509,13 @@ export const EditSeatSetupDashboard = () => {
                   {seatTypes.map((seatType, index) => (
                     <div 
                       key={index} 
-                      className={`grid grid-cols-3 gap-4 py-3 border-b border-gray-200 cursor-pointer hover:bg-gray-50 px-4 -mx-6 ${
-                        selectedSeatType === seatType.name ? 'bg-[#C72030]/10 border-[#C72030] border-l-4' : ''
+                      className={`grid grid-cols-3 gap-4 py-3 border-b border-gray-200 cursor-pointer hover:bg-brand-selected px-4 -mx-6 ${
+                        selectedSeatType === seatType.name ? 'bg-brand-light border-brand border-l-4' : ''
                       }`}
                       onClick={() => handleSeatTypeClick(seatType.name)}
                     >
                       <div className="flex items-center">
-                        <span className={`text-sm font-medium ${selectedSeatType === seatType.name ? 'text-[#C72030]' : 'text-gray-700'}`}>
+                        <span className={`text-sm font-medium ${selectedSeatType === seatType.name ? 'text-brand' : 'text-gray-700'}`}>
                           {seatType.name}
                         </span>
                       </div>
@@ -542,7 +543,7 @@ export const EditSeatSetupDashboard = () => {
               </div>
 
               {/* Right Side - Dynamic Seat Type Preview */}
-              <div className="w-80 bg-pink-50 rounded-lg border shadow-sm p-6">
+              <div className="w-80 bg-brand-card-bg rounded-lg border border-brand-card-border shadow-sm p-6">
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold text-gray-800">{selectedSeatType}</h3>
                   <p className="text-sm text-gray-600">Common Seats</p>
@@ -639,25 +640,30 @@ export const EditSeatSetupDashboard = () => {
             {/* Floor Map Section */}
             <div className="mt-8 bg-white rounded-lg border shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Floor Map</h3>
-              <div className="border border-gray-300 rounded-lg p-4">
-                <input 
-                  type="file" 
-                  id="floor-map-edit" 
-                  className="hidden" 
+              <div className="flex items-center gap-3 border border-gray-300 rounded-lg p-4">
+                <input
+                  type="file"
+                  id="floor-map-edit"
+                  className="hidden"
                   accept="image/*"
+                  onChange={(e) => setFloorMapFile(e.target.files?.[0] ?? null)}
                 />
-                <label 
-                  htmlFor="floor-map-edit" 
-                  className="text-[#C72030] cursor-pointer hover:underline"
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById('floor-map-edit')?.click()}
                 >
+                  <Upload className="w-4 h-4 mr-2" />
                   Choose File
-                </label>
-                <span className="ml-2 text-gray-500">No file chosen</span>
+                </Button>
+                <span className="text-sm text-gray-500 truncate">
+                  {floorMapFile ? floorMapFile.name : 'No file chosen'}
+                </span>
               </div>
             </div>
 
             {/* Action Buttons for Seat Configuration */}
-            <div className="flex gap-4 mt-6">
+            <div className="flex justify-end gap-4 mt-6">
               <Button 
                 onClick={handleProceed}
                 className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
@@ -678,7 +684,7 @@ export const EditSeatSetupDashboard = () => {
             <div className="flex gap-6">
               {/* Left Side - Department List */}
               <div className="flex-1 bg-white rounded-lg border shadow-sm">
-                <div className="bg-gray-100 p-4 rounded-t-lg border-b border-[#C72030]">
+                <div className="bg-gray-100 p-4 rounded-t-lg border-b border-brand-card-border">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="font-semibold text-gray-700">Departments</div>
                     <div className="font-semibold text-gray-700 text-center">No. of Seats</div>
@@ -686,7 +692,7 @@ export const EditSeatSetupDashboard = () => {
                 </div>
                 <div className="p-0 max-h-96 overflow-y-auto">
                   {departments.map((department, index) => (
-                    <div key={index} className="grid grid-cols-2 gap-4 p-4 border-b border-gray-100 hover:bg-gray-50">
+                    <div key={index} className="grid grid-cols-2 gap-4 p-4 border-b border-gray-100 hover:bg-brand-selected">
                       <div className="text-sm text-gray-700">{department.name}</div>
                       <div className="text-sm text-gray-700 text-center">{department.seats}</div>
                     </div>
@@ -695,7 +701,7 @@ export const EditSeatSetupDashboard = () => {
               </div>
 
               {/* Right Side - Tag Department */}
-              <div className="w-80 bg-blue-50 rounded-lg border shadow-sm p-6">
+              <div className="w-80 bg-brand-card-bg rounded-lg border border-brand-card-border shadow-sm p-6">
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold text-gray-800">Tag Department</h3>
                 </div>
@@ -711,10 +717,10 @@ export const EditSeatSetupDashboard = () => {
                             <Button
                               onClick={() => toggleSeatTypeExpansion(seatType.name)}
                               size="sm"
-                              className="h-6 w-6 p-0 bg-[#C72030] hover:bg-[#C72030]/90 text-white rounded-full"
+                              className="h-6 w-6 p-0 bg-brand hover:bg-brand-hover text-white rounded-full"
                               disabled={seatType.total === 0}
                             >
-                              {seatType.isExpanded ? <Minus className="h-3 w-3" /> : <CirclePlus className="h-3 w-3" />}
+                              {seatType.isExpanded ? <Minus className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
                             </Button>
                           </div>
                         </div>
@@ -735,7 +741,7 @@ export const EditSeatSetupDashboard = () => {
                                 <div className="flex gap-2 items-center">
                                   <Button
                                     size="sm"
-                                    className="bg-[#C72030] hover:bg-[#C72030]/90 text-white text-xs px-3 py-1"
+                                    className="bg-brand hover:bg-brand-hover text-white text-xs px-3 py-1"
                                     onClick={() => handleOpenAssignDialog(seatType.name)}
                                     disabled={seatType.assigned >= seatType.total}
                                   >
@@ -808,10 +814,10 @@ export const EditSeatSetupDashboard = () => {
             </Dialog>
 
             {/* Action Buttons */}
-            <div className="flex gap-4 mt-6">
+            <div className="flex justify-end gap-4 mt-6">
               <Button 
                 onClick={handleSubmit}
-                className="bg-[#6B3FA0] hover:bg-[#6B3FA0]/90 text-white px-8"
+                className="bg-brand hover:bg-brand-hover text-white px-8"
               >
                 Submit
               </Button>
