@@ -397,16 +397,16 @@ export const AddUtilityRequestPage = () => {
 
       {/* Form Card */}
       <Card className="mx-auto">
-        <CardHeader className="bg-[#f6f4ee] border-b">
-          <CardTitle className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-            <span className="inline-flex items-center">
-              <FileChartLine className="w-5 h-5" color='#C72030' />
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold text-gray-900 sm:text-base">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-100">
+              <FileChartLine className="h-4 w-4 text-gray-700" />
             </span>
-            <span className="text-[#C72030]">Compile Utilizations</span>
+            <span>Compile Utilizations</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <CardContent className="px-8 pb-8 pt-2">
+          <form id="add-utility-request-form" onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Select Entity */}
               <div className="space-y-2">
@@ -633,25 +633,34 @@ export const AddUtilityRequestPage = () => {
                 </FormControl>
               </div>
             </div>
-
-            {/* Submit Button */}
-            <div className="flex justify-center pt-6">
-              <Button
-                type="submit"
-                className="bg-[#C72030] hover:bg-[#A01B29] text-white px-8 py-3 rounded-none font-medium transition-colors duration-200"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <CircularProgress size={16} color="inherit" className="mr-2" />
-                    Submitting...
-                  </>
-                ) : 'Submit'}
-              </Button>
-            </div>
           </form>
         </CardContent>
       </Card>
+
+      {/* Submit Button */}
+      <div className="flex justify-end gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleCancel}
+          className="border-gray-400 bg-white px-8 py-3 font-medium text-gray-900 hover:bg-gray-50"
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          form="add-utility-request-form"
+          className="bg-[#C72030] hover:bg-[#A01B29] text-white px-8 py-3 rounded-none font-medium transition-colors duration-200"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <>
+              <CircularProgress size={16} color="inherit" className="mr-2" />
+              Submitting...
+            </>
+          ) : 'Submit'}
+        </Button>
+      </div>
     </div>
   );
 };

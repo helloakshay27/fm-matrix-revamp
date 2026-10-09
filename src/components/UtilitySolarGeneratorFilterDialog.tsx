@@ -79,27 +79,27 @@ export const UtilitySolarGeneratorFilterDialog = ({
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 pt-6">
-          <Button 
-            onClick={handleSubmit} 
-            className="flex-1 h-11 bg-brand hover:bg-brand-hover text-white"
+        <div className="flex flex-col sm:flex-row sm:justify-end gap-4 pt-6">
+          <Button
+            variant="outline"
+            onClick={handleReset}
+            className="h-11 w-full px-6 sm:w-auto border-brand text-brand hover:bg-brand-selected hover:text-brand"
+          >
+            Reset
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            className="h-11 w-full px-6 sm:w-auto bg-brand hover:bg-brand-hover text-white"
           >
             Apply Filters
           </Button>
-          <Button 
+          {/* <Button 
             variant="outline" 
             onClick={onClose}
             className="flex-1 h-11 border-brand text-brand hover:bg-brand-selected hover:text-brand"
           >
             Cancel
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={handleReset} 
-            className="flex-1 h-11 border-brand text-brand hover:bg-brand-selected hover:text-brand"
-          >
-            Reset
-          </Button>
+          </Button> */}
         </div>
       </DialogContent>
     </Dialog>

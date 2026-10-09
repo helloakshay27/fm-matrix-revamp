@@ -147,9 +147,9 @@ export const AssetAnalyticsFilterDialog: React.FC<AssetAnalyticsFilterDialogProp
           <Button variant="outline" onClick={handleReset}>
             Reset
           </Button>
-          <Button variant="outline" onClick={onClose}>
+          {/* <Button variant="outline" onClick={onClose}>
             Cancel
-          </Button>
+          </Button> */}
           <Button 
             onClick={handleSubmit}
             className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"

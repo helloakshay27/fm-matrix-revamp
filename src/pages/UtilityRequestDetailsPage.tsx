@@ -236,15 +236,15 @@ export const UtilityRequestDetailsPage = () => {
       <div className=" mx-auto space-y-6">
         {/* Basic Details Card */}
         <Card className="w-full">
-          <CardHeader className="border-b" style={{ backgroundColor: "#f6f4ee" }}>
-            <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <span className="inline-flex items-center">
-                <File className="w-5 h-5" color='#C72030' />
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold text-gray-900 sm:text-base">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-100">
+                <File className="h-4 w-4 text-gray-700" />
               </span>
-              <span className="text-[#C72030]">BASIC DETAILS</span>
+              <span>BASIC DETAILS</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
+          <CardContent className="px-6 pb-6 pt-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Left Column */}
               <div className="space-y-4">
@@ -300,15 +300,15 @@ export const UtilityRequestDetailsPage = () => {
 
         {/* Consumption Details Card */}
         <Card className="w-full">
-          <CardHeader className="border-b" style={{ backgroundColor: "#f6f4ee" }}>
-            <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <span className="inline-flex items-center">
-                <FileChartLine className="w-5 h-5" color='#C72030' />
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold text-gray-900 sm:text-base">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-100">
+                <FileChartLine className="h-4 w-4 text-gray-700" />
               </span>
-              <span className="text-[#C72030]">Consumption Details</span>
+              <span>Consumption Details</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
+          <CardContent className="px-6 pb-6 pt-2">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-100 border-b">
