@@ -359,10 +359,10 @@ export const GenerateUtilityBillPage = () => {
       <form onSubmit={handleSubmit} className="space-y-6">
 
         {/* ── STEP 1 ── */}
-        <Card className="border-0 bg-white !shadow-none" style={{ boxShadow: 'none' }}>
-          <CardHeader className="bg-white border-b border-[#e4ddd4] px-6 py-4">
+        <Card className="overflow-hidden rounded-xl border border-[#eeeeee] bg-white shadow-none">
+          <CardHeader className="bg-white px-6 py-4">
             <div className="flex items-center gap-3">
-              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-[#DA7756] text-white text-sm font-bold">1</span>
+              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-[#f5f4f0] text-gray-700 text-sm font-bold">1</span>
               <CardTitle className="text-base font-semibold text-[#22201d]">Select Filters & Utility Type</CardTitle>
             </div>
           </CardHeader>
@@ -404,8 +404,6 @@ export const GenerateUtilityBillPage = () => {
                 />
               </RadioGroup>
             </div>
-
-            <div className="border-t border-[#e5ddd2]" />
 
             {/* Row 1: From Date | To Date | Select KIOSK | Kiosk Consumption | Consumption as per EB */}
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -518,8 +516,8 @@ export const GenerateUtilityBillPage = () => {
 
             </div>
 
-            {/* Generate Adjustment Factor - centered at bottom of Step 1 */}
-            <div className="flex justify-center pt-2">
+            {/* Generate Adjustment Factor - bottom right of Step 1 */}
+            <div className="flex justify-end pt-2">
               <Button
                 type="button"
                 onClick={handleGenerateAdjustmentFactor}
@@ -535,10 +533,10 @@ export const GenerateUtilityBillPage = () => {
         </Card>
 
         {/* ── STEP 2 ── */}
-        <Card className={`border-0 bg-white !shadow-none transition-all ${formData.totalConsumption ? 'border-green-300' : ''}`} style={{ boxShadow: 'none' }}>
-          <CardHeader className="bg-white border-b border-[#e4ddd4] px-6 py-4">
+        <Card className={`overflow-hidden rounded-xl border bg-white shadow-none transition-all ${formData.totalConsumption ? 'border-green-300' : 'border-[#eeeeee]'}`}>
+          <CardHeader className="bg-white px-6 py-4">
             <div className="flex items-center gap-3">
-              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-[#DA7756] text-white text-sm font-bold">2</span>
+              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-[#f5f4f0] text-gray-700 text-sm font-bold">2</span>
               <CardTitle className="text-base font-semibold text-[#22201d]">Review & Submit</CardTitle>
               {!formData.totalConsumption && (
                 <span className="text-xs text-[#8f8579] ml-2">— complete Step 1 first</span>
@@ -606,15 +604,6 @@ export const GenerateUtilityBillPage = () => {
               </div>
             </div> */}
 
-            <div className="flex justify-center pt-2">
-              <Button
-                type="submit"
-                disabled={!formData.totalConsumption || resultsLoading}
-                className="fm-button-fix fm-button-brand-solid h-[45px] px-10 rounded-lg font-medium flex items-center gap-2"
-              >
-                Submit
-              </Button>
-            </div>
           </CardContent>
         </Card>
 
