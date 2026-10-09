@@ -52,6 +52,12 @@ if (!posthogToken || posthogToken === "phc_replace_me") {
     autocapture: false,
     capture_pageview: false, // handled manually by PostHogPageView
     disable_session_recording: true,
+    // localStorage-only: the default 'localStorage+cookie' persistence sets a
+    // `ph_..._posthog` cookie holding the anonymous device_id. That cookie is
+    // written by this client-side SDK via document.cookie, so it can never carry
+    // HttpOnly (browsers refuse HttpOnly on JS-set cookies by design) - dropping
+    // it entirely avoids the cookie-flags finding instead of leaving it half-fixed.
+    persistence: "localStorage",
   });
 
   // Several apps share this PostHog project — the Vi my Workspace Flutter app, a separate
