@@ -1,19 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Zap, Database, Droplets, Loader2 } from 'lucide-react';
-import { 
-  TextField, 
-  Select, 
-  MenuItem, 
-  FormControl, 
-  InputLabel, 
+import { ArrowLeft, Zap, Loader2, SlidersHorizontal, ClipboardCheck } from 'lucide-react';
+import {
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
   SelectChangeEvent,
   RadioGroup,
-  FormControlLabel,
   Radio,
-  FormLabel
+  FormControlLabel,
 } from '@mui/material';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -45,6 +42,47 @@ const columns: ColumnConfig[] = [
   { key: 'rate', label: 'Rate', sortable: true, defaultVisible: true },
   { key: 'amount', label: 'Amount', sortable: true, defaultVisible: true },
 ];
+
+const UTILITY_TYPES = [
+  { value: 'EB', label: 'EB' },
+  { value: 'DG', label: 'DG' },
+  { value: 'Water', label: 'Water' },
+];
+
+const fieldSx = { '& .MuiOutlinedInput-root': { backgroundColor: '#ffffff' } };
+const readOnlySx = { '& .MuiOutlinedInput-root': { backgroundColor: 'var(--color-surface)' } };
+
+const cardStyle: React.CSSProperties = {
+  backgroundColor: '#fff',
+  border: '1px solid var(--color-divider)',
+  borderRadius: 16,
+  boxShadow: 'none',
+  padding: 24,
+};
+
+const fieldLabelClass = 'mb-1.5 block text-[12px] font-semibold text-[var(--color-ink-68)]';
+const staticBoxClass = 'flex h-[44px] items-center overflow-hidden whitespace-nowrap rounded-xl border px-3.5 text-[13.5px]';
+
+const primaryBtnClass = 'inline-flex h-[42px] min-w-[160px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-[var(--color-primary)] bg-[var(--color-primary)] px-[22px] text-[13px] font-semibold leading-none text-white hover:bg-[var(--color-primary-hover)] disabled:cursor-not-allowed';
+const outlineBtnClass = 'inline-flex h-[42px] w-[160px] shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-[var(--color-line)] bg-white px-[22px] text-[13px] font-semibold leading-none text-[var(--color-ink-68)] hover:border-[rgba(26,26,24,0.28)] hover:text-[var(--color-text)]';
+const primaryBtnStyle: React.CSSProperties = { backgroundColor: 'var(--color-primary)', color: '#ffffff', boxShadow: 'none' };
+
+const lossBoxClass = (value: string) => {
+  if (!value) return 'border-[rgba(26,26,24,0.12)] bg-white text-[var(--color-ink-48)]';
+  return parseFloat(value) >= 0
+    ? 'border-[var(--color-error)] bg-[var(--color-error-bg)] font-semibold text-[var(--color-text)]'
+    : 'border-[var(--color-success-solid)] bg-[var(--color-success-bg)] font-semibold text-[var(--color-text)]';
+};
+
+const SectionHeader = ({ icon: Icon, title, note }: { icon: React.ElementType; title: string; note?: string }) => (
+  <div className="mb-6 flex items-center gap-2">
+    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--color-surface)]">
+      <Icon className="h-4 w-4 text-[var(--color-text)]" />
+    </span>
+    <h2 className="m-0 text-[14px] font-semibold uppercase leading-6 tracking-[0.02em] text-[var(--color-text)]">{title}</h2>
+    {note && <span className="text-[12px] font-normal normal-case text-[var(--color-ink-48)]">{note}</span>}
+  </div>
+);
 
 export const GenerateUtilityBillPage = () => {
   const navigate = useNavigate();
@@ -159,9 +197,6 @@ export const GenerateUtilityBillPage = () => {
     handleInputChange(name as keyof BillGenerationFormData, value);
   };
 
-  const handleUtilityTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    handleInputChange('utilityType', event.target.value);
-  };
 
   const fetchTotalConsumption = async () => {
     try {
@@ -337,285 +372,239 @@ export const GenerateUtilityBillPage = () => {
       case 'rate':
         return <span>₹{item.rate ?? '-'}</span>;
       case 'amount':
-        return <span className="font-medium text-green-600">₹{item.amount ?? '-'}</span>;
+        return <span className="font-medium text-[var(--color-success-solid)]">₹{item.amount ?? '-'}</span>;
       default:
         return item[columnKey] ?? '-';
     }
   };
 
-  return (
-    <div className="p-6 space-y-6 bg-white min-h-screen">
-      {/* Breadcrumb */}
-      <div className="text-sm text-[#6B6258]">Utility &gt; Generate Bill</div>
+  const consumptionLabel =
+    formData.utilityType === 'DG'
+      ? 'Consumption as per DG'
+      : formData.utilityType === 'Water'
+        ? 'Consumption as per Water (KL)'
+        : 'Consumption as per EB';
 
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={handleCancel} className="text-[#6B6258] hover:text-[#2D2A26] p-2">
-          <ArrowLeft className="w-4 h-4" />
-        </Button>
-        <h1 className="font-semibold text-2xl text-[#2D2A26]">Utility Billing Calculation</h1>
+  return (
+    <div className="min-h-screen p-4 sm:p-6" style={{ backgroundColor: 'var(--color-bg)' }}>
+      <div className="mb-6">
+        <div className="mb-2 flex items-center gap-2 text-sm text-[var(--color-ink-68)]">
+          <button
+            type="button"
+            onClick={handleCancel}
+            aria-label="Go back"
+            className="mr-1 flex h-8 w-8 items-center justify-center rounded-lg border-0 bg-transparent hover:bg-[var(--color-hover)]"
+          >
+            <ArrowLeft className="h-4 w-4 text-[var(--color-ink-68)]" />
+          </button>
+          <span>Utility Consumption</span>
+          <span>{'>'}</span>
+          <span className="font-medium text-[var(--color-text)]">Generate Bill</span>
+        </div>
+        <h1 className="m-0 text-2xl font-bold uppercase text-[var(--color-text)]">
+          Utility Billing Calculation
+        </h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-        {/* ── STEP 1 ── */}
-        <Card className="overflow-hidden rounded-xl border border-[#eeeeee] bg-white shadow-none">
-          <CardHeader className="bg-white px-6 py-4">
-            <div className="flex items-center gap-3">
-              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-[#f5f4f0] text-gray-700 text-sm font-bold">1</span>
-              <CardTitle className="text-base font-semibold text-[#22201d]">Select Filters & Utility Type</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="p-6 space-y-6">
+          {/* ── FILTERS ── */}
+          <section style={cardStyle}>
+            <SectionHeader icon={SlidersHorizontal} title="Select Filters" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-            {/* Utility Type */}
-            <div>
-              <p className="text-sm font-medium text-[#4a453f] mb-3">Utility Type</p>
-              <RadioGroup row value={formData.utilityType} onChange={handleUtilityTypeChange} className="flex gap-4">
-                <FormControlLabel
-                  value="EB"
-                  control={<Radio size="small" />}
-                  label={
-                    <div className={`flex items-center gap-2 px-5 py-3 rounded-lg border-2 transition-all ${formData.utilityType === 'EB' ? 'bg-[#fdf0ea] border-[#DA7756]' : 'bg-white border-[#ddd6cc]'}`}>
-                      <Zap className="w-5 h-5 text-[#DA7756]" />
-                      <span className="font-medium text-sm">EB</span>
-                    </div>
-                  }
-                />
-                <FormControlLabel
-                  value="DG"
-                  control={<Radio size="small" />}
-                  label={
-                    <div className={`flex items-center gap-2 px-5 py-3 rounded-lg border-2 transition-all ${formData.utilityType === 'DG' ? 'bg-[#fdf0ea] border-[#DA7756]' : 'bg-white border-[#ddd6cc]'}`}>
-                      <Database className="w-5 h-5 text-[#DA7756]" />
-                      <span className="font-medium text-sm">DG</span>
-                    </div>
-                  }
-                />
-                <FormControlLabel
-                  value="Water"
-                  control={<Radio size="small" />}
-                  label={
-                    <div className={`flex items-center gap-2 px-5 py-3 rounded-lg border-2 transition-all ${formData.utilityType === 'Water' ? 'bg-[#fdf0ea] border-[#DA7756]' : 'bg-white border-[#ddd6cc]'}`}>
-                      <Droplets className="w-5 h-5 text-[#DA7756]" />
-                      <span className="font-medium text-sm">Water</span>
-                    </div>
-                  }
-                />
-              </RadioGroup>
-            </div>
-
-            {/* Row 1: From Date | To Date | Select KIOSK | Kiosk Consumption | Consumption as per EB */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              <TextField
-                label="From Date"
-                type="date"
-                value={formData.fromDate}
-                onChange={(e) => handleInputChange('fromDate', e.target.value)}
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                sx={{ '& .MuiOutlinedInput-root': { height: '45px', backgroundColor: '#ffffff' } }}
-              />
-              <TextField
-                label="To Date"
-                type="date"
-                value={formData.toDate}
-                onChange={(e) => handleInputChange('toDate', e.target.value)}
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                sx={{ '& .MuiOutlinedInput-root': { height: '45px', backgroundColor: '#ffffff' } }}
-              />
-              <FormControl fullWidth>
-                <InputLabel id="kiosk-label">Select KIOSK</InputLabel>
-                <Select
-                  labelId="kiosk-label"
-                  name="kiosk"
-                  value={formData.kiosk}
-                  onChange={(e) => handleKioskChange(e.target.value as string)}
-                  label="Select KIOSK"
-                  disabled={kiosksLoading}
-                  sx={{ height: '45px', backgroundColor: '#ffffff' }}
-                >
-                  {kiosksLoading ? <MenuItem disabled>Loading...</MenuItem> : kiosks.map(([name, id]) => (
-                    <MenuItem key={id} value={String(id)}>{name}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <TextField
-                label="Kiosk Consumption"
-                value={kioskConsumption}
-                disabled
-                fullWidth
-                placeholder="Auto-filled"
-                sx={{ '& .MuiOutlinedInput-root': { height: '45px', backgroundColor: '#ffffff' } }}
-              />
-              <TextField
-                label={formData.utilityType === 'DG' ? 'Consumption as per DG' : formData.utilityType === 'Water' ? 'Consumption as per Water (KL)' : 'Consumption as per EB'}
-                type="number"
-                name="consumptionEB"
-                value={formData.consumptionEB}
-                onChange={(e) => handleInputChange('consumptionEB', e.target.value)}
-                placeholder="Enter numeric value"
-                fullWidth
-                required
-                sx={{ '& .MuiOutlinedInput-root': { height: '45px', backgroundColor: '#ffffff' } }}
-              />
-            </div>
-
-            {/* Row 2: Select Tower | Select Wing */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FormControl fullWidth>
-                <InputLabel id="tower-label">Select Tower</InputLabel>
-                <Select
-                  labelId="tower-label"
-                  name="tower"
-                  value={formData.tower}
-                  onChange={(e) => { handleSelectChange(e); handleInputChange('wing', ''); fetchWings(e.target.value as string); }}
-                  label="Select Tower"
-                  disabled={buildingsLoading}
-                  sx={{ height: '45px', backgroundColor: '#ffffff' }}
-                >
-                  {buildingsLoading ? <MenuItem disabled>Loading...</MenuItem> : buildings.map((b) => (
-                    <MenuItem key={b.id} value={String(b.id)}>{b.name}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl fullWidth>
-                <InputLabel id="wing-label">Select Wing</InputLabel>
-                <Select
-                  labelId="wing-label"
-                  name="wing"
-                  value={formData.wing}
-                  onChange={handleSelectChange}
-                  label="Select Wing"
-                  disabled={wingsLoading || !formData.tower}
-                  sx={{ height: '45px', backgroundColor: '#ffffff' }}
-                >
-                  {wingsLoading ? <MenuItem disabled>Loading...</MenuItem>
-                    : wings.length === 0 ? <MenuItem disabled>No wings available</MenuItem>
-                    : wings.map((w) => <MenuItem key={w.id} value={String(w.id)}>{w.name}</MenuItem>)}
-                </Select>
-              </FormControl>
-              {/* <div>
-                <p className="text-xs font-medium text-gray-500 mb-1">Total Consumption</p>
-                <div className="h-[45px] flex items-center px-4 bg-gray-50 border border-gray-200 rounded text-gray-800 font-semibold text-sm">
-                  {formData.totalConsumption || <span className="text-gray-400">Auto-filled after Step 1</span>}
-                </div>
-              </div> */}
-              <TextField
-                label="Total Consumption"
-                type="number"
-                name="consumptionEB"
-                value={formData.totalConsumption || "Auto-filled after Step 1"}
-                disabled
-                placeholder="Enter numeric value"
-                fullWidth
-                required
-                sx={{ '& .MuiOutlinedInput-root': { height: '45px', backgroundColor: '#faf7f3' } }}
-              />
-
-            </div>
-
-            {/* Generate Adjustment Factor - bottom right of Step 1 */}
-            <div className="flex justify-end pt-2">
-              <Button
-                type="button"
-                onClick={handleGenerateAdjustmentFactor}
-                disabled={resultsLoading}
-                className="fm-button-fix fm-button-brand h-[45px] px-10 rounded-lg font-medium flex items-center gap-2"
-              >
-                {resultsLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                Generate Adjustment Factor
-              </Button>
-            </div>
-
-          </CardContent>
-        </Card>
-
-        {/* ── STEP 2 ── */}
-        <Card className={`overflow-hidden rounded-xl border bg-white shadow-none transition-all ${formData.totalConsumption ? 'border-green-300' : 'border-[#eeeeee]'}`}>
-          <CardHeader className="bg-white px-6 py-4">
-            <div className="flex items-center gap-3">
-              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-[#f5f4f0] text-gray-700 text-sm font-bold">2</span>
-              <CardTitle className="text-base font-semibold text-[#22201d]">Review & Submit</CardTitle>
-              {!formData.totalConsumption && (
-                <span className="text-xs text-[#8f8579] ml-2">— complete Step 1 first</span>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="p-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-              
+              {/* Utility Type */}
               <div>
-                <p className="text-xs font-medium text-[#4a453f] mb-1">Adjustment Factor</p>
-                <div className="h-[45px] flex items-center px-4 bg-white border border-[#e0d6cb] rounded text-[#22201d] font-semibold text-sm">
-                  {formData.adjustment || <span className="text-[#8f8579]">Auto-filled after Step 1</span>}
-                </div>
+                <div className="mb-2 text-sm font-medium text-[var(--color-text)]">Utility Type</div>
+                <RadioGroup
+                  row
+                  aria-label="Utility Type"
+                  value={formData.utilityType}
+                  onChange={(e) => handleInputChange('utilityType', e.target.value)}
+                  sx={{
+                    gap: 1,
+                    '& .MuiFormControlLabel-label': { color: 'var(--color-text)', fontSize: '14px' },
+                    '& .MuiRadio-root': { color: 'var(--color-text)', '&.Mui-checked': { color: 'var(--color-text)' } },
+                  }}
+                >
+                  {UTILITY_TYPES.map(({ value, label }) => (
+                    <FormControlLabel key={value} value={value} control={<Radio />} label={label} />
+                  ))}
+                </RadioGroup>
               </div>
-              <div>
-                <p className="text-xs font-medium text-[#4a453f] mb-1">{formData.utilityType === 'Water' ? 'Rate Per KL' : 'Rate Per KWH'}</p>
-                <input
+
+              {/* Period & location, then readings */}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <TextField
+                  label="From Date"
+                  type="date"
+                  value={formData.fromDate}
+                  onChange={(e) => handleInputChange('fromDate', e.target.value)}
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  sx={fieldSx}
+                />
+                <TextField
+                  label="To Date"
+                  type="date"
+                  value={formData.toDate}
+                  onChange={(e) => handleInputChange('toDate', e.target.value)}
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  sx={fieldSx}
+                />
+                <FormControl fullWidth sx={fieldSx}>
+                  <InputLabel id="tower-label">Select Tower</InputLabel>
+                  <Select
+                    labelId="tower-label"
+                    name="tower"
+                    value={formData.tower}
+                    onChange={(e) => { handleSelectChange(e); handleInputChange('wing', ''); fetchWings(e.target.value as string); }}
+                    label="Select Tower"
+                    disabled={buildingsLoading}
+                  >
+                    {buildingsLoading ? <MenuItem disabled>Loading...</MenuItem> : buildings.map((b) => (
+                      <MenuItem key={b.id} value={String(b.id)}>{b.name}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl fullWidth sx={formData.tower ? fieldSx : readOnlySx}>
+                  <InputLabel id="wing-label">Select Wing</InputLabel>
+                  <Select
+                    labelId="wing-label"
+                    name="wing"
+                    value={formData.wing}
+                    onChange={handleSelectChange}
+                    label="Select Wing"
+                    disabled={wingsLoading || !formData.tower}
+                  >
+                    {wingsLoading ? <MenuItem disabled>Loading...</MenuItem>
+                      : wings.length === 0 ? <MenuItem disabled>No wings available</MenuItem>
+                      : wings.map((w) => <MenuItem key={w.id} value={String(w.id)}>{w.name}</MenuItem>)}
+                  </Select>
+                </FormControl>
+
+                <FormControl fullWidth sx={fieldSx}>
+                  <InputLabel id="kiosk-label">Select KIOSK</InputLabel>
+                  <Select
+                    labelId="kiosk-label"
+                    name="kiosk"
+                    value={formData.kiosk}
+                    onChange={(e) => handleKioskChange(e.target.value as string)}
+                    label="Select KIOSK"
+                    disabled={kiosksLoading}
+                  >
+                    {kiosksLoading ? <MenuItem disabled>Loading...</MenuItem> : kiosks.map(([name, id]) => (
+                      <MenuItem key={id} value={String(id)}>{name}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <TextField
+                  label="Kiosk Consumption"
+                  value={kioskConsumption}
+                  disabled
+                  fullWidth
+                  placeholder="Auto-filled"
+                  sx={readOnlySx}
+                />
+                <TextField
+                  label={consumptionLabel}
                   type="number"
-                  value={formData.ratePerKWH}
-                  onChange={(e) => handleInputChange('ratePerKWH', e.target.value)}
-                  placeholder="Enter rate"
+                  name="consumptionEB"
+                  value={formData.consumptionEB}
+                  onChange={(e) => handleInputChange('consumptionEB', e.target.value)}
+                  placeholder="Enter numeric value"
+                  fullWidth
                   required
-                  className="h-[45px] w-full px-4 bg-white border border-[#e0d6cb] rounded text-[#22201d] font-semibold text-sm outline-none focus:border-[#DA7756] focus:bg-white transition-colors"
+                  sx={fieldSx}
+                />
+                <TextField
+                  label="Total Consumption"
+                  name="totalConsumption"
+                  value={formData.totalConsumption}
+                  disabled
+                  placeholder="Auto-filled"
+                  fullWidth
+                  required
+                  sx={readOnlySx}
                 />
               </div>
-              <div>
-                <p className="text-xs font-medium text-[#4a453f] mb-1">Transmission Loss</p>
-                <div className={`h-[45px] flex items-center px-4 border rounded font-semibold text-sm ${transmissionLoss ? (parseFloat(transmissionLoss) >= 0 ? 'bg-[#fdf0ea] border-[#f0c0ad] text-[#8c4c36]' : 'bg-green-50 border-green-200 text-green-700') : 'bg-white border-[#e0d6cb] text-[#8f8579]'}`}>
-                  {transmissionLoss ? transmissionLoss : 'Auto-filled after Step 1'}
-                </div>
+
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleGenerateAdjustmentFactor}
+                  disabled={resultsLoading}
+                  className={primaryBtnClass}
+                  style={primaryBtnStyle}
+                >
+                  {resultsLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Generate Adjustment Factor
+                </button>
               </div>
-              <div>
-                <p className="text-xs font-medium text-[#4a453f] mb-1">Consumption Loss</p>
-                <div className={`h-[45px] flex items-center px-4 border rounded font-semibold text-sm ${consumptionLoss ? (parseFloat(consumptionLoss) >= 0 ? 'bg-[#fdf0ea] border-[#f0c0ad] text-[#8c4c36]' : 'bg-green-50 border-green-200 text-green-700') : 'bg-white border-[#e0d6cb] text-[#8f8579]'}`}>
-                  {consumptionLoss ? consumptionLoss : 'Auto-filled after Step 1'}
+            </div>
+          </section>
+
+          {/* ── STEP 2 ── */}
+          <section style={cardStyle}>
+            <SectionHeader
+              icon={ClipboardCheck}
+              title="Review & Submit"
+              note={!formData.totalConsumption ? 'Generate the adjustment factor first' : undefined}
+            />
+            <div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3 xl:grid-cols-5">
+                <div>
+                  <span className={fieldLabelClass}>Adjustment Factor</span>
+                  <div className={`${staticBoxClass} border-[rgba(26,26,24,0.12)] bg-[var(--color-surface)] ${formData.adjustment ? 'font-semibold text-[var(--color-text)]' : 'text-[var(--color-ink-48)]'}`}>
+                    {formData.adjustment || 'Auto-filled'}
+                  </div>
                 </div>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-[#4a453f] mb-1">Total Loss</p>
-                <div className={`h-[45px] flex items-center px-4 border rounded font-semibold text-sm ${totalLoss ? (parseFloat(totalLoss) >= 0 ? 'bg-[#fdf0ea] border-[#f0c0ad] text-[#8c4c36]' : 'bg-green-50 border-green-200 text-green-700') : 'bg-white border-[#e0d6cb] text-[#8f8579]'}`}>
-                  {totalLoss ? totalLoss : 'Auto-filled after Step 1'}
+                <div>
+                  <label htmlFor="rate-per-unit" className={fieldLabelClass}>
+                    {formData.utilityType === 'Water' ? 'Rate Per KL' : 'Rate Per KWH'}
+                  </label>
+                  <TextField
+                    id="rate-per-unit"
+                    type="number"
+                    value={formData.ratePerKWH}
+                    onChange={(e) => handleInputChange('ratePerKWH', e.target.value)}
+                    placeholder="Enter rate"
+                    required
+                    fullWidth
+                    sx={{ '& .MuiOutlinedInput-root': { backgroundColor: '#ffffff', height: '44px', minHeight: '44px', fontSize: '13.5px' } }}
+                  />
+                </div>
+                <div>
+                  <span className={fieldLabelClass}>Transmission Loss</span>
+                  <div className={`${staticBoxClass} ${lossBoxClass(transmissionLoss)}`}>
+                    {transmissionLoss || 'Auto-filled'}
+                  </div>
+                </div>
+                <div>
+                  <span className={fieldLabelClass}>Consumption Loss</span>
+                  <div className={`${staticBoxClass} ${lossBoxClass(consumptionLoss)}`}>
+                    {consumptionLoss || 'Auto-filled'}
+                  </div>
+                </div>
+                <div>
+                  <span className={fieldLabelClass}>Total Loss</span>
+                  <div className={`${staticBoxClass} ${lossBoxClass(totalLoss)}`}>
+                    {totalLoss || 'Auto-filled'}
+                  </div>
                 </div>
               </div>
             </div>
+          </section>
+        </form>
 
-            {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <p className="text-xs font-medium text-gray-500 mb-1">Transmission Loss</p>
-                <div className={`h-[45px] flex items-center px-4 border rounded font-semibold text-sm ${transmissionLoss ? (parseFloat(transmissionLoss) >= 0 ? 'bg-red-50 border-red-200 text-red-700' : 'bg-green-50 border-green-200 text-green-700') : 'bg-gray-50 border-gray-200 text-gray-400'}`}>
-                  {transmissionLoss ? transmissionLoss : 'Auto-filled after Step 1'}
-                </div>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-500 mb-1">Consumption Loss</p>
-                <div className={`h-[45px] flex items-center px-4 border rounded font-semibold text-sm ${consumptionLoss ? (parseFloat(consumptionLoss) >= 0 ? 'bg-red-50 border-red-200 text-red-700' : 'bg-green-50 border-green-200 text-green-700') : 'bg-gray-50 border-gray-200 text-gray-400'}`}>
-                  {consumptionLoss ? consumptionLoss : 'Auto-filled after Step 1'}
-                </div>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-500 mb-1">Total Loss</p>
-                <div className={`h-[45px] flex items-center px-4 border rounded font-semibold text-sm ${totalLoss ? (parseFloat(totalLoss) >= 0 ? 'bg-red-50 border-red-200 text-red-700' : 'bg-green-50 border-green-200 text-green-700') : 'bg-gray-50 border-gray-200 text-gray-400'}`}>
-                  {totalLoss ? totalLoss : 'Auto-filled after Step 1'}
-                </div>
-              </div>
-            </div> */}
-
-          </CardContent>
-        </Card>
-
-      </form>
-
-      {/* Results Table */}
-      {resultsLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-7 h-7 animate-spin text-[#DA7756]" />
-        </div>
-      ) : results.length > 0 && (
-        <>
+        {/* Results Table */}
+        {resultsLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-7 w-7 animate-spin text-[var(--color-ink-68)]" />
+          </div>
+        ) : results.length > 0 && (
           <EnhancedTable
             data={results}
             columns={columns}
@@ -628,16 +617,24 @@ export const GenerateUtilityBillPage = () => {
             selectable={false}
             storageKey="generate-bill-results-table"
           />
-          <div className="flex justify-start">
-            <Button
-              onClick={handleGenerateUtilityConsumption}
-              className="fm-button-fix fm-button-brand px-6 h-[45px] rounded-lg font-medium"
-            >
-              Generate Utility Consumption
-            </Button>
-          </div>
-        </>
-      )}
+        )}
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10 }}>
+          <button type="button" onClick={handleCancel} className={outlineBtnClass}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleGenerateUtilityConsumption}
+            disabled={results.length === 0}
+            title={results.length === 0 ? 'Generate the adjustment factor first' : undefined}
+            className={primaryBtnClass}
+            style={primaryBtnStyle}
+          >
+            Generate Utility Consumption
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
