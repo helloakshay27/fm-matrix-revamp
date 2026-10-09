@@ -2301,7 +2301,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                                         }}
                                         disabled={items.length === 1}
                                         sx={{
-                                            color: '#DA7756',
+                                            // color: '#DA7756',
                                             '&:hover': { backgroundColor: 'rgba(218, 119, 86, 0.08)' },
                                             '&.Mui-disabled': { color: 'rgba(218, 119, 86, 0.4)' },
                                         }}
