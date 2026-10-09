@@ -265,7 +265,7 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
                 <TableHead className="text-gray-600 font-medium">Sr.no</TableHead>
                 <TableHead className="text-gray-600 font-medium">Date</TableHead>
                 <TableHead className="text-gray-600 font-medium">Repaired</TableHead>
-                <TableHead className="text-gray-600 font-medium">Cost</TableHead>
+                <TableHead className="text-gray-600 font-medium text-right">Cost</TableHead>
                 <TableHead className="text-gray-600 font-medium">Warranty</TableHead>
                 <TableHead className="text-gray-600 font-medium">Warranty Type</TableHead>
                 <TableHead className="text-gray-600 font-medium">Payment Status</TableHead>
@@ -279,7 +279,7 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>{item.date}</TableCell>
                     <TableCell>{item.status}</TableCell>
-                    <TableCell>{currencySymbol}{item.cost}</TableCell>
+                    <TableCell className="text-right tabular-nums">{currencySymbol}{item.cost}</TableCell>
                     <TableCell>{item.warranty_in_month} months</TableCell>
                     <TableCell>{(item.warranty_type || "N/A").toUpperCase()}</TableCell>
                     <TableCell>{(item.payment_status || "N/A").replace(/_/g, ' ').toUpperCase()}</TableCell>
@@ -307,7 +307,7 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
 
       {/* Modal */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md rounded-3xl p-7">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
               Asset Status Update

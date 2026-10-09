@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
-import { TextField, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent, RadioGroup, FormControlLabel, Radio } from '@mui/material';
+import { TextField, FormControl, Select, MenuItem, SelectChangeEvent, RadioGroup, FormControlLabel, Radio } from '@mui/material';
 import { Recycle, ArrowLeft, Plus, Trash2, X, Eye } from 'lucide-react';
 import {
   fetchBuildings,
@@ -108,13 +108,50 @@ const normalizeAttachment = (raw: unknown): ExistingAttachment | null => {
   return { url, name };
 };
 
-// Field styles for Material-UI components
+// Business Genie input spec: label sits above the control (FieldLabel), white surface,
+// 44px min height, 12px radius, 1px hairline border, 13.5px/500 text.
+// `&.MuiOutlinedInput-root` covers a bare <Select>; `& .MuiOutlinedInput-root` a <TextField>.
 const fieldStyles = {
-  height: { xs: 28, sm: 36, md: 45 },
+  '&.MuiOutlinedInput-root, & .MuiOutlinedInput-root': {
+    minHeight: 44,
+    borderRadius: '12px',
+    backgroundColor: '#FFFFFF',
+  },
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'rgba(44, 44, 44, 0.12)',
+  },
   '& .MuiInputBase-input, & .MuiSelect-select': {
-    padding: { xs: '8px', sm: '10px', md: '12px' },
+    padding: '10px 14px',
+    fontSize: '13.5px',
+    fontWeight: 500,
+    color: '#2C2C2C',
   },
 };
+
+const textareaStyles = {
+  ...fieldStyles,
+  '& .MuiOutlinedInput-root': {
+    minHeight: 88,
+    borderRadius: '12px',
+    backgroundColor: '#FFFFFF',
+    padding: '12px 14px',
+    alignItems: 'flex-start',
+  },
+  '& .MuiInputBase-input': {
+    padding: 0,
+    fontSize: '13.5px',
+    fontWeight: 500,
+    color: '#2C2C2C',
+    resize: 'none',
+  },
+};
+
+const FieldLabel: React.FC<{ children: React.ReactNode; required?: boolean }> = ({ children, required }) => (
+  <span className="block mb-1.5 text-[12px] font-semibold text-[rgba(44,44,44,0.68)]">
+    {children}
+    {required && <span className="text-red-500"> *</span>}
+  </span>
+);
 
 // Compact variant of fieldStyles for inputs/selects placed inside the
 // Waste Entries table cells, where the column header already acts as the label
@@ -714,12 +751,10 @@ const EditWasteGenerationPage = () => {
 
               {generatorType === 'customer' && (
                 <div className="max-w-sm">
+                  <FieldLabel>Customer</FieldLabel>
                   <FormControl fullWidth disabled={loadingEntities}>
-                    <InputLabel shrink id="customer-label" sx={{ backgroundColor: 'white', px: 1 }}>
-                      Customer
-                    </InputLabel>
                     <Select
-                      labelId="customer-label"
+                      inputProps={{ 'aria-label': 'Customer' }}
                       value={customerId}
                       onChange={(e: SelectChangeEvent<string>) => setCustomerId(e.target.value)}
                       displayEmpty
@@ -740,12 +775,11 @@ const EditWasteGenerationPage = () => {
 
             {/* Location Details Section */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-10">
+              <div>
+              <FieldLabel required>Building</FieldLabel>
               <FormControl fullWidth disabled={loadingBuildings}>
-                <InputLabel shrink id="building-label" sx={{ backgroundColor: 'white', px: 1 }}>
-                  Building <span className="text-red-500">*</span>
-                </InputLabel>
                 <Select
-                  labelId="building-label"
+                  inputProps={{ 'aria-label': 'Building' }}
                   value={formData.building}
                   onChange={(e: SelectChangeEvent<string>) => handleInputChange('building', e.target.value)}
                   displayEmpty
@@ -760,13 +794,13 @@ const EditWasteGenerationPage = () => {
                   ))}
                 </Select>
               </FormControl>
+              </div>
 
+              <div>
+              <FieldLabel>Wing</FieldLabel>
               <FormControl fullWidth disabled={loadingWings || !formData.building}>
-                <InputLabel shrink id="wing-label" sx={{ backgroundColor: 'white', px: 1 }}>
-                  Wing
-                </InputLabel>
                 <Select
-                  labelId="wing-label"
+                  inputProps={{ 'aria-label': 'Wing' }}
                   value={formData.wing}
                   onChange={(e: SelectChangeEvent<string>) => handleInputChange('wing', e.target.value)}
                   displayEmpty
@@ -787,13 +821,13 @@ const EditWasteGenerationPage = () => {
                   ))}
                 </Select>
               </FormControl>
+              </div>
 
+              <div>
+              <FieldLabel>Area</FieldLabel>
               <FormControl fullWidth disabled={loadingAreas || !formData.wing}>
-                <InputLabel shrink id="area-label" sx={{ backgroundColor: 'white', px: 1 }}>
-                  Area
-                </InputLabel>
                 <Select
-                  labelId="area-label"
+                  inputProps={{ 'aria-label': 'Area' }}
                   value={formData.area}
                   onChange={(e: SelectChangeEvent<string>) => handleInputChange('area', e.target.value)}
                   displayEmpty
@@ -814,24 +848,25 @@ const EditWasteGenerationPage = () => {
                   ))}
                 </Select>
               </FormControl>
+              </div>
 
-              <TextField
-                label={<span>Date <span className="text-red-500">*</span></span>}
-                type="date"
-                value={formData.date}
-                onChange={(e) => handleInputChange('date', e.target.value)}
-                fullWidth
-                variant="outlined"
-                slotProps={{
-                  inputLabel: {
-                    shrink: true,
-                  },
-                  htmlInput: {
-                    max: new Date().toISOString().split('T')[0],
-                  },
-                }}
-                sx={fieldStyles}
-              />
+              <div>
+                <FieldLabel required>Date</FieldLabel>
+                <TextField
+                  type="date"
+                  value={formData.date}
+                  onChange={(e) => handleInputChange('date', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  slotProps={{
+                    htmlInput: {
+                      max: new Date().toISOString().split('T')[0],
+                      'aria-label': 'Date',
+                    },
+                  }}
+                  sx={fieldStyles}
+                />
+              </div>
             </div>
 
             {/* Waste Entries — one table row per category, each with its own
@@ -924,26 +959,28 @@ const EditWasteGenerationPage = () => {
 
                         <TableCell className="p-2 align-top">
                           <div className="flex items-start gap-2">
-                            <TextField
-                              type="number"
-                              label="Bag Count"
-                              value={entry.bagCount}
-                              onChange={(e) => updateWasteEntry(entry.key, 'bagCount', e.target.value)}
-                              variant="outlined"
-                              inputProps={{ min: '1', step: '1' }}
-                              sx={{ width: 100, ...tableFieldStyles }}
-                              InputLabelProps={{ shrink: true }}
-                            />
-                            <TextField
-                              type="number"
-                              label="Overall Weight"
-                              value={entry.overallWeight}
-                              onChange={(e) => updateWasteEntry(entry.key, 'overallWeight', e.target.value)}
-                              variant="outlined"
-                              inputProps={{ min: '0' }}
-                              sx={{ width: 120, ...tableFieldStyles }}
-                              InputLabelProps={{ shrink: true }}
-                            />
+                            <div>
+                              <FieldLabel>Bag Count</FieldLabel>
+                              <TextField
+                                type="number"
+                                value={entry.bagCount}
+                                onChange={(e) => updateWasteEntry(entry.key, 'bagCount', e.target.value)}
+                                variant="outlined"
+                                inputProps={{ min: '1', step: '1', 'aria-label': 'Bag Count' }}
+                                sx={{ width: 100, ...tableFieldStyles }}
+                              />
+                            </div>
+                            <div>
+                              <FieldLabel>Overall Weight</FieldLabel>
+                              <TextField
+                                type="number"
+                                value={entry.overallWeight}
+                                onChange={(e) => updateWasteEntry(entry.key, 'overallWeight', e.target.value)}
+                                variant="outlined"
+                                inputProps={{ min: '0', 'aria-label': 'Overall Weight' }}
+                                sx={{ width: 120, ...tableFieldStyles }}
+                              />
+                            </div>
                           </div>
                         </TableCell>
 
@@ -1035,21 +1072,17 @@ const EditWasteGenerationPage = () => {
                 variant="outline"
                 size="sm"
                 onClick={addWasteEntry}
-                className="mt-3 border-brand text-brand hover:bg-brand-selected hover:text-brand"
+                className="mt-3 h-[40px] px-[18px] gap-[7px] rounded-[8px] bg-white border border-[rgba(44,44,44,0.12)] text-[#2C2C2C] text-[12.5px] font-semibold tracking-normal hover:bg-[#F6F4EE] hover:text-[#2C2C2C] [&_svg]:text-[#2C2C2C]"
               >
-                <Plus className="w-4 h-4 mr-1" /> Add Category
+                <Plus className="w-4 h-4" /> Add Category
               </Button>
             </div>
 
             {/* Organization Details Section */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-10">
               <div className="min-w-0">
+                <FieldLabel required>Operational Name of Landlord/Tenant</FieldLabel>
                 <FormSearchSelect
-                  label={
-                    <span>
-                      <span className="text-red-500">*</span> Operational Name of Landlord/Tenant
-                    </span>
-                  }
                   value={formData.operationalName}
                   onChange={(value) => handleInputChange('operationalName', value)}
                   options={operationalLandlordOptions}
@@ -1060,79 +1093,55 @@ const EditWasteGenerationPage = () => {
                 />
               </div>
 
-              <TextField
-                label="Agency Name"
-                placeholder="Enter Agency Name"
-                value={formData.agencyName}
-                onChange={(e) => handleInputChange('agencyName', e.target.value)}
-                fullWidth
-                variant="outlined"
-                slotProps={{
-                  inputLabel: {
-                    shrink: true,
-                  },
-                }}
-                sx={fieldStyles}
-              />
+              <div>
+                <FieldLabel>Agency Name</FieldLabel>
+                <TextField
+                  placeholder="Enter Agency Name"
+                  value={formData.agencyName}
+                  onChange={(e) => handleInputChange('agencyName', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  slotProps={{ htmlInput: { 'aria-label': 'Agency Name' } }}
+                  sx={fieldStyles}
+                />
+              </div>
 
-              <TextField
-                label="Total Generated Unit"
-                type="number"
-                value={totalGeneratedUnit}
-                fullWidth
-                variant="outlined"
-                disabled
-                slotProps={{
-                  inputLabel: {
-                    shrink: true,
-                  },
-                }}
-                sx={fieldStyles}
-              />
+              <div>
+                <FieldLabel>Total Generated Unit</FieldLabel>
+                <TextField
+                  type="number"
+                  value={totalGeneratedUnit}
+                  fullWidth
+                  variant="outlined"
+                  disabled
+                  slotProps={{ htmlInput: { 'aria-label': 'Total Generated Unit' } }}
+                  sx={fieldStyles}
+                />
+              </div>
 
               {/* Vendor — uses virtualized SupplierSearchSelect to handle large record sets without freezing */}
-              <SupplierSearchSelect
-                value={formData.vendor}
-                onChange={(vendorId) => handleInputChange('vendor', vendorId)}
-                label={<span>Vendor <span style={{ color: '#C72030' }}>*</span></span>}
-                size="schedule"
-                error={false}
-              />
+              <div>
+                <FieldLabel required>Vendor</FieldLabel>
+                <SupplierSearchSelect
+                  value={formData.vendor}
+                  onChange={(vendorId) => handleInputChange('vendor', vendorId)}
+                  size="schedule"
+                  error={false}
+                />
+              </div>
 
               <div className="md:col-span-4">
+                <FieldLabel>Remark</FieldLabel>
                 <TextField
-                  label="Remark"
                   placeholder="Enter remark"
                   value={formData.remark}
                   onChange={(e) => handleInputChange('remark', e.target.value)}
                   fullWidth
                   variant="outlined"
                   multiline
-                  rows={4}
-                  sx={{
-                    mt: 1,
-                    "& .MuiOutlinedInput-root": {
-                      height: "auto !important",
-                      padding: "2px !important",
-                      display: "flex",
-                    },
-                    "& .MuiInputBase-input[aria-hidden='true']": {
-                      flex: 0,
-                      width: 0,
-                      height: 0,
-                      padding: "0 !important",
-                      margin: 0,
-                      display: "none",
-                    },
-                    "& .MuiInputBase-input": {
-                      resize: "none !important",
-                    },
-                  }}
-                  slotProps={{
-                    inputLabel: {
-                      shrink: true,
-                    },
-                  }}
+                  minRows={4}
+                  slotProps={{ htmlInput: { 'aria-label': 'Remark' } }}
+                  sx={textareaStyles}
                 />
               </div>
             </div>

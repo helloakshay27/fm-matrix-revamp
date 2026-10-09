@@ -14,7 +14,7 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { toast } from 'sonner';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
-import StatusDropdown from '@/components/StatusDropdown';
+import StatusDropdown, { getStatusPillStyle } from '@/components/StatusDropdown';
 import AssetAuditFilterModal, { FilterParams } from '@/components/AssetAuditFilterModal';
 import {
   Pagination,
@@ -552,6 +552,12 @@ export const AssetAuditDashboard = () => {
   //     default: return 'bg-gray-500';
   //   }
   // };
+  // Business Genie summary card: #F5F4F0, 16px radius, 18px 20px padding, no border/shadow,
+  // white 36x36 icon tile (10px radius) holding a neutral 18px line icon.
+  const summaryCardClass = (selected: boolean) =>
+    `!rounded-2xl !px-5 !py-[18px] !shadow-none hover:!shadow-none ${selected ? "!bg-[#E9E6DE]" : "!bg-[#F5F4F0]"}`;
+  const summaryIconTileClass = "!w-9 !h-9 !bg-white !rounded-[10px]";
+
   const statusOptions = [
     { value: 'scheduled', label: 'Scheduled', color: '#F2EBC9' },
     { value: 'in_progress', label: 'In Progress', color: '#F8E4C7' },
@@ -561,23 +567,7 @@ export const AssetAuditDashboard = () => {
     { value: 'paused', label: 'Paused', color: '#CECBF6' },
   ];
 
-  const getStatusStyle = (status: string): React.CSSProperties => {
-    const normalizedStatus = status.toLowerCase().replace(/[\s_]+/g, '_');
-    const statusMap: { [key: string]: string } = {
-      scheduled: '#F2EBC9',
-      in_progress: '#F8E4C7',
-      completed: '#C7EDDA',
-      overdue: '#F2C8C4',
-      closed: '#E5E0D8',
-      paused: '#CECBF6',
-    };
-    const color = statusMap[normalizedStatus] || '#F2EBC9';
-    return {
-      backgroundColor: color,
-      color: '#2c2c2c',
-      border: 'none',
-    };
-  };
+  const getStatusStyle = getStatusPillStyle;
 
 
   const handleSelectAll = (checked: boolean) => {
@@ -665,7 +655,7 @@ export const AssetAuditDashboard = () => {
 
       case 'status':
         return (
-          <div className="min-w-[140px]">
+          <div>
             <StatusDropdown
               data={item}
               selectedStatus={selectedStatus}
@@ -864,53 +854,65 @@ export const AssetAuditDashboard = () => {
 
         {/* Statistics Cards */}
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-[14px] mb-6">
               <div onClick={() => handleCardClick('scheduled')}>
                 <StatsCard
                   title="Scheduled"
                   value={stats.scheduled}
-                  icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+                  icon={<Settings className="w-[18px] h-[18px]" style={{ color: "rgba(44, 44, 44, 0.48)" }} />}
                   selected={selectedStatusFilter === 'scheduled'}
+                  className={summaryCardClass(selectedStatusFilter === 'scheduled')}
+                  iconWrapperClassName={summaryIconTileClass}
                 />
               </div>
               <div onClick={() => handleCardClick('in_progress')}>
                 <StatsCard
                   title="In Progress"
                   value={stats.inProgress}
-                  icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+                  icon={<Settings className="w-[18px] h-[18px]" style={{ color: "rgba(44, 44, 44, 0.48)" }} />}
                   selected={selectedStatusFilter === 'in_progress'}
+                  className={summaryCardClass(selectedStatusFilter === 'in_progress')}
+                  iconWrapperClassName={summaryIconTileClass}
                 />
               </div>
               <div onClick={() => handleCardClick('completed')}>
                 <StatsCard
                   title="Completed"
                   value={stats.completed}
-                  icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+                  icon={<Settings className="w-[18px] h-[18px]" style={{ color: "rgba(44, 44, 44, 0.48)" }} />}
                   selected={selectedStatusFilter === 'completed'}
+                  className={summaryCardClass(selectedStatusFilter === 'completed')}
+                  iconWrapperClassName={summaryIconTileClass}
                 />
               </div>
               <div onClick={() => handleCardClick('overdue')}>
                 <StatsCard
                   title="Overdue"
                   value={stats.overdue}
-                  icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+                  icon={<Settings className="w-[18px] h-[18px]" style={{ color: "rgba(44, 44, 44, 0.48)" }} />}
                   selected={selectedStatusFilter === 'overdue'}
+                  className={summaryCardClass(selectedStatusFilter === 'overdue')}
+                  iconWrapperClassName={summaryIconTileClass}
                 />
               </div>
               <div onClick={() => handleCardClick('paused')}>
                 <StatsCard
                   title="Paused"
                   value={stats.paused_count}
-                  icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+                  icon={<Settings className="w-[18px] h-[18px]" style={{ color: "rgba(44, 44, 44, 0.48)" }} />}
                   selected={selectedStatusFilter === 'paused'}
+                  className={summaryCardClass(selectedStatusFilter === 'paused')}
+                  iconWrapperClassName={summaryIconTileClass}
                 />
               </div>
               <div onClick={() => handleCardClick('closed')}>
                 <StatsCard
                   title="Closed"
                   value={stats.closed}
-                  icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+                  icon={<Settings className="w-[18px] h-[18px]" style={{ color: "rgba(44, 44, 44, 0.48)" }} />}
                   selected={selectedStatusFilter === 'closed'}
+                  className={summaryCardClass(selectedStatusFilter === 'closed')}
+                  iconWrapperClassName={summaryIconTileClass}
                 />
               </div>
             </div>

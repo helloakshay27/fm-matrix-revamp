@@ -7,48 +7,41 @@ import { useNavigate } from 'react-router-dom';
 import {
   TextField,
   FormControl,
-  InputLabel,
   Select as MuiSelect,
   MenuItem,
 } from '@mui/material';
 import { PostHogAuditActivity } from '@/components/PostHogAuditActivity';
 
+// Business Genie input spec: label sits above the control (see FieldLabel),
+// white surface, 44px min height, 12px radius, 1px hairline border, 13.5px/500 text.
 const fieldStyles = {
   width: '100%',
   '& .MuiOutlinedInput-root': {
-    height: { xs: '36px', md: '45px' },
-    borderRadius: '8px',
+    minHeight: '44px',
+    borderRadius: '12px',
     backgroundColor: '#FFFFFF',
     '& fieldset': {
-      borderColor: '#E0E0E0',
+      borderColor: 'rgba(44, 44, 44, 0.12)',
+      borderWidth: '1px',
     },
     '&:hover fieldset': {
-      borderColor: '#1A1A1A',
+      borderColor: 'rgba(44, 44, 44, 0.24)',
     },
     '&.Mui-focused fieldset': {
       borderColor: 'var(--color-primary)',
-      borderWidth: 2,
-    },
-  },
-  '& .MuiInputLabel-root': {
-    color: '#666666',
-    fontSize: '16px',
-    '&.Mui-focused': {
-      color: 'var(--color-primary)',
-    },
-    '&.MuiInputLabel-shrink': {
-      transform: 'translate(14px, -9px) scale(0.75)',
-      backgroundColor: '#FFFFFF',
-      padding: '0 4px',
+      borderWidth: '1px',
     },
   },
   '& .MuiOutlinedInput-input, & .MuiSelect-select': {
-    color: '#1A1A1A',
-    fontSize: '14px',
-    padding: { xs: '8px 14px', md: '12px 14px' },
-    height: 'auto',
+    color: '#2C2C2C',
+    fontSize: '13.5px',
+    fontWeight: 500,
+    padding: '0 14px',
+    height: '44px',
+    lineHeight: '44px',
+    boxSizing: 'border-box',
     '&::placeholder': {
-      color: '#999999',
+      color: 'rgba(44, 44, 44, 0.48)',
       opacity: 1,
     },
   },
@@ -58,10 +51,32 @@ const multilineFieldStyles = {
   ...fieldStyles,
   '& .MuiOutlinedInput-root': {
     ...fieldStyles['& .MuiOutlinedInput-root'],
-    height: 'auto',
+    minHeight: '88px',
+    padding: '12px 14px',
     alignItems: 'flex-start',
   },
+  '& .MuiOutlinedInput-input': {
+    ...fieldStyles['& .MuiOutlinedInput-input, & .MuiSelect-select'],
+    padding: 0,
+    height: 'auto',
+    lineHeight: 1.5,
+  },
 };
+
+const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <span
+    className="block mb-1.5 text-[12px] font-semibold"
+    style={{ color: 'rgba(44, 44, 44, 0.68)' }}
+  >
+    {children}
+  </span>
+);
+
+// One ink primary action per view; supporting actions use the neutral outlined shell.
+const primaryButtonClass =
+  'inline-flex items-center justify-center gap-2 h-[42px] px-[22px] rounded-[8px] bg-[#2C2C2C] text-white text-[13px] font-semibold hover:bg-[#2C2C2C]/90 transition-colors';
+const secondaryButtonClass =
+  'inline-flex items-center justify-center gap-[7px] h-[40px] px-[18px] rounded-[8px] bg-white border border-[rgba(44,44,44,0.12)] text-[#2C2C2C] text-[12.5px] font-semibold hover:bg-[#F6F4EE] transition-colors';
 
 export const AddMasterChecklistPage = () => {
   const navigate = useNavigate();
@@ -246,40 +261,41 @@ export const AddMasterChecklistPage = () => {
               </div>
             </div>
 
-            <TextField
-              label="Activity Name"
-              placeholder="Enter Activity"
-              value={activityName}
-              onChange={(e) => setActivityName(e.target.value)}
-              variant="outlined"
-              required
-              InputLabelProps={{
-                shrink: true,
-              }}
-              sx={fieldStyles}
-            />
+            <div>
+              <FieldLabel>Activity Name *</FieldLabel>
+              <TextField
+                placeholder="Enter Activity"
+                value={activityName}
+                onChange={(e) => setActivityName(e.target.value)}
+                variant="outlined"
+                required
+                inputProps={{ 'aria-label': 'Activity Name' }}
+                sx={fieldStyles}
+              />
+            </div>
 
-            <TextField
-              label="Description"
-              placeholder="Enter Description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              variant="outlined"
-              multiline
-              rows={3}
-              InputLabelProps={{
-                shrink: true,
-              }}
-              sx={multilineFieldStyles}
-            />
+            <div>
+              <FieldLabel>Description</FieldLabel>
+              <TextField
+                placeholder="Enter Description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                variant="outlined"
+                multiline
+                minRows={3}
+                inputProps={{ 'aria-label': 'Description' }}
+                sx={multilineFieldStyles}
+              />
+            </div>
 
+            <div>
+            <FieldLabel>Asset Type</FieldLabel>
             <FormControl variant="outlined" sx={fieldStyles}>
-              <InputLabel shrink>Select Asset Type</InputLabel>
               <MuiSelect
                 displayEmpty
                 value={assetType}
                 onChange={(e) => setAssetType(e.target.value)}
-                label="Select Asset Type"
+                inputProps={{ 'aria-label': 'Asset Type' }}
               >
                 <MenuItem value="">
                   <em>Select Asset Type</em>
@@ -291,6 +307,7 @@ export const AddMasterChecklistPage = () => {
                 ))}
               </MuiSelect>
             </FormControl>
+            </div>
           </div>
         </div>
 
@@ -315,13 +332,14 @@ export const AddMasterChecklistPage = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+              <FieldLabel>Group</FieldLabel>
               <FormControl variant="outlined" sx={fieldStyles}>
-                <InputLabel shrink>Select Group</InputLabel>
                 <MuiSelect
                   displayEmpty
                   value={section.group}
                   onChange={(e) => updateTaskSection(section.id, 'group', e.target.value)}
-                  label="Select Group"
+                  inputProps={{ 'aria-label': 'Group' }}
                 >
                   <MenuItem value="">
                     <em>Select</em>
@@ -333,14 +351,16 @@ export const AddMasterChecklistPage = () => {
                   ))}
                 </MuiSelect>
               </FormControl>
+              </div>
 
+              <div>
+              <FieldLabel>Sub Group</FieldLabel>
               <FormControl variant="outlined" sx={fieldStyles}>
-                <InputLabel shrink>Select Sub Group</InputLabel>
                 <MuiSelect
                   displayEmpty
                   value={section.subGroup}
                   onChange={(e) => updateTaskSection(section.id, 'subGroup', e.target.value)}
-                  label="Select Sub Group"
+                  inputProps={{ 'aria-label': 'Sub Group' }}
                 >
                   <MenuItem value="">
                     <em>Select</em>
@@ -352,6 +372,7 @@ export const AddMasterChecklistPage = () => {
                   ))}
                 </MuiSelect>
               </FormControl>
+              </div>
             </div>
 
             {section.tasks.map((task) => (
@@ -359,25 +380,26 @@ export const AddMasterChecklistPage = () => {
                 key={task.id}
                 className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 border p-4 rounded"
               >
-                <TextField
-                  label="Task *"
-                  placeholder="Enter Task"
-                  value={task.taskName}
-                  onChange={(e) => updateTask(section.id, task.id, 'taskName', e.target.value)}
-                  variant="outlined"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  sx={fieldStyles}
-                />
+                <div>
+                  <FieldLabel>Task *</FieldLabel>
+                  <TextField
+                    placeholder="Enter Task"
+                    value={task.taskName}
+                    onChange={(e) => updateTask(section.id, task.id, 'taskName', e.target.value)}
+                    variant="outlined"
+                    inputProps={{ 'aria-label': 'Task' }}
+                    sx={fieldStyles}
+                  />
+                </div>
 
+                <div>
+                <FieldLabel>Input Type</FieldLabel>
                 <FormControl variant="outlined" sx={fieldStyles}>
-                  <InputLabel shrink>Select Input Type</InputLabel>
                   <MuiSelect
                     displayEmpty
                     value={task.inputType}
                     onChange={(e) => updateTask(section.id, task.id, 'inputType', e.target.value)}
-                    label="Select Input Type"
+                    inputProps={{ 'aria-label': 'Input Type' }}
                   >
                     <MenuItem value="">
                       <em>Select Input Type</em>
@@ -389,6 +411,7 @@ export const AddMasterChecklistPage = () => {
                     ))}
                   </MuiSelect>
                 </FormControl>
+                </div>
 
                 <div className="md:col-span-2 flex flex-wrap gap-4 pt-2">
                   {['mandatory', 'reading', 'helpText'].map((field) => (
@@ -408,8 +431,7 @@ export const AddMasterChecklistPage = () => {
               <button
                 type="button"
                 onClick={() => addQuestion(section.id)}
-                style={{ backgroundColor: 'var(--color-primary)' }}
-                className="text-white rounded-md h-10 px-4 text-sm font-medium flex items-center gap-2 hover:opacity-90 transition-opacity"
+                className={secondaryButtonClass}
               >
                 <Plus className="w-4 h-4" /> Add Question
               </button>
@@ -421,16 +443,14 @@ export const AddMasterChecklistPage = () => {
           <button
             type="button"
             onClick={addTaskSection}
-            style={{ backgroundColor: 'var(--color-primary)' }}
-            className="text-white rounded-md h-10 px-5 text-sm font-medium flex items-center gap-2 hover:opacity-90 transition-opacity"
+            className={secondaryButtonClass}
           >
             <Plus className="w-4 h-4" /> Add Task
           </button>
 
           <button
             type="submit"
-            style={{ backgroundColor: 'var(--color-primary)' }}
-            className="text-white rounded-md h-10 px-6 text-sm font-semibold hover:opacity-90 transition-opacity"
+            className={primaryButtonClass}
           >
             Submit
           </button>
