@@ -1014,6 +1014,7 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
               >
                 Reason <span className="text-red-500">*</span>
               </label>
+              
               <textarea
                 id="blacklist-reason"
                 value={blacklistReason}
