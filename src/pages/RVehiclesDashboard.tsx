@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Download, Edit } from 'lucide-react';
+import { Plus, Download, Edit, History, List, LogIn, LogOut } from 'lucide-react';
 import { AddVehicleParkingModal } from '@/components/AddVehicleParkingModal';
 import { RVehicleImportModal } from '@/components/RVehicleImportModal';
 import { RVehicleFilterModal } from '@/components/RVehicleFilterModal';
@@ -11,6 +11,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useNavigate } from 'react-router-dom';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { useVehicleEvents } from '@/components/PostHogSecurityEvents';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface Vehicle {
   id: number;
@@ -305,21 +306,38 @@ export const RVehiclesDashboard = () => {
         Vehicle Parkings
       </h1>
 
-      <div className="flex w-full border-b border-[#e4ddd4] rounded-t-lg overflow-hidden mb-4">
-        {['History', 'All', 'In', 'Out'].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => handleTabClick(tab)}
-            className={`flex-1 py-3 text-sm font-medium transition-colors ${
-              activeTab === tab
-                ? 'bg-[#DA7756] text-white'
-                : 'bg-[#F2EEE9] text-[#8a7e72] hover:bg-[#ece4db]'
-            }`}
+      <Tabs value={activeTab} onValueChange={handleTabClick} className="w-full">
+        <TabsList className="grid w-full grid-cols-4 bg-white border border-gray-200">
+          <TabsTrigger
+            value="History"
+            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
           >
-            {tab}
-          </button>
-        ))}
-      </div>
+            <History className="w-4 h-4" />
+            History
+          </TabsTrigger>
+          <TabsTrigger
+            value="All"
+            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            <List className="w-4 h-4" />
+            All
+          </TabsTrigger>
+          <TabsTrigger
+            value="In"
+            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            <LogIn className="w-4 h-4" />
+            In
+          </TabsTrigger>
+          <TabsTrigger
+            value="Out"
+            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            <LogOut className="w-4 h-4" />
+            Out
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       <EnhancedTable
         data={filteredData}

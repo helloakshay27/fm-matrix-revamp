@@ -217,17 +217,16 @@ export const StaffDetailsPage = () => {
     children: React.ReactNode;
     hasData?: boolean;
   }) => (
-    <div className="border-2 rounded-lg mb-6">
+    <div className="bg-white shadow-sm rounded-lg overflow-hidden mb-4 sm:mb-6">
       <div 
         onClick={onToggle} 
-        className="flex items-center justify-between cursor-pointer p-6"
-        style={{ backgroundColor: 'rgb(246 244 238)' }}
+        className="flex items-center justify-between cursor-pointer border-l-4 border-l-[#DA7756] p-3 sm:p-6 bg-white"
       >
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-            <Icon className="w-4 h-4" style={{ color: "#C72030" }} />
-          </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+        <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold">
+          <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm shrink-0">
+            <Icon className="w-3 h-3 sm:w-4 sm:h-4" />
+          </span>
+          <h3 className="text-sm sm:text-base font-semibold uppercase text-[#DA7756]">
             {title}
           </h3>
         </div>
@@ -240,8 +239,7 @@ export const StaffDetailsPage = () => {
       </div>
       {isExpanded && (
         <div 
-          className="p-6"
-          style={{ backgroundColor: 'rgb(246 247 247)' }}
+          className="border-l-4 border-l-[#DA7756] px-3 pb-4 sm:px-6 sm:pb-6 bg-white"
         >
           {children}
         </div>
@@ -250,7 +248,7 @@ export const StaffDetailsPage = () => {
   );
 
   return (
-    <div className="p-6 bg-white min-h-screen">
+    <div className="p-4 sm:p-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
@@ -283,8 +281,10 @@ export const StaffDetailsPage = () => {
             {shouldShow("Staff", "update") && (
               <Button
                 onClick={handleEdit}
-                style={{ backgroundColor: '#C72030' }}
-                className="text-white hover:bg-[#C72030]/90 [&_svg]:text-white"
+                variant="outline"
+                className="h-10 w-10 border-gray-300 bg-white p-0 text-gray-700 hover:bg-gray-50 hover:text-[#C72030] [&_svg]:text-current"
+                aria-label="Edit staff"
+                title="Edit staff"
               >
                 <Edit className="w-4 h-4" />
               </Button>

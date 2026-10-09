@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo, useEffect, useId } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -63,6 +63,8 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
   isEditPage = false,
   showEditButton = true,
 }) => {
+  const radioIdPrefix = useId().replace(/:/g, "");
+
   // Use props data instead of local state
   const {
     hourMode = "specific",
@@ -239,10 +241,11 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem
                           value="specific"
-                          id="hour-specific"
+                          id={`${radioIdPrefix}-hour-specific`}
+                          className="h-4 w-4 shrink-0 border-[#1A1A18] data-[state=checked]:border-[#1A1A18] focus-visible:ring-2 focus-visible:ring-[#DA7756]/30 focus-visible:ring-offset-2"
                           disabled={disabled}
                         />
-                        <Label htmlFor="hour-specific" className="text-sm">
+                        <Label htmlFor={`${radioIdPrefix}-hour-specific`} className="text-sm">
                           Choose one or more specific hours
                         </Label>
                       </div>
@@ -302,10 +305,11 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem
                           value="specific"
-                          id="minute-specific"
+                          id={`${radioIdPrefix}-minute-specific`}
+                          className="h-4 w-4 shrink-0 border-[#1A1A18] data-[state=checked]:border-[#1A1A18] focus-visible:ring-2 focus-visible:ring-[#DA7756]/30 focus-visible:ring-offset-2"
                           disabled={disabled}
                         />
-                        <Label htmlFor="minute-specific" className="text-sm">
+                        <Label htmlFor={`${radioIdPrefix}-minute-specific`} className="text-sm">
                           Specific minutes (choose one or many)
                         </Label>
                       </div>
@@ -313,10 +317,11 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem
                           value="between"
-                          id="minute-between"
+                          id={`${radioIdPrefix}-minute-between`}
+                          className="h-4 w-4 shrink-0 border-[#1A1A18] data-[state=checked]:border-[#1A1A18] focus-visible:ring-2 focus-visible:ring-[#DA7756]/30 focus-visible:ring-offset-2"
                           disabled={disabled}
                         />
-                        <Label htmlFor="minute-between" className="text-sm">
+                        <Label htmlFor={`${radioIdPrefix}-minute-between`} className="text-sm">
                           Every minute between minute
                         </Label>
                       </div>
@@ -415,17 +420,23 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem
                           value="weekdays"
-                          id="day-weekdays"
+                          id={`${radioIdPrefix}-day-weekdays`}
+                          className="h-4 w-4 shrink-0 border-[#1A1A18] data-[state=checked]:border-[#1A1A18] focus-visible:ring-2 focus-visible:ring-[#DA7756]/30 focus-visible:ring-offset-2"
                           disabled={disabled}
                         />
-                        <Label htmlFor="day-weekdays" className="text-sm">
+                        <Label htmlFor={`${radioIdPrefix}-day-weekdays`} className="text-sm">
                           Days of week
                         </Label>
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="specific" id="day-specific" />
-                        <Label htmlFor="day-specific" className="text-sm">
+                        <RadioGroupItem
+                          value="specific"
+                          id={`${radioIdPrefix}-day-specific`}
+                          className="h-4 w-4 shrink-0 border-[#1A1A18] data-[state=checked]:border-[#1A1A18] focus-visible:ring-2 focus-visible:ring-[#DA7756]/30 focus-visible:ring-offset-2"
+                          disabled={disabled}
+                        />
+                        <Label htmlFor={`${radioIdPrefix}-day-specific`} className="text-sm">
                           Specific date of month (choose one or many)
                         </Label>
                       </div>
@@ -545,10 +556,11 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem
                           value="all"
-                          id="month-all"
+                          id={`${radioIdPrefix}-month-all`}
+                          className="h-4 w-4 shrink-0 border-[#1A1A18] data-[state=checked]:border-[#1A1A18] focus-visible:ring-2 focus-visible:ring-[#DA7756]/30 focus-visible:ring-offset-2"
                           disabled={disabled}
                         />
-                        <Label htmlFor="month-all" className="text-sm">
+                        <Label htmlFor={`${radioIdPrefix}-month-all`} className="text-sm">
                           All months
                         </Label>
                       </div>
@@ -556,10 +568,11 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem
                           value="specific"
-                          id="month-specific"
+                          id={`${radioIdPrefix}-month-specific`}
+                          className="h-4 w-4 shrink-0 border-[#1A1A18] data-[state=checked]:border-[#1A1A18] focus-visible:ring-2 focus-visible:ring-[#DA7756]/30 focus-visible:ring-offset-2"
                           disabled={disabled}
                         />
-                        <Label htmlFor="month-specific" className="text-sm">
+                        <Label htmlFor={`${radioIdPrefix}-month-specific`} className="text-sm">
                           Specific months
                         </Label>
                       </div>
@@ -567,10 +580,11 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem
                           value="between"
-                          id="month-between"
+                          id={`${radioIdPrefix}-month-between`}
+                          className="h-4 w-4 shrink-0 border-[#1A1A18] data-[state=checked]:border-[#1A1A18] focus-visible:ring-2 focus-visible:ring-[#DA7756]/30 focus-visible:ring-offset-2"
                           disabled={disabled}
                         />
-                        <Label htmlFor="month-between" className="text-sm">
+                        <Label htmlFor={`${radioIdPrefix}-month-between`} className="text-sm">
                           Every month between
                         </Label>
                       </div>
