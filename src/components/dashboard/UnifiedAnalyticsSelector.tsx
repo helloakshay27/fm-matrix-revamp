@@ -659,6 +659,16 @@ export const executiveAnalyticsOptions = {
         label: "Site-wise Visitor Count",
       },
       {
+        id: "quickgate_site_wise_goods_inward",
+        endpoint: "site_wise_goods_inward",
+        label: "Site-wise Goods Inward",
+      },
+      // {
+      //   id: "quickgate_delivery_visitors",
+      //   endpoint: "delivery_visitor_data",
+      //   label: "Delivery Visitors",
+      // },
+      {
         id: "quickgate_goods_staff_overview",
         endpoint: "goods_staff_overview",
         label: "Goods & Staff Overview",

@@ -905,6 +905,105 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Blacklist Reason Modal */}
+      <Dialog
+        open={isBlacklistModalOpen}
+        onOpenChange={(open) => !open && handleBlacklistModalClose()}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Blacklist {selectedVisitors.length} Visitor
+              {selectedVisitors.length > 1 ? "s" : ""}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label
+                htmlFor="blacklist-reason"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Reason <span className="text-red-500">*</span>
+              </label>
+              
+              <textarea
+                id="blacklist-reason"
+                value={blacklistReason}
+                onChange={(e) => setBlacklistReason(e.target.value)}
+                placeholder="Enter reason for blacklisting..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 resize-none text-sm"
+                rows={4}
+                disabled={isBlacklistLoading}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={handleBlacklistModalClose}
+              disabled={isBlacklistLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleBlacklistSubmit}
+              disabled={isBlacklistLoading || !blacklistReason.trim()}
+              className="bg-[#C72030] hover:bg-[#B01E2F] text-white"
+            >
+              {isBlacklistLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Blacklisting...
+                </>
+              ) : (
+                "Blacklist"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel Confirmation Modal */}
+      <Dialog
+        open={isCancelModalOpen}
+        onOpenChange={(open) => !open && handleCancelModalClose()}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cancel Visitor{selectedVisitors.length > 1 ? "s" : ""}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-600">
+            Are you sure you want to cancel {selectedVisitors.length} selected
+            visitor{selectedVisitors.length > 1 ? "s" : ""}? This action cannot
+            be undone.
+          </p>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={handleCancelModalClose}
+              disabled={isCancelLoading}
+            >
+              No, Keep
+            </Button>
+            <Button
+              onClick={handleCancelConfirm}
+              disabled={isCancelLoading}
+              className="bg-[#C72030] hover:bg-[#B01E2F] text-white"
+            >
+              {isCancelLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Cancelling...
+                </>
+              ) : (
+                "Yes, Cancel"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
