@@ -2872,9 +2872,10 @@ export const AddOperationalAuditSchedulePage = () => {
         )}
 
         {/* Navigation Buttons */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 4 }}>
+        <div className="fm-action-bar mt-6 pt-4 sm:pt-6">
           <RedButton
             variant="contained"
+            className="fm-action-secondary"
             onClick={() => {
               captureAuditEvent("Save to Draft clicked");
               toast.success('Draft saved');
@@ -2885,11 +2886,12 @@ export const AddOperationalAuditSchedulePage = () => {
           </RedButton>
           <RedButton
             variant="contained"
+            className="fm-action-primary"
             onClick={activeStep === 2 ? handleSubmit : handleNext}
           >
-            {activeStep === 2 ? 'Proceed to Save' : 'Proceed to Save'}
+            Proceed to Save
           </RedButton>
-        </Box>
+        </div>
       </Box>
     </Box>
   );

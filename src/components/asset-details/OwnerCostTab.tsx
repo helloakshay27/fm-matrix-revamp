@@ -61,6 +61,11 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
     comments: ''
   });
 
+  const closeRepairModal = () => {
+    setShowModal(false);
+    setIsInUse(!(asset?.breakdown ?? true));
+  };
+
   const handleToggle = async () => {
     const newInUseState = !isInUse;
     setIsInUse(newInUseState);
@@ -306,44 +311,43 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
       </div>
 
       {/* Modal */}
-      <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-md rounded-3xl p-7">
-          <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              Asset Status Update
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowModal(false)}
-                className="p-1"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </DialogTitle>
+      <Dialog
+        open={showModal}
+        onOpenChange={(open) => (open ? setShowModal(true) : closeRepairModal())}
+      >
+        <DialogContent className="max-w-[620px] rounded-3xl p-8">
+          <DialogHeader className="mb-2 flex flex-row items-center justify-between">
+            <DialogTitle className="text-xl font-semibold">Asset Status Update</DialogTitle>
+            <button
+              type="button"
+              onClick={closeRepairModal}
+              className="rounded-sm text-gray-400 transition-colors hover:text-gray-700"
+              aria-label="Close asset status update"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </DialogHeader>
 
           <div className="space-y-4">
             <div>
-              <Label className="text-sm font-medium">Repaired:</Label>
+              <Label className="text-sm font-medium">Repaired</Label>
               <RadioGroup
                 value={formData.status}
                 onValueChange={handleStatusChange}
                 className="flex gap-4 mt-2"
               >
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="repaired" id="repaired" />
-                  <Label htmlFor="repaired">Repaired</Label>
+                  <RadioGroupItem value="repaired" id="status-repaired" />
+                  <Label htmlFor="status-repaired">Repaired</Label>
                 </div>
               </RadioGroup>
             </div>
 
             <div>
-              <Label htmlFor="cost" className="text-sm font-medium">
-                Cost ({currencySymbol.trim()}):
-              </Label>
-              <div className="relative mt-1">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 ">
-                  {currencySymbol}
+              <Label htmlFor="cost" className="text-sm font-medium">Cost ({currencySymbol.trim()})</Label>
+              <div className="relative mt-2">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+                  {currencySymbol.trim()}
                 </span>
                 <Input
                   id="cost"
@@ -352,15 +356,13 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
                   value={formData.cost}
                   onChange={handleInputChange}
                   placeholder="Enter cost"
-                  className="pl-20"
+                  className="h-[54px] rounded-2xl border-gray-200 pl-16"
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="warranty" className="text-sm font-medium">
-                Warranty (in Months):
-              </Label>
+              <Label htmlFor="warranty" className="text-sm font-medium">Warranty (in months)</Label>
               <Input
                 id="warranty"
                 name="warranty"
@@ -368,61 +370,66 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
                 value={formData.warranty}
                 onChange={handleInputChange}
                 placeholder="Enter warranty period"
-                className="mt-1"
+                className="mt-2 h-[54px] rounded-2xl border-gray-200"
               />
             </div>
 
-            <div>
-              <Label className="text-sm font-medium">
-                Type of Warranty:
-              </Label>
-              <Select value={formData.warrantyType} onValueChange={handleWarrantyTypeChangeModal}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select warranty type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fully">Fully</SelectItem>
-                  <SelectItem value="partially">Partially</SelectItem>
-                  <SelectItem value="no_claim">No Claim</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <Label className="text-sm font-medium">Type of Warranty</Label>
+                <Select value={formData.warrantyType} onValueChange={handleWarrantyTypeChangeModal}>
+                  <SelectTrigger className="mt-2 h-[54px] rounded-2xl border-gray-200">
+                    <SelectValue placeholder="Select warranty type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fully">Fully</SelectItem>
+                    <SelectItem value="partially">Partially</SelectItem>
+                    <SelectItem value="no_claim">No Claim</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium">Payment Status</Label>
+                <Select value={formData.paymentStatus} onValueChange={handlePaymentStatusChangeModal}>
+                  <SelectTrigger className="mt-2 h-[54px] rounded-2xl border-gray-200">
+                    <SelectValue placeholder="Select payment status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="not_paid">Not Paid</SelectItem>
+                    <SelectItem value="claimed">Claimed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div>
-              <Label className="text-sm font-medium">
-                Payment Status:
-              </Label>
-              <Select value={formData.paymentStatus} onValueChange={handlePaymentStatusChangeModal}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select payment status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="not_paid">Not Paid</SelectItem>
-                  <SelectItem value="claimed">Claimed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="reason" className="text-sm font-medium">
-                Comments:
-              </Label>
+              <Label htmlFor="reason" className="text-sm font-medium">Comments</Label>
               <Textarea
                 id="reason"
                 name="reason"
                 value={formData.reason}
                 onChange={handleInputChange}
                 placeholder="Enter reason"
-                rows={3}
-                className="mt-1"
+                rows={4}
+                className="mt-2 min-h-[104px] rounded-2xl border-gray-200"
               />
             </div>
 
-            <div className="flex justify-end pt-4">
+            <div className="flex justify-end gap-3 pt-2">
               <Button
+                type="button"
+                variant="outline"
+                onClick={closeRepairModal}
+                className="h-12 rounded-xl border-gray-200 px-5 !text-gray-700"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
                 onClick={handleSubmit}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                className="h-12 rounded-xl bg-neutral-900 px-6 text-white hover:bg-neutral-800"
               >
                 Submit
               </Button>
@@ -433,43 +440,39 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
 
       {/* Asset Status Update Modal */}
       <Dialog open={showAssetStatusModal} onOpenChange={setShowAssetStatusModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              Ownership Cost
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowAssetStatusModal(false)}
-                className="p-1"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </DialogTitle>
+        <DialogContent className="max-w-[620px] rounded-3xl p-8">
+          <DialogHeader className="mb-2 flex flex-row items-center justify-between">
+            <DialogTitle className="text-xl font-semibold">Asset Status Update</DialogTitle>
+            <button
+              type="button"
+              onClick={() => setShowAssetStatusModal(false)}
+              className="rounded-sm text-gray-400 transition-colors hover:text-gray-700"
+              aria-label="Close asset status update"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </DialogHeader>
 
           <div className="space-y-4">
             <div>
-              <Label className="text-sm font-medium">Repaired:</Label>
+              <Label className="text-sm font-medium">Repaired</Label>
               <RadioGroup
                 value={assetStatusFormData.status}
                 onValueChange={handleAssetStatusChange}
                 className="flex gap-4 mt-2"
               >
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="repaired" id="asset-repaired" />
-                  <Label htmlFor="asset-repaired">Repaired</Label>
+                  <RadioGroupItem value="repaired" id="cost-status-repaired" />
+                  <Label htmlFor="cost-status-repaired">Repaired</Label>
                 </div>
               </RadioGroup>
             </div>
 
             <div>
-              <Label htmlFor="asset-cost" className="text-sm font-medium">
-                Cost ({currencySymbol.trim()}):
-              </Label>
-              <div className="relative mt-1">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                  {currencySymbol}
+              <Label htmlFor="asset-cost" className="text-sm font-medium">Cost ({currencySymbol.trim()})</Label>
+              <div className="relative mt-2">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+                  {currencySymbol.trim()}
                 </span>
                 <Input
                   id="asset-cost"
@@ -478,15 +481,13 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
                   value={assetStatusFormData.cost}
                   onChange={handleAssetStatusInputChange}
                   placeholder="Enter cost"
-                  className="pl-16"
+                  className="h-[54px] rounded-2xl border-gray-200 pl-16"
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="asset-warranty" className="text-sm font-medium">
-                Warranty (in Months):
-              </Label>
+              <Label htmlFor="asset-warranty" className="text-sm font-medium">Warranty (in months)</Label>
               <Input
                 id="asset-warranty"
                 name="warranty"
@@ -494,61 +495,66 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
                 value={assetStatusFormData.warranty}
                 onChange={handleAssetStatusInputChange}
                 placeholder="Enter warranty period"
-                className="mt-1"
+                className="mt-2 h-[54px] rounded-2xl border-gray-200"
               />
             </div>
 
-            <div>
-              <Label className="text-sm font-medium">
-                Type of Warranty:
-              </Label>
-              <Select value={assetStatusFormData.warrantyType} onValueChange={handleWarrantyTypeChange}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select warranty type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fully">Fully</SelectItem>
-                  <SelectItem value="partially">Partially</SelectItem>
-                  <SelectItem value="no_claim">No Claim</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <Label className="text-sm font-medium">Type of Warranty</Label>
+                <Select value={assetStatusFormData.warrantyType} onValueChange={handleWarrantyTypeChange}>
+                  <SelectTrigger className="mt-2 h-[54px] rounded-2xl border-gray-200">
+                    <SelectValue placeholder="Select warranty type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fully">Fully</SelectItem>
+                    <SelectItem value="partially">Partially</SelectItem>
+                    <SelectItem value="no_claim">No Claim</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium">Payment Status</Label>
+                <Select value={assetStatusFormData.paymentStatus} onValueChange={handlePaymentStatusChange}>
+                  <SelectTrigger className="mt-2 h-[54px] rounded-2xl border-gray-200">
+                    <SelectValue placeholder="Select payment status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="not_paid">Not Paid</SelectItem>
+                    <SelectItem value="claimed">Claimed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div>
-              <Label className="text-sm font-medium">
-                Payment Status:
-              </Label>
-              <Select value={assetStatusFormData.paymentStatus} onValueChange={handlePaymentStatusChange}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select payment status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="not_paid">Not Paid</SelectItem>
-                  <SelectItem value="claimed">Claimed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="asset-comments" className="text-sm font-medium">
-                Comments:
-              </Label>
+              <Label htmlFor="asset-comments" className="text-sm font-medium">Comments</Label>
               <Textarea
                 id="asset-comments"
                 name="comments"
                 value={assetStatusFormData.comments}
                 onChange={handleAssetStatusInputChange}
                 placeholder="Enter reason"
-                rows={3}
-                className="mt-1"
+                rows={4}
+                className="mt-2 min-h-[104px] rounded-2xl border-gray-200"
               />
             </div>
 
-            <div className="flex justify-end pt-4">
+            <div className="flex justify-end gap-3 pt-2">
               <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowAssetStatusModal(false)}
+                className="h-12 rounded-xl border-gray-200 px-5 !text-gray-700"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
                 onClick={handleAssetStatusSubmit}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                className="h-12 rounded-xl bg-neutral-900 px-6 text-white hover:bg-neutral-800"
               >
                 Submit
               </Button>

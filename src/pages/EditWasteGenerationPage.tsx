@@ -149,7 +149,7 @@ const textareaStyles = {
 const FieldLabel: React.FC<{ children: React.ReactNode; required?: boolean }> = ({ children, required }) => (
   <span className="block mb-1.5 text-[12px] font-semibold text-[rgba(44,44,44,0.68)]">
     {children}
-    {required && <span className="text-red-500"> *</span>}
+    {required && <span className="fm-required-mark">*</span>}
   </span>
 );
 
@@ -882,16 +882,16 @@ const EditWasteGenerationPage = () => {
                     <TableRow className="border-b-gray-200 hover:bg-gray-50">
                       <TableHead className="w-12 font-semibold text-gray-600">Sr. No.</TableHead>
                       <TableHead className="min-w-[220px] font-semibold text-gray-600">
-                        Category <span className="text-red-500">*</span>
+                        Category <span className="fm-required-mark">*</span>
                       </TableHead>
                       <TableHead className="min-w-[220px] font-semibold text-gray-600">
-                        Subcategory <span className="text-red-500">*</span>
+                        Subcategory <span className="fm-required-mark">*</span>
                       </TableHead>
                       <TableHead className="min-w-[110px] font-semibold text-gray-600">
-                        UOM <span className="text-red-500">*</span>
+                        UOM <span className="fm-required-mark">*</span>
                       </TableHead>
                       <TableHead className="min-w-[280px] font-semibold text-gray-600">
-                        Bags / Weights <span className="text-red-500">*</span>
+                        Bags / Weights <span className="fm-required-mark">*</span>
                       </TableHead>
                       <TableHead className="min-w-[220px] font-semibold text-gray-600">Attachments</TableHead>
                       <TableHead className="w-10"></TableHead>
@@ -1148,23 +1148,22 @@ const EditWasteGenerationPage = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-4 justify-center px-6 py-6 border-t border-gray-200">
-            <Button
-              type="submit"
-              disabled={submitting}
-              style={{ backgroundColor: '#C72030', color: '#ffffff' }}
-              className="hover:bg-[#A01B26] px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
-            >
-              {submitting ? 'Updating...' : 'Update'}
-            </Button>
+          <div className="fm-action-bar px-6 py-6 border-t border-gray-200">
             <Button
               type="button"
               variant="outline"
               onClick={handleBack}
               disabled={submitting}
-              className="border-brand text-brand hover:bg-brand-selected hover:text-brand px-8 py-2 disabled:opacity-50 rounded-md"
+              className="fm-action-secondary disabled:opacity-50"
             >
               Back
+            </Button>
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="fm-action-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submitting ? 'Updating...' : 'Update'}
             </Button>
           </div>
         </div>

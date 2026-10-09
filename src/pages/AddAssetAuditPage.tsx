@@ -1005,7 +1005,7 @@ export const AddAssetAuditPage = () => {
   //   { name: 'assetSubGroup', label: 'Asset Subgroup', values: assetSubGroups, multiple: true },
   // ];
   const fieldsToRender = formData.basedOn === 'Location' ? [
-    { name: 'building', label: <>Building <span className="text-red-500">*</span></>, values: buildings, multiple: true },
+    { name: 'building', label: <>Building <span className="fm-required-mark">*</span></>, values: buildings, multiple: true },
     { name: 'wing', label: 'Wing', values: wings, multiple: true },
     { name: 'area', label: 'Area', values: areas, multiple: true },
     { name: 'floor', label: 'Floor', values: floors, multiple: true },
@@ -1013,9 +1013,9 @@ export const AddAssetAuditPage = () => {
     { name: 'assetGroup', label: 'Asset Group', values: assetGroups, multiple: true },
     { name: 'assetSubGroup', label: 'Asset Subgroup', values: assetSubGroups, multiple: true },
   ] : [
-    { name: 'assetGroup', label: <>Asset Group <span className="text-red-500">*</span></>, values: assetGroups, multiple: true },
-    { name: 'assetSubGroup', label: <>Asset Subgroup <span className="text-red-500">*</span></>, values: assetSubGroups, multiple: true },
-    { name: 'building', label: <>Building <span className="text-red-500">*</span></>, values: buildings, multiple: true },
+    { name: 'assetGroup', label: <>Asset Group <span className="fm-required-mark">*</span></>, values: assetGroups, multiple: true },
+    { name: 'assetSubGroup', label: <>Asset Subgroup <span className="fm-required-mark">*</span></>, values: assetSubGroups, multiple: true },
+    { name: 'building', label: <>Building <span className="fm-required-mark">*</span></>, values: buildings, multiple: true },
     { name: 'wing', label: 'Wing', values: wings, multiple: true },
     { name: 'area', label: 'Area', values: areas, multiple: true },
     { name: 'floor', label: 'Floor', values: floors, multiple: true },
@@ -1237,12 +1237,12 @@ export const AddAssetAuditPage = () => {
             <div className="p-4 sm:p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 <TextField
-                  label={<>Audit Name <span className="text-red-500">*</span></>} value={formData.auditName}
+                  label={<>Audit Name <span className="fm-required-mark">*</span></>} value={formData.auditName}
                   onChange={(e) => updateFormData('auditName', e.target.value)}
                   fullWidth variant="outlined" InputLabelProps={{ shrink: true }} sx={fieldStyles}
                 />
                 <TextField
-                  label={<>Start Date <span className="text-red-500">*</span></>} type="date" value={formData.startDate}
+                  label={<>Start Date <span className="fm-required-mark">*</span></>} type="date" value={formData.startDate}
                   onChange={(e) => {
                     const newStartDate = e.target.value;
                     updateFormData('startDate', newStartDate);
@@ -1257,7 +1257,7 @@ export const AddAssetAuditPage = () => {
                   }}
                 />
                 <TextField
-                  label={<>End Date <span className="text-red-500">*</span></>} type="date" value={formData.endDate}
+                  label={<>End Date <span className="fm-required-mark">*</span></>} type="date" value={formData.endDate}
                   onChange={(e) => {
                     const newEndDate = e.target.value;
                     // Prevent selecting end date before start date
@@ -1273,7 +1273,7 @@ export const AddAssetAuditPage = () => {
                 />
 
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Conducted By <span className="text-red-500">*</span></InputLabel>
+                  <InputLabel shrink>Conducted By <span className="fm-required-mark">*</span></InputLabel>
                   <MuiSelect
                     label="Conducted By"
                     notched
@@ -1406,22 +1406,22 @@ export const AddAssetAuditPage = () => {
         </div>
 
         {/* Buttons */}
-        <div className="flex justify-center gap-4">
-          <Button
-            className="bg-brand hover:bg-brand-hover text-white px-6"
-            onClick={() => handleSubmit('create')}
-            disabled={isLoading}
-          >
-            {isLoading ? 'Creating...' : 'Create Audit'}
-          </Button>
-
+        <div className="fm-action-bar pt-4 sm:pt-6">
           <Button
             variant="outline"
-            className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] px-6"
+            className="fm-action-secondary"
             onClick={() => handleSubmit('saveAndCreate')}
             disabled={isLoading}
           >
             {isLoading ? 'Saving...' : 'Save And Create New Audit'}
+          </Button>
+
+          <Button
+            className="fm-action-primary"
+            onClick={() => handleSubmit('create')}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Creating...' : 'Create Audit'}
           </Button>
         </div>
       </div>
