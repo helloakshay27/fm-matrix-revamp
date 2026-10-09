@@ -158,9 +158,11 @@ export function useEnhancedTable<T>({
 
   // Sort the data based on current sort state
   const sortedData = useMemo(() => {
-    if (!sortState.column || !sortState.direction) return data;
+    // Callers occasionally pass an unwrapped API object; treat it as no rows.
+    const rows: T[] = Array.isArray(data) ? data : [];
+    if (!sortState.column || !sortState.direction) return rows;
 
-    return [...data].sort((a, b) => {
+    return [...rows].sort((a, b) => {
       const aValue = a[sortState.column as keyof T];
       const bValue = b[sortState.column as keyof T];
 

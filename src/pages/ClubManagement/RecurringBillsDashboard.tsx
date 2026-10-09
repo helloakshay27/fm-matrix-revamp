@@ -237,10 +237,11 @@ export const RecurringBillsDashboard: React.FC = () => {
         }
       );
 
-      // 🔥 Adjust this based on actual API response structure
+      // API returns { lock_account_bills: [...] } (same endpoint as BillListPage);
+      // older shapes used { data: [...] } or a bare array.
       const apiData = response.data;
-
-      const bills: Bill[] = apiData?.data || apiData || [];
+      const list = apiData?.lock_account_bills ?? apiData?.data ?? apiData;
+      const bills: Bill[] = Array.isArray(list) ? list : [];
 
       setBillData(bills);
 

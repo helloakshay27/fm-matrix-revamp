@@ -39,7 +39,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { toast as sonnerToast } from "sonner";
+import { accountingToast as sonnerToast } from "@/lib/accountingToast";
+import "@/styles/accounting.css";
 import { API_CONFIG } from "@/config/apiConfig";
 import axios from "axios";
 // import html2canvas from "html2canvas";
@@ -553,7 +554,7 @@ export const PurchaseOrderDetailPage = () => {
       "N/A";
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="accounting-ui min-h-screen bg-background p-6">
       <div className="w-full space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -600,39 +601,38 @@ export const PurchaseOrderDetailPage = () => {
 
             <Button
               variant="outline"
-              style={{ borderColor: '#DA7756', color: '#DA7756' }}
+              className="acc-btn acc-btn-sm acc-btn-secondary"
               onClick={() => setActiveTab("pdf-view")}
             >
-              <FileText className="h-4 w-4 mr-2" color="#DA7756" />
+              <FileText className="h-4 w-4 mr-2" />
               PDF
             </Button>
 
             <Button
               variant="outline"
-              style={{ borderColor: '#DA7756', color: '#DA7756' }}
+              className="acc-btn acc-btn-sm acc-btn-secondary"
               onClick={() => navigate("/accounting/purchase-order/template", { state: { recordId: id } })}
             >
-              <Settings2 className="h-4 w-4 mr-2" color="#DA7756" />
+              <Settings2 className="h-4 w-4 mr-2" />
               Template Edit
             </Button>
 
             <Button
               variant="outline"
-              style={{ borderColor: '#DA7756', color: '#DA7756' }}
+              className="acc-btn acc-btn-sm acc-btn-secondary"
               onClick={handleDownloadPdf}
             >
-              <Download className="h-4 w-4 mr-2" color="#DA7756" />
+              <Download className="h-4 w-4 mr-2" />
               Download PDF
             </Button>
 
             <Button
               size="sm"
               variant="outline"
-              className="gap-2"
-              style={{ borderColor: '#DA7756', color: '#DA7756' }}
+              className="acc-btn acc-btn-sm acc-btn-secondary"
               onClick={() => navigate(`/accounting/purchase-order/edit/${id}`)}
             >
-              <Edit className="h-4 w-4" color="#DA7756" />
+              <Edit className="h-4 w-4" />
               Edit
             </Button>
 
@@ -655,7 +655,7 @@ export const PurchaseOrderDetailPage = () => {
                 {purchaseOrder.status === "draft" && (
                   <Button
                     size="sm"
-                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
+                    className="acc-btn acc-btn-sm acc-btn-primary"
                     disabled={actionLoading}
                     onClick={() => updateStatus("issued")}
                   >
@@ -667,7 +667,7 @@ export const PurchaseOrderDetailPage = () => {
                 {purchaseOrder.status === "issued" && (
                   <Button
                     size="sm"
-                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
+                    className="acc-btn acc-btn-sm acc-btn-primary"
                     disabled={actionLoading}
                     onClick={() => navigate("/accounting/bills/create", { state: { saleOrderId: purchaseOrder?.id || id } })}
                   >
@@ -684,7 +684,7 @@ export const PurchaseOrderDetailPage = () => {
                 {purchaseOrder.status === "draft" && (
                   <Button
                     size="sm"
-                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
+                    className="acc-btn acc-btn-sm acc-btn-primary"
                     disabled={actionLoading}
                     onClick={() => updateStatus("pending_approval")}
                   >
@@ -697,7 +697,7 @@ export const PurchaseOrderDetailPage = () => {
                   <>
                     <Button
                       size="sm"
-                      className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
+                      className="acc-btn acc-btn-sm acc-btn-primary"
                       disabled={actionLoading}
                       onClick={() => updateApprovalStatus("approved")}
                     >
@@ -705,7 +705,7 @@ export const PurchaseOrderDetailPage = () => {
                     </Button>
                     <Button
                       size="sm"
-                      className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
+                      className="acc-btn acc-btn-sm acc-btn-secondary"
                       disabled={actionLoading}
                       onClick={() => updateApprovalStatus("rejected")}
                     >
@@ -718,7 +718,7 @@ export const PurchaseOrderDetailPage = () => {
                 {purchaseOrder.status === "approved" && (
                   <Button
                     size="sm"
-                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
+                    className="acc-btn acc-btn-sm acc-btn-primary"
                     disabled={actionLoading}
                     onClick={() => updateStatus("issued")}
                   >
@@ -730,7 +730,7 @@ export const PurchaseOrderDetailPage = () => {
                 {purchaseOrder.status === "issued" && (
                   <Button
                     size="sm"
-                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
+                    className="acc-btn acc-btn-sm acc-btn-primary"
                     disabled={actionLoading}
                     onClick={() => navigate("/accounting/bills/create", { state: { saleOrderId: purchaseOrder?.id || id } })}
                   >
@@ -756,7 +756,7 @@ export const PurchaseOrderDetailPage = () => {
             onValueChange={setActiveTab}
             className="w-full"
           >
-            <TabsList className="flex flex-wrap w-full max-w-3xl justify-start">
+            <TabsList className="acc-tabs h-auto">
               {[
                 { label: "Order Details", value: "order-details" },
                 { label: "Vendor Info", value: "vendor-info" },
@@ -766,7 +766,7 @@ export const PurchaseOrderDetailPage = () => {
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
-                  className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand"
+                  className="acc-tab"
                 >
                   {tab.label}
                 </TabsTrigger>
@@ -889,15 +889,15 @@ export const PurchaseOrderDetailPage = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="border border-border rounded-lg overflow-hidden">
+                      <div className="acc-table-wrap acc-line-items">
                         <Table>
                           <TableHeader>
                             <TableRow className="bg-muted/50">
                               <TableHead>Item Details</TableHead>
-                              <TableHead className="text-right">Quantity</TableHead>
-                              <TableHead className="text-right">Rate</TableHead>
-                              <TableHead className="text-right">Tax</TableHead>
-                              <TableHead className="text-right">Amount</TableHead>
+                              <TableHead className="acc-num text-right">Quantity</TableHead>
+                              <TableHead className="acc-num text-right">Rate</TableHead>
+                              <TableHead className="acc-num text-right">Tax</TableHead>
+                              <TableHead className="acc-num text-right">Amount</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -913,16 +913,16 @@ export const PurchaseOrderDetailPage = () => {
                                     </p>
                                   </div>
                                 </TableCell>
-                                <TableCell className="text-right">
+                                <TableCell className="acc-num text-right">
                                   {item.quantity} {item.unit || ""}
                                 </TableCell>
-                                <TableCell className="text-right">
+                                <TableCell className="acc-num text-right">
                                   ₹{Number(item.rate).toFixed(2)}
                                 </TableCell>
-                                <TableCell className="text-right">
+                                <TableCell className="acc-num text-right">
                                   {item.tax_group?.name ?? "-"}
                                 </TableCell>
-                                <TableCell className="text-right font-semibold">
+                                <TableCell className="acc-num acc-amount text-right">
                                   ₹{Number(item.total_value).toFixed(2)}
                                 </TableCell>
                               </TableRow>
@@ -1291,18 +1291,18 @@ export const PurchaseOrderDetailPage = () => {
                     <div className="flex items-center gap-3">
                       <Button
                         variant="outline"
-                        style={{ borderColor: '#DA7756', color: '#DA7756' }}
+                        className="acc-btn acc-btn-sm acc-btn-secondary"
                         onClick={() => window.print()}
                       >
-                        <Printer className="h-4 w-4 mr-2" color="#DA7756" />
+                        <Printer className="h-4 w-4 mr-2" />
                         Print
                       </Button>
                       <Button
                         variant="outline"
-                        style={{ borderColor: '#DA7756', color: '#DA7756' }}
+                        className="acc-btn acc-btn-sm acc-btn-secondary"
                         onClick={handleDownloadPdf}
                       >
-                        <Download className="h-4 w-4 mr-2" color="#DA7756" />
+                        <Download className="h-4 w-4 mr-2" />
                         Download PDF
                       </Button>
                     </div>

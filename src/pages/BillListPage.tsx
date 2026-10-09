@@ -252,12 +252,12 @@ export const BillListPage: React.FC = () => {
         }
       );
 
-      // 🔥 Adjust this based on actual API response structure
+      // API returns { lock_account_bills: [...] } (same as BillDetailsReport /
+      // CustomerBillsDashboard); older shapes used { data: [...] } or a bare array.
       const apiData = response.data;
+      const bills = apiData?.lock_account_bills ?? apiData?.data ?? apiData;
 
-      const bills: Bill[] = apiData?.data || apiData || [];
-
-      setBillData(bills);
+      setBillData(Array.isArray(bills) ? (bills as Bill[]) : []);
     } catch (error: unknown) {
       console.error("Error fetching bill data:", error);
 

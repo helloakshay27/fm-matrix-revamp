@@ -164,7 +164,8 @@ import {
 } from '@mui/icons-material';
 import { ShoppingCart, Package, Calendar, FileText, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
-import { toast } from "sonner";
+import { accountingToast as toast } from "@/lib/accountingToast";
+import "@/styles/accounting.css";
 import { Button } from '@/components/ui/button';
 import ItemSearchInput from '@/components/ItemSearchInput';
 import {
@@ -1826,7 +1827,7 @@ export const BillsAdd: React.FC = () => {
     }
 
     return (
-        <div className="p-6 space-y-6 relative">
+        <div className="accounting-ui p-6 space-y-6 relative">
             {isSubmitting && (
                 <div className="absolute inset-0 bg-white/80 flex flex-col gap-3 items-center justify-center z-20 rounded-lg">
                     <CircularProgress size={60} />
@@ -2983,14 +2984,14 @@ export const BillsAdd: React.FC = () => {
                 </Section>
             </div>
 
-            <div className="flex items-center gap-3 justify-center pt-2">
-                <Button variant="outline" className="fm-button-fix px-8 py-2" onClick={() => navigate('/accounting/bills')} disabled={isSubmitting || isRecurringPrefillLoading}>
+            <div className="acc-actions pt-2">
+                <Button variant="outline" className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2" onClick={() => navigate('/accounting/bills')} disabled={isSubmitting || isRecurringPrefillLoading}>
                     Cancel
                 </Button>
-                <Button className="fm-button-fix fm-button-brand px-8 py-2" onClick={() => handleSubmit(true)} disabled={isSubmitting || isRecurringPrefillLoading}>
+                <Button variant="outline" className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2" onClick={() => handleSubmit(true)} disabled={isSubmitting || isRecurringPrefillLoading}>
                     {isSubmitting ? 'Saving...' : 'Save as Draft'}
                 </Button>
-                <Button className="fm-button-fix fm-button-brand px-8 py-2" onClick={() => handleSubmit(false)} disabled={isSubmitting || isRecurringPrefillLoading}>
+                <Button className="acc-btn fm-button-fix fm-button-brand px-8 py-2" onClick={() => handleSubmit(false)} disabled={isSubmitting || isRecurringPrefillLoading}>
                     {isSubmitting ? 'Saving...' : 'Save as Open'}
                 </Button>
             </div>
