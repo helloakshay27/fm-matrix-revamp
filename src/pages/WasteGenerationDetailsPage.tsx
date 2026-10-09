@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { DetailCard as SharedDetailCard } from "@/components/ui/detail-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
@@ -332,8 +332,8 @@ export const WasteGenerationDetailsPage = () => {
 
   type Field = { label: string; value: string | number | null | undefined };
 
-  // Card shell matching TicketDetailsPage.tsx's card pattern: icon-badge
-  // header bar + bordered body.
+  // Business Genie detail shell: white card, 16px radius, heading directly on the
+  // card surface with a neutral icon tile, 20px between section blocks.
   const DetailCard = ({
     icon: Icon,
     title,
@@ -343,17 +343,13 @@ export const WasteGenerationDetailsPage = () => {
     title: string;
     children: React.ReactNode;
   }) => (
-    <Card className="w-full bg-white rounded-lg shadow-sm border mb-6">
-      <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-          <Icon className="w-5 h-5 text-brand" />
-        </div>
-        <h3 className="text-lg font-semibold uppercase text-black">{title}</h3>
-      </div>
-      <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-4">
-        {children}
-      </div>
-    </Card>
+    <SharedDetailCard
+      icon={<Icon className="w-[18px] h-[18px]" style={{ color: "rgba(44, 44, 44, 0.68)" }} />}
+      title={title}
+      className="mb-5"
+    >
+      {children}
+    </SharedDetailCard>
   );
 
   // Renders a field list as two side-by-side columns, matching

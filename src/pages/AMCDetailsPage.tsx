@@ -10,6 +10,7 @@ import {
   PaginationEllipsis,
 } from "@/components/ui/pagination";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DetailCard } from "@/components/ui/detail-card";
 import {
   Table,
   TableBody,
@@ -749,22 +750,10 @@ export const AMCDetailsPage = () => {
           backgroundColor: "rgba(250, 250, 250, 1)",
         }}
       >
-        <style>{`
-          .top-level-tabs button[data-state="active"] {
-            background-color: rgba(237, 234, 227, 1) !important;
-            color: rgba(199, 32, 48, 1) !important;
-          }
-        `}</style>
         <Tabs defaultValue="amc-information" className="w-full" onValueChange={setActiveTab}>
           <TabsList
-            className="top-level-tabs w-full flex flex-nowrap rounded-t-lg p-0 overflow-x-auto mb-4"
-            style={{
-              gap: "0",
-              padding: "0",
-              backgroundColor: "rgba(246, 247, 247, 1)",
-              height: "50px",
-              marginBottom: "16px",
-            }}
+            className="inline-flex w-fit max-w-full overflow-x-auto rounded-xl p-[3px] gap-[3px] mb-4 h-auto"
+            style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
           >
             {[
               { label: "AMC Information", value: "amc-information" },
@@ -778,25 +767,7 @@ export const AMCDetailsPage = () => {
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030]"
-                style={{
-                  width: "230px",
-                  height: "36px",
-                  paddingTop: "10px",
-                  paddingRight: "20px",
-                  paddingBottom: "10px",
-                  paddingLeft: "20px",
-                  borderRadius: "0",
-                  border: "none",
-                  margin: "0",
-                  fontFamily: "Work Sans",
-                  fontWeight: 500,
-                  fontSize: "14px",
-                  lineHeight: "100%",
-                  letterSpacing: "0%",
-                  color: "rgba(26, 26, 26, 1)",
-                  backgroundColor: "rgba(246, 247, 247, 1)",
-                }}
+                className="rounded-lg py-2 px-4 text-[12.5px] font-semibold whitespace-nowrap border-0 text-gray-500 bg-transparent data-[state=active]:bg-white data-[state=active]:text-[#1A1A1A] data-[state=active]:shadow-sm"
               >
                 {tab.label}
               </TabsTrigger>
@@ -886,105 +857,53 @@ export const AMCDetailsPage = () => {
             className="p-3 sm:p-6"
             style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
           >
-            <Card
-              className="border-[#D9D9D9] bg-white shadow-sm"
-              style={{
-                borderRadius: "4px",
-                background: "#FFF",
-                boxShadow: "0 4px 14.2px 0 rgba(0, 0, 0, 0.10)",
-              }}
+            <DetailCard
+              icon={<Settings className="w-[18px] h-[18px] text-gray-500" />}
+              title="SUPPLIER INFORMATION"
             >
-              <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                    <div className="w-6 h-6 mr-2 flex items-center justify-center">
-                      <svg
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                          stroke="#C72030"
-                          strokeWidth="1.5"
-                        />
-                        <path
-                          d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                          stroke="#C72030"
-                          strokeWidth="1.5"
-                        />
-                      </svg>
-                    </div>
-                    SUPPLIER INFORMATION
-                  </CardTitle>
-                  {/* <Button
-                    className="px-4 py-2 font-medium t border rounded-md hover:bg-[#C72030] hover:text-white transition-colors"
-                    style={{
-                      backgroundColor: "#F6F4EE",
-                      color: '#C72030',
-                      border: "1px solid #C72030",
-                      borderRadius: "4px",
-                      padding: "8px 16px",
-                      fontSize: "14px",
-                      fontWeight: 500,
-                    }}
-
-
-                  >
-                    View Supplier
-                  </Button> */}
-                </div>
-              </CardHeader>
-              <CardContent
-                className="p-6"
-                style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-1">
-                    <div className="text-sm text-gray-500 font-normal">
-                      Name
-                    </div>
-                    <div className="text-base text-gray-900 font-semibold">
-                      {amcDetails.amc_vendor_name || "—"}
-                    </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-1">
+                  <div className="text-sm text-gray-500 font-normal">
+                    Name
                   </div>
-                  <div className="space-y-1">
-                    <div className="text-sm text-gray-500 font-normal">
-                      Company Name
-                    </div>
-                    <div className="text-base text-gray-900 font-semibold">
-                      {amcDetails.amc_vendor_name || "—"}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-sm text-gray-500 font-normal">
-                      Mobile 1
-                    </div>
-                    <div className="text-base text-gray-900 font-semibold">
-                      {amcDetails.amc_vendor_mobile || "—"}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-sm text-gray-500 font-normal">
-                      Email
-                    </div>
-                    <div className="text-base text-gray-900 font-semibold">
-                      {amcDetails.amc_vendor_email || "—"}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-sm text-gray-500 font-normal">
-                      Mobile 2
-                    </div>
-                    <div className="text-base text-gray-900 font-semibold">
-                      —
-                    </div>
+                  <div className="text-base text-gray-900 font-semibold">
+                    {amcDetails.amc_vendor_name || "—"}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="space-y-1">
+                  <div className="text-sm text-gray-500 font-normal">
+                    Company Name
+                  </div>
+                  <div className="text-base text-gray-900 font-semibold">
+                    {amcDetails.amc_vendor_name || "—"}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-sm text-gray-500 font-normal">
+                    Mobile 1
+                  </div>
+                  <div className="text-base text-gray-900 font-semibold">
+                    {amcDetails.amc_vendor_mobile || "—"}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-sm text-gray-500 font-normal">
+                    Email
+                  </div>
+                  <div className="text-base text-gray-900 font-semibold">
+                    {amcDetails.amc_vendor_email || "—"}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-sm text-gray-500 font-normal">
+                    Mobile 2
+                  </div>
+                  <div className="text-base text-gray-900 font-semibold">
+                    —
+                  </div>
+                </div>
+              </div>
+            </DetailCard>
           </TabsContent>
 
           {/* Attachments */}
@@ -993,29 +912,13 @@ export const AMCDetailsPage = () => {
             className="p-3 sm:p-6"
             style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
           >
-            <Card
-              className="border-[#D9D9D9] bg-white shadow-sm"
-              style={{
-                borderRadius: "4px",
-                background: "#FFF",
-                boxShadow: "0 4px 14.2px 0 rgba(0, 0, 0, 0.10)",
-              }}
+            <DetailCard
+              icon={<Paperclip className="w-[18px] h-[18px] text-gray-500" />}
+              title="ATTACHMENTS"
             >
-              <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
-                <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                  <div className="w-6 h-6 mr-2 flex items-center justify-center">
-                    <Paperclip className="w-5 h-5 text-[#C72030]" />
-                  </div>
-                  ATTACHMENTS
-                </CardTitle>
-              </CardHeader>
-              <CardContent
-                className="p-6"
-                style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* AMC Contracts Card */}
-                  <div className="bg-[#F6F4EE] rounded-lg p-6">
+                  <div className="bg-white rounded-2xl border border-gray-200 p-6">
                     <h3 className="text-[#1a1a1a] font-semibold text-base mb-3">
                       AMC Contracts
                     </h3>
@@ -1168,7 +1071,7 @@ export const AMCDetailsPage = () => {
                   </div>
 
                   {/* AMC Invoice Card */}
-                  <div className="bg-[#F6F4EE] rounded-lg p-6">
+                  <div className="bg-white rounded-2xl border border-gray-200 p-6">
                     <h3 className="text-[#1a1a1a] font-semibold text-base mb-3">
                       Other Documents
                     </h3>
@@ -1402,8 +1305,7 @@ export const AMCDetailsPage = () => {
                     </div>
                   </DialogContent>
                 </Dialog>
-              </CardContent>
-            </Card>
+            </DetailCard>
           </TabsContent>
 
           {/* Scheduled AMC */}
@@ -1412,33 +1314,17 @@ export const AMCDetailsPage = () => {
             className="p-3 sm:p-6"
             style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
           >
-            <Card
-              className="border-[#D9D9D9] bg-white shadow-sm"
-              style={{
-                borderRadius: "4px",
-                background: "#FFF",
-                boxShadow: "0 4px 14.2px 0 rgba(0, 0, 0, 0.10)",
-              }}
+            <DetailCard
+              icon={<Calendar className="w-[18px] h-[18px] text-gray-500" />}
+              title="Scheduled Tasks"
             >
-              <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
-                <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
-                    <Calendar className="w-5 h-5 text-[#C72030]" />
-                  </div>
-                  Scheduled Tasks
-                </CardTitle>
-              </CardHeader>
-              <CardContent
-                className="p-6"
-                style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
-              >
                 {(() => {
                   const statusCards = [
-                    { label: "Scheduled", color: "#6366F1", count: occurrenceCounts.scheduled },
-                    { label: "Open", color: "#EF4444", count: occurrenceCounts.open },
-                    { label: "In Progress", color: "#F59E0B", count: occurrenceCounts.in_progress },
-                    { label: "Closed", color: "#10B981", count: occurrenceCounts.closed },
-                    { label: "Overdue", color: "#C72030", count: occurrenceCounts.overdue },
+                    { label: "Scheduled", count: occurrenceCounts.scheduled },
+                    { label: "Open", count: occurrenceCounts.open },
+                    { label: "In Progress", count: occurrenceCounts.in_progress },
+                    { label: "Closed", count: occurrenceCounts.closed },
+                    { label: "Overdue", count: occurrenceCounts.overdue },
                   ];
 
                   const filtered = occurrences.filter(
@@ -1450,22 +1336,25 @@ export const AMCDetailsPage = () => {
                   return (
                     <div className="space-y-6">
                       {/* Status Cards */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-[14px] mb-6">
                         {statusCards.map((card) => {
+                          const isSelected = occurrenceStatusFilter === card.label;
                           return (
                             <div
                               key={card.label}
-                              className={`p-4 rounded-lg cursor-pointer ${occurrenceStatusFilter === card.label ? "ring-2 ring-brand" : ""
-                                }`}
-                              style={{ backgroundColor: "#F6F4EE" }}
+                              className="rounded-2xl cursor-pointer"
+                              style={{
+                                backgroundColor: isSelected ? "rgba(230, 226, 218, 1)" : "#F5F4F0",
+                                padding: "18px 20px",
+                              }}
                               onClick={() => {
                                 setOccurrenceStatusFilter(card.label);
                                 setOccurrencePage(1);
                               }}
                             >
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
-                                  <Calendar className="w-5 h-5" style={{ color: "#C72030" }} />
+                                <div className="w-9 h-9 bg-white rounded-[10px] flex items-center justify-center shrink-0">
+                                  <Calendar className="w-[18px] h-[18px] text-gray-500" />
                                 </div>
                                 <div>
                                   <div className="text-2xl font-bold text-black">
@@ -1577,8 +1466,7 @@ export const AMCDetailsPage = () => {
                     </div>
                   );
                 })()}
-              </CardContent>
-            </Card>
+            </DetailCard>
           </TabsContent>
 
           {/* Tickets */}
@@ -1587,26 +1475,10 @@ export const AMCDetailsPage = () => {
             className="p-3 sm:p-6"
             style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
           >
-            <Card
-              className="border-[#D9D9D9] bg-white shadow-sm"
-              style={{
-                borderRadius: "4px",
-                background: "#FFF",
-                boxShadow: "0 4px 14.2px 0 rgba(0, 0, 0, 0.10)",
-              }}
+            <DetailCard
+              icon={<Ticket className="w-[18px] h-[18px] text-gray-500" />}
+              title="TICKETS"
             >
-              <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
-                <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
-                    <Ticket className="w-5 h-5 text-[#C72030]" />
-                  </div>
-                  TICKETS
-                </CardTitle>
-              </CardHeader>
-              <CardContent
-                className="p-6"
-                style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
-              >
                 {ticketsError && (
                   <div className="text-brand-error text-sm mb-3">{ticketsError}</div>
                 )}
@@ -1666,8 +1538,7 @@ export const AMCDetailsPage = () => {
                     getItemId={(item) => String(item.id)}
                   />
                 </div>
-              </CardContent>
-            </Card>
+            </DetailCard>
           </TabsContent>
 
           {/* AMC Visits History */}
@@ -1676,26 +1547,10 @@ export const AMCDetailsPage = () => {
             className="p-3 sm:p-6"
             style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
           >
-            <Card
-              className="border-[#D9D9D9] bg-white shadow-sm"
-              style={{
-                borderRadius: "4px",
-                background: "#FFF",
-                boxShadow: "0 4px 14.2px 0 rgba(0, 0, 0, 0.10)",
-              }}
+            <DetailCard
+              icon={<Calendar className="w-[18px] h-[18px] text-gray-500" />}
+              title="AMC VISITS"
             >
-              <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
-                <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
-                    <Calendar className="w-5 h-5 text-[#C72030]" />
-                  </div>
-                  AMC VISITS
-                </CardTitle>
-              </CardHeader>
-              <CardContent
-                className="p-6"
-                style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
-              >
                 {visitLogsByFrequency && visitLogsByFrequency.length > 0 ? (
                   <div className="space-y-4">
                     {/* Frequency Tab Buttons */}
@@ -1729,7 +1584,7 @@ export const AMCDetailsPage = () => {
                             { label: "Pending", value: group.pending ?? 0, icon: Clock },
                             { label: "Missed", value: group.missed ?? 0, icon: AlertCircle },
                           ].map((card) => (
-                            <div key={card.label} className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4">
+                            <div key={card.label} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4">
                               <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center flex-shrink-0">
                                 <card.icon className="w-6 h-6 text-[#C72030]" />
                               </div>
@@ -1946,8 +1801,7 @@ export const AMCDetailsPage = () => {
                       </div>
                     ))()
                 )}
-              </CardContent>
-            </Card>
+            </DetailCard>
 
             {/* Edit Visit Modal */}
             <Dialog open={showVisitEditModal} onOpenChange={setShowVisitEditModal}>
@@ -2417,43 +2271,10 @@ export const AMCDetailsPage = () => {
             className="p-3 sm:p-6"
             style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
           >
-            <Card
-              className="border-[#D9D9D9] bg-white shadow-sm"
-              style={{
-                borderRadius: "4px",
-                background: "#FFF",
-                boxShadow: "0 4px 14.2px 0 rgba(0, 0, 0, 0.10)",
-              }}
+            <DetailCard
+              icon={<Settings className="w-[18px] h-[18px] text-gray-500" />}
+              title="ASSET / SERVICE"
             >
-              <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
-                <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
-                    <svg
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                        stroke="#C72030"
-                        strokeWidth="1.5"
-                      />
-                      <path
-                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                        stroke="#C72030"
-                        strokeWidth="1.5"
-                      />
-                    </svg>
-                  </div>
-                  ASSET / SERVICE
-                </CardTitle>
-              </CardHeader>
-              <CardContent
-                className="p-6"
-                style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
-              >
                 <div className="w-full min-w-0 max-w-full">
                   {isServiceAmc ? (
                     <EnhancedTable
@@ -2590,8 +2411,7 @@ export const AMCDetailsPage = () => {
                     />
                   )}
                 </div>
-              </CardContent>
-            </Card>
+            </DetailCard>
           </TabsContent>
         </Tabs>
       </div>

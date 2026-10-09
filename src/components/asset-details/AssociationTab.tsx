@@ -171,7 +171,7 @@ const AssociateAssetModal: React.FC<AssociateAssetModalProps> = ({
 
   return (
     <Dialog open={show} onOpenChange={onClose}>
-      <DialogContent className="w-full max-w-[95vw] sm:max-w-6xl max-h-[90vh] overflow-auto">
+      <DialogContent className="flex h-[min(82vh,760px)] w-full max-w-[95vw] flex-col overflow-hidden rounded-3xl p-7 sm:max-w-6xl">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <DialogTitle className="text-lg font-semibold">
             Associate Asset - {assetName}
@@ -185,88 +185,97 @@ const AssociateAssetModal: React.FC<AssociateAssetModalProps> = ({
           </button>
         </DialogHeader>
 
-        <div className="space-y-4 flex flex-col h-full">
+        <div className="flex min-h-0 flex-1 flex-col gap-4">
           {/* Search */}
           <div className="flex justify-end">
-            <div className="relative">
+            <div className="relative w-full sm:w-[310px]">
               <input
                 type="text"
-                className="w-64 px-4 py-2 pl-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="Search"
+                className="h-12 w-full rounded-2xl border border-gray-200 bg-white py-2 pl-11 pr-4 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
+                placeholder="Search assets"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2">
                 <Search size={16} className="text-gray-400" />
               </div>
             </div>
           </div>
 
           {/* Assets Table */}
-          <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-            <div className="flex-1 min-h-0 overflow-y-auto border border-gray-200 rounded-lg">
-              <table className="w-full table-auto">
-                <thead className="bg-gray-50 sticky top-0">
+          <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+            <div className="min-h-0 flex-1 overflow-auto rounded-2xl border border-gray-200">
+              <table className="w-full min-w-[850px] table-auto">
+                <thead className="sticky top-0 z-10 bg-[#f8f7f5]">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Asset Name</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Group</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Sub-Group</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Meter</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Sub-Meter</th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">Associate As Parent</th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">Associate As Child</th>
+                    <th className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Group</th>
+                    <th className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Sub-Group</th>
+                    <th className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Meter</th>
+                    <th className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Sub-Meter</th>
+                    <th className="whitespace-nowrap px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500">As Parent</th>
+                    <th className="whitespace-nowrap px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500">As Child</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-100">
                   {filteredAssets.map((asset) => (
-                    <tr key={asset.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm text-gray-900">{asset.name}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{asset.asset_group}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{asset.asset_sub_group}</td>
-                      <td className="px-4 py-3 text-sm">
-                        {asset.meter_tag_type === "SubMeter" && (
-                          <span className="inline-block px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">
-                            Sub Meter
-                          </span>
-                        )}
-                        {asset.meter_tag_type === "ParentMeter" && !asset.parent_meter_id && (
-                          <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
-                            Parent Meter
-                          </span>
-                        )}
+                    <tr key={asset.id} className="transition-colors hover:bg-gray-50">
+                      <td className="whitespace-nowrap px-4 py-3.5 text-sm text-gray-600">{asset.asset_group || "—"}</td>
+                      <td className="whitespace-nowrap px-4 py-3.5 text-sm text-gray-600">{asset.asset_sub_group || "—"}</td>
+                      <td className="whitespace-nowrap px-4 py-3.5 text-sm text-gray-600">
+                        {asset.meter_tag_type === "ParentMeter" ? "Meter" : "—"}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">Sub-Meter</td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="whitespace-nowrap px-4 py-3.5 text-sm text-gray-600">
+                        {asset.meter_tag_type === "SubMeter" ? "Sub-Meter" : "—"}
+                      </td>
+                      <td className="px-4 py-3.5 text-center">
                         <input
                           type="radio"
                           name="parent"
                           value={asset.id}
                           onChange={() => setParentId(asset.id)}
                           checked={parentId === asset.id}
-                          className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
+                          aria-label={`Associate ${asset.name} as parent`}
+                          className="h-5 w-5 accent-neutral-900"
                         />
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-4 py-3.5 text-center">
                         <input
                           type="checkbox"
                           value={asset.id}
                           onChange={() => handleCheckboxChange(asset.id)}
                           checked={childIds.includes(asset.id)}
-                          className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                          aria-label={`Associate ${asset.name} as child`}
+                          className="h-5 w-5 rounded accent-neutral-900"
                         />
                       </td>
                     </tr>
                   ))}
+                  {filteredAssets.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-500">
+                        No assets found.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
 
-            <div className="flex justify-center pt-4">
+            <div className="flex justify-end gap-3 pt-5">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                className="h-12 rounded-xl border-gray-200 px-5 !text-gray-700"
+              >
+                Cancel
+              </Button>
               <Button
                 type="submit"
                 disabled={submitting || !assetId || (!parentId && childIds.length === 0)}
+                className="h-12 rounded-xl bg-neutral-900 px-6 text-white hover:bg-neutral-800"
               >
-                {submitting ? 'Processing...' : 'Done'}
+                {submitting ? 'Processing...' : 'Associate'}
               </Button>
             </div>
           </form>
@@ -390,7 +399,7 @@ export const AssociationTab: React.FC<AssociationTabProps> = ({ asset, assetId }
         <Button
           onClick={openModalForCurrentAsset}
           variant="outline"
-        // className="bg-purple-600 hover:bg-purple-700 text-white"
+          className="h-[30px] px-3 py-0 rounded-[8px] border-[1.5px] border-[#2c2c2c] text-[#2c2c2c] text-[11.5px] font-semibold hover:bg-gray-50"
         >
           Associate Asset
         </Button>

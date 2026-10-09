@@ -623,7 +623,7 @@ export const VisitorsDashboard = () => {
       case 'visitor_image':
         return (
           <div className="flex justify-center">
-            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-[#EDEAE3] flex items-center justify-center">
               {visitor.visitor_image && visitor.visitor_image !== 'person.png' ? (
                 <img
                   src={visitor.visitor_image.startsWith('http') ? visitor.visitor_image : '/placeholder.svg'}
@@ -635,8 +635,8 @@ export const VisitorsDashboard = () => {
                   }}
                 />
               ) : (
-                <div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center">
-                  <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                <div className="w-full h-full bg-[#EDEAE3] rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-[#DA7756]" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                   </svg>
                 </div>
@@ -706,7 +706,7 @@ export const VisitorsDashboard = () => {
       case 'visitor_image':
         return (
           <div className="flex justify-center">
-            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-[#EDEAE3] flex items-center justify-center">
               {visitor.visitor_image ? (
                 <img
                   src={visitor.visitor_image}
@@ -714,7 +714,7 @@ export const VisitorsDashboard = () => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="text-gray-400 text-xs">No Photo</span>
+                <span className="text-[#DA7756] text-xs">No Photo</span>
               )}
             </div>
           </div>
@@ -787,7 +787,7 @@ export const VisitorsDashboard = () => {
       case 'visitor_image':
         return (
           <div className="flex justify-center">
-            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-[#EDEAE3] flex items-center justify-center">
               {visitor.visitor_image && visitor.visitor_image !== 'person.png' ? (
                 <img
                   src={visitor.visitor_image.startsWith('http') ? visitor.visitor_image : '/placeholder.svg'}
@@ -799,8 +799,8 @@ export const VisitorsDashboard = () => {
                   }}
                 />
               ) : (
-                <div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center">
-                  <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                <div className="w-full h-full bg-[#EDEAE3] rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-[#DA7756]" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                   </svg>
                 </div>
@@ -849,7 +849,7 @@ export const VisitorsDashboard = () => {
       case 'visitor_image':
         return (
           <div className="flex justify-center">
-            <div className="w-10 h-10 rounded-full overflow-hidden bg-[rgba(218,119,86,0.15)] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-[#EDEAE3] flex items-center justify-center">
               {visitor.visitor_image && visitor.visitor_image !== 'person.png' ? (
                 <img
                   src={visitor.visitor_image.startsWith('http') ? visitor.visitor_image : '/placeholder.svg'}
@@ -861,7 +861,7 @@ export const VisitorsDashboard = () => {
                   }}
                 />
               ) : (
-                <div className="w-full h-full bg-[rgba(218,119,86,0.15)] rounded-full flex items-center justify-center">
+                <div className="w-full h-full bg-[#EDEAE3] rounded-full flex items-center justify-center">
                   <svg className="w-6 h-6 text-[#DA7756]" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                   </svg>
@@ -2095,11 +2095,12 @@ const handlePageChange = (page: number) => {
                 <div className="flex gap-3">
                   {shouldShow("visitor", "create") && (
                     <Button
+                      size="sm"
                       onClick={() => setIsActionPanelOpen(true)}
-                      className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
+                      className="fm-button-fix fm-button-brand px-4 py-2"
+                      variant="ghost"
                     >
-                      <Plus  className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost" />
+                      <Plus className="w-4 h-4 mr-2" />
                       Action
                     </Button>
                   )}

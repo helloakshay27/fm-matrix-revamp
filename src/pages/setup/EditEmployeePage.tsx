@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Upload, X, Plus } from "lucide-react";
+import { ArrowLeft, Upload, X, Plus, User, Briefcase, Armchair, Paperclip } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -263,20 +263,23 @@ export const EditEmployeePage = () => {
     file: File | null; 
   }) => (
     <div className="border rounded-lg p-4">
-      <h4 className="font-medium text-[#da7756] mb-3">{title}</h4>
-      <div className="flex items-center gap-2">
+      <h4 className="font-medium text-brand mb-3">{title}</h4>
+      <div className="flex items-center gap-3">
         <input
           type="file"
           id={type}
           className="hidden"
           onChange={(e) => handleFileUpload(type, e.target.files?.[0] || null)}
         />
-        <label
-          htmlFor={type}
-          className="flex items-center gap-2 px-3 py-2 text-sm text-[#da7756] border border-[#da7756] rounded cursor-pointer hover:bg-[#fdf0ea]"
+        <button
+          type="button"
+          onClick={() => document.getElementById(type)?.click()}
+          className="inline-flex h-[42px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-[var(--color-line)] bg-white px-[22px] text-[13px] font-semibold leading-none text-[var(--color-ink-68)] hover:border-[rgba(26,26,24,0.28)] hover:text-[var(--color-text)]"
+          style={{ boxShadow: 'none' }}
         >
+          <Upload className="h-4 w-4" />
           Choose File
-        </label>
+        </button>
         <span className="text-sm text-gray-500">
           {file ? file.name : 'No file chosen'}
         </span>
@@ -291,13 +294,14 @@ export const EditEmployeePage = () => {
           </Button>
         )}
       </div>
-      <Button
-        size="sm"
-        className="fm-button-fix fm-button-brand px-4 py-2"
-        variant="ghost"
+      <button
+        type="button"
+        aria-label="Add file"
+        className="mt-3 inline-flex h-[42px] w-[42px] items-center justify-center rounded-lg border border-[var(--color-primary)] bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]"
+        style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff', boxShadow: 'none' }}
       >
-        <Plus className="w-4 h-4" />
-      </Button>
+        <Plus className="h-4 w-4" />
+      </button>
     </div>
   );
 
@@ -330,10 +334,10 @@ export const EditEmployeePage = () => {
           {/* Basic Information */}
           <div className="bg-white rounded-lg border p-6">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 bg-[#da7756] rounded-full flex items-center justify-center">
-                <span className="text-white text-sm">1</span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-surface)] text-[var(--color-ink-68)]">
+                <User className="h-4 w-4" />
               </div>
-              <h3 className="text-lg font-semibold text-[#da7756]">BASIC INFORMATION</h3>
+              <h3 className="text-lg font-semibold text-[var(--color-text)]">BASIC INFORMATION</h3>
             </div>
             
             <div className="grid grid-cols-5 gap-4">
@@ -400,10 +404,10 @@ export const EditEmployeePage = () => {
           {/* Functional Details */}
           <div className="bg-white rounded-lg border p-6">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 bg-[#da7756] rounded-full flex items-center justify-center">
-                <span className="text-white text-sm">2</span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-surface)] text-[var(--color-ink-68)]">
+                <Briefcase className="h-4 w-4" />
               </div>
-              <h3 className="text-lg font-semibold text-[#da7756]">FUNCTIONAL DETAILS</h3>
+              <h3 className="text-lg font-semibold text-[var(--color-text)]">FUNCTIONAL DETAILS</h3>
             </div>
             
             <div className="grid grid-cols-4 gap-4">
@@ -474,10 +478,10 @@ export const EditEmployeePage = () => {
           {/* Seat Management */}
           <div className="bg-white rounded-lg border p-6">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 bg-[#da7756] rounded-full flex items-center justify-center">
-                <span className="text-white text-sm">3</span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-surface)] text-[var(--color-ink-68)]">
+                <Armchair className="h-4 w-4" />
               </div>
-              <h3 className="text-lg font-semibold text-[#da7756]">Seat Management</h3>
+              <h3 className="text-lg font-semibold text-[var(--color-text)]">Seat Management</h3>
             </div>
             
             <div className="grid grid-cols-3 gap-4">
@@ -530,10 +534,10 @@ export const EditEmployeePage = () => {
           {/* Attachments */}
           <div className="bg-white rounded-lg border p-6">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 bg-[#da7756] rounded-full flex items-center justify-center">
-                <Upload className="text-white w-4 h-4" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-surface)] text-[var(--color-ink-68)]">
+                <Paperclip className="h-4 w-4" />
               </div>
-              <h3 className="text-lg font-semibold text-[#da7756]">ATTACHMENTS</h3>
+              <h3 className="text-lg font-semibold text-[var(--color-text)]">ATTACHMENTS</h3>
             </div>
             
             <div className="grid grid-cols-2 gap-6">

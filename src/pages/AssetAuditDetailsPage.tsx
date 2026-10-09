@@ -1197,8 +1197,8 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Edit, Printer, Eye, File } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent } from '@mui/material';
-import StatusDropdown from '@/components/StatusDropdown';
+import { FormControl, Select as MuiSelect, MenuItem, SelectChangeEvent } from '@mui/material';
+import StatusDropdown, { getStatusPillStyle } from '@/components/StatusDropdown';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { PostHogAuditActivity } from '@/components/PostHogAuditActivity';
 
@@ -1630,14 +1630,22 @@ export const AssetAuditDetailsPage = () => {
     { value: 'closed', label: 'Closed', color: '#bbf7d0' },
   ];
 
-  const getStatusStyle = (status: string): React.CSSProperties => {
-    const normalized = status.toLowerCase().replace(/\s+/g, '').replace(/_/g, '');
-    const colorMap: any = {
-      scheduled: '#C4B89D', inprogress: '#F4C790', completed: '#AAB9C5',
-      overdue: '#E4626F', closed: '#bbf7d0'
-    };
-    return { backgroundColor: colorMap[normalized] || '#AAB9C5', color: '#000' };
+  const getStatusStyle = getStatusPillStyle;
+
+  // Business Genie input spec: label above the control, white surface, 44px min height,
+  // 12px radius, 1px hairline border, 13.5px/500 text.
+  const filterFieldSx = {
+    '& .MuiOutlinedInput-root': {
+      minHeight: '44px',
+      borderRadius: '12px',
+      backgroundColor: '#FFFFFF',
+      '& fieldset': { borderColor: 'rgba(44, 44, 44, 0.12)', borderWidth: '1px' },
+      '&:hover fieldset': { borderColor: 'rgba(44, 44, 44, 0.24)' },
+      '&.Mui-focused fieldset': { borderColor: 'var(--color-primary)', borderWidth: '1px' },
+    },
+    '& .MuiSelect-select': { fontSize: '13.5px', fontWeight: 500, color: '#2C2C2C', padding: '10px 14px' },
   };
+  const filterLabelClass = 'block mb-1.5 text-[12px] font-semibold text-[rgba(44,44,44,0.68)]';
 
   if (loading) {
     return (
@@ -1669,7 +1677,7 @@ export const AssetAuditDetailsPage = () => {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <h1 className="text-2xl font-bold">{auditDetails.name} ({auditDetails.id})</h1>
-            <div className="min-w-[140px]">
+            <div>
               <StatusDropdown
                 data={{ id: Number(auditDetails.id), status: auditDetails.status }}
                 selectedStatus={selectedStatus}
@@ -1733,8 +1741,8 @@ export const AssetAuditDetailsPage = () => {
         {/* Basic Details */}
         <div className="bg-white rounded-lg shadow-sm border mb-6">
           <div className="p-4 border-b flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-              <File className="w-6 h-6" style={{ color: "#C72030" }} />
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 shrink-0">
+              <File className="w-[18px] h-[18px]" style={{ color: "rgba(44, 44, 44, 0.68)" }} />
             </div>
             <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">BASIC DETAILS</h3>
           </div>
@@ -1765,8 +1773,8 @@ export const AssetAuditDetailsPage = () => {
         {/* LIST OF ASSETS SECTION */}
         <div className="bg-white rounded-lg shadow-sm border">
           <div className="p-4 border-b flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-              <File className="w-6 h-6" style={{ color: "#C72030" }} />
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 shrink-0">
+              <File className="w-[18px] h-[18px]" style={{ color: "rgba(44, 44, 44, 0.68)" }} />
             </div>
             <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">LIST OF ASSETS</h3>
           </div>
@@ -1779,65 +1787,77 @@ export const AssetAuditDetailsPage = () => {
               </div>
               <div className="flex flex-col lg:flex-row gap-4 items-end">
                 <div className="grid grid-cols-2 md:grid-cols-6 gap-4 flex-1">
-                  <FormControl fullWidth variant="outlined" size="small">
-                    <InputLabel shrink>Wing</InputLabel>
-                    <MuiSelect value={filterWing} onChange={(e: SelectChangeEvent<string>) => setFilterWing(e.target.value)} label="Wing">
+                  <div>
+                    <span className={filterLabelClass}>Wing</span>
+                    <FormControl fullWidth variant="outlined" sx={filterFieldSx}>
+                    <MuiSelect value={filterWing} onChange={(e: SelectChangeEvent<string>) => setFilterWing(e.target.value)} displayEmpty inputProps={{ 'aria-label': 'Wing' }}>
                       <MenuItem value="">All Wings</MenuItem>
                       {wings.map((wing) => (
                         <MenuItem key={wing.id} value={String(wing.id)}>{wing.name}</MenuItem>
                       ))}
                     </MuiSelect>
                   </FormControl>
+                    </div>
 
-                  <FormControl fullWidth variant="outlined" size="small">
-                    <InputLabel shrink>Area</InputLabel>
-                    <MuiSelect value={filterArea} onChange={(e: SelectChangeEvent<string>) => setFilterArea(e.target.value)} label="Area" disabled={!filterWing}>
+                  <div>
+                    <span className={filterLabelClass}>Area</span>
+                    <FormControl fullWidth variant="outlined" sx={filterFieldSx}>
+                    <MuiSelect value={filterArea} onChange={(e: SelectChangeEvent<string>) => setFilterArea(e.target.value)} displayEmpty inputProps={{ 'aria-label': 'Area' }} disabled={!filterWing}>
                       <MenuItem value="">All Areas</MenuItem>
                       {areas.map((area) => (
                         <MenuItem key={area.id} value={String(area.id)}>{area.name}</MenuItem>
                       ))}
                     </MuiSelect>
                   </FormControl>
+                    </div>
 
-                  <FormControl fullWidth variant="outlined" size="small">
-                    <InputLabel shrink>Floor</InputLabel>
-                    <MuiSelect value={filterFloor} onChange={(e: SelectChangeEvent<string>) => setFilterFloor(e.target.value)} label="Floor" disabled={!filterArea}>
+                  <div>
+                    <span className={filterLabelClass}>Floor</span>
+                    <FormControl fullWidth variant="outlined" sx={filterFieldSx}>
+                    <MuiSelect value={filterFloor} onChange={(e: SelectChangeEvent<string>) => setFilterFloor(e.target.value)} displayEmpty inputProps={{ 'aria-label': 'Floor' }} disabled={!filterArea}>
                       <MenuItem value="">All Floors</MenuItem>
                       {floors.map((floor) => (
                         <MenuItem key={floor.id} value={String(floor.id)}>{floor.name}</MenuItem>
                       ))}
                     </MuiSelect>
                   </FormControl>
+                    </div>
 
-                  <FormControl fullWidth variant="outlined" size="small">
-                    <InputLabel shrink>Department</InputLabel>
-                    <MuiSelect value={filterDepartment} onChange={(e: SelectChangeEvent<string>) => setFilterDepartment(e.target.value)} label="Department">
+                  <div>
+                    <span className={filterLabelClass}>Department</span>
+                    <FormControl fullWidth variant="outlined" sx={filterFieldSx}>
+                    <MuiSelect value={filterDepartment} onChange={(e: SelectChangeEvent<string>) => setFilterDepartment(e.target.value)} displayEmpty inputProps={{ 'aria-label': 'Department' }}>
                       <MenuItem value="">All Departments</MenuItem>
                       {departments.map((dept) => (
                         <MenuItem key={dept.id} value={String(dept.id)}>{dept.department_name || dept.name}</MenuItem>
                       ))}
                     </MuiSelect>
                   </FormControl>
+                    </div>
 
-                  <FormControl fullWidth variant="outlined" size="small">
-                    <InputLabel shrink>Asset Group</InputLabel>
-                    <MuiSelect value={filterAssetGroup} onChange={(e: SelectChangeEvent<string>) => setFilterAssetGroup(e.target.value)} label="Asset Group">
+                  <div>
+                    <span className={filterLabelClass}>Asset Group</span>
+                    <FormControl fullWidth variant="outlined" sx={filterFieldSx}>
+                    <MuiSelect value={filterAssetGroup} onChange={(e: SelectChangeEvent<string>) => setFilterAssetGroup(e.target.value)} displayEmpty inputProps={{ 'aria-label': 'Asset Group' }}>
                       <MenuItem value="">All Groups</MenuItem>
                       {assetGroups.map((group) => (
                         <MenuItem key={group.id} value={String(group.id)}>{group.name}</MenuItem>
                       ))}
                     </MuiSelect>
                   </FormControl>
+                    </div>
 
-                  <FormControl fullWidth variant="outlined" size="small">
-                    <InputLabel shrink>Sub Group</InputLabel>
-                    <MuiSelect value={filterSubGroup} onChange={(e: SelectChangeEvent<string>) => setFilterSubGroup(e.target.value)} label="Sub Group" disabled={!filterAssetGroup}>
+                  <div>
+                    <span className={filterLabelClass}>Sub Group</span>
+                    <FormControl fullWidth variant="outlined" sx={filterFieldSx}>
+                    <MuiSelect value={filterSubGroup} onChange={(e: SelectChangeEvent<string>) => setFilterSubGroup(e.target.value)} displayEmpty inputProps={{ 'aria-label': 'Sub Group' }} disabled={!filterAssetGroup}>
                       <MenuItem value="">All Sub Groups</MenuItem>
                       {assetSubGroups.map((subGroup) => (
                         <MenuItem key={subGroup.id} value={String(subGroup.id)}>{subGroup.name}</MenuItem>
                       ))}
                     </MuiSelect>
                   </FormControl>
+                    </div>
                 </div>
 
                 <span onClick={handleResetAll} className="text-red-600 hover:text-red-700 cursor-pointer font-medium whitespace-nowrap text-sm hover:underline pb-1">

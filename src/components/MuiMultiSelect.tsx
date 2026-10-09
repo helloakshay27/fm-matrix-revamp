@@ -25,7 +25,7 @@ interface MuiMultiSelectProps {
     maxHeight?: string | number;
 }
 
-const BRAND = '#C72030';
+const BRAND = 'var(--color-primary)';
 
 export const MuiMultiSelect = ({
     label,
@@ -161,7 +161,7 @@ export const MuiMultiSelect = ({
                                     sx={{
                                         height: "22px",
                                         fontSize: "0.75rem",
-                                        borderColor: "rgba(199, 32, 48, 0.35)",
+                                        borderColor: "var(--color-primary-light)",
                                         color: BRAND,
                                         "& .MuiChip-label": {
                                             padding: "0 6px",

@@ -850,13 +850,13 @@ export const PatrollingDetailPage: React.FC = () => {
               <img
                 src={item.location_qr_code_url}
                 alt={`QR Code – ${item.name}`}
-                className="w-12 h-12 object-contain border border-gray-200 rounded group-hover:opacity-80 group-hover:border-[#C72030] transition-all cursor-pointer"
+                className="w-12 h-12 object-contain border border-gray-200 rounded group-hover:opacity-80 group-hover:border-brand transition-all cursor-pointer"
               />
             </button>
             {/* Download button — calls print_qr_codes API for this single checkpoint */}
             <button
               title="Download QR code"
-              className="flex-shrink-0 p-1 rounded hover:bg-gray-100 transition-colors text-gray-500 hover:text-[#C72030]"
+              className="flex-shrink-0 p-1 rounded hover:bg-gray-100 transition-colors text-gray-500 hover:text-brand"
               onClick={(e) => {
                 e.stopPropagation();
                 const apiUrl = `${API_CONFIG.BASE_URL}/patrolling/print_qr_codes?checkpoint_ids=${item.id}&access_token=${API_CONFIG.TOKEN}`;
@@ -880,9 +880,9 @@ export const PatrollingDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+      <div className="p-6 min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto mb-4"></div>
           <p className="text-gray-700">Loading patrolling details...</p>
         </div>
       </div>
@@ -911,58 +911,53 @@ export const PatrollingDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="p-4 sm:p-6 min-h-screen bg-gray-50">
+    <div className="p-4 sm:p-6 min-h-screen">
       {/* Header */}
       <div className="mb-6">
         <button
         onClick={() => navigate(-1)}
-          className="flex items-center gap-1 hover:text-gray-800 mb-4"
+          className="flex items-center gap-1 text-gray-600 hover:text-brand mb-4 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Patrolling List
         </button>
 
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-[#1a1a1a] mb-2">
-              {patrolling.name}
-            </h1>
-            <Badge
-              variant={patrolling.active ? "default" : "secondary"}
-              className="text-xs"
-            >
-              {patrolling.active ? (
-                <>
-                  <CheckCircle className="w-3 h-3 mr-1" />
-                  Active
-                </>
-              ) : (
-                <>
-                  <XCircle className="w-3 h-3 mr-1" />
-                  Inactive
-                </>
-              )}
-            </Badge>
+          <div className="flex flex-col gap-2 min-w-0">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
+                {patrolling.name}
+              </h1>
+              <Badge
+                variant="outline"
+                className={patrolling.active
+                  ? "border-brand-success text-brand-success bg-brand-success-bg"
+                  : "border-gray-300 text-gray-600 bg-gray-100"}
+              >
+                {patrolling.active ? <CheckCircle className="w-3 h-3 mr-1" /> : <XCircle className="w-3 h-3 mr-1" />}
+                {patrolling.active ? "Active" : "Inactive"}
+              </Badge>
+            </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {shouldShow("Patrolling", "update") && (
               <Button
                 onClick={handleEdit}
                 variant="outline"
-                size="sm"
-                className="border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756]/10"
+                size="icon"
+                aria-label="Edit patrolling"
+                title="Edit patrolling"
+                className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
               >
-                <Edit className="w-4 h-4 mr-2 text-[#DA7756]" />
-                Edit
+                <Edit className="w-4 h-4" />
               </Button>
             )}
             <Button
               onClick={handleDelete}
               variant="outline"
               size="sm"
-              style={{ borderColor: "#C72030", color: "#C72030" }}
-              className="hover:bg-red-50"
+              className="border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white"
             >
               <Trash2 className="w-4 h-4 mr-2" />
               Delete
@@ -974,9 +969,9 @@ export const PatrollingDetailPage: React.FC = () => {
       {/* Main Content */}
       <div className="space-y-6">
         {/* Tabs */}
-        <Card className="w-full bg-white shadow-sm border border-gray-200">
+        <div className="w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm border-b border-gray-200">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-gray-50 rounded-t-lg h-auto p-0 text-sm">
               {[
                 { label: "Patrol Information", value: "patrol-information" },
                 { label: "Questions", value: "questions" },
@@ -986,7 +981,7 @@ export const PatrollingDetailPage: React.FC = () => {
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
-                  className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] px-3 py-2 border-r border-gray-200 last:border-r-0 text-sm"
+                  className="w-full min-w-0 bg-white data-[state=active]:bg-brand-selected px-3 py-2 data-[state=active]:text-brand border-r border-b border-gray-200"
                 >
                   {tab.label}
                 </TabsTrigger>
@@ -997,24 +992,24 @@ export const PatrollingDetailPage: React.FC = () => {
           <TabsContent value="patrol-information" className="p-4 sm:p-6">
             {/* Summary Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+              <div className="bg-[#F6F4EE] border border-gray-200 rounded-lg p-4 shadow-sm">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
-                    <Clock className="w-5 h-5 text-orange-600" />
+                  <div className="w-10 h-10 rounded-md bg-white flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-gray-600" />
                   </div>
                   <div>
                     <p className="text-xs text-gray-600">Duration</p>
                     <p className="text-lg font-semibold text-gray-900">
-                      {patrolling.grace_period_minutes} min
+                      {patrolling.estimated_duration_minutes} min
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+              <div className="bg-[#F6F4EE] border border-gray-200 rounded-lg p-4 shadow-sm">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                    <ListChecks className="w-5 h-5 text-blue-600" />
+                  <div className="w-10 h-10 rounded-md bg-white flex items-center justify-center">
+                    <ListChecks className="w-5 h-5 text-gray-600" />
                   </div>
                   <div>
                     <p className="text-xs text-gray-600">Questions</p>
@@ -1025,10 +1020,10 @@ export const PatrollingDetailPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+              <div className="bg-[#F6F4EE] border border-gray-200 rounded-lg p-4 shadow-sm">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-                    <Users className="w-5 h-5 text-purple-600" />
+                  <div className="w-10 h-10 rounded-md bg-white flex items-center justify-center">
+                    <Users className="w-5 h-5 text-gray-600" />
                   </div>
                   <div>
                     <p className="text-xs text-gray-600">Schedules</p>
@@ -1039,10 +1034,10 @@ export const PatrollingDetailPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+              <div className="bg-[#F6F4EE] border border-gray-200 rounded-lg p-4 shadow-sm">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                    <MapPin className="w-5 h-5 text-green-600" />
+                  <div className="w-10 h-10 rounded-md bg-white flex items-center justify-center">
+                    <MapPin className="w-5 h-5 text-gray-600" />
                   </div>
                   <div>
                     <p className="text-xs text-gray-600">Checkpoints</p>
@@ -1055,94 +1050,105 @@ export const PatrollingDetailPage: React.FC = () => {
             </div>
 
             {/* Patrol Information Card */}
-            <Card className="mb-6 border-none bg-transparent shadow-none">
-              <div className="figma-card-header">
-                <div className="flex items-center gap-3">
-                  <div className="figma-card-icon-wrapper">
-                    <Shield className="figma-card-icon" />
+            <Card className="mb-6 w-full">
+              <CardHeader className="pb-4 lg:pb-6">
+                <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E5E0D3]">
+                    <Shield className="h-6 w-6 text-brand" />
                   </div>
-                  <h3 className="figma-card-title">Patrol Information</h3>
-                </div>
-              </div>
-              <div className="figma-card-content">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
-                  <div className="flex flex-col">
-                    <span className="text-gray-600 text-xs mb-1">Name</span>
+                  <span className="uppercase tracking-wide">Patrol Information</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="grid grid-cols-1 gap-6 text-sm md:grid-cols-2">
+                  <div className="flex items-start">
+                    <span className="min-w-[140px] text-gray-500">Name</span>
+                    <span className="mx-2 text-gray-500">:</span>
                     <span className="font-medium text-gray-900">{patrolling.name}</span>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-gray-600 text-xs mb-1">Description</span>
+                  <div className="flex items-start">
+                    <span className="min-w-[140px] text-gray-500">Description</span>
+                    <span className="mx-2 text-gray-500">:</span>
                     <span className="font-medium text-gray-900">{patrolling.description || "—"}</span>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-gray-600 text-xs mb-1">Start Date</span>
+                  <div className="flex items-start">
+                    <span className="min-w-[140px] text-gray-500">Start Date</span>
+                    <span className="mx-2 text-gray-500">:</span>
                     <span className="font-medium text-gray-900">{formatDate(patrolling.validity_start_date)}</span>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-gray-600 text-xs mb-1">End Date</span>
+                  <div className="flex items-start">
+                    <span className="min-w-[140px] text-gray-500">End Date</span>
+                    <span className="mx-2 text-gray-500">:</span>
                     <span className="font-medium text-gray-900">{formatDate(patrolling.validity_end_date)}</span>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-gray-600 text-xs mb-1">Grace Period</span>
+                  <div className="flex items-start">
+                    <span className="min-w-[140px] text-gray-500">Grace Period</span>
+                    <span className="mx-2 text-gray-500">:</span>
                     <span className="font-medium text-gray-900">{patrolling.grace_period_minutes} minutes</span>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-gray-600 text-xs mb-1">Status</span>
-                    <div>
-                      <Badge
-                        variant={patrolling.active ? "default" : "secondary"}
-                        className="text-xs"
-                      >
-                        {patrolling.active ? "Active" : "Inactive"}
-                      </Badge>
-                    </div>
+                  <div className="flex items-start">
+                    <span className="min-w-[140px] text-gray-500">Status</span>
+                    <span className="mx-2 text-gray-500">:</span>
+                    <Badge
+                      variant="outline"
+                      className={patrolling.active
+                        ? "border-brand-success text-brand-success bg-brand-success-bg"
+                        : "border-gray-300 text-gray-600 bg-gray-100"}
+                    >
+                      {patrolling.active ? "Active" : "Inactive"}
+                    </Badge>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-gray-600 text-xs mb-1">Created On</span>
+                  <div className="flex items-start">
+                    <span className="min-w-[140px] text-gray-500">Created On</span>
+                    <span className="mx-2 text-gray-500">:</span>
                     <span className="font-medium text-gray-900">{formatDateTime(patrolling.created_at)}</span>
                   </div>
                 </div>
-              </div>
+              </CardContent>
             </Card>
 
             {/* Checklist Information */}
             {patrolling.checklist && (
-              <Card className="mb-6 border-none bg-transparent shadow-none">
-                <div className="figma-card-header">
-                  <div className="flex items-center gap-3">
-                    <div className="figma-card-icon-wrapper">
-                      <ListChecks className="figma-card-icon" />
+              <Card className="mb-6 w-full">
+                <CardHeader className="pb-4 lg:pb-6">
+                  <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E5E0D3]">
+                      <ListChecks className="h-6 w-6 text-brand" />
                     </div>
-                    <h3 className="figma-card-title">Checklist Information</h3>
-                  </div>
-                </div>
-                <div className="figma-card-content">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
-                    <div className="flex flex-col">
-                      <span className="text-gray-600 text-xs mb-1">Checklist Name</span>
+                    <span className="uppercase tracking-wide">Checklist Information</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="grid grid-cols-1 gap-6 text-sm md:grid-cols-2">
+                    <div className="flex items-start">
+                      <span className="min-w-[140px] text-gray-500">Checklist Name</span>
+                      <span className="mx-2 text-gray-500">:</span>
                       <span className="font-medium text-gray-900">{patrolling.checklist.name}</span>
                     </div>
-                    <div className="flex flex-col">
-                      <span className="text-gray-600 text-xs mb-1">Check Type</span>
+                    <div className="flex items-start">
+                      <span className="min-w-[140px] text-gray-500">Check Type</span>
+                      <span className="mx-2 text-gray-500">:</span>
                       <span className="font-medium text-gray-900">{patrolling.checklist.check_type}</span>
                     </div>
-                    <div className="flex flex-col">
-                      <span className="text-gray-600 text-xs mb-1">Status</span>
-                      <div>
-                        <Badge
-                          variant="outline"
-                          className={`text-xs ${patrolling.checklist.active ? "bg-red-100 text-red-800 border-red-200" : "bg-gray-100 text-gray-600 border-gray-200"}`}
-                        >
-                          {patrolling.checklist.active ? "Active" : "Inactive"}
-                        </Badge>
-                      </div>
+                    <div className="flex items-start">
+                      <span className="min-w-[140px] text-gray-500">Status</span>
+                      <span className="mx-2 text-gray-500">:</span>
+                      <Badge
+                        variant="outline"
+                        className={patrolling.checklist.active
+                          ? "border-brand-success text-brand-success bg-brand-success-bg"
+                          : "border-gray-300 text-gray-600 bg-gray-100"}
+                      >
+                        {patrolling.checklist.active ? "Active" : "Inactive"}
+                      </Badge>
                     </div>
-                    <div className="flex flex-col">
-                      <span className="text-gray-600 text-xs mb-1">Created On</span>
+                    <div className="flex items-start">
+                      <span className="min-w-[140px] text-gray-500">Created On</span>
+                      <span className="mx-2 text-gray-500">:</span>
                       <span className="font-medium text-gray-900">{formatDateTime(patrolling.checklist.created_at)}</span>
                     </div>
                   </div>
-                </div>
+                </CardContent>
               </Card>
             )}
 
@@ -1220,7 +1226,7 @@ export const PatrollingDetailPage: React.FC = () => {
                             toast.error(`Failed to download QR codes: ${error.message}`);
                           }
                         }}
-                        className="text-xs border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+                        className="text-xs border-brand text-brand hover:bg-brand hover:text-white"
                       >
                         <Download className="w-3 h-3 mr-1" />
                         Download All QR Codes
@@ -1393,14 +1399,14 @@ export const PatrollingDetailPage: React.FC = () => {
             {patrolling.checklist && checklistQuestions.length > 0 ? (
               // Show checklist questions
               <>
-                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="mb-4 p-4 bg-[#F6F4EE] border border-[#E5E0D3] rounded-lg">
                   <div className="flex items-center gap-2">
-                    <Info className="w-5 h-5 text-blue-600" />
+                    <Info className="w-5 h-5 text-brand" />
                     <div>
-                      <p className="text-sm font-medium text-blue-800">
+                      <p className="text-sm font-medium text-gray-900">
                         Questions from Checklist
                       </p>
-                      <p className="text-xs text-blue-600">
+                      <p className="text-xs text-gray-600">
                         Questions are loaded from the selected checklist:{" "}
                         <strong>{patrolling.checklist.name}</strong>
                       </p>
@@ -1408,21 +1414,21 @@ export const PatrollingDetailPage: React.FC = () => {
                   </div>
                 </div>
 
-                <Card className="mb-6 border-none bg-transparent shadow-none">
-                  <div className="figma-card-header">
-                    <div className="flex items-center gap-3">
-                      <div className="figma-card-icon-wrapper">
-                        <ListChecks className="figma-card-icon" />
+                <Card className="mb-6 w-full">
+                  <CardHeader className="pb-4 lg:pb-6">
+                    <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E5E0D3]">
+                        <ListChecks className="h-6 w-6 text-brand" />
                       </div>
-                      <h3 className="figma-card-title">
+                      <span className="uppercase tracking-wide">
                         Checklist Questions ({checklistQuestions.length})
                         {loadingChecklistQuestions && (
-                          <Loader2 className="w-4 h-4 animate-spin ml-2 text-[#C72030]" />
+                          <Loader2 className="w-4 h-4 animate-spin ml-2 text-brand" />
                         )}
-                      </h3>
-                    </div>
-                  </div>
-                  <div className="figma-card-content">
+                      </span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
@@ -1492,26 +1498,26 @@ export const PatrollingDetailPage: React.FC = () => {
                         </TableBody>
                       </Table>
                     </div>
-                  </div>
+                  </CardContent>
                 </Card>
               </>
             ) : (
               // Show patrolling questions
-              <Card className="mb-6 border-none bg-transparent shadow-none">
-                <div className="figma-card-header">
-                  <div className="flex items-center gap-3">
-                    <div className="figma-card-icon-wrapper">
-                      <ListChecks className="figma-card-icon" />
+              <Card className="mb-6 w-full">
+                <CardHeader className="pb-4 lg:pb-6">
+                  <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E5E0D3]">
+                      <ListChecks className="h-6 w-6 text-brand" />
                     </div>
-                    <h3 className="figma-card-title">
+                    <span className="uppercase tracking-wide">
                       Questions ({patrolling.questions?.length || 0})
                       {patrolling.checklist && loadingChecklistQuestions && (
-                        <Loader2 className="w-4 h-4 animate-spin ml-2 text-[#C72030]" />
+                        <Loader2 className="w-4 h-4 animate-spin ml-2 text-brand" />
                       )}
-                    </h3>
-                  </div>
-                </div>
-                <div className="figma-card-content">
+                    </span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
          
 
                   <div className="overflow-x-auto">
@@ -1593,27 +1599,29 @@ export const PatrollingDetailPage: React.FC = () => {
                       </TableBody>
                     </Table>
                   </div>
-                </div>
+                </CardContent>
               </Card>
             )}
           </TabsContent>
 
           {/* Schedules */}
           <TabsContent value="schedules" className="p-4 sm:p-6">
-            <Card className="mb-6 border-none bg-transparent shadow-none">
-              <div className="figma-card-header">
-                <div className="flex items-center justify-between w-full">
+            <Card className="mb-6 w-full">
+              <CardHeader className="pb-4 lg:pb-6">
+                <div className="flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <div className="figma-card-icon-wrapper">
-                      <Calendar className="figma-card-icon" />
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E5E0D3]">
+                      <Calendar className="h-6 w-6 text-brand" />
                     </div>
-                    <h3 className="figma-card-title">Schedules ({patrolling.schedules?.length || 0})</h3>
+                    <CardTitle className="text-lg font-semibold text-[#1A1A1A]">
+                      <span className="uppercase tracking-wide">Schedules ({patrolling.schedules?.length || 0})</span>
+                    </CardTitle>
                   </div>
                   {patrolling.schedules && patrolling.schedules.length > 0 && (
                     <div className="flex items-center gap-4 text-sm">
                       <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 bg-[#C72030] rounded-full animate-pulse"></div>
-                        <span className="text-[#C72030] font-medium">
+                        <div className="w-2 h-2 bg-brand-success rounded-full animate-pulse"></div>
+                        <span className="text-brand-success font-medium">
                           Active: {patrolling.schedules.filter(s => s.active).length}
                         </span>
                       </div>
@@ -1626,16 +1634,16 @@ export const PatrollingDetailPage: React.FC = () => {
                     </div>
                   )}
                 </div>
-              </div>
-              <div className="figma-card-content">
+              </CardHeader>
+              <CardContent className="pt-0">
                 {patrolling.schedules && patrolling.schedules.length > 0 ? (
                   <div className="space-y-6">
                     {patrolling.schedules.map((schedule) => (
-                      <div key={schedule.id} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-200 hover:border-gray-300">
+                      <div key={schedule.id} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
                         {/* Schedule Header */}
                         <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
                           <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 ${schedule.active ? 'bg-[#C72030]' : 'bg-gray-400'} text-white rounded-full flex items-center justify-center font-semibold shadow-sm`}>
+                            <div className="w-10 h-10 bg-brand-selected text-brand rounded-full flex items-center justify-center font-semibold">
                               #{schedule.id}
                             </div>
                             <div>
@@ -1658,11 +1666,11 @@ export const PatrollingDetailPage: React.FC = () => {
                           </div>
                           <Badge
                             variant={schedule.active ? "default" : "secondary"}
-                            className={`px-3 py-1 ${schedule.active ? 'bg-red-100 text-red-800 border-red-200' : 'bg-gray-100 text-gray-600 border-gray-200'}`}
+                            className={`px-3 py-1 ${schedule.active ? 'bg-brand-success-bg text-brand-success border-brand-success/30' : 'bg-gray-100 text-gray-600 border-gray-200'}`}
                           >
                             {schedule.active ? (
                               <>
-                                <div className="w-2 h-2 bg-[#C72030] rounded-full mr-2 animate-pulse" />
+                                <div className="w-2 h-2 bg-brand-success rounded-full mr-2 animate-pulse" />
                                 Active
                               </>
                             ) : (
@@ -1817,35 +1825,35 @@ export const PatrollingDetailPage: React.FC = () => {
                     </p>
                     <Button 
                       onClick={() => navigate(`/security/patrolling/edit/${id}`)}
-                      className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                      className="bg-brand hover:bg-brand-hover text-white"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Add Schedule
                     </Button>
                   </div>
                 )}
-              </div>
+              </CardContent>
             </Card>
           </TabsContent>
 
           {/* Checkpoints */}
-          <TabsContent value="checkpoints" className="mt-4">
-            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
-                <CardTitle className="text-lg flex items-center">
-                  <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded-full mr-3">
-                    <MapPin className="h-5 w-5 text-[#C72030]" />
+          <TabsContent value="checkpoints" className="p-4 sm:p-6">
+            <Card className="mb-6 w-full">
+              <CardHeader className="pb-4 lg:pb-6">
+                <CardTitle className="flex flex-wrap items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E5E0D3]">
+                    <MapPin className="h-6 w-6 text-brand" />
                   </div>
-                  Checkpoints ({patrolling.checkpoints?.length || 0})
+                  <span className="uppercase tracking-wide">Checkpoints ({patrolling.checkpoints?.length || 0})</span>
                   {isReordering && (
                     <span className="ml-4 flex items-center gap-1 text-sm font-normal text-gray-500">
-                      <Loader2 className="w-4 h-4 animate-spin text-[#C72030]" />
+                      <Loader2 className="w-4 h-4 animate-spin text-brand" />
                       Saving order...
                     </span>
                   )}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="relative">
+              <CardContent className="relative pt-0">
                 {selectedCheckpointIds.length > 0 && (
                   <LocationSelectionPanel
                     selectedLocations={selectedCheckpointIds}
@@ -1921,7 +1929,7 @@ export const PatrollingDetailPage: React.FC = () => {
                           variant="ghost"
                           size="sm"
                           onClick={clearAllCpFilters}
-                          className="text-xs text-[#C72030] hover:text-[#C72030] hover:bg-red-50 h-6 px-1.5"
+                          className="text-xs text-brand hover:text-brand hover:bg-brand-selected h-6 px-1.5"
                         >
                           Clear All
                         </Button>
@@ -1944,7 +1952,7 @@ export const PatrollingDetailPage: React.FC = () => {
                       onClick={() => setIsCpFilterOpen(true)}
                       className={`flex items-center gap-1.5 h-9 text-sm ${
                         activeCpFilterCount > 0
-                          ? "border-[#C72030] text-[#C72030] bg-red-50 hover:bg-red-100"
+                          ? "border-brand text-brand bg-brand-selected hover:bg-brand-light"
                           : ""
                       }`}
                     >
@@ -2022,9 +2030,9 @@ export const PatrollingDetailPage: React.FC = () => {
                                   {col.sortable && (
                                     checkpointSort?.column === col.key ? (
                                       checkpointSort.direction === "asc" ? (
-                                        <ChevronUp className="w-3.5 h-3.5 text-[#C72030]" />
+                                        <ChevronUp className="w-3.5 h-3.5 text-brand" />
                                       ) : (
-                                        <ChevronDown className="w-3.5 h-3.5 text-[#C72030]" />
+                                        <ChevronDown className="w-3.5 h-3.5 text-brand" />
                                       )
                                     ) : (
                                       <ChevronsUpDown className="w-3.5 h-3.5 text-gray-400" />
@@ -2139,7 +2147,7 @@ export const PatrollingDetailPage: React.FC = () => {
                                 {session.total_checkpoints} checkpoints
                                 <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
                                   <div
-                                    className="bg-[#C72030] h-2 rounded-full"
+                                    className="bg-brand h-2 rounded-full"
                                     style={{
                                       width: `${
                                         (session.checkpoints_completed /
@@ -2182,7 +2190,7 @@ export const PatrollingDetailPage: React.FC = () => {
             </Card>
           </TabsContent>
         </Tabs>
-        </Card>
+        </div>
       </div>
 
       {/* Delete Confirmation Modal */}

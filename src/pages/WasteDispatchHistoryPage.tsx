@@ -195,11 +195,11 @@ const WasteDispatchHistoryPage: React.FC = () => {
     const approved = dispatchRecords.filter((r) => r.approval_status === 'approved').length;
 
     return [
-      { label: 'Total Dispatch Requests', value: dispatchRecords.length, icon: <Truck className="w-6 h-6 text-[#C72030]" /> },
-      { label: 'Pending Approval', value: pendingApproval, icon: <Clock className="w-6 h-6 text-[#C72030]" /> },
-      { label: 'Approved', value: approved, icon: <CheckCircle2 className="w-6 h-6 text-[#C72030]" /> },
-      { label: 'Total Dispatch Weight (Kg)', value: `${totalKg.toLocaleString('en-IN')} KG`, icon: <Scale className="w-6 h-6 text-[#C72030]" /> },
-      { label: 'Total Dispatch Weight (Ltr)', value: `${totalLtr.toLocaleString('en-IN')} L`, icon: <Scale className="w-6 h-6 text-[#C72030]" /> },
+      { label: 'Total Dispatch Requests', value: dispatchRecords.length, icon: <Truck className="w-[18px] h-[18px] text-[rgba(44,44,44,0.48)]" /> },
+      { label: 'Pending Approval', value: pendingApproval, icon: <Clock className="w-[18px] h-[18px] text-[rgba(44,44,44,0.48)]" /> },
+      { label: 'Approved', value: approved, icon: <CheckCircle2 className="w-[18px] h-[18px] text-[rgba(44,44,44,0.48)]" /> },
+      { label: 'Total Dispatch Weight (Kg)', value: `${totalKg.toLocaleString('en-IN')} KG`, icon: <Scale className="w-[18px] h-[18px] text-[rgba(44,44,44,0.48)]" /> },
+      { label: 'Total Dispatch Weight (Ltr)', value: `${totalLtr.toLocaleString('en-IN')} L`, icon: <Scale className="w-[18px] h-[18px] text-[rgba(44,44,44,0.48)]" /> },
     ];
   }, [dispatchRecords]);
 
@@ -252,10 +252,10 @@ const WasteDispatchHistoryPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-[14px] mb-6">
         {summaryCards.map((card, i) => (
-          <div key={i} className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 hover:shadow-lg transition-shadow duration-300">
-            <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center shrink-0">
+          <div key={i} className="bg-[#F5F4F0] px-5 py-[18px] rounded-2xl flex items-center gap-4">
+            <div className="w-9 h-9 bg-white rounded-[10px] flex items-center justify-center shrink-0">
               {card.icon}
             </div>
             <div>

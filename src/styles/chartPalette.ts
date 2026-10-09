@@ -22,6 +22,24 @@ export const getPaletteColor = (index: number): AnalyticsPaletteColor => {
   return ANALYTICS_PALETTE[index % ANALYTICS_PALETTE.length];
 };
 
+// Business Genie fixed series palette — series are assigned strictly by index,
+// never re-ordered per chart: purple, blue, growth, olive, sageMint, purpleMid,
+// warning, danger. Written as rgb() on purpose: theme.css has legacy
+// [fill="#hex"] !important overrides that would otherwise recolor these.
+export const CHART_SERIES_PALETTE = [
+  'rgb(142, 123, 224)', // [0] purple    #8E7BE0
+  'rgb(107, 155, 204)', // [1] blue      #6B9BCC
+  'rgb(16, 140, 114)',  // [2] growth    #108C72
+  'rgb(121, 140, 94)',  // [3] olive     #798C5E
+  'rgb(158, 200, 186)', // [4] sageMint  #9EC8BA
+  'rgb(206, 203, 246)', // [5] purpleMid #CECBF6
+  'rgb(237, 196, 136)', // [6] warning   #EDC488
+  'rgb(228, 145, 145)', // [7] danger    #E49191
+] as const;
+
+export const getSeriesColor = (index: number): string =>
+  CHART_SERIES_PALETTE[index % CHART_SERIES_PALETTE.length];
+
 // Specific semantic mappings aligned with Lockated brand:
 export const ITEM_STATUS_COLORS = {
   active: ANALYTICS_PALETTE[1],    // Green - 798C5E

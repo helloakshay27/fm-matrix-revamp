@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useGatePassEvents } from '@/components/PostHogGatePassEvents';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, RadioGroup, FormControlLabel, Radio, Box, Typography, IconButton, Button as MuiButton, Autocomplete } from '@mui/material';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ArrowLeft, Trash2, Users, FileText, Package, Paperclip } from 'lucide-react';
 import { AttachFile, Close } from '@mui/icons-material';
 import { gateNumberService } from '@/services/gateNumberService';
 import { gatePassInwardService } from '@/services/gatePassInwardService';
@@ -517,7 +517,7 @@ export const GatePassOutwardsAddPage = () => {
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-4 sm:p-6 max-w-full mx-auto bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="mb-4 sm:mb-6">
         <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
@@ -537,7 +537,8 @@ export const GatePassOutwardsAddPage = () => {
         </h1>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6 bg-white shadow-sm rounded-lg overflow-hidden">
+        <div className="border-l-4 border-l-[#DA7756] p-3 sm:p-4 bg-white">
         <FormControl component="fieldset">
           <RadioGroup
             row
@@ -569,12 +570,17 @@ export const GatePassOutwardsAddPage = () => {
             }} />} label="Non-Returnable" />
           </RadioGroup>
         </FormControl>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6 border border-gray-200 rounded-lg p-10 bg-white">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
 
-        <div>
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Visitor Details</h2>
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div className="border-l-4 border-l-[#DA7756] p-4 sm:p-6 bg-white">
+          <div className="flex items-center gap-2 text-[#DA7756] text-base font-semibold mb-6">
+            <span className="bg-[#f5f4f0] text-white rounded-full w-6 h-6 flex items-center justify-center"><Users className="w-4 h-4" /></span>
+            VISITOR DETAILS
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Row 1 */}
             <TextField label={<span>Contact Person <span style={{ color: 'red' }}>*</span></span>} placeholder="Enter Contact Person" fullWidth variant="outlined" value={visitorDetails.contactPerson} onChange={(e) => {
@@ -700,10 +706,15 @@ export const GatePassOutwardsAddPage = () => {
             InputProps={{ sx: fieldStyles }}
           /> */}
           </div>
+          </div>
         </div>
 
-        <div>
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Gate Pass Details</h2>
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div className="border-l-4 border-l-[#DA7756] p-4 sm:p-6 bg-white">
+          <div className="flex items-center gap-2 text-[#DA7756] text-base font-semibold mb-6">
+            <span className="bg-[#f5f4f0] text-white rounded-full w-6 h-6 flex items-center justify-center"><FileText className="w-4 h-4" /></span>
+            GATE PASS DETAILS
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.site}>
               <InputLabel shrink>Site <span style={{ color: 'red' }}>*</span></InputLabel>
@@ -815,13 +826,18 @@ export const GatePassOutwardsAddPage = () => {
                         </div>
             
           </div>
+          </div>
         </div>
 
 
         {/* Material / Asset Details Section */}
-        <div>
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div className="border-l-4 border-l-[#DA7756] p-4 sm:p-6 bg-white">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">Item Details</h2>
+            <div className="flex items-center gap-2 text-[#DA7756] text-base font-semibold">
+              <span className="bg-[#f5f4f0] text-white rounded-full w-6 h-6 flex items-center justify-center"><Package className="w-4 h-4" /></span>
+              ITEM DETAILS
+            </div>
             <Button type="button" onClick={handleAddRow} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white text-sm px-4 py-2">Add Item</Button>
           </div>
           <div className="overflow-x-auto">
@@ -986,10 +1002,12 @@ export const GatePassOutwardsAddPage = () => {
               </tbody>
             </table>
           </div>
+          </div>
         </div>
 
         {/* Document Attachment Section */}
-        <div>
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div className="border-l-4 border-l-[#DA7756] p-4 sm:p-6 bg-white">
           <Box sx={{ gap: 2, mb: 2 }}>
             {attachments.length > 0 && (
               <h2 className="text-lg font-semibold text-gray-800 mb-4">Attachments</h2>
@@ -1086,18 +1104,19 @@ export const GatePassOutwardsAddPage = () => {
               className="hidden"
             />
           </Box>
+          </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-center gap-4 pt-4">
+        <div className="flex items-center justify-end gap-3 pt-4">
+          <Button type="button" variant="outline" className="border-gray-300 bg-white px-8 py-2 text-gray-900 hover:bg-gray-50" onClick={() => { captureFormAbandoned(); navigate('/security/gate-pass/outwards'); }}>Cancel</Button>
           <Button
             type="submit"
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2"
+            className="bg-gray-900 px-8 py-2 text-white hover:bg-black"
             disabled={isSubmitting}
           >
             {isSubmitting ? 'Submitting...' : 'Submit'}
           </Button>
-          <Button type="button" variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-red-50 px-8 py-2" onClick={() => { captureFormAbandoned(); navigate('/security/gate-pass/outwards'); }}>Cancel</Button>
         </div>
       </form>
     </div>

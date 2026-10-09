@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import "@/styles/accounting.css";
 import {
   Plus,
   MoreHorizontal,
@@ -166,21 +167,18 @@ export const RetainerInvoicesDashboard = () => {
   const [loading, setLoading] = useState(false);
 
   const getStatusBadge = (status: string) => {
-    const statusColors: Record<string, string> = {
-      draft: "bg-gray-100 text-gray-800",
-      sent: "bg-blue-100 text-blue-800",
-      paid: "bg-green-100 text-green-800",
-      overdue: "bg-red-100 text-red-800",
-      cancelled: "bg-yellow-100 text-yellow-800",
+    const statusTones: Record<string, string> = {
+      draft: "neutral",
+      sent: "info",
+      paid: "success",
+      overdue: "danger",
+      cancelled: "neutral",
     };
+    const key = status.toLowerCase();
 
     return (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          statusColors[status.toLowerCase()] || "bg-gray-100 text-gray-800"
-        }`}
-      >
-        {status.toUpperCase()}
+      <span className={`acc-pill acc-pill--${statusTones[key] || "neutral"}`}>
+        {key.charAt(0).toUpperCase() + key.slice(1)}
       </span>
     );
   };
@@ -248,10 +246,10 @@ export const RetainerInvoicesDashboard = () => {
   });
 
   return (
-    <div className="p-6 space-y-6 h-[calc(100vh-80px)] flex flex-col overflow-y-auto bg-white">
+    <div className="accounting-ui p-6 space-y-6 h-[calc(100vh-80px)] flex flex-col overflow-y-auto bg-white">
       {/* Header Section */}
       <header className="flex items-center justify-between shrink-0">
-        <h1 className="text-2xl font-bold text-gray-800">
+        <h1 className="acc-title">
           All Retainer Invoices
         </h1>
       </header>

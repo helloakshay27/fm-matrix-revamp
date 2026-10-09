@@ -79,7 +79,7 @@ export const ItAssetDetailsSection: React.FC<ItAssetDetailsProps> = ({
               e.stopPropagation();
               onOpenCustomFieldModal();
             }}
-            className="px-3 py-1 rounded-md text-sm flex items-center gap-1 bg-[#f6f4ee] text-red-700"
+            className="fm-custom-field-btn"
           >
             <Plus className="w-4 h-4" />
             Custom Field

@@ -566,7 +566,7 @@ const AddWasteGenerationPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-10">
               <FormControl fullWidth disabled={loadingBuildings}>
                 <InputLabel shrink id="building-label" sx={{ backgroundColor: 'white', px: 1 }}>
-                  Building <span className="text-red-500">*</span>
+                  Building <span className="fm-required-mark">*</span>
                 </InputLabel>
                 <Select
                   labelId="building-label"
@@ -640,7 +640,7 @@ const AddWasteGenerationPage = () => {
               </FormControl>
 
               <TextField
-                label={<span>Date <span className="text-red-500">*</span></span>}
+                label={<span>Date <span className="fm-required-mark">*</span></span>}
                 type="date"
                 value={formData.date}
                 onChange={(e) => handleInputChange('date', e.target.value)}
@@ -677,16 +677,16 @@ const AddWasteGenerationPage = () => {
                     <TableRow className="border-b-gray-200 hover:bg-gray-50">
                       <TableHead className="w-12 font-semibold text-gray-600">Sr. No.</TableHead>
                       <TableHead className="min-w-[220px] font-semibold text-gray-600">
-                        Category <span className="text-red-500">*</span>
+                        Category <span className="fm-required-mark">*</span>
                       </TableHead>
                       <TableHead className="min-w-[220px] font-semibold text-gray-600">
-                        Subcategory <span className="text-red-500">*</span>
+                        Subcategory <span className="fm-required-mark">*</span>
                       </TableHead>
                       <TableHead className="min-w-[110px] font-semibold text-gray-600">
-                        UOM <span className="text-red-500">*</span>
+                        UOM <span className="fm-required-mark">*</span>
                       </TableHead>
                       <TableHead className="min-w-[280px] font-semibold text-gray-600">
-                        Bags / Weights <span className="text-red-500">*</span>
+                        Bags / Weights <span className="fm-required-mark">*</span>
                       </TableHead>
                       <TableHead className="min-w-[220px] font-semibold text-gray-600">Attachments</TableHead>
                       <TableHead className="w-10"></TableHead>
@@ -849,7 +849,7 @@ const AddWasteGenerationPage = () => {
                 <FormSearchSelect
                   label={
                     <span>
-                      <span className="text-red-500">*</span> Operational Name of Landlord/Tenant
+                      <span className="fm-required-mark">*</span> Operational Name of Landlord/Tenant
                     </span>
                   }
                   value={formData.operationalName}
@@ -896,7 +896,7 @@ const AddWasteGenerationPage = () => {
               <SupplierSearchSelect
                 value={formData.vendor}
                 onChange={(vendorId) => handleInputChange('vendor', vendorId)}
-                label={<span>Vendor <span style={{ color: '#C72030' }}>*</span></span>}
+                label={<span>Vendor <span className="fm-required-mark">*</span></span>}
                 size="schedule"
                 error={false}
               />
@@ -958,23 +958,22 @@ const AddWasteGenerationPage = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-4 justify-center px-6 py-6 border-t border-gray-200">
-            <Button
-              type="submit"
-              disabled={submitting}
-              style={{ backgroundColor: '#C72030', color: '#ffffff' }}
-              className="hover:bg-[#A01B26] px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
-            >
-              {submitting ? 'Saving...' : 'Save'}
-            </Button>
+          <div className="fm-action-bar px-6 py-6 border-t border-gray-200">
             <Button
               type="button"
               variant="outline"
               onClick={handleBack}
               disabled={submitting}
-              className="border-brand text-brand hover:bg-brand-selected hover:text-brand px-8 py-2 disabled:opacity-50 rounded-md"
+              className="fm-action-secondary disabled:opacity-50"
             >
               Back
+            </Button>
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="fm-action-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submitting ? 'Saving...' : 'Save'}
             </Button>
           </div>
         </div>

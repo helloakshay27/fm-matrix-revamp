@@ -2097,19 +2097,14 @@ export const AMCDashboard = () => {
             value="amclist"
             className="space-y-4 sm:space-y-6 mt-4 sm:mt-6"
           >
-            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-[14px] mb-6">
               <StatsCard
                 title="Total AMCs"
                 value={(apiData as any)?.total_amcs_count || 0}
                 selected={selectedSummary === "total"}
-                icon={
-                  <Settings
-                    className="w-6 h-6 sm:w-8 sm:h-8"
-                    style={{ color: "#C72030" }}
-                  />
-                }
-                // bgColor="#C4B89D54"
-                // isSelected={selectedSummary === 'total'}
+                className="!rounded-2xl !shadow-none !border-0"
+                iconWrapperClassName="!bg-white !w-9 !h-9 !rounded-[10px]"
+                icon={<Settings className="w-[18px] h-[18px] text-gray-500" />}
                 onClick={() => {
                   setSelectedSummary("total");
                   handleTotalAMCClick();
@@ -2120,14 +2115,9 @@ export const AMCDashboard = () => {
                 title="Active AMCs"
                 value={(apiData as any)?.active_amcs_count || 0}
                 selected={selectedSummary === "active"}
-                icon={
-                  <Settings
-                    className="w-6 h-6 sm:w-8 sm:h-8"
-                    style={{ color: "#C72030" }}
-                  />
-                }
-                // bgColor="#C4B89D54"
-                // isSelected={selectedSummary === 'active'}
+                className="!rounded-2xl !shadow-none !border-0"
+                iconWrapperClassName="!bg-white !w-9 !h-9 !rounded-[10px]"
+                icon={<Settings className="w-[18px] h-[18px] text-gray-500" />}
                 onClick={() => {
                   setSelectedSummary("active");
                   handleActiveAMCClick();
@@ -2138,14 +2128,9 @@ export const AMCDashboard = () => {
                 title="Inactive AMCs"
                 value={(apiData as any)?.inactive_amcs_count || 0}
                 selected={selectedSummary === "inactive"}
-                icon={
-                  <Settings
-                    className="w-6 h-6 sm:w-8 sm:h-8"
-                    style={{ color: "#C72030" }}
-                  />
-                }
-                // bgColor="#C4B89D54"
-                // isSelected={selectedSummary === 'inactive'}
+                className="!rounded-2xl !shadow-none !border-0"
+                iconWrapperClassName="!bg-white !w-9 !h-9 !rounded-[10px]"
+                icon={<Settings className="w-[18px] h-[18px] text-gray-500" />}
                 onClick={() => {
                   setSelectedSummary("inactive");
                   handleInactiveAMCClick();
@@ -2156,14 +2141,9 @@ export const AMCDashboard = () => {
                 title="Under Observation"
                 value={(apiData as any)?.under_observation || 0}
                 selected={selectedSummary === "underObservation"}
-                icon={
-                  <Settings
-                    className="w-6 h-6 sm:w-8 sm:h-8"
-                    style={{ color: "#C72030" }}
-                  />
-                }
-                // bgColor="#C4B89D54"
-                // isSelected={selectedSummary === 'underObservation'}
+                className="!rounded-2xl !shadow-none !border-0"
+                iconWrapperClassName="!bg-white !w-9 !h-9 !rounded-[10px]"
+                icon={<Settings className="w-[18px] h-[18px] text-gray-500" />}
                 onClick={() => {
                   setSelectedSummary("underObservation");
                   handleFlaggedAMCClick();
@@ -2174,14 +2154,9 @@ export const AMCDashboard = () => {
                 title="Expiring Soon (15 days)"
                 value={(apiData as any)?.expiring_in_fifteen_days || 0}
                 selected={selectedSummary === "expiring"}
-                icon={
-                  <Settings
-                    className="w-6 h-6 sm:w-8 sm:h-8"
-                    style={{ color: "#C72030" }}
-                  />
-                }
-                // bgColor="#C4B89D54"
-                // isSelected={selectedSummary === 'expiring'}
+                className="!rounded-2xl !shadow-none !border-0"
+                iconWrapperClassName="!bg-white !w-9 !h-9 !rounded-[10px]"
+                icon={<Settings className="w-[18px] h-[18px] text-gray-500" />}
                 onClick={() => {
                   handleExpiringIn90DaysClick();
                   setSelectedSummary("expiring");
@@ -2191,14 +2166,9 @@ export const AMCDashboard = () => {
                 title="Total AMC Cost"
                 value={`${localStorage.getItem("currency") ?? ""} ${(apiData as any)?.total_amc_cost?.toLocaleString() || 0}`}
                 selected={selectedSummary === "totalCost"}
-                icon={
-                  <Settings
-                    className="w-6 h-6 sm:w-8 sm:h-8"
-                    style={{ color: "#C72030" }}
-                  />
-                }
-                // bgColor="#C4B89D54"
-                // isSelected={false}
+                className="!rounded-2xl !shadow-none !border-0"
+                iconWrapperClassName="!bg-white !w-9 !h-9 !rounded-[10px]"
+                icon={<Settings className="w-[18px] h-[18px] text-gray-500" />}
                 onClick={() => {
                   handleTotalAMCClick();
                 }}
@@ -2331,16 +2301,24 @@ export const AMCDashboard = () => {
         <MUIDialog
           open={isFilterModalOpen}
           onClose={() => setIsFilterModalOpen(false)}
-          maxWidth="md"
+          maxWidth="lg"
           fullWidth
-          PaperProps={{ sx: { borderRadius: "5px", overflow: "hidden" } }}
+          PaperProps={{
+            sx: {
+              width: "min(896px, calc(100% - 32px))",
+              maxWidth: "896px",
+              maxHeight: "90vh",
+              borderRadius: "8px",
+              overflow: "hidden",
+            },
+          }}
         >
-          <MUIDialogContent sx={{ p: 0 }}>
+          <MUIDialogContent sx={{ p: 0, overflowY: "auto" }}>
             <div className="p-6" ref={filterDialogRef}>
-              <div className="flex items-start justify-between mb-6">
+              <div className="mb-6 flex items-center justify-between">
                 <Typography
                   variant="h6"
-                  className="!text-[20px] font-extrabold text-[#0f172a]"
+                  className="!text-lg !font-semibold text-gray-900"
                 >
                   FILTER BY
                 </Typography>
@@ -2367,16 +2345,21 @@ export const AMCDashboard = () => {
                 </IconButton>
               </div>
 
-              <Box className="space-y-10">
+              <Box className="space-y-6 py-2">
                 <div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  <Typography className="!mb-4 !text-sm !font-medium !text-brand">
+                    AMC Details
+                  </Typography>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
                     <div>
-                      <FormControl fullWidth size="small">
-                        <InputLabel id="status-filter-label">Status</InputLabel>
+                      <FormControl fullWidth>
+                        <InputLabel id="status-filter-label" shrink>Status</InputLabel>
                         <MUISelect
                           labelId="status-filter-label"
                           label="Status"
+                          displayEmpty
                           value={tempStatusFilter || "all"}
+                          sx={{ height: { xs: 40, sm: 45 } }}
                           onChange={(e) =>
                             setTempStatusFilter(
                               e.target.value === "all"
@@ -2396,14 +2379,16 @@ export const AMCDashboard = () => {
                       </FormControl>
                     </div>
                     <div>
-                      <FormControl fullWidth size="small">
-                        <InputLabel id="vendor-filter-label">
+                      <FormControl fullWidth>
+                        <InputLabel id="vendor-filter-label" shrink>
                           Vendor Name
                         </InputLabel>
                         <MUISelect
                           labelId="vendor-filter-label"
                           label="Vendor Name"
+                          displayEmpty
                           value={tempVendorNameFilter || "all"}
+                          sx={{ height: { xs: 40, sm: 45 } }}
                           onChange={(e) =>
                             setTempVendorNameFilter(
                               e.target.value === "all"
@@ -2422,14 +2407,50 @@ export const AMCDashboard = () => {
                       </FormControl>
                     </div>
                     <div>
-                      <FormControl fullWidth size="small">
-                        <InputLabel id="asset-name-filter-label">
+                      <FormControl fullWidth ref={amcTypeControlRef}>
+                        <InputLabel id="amc-type-label" shrink>AMC Type</InputLabel>
+                        <MUISelect
+                          labelId="amc-type-label"
+                          label="AMC Type"
+                          displayEmpty
+                          value={tempAmcTypeFilter || "all"}
+                          sx={{ height: { xs: 40, sm: 45 } }}
+                          onChange={(e) =>
+                            setTempAmcTypeFilter(
+                              e.target.value === "all"
+                                ? null
+                                : (e.target.value as string)
+                            )
+                          }
+                          MenuProps={{
+                            PaperProps: {
+                              sx: {
+                                mt: 0.5,
+                                borderRadius: "10px",
+                                boxShadow: "0 6px 18px rgba(0,0,0,0.18)",
+                                minWidth:
+                                  amcTypeControlRef.current?.offsetWidth,
+                              },
+                            },
+                          }}
+                        >
+                          <MenuItem value="all">All Types</MenuItem>
+                          <MenuItem value="Asset">Asset</MenuItem>
+                          <MenuItem value="Service">Service</MenuItem>
+                        </MUISelect>
+                      </FormControl>
+                    </div>
+                    <div>
+                      <FormControl fullWidth>
+                        <InputLabel id="asset-name-filter-label" shrink>
                           Asset Name
                         </InputLabel>
                         <MUISelect
                           labelId="asset-name-filter-label"
                           label="Asset Name"
+                          displayEmpty
                           value={tempAssetNameFilter || "all"}
+                          sx={{ height: { xs: 40, sm: 45 } }}
                           onChange={(e) =>
                             setTempAssetNameFilter(
                               e.target.value === "all"
@@ -2450,15 +2471,16 @@ export const AMCDashboard = () => {
                     <div>
                       <FormControl
                         fullWidth
-                        size="small"
+                        sx={{ "& .MuiInputBase-root": { height: { xs: 40, sm: 45 } } }}
                         ref={serviceNameControlRef}
                       >
-                        <InputLabel id="service-name-filter-label">
+                        <InputLabel id="service-name-filter-label" shrink>
                           Service Name
                         </InputLabel>
                         <MUISelect
                           labelId="service-name-filter-label"
                           label="Service Name"
+                          displayEmpty
                           value={tempServiceNameFilter || "all"}
                           onChange={(e) =>
                             setTempServiceNameFilter(
@@ -2491,55 +2513,23 @@ export const AMCDashboard = () => {
                         </MUISelect>
                       </FormControl>
                     </div>
+                  </div>
+                </div>
+
+                <div>
+                  <Typography className="!mb-4 !text-sm !font-medium !text-brand">
+                    Asset Details
+                  </Typography>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
                     <div>
-                      <FormControl
-                        fullWidth
-                        size="small"
-                        ref={amcTypeControlRef}
-                      >
-                        <InputLabel id="amc-type-label">AMC Type</InputLabel>
-                        <MUISelect
-                          labelId="amc-type-label"
-                          label="AMC Type"
-                          value={tempAmcTypeFilter || "all"}
-                          onChange={(e) =>
-                            setTempAmcTypeFilter(
-                              e.target.value === "all"
-                                ? null
-                                : (e.target.value as string)
-                            )
-                          }
-                          sx={{
-                            "& .MuiSelect-select": {
-                              display: "flex",
-                              alignItems: "center",
-                            },
-                          }}
-                          MenuProps={{
-                            PaperProps: {
-                              sx: {
-                                mt: 0.5,
-                                borderRadius: "10px",
-                                boxShadow: "0 6px 18px rgba(0,0,0,0.18)",
-                                minWidth:
-                                  amcTypeControlRef.current?.offsetWidth,
-                              },
-                            },
-                          }}
-                        >
-                          <MenuItem value="all">All Types</MenuItem>
-                          <MenuItem value="Asset">Asset</MenuItem>
-                          <MenuItem value="Service">Service</MenuItem>
-                        </MUISelect>
-                      </FormControl>
-                    </div>
-                    <div>
-                      <FormControl fullWidth size="small">
-                        <InputLabel id="group-filter-label">Group</InputLabel>
+                      <FormControl fullWidth>
+                        <InputLabel id="group-filter-label" shrink>Group</InputLabel>
                         <MUISelect
                           labelId="group-filter-label"
                           label="Group"
+                          displayEmpty
                           value={tempGroupFilter || "all"}
+                          sx={{ height: { xs: 40, sm: 45 } }}
                           onChange={(e) => {
                             const nextGroupId =
                               e.target.value === "all"
@@ -2565,18 +2555,19 @@ export const AMCDashboard = () => {
                     <div>
                       <FormControl
                         fullWidth
-                        size="small"
+                        sx={{ "& .MuiInputBase-root": { height: { xs: 40, sm: 45 } } }}
                         disabled={
                           subGroupOptions.length === 0 ||
                           filtersOptionsLoading.subGroups
                         }
                       >
-                        <InputLabel id="subgroup-filter-label">
+                        <InputLabel id="subgroup-filter-label" shrink>
                           Sub Group
                         </InputLabel>
                         <MUISelect
                           labelId="subgroup-filter-label"
                           label="Sub Group"
+                          displayEmpty
                           value={tempSubGroupFilter || "all"}
                           onChange={(e) =>
                             setTempSubGroupFilter(
@@ -2595,37 +2586,45 @@ export const AMCDashboard = () => {
                         </MUISelect>
                       </FormControl>
                     </div>
+                  </div>
+                </div>
+
+                <div>
+                  <Typography className="!mb-4 !text-sm !font-medium !text-brand">
+                    Contract Period
+                  </Typography>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
                     <div>
                       <TextField
                         label="Start Date"
                         type="date"
-                        size="small"
                         fullWidth
                         value={tempStartDateFilter || ""}
                         onChange={(e) =>
                           setTempStartDateFilter(e.target.value || null)
                         }
                         InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: { height: { xs: 40, sm: 45 } } }}
                       />
                     </div>
                     <div>
                       <TextField
                         label="End Date"
                         type="date"
-                        size="small"
                         fullWidth
                         value={tempEndDateFilter || ""}
                         onChange={(e) =>
                           setTempEndDateFilter(e.target.value || null)
                         }
                         InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: { height: { xs: 40, sm: 45 } } }}
                       />
                     </div>
                   </div>
                 </div>
               </Box>
 
-              <div className="flex justify-end gap-2 mt-12 pt-6 border-t">
+              <div className="mt-6 flex justify-end gap-2 border-t pt-6">
                 <Button
                   onClick={handleApplyFilters}
                   className="fm-button-fix fm-button-brand px-4 py-2"

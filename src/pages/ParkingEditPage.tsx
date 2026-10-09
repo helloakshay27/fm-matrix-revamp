@@ -22,15 +22,15 @@ const fieldStyles = {
       borderColor: '#ddd',
     },
     '&:hover fieldset': {
-      borderColor: '#C72030',
+      borderColor: 'var(--color-primary)',
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
+      borderColor: 'var(--color-primary)',
     },
   },
   '& .MuiInputLabel-root': {
     '&.Mui-focused': {
-      color: '#C72030',
+      color: 'var(--color-primary)',
     },
   },
 };
@@ -313,6 +313,11 @@ export const ParkingEditPage = () => {
     }
   };
 
+  const primaryBtnClass =
+    'inline-flex h-[42px] w-[160px] shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-[var(--color-primary)] bg-[var(--color-primary)] px-[22px] text-[13px] font-semibold leading-none text-white hover:bg-[var(--color-primary-hover)] disabled:cursor-not-allowed';
+  const outlineBtnClass =
+    'inline-flex h-[42px] w-[160px] shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-[var(--color-line)] bg-white px-[22px] text-[13px] font-semibold leading-none text-[var(--color-ink-68)] hover:border-[rgba(26,26,24,0.28)] hover:text-[var(--color-text)]';
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
@@ -320,7 +325,7 @@ export const ParkingEditPage = () => {
         <Button
           onClick={handleBack}
           variant="ghost"
-          className="mr-4 p-2 hover:bg-[#C72030]/10"
+          className="mr-4 p-2 hover:bg-brand-selected"
         >
           <ArrowLeft className="w-5 h-5" />
         </Button>
@@ -339,8 +344,8 @@ export const ParkingEditPage = () => {
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="px-6 py-3 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                <MapPin size={16} color="#C72030" />
+              <span className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center mr-3">
+                <MapPin size={16} className="text-[var(--color-ink-68)]" />
               </span>
               Location Details
             </h2>
@@ -422,17 +427,6 @@ export const ParkingEditPage = () => {
                 </MuiSelect>
               </FormControl>
             </div>
-            <div className="flex justify-end pt-4">
-              <Button
-                type="button"
-                onClick={handleLoadParkingSlots}
-                disabled={loadingParkingSlots || !building || !floor || !parkingSlotType}
-                className="fm-button-fix fm-button-brand px-4 py-2 disabled:opacity-50"
-                variant="ghost"
-              >
-                {loadingParkingSlots ? 'Loading Slots...' : 'Load Parking Slots'}
-              </Button>
-            </div>
           </div>
         </div>
 
@@ -440,8 +434,8 @@ export const ParkingEditPage = () => {
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="px-6 py-3 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                <User size={16} color="#C72030" />
+              <span className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center mr-3">
+                <User size={16} className="text-[var(--color-ink-68)]" />
               </span>
               Client & Lease Details
             </h2>
@@ -543,8 +537,8 @@ export const ParkingEditPage = () => {
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             <div className="px-6 py-3 border-b border-gray-200">
               <h2 className="text-lg font-medium text-gray-900 flex items-center">
-                <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                  <Car size={16} color="#C72030" />
+                <span className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center mr-3">
+                  <Car size={16} className="text-[var(--color-ink-68)]" />
                 </span>
                 Select Parking Slots
               </h2>
@@ -652,24 +646,32 @@ export const ParkingEditPage = () => {
           </div>
         )}
 
-        {/* Action Buttons */}
-        <div className="flex gap-4 justify-center pt-6">
-          <Button
+        {/* Action Buttons — equal 160×42, right-aligned, 10px gap (replica footer) */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10 }}>
+          <button
             type="button"
-            variant="ghost"
             onClick={handleBack}
-            className="fm-button-fix fm-button-brand px-4 py-2"
+            className={outlineBtnClass}
           >
             Cancel
-          </Button>
-          <Button
+          </button>
+          <button
+            type="button"
+            onClick={handleLoadParkingSlots}
+            disabled={loadingParkingSlots || !building || !floor || !parkingSlotType}
+            className={primaryBtnClass}
+            style={{ width: 'auto', minWidth: 160, backgroundColor: 'var(--color-primary)', color: '#ffffff' }}
+          >
+            {loadingParkingSlots ? 'Loading Slots...' : 'Load Parking Slots'}
+          </button>
+          <button
             type="submit"
-            variant="ghost"
-            disabled={loadingSubmit || (!showParkingSlots && (!building || !floor || !parkingSlotType || !clientName || !leaser))} // Disable if not ready to load or no slots shown
-            className="fm-button-fix fm-button-brand px-4 py-2"
+            disabled={loadingSubmit || (!showParkingSlots && (!building || !floor || !parkingSlotType || !clientName || !leaser))}
+            className={primaryBtnClass}
+            style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }}
           >
             {loadingSubmit ? 'Submitting...' : 'Submit Parking'}
-          </Button>
+          </button>
         </div>
       </form>
     </div>

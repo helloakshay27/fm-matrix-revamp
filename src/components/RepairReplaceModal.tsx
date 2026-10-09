@@ -60,7 +60,7 @@ export const RepairReplaceModal: React.FC<RepairReplaceModalProps> = ({
     setInUseReason('');
   };
   return <Dialog open={isOpen} onOpenChange={onClose}>
-    <DialogContent className="max-w-md">
+    <DialogContent className="max-w-md rounded-3xl p-7">
       <DialogHeader className="relative">
         <DialogTitle className="text-lg font-semibold text-gray-900">Asset Status Update</DialogTitle>
         <button onClick={onClose} className="absolute right-0 top-0 p-1 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 ">
