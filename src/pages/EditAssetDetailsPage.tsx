@@ -6024,7 +6024,7 @@ export const EditAssetDetailsPage = () => {
                       onClick={() =>
                         openCustomFieldModal("basicIdentification")
                       }
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -6036,7 +6036,7 @@ export const EditAssetDetailsPage = () => {
                     <TextField
                       label={
                         <span>
-                          Asset Name<span style={{ color: "#C72030" }}>*</span>
+                          Asset Name<span className="fm-required-mark">*</span>
                         </span>
                       }
                       placeholder="Enter land name"
@@ -6096,7 +6096,7 @@ export const EditAssetDetailsPage = () => {
                       }}
                     >
                       <InputLabel>
-                        Land Type<span style={{ color: "#C72030" }}>*</span>
+                        Land Type<span className="fm-required-mark">*</span>
                       </InputLabel>
                       <MuiSelect
                         label="Land Type"
@@ -6168,7 +6168,7 @@ export const EditAssetDetailsPage = () => {
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("locationOwnership")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -6180,7 +6180,7 @@ export const EditAssetDetailsPage = () => {
                     <TextField
                       label={
                         <span>
-                          Location<span style={{ color: "#C72030" }}>*</span>
+                          Location<span className="fm-required-mark">*</span>
                         </span>
                       }
                       placeholder="Full address or GPS coordinates"
@@ -6359,7 +6359,7 @@ export const EditAssetDetailsPage = () => {
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("landSizeValue")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -6372,7 +6372,7 @@ export const EditAssetDetailsPage = () => {
                       <TextField
                         label={
                           <span>
-                            Area<span style={{ color: "#C72030" }}>*</span>
+                            Area<span className="fm-required-mark">*</span>
                           </span>
                         }
                         placeholder="Enter area"
@@ -6610,7 +6610,7 @@ export const EditAssetDetailsPage = () => {
                       onClick={() =>
                         openCustomFieldModal("landUsageDevelopment")
                       }
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -6753,7 +6753,7 @@ export const EditAssetDetailsPage = () => {
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("miscellaneous")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -6913,7 +6913,7 @@ export const EditAssetDetailsPage = () => {
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("leaseholdBasicId")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -6951,7 +6951,7 @@ export const EditAssetDetailsPage = () => {
                     <TextField
                       label={
                         <span>
-                          Asset Name <span style={{ color: "#C72030" }}>*</span>
+                          Asset Name <span className="fm-required-mark">*</span>
                         </span>
                       }
                       placeholder="e.g., Flooring, IT Cabling"
@@ -7020,7 +7020,7 @@ export const EditAssetDetailsPage = () => {
                       onClick={() =>
                         openCustomFieldModal("leaseholdLocationAssoc")
                       }
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -7033,7 +7033,7 @@ export const EditAssetDetailsPage = () => {
                       label={
                         <span>
                           Location / Site
-                          <span style={{ color: "#C72030" }}>*</span>
+                          <span className="fm-required-mark">*</span>
                         </span>
                       }
                       placeholder="Enter location"
@@ -7171,7 +7171,7 @@ export const EditAssetDetailsPage = () => {
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("improvementDetails")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -7184,7 +7184,7 @@ export const EditAssetDetailsPage = () => {
                       label={
                         <span>
                           Improvement Description
-                          <span style={{ color: "#C72030" }}>*</span>
+                          <span className="fm-required-mark">*</span>
                         </span>
                       }
                       placeholder="Describe the improvement work"
@@ -7438,7 +7438,7 @@ export const EditAssetDetailsPage = () => {
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("leaseholdFinancial")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -7717,7 +7717,7 @@ export const EditAssetDetailsPage = () => {
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("leaseholdLease")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -7907,7 +7907,7 @@ export const EditAssetDetailsPage = () => {
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("leaseholdOversight")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -8075,7 +8075,7 @@ export const EditAssetDetailsPage = () => {
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("vehicleBasicId")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -8113,7 +8113,7 @@ export const EditAssetDetailsPage = () => {
                     <TextField
                       label={
                         <span>
-                          Asset Name <span style={{ color: "#C72030" }}>*</span>
+                          Asset Name <span className="fm-required-mark">*</span>
                         </span>
                       }
                       placeholder="Name "
@@ -8140,7 +8140,7 @@ export const EditAssetDetailsPage = () => {
                       }}
                     >
                       <InputLabel>
-                        Vehicle Type<span style={{ color: "#C72030" }}>*</span>
+                        Vehicle Type<span className="fm-required-mark">*</span>
                       </InputLabel>
                       <MuiSelect
                         label="Vehicle Type"
@@ -8168,7 +8168,7 @@ export const EditAssetDetailsPage = () => {
                       label={
                         <span>
                           Make & Model
-                          <span style={{ color: "#C72030" }}>*</span>
+                          <span className="fm-required-mark">*</span>
                         </span>
                       }
                       placeholder="e.g., Tata Ace, Honda Activa"
@@ -8194,7 +8194,7 @@ export const EditAssetDetailsPage = () => {
                       label={
                         <span>
                           Registration Number
-                          <span style={{ color: "#C72030" }}>*</span>
+                          <span className="fm-required-mark">*</span>
                         </span>
                       }
                       placeholder="e.g., MH01AB1234"
@@ -8315,7 +8315,7 @@ export const EditAssetDetailsPage = () => {
                       onClick={() =>
                         openCustomFieldModal("vehicleTechnicalSpecs")
                       }
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -8445,7 +8445,7 @@ export const EditAssetDetailsPage = () => {
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("vehicleOwnership")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -8626,7 +8626,7 @@ export const EditAssetDetailsPage = () => {
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("vehicleFinancial")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -8811,7 +8811,7 @@ export const EditAssetDetailsPage = () => {
                       label={
                         <span>
                           Warranty Expires On
-                          <span style={{ color: "#C72030" }}>*</span>
+                          <span className="fm-required-mark">*</span>
                         </span>
                       }
                       type="date"
@@ -9026,7 +9026,7 @@ export const EditAssetDetailsPage = () => {
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("vehiclePerformance")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -9239,7 +9239,7 @@ export const EditAssetDetailsPage = () => {
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("vehicleLegal")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -9494,7 +9494,7 @@ export const EditAssetDetailsPage = () => {
                       onClick={() =>
                         openCustomFieldModal("vehicleMiscellaneous")
                       }
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -9637,7 +9637,7 @@ export const EditAssetDetailsPage = () => {
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("buildingBasicId")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -9675,7 +9675,7 @@ export const EditAssetDetailsPage = () => {
                     <TextField
                       label={
                         <span>
-                          Asset Name <span style={{ color: "#C72030" }}>*</span>
+                          Asset Name <span className="fm-required-mark">*</span>
                         </span>
                       }
                       placeholder="Enter building name"
@@ -9702,7 +9702,7 @@ export const EditAssetDetailsPage = () => {
                       }}
                     >
                       <InputLabel>
-                        Building Type<span style={{ color: "#C72030" }}>*</span>
+                        Building Type<span className="fm-required-mark">*</span>
                       </InputLabel>
                       <MuiSelect
                         label="Building Type"
@@ -9801,7 +9801,7 @@ export const EditAssetDetailsPage = () => {
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("buildingLocation")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -9813,7 +9813,7 @@ export const EditAssetDetailsPage = () => {
                     <TextField
                       label={
                         <span>
-                          Location<span style={{ color: "#C72030" }}>*</span>
+                          Location<span className="fm-required-mark">*</span>
                         </span>
                       }
                       placeholder="Full address"
@@ -9938,7 +9938,7 @@ export const EditAssetDetailsPage = () => {
                       onClick={() =>
                         openCustomFieldModal("buildingConstruction")
                       }
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -10034,7 +10034,7 @@ export const EditAssetDetailsPage = () => {
                         label={
                           <span>
                             Built-up Area
-                            <span style={{ color: "#C72030" }}>*</span>
+                            <span className="fm-required-mark">*</span>
                           </span>
                         }
                         value={extraFormFields.built_up_area?.value || ""}
@@ -10184,7 +10184,7 @@ export const EditAssetDetailsPage = () => {
                       onClick={() =>
                         openCustomFieldModal("buildingAcquisition")
                       }
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -10522,7 +10522,7 @@ export const EditAssetDetailsPage = () => {
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("buildingUsage")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -10800,7 +10800,7 @@ export const EditAssetDetailsPage = () => {
                       onClick={() =>
                         openCustomFieldModal("buildingMaintenance")
                       }
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -10922,7 +10922,7 @@ export const EditAssetDetailsPage = () => {
                       onClick={() =>
                         openCustomFieldModal("buildingMiscellaneous")
                       }
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -11063,11 +11063,7 @@ export const EditAssetDetailsPage = () => {
                         e.stopPropagation();
                         openCustomFieldModal("assetDetails");
                       }}
-                      className="px-3 py-1 rounded text-sm flex items-center gap-1"
-                      style={{
-                        backgroundColor: "#F6F4EE",
-                        color: "#C72030",
-                      }}
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -11086,7 +11082,7 @@ export const EditAssetDetailsPage = () => {
                       <TextField
                         label={
                           <span>
-                            Asset Name<span style={{ color: "#C72030" }}>*</span>
+                            Asset Name<span className="fm-required-mark">*</span>
                           </span>
                         }
                         placeholder="Enter Asset Name"
@@ -11214,7 +11210,7 @@ export const EditAssetDetailsPage = () => {
                         }}
                       >
                         <InputLabel id="group-select-label" shrink>
-                          Group<span style={{ color: "#C72030" }}>*</span>
+                          Group<span className="fm-required-mark">*</span>
                         </InputLabel>
                         <MuiSelect
                           labelId="group-select-label"
@@ -11251,7 +11247,7 @@ export const EditAssetDetailsPage = () => {
                         }}
                       >
                         <InputLabel id="subgroup-select-label" shrink>
-                          Subgroup<span style={{ color: "#C72030" }}>*</span>
+                          Subgroup<span className="fm-required-mark">*</span>
                         </InputLabel>
                         <MuiSelect
                           labelId="subgroup-select-label"
@@ -11291,7 +11287,7 @@ export const EditAssetDetailsPage = () => {
                       >
                         <InputLabel id="vendor-select-label" shrink>
                           Vendor Name
-                          {/* <span style={{ color: '#C72030' }}>*</span> */}
+                          {/* <span className="fm-required-mark">*</span> */}
                         </InputLabel>
                         <MuiSelect
                           labelId="vendor-select-label"
@@ -11549,7 +11545,7 @@ export const EditAssetDetailsPage = () => {
                         sx={{ minWidth: 120 }}
                       >
                         <InputLabel id="site-select-label" shrink>
-                          Site<span style={{ color: "#C72030" }}>*</span>
+                          Site<span className="fm-required-mark">*</span>
                         </InputLabel>
                         <MuiSelect
                           labelId="site-select-label"
@@ -11825,11 +11821,7 @@ export const EditAssetDetailsPage = () => {
                           e.stopPropagation();
                           setItAssetsCustomFieldModalOpen(true);
                         }}
-                        className="px-3 py-1 rounded text-sm flex items-center gap-1 hover:opacity-80"
-                        style={{
-                          backgroundColor: "#F6F4EE",
-                          color: "#C72030",
-                        }}
+                        className="fm-custom-field-btn"
                       >
                         <Plus className="w-4 h-4" />
                         Custom Field
@@ -12276,7 +12268,7 @@ export const EditAssetDetailsPage = () => {
                           <div className="mb-6">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                               Parent Meter{" "}
-                              <span style={{ color: "#C72030" }}>*</span>
+                              <span className="fm-required-mark">*</span>
                             </label>
                             <FormControl fullWidth>
                               <InputLabel>Parent Meter</InputLabel>
@@ -12704,7 +12696,7 @@ export const EditAssetDetailsPage = () => {
                         e.stopPropagation();
                         openCustomFieldModal("purchaseDetails");
                       }}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="fm-custom-field-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -12723,7 +12715,7 @@ export const EditAssetDetailsPage = () => {
                         label={
                           <span>
                             Purchase Cost
-                            {/* <span style={{ color: "#C72030" }}>*</span> */}
+                            {/* <span className="fm-required-mark">*</span> */}
                           </span>
                         }
                         placeholder="Enter cost"
@@ -12746,7 +12738,7 @@ export const EditAssetDetailsPage = () => {
                         label={
                           <span>
                             Purchase Date
-                            {/* <span style={{ color: "#C72030" }}>*</span> */}
+                            {/* <span className="fm-required-mark">*</span> */}
                           </span>
                         }
                         placeholder="dd/mm/yyyy"
@@ -12772,7 +12764,7 @@ export const EditAssetDetailsPage = () => {
                         label={
                           <span>
                             Commissioning Date
-                            {/* <span style={{ color: "#C72030" }}>*</span> */}
+                            {/* <span className="fm-required-mark">*</span> */}
                           </span>
                         }
                         placeholder="dd/mm/yyyy"
@@ -12795,7 +12787,7 @@ export const EditAssetDetailsPage = () => {
                         label={
                           <span>
                             Warranty Expires On
-                            {/* <span style={{ color: "#C72030" }}>*</span> */}
+                            {/* <span className="fm-required-mark">*</span> */}
                           </span>
                         }
                         placeholder="dd/mm/yyyy"
@@ -12970,7 +12962,7 @@ export const EditAssetDetailsPage = () => {
                                                                                                                                                                       e.stopPropagation();
                                                                                                                                                                       openCustomFieldModal('depreciationRule');
                                                                                                                                                                     }}
-                                                                                                                                                                    className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                                                                                                                                                                    className="fm-custom-field-btn"
                                                                                                                                                                   >
                                                                                                                                                                     <Plus className="w-4 h-4" />
                                                                                                                                                                     Custom Field
@@ -13102,11 +13094,11 @@ export const EditAssetDetailsPage = () => {
                         <TextField
                           label={
                             // <span>
-                            //   Useful Life (Years){depreciationToggle && <span style={{ color: '#C72030' }}>*</span>}
+                            //   Useful Life (Years){depreciationToggle && <span className="fm-required-mark">*</span>}
                             // </span>
                             <span>
                               Useful Life (Years)
-                              <span style={{ color: "#C72030" }}>*</span>
+                              <span className="fm-required-mark">*</span>
                             </span>
                           }
                           placeholder="Enter years"
@@ -13146,10 +13138,10 @@ export const EditAssetDetailsPage = () => {
                           required={!!formData.depreciation_method}
                           label={
                             <span>
-                              {/* Salvage Value{depreciationToggle && <span style={{ color: '#C72030' }}>*</span>} */}
+                              {/* Salvage Value{depreciationToggle && <span className="fm-required-mark">*</span>} */}
                               Salvage Value
                               {formData.depreciation_method && (
-                                <span style={{ color: "#C72030" }}>*</span>
+                                <span className="fm-required-mark">*</span>
                               )}
                             </span>
                           }
@@ -13379,7 +13371,7 @@ export const EditAssetDetailsPage = () => {
                               <div className="mt-6">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                   Select Assets{" "}
-                                  <span className="text-red-500">*</span>
+                                  <span className="fm-required-mark">*</span>
                                 </label>
                                 <FormControl fullWidth>
                                   <InputLabel>Select Assets</InputLabel>
@@ -13473,7 +13465,7 @@ export const EditAssetDetailsPage = () => {
                                   <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                       Select Group{" "}
-                                      <span className="text-red-500">*</span>
+                                      <span className="fm-required-mark">*</span>
                                     </label>
                                     <FormControl fullWidth>
                                       <InputLabel>Select Group</InputLabel>
@@ -13700,7 +13692,7 @@ export const EditAssetDetailsPage = () => {
                             {allocationBasedOn === "department"
                               ? "Department"
                               : "Users"}
-                            {/* <span style={{ color: '#C72030' }}>*</span> */}
+                            {/* <span className="fm-required-mark">*</span> */}
                           </InputLabel>
                           <MuiSelect
                             labelId="allocation-select-label"
@@ -13842,7 +13834,7 @@ export const EditAssetDetailsPage = () => {
                         <InputLabel id="vendor-select-label" shrink>
                           Vendor Name
                           {assetLoanedToggle && (
-                            <span style={{ color: "#C72030" }}>*</span>
+                            <span className="fm-required-mark">*</span>
                           )}
                         </InputLabel>
                         <MuiSelect
@@ -13879,7 +13871,7 @@ export const EditAssetDetailsPage = () => {
                           <span>
                             Agreement Start Date
                             {assetLoanedToggle && (
-                              <span style={{ color: "#C72030" }}>*</span>
+                              <span className="fm-required-mark">*</span>
                             )}
                           </span>
                         }
@@ -13915,7 +13907,7 @@ export const EditAssetDetailsPage = () => {
                           <span>
                             Agreement End Date
                             {assetLoanedToggle && (
-                              <span style={{ color: "#C72030" }}>*</span>
+                              <span className="fm-required-mark">*</span>
                             )}
                           </span>
                         }
@@ -14849,17 +14841,17 @@ export const EditAssetDetailsPage = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 sm:pt-6">
+        <div className="fm-action-bar pt-4 sm:pt-6">
           <button
             onClick={handleSaveAndShow}
-            className="border border-[#C72030] text-[#C72030] px-6 sm:px-8 py-2 rounded-md   text-sm sm:text-base"
+            className="fm-action-secondary"
           // disabled={submitting}
           >
             Save & Show Details
           </button>
           <button
             onClick={handleSaveAndCreate}
-            className="px-6 sm:px-8 py-2 rounded-md text-sm sm:text-base bg-[#f6f4ee] text-red-700"
+            className="fm-action-primary"
           >
             Save & Update
           </button>
@@ -14909,19 +14901,19 @@ export const EditAssetDetailsPage = () => {
               }}
             />
           </div>
-          <DialogFooter className="flex justify-center gap-4">
+          <DialogFooter className="fm-action-bar">
             <button
               onClick={() => {
                 setCustomFieldModalOpen(false);
                 setNewFieldName("");
               }}
-              className="px-6 py-2 border border-[#C72030] rounded-md hover:bg-gray-50 text-sm text-orange-700"
+              className="fm-action-secondary"
             >
               Cancel
             </button>
             <button
               onClick={handleAddCustomField}
-              className="px-6 py-2 rounded-md text-sm bg-[#f6f4ee] text-red-700"
+              className="fm-action-primary"
             >
               Add Field
             </button>

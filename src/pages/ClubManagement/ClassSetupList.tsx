@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Plus, Eye, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
@@ -198,18 +199,11 @@ export const ClassSetupList = () => {
     duration: <span className="text-sm text-gray-600">{cls.duration || "-"}</span>,
     location: <span className="text-sm text-gray-600">{cls.location}</span>,
     status: (
-      <button
-        type="button"
-        onClick={() => handleToggleStatus(cls)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${cls.status === "Active" ? "bg-brand" : "bg-gray-300"
-          }`}
-        title={cls.status === "Active" ? "Active - click to deactivate" : "Inactive - click to activate"}
-      >
-        <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${cls.status === "Active" ? "translate-x-6" : "translate-x-1"
-            }`}
-        />
-      </button>
+      <Switch
+        checked={cls.status === "Active"}
+        onCheckedChange={() => handleToggleStatus(cls)}
+        aria-label={`Toggle ${cls.className} status`}
+      />
     ),
   });
 

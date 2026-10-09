@@ -5938,3 +5938,128 @@ html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-out
   font-size: 13.5px !important;
   font-weight: 500 !important;
 }
+
+/* ============================================================
+   REQUIRED-FIELD ASTERISKS → danger red
+   Labels hand-write the marker as <span style={{ color: '#DA7756' | '#C72030' | 'red' }}>*</span>
+   or <span className="text-red-500">*</span>. The inline-coral remap above turns
+   those black (coral → --color-primary), so inside labels they are pinned to red.
+   ============================================================ */
+html body label [style*="color: rgb(218, 119, 86)"],
+html body label [style*="color:rgb(218, 119, 86)"],
+html body label [style*="color: #da7756" i],
+html body label [style*="color:#da7756" i],
+html body label [style*="color: rgb(199, 32, 48)"],
+html body label [style*="color:rgb(199, 32, 48)"],
+html body label [style*="color: #c72030" i],
+html body label [style*="color:#c72030" i],
+html body label [style*="color: red"],
+html body label [style*="color:red"],
+html body label [style*="color: rgb(255, 0, 0)"],
+html body label .text-red-500,
+html body label .text-red-600,
+html body label [class*="text-[#C72030]"],
+html body label [class*="text-[#DA7756]"],
+html body label [class*="text-[#da7756]"],
+html body .MuiFormLabel-asterisk {
+  color: var(--color-danger) !important;
+}
+
+/* ============================================================
+   FORM ACTION BAR — bottom-right, secondary (white) then primary (ink)
+   <div className="fm-action-bar">
+     <button className="fm-action-secondary">Cancel</button>
+     <button className="fm-action-primary">Save</button>
+   </div>
+   42px high, 0 22px padding, 13px/600, 8px radius, 8px icon gap.
+   ============================================================ */
+html body .fm-action-bar {
+  display: flex !important;
+  flex-wrap: wrap;
+  justify-content: flex-end !important;
+  align-items: center;
+  gap: 12px;
+}
+html body .fm-action-primary,
+html body .fm-action-secondary {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px !important;
+  padding: 0 22px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+html body .fm-action-primary {
+  background-color: #1a1a18 !important;
+  border: 1px solid #1a1a18 !important;
+  color: #ffffff !important;
+}
+html body .fm-action-primary:hover:not(:disabled) {
+  background-color: #12100e !important;
+  border-color: #12100e !important;
+}
+html body .fm-action-primary svg {
+  color: #ffffff !important;
+}
+html body .fm-action-secondary {
+  background-color: #ffffff !important;
+  border: 1px solid rgba(26, 26, 24, 0.12) !important;
+  color: #1a1a18 !important;
+}
+html body .fm-action-secondary:hover:not(:disabled) {
+  background-color: #f7f6f2 !important;
+  border-color: rgba(26, 26, 24, 0.28) !important;
+}
+html body .fm-action-secondary svg {
+  color: #1a1a18 !important;
+}
+html body .fm-action-primary:focus-visible,
+html body .fm-action-secondary:focus-visible {
+  outline: 2px solid #1a1a18 !important;
+  outline-offset: 2px;
+}
+html body .fm-action-primary:disabled,
+html body .fm-action-secondary:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed;
+}
+
+/* Section "+ Custom Field" toggle — plain ink text, no fill (sits beside the
+   section chevron). Overrides the inline-coral button remap above. */
+html body button.fm-custom-field-btn {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #1a1a18 !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  padding: 4px 8px !important;
+  border-radius: 8px !important;
+}
+html body button.fm-custom-field-btn:hover {
+  background: rgba(26, 26, 24, 0.04) !important;
+}
+html body button.fm-custom-field-btn svg {
+  color: #1a1a18 !important;
+  width: 16px;
+  height: 16px;
+}
+
+/* Required-field marker: <span className="fm-required-mark">*</span> — red anywhere
+   (inside MUI labels, plain labels or headings), independent of the inline-colour remaps. */
+html body .fm-required-mark,
+html body label .fm-required-mark,
+html body .MuiFormControl-root .MuiInputLabel-root .fm-required-mark {
+  color: var(--color-danger) !important;
+  margin-left: 2px;
+}
