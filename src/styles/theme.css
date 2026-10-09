@@ -867,6 +867,15 @@ svg.text-red-500.fill-red-500 {
   border-color: var(--color-primary) !important;
 }
 
+/* Section-header accent bar border-[#C72030AD] (alpha red renders pink) -
+   force solid black instead */
+.border-\[\#C72030AD\],
+.border-\[\#c72030ad\],
+[class*="border-[#C72030AD]"],
+[class*="border-[#c72030ad]"] {
+  border-color: #000000 !important;
+}
+
 /* Hover states for legacy red */
 .hover\:bg-\[\#C72030\]:hover,
 .hover\:bg-\[\#c72030\]:hover,
@@ -4101,17 +4110,40 @@ html body header.fixed.top-0 button[class*="hover:bg-[#f6f4ee]"]:hover {
   }
 }
 
-/* Notification bell → bordered square button, grey icon */
+/* Notification bell → borderless icon button, thin grey line bell */
 html body header.fixed.top-0 button[aria-label="Notifications"] {
   border: 1px solid rgba(26, 26, 24, 0.08) !important;
-  background-color: #ffffff !important;
+  background-color: transparent !important;
   border-radius: 8px !important;
+  overflow: visible !important;
 }
 html body header.fixed.top-0 button[aria-label="Notifications"]:hover {
-  border-color: rgba(26, 26, 24, 0.28) !important;
+  background-color: var(--color-surface) !important;
 }
-html body header.fixed.top-0 button[aria-label="Notifications"] svg {
-  color: rgba(26, 26, 24, 0.68) !important;
+html body header.fixed.top-0 button[aria-label="Notifications"] > svg {
+  width: 20px !important;
+  height: 20px !important;
+  color: rgba(26, 26, 24, 0.55) !important;
+  stroke-width: 1.8 !important;
+}
+/* Unread count → coral pill (accentOrange #E8916F), white bold count,
+   2px page-coloured ring so it reads cleanly over the bell */
+html body header.fixed.top-0 button[aria-label="Notifications"] [class*="bg-[#DA7756]"] {
+  top: -6px !important;
+  right: -8px !important;
+  min-width: 20px !important;
+  height: 18px !important;
+  padding: 0 5px !important;
+  border: none !important;
+  border-radius: 999px !important;
+  background-color: #e8916f !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 2px var(--color-bg) !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  line-height: 18px !important;
+  letter-spacing: 0 !important;
+  font-variant-numeric: tabular-nums;
 }
 html body header.fixed.top-0 [class*="bg-[#DA7756]"] {
   background-color: var(--color-accent) !important;
@@ -4136,14 +4168,26 @@ html body div.fixed.top-16.h-12 button.flex-shrink-0 {
   font-weight: 500 !important;
   opacity: 1 !important;
   color: rgba(26, 26, 24, 0.55) !important;
-  transition: all 0.16s;
+  /* Animate fill/colour only — animating borders made the previously
+     active tab flash an outline while switching modules. */
+  transition: background-color 0.16s, color 0.16s !important;
 }
 html body div.fixed.top-16.h-12 button.flex-shrink-0:hover {
   background-color: #f7f6f2 !important;
   color: #1a1a18 !important;
 }
-html body div.fixed.top-16.h-12 button.flex-shrink-0.border-b-2 {
+/* Active module: soft grey filled pill, bold ink label — no outline or shadow.
+   (The generic "red text + red border button → white outlined" rule further
+   down also matches this tab's legacy classes, so border/shadow are cleared here.) */
+html body div.fixed.top-16.h-12 button.flex-shrink-0.border-b-2,
+html body div.fixed.top-16.h-12 button.flex-shrink-0.border-b-2:hover,
+html body div.fixed.top-16.h-12 button.flex-shrink-0.border-b-2:focus-visible {
   background-color: rgba(26, 26, 24, 0.07) !important;
+  /* zero-width (not `none`, which resets width to `medium`) so switching
+     tabs never animates a border in or out */
+  border: 0 solid transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
   color: #1a1a18 !important;
   font-weight: 600 !important;
 }
@@ -4781,10 +4825,8 @@ html body select,
 html body button[role="combobox"] {
   border-radius: var(--radius-input) !important;
 }
-/* Floating-label notch must follow the larger radius cleanly */
-html body .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline legend {
-  max-width: 100%;
-}
+/* Label placement / notch: see "MUI OUTLINED FIELDS — LABEL ABOVE THE CONTROL"
+   at the end of this file (labels sit above the box, so the notch stays closed). */
 
 
 /* ============================================================
@@ -5114,6 +5156,19 @@ html body button[class*="fm-button-brand"]:hover {
   border-color: var(--color-primary-hover) !important;
   color: #ffffff !important;
 }
+/* Re-assert the white label: the stat-card ink rule above
+   (html body [class*="bg-[#F6F4EE]"] .text-sm.font-medium, 0-3-2) outranks the
+   fm-button-brand rules (0-1-3 / 0-2-1) and repaints brand-button text with
+   rgba(26,26,24,0.68) — ink-on-ink, so the label is invisible at rest and only
+   appears on hover (when the index.css hover rule, 0-4-1, finally wins).
+   Covers every fm-button-brand control carrying shadcn's text-sm/text-xs
+   font-medium label, in any container (e.g. CRM Wallet Point Expiry Edit). */
+html body button[class*="fm-button-brand"].text-sm.font-medium,
+html body button[class*="fm-button-brand"].text-xs.font-medium,
+html body a[class*="fm-button-brand"].text-sm.font-medium,
+html body a[class*="fm-button-brand"].text-xs.font-medium {
+  color: #ffffff !important;
+}
 
 html body button:is([class*="border-[#C72030]"], [class*="border-[#DA7756]"], [class*="border-[#da7756]"]):is([class*="text-[#C72030]"], [class*="text-[#DA7756]"], [class*="text-[#da7756]"]) {
   background-color: #ffffff !important;
@@ -5194,4 +5249,692 @@ html body [role="dialog"] [class*="border-b-[#"],
 html body [role="dialog"] [class*="border-b-[#"][class*="border-b"],
 html body [class*="fixed"][class*="right-0"] [class*="border-b-2"] {
   border-bottom: 1px solid var(--color-line) !important;
+}
+
+/* Sprint details page icons use the page-specific FolderKanban icon as scope. */
+html body main:has(svg.lucide-folder-kanban) svg:not(.recharts-surface) {
+  color: var(--color-text) !important;
+  stroke: currentColor !important;
+}
+
+html body main:has(svg.lucide-folder-kanban) button[class*="text-[#E95420]"] {
+  color: var(--color-text) !important;
+}
+html body main:has(svg.lucide-folder-kanban) button[class*="text-[#E95420]"] > span.absolute {
+  background-color: var(--color-text) !important;
+}
+html body main:has(svg.lucide-folder-kanban) button[class*="text-[#323232]"] {
+  color: var(--color-ink-48) !important;
+}
+html body main:has(svg.lucide-folder-kanban) button[class*="text-[#323232]"]:hover {
+  color: var(--color-ink-48) !important;
+}
+
+html body [role="dialog"]:has(hr[class*="border-[#E95420]"])
+  hr[class*="border-[#E95420]"] {
+  border-color: var(--color-text) !important;
+}
+
+/* Project task details: keep page icons on the ink palette. */
+html body main:has(svg.lucide-copy) svg:not(.recharts-surface) {
+  color: var(--color-text) !important;
+  stroke: currentColor !important;
+}
+
+/* Workflow Status: black primary trigger with a readable white label/icon. */
+html body main:has(svg.lucide-copy)
+  button[role="combobox"][class*="bg-[#C72030]"] {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #ffffff !important;
+}
+html body main:has(svg.lucide-copy)
+  button[role="combobox"][class*="bg-[#C72030]"] * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+html body main:has(svg.lucide-copy)
+  button[role="combobox"][class*="bg-[#C72030]"] svg {
+  color: #ffffff !important;
+  stroke: currentColor !important;
+}
+
+/* Legacy orange section icons resolve to black ink. */
+html body #root main svg[color="#E95420" i],
+html body #root main svg[stroke="#E95420" i] {
+  color: var(--color-text) !important;
+  stroke: currentColor !important;
+}
+
+/* Red-outline Cancel buttons use black text on their light background. */
+html body #root main button[class*="border-[#C72030]" i]:not([class*="bg-[#C72030]" i]),
+html body #root main button[class*="border-[#C72030]" i]:not([class*="bg-[#C72030]" i]) * {
+  color: var(--color-text) !important;
+  -webkit-text-fill-color: var(--color-text) !important;
+}
+
+/* Issue detail tabs: active tab in ink, inactive tabs in muted grey. */
+html body #root main div[class*="gap-10"][class*="overflow-x-auto"]
+  > div[class*="text-[14px]"][class*="border-[#E95420]"] {
+  color: var(--color-text) !important;
+  border-color: var(--color-text) !important;
+}
+html body #root main div[class*="gap-10"][class*="overflow-x-auto"]
+  > div[class*="text-[14px]"]:not([class*="border-[#E95420]"]) {
+  color: var(--color-ink-48) !important;
+}
+
+/* Notification count badge: styled once, in the "Top header" section
+   (coral #E8916F pill, white count). */
+
+/* Location Account company logo dropzone outer border. */
+html body #root main [role="tabpanel"][id$="-content-company"]
+  > div [class~="border-orange-300"] {
+  border-color: var(--color-text) !important;
+}
+
+/* User profile fallback avatar: replace amber tones with black and grey. */
+html body #root main div[class*="bg-gradient-to-br"][class*="from-amber-200"][class*="to-amber-300"] {
+  background-image: linear-gradient(
+    to bottom right,
+    var(--color-primary) 0%,
+    var(--color-ink-48) 100%
+  ) !important;
+}
+html body #root main div[class*="bg-gradient-to-br"][class*="from-amber-200"][class*="to-amber-300"]
+  > div.bg-amber-100 {
+  background-color: var(--color-surface) !important;
+}
+html body #root main div[class*="bg-gradient-to-br"][class*="from-amber-200"][class*="to-amber-300"]
+  > div.bg-amber-100 > div.bg-amber-50 {
+  background-color: var(--color-hover) !important;
+}
+
+/* VI user profile initials circle: replace coral gradient with black. */
+html body #root main
+  div[class*="bg-gradient-to-br"][class*="from-[#DA7756]"][class*="to-[#b85a3d]"] {
+  background-color: var(--color-primary) !important;
+  background-image: none !important;
+}
+
+/* Add Gate number badge in the TAB CONFIGURATION header. */
+html body #root main form.space-y-6
+  > div.bg-white.rounded-lg.border.border-gray-200.overflow-hidden
+  > div.px-6.py-4[class*="bg-[#F2EEE9]"]
+  > div[class*="bg-[#C72030]"][class*="rounded-full"] {
+  background-color: var(--color-primary) !important;
+  color: #ffffff !important;
+}
+
+/* Payments Made create form: red section icons use black ink. */
+html body #root main:has([role="tab"][class*="data-[state=active]:text-red-700"])
+  svg[class*="text-[#db4a4a]" i] {
+  color: var(--color-primary) !important;
+  stroke: currentColor !important;
+}
+
+/* Vendor Name select outline and dropdown arrow. */
+html body #root main:has([role="tab"][class*="data-[state=active]:text-red-700"])
+  div[class~="bg-[#f9f9fa]"] > div.mt-2 .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-primary) !important;
+}
+html body #root main:has([role="tab"][class*="data-[state=active]:text-red-700"])
+  div[class~="bg-[#f9f9fa]"] > div.mt-2 .MuiOutlinedInput-root:hover
+  .MuiOutlinedInput-notchedOutline,
+html body #root main:has([role="tab"][class*="data-[state=active]:text-red-700"])
+  div[class~="bg-[#f9f9fa]"] > div.mt-2 .MuiOutlinedInput-root.Mui-focused
+  .MuiOutlinedInput-notchedOutline,
+html body #root main:has([role="tab"][class*="data-[state=active]:text-red-700"])
+  div[class~="bg-[#f9f9fa]"] > div.mt-2 .MuiOutlinedInput-root.Mui-error
+  .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-primary) !important;
+}
+html body #root main:has([role="tab"][class*="data-[state=active]:text-red-700"])
+  div[class~="bg-[#f9f9fa]"] > div.mt-2 .MuiSelect-icon {
+  color: var(--color-primary) !important;
+}
+
+/* Selected Bill Payment tab: black label and underline. */
+html body #root main
+  [role="tab"][data-state="active"][class*="data-[state=active]:text-red-700"] {
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+/* ============================================================
+   BATCH — outline-button radius, primary-button icons, section cards,
+   number discs, plain-button tab bars, stat icon wells, dropzones
+   (all keyed on legacy markup; tune via the :root tokens)
+   ============================================================ */
+
+/* 1. Every text/outline button shares the primary button radius
+   (Reset / Back / Cancel / "Save And Create New Audit" were square). */
+html body button:not([role="tab"]):not([role="combobox"]):not([role="switch"]):not([role="checkbox"]):not([role="radio"]):not([role="option"]):not([class*="rounded-full"]):not([class*="Mui"]):not([data-radix-collection-item]),
+html body a[class*="fm-button-fix"],
+html body [role="button"].fm-button-fix {
+  border-radius: var(--radius-button) !important;
+}
+
+/* 2. Icons inside filled primary buttons (the "+" before Action) must show.
+   Some legacy rules recoloured the glyph to the fill colour. */
+html body button:is(.bg-brand, .bg-primary, [class*="bg-[#C72030]"], [class*="bg-[#DA7756]"], [class*="bg-[#da7756]"], [class*="fm-button-brand"]) svg,
+html body button:is(.bg-brand, .bg-primary, [class*="bg-[#C72030]"], [class*="bg-[#DA7756]"], [class*="bg-[#da7756]"], [class*="fm-button-brand"]) svg * {
+  color: #ffffff !important;
+  stroke: currentColor !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* 3. Section cards: the card is white; only the header strip is the grey surface */
+html body [class*="bg-[#F6F7F7]"][class*="border-[#D9D9D9]"],
+html body [class*="bg-[#F6F7F7]"][class*="mb-6"] {
+  background-color: #ffffff !important;
+}
+
+/* 4. Numbered section discs: always the numbered-badge tokens
+   (the avatar/dot rules for w-8/w-10 discs were winning with coral) */
+html body .w-8.h-8.bg-\[\#C72030\].rounded-full,
+html body .w-10.h-10.bg-\[\#C72030\].rounded-full,
+html body .w-6.h-6.bg-\[\#C72030\].rounded-full,
+html body .w-8.h-8.bg-\[\#DA7756\].rounded-full,
+html body .w-6.h-6.bg-\[\#DA7756\].rounded-full {
+  background-color: var(--color-numbered-badge-bg) !important;
+  color: var(--color-numbered-badge-fg) !important;
+}
+html body .w-8.h-8.bg-\[\#C72030\].rounded-full > *,
+html body .w-10.h-10.bg-\[\#C72030\].rounded-full > *,
+html body .w-6.h-6.bg-\[\#C72030\].rounded-full > * {
+  color: var(--color-numbered-badge-fg) !important;
+}
+
+/* 5. Plain-button tab bars (flex-1 buttons in a bordered strip) → segmented switcher
+   (Survey mapping details: "Survey Information | Questions | Location Details") */
+html body div.flex.w-full.border.overflow-hidden:has(> button.flex-1) {
+  display: inline-flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px !important;
+  width: fit-content !important;
+  max-width: 100%;
+  padding: 3px !important;
+  background-color: rgba(26, 26, 24, 0.055) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  overflow: visible !important;
+}
+html body div.flex.w-full.border.overflow-hidden:has(> button.flex-1) > button {
+  flex: none !important;
+  padding: 8px 16px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  background-color: transparent !important;
+  color: rgba(26, 26, 24, 0.55) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+  transition: all 0.16s;
+}
+html body div.flex.w-full.border.overflow-hidden:has(> button.flex-1) > button:hover {
+  color: var(--color-text) !important;
+}
+html body div.flex.w-full.border.overflow-hidden:has(> button.flex-1) > button[class*="bg-[#C72030]"],
+html body div.flex.w-full.border.overflow-hidden:has(> button.flex-1) > button[class*="bg-brand"] {
+  background-color: #ffffff !important;
+  color: var(--color-text) !important;
+  box-shadow: 0 1px 2px rgba(26, 26, 24, 0.1), 0 0 0 1px rgba(26, 26, 24, 0.05) !important;
+}
+/* A hidden Radix TabsList (kept only to sync state) must stay hidden — the
+   segmented rules above forced it to display as an empty pill. */
+html body [role="tablist"].hidden,
+html body [role="tablist"][class*="hidden"]:not([class*="overflow-hidden"]) {
+  display: none !important;
+}
+
+/* 6. Stat-tile icon wells with a coral tint → white tile, ink glyph (wireframe .pic) */
+html body [class*="bg-[#F6F4EE]"] :is(.w-14.h-14, .w-12.h-12, .w-10.h-10)[class*="bg-[#C72030"],
+html body [class*="bg-[#f6f4ee]"] :is(.w-14.h-14, .w-12.h-12, .w-10.h-10)[class*="bg-[#C72030"] {
+  background-color: #ffffff !important;
+  border-radius: 10px !important;
+}
+html body [class*="bg-[#F6F4EE]"] :is(.w-14.h-14, .w-12.h-12, .w-10.h-10)[class*="bg-[#C72030"] svg,
+html body [class*="bg-[#f6f4ee]"] :is(.w-14.h-14, .w-12.h-12, .w-10.h-10)[class*="bg-[#C72030"] svg {
+  color: var(--color-ink-68) !important;
+  stroke: currentColor !important;
+}
+
+/* 7. Coral/red dashed dropzones → the soft wireframe dropzone */
+html body .border-dashed:is([class*="border-[#C72030]"], [class*="border-[#DA7756]"], [class*="border-red-"]) {
+  border-width: 2px !important;
+  border-color: #ebe9e2 !important;
+  border-radius: 12px !important;
+  background-color: transparent !important;
+}
+
+/* MUI text/outlined/contained buttons (dialog actions) share the same radius */
+html body .MuiButton-root {
+  border-radius: var(--radius-button) !important;
+}
+
+/* ============================================================
+   PINK/RED SHADOWS (shadow-red-*, shadow-rose-*, shadow-pink-*)
+   Legacy cards/buttons tint their shadow with shadow-red-200 etc.,
+   which renders as a pink glow. Remove that shadow effect globally.
+   ============================================================ */
+[class*="shadow-red-"],
+[class*="shadow-rose-"],
+[class*="shadow-pink-"] {
+  box-shadow: none !important;
+}
+
+/* ============================================================
+   ADD-STYLE PILL BUTTONS ("Add Question", "Add Section", …)
+   Buttons carrying gap-1 + bg-[#f6f4ee] + hover:bg-[#f0ebe0] become a
+   solid black fill with white label and white "+" icon.
+   (gap-1 keeps this scoped to the Add Question/Add Section style and
+   the 3-attribute selector out-specifies the generic
+   [class*="bg-[#f6f4ee]"] .text-sm.font-medium ink rule above; placed
+   last so it also beats the equal-specificity .border-dashed rule.)
+   ============================================================ */
+html body button[class*="gap-1"][class*="bg-[#f6f4ee]"][class*="hover:bg-[#f0ebe0]"],
+html body button[class*="gap-1"][class*="bg-[#F6F4EE]"][class*="hover:bg-[#f0ebe0]"] {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+html body button[class*="gap-1"][class*="bg-[#f6f4ee]"][class*="hover:bg-[#f0ebe0]"]:hover,
+html body button[class*="gap-1"][class*="bg-[#F6F4EE]"][class*="hover:bg-[#f0ebe0]"]:hover {
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
+}
+html body button[class*="gap-1"][class*="bg-[#f6f4ee]"][class*="hover:bg-[#f0ebe0]"] svg,
+html body button[class*="gap-1"][class*="bg-[#F6F4EE]"][class*="hover:bg-[#f0ebe0]"] svg {
+  color: #ffffff !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+/* Permit closure approval actions: both buttons use the same green utility classes. */
+html body #root main .flex.items-center.gap-4.justify-center.mt-4:has(> button.bg-green-600) > button.bg-green-600 {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+html body #root main .flex.items-center.gap-4.justify-center.mt-4:has(> button.bg-green-600) > button.bg-green-600:hover {
+  background-color: #1a1a1a !important;
+}
+
+/* Pending-approvals count pill. */
+html body #root span[class*="min-w-[20px]"][class*="rounded-full"][class*="bg-[#C72030]"] {
+  background-color: #000000 !important;
+}
+
+/* Customer Bills filter dialog Apply button. */
+html body [role="dialog"]:has(input[placeholder="Bill Number Search"]) button[class~="bg-[#F2EEE9]"] {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+html body [role="dialog"]:has(input[placeholder="Bill Number Search"]) button[class~="bg-[#F2EEE9]"]:hover {
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
+}
+
+/* CRM Events: keep unchecked status switches visibly inactive in grey. */
+html body button[role="switch"][class*="data-[state=checked]:bg-green-500"][data-state="unchecked"] {
+  background-color: #9ca3af !important;
+}
+
+/* R Vehicles toolbar Import action: preserve a visible black outline and icon. */
+html body #root main:has(input[placeholder="Search by vehicle number"]) button[title="Import"] {
+  border: 1px solid #000000 !important;
+  border-color: #000000 !important;
+  color: #000000 !important;
+}
+html body #root main:has(input[placeholder="Search by vehicle number"]) button[title="Import"] svg {
+  display: block !important;
+  width: 1rem !important;
+  height: 1rem !important;
+  min-width: 1rem !important;
+  min-height: 1rem !important;
+  flex-shrink: 0 !important;
+  color: #000000 !important;
+  stroke: #000000 !important;
+  stroke-width: 2px !important;
+  fill: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+html body #root main:has(input[placeholder="Search by vehicle number"]) button[title="Import"] svg * {
+  display: initial !important;
+  color: #000000 !important;
+  stroke: #000000 !important;
+  stroke-width: 2px !important;
+  fill: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Visitor table Details action: force the eye icon to render in black. */
+html body #root main button[title="View visitor details"] {
+  color: #000000 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+html body #root main button[title="View visitor details"] svg {
+  display: block !important;
+  width: 1rem !important;
+  height: 1rem !important;
+  min-width: 1rem !important;
+  min-height: 1rem !important;
+  color: #000000 !important;
+  stroke: #000000 !important;
+  stroke-width: 2px !important;
+  fill: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+html body #root main button[title="View visitor details"] svg * {
+  display: initial !important;
+  color: #000000 !important;
+  stroke: #000000 !important;
+  stroke-width: 2px !important;
+  fill: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Work Order attachment dropzone: replace the yellow dashed border with black. */
+html body #root main .border-dashed.border-yellow-400,
+html body #root main .border-dashed.border-yellow-400:hover {
+  border-color: #000000 !important;
+}
+
+/* Material PR details: black Approve action next to the Reject button. */
+html body #root main .flex.items-center.justify-center.gap-4:has(> button.bg-green-600 + button[class*="bg-[#C72030]"]) > button.bg-green-600 {
+  background-color: #000000 !important;
+  border-color: #000000 !important;
+  color: #ffffff !important;
+}
+html body #root main .flex.items-center.justify-center.gap-4:has(> button.bg-green-600 + button[class*="bg-[#C72030]"]) > button.bg-green-600:hover {
+  background-color: #1a1a1a !important;
+  border-color: #1a1a1a !important;
+  color: #ffffff !important;
+}
+
+/* QR Fields Setup: style Existing/Custom Fields like the top-level setup tabs. */
+html body #root main .flex.gap-0.border-b.border-gray-200 {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  width: fit-content !important;
+  padding: 3px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background-color: var(--color-surface) !important;
+}
+html body #root main .flex.gap-0.border-b.border-gray-200 > button {
+  padding: 8px 16px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background-color: transparent !important;
+  color: var(--color-text-light) !important;
+  box-shadow: none !important;
+  white-space: nowrap !important;
+}
+html body #root main .flex.gap-0.border-b.border-gray-200 > button[class~="border-brand"] {
+  background-color: #ffffff !important;
+  color: var(--color-text) !important;
+  box-shadow: 0 1px 2px rgba(26, 26, 24, 0.1), 0 0 0 1px rgba(26, 26, 24, 0.05) !important;
+}
+html body #root main .flex.gap-0.border-b.border-gray-200 > button:not([class~="border-brand"]):hover {
+  color: var(--color-text) !important;
+}
+
+/* CRM Point Expiry rule Edit action: keep its existing text label visible. */
+html body #root main button.fm-button-brand:has(svg.lucide-pen) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  width: max-content !important;
+  min-width: max-content !important;
+  overflow: visible !important;
+  white-space: nowrap !important;
+  font-size: 14px !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+html body #root main button.fm-button-brand:has(svg.lucide-pen) svg {
+  flex-shrink: 0 !important;
+}
+
+/* Waste Generation Setup: match the Category/Subcategory/Landlord tabs to the setup pill tabs. */
+html body #root main .flex.border-b.border-gray-200.bg-white.rounded-t-lg {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  width: fit-content !important;
+  padding: 3px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background-color: var(--color-surface) !important;
+}
+html body #root main .flex.border-b.border-gray-200.bg-white.rounded-t-lg > button {
+  padding: 8px 16px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background-color: transparent !important;
+  color: var(--color-text-light) !important;
+  box-shadow: none !important;
+  white-space: nowrap !important;
+}
+html body #root main .flex.border-b.border-gray-200.bg-white.rounded-t-lg > button[class~="border-brand"] {
+  background-color: #ffffff !important;
+  color: var(--color-text) !important;
+  box-shadow: 0 1px 2px rgba(26, 26, 24, 0.1), 0 0 0 1px rgba(26, 26, 24, 0.05) !important;
+}
+html body #root main .flex.border-b.border-gray-200.bg-white.rounded-t-lg > button:not([class~="border-brand"]):hover {
+  color: var(--color-text) !important;
+}
+
+/* Visitor Management setup: match the four tabs to the compact setup-tab style. */
+html body #root main .bg-white.rounded-lg.border.border-gray-200:has(> .flex.border-b.border-gray-200 > button:nth-child(4)) > .flex.border-b.border-gray-200 {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  width: fit-content !important;
+  max-width: 100% !important;
+  padding: 3px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background-color: var(--color-surface) !important;
+  overflow-x: auto !important;
+}
+html body #root main .bg-white.rounded-lg.border.border-gray-200:has(> .flex.border-b.border-gray-200 > button:nth-child(4)) > .flex.border-b.border-gray-200 > button {
+  flex: 0 0 auto !important;
+  padding: 8px 16px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background-color: transparent !important;
+  color: var(--color-text-light) !important;
+  box-shadow: none !important;
+  white-space: nowrap !important;
+}
+html body #root main .bg-white.rounded-lg.border.border-gray-200:has(> .flex.border-b.border-gray-200 > button:nth-child(4)) > .flex.border-b.border-gray-200 > button[class~="border-brand"] {
+  background-color: #ffffff !important;
+  color: var(--color-text) !important;
+  box-shadow: 0 1px 2px rgba(26, 26, 24, 0.1), 0 0 0 1px rgba(26, 26, 24, 0.05) !important;
+}
+html body #root main .bg-white.rounded-lg.border.border-gray-200:has(> .flex.border-b.border-gray-200 > button:nth-child(4)) > .flex.border-b.border-gray-200 > button:not([class~="border-brand"]):hover {
+  color: var(--color-text) !important;
+}
+
+/* Purchase Order details: keep filled black actions black on hover and focus. */
+html body #root main:has(svg.lucide-shopping-cart) button[style*="rgb(218, 119, 86)"],
+html body #root main:has(svg.lucide-shopping-cart) button[style*="#DA7756"],
+html body #root main:has(svg.lucide-shopping-cart) button[style*="#da7756"],
+html body #root main:has(svg.lucide-shopping-cart) button[class*="bg-[#DA7756]"],
+html body #root main:has(svg.lucide-shopping-cart) button[class*="bg-[#da7756]"] {
+  background-color: #1a1a18 !important;
+  border-color: #1a1a18 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  transition: none !important;
+}
+html body #root main:has(svg.lucide-shopping-cart) button[style*="rgb(218, 119, 86)"]:is(:hover, :focus, :focus-visible),
+html body #root main:has(svg.lucide-shopping-cart) button[style*="#DA7756"]:is(:hover, :focus, :focus-visible),
+html body #root main:has(svg.lucide-shopping-cart) button[style*="#da7756"]:is(:hover, :focus, :focus-visible),
+html body #root main:has(svg.lucide-shopping-cart) button[class*="bg-[#DA7756]"]:is(:hover, :focus, :focus-visible),
+html body #root main:has(svg.lucide-shopping-cart) button[class*="bg-[#da7756]"]:is(:hover, :focus, :focus-visible) {
+  background-color: #1a1a18 !important;
+  border-color: #1a1a18 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  filter: none !important;
+}
+html body #root main:has(svg.lucide-shopping-cart) button[style*="rgb(218, 119, 86)"] svg,
+html body #root main:has(svg.lucide-shopping-cart) button[style*="#DA7756"] svg,
+html body #root main:has(svg.lucide-shopping-cart) button[style*="#da7756"] svg,
+html body #root main:has(svg.lucide-shopping-cart) button[class*="bg-[#DA7756]"] svg,
+html body #root main:has(svg.lucide-shopping-cart) button[class*="bg-[#da7756]"] svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* Invoice Details report heading icon: override its inline red color. */
+html body #root main:has(svg.lucide-notepad-text) svg.lucide-notepad-text {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+html body #root main:has(svg.lucide-notepad-text) svg.lucide-notepad-text * {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+
+/* ============================================================
+   MUI OUTLINED FIELDS — LABEL ABOVE THE CONTROL
+   Every MUI outlined TextField / Select / Autocomplete / date or
+   time picker shows its label above the box instead of inside the
+   border notch (Business Genie form control):
+     label   12px / 600 Poppins, ink-soft, 6px gap to the control
+     control 44px min height, 12px radius, 1px hairline, 13.5px / 500
+     textarea 88px min height, 12px 14px padding
+   Pure CSS — value, validation, focus and disabled behaviour are
+   untouched. Opt a single field out with className="mui-floating-label"
+   on the TextField / FormControl.
+   ============================================================ */
+
+/* Label: out of the border, into the flow above the control */
+html body .MuiFormControl-root:not(.mui-floating-label) > .MuiInputLabel-outlined {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  max-width: 100% !important;
+  width: auto !important;
+  margin: 0 0 6px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0 !important;
+  color: var(--color-ink-68) !important;
+  z-index: auto !important;
+  transition: none !important;
+}
+/* Label keeps its colour on focus (no brand flash); error / disabled stay readable */
+html body .MuiFormControl-root:not(.mui-floating-label) > .MuiInputLabel-outlined.Mui-focused {
+  color: var(--color-ink-68) !important;
+}
+html body .MuiFormControl-root:not(.mui-floating-label) > .MuiInputLabel-outlined.Mui-error {
+  color: var(--color-danger) !important;
+}
+html body .MuiFormControl-root:not(.mui-floating-label) > .MuiInputLabel-outlined.Mui-disabled {
+  color: var(--color-ink-48) !important;
+}
+html body .MuiFormControl-root:not(.mui-floating-label) > .MuiInputLabel-outlined .MuiFormLabel-asterisk {
+  color: var(--color-danger) !important;
+}
+
+/* Notch: always closed, the border is drawn as one continuous line */
+html body .MuiFormControl-root:not(.mui-floating-label) .MuiOutlinedInput-notchedOutline > legend,
+html body .MuiFormControl-root:not(.mui-floating-label) .MuiPickersOutlinedInput-notchedOutline > legend {
+  max-width: 0.01px !important;
+  padding: 0 !important;
+  transition: none !important;
+}
+
+/* MUI hides the placeholder while an un-shrunk label sits inside the box;
+   the label is outside now, so the placeholder stays visible */
+html body .MuiFormControl-root:not(.mui-floating-label) > label[data-shrink="false"] + .MuiInputBase-formControl .MuiInputBase-input::placeholder {
+  opacity: 1 !important;
+}
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) .MuiInputBase-input::placeholder {
+  color: var(--color-ink-30);
+  opacity: 1;
+  font-style: normal;
+}
+html body .MuiFormControl-root:not(.mui-floating-label) > .MuiPickersInputBase-root .MuiPickersInputBase-sectionsContainer,
+html body .MuiFormControl-root:not(.mui-floating-label) > .MuiPickersOutlinedInput-root .MuiPickersSectionList-root {
+  opacity: 1 !important;
+}
+/* Select placeholders written as <em>Select …</em> render upright and muted */
+html body .MuiSelect-select em {
+  font-style: normal;
+  color: var(--color-ink-30);
+}
+
+/* Control shell (labelled fields only — label-less toolbar/search fields keep their size) */
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) > .MuiOutlinedInput-root:not(.MuiInputBase-multiline),
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) > .MuiPickersOutlinedInput-root {
+  min-height: 44px !important;
+  height: auto !important;
+  border-radius: var(--radius-input) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+}
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) > .MuiOutlinedInput-root > .MuiOutlinedInput-input:not(.MuiAutocomplete-input):not(textarea),
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) > .MuiOutlinedInput-root > .MuiSelect-select {
+  padding-top: 10.5px !important;
+  padding-bottom: 10.5px !important;
+  height: auto !important;
+  min-height: 1.4375em !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  color: var(--color-text);
+  box-sizing: content-box;
+}
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) .MuiAutocomplete-input,
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) .MuiPickersSectionList-root {
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+}
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) > .MuiOutlinedInput-root:not(.Mui-focused):not(.Mui-error):not(.Mui-disabled) > .MuiOutlinedInput-notchedOutline,
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) > .MuiPickersOutlinedInput-root:not(.Mui-focused):not(.Mui-error):not(.Mui-disabled) > .MuiPickersOutlinedInput-notchedOutline {
+  border-width: 1px;
+  border-color: rgba(26, 26, 24, 0.12);
+}
+
+/* Textareas (multiline TextField) */
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) > .MuiOutlinedInput-root.MuiInputBase-multiline {
+  min-height: 88px !important;
+  height: auto !important;
+  padding: 12px 14px !important;
+  align-items: flex-start !important;
+  border-radius: var(--radius-input) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+}
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) > .MuiOutlinedInput-root.MuiInputBase-multiline > textarea {
+  padding: 0 !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
 }

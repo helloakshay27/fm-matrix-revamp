@@ -406,6 +406,12 @@ export const VisitorFormPage = () => {
     }
   };
 
+  // Local yyyy-mm-dd for "today" — used as the minimum for pass validity dates.
+  const todayStr = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  })();
+
   const handleInputChange = (field: string, value: any) => {
     setFormData((prev) => {
       const newData = { ...prev, [field]: value };
@@ -608,6 +614,16 @@ export const VisitorFormPage = () => {
       }
       if (!formData.passValidTo) {
         toast.error("Please select pass valid to date");
+        return;
+      }
+      const todayForCheck = new Date();
+      const todayIso = `${todayForCheck.getFullYear()}-${String(todayForCheck.getMonth() + 1).padStart(2, "0")}-${String(todayForCheck.getDate()).padStart(2, "0")}`;
+      if (formData.passValidFrom < todayIso) {
+        toast.error("Pass valid from date cannot be in the past");
+        return;
+      }
+      if (formData.passValidTo < formData.passValidFrom) {
+        toast.error("Pass valid to date cannot be before the valid from date");
         return;
       }
       const hasSelectedDay = Object.values(formData.daysPermitted).some(
@@ -1923,12 +1939,22 @@ export const VisitorFormPage = () => {
                   label="Pass Valid From"
                   type="date"
                   value={formData.passValidFrom}
-                  onChange={(e) =>
-                    handleInputChange("passValidFrom", e.target.value)
-                  }
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v && v < todayStr) {
+                      toast.error("Pass valid from date cannot be in the past");
+                      return;
+                    }
+                    handleInputChange("passValidFrom", v);
+                    // keep "to" from falling before the new "from"
+                    if (v && formData.passValidTo && formData.passValidTo < v) {
+                      handleInputChange("passValidTo", "");
+                    }
+                  }}
                   fullWidth
                   required
                   variant="outlined"
+                  inputProps={{ min: todayStr }}
                   InputLabelProps={{ shrink: true }}
                   sx={fieldStyles}
                 />
@@ -1936,12 +1962,31 @@ export const VisitorFormPage = () => {
                   label="Pass Valid To"
                   type="date"
                   value={formData.passValidTo}
-                  onChange={(e) =>
-                    handleInputChange("passValidTo", e.target.value)
-                  }
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    const minTo =
+                      formData.passValidFrom && formData.passValidFrom > todayStr
+                        ? formData.passValidFrom
+                        : todayStr;
+                    if (v && v < minTo) {
+                      toast.error(
+                        minTo === todayStr
+                          ? "Pass valid to date cannot be in the past"
+                          : "Pass valid to date cannot be before the valid from date"
+                      );
+                      return;
+                    }
+                    handleInputChange("passValidTo", v);
+                  }}
                   fullWidth
                   required
                   variant="outlined"
+                  inputProps={{
+                    min:
+                      formData.passValidFrom && formData.passValidFrom > todayStr
+                        ? formData.passValidFrom
+                        : todayStr,
+                  }}
                   InputLabelProps={{ shrink: true }}
                   sx={fieldStyles}
                 />

@@ -37,7 +37,8 @@ import {
 } from '@mui/icons-material';
 import { ShoppingCart, Package, Calendar, FileText, ChevronDown, ChevronUp, Mail, Phone, Smartphone, Star, ChevronRight, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
-import { toast } from 'sonner';
+import { accountingToast as toast } from '@/lib/accountingToast';
+import '@/styles/accounting.css';
 import { format, parseISO } from 'date-fns';
 import {
     BankRecord,
@@ -1596,7 +1597,7 @@ export const SalesOrderCreatePage: React.FC = () => {
         "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry", "Foreign Country"
     ];
     return (
-        <div className="p-6 space-y-6 relative">
+        <div className="accounting-ui p-6 space-y-6 relative">
             {isSubmitting && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <CircularProgress size={60} />
@@ -2114,13 +2115,13 @@ export const SalesOrderCreatePage: React.FC = () => {
                             <div className="text-brand text-sm bg-red-50 p-3 rounded-md">{errors.items}</div>
                         )}
 
-                        <div className="border border-border rounded-lg overflow-x-auto">
-                            <table className="w-full min-w-[900px]">
+                        <div className="acc-table-wrap overflow-x-auto">
+                            <table className="acc-line-items w-full min-w-[900px]">
                                 <thead className="bg-muted/50">
                                     <tr>
                                         <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Rate</th>
+                                        <th className="acc-num px-4 py-3 text-right text-sm font-medium">Quantity</th>
+                                        <th className="acc-num px-4 py-3 text-right text-sm font-medium">Rate</th>
                                         {/* <th className="px-4 py-3 text-left text-sm font-medium">Discount</th> */}
                                         <th className="px-4 py-3 text-left text-sm font-medium">Tax</th>
                                         <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
@@ -2287,7 +2288,7 @@ export const SalesOrderCreatePage: React.FC = () => {
                                                     </Select>
                                                 </FormControl>
                                             </td>
-                                            <td className="px-4 py-3 text-right font-semibold">
+                                            <td className="acc-num px-4 py-3 text-right font-semibold">
                                                 ₹{item.amount.toFixed(2)}
                                             </td>
                                             <td className="px-4 py-3 text-center">
@@ -2315,6 +2316,7 @@ export const SalesOrderCreatePage: React.FC = () => {
                                 startIcon={<Add />}
                                 onClick={addItem}
                                 variant="outlined"
+                                className="acc-btn acc-btn-secondary acc-btn-xs"
                                 sx={{ textTransform: 'none' }}
                             >
                                 Add New Row
@@ -2681,7 +2683,7 @@ export const SalesOrderCreatePage: React.FC = () => {
 
             <div className="flex items-center gap-3 justify-center pt-2">
                 <Button
-                    className="fm-button-fix fm-button-brand px-8 py-2"
+                    className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2"
                     onClick={() => handleSubmit(true)}
                     disabled={isSubmitting}
                     sx={{ textTransform: 'none', fontWeight: 600 }}
@@ -2689,7 +2691,7 @@ export const SalesOrderCreatePage: React.FC = () => {
                     Save as Draft
                 </Button>
                 <Button
-                    className="fm-button-fix fm-button-brand px-8 py-2"
+                    className="acc-btn fm-button-fix fm-button-brand px-8 py-2"
                     onClick={() => handleSubmit(false)}
                     disabled={isSubmitting}
                     sx={{ textTransform: 'none', fontWeight: 600 }}
@@ -2698,16 +2700,10 @@ export const SalesOrderCreatePage: React.FC = () => {
                 </Button>
                 <Button
                     variant="outlined"
-                    className="fm-button-fix px-8 py-2"
+                    className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2"
                     onClick={() => navigate('/accounting/sales-order')}
                     disabled={isSubmitting}
-                    sx={{
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        borderColor: '#DA7756',
-                        color: '#DA7756',
-                        '&:hover': { borderColor: '#C45F40', bgcolor: '#F2EEE9', color: '#C45F40' }
-                    }}
+                    sx={{ textTransform: 'none' }}
                 >
                     Cancel
                 </Button>

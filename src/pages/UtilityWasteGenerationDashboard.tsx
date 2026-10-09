@@ -22,6 +22,7 @@ import { format, subYears } from 'date-fns';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
+import { getSeriesColor } from '@/styles/chartPalette';
 
 // Analytics Components
 import { TicketAnalyticsFilterDialog } from "@/components/TicketAnalyticsFilterDialog";
@@ -120,7 +121,7 @@ const WasteCategoryChart: React.FC<WasteChartProps> = ({ data, isLoading, onDown
                 tickLine={false}
               />
               <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="value" name="Waste (kg)" fill="#c4b99d" radius={[4, 4, 0, 0]}
+              <Bar dataKey="value" name="Waste (kg)" fill={getSeriesColor(0)} radius={[4, 4, 0, 0]}
                 label={{ position: 'top', fontSize: 10, fill: '#6B7280', formatter: (v: number) => fmt(v) }}
               />
             </BarChart>

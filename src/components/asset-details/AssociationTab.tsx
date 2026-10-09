@@ -171,7 +171,7 @@ const AssociateAssetModal: React.FC<AssociateAssetModalProps> = ({
 
   return (
     <Dialog open={show} onOpenChange={onClose}>
-      <DialogContent className="w-full max-w-[95vw] sm:max-w-6xl max-h-[90vh] overflow-auto">
+      <DialogContent className="w-full max-w-[95vw] sm:max-w-6xl max-h-[90vh] overflow-auto rounded-3xl p-7">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <DialogTitle className="text-lg font-semibold">
             Associate Asset - {assetName}
@@ -390,7 +390,7 @@ export const AssociationTab: React.FC<AssociationTabProps> = ({ asset, assetId }
         <Button
           onClick={openModalForCurrentAsset}
           variant="outline"
-        // className="bg-purple-600 hover:bg-purple-700 text-white"
+          className="h-[30px] px-3 py-0 rounded-[8px] border-[1.5px] border-[#2c2c2c] text-[#2c2c2c] text-[11.5px] font-semibold hover:bg-gray-50"
         >
           Associate Asset
         </Button>

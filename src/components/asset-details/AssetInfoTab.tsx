@@ -24,6 +24,7 @@ import {
   TableRow,
 } from "../ui/table";
 import { AssetAnalyticsTab } from "./AssetAnalyticsTab";
+import { DetailCard } from "../ui/detail-card";
 
 // Removed duplicate interface declaration for AssetInfoTabProps
 interface Asset {
@@ -143,6 +144,7 @@ const renderExtraFieldsGrouped = (
   ));
 };
 
+
 export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
   asset,
   assetId,
@@ -195,30 +197,22 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
         </TabsList>
 
         {/* Asset Details - Full Width */}
-        <TabsContent value="assetDetails" className="space-y-8 ">
+        <TabsContent value="assetDetails" className="space-y-5 ">
           {showEnable ? (
             <>
               {asset?.asset_image?.document && (
-                <div className="w-full bg-white rounded-lg shadow-sm border">
-                  <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <CreditCard
-                        className="w-8 h-8 "
-                        style={{ color: "#C72030" }}
-                      />
-                    </div>
-                    <h3 className="text-lg font-semibold uppercase text-black">
-                      Asset Image
-                    </h3>
-                  </div>
-                  <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6 flex items-center justify-center">
+                <DetailCard
+                  icon={<CreditCard className="w-[18px] h-[18px] text-gray-500" />}
+                  title="Asset Image"
+                >
+                  <div className="flex items-center justify-center">
                     <img
                       src={asset.asset_image.document}
                       alt={asset.asset_image.document_name || "Asset Image"}
                       className="max-h-[200px] max-w-full w-auto h-auto rounded-md shadow object-contain"
                     />
                   </div>
-                </div>
+                </DetailCard>
               )}
               {/* {Object.entries(asset.extra_fields_grouped).map(
                 ([groupName, fields]) => (
@@ -252,23 +246,12 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
               )} */}
               {Object.entries(asset.extra_fields_grouped).map(
                 ([groupName, fields]) => (
-                  <div
+                  <DetailCard
                     key={groupName}
-                    className="w-full bg-white rounded-lg shadow-sm border"
+                    icon={<CreditCard className="w-[18px] h-[18px] text-gray-500" />}
+                    title={groupName}
                   >
-                    <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                        <CreditCard
-                          className="w-8 h-8"
-                          style={{ color: "#C72030" }}
-                        />
-                      </div>
-                      <h3 className="text-lg font-semibold uppercase text-black">
-                        {groupName}
-                      </h3>
-                    </div>
-
-                    <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6 space-y-4">
+                    <div className="space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8 pl-4">
                         {/* Vehicle Financial: Show Warranty Period if category is Vehicle */}
                         {groupName === "Vehicle Financial" && (
@@ -328,7 +311,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                         ))}
                       </div>
                     </div>
-                  </div>
+                  </DetailCard>
                 )
               )}
 
@@ -336,80 +319,58 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                 asset.asset_move_tos[0]?.from?.location &&
                 asset.asset_move_tos[0]?.to?.location && (
                   <div className="flex flex-col lg:flex-row gap-6 mt-6">
-                    <div className="w-full bg-white rounded-lg shadow-sm border">
-                      <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                          <TrendingUp
-                            className="w-6 h-6"
-                            style={{ color: "#C72030" }}
-                          />
-                        </div>
-                        <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                          Movement Details
-                        </h3>
-                      </div>
-
-                      <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] px-6">
-                        <div className="relative w-full px-4">
-                          <div
-                            className="flex flex-col items-center w-full relative"
-                            style={{ minHeight: "56px" }}
-                          >
-                            <div className="flex w-full items-center justify-between relative">
-                              {/* From Site */}
-                              <div className="flex flex-col items-center w-1/2 text-left">
-                                <div className="text-xs text-gray-500 mb-2 ml-1">
-                                  From Site
-                                </div>
-                                <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10 mt-[2px]" />
+                    <DetailCard
+                      icon={<TrendingUp className="w-[18px] h-[18px] text-gray-500" />}
+                      title="Movement Details"
+                    >
+                      <div className="relative w-full px-4">
+                        <div
+                          className="flex flex-col items-center w-full relative"
+                          style={{ minHeight: "56px" }}
+                        >
+                          <div className="flex w-full items-center justify-between relative">
+                            {/* From Site */}
+                            <div className="flex flex-col items-center w-1/2 text-left">
+                              <div className="text-xs text-gray-500 mb-2 ml-1">
+                                From Site
                               </div>
-
-                              {/* Line */}
-                              <div className="absolute top-[32px] left-[25%] right-[25%] h-0.5 bg-[#C72030] z-0" />
-
-                              {/* To Site */}
-                              <div className="flex flex-col items-center w-1/2 text-right">
-                                <div className="text-xs text-gray-500 mb-2 mr-1">
-                                  To Site
-                                </div>
-                                <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10" />
-                              </div>
+                              <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10 mt-[2px]" />
                             </div>
 
-                            {/* Values */}
-                            <div className="flex w-[80%] mx-auto justify-between mt-6">
-                              <div className="text-sm font-medium text-[#1A1A1A] break-words px-2 w-1/2 text-left">
-                                {asset.asset_move_tos[0].from.location || "NA"}
+                            {/* Line */}
+                            <div className="absolute top-[32px] left-[25%] right-[25%] h-0.5 bg-[#C72030] z-0" />
+
+                            {/* To Site */}
+                            <div className="flex flex-col items-center w-1/2 text-right">
+                              <div className="text-xs text-gray-500 mb-2 mr-1">
+                                To Site
                               </div>
-                              <div className="text-sm font-medium text-[#1A1A1A] break-words px-2 w-1/2 text-right">
-                                {asset.asset_move_tos[0].to.location || "NA"}
-                              </div>
+                              <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10" />
+                            </div>
+                          </div>
+
+                          {/* Values */}
+                          <div className="flex w-[80%] mx-auto justify-between mt-6">
+                            <div className="text-sm font-medium text-[#1A1A1A] break-words px-2 w-1/2 text-left">
+                              {asset.asset_move_tos[0].from.location || "NA"}
+                            </div>
+                            <div className="text-sm font-medium text-[#1A1A1A] break-words px-2 w-1/2 text-right">
+                              {asset.asset_move_tos[0].to.location || "NA"}
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </DetailCard>
                   </div>
                 )}
             </>
           ) : (
             <>
-              <div className="w-full bg-white rounded-lg shadow-sm border">
-                {/* Header */}
-                <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <Settings
-                      className="w-6 h-6 "
-                      style={{ color: "#C72030" }}
-                    />
-                  </div>
-                  <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                    Asset Details
-                  </h3>
-                </div>
-
-                {/* Body */}
-                <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6 space-y-8 text-sm text-gray-800">
+              <DetailCard
+                icon={<Settings className="w-[18px] h-[18px] text-gray-500" />}
+                title="Asset Details"
+              >
+                <div className="space-y-8">
                   {/* Asset Details */}
                   <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
                     {/* Left Section - Asset Info */}
@@ -725,504 +686,406 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                     </div>
                   )}
                 </div>
-              </div>
+              </DetailCard>
               {/* Meter Category Type Block */}
               {(asset.asset_type_category === "Meter" || asset.is_meter) && (
-                <div className="w-full bg-white rounded-lg shadow-sm border mb-6">
-                  <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <CreditCard
-                        className="w-8 h-8"
-                        style={{ color: "#C72030" }}
-                      />
-                    </div>
-                    <h3 className="text-lg font-semibold uppercase text-black">
-                      Meter Category Type
-                    </h3>
+                <DetailCard
+                  className="mb-6"
+                  icon={<CreditCard className="w-[18px] h-[18px] text-gray-500" />}
+                  title="Meter Category Type"
+                >
+                  <div className="text-sm text-gray-800">
+                    <span className="text-gray-500">Category Name:</span>{" "}
+                    <span className="font-medium">
+                      {asset.meter_category_name || "-"}
+                    </span>
                   </div>
-                  <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-                    <div className="text-sm text-gray-800">
-                      <span className="text-gray-500">Category Name:</span>{" "}
-                      <span className="font-medium">
-                        {asset.meter_category_name || "-"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                </DetailCard>
               )}
 
               {/* Other Details - SPV Code (only when spv_code is a non-null object) */}
               {asset.spv_code && typeof asset.spv_code === 'object' && (
-                <div className="w-full bg-white rounded-lg shadow-sm border mb-6">
-                  <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <FileText className="w-8 h-8" style={{ color: "#C72030" }} />
-                    </div>
-                    <h3 className="text-lg font-semibold uppercase text-black">
-                      Other Details
-                    </h3>
-                  </div>
-                  <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-gray-600 font-medium">SPV Plant Code</TableHead>
-                          <TableHead className="text-gray-600 font-medium">SPV Org Code</TableHead>
-                          <TableHead className="text-gray-600 font-medium">SPV Company Code</TableHead>
-                          <TableHead className="text-gray-600 font-medium">Service Location</TableHead>
-                          <TableHead className="text-gray-600 font-medium">Need QR</TableHead>
-                          <TableHead className="text-gray-600 font-medium">QR Done</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell>{asset.spv_code.spv_plant_code ?? "-"}</TableCell>
-                          <TableCell>{asset.spv_code.spv_org_code ?? "-"}</TableCell>
-                          <TableCell>{asset.spv_code.spv_company_code ?? "-"}</TableCell>
-                          <TableCell>{asset.spv_code.service_location ?? "-"}</TableCell>
-                          <TableCell>{asset.spv_code.need_qr ? "Yes" : "No"}</TableCell>
-                          <TableCell>{asset.spv_code.qr_done != null ? (asset.spv_code.qr_done ? "Yes" : "No") : "-"}</TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
+                <DetailCard
+                  className="mb-6"
+                  icon={<FileText className="w-[18px] h-[18px] text-gray-500" />}
+                  title="Other Details"
+                >
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-gray-600 font-medium">SPV Plant Code</TableHead>
+                        <TableHead className="text-gray-600 font-medium">SPV Org Code</TableHead>
+                        <TableHead className="text-gray-600 font-medium">SPV Company Code</TableHead>
+                        <TableHead className="text-gray-600 font-medium">Service Location</TableHead>
+                        <TableHead className="text-gray-600 font-medium">Need QR</TableHead>
+                        <TableHead className="text-gray-600 font-medium">QR Done</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell>{asset.spv_code.spv_plant_code ?? "-"}</TableCell>
+                        <TableCell>{asset.spv_code.spv_org_code ?? "-"}</TableCell>
+                        <TableCell>{asset.spv_code.spv_company_code ?? "-"}</TableCell>
+                        <TableCell>{asset.spv_code.service_location ?? "-"}</TableCell>
+                        <TableCell>{asset.spv_code.need_qr ? "Yes" : "No"}</TableCell>
+                        <TableCell>{asset.spv_code.qr_done != null ? (asset.spv_code.qr_done ? "Yes" : "No") : "-"}</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </DetailCard>
               )}
 
               <div className="flex flex-col lg:flex-row gap-6">
                 {/* Movement Details */}
-                <div className="w-full bg-white rounded-lg shadow-sm border">
-                  {/* Header */}
-                  <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <TrendingUp
-                        className="w-6 h-6"
-                        style={{ color: "#C72030" }}
-                      />
-                    </div>
-                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A ]">
-                      Movement Details
-                    </h3>
-                  </div>
-
-                  {/* Body */}
-                  <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] px-6">
-                    {/* Timeline with two dots */}
-                    <div className="relative w-full px-4">
-                      <div
-                        className="flex flex-col items-center w-full relative"
-                        style={{ minHeight: "56px" }}
-                      >
-                        <div className="flex w-full items-center justify-between relative">
-                          {/* From Site */}
-                          <div className="flex flex-col items-center w-1/2 text-left">
-                            <div className="text-xs text-gray-500 mb-2 ml-1">
-                              From Site
-                            </div>
-                            <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10 mt-[2px]" />
+                <DetailCard
+                  icon={<TrendingUp className="w-[18px] h-[18px] text-gray-500" />}
+                  title="Movement Details"
+                >
+                  {/* Timeline with two dots */}
+                  <div className="relative w-full px-4">
+                    <div
+                      className="flex flex-col items-center w-full relative"
+                      style={{ minHeight: "56px" }}
+                    >
+                      <div className="flex w-full items-center justify-between relative">
+                        {/* From Site */}
+                        <div className="flex flex-col items-center w-1/2 text-left">
+                          <div className="text-xs text-gray-500 mb-2 ml-1">
+                            From Site
                           </div>
-
-                          {/* Line */}
-                          <div className="absolute top-[32px] left-[25%] right-[25%] h-0.5 bg-[#C72030] z-0" />
-
-                          {/* To Site */}
-                          <div className="flex flex-col items-center w-1/2 text-right">
-                            <div className="text-xs text-gray-500 mb-2 mr-1">
-                              To Site
-                            </div>
-                            <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10" />
-                          </div>
+                          <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10 mt-[2px]" />
                         </div>
 
-                        {/* Values */}
-                        <div className="flex w-[80%] mx-auto justify-between mt-6">
-                          <div className="text-sm font-medium text-[#1A1A1A] break-words px-2 w-1/2 text-left">
-                            {asset.asset_move_tos?.[0]?.from?.location || "NA"}
+                        {/* Line */}
+                        <div className="absolute top-[32px] left-[25%] right-[25%] h-0.5 bg-[#C72030] z-0" />
+
+                        {/* To Site */}
+                        <div className="flex flex-col items-center w-1/2 text-right">
+                          <div className="text-xs text-gray-500 mb-2 mr-1">
+                            To Site
                           </div>
-                          <div className="text-sm font-medium text-[#1A1A1A] break-words px-2 w-1/2 text-right">
-                            {asset.asset_move_tos?.[0]?.to?.location || "NA"}
-                          </div>
+                          <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10" />
+                        </div>
+                      </div>
+
+                      {/* Values */}
+                      <div className="flex w-[80%] mx-auto justify-between mt-6">
+                        <div className="text-sm font-medium text-[#1A1A1A] break-words px-2 w-1/2 text-left">
+                          {asset.asset_move_tos?.[0]?.from?.location || "NA"}
+                        </div>
+                        <div className="text-sm font-medium text-[#1A1A1A] break-words px-2 w-1/2 text-right">
+                          {asset.asset_move_tos?.[0]?.to?.location || "NA"}
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                </DetailCard>
               </div>
               <div className="flex gap-6">
-                <div className="w-full bg-white rounded-lg shadow-sm border">
-                  {/* Header */}
-                  <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <MapPin
-                        className="w-6 h-6 text-white"
-                        style={{ color: "#C72030" }}
-                      />
-                    </div>
-                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                      Location Details
-                    </h3>
-                  </div>
+                <DetailCard
+                  icon={<MapPin className="w-[18px] h-[18px] text-gray-500" />}
+                  title="Location Details"
+                >
+                  {/* Timeline */}
+                  <div className="relative w-full px-4">
+                    {/* Connecting Line */}
+                    <div
+                      className="absolute top-[38px] left-0 right-0 h-0.5 bg-[#C72030] z-0"
+                      style={{
+                        left: `calc(9%)`,
+                        right: `calc(9%)`,
+                      }}
+                    />
 
-                  {/* Body */}
-                  <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-                    {/* Timeline */}
-                    <div className="relative w-full px-4">
-                      {/* Connecting Line */}
-                      <div
-                        className="absolute top-[38px] left-0 right-0 h-0.5 bg-[#C72030] z-0"
-                        style={{
-                          left: `calc(9%)`,
-                          right: `calc(9%)`,
-                        }}
-                      />
-
-                      <div className="flex justify-between items-start relative z-10">
-                        {[
-                          { label: "Site", value: asset.site_name || "NA" },
-                          {
-                            label: "Building",
-                            value: asset.building?.name || "NA",
-                          },
-                          { label: "Wing", value: asset.wing?.name || "NA" },
-                          { label: "Floor", value: asset.floor?.name || "NA" },
-                          { label: "Area", value: asset.area?.name || "NA" },
-                          {
-                            label: "Room",
-                            value: asset.pms_room?.name || "NA",
-                          },
-                        ].map((item, index) => (
-                          <div
-                            key={index}
-                            className="flex flex-col items-center w-full text-center"
-                          >
-                            {/* Label above dot */}
-                            <div className="text-sm text-gray-500 mb-2 mt-1">
-                              {item.label}
-                            </div>
-
-                            {/* Dot */}
-                            <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10 mt-1" />
-
-                            {/* Value below dot */}
-                            <div className="mt-2 text-base font-medium text-[#1A1A1A] break-words px-2">
-                              {item.value}
-                            </div>
+                    <div className="flex justify-between items-start relative z-10">
+                      {[
+                        { label: "Site", value: asset.site_name || "NA" },
+                        {
+                          label: "Building",
+                          value: asset.building?.name || "NA",
+                        },
+                        { label: "Wing", value: asset.wing?.name || "NA" },
+                        { label: "Floor", value: asset.floor?.name || "NA" },
+                        { label: "Area", value: asset.area?.name || "NA" },
+                        {
+                          label: "Room",
+                          value: asset.pms_room?.name || "NA",
+                        },
+                      ].map((item, index) => (
+                        <div
+                          key={index}
+                          className="flex flex-col items-center w-full text-center"
+                        >
+                          {/* Label above dot */}
+                          <div className="text-sm text-gray-500 mb-2 mt-1">
+                            {item.label}
                           </div>
-                        ))}
-                      </div>
-                    </div>
 
-                    {/* Location Type */}
-                    {asset.location_type && (
-                      <div className="mt-6 flex items-start text-sm text-gray-800">
-                        <span className="text-gray-500 w-32">Location Type</span>
-                        <span className="mx-2 text-gray-500">:</span>
-                        <span className="font-semibold text-black">
-                          {asset.location_type}
-                        </span>
-                      </div>
-                    )}
+                          {/* Dot */}
+                          <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10 mt-1" />
+
+                          {/* Value below dot */}
+                          <div className="mt-2 text-base font-medium text-[#1A1A1A] break-words px-2">
+                            {item.value}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+
+                  {/* Location Type */}
+                  {asset.location_type && (
+                    <div className="mt-6 flex items-start text-sm text-gray-800">
+                      <span className="text-gray-500 w-32">Location Type</span>
+                      <span className="mx-2 text-gray-500">:</span>
+                      <span className="font-semibold text-black">
+                        {asset.location_type}
+                      </span>
+                    </div>
+                  )}
+                </DetailCard>
               </div>
 
               {/* Consumption Details */}
               {asset.consumption_pms_asset_measures?.length > 0 && (
-                <div className="w-full bg-white rounded-lg shadow-sm border">
-                  {/* Header */}
-                  <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <TrendingUp
-                        className="w-6 h-6"
-                        style={{ color: "#C72030" }}
-                      />
-                    </div>
-                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                      CONSUMPTION DETAILS
-                    </h3>
-                  </div>
-
-                  {/* Body */}
-                  <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-gray-600 font-medium">
-                            Name
-                          </TableHead>
-                          <TableHead className="text-gray-600 font-medium">
-                            Min
-                          </TableHead>
-                          <TableHead className="text-gray-600 font-medium">
-                            Max
-                          </TableHead>
-                          <TableHead className="text-gray-600 font-medium">
-                            Alert Below
-                          </TableHead>
-                          <TableHead className="text-gray-600 font-medium">
-                            Alert Above
-                          </TableHead>
-                          <TableHead className="text-gray-600 font-medium">
-                            Multiplier
-                          </TableHead>
-                          <TableHead className="text-gray-600 font-medium">
-                            Check Prev Reading
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {asset.consumption_pms_asset_measures.map(
-                          (item: any) => (
-                            <TableRow key={item.id}>
-                              <TableCell>{item.name || "N/A"}</TableCell>
-                              <TableCell>{item.min_value || "N/A"}</TableCell>
-                              <TableCell>{item.max_value || "N/A"}</TableCell>
-                              <TableCell>{item.alert_below || "N/A"}</TableCell>
-                              <TableCell>{item.alert_above || "N/A"}</TableCell>
-                              <TableCell>
-                                {item.multiplier_factor ?? "-"}
-                              </TableCell>
-                              <TableCell>
-                                {item.check_previous_reading ? "Yes" : "No"}
-                              </TableCell>
-                            </TableRow>
-                          )
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
+                <DetailCard
+                  icon={<TrendingUp className="w-[18px] h-[18px] text-gray-500" />}
+                  title="CONSUMPTION DETAILS"
+                >
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-gray-600 font-medium">
+                          Name
+                        </TableHead>
+                        <TableHead className="text-gray-600 font-medium">
+                          Min
+                        </TableHead>
+                        <TableHead className="text-gray-600 font-medium">
+                          Max
+                        </TableHead>
+                        <TableHead className="text-gray-600 font-medium">
+                          Alert Below
+                        </TableHead>
+                        <TableHead className="text-gray-600 font-medium">
+                          Alert Above
+                        </TableHead>
+                        <TableHead className="text-gray-600 font-medium">
+                          Multiplier
+                        </TableHead>
+                        <TableHead className="text-gray-600 font-medium">
+                          Check Prev Reading
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {asset.consumption_pms_asset_measures.map(
+                        (item: any) => (
+                          <TableRow key={item.id}>
+                            <TableCell>{item.name || "N/A"}</TableCell>
+                            <TableCell>{item.min_value || "N/A"}</TableCell>
+                            <TableCell>{item.max_value || "N/A"}</TableCell>
+                            <TableCell>{item.alert_below || "N/A"}</TableCell>
+                            <TableCell>{item.alert_above || "N/A"}</TableCell>
+                            <TableCell>
+                              {item.multiplier_factor ?? "-"}
+                            </TableCell>
+                            <TableCell>
+                              {item.check_previous_reading ? "Yes" : "No"}
+                            </TableCell>
+                          </TableRow>
+                        )
+                      )}
+                    </TableBody>
+                  </Table>
+                </DetailCard>
               )}
 
               {/* Non-Consumption Details */}
               {asset.non_consumption_pms_asset_measures?.length > 0 && (
-                <div className="w-full bg-white rounded-lg shadow-sm border">
-                  {/* Header */}
-                  <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <X className="w-6 h-6" style={{ color: "#C72030" }} />
-                    </div>
-                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                      NON-CONSUMPTION DETAILS
-                    </h3>
-                  </div>
-
-                  {/* Body */}
-                  <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-gray-600 font-medium">
-                            Name
-                          </TableHead>
-                          <TableHead className="text-gray-600 font-medium">
-                            Min
-                          </TableHead>
-                          <TableHead className="text-gray-600 font-medium">
-                            Max
-                          </TableHead>
-                          <TableHead className="text-gray-600 font-medium">
-                            Alert Below
-                          </TableHead>
-                          <TableHead className="text-gray-600 font-medium">
-                            Alert Above
-                          </TableHead>
-                          <TableHead className="text-gray-600 font-medium">
-                            Multiplier
-                          </TableHead>
-                          <TableHead className="text-gray-600 font-medium">
-                            Check Prev Reading
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {asset.non_consumption_pms_asset_measures.map(
-                          (item: any) => (
-                            <TableRow key={item.id}>
-                              <TableCell>{item.name || "N/A"}</TableCell>
-                              <TableCell>{item.min_value || "N/A"}</TableCell>
-                              <TableCell>{item.max_value || "N/A"}</TableCell>
-                              <TableCell>{item.alert_below || "N/A"}</TableCell>
-                              <TableCell>{item.alert_above || "N/A"}</TableCell>
-                              <TableCell>
-                                {item.multiplier_factor ?? "-"}
-                              </TableCell>
-                              <TableCell>
-                                {item.check_previous_reading ? "Yes" : "No"}
-                              </TableCell>
-                            </TableRow>
-                          )
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
+                <DetailCard
+                  icon={<X className="w-[18px] h-[18px] text-gray-500" />}
+                  title="NON-CONSUMPTION DETAILS"
+                >
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-gray-600 font-medium">
+                          Name
+                        </TableHead>
+                        <TableHead className="text-gray-600 font-medium">
+                          Min
+                        </TableHead>
+                        <TableHead className="text-gray-600 font-medium">
+                          Max
+                        </TableHead>
+                        <TableHead className="text-gray-600 font-medium">
+                          Alert Below
+                        </TableHead>
+                        <TableHead className="text-gray-600 font-medium">
+                          Alert Above
+                        </TableHead>
+                        <TableHead className="text-gray-600 font-medium">
+                          Multiplier
+                        </TableHead>
+                        <TableHead className="text-gray-600 font-medium">
+                          Check Prev Reading
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {asset.non_consumption_pms_asset_measures.map(
+                        (item: any) => (
+                          <TableRow key={item.id}>
+                            <TableCell>{item.name || "N/A"}</TableCell>
+                            <TableCell>{item.min_value || "N/A"}</TableCell>
+                            <TableCell>{item.max_value || "N/A"}</TableCell>
+                            <TableCell>{item.alert_below || "N/A"}</TableCell>
+                            <TableCell>{item.alert_above || "N/A"}</TableCell>
+                            <TableCell>
+                              {item.multiplier_factor ?? "-"}
+                            </TableCell>
+                            <TableCell>
+                              {item.check_previous_reading ? "Yes" : "No"}
+                            </TableCell>
+                          </TableRow>
+                        )
+                      )}
+                    </TableBody>
+                  </Table>
+                </DetailCard>
               )}
 
               {/* Purchase Details - Full Width */}
 
-              <div className="w-full bg-white rounded-lg shadow-sm border">
-                {/* Header */}
-                <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <CreditCard
-                      className="w-6 h-6 "
-                      style={{ color: "#C72030" }}
-                    />
+              <DetailCard
+                icon={<CreditCard className="w-[18px] h-[18px] text-gray-500" />}
+                title="Purchase Details"
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8 text-sm text-gray-800">
+                  <div className="flex">
+                    <span className="text-gray-500 w-32">Purchase Cost</span>
+                    <span className="mx-2 text-gray-500">:</span>
+                    <span className="font-medium">
+                      {localStorage.getItem("currency")}{" "}
+                      {asset.purchase_cost?.toLocaleString() || "-"}
+                    </span>
                   </div>
-                  <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                    Purchase Details
-                  </h3>
-                </div>
 
-                {/* Body */}
-                <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8 text-sm text-gray-800">
-                    <div className="flex">
-                      <span className="text-gray-500 w-32">Purchase Cost</span>
-                      <span className="mx-2 text-gray-500">:</span>
-                      <span className="font-medium">
-                        {localStorage.getItem("currency")}{" "}
-                        {asset.purchase_cost?.toLocaleString() || "-"}
-                      </span>
-                    </div>
-
-                    <div className="flex">
-                      <span className="text-gray-500 w-32">
-                        Current Book Value
-                      </span>
-                      <span className="mx-2 text-gray-500">:</span>
-                      <span className="font-medium">
-                        {localStorage.getItem("currency")}{" "}
-                        {asset.current_book_value?.toLocaleString() || "-"} (
-                        {asset.depreciation_method || "-"})
-                      </span>
-                    </div>
-
-                    <div className="flex">
-                      <span className="text-gray-500 w-32">Purchase Date</span>
-                      <span className="mx-2 text-gray-500">:</span>
-                      <span className="font-medium">
-                        {asset.purchased_on || "-"}
-                      </span>
-                    </div>
-
-                    <div className="flex">
-                      <span className="text-gray-500 w-32">Under Warranty</span>
-                      <span className="mx-2 text-gray-500">:</span>
-                      <span className="font-medium">
-                        {asset.warranty ? "Yes" : "No"}
-                      </span>
-                    </div>
-
-                    <div className="flex">
-                      <span className="text-gray-500 w-32">
-                        Warranty Period
-                      </span>
-                      <span className="mx-2 text-gray-500">:</span>
-                      <span className="font-medium">
-                        {asset.warranty_period
-                          ? `${asset.warranty_period} Month(s)`
-                          : "-"}
-                      </span>
-                    </div>
-
-                    <div className="flex">
-                      <span className="text-gray-500 w-32">
-                        Warranty Expiry
-                      </span>
-                      <span className="mx-2 text-gray-500">:</span>
-                      <span className="font-medium">
-                        {asset.warranty_expiry || "-"}
-                      </span>
-                    </div>
-
-                    {/* Purchase Details Extra Fields */}
-                    {asset.extra_fields_grouped?.["Purchase Details"]?.map(
-                      (field, idx) => (
-                        <div key={idx} className="flex">
-                          <span className="text-gray-500 w-32">
-                            {field.field_name
-                              .replace(/_/g, " ")
-                              .replace(/^./, (str) => str.toUpperCase())}
-                          </span>
-                          <span className="mx-2 text-gray-500">:</span>
-                          <span className="font-medium">
-                            {field.field_value || "-"}
-                          </span>
-                        </div>
-                      )
-                    )}
+                  <div className="flex">
+                    <span className="text-gray-500 w-32">
+                      Current Book Value
+                    </span>
+                    <span className="mx-2 text-gray-500">:</span>
+                    <span className="font-medium">
+                      {localStorage.getItem("currency")}{" "}
+                      {asset.current_book_value?.toLocaleString() || "-"} (
+                      {asset.depreciation_method || "-"})
+                    </span>
                   </div>
+
+                  <div className="flex">
+                    <span className="text-gray-500 w-32">Purchase Date</span>
+                    <span className="mx-2 text-gray-500">:</span>
+                    <span className="font-medium">
+                      {asset.purchased_on || "-"}
+                    </span>
+                  </div>
+
+                  <div className="flex">
+                    <span className="text-gray-500 w-32">Under Warranty</span>
+                    <span className="mx-2 text-gray-500">:</span>
+                    <span className="font-medium">
+                      {asset.warranty ? "Yes" : "No"}
+                    </span>
+                  </div>
+
+                  <div className="flex">
+                    <span className="text-gray-500 w-32">
+                      Warranty Period
+                    </span>
+                    <span className="mx-2 text-gray-500">:</span>
+                    <span className="font-medium">
+                      {asset.warranty_period
+                        ? `${asset.warranty_period} Month(s)`
+                        : "-"}
+                    </span>
+                  </div>
+
+                  <div className="flex">
+                    <span className="text-gray-500 w-32">
+                      Warranty Expiry
+                    </span>
+                    <span className="mx-2 text-gray-500">:</span>
+                    <span className="font-medium">
+                      {asset.warranty_expiry || "-"}
+                    </span>
+                  </div>
+
+                  {/* Purchase Details Extra Fields */}
+                  {asset.extra_fields_grouped?.["Purchase Details"]?.map(
+                    (field, idx) => (
+                      <div key={idx} className="flex">
+                        <span className="text-gray-500 w-32">
+                          {field.field_name
+                            .replace(/_/g, " ")
+                            .replace(/^./, (str) => str.toUpperCase())}
+                        </span>
+                        <span className="mx-2 text-gray-500">:</span>
+                        <span className="font-medium">
+                          {field.field_value || "-"}
+                        </span>
+                      </div>
+                    )
+                  )}
                 </div>
-              </div>
+              </DetailCard>
 
               {/* Asset Loaned and Vendor Contact Details Side by Side */}
               <div className="flex gap-6">
                 {/* Asset Loaned - 50% width */}
-                <div className="w-1/2 bg-white rounded-lg shadow-sm border">
-                  {/* Header */}
-                  <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <UserCheck
-                        className="w-6 h-6 "
-                        style={{ color: "#C72030" }}
-                      />
+                <DetailCard
+                  className="w-1/2"
+                  icon={<UserCheck className="w-[18px] h-[18px] text-gray-500" />}
+                  title="Asset Loaned"
+                >
+                  <div className="grid grid-cols-1 gap-y-6 gap-x-8 pl-4">
+                    <div className="text-sm text-gray-800">
+                      <span className="text-gray-500">Vendor:</span>{" "}
+                      {asset.asset_loan_detail?.supplier || "-"}
                     </div>
-                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                      Asset Loaned
-                    </h3>
-                  </div>
-
-                  {/* Body */}
-                  <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-                    <div className="grid grid-cols-1 gap-y-6 gap-x-8 pl-4">
-                      <div className="text-sm text-gray-800">
-                        <span className="text-gray-500">Vendor:</span>{" "}
-                        {asset.asset_loan_detail?.supplier || "-"}
-                      </div>
-                      <div className="text-sm text-gray-800">
-                        <span className="text-gray-500">Agreement From:</span>{" "}
-                        {asset.asset_loan_detail?.agrement_from_date || "-"}
-                      </div>
-                      <div className="text-sm text-gray-800">
-                        <span className="text-gray-500">Agreement To:</span>{" "}
-                        {asset.asset_loan_detail?.agrement_to_date || "-"}
-                      </div>
+                    <div className="text-sm text-gray-800">
+                      <span className="text-gray-500">Agreement From:</span>{" "}
+                      {asset.asset_loan_detail?.agrement_from_date || "-"}
+                    </div>
+                    <div className="text-sm text-gray-800">
+                      <span className="text-gray-500">Agreement To:</span>{" "}
+                      {asset.asset_loan_detail?.agrement_to_date || "-"}
                     </div>
                   </div>
-                </div>
+                </DetailCard>
 
                 {/* Vendor Contact Details - 50% width */}
-                <div className="w-1/2 bg-white rounded-lg shadow-sm border">
-                  {/* Header */}
-                  <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <User className="w-6 h-6 " style={{ color: "#C72030" }} />
+                <DetailCard
+                  className="w-1/2"
+                  icon={<User className="w-[18px] h-[18px] text-gray-500" />}
+                  title="Vendor Contact Details"
+                >
+                  <div className="grid grid-cols-1 gap-y-6 gap-x-8 pl-4">
+                    <div className="text-sm text-gray-800 gap-x-2">
+                      <span className="text-gray-500">Name:</span>{" "}
+                      {asset.supplier_detail?.company_name || "-"}
                     </div>
-                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                      Vendor Contact Details
-                    </h3>
-                  </div>
-
-                  {/* Body */}
-                  <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-                    <div className="grid grid-cols-1 gap-y-6 gap-x-8 pl-4">
-                      <div className="text-sm text-gray-800 gap-x-2">
-                        <span className="text-gray-500">Name:</span>{" "}
-                        {asset.supplier_detail?.company_name || "-"}
-                      </div>
-                      <div className="text-sm text-gray-800 gap-x-2">
-                        <span className="text-gray-500">Mobile No:</span>{" "}
-                        {asset.supplier_detail?.mobile1 || "-"}
-                      </div>
-                      <div className="text-sm text-gray-800 gap-x-2">
-                        <span className="text-gray-500">Email ID:</span>{" "}
-                        {asset.supplier_detail?.email || "-"}
-                      </div>
+                    <div className="text-sm text-gray-800 gap-x-2">
+                      <span className="text-gray-500">Mobile No:</span>{" "}
+                      {asset.supplier_detail?.mobile1 || "-"}
+                    </div>
+                    <div className="text-sm text-gray-800 gap-x-2">
+                      <span className="text-gray-500">Email ID:</span>{" "}
+                      {asset.supplier_detail?.email || "-"}
                     </div>
                   </div>
-                </div>
+                </DetailCard>
               </div>
             </>
           )}

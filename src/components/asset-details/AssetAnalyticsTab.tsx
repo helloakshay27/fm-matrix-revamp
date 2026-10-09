@@ -44,6 +44,50 @@ interface DashboardSummary {
   asset_down_time?: string | number;
 }
 
+// Neutral 18px line icon shared by the summary cards below (inkSoft, per the
+// design system - decorative status-style colour is reserved for real status
+// indicators elsewhere, not these informational tiles).
+const SummaryCogIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
+      stroke="#6B7280"
+      strokeWidth="1.5"
+    />
+    <path
+      d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+      stroke="#6B7280"
+      strokeWidth="1.5"
+    />
+  </svg>
+);
+
+const SummaryInfoIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="12" r="10" stroke="#6B7280" strokeWidth="1.5" />
+    <rect x="11" y="10" width="2" height="7" rx="1" fill="#6B7280" />
+    <rect x="11" y="7" width="2" height="2" rx="1" fill="#6B7280" />
+  </svg>
+);
+
+// Shared shell for the 4-column summary-card grid (Business Genie M21.1):
+// #F5F4F0 card, 16px radius, 18px/20px padding, no border/shadow, white 36x36
+// icon tile with 10px radius holding a neutral 18px line icon.
+const SummaryCard: React.FC<{ icon: React.ReactNode; children: React.ReactNode }> = ({ icon, children }) => (
+  <div
+    className="flex items-center rounded-2xl"
+    style={{ background: "#F5F4F0", padding: "18px 20px" }}
+  >
+    <div
+      className="flex items-center justify-center bg-white shrink-0 mr-4"
+      style={{ width: 36, height: 36, borderRadius: 10 }}
+    >
+      {icon}
+    </div>
+    <div className="flex flex-col justify-center min-w-0">{children}</div>
+  </div>
+);
+
 export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
   asset,
   assetId,
@@ -383,265 +427,67 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
         </div>
       </div> */}
 
-      {/* Cards Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Open Tickets */}
-        <div
-          className="border bg-[#F6F4EE] flex items-center p-4"
-          style={{ height: "132px", width: "auto" }}
-        >
-          <div
-            className="flex items-center justify-center rounded-lg mr-4"
-            style={{ background: "#EDEAE3", width: 62, height: 62 }}
-          >
-            {/* Cog SVG icon */}
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-            </svg>
-          </div>
-          <div className="flex flex-col justify-center">
-            <span
-              className="font-semibold text-[#1A1A1A]"
-              style={{ fontSize: 18 }}
-            >
-              Open Tickets
-            </span>
-            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-              {dashboardSummary?.tickets !== undefined ? dashboardSummary.tickets : "-"}
-            </span>
+      {/* Cards Grid - four columns regardless of count, per the design system */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[14px] mb-6">
+        <SummaryCard icon={<SummaryCogIcon />}>
+          <span className="font-semibold text-[#1A1A1A]" style={{ fontSize: 18 }}>
+            Open Tickets
+          </span>
+          <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
+            {dashboardSummary?.tickets !== undefined ? dashboardSummary.tickets : "-"}
+          </span>
+        </SummaryCard>
 
-          </div>
-        </div>
+        <SummaryCard icon={<SummaryCogIcon />}>
+          <span className="font-semibold text-[#1A1A1A]" style={{ fontSize: 24 }}>
+            {dashboardSummary?.upcoming_amc_date || "-"}
+          </span>
+          <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
+            Upcoming AMC
+          </span>
+        </SummaryCard>
 
-        {/* Upcoming AMC */}
-        <div
-          className="border bg-[#F6F4EE] flex items-center p-4"
-          style={{ height: "132px", width: "auto" }}
-        >
-          <div
-            className="flex items-center justify-center rounded-lg mr-4"
-            style={{ background: "#EDEAE3", width: 62, height: 62 }}
-          >
-            {/* Cog SVG icon */}
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-            </svg>
-          </div>
-          <div className="flex flex-col justify-center">
-            <span
-              className="font-semibold text-[#1A1A1A]"
-              style={{ fontSize: 24 }}
-            >
-              {dashboardSummary?.upcoming_amc_date || "-"}
-            </span>
-            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-              Upcoming AMC
-            </span>
-          </div>
-        </div>
+        <SummaryCard icon={<SummaryCogIcon />}>
+          <span className="font-semibold text-[#1A1A1A]" style={{ fontSize: 18 }}>
+            PPM Completion %
+          </span>
+          <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
+            {dashboardSummary?.ppm_comp_rate || "-"}
+          </span>
+        </SummaryCard>
 
-        {/* PPM Comp. Rate */}
-        <div
-          className="border bg-[#F6F4EE] flex items-center p-4"
-          style={{ height: "132px", width: "auto" }}
-        >
-          <div
-            className="flex items-center justify-center rounded-lg mr-4"
-            style={{ background: "#EDEAE3", width: 62, height: 62 }}
-          >
-            {/* Cog SVG icon */}
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-            </svg>
-          </div>
-          <div className="flex flex-col justify-center">
-            <span
-              className="font-semibold text-[#1A1A1A]"
-              style={{ fontSize: 18 }}
-            >
-              PPM Completion %
-            </span>
-            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-              {dashboardSummary?.ppm_comp_rate || "-"}
-            </span>
-          </div>
-        </div>
+        <SummaryCard icon={<SummaryCogIcon />}>
+          <span className="font-semibold text-[#1A1A1A]" style={{ fontSize: 18 }}>
+            Last PPM Conducted On
+          </span>
+          <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
+            {dashboardSummary?.last_ppm || "-"}
+          </span>
+        </SummaryCard>
 
-        {/* Last PPM */}
-        <div
-          className="border bg-[#F6F4EE] flex items-center p-4"
-          style={{ height: "132px", width: "auto" }}
-        >
-          <div
-            className="flex items-center justify-center rounded-lg mr-4"
-            style={{ background: "#EDEAE3", width: 62, height: 62 }}
-          >
-            {/* Cog SVG icon */}
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-            </svg>
-          </div>
-          <div className="flex flex-col justify-center">
-            <span
-              className="font-semibold text-[#1A1A1A]"
-              style={{ fontSize: 18 }}
-            >
-              Last PPM Conducted On
-            </span>
-            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-              {dashboardSummary?.last_ppm || "-"}
-            </span>
-          </div>
-        </div>
+        <SummaryCard icon={<SummaryCogIcon />}>
+          <span className="font-semibold text-[#1A1A1A]" style={{ fontSize: 24 }}>
+            Next PPM Due
+          </span>
+          <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
+            {dashboardSummary?.next_ppm_due || "-"}
+          </span>
+        </SummaryCard>
 
-        {/* Next PPM Due */}
-        <div
-          className="border bg-[#F6F4EE] flex items-center p-4"
-          style={{ height: "132px", width: "auto" }}
-        >
-          <div
-            className="flex items-center justify-center rounded-lg mr-4"
-            style={{ background: "#EDEAE3", width: 62, height: 62 }}
-          >
-            {/* Cog SVG icon */}
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-            </svg>
-          </div>
-          <div className="flex flex-col justify-center">
-            <span
-              className="font-semibold text-[#1A1A1A]"
-              style={{ fontSize: 24 }}
-            >
-              Next PPM Due
-            </span>
-            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-              {dashboardSummary?.next_ppm_due || "-"}
-            </span>
-          </div>
-        </div>
-
-        {/* 6th Card - Recent Updates */}
-        <div
-          className="border bg-[#F6F4EE] flex items-center p-4"
-          style={{ height: "132px", width: "auto" }}
-        >
-          <div
-            className="flex items-center justify-center rounded-lg mr-4"
-            style={{ background: "#EDEAE3", width: 62, height: 62 }}
-          >
-            {/* Info SVG icon */}
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <circle
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-              <rect x="11" y="10" width="2" height="7" rx="1" fill="#C72030" />
-              <rect x="11" y="7" width="2" height="2" rx="1" fill="#C72030" />
-            </svg>
-          </div>
-          <div className="flex flex-col justify-center">
-            <span
-              className="font-semibold text-[#1A1A1A]"
-              style={{ fontSize: 18 }}
-            >
-              Recent Updates
-            </span>
-            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-              {asset?.last_updated_by ? `Last updated by ${asset.last_updated_by}` : "No recent updates"}
-            </span>
-            <span className="text-[12px] text-[#9CA3AF] mt-2">
-              {asset?.created_by && asset?.updated_at
-                ? `Created by ${asset.created_by} • Last updated on ${asset.updated_at}`
-                : "No update information available"
-              }
-            </span>
-          </div>
-        </div>
+        <SummaryCard icon={<SummaryInfoIcon />}>
+          <span className="font-semibold text-[#1A1A1A]" style={{ fontSize: 18 }}>
+            Recent Updates
+          </span>
+          <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
+            {asset?.last_updated_by ? `Last updated by ${asset.last_updated_by}` : "No recent updates"}
+          </span>
+          <span className="text-[12px] text-[#9CA3AF] mt-2">
+            {asset?.created_by && asset?.updated_at
+              ? `Created by ${asset.created_by} • Last updated on ${asset.updated_at}`
+              : "No update information available"
+            }
+          </span>
+        </SummaryCard>
       </div>
     </div>
   );

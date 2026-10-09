@@ -23,6 +23,22 @@ import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
 const formatCurrency = (value?: number | null) =>
   typeof value === "number" ? `₹${value.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "-";
 
+// API sends "2026-10-07 18:12:34 +0530" — normalise to ISO before parsing.
+const formatApiDateTime = (value?: string | null) => {
+  if (!value) return "-";
+  const iso = value.replace(" ", "T").replace(/\s*([+-]\d{2})(\d{2})$/, "$1:$2");
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+
 // cancellation_tiers[].min_before comes from the API in minutes — render as days/hours/minutes.
 const formatMinutesDuration = (minutes?: number | null) => {
   if (typeof minutes !== "number" || Number.isNaN(minutes)) return "-";
@@ -520,6 +536,55 @@ export const BookingDetailsPage = () => {
                 )} */}
               </div>
             </div>
+
+            {bookings?.current_status?.toLowerCase() === "cancelled" && bookings?.cancellation_details && (
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-semibold uppercase text-gray-500 mb-3">
+                  Cancellation Details
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-4 text-sm">
+                  {[
+                    { label: "Cancelled On", value: formatApiDateTime(bookings.cancellation_details.cancelled_on) },
+                    { label: "Cancelled By", value: bookings.cancellation_details.cancelled_by || "-" },
+                    {
+                      label: "Cancellation Type",
+                      value: bookings.cancellation_details.cancellation_type || "-",
+                      className: "capitalize",
+                    },
+                    { label: "Reason", value: bookings.cancellation_details.reason || "-" },
+                    {
+                      label: "Refund %",
+                      value:
+                        bookings.cancellation_details.refund_percentage != null
+                          ? `${bookings.cancellation_details.refund_percentage}%`
+                          : "-",
+                    },
+                    { label: "Refunded Amount", value: formatCurrency(bookings.cancellation_details.refunded_amount) },
+                    { label: "Refunded On", value: formatApiDateTime(bookings.cancellation_details.refunded_on) },
+                    {
+                      label: "Refund Transaction ID",
+                      value: bookings.cancellation_details.refund_transaction_id || "-",
+                    },
+                    {
+                      label: "Refund Status",
+                      value: bookings.cancellation_details.refund_status || "-",
+                      className: "capitalize",
+                    },
+                  ].map((field) => (
+                    <div key={field.label} className="flex items-start">
+                      <span className="text-gray-500 min-w-[160px]">{field.label}</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span
+                        className={`text-gray-900 font-medium break-words ${field.className || ""}`}
+                        title={typeof field.value === "string" ? field.value : undefined}
+                      >
+                        {field.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )
@@ -551,7 +616,7 @@ export const BookingDetailsPage = () => {
     <div className="p-[30px] min-h-screen bg-transparent">
       <div className="flex items-center gap-2 text-sm text-gray-600 mb-2 cursor-pointer">
         <button
-          onClick={() => navigate(`/pulse/amenity`)}
+          onClick={() => navigate(-1)}
           className="flex items-center gap-1 hover:text-gray-800 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />

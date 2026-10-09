@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import axios from 'axios';
 import { Eye, Plus, Download, Upload, Filter, QrCode, Edit, Trash2, Users, CreditCard, FileText, X, CheckCircle, AlertCircle, Loader2, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import { accountingToast as toast } from "@/lib/accountingToast";
+import "@/styles/accounting.css";
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Badge } from "@/components/ui/badge";
@@ -881,9 +882,9 @@ export const ItemsDashboard = () => {
   );
 
   return (
-    <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
+    <div className="accounting-ui p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Items</h1>
+        <h1 className="acc-title">Items</h1>
       </div>
       {/* Memberships Table */}
       <div className="overflow-x-auto animate-fade-in">

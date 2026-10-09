@@ -18,6 +18,7 @@ import {
   MapPin,
   Pencil,
   X,
+  Ban,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -152,6 +153,8 @@ interface VisitorData {
   encrypted_gatekeeper_id?: string;
   item_movements?: ItemMovement[];
   visitor_in_outs?: VisitorInOut[];
+  // Blacklist/block reason entered when the visitor was blocked
+  reason?: string;
 }
 
 const visitorInOutColumns: ColumnConfig[] = [
@@ -190,6 +193,22 @@ export const VisitorDetailsPage = () => {
   // Helper function to check if value has data
   const hasData = (value: string | undefined | null): boolean => {
     return value !== null && value !== undefined && value !== "";
+  };
+
+  // An exit counts if ANY exit marker is present — the guard's exit time, its display
+  // string, or the master (admin) exit time. guest_exit_time can be null while
+  // master_exit_time_show is set, so checking only one of them left Check-out showing.
+  const hasExited = (v: typeof visitorData): boolean =>
+    !!v &&
+    (hasData(v.guest_exit_time) ||
+      hasData(v.guest_exit_time_show) ||
+      hasData(v.master_exit_time_show));
+
+  // Visitor is blocked/blacklisted — the API reports it as vstatus "Blacklisted"
+  // and carries the reason the guard entered at block time.
+  const isBlocked = (v: typeof visitorData): boolean => {
+    const status = (v?.vstatus || "").toLowerCase();
+    return status.includes("blacklist") || status.includes("blocked");
   };
 
   const formatDateTime = (raw?: string | null): string => {
@@ -404,13 +423,14 @@ export const VisitorDetailsPage = () => {
       const url = getFullUrl(`/pms/admin/visitors/marked_out_visitors.json`);
       const options = getAuthenticatedFetchOptions();
 
-      // Create request body for checkout with current timestamp
+      // Local time with its real UTC offset (the old UTC-time + hardcoded "+05:30"
+      // stamped checkouts 5h30m early).
       const requestBody = {
         gatekeeper: {
-          guest_exit_time: new Date().toISOString().slice(0, 19) + "+05:30",
+          guest_exit_time: getLocalISOString(),
           exit_gate_id: "",
           status: "checked_out",
-          gatekeeper_ids: id,
+          gatekeeper_ids: Number(id),
         },
       };
 
@@ -433,10 +453,14 @@ export const VisitorDetailsPage = () => {
         );
       }
 
+      // { message: "Marked Out Visitors Successfully.", count: 1 }
       const data = await response.json();
+      if (typeof data?.count === "number" && data.count < 1) {
+        throw new Error(data?.message || "No visitor was marked out");
+      }
 
       // Show success toast
-      toast.success("Visitor checked out successfully!");
+      toast.success(data?.message || "Visitor checked out successfully!");
 
       // Refresh visitor data
       window.location.reload();
@@ -501,19 +525,37 @@ export const VisitorDetailsPage = () => {
               {visitorData.vstatus && (
                 <Badge
                   className={
-                    visitorData.vstatus === "checked_in"
-                      ? "bg-green-100 text-green-800"
-                      : visitorData.vstatus === "checked_out"
-                        ? "bg-blue-100 text-blue-800"
-                        : visitorData.vstatus === "expected"
-                          ? "bg-orange-100 text-orange-800"
-                          : "bg-gray-100 text-gray-800"
+                    isBlocked(visitorData)
+                      ? "bg-red-100 text-red-800"
+                      : visitorData.vstatus === "checked_in"
+                        ? "bg-green-100 text-green-800"
+                        : visitorData.vstatus === "checked_out"
+                          ? "bg-blue-100 text-blue-800"
+                          : visitorData.vstatus === "expected"
+                            ? "bg-orange-100 text-orange-800"
+                            : "bg-gray-100 text-gray-800"
                   }
                 >
                   {visitorData.vstatus.replace(/_/g, " ").toUpperCase()}
                 </Badge>
               )}
             </div>
+
+            {/* Blocked visitor → show the reason recorded at block time */}
+            {isBlocked(visitorData) && (
+              <div className="mt-3 flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2">
+                <Ban className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm">
+                  <span className="font-semibold text-red-700">Blocked Reason :</span>
+                  {hasData(visitorData.reason) && (
+                    <>
+                      <span className="text-red-400 mx-1">:</span>
+                      <span className="text-red-800">{visitorData.reason}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-2">
@@ -528,8 +570,10 @@ export const VisitorDetailsPage = () => {
               </Button>
             )}
 
-            {visitorData.vstatus !== "checked_in" &&
-              visitorData.vstatus !== "checked_out" &&
+            {/* Entry time drives the button: no entry yet → Check-in;
+                entry recorded and no exit yet → Check-out; exit recorded → neither. */}
+            {!visitorData.guest_entry_time &&
+              !hasExited(visitorData) &&
               visitorData.approve === 1 && (
                 <Button
                   onClick={handleCheckIn}
@@ -539,7 +583,7 @@ export const VisitorDetailsPage = () => {
                 </Button>
               )}
 
-            {visitorData.vstatus === "checked_in" && (
+            {!!visitorData.guest_entry_time && !hasExited(visitorData) && (
               <Button
                 onClick={handleCheckOut}
                 className="bg-[#C72030] text-white hover:bg-[#C72030]/90"

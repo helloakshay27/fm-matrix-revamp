@@ -55,6 +55,14 @@ const getCurrentSiteId = (): number => {
   return parseInt(siteId);
 };
 
+// The list API sends `is_flagged` as a boolean, but depending on the serializer
+// it can also arrive as 1/0 or "true"/"false" — normalise it to a real boolean
+// so the flag icon on/off state and the flag/unflag action always agree.
+const isVisitorFlagged = (visitor: any): boolean => {
+  const value = visitor?.is_flagged;
+  return value === true || value === 1 || value === '1' || value === 'true';
+};
+
 
 
 // API Service using apiConfig
@@ -257,6 +265,8 @@ export const VisitorsDashboard = () => {
   const [visitorsOutLoading, setVisitorsOutLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [disabledOTPButtons, setDisabledOTPButtons] = useState<Record<number, boolean>>({});
+  // Visitor ids with an in-flight flag/unflag request (blocks double clicks)
+  const [flagTogglingIds, setFlagTogglingIds] = useState<Set<number>>(new Set());
   const [currentFilters, setCurrentFilters] = useState<VisitorFilters>({});
   const [unexpectedFilters, setUnexpectedFilters] = useState<VisitorFilters>({});
   const [expectedFilters, setExpectedFilters] = useState<VisitorFilters>({});
@@ -904,7 +914,10 @@ export const VisitorsDashboard = () => {
             {visitor.status}
           </Badge>
         );
-      case 'action':
+      case 'action': {
+        const isFlagToggling = flagTogglingIds.has(visitor.id);
+        // on/off state comes straight from the list API's is_flagged parameter
+        const isFlagged = isVisitorFlagged(visitor);
         return (
           <div className="flex items-center justify-center gap-1">
             {shouldShow("visitor", "show") && (
@@ -921,20 +934,32 @@ export const VisitorsDashboard = () => {
                 <Eye className="w-4 h-4" />
               </Button>
             )}
-            <div title={`${visitor.is_flagged ? 'Unflag' : 'Flag'} visitor`} className="p-1 hover:bg-gray-100 rounded transition-colors">
+            <div
+              title={
+                isFlagToggling
+                  ? 'Updating flag...'
+                  : `${isFlagged ? 'Unflag' : 'Flag'} visitor`
+              }
+              className={`p-1 rounded transition-colors ${isFlagToggling ? 'opacity-50 cursor-wait' : 'hover:bg-gray-100'}`}
+            >
               <Flag
-                className={`w-4 h-4 cursor-pointer transition-all duration-200 hover:scale-110 ${visitor.is_flagged
-                  ? 'text-red-500 fill-red-500'
-                  : 'text-gray-600'
+                className={`w-4 h-4 transition-all duration-200 ${isFlagToggling
+                  ? 'animate-pulse cursor-wait'
+                  : 'cursor-pointer hover:scale-110'
+                  } ${isFlagged
+                    ? 'text-red-500 fill-red-500'
+                    : 'text-gray-600'
                   }`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleSingleVisitorFlag(visitor.id, visitor.is_flagged);
+                  if (isFlagToggling) return;
+                  handleSingleVisitorFlag(visitor.id, isFlagged);
                 }}
               />
             </div>
           </div>
         );
+      }
       default: {
         const value = visitor[columnKey as keyof typeof visitor];
         return value ? String(value) : '--';
@@ -1301,12 +1326,35 @@ export const VisitorsDashboard = () => {
     // Handle check in logic here
   };
 
+  // Shared caller for the visitor flag/unflag endpoints.
+  // Flag   -> POST /pms/admin/visitors/mark_as_flagged.json   { ids: [...] }
+  // Unflag -> POST /pms/admin/visitors/:id/remove_flagged.json
+  const postFlagApi = async (endpoint: string, body?: Record<string, unknown>) => {
+    const options = getAuthenticatedFetchOptions('POST');
+    const response = await fetch(getFullUrl(endpoint), {
+      ...options,
+      body: body ? JSON.stringify(body) : null,
+    });
+
+    const data = await response.json().catch(() => ({}));
+    const apiCode = typeof data?.code === 'number' ? data.code : null;
+
+    if (!response.ok || (apiCode !== null && apiCode >= 400)) {
+      throw new Error(data?.message || `Failed to update flag status (${response.status})`);
+    }
+
+    return data;
+  };
+
   const handleSingleVisitorFlag = async (visitorId: number, currentFlagStatus: boolean) => {
+    if (flagTogglingIds.has(visitorId)) return;
+
     console.log('VisitorsDashboard - Single flag action for visitor:', visitorId);
+    setFlagTogglingIds(prev => new Set(prev).add(visitorId));
     try {
-      // TODO: Replace with actual API endpoint when available
-      // For now, we'll simulate the flag toggle
-      console.log(`${currentFlagStatus ? 'Unflagging' : 'Flagging'} visitor ${visitorId}`);
+      const data = currentFlagStatus
+        ? await postFlagApi(`/pms/admin/visitors/${visitorId}/remove_flagged.json`)
+        : await postFlagApi('/pms/admin/visitors/mark_as_flagged.json', { ids: [visitorId] });
 
       // Update the visitor locally
       setVisitorHistoryData(prevVisitors => {
@@ -1320,39 +1368,37 @@ export const VisitorsDashboard = () => {
         if (!currentFlagStatus) {
           const newlyFlaggedVisitor = updatedVisitors.find(visitor => visitor.id === visitorId);
           const otherVisitors = updatedVisitors.filter(visitor => visitor.id !== visitorId);
-          return [newlyFlaggedVisitor, ...otherVisitors];
+          return newlyFlaggedVisitor ? [newlyFlaggedVisitor, ...otherVisitors] : updatedVisitors;
         }
 
         return updatedVisitors;
       });
 
-      toast.success(`Visitor ${!currentFlagStatus ? 'flagged' : 'unflagged'} successfully`);
+      toast.success(data?.message || `Visitor ${!currentFlagStatus ? 'flagged' : 'unflagged'} successfully`);
       // F3 · Visitor Flag Toggled
       visitorEvents.onVisitorFlagToggled(visitorId, !currentFlagStatus);
-
-      // TODO: Add actual API call here
-      /*
-      const response = await visitorManagementAPI.markAsFlagged([visitorId]);
-      toast.success(response.message || `Visitor ${!currentFlagStatus ? 'flagged' : 'unflagged'} successfully`);
-      */
-
     } catch (error) {
       console.error('Single flag action failed:', error);
-      toast.error("Failed to flag visitor");
+      toast.error(error instanceof Error ? error.message : 'Failed to flag visitor');
+    } finally {
+      setFlagTogglingIds(prev => {
+        const next = new Set(prev);
+        next.delete(visitorId);
+        return next;
+      });
     }
   };
 
   const handleBulkFlag = async () => {
     console.log('VisitorsDashboard - Bulk flag action for visitors:', selectedVisitors);
     if (selectedVisitors.length === 0) {
-      toast.error("Please select visitors to flag");
-      return;
+      // The selection panel shows its own success toast on resolve, so reject
+      // instead of returning silently (which would report a false success).
+      throw new Error('Please select visitors to flag');
     }
 
     try {
-      // TODO: Replace with actual API endpoint when available
-      // For now, we'll simulate the bulk flag toggle
-      console.log(`Bulk flagging ${selectedVisitors.length} visitors`);
+      await postFlagApi('/pms/admin/visitors/mark_as_flagged.json', { ids: selectedVisitors });
 
       // Update selected visitors locally
       setVisitorHistoryData(prevVisitors => {
@@ -1363,18 +1409,12 @@ export const VisitorsDashboard = () => {
         );
       });
 
-      toast.success(`${selectedVisitors.length} visitor(s) flagged successfully`);
       setSelectedVisitors([]);
-
-      // TODO: Add actual API call here
-      /*
-      await visitorManagementAPI.markAsFlagged(selectedVisitors);
-      await fetchVisitorHistory(historyPagination.currentPage);
-      */
-
+      setSelectAll(false);
     } catch (error) {
       console.error('Bulk flag action failed:', error);
-      toast.error("Failed to flag visitors");
+      // VisitorSelectionPanel surfaces the failure toast to the user
+      throw error;
     }
   };
 

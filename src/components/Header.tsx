@@ -160,7 +160,9 @@ export const Header = () => {
   // Scoped to isPulseSite (pulse domains + org_id 90) and deliberately NOT localhost —
   // the entry above already renders there, and two identical "Usage Analytics" rows in
   // the same profile menu is what the original localhost condition produced.
-  const showPulseUsageAnalytics = isPulseSite;
+  // External-role users (lock_role_name saved at Pulse login) must not see the Pulse dashboard.
+  const isExternalRole = localStorage.getItem("lock_role_name")?.toLowerCase() === "external";
+  const showPulseUsageAnalytics = isPulseSite && !isExternalRole;
 
   const navigate = useNavigate();
   const { shouldShow } = useDynamicPermissions();
@@ -1157,54 +1159,58 @@ export const Header = () => {
                   </div>
                 )}
 
-              {/* Menu Items */}
-              <div className="py-1">
-                <DropdownMenuItem
-                  onClick={() => navigate("/business-compass/profile")}
-                  className="mx-2 my-1 rounded-md"
-                >
-                  <User className="w-4 h-4 mr-2 text-gray-500" />
-                  <span className="font-medium">My Profile</span>
-                </DropdownMenuItem>
-                {/* <DropdownMenuItem
-                  onClick={handleFmPosthog}
-                  className="mx-2 my-1 rounded-md"
-                >
-                  <Activity className="w-4 h-4 mr-2 text-gray-500" />
-                  <span className="font-medium">Usage Analytics</span>
-                </DropdownMenuItem> */}
-                {usageAnalyticsOptions
-                  .filter((option) => option.shouldShow())
-                  .map((option) => (
+              {/* Menu Items — hidden for External-role users, who only get Logout */}
+              {!isExternalRole && (
+                <>
+                  <div className="py-1">
                     <DropdownMenuItem
-                      key={option.key}
-                      onClick={option.onSelect}
+                      onClick={() => navigate("/business-compass/profile")}
+                      className="mx-2 my-1 rounded-md"
+                    >
+                      <User className="w-4 h-4 mr-2 text-gray-500" />
+                      <span className="font-medium">My Profile</span>
+                    </DropdownMenuItem>
+                    {/* <DropdownMenuItem
+                      onClick={handleFmPosthog}
                       className="mx-2 my-1 rounded-md"
                     >
                       <Activity className="w-4 h-4 mr-2 text-gray-500" />
-                      <span className="font-medium">{option.label}</span>
+                      <span className="font-medium">Usage Analytics</span>
+                    </DropdownMenuItem> */}
+                    {usageAnalyticsOptions
+                      .filter((option) => option.shouldShow())
+                      .map((option) => (
+                        <DropdownMenuItem
+                          key={option.key}
+                          onClick={option.onSelect}
+                          className="mx-2 my-1 rounded-md"
+                        >
+                          <Activity className="w-4 h-4 mr-2 text-gray-500" />
+                          <span className="font-medium">{option.label}</span>
+                        </DropdownMenuItem>
+                      ))}
+
+                    <DropdownMenuItem
+                      onClick={() =>
+                        // "/settings" itself has no content - it's a bare parent route for
+                        // /settings/* pages. For the Club tenant, land on the first page of the
+                        // (now Master-merged) Settings package instead.
+                        navigate(
+                          isClubSite
+                            ? "/settings/vas/booking-club/setup"
+                            : "/settings"
+                        )
+                      }
+                      className="mx-2 my-1 rounded-md"
+                    >
+                      <Settings className="w-4 h-4 mr-2 text-gray-500" />
+                      <span className="font-medium">Settings</span>
                     </DropdownMenuItem>
-                  ))}
+                  </div>
 
-                <DropdownMenuItem
-                  onClick={() =>
-                    // "/settings" itself has no content - it's a bare parent route for
-                    // /settings/* pages. For the Club tenant, land on the first page of the
-                    // (now Master-merged) Settings package instead.
-                    navigate(
-                      isClubSite
-                        ? "/settings/vas/booking-club/setup"
-                        : "/settings"
-                    )
-                  }
-                  className="mx-2 my-1 rounded-md"
-                >
-                  <Settings className="w-4 h-4 mr-2 text-gray-500" />
-                  <span className="font-medium">Settings</span>
-                </DropdownMenuItem>
-              </div>
-
-              <DropdownMenuSeparator className="my-1" />
+                  <DropdownMenuSeparator className="my-1" />
+                </>
+              )}
 
               {/* Logout Button */}
               <div className="p-2">

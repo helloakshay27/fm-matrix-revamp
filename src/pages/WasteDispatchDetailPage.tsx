@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, FileCheck, Eye, Download, FileText, FileSpreadsheet, File as FileIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
@@ -116,13 +116,15 @@ const CardShell = ({
   badge?: React.ReactNode;
   children: React.ReactNode;
 }) => (
-  <Card className="w-full bg-white rounded-lg shadow-sm border mb-6">
-    <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-      <h3 className="text-lg font-semibold uppercase text-black">{title}</h3>
+  // Business Genie detail shell (matches components/ui/detail-card): white card,
+  // 16px radius, heading directly on the surface, 12px to body, 20px between blocks.
+  <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-5">
+    <div className="flex items-center justify-between gap-3 mb-3">
+      <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">{title}</h3>
       {badge}
     </div>
-    <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-4">{children}</div>
-  </Card>
+    <div className="text-sm text-gray-800">{children}</div>
+  </div>
 );
 
 const InfoField = ({ label, children }: { label: string; children: React.ReactNode }) => (
@@ -362,19 +364,19 @@ const WasteDispatchDetailPage: React.FC = () => {
 
       {/* Summary cards — both units shown together in each card */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="border border-gray-200 rounded-lg p-4 border-l-4 border-l-gray-400 bg-white">
+        <div className="border border-gray-200 rounded-2xl px-5 py-[18px] bg-white">
           <p className="text-xs text-gray-500 mb-1">Dispatch Quantity</p>
           <p className="text-lg font-bold text-gray-900">
             {formatDual(dispatchData.dispatch_weight_kg, dispatchData.dispatch_weight_ltr)}
           </p>
         </div>
-        <div className="border border-gray-200 rounded-lg p-4 border-l-4 border-l-green-700 bg-white">
+        <div className="border border-gray-200 rounded-2xl px-5 py-[18px] bg-white">
           <p className="text-xs text-gray-500 mb-1">Recycled Quantity</p>
           <p className="text-lg font-bold text-gray-900">
             {formatDual(recycleEntry?.recycled_quantity_kg, recycleEntry?.recycled_quantity_ltr)}
           </p>
         </div>
-        <div className="border border-gray-200 rounded-lg p-4 border-l-4 border-l-red-600 bg-white">
+        <div className="border border-gray-200 rounded-2xl px-5 py-[18px] bg-white">
           <p className="text-xs text-gray-500 mb-1">Wastage / Loss</p>
           <p className="text-lg font-bold text-gray-900">
             {formatDual(wastageKg, wastageLtr)}

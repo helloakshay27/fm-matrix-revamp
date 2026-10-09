@@ -222,11 +222,11 @@ const MsafeDashboardVI: React.FC = () => {
                 }
 
                 const host = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
-                const url = `https://${host}/msafe_dashboard/cluster_level_filter.json?access_token=${encodeURIComponent(token)}&company_id=145`;
+                const url = `https://${host}/msafe_dashboard/cluster_level_filter.json?company_id=145`;
 
                 const controller = new AbortController();
 
-                const res = await fetch(url, { signal: controller.signal });
+                const res = await fetch(url, { signal: controller.signal, headers: { Authorization: `Bearer ${token}` } });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
                 const data = await res.json();
@@ -263,9 +263,9 @@ const MsafeDashboardVI: React.FC = () => {
                 const token = localStorage.getItem('token') || '';
                 if (!baseUrl || !token) return;
                 const host = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
-                const url = `https://${host}/msafe_dashboard/circle_level_filter.json?access_token=${encodeURIComponent(token)}&company_id=145`;
+                const url = `https://${host}/msafe_dashboard/circle_level_filter.json?company_id=145`;
                 const controller = new AbortController();
-                const res = await fetch(url, { signal: controller.signal });
+                const res = await fetch(url, { signal: controller.signal, headers: { Authorization: `Bearer ${token}` } });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
                 const arr = data?.circles || (Array.isArray(data) ? data : []);
@@ -297,9 +297,9 @@ const MsafeDashboardVI: React.FC = () => {
                 if (!baseUrl || !token) return;
                 const host = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
                 // Note: endpoint is 'fuction_level_filter.json' as provided
-                const url = `https://${host}/msafe_dashboard/fuction_level_filter.json?access_token=${encodeURIComponent(token)}&company_id=145`;
+                const url = `https://${host}/msafe_dashboard/fuction_level_filter.json?company_id=145`;
                 const controller = new AbortController();
-                const res = await fetch(url, { signal: controller.signal });
+                const res = await fetch(url, { signal: controller.signal, headers: { Authorization: `Bearer ${token}` } });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
                 const arr = data?.functions || (Array.isArray(data) ? data : []);
@@ -354,7 +354,6 @@ const MsafeDashboardVI: React.FC = () => {
             }
             const host = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
             const params = new URLSearchParams();
-            params.set('access_token', token);
             params.set('company_id', '145');
             if (useFilters) {
                 const src = filters ?? {
@@ -376,7 +375,7 @@ const MsafeDashboardVI: React.FC = () => {
                 params.set('to_date', formatDate(src.to));
             }
             const url = `https://${host}/msafe_dashboard/new_joinee_trend.json?${params.toString()}`;
-            const res = await fetch(url);
+            const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
             const arr = json?.clusters || [];
@@ -421,7 +420,6 @@ const MsafeDashboardVI: React.FC = () => {
             }
             const host = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
             const params = new URLSearchParams();
-            params.set('access_token', token);
             params.set('company_id', '145');
             if (useFilters) {
                 const src = filters ?? {
@@ -443,7 +441,7 @@ const MsafeDashboardVI: React.FC = () => {
                 params.set('to_date', formatDate(src.to));
             }
             const url = `https://${host}/msafe_dashboard/new_joinee_trend_monthwise.json?${params.toString()}`;
-            const res = await fetch(url);
+            const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
             const resp = json?.response || {};
@@ -676,7 +674,6 @@ const MsafeDashboardVI: React.FC = () => {
             }
             const host = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
             const params = new URLSearchParams();
-            params.set('access_token', token);
             params.set('company_id', '145');
             if (useFilters) {
                 const src = filters ?? {
@@ -699,7 +696,7 @@ const MsafeDashboardVI: React.FC = () => {
             }
 
             const url = `https://${host}/msafe_dashboard/onboarding_status.json?${params.toString()}`;
-            const res = await fetch(url);
+            const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
             const arr = json?.clusters || [];
@@ -775,7 +772,6 @@ const MsafeDashboardVI: React.FC = () => {
             }
             const host = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
             const params = new URLSearchParams();
-            params.set('access_token', token);
             params.set('company_id', '145');
             if (useFilters) {
                 const src = filters ?? {
@@ -798,7 +794,7 @@ const MsafeDashboardVI: React.FC = () => {
             }
 
             const url = `https://${host}/msafe_dashboard/day_1_hsw_induction.json?${params.toString()}`;
-            const res = await fetch(url);
+            const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
             const arr = json?.clusters || [];
@@ -829,7 +825,6 @@ const MsafeDashboardVI: React.FC = () => {
             }
             const host = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
             const params = new URLSearchParams();
-            params.set('access_token', token);
             params.set('company_id', '145');
             if (useFilters) {
                 const src = filters ?? {
@@ -852,7 +847,7 @@ const MsafeDashboardVI: React.FC = () => {
             }
 
             const url = `https://${host}/msafe_dashboard/training_compliance.json?${params.toString()}`;
-            const res = await fetch(url);
+            const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
             const arr = json?.clusters || [];
@@ -934,7 +929,6 @@ const MsafeDashboardVI: React.FC = () => {
 
             const host = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
             const params = new URLSearchParams();
-            params.set('access_token', token);
             params.set('company_id', '145');
             
             // Use applied filters for the download
@@ -951,7 +945,7 @@ const MsafeDashboardVI: React.FC = () => {
 
             const url = `https://${host}/msafe_dashboard/${endpoint}?${params.toString()}`;
             
-            const res = await fetch(url);
+            const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             
             // Get the response as blob first to check content
@@ -1175,7 +1169,6 @@ const MsafeDashboardVI: React.FC = () => {
             }
             const host = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
             const params = new URLSearchParams();
-            params.set('access_token', token);
             params.set('company_id', '145');
             if (useFilters) {
                 const src = filters ?? {
@@ -1197,7 +1190,7 @@ const MsafeDashboardVI: React.FC = () => {
                 if (src.to) params.set('to_date', formatDate(src.to));
             }
             const url = `https://${host}/msafe_dashboard/first_time_pass_rate.json?${params.toString()}`;
-            const res = await fetch(url);
+            const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
             const arr = json?.clusters || [];
@@ -1325,7 +1318,6 @@ const MsafeDashboardVI: React.FC = () => {
             }
             const host = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
             const params = new URLSearchParams();
-            params.set('access_token', token);
             params.set('company_id', '145');
             if (useFilters) {
                 const src = filters ?? {
@@ -1347,7 +1339,7 @@ const MsafeDashboardVI: React.FC = () => {
                 params.set('to_date', formatDate(src.to));
             }
             const url = `https://${host}/msafe_dashboard/lmc_section.json?${params.toString()}`;
-            const res = await fetch(url);
+            const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
             const clusters = json?.clusters ?? {};
@@ -1412,7 +1404,6 @@ const MsafeDashboardVI: React.FC = () => {
             }
             const host = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
             const params = new URLSearchParams();
-            params.set('access_token', token);
             params.set('company_id', '145');
             if (useFilters) {
                 const src = filters ?? {
@@ -1434,7 +1425,7 @@ const MsafeDashboardVI: React.FC = () => {
                 params.set('to_date', formatDate(src.to));
             }
             const url = `https://${host}/msafe_dashboard/smt_section.json?${params.toString()}`;
-            const res = await fetch(url);
+            const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
             const obj = json?.res || {};
@@ -1543,7 +1534,6 @@ const MsafeDashboardVI: React.FC = () => {
             }
             const host = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
             const params = new URLSearchParams();
-            params.set('access_token', token);
             params.set('company_id', '145');
             if (useFilters) {
                 const src = filters ?? {
@@ -1565,7 +1555,7 @@ const MsafeDashboardVI: React.FC = () => {
                 params.set('to_date', formatDate(src.to));
             }
             const url = `https://${host}/msafe_dashboard/compliance_forecasting.json?${params.toString()}`;
-            const res = await fetch(url);
+            const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
             const arr = json?.clusters || [];
@@ -1658,7 +1648,6 @@ const MsafeDashboardVI: React.FC = () => {
             }
             const host = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
             const params = new URLSearchParams();
-            params.set('access_token', token);
             params.set('company_id', '145');
             if (useFilters) {
                 const src = filters ?? {
@@ -1680,7 +1669,7 @@ const MsafeDashboardVI: React.FC = () => {
                 params.set('to_date', formatDate(src.to));
             }
             const url = `https://${host}/msafe_dashboard/driving_section.json?${params.toString()}`;
-            const res = await fetch(url);
+            const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
             const obj = json?.res || json?.response || {};
@@ -1731,7 +1720,6 @@ const MsafeDashboardVI: React.FC = () => {
             }
             const host = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
             const params = new URLSearchParams();
-            params.set('access_token', token);
             params.set('company_id', '145');
             if (useFilters) {
                 const src = filters ?? {
@@ -1753,7 +1741,7 @@ const MsafeDashboardVI: React.FC = () => {
                 params.set('to_date', formatDate(src.to));
             }
             const url = `https://${host}/msafe_dashboard/medical_checkup_and_first_aid.json?${params.toString()}`;
-            const res = await fetch(url);
+            const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
             const clusters = json?.clusters ?? [];

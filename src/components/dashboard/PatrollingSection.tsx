@@ -13,16 +13,39 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  Label,
 } from "recharts";
-import { Footprints, AlertCircle } from "lucide-react";
+import { RefreshCw, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ANALYTICS_PALETTE } from "@/styles/chartPalette";
 import { fetchPatrolling, PatrollingEndpoint, PatrollingResponse } from "@/services/fmDashboardAPI";
 
 type Row = Record<string, unknown>;
 type State = { data?: PatrollingResponse; error?: string };
 
-const PALETTE = ANALYTICS_PALETTE;
+const PIE_COLORS = [
+  "#76CDC1",
+  "#E39090",
+  "#CDCAF5",
+  "#9EC8BA",
+  "#EDC488",
+  "#8E7BE0",
+  "#DA7756",
+  "#798C5E",
+];
+const PALETTE = PIE_COLORS;
+
+// Tile styling mirrors the "Ticket Status Overview" card.
+const TILE_STYLES = {
+  red: { bg: "rgba(227,144,144,0.15)", num: "#D97655" },
+  green: { bg: "rgba(183,220,212,0.30)", num: "#2E7D6B" },
+  purple: { bg: "#EFEFFB", num: "#6B5EA8" },
+};
+const tileStyle = (key: string) => {
+  if (/open|reopen|critical|pending|miss|fail|overdue/i.test(key)) return TILE_STYLES.red;
+  if (/closed|complete|done/i.test(key)) return TILE_STYLES.green;
+  return TILE_STYLES.purple;
+};
+
 const META_KEYS = new Set(["success", "message", "filters", "status_code", "errors"]);
 const LABEL_KEYS = [
   "name", "label", "status", "category", "date", "day", "guard_name", "guard", "staff_name",
@@ -146,11 +169,36 @@ function toKpis(raw: unknown): { key: string; value: number }[] {
 const fmt = (key: string, v: number) =>
   isPct(key) ? `${Number.isInteger(v) ? v : v.toFixed(1)}%` : v.toLocaleString();
 
+const axisTick = { fontSize: 11, fill: "#6B7280" };
+const axisLine = { stroke: "#D1D5DB" };
+const tooltipStyle = {
+  backgroundColor: "#FFFFFF",
+  border: "1px solid #E5E7EB",
+  borderRadius: "8px",
+  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+};
+
 const Empty = () => (
-  <div className="h-full min-h-[200px] flex items-center justify-center text-sm text-[#888780]">
-    No data for the selected period
+  <div className="h-64 flex items-center justify-center">
+    <p className="text-gray-500">No data available for the selected period</p>
   </div>
 );
+
+const renderCenterTotalLabel = (total: number) => {
+  return ({ viewBox }: any) => {
+    const { cx, cy } = viewBox;
+    return (
+      <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle">
+        <tspan x={cx} y={cy - 6} className="fill-gray-900" style={{ fontSize: "20px", fontWeight: 700 }}>
+          {total.toLocaleString()}
+        </tspan>
+        <tspan x={cx} y={cy + 14} className="fill-gray-500" style={{ fontSize: "11px" }}>
+          Total
+        </tspan>
+      </text>
+    );
+  };
+};
 
 const TITLES: Record<PatrollingEndpoint, string> = {
   patrolling_overview: "Patrolling Overview",
@@ -201,28 +249,42 @@ export const PatrollingCard: React.FC<PatrollingCardProps> = ({ endpoint, title,
   const labelKey = labelKeyOf(rows);
   const keys = numericKeysOf(rows, labelKey);
 
-  const bar = (horizontal: boolean) => {
+  const bar = (horizontal: boolean, hideCategoryLabels = false) => {
     if (!rows.length || !keys.length) return <Empty />;
     const series = keys.slice(0, 4);
     return (
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={rows} layout={horizontal ? "vertical" : "horizontal"} margin={{ left: horizontal ? 24 : 0, right: 8 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={!horizontal} horizontal={!horizontal} />
+      <ResponsiveContainer width="100%" height={320}>
+        <BarChart data={rows} layout={horizontal ? "vertical" : "horizontal"} margin={{ top: 20, right: 30, left: horizontal ? 20 : 0, bottom: horizontal ? 20 : 80 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={!horizontal} horizontal={!horizontal} />
           {horizontal ? (
             <>
-              <XAxis type="number" tick={{ fill: '#9CA3AF', fontSize: 10 }} axisLine={false} tickLine={false} />
-              <YAxis type="category" dataKey={labelKey} width={110} tick={{ fill: '#9CA3AF', fontSize: 10 }} axisLine={false} tickLine={false} />
+              <XAxis type="number" tick={axisTick} axisLine={axisLine} tickLine={axisLine} />
+              <YAxis type="category" dataKey={labelKey} width={110} tick={axisTick} axisLine={axisLine} tickLine={axisLine} />
             </>
           ) : (
             <>
-              <XAxis dataKey={labelKey} tick={{ fill: '#9CA3AF', fontSize: 10 }} axisLine={false} tickLine={false} interval={0} angle={rows.length > 6 ? -30 : 0} textAnchor={rows.length > 6 ? "end" : "middle"} height={rows.length > 6 ? 60 : 30} />
-              <YAxis tick={{ fill: '#9CA3AF', fontSize: 10 }} axisLine={false} tickLine={false} />
+              <XAxis
+                dataKey={labelKey}
+                tick={hideCategoryLabels ? false : axisTick}
+                axisLine={axisLine}
+                tickLine={axisLine}
+                interval={0}
+                angle={!hideCategoryLabels && rows.length > 6 ? -45 : 0}
+                textAnchor={!hideCategoryLabels && rows.length > 6 ? "end" : "middle"}
+                height={hideCategoryLabels ? 8 : 80}
+              />
+              <YAxis tick={axisTick} axisLine={axisLine} tickLine={axisLine} />
             </>
           )}
-          <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }} />
+          <Tooltip contentStyle={tooltipStyle} />
           {series.length > 1 && <Legend formatter={humanize} wrapperStyle={{ fontSize: 11 }} />}
           {series.map((k, i) => (
-            <Bar key={k} dataKey={k} name={humanize(k)} fill={PALETTE[i % PALETTE.length]} radius={[4, 4, 0, 0]} barSize={28} />
+            <Bar key={k} dataKey={k} name={humanize(k)} radius={[4, 4, 0, 0]} barSize={28} fill={PALETTE[i % PALETTE.length]}>
+              {series.length === 1 &&
+                rows.map((_, ri) => (
+                  <Cell key={`cell-${ri}`} fill={PALETTE[ri % PALETTE.length]} />
+                ))}
+            </Bar>
           ))}
         </BarChart>
       </ResponsiveContainer>
@@ -232,16 +294,29 @@ export const PatrollingCard: React.FC<PatrollingCardProps> = ({ endpoint, title,
   const status = () => {
     const valueKey = keys.find((k) => /count|total|value/i.test(k)) ?? keys[0];
     if (!rows.length || !valueKey) return <Empty />;
+    const total = rows.reduce((sum, r) => sum + (Number(r[valueKey]) || 0), 0);
     return (
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height={320}>
         <PieChart>
-          <Pie data={rows} dataKey={valueKey} nameKey={labelKey} innerRadius={60} outerRadius={95} paddingAngle={2}>
+          <Pie
+            data={rows}
+            dataKey={valueKey}
+            nameKey={labelKey}
+            innerRadius={45}
+            outerRadius={90}
+            paddingAngle={2}
+            stroke="#FFFFFF"
+            strokeWidth={2}
+            labelLine={false}
+            label={({ name, value }) => `${name} (${value})`}
+          >
             {rows.map((_, i) => (
               <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
             ))}
+            <Label content={renderCenterTotalLabel(total)} position="center" />
           </Pie>
-          <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }} />
-          <Legend wrapperStyle={{ fontSize: 11 }} />
+          <Tooltip contentStyle={tooltipStyle} formatter={(value) => [value, "Count"]} />
+          <Legend formatter={humanize} wrapperStyle={{ fontSize: 11 }} />
         </PieChart>
       </ResponsiveContainer>
     );
@@ -251,12 +326,12 @@ export const PatrollingCard: React.FC<PatrollingCardProps> = ({ endpoint, title,
     if (!rows.length || !keys.length) return <Empty />;
     const series = keys.slice(0, 3);
     return (
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={rows} margin={{ left: 0, right: 8 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis dataKey={labelKey} tick={{ fill: '#9CA3AF', fontSize: 10 }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fill: '#9CA3AF', fontSize: 10 }} axisLine={false} tickLine={false} />
-          <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }} />
+      <ResponsiveContainer width="100%" height={320}>
+        <AreaChart data={rows} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+          <XAxis dataKey={labelKey} tick={axisTick} axisLine={axisLine} tickLine={axisLine} />
+          <YAxis tick={axisTick} axisLine={axisLine} tickLine={axisLine} />
+          <Tooltip contentStyle={tooltipStyle} />
           {series.length > 1 && <Legend formatter={humanize} wrapperStyle={{ fontSize: 11 }} />}
           {series.map((k, i) => (
             <Area key={k} type="monotone" dataKey={k} name={humanize(k)} stroke={PALETTE[i]} fill={PALETTE[i]} fillOpacity={0.18} strokeWidth={2} />
@@ -268,17 +343,22 @@ export const PatrollingCard: React.FC<PatrollingCardProps> = ({ endpoint, title,
 
   const kpiTiles = (list: { key: string; value: number }[]) =>
     list.length ? (
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 overflow-auto h-full content-start">
-        {list.map((k, i) => (
-          <div
-            key={k.key}
-            className="rounded-lg bg-[#f6f4ee] border border-[#c4b89d]/50 p-4"
-            style={{ borderLeft: `4px solid ${PALETTE[i % PALETTE.length]}` }}
-          >
-            <div className="text-2xl font-semibold text-[#2c2c2c]">{fmt(k.key, k.value)}</div>
-            <div className="text-xs font-medium text-[#888780] mt-1">{humanize(k.key)}</div>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {list.map((k) => {
+          const { bg, num } = tileStyle(k.key);
+          return (
+            <div
+              key={k.key}
+              className="rounded-2xl px-4 py-5 flex flex-col items-center text-center gap-1"
+              style={{ backgroundColor: bg }}
+            >
+              <div className="text-2xl font-bold" style={{ color: num, fontFamily: "Work Sans, sans-serif" }}>
+                {fmt(k.key, k.value)}
+              </div>
+              <div className="text-xs text-gray-500">{humanize(k.key)}</div>
+            </div>
+          );
+        })}
       </div>
     ) : (
       <Empty />
@@ -288,20 +368,20 @@ export const PatrollingCard: React.FC<PatrollingCardProps> = ({ endpoint, title,
     if (!rows.length) return kpiTiles(toKpis(payload));
     const cols = Object.keys(rows[0]).filter((k) => !isObj(rows[0][k]) && !Array.isArray(rows[0][k])).slice(0, 6);
     return (
-      <div className="h-full overflow-auto">
+      <div className="h-64 overflow-auto rounded-lg border bg-white">
         <table className="w-full text-xs">
-          <thead className="sticky top-0 bg-[#f6f4ee]">
+          <thead className="sticky top-0 bg-gray-50">
             <tr>
               {cols.map((c) => (
-                <th key={c} className="text-left font-semibold px-2 py-2 text-[#2c2c2c]">{humanize(c)}</th>
+                <th key={c} className="text-left font-semibold px-3 py-2 text-gray-700">{humanize(c)}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {rows.map((r, i) => (
-              <tr key={i} className="border-b border-[#d5dbdb]/60">
+              <tr key={i} className="border-b border-gray-100 last:border-0">
                 {cols.map((c) => (
-                  <td key={c} className="px-2 py-1.5 text-[#2c2c2c]">{String(r[c] ?? "-")}</td>
+                  <td key={c} className="px-3 py-1.5 text-gray-700">{String(r[c] ?? "-")}</td>
                 ))}
               </tr>
             ))}
@@ -320,6 +400,7 @@ export const PatrollingCard: React.FC<PatrollingCardProps> = ({ endpoint, title,
       case "patrolling_trend":
         return trend();
       case "patrolling_guard_performance":
+        return bar(false, true);
       case "patrolling_completion_by_shift":
         return bar(false);
       case "patrolling_location_analysis":
@@ -331,28 +412,43 @@ export const PatrollingCard: React.FC<PatrollingCardProps> = ({ endpoint, title,
   };
 
   return (
-    <Card className="bg-white border border-[#c4b89d]/60 shadow-sm h-full flex flex-col">
-      <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
-        <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
-          <Footprints className="w-4 h-4 text-[#da7756]" />
-          {title ?? TITLES[ep] ?? humanize(endpoint)}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex-1 min-h-[280px] relative p-0">
-        <div className="absolute inset-0 px-4 pb-4">
-          {loading && !state.data ? (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="h-7 w-7 rounded-full border-2 border-gray-200 border-t-[#da7756] animate-spin" />
-            </div>
-          ) : state.error ? (
-            <div className="h-full flex flex-col items-center justify-center gap-2 text-sm text-[#e7848e]">
-              <AlertCircle className="w-5 h-5" />
-              <span>Failed to load</span>
-            </div>
-          ) : (
-            body()
-          )}
+    <Card className="w-full border border-gray-200 shadow-sm bg-white h-full flex flex-col">
+      <CardHeader className="pb-4 px-6 pt-6 flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-xl font-bold text-[#C72030]">
+            {title ?? TITLES[ep] ?? humanize(endpoint)}
+          </CardTitle>
+          <RefreshCw
+            data-no-drag="true"
+            className={`w-5 h-5 flex-shrink-0 cursor-pointer text-black hover:text-gray-700 transition-colors z-50${loading ? " animate-spin" : ""}`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              load();
+            }}
+            onPointerDown={(e) => { e.stopPropagation(); }}
+            onMouseDown={(e) => { e.stopPropagation(); }}
+            style={{ pointerEvents: "auto" }}
+          />
         </div>
+      </CardHeader>
+      <CardContent className="px-6 pb-6 flex-1 min-h-0">
+        {loading && !state.data ? (
+          <div className="bg-gray-50 rounded-lg p-4 min-h-[280px] flex items-center justify-center">
+            <RefreshCw className="w-8 h-8 animate-spin text-[#C72030]" />
+          </div>
+        ) : state.error ? (
+          <div className="bg-gray-50 rounded-lg p-4 min-h-[280px] flex flex-col items-center justify-center gap-2 text-sm text-[#E7848E]">
+            <AlertCircle className="w-5 h-5" />
+            <span>Failed to load</span>
+          </div>
+        ) : (
+          ep === "patrolling_overview" ? (
+            <div>{body()}</div>
+          ) : (
+            <div className="bg-gray-50 rounded-lg p-4">{body()}</div>
+          )
+        )}
       </CardContent>
     </Card>
   );

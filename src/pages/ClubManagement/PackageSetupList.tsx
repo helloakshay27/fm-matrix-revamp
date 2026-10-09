@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Plus, Eye, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
@@ -237,18 +238,11 @@ export const PackageSetupList = () => {
     priceNonMember: <span className="text-sm text-gray-900">₹{pkg.priceNonMember.toLocaleString("en-IN")}</span>,
     validity: <span className="text-sm text-gray-600">{pkg.validityDays} days</span>,
     status: (
-      <button
-        type="button"
-        onClick={() => handleToggleStatus(pkg)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${pkg.active ? "bg-brand" : "bg-gray-300"
-          }`}
-        title={pkg.active ? "Active - click to deactivate" : "Inactive - click to activate"}
-      >
-        <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${pkg.active ? "translate-x-6" : "translate-x-1"
-            }`}
-        />
-      </button>
+      <Switch
+        checked={pkg.active}
+        onCheckedChange={() => handleToggleStatus(pkg)}
+        aria-label={`Toggle ${pkg.name} status`}
+      />
     ),
   });
 

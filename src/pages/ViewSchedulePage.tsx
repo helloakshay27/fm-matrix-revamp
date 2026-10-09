@@ -376,7 +376,7 @@ export const ViewSchedulePage = () => {
             <Button
               onClick={handleViewPerformance}
               variant="outline"
-              className="border-[#C72030] text-[#C72030]"
+              className="h-[30px] px-3 gap-[7px] rounded-[8px] bg-white border-[1.5px] border-[#2C2C2C] text-[#2C2C2C] text-[11.5px] font-semibold tracking-normal hover:bg-[#F6F4EE] [&_svg]:text-[#2C2C2C]"
             >
               View Performance
             </Button>
@@ -444,8 +444,8 @@ export const ViewSchedulePage = () => {
               <Card className="w-full">
                 <CardHeader className="pb-4 lg:pb-6">
                   <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <FileText className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
+                    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 shrink-0">
+                      <FileText className="w-[18px] h-[18px]" style={{ color: 'rgba(44, 44, 44, 0.68)' }} />
                     </div>
                     <span className="uppercase tracking-wide">Basic Configuration</span>
                   </CardTitle>
@@ -635,8 +635,8 @@ export const ViewSchedulePage = () => {
                   <Card className="w-full">
                     <CardHeader className="pb-4 lg:pb-6">
                       <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
-                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                          <FileText className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
+                        <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 shrink-0">
+                          <FileText className="w-[18px] h-[18px]" style={{ color: 'rgba(44, 44, 44, 0.68)' }} />
                         </div>
                         <span className="uppercase tracking-wide">Task Details</span>
                       </CardTitle>
@@ -647,7 +647,7 @@ export const ViewSchedulePage = () => {
                           <div key={gid}>
                             {/* Group header */}
                             <div className="flex items-center gap-2 mb-4 pb-2 border-b-2" style={{ borderColor: 'var(--color-primary)' }}>
-                              <Layers className="w-4 h-4" style={{ color: 'var(--color-primary)' }} />
+                              <Layers className="w-4 h-4" style={{ color: 'rgba(44, 44, 44, 0.68)' }} />
                               <span className="font-semibold text-base text-gray-900 uppercase tracking-wide">
                                 {getGroupName(gid) || `Group ${gi + 1}`}
                               </span>
@@ -812,8 +812,8 @@ export const ViewSchedulePage = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <Clock className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
+                  <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 shrink-0">
+                    <Clock className="w-[18px] h-[18px]" style={{ color: 'rgba(44, 44, 44, 0.68)' }} />
                   </div>
                   <span className="uppercase tracking-wide">Time Setup</span>
                 </CardTitle>
@@ -913,8 +913,8 @@ export const ViewSchedulePage = () => {
               <Card className="w-full">
                 <CardHeader className="pb-4 lg:pb-6">
                   <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <FileText className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
+                    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 shrink-0">
+                      <FileText className="w-[18px] h-[18px]" style={{ color: 'rgba(44, 44, 44, 0.68)' }} />
                     </div>
                     <span className="uppercase tracking-wide">Schedule Configuration</span>
                   </CardTitle>
@@ -1020,8 +1020,8 @@ export const ViewSchedulePage = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <Link className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
+                  <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 shrink-0">
+                    <Link className="w-[18px] h-[18px]" style={{ color: 'rgba(44, 44, 44, 0.68)' }} />
                   </div>
                   <span className="uppercase tracking-wide">Association</span>
                 </CardTitle>
@@ -1085,8 +1085,8 @@ export const ViewSchedulePage = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <Mail className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
+                  <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 shrink-0">
+                    <Mail className="w-[18px] h-[18px]" style={{ color: 'rgba(44, 44, 44, 0.68)' }} />
                   </div>
                   <span className="uppercase tracking-wide">Email Trigger Rules</span>
                 </CardTitle>
@@ -1129,8 +1129,8 @@ export const ViewSchedulePage = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <MapPin className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
+                  <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 shrink-0">
+                    <MapPin className="w-[18px] h-[18px]" style={{ color: 'rgba(44, 44, 44, 0.68)' }} />
                   </div>
                   <span className="uppercase tracking-wide">Asset Mapping List</span>
                 </CardTitle>

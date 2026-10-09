@@ -2439,9 +2439,9 @@ export const IncidentSetupDashboard = () => {
                   </div>
 
                   <div className="flex gap-3 pt-2">
-                    <Button onClick={handleEditEsclation} 
-                    className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost">
+                    <Button onClick={handleEditEsclation}
+                      className="fm-button-fix fm-button-brand px-4 py-2"
+                      variant="ghost">
                       Submit
                     </Button>
                     <Button onClick={handleEditBack} variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2">
@@ -2805,7 +2805,10 @@ export const IncidentSetupDashboard = () => {
                                   style={{
                                     fontSize: '11px',
                                     height: '24px',
-                                    margin: '0'
+                                    margin: '0',
+                                    backgroundColor: '#DA7756',
+                                    color: '#fff',
+                                    // '& .MuiChip-deleteIcon': { color: '#fff', '&:hover': { color: '#f0c9c9' } }
                                   }}
                                 />
                               );
@@ -3238,7 +3241,7 @@ export const IncidentSetupDashboard = () => {
                     </div>
                   )}
                   <Button onClick={handleSubmit} className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost">
+                    variant="ghost">
                     {selectedCategory === 'Approval Setup' && existingApprovalSetupId ? 'Update' : 'Submit'}
                   </Button>
                 </div>

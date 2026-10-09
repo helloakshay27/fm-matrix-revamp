@@ -1732,29 +1732,59 @@ const DraftButton = styled(MuiButton)(({ theme }) => ({
   },
 }));
 
+// Business Genie light form shell: white card, neutral border, 16px radius, heading
+// directly on the card surface (no tinted band), 12px to body, 20px between blocks.
 const SectionCard = styled(Paper)({
   backgroundColor: 'white',
   border: '1px solid rgba(26,26,24,0.09)',
   boxShadow: 'none',
-  borderRadius: 0,
+  borderRadius: '16px',
   overflow: 'hidden',
-  marginBottom: '24px',
+  marginBottom: '20px',
+  // Body <Box p={3}> follows the header: trim its top padding to the 12px title gap.
+  '&& > .MuiBox-root + .MuiBox-root': {
+    paddingTop: '12px',
+  },
 });
 
 const SectionHeader = styled(Box)({
   display: 'flex',
   alignItems: 'center',
   gap: '12px',
-  padding: '16px',
-  backgroundColor: '#F5F4F0',
-  borderBottom: '1px solid rgba(26,26,24,0.08)',
+  padding: '24px 24px 0',
+  backgroundColor: 'transparent',
+  '& > svg': {
+    width: 18,
+    height: 18,
+    color: 'rgba(26,26,24,0.68)',
+    flexShrink: 0,
+  },
 });
 
 const SectionTitle = styled('h3')({
-  fontSize: '18px',
-  fontWeight: 700,
+  fontSize: '14px',
+  fontWeight: 600,
   color: '#1A1A18',
 });
+
+// Labels sit above controls: 12px/600 inkSoft, 6px gap.
+const FieldLabel: React.FC<{ htmlFor?: string; required?: boolean; children: React.ReactNode }> = ({
+  htmlFor,
+  required,
+  children,
+}) => (
+  <label htmlFor={htmlFor} className="block mb-1.5 text-[12px] font-semibold text-[rgba(26,26,24,0.68)]">
+    {children}
+    {required && <span className="text-[#E5484D]"> *</span>}
+  </label>
+);
+
+// Footer actions: readable at rest. Primary is ink with a white label; secondary is the
+// neutral outlined shell. Both 42px high, 0 22px padding, 13px/600, 8px radius.
+const footerPrimaryClass =
+  'inline-flex items-center justify-center gap-2 h-[42px] px-[22px] rounded-[8px] bg-[#1A1A18] text-white text-[13px] font-semibold hover:bg-[#12100E] active:bg-[#000000] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A18] focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-colors';
+const footerSecondaryClass =
+  'inline-flex items-center justify-center gap-2 h-[42px] px-[22px] rounded-[8px] bg-white border border-[rgba(26,26,24,0.12)] text-[#1A1A18] text-[13px] font-semibold hover:border-[rgba(26,26,24,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A18] focus-visible:ring-offset-2 disabled:text-[rgba(26,26,24,0.48)] disabled:bg-[#F7F6F2] disabled:cursor-not-allowed transition-colors';
 
 const VENDOR_FORM_CSS = `
 .vendor-add-page .MuiOutlinedInput-notchedOutline{border-color:rgba(26,26,24,.08)!important}
@@ -1769,6 +1799,9 @@ const VENDOR_FORM_CSS = `
 .vendor-add-page .MuiInputBase-input,.vendor-add-page .MuiSelect-select{color:#1A1A18!important}
 .vendor-add-page .MuiInputBase-input::placeholder,.vendor-add-page textarea::placeholder{color:rgba(26,26,24,.3)!important;opacity:1}
 .vendor-add-page .MuiSelect-icon,.vendor-add-page .MuiSvgIcon-root{color:rgba(26,26,24,.48)}
+.vendor-add-page .vendor-labeled .MuiOutlinedInput-root{min-height:44px;border-radius:12px;background:#fff}
+.vendor-add-page .vendor-labeled .MuiOutlinedInput-notchedOutline{border-width:1px!important}
+.vendor-add-page .vendor-labeled .MuiInputBase-input,.vendor-add-page .vendor-labeled .MuiSelect-select{font-size:13.5px;font-weight:500;padding-top:10px;padding-bottom:10px}
 `;
 
 const steps = [
@@ -2290,43 +2323,61 @@ export const AddVendorPage = () => {
               <SectionTitle>COMPANY INFORMATION</SectionTitle>
             </SectionHeader>
             <Box p={3}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="vendor-labeled grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div>
+                <FieldLabel htmlFor="vendor-companyName" required>Company Name</FieldLabel>
                 <TextField
-                  label={<span>Company Name <span style={{ color: 'red' }}>*</span></span>}
+                  id="vendor-companyName"
                   fullWidth
                   value={formData.companyName}
                   onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
                   error={!!errors.companyName}
                   helperText={errors.companyName}
+                  placeholder="Enter Company Name"
                 />
+                </div>
+                <div>
+                <FieldLabel htmlFor="vendor-primaryPhone">Primary Phone No.</FieldLabel>
                 <TextField
-                  label="Primary Phone No."
+                  id="vendor-primaryPhone"
                   type='numeric'
                   fullWidth
                   value={formData.primaryPhone}
                   onChange={(e) => setFormData({ ...formData, primaryPhone: e.target.value })}
                   error={!!errors.primaryPhone}
                   helperText={errors.primaryPhone}
+                  placeholder="Enter Primary Phone No."
                 />
+                </div>
+                <div>
+                <FieldLabel htmlFor="vendor-secondaryPhone">Secondary Phone No.</FieldLabel>
                 <TextField
-                  label="Secondary Phone No."
+                  id="vendor-secondaryPhone"
                   fullWidth
                   value={formData.secondaryPhone}
                   onChange={(e) => setFormData({ ...formData, secondaryPhone: e.target.value })}
                   error={!!errors.secondaryPhone}
                   helperText={errors.secondaryPhone}
+                  placeholder="Enter Secondary Phone No."
                 />
+                </div>
+                <div>
+                <FieldLabel htmlFor="vendor-email" required>Email</FieldLabel>
                 <TextField
-                  label={<span>Email <span style={{ color: 'red' }}>*</span></span>}
+                  id="vendor-email"
                   type="email"
                   fullWidth
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   error={!!errors.email}
                   helperText={errors.email}
+                  placeholder="Enter Email"
                 />
+                </div>
+                <div>
+                <FieldLabel htmlFor="vendor-pan">PAN</FieldLabel>
                 <TextField
-                  label="PAN"
+                  id="vendor-pan"
                   fullWidth
                   value={formData.pan}
                   onChange={(e) => setFormData({ ...formData, pan: e.target.value.toUpperCase() })}
@@ -2334,8 +2385,11 @@ export const AddVendorPage = () => {
                   helperText={errors.pan}
                   placeholder="ABCDE1234F"
                 />
+                </div>
+                <div>
+                <FieldLabel htmlFor="vendor-gst">GST</FieldLabel>
                 <TextField
-                  label="GST"
+                  id="vendor-gst"
                   fullWidth
                   value={formData.gst}
                   onChange={(e) => setFormData({ ...formData, gst: e.target.value.toUpperCase() })}
@@ -2343,13 +2397,25 @@ export const AddVendorPage = () => {
                   helperText={errors.gst}
                   placeholder="22AAAAA0000A1Z5"
                 />
+                </div>
+                <div>
+                <FieldLabel htmlFor="vendor-supplierType">Supplier Type</FieldLabel>
                 <TextField
-                  label="Supplier Type"
+                  id="vendor-supplierType"
                   select
                   fullWidth
                   value={formData.supplierType}
                   onChange={(e) => setFormData({ ...formData, supplierType: e.target.value })}
                   disabled={loading.suppliers}
+                  SelectProps={{
+                    displayEmpty: true,
+                    renderValue: (selected: any) =>
+                      selected === '' || selected == null ? (
+                        <span className="text-[rgba(26,26,24,0.3)]">Select Supplier Type</span>
+                      ) : (
+                        suppliers.find((s: any) => String(s.id) === String(selected))?.name ?? selected
+                      ),
+                  }}
                   InputProps={{
                     endAdornment: loading.suppliers ? <CircularProgress size={20} /> : null,
                   }}
@@ -2364,8 +2430,11 @@ export const AddVendorPage = () => {
                     ))
                   )}
                 </TextField>
+                </div>
+                <div>
+                <FieldLabel htmlFor="vendor-websiteUrl">Website Url</FieldLabel>
                 <TextField
-                  label="Website Url"
+                  id="vendor-websiteUrl"
                   fullWidth
                   value={formData.websiteUrl}
                   onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
@@ -2373,31 +2442,40 @@ export const AddVendorPage = () => {
                   helperText={errors.websiteUrl}
                   placeholder="https://example.com"
                 />
+                </div>
+                <div>
+                <FieldLabel htmlFor="vendor-date">Date</FieldLabel>
                 <TextField
-                  label={
-                    <span>
-                      Date
-                    </span>
-                  }
+                  id="vendor-date"
                   type="date"
                   fullWidth
                   variant="outlined"
                   value={formData.date}
                   onChange={(date) => setFormData({ ...formData, date })}
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
                   placeholder="Select Date"
                   inputProps={{
                     max: formData.date || undefined,
                   }}
                 />
+                </div>
+                <div>
+                <FieldLabel htmlFor="vendor-services">Services</FieldLabel>
                 <TextField
-                  label="Services"
+                  id="vendor-services"
                   select
                   fullWidth
                   value={formData.services}
                   onChange={(e) => setFormData({ ...formData, services: e.target.value })}
                   disabled={loading.services}
+                  SelectProps={{
+                    displayEmpty: true,
+                    renderValue: (selected: any) =>
+                      selected === '' || selected == null ? (
+                        <span className="text-[rgba(26,26,24,0.3)]">Select Services</span>
+                      ) : (
+                        services.find((s: any) => String(s.id) === String(selected))?.name ?? selected
+                      ),
+                  }}
                   InputProps={{
                     endAdornment: loading.services ? <CircularProgress size={20} /> : null,
                   }}
@@ -2412,33 +2490,17 @@ export const AddVendorPage = () => {
                     ))
                   )}
                 </TextField>
-                  <div className="col-span-1 md:col-span-2 lg:col-span-3">
-                  <div className="relative w-full">
-                    <textarea
-                      id="serviceDescription"
-                      value={formData.serviceDescription}
-                      onChange={(e) => setFormData({ ...formData, serviceDescription: e.target.value })}
-                      rows={3}
-                      placeholder=" "
-                      className="peer block w-full appearance-none rounded border border-gray-300 bg-white px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent 
-            focus:outline-none 
-            focus:border-[2px] 
-            focus:border-[rgb(25,118,210)] 
-            resize-vertical"
-                    />
-                    <label
-                      htmlFor="serviceDescription"
-                      className="absolute left-3 -top-[10px] bg-white px-1 text-sm text-gray-500 z-[1] transition-all duration-200
-            peer-placeholder-shown:top-4
-            peer-placeholder-shown:text-base
-            peer-placeholder-shown:text-gray-400
-            peer-focus:-top-[10px]
-            peer-focus:text-sm
-            peer-focus:text-[rgb(25,118,210)]"
-                    >
-                      Service Description
-                    </label>
-                  </div>
+                </div>
+                <div className="col-span-1 md:col-span-2 lg:col-span-3">
+                  <FieldLabel htmlFor="serviceDescription">Service Description</FieldLabel>
+                  <textarea
+                    id="serviceDescription"
+                    value={formData.serviceDescription}
+                    onChange={(e) => setFormData({ ...formData, serviceDescription: e.target.value })}
+                    rows={3}
+                    placeholder="Enter Service Description"
+                    className="block w-full min-h-[88px] rounded-[12px] border border-[rgba(26,26,24,0.08)] bg-white px-[14px] py-3 text-[13.5px] font-medium text-[#1A1A18] placeholder:text-[rgba(26,26,24,0.3)] hover:border-[rgba(26,26,24,0.28)] focus:outline-none focus:border-[#1A1A18] resize-y"
+                  />
                 </div>
               </div>
             </Box>
@@ -2825,17 +2887,19 @@ export const AddVendorPage = () => {
       </div>
 
       <div className="flex justify-end gap-4 mt-8">
-        <Button variant="outline" className="fm-button-fix fm-button-brand px-8 !bg-white !text-[#1A1A18] !border-[rgba(26,26,24,0.08)] hover:!border-[rgba(26,26,24,0.28)] disabled:!opacity-50" disabled={activeStep === 0} onClick={handleBack}>
+        {/* Plain <button>s: the shared fm-button-fix/fm-button-brand classes force the
+            brand fill with !important and left these labels unreadable at rest. */}
+        <button type="button" className={footerSecondaryClass} disabled={activeStep === 0} onClick={handleBack}>
           Back
-        </Button>
+        </button>
         {activeStep === steps.length - 1 ? (
-          <Button variant="ghost" className="fm-button-fix fm-button-brand px-8 !bg-[#1A1A18] !text-white !border !border-[#1A1A18] hover:!bg-[#12100E]" onClick={handleSave} disabled={isSubmitting}>
+          <button type="button" className={footerPrimaryClass} onClick={handleSave} disabled={isSubmitting}>
             {isSubmitting ? 'Saving...' : 'Save Vendor'}
-          </Button>
+          </button>
         ) : (
-          <Button variant="ghost" className="fm-button-fix fm-button-brand px-8 !bg-[#1A1A18] !text-white !border !border-[#1A1A18] hover:!bg-[#12100E]" onClick={handleNext}>
+          <button type="button" className={footerPrimaryClass} onClick={handleNext}>
             Next
-          </Button>
+          </button>
         )}
       </div>
     </div>

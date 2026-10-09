@@ -12,6 +12,7 @@ const CARD_STYLES = [
 ];
 
 const EXTRA_FIELD_LABELS: Record<string, string> = {
+  fuel_consumption: "Fuel Consumption",
   factor: "Factor",
   area: "Area (sq ft)",
   power_value: "Power Value",
@@ -28,22 +29,30 @@ function formatVal(val: unknown): string {
     : "0";
 }
 
-// /utility_dashboard/card_fuel_consumption.json hasn't been hit against a
-// live backend from this environment. Its sibling "card_*" utility endpoints
-// in this app (EnergyIntensityCard, CarbonEmissionCard — both confirmed
-// working) return a flat, non-enveloped object with the headline number
-// under `response` plus a few sibling numeric fields (factor, area, ...), so
-// that same shape is assumed here: a "Fuel Consumption" tile from `response`,
-// plus whatever other numeric top-level fields the response actually has.
+// GET /utility_dashboard/card_fuel_consumption.json?site_id=..&from_date=..&to_date=..
+// responds with:
+//   { "success": 1, "message": "get successfully", "response": { "fuel_consumption": 8.44 } }
+// The headline number lives under `response.fuel_consumption` (not directly under
+// `response`), so unwrap it — while still tolerating a flat numeric `response`.
 const FuelConsumptionCard: React.FC<Props> = ({ data }) => {
   const root = data?.data ?? data ?? {};
+  const response = root?.response ?? {};
 
-  const extraStats = Object.entries(root)
-    .filter(([key, val]) => key !== "response" && key !== "success" && key !== "message" && key !== "info")
-    .filter(([, val]) => typeof val === "number" || (typeof val === "string" && val.trim() !== "" && !Number.isNaN(Number(val))))
+  const responseEntries: Array<[string, unknown]> =
+    response !== null && typeof response === "object"
+      ? Object.entries(response as Record<string, unknown>)
+      : [["fuel_consumption", response]];
+
+  const stats = responseEntries
+    .filter(
+      ([, val]) =>
+        typeof val === "number" ||
+        (typeof val === "string" && val.trim() !== "" && !Number.isNaN(Number(val)))
+    )
     .map(([key, val]) => ({ label: humanize(key), value: formatVal(val) }));
 
-  const stats = [{ label: "Fuel Consumption", value: formatVal(root.response) }, ...extraStats];
+  // Never render an empty card if the API shape changes unexpectedly
+  const displayStats = stats.length ? stats : [{ label: "Fuel Consumption", value: "0" }];
 
   return (
     <div className="bg-white rounded-xl shadow-sm">
@@ -54,7 +63,7 @@ const FuelConsumptionCard: React.FC<Props> = ({ data }) => {
       </div>
       <div className="p-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {stats.map((s, i) => {
+          {displayStats.map((s, i) => {
             const style = CARD_STYLES[i % CARD_STYLES.length];
             return (
               <div key={s.label} className="rounded-2xl px-4 py-6 text-center" style={{ backgroundColor: style.bg }}>

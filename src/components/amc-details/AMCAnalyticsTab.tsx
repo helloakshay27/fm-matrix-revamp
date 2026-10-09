@@ -202,36 +202,48 @@ export const AMCAnalyticsTab: React.FC<AMCAnalyticsTab> = ({
 
       {/* Analytics Cards Section */}
       <div className="space-y-4 p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 px-4 pb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-[14px] mb-6">
           <StatsCard
             title="SLA Achieved"
             value={formatValue(analytics?.sla_achieved)}
-            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+            className="!rounded-2xl !shadow-none !border-0"
+            iconWrapperClassName="!bg-white !w-9 !h-9 !rounded-[10px]"
+            icon={<Settings className="w-[18px] h-[18px] text-gray-500" />}
           />
           <StatsCard
             title="No. of Critical Assets Covered"
             value={formatValue(analytics?.critical_assets_covered_number)}
-            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+            className="!rounded-2xl !shadow-none !border-0"
+            iconWrapperClassName="!bg-white !w-9 !h-9 !rounded-[10px]"
+            icon={<Settings className="w-[18px] h-[18px] text-gray-500" />}
           />
           <StatsCard
             title="Critical Assets Covered (Value)"
             value={formatValue(analytics?.critical_assets_covered_value)}
-            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+            className="!rounded-2xl !shadow-none !border-0"
+            iconWrapperClassName="!bg-white !w-9 !h-9 !rounded-[10px]"
+            icon={<Settings className="w-[18px] h-[18px] text-gray-500" />}
           />
           <StatsCard
             title="Visits Completed"
             value={formatValue(analytics?.visits_completed)}
-            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+            className="!rounded-2xl !shadow-none !border-0"
+            iconWrapperClassName="!bg-white !w-9 !h-9 !rounded-[10px]"
+            icon={<Settings className="w-[18px] h-[18px] text-gray-500" />}
           />
           <StatsCard
             title="Pending Visits"
             value={formatValue(analytics?.pending_visits)}
-            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+            className="!rounded-2xl !shadow-none !border-0"
+            iconWrapperClassName="!bg-white !w-9 !h-9 !rounded-[10px]"
+            icon={<Settings className="w-[18px] h-[18px] text-gray-500" />}
           />
           <StatsCard
             title="Open Tickets"
             value={formatValue(analytics?.open_tickets)}
-            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+            className="!rounded-2xl !shadow-none !border-0"
+            iconWrapperClassName="!bg-white !w-9 !h-9 !rounded-[10px]"
+            icon={<Settings className="w-[18px] h-[18px] text-gray-500" />}
           />
         </div>
       </div>

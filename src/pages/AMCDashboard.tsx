@@ -2097,19 +2097,14 @@ export const AMCDashboard = () => {
             value="amclist"
             className="space-y-4 sm:space-y-6 mt-4 sm:mt-6"
           >
-            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-[14px] mb-6">
               <StatsCard
                 title="Total AMCs"
                 value={(apiData as any)?.total_amcs_count || 0}
                 selected={selectedSummary === "total"}
-                icon={
-                  <Settings
-                    className="w-6 h-6 sm:w-8 sm:h-8"
-                    style={{ color: "#C72030" }}
-                  />
-                }
-                // bgColor="#C4B89D54"
-                // isSelected={selectedSummary === 'total'}
+                className="!rounded-2xl !shadow-none !border-0"
+                iconWrapperClassName="!bg-white !w-9 !h-9 !rounded-[10px]"
+                icon={<Settings className="w-[18px] h-[18px] text-gray-500" />}
                 onClick={() => {
                   setSelectedSummary("total");
                   handleTotalAMCClick();
@@ -2120,14 +2115,9 @@ export const AMCDashboard = () => {
                 title="Active AMCs"
                 value={(apiData as any)?.active_amcs_count || 0}
                 selected={selectedSummary === "active"}
-                icon={
-                  <Settings
-                    className="w-6 h-6 sm:w-8 sm:h-8"
-                    style={{ color: "#C72030" }}
-                  />
-                }
-                // bgColor="#C4B89D54"
-                // isSelected={selectedSummary === 'active'}
+                className="!rounded-2xl !shadow-none !border-0"
+                iconWrapperClassName="!bg-white !w-9 !h-9 !rounded-[10px]"
+                icon={<Settings className="w-[18px] h-[18px] text-gray-500" />}
                 onClick={() => {
                   setSelectedSummary("active");
                   handleActiveAMCClick();
@@ -2138,14 +2128,9 @@ export const AMCDashboard = () => {
                 title="Inactive AMCs"
                 value={(apiData as any)?.inactive_amcs_count || 0}
                 selected={selectedSummary === "inactive"}
-                icon={
-                  <Settings
-                    className="w-6 h-6 sm:w-8 sm:h-8"
-                    style={{ color: "#C72030" }}
-                  />
-                }
-                // bgColor="#C4B89D54"
-                // isSelected={selectedSummary === 'inactive'}
+                className="!rounded-2xl !shadow-none !border-0"
+                iconWrapperClassName="!bg-white !w-9 !h-9 !rounded-[10px]"
+                icon={<Settings className="w-[18px] h-[18px] text-gray-500" />}
                 onClick={() => {
                   setSelectedSummary("inactive");
                   handleInactiveAMCClick();
@@ -2156,14 +2141,9 @@ export const AMCDashboard = () => {
                 title="Under Observation"
                 value={(apiData as any)?.under_observation || 0}
                 selected={selectedSummary === "underObservation"}
-                icon={
-                  <Settings
-                    className="w-6 h-6 sm:w-8 sm:h-8"
-                    style={{ color: "#C72030" }}
-                  />
-                }
-                // bgColor="#C4B89D54"
-                // isSelected={selectedSummary === 'underObservation'}
+                className="!rounded-2xl !shadow-none !border-0"
+                iconWrapperClassName="!bg-white !w-9 !h-9 !rounded-[10px]"
+                icon={<Settings className="w-[18px] h-[18px] text-gray-500" />}
                 onClick={() => {
                   setSelectedSummary("underObservation");
                   handleFlaggedAMCClick();
@@ -2174,14 +2154,9 @@ export const AMCDashboard = () => {
                 title="Expiring Soon (15 days)"
                 value={(apiData as any)?.expiring_in_fifteen_days || 0}
                 selected={selectedSummary === "expiring"}
-                icon={
-                  <Settings
-                    className="w-6 h-6 sm:w-8 sm:h-8"
-                    style={{ color: "#C72030" }}
-                  />
-                }
-                // bgColor="#C4B89D54"
-                // isSelected={selectedSummary === 'expiring'}
+                className="!rounded-2xl !shadow-none !border-0"
+                iconWrapperClassName="!bg-white !w-9 !h-9 !rounded-[10px]"
+                icon={<Settings className="w-[18px] h-[18px] text-gray-500" />}
                 onClick={() => {
                   handleExpiringIn90DaysClick();
                   setSelectedSummary("expiring");
@@ -2191,14 +2166,9 @@ export const AMCDashboard = () => {
                 title="Total AMC Cost"
                 value={`${localStorage.getItem("currency") ?? ""} ${(apiData as any)?.total_amc_cost?.toLocaleString() || 0}`}
                 selected={selectedSummary === "totalCost"}
-                icon={
-                  <Settings
-                    className="w-6 h-6 sm:w-8 sm:h-8"
-                    style={{ color: "#C72030" }}
-                  />
-                }
-                // bgColor="#C4B89D54"
-                // isSelected={false}
+                className="!rounded-2xl !shadow-none !border-0"
+                iconWrapperClassName="!bg-white !w-9 !h-9 !rounded-[10px]"
+                icon={<Settings className="w-[18px] h-[18px] text-gray-500" />}
                 onClick={() => {
                   handleTotalAMCClick();
                 }}

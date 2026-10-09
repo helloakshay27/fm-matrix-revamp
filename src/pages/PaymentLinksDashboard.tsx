@@ -30,7 +30,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner"; // Assuming sonner is used as in SalesOrderListPage
+import { accountingToast as toast } from "@/lib/accountingToast";
+import "@/styles/accounting.css";
 
 interface PaymentLink {
   id: number;
@@ -149,21 +150,18 @@ export const PaymentLinksDashboard = () => {
   const [loading, setLoading] = useState(false);
 
   const getStatusBadge = (status: string) => {
-    const statusColors: Record<string, string> = {
-      draft: "bg-yellow-100 text-yellow-800",
-      sent: "bg-blue-100 text-blue-800",
-      paid: "bg-green-100 text-green-800",
-      overdue: "bg-red-100 text-red-800",
-      cancelled: "bg-gray-100 text-gray-800",
+    const statusTones: Record<string, string> = {
+      draft: "neutral",
+      sent: "info",
+      paid: "success",
+      overdue: "danger",
+      cancelled: "neutral",
     };
+    const key = status.toLowerCase();
 
     return (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          statusColors[status.toLowerCase()] || "bg-gray-100 text-gray-800"
-        }`}
-      >
-        {status.toUpperCase()}
+      <span className={`acc-pill acc-pill--${statusTones[key] || "neutral"}`}>
+        {key.charAt(0).toUpperCase() + key.slice(1)}
       </span>
     );
   };
@@ -210,9 +208,9 @@ export const PaymentLinksDashboard = () => {
   });
 
   return (
-    <div className="p-6 space-y-6 h-[calc(100vh-80px)] flex flex-col overflow-y-auto bg-white">
+    <div className="accounting-ui p-6 space-y-6 h-[calc(100vh-80px)] flex flex-col overflow-y-auto bg-white">
       <header className="flex items-center justify-between shrink-0">
-        <h1 className="text-2xl font-bold text-gray-800">All Payment Links</h1>
+        <h1 className="acc-title">All Payment Links</h1>
       </header>
 
       <EnhancedTaskTable
@@ -252,19 +250,21 @@ export const PaymentLinksDashboard = () => {
 
       {/* Create Payment Link Modal */}
       <Dialog open={isNewLinkOpen} onOpenChange={setIsNewLinkOpen}>
-        <DialogContent className="sm:max-w-[600px] p-0 gap-0 overflow-hidden">
-          <DialogHeader className="px-6 py-4 border-b border-gray-100 flex flex-row items-center justify-between">
-            <DialogTitle className="text-lg font-normal text-gray-800">
+        <DialogContent className="accounting-ui acc-dialog sm:max-w-[580px]">
+          <DialogHeader className="acc-dialog-head flex flex-row items-center justify-between">
+            <DialogTitle className="acc-dialog-title">
               New Payment Link
             </DialogTitle>
           </DialogHeader>
 
-          <div className="p-6 space-y-6">
-            <div className="space-y-2">
-              <Label className="text-red-500 font-normal">Customer Name*</Label>
+          <div className="acc-form acc-dialog-body">
+            <div className="acc-field">
+              <Label className="acc-label">
+                Customer Name <span className="acc-required">*</span>
+              </Label>
               <div className="flex gap-2">
                 <Select>
-                  <SelectTrigger className="w-full text-gray-500 border-gray-300 focus:ring-blue-500">
+                  <SelectTrigger className="w-full text-gray-500 border-gray-300">
                     <SelectValue placeholder="Select Customer" />
                   </SelectTrigger>
                   <SelectContent>
@@ -274,54 +274,56 @@ export const PaymentLinksDashboard = () => {
                 </Select>
                 <Button
                   size="icon"
-                  className="bg-blue-500 hover:bg-blue-600 text-white shrink-0"
+                  className="acc-icon-btn shrink-0"
                 >
                   <Plus className="w-4 h-4" />
                 </Button>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-red-500 font-normal">
-                Payment Amount*
+            <div className="acc-field">
+              <Label className="acc-label">
+                Payment Amount <span className="acc-required">*</span>
               </Label>
-              <Input className="border-gray-300 focus:ring-blue-500" />
+              <Input className="border-gray-300" />
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-red-500 font-normal">
-                Link Expiration Date*
+            <div className="acc-field">
+              <Label className="acc-label">
+                Link Expiration Date <span className="acc-required">*</span>
               </Label>
               <div className="relative">
                 <Input
-                  className="border-gray-300 focus:ring-blue-500 pr-10"
+                  className="border-gray-300 pr-10"
                   defaultValue="04/03/2026"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-red-500 font-normal">Description*</Label>
+            <div className="acc-field">
+              <Label className="acc-label">
+                Description <span className="acc-required">*</span>
+              </Label>
               <Textarea
                 placeholder="Tell your customer why you're collecting this payment..."
-                className="min-h-[100px] resize-none border-gray-300 focus:ring-blue-500"
+                className="min-h-[100px] resize-none border-gray-300"
               />
             </div>
           </div>
 
-          <DialogFooter className="px-6 py-4 border-t border-gray-100 bg-gray-50 sm:justify-start gap-2">
-            <Button className="fm-button-fix fm-button-brand px-4 py-2P" onClick={() => toast.success("Payment link generated successfully!")}>
+          <DialogFooter className="acc-dialog-foot sm:justify-start">
+            <Button className="acc-btn acc-btn-sm fm-button-fix fm-button-brand" onClick={() => toast.success("Payment link generated successfully!")}>
               Generate Link
             </Button>
             <Button
               variant="outline"
-              className="fm-button-fix fm-button-brand px-4 py-2P"
+              className="acc-btn acc-btn-sm acc-btn-secondary"
             >
               Save and Share
             </Button>
             <Button
               variant="outline"
-              className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+              className="acc-btn acc-btn-sm acc-btn-secondary"
               onClick={() => setIsNewLinkOpen(false)}
             >
               Cancel

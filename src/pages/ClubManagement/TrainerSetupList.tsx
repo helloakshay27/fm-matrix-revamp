@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Eye, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
@@ -17,7 +18,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
-import { deleteTrainer, updateTrainer, type TrainerSetup } from "./trainerSetupMockData";
+import { deleteTrainer, type TrainerSetup } from "./trainerSetupMockData";
 
 const columns: ColumnConfig[] = [
   { key: "actions", label: "Actions", sortable: false, hideable: false, draggable: false },
@@ -112,11 +113,20 @@ export const TrainerSetupList = () => {
     setCurrentPage(1);
   };
 
-  const handleToggleStatus = (trainer: TrainerSetup) => {
+  const handleToggleStatus = async (trainer: TrainerSetup) => {
     const nextStatus = trainer.status === "Active" ? "Inactive" : "Active";
-    updateTrainer(trainer.id, { ...trainer, status: nextStatus });
-    toast.success(`Trainer marked ${nextStatus}`);
-    setRefreshTick((n) => n + 1);
+    try {
+      await apiClient.put(`/pms/admin/trainers/${trainer.id}.json`, {
+        trainer: { status: nextStatus.toLowerCase() },
+      });
+      setAllTrainers((current) =>
+        current.map((item) => item.id === trainer.id ? { ...item, status: nextStatus } : item)
+      );
+      toast.success(`Trainer marked ${nextStatus}`);
+    } catch (error) {
+      console.error("Failed to update trainer status", error);
+      toast.error("Failed to update trainer status");
+    }
   };
 
   const handleConfirmDelete = () => {
@@ -170,18 +180,11 @@ export const TrainerSetupList = () => {
     ratePerSession: <span className="text-sm text-gray-900">₹ {trainer.ratePerSession}/hr</span>,
     contactNumber: <span className="text-sm text-gray-600">{trainer.contactNumber}</span>,
     status: (
-      <button
-        type="button"
-        onClick={() => handleToggleStatus(trainer)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${trainer.status === "Active" ? "bg-brand" : "bg-gray-300"
-          }`}
-        title={trainer.status === "Active" ? "Active - click to deactivate" : "Inactive - click to activate"}
-      >
-        <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${trainer.status === "Active" ? "translate-x-6" : "translate-x-1"
-            }`}
-        />
-      </button>
+      <Switch
+        checked={trainer.status === "Active"}
+        onCheckedChange={() => handleToggleStatus(trainer)}
+        aria-label={`Toggle ${trainer.name} status`}
+      />
     ),
   });
 

@@ -163,6 +163,26 @@ interface StatusOption {
     color: string;
 }
 
+// Business Genie status pill: low-saturation tone tint + matching tone text.
+// Shared by the audit list and audit detail so a state never changes tone between screens.
+const STATUS_PILL_TONES: Record<string, { bg: string; fg: string }> = {
+    scheduled: { bg: "rgba(107, 155, 204, 0.15)", fg: "#3F6E9E" },
+    in_progress: { bg: "rgba(237, 196, 136, 0.28)", fg: "#8A6420" },
+    completed: { bg: "rgba(121, 140, 94, 0.15)", fg: "#56683F" },
+    overdue: { bg: "rgba(231, 132, 142, 0.15)", fg: "#B04A55" },
+    paused: { bg: "rgba(206, 203, 246, 0.4)", fg: "#5E55B0" },
+    closed: { bg: "rgba(44, 44, 44, 0.06)", fg: "rgba(44, 44, 44, 0.68)" },
+};
+
+export const getStatusPillStyle = (status: string): React.CSSProperties => {
+    const key = (status || "").toLowerCase().trim().replace(/[\s_]+/g, "_");
+    const tone = STATUS_PILL_TONES[key] || STATUS_PILL_TONES.closed;
+    return { backgroundColor: tone.bg, color: tone.fg, border: "none" };
+};
+
+const pillClassName =
+    "inline-flex w-auto h-auto items-center gap-1 rounded-full px-[10px] py-[3px] text-[11px] font-medium leading-4 tracking-normal font-[inherit]";
+
 interface StatusDropdownProps {
     data: any;
     selectedStatus: { [key: string]: string };
@@ -201,7 +221,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
         return (
             <Button
                 variant="ghost"
-                className="w-full justify-between"
+                className={pillClassName}
                 style={{
                     ...getStatusStyle(currentStatus),
                     cursor: "not-allowed",
@@ -219,11 +239,11 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
             <DropdownMenuTrigger asChild>
                 <Button
                     variant="ghost"
-                    className="w-full justify-between px-3 py-2"
+                    className={`${pillClassName} hover:opacity-90`}
                     style={getStatusStyle(currentStatus)}
                 >
                     <span>{statusLabel}</span>
-                    <ChevronDown className="w-4 h-4 ml-2" />
+                    <ChevronDown className="w-3 h-3" />
                 </Button>
             </DropdownMenuTrigger>
 
@@ -240,7 +260,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
                         onClick={() =>
                             onStatusChange(status.value, data.id)
                         }
-                        className="cursor-pointer font-medium"
+                        className="cursor-pointer m-1 w-fit rounded-full px-[10px] py-[3px] text-[11px] font-medium"
                         style={getStatusStyle(status.value)}
                     >
                         {status.label}

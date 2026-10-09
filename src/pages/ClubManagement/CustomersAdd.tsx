@@ -13,7 +13,8 @@ import {
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { accountingToast as toast } from "@/lib/accountingToast";
+import "@/styles/accounting.css";
 import { InputAdornment, TextField } from "@mui/material";
 import axios from "axios";
 import { Loader2, TrendingUp, Target, Users, DollarSign, ArrowLeft } from "lucide-react";
@@ -1711,22 +1712,22 @@ const CustomersAdd = () => {
 
     return (
         <ThemeProvider theme={muiTheme}>
-            <div className="p-6 bg-white min-h-screen">
+            <div className="accounting-ui p-6 bg-white min-h-screen">
                 <div className="mb-6">
                     <Button
                         variant="ghost"
                         onClick={() => navigate("/accounting/customers")}
-                        className="p-0"
+                        className="acc-back p-0"
                     >
                         <ArrowLeft className="w-4 h-4 mr-2" />
                         Back to Customers
                     </Button>
                 </div>
-                <h1 className="text-2xl font-semibold mb-6">New Customer</h1>
+                <h1 className="acc-title mb-6">New Customer</h1>
 
                 {/* CUSTOMER TYPE */}
-                <div className="flex items-center gap-6 mb-6">
-                    <div className="font-medium w-40">Customer Type</div>
+                <div className="acc-field mb-6">
+                    <div className="acc-label">Customer Type</div>
 
                     <RadioGroup
                         row
@@ -1740,8 +1741,8 @@ const CustomersAdd = () => {
                 </div>
 
                 {/* PRIMARY CONTACT */}
-                <div className="grid md:grid-cols-[160px_1fr] items-center gap-4 mb-4">
-                    <div>Primary Contact</div>
+                <div className="acc-field mb-4">
+                    <div className="acc-label">Primary Contact</div>
 
                     <div className="grid md:grid-cols-3 gap-4">
                         <FormControl>
@@ -1781,8 +1782,8 @@ const CustomersAdd = () => {
                 </div>
 
                 {/* COMPANY NAME */}
-                <div className="grid md:grid-cols-[160px_1fr] items-center gap-4 mb-4">
-                    <div>Company Name</div>
+                <div className="acc-field mb-4">
+                    <div className="acc-label">Company Name</div>
                     <TextField
                         name="company_name"
                         value={form.company_name}
@@ -1792,8 +1793,8 @@ const CustomersAdd = () => {
                 </div>
 
                 {/* DISPLAY NAME */}
-                <div className="grid md:grid-cols-[160px_1fr] items-center gap-4 mb-4">
-                    <div className="text-[#DA7756]">Display Name *</div>
+                <div className="acc-field mb-4">
+                    <div className="acc-label">Display Name <span className="acc-required">*</span></div>
                     <TextField
                         name="display_name"
                         placeholder="Enter display name"
@@ -1803,8 +1804,8 @@ const CustomersAdd = () => {
                 </div>
 
                 {/* EMAIL */}
-                <div className="grid md:grid-cols-[160px_1fr] items-center gap-4 mb-4">
-                    <div>Email Address</div>
+                <div className="acc-field mb-4">
+                    <div className="acc-label">Email Address</div>
                     <TextField
                         name="email"
                         value={form.email}
@@ -1816,8 +1817,8 @@ const CustomersAdd = () => {
                 </div>
 
                 {/* PHONE */}
-                <div className="grid md:grid-cols-[160px_1fr] items-center gap-4 mb-4">
-                    <div>Phone</div>
+                <div className="acc-field mb-4">
+                    <div className="acc-label">Phone</div>
 
                     <div className="grid md:grid-cols-2 gap-4">
                         <TextField
@@ -1845,8 +1846,8 @@ const CustomersAdd = () => {
                 </div>
 
                 {/* LANGUAGE */}
-                <div className="grid md:grid-cols-[160px_1fr] items-center gap-4 mb-6">
-                    <div>Customer Language</div>
+                <div className="acc-field mb-6">
+                    <div className="acc-label">Customer Language</div>
                     <FormControl>
                         <Select
                             name="language"
@@ -1862,9 +1863,9 @@ const CustomersAdd = () => {
                 {/* TABS PLACEHOLDER */}
                 {/* <div className="p-4"> */}
                 {/* Tabs Header */}
-                <div className="bg-white rounded-lg border p-6 mb-6">
+                <div className="acc-card mb-6">
                     {/* <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 border-b mb-6"> */}
-                    <div className="flex flex-wrap md:flex-nowrap overflow-x-auto border-b mb-6">
+                    <div role="tablist" className="acc-tabs mb-6">
                         {TABS.map((tab) => (
                             //                 <button
                             //                     key={tab.key}
@@ -1883,13 +1884,11 @@ const CustomersAdd = () => {
                             <button
                                 key={tab.key}
                                 type="button"
+                                role="tab"
+                                aria-selected={activeTab === tab.key}
+                                data-state={activeTab === tab.key ? "active" : "inactive"}
                                 onClick={() => setActiveTab(tab.key)}
-                                className={`flex-1 text-center px-4 py-3 text-sm font-semibold whitespace-nowrap transition-colors
-    ${activeTab === tab.key
-                                        ? "text-[#DA7756] border-b-2 border-[#DA7756] bg-[#f9f7f2]/50"
-                                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                                    }
-  `}
+                                className="acc-tab"
                             >
                                 {tab.label}
                             </button>
@@ -1971,7 +1970,7 @@ const CustomersAdd = () => {
                         variant="ghost"
                         onClick={handleSubmit}
                         disabled={loading}
-                        className="fm-button-fix fm-button-brand px-8 py-2 min-w-[100px]"
+                        className="acc-btn fm-button-fix fm-button-brand px-8 py-2 min-w-[100px]"
                     >
                         {loading ? (
                             <>
@@ -1983,7 +1982,7 @@ const CustomersAdd = () => {
                         )}
                     </Button>
 
-                    <Button variant="outline" className="fm-button-fix px-8 py-2" onClick={() => navigate("/accounting/customers")}>
+                    <Button variant="outline" className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2" onClick={() => navigate("/accounting/customers")}>
                         Cancel
                     </Button>
                 </div>

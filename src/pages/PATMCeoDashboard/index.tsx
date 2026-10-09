@@ -48,9 +48,10 @@ export default function PATMCeoDashboard() {
     const fetchQuote = async () => {
       try {
         const token = localStorage.getItem('token') || '';
+        if (!token) return;
         const res = await fetch('https://lockated-api.gophygital.work/patm_dashboard/patm_chatbot_quotes', {
           headers: {
-            Authorization: token ? `Bearer ${token}` : 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxODkwMzcsImVtYWlsIjoiYXRoYXJ2Lmthcm5la2FyQGxvY2thdGVkLmNvbSJ9.K9KDSk-Ltl8ptPWB3FDxlwnhP080pHWzmIi8tKZJ1dg'
+            Authorization: `Bearer ${token}`
           }
         });
         if (!res.ok) return;
