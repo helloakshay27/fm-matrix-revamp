@@ -1,0 +1,594 @@
+/* ============================================================
+   ACCOUNTING MODULE — Business Genie skin (Items & Customers)
+   Scoped to `.accounting-ui` so it never leaks into other modules.
+   Values follow the asset-management.html reference ("Exact specs by
+   component") and the theme.css :root tokens.
+   Audit refs: A01.1–A01.3, A02.1–A02.3.
+   ============================================================ */
+
+.accounting-ui {
+  --acc-ink: #1a1a18;
+  --acc-ink-68: rgba(26, 26, 24, 0.68);
+  --acc-ink-55: rgba(26, 26, 24, 0.55);
+  --acc-ink-48: rgba(26, 26, 24, 0.48);
+  --acc-ink-30: rgba(26, 26, 24, 0.3);
+  --acc-ink-28: rgba(26, 26, 24, 0.28);
+  --acc-ink-22: rgba(26, 26, 24, 0.22);
+  --acc-line: rgba(26, 26, 24, 0.08); /* inputs, rows */
+  --acc-line-card: rgba(26, 26, 24, 0.09); /* card edge */
+  --acc-focus-ring: 0 0 0 4px rgba(26, 26, 24, 0.1);
+  --acc-danger: #e5484d;
+  --acc-input-radius: 12px;
+  --acc-button-radius: 8px;
+  --acc-label-gap: 6px;
+  --acc-label-size: 12px;
+  --acc-label-line: 1.4;
+}
+
+/* ---------- Page header ----------
+   Page padding 24px 32px 48px. Back link 12.5/600 at .48 (hover ink).
+   Title 22/600, -.015em, line-height 1.2. */
+html body .accounting-ui.p-6 {
+  padding: 24px 32px 48px !important;
+}
+html body .accounting-ui .acc-back {
+  height: auto !important;
+  gap: 6px;
+  background: transparent !important;
+  color: var(--acc-ink-48) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  transition: color 0.16s;
+}
+html body .accounting-ui .acc-back:hover {
+  color: var(--acc-ink) !important;
+}
+html body .accounting-ui .acc-back svg {
+  width: 18px;
+  height: 18px;
+  margin-right: 0 !important;
+}
+html body .accounting-ui .acc-title {
+  margin-top: 0;
+  font-size: 22px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+  color: var(--acc-ink) !important;
+}
+
+/* ---------- Field labels (A01.1 / A02.1) ----------
+   Labels sit ABOVE their controls: 12/600 at .68, 6px gap, required
+   star in #E5484D. MUI's floating notched label is pinned above the
+   field and the notch removed, so every TextField / Select matches. */
+html body .accounting-ui .MuiFormControl-root:has(> .MuiInputLabel-root) {
+  padding-top: calc(var(--acc-label-size) * var(--acc-label-line) + var(--acc-label-gap)) !important;
+}
+html body .accounting-ui .MuiFormControl-root > .MuiInputLabel-root {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  transform: none !important;
+  max-width: 100% !important;
+  padding: 0 !important;
+  background: transparent !important;
+  font-size: var(--acc-label-size) !important;
+  font-weight: 600 !important;
+  line-height: var(--acc-label-line) !important;
+  letter-spacing: 0 !important;
+  color: var(--acc-ink-68) !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Focused labels stay inkSoft. index.css paints focused textarea labels
+   #1976d2 (MUI blue) at (0,4,0); the doubled class lifts this above it. */
+html body .accounting-ui .MuiFormControl-root.MuiFormControl-root > .MuiInputLabel-root.Mui-focused:not(.Mui-error) {
+  color: var(--acc-ink-68) !important;
+}
+html body .accounting-ui .MuiInputLabel-root .MuiFormLabel-asterisk {
+  color: var(--acc-danger) !important;
+}
+html body .accounting-ui .MuiFormControl-root > .MuiInputLabel-root.Mui-error {
+  color: var(--acc-danger) !important;
+}
+
+/* Plain-text labels rendered beside a control → stacked above it */
+html body .accounting-ui .acc-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--acc-label-gap);
+  min-width: 0;
+}
+html body .accounting-ui .acc-label {
+  font-size: var(--acc-label-size);
+  font-weight: 600;
+  line-height: var(--acc-label-line);
+  color: var(--acc-ink-68);
+}
+html body .accounting-ui .acc-label .acc-required {
+  color: var(--acc-danger);
+}
+
+/* ---------- Shared input (A01.1 / A02.1) ----------
+   Min-height 44, padding 0 14px, radius 12, 1px border .08, white,
+   13.5/500 ink, placeholder .30. Focus: ink border + 4px .10 ring.
+   Textarea: min-height 88, padding 12px 14px, line-height 1.6. */
+html body .accounting-ui .MuiOutlinedInput-root:not(.MuiInputBase-multiline) {
+  min-height: 44px !important;
+  height: 44px !important;
+}
+html body .accounting-ui .MuiOutlinedInput-root {
+  border-radius: var(--acc-input-radius) !important;
+  background-color: #ffffff;
+  color: var(--acc-ink);
+  font-size: 13.5px !important;
+  font-weight: 500;
+  transition: box-shadow 0.16s;
+}
+html body .accounting-ui .MuiOutlinedInput-input:not(.MuiInputBase-inputMultiline),
+html body .accounting-ui .MuiSelect-select {
+  padding-left: 14px !important;
+  padding-right: 14px;
+}
+html body .accounting-ui .MuiSelect-select {
+  padding-right: 36px !important;
+}
+html body .accounting-ui .MuiSelect-icon {
+  right: 12px !important;
+  font-size: 20px;
+  color: var(--acc-ink-48) !important;
+}
+html body .accounting-ui .MuiInputBase-multiline {
+  min-height: 88px;
+  padding: 12px 14px !important;
+  align-items: flex-start;
+}
+html body .accounting-ui .MuiInputBase-inputMultiline {
+  line-height: 1.6 !important;
+}
+html body .accounting-ui .MuiInputBase-input::placeholder {
+  opacity: 1 !important;
+  color: var(--acc-ink-30) !important;
+}
+html body .accounting-ui .MuiOutlinedInput-notchedOutline {
+  top: 0 !important;
+  border: 1px solid var(--acc-line) !important;
+  border-radius: var(--acc-input-radius) !important;
+  transition: border-color 0.16s;
+}
+html body .accounting-ui .MuiOutlinedInput-notchedOutline legend {
+  display: none !important;
+}
+html body .accounting-ui .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: var(--acc-line) !important;
+}
+html body .accounting-ui .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--acc-ink) !important;
+  border-width: 1px !important;
+}
+html body .accounting-ui .MuiOutlinedInput-root.Mui-focused {
+  box-shadow: var(--acc-focus-ring) !important;
+}
+html body .accounting-ui .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline {
+  border-color: var(--acc-danger) !important;
+}
+html body .accounting-ui .MuiOutlinedInput-root.Mui-disabled {
+  background-color: var(--color-surface, #f5f4f0) !important;
+}
+
+/* ---------- Radio / checkbox ----------
+   18px, 1.5px border at .22; checked = ink. Option label 13px at .68. */
+html body .accounting-ui .MuiRadio-root,
+html body .accounting-ui .MuiCheckbox-root {
+  color: var(--acc-ink-22) !important;
+}
+html body .accounting-ui .MuiRadio-root.Mui-checked,
+html body .accounting-ui .MuiCheckbox-root.Mui-checked {
+  color: var(--acc-ink) !important;
+}
+html body .accounting-ui .MuiRadio-root .MuiSvgIcon-root,
+html body .accounting-ui .MuiCheckbox-root .MuiSvgIcon-root {
+  font-size: 20px;
+}
+html body .accounting-ui .MuiFormControlLabel-label {
+  font-size: 13px !important;
+  color: var(--acc-ink-68);
+}
+
+/* ---------- Card surfaces (A01.2) ----------
+   White, 1px .09, radius 16, padding 22px 24px, no shadow, no fill on
+   the heading. Title 14/600 ink, 16px to the body. */
+html body .accounting-ui .acc-card {
+  background-color: #ffffff !important;
+  border: 1px solid var(--acc-line-card) !important;
+  border-radius: 16px !important;
+  padding: 22px 24px !important;
+  box-shadow: none !important;
+}
+html body .accounting-ui .acc-card-title {
+  margin-bottom: 16px !important;
+  background: transparent !important;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--acc-ink);
+}
+
+/* ---------- Segmented tabs (A02.2) ----------
+   Track rgba(26,26,24,.055), radius 12, padding 3, gap 3, fit-content.
+   Item 8px 16px, radius 8, 12.5/600 at .55. Active white, ink, raised. */
+html body .accounting-ui .acc-tabs {
+  display: inline-flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px !important;
+  width: fit-content !important;
+  max-width: 100%;
+  padding: 3px !important;
+  background-color: rgba(26, 26, 24, 0.055) !important;
+  border: none !important;
+  border-radius: 12px !important;
+}
+html body .accounting-ui .acc-tab {
+  flex: none;
+  padding: 8px 16px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  background-color: transparent !important;
+  color: var(--acc-ink-55) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  white-space: nowrap;
+  box-shadow: none !important;
+  transition: all 0.16s;
+}
+html body .accounting-ui .acc-tab:hover {
+  color: var(--acc-ink) !important;
+}
+html body .accounting-ui .acc-tab[data-state="active"] {
+  background-color: #ffffff !important;
+  color: var(--acc-ink) !important;
+  box-shadow: 0 1px 2px rgba(26, 26, 24, 0.1), 0 0 0 1px rgba(26, 26, 24, 0.05) !important;
+}
+
+/* ---------- Upload drop zone ----------
+   2px dashed #EBE9E2, radius 12, padding 18, centred, gap 8.
+   Hover border .28 and #FDFDFB fill. */
+html body .accounting-ui .acc-dropzone {
+  gap: 8px;
+  padding: 18px !important;
+  border: 2px dashed #ebe9e2 !important;
+  border-radius: 12px !important;
+  background-color: transparent;
+  transition: all 0.16s;
+}
+html body .accounting-ui .acc-dropzone:hover {
+  border-color: var(--acc-ink-28) !important;
+  background-color: #fdfdfb;
+}
+
+/* ---------- Buttons (A02.3) ----------
+   Form actions: 42px, padding 0 22px, radius 8, 13/600, gap 8.
+   `.fm-button-fix` forces square corners globally, so it is overridden
+   here. Secondary (Cancel): white, 1px border .08, .68 text; hover
+   border .28 and ink text. */
+html body .accounting-ui button.fm-button-fix,
+html body .accounting-ui a.fm-button-fix {
+  border-radius: var(--acc-button-radius) !important;
+}
+html body .accounting-ui button.acc-btn {
+  min-height: 42px !important;
+  padding: 0 22px !important;
+  gap: 8px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  transition: all 0.16s;
+}
+html body .accounting-ui button.acc-btn-secondary {
+  background-color: #ffffff !important;
+  border: 1px solid var(--acc-line) !important;
+  color: var(--acc-ink-68) !important;
+  box-shadow: none !important;
+}
+html body .accounting-ui button.acc-btn-secondary:hover {
+  background-color: #ffffff !important;
+  border-color: var(--acc-ink-28) !important;
+  color: var(--acc-ink) !important;
+}
+
+/* Ink primary for buttons without the legacy fm-button-brand class */
+html body .accounting-ui button.acc-btn-primary {
+  background-color: var(--acc-ink) !important;
+  border: 1px solid var(--acc-ink) !important;
+  color: #ffffff !important;
+}
+html body .accounting-ui button.acc-btn-primary:hover {
+  background-color: #12100e !important;
+  border-color: #12100e !important;
+}
+/* Compact (.sm) 40px / 0 18px / 12.5 / gap 7 — toolbars, dialogs, cards */
+html body .accounting-ui button.acc-btn.acc-btn-sm {
+  min-height: 40px !important;
+  height: auto !important;
+  padding: 0 18px !important;
+  gap: 7px !important;
+  font-size: 12.5px !important;
+}
+/* Small (.xs) 32px / 0 12px / 12 / gap 6 — inline row actions */
+html body .accounting-ui button.acc-btn.acc-btn-xs {
+  min-height: 32px !important;
+  height: auto !important;
+  padding: 0 12px !important;
+  gap: 6px !important;
+  font-size: 12px !important;
+  line-height: 1.25 !important;
+}
+html body .accounting-ui button.acc-btn svg {
+  width: 16px;
+  height: 16px;
+  margin: 0 !important;
+}
+html body .accounting-ui button.acc-btn.acc-btn-xs svg {
+  width: 14px;
+  height: 14px;
+}
+/* Bordered icon button: white, 1px .08, radius 8, icon .68; hover .28 + ink.
+   Sized to sit beside a 44px field. */
+html body .accounting-ui button.acc-icon-btn {
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  border-radius: var(--acc-button-radius) !important;
+  border: 1px solid var(--acc-line) !important;
+  background-color: #ffffff !important;
+  color: var(--acc-ink-68) !important;
+  box-shadow: none !important;
+  transition: all 0.16s;
+}
+html body .accounting-ui button.acc-icon-btn:hover {
+  border-color: var(--acc-ink-28) !important;
+  color: var(--acc-ink) !important;
+}
+
+/* ---------- Plain inputs (shadcn Input / Textarea / Select trigger) ----------
+   Same shared shell as the MUI fields, opted in with `.acc-form`. */
+html body .accounting-ui .acc-form :is(input:not([type="checkbox"]):not([type="radio"]):not(.acc-cell-input), button[role="combobox"]) {
+  min-height: 44px !important;
+  height: 44px;
+  padding-left: 14px;
+  border: 1px solid var(--acc-line) !important;
+  border-radius: var(--acc-input-radius) !important;
+  background-color: #ffffff !important;
+  color: var(--acc-ink);
+  font-size: 13.5px !important;
+  font-weight: 500;
+  box-shadow: none;
+  transition: border-color 0.16s, box-shadow 0.16s;
+}
+html body .accounting-ui .acc-form textarea:not(.acc-cell-input) {
+  min-height: 88px !important;
+  padding: 12px 14px !important;
+  border: 1px solid var(--acc-line) !important;
+  border-radius: var(--acc-input-radius) !important;
+  background-color: #ffffff !important;
+  color: var(--acc-ink);
+  font-size: 13.5px !important;
+  font-weight: 500;
+  line-height: 1.6;
+  transition: border-color 0.16s, box-shadow 0.16s;
+}
+html body .accounting-ui .acc-form :is(input, textarea):not(.acc-cell-input)::placeholder {
+  color: var(--acc-ink-30) !important;
+  font-weight: 400;
+}
+html body .accounting-ui .acc-form :is(input:not(.acc-cell-input), textarea:not(.acc-cell-input), button[role="combobox"]):focus,
+html body .accounting-ui .acc-form button[role="combobox"][data-state="open"] {
+  border-color: var(--acc-ink) !important;
+  box-shadow: var(--acc-focus-ring) !important;
+  outline: none !important;
+}
+/* Read-only / disabled controls keep the same 12px shell (A03.1) */
+html body .accounting-ui .acc-form :is(input, textarea, button[role="combobox"]):disabled {
+  background-color: var(--color-surface, #f5f4f0) !important;
+  color: var(--acc-ink-48) !important;
+}
+
+/* ---------- Line-item table (A03.4 / A04.5) ----------
+   Clipped 16px wrapper: 1px .09 border, zero padding, header and body
+   clipped together. Quantity / rate / amount right-aligned, tabular. */
+html body .accounting-ui .acc-table-wrap {
+  padding: 0 !important;
+  border: 1px solid var(--acc-line-card) !important;
+  border-radius: 16px !important;
+  overflow: hidden;
+  background-color: #ffffff;
+}
+html body .accounting-ui .acc-table-wrap.overflow-x-auto {
+  overflow-x: auto;
+}
+html body .accounting-ui .acc-table-wrap > table,
+html body .accounting-ui .acc-table-wrap > div > table {
+  border: none !important;
+  border-radius: 0 !important;
+}
+html body .accounting-ui .acc-line-items .acc-num,
+html body .accounting-ui .acc-line-items th.text-right {
+  text-align: right !important;
+  justify-content: flex-end;
+  font-variant-numeric: tabular-nums;
+}
+html body .accounting-ui .acc-line-items input[type="number"],
+html body .accounting-ui .acc-line-items .acc-num input {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Status pill (A04.1 / A05.1) ----------
+   Radius 999, padding 3px 10px, 11/500, low-saturation tint + tone text. */
+html body .accounting-ui .acc-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: auto !important;
+  height: auto !important;
+  padding: 3px 10px !important;
+  border: none !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+html body .accounting-ui .acc-pill--success {
+  background-color: rgba(18, 161, 80, 0.12) !important;
+  color: #0e7f3f !important;
+}
+html body .accounting-ui .acc-pill--info {
+  background-color: rgba(47, 111, 224, 0.12) !important;
+  color: #2556b0 !important;
+}
+html body .accounting-ui .acc-pill--danger {
+  background-color: rgba(229, 72, 77, 0.12) !important;
+  color: #a32126 !important;
+}
+html body .accounting-ui .acc-pill--warning {
+  background-color: rgba(242, 163, 18, 0.3) !important;
+  color: #8a5b00 !important;
+}
+html body .accounting-ui .acc-pill--neutral {
+  background-color: #f5f4f0 !important;
+  color: var(--acc-ink-68) !important;
+}
+
+/* ---------- Info notice (A04.4) ----------
+   Violet Info key: low-saturation lavender tint, violet tone text. */
+html body .accounting-ui .acc-notice-info {
+  background-color: #eeebff !important;
+  border: none !important;
+  border-radius: 12px !important;
+  color: #4839c4;
+}
+html body .accounting-ui .acc-notice-info p {
+  color: #4839c4 !important;
+}
+html body .accounting-ui .acc-notice-icon {
+  background-color: #ffffff !important;
+  border: none !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+}
+html body .accounting-ui .acc-notice-icon svg path {
+  stroke: #5a4be0 !important;
+}
+html body .accounting-ui .acc-notice-link {
+  color: #4839c4 !important;
+  font-weight: 600;
+}
+
+/* ---------- Dialog (A05.2) ----------
+   Panel radius 24, padding 28, shadow 0 8px 40px .16, max-height 86vh
+   with its own scroll. Scrim rgba(26,26,24,.32) + 2px blur. Header
+   18/600, 20px below. Footer gap 10, 24px above. */
+html body .accounting-ui.acc-dialog {
+  gap: 0 !important;
+  padding: 28px !important;
+  border: none !important;
+  border-radius: 24px !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 8px 40px rgba(26, 26, 24, 0.16) !important;
+  max-width: min(580px, 92vw);
+  max-height: 86vh;
+  overflow-y: auto;
+}
+html body [data-state="open"]:has(+ .acc-dialog) {
+  background-color: rgba(26, 26, 24, 0.32) !important;
+  backdrop-filter: blur(2px);
+}
+html body .accounting-ui .acc-dialog-head {
+  margin-bottom: 20px;
+  padding: 0 !important;
+  border: none !important;
+}
+html body .accounting-ui .acc-dialog-title {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  color: var(--acc-ink) !important;
+}
+html body .accounting-ui .acc-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+html body .accounting-ui .acc-dialog-foot {
+  gap: 10px !important;
+  margin-top: 24px;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+html body .accounting-ui.acc-dialog > button.absolute {
+  top: 24px;
+  right: 24px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: var(--acc-ink-48);
+  opacity: 1;
+}
+html body .accounting-ui.acc-dialog > button.absolute:hover {
+  background-color: #f5f4f0;
+  color: var(--acc-ink);
+}
+
+/* ---------- Feedback toast (A01.3) ----------
+   Bottom-centre ink toast: radius 8, padding 10px 20px, 13/600 white,
+   gap 8, shadow 0 4px 20px rgba(26,26,24,.18), 2.4s (set in
+   src/lib/accountingToast.ts). Toasts render in a portal outside
+   `.accounting-ui`, so this is keyed on the `acc-toast` class. The icon
+   keeps its semantic tone; success uses the reference mint tick. */
+html body [data-sonner-toast].acc-toast {
+  padding: 10px 20px !important;
+  gap: 8px !important;
+  border-radius: 8px !important;
+  border: none !important;
+  background: #1a1a18 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 20px rgba(26, 26, 24, 0.18) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+}
+html body [data-sonner-toast].acc-toast [data-title] {
+  color: #ffffff !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+html body [data-sonner-toast].acc-toast [data-description] {
+  color: rgba(255, 255, 255, 0.72) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+html body [data-sonner-toast].acc-toast [data-icon] {
+  width: 16px;
+  height: 16px;
+}
+html body [data-sonner-toast].acc-toast [data-close-button] {
+  background: #1a1a18 !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+html body [data-sonner-toast].acc-toast[data-type="success"] [data-icon] {
+  color: #a8e6c4 !important;
+}
+html body [data-sonner-toast].acc-toast[data-type="error"] [data-icon] {
+  color: #ff8f92 !important;
+}
+html body [data-sonner-toast].acc-toast[data-type="warning"] [data-icon] {
+  color: #f5c46a !important;
+}
+html body [data-sonner-toast].acc-toast[data-type="info"] [data-icon] {
+  color: #9dbcff !important;
+}

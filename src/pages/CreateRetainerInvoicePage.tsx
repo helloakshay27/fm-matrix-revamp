@@ -12,6 +12,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import "@/styles/accounting.css";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -134,7 +135,7 @@ export const CreateRetainerInvoicePage = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white relative">
+    <div className="accounting-ui flex flex-col h-full bg-white relative">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b bg-[#f6f4ee]">
         <div className="flex items-center gap-2">
@@ -170,14 +171,14 @@ export const CreateRetainerInvoicePage = () => {
       {/* Main Form Content */}
       <div className="flex-1 overflow-y-auto p-8 max-w-5xl mx-auto w-full">
         {/* Top Form Fields */}
-        <div className="grid grid-cols-12 gap-y-6 gap-x-8 mb-8">
+        <div className="acc-form grid grid-cols-12 gap-x-8 mb-8">
           {/* Customer Name */}
-          <div className="col-span-3">
-            <label className="text-sm font-medium text-[#DA7756]">
-              Customer Name*
+          <div className="col-span-12 mb-1.5">
+            <label className="acc-label">
+              Customer Name <span className="acc-required">*</span>
             </label>
           </div>
-          <div className="col-span-5 relative flex flex-col gap-4">
+          <div className="mb-6 col-span-5 relative flex flex-col gap-4">
             <div className="flex gap-2 w-full">
               <div className="flex-1">
                 <Popover open={open} onOpenChange={setOpen}>
@@ -300,7 +301,7 @@ export const CreateRetainerInvoicePage = () => {
               </div>
             )}
           </div>
-          <div className="col-span-4 flex justify-end items-start pt-1">
+          <div className="mb-6 col-span-4 flex justify-end items-start pt-1">
             {customerName && (
               <Button
                 variant="default"
@@ -314,12 +315,12 @@ export const CreateRetainerInvoicePage = () => {
           </div>
 
           {/* Retainer Invoice Number */}
-          <div className="col-span-3">
-            <label className="text-sm font-medium text-[#DA7756]">
-              Retainer Invoice Number*
+          <div className="col-span-12 mb-1.5">
+            <label className="acc-label">
+              Retainer Invoice Number <span className="acc-required">*</span>
             </label>
           </div>
-          <div className="col-span-5 relative">
+          <div className="mb-6 col-span-5 relative">
             <Input
               value={retainerNumber}
               onChange={(e) => setRetainerNumber(e.target.value)}
@@ -329,30 +330,30 @@ export const CreateRetainerInvoicePage = () => {
               <Settings className="w-4 h-4" />
             </button>
           </div>
-          <div className="col-span-4"></div>
+          <div className="mb-6 col-span-4"></div>
 
           {/* Reference# */}
-          <div className="col-span-3">
-            <label className="text-sm font-medium text-gray-700">
+          <div className="col-span-12 mb-1.5">
+            <label className="acc-label">
               Reference#
             </label>
           </div>
-          <div className="col-span-5">
+          <div className="mb-6 col-span-5">
             <Input
               value={referenceNumber}
               onChange={(e) => setReferenceNumber(e.target.value)}
               className="w-full border-gray-300"
             />
           </div>
-          <div className="col-span-4"></div>
+          <div className="mb-6 col-span-4"></div>
 
           {/* Retainer Invoice Date */}
-          <div className="col-span-3">
-            <label className="text-sm font-medium text-[#DA7756]">
-              Retainer Invoice Date*
+          <div className="col-span-12 mb-1.5">
+            <label className="acc-label">
+              Retainer Invoice Date <span className="acc-required">*</span>
             </label>
           </div>
-          <div className="col-span-5">
+          <div className="mb-6 col-span-5">
             <Input
               type="text"
               value={invoiceDate}
@@ -360,15 +361,15 @@ export const CreateRetainerInvoicePage = () => {
               className="w-full border-gray-300"
             />
           </div>
-          <div className="col-span-4"></div>
+          <div className="mb-6 col-span-4"></div>
 
           {/* Project Name */}
-          <div className="col-span-3">
-            <label className="text-sm font-medium text-gray-700">
+          <div className="col-span-12 mb-1.5">
+            <label className="acc-label">
               Project Name
             </label>
           </div>
-          <div className="col-span-5">
+          <div className="mb-6 col-span-5">
             <Select value={projectName} onValueChange={setProjectName}>
               <SelectTrigger className="w-full bg-white border-gray-300 text-gray-400">
                 <SelectValue placeholder="Select a project" />
@@ -382,11 +383,11 @@ export const CreateRetainerInvoicePage = () => {
               Select a customer to associate a project.
             </p>
           </div>
-          <div className="col-span-4"></div>
+          <div className="mb-6 col-span-4"></div>
         </div>
 
         {/* Items Table */}
-        <div className="mb-8 border border-gray-200 rounded-sm">
+        <div className="acc-table-wrap acc-line-items mb-8">
           <Table>
             <TableHeader className="bg-gray-50">
               <TableRow className="border-b-gray-200 hover:bg-gray-50">
@@ -412,7 +413,7 @@ export const CreateRetainerInvoicePage = () => {
                         handleItemChange(item.id, "description", e.target.value)
                       }
                       placeholder="Description"
-                      className="min-h-[60px] w-full border-0 rounded-none resize-none focus-visible:ring-0 px-3 py-2 shadow-none"
+                      className="acc-cell-input min-h-[60px] w-full border-0 rounded-none resize-none focus-visible:ring-0 px-3 py-2 shadow-none"
                     />
                   </TableCell>
                   <TableCell className="p-0 align-top border-r border-gray-200">
@@ -422,7 +423,7 @@ export const CreateRetainerInvoicePage = () => {
                       onChange={(e) =>
                         handleItemChange(item.id, "amount", e.target.value)
                       }
-                      className="w-full border-0 rounded-none focus-visible:ring-0 text-right h-[60px] px-4 shadow-none"
+                      className="acc-cell-input w-full border-0 rounded-none focus-visible:ring-0 text-right h-[60px] px-4 shadow-none"
                       style={{ backgroundColor: "transparent" }}
                       min="0"
                       step="0.01"
@@ -454,7 +455,7 @@ export const CreateRetainerInvoicePage = () => {
               variant="outline"
               size="sm"
               onClick={handleAddItem}
-              className="text-[#DA7756] border-none bg-[#fdf5f2] hover:bg-[#f8e7df] hover:text-[#C45F40] h-8 px-3 text-xs font-medium"
+              className="acc-btn acc-btn-secondary acc-btn-xs"
             >
               <Plus className="w-3.5 h-3.5 mr-1" /> Add New Row
             </Button>
@@ -467,9 +468,9 @@ export const CreateRetainerInvoicePage = () => {
         </div>
 
         {/* Bottom Section */}
-        <div className="grid grid-cols-2 gap-12 mb-12">
+        <div className="acc-form grid grid-cols-2 gap-12 mb-12">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
+            <label className="acc-label block">
               Customer Notes
             </label>
             <Textarea
@@ -480,7 +481,7 @@ export const CreateRetainerInvoicePage = () => {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
+            <label className="acc-label block">
               Terms & Conditions
             </label>
             <Textarea
@@ -511,9 +512,9 @@ export const CreateRetainerInvoicePage = () => {
             Payment Gateway
           </a>
 
-          <div className="bg-blue-50 border border-blue-100 rounded-md p-4 flex items-center justify-between">
+          <div className="acc-notice-info p-4 flex items-center justify-between">
             <div className="flex items-start gap-4">
-              <div className="p-2 bg-white rounded-md border border-blue-100 shadow-sm">
+              <div className="acc-notice-icon p-2">
                 <svg
                   width="24"
                   height="24"
@@ -551,14 +552,14 @@ export const CreateRetainerInvoicePage = () => {
                   unified payment solution designed to work seamlessly with your
                   business apps. Set up now and manage payments, refunds, and
                   disputes effortlessly.{" "}
-                  <a href="#" className="text-blue-500 hover:underline">
+                  <a href="#" className="acc-notice-link hover:underline">
                     View Platform Fee Details
                   </a>
                 </p>
               </div>
             </div>
             <div className="flex items-start gap-2">
-              <Button className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-4 h-8">
+              <Button className="acc-btn acc-btn-primary acc-btn-xs">
                 Set Up Now
               </Button>
               <button className="text-gray-400 hover:text-gray-600">
@@ -586,17 +587,17 @@ export const CreateRetainerInvoicePage = () => {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            className="text-gray-700 border-gray-300 hover:bg-gray-50"
+            className="acc-btn acc-btn-secondary"
           >
             Save as Draft
           </Button>
-          <Button className="fm-button-fix fm-button-brand text-white">
+          <Button className="acc-btn fm-button-fix fm-button-brand text-white">
             Save and Send
           </Button>
           <Button
             variant="ghost"
             onClick={() => navigate(-1)}
-            className="text-gray-600 hover:bg-gray-50 hover:text-gray-800 border border-gray-300"
+            className="acc-btn acc-btn-secondary"
           >
             Cancel
           </Button>
