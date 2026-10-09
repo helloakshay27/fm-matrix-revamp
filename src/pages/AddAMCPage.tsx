@@ -1312,7 +1312,7 @@ export const AddAMCPage = () => {
       helperText={errors.supplier}
       label={
         <>
-          Supplier <span style={{ color: '#DA7756' }}>*</span>
+          Supplier <span className="fm-required-mark">*</span>
         </>
       }
       required
@@ -1759,7 +1759,7 @@ export const AddAMCPage = () => {
                       <>
                         {formData.details === 'Asset' ? (
                           <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                            <InputLabel shrink>Assets <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                            <InputLabel shrink>Assets <span className="fm-required-mark">*</span></InputLabel>
                             <MuiSelect
                               multiple
                               label="Assets"
@@ -1789,7 +1789,7 @@ export const AddAMCPage = () => {
                           </FormControl>
                         ) : (
                           <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                            <InputLabel shrink>Service <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                            <InputLabel shrink>Service <span className="fm-required-mark">*</span></InputLabel>
                             <MuiSelect
                               multiple
                               label="Service"
@@ -1811,7 +1811,7 @@ export const AddAMCPage = () => {
                         )}
 
                         <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                          <InputLabel shrink>Supplier <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                          <InputLabel shrink>Supplier <span className="fm-required-mark">*</span></InputLabel>
                           <MuiSelect
                             label="Supplier"
                             displayEmpty
@@ -1886,7 +1886,7 @@ export const AddAMCPage = () => {
                           </FormControl>
 
                           <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                            <InputLabel shrink>Supplier <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                            <InputLabel shrink>Supplier <span className="fm-required-mark">*</span></InputLabel>
                             <MuiSelect
                               label="Supplier"
                               displayEmpty
@@ -1944,7 +1944,7 @@ export const AddAMCPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <TextField
                         disabled
-                        label={<span>Contract Name <span style={{ color: 'red' }}>*</span></span>}
+                        label={<span>Contract Name <span className="fm-required-mark">*</span></span>}
                         placeholder="Enter Contract Name"
                         fullWidth
                         value={formData.contractName}
@@ -1953,7 +1953,7 @@ export const AddAMCPage = () => {
 
                       <TextField
                         disabled
-                        label={<span>Start Date <span style={{ color: 'red' }}>*</span></span>}
+                        label={<span>Start Date <span className="fm-required-mark">*</span></span>}
                         type="date"
                         fullWidth
                         value={formData.startDate || ''}
@@ -1963,7 +1963,7 @@ export const AddAMCPage = () => {
 
                       <TextField
                         disabled
-                        label={<span>End Date <span style={{ color: 'red' }}>*</span></span>}
+                        label={<span>End Date <span className="fm-required-mark">*</span></span>}
                         type="date"
                         fullWidth
                         value={formData.endDate || ''}
@@ -1973,7 +1973,7 @@ export const AddAMCPage = () => {
 
                       {/* <TextField
                         disabled
-                        label={<span>First Service Date <span style={{ color: 'red' }}>*</span></span>}
+                        label={<span>First Service Date <span className="fm-required-mark">*</span></span>}
                         type="date"
                         fullWidth
                         value={formData.firstService || ''}
@@ -1984,7 +1984,7 @@ export const AddAMCPage = () => {
                       <TextField
                         label={
                           <span>
-                            First Service Date <span style={{ color: 'red' }}>*</span>
+                            First Service Date <span className="fm-required-mark">*</span>
                           </span>
                         }
                         type="date"
@@ -2001,7 +2001,7 @@ export const AddAMCPage = () => {
                       />
 
                       <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                        <InputLabel shrink>Payment Terms <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                        <InputLabel shrink>Payment Terms <span className="fm-required-mark">*</span></InputLabel>
                         <MuiSelect
                           label="Payment Terms"
                           displayEmpty
@@ -2020,7 +2020,7 @@ export const AddAMCPage = () => {
 
                       <TextField
                         disabled
-                        label={<span>Cost <span style={{ color: 'red' }}>*</span></span>}
+                        label={<span>Cost <span className="fm-required-mark">*</span></span>}
                         placeholder="Enter Cost"
                         type="number"
                         fullWidth
@@ -2031,7 +2031,7 @@ export const AddAMCPage = () => {
 
                       <TextField
                         disabled
-                        label={<span>No. of Visits <span style={{ color: 'red' }}>*</span></span>}
+                        label={<span>No. of Visits <span className="fm-required-mark">*</span></span>}
                         placeholder="Enter No. of Visits"
                         type="number"
                         fullWidth
@@ -2280,7 +2280,7 @@ export const AddAMCPage = () => {
                     <>
                       {formData.details === 'Asset' ? (
                         <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                          <InputLabel shrink>Assets <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                          <InputLabel shrink>Assets <span className="fm-required-mark">*</span></InputLabel>
                           <MuiSelect
                             multiple
                             label="Assets"
@@ -2311,7 +2311,7 @@ export const AddAMCPage = () => {
                         </FormControl>
                       ) : (
                         <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                          <InputLabel shrink>Service <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                          <InputLabel shrink>Service <span className="fm-required-mark">*</span></InputLabel>
                           <MuiSelect
                             multiple
                             label="Service"
@@ -2332,7 +2332,7 @@ export const AddAMCPage = () => {
                       )}
 
                       <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                        <InputLabel shrink>Supplier <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                        <InputLabel shrink>Supplier <span className="fm-required-mark">*</span></InputLabel>
                         <MuiSelect
                           label="Supplier"
                           displayEmpty
@@ -2406,7 +2406,7 @@ export const AddAMCPage = () => {
                         </FormControl>
 
                         <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                          <InputLabel shrink>Supplier <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                          <InputLabel shrink>Supplier <span className="fm-required-mark">*</span></InputLabel>
                           <MuiSelect
                             label="Supplier"
                             displayEmpty
@@ -2480,7 +2480,7 @@ export const AddAMCPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <TextField
                       disabled
-                      label={<span>Contract Name <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>Contract Name <span className="fm-required-mark">*</span></span>}
                       placeholder="Enter Contract Name"
                       fullWidth
                       value={formData.contractName}
@@ -2489,7 +2489,7 @@ export const AddAMCPage = () => {
 
                     <TextField
                       disabled
-                      label={<span>Start Date <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>Start Date <span className="fm-required-mark">*</span></span>}
                       type="date"
                       fullWidth
                       value={formData.startDate || ''}
@@ -2499,7 +2499,7 @@ export const AddAMCPage = () => {
 
                     <TextField
                       disabled
-                      label={<span>End Date <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>End Date <span className="fm-required-mark">*</span></span>}
                       type="date"
                       fullWidth
                       value={formData.endDate || ''}
@@ -2509,7 +2509,7 @@ export const AddAMCPage = () => {
 
                     <TextField
                       disabled
-                      label={<span>First Service Date <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>First Service Date <span className="fm-required-mark">*</span></span>}
                       type="date"
                       fullWidth
                       value={formData.firstService || ''}
@@ -2518,7 +2518,7 @@ export const AddAMCPage = () => {
                     />
 
                     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                      <InputLabel shrink>Payment Terms <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                      <InputLabel shrink>Payment Terms <span className="fm-required-mark">*</span></InputLabel>
                       <MuiSelect
                         label="Payment Terms"
                         displayEmpty
@@ -2537,7 +2537,7 @@ export const AddAMCPage = () => {
 
                     <TextField
                       disabled
-                      label={<span>Cost <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>Cost <span className="fm-required-mark">*</span></span>}
                       placeholder="Enter Cost"
                       type="number"
                       fullWidth
@@ -2547,7 +2547,7 @@ export const AddAMCPage = () => {
 
                     <TextField
                       disabled
-                      label={<span>No. of Visits <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>No. of Visits <span className="fm-required-mark">*</span></span>}
                       placeholder="Enter No. of Visits"
                       type="number"
                       fullWidth
@@ -2678,7 +2678,7 @@ export const AddAMCPage = () => {
                 <CardContent className="p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
-                      <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Contracts <span style={{ color: 'red' }}>*</span></label>
+                      <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Contracts <span className="fm-required-mark">*</span></label>
                       <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 min-h-[200px]">
                         {attachments.contracts.length > 0 ? (
                           <div className="flex flex-wrap gap-3">
@@ -2794,13 +2794,13 @@ export const AddAMCPage = () => {
             </div >
 
             {/* Preview Mode Buttons */}
-            < div className="flex gap-4 justify-center" >
+            <div className="fm-action-bar">
               <Button
                 type="button"
                 onClick={() => setIsPreviewMode(false)}
                 disabled={isSubmitting}
                 variant="ghost"
-                className="fm-button-fix fm-button-brand px-8 font-medium"
+                className="fm-action-secondary"
               >
                 Back to Edit
               </Button>
@@ -2828,7 +2828,7 @@ export const AddAMCPage = () => {
                 }}
                 disabled={isSubmitting}
                 variant="ghost"
-                className="fm-button-fix fm-button-brand px-6 py-2 font-medium"
+                className="fm-action-primary"
               >
                 {isSubmitting ? (
                   <>
@@ -2839,7 +2839,7 @@ export const AddAMCPage = () => {
                   'Proceed to Save'
                 )}
               </Button>
-            </div >
+            </div>
           </div >
         )}
 
@@ -2979,7 +2979,7 @@ export const AddAMCPage = () => {
                           {/* Header row */}
                           <div className="flex items-center justify-between mb-2">
                             <Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#444' }}>
-                              Assets <span style={{ color: '#DA7756' }}>*</span>
+                              Assets <span className="fm-required-mark">*</span>
                             </Typography>
                             {formData.asset_ids.length > 0 && (
                               <span className="text-xs text-[#DA7756] font-medium">{formData.asset_ids.length} selected</span>
@@ -3264,7 +3264,7 @@ export const AddAMCPage = () => {
                               color: "#444",
                             }}
                           >
-                            Services <span style={{ color: "#DA7756" }}>*</span>
+                            Services <span className="fm-required-mark">*</span>
                           </Typography>
 
                           <Select
@@ -3845,7 +3845,7 @@ export const AddAMCPage = () => {
                     {/* Row 1: Contract Name | Start Date | End Date */}
                     <TextField
                       disabled={isSubmitting}
-                      label={<span>Contract Name <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>Contract Name <span className="fm-required-mark">*</span></span>}
                       placeholder="Enter Contract Name"
                       fullWidth
                       value={formData.contractName}
@@ -3857,7 +3857,7 @@ export const AddAMCPage = () => {
 
                     <TextField
                       disabled={isSubmitting}
-                      label={<span>Start Date <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>Start Date <span className="fm-required-mark">*</span></span>}
                       type="date"
                       fullWidth
                       value={formData.startDate || ''}
@@ -3870,7 +3870,7 @@ export const AddAMCPage = () => {
 
                     <TextField
                       disabled={!formData.startDate || isSubmitting}
-                      label={<span>End Date <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>End Date <span className="fm-required-mark">*</span></span>}
                       type="date"
                       fullWidth
                       value={formData.endDate || ''}
@@ -3885,7 +3885,7 @@ export const AddAMCPage = () => {
                     {/* Row 2: First Service Date | Payment Terms | AMC Cost */}
                     <TextField
                       disabled={isSubmitting}
-                      label={<span>First Service Date <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>First Service Date <span className="fm-required-mark">*</span></span>}
                       type="date"
                       fullWidth
                       value={formData.firstService || ''}
@@ -3897,7 +3897,7 @@ export const AddAMCPage = () => {
                     />
 
                     <FormControl fullWidth variant="outlined" error={!!errors.paymentTerms} sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                      <InputLabel shrink>Payment Terms <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                      <InputLabel shrink>Payment Terms <span className="fm-required-mark">*</span></InputLabel>
                       <MuiSelect
                         label="Payment Terms"
                         displayEmpty
@@ -3918,7 +3918,7 @@ export const AddAMCPage = () => {
 
                     <TextField
                       disabled={isSubmitting}
-                      label={<span>Cost <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>Cost <span className="fm-required-mark">*</span></span>}
                       placeholder="Enter Cost"
                       type="number"
                       fullWidth
@@ -3937,7 +3937,7 @@ export const AddAMCPage = () => {
                     {/* Row 3: No. of Visits | Remarks */}
                     <TextField
                       disabled={isSubmitting}
-                      label={<span>No. of Visits <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>No. of Visits <span className="fm-required-mark">*</span></span>}
                       placeholder="Enter No. of Visits"
                       type="number"
                       fullWidth
@@ -4190,9 +4190,11 @@ export const AddAMCPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {/* Checklist Template */}
                       <FormControl fullWidth variant="outlined" error={!!checklistErrors.templateId}>
-                        <InputLabel shrink>Checklist Template *</InputLabel>
+                        <InputLabel shrink>
+                          Checklist Template <span className="fm-required-mark">*</span>
+                        </InputLabel>
                         <MuiSelect
-                          label="Checklist Template *"
+                          label="Checklist Template"
                           value={checklistFields.templateId}
                           onChange={e => {
                             setChecklistFields(prev => ({ ...prev, templateId: String(e.target.value) }));
@@ -4211,9 +4213,11 @@ export const AddAMCPage = () => {
 
                       {/* Grace Time Type */}
                       <FormControl fullWidth variant="outlined" error={!!checklistErrors.graceTimeType}>
-                        <InputLabel shrink>Grace Time Type *</InputLabel>
+                        <InputLabel shrink>
+                          Grace Time Type <span className="fm-required-mark">*</span>
+                        </InputLabel>
                         <MuiSelect
-                          label="Grace Time Type *"
+                          label="Grace Time Type"
                           value={checklistFields.graceTimeType}
                           onChange={e => {
                             setChecklistFields(prev => ({ ...prev, graceTimeType: String(e.target.value) }));
@@ -4230,7 +4234,11 @@ export const AddAMCPage = () => {
 
                       {/* Grace Time Value */}
                       <TextField
-                        label="Grace Time Value *"
+                        label={
+                          <>
+                            Grace Time Value <span className="fm-required-mark">*</span>
+                          </>
+                        }
                         type="number"
                         variant="outlined"
                         fullWidth
@@ -4288,7 +4296,7 @@ export const AddAMCPage = () => {
                 <CardContent className="p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
-                      <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Contracts<span style={{ color: 'red' }}>*</span></label>
+                      <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Contracts<span className="fm-required-mark">*</span></label>
                       <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
                         <input
                           type="file"
@@ -4553,7 +4561,7 @@ export const AddAMCPage = () => {
         {/* Step Navigation Buttons - Hide in preview mode */}
         {
           !isPreviewMode && (
-            <div className="flex gap-4 justify-center mt-8">
+            <div className="fm-action-bar mt-8">
               {/* {currentStep > 0 && (
           <Button
             type="button"
@@ -4574,19 +4582,19 @@ export const AddAMCPage = () => {
                 <>
                   <Button
                     type="button"
-                    onClick={handleProceedToSave}
+                    onClick={handleSaveToDraft}
                     variant="ghost"
-                    className="fm-button-fix fm-button-brand px-6 py-2 font-medium"
+                    className="fm-action-secondary"
                   >
-                    Proceed to save
+                    Save to draft
                   </Button>
                   <Button
                     type="button"
-                    onClick={handleSaveToDraft}
+                    onClick={handleProceedToSave}
                     variant="ghost"
-                    className="fm-button-fix fm-button-brand px-6 py-2 font-medium"
+                    className="fm-action-primary"
                   >
-                    Save to draft
+                    Proceed to save
                   </Button>
                 </>
               ) : (
@@ -4596,7 +4604,7 @@ export const AddAMCPage = () => {
                     type="button"
                     onClick={handlePreview}
                     variant="ghost"
-                    className="fm-button-fix fm-button-brand px-6 py-2 font-medium"
+                    className="fm-action-primary"
                   >
                     Preview
                   </Button>
@@ -4604,7 +4612,7 @@ export const AddAMCPage = () => {
                     type="button"
                     onClick={handleSaveToDraft}
                     variant="ghost"
-                    className="fm-button-fix fm-button-brand px-6 py-2 font-medium"
+                    className="fm-action-secondary"
                   >
                     Save to draft
                   </Button>
