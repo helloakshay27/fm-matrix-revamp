@@ -1647,6 +1647,14 @@ header a[class*="text-[#C72030]"] {
 [class*="pagination"] button[class*="bg-[#C72030]"] {
   background-color: var(--color-primary) !important;
 }
+/* Selected page: 8px corners everywhere (shadcn PaginationLink already uses
+   rounded-[8px]; this covers custom pagers and MUI <Pagination>) */
+html body nav[aria-label="pagination"] [aria-current="page"],
+html body [class*="pagination"] button[class*="bg-[#C72030]"],
+html body [class*="pagination"] [aria-current="page"],
+html body .MuiPaginationItem-root.Mui-selected {
+  border-radius: 8px !important;
+}
 
 /* ===== LOADING/SPINNER COLOR OVERRIDES ===== */
 .animate-spin[class*="text-[#C72030]"],
@@ -6062,4 +6070,104 @@ html body label .fm-required-mark,
 html body .MuiFormControl-root .MuiInputLabel-root .fm-required-mark {
   color: var(--color-danger) !important;
   margin-left: 2px;
+}
+
+/* ============================================================
+   STAT / KPI CARDS — Business Genie summary tile
+   Label on top, large ink value below, white 36px icon tile in the
+   top-right corner; grey #F5F4F0 surface, 16px radius, 18px 20px
+   padding, no border and no shadow (hover included).
+   Applies to <StatsCard> and every inline tile built the same way:
+   beige tile > icon well (bg-[#C4B89D54]) + value/title block.
+   CSS only — values, click/filter handlers and selection untouched.
+   ============================================================ */
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]):has(> [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])) {
+  position: relative;
+  display: flex !important;
+  flex-direction: row-reverse !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  padding: 18px 20px !important;
+  border: none !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
+  background-color: #f5f4f0 !important;
+  transition: background-color 0.16s !important;
+}
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]):has(> [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])):hover {
+  box-shadow: none !important;
+}
+html body div[class*="cursor-pointer"]:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]):has(> [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])):hover {
+  background-color: #efede7 !important;
+}
+/* Selected filter card (StatsCard selected) */
+html body div[class*="bg-[rgb(230_226_218"]:has(> [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])),
+html body div[class*="bg-[rgb(230_226_218"]:has(> [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])):hover {
+  background-color: #e9e7e0 !important;
+}
+
+/* Icon tile: white 36×36, 10px corners, neutral 18px line icon */
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i]:has(+ div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])) {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  flex: 0 0 36px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+  background-color: #ffffff !important;
+}
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i]:has(+ div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])) svg {
+  width: 18px !important;
+  height: 18px !important;
+  color: rgba(26, 26, 24, 0.68) !important;
+  stroke: currentColor !important;
+  stroke-width: 1.8 !important;
+}
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i]:has(+ div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])) span {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: rgba(26, 26, 24, 0.68) !important;
+}
+
+/* Text block: label above the value */
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i] + div:has(> :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])) {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  gap: 0 !important;
+}
+/* most tiles write value first, title second → show title first */
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i] + div:has(> :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"]):first-child) {
+  flex-direction: column-reverse !important;
+  justify-content: flex-end !important;
+}
+/* value: large full-ink number */
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"]) {
+  margin: 0 !important;
+  font-size: 26px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.01em !important;
+  color: #1a1a18 !important;
+  font-variant-numeric: tabular-nums;
+}
+/* label (and any sub-line): soft ink */
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i] + div:has(> :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])) > :not([class*="text-xl"]):not([class*="text-2xl"]):not([class*="text-3xl"]) {
+  margin: 0 0 6px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  color: rgba(26, 26, 24, 0.68) !important;
+}
+
+/* Asset stats "swap" control: move out of the icon's corner to bottom-right */
+html body div[class*="bg-[#F6F4EE]" i]:has(> [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])) > button.absolute {
+  top: auto !important;
+  bottom: 12px !important;
+  right: 14px !important;
 }
