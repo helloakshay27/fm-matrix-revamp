@@ -4790,10 +4790,8 @@ html body select,
 html body button[role="combobox"] {
   border-radius: var(--radius-input) !important;
 }
-/* Floating-label notch must follow the larger radius cleanly */
-html body .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline legend {
-  max-width: 100%;
-}
+/* Label placement / notch: see "MUI OUTLINED FIELDS — LABEL ABOVE THE CONTROL"
+   at the end of this file (labels sit above the box, so the notch stays closed). */
 
 
 /* ============================================================
@@ -5782,4 +5780,130 @@ html body #root main:has(svg.lucide-notepad-text) svg.lucide-notepad-text {
 html body #root main:has(svg.lucide-notepad-text) svg.lucide-notepad-text * {
   color: #000000 !important;
   stroke: #000000 !important;
+}
+
+/* ============================================================
+   MUI OUTLINED FIELDS — LABEL ABOVE THE CONTROL
+   Every MUI outlined TextField / Select / Autocomplete / date or
+   time picker shows its label above the box instead of inside the
+   border notch (Business Genie form control):
+     label   12px / 600 Poppins, ink-soft, 6px gap to the control
+     control 44px min height, 12px radius, 1px hairline, 13.5px / 500
+     textarea 88px min height, 12px 14px padding
+   Pure CSS — value, validation, focus and disabled behaviour are
+   untouched. Opt a single field out with className="mui-floating-label"
+   on the TextField / FormControl.
+   ============================================================ */
+
+/* Label: out of the border, into the flow above the control */
+html body .MuiFormControl-root:not(.mui-floating-label) > .MuiInputLabel-outlined {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  max-width: 100% !important;
+  width: auto !important;
+  margin: 0 0 6px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0 !important;
+  color: var(--color-ink-68) !important;
+  z-index: auto !important;
+  transition: none !important;
+}
+/* Label keeps its colour on focus (no brand flash); error / disabled stay readable */
+html body .MuiFormControl-root:not(.mui-floating-label) > .MuiInputLabel-outlined.Mui-focused {
+  color: var(--color-ink-68) !important;
+}
+html body .MuiFormControl-root:not(.mui-floating-label) > .MuiInputLabel-outlined.Mui-error {
+  color: var(--color-danger) !important;
+}
+html body .MuiFormControl-root:not(.mui-floating-label) > .MuiInputLabel-outlined.Mui-disabled {
+  color: var(--color-ink-48) !important;
+}
+html body .MuiFormControl-root:not(.mui-floating-label) > .MuiInputLabel-outlined .MuiFormLabel-asterisk {
+  color: var(--color-danger) !important;
+}
+
+/* Notch: always closed, the border is drawn as one continuous line */
+html body .MuiFormControl-root:not(.mui-floating-label) .MuiOutlinedInput-notchedOutline > legend,
+html body .MuiFormControl-root:not(.mui-floating-label) .MuiPickersOutlinedInput-notchedOutline > legend {
+  max-width: 0.01px !important;
+  padding: 0 !important;
+  transition: none !important;
+}
+
+/* MUI hides the placeholder while an un-shrunk label sits inside the box;
+   the label is outside now, so the placeholder stays visible */
+html body .MuiFormControl-root:not(.mui-floating-label) > label[data-shrink="false"] + .MuiInputBase-formControl .MuiInputBase-input::placeholder {
+  opacity: 1 !important;
+}
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) .MuiInputBase-input::placeholder {
+  color: var(--color-ink-30);
+  opacity: 1;
+  font-style: normal;
+}
+html body .MuiFormControl-root:not(.mui-floating-label) > .MuiPickersInputBase-root .MuiPickersInputBase-sectionsContainer,
+html body .MuiFormControl-root:not(.mui-floating-label) > .MuiPickersOutlinedInput-root .MuiPickersSectionList-root {
+  opacity: 1 !important;
+}
+/* Select placeholders written as <em>Select …</em> render upright and muted */
+html body .MuiSelect-select em {
+  font-style: normal;
+  color: var(--color-ink-30);
+}
+
+/* Control shell (labelled fields only — label-less toolbar/search fields keep their size) */
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) > .MuiOutlinedInput-root:not(.MuiInputBase-multiline),
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) > .MuiPickersOutlinedInput-root {
+  min-height: 44px !important;
+  height: auto !important;
+  border-radius: var(--radius-input) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+}
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) > .MuiOutlinedInput-root > .MuiOutlinedInput-input:not(.MuiAutocomplete-input):not(textarea),
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) > .MuiOutlinedInput-root > .MuiSelect-select {
+  padding-top: 10.5px !important;
+  padding-bottom: 10.5px !important;
+  height: auto !important;
+  min-height: 1.4375em !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  color: var(--color-text);
+  box-sizing: content-box;
+}
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) .MuiAutocomplete-input,
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) .MuiPickersSectionList-root {
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+}
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) > .MuiOutlinedInput-root:not(.Mui-focused):not(.Mui-error):not(.Mui-disabled) > .MuiOutlinedInput-notchedOutline,
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) > .MuiPickersOutlinedInput-root:not(.Mui-focused):not(.Mui-error):not(.Mui-disabled) > .MuiPickersOutlinedInput-notchedOutline {
+  border-width: 1px;
+  border-color: rgba(26, 26, 24, 0.12);
+}
+
+/* Textareas (multiline TextField) */
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) > .MuiOutlinedInput-root.MuiInputBase-multiline {
+  min-height: 88px !important;
+  height: auto !important;
+  padding: 12px 14px !important;
+  align-items: flex-start !important;
+  border-radius: var(--radius-input) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+}
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) > .MuiOutlinedInput-root.MuiInputBase-multiline > textarea {
+  padding: 0 !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
 }
