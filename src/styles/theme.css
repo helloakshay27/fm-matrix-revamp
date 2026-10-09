@@ -4110,17 +4110,40 @@ html body header.fixed.top-0 button[class*="hover:bg-[#f6f4ee]"]:hover {
   }
 }
 
-/* Notification bell → bordered square button, grey icon */
+/* Notification bell → borderless icon button, thin grey line bell */
 html body header.fixed.top-0 button[aria-label="Notifications"] {
   border: 1px solid rgba(26, 26, 24, 0.08) !important;
-  background-color: #ffffff !important;
+  background-color: transparent !important;
   border-radius: 8px !important;
+  overflow: visible !important;
 }
 html body header.fixed.top-0 button[aria-label="Notifications"]:hover {
-  border-color: rgba(26, 26, 24, 0.28) !important;
+  background-color: var(--color-surface) !important;
 }
-html body header.fixed.top-0 button[aria-label="Notifications"] svg {
-  color: rgba(26, 26, 24, 0.68) !important;
+html body header.fixed.top-0 button[aria-label="Notifications"] > svg {
+  width: 20px !important;
+  height: 20px !important;
+  color: rgba(26, 26, 24, 0.55) !important;
+  stroke-width: 1.8 !important;
+}
+/* Unread count → coral pill (accentOrange #E8916F), white bold count,
+   2px page-coloured ring so it reads cleanly over the bell */
+html body header.fixed.top-0 button[aria-label="Notifications"] [class*="bg-[#DA7756]"] {
+  top: -6px !important;
+  right: -8px !important;
+  min-width: 20px !important;
+  height: 18px !important;
+  padding: 0 5px !important;
+  border: none !important;
+  border-radius: 999px !important;
+  background-color: #e8916f !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 2px var(--color-bg) !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  line-height: 18px !important;
+  letter-spacing: 0 !important;
+  font-variant-numeric: tabular-nums;
 }
 html body header.fixed.top-0 [class*="bg-[#DA7756]"] {
   background-color: var(--color-accent) !important;
@@ -4145,14 +4168,26 @@ html body div.fixed.top-16.h-12 button.flex-shrink-0 {
   font-weight: 500 !important;
   opacity: 1 !important;
   color: rgba(26, 26, 24, 0.55) !important;
-  transition: all 0.16s;
+  /* Animate fill/colour only — animating borders made the previously
+     active tab flash an outline while switching modules. */
+  transition: background-color 0.16s, color 0.16s !important;
 }
 html body div.fixed.top-16.h-12 button.flex-shrink-0:hover {
   background-color: #f7f6f2 !important;
   color: #1a1a18 !important;
 }
-html body div.fixed.top-16.h-12 button.flex-shrink-0.border-b-2 {
+/* Active module: soft grey filled pill, bold ink label — no outline or shadow.
+   (The generic "red text + red border button → white outlined" rule further
+   down also matches this tab's legacy classes, so border/shadow are cleared here.) */
+html body div.fixed.top-16.h-12 button.flex-shrink-0.border-b-2,
+html body div.fixed.top-16.h-12 button.flex-shrink-0.border-b-2:hover,
+html body div.fixed.top-16.h-12 button.flex-shrink-0.border-b-2:focus-visible {
   background-color: rgba(26, 26, 24, 0.07) !important;
+  /* zero-width (not `none`, which resets width to `medium`) so switching
+     tabs never animates a border in or out */
+  border: 0 solid transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
   color: #1a1a18 !important;
   font-weight: 600 !important;
 }
@@ -5289,12 +5324,8 @@ html body #root main div[class*="gap-10"][class*="overflow-x-auto"]
   color: var(--color-ink-48) !important;
 }
 
-/* Notification count badge: black background with a white count. */
-html body header.fixed.top-0 button[aria-label="Notifications"]
-  [class*="bg-[#DA7756]"] {
-  background-color: var(--color-primary) !important;
-  color: #ffffff !important;
-}
+/* Notification count badge: styled once, in the "Top header" section
+   (coral #E8916F pill, white count). */
 
 /* Location Account company logo dropzone outer border. */
 html body #root main [role="tabpanel"][id$="-content-company"]
