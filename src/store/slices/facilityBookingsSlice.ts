@@ -64,6 +64,17 @@ export interface FacilityBookingDetails {
   returned_amount?: number;
   free_cancellation_reason?: string;
   cancelled_on?: string;
+  cancellation_details?: {
+    cancelled_on?: string | null;
+    cancelled_by?: string | null;
+    cancellation_type?: string | null;
+    reason?: string | null;
+    refund_percentage?: number | null;
+    refunded_amount?: number | null;
+    refunded_on?: string | null;
+    refund_transaction_id?: string | null;
+    refund_status?: string | null;
+  } | null;
   booked_members?: any[];
   facility_booking_accessories?: {
     facility_booking_accessory: {

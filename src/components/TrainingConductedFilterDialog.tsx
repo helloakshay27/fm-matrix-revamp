@@ -38,9 +38,9 @@ const emptyFilters: TrainingConductedFilters = {
 };
 
 const fieldStyles = {
-  height: { xs: 36, sm: 40, md: 45 },
+  height: { xs: 40, sm: 45 },
   "& .MuiInputBase-input, & .MuiSelect-select": {
-    padding: { xs: "8px 12px", sm: "10px 14px", md: "12px 14px" },
+    padding: { xs: "8px", sm: "10px", md: "12px" },
   },
   "& .MuiOutlinedInput-root": {
     backgroundColor: "white",
@@ -48,6 +48,21 @@ const fieldStyles = {
 };
 
 const selectMenuProps = {
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+  disableScrollLock: true,
+  anchorOrigin: {
+    vertical: "bottom" as const,
+    horizontal: "left" as const,
+  },
+  transformOrigin: {
+    vertical: "top" as const,
+    horizontal: "left" as const,
+  },
+  style: {
+    zIndex: 10001,
+  },
   PaperProps: {
     style: {
       maxHeight: 224,
@@ -56,7 +71,7 @@ const selectMenuProps = {
       borderRadius: "8px",
       boxShadow:
         "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-      zIndex: 9999,
+      zIndex: 10001,
     },
   },
   disablePortal: false,
@@ -93,7 +108,8 @@ export const TrainingConductedFilterDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
       <DialogContent
-        className="w-full sm:max-w-[500px] bg-white overflow-visible"
+        className="max-h-[90vh] max-w-4xl overflow-y-auto bg-white"
+        aria-describedby="training-conducted-filter-description"
         onPointerDownOutside={(e) => {
           if (
             (e.target as HTMLElement).closest(
@@ -113,21 +129,26 @@ export const TrainingConductedFilterDialog = ({
           }
         }}
       >
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-lg font-semibold">Filters</DialogTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="h-6 w-6 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <DialogTitle className="text-lg font-semibold text-gray-900">FILTER BY</DialogTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="h-6 w-6 p-0 hover:bg-gray-100"
+            aria-label="Close filters"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+          <div id="training-conducted-filter-description" className="sr-only">
+            Filter conducted training by training name, status, site, and conductor
           </div>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
+        <div className="space-y-6 py-4">
+          <div>
+            <h3 className="mb-4 text-sm font-medium text-brand">Training Details</h3>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
           <TextField
             label="Training Name"
             value={localFilters.trainingName}
@@ -140,11 +161,10 @@ export const TrainingConductedFilterDialog = ({
             fullWidth
             variant="outlined"
             sx={fieldStyles}
-            className="sm:col-span-2"
           />
 
-          <FormControl fullWidth variant="outlined" className="sm:col-span-2">
-            <InputLabel id="training-conducted-status-label">Status</InputLabel>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="training-conducted-status-label" shrink>Status</InputLabel>
             <MuiSelect
               labelId="training-conducted-status-label"
               label="Status"
@@ -155,11 +175,12 @@ export const TrainingConductedFilterDialog = ({
                   status: e.target.value as string,
                 }))
               }
+              displayEmpty
               sx={fieldStyles}
               MenuProps={selectMenuProps}
             >
               <MenuItem value="">
-                <em>All</em>
+                <em>All Statuses</em>
               </MenuItem>
               <MenuItem value="completed">Completed</MenuItem>
               <MenuItem value="in-progress">In Progress</MenuItem>
@@ -191,19 +212,21 @@ export const TrainingConductedFilterDialog = ({
             variant="outlined"
             sx={fieldStyles}
           />
+            </div>
+          </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
+        <div className="flex justify-end gap-2 border-t pt-6">
           <Button
             onClick={handleApply}
-            className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto"
+            className="bg-brand px-4 py-2 text-white hover:bg-brand-hover"
           >
-            APPLY
+            Apply Filters
           </Button>
           <Button
             variant="outline"
             onClick={handleReset}
-            className="border-brand text-brand px-8 w-full sm:w-auto"
+            className="border-brand px-4 py-2 text-brand hover:bg-brand-selected hover:text-brand"
           >
             RESET
           </Button>

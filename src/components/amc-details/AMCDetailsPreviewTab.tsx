@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DetailCard } from "@/components/ui/detail-card";
 import { Button } from "@/components/ui/button";
 import { Eye, Download, FileText, FileSpreadsheet, X } from "lucide-react";
 import {
@@ -712,37 +713,29 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
   return (
     <div className="space-y-6">
       {/* AMC Configuration Section */}
-      <Card className="border-[#D9D9D9] bg-white shadow-sm" style={{
-        borderRadius: '4px',
-        background: '#FFF',
-        boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-      }}>
-        <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
-          <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-            <div className="w-6 h-6 mr-2 flex items-center justify-center">
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                  stroke="#C72030"
-                  strokeWidth="1.5"
-                />
-                <path
-                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                  stroke="#C72030"
-                  strokeWidth="1.5"
-                />
-              </svg>
-            </div>
-            AMC CONFIGURATION
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6 p-6" style={{ backgroundColor: 'rgba(246, 247, 247, 1)' }}>
+      <DetailCard
+        icon={
+          <svg
+            className="w-[18px] h-[18px] text-gray-500"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+          </svg>
+        }
+        title="AMC CONFIGURATION"
+      >
+        <div className="space-y-6">
           <div>
             <label className="block text-sm font-semibold mb-3 text-[#1a1a1a]">Details</label>
             <div className="flex gap-6">
@@ -946,41 +939,33 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
               </div>
             </>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </DetailCard>
 
       {/* AMC Details Section */}
-      <Card className="border-[#D9D9D9] bg-white shadow-sm" style={{
-        borderRadius: '4px',
-        background: '#FFF',
-        boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-      }}>
-        <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
-          <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-            <div className="w-6 h-6 mr-2 flex items-center justify-center">
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                  stroke="#C72030"
-                  strokeWidth="1.5"
-                />
-                <path
-                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                  stroke="#C72030"
-                  strokeWidth="1.5"
-                />
-              </svg>
-            </div>
-            AMC DETAILS
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 p-6" style={{ backgroundColor: 'rgba(246, 247, 247, 1)' }}>
+      <DetailCard
+        icon={
+          <svg
+            className="w-[18px] h-[18px] text-gray-500"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+          </svg>
+        }
+        title="AMC DETAILS"
+      >
+        <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <TextField
               disabled
@@ -1087,59 +1072,48 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
 
             <div></div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </DetailCard>
 
 
       {/* Schedule Section */}
-      <Card className="border-[#D9D9D9] bg-white shadow-sm" style={{
-        borderRadius: '4px',
-        background: '#FFF',
-        boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-      }}>
-        <CardHeader className="bg-[#F6F4EE]">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-              <div className="w-6 h-6 mr-2 flex items-center justify-center">
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                    stroke="#C72030"
-                    strokeWidth="1.5"
-                  />
-                  <path
-                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                    stroke="#C72030"
-                    strokeWidth="1.5"
-                  />
-                </svg>
-              </div>
-              SCHEDULE
-            </CardTitle>
-            <button
-              type="button"
-              onClick={() => setShowScheduleSection(!showScheduleSection)}
-              style={{
-                color: '#C72030',
-                border: '1px solid #C72030',
-                backgroundColor: '#F6F4EE',
-              }}
-              className="px-4 py-2 text-sm font-medium rounded hover:opacity-80 transition-opacity"
-            >
-              Change View
-            </button>
-          </div>
-        </CardHeader>
+      <DetailCard
+        icon={
+          <svg
+            className="w-[18px] h-[18px] text-gray-500"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+          </svg>
+        }
+        title="SCHEDULE"
+      >
+        {/* Change View toggle - kept adjacent to the card header since DetailCard's
+            title slot doesn't support an inline action; see task report for this call-out. */}
+        <div className="flex justify-end -mt-9 mb-3">
+          <button
+            type="button"
+            onClick={() => setShowScheduleSection(!showScheduleSection)}
+            className="h-[30px] px-3 py-0 rounded-[8px] border-[1.5px] border-[#2c2c2c] text-[#2c2c2c] text-[11.5px] font-semibold hover:bg-gray-50 transition-colors"
+          >
+            Change View
+          </button>
+        </div>
 
         {/* Step Content - Schedule */}
         {!showScheduleSection ? (
-          <CardContent className="p-0" style={{ backgroundColor: 'rgb(246, 247, 247)' }}>
+          <div className="p-0">
             {(() => {
               const visitLogs = Array.isArray(amc?.amc_visit_logs) ? amc.amc_visit_logs : [];
               const VISIT_PER_PAGE = 15;
@@ -1241,9 +1215,9 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
                 </>
               );
             })()}
-          </CardContent>
+          </div>
         ) : (
-          <CardContent className="p-0" style={{ backgroundColor: 'rgba(246, 247, 247, 1)' }}>
+          <div className="p-0">
             {frequencyGroups.some(g => g.frequency_config_id !== null) ? (
               /* Multi-frequency tabbed cron view */
               <div>
@@ -1307,44 +1281,36 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
                 </div>
               </div>
             )}
-          </CardContent>
+          </div>
         )}
-      </Card>
+      </DetailCard>
 
       {/* Attachments Section */}
-      <Card className="border-[#D9D9D9] bg-white shadow-sm" style={{
-        borderRadius: '4px',
-        background: '#FFF',
-        boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-      }}>
-        <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
-          <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-            <div className="w-6 h-6 mr-2 flex items-center justify-center">
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                  stroke="#C72030"
-                  strokeWidth="1.5"
-                />
-                <path
-                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                  stroke="#C72030"
-                  strokeWidth="1.5"
-                />
-              </svg>
-            </div>
-            ATTACHMENTS
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-6" style={{ backgroundColor: 'rgba(246, 247, 247, 1)' }}>
+      <DetailCard
+        icon={
+          <svg
+            className="w-[18px] h-[18px] text-gray-500"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+          </svg>
+        }
+        title="ATTACHMENTS"
+      >
+        <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-[#F6F4EE] rounded-lg p-6">
+            <div className="bg-white rounded-2xl border border-gray-200 p-6">
               <h3 className="text-[#1a1a1a] font-semibold text-base mb-3">AMC Contracts</h3>
               <div className="flex flex-wrap gap-4">
                 {renderAttachmentCards(contractDocuments, "No AMC contract attachments available")}
@@ -1407,8 +1373,8 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
               </div>
             </DialogContent>
           </Dialog>
-        </CardContent>
-      </Card>
+        </div>
+      </DetailCard>
     </div>
   );
 };

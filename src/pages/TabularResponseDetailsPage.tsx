@@ -847,7 +847,7 @@ export default function TabularResponseDetailsPage({
       </div>
 
       <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7] my-pdf-card">
-        <CardHeader className="bg-[#F6F4EE] mb-2">
+        <CardHeader className="bg-white mb-2">
           <CardTitle className="text-lg flex items-center">
             <div className="w-8 h-8 bg-[#E5E0D3] text-white rounded-full flex items-center justify-center mr-3">
               <FileText className="h-4 w-4 text-[#C72030]" />
@@ -897,7 +897,7 @@ export default function TabularResponseDetailsPage({
       </Card>
 
       <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7] my-pdf-card">
-        <CardHeader className="bg-[#F6F4EE] mb-2">
+        <CardHeader className="bg-white mb-2">
           <CardTitle className="text-lg flex items-center">
             <div className="w-10 h-10 bg-[#E5E0D3] text-white rounded-full flex items-center justify-center mr-3">
               <FileText className="h-4 w-4 text-[#C72030]" />

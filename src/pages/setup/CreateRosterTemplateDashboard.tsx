@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { MaterialDatePicker } from "@/components/ui/material-date-picker";
 import { useNavigate } from 'react-router-dom';
 import { parse } from 'date-fns';
+import { MapPin } from 'lucide-react';
 
 const selectTriggerClass =
   "h-10 bg-white border-gray-300 shadow-none focus:ring-0 focus:ring-offset-0 focus:!border-gray-300 focus:!shadow-none data-[state=open]:ring-0 data-[state=open]:ring-offset-0 data-[state=open]:!border-gray-300 data-[state=open]:!shadow-none";
@@ -47,7 +48,7 @@ export const CreateRosterTemplateDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg)', padding: '24px 32px 48px' }}>
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Create Roster Template</h1>
@@ -55,13 +56,16 @@ export const CreateRosterTemplateDashboard = () => {
 
       <div className="flex gap-6">
         {/* Left Side - Form */}
-        <div className="flex-1 bg-white rounded-lg border shadow-sm p-6">
+        <div
+          className="flex-1 bg-white p-6"
+          style={{ border: '1px solid var(--color-divider)', borderRadius: 16, boxShadow: 'none', outline: 'none' }}
+        >
           {/* Location Details Header */}
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 bg-[#da7756] rounded-full flex items-center justify-center text-white font-bold text-sm">
-              3
+            <div className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center">
+              <MapPin className="w-4 h-4 text-[var(--color-ink-68)]" />
             </div>
-            <h2 className="text-lg font-semibold text-orange-500 uppercase">LOCATION DETAILS</h2>
+            <h2 className="text-lg font-semibold text-brand uppercase">LOCATION DETAILS</h2>
           </div>
 
           <div className="space-y-4">
@@ -230,27 +234,31 @@ export const CreateRosterTemplateDashboard = () => {
               />
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-4 pt-6">
-              <Button 
-                onClick={handleSubmit}
-                className="!bg-[#DA7756] hover:!bg-[#C45F40] px-8 h-10"
-              >
-                <span className="!text-white font-medium">Submit</span>
-              </Button>
-              <Button 
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10, marginTop: 24 }}>
+              <button
+                type="button"
                 onClick={handleCancel}
-                variant="outline" 
-                className="border-gray-300 text-gray-700 px-8 h-10"
+                className="inline-flex h-[42px] w-[160px] shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-[var(--color-line)] bg-white px-[22px] text-[13px] font-semibold leading-none text-[var(--color-ink-68)] hover:border-[rgba(26,26,24,0.28)] hover:text-[var(--color-text)]"
               >
                 Cancel
-              </Button>
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                className="inline-flex h-[42px] w-[160px] shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-[var(--color-primary)] bg-[var(--color-primary)] px-[22px] text-[13px] font-semibold leading-none text-white hover:bg-[var(--color-primary-hover)]"
+                style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff', boxShadow: 'none' }}
+              >
+                Submit
+              </button>
             </div>
           </div>
         </div>
 
         {/* Right Side - Employee List */}
-        <div className="w-80 bg-white rounded-lg border shadow-sm p-6">
+        <div
+          className="w-80 bg-white p-6"
+          style={{ border: '1px solid var(--color-divider)', borderRadius: 16, boxShadow: 'none', outline: 'none' }}
+        >
           <h3 className="text-lg font-semibold text-gray-800 mb-4">List Of Selected Employees</h3>
           
           <div className="mb-4">

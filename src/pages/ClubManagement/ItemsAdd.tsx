@@ -15,7 +15,8 @@ import {
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { accountingToast as toast } from "@/lib/accountingToast";
+import "@/styles/accounting.css";
 import { InputAdornment, TextField } from "@mui/material";
 import {
   Trash2,
@@ -634,18 +635,18 @@ const ItemsAdd = () => {
 
   return (
     <ThemeProvider theme={muiTheme}>
-      <div className="p-6 bg-white min-h-screen">
+      <div className="accounting-ui p-6 bg-white min-h-screen">
         <div className="mb-6">
           <Button
             variant="ghost"
             onClick={() => navigate("/accounting/items")}
-            className="p-0"
+            className="acc-back p-0"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Items List
           </Button>
         </div>
-        <h1 className="text-2xl font-semibold mb-6">New Item</h1>
+        <h1 className="acc-title mb-6">New Item</h1>
 
         {/* TYPE */}
         <div className="mb-6 flex items-center gap-8">
@@ -818,8 +819,8 @@ const ItemsAdd = () => {
             </div>
             {/* STOCK DETAILS */}
             {/* {form.is_inventory && ( */}
-            <div className="mt-6 border rounded-lg p-4 bg-gray-50">
-              <h2 className="font-semibold mb-4">Inventory Details</h2>
+            <div className="acc-card mt-6 p-4">
+              <h2 className="acc-card-title mb-4">Inventory Details</h2>
               <div className="grid md:grid-cols-3 gap-4">
                 <TextField
                   fullWidth
@@ -896,7 +897,7 @@ const ItemsAdd = () => {
           <div>
             {!preview ? (
               /* EMPTY STATE */
-              <div className="border-2 border-dashed rounded-lg min-h-[200px] flex flex-col items-center justify-center text-center p-6">
+              <div className="acc-dropzone border-2 border-dashed rounded-lg min-h-[200px] flex flex-col items-center justify-center text-center p-6">
                 <div className="text-gray-400 mb-2">
                   <svg
                     width="40"
@@ -1408,7 +1409,7 @@ const ItemsAdd = () => {
         </div>
 
         {form.tax_preference === "taxable" && (
-          <div className="grid md:grid-cols-2 gap-6 mt-4 p-4 border rounded-lg bg-gray-50">
+          <div className="acc-card grid md:grid-cols-2 gap-6 mt-4 p-4">
             <div className="md:col-span-2 font-semibold text-gray-700">
               Default Tax Rates
             </div>
@@ -1475,21 +1476,21 @@ const ItemsAdd = () => {
           </div>
         )}
         {/* BUTTONS */}
-        <div className="flex gap-3 mt-10 mb-5 justify-center">
-          <Button
-            variant="ghost"
-            onClick={handleSubmit}
-            className="fm-button-fix fm-button-brand px-8 py-2"
-          >
-            Save
-          </Button>
-
+        <div className="acc-actions mt-10 mb-5">
           <Button
             variant="outline"
             onClick={() => navigate("/accounting/items")}
-            className="fm-button-fix px-8 py-2"
+            className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2"
           >
             Cancel
+          </Button>
+
+          <Button
+            variant="ghost"
+            onClick={handleSubmit}
+            className="acc-btn fm-button-fix fm-button-brand px-8 py-2"
+          >
+            Save
           </Button>
         </div>
       </div>

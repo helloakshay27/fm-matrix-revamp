@@ -6916,51 +6916,54 @@ export const AddVendorAuditPage = () => {
       </div>
 
       {/* Navigation Buttons */}
-      <div className="flex justify-center items-center mt-6 pt-4 sm:pt-6">
+      <div className="fm-action-bar mt-6 pt-4 sm:pt-6">
         {activeStep < steps.length - 1 ? (
           <>
             {activeStep === 3 ? ( // Time Setup step - has Save button to submit and move to Mapping
-              <div className="flex justify-center gap-4">
+              <>
                 <RedButton
                   onClick={handleSaveToDraft}
                   disabled={isSubmitting}
+                  className="fm-action-secondary"
                 >
                   Save to Draft
                 </RedButton>
                 <RedButton
                   onClick={handleSave}
                   disabled={isSubmitting}
+                  className="fm-action-primary"
                 >
                   {isSubmitting ? 'Submitting...' : 'Submit'}
                 </RedButton>
-              </div>
+              </>
             ) : (
-              <div className="flex justify-center gap-4">
-                <RedButton
-                  onClick={handleProceedToSave}
-                  disabled={isSubmitting}
-                >
-                  Proceed to Save
-                </RedButton>
+              <>
                 <RedButton
                   onClick={handleSaveToDraft}
                   disabled={isSubmitting}
+                  className="fm-action-secondary"
                 >
                   Save to Draft
                 </RedButton>
-              </div>
+                <RedButton
+                  onClick={handleProceedToSave}
+                  disabled={isSubmitting}
+                  className="fm-action-primary"
+                >
+                  Proceed to Save
+                </RedButton>
+              </>
             )}
           </>
         ) : (
           // Mapping section (last step) - has Submit button only
-          <div className="flex justify-center gap-4">
-            <RedButton
-              onClick={handleSave}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit'}
-            </RedButton>
-          </div>
+          <RedButton
+            onClick={handleSave}
+            disabled={isSubmitting}
+            className="fm-action-primary"
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit'}
+          </RedButton>
         )}
       </div>
 

@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { ArrowLeft, Edit, Building, Palette, Calendar, ChevronUp, ChevronDown } from "lucide-react";
 import { toast } from 'sonner';
 import { fetchParkingDetails, ParkingDetailsResponse } from '@/services/parkingConfigurationsAPI';
@@ -82,32 +80,45 @@ const ParkingDetailsPage = () => {
     children: React.ReactNode;
     hasData?: boolean;
   }) => (
-    <div className="border-2 rounded-lg mb-6">
-      <div 
-        onClick={onToggle} 
-        className="flex items-center justify-between cursor-pointer p-6"
-        style={{ backgroundColor: 'rgb(246 244 238)' }}
+    <div
+      className="bg-white"
+      style={{
+        border: '1px solid var(--color-divider)',
+        borderRadius: 16,
+        marginBottom: 20,
+        boxShadow: 'none',
+        outline: 'none',
+      }}
+    >
+      <div
+        onClick={onToggle}
+        className="flex cursor-pointer items-center justify-between"
+        style={{ padding: '22px 24px', backgroundColor: '#fff' }}
       >
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-            <Icon className="w-4 h-4" style={{ color: "#C72030" }} />
+        <div className="flex items-center" style={{ gap: 8 }}>
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-surface)] text-[var(--color-ink-68)]">
+            <Icon className="h-4 w-4" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+          <h3 style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.4, color: 'var(--color-text)', textTransform: 'uppercase', margin: 0 }}>
             {title}
           </h3>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center" style={{ gap: 8 }}>
           {!hasData && (
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">No data</span>
+            <span
+              className="rounded-full bg-[var(--color-surface)] text-[var(--color-ink-48)]"
+              style={{ fontSize: 11, fontWeight: 500, padding: '3px 10px' }}
+            >
+              No data
+            </span>
           )}
-          {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-600" /> : <ChevronDown className="w-5 h-5 text-gray-600" />}
+          {isExpanded
+            ? <ChevronUp className="h-4 w-4 text-[var(--color-ink-48)]" />
+            : <ChevronDown className="h-4 w-4 text-[var(--color-ink-48)]" />}
         </div>
       </div>
       {isExpanded && (
-        <div 
-          className="p-6"
-          style={{ backgroundColor: 'rgb(246 247 247)' }}
-        >
+        <div style={{ padding: '0 24px 22px', backgroundColor: '#fff' }}>
           {children}
         </div>
       )}
@@ -118,7 +129,7 @@ const ParkingDetailsPage = () => {
     return (
       <div className="p-6 bg-white min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto mb-4"></div>
           <p className="text-gray-700">Loading parking details...</p>
         </div>
       </div>
@@ -127,33 +138,27 @@ const ParkingDetailsPage = () => {
 
   if (error || !parkingDetails) {
     return (
-      <div className="p-6 bg-white min-h-screen">
-        <div className="flex items-center mb-6">
-          <Button 
-            onClick={handleBack}
-            variant="ghost" 
-            className="mr-4 p-2 hover:bg-[#C72030]/10"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-[#C72030]">Error Loading Data</h1>
-          </div>
-        </div>
-        
-        <div className="flex items-center justify-center h-64">
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg)', padding: '24px 32px 48px' }}>
+        <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--color-text)', margin: '0 0 22px' }}>
+          Error Loading Data
+        </h1>
+        <div className="flex h-64 items-center justify-center">
           <div className="text-center">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-text)', marginBottom: 16 }}>
               {error || 'Client data could not be loaded'}
             </h2>
-            <p className="text-gray-600 mb-6">Please try again or contact support if the problem persists.</p>
-            <Button 
+            <p style={{ fontSize: 13.5, color: 'var(--color-ink-68)', marginBottom: 24 }}>
+              Please try again or contact support if the problem persists.
+            </p>
+            <button
+              type="button"
               onClick={handleBack}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2"
+              className="inline-flex h-[42px] items-center justify-center gap-2 rounded-lg border border-[var(--color-primary)] bg-[var(--color-primary)] px-[22px] text-[13px] font-semibold text-white hover:bg-[var(--color-primary-hover)]"
+              style={{ boxShadow: 'none' }}
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
+              <ArrowLeft className="h-4 w-4" />
               Back to Parking Dashboard
-            </Button>
+            </button>
           </div>
         </div>
       </div>
@@ -161,29 +166,32 @@ const ParkingDetailsPage = () => {
   }
 
   return (
-    <div className="p-6 bg-white min-h-screen">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <button onClick={handleBack} className="flex items-center gap-1 hover:text-[#C72030] transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            <span className="font-bold text-[#1a1a1a]">Back to Parking Dashboard</span>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg)' }}>
+      <div style={{ padding: '24px 32px 48px' }}>
+        <button
+          type="button"
+          onClick={handleBack}
+          className="inline-flex items-center gap-1.5 border-0 bg-transparent p-0 text-[12.5px] font-semibold text-[var(--color-ink-48)] hover:text-[var(--color-text)]"
+          style={{ marginBottom: 12 }}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Parking Dashboard
+        </button>
+
+        <div className="flex items-center justify-between" style={{ marginBottom: 22 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.015em', lineHeight: 1.2, margin: 0, color: 'var(--color-text)' }}>
+            Client Parking Details
+          </h1>
+          <button
+            type="button"
+            onClick={() => navigate(`/vas/parking/edit/${clientId}`)}
+            aria-label="Edit parking details"
+            className="inline-flex h-[42px] w-[42px] items-center justify-center rounded-lg border border-[var(--color-primary)] bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]"
+            style={{ boxShadow: 'none' }}
+          >
+            <Edit className="h-4 w-4" />
           </button>
         </div>
-        
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">Client Parking Details</h1>
-          <div className="flex gap-3">
-            <Button 
-              onClick={() => navigate(`/vas/parking/edit/${clientId}`)}
-              variant="ghost"
-              className="fm-button-fix fm-button-brand px-4 py-2"
-            >
-              <Edit className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
 
       {/* Section 1: Client Information */}
       <ExpandableSection
@@ -196,19 +204,19 @@ const ParkingDetailsPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
           <div className="space-y-4">
             <div className="flex items-start">
-              <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Client Name</span>
-              <span className="text-gray-500 mx-3">:</span>
-              <span className="text-gray-900 font-semibold flex-1">{parkingDetails.entity.name}</span>
+              <span className="w-40 flex-shrink-0 font-medium text-[var(--color-ink-48)]">Client Name</span>
+              <span className="mx-3 text-[var(--color-ink-30)]">:</span>
+              <span className="flex-1 font-medium text-[var(--color-text)]">{parkingDetails.entity.name}</span>
             </div>
             <div className="flex items-start">
-              <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Color Code</span>
-              <span className="text-gray-500 mx-3">:</span>
+              <span className="w-40 flex-shrink-0 font-medium text-[var(--color-ink-48)]">Color Code</span>
+              <span className="mx-3 text-[var(--color-ink-30)]">:</span>
               <div className="flex items-center gap-3">
                 <div 
                   className="w-4 h-4 rounded-full" 
                   style={{ backgroundColor: parkingDetails.entity.color_code }}
                 ></div>
-                <span className="text-gray-900 font-semibold">{parkingDetails.entity.color_code}</span>
+                <span className="font-medium text-[var(--color-text)]">{parkingDetails.entity.color_code}</span>
               </div>
             </div>
           </div>
@@ -226,16 +234,16 @@ const ParkingDetailsPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
           <div className="space-y-4">
             <div className="flex items-start">
-              <span className="text-gray-500 w-40 flex-shrink-0 font-medium">2 Wheeler Slots</span>
-              <span className="text-gray-500 mx-3">:</span>
-              <span className="text-gray-900 font-semibold flex-1">{parkingDetails.parking_summary.two_wheeler_count}</span>
+              <span className="w-40 flex-shrink-0 font-medium text-[var(--color-ink-48)]">2 Wheeler Slots</span>
+              <span className="mx-3 text-[var(--color-ink-30)]">:</span>
+              <span className="flex-1 font-medium text-[var(--color-text)]">{parkingDetails.parking_summary.two_wheeler_count}</span>
             </div>
           </div>
           <div className="space-y-4">
             <div className="flex items-start">
-              <span className="text-gray-500 w-40 flex-shrink-0 font-medium">4 Wheeler Slots</span>
-              <span className="text-gray-500 mx-3">:</span>
-              <span className="text-gray-900 font-semibold flex-1">{parkingDetails.parking_summary.four_wheeler_count}</span>
+              <span className="w-40 flex-shrink-0 font-medium text-[var(--color-ink-48)]">4 Wheeler Slots</span>
+              <span className="mx-3 text-[var(--color-ink-30)]">:</span>
+              <span className="flex-1 font-medium text-[var(--color-text)]">{parkingDetails.parking_summary.four_wheeler_count}</span>
             </div>
           </div>
         </div>
@@ -252,21 +260,21 @@ const ParkingDetailsPage = () => {
         {parkingDetails.leases && parkingDetails.leases.length > 0 ? (
           <div className="space-y-4">
             {parkingDetails.leases.map((lease) => (
-              <div key={lease.id} className={`border rounded-lg p-6 ${lease.lease_period.expired ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
+              <div
+                key={lease.id}
+                className="bg-white"
+                style={{ border: '1px solid var(--color-divider)', borderRadius: 12, padding: '18px 20px', boxShadow: 'none', outline: 'none' }}
+              >
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm font-medium text-gray-700">Lease Period</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-ink-68)' }}>Lease Period</span>
                   {lease.lease_period.expired ? (
-                    <span className="inline-block bg-red-500 text-white px-3 py-1 rounded-full text-xs font-medium">
-                      Expired
-                    </span>
+                    <StatusBadge variant="inactive" size="lg">Expired</StatusBadge>
                   ) : (
-                    <span className="inline-block bg-green-500 text-white px-3 py-1 rounded-full text-xs font-medium">
-                      Active
-                    </span>
+                    <StatusBadge variant="active" size="lg">Active</StatusBadge>
                   )}
                 </div>
                 <div>
-                  <span className={`inline-block text-white px-4 py-2 rounded font-medium ${lease.lease_period.expired ? 'bg-[#C72030]' : 'bg-green-600'}`}>
+                  <span style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--color-text)' }}>
                     {lease.lease_period.start_date} - {lease.lease_period.end_date}
                   </span>
                 </div>
@@ -277,6 +285,7 @@ const ParkingDetailsPage = () => {
           <p className="text-gray-500 text-center py-8">No lease information found</p>
         )}
       </ExpandableSection>
+      </div>
     </div>
   );
 };

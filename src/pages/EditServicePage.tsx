@@ -269,7 +269,7 @@ export const EditServicePage = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="service-form p-6">
       <div className="mb-6">
         <div className="flex items-center mb-2">
           <Button
@@ -285,9 +285,9 @@ export const EditServicePage = () => {
         <h1 className="text-2xl font-bold text-[#1a1a1a]">EDIT SERVICE</h1>
       </div>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg text-[#C72030] flex items-center">
+      <Card className="service-form-card mb-6">
+        <CardHeader className="service-form-card-header">
+          <CardTitle className="service-form-card-title flex items-center">
             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
             BASIC DETAILS
           </CardTitle>
@@ -358,15 +358,16 @@ export const EditServicePage = () => {
         </CardContent>
       </Card>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg text-[#C72030] flex items-center">
+      <Card className="service-form-card mb-6">
+        <CardHeader className="service-form-card-header">
+          <CardTitle className="service-form-card-title flex items-center">
             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
             SERVICE DESCRIPTION
           </CardTitle>
         </CardHeader>
         <CardContent>
           <TextField
+            className="service-description-field"
             label="Service Description"
             value={formData.serviceDescription}
             onChange={(e) => handleInputChange('serviceDescription', e.target.value)}
@@ -398,9 +399,9 @@ export const EditServicePage = () => {
         </CardContent>
       </Card>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg text-[#C72030] flex items-center">
+      <Card className="service-form-card mb-6">
+        <CardHeader className="service-form-card-header">
+          <CardTitle className="service-form-card-title flex items-center">
             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
             FILES UPLOAD
           </CardTitle>

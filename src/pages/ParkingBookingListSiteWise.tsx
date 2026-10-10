@@ -2344,7 +2344,7 @@ const ParkingBookingListSiteWise = () => {
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger
             value="parking"
-           className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+           className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -2353,7 +2353,7 @@ const ParkingBookingListSiteWise = () => {
                 viewBox="0 0 24 24"
                 fill="none"
                 strokeWidth={2}
-                className="lucide lucide-ticket w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+                className="lucide lucide-ticket w-4 h-4 stroke-black group-data-[state=active]:stroke-brand"
               >
                 <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
                 <path d="M13 5v2" />
@@ -2365,7 +2365,7 @@ const ParkingBookingListSiteWise = () => {
 
           <TabsTrigger
             value="analytics"
-           className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+           className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -2374,7 +2374,7 @@ const ParkingBookingListSiteWise = () => {
                 viewBox="0 0 24 24"
                 fill="none"
                 strokeWidth={2}
-                className="lucide lucide-ticket w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+                className="lucide lucide-ticket w-4 h-4 stroke-black group-data-[state=active]:stroke-brand"
               >
                 <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
                 <path d="M13 5v2" />
@@ -3234,14 +3234,14 @@ const ParkingBookingListSiteWise = () => {
                 setAnalyticsDraftRange(analyticsDateRange);
                 setIsAnalyticsFilterOpen(true);
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-[#da7756]"
+              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-brand-selected border-gray-200 text-gray-900 [&_svg]:text-gray-700"
             >
-              <Calendar className="w-4 h-4 text-[#da7756]" />
-              <span className="text-sm font-medium text-[#da7756]">
+              <Calendar className="w-4 h-4 text-gray-700" />
+              <span className="text-sm font-medium text-gray-900">
                 {analyticsDateRange.rangeA.label} vs{" "}
                 {analyticsDateRange.rangeB.label}
               </span>
-              <Filter className="w-4 h-4 text-[#da7756]" />
+              <Filter className="w-4 h-4 text-gray-700" />
             </Button>
 
             <ParkingAnalyticsSelector

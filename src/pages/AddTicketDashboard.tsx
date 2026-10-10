@@ -10,7 +10,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Upload, Paperclip, X, User, Ticket, MapPin } from 'lucide-react';
+import { ArrowLeft, Check, Upload, Paperclip, X, User, Ticket, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { ticketManagementAPI, CategoryResponse, SubCategoryResponse, UserAccountResponse, OccupantUserResponse } from '@/services/ticketManagementAPI';
 import { FMUser } from '@/store/slices/fmUserSlice';
@@ -105,30 +105,6 @@ const SEVERITY_OPTIONS = [
   { value: 'Major', label: 'Major' },
   { value: 'Minor', label: 'Minor' }
 ];
-
-// Field styles for Material-UI components
-const fieldStyles = {
-  height: '45px',
-  backgroundColor: '#fff',
-  borderRadius: '4px',
-  '& .MuiOutlinedInput-root': {
-    height: '45px',
-    '& fieldset': {
-      borderColor: '#ddd',
-    },
-    '&:hover fieldset': {
-      borderColor: '#C72030',
-    },
-    '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
-    },
-  },
-  '& .MuiInputLabel-root': {
-    '&.Mui-focused': {
-      color: '#C72030',
-    },
-  },
-};
 
 // Helper functions to get user data from localStorage
 const getUserDataFromLocalStorage = () => {
@@ -1171,7 +1147,11 @@ export const AddTicketDashboard = () => {
 
       toast.success(ticketNumber
         ? `Ticket created successfully - ${ticketNumber}`
-        : "Ticket created successfully!");
+        : "Ticket created successfully!", {
+          position: 'bottom-center',
+          icon: <Check size={16} />,
+          className: 'ticket-created-toast',
+        });
 
       setTicketEvent({ event: 'ticket creation successful', properties: { ticket_number: ticketNumber } });
       viEvents.onTicketCreateSucceeded({ ticket_id: ticketNumber });
@@ -1304,10 +1284,10 @@ export const AddTicketDashboard = () => {
         </div>
       </div> */}
 
-      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
+      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="ticket-create-form space-y-6">
         {/* Section 1: Requestor Details */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3 border-b border-gray-200">
+          <div className="px-6 py-3">
             <h2 className="text-lg font-medium text-gray-900 flex items-center">
               <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
                 <User size={16} color="#C72030" />
@@ -1321,7 +1301,6 @@ export const AddTicketDashboard = () => {
               <FormControl
                 fullWidth
                 variant="outlined"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
                 <InputLabel shrink>Create Ticket on Behalf of</InputLabel>
                 <MuiSelect
@@ -1330,7 +1309,6 @@ export const AddTicketDashboard = () => {
                   label="Create Ticket on Behalf of"
                   notched
                   displayEmpty
-                  sx={{ backgroundColor: '#C4B89D59' }}
                 >
                   <MenuItem value="self">Self</MenuItem>
                   <MenuItem value="occupant-user">Occupant User</MenuItem>
@@ -1350,12 +1328,6 @@ export const AddTicketDashboard = () => {
                     shrink: true,
                   },
                 }}
-                InputProps={{
-                  sx: {
-                    ...fieldStyles,
-                    backgroundColor: (isFieldsReadOnly || onBehalfOf === 'self') ? '#f9fafb' : '#fff',
-                  },
-                }}
               />
               <TextField
                 label="Department"
@@ -1370,12 +1342,6 @@ export const AddTicketDashboard = () => {
                     shrink: true,
                   },
                 }}
-                InputProps={{
-                  sx: {
-                    ...fieldStyles,
-                    backgroundColor: (isFieldsReadOnly || onBehalfOf === 'self') ? '#f9fafb' : '#fff',
-                  },
-                }}
               />
             </div>
 
@@ -1385,7 +1351,6 @@ export const AddTicketDashboard = () => {
                 fullWidth
                 variant="outlined"
                 required
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
                 <InputLabel shrink>Select User</InputLabel>
                 <MuiSelect
@@ -1412,7 +1377,7 @@ export const AddTicketDashboard = () => {
 
         {/* Section 2: Tickets Type */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3 border-b border-gray-200">
+          <div className="px-6 py-3">
             <h2 className="text-lg font-medium text-gray-900 flex items-center">
               <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
                 <Ticket size={16} color="#C72030" />
@@ -1491,7 +1456,6 @@ export const AddTicketDashboard = () => {
                 <FormControl
                   fullWidth
                   variant="outlined"
-                  sx={{ '& .MuiInputBase-root': fieldStyles }}
                 >
                   <InputLabel shrink>Customer Name</InputLabel>
                   <MuiSelect
@@ -1520,7 +1484,6 @@ export const AddTicketDashboard = () => {
                 fullWidth
                 variant="outlined"
                 // required
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
                 <InputLabel shrink>Category Type <span className="text-red-500">*</span></InputLabel>
                 <MuiSelect
@@ -1542,7 +1505,6 @@ export const AddTicketDashboard = () => {
               <FormControl
                 fullWidth
                 variant="outlined"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
                 <InputLabel shrink>Sub Category Type</InputLabel>
                 <MuiSelect
@@ -1568,7 +1530,6 @@ export const AddTicketDashboard = () => {
               <FormControl
                 fullWidth
                 variant="outlined"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
                 <InputLabel shrink>
                   Assigned To {isAssignedToMandatory && <span className="text-red-500">*</span>}
@@ -1592,7 +1553,6 @@ export const AddTicketDashboard = () => {
                 fullWidth
                 variant="outlined"
                 // required
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
                 <InputLabel shrink>Mode <span className="text-red-500">*</span></InputLabel>
                 <MuiSelect
@@ -1620,7 +1580,6 @@ export const AddTicketDashboard = () => {
               <FormControl
                 fullWidth
                 variant="outlined"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
                 <InputLabel shrink>Proactive/Reactive</InputLabel>
                 <MuiSelect
@@ -1641,7 +1600,6 @@ export const AddTicketDashboard = () => {
               <FormControl
                 fullWidth
                 variant="outlined"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
                 <InputLabel shrink>Admin Priority</InputLabel>
                 <MuiSelect
@@ -1662,7 +1620,6 @@ export const AddTicketDashboard = () => {
               <FormControl
                 fullWidth
                 variant="outlined"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
                 <InputLabel shrink>Severity</InputLabel>
                 <MuiSelect
@@ -1683,7 +1640,6 @@ export const AddTicketDashboard = () => {
               <FormControl
                 fullWidth
                 variant="outlined"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
                 <InputLabel shrink>Vendor</InputLabel>
                 <MuiSelect
@@ -1721,46 +1677,29 @@ export const AddTicketDashboard = () => {
                     shrink: true,
                   },
                 }}
-                InputProps={{
-                  sx: fieldStyles,
-                }}
               />
             </div>
 
             {/* Description - Full width */}
-            <div className="relative w-full">
+            <div className="ticket-create-description-field">
+              <label htmlFor="description" className="ticket-create-description-label">
+                Description <span className="text-red-500">*</span>
+              </label>
               <textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={3}
-                placeholder=" "
-                className="peer block w-full appearance-none rounded border border-gray-300 bg-white px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent 
-      focus:outline-none 
-      focus:border-[2px] 
-      focus:border-[rgb(25,118,210)] 
-      resize-vertical"
+                rows={4}
+                placeholder="Enter description"
+                className="ticket-create-description"
               />
-
-              <label
-                htmlFor="description"
-                className="absolute left-3 -top-[10px] bg-white px-1 text-sm text-gray-500 z-[1] transition-all duration-200
-      peer-placeholder-shown:top-4
-      peer-placeholder-shown:text-base
-      peer-placeholder-shown:text-gray-400
-      peer-focus:-top-[10px]
-      peer-focus:text-sm
-      peer-focus:text-[rgb(25,118,210)]"
-              >
-                Description <span className="text-red-500">*</span>
-              </label>
             </div>
           </div>
         </div>
 
         {/* Section 3: Location Details */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3 border-b border-gray-200">
+          <div className="px-6 py-3">
             <h2 className="text-lg font-medium text-gray-900 flex items-center">
               <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
                 <MapPin size={16} color="#C72030" />
@@ -1774,7 +1713,6 @@ export const AddTicketDashboard = () => {
               <FormControl
                 fullWidth
                 variant="outlined"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
                 <InputLabel shrink>Building</InputLabel>
                 <MuiSelect
@@ -1800,7 +1738,6 @@ export const AddTicketDashboard = () => {
               <FormControl
                 fullWidth
                 variant="outlined"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
                 <InputLabel shrink>Wing</InputLabel>
                 <MuiSelect
@@ -1827,7 +1764,6 @@ export const AddTicketDashboard = () => {
               <FormControl
                 fullWidth
                 variant="outlined"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
                 <InputLabel shrink>Area</InputLabel>
                 <MuiSelect
@@ -1854,7 +1790,6 @@ export const AddTicketDashboard = () => {
               <FormControl
                 fullWidth
                 variant="outlined"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
                 <InputLabel shrink>Floor</InputLabel>
                 <MuiSelect
@@ -1881,7 +1816,6 @@ export const AddTicketDashboard = () => {
               <FormControl
                 fullWidth
                 variant="outlined"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
                 <InputLabel shrink>Room</InputLabel>
                 <MuiSelect
@@ -1909,7 +1843,7 @@ export const AddTicketDashboard = () => {
 
         {/* Section 4: Add Attachments */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3 border-b border-gray-200">
+          <div className="px-6 py-3">
             <h2 className="text-lg font-medium text-gray-900 flex items-center">
               <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1965,7 +1899,7 @@ export const AddTicketDashboard = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-4 justify-center pt-6">
+        <div className="flex gap-4 justify-end pt-6">
           <Button
             type="submit"
             variant="ghost"

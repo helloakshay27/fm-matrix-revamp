@@ -3,7 +3,15 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useGatePassEvents } from '@/components/PostHogGatePassEvents';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Box, Typography, IconButton, Button as MuiButton, Autocomplete } from '@mui/material';
-import { ArrowLeft, Trash2, Plus } from 'lucide-react';
+import {
+  ArrowLeft,
+  Trash2,
+  Plus,
+  Users,
+  ClipboardList,
+  FileText,
+  Paperclip,
+} from "lucide-react";
 import { AttachFile, Close } from '@mui/icons-material';
 import { useToast } from '@/hooks/use-toast';
 import { gateNumberService } from '@/services/gateNumberService';
@@ -547,7 +555,7 @@ export const AddGatePassInwardPage = () => {
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-4 sm:p-6 max-w-full mx-auto min-h-screen bg-gray-50">
       {/* Header */}
       <div className="mb-4 sm:mb-6">
         <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
@@ -567,12 +575,18 @@ export const AddGatePassInwardPage = () => {
         </h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8 border border-gray-200 rounded-lg p-10 bg-white" onMouseDown={e => e.stopPropagation()}>
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6" onMouseDown={e => e.stopPropagation()}>
 
         {/* Visitor Detail Section */}
-        <div>
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Visitor Details</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div className="border-l-4 border-l-[#DA7756] p-2 sm:p-6 bg-white">
+            <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold mb-6">
+              <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+              </span>
+              VISITOR DETAILS
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <TextField label={<span>Visitor Name <span style={{ color: 'red' }}>*</span></span>} placeholder="Enter Name" fullWidth variant="outlined" value={visitorDetails.contactPerson} onChange={(e) => {
               const value = e.target.value;
               if (/^[a-zA-Z ]*$/.test(value)) handleVisitorChange('contactPerson', value);
@@ -635,23 +649,30 @@ export const AddGatePassInwardPage = () => {
               {fieldErrors.vendorId && <Typography variant="caption" color="error">{fieldErrors.vendorId}</Typography>}
             </FormControl>
           </div>
+          </div>
         </div>
 
         {/* Gate Pass Details Section */}
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">Gate Pass Details</h2>
-            <Button
-              type="button"
-              onClick={() => openCustomFieldModal("gatePassDetails")}
-              className="fm-button-fix fm-button-brand px-4 py-2"
-              variant="ghost"
-            >
-              <Plus className="w-4 h-4" />
-              Custom Field
-            </Button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div className="border-l-4 border-l-[#DA7756] p-2 sm:p-6 bg-white">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold">
+                <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                  <ClipboardList className="w-3 h-3 sm:w-4 sm:h-4" />
+                </span>
+                GATE PASS DETAILS
+              </div>
+              <Button
+                type="button"
+                onClick={() => openCustomFieldModal("gatePassDetails")}
+                className="fm-button-fix fm-button-brand px-4 py-2"
+                variant="ghost"
+              >
+                <Plus className="w-4 h-4" />
+                Custom Field
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Move Site and Building fields to the top */}
             {/* <TextField
               label={<span>Site <span style={{ color: 'red' }}>*</span></span>}
@@ -843,16 +864,26 @@ export const AddGatePassInwardPage = () => {
                 </div>
               </div>
             ))}
+            </div>
           </div>
         </div>
 
         {/* Goods Detail Section */}
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">Item Details</h2>
-            <Button type="button" onClick={handleAddRow} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white text-sm px-4 py-2">Add Item</Button>
-          </div>
-          <div className="overflow-x-auto">
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div className="border-l-4 border-l-[#DA7756] p-2 sm:p-6 bg-white">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold">
+                <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                  <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
+                </span>
+                ITEM DETAILS
+              </div>
+              <Button type="button" onClick={handleAddRow} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white text-sm px-4 py-2">
+                <Plus className="w-4 h-4 mr-1" />
+                Add Item
+              </Button>
+            </div>
+            <div className="overflow-x-auto">
             <table className="w-full text-sm text-left text-gray-500">
               <thead className="text-xs text-white uppercase bg-[#C72030]">
                 <tr>
@@ -1020,16 +1051,24 @@ export const AddGatePassInwardPage = () => {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
 
         {/* Document Attachment Section */}
-        <div>
-          <Box sx={{ gap: 2, mb: 2 }}>
-            {attachments.length > 0 && (
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">Attachments</h2>
-            )}
-            <div className="flex gap-4" >
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div className="border-l-4 border-l-[#DA7756] p-2 sm:p-6 bg-white">
+            <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold mb-6">
+              <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                <Paperclip className="w-3 h-3 sm:w-4 sm:h-4" />
+              </span>
+              ATTACHMENTS
+            </div>
+            <Box sx={{ gap: 2, mb: 2 }}>
+              {attachments.length > 0 && (
+                <h2 className="text-lg font-semibold text-gray-800 mb-4">Attachments</h2>
+              )}
+              <div className="flex gap-4 flex-wrap">
 
               {attachments.map((attachment) => {
                 const isImage = attachment.file.type.startsWith('image/');
@@ -1103,44 +1142,45 @@ export const AddGatePassInwardPage = () => {
                   </Box>
                 );
               })}
-            </div>
-          </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <MuiButton
-              variant="outlined"
-              onClick={() => fileInputRef.current?.click()}
-              sx={{
-                borderColor: '#C72030',
-                color: '#C72030',
-                textTransform: 'none',
-                fontFamily: 'Work Sans, sans-serif',
-                fontWeight: 500,
-                borderRadius: '0',
-                padding: '8px 16px',
-                '&:hover': {
-                  borderColor: '#B8252F',
-                  backgroundColor: 'rgba(199, 32, 48, 0.04)',
-                },
-              }}
-            >
-              Add Attachment
-            </MuiButton>
-            <input
-              type="file"
-              ref={fileInputRef}
-              multiple
-              onChange={handleFileChange}
-              className="hidden"
-            />
-          </Box>
+              </div>
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <MuiButton
+                variant="outlined"
+                onClick={() => fileInputRef.current?.click()}
+                sx={{
+                  borderColor: '#C72030',
+                  color: '#C72030',
+                  textTransform: 'none',
+                  fontFamily: 'Work Sans, sans-serif',
+                  fontWeight: 500,
+                  borderRadius: '0',
+                  padding: '8px 16px',
+                  '&:hover': {
+                    borderColor: '#B8252F',
+                    backgroundColor: 'rgba(199, 32, 48, 0.04)',
+                  },
+                }}
+              >
+                Add Attachment
+              </MuiButton>
+              <input
+                type="file"
+                ref={fileInputRef}
+                multiple
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </Box>
+          </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-center gap-4 pt-4">
-          <Button type="submit" className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2" disabled={isSubmitting}>
+        <div className="flex items-center justify-end gap-3 pt-4">
+          <Button type="button" variant="outline" className="border-gray-300 bg-white px-8 py-2 text-gray-900 hover:bg-gray-50" onClick={() => { captureFormAbandoned(); navigate('/security/gate-pass/inwards'); }}>Cancel</Button>
+          <Button type="submit" className="bg-gray-900 px-8 py-2 text-white hover:bg-black" disabled={isSubmitting}>
             {isSubmitting ? 'Submitting...' : 'Submit'}
           </Button>
-          <Button type="button" variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-red-50 px-8 py-2" onClick={() => { captureFormAbandoned(); navigate('/security/gate-pass/inwards'); }}>Cancel</Button>
         </div>
       </form>
 

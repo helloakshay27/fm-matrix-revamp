@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
 import { Plus, X, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { FormControl, InputLabel, Select as MuiSelect, MenuItem, TextField } from '@mui/material';
@@ -20,14 +19,55 @@ interface RewardOutcome {
 }
 
 const fieldStyles = {
-  height: { xs: 36, sm: 40, md: 45 },
-  '& .MuiInputBase-input, & .MuiSelect-select': {
-    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
-  },
+  backgroundColor: '#fff',
   '& .MuiOutlinedInput-root': {
-    backgroundColor: 'white',
+    minHeight: '44px',
+    backgroundColor: '#fff',
+    fontSize: '13.5px',
+    fontWeight: 500,
   },
 };
+
+const cardStyle: React.CSSProperties = {
+  backgroundColor: '#fff',
+  border: '1px solid var(--color-divider)',
+  borderRadius: 16,
+  padding: '22px 24px',
+  boxShadow: 'none',
+};
+
+const sectionTitleStyle: React.CSSProperties = {
+  fontSize: 14,
+  fontWeight: 600,
+  lineHeight: 1.4,
+  color: 'var(--color-text)',
+  margin: 0,
+};
+
+const subTitleStyle: React.CSSProperties = {
+  fontSize: 12,
+  fontWeight: 600,
+  letterSpacing: '0.04em',
+  textTransform: 'uppercase',
+  color: 'var(--color-ink-48)',
+  margin: '0 0 10px',
+};
+
+const pairGrid: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'minmax(0,1fr) 28px minmax(0,1fr)',
+  alignItems: 'end',
+  gap: 14,
+};
+
+const AndMark = () => (
+  <div
+    className="flex items-center justify-center"
+    style={{ height: 44, fontSize: 13, fontWeight: 600, color: 'var(--color-ink-48)' }}
+  >
+    &amp;
+  </div>
+);
 
 // Portals to document.body so the menu anchors under the field instead of
 // inheriting any transform that mispositions it.
@@ -153,63 +193,59 @@ export const LoyaltyRuleEngineDashboard = () => {
   };
 
   return (
-    <div className="p-6 bg-white min-h-screen">
-      {/* Breadcrumb */}
-      <div className="mb-4 text-sm text-gray-600">
-        Rule Engine &gt; New Rule
-      </div>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg)', padding: '24px 32px 48px' }}>
+      <button
+        type="button"
+        onClick={handleBack}
+        className="inline-flex items-center gap-1.5 border-0 bg-transparent p-0 text-[12.5px] font-semibold text-[var(--color-ink-48)] hover:text-[var(--color-text)]"
+        style={{ marginBottom: 12 }}
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Rule List
+      </button>
+      <h1 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.015em', lineHeight: 1.2, margin: '0 0 22px', color: 'var(--color-text)' }}>
+        New Rule
+      </h1>
 
-      {/* Back Button and Page Title */}
-      <div className="flex items-center gap-4 mb-6">
-        <Button
-          onClick={handleBack}
-          variant="ghost"
-          className="text-[#C72030] hover:bg-[#C72030]/10 p-2"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <h1 className="text-2xl font-bold text-[#C72030]">New Rule</h1>
-      </div>
-
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Rule Name Section */}
-      <div className="mb-8">
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <h2 className="text-lg font-semibold mb-4">"New Rule"</h2>
-          <div className="max-w-md">
-            <TextField
-              label="Enter Rule Name"
-              variant="outlined"
-              fullWidth
-              value={ruleName}
-              onChange={(e) => setRuleName(e.target.value)}
-              placeholder="Enter rule name"
-              sx={fieldStyles}
-            />
-          </div>
+      <section style={cardStyle}>
+        <h2 style={{ ...sectionTitleStyle, marginBottom: 16 }}>Rule Details</h2>
+        <div style={{ maxWidth: 480 }}>
+          <TextField
+            label="Rule Name"
+            variant="outlined"
+            fullWidth
+            value={ruleName}
+            onChange={(e) => setRuleName(e.target.value)}
+            placeholder="Enter rule name"
+            sx={fieldStyles}
+          />
         </div>
-      </div>
+      </section>
 
       {/* Set Rule Conditions */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold text-[#C72030] mb-6">Set Rule Conditions</h2>
-        
+      <section style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <h2 style={sectionTitleStyle}>Set Rule Conditions</h2>
+
         {conditions.map((condition, index) => (
-          <div key={condition.id} className="mb-6 p-4 border border-[#C72030] rounded-lg">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium text-[#C72030]">Condition {index + 1}</h3>
+          <div key={condition.id} style={cardStyle}>
+            <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
+              <h3 style={sectionTitleStyle}>Condition {index + 1}</h3>
               {conditions.length > 1 && (
-                <Button
+                <button
+                  type="button"
                   onClick={() => removeCondition(condition.id)}
-                  variant="ghost"
-                  size="sm"
-                  className="text-red-500 hover:text-red-700"
+                  aria-label={`Remove condition ${index + 1}`}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border-0 bg-transparent text-[var(--color-ink-48)] hover:bg-[var(--color-surface)] hover:text-[var(--color-danger)]"
                 >
-                  <X className="w-4 h-4" />
-                </Button>
+                  <X className="h-4 w-4" />
+                </button>
               )}
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+
+            <p style={subTitleStyle}>Attribute</p>
+            <div style={pairGrid}>
               {/* Master Attribute */}
               <div>
                 <FormControl fullWidth variant="outlined">
@@ -230,9 +266,7 @@ export const LoyaltyRuleEngineDashboard = () => {
                 </FormControl>
               </div>
 
-              <div className="flex justify-center">
-                <span className="text-lg font-bold">&</span>
-              </div>
+              <AndMark />
 
               {/* Sub Attribute */}
               <div>
@@ -256,9 +290,9 @@ export const LoyaltyRuleEngineDashboard = () => {
             </div>
 
             {/* Operator Section */}
-            <div className="mt-6">
-              <h4 className="font-medium text-[#C72030] mb-4">Operator</h4>
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+            <div style={{ marginTop: 20 }}>
+              <p style={subTitleStyle}>Operator</p>
+              <div style={pairGrid}>
                 <div>
                   <FormControl fullWidth variant="outlined">
                     <InputLabel id={`master-operator-${condition.id}`}>Master Operator *</InputLabel>
@@ -278,9 +312,7 @@ export const LoyaltyRuleEngineDashboard = () => {
                   </FormControl>
                 </div>
 
-                <div className="flex justify-center">
-                  <span className="text-lg font-bold">&</span>
-                </div>
+                <AndMark />
 
                 <div>
                   <FormControl fullWidth variant="outlined">
@@ -304,9 +336,9 @@ export const LoyaltyRuleEngineDashboard = () => {
             </div>
 
             {/* Value Section */}
-            <div className="mt-6">
-              <h4 className="font-medium text-[#C72030] mb-4">Value</h4>
-              <div className="max-w-md">
+            <div style={{ marginTop: 20 }}>
+              <p style={subTitleStyle}>Value</p>
+              <div style={{ maxWidth: 'calc(50% - 28px)' }}>
                 <TextField
                   label="Value *"
                   variant="outlined"
@@ -322,21 +354,31 @@ export const LoyaltyRuleEngineDashboard = () => {
         ))}
 
         {/* Add Additional Condition Button */}
-        <Button
-          onClick={addCondition}
-          variant="ghost"
-          className="text-[#C72030] hover:text-[#A01A28]"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Additional Condition
-        </Button>
-      </div>
+        <div>
+          <button
+            type="button"
+            onClick={addCondition}
+            className="inline-flex h-[42px] items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-[var(--color-line)] bg-white px-[22px] text-[13px] font-semibold leading-none text-[var(--color-ink-68)] hover:border-[rgba(26,26,24,0.28)] hover:text-[var(--color-text)]"
+          >
+            <Plus className="h-4 w-4" />
+            Add Additional Condition
+          </button>
+        </div>
+      </section>
 
       {/* THEN Section */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold text-[#C72030] mb-6">THEN</h2>
-        <div className="p-4 border border-[#C72030] rounded-lg">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+      <section style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <h2 style={sectionTitleStyle}>Then</h2>
+        <div style={cardStyle}>
+          <p style={subTitleStyle}>Reward Outcome</p>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'minmax(0,1fr) 28px minmax(0,1fr) minmax(0,1fr)',
+              alignItems: 'end',
+              gap: 14,
+            }}
+          >
             <div>
               <FormControl fullWidth variant="outlined">
                 <InputLabel id="master-reward-outcome-label">Master Reward Outcome *</InputLabel>
@@ -356,9 +398,7 @@ export const LoyaltyRuleEngineDashboard = () => {
               </FormControl>
             </div>
 
-            <div className="flex justify-center">
-              <span className="text-lg font-bold">&</span>
-            </div>
+            <AndMark />
 
             <div>
               <FormControl fullWidth variant="outlined">
@@ -392,23 +432,26 @@ export const LoyaltyRuleEngineDashboard = () => {
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Action Buttons */}
-      <div className="flex gap-4">
-        <Button
-          onClick={handleSubmit}
-          className="bg-[#C72030] hover:bg-[#A01A28] text-white px-8"
-        >
-          Submit
-        </Button>
-        <Button
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10 }}>
+        <button
+          type="button"
           onClick={handleCancel}
-          variant="outline"
-          className="px-8"
+          className="inline-flex h-[42px] w-[160px] shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-[var(--color-line)] bg-white px-[22px] text-[13px] font-semibold leading-none text-[var(--color-ink-68)] hover:border-[rgba(26,26,24,0.28)] hover:text-[var(--color-text)]"
         >
           Cancel
-        </Button>
+        </button>
+        <button
+          type="button"
+          onClick={handleSubmit}
+          className="inline-flex h-[42px] w-[160px] shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-[var(--color-primary)] bg-[var(--color-primary)] px-[22px] text-[13px] font-semibold leading-none text-white hover:bg-[var(--color-primary-hover)]"
+          style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff', boxShadow: 'none' }}
+        >
+          Submit
+        </button>
+      </div>
       </div>
     </div>
   );

@@ -670,7 +670,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 : "ml-0" // No margin for other modules
               : // For action sidebar, add extra top padding and adjust left margin
               isActionSidebarVisible
-                ? "ml-0 md:ml-64 pt-28"
+                ? isSidebarCollapsed
+                  ? "ml-0 md:ml-16 pt-28"
+                  : "ml-0 md:ml-64 pt-28"
                 : isSidebarCollapsed
                   ? "ml-0 md:ml-16"
                   : "ml-0 md:ml-64"

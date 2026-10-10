@@ -443,6 +443,14 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       localStorage.setItem("userId", response.id?.toString() || "");
       localStorage.setItem("userType", response.user_type?.toString() || "");
 
+      if (isPulseSite) {
+        if (response.lock_role?.name) {
+          localStorage.setItem("lock_role_name", response.lock_role.name);
+        } else {
+          localStorage.removeItem("lock_role_name");
+        }
+      }
+
       // Identify user in PostHog (spec: user_role, is_internal, company_id)
       posthog.identify(response.id?.toString(), {
         email: response.email,

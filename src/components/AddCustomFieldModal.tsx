@@ -118,17 +118,17 @@ export const AddCustomFieldModal: React.FC<AddCustomFieldModalProps> = ({
             </div>
           )}
 
-          <div className="flex justify-end gap-4 pt-4">
+          <div className="fm-action-bar pt-4">
             <button
               type="button"
               onClick={handleCancel}
-              className="px-4 py-2 bg-[#C72030] text-white hover:bg-[#C72030]/90 transition-colors text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C72030]"
+              className="fm-action-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-[#C72030] text-white hover:bg-[#C72030]/90 transition-colors text-sm flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C72030]"
+              className="fm-action-primary"
             >
               <Plus className="w-4 h-4" />
               Add Field

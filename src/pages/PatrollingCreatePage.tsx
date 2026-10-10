@@ -30,14 +30,16 @@ import { usePatrolEvents } from '@/components/PostHogSecurityEvents';
 
 // Section component defined outside to prevent re-creation on every render
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
-  <section className="bg-card rounded-lg border border-border shadow-sm">
-    <div className="px-6 py-4 border-b border-border flex items-center gap-3">
-      <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-        {icon}
+  <section className="bg-white border border-gray-200 shadow-sm rounded-lg overflow-hidden">
+    <div className="border-l-4 border-l-[#DA7756] p-2 sm:p-6 bg-white">
+      <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold mb-6">
+        <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+          {icon}
+        </span>
+        <h2 className="text-sm sm:text-base font-semibold uppercase">{title}</h2>
       </div>
-      <h2 className="text-sm font-semibold tracking-wide uppercase">{title}</h2>
+      <div>{children}</div>
     </div>
-    <div className="p-6">{children}</div>
   </section>
 );
 
@@ -1245,17 +1247,17 @@ export const PatrollingCreatePage: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-6 relative">
+    <div className="p-4 sm:p-6 max-w-full mx-auto min-h-screen bg-gray-50 space-y-4 sm:space-y-6 relative">
       {isSubmitting && (
         <div className="absolute inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
           <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
         </div>
       )}
       <header className="flex items-center justify-between">
-        <h1 className="text-xl font-bold tracking-wide uppercase">Patrolling</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 uppercase">Patrolling</h1>
       </header>
 
-      <Section title="Patrol Details" icon={<Type className="w-3.5 h-3.5" />}>
+      <Section title="Patrol Details" icon={<Type className="w-3 h-3 sm:w-4 sm:h-4" />}>
         <div className="space-y-6">
           {/* Name and Duration on first row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1313,7 +1315,7 @@ export const PatrollingCreatePage: React.FC = () => {
         </div>
       </Section>
 
-      <Section title="Validity" icon={<CalendarRange className="w-3.5 h-3.5" />}>
+      <Section title="Validity" icon={<CalendarRange className="w-3 h-3 sm:w-4 sm:h-4" />}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <TextField
@@ -1414,7 +1416,7 @@ export const PatrollingCreatePage: React.FC = () => {
         </div>
       </Section>
 
-      <Section title="Question" icon={<ListChecks className="w-3.5 h-3.5" />}>
+      <Section title="Question" icon={<ListChecks className="w-3 h-3 sm:w-4 sm:h-4" />}>
         <div className="space-y-4">
           {/* Checklist Dropdown */}
           <div className="mb-4">
@@ -1442,7 +1444,7 @@ export const PatrollingCreatePage: React.FC = () => {
             )}
           </div>
           {selectedChecklist && questions.map((q, idx) => (
-            <div key={q.id} className="relative rounded-md border border-dashed bg-muted/30 p-4">
+            <div key={q.id} className="relative rounded-lg border border-dashed border-gray-300 bg-[#F6F4EE] p-4">
             
               <div className="mb-6">
                 <div className="flex items-center gap-2">
@@ -1579,10 +1581,10 @@ export const PatrollingCreatePage: React.FC = () => {
 
 
 
-      <Section title="Assignment" icon={<Clock className="w-3.5 h-3.5" />}>
+      <Section title="Assignment" icon={<Clock className="w-3 h-3 sm:w-4 sm:h-4" />}>
         <div className="space-y-4">
           {shifts.map((s, idx) => (
-            <div key={s.id} className="relative rounded-md border border-dashed bg-muted/30 p-4">
+            <div key={s.id} className="relative rounded-lg border border-dashed border-gray-300 bg-[#F6F4EE] p-4">
               {idx > 0 && (
                 <button
                   type="button"
@@ -1676,10 +1678,10 @@ export const PatrollingCreatePage: React.FC = () => {
         </div>
       </Section>
 
-      <Section title="Checkpoint Setup" icon={<MapPin className="w-3.5 h-3.5" />}>
+      <Section title="Checkpoint Setup" icon={<MapPin className="w-3 h-3 sm:w-4 sm:h-4" />}>
         <div className="space-y-6">
           {checkpoints.map((c, idx) => (
-            <div key={c.id} className="relative rounded-md border border-dashed bg-muted/30 p-4">
+            <div key={c.id} className="relative rounded-lg border border-dashed border-gray-300 bg-[#F6F4EE] p-4">
               {idx > 0 && (
                 <button
                   type="button"
@@ -1765,11 +1767,19 @@ export const PatrollingCreatePage: React.FC = () => {
         </div>
       </Section>
 
-      <div className="flex items-center gap-3 justify-center pt-2">
+      <div className="flex justify-end gap-3 pt-2">
         <Button
-          variant="destructive"
-          className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
+          type="button"
+          variant="outline"
+          className="min-w-36 border-gray-200 bg-white px-8 py-2 text-gray-900 hover:bg-gray-50"
+          onClick={() => navigate('/security/patrolling')}
+          disabled={isSubmitting}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          className="min-w-36 bg-[#111827] px-8 py-2 text-white hover:bg-[#1F2937]"
           onClick={handleSubmit}
           disabled={isSubmitting}
         >
@@ -1781,14 +1791,6 @@ export const PatrollingCreatePage: React.FC = () => {
           ) : (
             'Submit'
           )}
-        </Button>
-        <Button
-          variant="outline"
-          className="px-8"
-          onClick={() => navigate('/security/patrolling')}
-          disabled={isSubmitting}
-        >
-          Cancel
         </Button>
       </div>
     </div>

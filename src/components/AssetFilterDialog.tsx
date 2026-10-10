@@ -569,7 +569,7 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
+                sx={fieldStyles}
               />
               <TextField
                 label="Asset ID"
@@ -579,7 +579,7 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
+                sx={fieldStyles}
               />
             </div>
             <div className="grid grid-cols-2 gap-6 mt-4">

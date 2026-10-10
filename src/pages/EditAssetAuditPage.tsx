@@ -500,14 +500,19 @@ export const EditAssetAuditPage = () => {
   const Dropdown = ({
     name,
     label,
+    required = false,
     values,
   }: {
     name: string;
     label: string;
+    required?: boolean;
     values: any[];
   }) => (
     <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-      <InputLabel shrink>{label}</InputLabel>
+      <InputLabel shrink>
+        {label}
+        {required && <span className="fm-required-mark">*</span>}
+      </InputLabel>
       <MuiSelect
         label={label}
         displayEmpty
@@ -531,25 +536,25 @@ export const EditAssetAuditPage = () => {
 
   // Field arrangement based on radio selection
   const assetModeFields = [
-    { name: 'assetGroup', label: 'Asset Group*', values: assetGroups },
+    { name: 'assetGroup', label: 'Asset Group', required: true, values: assetGroups },
     { name: 'assetSubGroup', label: 'Subgroup', values: assetSubGroups },
-    { name: 'site', label: 'Site*', values: sites },
-    { name: 'building', label: 'Building*', values: buildings },
-    { name: 'wing', label: 'Wing*', values: wings },
-    { name: 'area', label: 'Area*', values: areas },
-    { name: 'floor', label: 'Floor*', values: floors },
-    { name: 'department', label: 'Department*', values: departments },
+    { name: 'site', label: 'Site', values: sites },
+    { name: 'building', label: 'Building', required: true, values: buildings },
+    { name: 'wing', label: 'Wing', values: wings },
+    { name: 'area', label: 'Area', values: areas },
+    { name: 'floor', label: 'Floor', values: floors },
+    { name: 'department', label: 'Department', values: departments },
   ];
 
   const locationModeFields = [
-    { name: 'site', label: 'Site*', values: sites },
-    { name: 'building', label: 'Building*', values: buildings },
-    { name: 'wing', label: 'Wing*', values: wings },
-    { name: 'area', label: 'Area*', values: areas },
-    { name: 'floor', label: 'Floor*', values: floors },
-    { name: 'department', label: 'Department*', values: departments },
-    { name: 'assetGroup', label: 'Asset Group*', values: assetGroups },
-    { name: 'assetSubGroup', label: 'Asset Subgroup*', values: assetSubGroups },
+    { name: 'site', label: 'Site', values: sites },
+    { name: 'building', label: 'Building', required: true, values: buildings },
+    { name: 'wing', label: 'Wing', values: wings },
+    { name: 'area', label: 'Area', values: areas },
+    { name: 'floor', label: 'Floor', values: floors },
+    { name: 'department', label: 'Department', values: departments },
+    { name: 'assetGroup', label: 'Asset Group', values: assetGroups },
+    { name: 'assetSubGroup', label: 'Asset Subgroup', values: assetSubGroups },
   ];
 
   const fieldsToRender =
@@ -599,7 +604,7 @@ export const EditAssetAuditPage = () => {
                 {/* Audit Name */}
                 <div>
                   <Label className="text-sm font-medium">
-                    Audit Name<span className="text-red-500">*</span>
+                    Audit Name<span className="fm-required-mark">*</span>
                   </Label>
                   <TextField
                     value={formData.auditName}
@@ -615,7 +620,7 @@ export const EditAssetAuditPage = () => {
                 {/* Start Date */}
                 <div>
                   <Label className="text-sm font-medium">
-                    Start Date<span className="text-red-500">*</span>
+                    Start Date<span className="fm-required-mark">*</span>
                   </Label>
                   <TextField
                     type="date"
@@ -632,7 +637,7 @@ export const EditAssetAuditPage = () => {
                 {/* End Date */}
                 <div>
                   <Label className="text-sm font-medium">
-                    End Date<span className="text-red-500">*</span>
+                    End Date<span className="fm-required-mark">*</span>
                   </Label>
                   <TextField
                     type="date"
@@ -648,7 +653,7 @@ export const EditAssetAuditPage = () => {
                 {/* Conducted By */}
                 <div>
                   <Label className="text-sm font-medium">
-                    Conducted By<span className="text-red-500">*</span>
+                    Conducted By<span className="fm-required-mark">*</span>
                   </Label>
                   <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                     <InputLabel shrink>Select User</InputLabel>
@@ -718,6 +723,7 @@ export const EditAssetAuditPage = () => {
                     key={idx}
                     name={item.name}
                     label={item.label}
+                    required={item.required}
                     values={item.values}
                   />
                 ))}
@@ -727,10 +733,10 @@ export const EditAssetAuditPage = () => {
         </div>
 
         {/* Submit Button */}
-        <div className="flex justify-center">
+        <div className="fm-action-bar pt-4 sm:pt-6">
           <Button
             onClick={handleSubmit}
-            className="bg-[#C72030] hover:bg-[#A01020] text-white px-8"
+            className="fm-action-primary"
             disabled={isLoading}
           >
             {isLoading ? 'Updating...' : 'Update Audit'}

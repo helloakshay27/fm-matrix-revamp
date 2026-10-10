@@ -90,26 +90,26 @@ export const TicketAnalyticsFilterDialog: React.FC<TicketAnalyticsFilterDialogPr
             />
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-4 pt-6">
-          <Button 
-            onClick={handleSubmit}
-            className="flex-1 h-11"
-          >
-            Apply Filters
-          </Button>
-          <Button 
-            variant="outline" 
+        <div className="flex flex-col gap-4 pt-6 sm:flex-row sm:justify-end">
+          {/* <Button
+            variant="outline"
             onClick={onClose}
             className="flex-1 h-11"
           >
             Cancel
-          </Button>
-          <Button 
-            variant="outline" 
+          </Button> */}
+          <Button
+            variant="outline"
             onClick={handleReset}
-            className="flex-1 h-11"
+            className="h-11 px-4 hover:border-black"
           >
             Reset
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            className="h-11 px-4"
+          >
+            Apply Filters
           </Button>
         </div>
       </DialogContent>

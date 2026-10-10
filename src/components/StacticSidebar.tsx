@@ -1539,11 +1539,13 @@ const modulesByPackage = {
       name: "Purchase Orders",
       icon: FileText,
       subItems: [
-        { name: "Purchase Order", href: "/settings/purchase-order" },
-        { name: "Bills", href: "/settings/bills" },
+        // /settings/purchase-order, /settings/bills and /settings/expense have no
+        // routes (404) — point at the accounting screens, as the Accounting menu does.
+        { name: "Purchase Order", href: "/accounting/purchase-order" },
+        { name: "Bills", href: "/accounting/bills" },
         { name: "Recurring Bills", href: "/accounting/recurring-bills" },
         { name: "Vendor", href: "/maintenance/vendor" },
-        { name: "Expense", href: "/settings/expense" },
+        { name: "Expense", href: "/accounting/expense" },
 
         // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
         // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },

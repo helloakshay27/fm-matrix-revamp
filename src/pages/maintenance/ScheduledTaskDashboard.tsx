@@ -1166,7 +1166,7 @@ export const ScheduledTaskDashboard = () => {
             className="space-y-4 sm:space-y-6 mt-4 sm:mt-6"
           >
             {/* Quick Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
+            <div className="task-overview-kpi-grid">
               {statusCards.map((card, index) => {
                 const getStatusCount = (status: string) => {
                   switch (status) {
@@ -1188,20 +1188,17 @@ export const ScheduledTaskDashboard = () => {
                 return (
                   <div
                     key={index}
-                    className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow ${selectedStatus === card.status
-                      ? "shadow-lg transition-shadow shadow-[0px_1px_8px_rgba(45,45,45,0.05)]"
-                      : ""
-                      }`}
+                    className="task-overview-kpi-card"
                     onClick={() => handleStatusCardClick(card.status)}
                   >
-                    <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
-                      <card.icon className="w-6 h-6 text-[#C72030]" />
+                    <div className="task-overview-kpi-icon">
+                      <card.icon className="task-overview-kpi-icon-svg" />
                     </div>
-                    <div>
-                      <div className="text-2xl font-semibold text-[#1A1A1A]">
+                    <div className="task-overview-kpi-copy">
+                      <div className="task-overview-kpi-value">
                         {getStatusCount(card.status)}
                       </div>
-                      <div className="text-sm font-medium text-[#1A1A1A]">
+                      <div className="task-overview-kpi-label">
                         {card.title}
                       </div>
                     </div>
@@ -1360,7 +1357,10 @@ export const ScheduledTaskDashboard = () => {
                       schedule: task.schedule,
                       assignTo: task.assignTo || "-",
                       status: (
-                        <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-600 font-medium">
+                        <span
+                          className="entity-status-pill"
+                          data-status={String(task.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}
+                        >
                           {task.status}
                         </span>
                       ),
@@ -1494,14 +1494,14 @@ export const ScheduledTaskDashboard = () => {
               <div className="flex gap-2 items-center">
                 <Button
                   onClick={() => setShowAnalyticsFilter(true)}
-                  className="fm-button-fix flex items-center gap-2"
-                  style={{ backgroundColor: '#111111', borderColor: '#111111', color: '#ffffff' }}
+                  variant="outline"
+                  className="task-analytics-date-range-button"
                 >
-                  <CalendarIcon className="w-4 h-4" style={{ color: '#ffffff' }} />
-                  <span className="text-sm font-medium" style={{ color: '#ffffff' }}>
+                  <CalendarIcon className="task-analytics-date-range-icon" />
+                  <span className="task-analytics-date-range-text">
                     {analyticsDateRange.startDate} - {analyticsDateRange.endDate}
                   </span>
-                  <FilterIcon className="w-4 h-4" style={{ color: '#ffffff' }} />
+                  <FilterIcon className="task-analytics-date-range-icon" />
                 </Button>
                 <TaskAnalyticsSelector
                   onSelectionChange={handleAnalyticsSelectionChange}

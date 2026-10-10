@@ -302,22 +302,26 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
   };
 
   // Use API search results or filter data based on search term
-  const filteredData = useMemo(() => {
+  const filteredData = useMemo((): T[] => {
     // If we have API search results, use them instead of filtering original data
     if (apiSearchResults) {
-      return apiSearchResults;
+      return Array.isArray(apiSearchResults) ? apiSearchResults : [];
     }
+
+    // A caller passing a non-array (e.g. an unwrapped API response object)
+    // must not crash the table — render it as empty instead.
+    const rows: T[] = Array.isArray(baseSortedData) ? baseSortedData : [];
 
     // If onSearchChange is provided, the parent is handling search (server-side)
     // So don't apply client-side filtering, just use the data as-is
     if (onSearchChange) {
-      return baseSortedData;
+      return rows;
     }
 
     // Otherwise, apply client-side filtering
-    if (!searchTerm) return baseSortedData;
+    if (!searchTerm) return rows;
 
-    return baseSortedData.filter((item) =>
+    return rows.filter((item) =>
       Object.values(item).some((value) =>
         String(value).toLowerCase().includes(searchTerm.toLowerCase())
       )

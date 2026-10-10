@@ -24,6 +24,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, IconButton, TextFiel
 import CloseIcon from '@mui/icons-material/Close';
 import { RecentAttendanceSidebar } from '@/components/RecentAttendanceSidebar';
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { getSeriesColor } from '@/styles/chartPalette';
 
 // Sortable Chart Item Component
 const SortableChartItem = ({ id, children }: { id: string; children: React.ReactNode }) => {
@@ -347,14 +348,14 @@ export const AttendanceDashboard = () => {
   const statusData = useMemo(() =>
     statusChartData
       ? [
-        { name: 'Present', value: statusChartData.present_count, color: '#c6b692' },
-        { name: 'Absent', value: statusChartData.absent_count, color: '#d8dcdd' },
-        { name: 'Late', value: statusChartData.late_count, color: '#e5e7eb' }
+        { name: 'Present', value: statusChartData.present_count, color: getSeriesColor(0) },
+        { name: 'Absent', value: statusChartData.absent_count, color: getSeriesColor(1) },
+        { name: 'Late', value: statusChartData.late_count, color: getSeriesColor(2) }
       ]
       : [
-        { name: 'Present', value: 0, color: '#c6b692' },
-        { name: 'Absent', value: 0, color: '#d8dcdd' },
-        { name: 'Late', value: 0, color: '#e5e7eb' }
+        { name: 'Present', value: 0, color: getSeriesColor(0) },
+        { name: 'Absent', value: 0, color: getSeriesColor(1) },
+        { name: 'Late', value: 0, color: getSeriesColor(2) }
       ]
     , [statusChartData]);
 
@@ -424,12 +425,12 @@ export const AttendanceDashboard = () => {
   const trendsData = useMemo(() =>
     trendsChartData
       ? [
-        { name: 'Regular Hours', value: trendsChartData.regular_count, color: '#c6b692' },
-        { name: 'Overtime', value: trendsChartData.overtime_count, color: '#d8dcdd' }
+        { name: 'Regular Hours', value: trendsChartData.regular_count, color: getSeriesColor(0) },
+        { name: 'Overtime', value: trendsChartData.overtime_count, color: getSeriesColor(1) }
       ]
       : [
-        { name: 'Regular Hours', value: 0, color: '#c6b692' },
-        { name: 'Overtime', value: 0, color: '#d8dcdd' }
+        { name: 'Regular Hours', value: 0, color: getSeriesColor(0) },
+        { name: 'Overtime', value: 0, color: getSeriesColor(1) }
       ]
     , [trendsChartData]);
 
@@ -1027,7 +1028,7 @@ export const AttendanceDashboard = () => {
                                       />
                                       <YAxis tick={{ fill: '#6b7280', fontSize: 10 }} />
                                       <Tooltip />
-                                      <Bar dataKey="value" fill="#c6b692" />
+                                      <Bar dataKey="value" fill={getSeriesColor(0)} />
                                     </BarChart>
                                   </ResponsiveContainer>
                                 </div>

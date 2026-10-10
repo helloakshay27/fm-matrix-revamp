@@ -30,21 +30,21 @@ export const StaffsFilterModal = ({ isOpen, onClose }: StaffsFilterModalProps) =
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-white [&>button]:hidden rounded-none">
+      <DialogContent className="max-w-lg bg-white [&>button]:hidden max-h-[90vh] overflow-y-auto">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <DialogTitle className="text-lg font-semibold">FILTER</DialogTitle>
+          <DialogTitle className="text-lg font-semibold text-gray-900">FILTER BY</DialogTitle>
           <Button
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="h-6 w-6 p-0 rounded-none"
+            className="h-6 w-6 p-0 hover:bg-gray-100"
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Close</span>
           </Button>
         </DialogHeader>
         
-        <div className="p-6 space-y-4">
+        <div className="space-y-6 py-4">
           {/* Search by Name, Mobile or Staff Id */}
           <div className="space-y-2">
             <Label htmlFor="searchQuery" className="text-sm font-medium">
@@ -55,7 +55,7 @@ export const StaffsFilterModal = ({ isOpen, onClose }: StaffsFilterModalProps) =
               placeholder="Search by Name, Mobile or Staff Id"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="border-gray-300 rounded-none"
+              className="h-11 rounded-lg border-gray-200"
             />
           </div>
 
@@ -65,10 +65,10 @@ export const StaffsFilterModal = ({ isOpen, onClose }: StaffsFilterModalProps) =
               Work type
             </Label>
             <Select value={workType} onValueChange={setWorkType}>
-              <SelectTrigger className="border-gray-300 rounded-none">
+              <SelectTrigger className="h-11 rounded-lg border-gray-200">
                 <SelectValue placeholder="Select Work Type" />
               </SelectTrigger>
-              <SelectContent className="bg-white border border-gray-200 shadow-lg z-50 rounded-none">
+              <SelectContent className="bg-white border border-gray-200 shadow-lg z-50 rounded-lg">
                 <SelectItem value="other">Other</SelectItem>
                 <SelectItem value="vendor">Vendor</SelectItem>
                 <SelectItem value="contractor">Contractor</SelectItem>
@@ -82,10 +82,10 @@ export const StaffsFilterModal = ({ isOpen, onClose }: StaffsFilterModalProps) =
               Status
             </Label>
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="border-gray-300 rounded-none">
+              <SelectTrigger className="h-11 rounded-lg border-gray-200">
                 <SelectValue placeholder="Select Status" />
               </SelectTrigger>
-              <SelectContent className="bg-white border border-gray-200 shadow-lg z-50 rounded-none">
+              <SelectContent className="bg-white border border-gray-200 shadow-lg z-50 rounded-lg">
                 <SelectItem value="approved">Approved</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="rejected">Rejected</SelectItem>
@@ -94,20 +94,19 @@ export const StaffsFilterModal = ({ isOpen, onClose }: StaffsFilterModalProps) =
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-3 pt-4">
+          <div className="flex flex-col sm:flex-row justify-end gap-2 pt-6">
             <Button
               onClick={handleReset}
-              variant="ghost"
-              className="fm-button-fix fm-button-brand px-4 py-2"
+              variant="outline"
+              className="h-11 px-8 border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
             >
               Reset
             </Button>
             <Button
               onClick={handleApply}
-              style={{ backgroundColor: '#C72030' }}
-              className="hover:bg-[#C72030]/90 text-white px-6 py-2 rounded-none"
+              className="h-11 px-8 bg-[#1A1A18] text-white hover:bg-black"
             >
-              Apply
+              Apply Filters
             </Button>
           </div>
         </div>

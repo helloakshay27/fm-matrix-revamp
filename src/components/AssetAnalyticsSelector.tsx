@@ -124,9 +124,9 @@ export const AssetAnalyticsSelector: React.FC<AssetAnalyticsSelectorProps> = ({
     <div ref={wrapperRef} className="relative w-full sm:w-auto">
       {/* Trigger Button */}
       <Button
-        variant="ghost"
+        variant="outline"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="fm-button-fix fm-button-brand flex items-center gap-2 min-w-[250px] justify-between"
+        className="flex items-center gap-2 min-w-[250px] justify-between px-4 py-2 bg-white hover:bg-gray-50 border border-gray-300 text-brand [&_svg]:text-brand"
       >
         <div className="flex items-center gap-2">
           <Settings className="w-4 h-4" />

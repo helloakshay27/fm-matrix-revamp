@@ -144,6 +144,8 @@ import AmountOverviewCard from "@/components/accounting/AmountOverviewCard";
 import AmountClientWiseCard from "@/components/accounting/AmountClientWiseCard";
 import QuickGateOverviewCard from "@/components/quickgate/QuickGateOverviewCard";
 import SiteWiseVisitorsCard from "@/components/quickgate/SiteWiseVisitorsCard";
+import SiteWiseGoodsInwardCard from "@/components/quickgate/SiteWiseGoodsInwardCard";
+import DeliveryVisitorsCard from "@/components/quickgate/DeliveryVisitorsCard";
 import QuickGateGoodsStaffCard from "@/components/quickgate/QuickGateGoodsStaffCard";
 import visitorManagementAnalyticsAPI from "@/services/visitorManagementAnalyticsAPI";
 import VisitorTrendAnalysisCard from "@/components/visitor/VisitorTrendAnalysisCard";
@@ -251,6 +253,23 @@ type LastFailedMap = Partial<
   Record<keyof DashboardData, Record<string, string>>
 > &
   Record<string, Record<string, string>>;
+
+// Cards for these endpoints fetch their own data and ignore dashboardData, so a
+// null dashboardData entry here does NOT mean "no data" — never show the
+// empty-state card for them (see the quick-gate/occupancy/utility/incident cards).
+const SELF_FETCH_ENDPOINTS = new Set<string>([
+  "visitor_summary",
+  "site_wise_visitors",
+  "site_wise_goods_inward",
+  "delivery_visitor_data",
+  "goods_staff_overview",
+  "occupancy_summary",
+  "power_consumption_top_management",
+  "water_consumption_top_management",
+  "body_injury_chart",
+  "safety_metrics",
+  "escalation_kpis",
+]);
 
 const buildAssetStatusChartData = (data: any) => {
   const statusData = data?.assets_statistics?.status || data || {};
@@ -888,6 +907,8 @@ export const Dashboard = () => {
           total_outstanding_amount_client_wise: { h: 10, minH: 8 },
           visitor_summary: { h: 4, minH: 3, maxH: 4 },
           site_wise_visitors: { h: 10, minH: 8 },
+          site_wise_goods_inward: { h: 10, minH: 8 },
+          delivery_visitor_data: { h: 10, minH: 8 },
           goods_staff_overview: { h: 4, minH: 3, maxH: 4 },
           safety_metrics: { h: 4, minH: 3, maxH: 4 },
           escalation_kpis: { h: 4, minH: 3, maxH: 4 },
@@ -2631,6 +2652,20 @@ export const Dashboard = () => {
               promises.push(Promise.resolve(null));
             }
             break;
+          case "patrolling":
+            // Patrolling cards self-fetch via <PatrollingCard /> and bypass
+            // dashboardData. Still push one resolved sentinel per analytic so
+            // the promise list stays aligned with moduleGroups (the .finally
+            // loop below indexes promises per analytic) — otherwise
+            // promises[idx] is undefined and throws, surfacing the generic
+            // "Failed to fetch dashboard data" toast for a selection that
+            // never actually failed.
+            for (const analytic of analytics) {
+              toLoad[module] = toLoad[module] || {};
+              toLoad[module][analytic.endpoint] = true;
+              promises.push(Promise.resolve(null));
+            }
+            break;
         }
       }
 
@@ -2662,7 +2697,7 @@ export const Dashboard = () => {
             const _idx = _pi++;
             const _module = _mod;
             const _endpoint = _anal.endpoint;
-            (promises[_idx] as Promise<unknown>).finally(() => {
+            (promises[_idx] as Promise<unknown> | undefined)?.finally(() => {
               setLoadingMap((prev) => {
                 const merged: Record<string, Record<string, boolean>> = { ...prev };
                 merged[_module] = { ...(merged[_module] || {}) };
@@ -2951,6 +2986,32 @@ export const Dashboard = () => {
     }
 
     const rawData = dashboardData[analytic.module]?.[analytic.endpoint];
+
+    // No payload returned for this analytic (and it's not a self-fetching card):
+    // render a standard empty state instead of the card's blank/empty UI.
+    const isLoadingAnalytic =
+      analytic.module !== "patrolling" &&
+      !!loadingMap?.[analytic.module]?.[analytic.endpoint];
+    if (
+      rawData == null &&
+      !isLoadingAnalytic &&
+      !SELF_FETCH_ENDPOINTS.has(analytic.endpoint)
+    ) {
+      return (
+        <Card className="w-full border border-gray-200 shadow-sm bg-white h-full flex flex-col">
+          <CardHeader className="pb-4 px-6 pt-6">
+            <CardTitle className="text-xl font-bold text-[#C72030]">
+              {analytic.title}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-6 pb-6 flex-1">
+            <div className="bg-gray-50 rounded-lg p-4 min-h-[280px] flex items-center justify-center">
+              <p className="text-gray-500">No data available for the selected period</p>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
 
     // Transform ticket data to match TicketAnalyticsCard expectations
     const transformTicketData = (data: any, endpoint: string) => {
@@ -3952,6 +4013,26 @@ export const Dashboard = () => {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <SiteWiseVisitorsCard
+                  siteIds={activeSiteIds}
+                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
+                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                />
+              </SortableChartItem>
+            );
+          case "site_wise_goods_inward":
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <SiteWiseGoodsInwardCard
+                  siteIds={activeSiteIds}
+                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
+                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                />
+              </SortableChartItem>
+            );
+          case "delivery_visitor_data":
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <DeliveryVisitorsCard
                   siteIds={activeSiteIds}
                   startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
                   endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}

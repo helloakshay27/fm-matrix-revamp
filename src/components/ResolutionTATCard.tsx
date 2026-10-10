@@ -4,16 +4,7 @@ import { Download } from 'lucide-react';
 import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
 import { useToast } from '@/hooks/use-toast';
 
-// Per-bar colors per guideline
-const BAR_COLORS = ['#9EC8BA', '#8E7BE0', '#DA7756', '#798C5E', '#EDC488'];
-const CHART_COLORS = {
-  primary: '#9EC8BA',
-  secondary: '#DA7756',
-  tertiary: '#8E7BE0',
-  primaryLight: '#EDC488',
-  secondaryLight: '#798C5E',
-  tertiaryLight: '#CDCAF5',
-};
+const TICKET_ANALYTICS_SERIES_COUNT = 8;
 
 interface ResolutionTATData {
   success: number;
@@ -91,7 +82,7 @@ export const ResolutionTATCard: React.FC<ResolutionTATCardProps> = ({ data, clas
     total: data.response.total[index] || 0,
     percentage_breached: data.response.percentage_breached[index] || 0,
     percentage_achieved: data.response.percentage_achieved[index] || 0,
-    color: BAR_COLORS[index % BAR_COLORS.length],
+    color: `var(--ticket-analytics-series-${(index % TICKET_ANALYTICS_SERIES_COUNT) + 1})`,
   })).filter(item => item.total > 0);
 
   return (
@@ -143,28 +134,25 @@ export const ResolutionTATCard: React.FC<ResolutionTATCardProps> = ({ data, clas
             
             {/* Summary Table */}
             <div className="mt-4">
-              <div className="rounded-xl overflow-hidden border border-gray-200">
+              <div className="ticket-analytics-table-clip">
               <div className="overflow-x-auto">
-                <table className="w-full text-sm border-collapse">
+                <table className="ticket-analytics-table ticket-resolution-tat-table">
                   <thead>
                     <tr>
-                      <th className="px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center" style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Category</th>
-                      <th className="px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center" style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Breached</th>
-                      <th className="px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center" style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Achieved</th>
-                      <th className="px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center" style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Total</th>
-                      <th className="px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center" style={{ backgroundColor: '#D97655', color: '#ffffff' }}>% Breached</th>
-                      <th className="px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center" style={{ backgroundColor: '#D97655', color: '#ffffff' }}>% Achieved</th>
+                      {['Category', 'Breached', 'Achieved', 'Total', '% Breached', '% Achieved'].map(label => (
+                        <th key={label} className="ticket-analytics-table-header text-center">{label}</th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
                     {chartData.map((item, index) => (
-                      <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
-                        <td className="px-4 py-3 text-sm border-b border-gray-100 text-left font-medium text-gray-800">{item.category}</td>
-                        <td className="px-4 py-3 text-sm border-b border-gray-100 text-left text-red-600">{item.breached}</td>
-                        <td className="px-4 py-3 text-sm border-b border-gray-100 text-left text-green-600">{item.achieved}</td>
-                        <td className="px-4 py-3 text-sm border-b border-gray-100 text-left font-medium">{item.total}</td>
-                        <td className="px-4 py-3 text-sm border-b border-gray-100 text-left text-red-600">{item.percentage_breached.toFixed(1)}%</td>
-                        <td className="px-4 py-3 text-sm border-b border-gray-100 text-left text-green-600">{item.percentage_achieved.toFixed(1)}%</td>
+                      <tr key={index} className="ticket-analytics-table-row">
+                        <td className="ticket-analytics-table-cell text-left font-medium">{item.category}</td>
+                        <td className="ticket-analytics-table-cell text-left text-red-600">{item.breached}</td>
+                        <td className="ticket-analytics-table-cell text-left text-green-600">{item.achieved}</td>
+                        <td className="ticket-analytics-table-cell text-left font-medium">{item.total}</td>
+                        <td className="ticket-analytics-table-cell text-left text-red-600">{item.percentage_breached.toFixed(1)}%</td>
+                        <td className="ticket-analytics-table-cell text-left text-green-600">{item.percentage_achieved.toFixed(1)}%</td>
                       </tr>
                     ))}
                   </tbody>

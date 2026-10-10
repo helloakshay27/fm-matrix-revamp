@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Filter, Search } from 'lucide-react';
+import { Plus, Filter, Search, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { RuleFilterDialog } from '@/components/RuleFilterDialog';
 
@@ -39,32 +39,47 @@ export const RuleListPage = () => {
           New Rule
         </Button>
 
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+        <div className="flex items-center gap-2">
+          <div className="relative w-[300px] max-w-full">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               placeholder="Search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64"
+              className="pl-10 w-full"
             />
           </div>
 
-          <Button 
-            variant="outline" 
-            // className="border-gray-300"
-            className="border-brand text-brand hover:bg-brand-selected flex items-center gap-2 rounded-lg"
+          <Button
+            variant="outline"
+            size="icon"
+            className="!rounded-lg border border-brand text-brand"
             onClick={handleFilterClick}
+            title="Filter"
+            aria-label="Filter"
           >
             <Filter className="w-4 h-4" />
           </Button>
-          
-          <Button className="bg-[#C72030] hover:bg-[#A01A28] text-white px-6">
-            Go!
+
+          <Button
+            variant="outline"
+            size="icon"
+            className="!rounded-lg border border-brand text-brand"
+            title="Go"
+            aria-label="Go"
+          >
+            <Search className="w-4 h-4" />
           </Button>
-          
-          <Button variant="outline" className="borderborder-[#C72030] ">
-            Reset
+
+          <Button
+            variant="outline"
+            size="icon"
+            className="!rounded-lg border border-brand text-brand"
+            onClick={() => setSearchTerm('')}
+            title="Reset"
+            aria-label="Reset"
+          >
+            <RotateCcw className="w-4 h-4" />
           </Button>
         </div>
       </div>

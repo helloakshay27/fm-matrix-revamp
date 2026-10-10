@@ -38,7 +38,8 @@ import {
     EditOutlined,
 } from '@mui/icons-material';
 import { ShoppingCart, Package, Calendar, FileText, ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner';
+import { accountingToast as toast } from '@/lib/accountingToast';
+import '@/styles/accounting.css';
 import ItemSearchInput from '@/components/ItemSearchInput';
 import axios from 'axios';
 import {
@@ -52,8 +53,8 @@ import {
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({
     title, icon, children,
 }) => (
-    <section className="bg-card rounded-lg border border-border shadow-sm">
-        <div className="px-6 py-4 border-b border-border flex items-center gap-3">
+    <section className="acc-section bg-card">
+        <div className="acc-section-head px-6 py-4 flex items-center gap-3">
             <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center">
                 {icon}
             </div>
@@ -1298,7 +1299,7 @@ export const PurchaseOrderEditPage: React.FC = () => {
     }
 
     return (
-        <div className="p-6 space-y-6 relative">
+        <div className="accounting-ui p-6 space-y-6 relative">
             {isSubmitting && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <CircularProgress size={60} sx={{ color: '#DA7756' }} />
@@ -1676,14 +1677,14 @@ export const PurchaseOrderEditPage: React.FC = () => {
                             <div className="text-red-500 text-sm bg-red-50 p-3 rounded-md">{errors.items}</div>
                         )}
 
-                        <div className="border border-border rounded-lg overflow-hidden">
-                            <table className="w-full">
+                        <div className="acc-table-wrap">
+                            <table className="acc-line-items w-full">
                                 <thead className="bg-muted/50">
                                     <tr>
                                         <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
                                         <th className="px-4 py-3 text-left text-sm font-medium">Account</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Rate</th>
+                                        <th className="acc-num px-4 py-3 text-right text-sm font-medium">Quantity</th>
+                                        <th className="acc-num px-4 py-3 text-right text-sm font-medium">Rate</th>
                                         <th className="px-4 py-3 text-left text-sm font-medium">Tax</th>
                                         <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
                                         <th className="px-4 py-3 text-center text-sm font-medium">Action</th>
@@ -1752,7 +1753,7 @@ export const PurchaseOrderEditPage: React.FC = () => {
                                                 </FormControl>
                                             </td>
 
-                                            <td className="px-4 py-3">
+                                            <td className="acc-num px-4 py-3">
                                                 <TextField type="number" size="small" value={item.quantity}
                                                     onChange={(e) => {
                                                         const val = parseFloat(e.target.value);
@@ -1762,7 +1763,7 @@ export const PurchaseOrderEditPage: React.FC = () => {
                                                     inputProps={{ min: 0, step: 1 }} sx={{ width: 80 }} />
                                             </td>
 
-                                            <td className="px-4 py-3">
+                                            <td className="acc-num px-4 py-3">
                                                 <TextField type="number" size="small" value={item.rate}
                                                     onChange={(e) => {
                                                         const val = parseFloat(e.target.value);
@@ -1822,7 +1823,7 @@ export const PurchaseOrderEditPage: React.FC = () => {
                                                 {reverseCharge && <span className="text-xs text-black-400 block mt-1">Tax disabled (RCM)</span>}
                                             </td>
 
-                                            <td className="px-4 py-3 text-right font-semibold">₹{item.amount.toFixed(2)}</td>
+                                            <td className="acc-num px-4 py-3 text-right font-semibold">₹{item.amount.toFixed(2)}</td>
 
                                             <td className="px-4 py-3 text-center">
                                                 <IconButton size="small" onClick={() => removeItem(index)}
@@ -1837,10 +1838,11 @@ export const PurchaseOrderEditPage: React.FC = () => {
                         </div>
 
                         <div className="flex gap-3 pt-4">
-                            <Button startIcon={<Add />} onClick={addItem} variant="outlined" sx={{ textTransform: 'none' }}>
+                            <Button startIcon={<Add />} onClick={addItem} variant="outlined" className="acc-btn acc-btn-secondary acc-btn-xs" sx={{ textTransform: 'none' }}>
                                 Add New Row
                             </Button>
-                            <Button variant="outlined" sx={{ textTransform: 'none' }} onClick={() => setBulkModalOpen(true)}>
+                            <Button variant="outlined" className="acc-btn acc-btn-secondary acc-btn-xs"
+                                sx={{ textTransform: 'none' }} onClick={() => setBulkModalOpen(true)}>
                                 Add Items in Bulk
                             </Button>
                         </div>
@@ -2041,26 +2043,20 @@ export const PurchaseOrderEditPage: React.FC = () => {
             </div>
 
             {/* ── Action Buttons ────────────────────────────────────────────── */}
-            <div className="flex items-center gap-3 justify-center pt-2">
+            <div className="acc-actions pt-2">
                 <Button variant="outlined" onClick={() => navigate('/accounting/purchase-order')} disabled={isSubmitting}
-                    className="fm-button-fix px-8 py-2"
-                    sx={{
-                        textTransform: 'none', fontWeight: 600, borderColor: '#DA7756', color: '#DA7756',
-                        '&:hover': { borderColor: '#C45F40', bgcolor: '#F2EEE9', color: '#C45F40' },
-                    }}>
+                    className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2"
+                    sx={{ textTransform: 'none' }}>
                     Cancel
                 </Button>
                 <Button variant="outlined" onClick={() => handleSubmit(true)} disabled={isSubmitting}
-                    className="fm-button-fix px-8 py-2"
-                    sx={{
-                        textTransform: 'none', fontWeight: 600, borderColor: '#DA7756', color: '#DA7756',
-                        '&:hover': { borderColor: '#C45F40', bgcolor: '#F2EEE9', color: '#C45F40' },
-                    }}>
+                    className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2"
+                    sx={{ textTransform: 'none' }}>
                     Save as Draft
                 </Button>
                 <Button variant="contained" onClick={() => handleSubmit(false)} disabled={isSubmitting}
-                    className="fm-button-fix fm-button-brand px-8 py-2"
-                    sx={{ textTransform: 'none', fontWeight: 600 }}>
+                    className="acc-btn fm-button-fix fm-button-brand px-8 py-2"
+                    sx={{ textTransform: 'none' }}>
                     {isSubmitting ? 'Updating...' : 'Update Purchase Order'}
                 </Button>
             </div>

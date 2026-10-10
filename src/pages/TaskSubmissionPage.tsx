@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Upload, Camera, Edit, User, FileText, X } from "lucide-react";
+import { ArrowLeft, Upload, Camera, Check, Edit, User, FileText, X } from "lucide-react";
 import { toast as sonnerToast } from "sonner";
 import { taskService, TaskOccurrence } from "@/services/taskService";
 import { TaskSubmissionSuccessModal } from "@/components/TaskSubmissionSuccessModal";
@@ -1173,6 +1173,9 @@ export const TaskSubmissionPage: React.FC = () => {
         `Draft saved successfully! ${savedItems.length > 0 ? savedItems.join(", ") : "No data"} saved.`,
         {
           duration: 4000,
+          position: "bottom-center",
+          icon: <Check size={16} />,
+          className: "task-draft-toast",
         }
       );
     } catch (error) {
@@ -1521,8 +1524,8 @@ export const TaskSubmissionPage: React.FC = () => {
           return (
             <div className="space-y-6">
               {/* Checklist Summary */}
-              <Card className="border border-gray-200 shadow-sm">
-                <div className="figma-card-header">
+              <Card className="task-submission-checklist-card">
+                <div className="figma-card-header task-submission-checklist-header">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="figma-card-icon-wrapper">
@@ -1544,7 +1547,7 @@ export const TaskSubmissionPage: React.FC = () => {
                   </div>
                 </div>
 
-                <CardContent className="figma-card-content">
+                <CardContent className="figma-card-content task-submission-checklist-content">
                   {dynamicChecklist.length === 0 ? (
                     <div className="text-center py-8">
                       <Typography variant="body1" className="text-gray-600">
@@ -1740,8 +1743,8 @@ export const TaskSubmissionPage: React.FC = () => {
         case 1: // Before Photo
           return (
             <div className="space-y-6">
-              <Card className="border border-gray-200 shadow-sm">
-                <div className="figma-card-header">
+              <Card className="task-submission-checklist-card">
+                <div className="figma-card-header task-submission-checklist-header">
                   <div className="flex items-center gap-3">
                     <div className="figma-card-icon-wrapper">
                       <User className="figma-card-icon" />
@@ -1752,7 +1755,7 @@ export const TaskSubmissionPage: React.FC = () => {
                   </div>
                 </div>
 
-                <CardContent className="figma-card-content">
+                <CardContent className="figma-card-content task-submission-checklist-content">
                   <div className="space-y-6">
                     <div>
                       <Typography
@@ -1917,8 +1920,8 @@ export const TaskSubmissionPage: React.FC = () => {
               )}
 
               {/* Step 2 - Checklist Card (Active) */}
-              <Card className="border border-gray-200 shadow-sm">
-                <div className="figma-card-header">
+              <Card className="task-submission-checklist-card">
+                <div className="figma-card-header task-submission-checklist-header">
                   <div className="flex items-center gap-3">
                     <div className="figma-card-icon-wrapper">
                       <FileText className="figma-card-icon" />
@@ -1930,7 +1933,7 @@ export const TaskSubmissionPage: React.FC = () => {
                   </div>
                 </div>
 
-                <CardContent className="figma-card-content">
+                <CardContent className="figma-card-content task-submission-checklist-content">
                   {dynamicChecklist.length === 0 ? (
                     <div className="text-center py-8">
                       <Typography variant="body1" className="text-gray-600">
@@ -2566,8 +2569,8 @@ export const TaskSubmissionPage: React.FC = () => {
               )}
 
               {/* Step 2 - Checklist (Disabled/Completed) */}
-              <Card className="border border-gray-200 shadow-sm">
-                <div className="figma-card-header">
+              <Card className="task-submission-checklist-card">
+                <div className="figma-card-header task-submission-checklist-header">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="figma-card-icon-wrapper">
@@ -2590,7 +2593,7 @@ export const TaskSubmissionPage: React.FC = () => {
                   </div>
                 </div>
 
-                <CardContent className="figma-card-content">
+                <CardContent className="figma-card-content task-submission-checklist-content">
                   {dynamicChecklist.length === 0 ? (
                     <div className="text-center py-8">
                       <Typography variant="body1" className="text-gray-600">
