@@ -292,6 +292,9 @@ const isViSite =
   hostname.includes("web.gophygital.work") ||
   hostname.includes("lockated.gophygital.work") ||
   hostname.includes("community.gophygital.work")
+
+const isViUatSite = hostname === "vi-uat.gophygital.work"
+
 const isFmSite =
   hostname === "fm-uat.gophygital.work" ||
   hostname === "fm.gophygital.work" ||
@@ -330,6 +333,19 @@ export const getOrganizationsByEmail = async (
   if (isViSite) {
     const response = await fetch(
       `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch organizations");
+    }
+
+    const data = await response.json();
+    return data.organizations || [];
+  }
+
+  if (isViUatSite) {
+    const response = await fetch(
+      `https://vi-uat-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`
     );
 
     if (!response.ok) {
