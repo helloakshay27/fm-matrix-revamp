@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import {
   FormControl,
-  InputLabel,
   Select,
   MenuItem,
   Chip,
@@ -218,14 +217,14 @@ const Section: React.FC<{
   icon: React.ReactNode;
   children: React.ReactNode;
 }> = ({ title, icon, children }) => (
-  <section className="bg-card rounded-lg border border-border shadow-sm">
-    <div className="px-6 py-4 border-b border-border flex items-center gap-3">
-      <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+  <section className="rounded-2xl border border-[#D5DBDB] bg-white shadow-sm">
+    <div className="flex items-center gap-3 px-5 pt-5">
+      <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#F5F4F0] text-[#1A1A18]">
         {icon}
       </div>
-      <h2 className="text-sm font-semibold tracking-wide uppercase">{title}</h2>
+      <h2 className="text-sm font-semibold text-[#1A1A18]">{title}</h2>
     </div>
-    <div className="p-6">{children}</div>
+    <div className="px-5 pb-5 pt-3">{children}</div>
   </section>
 );
 
@@ -484,9 +483,25 @@ export const EditSurveyMapping = () => {
 
   // Field styles for Material-UI components
   const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
+    minHeight: 44,
+    borderRadius: "12px",
+    backgroundColor: "#FFFFFF",
+    fontSize: "13.5px",
+    fontWeight: 500,
     "& .MuiInputBase-input, & .MuiSelect-select": {
-      padding: { xs: "8px", sm: "10px", md: "12px" },
+      minHeight: "44px !important",
+      boxSizing: "border-box",
+      padding: "12px 14px !important",
+      display: "flex",
+      alignItems: "center",
+      fontSize: "13.5px",
+      fontWeight: 500,
+    },
+    "& .MuiOutlinedInput-notchedOutline": { borderColor: "#D5DBDB" },
+    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#A8B0B0" },
+    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+      borderColor: "#1A1A18",
+      borderWidth: "1px",
     },
   };
 
@@ -1214,7 +1229,7 @@ export const EditSurveyMapping = () => {
   }
 
   return (
-    <div className="p-6 space-y-6 relative">
+    <div className="p-6 space-y-5 relative">
       {isSubmitting && (
         <div className="absolute inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
           <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
@@ -1243,27 +1258,26 @@ export const EditSurveyMapping = () => {
 
       <Section title="Survey Selection" icon={<List className="w-3.5 h-3.5" />}>
         <div className="space-y-6">
-          <div className="rounded-md border border-dashed bg-muted/30 p-4">
-            <p className="mb-3 text-sm font-medium text-muted-foreground">
+          <div className="space-y-4">
+            <p className="text-sm text-[var(--color-ink-68)]">
               Select Survey for All Location Configurations
             </p>
 
             <div className="space-y-4">
               {/* Single Survey Selection */}
-              <div className="grid grid-cols-1 gap-6">
+              <div className="grid grid-cols-1 gap-5">
                 <FormControl
                   fullWidth
                   variant="outlined"
+                  className="gap-1.5"
                   sx={{ "& .MuiInputBase-root": fieldStyles }}
                 >
-                  <InputLabel shrink>
+                  <label className="text-xs font-semibold text-[var(--color-ink-68)]">
                     Select Survey <span className="text-red-500">*</span>
-                  </InputLabel>
+                  </label>
                   <Select
                     value={selectedSurveyId || ""}
                     onChange={handleSurveyChange}
-                    label="Select Survey"
-                    notched
                     displayEmpty
                     disabled={loadingSurveys}
                   >
@@ -1327,7 +1341,7 @@ export const EditSurveyMapping = () => {
               return (
                 <div
                   key={mapping.id}
-                  className="relative rounded-md border border-dashed bg-muted/30 p-4"
+                  className="relative rounded-2xl border border-[#D5DBDB] bg-white p-4"
                 >
                   {surveyMappings.filter((m) => !m.markedForDeletion).length >
                     1 && (
@@ -1359,11 +1373,12 @@ export const EditSurveyMapping = () => {
                     <FormControl
                       fullWidth
                       variant="outlined"
+                      className="gap-1.5"
                       sx={{ "& .MuiInputBase-root": fieldStyles }}
                     >
-                      <InputLabel shrink>
+                      <label className="text-xs font-semibold text-[var(--color-ink-68)]">
                         Site <span className="text-red-500">*</span>
-                      </InputLabel>
+                      </label>
                       <Select
                         value={mapping.selectedLocation.site}
                         onChange={(e) =>
@@ -1373,10 +1388,9 @@ export const EditSurveyMapping = () => {
                             e.target.value as string
                           )
                         }
-                        input={<OutlinedInput label="Site" />}
+                        input={<OutlinedInput />}
                         disabled={loading.sites}
                         displayEmpty
-                        notched
                       >
                         <MenuItem value="">
                           <em>Select Site</em>
@@ -1405,11 +1419,12 @@ export const EditSurveyMapping = () => {
                     <FormControl
                       fullWidth
                       variant="outlined"
+                      className="gap-1.5"
                       sx={{ "& .MuiInputBase-root": fieldStyles }}
                     >
-                      <InputLabel shrink>
+                      <label className="text-xs font-semibold text-[var(--color-ink-68)]">
                         Building <span className="text-red-500">*</span>
-                      </InputLabel>
+                      </label>
                       <Select
                         value={mapping.selectedLocation.building}
                         onChange={(e) =>
@@ -1419,10 +1434,9 @@ export const EditSurveyMapping = () => {
                             e.target.value as string
                           )
                         }
-                        input={<OutlinedInput label="Building" />}
+                        input={<OutlinedInput />}
                         disabled={!mapping.selectedLocation.site}
                         displayEmpty
-                        notched
                       >
                         <MenuItem value="">
                           <em>
@@ -1448,9 +1462,10 @@ export const EditSurveyMapping = () => {
                     <FormControl
                       fullWidth
                       variant="outlined"
+                      className="gap-1.5"
                       sx={{ "& .MuiInputBase-root": fieldStyles }}
                     >
-                      <InputLabel shrink>Wing</InputLabel>
+                      <label className="text-xs font-semibold text-[var(--color-ink-68)]">Wing</label>
                       <Select
                         value={mapping.selectedLocation.wing}
                         onChange={(e) =>
@@ -1460,10 +1475,9 @@ export const EditSurveyMapping = () => {
                             e.target.value as string
                           )
                         }
-                        input={<OutlinedInput label="Wing" />}
+                        input={<OutlinedInput />}
                         disabled={!mapping.selectedLocation.building}
                         displayEmpty
-                        notched
                       >
                         <MenuItem value="">
                           <em>
@@ -1486,9 +1500,10 @@ export const EditSurveyMapping = () => {
                     <FormControl
                       fullWidth
                       variant="outlined"
+                      className="gap-1.5"
                       sx={{ "& .MuiInputBase-root": fieldStyles }}
                     >
-                      <InputLabel shrink>Area</InputLabel>
+                      <label className="text-xs font-semibold text-[var(--color-ink-68)]">Area</label>
                       <Select
                         value={mapping.selectedLocation.area}
                         onChange={(e) =>
@@ -1498,10 +1513,9 @@ export const EditSurveyMapping = () => {
                             e.target.value as string
                           )
                         }
-                        input={<OutlinedInput label="Area" />}
+                        input={<OutlinedInput />}
                         disabled={!mapping.selectedLocation.building}
                         displayEmpty
-                        notched
                       >
                         <MenuItem value="">
                           <em>
@@ -1524,9 +1538,10 @@ export const EditSurveyMapping = () => {
                     <FormControl
                       fullWidth
                       variant="outlined"
+                      className="gap-1.5"
                       sx={{ "& .MuiInputBase-root": fieldStyles }}
                     >
-                      <InputLabel shrink>Floor</InputLabel>
+                      <label className="text-xs font-semibold text-[var(--color-ink-68)]">Floor</label>
                       <Select
                         value={mapping.selectedLocation.floor}
                         onChange={(e) =>
@@ -1536,10 +1551,9 @@ export const EditSurveyMapping = () => {
                             e.target.value as string
                           )
                         }
-                        input={<OutlinedInput label="Floor" />}
+                        input={<OutlinedInput />}
                         disabled={!mapping.selectedLocation.building}
                         displayEmpty
-                        notched
                       >
                         <MenuItem value="">
                           <em>
@@ -1565,9 +1579,10 @@ export const EditSurveyMapping = () => {
                     <FormControl
                       fullWidth
                       variant="outlined"
+                      className="gap-1.5"
                       sx={{ "& .MuiInputBase-root": fieldStyles }}
                     >
-                      <InputLabel shrink>Room</InputLabel>
+                      <label className="text-xs font-semibold text-[var(--color-ink-68)]">Room</label>
                       <Select
                         value={mapping.selectedLocation.room}
                         onChange={(e) =>
@@ -1577,10 +1592,9 @@ export const EditSurveyMapping = () => {
                             e.target.value as string
                           )
                         }
-                        input={<OutlinedInput label="Room" />}
+                        input={<OutlinedInput />}
                         disabled={!mapping.selectedLocation.building}
                         displayEmpty
-                        notched
                       >
                         <MenuItem value="">
                           <em>
@@ -1631,7 +1645,7 @@ export const EditSurveyMapping = () => {
             {selectedSurveyQuestions.map((q, idx) => (
               <div
                 key={q.id}
-                className="relative rounded-md border border-dashed bg-muted/30 p-4"
+                className="relative rounded-2xl border border-[#D5DBDB] bg-white p-4"
               >
                 {/* First Row - Mandatory Checkbox */}
                 <div className="mb-6">
@@ -1658,13 +1672,12 @@ export const EditSurveyMapping = () => {
                     <FormControl
                       fullWidth
                       variant="outlined"
+                      className="gap-1.5"
                       sx={{ "& .MuiInputBase-root": fieldStyles }}
                     >
-                      <InputLabel shrink>Question</InputLabel>
+                      <label className="text-xs font-semibold text-[var(--color-ink-68)]">Question</label>
                       <Select
                         value={q.task}
-                        label="Question"
-                        notched
                         disabled
                         renderValue={() => q.task}
                       >
@@ -1676,13 +1689,12 @@ export const EditSurveyMapping = () => {
                     <FormControl
                       fullWidth
                       variant="outlined"
+                      className="gap-1.5"
                       sx={{ "& .MuiInputBase-root": fieldStyles }}
                     >
-                      <InputLabel shrink>Input Type</InputLabel>
+                      <label className="text-xs font-semibold text-[var(--color-ink-68)]">Input Type</label>
                       <Select
                         value={q.inputType}
-                        label="Input Type"
-                        notched
                         disabled
                       >
                         <MenuItem value="yes_no">Yes/No</MenuItem>
@@ -1705,13 +1717,12 @@ export const EditSurveyMapping = () => {
                     <FormControl
                       fullWidth
                       variant="outlined"
+                      className="gap-1.5"
                       sx={{ "& .MuiInputBase-root": fieldStyles }}
                     >
-                      <InputLabel shrink>Options</InputLabel>
+                      <label className="text-xs font-semibold text-[var(--color-ink-68)]">Options</label>
                       <Select
                         value={q.optionsText || ""}
-                        label="Options"
-                        notched
                         disabled
                         renderValue={() => q.optionsText || "No options"}
                       >
@@ -1765,7 +1776,7 @@ export const EditSurveyMapping = () => {
         </Button>
         <Button
           variant="outline"
-          className="px-8 border-brand text-brand hover:bg-brand-selected hover:text-brand"
+          className="h-[42px] rounded-lg border border-[#1A1A18] px-[22px] text-[13px] font-semibold text-[#1A1A18] hover:bg-[#F5F4F0]"
           onClick={() => navigate("/maintenance/survey/mapping")}
           disabled={isSubmitting}
         >

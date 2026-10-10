@@ -4422,7 +4422,7 @@ export const TicketDetailsPage = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 min-h-screen">
+    <div className="ticket-details-page p-4 sm:p-6 min-h-screen">
       {/* Header */}
       <div className="mb-6">
         <button
@@ -5179,7 +5179,7 @@ export const TicketDetailsPage = () => {
 
 
                     <Card className="w-full">
-                      <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+                      <div className="ticket-details-header flex items-center gap-3 bg-white py-3 px-4">
                         <div style={{ width: '40px', height: '40px' }} className="rounded-full flex items-center justify-center bg-[#E5E0D3]">
                           <Ticket className="w-5 h-5 text-brand" />
                         </div>
@@ -8247,17 +8247,17 @@ export const TicketDetailsPage = () => {
                   </div>
 
                   {/* Body */}
-                  <div className="bg-[#FAFAF8]">
+                  <div className="ticket-comments-section-body bg-white">
                     <div className="flex flex-col md:flex-row gap-3 px-2">
                       {/* Internal Comments Section */}
                       <div className="flex-1">
-                        <div className="bg-white w-full text-center py-0.5 bg-[#fafafa] border-[#D9D9D9]">
+                        <div className="w-full text-center py-0.5 bg-white">
                           <h4 className="text-[18px] font-regular text-[#000000]">Internal</h4>
                         </div>
 
-                        <div className="mt-4 ml-2">
+                        <div className="mt-4 ml-2 flex flex-col gap-8">
                           {/* Template Dropdown */}
-                          <div className="mb-3">
+                          <div>
                             <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                               <InputLabel shrink>Template</InputLabel>
                               <MuiSelect
@@ -8299,7 +8299,7 @@ export const TicketDetailsPage = () => {
                           </div>
 
                           {/* Comment Input */}
-                          <div className="mb-4 mt-6">
+                          <div>
                             <div className="relative w-full">
                               <textarea
                                 id="internal-comment"
@@ -8355,6 +8355,7 @@ export const TicketDetailsPage = () => {
                           htmlFor="internal-file-input"
                           sx={{
                             marginLeft: '8px',
+                            marginTop: '12px',
                             borderColor: 'var(--color-primary)',
                             color: 'var(--color-primary)',
                             textTransform: 'none',
@@ -8374,15 +8375,15 @@ export const TicketDetailsPage = () => {
 
                       {/* Customer Comments Section */}
                       <div className="flex-1">
-                        <div className="bg-white w-full text-center py-0.5 bg-[#fafafa] border-[#D9D9D9]">
+                        <div className="w-full text-center py-0.5 bg-white">
                           <h4 className="text-[18px] font-regular text-[#000000]">Customer</h4>
                         </div>
 
-                        <div className="mt-4 mr-2">
+                        <div className="mt-4 mr-2 flex flex-col gap-8">
 
 
                           {/* Template Dropdown */}
-                          <div className="mb-3">
+                          <div>
                             <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                               <InputLabel shrink>Template</InputLabel>
                               <MuiSelect
@@ -8424,7 +8425,7 @@ export const TicketDetailsPage = () => {
                           </div>
 
                           {/* Comment Input */}
-                          <div className="mb-4 mt-6">
+                          <div>
                             <div className="relative w-full">
                               <textarea
                                 id="customer-comment"
@@ -8479,6 +8480,7 @@ export const TicketDetailsPage = () => {
                           component="label"
                           htmlFor="customer-file-input"
                           sx={{
+                            marginTop: '12px',
                             borderColor: 'var(--color-primary)',
                             color: 'var(--color-primary)',
                             textTransform: 'none',
@@ -8531,7 +8533,7 @@ export const TicketDetailsPage = () => {
                   </div>
 
                   {/* Body */}
-                  <div className="bg-[#FAFAF8] relative px-6 pt-6 pb-8 pl-8">
+                  <div className="ticket-logs-section-body bg-white relative px-6 pt-6 pb-8 pl-8">
                     {complaintLogs.length === 0 ? (
                       <div className="text-xs text-gray-400">No logs available</div>
                     ) : (
@@ -8676,7 +8678,7 @@ export const TicketDetailsPage = () => {
 
 
                 <Card className="w-full">
-                  <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+                  <div className="ticket-details-header flex items-center gap-3 bg-white py-3 px-4">
                     <div style={{ width: '40px', height: '40px' }} className="rounded-full flex items-center justify-center bg-[#E5E0D3]">
                       <Ticket className="w-5 h-5 text-brand" />
                     </div>
@@ -9093,7 +9095,7 @@ export const TicketDetailsPage = () => {
               ticketData.parent_complaint.assigned_to
             ) && (
               <Card className="w-full bg-white rounded-lg shadow-sm border">
-                <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+                <div className="flex items-center gap-3 bg-white py-3 px-4 border border-[#D9D9D9]">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
                     <Ticket className="w-5 h-5" style={{ color: '#C72030' }} />
                   </div>
@@ -11572,17 +11574,17 @@ export const TicketDetailsPage = () => {
               </div>
 
               {/* Body */}
-              <div className="bg-[#FAFAF8]">
+              <div className="ticket-comments-section-body bg-white">
                 <div className="flex flex-col md:flex-row gap-3 px-2">
                   {/* Internal Comments Section */}
                   <div className="flex-1">
-                    <div className="bg-white w-full text-center py-0.5 bg-[#fafafa] border-[#D9D9D9]">
+                    <div className="w-full text-center py-0.5 bg-white">
                       <h4 className="text-[18px] font-regular text-[#000000]">Internal</h4>
                     </div>
 
-                    <div className="mt-4 ml-2">
+                    <div className="mt-4 ml-2 flex flex-col gap-8">
                       {/* Template Dropdown */}
-                      <div className="mb-3">
+                      <div>
                         <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                           <InputLabel shrink>Template</InputLabel>
                           <MuiSelect
@@ -11624,7 +11626,7 @@ export const TicketDetailsPage = () => {
                       </div>
 
                       {/* Comment Input */}
-                      <div className="mb-4 mt-6">
+                      <div>
                         <div className="relative w-full">
                           <textarea
                             id="internal-comment"
@@ -11680,6 +11682,7 @@ export const TicketDetailsPage = () => {
                       htmlFor="internal-file-input"
                       sx={{
                         marginLeft: '8px',
+                        marginTop: '12px',
                         borderColor: 'var(--color-primary)',
                         color: 'var(--color-primary)',
                         textTransform: 'none',
@@ -11699,15 +11702,15 @@ export const TicketDetailsPage = () => {
 
                   {/* Customer Comments Section */}
                   <div className="flex-1">
-                    <div className="bg-white w-full text-center py-0.5 bg-[#fafafa] border-[#D9D9D9]">
+                    <div className="w-full text-center py-0.5 bg-white">
                       <h4 className="text-[18px] font-regular text-[#000000]">Customer</h4>
                     </div>
 
-                    <div className="mt-4 mr-2">
+                    <div className="mt-4 mr-2 flex flex-col gap-8">
 
 
                       {/* Template Dropdown */}
-                      <div className="mb-3">
+                      <div>
                         <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                           <InputLabel shrink>Template</InputLabel>
                           <MuiSelect
@@ -11749,7 +11752,7 @@ export const TicketDetailsPage = () => {
                       </div>
 
                       {/* Comment Input */}
-                      <div className="mb-4 mt-6">
+                      <div>
                         <div className="relative w-full">
                           <textarea
                             id="customer-comment"
@@ -11804,6 +11807,7 @@ export const TicketDetailsPage = () => {
                       component="label"
                       htmlFor="customer-file-input"
                       sx={{
+                        marginTop: '12px',
                         borderColor: 'var(--color-primary)',
                         color: 'var(--color-primary)',
                         textTransform: 'none',
@@ -11860,7 +11864,7 @@ export const TicketDetailsPage = () => {
               </div>
 
               {/* Body */}
-              <div className="bg-[#FAFAF8] relative px-6 pt-6 pb-8 pl-8">
+              <div className="ticket-logs-section-body bg-white relative px-6 pt-6 pb-8 pl-8">
                 {complaintLogs.length === 0 ? (
                   <div className="text-xs text-gray-400">No logs available</div>
                 ) : (

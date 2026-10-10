@@ -29,6 +29,9 @@ import { useLocationData } from '@/hooks/useLocationData';
 import { getAuthHeader } from '@/config/apiConfig';
 
 const BRAND = '#DA7756';
+const ledgerCellClass = 'block w-full text-[12.5px] text-[var(--color-ink-68)]';
+const ledgerNumericCellClass = `${ledgerCellClass} text-right tabular-nums`;
+const ledgerIdentifierCellClass = 'block w-full text-[12.5px] font-medium text-[var(--color-text)]';
 
 interface HandoverUser {
   id: number;
@@ -415,38 +418,38 @@ const InventoryConsumptionViewPage = () => {
     (item: any, columnKey: string) => {
       switch (columnKey) {
         case 'date':
-          return item?.date || '-';
+          return <span className={ledgerIdentifierCellClass}>{item?.date || '-'}</span>;
         case 'opening':
-          return item?.opening ?? '-';
+          return <span className={ledgerNumericCellClass}>{item?.opening ?? '-'}</span>;
         case 'add_or_consume': {
           const type = String(item?.consumption_type || '').toLowerCase();
           const isNegative = ['consume', 'lost', 'breakage', 'spillage'].includes(type);
           return (
-            <span className={isNegative ? 'text-red-500 font-medium' : 'text-green-500 font-medium'}>
+            <span className={`${ledgerNumericCellClass} font-medium ${isNegative ? 'text-red-500' : 'text-green-500'}`}>
               {item?.add_or_consume ?? '-'}
             </span>
           );
         }
         case 'closing':
-          return item?.closing ?? '-';
+          return <span className={ledgerNumericCellClass}>{item?.closing ?? '-'}</span>;
         case 'consumption_type':
-          return item?.consumption_type || '-';
+          return <span className={ledgerIdentifierCellClass}>{item?.consumption_type || '-'}</span>;
         case 'building':
-          return displayName(item?.location?.building) || '-';
+          return <span className={ledgerIdentifierCellClass}>{displayName(item?.location?.building) || '-'}</span>;
         case 'wing':
-          return displayName(item?.location?.wing) || '-';
+          return <span className={ledgerIdentifierCellClass}>{displayName(item?.location?.wing) || '-'}</span>;
         case 'floor':
-          return displayName(item?.location?.floor) || '-';
+          return <span className={ledgerIdentifierCellClass}>{displayName(item?.location?.floor) || '-'}</span>;
         case 'area':
-          return displayName(item?.location?.area) || '-';
+          return <span className={ledgerIdentifierCellClass}>{displayName(item?.location?.area) || '-'}</span>;
         case 'handover_to':
-          return displayName(item?.handover_to) || '-';
+          return <span className={ledgerIdentifierCellClass}>{displayName(item?.handover_to) || '-'}</span>;
         case 'comments':
-          return item?.comments || '-';
+          return <span className={ledgerCellClass}>{item?.comments || '-'}</span>;
         case 'consumed_by':
-          return item?.consumed_by || '-';
+          return <span className={ledgerIdentifierCellClass}>{item?.consumed_by || '-'}</span>;
         default:
-          return '-';
+          return <span className={ledgerCellClass}>-</span>;
       }
     },
     []

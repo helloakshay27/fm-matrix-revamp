@@ -1,4 +1,5 @@
 import React from 'react';
+import { CheckCircle, CircleDot } from 'lucide-react';
 
 interface ProactiveReactiveCardProps {
   proactiveOpenTickets: number;
@@ -15,21 +16,11 @@ export const ProactiveReactiveCard: React.FC<ProactiveReactiveCardProps> = ({
   reactiveClosedTickets,
   className = '',
 }) => {
-  const sections = [
-    {
-      title: 'Proactive',
-      items: [
-        { label: 'Open', value: proactiveOpenTickets, bg: 'rgba(227,144,144,0.15)', num: '#D97655' },
-        { label: 'Closed', value: proactiveClosedTickets, bg: 'rgba(183,220,212,0.30)', num: '#2E7D6B' },
-      ],
-    },
-    {
-      title: 'Reactive',
-      items: [
-        { label: 'Open', value: reactiveOpenTickets, bg: 'rgba(227,144,144,0.15)', num: '#D97655' },
-        { label: 'Closed', value: reactiveClosedTickets, bg: 'rgba(183,220,212,0.30)', num: '#2E7D6B' },
-      ],
-    },
+  const items = [
+    { label: 'Proactive Open', value: proactiveOpenTickets, icon: CircleDot },
+    { label: 'Proactive Closed', value: proactiveClosedTickets, icon: CheckCircle },
+    { label: 'Reactive Open', value: reactiveOpenTickets, icon: CircleDot },
+    { label: 'Reactive Closed', value: reactiveClosedTickets, icon: CheckCircle },
   ];
 
   return (
@@ -37,22 +28,21 @@ export const ProactiveReactiveCard: React.FC<ProactiveReactiveCardProps> = ({
       <h3 className="text-base font-semibold text-gray-900 mb-4" style={{ fontFamily: 'Work Sans, sans-serif' }}>
         Proactive / Reactive Tickets
       </h3>
-      <div className="grid grid-cols-2 gap-4">
-        {sections.map(section => (
-          <div key={section.title}>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 text-center">{section.title}</p>
-            <div className="space-y-2">
-              {section.items.map(item => (
-                <div key={item.label} className="rounded-2xl px-4 py-5 text-center" style={{ backgroundColor: item.bg }}>
-                  <div className="text-2xl font-bold" style={{ color: item.num, fontFamily: 'Work Sans, sans-serif' }}>
-                    {item.value.toLocaleString()}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-0.5">{item.label}</div>
-                </div>
-              ))}
+      <div className="ticket-analytics-kpi-grid">
+        {items.map(item => {
+          const Icon = item.icon;
+          return (
+            <div key={item.label} className="ticket-analytics-kpi">
+              <div className="ticket-analytics-kpi-icon">
+                <Icon className="ticket-analytics-kpi-icon-svg" />
+              </div>
+              <div className="ticket-analytics-kpi-value">
+                {item.value.toLocaleString()}
+              </div>
+              <div className="ticket-analytics-kpi-label">{item.label}</div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

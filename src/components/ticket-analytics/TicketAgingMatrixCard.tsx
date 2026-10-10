@@ -47,9 +47,6 @@ export const TicketAgingMatrixCard: React.FC<TicketAgingMatrixCardProps> = ({
     }
   };
 
-  const thCls = 'px-3 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header';
-  const tdCls = 'px-3 py-2.5 text-center text-sm border-b border-gray-100';
-
   return (
     <div className={`bg-white rounded-xl shadow-sm overflow-hidden ${className}`}>
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
@@ -67,21 +64,21 @@ export const TicketAgingMatrixCard: React.FC<TicketAgingMatrixCardProps> = ({
       </div>
 
       <div className="px-4 pt-4 pb-2">
-        <div className="rounded-xl overflow-hidden border border-gray-200">
+        <div className="ticket-analytics-table-clip">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm border-collapse">
+          <table className="ticket-analytics-table ticket-aging-matrix-table">
             <thead>
               <tr>
-                <th rowSpan={2} className={`${thCls} text-left`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>
+                <th rowSpan={2} className="ticket-analytics-table-header text-left">
                   Priority
                 </th>
-                <th colSpan={5} className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>
+                <th colSpan={5} className="ticket-analytics-table-header">
                   No. of Days
                 </th>
               </tr>
-              <tr style={{ borderTop: '1px solid rgba(255,255,255,0.4)' }}>
+              <tr>
                 {['0-10', '11-20', '21-30', '31-40', '41-50'].map(label => (
-                  <th key={label} className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>
+                  <th key={label} className="ticket-analytics-table-header">
                     {label}
                   </th>
                 ))}
@@ -89,13 +86,13 @@ export const TicketAgingMatrixCard: React.FC<TicketAgingMatrixCardProps> = ({
             </thead>
             <tbody>
               {agingMatrixData.map((row, index) => (
-                <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
-                  <td className={`${tdCls} text-left font-medium text-gray-800`}>{row.priority}</td>
-                  <td className={`${tdCls} text-gray-700`}>{row.T1}</td>
-                  <td className={`${tdCls} text-gray-700`}>{row.T2}</td>
-                  <td className={`${tdCls} text-gray-700`}>{row.T3}</td>
-                  <td className={`${tdCls} text-gray-700`}>{row.T4}</td>
-                  <td className={`${tdCls} text-gray-700`}>{row.T5}</td>
+                <tr key={index} className="ticket-analytics-table-row">
+                  <td className="ticket-analytics-table-cell text-left font-medium">{row.priority}</td>
+                  <td className="ticket-analytics-table-cell">{row.T1}</td>
+                  <td className="ticket-analytics-table-cell">{row.T2}</td>
+                  <td className="ticket-analytics-table-cell">{row.T3}</td>
+                  <td className="ticket-analytics-table-cell">{row.T4}</td>
+                  <td className="ticket-analytics-table-cell">{row.T5}</td>
                 </tr>
               ))}
             </tbody>
@@ -105,11 +102,11 @@ export const TicketAgingMatrixCard: React.FC<TicketAgingMatrixCardProps> = ({
       </div>
 
       <div className="px-4 pb-4 pt-2">
-        <div className="rounded-lg p-4 sm:p-8 text-center" style={{ backgroundColor: '#f5e8e4' }}>
-          <div className="text-2xl sm:text-4xl font-bold text-black mb-1 sm:mb-2">
+        <div className="ticket-aging-average">
+          <div className="ticket-aging-average-value">
             {data?.average_days || 0} Days
           </div>
-          <div className="text-sm sm:text-base text-black">
+          <div className="ticket-aging-average-label">
             Average Time Taken To Resolve A Ticket
           </div>
         </div>

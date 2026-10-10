@@ -5097,7 +5097,7 @@ export const SurveyResponseDetailPage = () => {
 
                 return (
                   <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7] my-pdf-card">
-                    <CardHeader className="bg-[#F6F4EE] mb-6">
+                    <CardHeader className="bg-white">
                       <CardTitle className="text-lg flex items-center">
                         <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                           <HelpCircle className="h-4 w-4 text-[#C72030]" />
@@ -5109,6 +5109,7 @@ export const SurveyResponseDetailPage = () => {
                     </CardHeader>
                     <CardContent>
                       <SurveyAnalyticsCard
+                        className="border-0 shadow-none rounded-none"
                         title="Overall Question Response Distribution"
                         type="statusDistribution"
                         data={responseData}
@@ -5553,7 +5554,7 @@ export const SurveyResponseDetailPage = () => {
 
                 return (
                   <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7] my-pdf-card">
-                    <CardHeader className="bg-[#F6F4EE] mb-6">
+                    <CardHeader className="bg-white">
                       <CardTitle className="text-lg flex items-center">
                         <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                           <HelpCircle className="h-4 w-4 text-[#C72030]" />
@@ -5661,7 +5662,7 @@ export const SurveyResponseDetailPage = () => {
 
                 return (
                   <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7] my-pdf-card">
-                    <CardHeader className="bg-[#F6F4EE] mb-6">
+                    <CardHeader className="bg-white mb-6">
                       <CardTitle className="text-lg flex items-center">
                         <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                           <HelpCircle className="h-4 w-4 text-[#C72030]" />
@@ -5965,7 +5966,7 @@ export const SurveyResponseDetailPage = () => {
 
                 return (
                   <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7] my-pdf-card">
-                    <CardHeader className="bg-[#F6F4EE] mb-6">
+                    <CardHeader className="bg-white">
                       <CardTitle className="text-lg flex items-center">
                         <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                           <HelpCircle className="h-4 w-4 text-[#C72030]" />
