@@ -551,12 +551,12 @@ export const GRNDetailsPage = () => {
       ))}
 
       {/* Vendor/Contact Details Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <div className="flex items-center gap-3 pb-6">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <Contact className="w-4 h-4" />
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
+        <div className="flex items-center gap-3 pb-3">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <Contact className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">{billingAddress.building_name}</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">{billingAddress.building_name}</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex items-start">
@@ -605,12 +605,12 @@ export const GRNDetailsPage = () => {
       </div>
 
       {/* Purchase Order Details Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <div className="flex items-center gap-3 pb-6">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <ScrollText className="w-4 h-4" />
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
+        <div className="flex items-center gap-3 pb-3">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <ScrollText className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">GRN</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">GRN</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex items-start">
@@ -788,12 +788,12 @@ export const GRNDetailsPage = () => {
 
       {/* Gate Entry Details Section */}
       {grnDetails.gate_entry_and_transport_details && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
           <div className="flex items-center gap-3 pb-3">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <Truck className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <Truck className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Gate Entry Details</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Gate Entry Details</h3>
           </div>
           <EnhancedTable
             data={[{
@@ -822,12 +822,12 @@ export const GRNDetailsPage = () => {
 
       {/* Transport Invoice Details Section */}
       {grnDetails.gate_entry_and_transport_details && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
           <div className="flex items-center gap-3 pb-3">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <Receipt className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <Receipt className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Transport Invoice Details</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Transport Invoice Details</h3>
           </div>
           <EnhancedTable
             data={[{
@@ -881,12 +881,12 @@ export const GRNDetailsPage = () => {
 
 
       {/* Items Table Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
         <div className="flex items-center gap-3 pb-3">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <ClipboardList className="w-4 h-4" />
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <ClipboardList className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Items Table</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Items Table</h3>
         </div>
         <EnhancedTable
           data={itemsData}
@@ -926,12 +926,12 @@ export const GRNDetailsPage = () => {
         </div>
       </div>
 
-      <Card className="shadow-sm border border-border mb-6">
-        <div className="flex items-center gap-3 p-6">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <Images className="w-4 h-4" />
+      <Card className="rounded-2xl shadow-sm border border-gray-200 mb-6">
+        <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <Images className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
         </div>
         <CardContent>
           {Array.isArray(grnDetails.attachments?.general_attachments) &&
@@ -963,7 +963,7 @@ export const GRNDetailsPage = () => {
                       {isImage ? (
                         <>
                           <button
-                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                             title="View"
                             onClick={() => {
                               if (attachment.document_url) window.open(attachment.document_url, '_blank');
@@ -1025,12 +1025,12 @@ export const GRNDetailsPage = () => {
       </Card>
 
       {/* Debit Note Details Card */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
         <div className="flex items-center gap-3 pb-3">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <ScrollText className="w-4 h-4" />
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <ScrollText className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Debit Note Details</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Debit Note Details</h3>
         </div>
         <EnhancedTable
           data={grnDetails.debit_notes || []}

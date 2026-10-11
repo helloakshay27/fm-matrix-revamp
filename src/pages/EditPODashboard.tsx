@@ -12,6 +12,7 @@ import {
     ListChecks,
     Upload,
     X,
+  Paperclip,
 } from "lucide-react";
 import {
     TextField,
@@ -568,12 +569,12 @@ export const EditPODashboard = () => {
             <form onSubmit={handleSubmit}>
                 <div className="">
                     <div className="lg:col-span-2 space-y-6">
-                        <div className="bg-white p-6 rounded-lg shadow border">
-                            <div className="flex items-center gap-2 mb-6">
-                                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-                                    <FileText className="text-white w-4 h-4" />
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                                    <FileText className="w-[18px] h-[18px]" />
                                 </div>
-                                <h2 className="text-lg font-semibold text-[#C72030]">
+                                <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">
                                     SUPPLIER DETAILS
                                 </h2>
                             </div>
@@ -862,43 +863,36 @@ export const EditPODashboard = () => {
                             </div>
                         </div>
 
-                        <div className="bg-white p-6 rounded-lg shadow border">
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
                             <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2 mb-6">
-                                    <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-                                        <ListChecks className="text-white w-4 h-4" />
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                                        <ListChecks className="w-[18px] h-[18px]" />
                                     </div>
-                                    <h2 className="text-lg font-semibold text-[#C72030]">
+                                    <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">
                                         ITEM DETAILS
                                     </h2>
                                 </div>
-
-                                <Button
-                                    type="button"
-                                    onClick={addItem}
-                                    className="bg-[#C72030] hover:bg-[#A01020] text-white mb-4"
-                                >
-                                    Add Item
-                                </Button>
                             </div>
 
                             <div className="space-y-4">
                                 {items
                                     .filter((item) => item._destroy !== 1)
                                     .map((item, index) => (
-                                        <div key={item.id} className="border rounded-lg p-4">
-                                            <div className="flex justify-between items-center mb-4">
+                                        <div key={item.id} className="relative border rounded-lg p-4">
+                                            {items.length > 1 && (
+                                              <Button
+                                                onClick={() => removeItem(item.id)}
+                                                size="sm"
+                                                className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-[8px]"
+                                              >
+                                                <X className="w-4 h-4" />
+                                              </Button>
+                                            )}
+                                            <div className="flex items-center justify-between mb-4">
                                                 <h3 className="text-sm font-medium text-gray-700">
                                                     Item {index + 1}
                                                 </h3>
-                                                {items.length > 1 && (
-                                                    <Button
-                                                        onClick={() => removeItem(item.id)}
-                                                        className="text-red-600 hover:bg-red-100"
-                                                    >
-                                                        <X />
-                                                    </Button>
-                                                )}
                                             </div>
 
                                             <div className="grid grid-cols-4 gap-4">
@@ -1154,6 +1148,16 @@ export const EditPODashboard = () => {
                                         </div>
                                     ))}
                             </div>
+                            <div className="flex justify-end pt-4">
+                              <Button
+                                type="button"
+                                onClick={addItem}
+                                size="sm"
+                                className="bg-[#C72030] hover:bg-[#C72030]/90"
+                              >
+                                Add Item
+                              </Button>
+                            </div>
                         </div>
 
                         <div className="flex items-center justify-end my-4">
@@ -1162,12 +1166,10 @@ export const EditPODashboard = () => {
                             </Button>
                         </div>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-[#C72030] flex items-center">
-                                    <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
-                                        3
-                                    </h2>
+                        <Card className="rounded-2xl border border-gray-200 shadow-sm">
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-sm font-semibold uppercase text-[#1A1A1A] flex items-center gap-3">
+                                    <span className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0"><Paperclip className="w-[18px] h-[18px]" /></span>
                                     ATTACHMENTS
                                 </CardTitle>
                             </CardHeader>
@@ -1212,7 +1214,7 @@ export const EditPODashboard = () => {
                                                     {isImage ? (
                                                         <>
                                                             <button
-                                                                className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                                className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                                                                 title="View"
                                                                 onClick={() => {
                                                                     setSelectedDoc({
@@ -1263,7 +1265,7 @@ export const EditPODashboard = () => {
                                                         {attachment.name}
                                                     </span>
                                                     <button
-                                                        className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                        className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                                                         title="Remove"
                                                         onClick={() => removeFile(index, "existing")}
                                                         type="button"
@@ -1291,7 +1293,7 @@ export const EditPODashboard = () => {
                                                     {isImage ? (
                                                         <>
                                                             <button
-                                                                className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                                className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                                                                 title="View"
                                                                 onClick={() => {
                                                                     setSelectedDoc({
@@ -1342,7 +1344,7 @@ export const EditPODashboard = () => {
                                                         {file.name}
                                                     </span>
                                                     <button
-                                                        className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                        className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                                                         title="Remove"
                                                         onClick={() => removeFile(index, "new")}
                                                         type="button"
@@ -1359,22 +1361,21 @@ export const EditPODashboard = () => {
                     </div>
                 </div>
 
-                <div className="mt-6 flex justify-center gap-4">
-                    <Button
-                        type="submit"
-                        className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                        size="lg"
-                        disabled={submitting}
-                    >
-                        Submit
-                    </Button>
-                    <Button
-                        variant="outline"
-                        onClick={() => navigate(-1)}
-                        className="px-8"
-                    >
-                        Cancel
-                    </Button>
+                <div className="fm-action-bar mt-6">
+                  <Button
+                    onClick={() => navigate(-1)}
+                    variant="outline"
+                    className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={submitting}
+                    className="fm-action-primary"
+                  >
+                    Submit
+                  </Button>
                 </div>
             </form>
 

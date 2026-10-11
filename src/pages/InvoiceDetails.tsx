@@ -569,12 +569,12 @@ export const InvoiceDetails = () => {
             ))}
 
             {/* Vendor/Contact Details Section */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-                <div className="flex items-center gap-3 pb-6">
-                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                        <Contact className="w-4 h-4" />
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
+                <div className="flex items-center gap-3 pb-3">
+                    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                        <Contact className="w-[18px] h-[18px]" />
                     </div>
-                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">{invoice.supplier_name}</h3>
+                    <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">{invoice.supplier_name}</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -612,12 +612,12 @@ export const InvoiceDetails = () => {
             </div>
 
             {/* Purchase Order Details Section */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-                <div className="flex items-center gap-3 pb-6">
-                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                        <ScrollText className="w-4 h-4" />
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
+                <div className="flex items-center gap-3 pb-3">
+                    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                        <ScrollText className="w-[18px] h-[18px]" />
                     </div>
-                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]"> WO INVOICE</h3>
+                    <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]"> WO INVOICE</h3>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -753,12 +753,12 @@ export const InvoiceDetails = () => {
                 )}
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
                 <div className="flex items-center gap-3 pb-3">
-                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                        <ClipboardList className="w-4 h-4" />
+                    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                        <ClipboardList className="w-[18px] h-[18px]" />
                     </div>
-                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">BOQ List</h3>
+                    <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">BOQ List</h3>
                 </div>
                 <div className="overflow-x-auto">
                     <EnhancedTable
@@ -805,12 +805,12 @@ export const InvoiceDetails = () => {
                 </div>
             </div>
 
-            <Card className="shadow-sm border border-border mb-6">
-                <div className="flex items-center gap-3 p-6">
-                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                        <Images className="w-4 h-4" />
+            <Card className="rounded-2xl shadow-sm border border-gray-200 mb-6">
+                <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+                    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                        <Images className="w-[18px] h-[18px]" />
                     </div>
-                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
+                    <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
                 </div>
                 <CardContent>
                     {Array.isArray(invoice.attachments) && invoice.attachments.length > 0 ? (
@@ -829,7 +829,7 @@ export const InvoiceDetails = () => {
                                         {/* Top-right action button */}
                                         {isImage && (
                                             <button
-                                                className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                                                 title="View"
                                                 onClick={() => {
                                                     setSelectedAttachment(attachment);
@@ -843,7 +843,7 @@ export const InvoiceDetails = () => {
 
                                         {isPdf && (
                                             <button
-                                                className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                                                 title="Open PDF"
                                                 onClick={() => window.open(attachment.url, '_blank', 'noopener,noreferrer')}
                                                 type="button"
@@ -854,7 +854,7 @@ export const InvoiceDetails = () => {
 
                                         {(isExcel || isWord) && (
                                             <button
-                                                className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                                                 title="Download"
                                                 onClick={() => {
                                                     setSelectedAttachment(attachment);
@@ -912,12 +912,12 @@ export const InvoiceDetails = () => {
             </Card>
 
             {/* Payment Details */}
-<div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+<div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
     <div className="flex items-center gap-3 pb-3">
-        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <ScrollText className="w-4 h-4" />
+        <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <ScrollText className="w-[18px] h-[18px]" />
         </div>
-        <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Payment Details</h3>
+        <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Payment Details</h3>
     </div>
     <div className="overflow-x-auto">
         <EnhancedTable
@@ -943,12 +943,12 @@ export const InvoiceDetails = () => {
     </div>
 </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
                 <div className="flex items-center gap-3 pb-3">
-                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                        <ScrollText className="w-4 h-4" />
+                    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                        <ScrollText className="w-[18px] h-[18px]" />
                     </div>
-                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Debit Note Details</h3>
+                    <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Debit Note Details</h3>
                 </div>
                 <div className="overflow-x-auto">
                     <EnhancedTable
@@ -978,12 +978,12 @@ export const InvoiceDetails = () => {
 
             {/* External API Calls */}
             {(invoice as any)?.external_api_calls?.length > 0 && (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
                     <div className="flex items-center gap-3 pb-4">
-                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                            <Rss className="w-4 h-4" />
+                        <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                            <Rss className="w-[18px] h-[18px]" />
                         </div>
-                        <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">External API Calls</h3>
+                        <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">External API Calls</h3>
                     </div>
                     <div className="space-y-4">
                         {(invoice as any).external_api_calls.map((apiCall: ExternalApiCall, idx: number) => (

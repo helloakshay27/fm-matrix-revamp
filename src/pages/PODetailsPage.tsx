@@ -841,12 +841,12 @@ export const PODetailsPage = () => {
       </TooltipProvider>
 
       <div className="space-y-6">
-        <Card className="shadow-sm border border-border">
-          <div className="flex items-center gap-3 p-6">
-            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <ReceiptText className="w-4 h-4" />
+        <Card className="rounded-2xl shadow-sm border border-gray-200">
+          <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <ReceiptText className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]"> Billing Details</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]"> Billing Details</h3>
           </div>
           <CardContent>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -896,12 +896,12 @@ export const PODetailsPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border border-border">
-          <div className="flex items-center gap-3 p-6">
-            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <ScrollText className="w-4 h-4" />
+        <Card className="rounded-2xl shadow-sm border border-gray-200">
+          <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <ScrollText className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Purchase Order</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Purchase Order</h3>
           </div>
           <CardContent>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -1037,12 +1037,12 @@ export const PODetailsPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border border-border">
+        <Card className="rounded-2xl shadow-sm border border-gray-200">
           <div className="flex items-center gap-3 px-6 pt-6 pb-3">
-            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <ClipboardList className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <ClipboardList className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">PO Items</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">PO Items</h3>
           </div>
           <CardContent>
             <EnhancedTable
@@ -1111,12 +1111,12 @@ export const PODetailsPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border border-border">
-          <div className="flex items-center gap-3 p-6">
-            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <ScrollText className="w-4 h-4" />
+        <Card className="rounded-2xl shadow-sm border border-gray-200">
+          <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <ScrollText className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Notes & Terms</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Notes & Terms</h3>
           </div>
           <CardContent className="text-wrap break-words">
             <div className="space-y-6">
@@ -1160,12 +1160,12 @@ export const PODetailsPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border border-border">
-          <div className="flex items-center gap-3 p-6">
-            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <Images className="w-4 h-4" />
+        <Card className="rounded-2xl shadow-sm border border-gray-200">
+          <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <Images className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
           </div>
           <CardContent>
             {Array.isArray(poDetails.attachments) &&
@@ -1188,7 +1188,7 @@ export const PODetailsPage = () => {
                       {isImage ? (
                         <>
                           <button
-                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                             title="View"
                             onClick={() => {
                               setSelectedAttachment(attachment);
@@ -1265,12 +1265,12 @@ export const PODetailsPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border border-border">
+        <Card className="rounded-2xl shadow-sm border border-gray-200">
           <div className="flex items-center gap-3 px-6 pt-6 pb-3">
-            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <ReceiptText className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <ReceiptText className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">GRN Details</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">GRN Details</h3>
           </div>
           <CardContent>
             <EnhancedTable
@@ -1304,12 +1304,12 @@ export const PODetailsPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border border-border">
+        <Card className="rounded-2xl shadow-sm border border-gray-200">
           <div className="flex items-center gap-3 px-6 pt-6 pb-3">
-            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <ReceiptText className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <ReceiptText className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Payment Details</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Payment Details</h3>
           </div>
           <CardContent>
             <EnhancedTable
@@ -1329,12 +1329,12 @@ export const PODetailsPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border border-border">
+        <Card className="rounded-2xl shadow-sm border border-gray-200">
           <div className="flex items-center gap-3 px-6 pt-6 pb-3">
-            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <ReceiptText className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <ReceiptText className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]"> Debit/Credit Note Details</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]"> Debit/Credit Note Details</h3>
           </div>
           <CardContent>
             <EnhancedTable

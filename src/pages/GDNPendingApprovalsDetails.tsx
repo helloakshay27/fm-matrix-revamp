@@ -245,17 +245,17 @@ export const GDNPendingApprovalsDetails = () => {
         ))}
       </div>
 
-      <section className="bg-white border border-gray-200 rounded-md shadow-sm mb-4 p-3">
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-7 h-7 rounded-full flex items-center justify-center bg-[#C72030] text-white">
-            <FileText className="w-4 h-4" />
+      <section className="bg-white border border-gray-200 rounded-2xl shadow-sm mb-4 p-6">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <FileText className="w-[18px] h-[18px]" />
           </div>
-          <h1 className="text-xl font-medium uppercase text-[#C72030]">
+          <h1 className="text-sm font-semibold uppercase text-[#1A1A1A]">
             GDN Details
           </h1>
         </div>
 
-        <div className="bg-[#f3edf3] rounded-sm mx-3 mb-4 px-4 py-3">
+        <div className="bg-gray-50 rounded-xl mb-4 px-4 py-3">
           <div className="grid grid-cols-[130px_20px_1fr] gap-y-4 text-sm">
             <span className="text-gray-600">GDN Date</span>
             <span>:</span>

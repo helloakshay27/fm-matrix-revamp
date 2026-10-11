@@ -1097,12 +1097,12 @@ export const MaterialPRDetailsPage = () => {
       ))}
 
       <div className="space-y-6">
-        <Card className="shadow-sm border border-border">
-          <div className="flex items-center gap-3 p-6">
-            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <Contact className="w-4 h-4" />
+        <Card className="rounded-2xl shadow-sm border border-gray-200">
+          <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <Contact className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Contact Information</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Contact Information</h3>
           </div>
           <CardContent>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -1152,12 +1152,12 @@ export const MaterialPRDetailsPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border border-border">
-          <div className="flex items-center gap-3 p-6">
-            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <ScrollText className="w-4 h-4" />
+        <Card className="rounded-2xl shadow-sm border border-gray-200">
+          <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <ScrollText className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Material Purchase Request</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Material Purchase Request</h3>
           </div>
           <CardContent>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -1243,12 +1243,12 @@ export const MaterialPRDetailsPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border border-border">
+        <Card className="rounded-2xl shadow-sm border border-gray-200">
           <div className="flex items-center gap-3 px-6 pt-6 pb-3">
-            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <ClipboardList className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <ClipboardList className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Items Table</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Items Table</h3>
           </div>
           <CardContent>
             <EnhancedTable
@@ -1279,12 +1279,12 @@ export const MaterialPRDetailsPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border border-border">
-          <div className="flex items-center gap-3 p-6">
-            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <Images className="w-4 h-4" />
+        <Card className="rounded-2xl shadow-sm border border-gray-200">
+          <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <Images className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
           </div>
           <CardContent>
             {Array.isArray(pr.attachments) && pr.attachments.length > 0 ? (
@@ -1306,7 +1306,7 @@ export const MaterialPRDetailsPage = () => {
                       {isImage ? (
                         <>
                           <button
-                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                             title="View"
                             onClick={() => {
                               setSelectedDoc(attachment);
@@ -1380,12 +1380,12 @@ export const MaterialPRDetailsPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border border-border">
-          <div className="flex items-center gap-3 p-6">
-            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <ScrollText className="w-4 h-4" />
+        <Card className="rounded-2xl shadow-sm border border-gray-200">
+          <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <ScrollText className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Terms & Conditions</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Terms & Conditions</h3>
           </div>
           <CardContent className="text-wrap break-words">
             <p className="text-muted-foreground">

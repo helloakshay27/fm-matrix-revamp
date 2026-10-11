@@ -8,7 +8,7 @@ import {
   Select as MuiSelect,
   TextField,
 } from "@mui/material";
-import { ArrowLeft, Plus, Settings, Trash2 } from "lucide-react";
+import { ArrowLeft, FileText, Package, type LucideIcon, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
@@ -272,12 +272,12 @@ const getCurrentStockQuantity = (currentStock: string) => {
   return stockMatch ? Number(stockMatch[0]) : NaN;
 };
 
-const SectionHeader = ({ title }: { title: string }) => (
-  <div className="flex items-center gap-3 mb-5">
-    <div className="w-7 h-7 rounded-full flex items-center justify-center bg-[#C72030]">
-      <Settings className="w-4 h-4 text-white" />
+const SectionHeader = ({ title, icon: Icon = FileText }: { title: string; icon?: LucideIcon }) => (
+  <div className="flex items-center gap-3 mb-3">
+    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+      <Icon className="w-[18px] h-[18px]" />
     </div>
-    <h2 className="text-lg font-semibold uppercase tracking-normal text-[#C72030]">
+    <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">
       {title}
     </h2>
   </div>
@@ -541,8 +541,8 @@ export const AddGDNPage = () => {
       </div>
 
       <div className="space-y-4">
-        <section className="bg-white border border-gray-200 rounded-md shadow-sm p-4">
-          <SectionHeader title="Basic Details" />
+        <section className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+          <SectionHeader title="Basic Details" icon={FileText} />
 
           <div className="border border-gray-200 rounded-md shadow-sm p-3 md:ml-2 max-w-5xl">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start pr-0 md:pr-9">
@@ -572,15 +572,15 @@ export const AddGDNPage = () => {
           </div>
         </section>
 
-        <section className="bg-white border border-gray-200 rounded-md shadow-sm p-4">
-          <SectionHeader title="Inventory Details" />
+        <section className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+          <SectionHeader title="Inventory Details" icon={Package} />
 
-          <div className="border border-gray-200 rounded-md shadow-sm p-3 md:ml-2 max-w-5xl">
+          <div className="max-w-5xl">
             <div className="space-y-4">
               {inventoryItems.map((item, index) => (
                 <div
                   key={index}
-                  className="relative border border-gray-100 rounded-md p-3"
+                  className="relative p-4 border rounded-lg"
                 >
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start pr-0 md:pr-9">
                     <FormControl
@@ -806,40 +806,47 @@ export const AddGDNPage = () => {
                     */}
                   </div>
 
-                  <div className="absolute right-2 top-4">
-                    {inventoryItems.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeInventoryItem(index)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
+                  {inventoryItems.length > 1 && (
+                    <Button
+                      type="button"
+                      onClick={() => removeInventoryItem(index)}
+                      size="sm"
+                      className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-[8px]"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
 
-            <Button
-              type="button"
-              onClick={addInventoryItem}
-              className="mt-5 gap-2 !bg-[#DA7756] hover:!bg-[#C45F40]"
-            >
-              <Plus className="w-4 h-4 !text-white" />
-              <span className="!text-white font-medium">Add Inventory</span>
-            </Button>
+            <div className="flex justify-end pt-5">
+              <Button
+                type="button"
+                onClick={addInventoryItem}
+                size="sm"
+                className="bg-[#C72030] hover:bg-[#C72030]/90"
+              >
+                Add Inventory
+              </Button>
+            </div>
           </div>
         </section>
       </div>
 
-      <div className="flex justify-center pt-14">
+      <div className="fm-action-bar pt-6">
+        <Button
+          type="button"
+          onClick={() => navigate(-1)}
+          variant="outline"
+          className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+        >
+          Cancel
+        </Button>
         <Button
           type="button"
           onClick={handleSubmit}
-          className="px-6 !bg-[#DA7756] hover:!bg-[#C45F40]"
+          className="fm-action-primary"
         >
           <span className="!text-white font-medium">Submit</span>
         </Button>

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { cache } from "@/utils/cacheUtils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Upload, X } from "lucide-react";
+import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Upload, X, Building2, Package, Paperclip } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   TextField,
@@ -676,10 +676,10 @@ export const EditMaterialPRDashboard = () => {
         <div className="space-y-6">
 
           {/* ── Section 1: Supplier Details ── */}
-          <Card>
-            <CardHeader className="bg-[#F6F4EE] mb-4">
-              <CardTitle className="text-lg text-black flex items-center">
-                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
+          <Card className="rounded-2xl border border-gray-200 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold uppercase text-[#1A1A1A] flex items-center gap-3">
+                <span className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0"><Building2 className="w-[18px] h-[18px]" /></span>
                 SUPPLIER DETAILS
               </CardTitle>
             </CardHeader>
@@ -1008,21 +1008,13 @@ export const EditMaterialPRDashboard = () => {
           </Card>
 
           {/* ── Section 2: Item Details ── */}
-          <Card>
-            <CardHeader className="bg-[#F6F4EE] mb-4">
-              <CardTitle className="text-lg text-black flex items-center justify-between">
-                <div className="flex items-center">
-                  <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
+          <Card className="rounded-2xl border border-gray-200 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold uppercase text-[#1A1A1A] flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0"><Package className="w-[18px] h-[18px]" /></span>
                   ITEM DETAILS
                 </div>
-                <Button
-                  onClick={addItem}
-                  size="sm"
-                  className="bg-[#C72030] hover:bg-[#C72030]/90"
-                  type="button"
-                >
-                  Add Item
-                </Button>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -1037,7 +1029,7 @@ export const EditMaterialPRDashboard = () => {
                       <Button
                         onClick={() => removeItem(item.id)}
                         size="sm"
-                        className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-full"
+                        className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-[8px]"
                       >
                         <X className="w-4 h-4" />
                       </Button>
@@ -1260,6 +1252,16 @@ export const EditMaterialPRDashboard = () => {
                   </div>
                 ))}
             </CardContent>
+            <div className="flex justify-end p-4">
+              <Button
+                type="button"
+                onClick={addItem}
+                size="sm"
+                className="bg-[#C72030] hover:bg-[#C72030]/90"
+              >
+                Add Item
+              </Button>
+            </div>
           </Card>
 
           {/* Total */}
@@ -1270,10 +1272,10 @@ export const EditMaterialPRDashboard = () => {
           </div>
 
           {/* ── Section 3: Attachments ── */}
-          <Card>
-            <CardHeader className="bg-[#F6F4EE] mb-4">
-              <CardTitle className="text-lg text-black flex items-center">
-                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
+          <Card className="rounded-2xl border border-gray-200 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold uppercase text-[#1A1A1A] flex items-center gap-3">
+                <span className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0"><Paperclip className="w-[18px] h-[18px]" /></span>
                 Attachments
               </CardTitle>
             </CardHeader>
@@ -1324,7 +1326,7 @@ export const EditMaterialPRDashboard = () => {
                         {isImage ? (
                           <>
                             <button
-                              className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                              className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                               title="View"
                               onClick={() => {
                                 setSelectedDoc({ id: attachment.id, url: attachment.url, document_name: attachment.name, document_file_name: attachment.name });
@@ -1365,7 +1367,7 @@ export const EditMaterialPRDashboard = () => {
                           {attachment.name}
                         </span>
                         <button
-                          className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                          className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                           title="Remove"
                           onClick={() => removeFile(index, "existing")}
                           type="button"
@@ -1391,7 +1393,7 @@ export const EditMaterialPRDashboard = () => {
                         {isImage ? (
                           <>
                             <button
-                              className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                              className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                               title="View"
                               onClick={() => {
                                 setSelectedDoc({ id: index, url: URL.createObjectURL(file), document_name: file.name, document_file_name: file.name });
@@ -1432,7 +1434,7 @@ export const EditMaterialPRDashboard = () => {
                           {file.name}
                         </span>
                         <button
-                          className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                          className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                           title="Remove"
                           onClick={() => removeFile(index, "new")}
                           type="button"
@@ -1447,12 +1449,19 @@ export const EditMaterialPRDashboard = () => {
             </CardContent>
           </Card>
 
-          <div className="flex items-center justify-center">
+          <div className="fm-action-bar mt-6">
+            <Button
+              type="button"
+              onClick={() => navigate(-1)}
+              variant="outline"
+              className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+            >
+              Cancel
+            </Button>
             <Button
               type="submit"
-              size="lg"
-              className="bg-[#C72030] hover:bg-[#C72030] text-white"
               disabled={submitting}
+              className="fm-action-primary"
             >
               Submit
             </Button>
@@ -1475,7 +1484,7 @@ export const EditMaterialPRDashboard = () => {
               <h2 className="text-xl font-bold">WBS Budget Details - {selectedWbsCode}</h2>
               <button
                 onClick={() => setIsBudgetModalOpen(false)}
-                className="p-1 hover:bg-gray-200 rounded-full"
+                className="p-1 hover:bg-gray-200 rounded-[8px]"
               >
                 <X className="w-5 h-5" />
               </button>

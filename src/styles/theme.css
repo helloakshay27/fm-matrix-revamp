@@ -6978,6 +6978,20 @@ html body .MuiFormControl-root:not(.mui-floating-label) > .MuiInputLabel-outline
   color: var(--color-danger) !important;
 }
 
+/* The field wrapper must grow to hold label + control. Many forms pin the
+   whole TextField/FormControl to the old box height (sx height: 28/36/45),
+   which made the control spill out below — overlapping the next row and the
+   card border. The control's own height rules (below) are unaffected. */
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) {
+  height: auto !important;
+  min-height: 0 !important;
+}
+/* Inside grid layouts the grid gap spaces the rows; the old `mt` that made
+   room for the notched label only mis-aligned fields that had it vs. not. */
+html body .grid > .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) {
+  margin-top: 0 !important;
+}
+
 /* Notch: always closed, the border is drawn as one continuous line */
 html body .MuiFormControl-root:not(.mui-floating-label) .MuiOutlinedInput-notchedOutline > legend,
 html body .MuiFormControl-root:not(.mui-floating-label) .MuiPickersOutlinedInput-notchedOutline > legend {
