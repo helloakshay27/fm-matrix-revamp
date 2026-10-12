@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { cache } from "@/utils/cacheUtils";
-import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Settings, Trash2, Upload, X } from "lucide-react";
+import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Upload, X, ClipboardList, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   TextField,
@@ -1033,13 +1033,13 @@ export const AddServicePRDashboard = () => {
           Back
         </Button>
         {/* Work Order Details Section Card */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="p-4 border-b border-gray-200 bg-[#F6F4EE] mb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                <Settings className="w-4 h-4 text-white" />
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+          <div className="px-6 pt-6 pb-2">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                <FileText className="w-[18px] h-[18px]" />
               </div>
-              <h2 className="text-lg font-semibold text-foreground">
+              <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">
                 SERVICE PR DETAILS
               </h2>
             </div>
@@ -1404,13 +1404,13 @@ export const AddServicePRDashboard = () => {
         </div>
 
         {/* Details Section Card */}
-        <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="p-4 border-b border-gray-200 bg-[#F6F4EE] mb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                <Settings className="w-4 h-4 text-white" />
+        <div className="mt-8 bg-white rounded-2xl border border-gray-200 shadow-sm">
+          <div className="px-6 pt-6 pb-2">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                <ClipboardList className="w-[18px] h-[18px]" />
               </div>
-              <h2 className="text-lg font-semibold text-foreground">DETAILS</h2>
+              <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">DETAILS</h2>
             </div>
           </div>
 
@@ -1418,22 +1418,21 @@ export const AddServicePRDashboard = () => {
             {detailsForms.map((detailsData, index) => (
               <div
                 key={detailsData.id}
-                className={`${index > 0 ? "mt-8 pt-8 border-t border-gray-200" : ""}`}
+                className={`relative p-4 border rounded-lg ${index > 0 ? "mt-6" : ""}`}
               >
+                {detailsForms.length > 1 && (
+                  <Button
+                    onClick={() => removeDetailsForm(detailsData.id)}
+                    size="sm"
+                    className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-[8px]"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-md font-medium text-foreground">
                     Item {index + 1}
                   </h3>
-                  {detailsForms.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeDetailsForm(detailsData.id)}
-                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
@@ -1881,12 +1880,13 @@ export const AddServicePRDashboard = () => {
               </div>
             ))}
 
-            <div className="flex justify-end p-4">
+            <div className="flex justify-end pt-6">
               <Button
-                className="!bg-[#DA7756] hover:!bg-[#C45F40] px-6 py-2"
                 onClick={addNewDetailsForm}
+                size="sm"
+                className="bg-[#C72030] hover:bg-[#C72030]/90"
               >
-                <span className="!text-white font-medium">Add Items</span>
+                Add Items
               </Button>
             </div>
           </div>
@@ -1898,13 +1898,13 @@ export const AddServicePRDashboard = () => {
           </Button>
         </div>
 
-        <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm mb-6">
-          <div className="p-4 border-b border-gray-200 bg-[#F6F4EE] mb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                <Settings className="w-4 h-4 text-white" />
+        <div className="mt-8 bg-white rounded-2xl border border-gray-200 shadow-sm mb-6">
+          <div className="px-6 pt-6 pb-2">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                <ClipboardList className="w-[18px] h-[18px]" />
               </div>
-              <h2 className="text-lg font-semibold text-foreground">DETAILS</h2>
+              <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">DETAILS</h2>
             </div>
           </div>
 
@@ -1999,13 +1999,13 @@ export const AddServicePRDashboard = () => {
           </div>
         </div>
 
-        <Card>
-          <div className="p-4 border-b border-gray-200 mb-4 bg-[#F6F4EE]">
-            <div className="flex items-center gap-2 ">
-              <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                <Settings className="w-4 h-4 text-white" />
+        <Card className="rounded-2xl border border-gray-200 shadow-sm">
+          <div className="px-6 pt-6 pb-2">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                <Paperclip className="w-[18px] h-[18px]" />
               </div>
-              <h2 className="text-lg font-semibold text-foreground">ATTACHMENTS</h2>
+              <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">ATTACHMENTS</h2>
             </div>
           </div>
           <CardContent>
@@ -2047,12 +2047,12 @@ export const AddServicePRDashboard = () => {
                   return (
                     <div
                       key={`new-${index}`}
-                      className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                      className="flex relative flex-col items-center border rounded-full pt-10 px-3 pb-6 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                     >
                       {isImage ? (
                         <>
                           <button
-                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                            className="absolute top-2 left-1/2 ml-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                             title="View"
                             onClick={() => {
                               setSelectedDoc({
@@ -2103,7 +2103,7 @@ export const AddServicePRDashboard = () => {
                         {file.name}
                       </span>
                       <button
-                        className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                        className="absolute top-2 right-1/2 mr-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                         title="Remove"
                         onClick={() => removeFile(index)}
                         type="button"
@@ -2118,16 +2118,20 @@ export const AddServicePRDashboard = () => {
           </CardContent>
         </Card>
 
-        <div className="flex items-center justify-center gap-4 mt-8">
+        <div className="fm-action-bar mt-6">
+          <Button
+            onClick={() => navigate(-1)}
+            variant="outline"
+            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+          >
+            Cancel
+          </Button>
           <Button
             onClick={handleSubmit}
-            className="bg-[#C72030] hover:bg-[#C72030] text-white"
             disabled={submitting}
+            className="fm-action-primary"
           >
             Save Service PR
-          </Button>
-          <Button variant="outline" onClick={() => navigate(-1)} className="px-8">
-            Cancel
           </Button>
         </div>
       </div>
@@ -2147,7 +2151,7 @@ export const AddServicePRDashboard = () => {
               <h2 className="text-xl font-bold">WBS Budget Details - {selectedWbsCode}</h2>
               <button
                 onClick={() => setIsBudgetModalOpen(false)}
-                className="p-1 hover:bg-gray-200 rounded-full"
+                className="p-1 hover:bg-gray-200 rounded-[8px]"
               >
                 <X className="w-5 h-5" />
               </button>

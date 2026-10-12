@@ -327,7 +327,7 @@ export const GDNDetailsPage = () => {
                 {toTitleCase(level.level_name)} Approval:
               </span>
               <span
-                className={`px-2 py-1 rounded text-sm ${getStatusBadgeClass(
+                className={`px-2 py-1 rounded-full text-sm ${getStatusBadgeClass(
                   level.status
                 )}`}
               >
@@ -347,17 +347,17 @@ export const GDNDetailsPage = () => {
         </Button>
       </div>
 
-      <section className="bg-white border border-gray-200 rounded-md shadow-sm mb-4 p-3">
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-7 h-7 rounded-full flex items-center justify-center bg-[#C72030] text-white">
-            <FileText className="w-4 h-4" />
+      <section className="bg-white border border-gray-200 rounded-2xl shadow-sm mb-4 p-6">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <FileText className="w-[18px] h-[18px]" />
           </div>
-          <h1 className="text-xl font-medium uppercase text-[#C72030]">
+          <h1 className="text-sm font-semibold uppercase text-[#1A1A1A]">
             GDN Details
           </h1>
         </div>
 
-        <div className="bg-[#f3edf3] rounded-sm mx-3 mb-4 px-4 py-3">
+        <div className="bg-gray-50 rounded-xl mb-4 px-4 py-3">
           <div className="grid grid-cols-[130px_20px_1fr] gap-y-4 text-sm">
             <span className="text-gray-600">GDN Date</span>
             <span>:</span>
@@ -376,13 +376,13 @@ export const GDNDetailsPage = () => {
         <div className="border-t border-gray-300 mt-4" />
       </section>
 
-      <div className="bg-white border border-gray-200 rounded-sm shadow-sm overflow-x-auto">
-        <Card className="shadow-sm border border-border">
-          <div className="flex items-center gap-3 p-6">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#C72030] text-white">
-              <ClipboardList className="w-4 h-4" />
+      <div className="overflow-x-auto">
+        <Card className="rounded-2xl shadow-sm border border-gray-200">
+          <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <ClipboardList className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#C72030]">Inventory Items</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Inventory Items</h3>
           </div>
           <CardContent>
             {gdnDetails?.inventories && gdnDetails.inventories.length > 0 ? (
@@ -445,7 +445,7 @@ export const GDNDetailsPage = () => {
         open={dispatchDialogOpen}
         onOpenChange={handleDispatchDialogChange}
       >
-        <DialogContent className="top-1/2 w-[300px] max-w-[calc(100vw_-_32px)] gap-0 overflow-visible rounded-[4px] border-0 bg-white p-0 shadow-xl sm:w-[300px] sm:max-w-[300px] sm:rounded-[4px]">
+        <DialogContent className="top-1/2 w-[300px] max-w-[calc(100vw_-_32px)] gap-0 overflow-visible  border-0 bg-white p-0 shadow-xl sm:w-[300px] sm:max-w-[300px] rounded-[8px] sm:rounded-[8px]">
           <DialogHeader className="flex flex-row items-center justify-between space-y-0 border-b border-gray-200 px-4 py-4 text-left">
             <DialogTitle className="text-xl font-semibold text-gray-900">
               Dispatch Now
@@ -532,9 +532,17 @@ export const GDNDetailsPage = () => {
             </div>
           </div>
 
-          <DialogFooter className="border-t border-gray-200 px-5 py-4 sm:justify-end sm:space-x-0">
+          <DialogFooter className="px-5 pb-5 pt-4 flex flex-row justify-end gap-3 sm:justify-end sm:space-x-0">
             <Button
-              className="h-9 min-w-[94px] rounded-[4px] bg-[#6B2C65] px-6 text-sm text-white hover:bg-[#5a2455]"
+              type="button"
+              variant="outline"
+              className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+              onClick={() => handleDispatchDialogChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="fm-action-primary"
               disabled={dispatchSubmitting || usersLoading}
               onClick={handleDispatchSubmit}
             >

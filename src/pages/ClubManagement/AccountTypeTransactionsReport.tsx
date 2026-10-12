@@ -182,11 +182,11 @@ const AccountTypeTransactionsReport: React.FC = () => {
                       <td className="border-b border-[#ececec] px-3 py-2.5 text-xs text-[#111827] sm:px-4 sm:text-sm">{row.transactionType || ""}</td>
                       <td className="border-b border-[#ececec] px-3 py-2.5 text-xs text-[#111827] sm:px-4 sm:text-sm">{row.transactionNo || ""}</td>
                       <td className="border-b border-[#ececec] px-3 py-2.5 text-xs text-[#111827] sm:px-4 sm:text-sm">{row.referenceNo || ""}</td>
-                      <td className="border-b border-[#ececec] px-3 py-2.5 text-right text-xs font-medium text-[#1463df] sm:px-4 sm:text-sm">
+                      <td className="border-b border-[#ececec] px-3 py-2.5 text-right text-xs font-medium text-[#1a1a18] tabular-nums sm:px-4 sm:text-sm">
                         {row.debit !== undefined ? (
                           <button
                             type="button"
-                            className="text-[#1463df] hover:underline"
+                            className="text-[#1a1a18] tabular-nums hover:underline"
                             onClick={() => openDetails(section.title, row, "debit")}
                           >
                             {formatValue(row.debit)}
@@ -195,11 +195,11 @@ const AccountTypeTransactionsReport: React.FC = () => {
                           ""
                         )}
                       </td>
-                      <td className="border-b border-[#ececec] px-3 py-2.5 text-right text-xs font-medium text-[#1463df] sm:px-4 sm:text-sm">
+                      <td className="border-b border-[#ececec] px-3 py-2.5 text-right text-xs font-medium text-[#1a1a18] tabular-nums sm:px-4 sm:text-sm">
                         {row.credit !== undefined ? (
                           <button
                             type="button"
-                            className="text-[#1463df] hover:underline"
+                            className="text-[#1a1a18] tabular-nums hover:underline"
                             onClick={() => openDetails(section.title, row, "credit")}
                           >
                             {formatValue(row.credit)}
@@ -208,11 +208,11 @@ const AccountTypeTransactionsReport: React.FC = () => {
                           ""
                         )}
                       </td>
-                      <td className="border-b border-[#ececec] px-3 py-2.5 text-right text-xs font-semibold text-[#1463df] sm:px-4 sm:text-sm">
+                      <td className="border-b border-[#ececec] px-3 py-2.5 text-right text-xs font-semibold text-[#1a1a18] tabular-nums sm:px-4 sm:text-sm">
                         {row.amount ? (
                           <button
                             type="button"
-                            className="text-[#1463df] hover:underline"
+                            className="text-[#1a1a18] tabular-nums hover:underline"
                             onClick={() => openDetails(section.title, row, "amount")}
                           >
                             {row.amount}

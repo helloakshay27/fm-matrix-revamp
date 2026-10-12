@@ -434,10 +434,18 @@ export const CRMOccupantUserEditPage = () => {
               </div>
 
               {/* Update Button */}
-              <div className="flex justify-center pt-8">
+              <div className="fm-action-bar mt-6">
+                <Button
+                  type="button"
+                  onClick={() => navigate(-1)}
+                  variant="outline"
+                  className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+                >
+                  Cancel
+                </Button>
                 <Button
                   onClick={handleUpdate}
-                  className="bg-[#BF213E] hover:bg-[#BF213E]/90 text-white px-12 py-3 rounded-md text-lg"
+                  className="fm-action-primary"
                 >
                   Update
                 </Button>

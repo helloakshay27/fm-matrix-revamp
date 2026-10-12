@@ -1,4 +1,5 @@
 
+import { UserPlus } from "lucide-react";
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -128,9 +129,14 @@ export const AddLeadPage = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="bg-white rounded-lg shadow p-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">CREATE LEAD</h1>
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+        <div className="mb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <UserPlus className="w-[18px] h-[18px]" />
+            </div>
+            <h1 className="text-sm font-semibold uppercase text-[#1A1A1A]">CREATE LEAD</h1>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -290,10 +296,18 @@ export const AddLeadPage = () => {
               />
             </div>
 
-            <div className="flex justify-center">
+            <div className="fm-action-bar mt-6">
+              <Button
+                type="button"
+                onClick={() => navigate(-1)}
+                variant="outline"
+                className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+              >
+                Cancel
+              </Button>
               <Button
                 type="submit"
-                className="bg-brand hover:bg-brand-hover px-8 py-2 h-10 text-sm font-medium min-w-[100px] rounded-sm"
+                className="fm-action-primary"
               >
                 <span className="!text-white font-medium">Submit</span>
               </Button>

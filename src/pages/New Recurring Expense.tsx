@@ -1147,7 +1147,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { EditOutlined, Close as CloseIcon } from "@mui/icons-material";
 import { Receipt, Calendar, FileText, CreditCard, Landmark, ArrowLeft } from "lucide-react";
-import { toast as sonnerToast } from "sonner";
+import { accountingToast as sonnerToast } from "@/lib/accountingToast";
+import "@/styles/accounting.css";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -1924,7 +1925,7 @@ const NewRecurringExpensePage: React.FC = () => {
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="accounting-ui min-h-screen bg-background p-6">
       {/* Submitting overlay */}
       {isSubmitting && (
         <div className="fixed inset-0 bg-black/45 flex items-center justify-center z-50">
@@ -2616,21 +2617,22 @@ const NewRecurringExpensePage: React.FC = () => {
         </Section>
 
         {/* Action Buttons */}
-        <div className="flex justify-center gap-4 pt-2 pb-6">
-          <Button
-            onClick={handleSave}
-            disabled={isSubmitting}
-            className="fm-button-fix fm-button-brand px-8 py-2"
-          >
-            {isSubmitting ? (isEditMode ? "Updating…" : "Saving…") : (isEditMode ? "Update" : "Save")}
-          </Button>
+        <div className="acc-actions pt-2 pb-6">
           <Button
             onClick={handleCancel}
             disabled={isSubmitting}
             variant="outline"
-            className="fm-button-fix px-8 py-2"
+            className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2"
           >
             Cancel
+          </Button>
+
+          <Button
+            onClick={handleSave}
+            disabled={isSubmitting}
+            className="acc-btn fm-button-fix fm-button-brand px-8 py-2"
+          >
+            {isSubmitting ? (isEditMode ? "Updating…" : "Saving…") : (isEditMode ? "Update" : "Save")}
           </Button>
         </div>
       </div>

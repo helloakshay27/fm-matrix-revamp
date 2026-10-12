@@ -513,7 +513,7 @@ const CRMFMUserDashboard = () => {
         )
       case "type":
         return (
-          <Badge variant={user.type === "Internal" ? "default" : "secondary"}>
+          <Badge variant={user.type === "Internal" ? "default" : "secondary"} className="justify-center text-center">
             {user.type}
           </Badge>
         );
@@ -521,17 +521,18 @@ const CRMFMUserDashboard = () => {
         return (
           <Badge
             {...getStatusBadgeProps(user.status)}
+            className={`justify-center text-center ${getStatusBadgeProps(user.status).className ?? ""}`}
           />
         );
       case "faceRecognition":
         return (
-          <Badge variant={user.faceRecognition ? "default" : "secondary"}>
+          <Badge variant={user.faceRecognition ? "default" : "secondary"} className="justify-center text-center">
             {user.faceRecognition ? "Yes" : "No"}
           </Badge>
         );
       case "appDownloaded":
         return (
-          <Badge variant={user.appDownloaded ? "default" : "secondary"}>
+          <Badge variant={user.appDownloaded ? "default" : "secondary"} className="justify-center text-center">
             {user.appDownloaded ? "Yes" : "No"}
           </Badge>
         );
@@ -604,7 +605,7 @@ const CRMFMUserDashboard = () => {
       </div>
 
       <Dialog open={filterDialogOpen} onOpenChange={setFilterDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] p-0">
+        <DialogContent className="sm:max-w-[600px] p-0 rounded-[8px] sm:rounded-[8px]">
           <DialogHeader className="p-6 pb-4 border-b">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-xl font-semibold">
@@ -646,17 +647,17 @@ const CRMFMUserDashboard = () => {
             </Box>
           </div>
 
-          <div className="flex justify-end gap-3 p-6 pt-0 border-t mt-4">
+          <div className="flex gap-3 px-6 pb-6 pt-4 items-center justify-end">
             <Button
               onClick={handleResetFilters}
               variant="outline"
-              className="bg-[#f6f4ee] text-[#C72030] hover:bg-[#ede9e0] border-[#C72030] px-6 py-2 text-sm font-medium rounded-lg mt-4"
+              className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
             >
               Reset
             </Button>
             <Button
               onClick={handleApplyFilters}
-              className="bg-[#f6f4ee] text-[#C72030] hover:bg-[#ede9e0] border-none px-6 py-2 text-sm font-medium rounded-lg mt-4"
+              className="fm-action-primary"
             >
               Apply
             </Button>
@@ -665,7 +666,7 @@ const CRMFMUserDashboard = () => {
       </Dialog>
 
       <Dialog open={cloneRoleDialogOpen} onOpenChange={setCloneRoleDialogOpen}>
-        <DialogContent className="sm:max-w-[500px] p-0 bg-white">
+        <DialogContent className="sm:max-w-[500px] p-0 bg-white rounded-[8px] sm:rounded-[8px]">
           <DialogHeader className="p-6 pb-4 border-b">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-xl font-semibold">
@@ -808,10 +809,18 @@ const CRMFMUserDashboard = () => {
               </TabsContent>
             </Tabs>
 
-            <div className="flex justify-center pt-6">
+            <div className="flex items-center justify-end gap-3 pt-6">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+                onClick={() => setCloneRoleDialogOpen(false)}
+              >
+                Cancel
+              </Button>
               <Button
                 onClick={handleCloneRoleSubmit}
-                className="bg-[#C72030] hover:bg-[#a91b29] text-white px-8 py-2 rounded-md"
+                className="fm-action-primary"
                 disabled={!toUser || !fromUser || cloneLoading}
               >
                 Submit

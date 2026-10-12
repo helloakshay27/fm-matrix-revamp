@@ -19,7 +19,7 @@ import {
   getPurchaseOrdersList,
 } from "@/store/slices/grnSlice";
 import { getInventories, getSuppliers } from "@/store/slices/materialPRSlice";
-import { ArrowLeft, Upload, File, FileText, FileSpreadsheet, Eye, X } from "lucide-react";
+import { ArrowLeft, Upload, File, FileText, FileSpreadsheet, Eye, X, ClipboardCheck, Package, Paperclip, Truck } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import { useProcurementEvents } from "@/components/PostHogProcurementEvents";
@@ -637,12 +637,12 @@ export const AddGRNDashboard = () => {
       <h1 className="text-2xl font-bold mb-6">Add GRN</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-              <span className="text-white text-sm">1</span>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <FileText className="w-[18px] h-[18px]" />
             </div>
-            <h2 className="text-lg font-semibold text-[#C72030]">
+            <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">
               GRN DETAILS
             </h2>
           </div>
@@ -919,12 +919,12 @@ export const AddGRNDashboard = () => {
         </div>
 
         {/* Transport Details Section */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-              <span className="text-white text-sm">3</span>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <ClipboardCheck className="w-[18px] h-[18px]" />
             </div>
-            <h2 className="text-lg font-semibold text-[#C72030]">GRN GATE DETAILS</h2>
+            <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">GRN GATE DETAILS</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <TextField
@@ -986,12 +986,12 @@ export const AddGRNDashboard = () => {
         </div>
 
         {/* Transport Invoice Details Section */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-              <span className="text-white text-sm">4</span>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <Truck className="w-[18px] h-[18px]" />
             </div>
-            <h2 className="text-lg font-semibold text-[#C72030]">TRANSPORTATION DETAILS</h2>
+            <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">TRANSPORTATION DETAILS</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
@@ -1051,27 +1051,26 @@ export const AddGRNDashboard = () => {
 
         {/* Inventory Details Section */}
         {inventoryDetails.map((item, index) => (
-          <div key={index} className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between gap-2 mb-6">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm">2</span>
+          <div key={index} className="relative bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+            {inventoryDetails.length > 1 && (
+              <Button
+                type="button"
+                onClick={() => removeInventoryItem(index)}
+                size="sm"
+                className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-[8px]"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            )}
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                  <Package className="w-[18px] h-[18px]" />
                 </div>
-                <h2 className="text-lg font-semibold text-[#C72030]">
+                <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">
                   INVENTORY DETAILS {index + 1}
                 </h2>
               </div>
-              {inventoryDetails.length > 1 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeInventoryItem(index)}
-                  className="text-red-600 hover:text-red-700"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -1468,12 +1467,10 @@ export const AddGRNDashboard = () => {
           </Button>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-[#C72030] flex items-center">
-              <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
-                3
-              </h2>
+        <Card className="rounded-2xl border border-gray-200 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold uppercase text-[#1A1A1A] flex items-center gap-3">
+              <span className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0"><Paperclip className="w-[18px] h-[18px]" /></span>
               ATTACHMENTS*
             </CardTitle>
           </CardHeader>
@@ -1519,12 +1516,12 @@ export const AddGRNDashboard = () => {
                   return (
                     <div
                       key={`new-${index}`}
-                      className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                      className="flex relative flex-col items-center border rounded-full pt-10 px-3 pb-6 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                     >
                       {isImage ? (
                         <>
                           <button
-                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                            className="absolute top-2 left-1/2 ml-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                             title="View"
                             onClick={() => {
                               setSelectedDoc({
@@ -1575,7 +1572,7 @@ export const AddGRNDashboard = () => {
                         {file.name}
                       </span>
                       <button
-                        className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                        className="absolute top-2 right-1/2 mr-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                         title="Remove"
                         onClick={() => removeFile(index)}
                         type="button"
@@ -1590,22 +1587,20 @@ export const AddGRNDashboard = () => {
           </CardContent>
         </Card>
 
-        <div className="flex items-center justify-center gap-4">
+        <div className="fm-action-bar mt-6">
           <Button
-            type="submit"
-            size="lg"
-            className="bg-[#C72030] hover:bg-[#C72030] text-white"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "Submit GRN"}
-          </Button>
-          <Button
-            variant="outline"
-            size="lg"
             onClick={() => navigate(-1)}
-            className="px-8"
+            variant="outline"
+            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
           >
             Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="fm-action-primary"
+          >
+            {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "Submit GRN"}
           </Button>
         </div>
       </form>

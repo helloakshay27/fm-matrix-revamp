@@ -5567,7 +5567,9 @@ html body [class*="bg-[#D5DbDB]"][class*="border-[#D5DbDB]"] {
   width: auto !important;
   min-width: 0 !important;
   height: auto !important;
-  padding: 4px 8px 4px 11px !important;
+  padding: 4px 10px !important;
+  justify-content: center !important;
+  text-align: center !important;
   border: none !important;
   border-radius: 999px !important;
   font-size: 11px !important;
@@ -6690,10 +6692,6 @@ html body [role="dialog"]:has(input[placeholder="Bill Number Search"]) button[cl
   color: #ffffff !important;
 }
 
-/* CRM Events: keep unchecked status switches visibly inactive in grey. */
-html body button[role="switch"][class*="data-[state=checked]:bg-green-500"][data-state="unchecked"] {
-  background-color: #9ca3af !important;
-}
 
 /* R Vehicles toolbar Import action: preserve a visible black outline and icon. */
 html body #root main:has(input[placeholder="Search by vehicle number"]) button[title="Import"] {
@@ -6976,6 +6974,20 @@ html body .MuiFormControl-root:not(.mui-floating-label) > .MuiInputLabel-outline
 }
 html body .MuiFormControl-root:not(.mui-floating-label) > .MuiInputLabel-outlined .MuiFormLabel-asterisk {
   color: var(--color-danger) !important;
+}
+
+/* The field wrapper must grow to hold label + control. Many forms pin the
+   whole TextField/FormControl to the old box height (sx height: 28/36/45),
+   which made the control spill out below — overlapping the next row and the
+   card border. The control's own height rules (below) are unaffected. */
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) {
+  height: auto !important;
+  min-height: 0 !important;
+}
+/* Inside grid layouts the grid gap spaces the rows; the old `mt` that made
+   room for the notched label only mis-aligned fields that had it vs. not. */
+html body .grid > .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) {
+  margin-top: 0 !important;
 }
 
 /* Notch: always closed, the border is drawn as one continuous line */

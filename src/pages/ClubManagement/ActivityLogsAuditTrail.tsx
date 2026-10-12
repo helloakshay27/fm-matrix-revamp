@@ -130,7 +130,7 @@ const ActivityLogsAuditTrail: React.FC = () => {
       <div className="flex flex-col gap-1 text-left">
         <button
           type="button"
-          className="text-left text-[13px] font-medium text-[#2563eb] hover:underline"
+          className="text-left text-[13px] font-medium text-[#E8916F] transition-colors hover:text-[#9C4F31] hover:underline"
           onClick={() => {
             if (row.activityLinkHref && row.activityLinkHref !== "#") {
               window.location.href = row.activityLinkHref;
@@ -159,7 +159,7 @@ const ActivityLogsAuditTrail: React.FC = () => {
         </div>
         <button
           type="button"
-          className="shrink-0 text-[13px] font-medium text-[#2563eb] hover:underline"
+          className="shrink-0 text-[13px] font-medium text-[#E8916F] transition-colors hover:text-[#9C4F31] hover:underline"
           onClick={() => {
             if (row.auditTrailHref && row.auditTrailHref !== "#") {
               window.location.href = row.auditTrailHref;

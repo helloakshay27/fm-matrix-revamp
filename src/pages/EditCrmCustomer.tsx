@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useLayout } from "../contexts/LayoutContext";
 import { Button } from "../components/ui/button";
-import { Calendar, Trash2, Settings, ArrowLeft, Globe } from "lucide-react";
+import { Calendar, Settings, ArrowLeft, Globe, X } from "lucide-react";
 import { TextField, Card, CardContent } from "@mui/material";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { toast } from "sonner";
@@ -301,15 +301,19 @@ export const EditCrmCustomer = () => {
             </div>
             <Card
                 sx={{
-                    borderRadius: "12px",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                    bgcolor: "transparent",
+                    boxShadow: "none",
+                    borderRadius: 0,
+                    overflow: "visible",
                 }}
             >
-                <CardContent sx={{ p: 4 }}>
-                    <div className="mb-8">
-                        <div className="flex items-center gap-2 mb-6">
-                            <Settings className="w-5 h-5" />
-                            <h3 className="text-lg font-semibold">BASIC DETAILS</h3>
+                <CardContent sx={{ p: 0 }}>
+                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-6">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                                <Settings className="w-[18px] h-[18px]" />
+                            </div>
+                            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">BASIC DETAILS</h3>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                             <div>
@@ -512,10 +516,12 @@ export const EditCrmCustomer = () => {
                             />
                         </div>
                     </div>
-                    <div className="mb-8">
-                        <div className="flex items-center gap-2 mb-6">
-                            <Calendar className="w-5 h-5" />
-                            <h3 className="text-lg font-semibold">LEASE INFORMATION</h3>
+                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-6">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                                <Calendar className="w-[18px] h-[18px]" />
+                            </div>
+                            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">LEASE INFORMATION</h3>
                         </div>
                         {leases.map((lease, index) => (
                             <Card
@@ -524,7 +530,9 @@ export const EditCrmCustomer = () => {
                                     mb: 3,
                                     borderRadius: "8px",
                                     border: "1px solid #e5e7eb",
-                                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                                    boxShadow: "none",
+                                    overflow: "visible",
+                                    position: "relative",
                                 }}
                             >
                                 <CardContent sx={{ p: 3 }}>
@@ -596,12 +604,11 @@ export const EditCrmCustomer = () => {
                                                 />
                                                 {lease.id === undefined && leases.length > 1 && (
                                                     <Button
-                                                        variant="destructive"
-                                                        size="sm"
-                                                        className="p-2 h-10"
                                                         onClick={() => removeLease(index)}
+                                                        size="sm"
+                                                        className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-[8px]"
                                                     >
-                                                        <Trash2 className="w-4 h-4" />
+                                                        <X className="w-4 h-4" />
                                                     </Button>
                                                 )}
                                             </div>
@@ -610,19 +617,22 @@ export const EditCrmCustomer = () => {
                                 </CardContent>
                             </Card>
                         ))}
-                        <div className="mt-4">
+                        <div className="flex justify-end pt-4">
                             <Button
-                                variant="outline"
                                 onClick={addNewLease}
+                                size="sm"
+                                className="bg-[#C72030] hover:bg-[#C72030]/90"
                             >
                                 Add Lease
                             </Button>
                         </div>
                     </div>
-                    <div className="mb-8">
-                        <div className="flex items-center gap-2 mb-6">
-                            <Calendar className="w-5 h-5" />
-                            <h3 className="text-lg font-semibold">DOMAINS</h3>
+                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-6">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                                <Globe className="w-[18px] h-[18px]" />
+                            </div>
+                            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">DOMAINS</h3>
                         </div>
                         {domains
                             .filter((domain) => !domain._destroy)
@@ -635,7 +645,9 @@ export const EditCrmCustomer = () => {
                                             mb: 3,
                                             borderRadius: "8px",
                                             border: "1px solid #e5e7eb",
-                                            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                                            boxShadow: "none",
+                                            overflow: "visible",
+                                            position: "relative",
                                         }}
                                     >
                                         <CardContent sx={{ p: 3 }}>
@@ -658,12 +670,11 @@ export const EditCrmCustomer = () => {
                                                 {(domain.id ||
                                                     domains.filter((d) => !d._destroy).length > 1) && (
                                                         <Button
-                                                            variant="destructive"
-                                                            size="sm"
-                                                            className="p-2 h-10"
                                                             onClick={() => removeDomain(actualIndex)}
+                                                            size="sm"
+                                                            className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-[8px]"
                                                         >
-                                                            <Trash2 className="w-4 h-4" />
+                                                            <X className="w-4 h-4" />
                                                         </Button>
                                                     )}
                                             </div>
@@ -671,19 +682,28 @@ export const EditCrmCustomer = () => {
                                     </Card>
                                 );
                             })}
-                        <div className="mt-4">
+                        <div className="flex justify-end pt-4">
                             <Button
-                                variant="outline"
                                 onClick={addNewDomain}
+                                size="sm"
+                                className="bg-[#C72030] hover:bg-[#C72030]/90"
                             >
                                 Add Domain
                             </Button>
                         </div>
                     </div>
-                    <div className="flex justify-center pt-4 border-t border-gray-200">
+                    <div className="fm-action-bar mt-6">
+                        <Button
+                            type="button"
+                            onClick={() => navigate(-1)}
+                            variant="outline"
+                            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+                        >
+                            Cancel
+                        </Button>
                         <Button
                             onClick={handleSave}
-                            className="bg-[#c72030] text-white px-6 py-2"
+                            className="fm-action-primary"
                             disabled={isSaving}
                         >
                             {isSaving ? "Saving..." : "Save"}

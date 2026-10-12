@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { cache } from "@/utils/cacheUtils";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Upload, X, Info } from "lucide-react";
+import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Upload, X, Info, Building2, Package, Paperclip } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   TextField,
@@ -872,10 +872,10 @@ export const AddMaterialPRDashboard = () => {
       <form onSubmit={handleSubmit}>
         <div className="space-y-6">
           {/* Supplier Details */}
-          <Card>
-            <CardHeader className='bg-[#F6F4EE] mb-4'>
-              <CardTitle className="text-lg text-black flex items-center">
-                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
+          <Card className="rounded-2xl border border-gray-200 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold uppercase text-[#1A1A1A] flex items-center gap-3">
+                <span className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0"><Building2 className="w-[18px] h-[18px]" /></span>
                 SUPPLIER DETAILS
               </CardTitle>
             </CardHeader>
@@ -1239,11 +1239,11 @@ export const AddMaterialPRDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className='bg-[#F6F4EE] mb-4'>
-              <CardTitle className="text-lg text-black flex items-center justify-between">
-                <div className="flex items-center">
-                  <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
+          <Card className="rounded-2xl border border-gray-200 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold uppercase text-[#1A1A1A] flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0"><Package className="w-[18px] h-[18px]" /></span>
                   ITEM DETAILS
                 </div>
                 
@@ -1261,7 +1261,7 @@ export const AddMaterialPRDashboard = () => {
                     <Button
                       onClick={() => removeItem(item.id)}
                       size="sm"
-                      className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-full"
+                      className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-[8px]"
                     >
                       <X className="w-4 h-4" />
                     </Button>
@@ -1521,10 +1521,10 @@ export const AddMaterialPRDashboard = () => {
             </Button>
           </div>
 
-          <Card>
-            <CardHeader className='bg-[#F6F4EE] mb-4'>
-              <CardTitle className="text-lg text-black flex items-center">
-                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
+          <Card className="rounded-2xl border border-gray-200 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold uppercase text-[#1A1A1A] flex items-center gap-3">
+                <span className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0"><Paperclip className="w-[18px] h-[18px]" /></span>
                 Attachments
               </CardTitle>
             </CardHeader>
@@ -1566,12 +1566,12 @@ export const AddMaterialPRDashboard = () => {
                     return (
                       <div
                         key={index}
-                        className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                        className="flex relative flex-col items-center border rounded-full pt-10 px-3 pb-6 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                       >
                         {isImage ? (
                           <>
                             <button
-                              className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                              className="absolute top-2 left-1/2 ml-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                               title="View"
                               onClick={() => {
                                 setSelectedDoc({
@@ -1587,7 +1587,7 @@ export const AddMaterialPRDashboard = () => {
                               <Eye className="w-4 h-4" />
                             </button>
                             <button
-                              className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                              className="absolute top-2 right-1/2 mr-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                               title="View"
                               onClick={() => removeFile(index)}
                               type="button"
@@ -1630,7 +1630,7 @@ export const AddMaterialPRDashboard = () => {
                           {file.name || `Document_${file.id}`}
                         </span>
                         <button
-                          className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                          className="absolute top-2 right-1/2 mr-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                           title="View"
                           onClick={() => removeFile(index)}
                           type="button"
@@ -1645,12 +1645,19 @@ export const AddMaterialPRDashboard = () => {
             </CardContent>
           </Card>
 
-          <div className="flex items-center justify-center">
+          <div className="fm-action-bar mt-6">
+            <Button
+              type="button"
+              onClick={() => navigate(-1)}
+              variant="outline"
+              className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+            >
+              Cancel
+            </Button>
             <Button
               type="submit"
-              size="lg"
-              className="bg-[#C72030] hover:bg-[#C72030] text-white"
               disabled={submitting}
+              className="fm-action-primary"
             >
               Submit
             </Button>
@@ -1673,7 +1680,7 @@ export const AddMaterialPRDashboard = () => {
               <h2 className="text-xl font-bold">WBS Budget Details - {selectedWbsCode}</h2>
               <button
                 onClick={() => setIsBudgetModalOpen(false)}
-                className="p-1 hover:bg-gray-200 rounded-full"
+                className="p-1 hover:bg-gray-200 rounded-[8px]"
               >
                 <X className="w-5 h-5" />
               </button>

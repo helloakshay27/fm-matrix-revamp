@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
@@ -14,7 +15,7 @@ import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { fetchEventById, updateEvent } from "@/store/slices/eventSlice";
 import { format } from "date-fns";
-import { Switch } from "@mui/material";
+
 
 interface Event {
   id: string;
@@ -155,15 +156,15 @@ export const EventDetailsTab = () => {
       </div>
 
       {/* Main Content Card: Event Details */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
+      <div className="border border-gray-200 overflow-hidden mb-6 bg-white rounded-2xl shadow-sm">
         {/* Card Header */}
-        <div className="bg-[#F6F4EE] px-6 py-4 border-b border-gray-200">
+        <div className="px-6 pt-6 pb-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                <Info size={22} />
+              <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                <Info className="w-[18px] h-[18px]" />
               </div>
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">
                 EVENT DETAILS
               </h2>
             </div>
@@ -178,24 +179,8 @@ export const EventDetailsTab = () => {
               <div className="flex items-center gap-2">
                 <Switch
                   checked={eventData.active}
-                  onChange={(e) => handleStatusChange(e.target.checked)}
+                  onCheckedChange={(checked) => handleStatusChange(checked)}
                   disabled={updatingStatus}
-                  sx={{
-                    "& .MuiSwitch-switchBase": {
-                      color: "#ffffff",
-                      "&.Mui-checked": {
-                        color: "#22c55e",
-                      },
-                      "&.Mui-checked + .MuiSwitch-track": {
-                        backgroundColor: "#22c55e",
-                        opacity: 1,
-                      },
-                    },
-                    "& .MuiSwitch-track": {
-                      backgroundColor: "#9ca3af",
-                      opacity: 1,
-                    },
-                  }}
                 />
                 <span className="text-sm font-medium text-gray-700">
                   {eventData.active ? "Active" : "Inactive"}
@@ -225,14 +210,14 @@ export const EventDetailsTab = () => {
                 <>
                   <button
                     onClick={handlePrevAttachment}
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-[8px] opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                     title="Previous"
                   >
                     <ChevronLeft size={20} />
                   </button>
                   <button
                     onClick={handleNextAttachment}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-[8px] opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                     title="Next"
                   >
                     <ChevronRight size={20} />
@@ -334,15 +319,15 @@ export const EventDetailsTab = () => {
       </div>
 
       {/* Share Section Card */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
-        <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-          <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-            <Share2 size={16} />
+      <div className="border border-gray-200 overflow-hidden mb-6 bg-white rounded-2xl shadow-sm">
+        <div className="px-6 pt-6 pb-0 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <Share2 className="w-[18px] h-[18px]" />
           </div>
-          <span className="font-semibold text-lg text-gray-800">Share</span>
+          <span className="text-sm font-semibold uppercase text-[#1A1A1A]">Share</span>
         </div>
 
-        <div className="p-6 bg-white">
+        <div className="px-6 pb-6 pt-3 bg-white">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="flex items-center gap-8">
               <span className="text-sm text-gray-500 min-w-[160px]">

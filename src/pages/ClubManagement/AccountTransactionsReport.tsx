@@ -151,11 +151,11 @@ const AccountTransactionsReport: React.FC = () => {
                   <td className="px-4 py-3 border-b border-[#ececec] text-sm text-[#111827]">{row.transactionType}</td>
                   <td className="px-4 py-3 border-b border-[#ececec] text-sm text-[#111827]">{row.transactionNo || ""}</td>
                   <td className="px-4 py-3 border-b border-[#ececec] text-sm text-[#111827]">{row.referenceNo || ""}</td>
-                  <td className="px-4 py-3 border-b border-[#ececec] text-sm text-right text-[#1463df] font-medium">
+                  <td className="px-4 py-3 border-b border-[#ececec] text-sm text-right text-[#1a1a18] tabular-nums font-medium">
                     {row.debit !== undefined ? (
                       <button
                         type="button"
-                        className="text-[#1463df] hover:underline"
+                        className="text-[#1a1a18] tabular-nums hover:underline"
                         onClick={() => openDetails(row, "debit")}
                       >
                         {formatValue(row.debit)}
@@ -164,11 +164,11 @@ const AccountTransactionsReport: React.FC = () => {
                       ""
                     )}
                   </td>
-                  <td className="px-4 py-3 border-b border-[#ececec] text-sm text-right text-[#1463df] font-medium">
+                  <td className="px-4 py-3 border-b border-[#ececec] text-sm text-right text-[#1a1a18] tabular-nums font-medium">
                     {row.credit !== undefined ? (
                       <button
                         type="button"
-                        className="text-[#1463df] hover:underline"
+                        className="text-[#1a1a18] tabular-nums hover:underline"
                         onClick={() => openDetails(row, "credit")}
                       >
                         {formatValue(row.credit)}
@@ -177,10 +177,10 @@ const AccountTransactionsReport: React.FC = () => {
                       ""
                     )}
                   </td>
-                  <td className="px-4 py-3 border-b border-[#ececec] text-sm text-right text-[#1463df] font-semibold">
+                  <td className="px-4 py-3 border-b border-[#ececec] text-sm text-right text-[#1a1a18] tabular-nums font-semibold">
                     <button
                       type="button"
-                      className="text-[#1463df] hover:underline"
+                      className="text-[#1a1a18] tabular-nums hover:underline"
                       onClick={() => openDetails(row, "amount")}
                     >
                       {row.amount}

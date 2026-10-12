@@ -19,7 +19,7 @@ import {
   getPurchaseOrdersList,
 } from "@/store/slices/grnSlice";
 import { getInventories, getSuppliers } from "@/store/slices/materialPRSlice";
-import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Upload, X } from "lucide-react";
+import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Upload, X, Package, Paperclip } from "lucide-react";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 
 // Define interfaces for type safety
@@ -665,12 +665,12 @@ export const EditGRNDashboard = () => {
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* GRN Details Section */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-              <span className="text-white text-sm">1</span>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <FileText className="w-[18px] h-[18px]" />
             </div>
-            <h2 className="text-lg font-semibold text-[#C72030]">
+            <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">
               GRN DETAILS
             </h2>
           </div>
@@ -918,27 +918,26 @@ export const EditGRNDashboard = () => {
         {inventoryDetails
           .filter((item) => item._destroy !== 1)
           .map((item, index) => (
-            <div key={index} className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between gap-2 mb-6">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm">2</span>
+            <div key={index} className="relative bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              {inventoryDetails.length > 1 && (
+                <Button
+                  type="button"
+                  onClick={() => removeInventoryItem(index)}
+                  size="sm"
+                  className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-[8px]"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                    <Package className="w-[18px] h-[18px]" />
                   </div>
-                  <h2 className="text-lg font-semibold text-[#C72030]">
+                  <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">
                     INVENTORY DETAILS {index + 1}
                   </h2>
                 </div>
-                {inventoryDetails.length > 1 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeInventoryItem(index)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -1337,12 +1336,12 @@ export const EditGRNDashboard = () => {
         </div>
 
         {/* Attachments Section */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-              <span className="text-white text-sm">3</span>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <Paperclip className="w-[18px] h-[18px]" />
             </div>
-            <h2 className="text-lg font-semibold text-[#C72030]">
+            <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">
               ATTACHMENTS*
             </h2>
           </div>
@@ -1384,12 +1383,12 @@ export const EditGRNDashboard = () => {
                 return (
                   <div
                     key={`existing-${attachment.id}`}
-                    className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                    className="flex relative flex-col items-center border rounded-full pt-10 px-3 pb-6 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                   >
                     {isImage ? (
                       <>
                         <button
-                          className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                          className="absolute top-2 left-1/2 ml-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                           title="View"
                           onClick={() => {
                             setSelectedDoc({
@@ -1440,7 +1439,7 @@ export const EditGRNDashboard = () => {
                       {attachment.name}
                     </span>
                     <button
-                      className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                      className="absolute top-2 right-1/2 mr-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                       title="Remove"
                       onClick={() => removeExistingAttachment(attachment.id.toString())}
                       type="button"
@@ -1463,12 +1462,12 @@ export const EditGRNDashboard = () => {
                 return (
                   <div
                     key={`new-${index}`}
-                    className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                    className="flex relative flex-col items-center border rounded-full pt-10 px-3 pb-6 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                   >
                     {isImage ? (
                       <>
                         <button
-                          className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                          className="absolute top-2 left-1/2 ml-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                           title="View"
                           onClick={() => {
                             setSelectedDoc({
@@ -1519,7 +1518,7 @@ export const EditGRNDashboard = () => {
                       {file.name}
                     </span>
                     <button
-                      className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                      className="absolute top-2 right-1/2 mr-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                       title="Remove"
                       onClick={() => removeFile(index)}
                       type="button"
@@ -1534,11 +1533,19 @@ export const EditGRNDashboard = () => {
         </div>
 
         {/* Submit Section */}
-        <div className="flex justify-center items-center gap-4">
+        <div className="fm-action-bar mt-6">
+          <Button
+            type="button"
+            onClick={() => navigate(-1)}
+            variant="outline"
+            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+          >
+            Cancel
+          </Button>
           <Button
             type="submit"
-            className="bg-[#C72030] hover:bg-[#A01020] text-white px-8"
             disabled={isSubmitting}
+            className="fm-action-primary"
           >
             {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "Submit"}
           </Button>

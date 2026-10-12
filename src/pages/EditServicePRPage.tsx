@@ -1,7 +1,7 @@
 import axios from "axios";
 import { cache } from "@/utils/cacheUtils";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Loader2, Trash2, X } from "lucide-react";
+import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Loader2, X, ClipboardList, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   TextField,
@@ -661,10 +661,10 @@ export const EditServicePRPage = () => {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
-        <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
-          <CardHeader className="bg-[#F6F4EE] mb-4">
-            <CardTitle className="text-lg text-black flex items-center">
-              <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
+        <Card className="mb-6 rounded-2xl border border-gray-200 shadow-sm bg-white">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold uppercase text-[#1A1A1A] flex items-center gap-3">
+              <span className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0"><FileText className="w-[18px] h-[18px]" /></span>
               SERVICE PR DETAILS
             </CardTitle>
           </CardHeader>
@@ -936,10 +936,10 @@ export const EditServicePRPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
-          <CardHeader className="bg-[#F6F4EE] mb-4">
-            <CardTitle className="text-lg text-black flex items-center">
-              <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
+        <Card className="mb-6 rounded-2xl border border-gray-200 shadow-sm bg-white">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold uppercase text-[#1A1A1A] flex items-center gap-3">
+              <span className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0"><ClipboardList className="w-[18px] h-[18px]" /></span>
               DETAILS
             </CardTitle>
           </CardHeader>
@@ -950,22 +950,21 @@ export const EditServicePRPage = () => {
               .map((detailsData, index) => (
                 <div
                   key={detailsData.id}
-                  className={`${index > 0 ? "mt-8 pt-8 border-t border-gray-200" : ""}`}
+                  className={`relative p-4 border rounded-lg ${index > 0 ? "mt-6" : ""}`}
                 >
+                  {detailsForms.length > 1 && (
+                    <Button
+                      onClick={() => removeDetailsForm(detailsData.id)}
+                      size="sm"
+                      className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-[8px]"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-md font-medium text-foreground">
                       Item {index + 1}
                     </h3>
-                    {detailsForms.length > 1 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeDetailsForm(detailsData.id)}
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
@@ -1370,10 +1369,11 @@ export const EditServicePRPage = () => {
                 </div>
               ))}
 
-            <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="flex justify-end pt-6">
               <Button
-                className="bg-purple-700 hover:bg-purple-800 text-white px-6 py-2"
                 onClick={addNewDetailsForm}
+                size="sm"
+                className="bg-[#C72030] hover:bg-[#C72030]/90"
               >
                 Add Items
               </Button>
@@ -1387,10 +1387,10 @@ export const EditServicePRPage = () => {
           </Button>
         </div>
 
-        <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
-          <CardHeader className="bg-[#F6F4EE] mb-4">
-            <CardTitle className="text-lg text-black flex items-center">
-              <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
+        <Card className="mb-6 rounded-2xl border border-gray-200 shadow-sm bg-white">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold uppercase text-[#1A1A1A] flex items-center gap-3">
+              <span className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0"><ClipboardList className="w-[18px] h-[18px]" /></span>
               DETAILS
             </CardTitle>
           </CardHeader>
@@ -1538,10 +1538,10 @@ export const EditServicePRPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
-          <CardHeader className="bg-[#F6F4EE] mb-4">
-            <CardTitle className="text-lg text-black flex items-center">
-              <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">4</span>
+        <Card className="mb-6 rounded-2xl border border-gray-200 shadow-sm bg-white">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold uppercase text-[#1A1A1A] flex items-center gap-3">
+              <span className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0"><Paperclip className="w-[18px] h-[18px]" /></span>
               ATTACHMENTS
             </CardTitle>
           </CardHeader>
@@ -1596,12 +1596,12 @@ export const EditServicePRPage = () => {
                   return (
                     <div
                       key={`existing-${attachment.id}`}
-                      className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                      className="flex relative flex-col items-center border rounded-full pt-10 px-3 pb-6 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                     >
                       {isImage ? (
                         <>
                           <button
-                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                            className="absolute top-2 left-1/2 ml-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                             title="View"
                             onClick={() => {
                               setSelectedDoc({
@@ -1652,7 +1652,7 @@ export const EditServicePRPage = () => {
                         {attachment.name}
                       </span>
                       <button
-                        className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                        className="absolute top-2 right-1/2 mr-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                         title="Remove"
                         onClick={() => removeFile(index, "existing")}
                         type="button"
@@ -1671,12 +1671,12 @@ export const EditServicePRPage = () => {
                   return (
                     <div
                       key={`new-${index}`}
-                      className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                      className="flex relative flex-col items-center border rounded-full pt-10 px-3 pb-6 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                     >
                       {isImage ? (
                         <>
                           <button
-                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                            className="absolute top-2 left-1/2 ml-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                             title="View"
                             onClick={() => {
                               setSelectedDoc({
@@ -1727,7 +1727,7 @@ export const EditServicePRPage = () => {
                         {file.name}
                       </span>
                       <button
-                        className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                        className="absolute top-2 right-1/2 mr-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                         title="Remove"
                         onClick={() => removeFile(index, "new")}
                         type="button"
@@ -1742,17 +1742,20 @@ export const EditServicePRPage = () => {
           </CardContent>
         </Card>
 
-        <div className="flex items-center justify-center gap-4 mt-8">
+        <div className="fm-action-bar mt-6">
+          <Button
+            onClick={() => navigate(-1)}
+            variant="outline"
+            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+          >
+            Cancel
+          </Button>
           <Button
             onClick={handleSubmit}
-            className="fm-button-fix fm-button-brand px-4 py-2"
-            variant="ghost"
             disabled={submitting}
+            className="fm-action-primary"
           >
             Save Service PR
-          </Button>
-          <Button variant="outline" onClick={() => navigate(-1)} className="px-8">
-            Cancel
           </Button>
         </div>
       </div>

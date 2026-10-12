@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch } from '@/store/hooks';
 import { fetchUserGroupId } from '@/store/slices/userGroupSlice';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Users } from 'lucide-react';
 import { toast } from 'sonner';
 
 const CRMGroupDetailsPage = () => {
@@ -72,7 +72,7 @@ const CRMGroupDetailsPage = () => {
         Error: {error}
       </div>}
 
-      <div className="bg-white rounded-lg border mb-6 p-6">
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm mb-6 p-6">
         <div className="flex flex-col items-center">
           <div className="w-32 h-32 rounded-full bg-gray-200 mb-4 flex items-center justify-center border-4 border-[#C72030]">
             <div className="w-24 h-24 rounded-full bg-[#C72030]/10 flex items-center justify-center">
@@ -88,8 +88,16 @@ const CRMGroupDetailsPage = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border">
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
         <div className="p-6">
+          <div className="mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                <Users className="w-[18px] h-[18px]" />
+              </div>
+              <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Members</h3>
+            </div>
+          </div>
           {
             groupDetails?.group_members && groupDetails.group_members.filter(member => member.active).length > 0 ? (
               <div className="grid md:grid-cols-4">

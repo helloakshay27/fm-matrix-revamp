@@ -84,7 +84,7 @@ export const UpdatePaymentModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-sm max-h-[85vh] p-0 flex flex-col gap-0">
+      <DialogContent className="sm:max-w-sm max-h-[85vh] p-0 flex flex-col gap-0 rounded-[8px] sm:rounded-[8px]">
         <DialogHeader className="px-6 pt-6 pb-2 shrink-0">
           <DialogTitle>Update Payment</DialogTitle>
         </DialogHeader>
@@ -160,15 +160,21 @@ export const UpdatePaymentModal = ({
           </div>
         </div>
 
-        <DialogFooter className="px-6 pb-6 pt-2 shrink-0">
-          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+        <DialogFooter className="px-6 pb-6 pt-4 shrink-0 flex flex-row justify-end gap-3 sm:space-x-0">
+          <Button
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
+            variant="outline"
+            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+          >
             Cancel
           </Button>
           <Button
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="bg-brand hover:bg-brand-hover text-white"
+            className="fm-action-primary"
           >
             {isSubmitting ? "Submitting..." : "Submit"}
           </Button>

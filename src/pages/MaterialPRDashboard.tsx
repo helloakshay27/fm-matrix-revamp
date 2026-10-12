@@ -357,7 +357,7 @@ export const MaterialPRDashboard = () => {
       case "approvedStatus":
         return (
           <span
-            className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(
+            className={`inline-flex items-center justify-center text-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
               item.approvedStatus
             )}`}
           >
@@ -371,7 +371,6 @@ export const MaterialPRDashboard = () => {
             onCheckedChange={() =>
               handleCheckboxChange(item)
             }
-            className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
             disabled={updatingStatus[item.id]}
           />
         );

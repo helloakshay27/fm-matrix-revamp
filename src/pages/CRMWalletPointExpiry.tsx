@@ -6,7 +6,7 @@ import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { createExpiryRule, fetchLogs, fetchWalletRule } from '@/store/slices/pointExpirySlice';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Pen } from 'lucide-react';
+import { Pen, History, Settings } from 'lucide-react';
 import RuleAlert from '@/components/RuleAlert';
 import { useNavigate } from 'react-router-dom';
 import { LogEntry, LogsTimeline } from '@/components/LogTimeline';
@@ -115,19 +115,11 @@ const CRMWalletPointExpiry = () => {
 
     return (
         <div className="p-[30px] min-h-screen bg-[#F6F4EE]">
-            <Card className="mb-6" style={{ border: "1px solid #D9D9D9" }}>
-                <CardHeader
-                    className="bg-[#F6F4EE]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                >
+            <Card className="mb-6 rounded-2xl border border-gray-200 shadow-sm bg-white">
+                <CardHeader className="pb-3">
                     <div className='flex items-center justify-between'>
-                        <CardTitle className="flex items-center gap-4 text-[20px] font-semibold text-[#1A1A1A]">
-                            <span
-                                className="w-[40px] h-[40px] bg-[#E5E0D3] rounded-full flex items-center justify-center text-md font-bold"
-                                style={{ color: '#C72030' }}
-                            >
-                                R
-                            </span>
+                        <CardTitle className="flex items-center gap-3 text-sm font-semibold uppercase text-[#1A1A1A]">
+                            <span className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0"><Settings className="w-[18px] h-[18px]" /></span>
                             RULE SETUP
                         </CardTitle>
 
@@ -144,10 +136,7 @@ const CRMWalletPointExpiry = () => {
                         }
                     </div>
                 </CardHeader>
-                <CardContent
-                    className="px-[50px] py-[25px] bg-white"
-                    style={{ border: "1px solid #D9D9D9" }}
-                >
+                <CardContent className="px-6 pb-6 pt-0">
                     <TextField
                         fullWidth
                         label="Rule Name"
@@ -223,46 +212,35 @@ const CRMWalletPointExpiry = () => {
 
             {
                 addAllowed && (
-                    <div className='flex items-center justify-center gap-3'>
+                    <div className="fm-action-bar mt-6">
+                        <Button
+                            onClick={resetForm}
+                            variant="outline"
+                            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+                        >
+                            Cancel
+                        </Button>
                         {shouldShow("Wallet", "create") && (
                         <Button
                             onClick={() => setShowRuleCreateAlert(true)}
-                            className="fm-button-fix fm-button-brand px-4 py-2 rounded-lg shadow-sm"
+                            className="fm-action-primary"
                         >
                             Create Rule
                         </Button>
                         )}
-                        <Button
-                            onClick={resetForm}
-                            variant="outline"
-                            className="fm-button-fix border-[#DA7756] text-[#DA7756] hover:bg-[#fdf0ea]"
-                        >
-                            Cancel
-                        </Button>
                     </div>
                 )
             }
 
             {!addAllowed &&
-                <Card className="mb-6" style={{ border: "1px solid #D9D9D9" }}>
-                    <CardHeader
-                        className="bg-[#F6F4EE]"
-                        style={{ border: "1px solid #D9D9D9" }}
-                    >
-                        <CardTitle className="flex items-center gap-4 text-[20px] font-semibold text-[#1A1A1A]">
-                            <span
-                                className="w-[40px] h-[40px] bg-[#E5E0D3] rounded-full flex items-center justify-center text-md font-bold"
-                                style={{ color: '#C72030' }}
-                            >
-                                L
-                            </span>
+                <Card className="mb-6 rounded-2xl border border-gray-200 shadow-sm bg-white">
+                    <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center gap-3 text-sm font-semibold uppercase text-[#1A1A1A]">
+                            <span className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0"><History className="w-[18px] h-[18px]" /></span>
                             LOGS
                         </CardTitle>
                     </CardHeader>
-                    <CardContent
-                        className="px-[50px] py-[25px] bg-white"
-                        style={{ border: "1px solid #D9D9D9" }}
-                    >
+                    <CardContent className="px-6 pb-6 pt-0">
                         <div className="">
                             <div className="relative">
                                 {/* Background gradient */}

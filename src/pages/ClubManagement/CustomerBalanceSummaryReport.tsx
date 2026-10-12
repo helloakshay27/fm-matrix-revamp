@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect, useCallback } from "react";
 import TextField from "@mui/material/TextField";
 import { NotepadText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import "@/styles/accounting.css";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
@@ -153,7 +154,7 @@ const CustomerBalanceSummaryReport: React.FC = () => {
   };
 
   return (
-    <div className="w-full bg-[#f9f7f2] p-6" style={{ minHeight: "100vh", boxSizing: "border-box" }}>
+    <div className="accounting-ui w-full bg-[#f9f7f2] p-6" style={{ minHeight: "100vh", boxSizing: "border-box" }}>
       {/* Filter */}
       <div className="mb-6 rounded-lg border-2 bg-white p-6">
         <div className="mb-4 flex items-center gap-3">
@@ -188,7 +189,7 @@ const CustomerBalanceSummaryReport: React.FC = () => {
           />
           <Button
             type="button"
-            className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
+            className="acc-btn h-[44px] bg-[#C72030] text-white hover:bg-[#A01020]"
             onClick={() => fetchData(filters.fromDate, filters.toDate)}
           >
             View

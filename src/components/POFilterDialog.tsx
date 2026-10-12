@@ -79,7 +79,8 @@ export const POFilterDialog: React.FC<POFilterDialogProps> = ({
   };
 
   return (
-    <Dialog onClose={onOpenChange} open={open}>
+    <Dialog
+      PaperProps={{ sx: { borderRadius: "8px" } }} onClose={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-md">
         <div className="flex items-center justify-between mb-3">
           <h5 className="text-lg font-semibold">FILTER BY</h5>
@@ -152,19 +153,19 @@ export const POFilterDialog: React.FC<POFilterDialogProps> = ({
             </MuiSelect>
           </FormControl>
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-4 items-center justify-end">
             <Button
-              onClick={handleApply}
-              className="flex-1 !bg-brand hover:!bg-brand-hover !text-white"
-            >
-              Apply
-            </Button>
-            <Button
-              variant="outline"
               onClick={handleReset}
-              className="flex-1"
+              variant="outline"
+              className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
             >
               Reset
+            </Button>
+            <Button
+              onClick={handleApply}
+              className="fm-action-primary"
+            >
+              Apply
             </Button>
           </div>
         </div>
