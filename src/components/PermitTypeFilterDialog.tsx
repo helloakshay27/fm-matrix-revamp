@@ -60,7 +60,8 @@ export const PermitTypeFilterDialog = ({
     // (Radix modal mode otherwise traps pointer events outside DialogContent).
     <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
       <DialogContent
-        className="w-full sm:max-w-[500px] bg-white overflow-visible"
+        className="w-full sm:max-w-[500px] bg-white overflow-visible rounded-[24px] p-7"
+        data-settings-modal="true"
         onPointerDownOutside={(e) => {
           // Keep dialog open when interacting with MUI overlays
           if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {

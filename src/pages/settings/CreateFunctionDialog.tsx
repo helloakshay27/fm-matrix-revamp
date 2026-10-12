@@ -235,19 +235,19 @@ export const CreateFunctionDialog = ({
             <Label htmlFor="active">Active</Label>
           </div>
 
-          <div className="flex justify-end space-x-2 pt-4 border-t">
-            <Button
+          <div className="fm-action-bar pt-4 border-t">
+            <button
               type="button"
-              variant="outline"
               onClick={handleClose}
               disabled={isSubmitting}
+              className="fm-action-secondary"
             >
               Cancel
-            </Button>
-            <Button
+            </button>
+            <button
               type="submit"
               disabled={isSubmitting}
-              className="bg-[#C72030] hover:bg-[#A11D2A] text-white"
+              className="fm-action-primary"
             >
               {isSubmitting ? (
                 <>
@@ -257,7 +257,7 @@ export const CreateFunctionDialog = ({
               ) : (
                 'Create Function'
               )}
-            </Button>
+            </button>
           </div>
         </form>
       </DialogContent>

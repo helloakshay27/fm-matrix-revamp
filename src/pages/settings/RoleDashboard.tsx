@@ -700,7 +700,7 @@ export const RoleDashboard = () => {
             </div>
 
             {/* Module Tabs */}
-            <div className="flex gap-1 overflow-x-auto pb-0 scrollbar-hide -mb-px">
+            <div className="flex gap-[3px] overflow-x-auto p-[3px] rounded-xl bg-gray-100 scrollbar-hide">
               {modulesLoading ? (
                 <div className="text-gray-500 text-sm py-2">
                   Loading modules...
@@ -713,10 +713,10 @@ export const RoleDashboard = () => {
                       setActiveModuleTab(tab.id);
                       setFunctionSearchTerm(""); // Reset search when switching tabs
                     }}
-                    className={`px-4 py-3 border-b-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                       activeModuleTab === tab.id
-                        ? "border-[#C72030] text-[#C72030] bg-red-50/30"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        ? "bg-white text-gray-900 shadow-sm"
+                        : "text-gray-500"
                     }`}
                   >
                     {tab.name}

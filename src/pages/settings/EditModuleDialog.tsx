@@ -191,7 +191,7 @@ export const EditModuleDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
       <DialogContent
-        className="w-full sm:max-w-[500px] max-h-[90vh] overflow-y-auto bg-white overflow-x-visible"
+        className="w-full sm:max-w-[500px] max-h-[90vh] overflow-y-auto bg-white overflow-x-visible rounded-[24px] p-7"
         onPointerDownOutside={(e) => {
           if (
             (e.target as HTMLElement).closest(
@@ -229,35 +229,49 @@ export const EditModuleDialog = ({
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
-            <TextField
-              label="Module Name *"
-              value={formData.name}
-              onChange={(e) => handleInputChange("name", e.target.value)}
-              fullWidth
-              variant="outlined"
-              sx={fieldStyles}
-            />
+            <div>
+              <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                Module Name *
+              </label>
+              <TextField
+                placeholder="Module Name *"
+                value={formData.name}
+                onChange={(e) => handleInputChange("name", e.target.value)}
+                fullWidth
+                variant="outlined"
+                sx={fieldStyles}
+              />
+            </div>
 
-            <TextField
-              label="Abbreviation *"
-              value={formData.abbreviation}
-              onChange={(e) =>
-                handleInputChange("abbreviation", e.target.value)
-              }
-              fullWidth
-              variant="outlined"
-              sx={fieldStyles}
-            />
+            <div>
+              <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                Abbreviation *
+              </label>
+              <TextField
+                placeholder="Abbreviation *"
+                value={formData.abbreviation}
+                onChange={(e) =>
+                  handleInputChange("abbreviation", e.target.value)
+                }
+                fullWidth
+                variant="outlined"
+                sx={fieldStyles}
+              />
+            </div>
 
-            <TextField
-              label="Display Name *"
-              value={formData.show_name}
-              onChange={(e) => handleInputChange("show_name", e.target.value)}
-              fullWidth
-              variant="outlined"
-              sx={fieldStyles}
-              className="sm:col-span-2"
-            />
+            <div className="sm:col-span-2">
+              <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                Display Name *
+              </label>
+              <TextField
+                placeholder="Display Name *"
+                value={formData.show_name}
+                onChange={(e) => handleInputChange("show_name", e.target.value)}
+                fullWidth
+                variant="outlined"
+                sx={fieldStyles}
+              />
+            </div>
 
             <FormControl fullWidth variant="outlined">
               <InputLabel id="edit-module-type-label">Module Type</InputLabel>
@@ -433,11 +447,19 @@ export const EditModuleDialog = ({
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
-            <Button
+          <div className="fm-action-bar pt-4">
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+              className="fm-action-secondary"
+            >
+              Cancel
+            </button>
+            <button
               type="submit"
               disabled={isSubmitting}
-              className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto disabled:!opacity-100"
+              className="fm-action-primary"
             >
               {isSubmitting ? (
                 <>
@@ -445,18 +467,9 @@ export const EditModuleDialog = ({
                   Updating...
                 </>
               ) : (
-                "UPDATE"
+                "Update"
               )}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
-              className="border-brand text-brand px-8 w-full sm:w-auto"
-            >
-              CANCEL
-            </Button>
+            </button>
           </div>
         </form>
       </DialogContent>

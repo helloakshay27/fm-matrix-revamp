@@ -209,9 +209,15 @@ export const LockModuleList = () => {
         return module.module_type || "-";
       case "status":
         return (
-          <Badge variant={module.active ? "default" : "secondary"}>
+          <span
+            className={
+              module.active
+                ? "rounded-full bg-green-100 px-[10px] py-[3px] text-[11px] font-medium text-green-700"
+                : "rounded-full bg-gray-100 px-[10px] py-[3px] text-[11px] font-medium text-gray-600"
+            }
+          >
             {module.active ? "Active" : "Inactive"}
-          </Badge>
+          </span>
         );
       case "rate":
         return module.rate

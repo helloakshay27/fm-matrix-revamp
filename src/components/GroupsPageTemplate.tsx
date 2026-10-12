@@ -598,6 +598,7 @@ export const GroupsPageTemplate = ({
           onClose={() => setAddGroupOpen(false)}
           maxWidth="sm"
           fullWidth
+          sx={{ "& .MuiPaper-root": { borderRadius: "24px" } }}
         >
           <div className="flex items-center justify-between py-2 px-4 border-b">
             <DialogTitle className="text-xl font-bold p-0">
@@ -607,17 +608,20 @@ export const GroupsPageTemplate = ({
               <X className="w-5 h-5" />
             </IconButton>
           </div>
-          <DialogContent className="p-6">
+          <DialogContent sx={{ padding: "28px" }}>
             <div className="space-y-6">
-              <TextField
-                label="Group Name *"
-                placeholder="Enter Group Name"
-                variant="outlined"
-                fullWidth
-                value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
-                InputLabelProps={{ shrink: true }}
-              />
+              <div>
+                <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                  Group Name *
+                </label>
+                <TextField
+                  placeholder="Enter Group Name"
+                  variant="outlined"
+                  fullWidth
+                  value={groupName}
+                  onChange={(e) => setGroupName(e.target.value)}
+                />
+              </div>
               <div className="flex justify-end pt-4">
                 <Button
                   onClick={handleAddGroup}

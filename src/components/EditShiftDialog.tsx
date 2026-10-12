@@ -294,7 +294,8 @@ export const EditShiftDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
       <DialogContent
-        className="sm:max-w-lg bg-white"
+        className="sm:max-w-lg bg-white rounded-[24px] p-7"
+        data-settings-modal="true"
         onPointerDownOutside={(e) => {
           if (
             (e.target as HTMLElement).closest(
@@ -523,11 +524,19 @@ export const EditShiftDialog = ({
             )}
           </div>
 
-          <div className="flex justify-center pt-4">
-            <Button
+          <div className="fm-action-bar pt-4">
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              className="fm-action-secondary"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
               onClick={handleUpdate}
               disabled={isLoading}
-              className="bg-brand hover:bg-brand-hover text-white px-8 disabled:!opacity-100"
+              className="fm-action-primary"
             >
               {isLoading ? (
                 <>
@@ -537,7 +546,7 @@ export const EditShiftDialog = ({
               ) : (
                 "Update"
               )}
-            </Button>
+            </button>
           </div>
         </div>
       </DialogContent>

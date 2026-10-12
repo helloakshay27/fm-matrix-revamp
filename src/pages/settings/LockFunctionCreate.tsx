@@ -235,11 +235,19 @@ export const LockFunctionCreate: React.FC = () => {
             </div>
 
             {/* Create Button */}
-            <div className="flex justify-center pt-4">
-              <Button 
+            <div className="fm-action-bar pt-4">
+              <button
+                type="button"
+                onClick={() => navigate('/settings/lock-functions')}
+                className="fm-action-secondary"
+              >
+                Cancel
+              </button>
+              <button 
+                type="button"
                 onClick={handleCreate}
                 disabled={isSubmitting}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 rounded-none shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="fm-action-primary"
               >
                 {isSubmitting ? (
                   <>
@@ -249,7 +257,7 @@ export const LockFunctionCreate: React.FC = () => {
                 ) : (
                   'Create Lock Function'
                 )}
-              </Button>
+              </button>
             </div>
           </div>
         </div>
