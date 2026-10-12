@@ -7428,3 +7428,16 @@ html body div[class*="bg-[#F6F4EE]" i]:has(> [class*="bg-[#C4B89D54]" i] + div >
   bottom: 12px !important;
   right: 14px !important;
 }
+
+/* ============================================================
+   MODALS & CARDS — 16px corners everywhere
+   Centred shadcn dialogs / alert dialogs (side sheets & popovers are
+   excluded by the centring classes), MUI dialog papers and MUI cards.
+   Buttons inside keep their own 8px radius.
+   ============================================================ */
+html body [role="dialog"][class*="translate-x-[-50%]"],
+html body [role="alertdialog"][class*="translate-x-[-50%]"],
+html body .MuiDialog-paper,
+html body .MuiCard-root {
+  border-radius: 16px !important;
+}
