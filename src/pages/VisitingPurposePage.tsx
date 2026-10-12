@@ -11,6 +11,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { Plus, RefreshCw, Edit, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLayout } from '@/contexts/LayoutContext';
@@ -1307,11 +1308,11 @@ export const VisitingPurposePage = () => {
             </div>
 
             <div className="flex items-center space-x-2 pt-1">
-              <Checkbox
+              <Switch
                 id="active"
                 checked={formData.active}
                 onCheckedChange={(checked) =>
-                  setFormData({ ...formData, active: checked as boolean })
+                  setFormData({ ...formData, active: checked })
                 }
               />
               <Label htmlFor="active" className="text-sm font-medium">
@@ -1706,14 +1707,14 @@ export const VisitingPurposePage = () => {
             </div>
 
             <div className="flex items-center space-x-2 pt-1">
-              <Checkbox
+              <Switch
                 id="editActive"
                 checked={editingPurpose?.status || false}
                 onCheckedChange={(checked) =>
                   editingPurpose &&
                   setEditingPurpose({
                     ...editingPurpose,
-                    status: checked as boolean,
+                    status: checked,
                   })
                 }
               />

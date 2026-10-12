@@ -2,8 +2,9 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable"
 import { Button } from "@/components/ui/button";
 import { ColumnConfig } from "@/hooks/useEnhancedTable"
 import { Switch } from "@/components/ui/switch";
-import { Edit, Plus, X, ChevronDown, Trash2 } from "lucide-react";
+import { Edit, Plus, X, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Dialog, DialogContent, TextField, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchProjectsTags, createProjectsTags, updateProjectsTags, deleteProjectsTags } from "@/store/slices/projectTagSlice";
@@ -85,7 +86,6 @@ const ProjectTags = () => {
         setTagName('');
         setSelectedTagType('');
         setEditingId(null);
-        setShowTagTypeDropdown(false);
     };
 
     const handleSubmit = async () => {
@@ -273,39 +273,31 @@ const ProjectTags = () => {
 
                             {/* Tag Type Dropdown */}
                             <div>
-                                <label className="block text-sm font-medium mb-2">
-                                    Tag Type <span className="text-red-500">*</span>
-                                </label>
-                                <div className="relative">
-                                    <button
-                                        onClick={() => setShowTagTypeDropdown(!showTagTypeDropdown)}
-                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded text-left flex items-center justify-between hover:border-gray-400 focus:outline-none focus:border-blue-500"
+                                <FormControl fullWidth variant="outlined">
+                                    <InputLabel shrink>Tag Type*</InputLabel>
+                                    <Select
+                                        label="Tag Type*"
+                                        name="tagType"
+                                        value={selectedTagType || ''}
+                                        onChange={(e) => setSelectedTagType(e.target.value as string)}
+                                        displayEmpty
+                                        sx={{
+                                            height: { xs: 28, sm: 36, md: 45 },
+                                            "& .MuiInputBase-input, & .MuiSelect-select": {
+                                                padding: { xs: "8px", sm: "10px", md: "12px" },
+                                            },
+                                        }}
                                     >
-                                        <span className={selectedTagType ? 'text-base' : 'text-gray-400'}>
-                                            {selectedTagType || 'Tag Type'}
-                                        </span>
-                                        <ChevronDown size={20} className="text-gray-400" />
-                                    </button>
-                                    {showTagTypeDropdown && (
-                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-gray-300 rounded shadow-lg z-10">
-                                            {tagTypeOptions.map(type => (
-                                                <button
-                                                    key={type.id}
-                                                    onClick={() => {
-                                                        setSelectedTagType(type.name);
-                                                        setShowTagTypeDropdown(false);
-                                                    }}
-                                                    className={`w-full text-left px-4 py-3 border-b last:border-b-0 ${selectedTagType === type.name
-                                                        ? 'bg-red-600 text-white'
-                                                        : 'hover:bg-gray-100'
-                                                        }`}
-                                                >
-                                                    {type.name}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
+                                        <MenuItem value="">
+                                            <em>Select Tag Type</em>
+                                        </MenuItem>
+                                        {tagTypeOptions.map(type => (
+                                            <MenuItem key={type.id} value={type.name}>
+                                                {type.name}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
                             </div>
 
                             {/* Actions */}

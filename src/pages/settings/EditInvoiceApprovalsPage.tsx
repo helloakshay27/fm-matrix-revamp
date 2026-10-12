@@ -298,7 +298,7 @@ export const EditInvoiceApprovalsPage = () => {
               </div>
             ))}
 
-            <Button variant="ghost" onClick={addApprovalLevel} className="bg-brand text-white [&_svg]:!text-white [&_svg]:!stroke-white px-4 py-1.5">
+            <Button variant="ghost" onClick={addApprovalLevel} className="bg-[#1a1a18] hover:bg-[#12100e] text-white [&_svg]:!text-white [&_svg]:!stroke-white px-4 py-1.5">
               <Plus className="w-4 h-4" />
               Add More Level
             </Button>

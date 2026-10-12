@@ -619,9 +619,9 @@ export const BookingSetupDetailPage = () => {
             </Button>
             <div className="flex items-center gap-2">
               <Button
-                variant="outline"
+                variant="default"
                 onClick={() => handleEditClick(id)}
-                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                className="!bg-[#C72030] !text-white !border-[#C72030] hover:!bg-[#a81c29]"
               >
                 Edit
               </Button>

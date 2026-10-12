@@ -217,7 +217,7 @@ export const DepartmentDashboard = () => {
 
   const leftActions = shouldShow("Department", "create") ? (
     <Button
-      className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
+      className="bg-[#1a1a18] hover:bg-[#12100e] text-white h-9 px-4 text-sm font-medium"
       onClick={() => setIsDialogOpen(true)}
     >
       <Plus className="w-4 h-4 mr-2" />
@@ -305,7 +305,7 @@ export const DepartmentDashboard = () => {
               </Button>
               <Button
                 onClick={handleSubmit}
-                className="bg-brand text-white hover:bg-brand-hover"
+                className="bg-[#1a1a18] hover:bg-[#12100e] text-white rounded-lg"
               >
                 Submit
               </Button>
@@ -343,7 +343,7 @@ export const DepartmentDashboard = () => {
               </Button>
               <Button
                 onClick={handleEditSubmit}
-                className="bg-brand text-white hover:bg-brand-hover"
+                className="bg-[#1a1a18] hover:bg-[#12100e] text-white rounded-lg"
               >
                 Submit
               </Button>

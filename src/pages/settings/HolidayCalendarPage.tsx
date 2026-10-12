@@ -1291,14 +1291,14 @@ export const HolidayCalendarPage = () => {
           <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
             <Button
               onClick={handleApplyFilters}
-              className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto"
+              className="bg-[#1a1a18] hover:bg-[#12100e] text-white px-8 w-full sm:w-auto"
             >
               APPLY
             </Button>
             <Button
               variant="outline"
               onClick={handleClearFilters}
-              className="border-brand text-brand px-8 w-full sm:w-auto"
+              className="border-[#1a1a18] text-[#1a1a18] px-8 w-full sm:w-auto"
             >
               RESET
             </Button>
