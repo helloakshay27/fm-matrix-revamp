@@ -11,7 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { FormSection } from "@/components/common/FormSection";
 import { Switch } from "@/components/ui/switch";
 import {
   FormControl,
@@ -245,16 +246,9 @@ export const EditViUserPage = () => {
           </div>
 
           {/* Editable Section */}
-          <div className="lg:col-span-8 space-y-6">
+          <div className="lg:col-span-8 space-y-4 sm:space-y-6">
             {/* Role Settings */}
-            <Card className="border-0 shadow-sm">
-              <CardHeader className="border-b bg-gray-50">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <User className="w-5 h-5 text-[#C72030]" />
-                  Role Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
+            <FormSection title="ROLE SETTINGS" icon={User}>
                 <div className="space-y-4">
                   <div>
                     <FormControl fullWidth variant="outlined" size="small">
@@ -297,18 +291,10 @@ export const EditViUserPage = () => {
                     </FormControl>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+            </FormSection>
 
             {/* Access Settings */}
-            <Card className="border-0 shadow-sm">
-              <CardHeader className="border-b bg-gray-50">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-[#C72030]" />
-                  Access Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
+            <FormSection title="ACCESS SETTINGS" icon={Shield}>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -331,18 +317,10 @@ export const EditViUserPage = () => {
                     />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+            </FormSection>
 
             {/* Password Settings */}
-            <Card className="border-0 shadow-sm">
-              <CardHeader className="border-b bg-gray-50">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Lock className="w-5 h-5 text-[#C72030]" />
-                  Password Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
+            <FormSection title="PASSWORD SETTINGS" icon={Lock}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label
@@ -401,8 +379,7 @@ export const EditViUserPage = () => {
                   Leave password fields blank if you don't want to change the
                   password.
                 </p>
-              </CardContent>
-            </Card>
+            </FormSection>
 
             {/* Action Buttons */}
             <div className="flex justify-end gap-4">

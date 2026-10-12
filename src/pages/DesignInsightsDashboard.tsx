@@ -200,8 +200,8 @@ export const DesignInsightsDashboard = () => {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                size="sm"
-                className="border-brand text-brand hover:bg-brand-selected hover:text-brand flex items-center rounded-lg"
+                size="icon"
+                className="!rounded-lg border border-brand text-brand hover:bg-brand-selected hover:text-brand"
                 title="Download Report"
               >
                 <Download className="w-4 h-4" />

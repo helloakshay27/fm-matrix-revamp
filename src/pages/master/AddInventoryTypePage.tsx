@@ -95,7 +95,7 @@ const AddInventoryTypePage = () => {
         </h1>
       <div style={{ padding: '24px', marginTop: '20px', borderRadius: '3px', background: '#fff' }}>
         <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Name Field */}
           <Controller
             name="name"
@@ -175,7 +175,6 @@ const AddInventoryTypePage = () => {
                   <InputLabel shrink>Category</InputLabel>
                   <TextField
                     {...field}
-                    label="Category"
                     variant="outlined"
                     fullWidth
                   />
@@ -184,7 +183,7 @@ const AddInventoryTypePage = () => {
             )}
           />
           {/* Description Textarea */}
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 lg:col-span-4">
             <Controller
               name="material_type_description"
               control={control}
@@ -196,13 +195,10 @@ const AddInventoryTypePage = () => {
                 required: { value: true, message: "Description is required" }
               }}
               render={({ field }) => (
+                <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>Description <span style={{ color: 'red' }}>*</span></InputLabel>
                 <TextField
                   {...field}
-                  label={
-                    <span style={{ fontSize: '16px' }}>
-                      Description 
-                    </span>
-                  }
                   placeholder="Enter Description/SOP"
                   fullWidth
                   multiline
@@ -229,6 +225,7 @@ const AddInventoryTypePage = () => {
                     },
                   }}
                 />
+                </FormControl>
               )}
             />
           </div>

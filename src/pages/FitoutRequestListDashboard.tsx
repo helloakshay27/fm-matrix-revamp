@@ -153,6 +153,7 @@ export const FitoutRequestListDashboard = () => {
         onSearchChange={setSearchTerm}
         searchPlaceholder="Search fitout requests..."
         enableSearch
+        disableClientSearch
         pagination
         pageSize={10}
         selectable
@@ -162,14 +163,12 @@ export const FitoutRequestListDashboard = () => {
         getItemId={(item) => String(item.id)}
         onFilterClick={() => setShowFilters(true)}
         leftActions={
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={handleAddClick}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap"
-            >
-              <Plus className="w-4 h-4 mr-2" /> Add
-            </Button>
-          </div>
+          <Button
+            onClick={handleAddClick}
+            className="bg-brand hover:bg-brand-hover text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" /> Add
+          </Button>
         }
       />
 
