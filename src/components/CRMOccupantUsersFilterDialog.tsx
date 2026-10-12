@@ -25,7 +25,7 @@ export const CRMOccupantUsersFilterDialog = ({ open, onOpenChange }: CRMOccupant
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] p-0 rounded-[8px] sm:rounded-[8px]">
+      <DialogContent className="sm:max-w-[500px] p-0 rounded-2xl sm:rounded-2xl">
         <DialogHeader className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg font-medium text-gray-900">FILTER BY</DialogTitle>

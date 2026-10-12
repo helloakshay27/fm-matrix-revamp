@@ -175,17 +175,108 @@ export const MSafeDashboard = () => {
   }, [debouncedSearch, filters]);
   const getStatusBadge = (status: string) => {
     if (!status) {
-      return <Badge className="bg-gray-500 text-white hover:bg-gray-600">Unknown</Badge>;
+      return (
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 999,
+            padding: '3px 10px',
+            fontSize: 11,
+            fontWeight: 500,
+            lineHeight: 1.2,
+            background: '#F2EDE7',
+            color: '#6B5B52',
+            border: '1px solid #E7DCCF',
+          }}
+        >
+          Unknown
+        </span>
+      );
     }
+
     switch (status.toLowerCase()) {
       case 'approved':
-        return <Badge className="bg-green-500 text-white hover:bg-green-600">Approved</Badge>;
+        return (
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 999,
+              padding: '3px 10px',
+              fontSize: 11,
+              fontWeight: 500,
+              lineHeight: 1.2,
+              background: '#DCEFE3',
+              color: '#2E6F52',
+              border: '1px solid #B9DCC4',
+            }}
+          >
+            {status}
+          </span>
+        );
       case 'pending':
-        return <Badge className="bg-yellow-500 text-white hover:bg-yellow-600">Pending</Badge>;
+        return (
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 999,
+              padding: '3px 10px',
+              fontSize: 11,
+              fontWeight: 500,
+              lineHeight: 1.2,
+              background: '#F5E7BF',
+              color: '#8A6A12',
+              border: '1px solid #E4CF8C',
+            }}
+          >
+            {status}
+          </span>
+        );
       case 'rejected':
-        return <Badge className="bg-red-500 text-white hover:bg-red-600">Rejected</Badge>;
+        return (
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 999,
+              padding: '3px 10px',
+              fontSize: 11,
+              fontWeight: 500,
+              lineHeight: 1.2,
+              background: '#F7DCD7',
+              color: '#8D3D3D',
+              border: '1px solid #E7B1AA',
+            }}
+          >
+            {status}
+          </span>
+        );
       default:
-        return <Badge className="bg-gray-500 text-white hover:bg-gray-600">{status}</Badge>;
+        return (
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 999,
+              padding: '3px 10px',
+              fontSize: 11,
+              fontWeight: 500,
+              lineHeight: 1.2,
+              background: '#F2EDE7',
+              color: '#6B5B52',
+              border: '1px solid #E7DCCF',
+            }}
+          >
+            {status}
+          </span>
+        );
     }
   };
   const getTypeBadge = (type: string) => {

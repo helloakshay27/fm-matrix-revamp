@@ -816,7 +816,7 @@ export const AddBroadcastPage = () => {
           setFormData(prev => ({ ...prev, shareWith: "all" }));
         }
       }}>
-        <DialogContent className="max-w-md bg-white rounded-[8px] sm:rounded-[8px]">
+        <DialogContent className="max-w-md bg-white rounded-2xl sm:rounded-2xl">
           <DialogHeader className="flex flex-row items-center justify-between">
             <DialogTitle className="text-xl font-bold">Select Tech Park</DialogTitle>
           </DialogHeader>

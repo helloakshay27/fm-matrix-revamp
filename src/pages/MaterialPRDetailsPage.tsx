@@ -1429,7 +1429,7 @@ export const MaterialPRDetailsPage = () => {
         )}
 
         <Dialog
-      PaperProps={{ sx: { borderRadius: "8px" } }}
+      PaperProps={{ sx: { borderRadius: "16px" } }}
           open={openRejectDialog}
           onClose={() => setOpenRejectDialog(false)}
           maxWidth="sm"
@@ -1487,7 +1487,7 @@ export const MaterialPRDetailsPage = () => {
         </Dialog>
 
         <Dialog
-      PaperProps={{ sx: { borderRadius: "8px" } }}
+      PaperProps={{ sx: { borderRadius: "16px" } }}
           open={showEditWbsModal}
           onClose={() => setShowEditWbsModal(false)}
           maxWidth="md"
@@ -1628,7 +1628,7 @@ export const MaterialPRDetailsPage = () => {
         </Dialog>
 
         <Dialog
-      PaperProps={{ sx: { borderRadius: "8px" } }}
+      PaperProps={{ sx: { borderRadius: "16px" } }}
           open={openDeletionModal}
           onClose={() => setOpenDeletionModal(false)}
           aria-labelledby="alert-dialog-title"

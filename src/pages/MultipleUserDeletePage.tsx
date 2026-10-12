@@ -258,7 +258,7 @@ export const MultipleUserDeletePage = () => {
                         message = t;
                     }
                     // Final cleanup: remove surrounding braces/quotes for simple single-field JSON string leftovers
-                    message = message.toString().replace(/^\{"[a-zA-Z_]+":\s*"(.+)"\}$/,'$1').trim();
+                    message = message.toString().replace(/^\{"[a-zA-Z_]+":\s*"(.+)"\}$/, '$1').trim();
                 }
                 throw new Error(message);
             }
@@ -527,11 +527,11 @@ export const MultipleUserDeletePage = () => {
                             <h2 className="text-lg font-bold">IDENTIFIERS</h2>
                         </div>
                         <div className="p-4 pt-0">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {entries.map((entry, idx) => {
-                                        const errorMsg = getIdentifierError(entry.value);
-                                        const isEmailType = (entry.value || '').includes('@');
-                                        return (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {entries.map((entry, idx) => {
+                                    const errorMsg = getIdentifierError(entry.value);
+                                    const isEmailType = (entry.value || '').includes('@');
+                                    return (
                                         <TextField
                                             key={entry.id}
                                             label={
@@ -571,24 +571,24 @@ export const MultipleUserDeletePage = () => {
                                                 inputMode: isEmailType ? 'email' : 'tel',
                                             }}
                                         />
-                                    );})}
-                                </div>
+                                    );
+                                })}
+                            </div>
 
-                                <div className="mt-4 flex flex-wrap gap-3">
-                                    <Button
-                                        variant="outline"
-                                        onClick={handleAddField}
-                                        className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
-                                    >Add User</Button>
-                                </div>
+                            <div className="mt-4 flex flex-wrap gap-3">
+                                <Button
+                                    variant="outline"
+                                    onClick={handleAddField}
+                                    className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+                                >Add User</Button>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="flex gap-4 flex-wrap justify-center">
-                            {(() => {
-                                const hasAny = entries.some(e => e.value.trim() !== '');
-                                const hasInvalid = entries.some(e => e.value.trim() !== '' && !isValidIdentifier(e.value));
-                                return (
+                    <div className="flex gap-4 flex-wrap justify-end">                            {(() => {
+                        const hasAny = entries.some(e => e.value.trim() !== '');
+                        const hasInvalid = entries.some(e => e.value.trim() !== '' && !isValidIdentifier(e.value));
+                        return (
                             <Button
                                 onClick={handleSubmit}
                                 style={{ backgroundColor: '#C72030' }}
@@ -597,44 +597,44 @@ export const MultipleUserDeletePage = () => {
                             >
                                 {submitting ? 'Submitting...' : 'Submit'}
                             </Button>
-                                );
-                            })()}
-                        </div>
+                        );
+                    })()}
+                    </div>
 
                     {confirmOpen && (
-                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                                <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-                                    <div className="p-4 border-b">
-                                        <h3 className="text-lg font-semibold">Confirm Deletion</h3>
-                                    </div>
-                                    <div className="p-4 space-y-3 text-sm max-h-[60vh] overflow-auto">
-                                        <p>You are about to delete the following identifiers:</p>
-                                        <ul className="list-disc pl-5 space-y-1">
-                                            {pendingIds.map((idVal, i) => (
-                                                <li key={`${idVal}-${i}`} className="break-all">{idVal}</li>
-                                            ))}
-                                        </ul>
-                                        <p className="text-red-600">This action cannot be undone.</p>
-                                    </div>
-                                    <div className="p-4 flex justify-end gap-2 border-t">
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => setConfirmOpen(false)}
-                                            disabled={submitting}
-                                        >
-                                            No
-                                        </Button>
-                                        <Button
-                                            className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
-                                            onClick={handleConfirmDelete}
-                                            disabled={submitting}
-                                        >
-                                            {submitting ? 'Deleting...' : 'Yes, Delete'}
-                                        </Button>
-                                    </div>
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+                                <div className="p-4 border-b">
+                                    <h3 className="text-lg font-semibold">Confirm Deletion</h3>
+                                </div>
+                                <div className="p-4 space-y-3 text-sm max-h-[60vh] overflow-auto">
+                                    <p>You are about to delete the following identifiers:</p>
+                                    <ul className="list-disc pl-5 space-y-1">
+                                        {pendingIds.map((idVal, i) => (
+                                            <li key={`${idVal}-${i}`} className="break-all">{idVal}</li>
+                                        ))}
+                                    </ul>
+                                    <p className="text-red-600">This action cannot be undone.</p>
+                                </div>
+                                <div className="p-4 flex justify-end gap-2 border-t">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setConfirmOpen(false)}
+                                        disabled={submitting}
+                                    >
+                                        No
+                                    </Button>
+                                    <Button
+                                        className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+                                        onClick={handleConfirmDelete}
+                                        disabled={submitting}
+                                    >
+                                        {submitting ? 'Deleting...' : 'Yes, Delete'}
+                                    </Button>
                                 </div>
                             </div>
-                        )}
+                        </div>
+                    )}
 
                     {(resultMessage || deletedUsers.length || skippedUsers.length || notFoundUsers.length || notDeletedDueToReportee.length) ? (
                         <div className="mt-8 space-y-8 max-w-6xl mx-auto">
@@ -648,30 +648,30 @@ export const MultipleUserDeletePage = () => {
                                         <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{deletedUsers.length}</span>
                                     </div>
                                     <div className="p-4 pt-0">
-                                            {deletedUsers.length ? (
-                                                <div className="overflow-x-auto mt-2">
-                                                    <table className="w-full text-sm">
-                                                        <thead>
-                                                            <tr className="bg-[#F6F7F7] text-gray-700">
-                                                                <th className="text-left p-2 border-b">Name</th>
-                                                                <th className="text-left p-2 border-b">Email</th>
-                                                                <th className="text-left p-2 border-b">Mobile</th>
+                                        {deletedUsers.length ? (
+                                            <div className="overflow-x-auto mt-2">
+                                                <table className="w-full text-sm">
+                                                    <thead>
+                                                        <tr className="bg-[#F6F7F7] text-gray-700">
+                                                            <th className="text-left p-2 border-b">Name</th>
+                                                            <th className="text-left p-2 border-b">Email</th>
+                                                            <th className="text-left p-2 border-b">Mobile</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {deletedUsers.map((u, i) => (
+                                                            <tr key={`del-${u.email || i}`} className="hover:bg-gray-50">
+                                                                <td className="p-2 border-b">{u.name || '-'}</td>
+                                                                <td className="p-2 border-b break-all">{u.email || '-'}</td>
+                                                                <td className="p-2 border-b">{u.mobile_number || '-'}</td>
                                                             </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            {deletedUsers.map((u, i) => (
-                                                                <tr key={`del-${u.email || i}`} className="hover:bg-gray-50">
-                                                                    <td className="p-2 border-b">{u.name || '-'}</td>
-                                                                    <td className="p-2 border-b break-all">{u.email || '-'}</td>
-                                                                    <td className="p-2 border-b">{u.mobile_number || '-'}</td>
-                                                                </tr>
-                                                            ))}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            ) : (
-                                                <p className="text-sm text-gray-500">No users deleted.</p>
-                                            )}
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm text-gray-500">No users deleted.</p>
+                                        )}
                                     </div>
                                 </div>
 
@@ -684,30 +684,30 @@ export const MultipleUserDeletePage = () => {
                                         <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">{skippedUsers.length}</span>
                                     </div>
                                     <div className="p-4 pt-0">
-                                            {skippedUsers.length ? (
-                                                <div className="overflow-x-auto mt-2">
-                                                    <table className="w-full text-sm">
-                                                        <thead>
-                                                            <tr className="bg-[#F6F7F7] text-gray-700">
-                                                                <th className="text-left p-2 border-b">Name</th>
-                                                                <th className="text-left p-2 border-b">Email</th>
-                                                                <th className="text-left p-2 border-b">Mobile</th>
+                                        {skippedUsers.length ? (
+                                            <div className="overflow-x-auto mt-2">
+                                                <table className="w-full text-sm">
+                                                    <thead>
+                                                        <tr className="bg-[#F6F7F7] text-gray-700">
+                                                            <th className="text-left p-2 border-b">Name</th>
+                                                            <th className="text-left p-2 border-b">Email</th>
+                                                            <th className="text-left p-2 border-b">Mobile</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {skippedUsers.map((u, i) => (
+                                                            <tr key={`skip-${u.email || i}`} className="hover:bg-gray-50">
+                                                                <td className="p-2 border-b">{u.name || '-'}</td>
+                                                                <td className="p-2 border-b break-all">{u.email || '-'}</td>
+                                                                <td className="p-2 border-b">{u.mobile_number || '-'}</td>
                                                             </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            {skippedUsers.map((u, i) => (
-                                                                <tr key={`skip-${u.email || i}`} className="hover:bg-gray-50">
-                                                                    <td className="p-2 border-b">{u.name || '-'}</td>
-                                                                    <td className="p-2 border-b break-all">{u.email || '-'}</td>
-                                                                    <td className="p-2 border-b">{u.mobile_number || '-'}</td>
-                                                                </tr>
-                                                            ))}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            ) : (
-                                                <p className="text-sm text-gray-500">No users skipped.</p>
-                                            )}
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm text-gray-500">No users skipped.</p>
+                                        )}
                                     </div>
                                 </div>
 
@@ -720,26 +720,26 @@ export const MultipleUserDeletePage = () => {
                                         <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">{notFoundUsers.length}</span>
                                     </div>
                                     <div className="p-4 pt-0">
-                                            {notFoundUsers.length ? (
-                                                <div className="overflow-x-auto mt-2">
-                                                    <table className="w-full text-sm">
-                                                        <thead>
-                                                            <tr className="bg-[#F6F7F7] text-gray-700">
-                                                                <th className="text-left p-2 border-b">Email</th>
+                                        {notFoundUsers.length ? (
+                                            <div className="overflow-x-auto mt-2">
+                                                <table className="w-full text-sm">
+                                                    <thead>
+                                                        <tr className="bg-[#F6F7F7] text-gray-700">
+                                                            <th className="text-left p-2 border-b">Email</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {notFoundUsers.map((email, i) => (
+                                                            <tr key={`nf-${email || i}`} className="hover:bg-gray-50">
+                                                                <td className="p-2 border-b break-all">{email}</td>
                                                             </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            {notFoundUsers.map((email, i) => (
-                                                                <tr key={`nf-${email || i}`} className="hover:bg-gray-50">
-                                                                    <td className="p-2 border-b break-all">{email}</td>
-                                                                </tr>
-                                                            ))}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            ) : (
-                                                <p className="text-sm text-gray-500">All users matched.</p>
-                                            )}
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm text-gray-500">All users matched.</p>
+                                        )}
                                     </div>
                                 </div>
 
@@ -752,46 +752,46 @@ export const MultipleUserDeletePage = () => {
                                         <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">{notDeletedDueToReportee.length}</span>
                                     </div>
                                     <div className="p-4 pt-0">
-                                            {notDeletedDueToReportee.length ? (
-                                                <div className="overflow-x-auto mt-2">
-                                                    <table className="w-full text-sm">
-                                                        <thead>
-                                                            <tr className="bg-[#F6F7F7] text-gray-700">
-                                                                <th className="text-left p-2 border-b">Name</th>
-                                                                <th className="text-left p-2 border-b">Email</th>
-                                                                <th className="text-left p-2 border-b">Mobile</th>
-                                                                <th className="text-left p-2 border-b">Reportees</th>
+                                        {notDeletedDueToReportee.length ? (
+                                            <div className="overflow-x-auto mt-2">
+                                                <table className="w-full text-sm">
+                                                    <thead>
+                                                        <tr className="bg-[#F6F7F7] text-gray-700">
+                                                            <th className="text-left p-2 border-b">Name</th>
+                                                            <th className="text-left p-2 border-b">Email</th>
+                                                            <th className="text-left p-2 border-b">Mobile</th>
+                                                            <th className="text-left p-2 border-b">Reportees</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {notDeletedDueToReportee.map((m, i) => (
+                                                            <tr key={`ndr-${m.email || i}`} className="align-top hover:bg-gray-50">
+                                                                <td className="p-2 border-b">{m.name || '-'}</td>
+                                                                <td className="p-2 border-b break-all">{m.email || '-'}</td>
+                                                                <td className="p-2 border-b">{m.mobile_number || '-'}</td>
+                                                                <td className="p-2 border-b">
+                                                                    {m.reportees && m.reportees.length ? (
+                                                                        <ul className="list-disc pl-4 space-y-1">
+                                                                            {m.reportees.map((r, ri) => (
+                                                                                <li key={`ndr-r-${(r.email || ri)}`} className="break-all">
+                                                                                    <span className="font-medium">{r.name || '-'}</span>
+                                                                                    {` `}
+                                                                                    <span className="text-gray-600">({r.email || '-'}{r.mobile_number ? `, ${r.mobile_number}` : ''})</span>
+                                                                                </li>
+                                                                            ))}
+                                                                        </ul>
+                                                                    ) : (
+                                                                        <span className="text-gray-500">-</span>
+                                                                    )}
+                                                                </td>
                                                             </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            {notDeletedDueToReportee.map((m, i) => (
-                                                                <tr key={`ndr-${m.email || i}`} className="align-top hover:bg-gray-50">
-                                                                    <td className="p-2 border-b">{m.name || '-'}</td>
-                                                                    <td className="p-2 border-b break-all">{m.email || '-'}</td>
-                                                                    <td className="p-2 border-b">{m.mobile_number || '-'}</td>
-                                                                    <td className="p-2 border-b">
-                                                                        {m.reportees && m.reportees.length ? (
-                                                                            <ul className="list-disc pl-4 space-y-1">
-                                                                                {m.reportees.map((r, ri) => (
-                                                                                    <li key={`ndr-r-${(r.email || ri)}`} className="break-all">
-                                                                                        <span className="font-medium">{r.name || '-'}</span>
-                                                                                        {` `}
-                                                                                        <span className="text-gray-600">({r.email || '-'}{r.mobile_number ? `, ${r.mobile_number}` : ''})</span>
-                                                                                    </li>
-                                                                                ))}
-                                                                            </ul>
-                                                                        ) : (
-                                                                            <span className="text-gray-500">-</span>
-                                                                        )}
-                                                                    </td>
-                                                                </tr>
-                                                            ))}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            ) : (
-                                                <p className="text-sm text-gray-500">No entries.</p>
-                                            )}
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm text-gray-500">No entries.</p>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -808,57 +808,57 @@ export const MultipleUserDeletePage = () => {
                             <h2 className="text-lg font-bold">IDENTIFIER</h2>
                         </div>
                         <div className="p-4 pt-0">
-                                <div className="grid grid-cols-1 gap-4">
-                                    {(() => {
-                                        const err = getIdentifierError(treeIdentifier);
-                                        const isEmailType = (treeIdentifier || '').includes('@');
-                                        return (
-                                    <TextField
-                                        label="Email or Mobile Number"
-                                        placeholder="Enter Email or Mobile Number"
-                                        value={treeIdentifier}
-                                        onChange={(e) => {
-                                            const sanitized = sanitizeIdentifierInput(e.target.value);
-                                            setTreeIdentifier(sanitized);
-                                            if (!sanitized?.trim()) setTreeData(null);
-                                        }}
-                                        fullWidth
-                                        variant="outlined"
-                                        autoComplete="off"
-                                        error={Boolean(err)}
-                                        helperText={err || ' '}
-                                        slotProps={{ inputLabel: { shrink: true } as any }}
-                                        InputProps={{ sx: fieldStyles }}
-                                        inputProps={{
-                                            autoComplete: 'off',
-                                            name: 'tree-identifier',
-                                            autoCorrect: 'off',
-                                            autoCapitalize: 'none',
-                                            spellCheck: 'false',
-                                            inputMode: isEmailType ? 'email' : 'tel',
-                                        }}
-                                    />
-                                        );
-                                    })()}
-                                    <div className="flex gap-3 items-start">
+                            <div className="grid grid-cols-1 gap-4">
+                                {(() => {
+                                    const err = getIdentifierError(treeIdentifier);
+                                    const isEmailType = (treeIdentifier || '').includes('@');
+                                    return (
+                                        <TextField
+                                            label="Email or Mobile Number"
+                                            placeholder="Enter Email or Mobile Number"
+                                            value={treeIdentifier}
+                                            onChange={(e) => {
+                                                const sanitized = sanitizeIdentifierInput(e.target.value);
+                                                setTreeIdentifier(sanitized);
+                                                if (!sanitized?.trim()) setTreeData(null);
+                                            }}
+                                            fullWidth
+                                            variant="outlined"
+                                            autoComplete="off"
+                                            error={Boolean(err)}
+                                            helperText={err || ' '}
+                                            slotProps={{ inputLabel: { shrink: true } as any }}
+                                            InputProps={{ sx: fieldStyles }}
+                                            inputProps={{
+                                                autoComplete: 'off',
+                                                name: 'tree-identifier',
+                                                autoCorrect: 'off',
+                                                autoCapitalize: 'none',
+                                                spellCheck: 'false',
+                                                inputMode: isEmailType ? 'email' : 'tel',
+                                            }}
+                                        />
+                                    );
+                                })()}
+                                <div className="flex gap-3 items-start">
+                                    <Button
+                                        onClick={fetchHierarchy}
+                                        disabled={!treeIdentifier.trim() || !!getIdentifierError(treeIdentifier) || treeLoading}
+                                        className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+                                    >
+                                        {treeLoading ? 'Fetching...' : 'Submit'}
+                                    </Button>
+                                    {treeData && !isTreeEmpty(treeData) && (
                                         <Button
-                                            onClick={fetchHierarchy}
-                                            disabled={!treeIdentifier.trim() || !!getIdentifierError(treeIdentifier) || treeLoading}
-                                            className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+                                            onClick={() => setShowDeleteChoice(true)}
+                                            disabled={treeDeleteLoading}
+                                            className="bg-red-600 text-white hover:bg-red-600/90"
                                         >
-                                            {treeLoading ? 'Fetching...' : 'Submit'}
+                                            Delete
                                         </Button>
-                                        {treeData && !isTreeEmpty(treeData) &&  (
-                                            <Button
-                                                onClick={() => setShowDeleteChoice(true)}
-                                                disabled={treeDeleteLoading}
-                                                className="bg-red-600 text-white hover:bg-red-600/90"
-                                            >
-                                                Delete
-                                            </Button>
-                                        )}
-                                    </div>
+                                    )}
                                 </div>
+                            </div>
                         </div>
                     </div>
 

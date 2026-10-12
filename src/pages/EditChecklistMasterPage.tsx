@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { API_CONFIG, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAssetTypes } from '@/services/assetTypesAPI';
-import { toast, Toaster } from 'sonner';
+import { toast } from 'sonner';
 
 const fieldStyles = {
   height: { xs: 36, sm: 40, md: 44 },
@@ -431,8 +431,6 @@ export const EditChecklistMasterPage = () => {
 
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-screen-xl mx-auto">
-      {/* Sonner Toaster for notifications */}
-      <Toaster position="top-right" richColors closeButton />
       
       <Button
         onClick={() => navigate('/master/checklist')}

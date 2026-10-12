@@ -394,7 +394,7 @@ export const PendingApprovalsDashboard = () => {
       </div>
 
       <Dialog
-      PaperProps={{ sx: { borderRadius: "8px" } }} open={showFilters} onClose={() => setShowFilters(false)} fullWidth maxWidth="xs">
+      PaperProps={{ sx: { borderRadius: "16px" } }} open={showFilters} onClose={() => setShowFilters(false)} fullWidth maxWidth="xs">
         <DialogContent>
           <div className="flex items-center justify-between mb-3">
             <h5 className="text-lg font-semibold">FILTER BY</h5>

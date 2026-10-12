@@ -605,7 +605,7 @@ const CRMFMUserDashboard = () => {
       </div>
 
       <Dialog open={filterDialogOpen} onOpenChange={setFilterDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] p-0 rounded-[8px] sm:rounded-[8px]">
+        <DialogContent className="sm:max-w-[600px] p-0 rounded-2xl sm:rounded-2xl">
           <DialogHeader className="p-6 pb-4 border-b">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-xl font-semibold">
@@ -666,7 +666,7 @@ const CRMFMUserDashboard = () => {
       </Dialog>
 
       <Dialog open={cloneRoleDialogOpen} onOpenChange={setCloneRoleDialogOpen}>
-        <DialogContent className="sm:max-w-[500px] p-0 bg-white rounded-[8px] sm:rounded-[8px]">
+        <DialogContent className="sm:max-w-[500px] p-0 bg-white rounded-2xl sm:rounded-2xl">
           <DialogHeader className="p-6 pb-4 border-b">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-xl font-semibold">

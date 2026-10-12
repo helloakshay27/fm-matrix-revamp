@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
-import { toast, Toaster } from 'sonner';
+import { toast } from 'sonner';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -466,7 +466,6 @@ const ViewTrainingPerformancePage = () => {
 
     return (
         <div className="p-2 sm:p-4 lg:p-6">
-            <Toaster position="top-right" richColors closeButton />
 
             {/* Header */}
             <div className="mb-4 sm:mb-6">

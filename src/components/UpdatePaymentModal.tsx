@@ -84,7 +84,7 @@ export const UpdatePaymentModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-sm max-h-[85vh] p-0 flex flex-col gap-0 rounded-[8px] sm:rounded-[8px]">
+      <DialogContent className="sm:max-w-sm max-h-[85vh] p-0 flex flex-col gap-0 rounded-2xl sm:rounded-2xl">
         <DialogHeader className="px-6 pt-6 pb-2 shrink-0">
           <DialogTitle>Update Payment</DialogTitle>
         </DialogHeader>

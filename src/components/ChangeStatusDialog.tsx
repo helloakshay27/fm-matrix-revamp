@@ -36,7 +36,7 @@ export const ChangeStatusDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-[8px] sm:rounded-[8px]">
+      <DialogContent className="sm:max-w-md rounded-2xl sm:rounded-2xl">
         <DialogHeader className="flex flex-row items-center justify-between pb-4 border-b">
           <div className="flex items-center gap-2">
             <div className="text-pink-500 font-bold text-sm">Godrej | LIVING</div>

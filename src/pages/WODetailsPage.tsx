@@ -1196,7 +1196,7 @@ const renderBoqCell = (item: any, columnKey: string) => {
       )}
 
       <Dialog
-      PaperProps={{ sx: { borderRadius: "8px" } }}
+      PaperProps={{ sx: { borderRadius: "16px" } }}
         open={openRejectDialog}
         onClose={handleRejectCancel}
         maxWidth="sm"
