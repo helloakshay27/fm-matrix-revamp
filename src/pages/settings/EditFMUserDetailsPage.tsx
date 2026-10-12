@@ -451,13 +451,21 @@ export const EditFMUserDetailsPage = () => {
 
         {/* Save Button */}
         {isEditing && (
-          <div className="mt-6 flex justify-end">
-            <Button
+          <div className="fm-action-bar mt-6">
+            <button
+              type="button"
+              onClick={() => setIsEditing(false)}
+              className="fm-action-secondary"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
               onClick={handleSave}
-              className="bg-[#C72030] hover:bg-[#A01020] text-white px-8"
+              className="fm-action-primary"
             >
               Save Changes
-            </Button>
+            </button>
           </div>
         )}
       </div>

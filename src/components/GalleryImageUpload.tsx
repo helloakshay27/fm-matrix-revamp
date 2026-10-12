@@ -259,8 +259,9 @@ export const GalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
           flex-wrap: wrap;
           margin-bottom: 40px;
           padding: 40px 20px;
-          background: #f8f9fa;
-          border-radius: 8px;
+          background: #ffffff;
+          border: 2px dashed #d1d5db;
+          border-radius: 16px;
         }
 
         .ratio-card {
@@ -406,11 +407,11 @@ export const GalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
         }
 
         .continue-btn {
-          background: #f2eee9;
-          color: #dc2626;
-          border: none;
+          background: #ffffff;
+          color: #374151;
+          border: 1px solid #d1d5db;
           padding: 12px 24px;
-          border-radius: 6px;
+          border-radius: 8px;
           font-weight: 500;
           cursor: pointer;
           transition: background-color 0.2s ease;
@@ -418,7 +419,7 @@ export const GalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
         }
 
         .continue-btn:hover {
-          background: #f2eee9;
+          background: #f9fafb;
         }
 
         @media (max-width: 768px) {
@@ -535,7 +536,7 @@ export const GalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
     if (showAsModal) {
         return (
             <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black bg-opacity-50" onClick={onClose}>
-                <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto relative" onClick={(e) => e.stopPropagation()}>
+                <div className="bg-white rounded-[24px] shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto relative" onClick={(e) => e.stopPropagation()}>
                     <button
                         onClick={onClose}
                         className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 bg-transparent border-none cursor-pointer z-10"

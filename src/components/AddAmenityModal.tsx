@@ -4,7 +4,7 @@ import { Close } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { createBanner, editBanner, fetchBannersById } from '@/store/slices/bannerSlice';
 import { toast } from 'sonner';
-import { Box, Dialog, DialogContent, FormControl, IconButton, InputLabel, MenuItem, Select, TextField, Typography } from '@mui/material';
+import { Box, Dialog, DialogContent, FormControl, IconButton, MenuItem, Select, TextField, Typography } from '@mui/material';
 import { createAmenity, editAmenity } from '@/store/slices/amenitySlice';
 
 interface AddBannerModalProps {
@@ -118,54 +118,57 @@ export const AddAmenityModal = ({ isOpen, onClose, fetchData, isEditing, record 
     };
 
     return (
-        <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth>
-            <DialogContent>
+        <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth sx={{ '& .MuiPaper-root': { borderRadius: '24px' } }}>
+            <DialogContent sx={{ padding: '28px' }}>
                 <div>
                     <h1 className='text-xl mb-6 mt-2 font-semibold'>{isEditing ? 'Edit Amenity' : 'Add Amenity'}</h1>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {!isEditing && (
-                        <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                            <InputLabel shrink>Site</InputLabel>
-                            <Select
-                                multiple
-                                label="Site"
-                                name="site"
-                                value={formData.site}
-                                onChange={handleFormChange}
-                                displayEmpty
-                                sx={fieldStyles}
-                                renderValue={(selected) => {
-                                    if (selected.length === 0) {
-                                        return <em>Select Site</em>;
-                                    }
-                                    return selected
-                                        .map((value) => sites.find((option) => option.id === value)?.name)
-                                        .join(', ');
-                                }}
-                            >
-                                {sites.map((option) => (
-                                    <MenuItem key={option.id} value={option.id}>
-                                        {option.name}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
+                        <div>
+                            <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">Site</label>
+                            <FormControl fullWidth variant="outlined">
+                                <Select
+                                    multiple
+                                    name="site"
+                                    value={formData.site}
+                                    onChange={handleFormChange}
+                                    displayEmpty
+                                    sx={fieldStyles}
+                                    renderValue={(selected) => {
+                                        if (selected.length === 0) {
+                                            return <em>Select Site</em>;
+                                        }
+                                        return selected
+                                            .map((value) => sites.find((option) => option.id === value)?.name)
+                                            .join(', ');
+                                    }}
+                                >
+                                    {sites.map((option) => (
+                                        <MenuItem key={option.id} value={option.id}>
+                                            {option.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </div>
                     )}
 
-                    <TextField
-                        label="Name"
-                        name="name"
-                        type="text"
-                        fullWidth
-                        variant="outlined"
-                        value={formData.name}
-                        onChange={handleFormChange}
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                    />
+                    <div>
+                        <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">Name</label>
+                        <TextField
+                            name="name"
+                            type="text"
+                            placeholder="Name"
+                            fullWidth
+                            variant="outlined"
+                            value={formData.name}
+                            onChange={handleFormChange}
+                            InputProps={{ sx: fieldStyles }}
+                            sx={{ mt: 1 }}
+                        />
+                    </div>
 
                     <Box sx={{ mb: 4 }}>
                         <Typography variant="body1" sx={{ mb: 2, color: 'hsl(var(--label-text))', fontWeight: 500 }}>
@@ -181,7 +184,7 @@ export const AddAmenityModal = ({ isOpen, onClose, fetchData, isEditing, record 
                                 onChange={handleFileChange}
                             />
                             <label htmlFor="file-upload" className="block cursor-pointer">
-                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-orange-50 hover:bg-orange-100 transition-colors">
+                                <div className="border-2 border-dashed border-gray-300 rounded-2xl bg-white p-8 text-center transition-colors">
                                     <span className="text-gray-600">
                                         Drag & Drop or{" "}
                                         <span className="text-red-500 underline">Choose file</span>{" "}
@@ -229,14 +232,20 @@ export const AddAmenityModal = ({ isOpen, onClose, fetchData, isEditing, record 
                         </div>
                     </Box>
 
-                    <div className="pt-4">
-                        <Button
+                    <div className="fm-action-bar pt-4">
+                        <button
+                            type="button"
+                            onClick={() => setIsModalOpen(false)}
+                            className="fm-action-secondary"
+                        >
+                            Cancel
+                        </button>
+                        <button
                             type="submit"
-                            variant="outline"
-                            className="fm-button-fix fm-button-brand w-full"
+                            className="fm-action-primary"
                         >
                             Submit
-                        </Button>
+                        </button>
                     </div>
                 </form>
             </DialogContent>

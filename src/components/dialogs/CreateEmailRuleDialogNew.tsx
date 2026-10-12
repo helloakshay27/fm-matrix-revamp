@@ -188,7 +188,7 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
     // (Radix modal mode otherwise traps pointer events outside DialogContent).
     <Dialog open={open} onOpenChange={onClose} modal={false}>
       <DialogContent
-        className="w-[95vw] max-w-[500px] max-h-[85vh] overflow-hidden flex flex-col bg-white"
+        className="w-[95vw] max-w-[500px] max-h-[85vh] overflow-hidden flex flex-col bg-white rounded-[24px] p-7"
         onPointerDownOutside={(e) => {
           // Keep dialog open when interacting with the MUI select menu
           if ((e.target as HTMLElement).closest(".MuiPopover-root, .MuiModal-root, .MuiMenu-root")) {
@@ -222,6 +222,7 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
           <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-3 p-1">
           {/* Rule Name */}
           <div className="space-y-1">
+            <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">Rule Name</label>
             <Controller
               name="ruleName"
               control={control}
@@ -229,7 +230,6 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
                 <TextField
                   {...field}
                   id="ruleName"
-                  label="Rule Name"
                   placeholder="Enter rule name"
                   fullWidth
                   variant="outlined"
@@ -243,16 +243,15 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
 
           {/* Trigger Type */}
           <div className="space-y-1">
+            <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">Trigger Type</label>
             <FormControl fullWidth variant="outlined" error={!!errors.triggerType}>
-              <InputLabel id="trigger-type-label">Trigger Type</InputLabel>
               <Controller
                 name="triggerType"
                 control={control}
                 render={({ field }) => (
                   <MuiSelect
                     {...field}
-                    labelId="trigger-type-label"
-                    label="Trigger Type"
+                    displayEmpty
                     sx={fieldStyles}
                     MenuProps={selectMenuProps}
                   >
@@ -272,16 +271,15 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
 
           {/* Trigger To */}
           <div className="space-y-1">
+            <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">Trigger To</label>
             <FormControl fullWidth variant="outlined" error={!!errors.triggerTo}>
-              <InputLabel id="trigger-to-label">Trigger To</InputLabel>
               <Controller
                 name="triggerTo"
                 control={control}
                 render={({ field }) => (
                   <MuiSelect
                     {...field}
-                    labelId="trigger-to-label"
-                    label="Trigger To"
+                    displayEmpty
                     sx={fieldStyles}
                     MenuProps={selectMenuProps}
                   >
@@ -305,7 +303,7 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
 
           {/* Roles */}
           <div className="space-y-1">
-            <Label>Roles (Select multiple)</Label>
+            <label className="block text-[12px] font-semibold text-gray-700">Roles (Select multiple)</label>
             <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1">
               {loadingRoles ? (
                 <p className="text-sm text-gray-500">Loading roles...</p>
@@ -337,6 +335,7 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
           {/* Period Value and Type */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
+              <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">Period Value</label>
               <Controller
                 name="periodValue"
                 control={control}
@@ -344,7 +343,6 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
                   <TextField
                     {...field}
                     id="periodValue"
-                    label="Period Value"
                     type="number"
                     placeholder="Enter value"
                     fullWidth
@@ -359,16 +357,15 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
             </div>
             
             <div className="space-y-1">
+              <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">Period Type</label>
               <FormControl fullWidth variant="outlined" error={!!errors.periodType}>
-                <InputLabel id="period-type-label">Period Type</InputLabel>
                 <Controller
                   name="periodType"
                   control={control}
                   render={({ field }) => (
                     <MuiSelect
                       {...field}
-                      labelId="period-type-label"
-                      label="Period Type"
+                      displayEmpty
                       sx={fieldStyles}
                       MenuProps={selectMenuProps}
                     >
@@ -387,13 +384,21 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row justify-end gap-2 pt-3">
-            <Button type="button" variant="outline" onClick={onClose} className="border-brand text-brand px-8">
+          <div className="fm-action-bar pt-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="fm-action-secondary"
+            >
               Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting} className="bg-brand hover:bg-brand-hover text-white px-8">
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="fm-action-primary"
+            >
               {isSubmitting ? 'Creating...' : 'Create Rule'}
-            </Button>
+            </button>
           </div>
           </form>
         </div>

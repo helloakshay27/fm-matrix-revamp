@@ -38,6 +38,7 @@ const fieldStyles = {
   },
   '& .MuiOutlinedInput-root': {
     backgroundColor: '#ffffff',
+    borderRadius: '12px',
     '& fieldset': { borderColor: '#e5e7eb' },
     '&:hover fieldset': { borderColor: '#C72030' },
     '&.Mui-focused fieldset': { borderColor: '#C72030' },
@@ -178,7 +179,7 @@ export const EditWorkTypeModal = ({ isOpen, onClose, workTypeData, onUpdate }: E
   return (
     <Dialog open={isOpen} onOpenChange={handleClose} modal={false}>
       <DialogContent
-        className="sm:max-w-[500px] p-0"
+        className="sm:max-w-[500px] p-0 rounded-[24px]"
         onPointerDownOutside={(e) => {
           if (isMuiOverlayTarget(e.target)) e.preventDefault();
         }}
@@ -186,7 +187,7 @@ export const EditWorkTypeModal = ({ isOpen, onClose, workTypeData, onUpdate }: E
           if (isMuiOverlayTarget(e.target)) e.preventDefault();
         }}
       >
-        <DialogHeader className="px-6 py-4 border-b border-gray-200">
+        <DialogHeader className="px-7 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg font-medium text-gray-900">Edit Work Type</DialogTitle>
             <Button
@@ -200,45 +201,47 @@ export const EditWorkTypeModal = ({ isOpen, onClose, workTypeData, onUpdate }: E
           </div>
         </DialogHeader>
         
-        <div className="px-6 py-4 space-y-4">
+        <div className="px-7 py-4 space-y-4">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <span className="ml-2 text-sm text-gray-600">Loading work type data...</span>
             </div>
           ) : (
             <>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="edit-staff-type-label" shrink>
-                  Select Staff Type *
-                </InputLabel>
-                <MuiSelect
-                  labelId="edit-staff-type-label"
-                  label="Select Staff Type *"
-                  value={staffType}
-                  onChange={(e) => setStaffType(e.target.value as string)}
-                  displayEmpty
-                  notched
-                  sx={fieldStyles}
-                  MenuProps={selectMenuProps}
-                >
-                  <MenuItem value="">
-                    <em>Select Staff Type</em>
-                  </MenuItem>
-                  <MenuItem value="Personal">Personal</MenuItem>
-                  <MenuItem value="Society">Society</MenuItem>
-                </MuiSelect>
-              </FormControl>
+              <div>
+                <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                  Work Staff Type <span className="text-red-500">*</span>
+                </label>
+                <FormControl fullWidth variant="outlined">
+                  <MuiSelect
+                    value={staffType}
+                    onChange={(e) => setStaffType(e.target.value as string)}
+                    displayEmpty
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    <MenuItem value="">
+                      <em>Select Staff Type</em>
+                    </MenuItem>
+                    <MenuItem value="Personal">Personal</MenuItem>
+                    <MenuItem value="Society">Society</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              </div>
               
-              <TextField
-                label="Enter Work Type *"
-                placeholder="Enter work type"
-                value={workType}
-                onChange={(e) => setWorkType(e.target.value)}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                sx={fieldStyles}
-              />
+              <div>
+                <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                  Work Type <span className="text-red-500">*</span>
+                </label>
+                <TextField
+                  placeholder="Enter work type"
+                  value={workType}
+                  onChange={(e) => setWorkType(e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  sx={fieldStyles}
+                />
+              </div>
               
               <div className="flex items-center space-x-2">
                 <Switch
@@ -254,10 +257,18 @@ export const EditWorkTypeModal = ({ isOpen, onClose, workTypeData, onUpdate }: E
           )}
         </div>
 
-        <div className="flex justify-center px-6 py-4 border-t border-gray-200">
-          <Button
+        <div className="fm-action-bar px-7 py-4 border-t border-gray-200">
+          <button
+            type="button"
+            onClick={handleClose}
+            className="fm-action-secondary"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
             onClick={handleSubmit}
-            className="bg-brand hover:bg-brand-hover text-white px-8"
+            className="fm-action-primary"
             disabled={!staffType || !workType.trim() || isSubmitting}
           >
             {isSubmitting ? (
@@ -268,7 +279,7 @@ export const EditWorkTypeModal = ({ isOpen, onClose, workTypeData, onUpdate }: E
             ) : (
               'Update'
             )}
-          </Button>
+          </button>
         </div>
       </DialogContent>
     </Dialog>

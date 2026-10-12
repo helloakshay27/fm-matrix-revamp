@@ -53,7 +53,11 @@ const fields: FieldConfig[] = [
 ];
 
 const fieldSx = {
-    "& .MuiOutlinedInput-root": { backgroundColor: "white" },
+    "& .MuiOutlinedInput-root": {
+        backgroundColor: "white",
+        borderRadius: "12px",
+        minHeight: "44px",
+    },
     "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
         borderColor: "var(--color-primary)",
     },
@@ -127,7 +131,13 @@ export function TransportSupplierFormDialog({
     const fieldsDisabled = isSubmitting || isLoadingSupplier || loadFailed;
 
     return (
-        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+        <Dialog
+            open={open}
+            onClose={handleClose}
+            fullWidth
+            maxWidth="sm"
+            PaperProps={{ sx: { borderRadius: "24px" } }}
+        >
             <DialogTitle sx={{ fontWeight: 600, pr: 6 }}>
                 {isEdit ? "Edit Supplier" : "Create Supplier"}
                 <IconButton
@@ -141,7 +151,7 @@ export function TransportSupplierFormDialog({
             </DialogTitle>
 
             <form onSubmit={handleSubmit(onSubmit)} noValidate>
-                <DialogContent dividers>
+                <DialogContent dividers sx={{ p: "28px" }}>
                     {loadFailed ? (
                         <div className="py-8 text-center">
                             <p className="text-sm text-brand-error">Failed to load supplier.</p>
@@ -163,56 +173,67 @@ export function TransportSupplierFormDialog({
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                             {fields.map((field) => (
-                                <Controller
+                                <div
                                     key={field.name}
-                                    name={field.name}
-                                    control={control}
-                                    render={({ field: input, fieldState }) => (
-                                        <TextField
-                                            {...input}
-                                            onChange={(e) =>
-                                                input.onChange(
-                                                    field.numeric
-                                                        ? e.target.value.replace(/\D/g, "")
-                                                        : e.target.value
-                                                )
-                                            }
-                                            label={field.label}
-                                            placeholder={field.placeholder}
-                                            required={field.required}
-                                            type={field.type ?? "text"}
-                                            multiline={field.multiline}
-                                            minRows={field.multiline ? 2 : undefined}
-                                            error={!!fieldState.error}
-                                            helperText={fieldState.error?.message}
-                                            disabled={fieldsDisabled}
-                                            fullWidth
-                                            size="small"
-                                            slotProps={{
-                                                inputLabel: { shrink: true },
-                                                htmlInput: {
-                                                    maxLength: field.maxLength,
-                                                    inputMode: field.numeric ? "numeric" : undefined,
-                                                },
-                                            }}
-                                            sx={fieldSx}
-                                            className={field.fullRow ? "sm:col-span-2" : undefined}
-                                        />
-                                    )}
-                                />
+                                    className={field.fullRow ? "sm:col-span-2" : undefined}
+                                >
+                                    <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                                        {field.label}
+                                        {field.required && (
+                                            <span className="text-red-500"> *</span>
+                                        )}
+                                    </label>
+                                    <Controller
+                                        name={field.name}
+                                        control={control}
+                                        render={({ field: input, fieldState }) => (
+                                            <TextField
+                                                {...input}
+                                                onChange={(e) =>
+                                                    input.onChange(
+                                                        field.numeric
+                                                            ? e.target.value.replace(/\D/g, "")
+                                                            : e.target.value
+                                                    )
+                                                }
+                                                placeholder={field.placeholder}
+                                                type={field.type ?? "text"}
+                                                multiline={field.multiline}
+                                                minRows={field.multiline ? 2 : undefined}
+                                                error={!!fieldState.error}
+                                                helperText={fieldState.error?.message}
+                                                disabled={fieldsDisabled}
+                                                fullWidth
+                                                size="small"
+                                                slotProps={{
+                                                    htmlInput: {
+                                                        maxLength: field.maxLength,
+                                                        inputMode: field.numeric ? "numeric" : undefined,
+                                                    },
+                                                }}
+                                                sx={fieldSx}
+                                            />
+                                        )}
+                                    />
+                                </div>
                             ))}
                         </div>
                     )}
                 </DialogContent>
 
-                <DialogActions sx={{ px: 3, py: 2 }}>
-                    <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
+                <div className="fm-action-bar px-[28px] py-4">
+                    <button
+                        type="button"
+                        onClick={handleClose}
+                        disabled={isSubmitting}
+                        className="fm-action-secondary"
+                    >
                         Cancel
-                    </Button>
-                    <Button
+                    </button>
+                    <button
                         type="submit"
                         disabled={fieldsDisabled}
-                        className="!bg-brand hover:!bg-brand-hover !text-white"
+                        className="fm-action-primary"
                     >
                         {isEdit
                             ? isSubmitting
@@ -221,8 +242,8 @@ export function TransportSupplierFormDialog({
                             : isSubmitting
                               ? "Creating..."
                               : "Create"}
-                    </Button>
-                </DialogActions>
+                    </button>
+                </div>
             </form>
         </Dialog>
     );

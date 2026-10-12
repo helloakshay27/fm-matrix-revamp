@@ -212,38 +212,43 @@ const CurrencyPage = () => {
                 }}
                 maxWidth="sm"
                 fullWidth
+                sx={{ '& .MuiPaper-root': { borderRadius: '24px' } }}
             >
-                <DialogContent>
+                <DialogContent sx={{ padding: '28px' }}>
                     <h1 className="text-xl mb-6 mt-2 font-semibold">
                         {editingCurrency ? "Edit Currency" : "Add Currency"}
                     </h1>
 
                     <form className="space-y-4" onSubmit={handleSubmit}>
-                        <TextField
-                            label="Currency Name*"
-                            name="currency"
-                            type="text"
-                            fullWidth
-                            variant="outlined"
-                            value={formData.currency}
-                            onChange={(e) => handleChange("currency", e.target.value)}
-                            InputLabelProps={{ shrink: true }}
-                            InputProps={{ sx: fieldStyles }}
-                            sx={{ mt: 1 }}
-                        />
+                        <div>
+                            <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">Currency Name*</label>
+                            <TextField
+                                name="currency"
+                                type="text"
+                                placeholder="Currency Name"
+                                fullWidth
+                                variant="outlined"
+                                value={formData.currency}
+                                onChange={(e) => handleChange("currency", e.target.value)}
+                                InputProps={{ sx: fieldStyles }}
+                                sx={{ mt: 1 }}
+                            />
+                        </div>
 
-                        <TextField
-                            label="Symbol*"
-                            name="symbol"
-                            type="text"
-                            fullWidth
-                            variant="outlined"
-                            value={formData.symbol}
-                            onChange={(e) => handleChange("symbol", e.target.value)}
-                            InputLabelProps={{ shrink: true }}
-                            InputProps={{ sx: fieldStyles }}
-                            sx={{ mt: 1 }}
-                        />
+                        <div>
+                            <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">Symbol*</label>
+                            <TextField
+                                name="symbol"
+                                type="text"
+                                placeholder="Symbol"
+                                fullWidth
+                                variant="outlined"
+                                value={formData.symbol}
+                                onChange={(e) => handleChange("symbol", e.target.value)}
+                                InputProps={{ sx: fieldStyles }}
+                                sx={{ mt: 1 }}
+                            />
+                        </div>
 
                         {
                             !editingCurrency && (
@@ -272,13 +277,21 @@ const CurrencyPage = () => {
                             )
                         }
 
-                        <Button
-                            type="submit"
-                            variant="ghost"
-                            className="fm-button-fix fm-button-brand w-full"
-                        >
-                            {editingCurrency ? "Update" : "Submit"}
-                        </Button>
+                        <div className="fm-action-bar pt-4">
+                            <button
+                                type="button"
+                                onClick={() => setIsModalOpen(false)}
+                                className="fm-action-secondary"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                className="fm-action-primary"
+                            >
+                                {editingCurrency ? "Update" : "Submit"}
+                            </button>
+                        </div>
                     </form>
                 </DialogContent>
             </Dialog>

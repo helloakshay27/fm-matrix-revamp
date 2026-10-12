@@ -172,7 +172,7 @@ const ParagraphCard = ({
   };
 
   return (
-    <Card key={p.id} className="border border-blue-100 bg-[#f8fbff]">
+    <Card key={p.id} className="border border-gray-200 bg-white rounded-2xl">
       <CardContent className="pt-6 relative">
         <div className="absolute top-2 right-2 flex gap-1">
           <button
@@ -231,7 +231,7 @@ const DescriptionSection = ({
   placeholder: string;
 }) => (
   <div className="mb-8">
-    <h3 className="text-[#C72030] text-lg font-semibold mb-4">{title}</h3>
+    <h3 className="text-sm font-semibold text-gray-800 mb-4">{title}</h3>
     <div className="space-y-4">
       {paragraphs.map((p, index) => (
         <ParagraphCard
@@ -577,22 +577,22 @@ const CompanySetup: React.FC = () => {
             </div>
 
             {/* Section 1 Buttons */}
-            <div className="flex items-center justify-center gap-4 pt-6 border-t border-gray-100">
-              <Button
-                variant="outline"
+            <div className="fm-action-bar pt-6 border-t border-gray-100">
+              <button
+                type="button"
                 onClick={() => navigate(-1)}
-                className="border-[#C72030] text-[#C72030] px-8"
+                className="fm-action-secondary"
               >
                 Cancel
-              </Button>
-              <Button
-                variant="ghost"
+              </button>
+              <button
+                type="button"
                 onClick={handleCompanyUpdate}
                 disabled={loading}
-                className="fm-button-fix fm-button-brand px-4 py-2"
+                className="fm-action-primary"
               >
                 {loading ? "Saving..." : "Save Company Info"}
-              </Button>
+              </button>
             </div>
           </div>
         </div>

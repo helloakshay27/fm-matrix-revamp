@@ -165,14 +165,19 @@ export const LockModuleEdit = () => {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleBack}>
+        <div className="fm-action-bar">
+          <button
+            type="button"
+            className="fm-action-secondary"
+            onClick={handleBack}
+          >
             Cancel
-          </Button>
-          <Button 
+          </button>
+          <button 
+            type="button"
             onClick={handleSave} 
             disabled={saving}
-            className="bg-[#C72030] hover:bg-[#C72030]/90"
+            className="fm-action-primary"
           >
             {saving ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -180,7 +185,7 @@ export const LockModuleEdit = () => {
               <Save className="w-4 h-4 mr-2" />
             )}
             {saving ? 'Saving...' : 'Save Changes'}
-          </Button>
+          </button>
         </div>
       </div>
 

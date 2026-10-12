@@ -826,10 +826,10 @@ export const UtilityWasteGenerationSetupDashboard = () => {
       case "status":
         return (
           <span
-            className={`px-3 py-1 text-xs font-medium rounded-full cursor-pointer ${
+            className={`px-[10px] py-[3px] text-[11px] font-medium rounded-full cursor-pointer transition-colors ${
               item.active
-                ? "bg-green-100 text-green-800"
-                : "bg-red-100 text-red-800"
+                ? "bg-[#e0f7ea] text-[#12a150]"
+                : "bg-[#fbdcdc] text-[#a32126]"
             }`}
             onClick={() => handleStatusToggle(item.id)}
           >
@@ -898,7 +898,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
           </p>
         </div>
 
-        <div className="flex border-b border-gray-200 bg-white rounded-t-lg">
+        <div className="inline-flex items-center gap-[3px] p-[3px] rounded-xl bg-[#f5f4f0]">
           {[
             "Commodity",
             "Category",
@@ -907,10 +907,10 @@ export const UtilityWasteGenerationSetupDashboard = () => {
             <button
               key={tab}
               onClick={() => handleTabClick(tab)}
-              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors ${
                 activeTab === tab
-                  ? "border-brand text-brand bg-brand-selected"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
               }`}
             >
               {tabDisplayLabel(tab)}
@@ -1009,22 +1009,23 @@ export const UtilityWasteGenerationSetupDashboard = () => {
               <Label htmlFor="commodity-customer-enabled">Customer Enabled</Label>
             </div>
           </div>
-          <div className="flex justify-end space-x-2">
-            <Button
-              variant="outline"
+          <div className="fm-action-bar pt-4">
+            <button
+              type="button"
               onClick={() => setIsAddCommodityModalOpen(false)}
               disabled={submitting}
-              className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030]"
+              className="fm-action-secondary"
             >
               Cancel
-            </Button>
-            <Button
+            </button>
+            <button
+              type="button"
               onClick={handleCommoditySubmit}
-              className="bg-brand text-white hover:bg-brand-hover"
+              className="fm-action-primary"
               disabled={submitting}
             >
               {submitting ? "Submitting..." : "Submit"}
-            </Button>
+            </button>
           </div>
         </DialogContent>
       </Dialog>
@@ -1158,22 +1159,23 @@ export const UtilityWasteGenerationSetupDashboard = () => {
               <Label htmlFor="category-customer-enabled">Customer Enabled</Label>
             </div>
           </div>
-          <div className="flex justify-end space-x-2">
-            <Button
-              variant="outline"
+          <div className="fm-action-bar pt-4">
+            <button
+              type="button"
               onClick={() => setIsAddCategoryModalOpen(false)}
               disabled={submitting}
-              className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030]"
+              className="fm-action-secondary"
             >
               Cancel
-            </Button>
-            <Button
+            </button>
+            <button
+              type="button"
               onClick={handleCategorySubmit}
-              className="bg-brand text-white hover:bg-brand-hover"
+              className="fm-action-primary"
               disabled={submitting}
             >
               {submitting ? "Submitting..." : "Submit"}
-            </Button>
+            </button>
           </div>
         </DialogContent>
       </Dialog>
@@ -1370,21 +1372,23 @@ export const UtilityWasteGenerationSetupDashboard = () => {
               </div>
             </div>
           )}
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
+          <div className="fm-action-bar pt-4">
+            <button
+              type="button"
               onClick={() => setEditingTag(null)}
               disabled={submitting}
+              className="fm-action-secondary"
             >
               Cancel
-            </Button>
-            <Button
+            </button>
+            <button
+              type="button"
               onClick={handleTagUpdate}
-              className="bg-brand text-white hover:bg-brand-hover"
+              className="fm-action-primary"
               disabled={submitting}
             >
               {submitting ? "Saving..." : "Save"}
-            </Button>
+            </button>
           </div>
         </DialogContent>
       </Dialog>
@@ -1410,22 +1414,23 @@ export const UtilityWasteGenerationSetupDashboard = () => {
               InputLabelProps={{ shrink: true }}
             />
           </div>
-          <div className="flex justify-end space-x-2">
-            <Button
-              variant="outline"
+          <div className="fm-action-bar pt-4">
+            <button
+              type="button"
               onClick={() => setIsAddLandlordModalOpen(false)}
               disabled={submitting}
-              className="border-brand text-brand hover:bg-brand-selected"
+              className="fm-action-secondary"
             >
               Cancel
-            </Button>
-            <Button
+            </button>
+            <button
+              type="button"
               onClick={handleLandlordSubmit}
-              className="bg-brand text-white hover:bg-brand-hover"
+              className="fm-action-primary"
               disabled={submitting}
             >
               {submitting ? "Submitting..." : "Submit"}
-            </Button>
+            </button>
           </div>
         </DialogContent>
       </Dialog>

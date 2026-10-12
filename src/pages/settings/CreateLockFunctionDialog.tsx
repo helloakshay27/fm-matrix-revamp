@@ -15,7 +15,6 @@ import {
 } from "@/services/lockFunctionService";
 import {
   FormControl,
-  InputLabel,
   MenuItem,
   Select as MuiSelect,
   TextField,
@@ -174,7 +173,7 @@ export const CreateLockFunctionDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
       <DialogContent
-        className="w-full sm:max-w-[500px] bg-white overflow-visible"
+        className="w-full sm:max-w-[500px] bg-white overflow-visible rounded-[24px] p-7"
         onPointerDownOutside={(e) => {
           if (
             (e.target as HTMLElement).closest(
@@ -211,79 +210,107 @@ export const CreateLockFunctionDialog = ({
         </DialogHeader>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
-          <TextField
-            label="Function Name *"
-            value={formData.name}
-            onChange={(e) => handleInputChange("name", e.target.value)}
-            fullWidth
-            variant="outlined"
-            sx={fieldStyles}
-          />
-
-          <TextField
-            label="Action Name *"
-            value={formData.action_name}
-            onChange={(e) => handleInputChange("action_name", e.target.value)}
-            fullWidth
-            variant="outlined"
-            sx={fieldStyles}
-          />
-
-          <FormControl fullWidth variant="outlined" className="sm:col-span-2">
-            <InputLabel id="lock-function-module-label">Module *</InputLabel>
-            <MuiSelect
-              labelId="lock-function-module-label"
-              label="Module *"
-              value={formData.module_id}
-              onChange={(e) =>
-                handleInputChange("module_id", e.target.value as string)
-              }
+          <div>
+            <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+              Function Name *
+            </label>
+            <TextField
+              placeholder="Function Name *"
+              value={formData.name}
+              onChange={(e) => handleInputChange("name", e.target.value)}
+              fullWidth
+              variant="outlined"
               sx={fieldStyles}
-              MenuProps={selectMenuProps}
-            >
-              <MenuItem value="">
-                <em>Select Module</em>
-              </MenuItem>
-              {modules.map((module) => (
-                <MenuItem
-                  key={module.id}
-                  value={module.id?.toString() || ""}
-                >
-                  {module.name}
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+              Action Name *
+            </label>
+            <TextField
+              placeholder="Action Name *"
+              value={formData.action_name}
+              onChange={(e) => handleInputChange("action_name", e.target.value)}
+              fullWidth
+              variant="outlined"
+              sx={fieldStyles}
+            />
+          </div>
+
+          <div className="sm:col-span-2">
+            <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+              Module *
+            </label>
+            <FormControl fullWidth variant="outlined">
+              <MuiSelect
+                value={formData.module_id}
+                onChange={(e) =>
+                  handleInputChange("module_id", e.target.value as string)
+                }
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value="">
+                  <em>Select Module</em>
                 </MenuItem>
-              ))}
-            </MuiSelect>
-          </FormControl>
+                {modules.map((module) => (
+                  <MenuItem
+                    key={module.id}
+                    value={module.id?.toString() || ""}
+                  >
+                    {module.name}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
+          </div>
 
-          <TextField
-            label="React Link"
-            value={formData.react_link}
-            onChange={(e) => handleInputChange("react_link", e.target.value)}
-            fullWidth
-            variant="outlined"
-            sx={fieldStyles}
-            className="sm:col-span-2"
-          />
+          <div className="sm:col-span-2">
+            <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+              React Link
+            </label>
+            <TextField
+              placeholder="React Link"
+              value={formData.react_link}
+              onChange={(e) => handleInputChange("react_link", e.target.value)}
+              fullWidth
+              variant="outlined"
+              sx={fieldStyles}
+            />
+          </div>
 
-          <TextField
-            label="Parent Function"
-            value={formData.parent_function}
-            onChange={(e) =>
-              handleInputChange("parent_function", e.target.value)
-            }
-            fullWidth
-            variant="outlined"
-            sx={fieldStyles}
-            className="sm:col-span-2"
-          />
+          <div className="sm:col-span-2">
+            <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+              Parent Function
+            </label>
+            <TextField
+              placeholder="Parent Function"
+              value={formData.parent_function}
+              onChange={(e) =>
+                handleInputChange("parent_function", e.target.value)
+              }
+              fullWidth
+              variant="outlined"
+              sx={fieldStyles}
+            />
+          </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
-          <Button
+        <div className="fm-action-bar pt-4">
+          <button
+            type="button"
+            onClick={handleCancel}
+            disabled={isSubmitting}
+            className="fm-action-secondary"
+          >
+            Cancel
+          </button>
+          <button
             type="button"
             onClick={handleCreate}
             disabled={isSubmitting}
-            className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto disabled:!opacity-100"
+            className="fm-action-primary"
           >
             {isSubmitting ? (
               <>
@@ -291,18 +318,9 @@ export const CreateLockFunctionDialog = ({
                 Creating...
               </>
             ) : (
-              "CREATE"
+              "Create"
             )}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-            disabled={isSubmitting}
-            className="border-brand text-brand px-8 w-full sm:w-auto"
-          >
-            CANCEL
-          </Button>
+          </button>
         </div>
       </DialogContent>
     </Dialog>

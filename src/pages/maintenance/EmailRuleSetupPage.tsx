@@ -178,7 +178,7 @@ export const EmailRuleSetupPage: React.FC = () => {
       case 'role':
         return <span className="text-sm text-gray-600">{rule.role}</span>;
       case 'periodValue':
-        return <span className="text-sm text-gray-600">{rule.periodValue}</span>;
+        return <span className="block text-right tabular-nums text-sm text-gray-600">{rule.periodValue}</span>;
       case 'periodType':
         return <span className="text-sm text-gray-600">{rule.periodType}</span>;
       case 'createdOn':

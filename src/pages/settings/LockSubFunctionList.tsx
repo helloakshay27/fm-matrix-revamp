@@ -362,11 +362,13 @@ useEffect(() => {
       <span className="text-sm text-gray-600">{lockSubFunction.createdBy || '-'}</span>
     ),
     active: (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-        lockSubFunction.active 
-          ? 'bg-green-100 text-green-800' 
-          : 'bg-red-100 text-red-800'
-      }`}>
+      <span
+        className={
+          lockSubFunction.active
+            ? 'rounded-full bg-green-100 px-[10px] py-[3px] text-[11px] font-medium text-green-700'
+            : 'rounded-full bg-gray-100 px-[10px] py-[3px] text-[11px] font-medium text-gray-600'
+        }
+      >
         {lockSubFunction.active ? 'Active' : 'Inactive'}
       </span>
     )

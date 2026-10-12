@@ -1198,7 +1198,7 @@ export const Header = () => {
                         navigate(
                           isClubSite
                             ? "/settings/vas/booking-club/setup"
-                            : "/settings"
+                            : "/settings/company-hub/Company-setup"
                         )
                       }
                       className="mx-2 my-1 rounded-md"
