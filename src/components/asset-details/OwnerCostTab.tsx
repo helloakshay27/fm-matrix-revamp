@@ -11,6 +11,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CreditCard, X } from 'lucide-react';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 
+// Asset Status Update modal (repair from breakdown, and Cost on Owner Cost) — labels above
+// controls, white rounded fields, Cancel (white) + Submit (ink) bottom-right.
+const modalLabelClass = "block mb-2 text-[13px] font-semibold text-[rgba(26,26,24,0.68)]";
+const modalFieldClass =
+  "h-[52px] w-full rounded-[14px] border border-[rgba(26,26,24,0.12)] bg-white px-4 text-[14px] font-medium text-[#1A1A18] placeholder:text-[rgba(26,26,24,0.38)] shadow-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-[#1A1A18] [&>span]:text-left";
+const modalTextareaClass =
+  "min-h-[104px] w-full rounded-[14px] border border-[rgba(26,26,24,0.12)] bg-white px-4 py-3 text-[14px] font-medium text-[#1A1A18] placeholder:text-[rgba(26,26,24,0.38)] shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-[#1A1A18]";
+const modalPrefixClass =
+  "pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-[rgba(26,26,24,0.68)]";
+const modalCancelClass =
+  "inline-flex h-12 items-center justify-center rounded-[10px] border border-[rgba(26,26,24,0.12)] bg-white px-6 text-[14px] font-semibold text-[#1A1A18] hover:bg-[#F7F6F2] transition-colors";
+const modalSubmitClass =
+  "inline-flex h-12 items-center justify-center rounded-[10px] border border-[#1A1A18] bg-[#1A1A18] px-6 text-[14px] font-semibold text-white hover:bg-[#12100E] transition-colors";
+
 interface OwnerCostTabProps {
   asset: Asset;
   assetId?: string | number;
@@ -328,25 +342,25 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
             </button>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
-              <Label className="text-sm font-medium">Repaired</Label>
+              <Label className={modalLabelClass}>Repaired</Label>
               <RadioGroup
                 value={formData.status}
                 onValueChange={handleStatusChange}
-                className="flex gap-4 mt-2"
+                className="flex gap-4"
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="repaired" id="status-repaired" />
-                  <Label htmlFor="status-repaired">Repaired</Label>
+                  <Label htmlFor="status-repaired" className="text-[14px] font-medium text-[#1A1A18]">Repaired</Label>
                 </div>
               </RadioGroup>
             </div>
 
             <div>
-              <Label htmlFor="cost" className="text-sm font-medium">Cost ({currencySymbol.trim()})</Label>
-              <div className="relative mt-2">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+              <Label htmlFor="cost" className={modalLabelClass}>Cost ({currencySymbol.trim()})</Label>
+              <div className="relative">
+                <span className={modalPrefixClass}>
                   {currencySymbol.trim()}
                 </span>
                 <Input
@@ -356,13 +370,13 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
                   value={formData.cost}
                   onChange={handleInputChange}
                   placeholder="Enter cost"
-                  className="h-[54px] rounded-2xl border-gray-200 pl-16"
+                  className={`${modalFieldClass} pl-[62px]`}
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="warranty" className="text-sm font-medium">Warranty (in months)</Label>
+              <Label htmlFor="warranty" className={modalLabelClass}>Warranty (in months)</Label>
               <Input
                 id="warranty"
                 name="warranty"
@@ -370,15 +384,15 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
                 value={formData.warranty}
                 onChange={handleInputChange}
                 placeholder="Enter warranty period"
-                className="mt-2 h-[54px] rounded-2xl border-gray-200"
+                className={modalFieldClass}
               />
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <Label className="text-sm font-medium">Type of Warranty</Label>
+                <Label className={modalLabelClass}>Type of Warranty</Label>
                 <Select value={formData.warrantyType} onValueChange={handleWarrantyTypeChangeModal}>
-                  <SelectTrigger className="mt-2 h-[54px] rounded-2xl border-gray-200">
+                  <SelectTrigger className={modalFieldClass}>
                     <SelectValue placeholder="Select warranty type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -390,9 +404,9 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
               </div>
 
               <div>
-                <Label className="text-sm font-medium">Payment Status</Label>
+                <Label className={modalLabelClass}>Payment Status</Label>
                 <Select value={formData.paymentStatus} onValueChange={handlePaymentStatusChangeModal}>
-                  <SelectTrigger className="mt-2 h-[54px] rounded-2xl border-gray-200">
+                  <SelectTrigger className={modalFieldClass}>
                     <SelectValue placeholder="Select payment status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -405,7 +419,7 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
             </div>
 
             <div>
-              <Label htmlFor="reason" className="text-sm font-medium">Comments</Label>
+              <Label htmlFor="reason" className={modalLabelClass}>Comments</Label>
               <Textarea
                 id="reason"
                 name="reason"
@@ -413,26 +427,17 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
                 onChange={handleInputChange}
                 placeholder="Enter reason"
                 rows={4}
-                className="mt-2 min-h-[104px] rounded-2xl border-gray-200"
+                className={modalTextareaClass}
               />
             </div>
 
-            <div className="flex justify-end gap-3 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={closeRepairModal}
-                className="h-12 rounded-xl border-gray-200 px-5 !text-gray-700"
-              >
+            <div className="flex justify-end gap-3 pt-1">
+              <button type="button" onClick={closeRepairModal} className={modalCancelClass}>
                 Cancel
-              </Button>
-              <Button
-                type="button"
-                onClick={handleSubmit}
-                className="h-12 rounded-xl bg-neutral-900 px-6 text-white hover:bg-neutral-800"
-              >
+              </button>
+              <button type="button" onClick={handleSubmit} className={modalSubmitClass}>
                 Submit
-              </Button>
+              </button>
             </div>
           </div>
         </DialogContent>
@@ -453,25 +458,25 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
             </button>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
-              <Label className="text-sm font-medium">Repaired</Label>
+              <Label className={modalLabelClass}>Repaired</Label>
               <RadioGroup
                 value={assetStatusFormData.status}
                 onValueChange={handleAssetStatusChange}
-                className="flex gap-4 mt-2"
+                className="flex gap-4"
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="repaired" id="cost-status-repaired" />
-                  <Label htmlFor="cost-status-repaired">Repaired</Label>
+                  <Label htmlFor="cost-status-repaired" className="text-[14px] font-medium text-[#1A1A18]">Repaired</Label>
                 </div>
               </RadioGroup>
             </div>
 
             <div>
-              <Label htmlFor="asset-cost" className="text-sm font-medium">Cost ({currencySymbol.trim()})</Label>
-              <div className="relative mt-2">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+              <Label htmlFor="asset-cost" className={modalLabelClass}>Cost ({currencySymbol.trim()})</Label>
+              <div className="relative">
+                <span className={modalPrefixClass}>
                   {currencySymbol.trim()}
                 </span>
                 <Input
@@ -481,13 +486,13 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
                   value={assetStatusFormData.cost}
                   onChange={handleAssetStatusInputChange}
                   placeholder="Enter cost"
-                  className="h-[54px] rounded-2xl border-gray-200 pl-16"
+                  className={`${modalFieldClass} pl-[62px]`}
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="asset-warranty" className="text-sm font-medium">Warranty (in months)</Label>
+              <Label htmlFor="asset-warranty" className={modalLabelClass}>Warranty (in months)</Label>
               <Input
                 id="asset-warranty"
                 name="warranty"
@@ -495,15 +500,15 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
                 value={assetStatusFormData.warranty}
                 onChange={handleAssetStatusInputChange}
                 placeholder="Enter warranty period"
-                className="mt-2 h-[54px] rounded-2xl border-gray-200"
+                className={modalFieldClass}
               />
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <Label className="text-sm font-medium">Type of Warranty</Label>
+                <Label className={modalLabelClass}>Type of Warranty</Label>
                 <Select value={assetStatusFormData.warrantyType} onValueChange={handleWarrantyTypeChange}>
-                  <SelectTrigger className="mt-2 h-[54px] rounded-2xl border-gray-200">
+                  <SelectTrigger className={modalFieldClass}>
                     <SelectValue placeholder="Select warranty type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -515,9 +520,9 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
               </div>
 
               <div>
-                <Label className="text-sm font-medium">Payment Status</Label>
+                <Label className={modalLabelClass}>Payment Status</Label>
                 <Select value={assetStatusFormData.paymentStatus} onValueChange={handlePaymentStatusChange}>
-                  <SelectTrigger className="mt-2 h-[54px] rounded-2xl border-gray-200">
+                  <SelectTrigger className={modalFieldClass}>
                     <SelectValue placeholder="Select payment status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -530,7 +535,7 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
             </div>
 
             <div>
-              <Label htmlFor="asset-comments" className="text-sm font-medium">Comments</Label>
+              <Label htmlFor="asset-comments" className={modalLabelClass}>Comments</Label>
               <Textarea
                 id="asset-comments"
                 name="comments"
@@ -538,26 +543,17 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
                 onChange={handleAssetStatusInputChange}
                 placeholder="Enter reason"
                 rows={4}
-                className="mt-2 min-h-[104px] rounded-2xl border-gray-200"
+                className={modalTextareaClass}
               />
             </div>
 
-            <div className="flex justify-end gap-3 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowAssetStatusModal(false)}
-                className="h-12 rounded-xl border-gray-200 px-5 !text-gray-700"
-              >
+            <div className="flex justify-end gap-3 pt-1">
+              <button type="button" onClick={() => setShowAssetStatusModal(false)} className={modalCancelClass}>
                 Cancel
-              </Button>
-              <Button
-                type="button"
-                onClick={handleAssetStatusSubmit}
-                className="h-12 rounded-xl bg-neutral-900 px-6 text-white hover:bg-neutral-800"
-              >
+              </button>
+              <button type="button" onClick={handleAssetStatusSubmit} className={modalSubmitClass}>
                 Submit
-              </Button>
+              </button>
             </div>
           </div>
         </DialogContent>

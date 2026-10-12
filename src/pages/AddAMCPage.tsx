@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, X, Plus, FileSpreadsheet, FileText, File, Loader2 } from 'lucide-react';
+import { ArrowLeft, X, Plus, FileSpreadsheet, FileText, File, Loader2, Settings, CalendarClock, Paperclip } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, FormHelperText, Box, Avatar, Dialog as MuiDialog, DialogTitle, DialogContent, DialogActions, Typography, Switch } from '@mui/material';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, FormHelperText, Box, Dialog as MuiDialog, DialogTitle, DialogContent, DialogActions, Typography, Switch } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAssetsData } from '@/store/slices/assetsSlice';
 import { createAMC, resetAmcCreate } from '@/store/slices/amcCreateSlice';
@@ -1647,14 +1646,10 @@ export const AddAMCPage = () => {
 
               {/* Step Content - AMC Configuration */}
               {stepIndex === 0 && (
-                <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                  borderRadius: '4px',
-                  background: '#FFF',
-                  boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-                }}>
-                  <CardHeader className="bg-[#F6F4EE] ">
-                    <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                      <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">1</span>
+                <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
+                  <CardHeader className="pb-0">
+                    <CardTitle className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em] flex items-center">
+                      <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><Settings className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
                       AMC CONFIGURATION
                     </CardTitle>
                   </CardHeader>
@@ -1929,14 +1924,10 @@ export const AddAMCPage = () => {
 
               {/* Step Content - AMC Details */}
               {stepIndex === 1 && (
-                <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                  borderRadius: '4px',
-                  background: '#FFF',
-                  boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-                }}>
-                  <CardHeader className="bg-[#F6F4EE] ">
-                    <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                      <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">2</span>
+                <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
+                  <CardHeader className="pb-0">
+                    <CardTitle className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em] flex items-center">
+                      <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><FileText className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
                       AMC DETAILS
                     </CardTitle>
                   </CardHeader>
@@ -2056,14 +2047,10 @@ export const AddAMCPage = () => {
 
               {/* Step Content - Schedule */}
               {stepIndex === 2 && (
-                <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                  borderRadius: '4px',
-                  background: '#FFF',
-                  boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-                }}>
-                  <CardHeader className="bg-[#F6F4EE] ">
-                    <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                      <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">3</span>
+                <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
+                  <CardHeader className="pb-0">
+                    <CardTitle className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em] flex items-center">
+                      <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><CalendarClock className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
                       SCHEDULE
                     </CardTitle>
                   </CardHeader>
@@ -2075,14 +2062,10 @@ export const AddAMCPage = () => {
 
               {/* Step Content - Attachments */}
               {stepIndex === 3 && (
-                <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                  borderRadius: '4px',
-                  background: '#FFF',
-                  boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-                }}>
-                  <CardHeader className="bg-[#F6F4EE] ">
-                    <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                      <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">4</span>
+                <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
+                  <CardHeader className="pb-0">
+                    <CardTitle className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em] flex items-center">
+                      <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><Paperclip className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
                       ATTACHMENTS
                     </CardTitle>
                   </CardHeader>
@@ -2151,16 +2134,8 @@ export const AddAMCPage = () => {
             <div className="mb-4">
               {/* Step Header */}
               <div className="flex items-center mb-4">
-                <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-sm mr-3 font-medium">
-                  ✓
-                </span>
-                <h3 className="text-[#DA7756]" style={{
-                  fontFamily: 'Work Sans, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '26px',
-                  lineHeight: '100%',
-                  letterSpacing: '0%'
-                }}>
+                <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><Settings className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
+                <h3 className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em]">
                   AMC Configuration
                 </h3>
               </div>
@@ -2168,14 +2143,10 @@ export const AddAMCPage = () => {
 
 
               {/* Step Content - AMC Configuration (single card) */}
-              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                borderRadius: '4px',
-                background: '#FFF',
-                boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-              }}>
-                {/* <CardHeader className="bg-[#F6F4EE] ">
-                  <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                    <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">1</span>
+              <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
+                {/* <CardHeader className="pb-0">
+                  <CardTitle className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em] flex items-center">
+                    <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><Settings className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
                     AMC CONFIGURATION
                   </CardTitle>
                 </CardHeader> */}
@@ -2450,29 +2421,17 @@ export const AddAMCPage = () => {
             <div className="mb-4">
               {/* Step Header */}
               <div className="flex items-center mb-4">
-                <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-sm mr-3 font-medium">
-                  ✓
-                </span>
-                <h3 className="text-[#DA7756]" style={{
-                  fontFamily: 'Work Sans, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '26px',
-                  lineHeight: '100%',
-                  letterSpacing: '0%'
-                }}>
+                <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><FileText className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
+                <h3 className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em]">
                   AMC Details
                 </h3>
               </div>
 
               {/* Step Content - AMC Details */}
-              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                borderRadius: '4px',
-                background: '#FFF',
-                boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-              }}>
-                {/* <CardHeader className="bg-[#F6F4EE] ">
-                  <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                    <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">2</span>
+              <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
+                {/* <CardHeader className="pb-0">
+                  <CardTitle className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em] flex items-center">
+                    <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><FileText className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
                     AMC DETAILS
                   </CardTitle>
                 </CardHeader> */}
@@ -2581,24 +2540,12 @@ export const AddAMCPage = () => {
             {/* Schedule Preview */}
             <div className="mb-4">
               <div className="flex items-center mb-4">
-                <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-sm mr-3 font-medium">
-                  ✓
-                </span>
-                <h3 className="text-[#DA7756]" style={{
-                  fontFamily: 'Work Sans, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '26px',
-                  lineHeight: '100%',
-                  letterSpacing: '0%'
-                }}>
+                <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><CalendarClock className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
+                <h3 className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em]">
                   Schedule
                 </h3>
               </div>
-              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                borderRadius: '4px',
-                background: '#FFF',
-                boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-              }}>
+              <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
                 <CardContent className="p-0">
                   {frequencyConfigs.length > 0 ? (
                     <>
@@ -2649,29 +2596,17 @@ export const AddAMCPage = () => {
             <div className="mb-6">
               {/* Step Header */}
               <div className="flex items-center mb-4">
-                <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-sm mr-3 font-medium">
-                  ✓
-                </span>
-                <h3 className="text-[#DA7756]" style={{
-                  fontFamily: 'Work Sans, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '26px',
-                  lineHeight: '100%',
-                  letterSpacing: '0%'
-                }}>
+                <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><Paperclip className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
+                <h3 className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em]">
                   Attachments
                 </h3>
               </div>
 
               {/* Step Content - Attachments */}
-              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                borderRadius: '4px',
-                background: '#FFF',
-                boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-              }}>
-                {/* <CardHeader className="bg-[#F6F4EE] ">
-                  <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                    <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">4</span>
+              <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
+                {/* <CardHeader className="pb-0">
+                  <CardTitle className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em] flex items-center">
+                    <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><Paperclip className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
                     ATTACHMENTS
                   </CardTitle>
                 </CardHeader> */}
@@ -2849,32 +2784,13 @@ export const AddAMCPage = () => {
             <>
               {/* Header above card */}
               <div className="flex items-center mb-4">
-                <Avatar sx={{
-                  bgcolor: '#111111',
-                  color: 'white',
-                  width: 32,
-                  height: 32,
-                  mr: 2,
-                  fontSize: '16px'
-                }}>
-                  <SettingsOutlinedIcon fontSize="small" />
-                </Avatar>
-                <h2 className="text-[#111111]" style={{
-                  fontFamily: 'Work Sans, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '26px',
-                  lineHeight: '100%',
-                  letterSpacing: '0%'
-                }}>
+                <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><Settings className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
+                <h2 className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em]">
                   AMC Configuration
                 </h2>
               </div>
 
-              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                borderRadius: '4px',
-                background: '#FFF',
-                boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-              }}>
+              <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
                 <CardContent className="space-y-6 p-6">
                   <div>
                     <label className="block text-sm font-medium mb-3 text-[#1a1a1a]">Details</label>
@@ -3530,7 +3446,7 @@ export const AddAMCPage = () => {
                     //     </FormControl>
 
                     //     <FormControl fullWidth variant="outlined" error={!!errors.supplier} sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    //       <InputLabel shrink>Supplier <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                    //       <InputLabel shrink>Supplier <span className="fm-required-mark">*</span></InputLabel>
                     //       <MuiSelect
                     //         label="Supplier"
                     //         displayEmpty
@@ -3813,32 +3729,13 @@ export const AddAMCPage = () => {
             <>
               {/* Header above card */}
               <div className="flex items-center mb-4">
-                <Avatar sx={{
-                  bgcolor: '#111111',
-                  color: 'white',
-                  width: 32,
-                  height: 32,
-                  mr: 2,
-                  fontSize: '16px'
-                }}>
-                  <SettingsOutlinedIcon fontSize="small" />
-                </Avatar>
-                <h2 className="text-[#111111]" style={{
-                  fontFamily: 'Work Sans, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '26px',
-                  lineHeight: '100%',
-                  letterSpacing: '0%'
-                }}>
+                <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><FileText className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
+                <h2 className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em]">
                   AMC Details
                 </h2>
               </div>
 
-              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                borderRadius: '4px',
-                background: '#FFF',
-                boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-              }}>
+              <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
 
                 <CardContent className="space-y-4 p-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -4046,29 +3943,14 @@ export const AddAMCPage = () => {
           currentStep === 2 && (
             <>
               <div className="flex items-center mb-4">
-                <Avatar sx={{
-                  bgcolor: '#111111',
-                  color: 'white',
-                  width: 32,
-                  height: 32,
-                  mr: 2,
-                  fontSize: '16px'
-                }}>
-                  <SettingsOutlinedIcon fontSize="small" />
-                </Avatar>
-                <h2 className="text-[#111111]" style={{
-                  fontFamily: 'Work Sans, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '26px',
-                  lineHeight: '100%',
-                  letterSpacing: '0%'
-                }}>
+                <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><CalendarClock className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
+                <h2 className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em]">
                   Schedule
                 </h2>
               </div>
               {/* If frequencies are selected, show one tab per frequency; otherwise show the default single setup */}
               {frequencyConfigs.length > 0 ? (
-                <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{ borderRadius: '4px', background: '#FFF', boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)' }}>
+                <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
                   <CardContent className="p-0">
                     {/* Frequency tabs */}
                     <div className="flex border-b border-gray-200 overflow-x-auto">
@@ -4142,9 +4024,7 @@ export const AddAMCPage = () => {
                   </CardContent>
                 </Card>
               ) : (
-                <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                  borderRadius: '4px', background: '#FFF', boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-                }}>
+                <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
                   <CardContent className="p-4">
                     <div className="mb-3 text-sm bg-[#F6F4EE] p-3 rounded">
                       <span className="font-semibold text-[#1a1a1a]">Cron Expression:</span>{' '}
@@ -4162,7 +4042,7 @@ export const AddAMCPage = () => {
               )}
 
               {/* Create Checklist */}
-              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{ borderRadius: '4px', boxShadow: '0 4px 14.2px 0 rgba(0,0,0,0.10)' }}>
+              <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
                 <CardContent className="p-4">
                   {/* Toggle */}
                   <div className="flex items-center gap-3 mb-4">
@@ -4267,32 +4147,13 @@ export const AddAMCPage = () => {
             <>
               {/* Header above card */}
               <div className="flex items-center mb-4">
-                <Avatar sx={{
-                  bgcolor: '#111111',
-                  color: 'white',
-                  width: 32,
-                  height: 32,
-                  mr: 2,
-                  fontSize: '16px'
-                }}>
-                  <SettingsOutlinedIcon fontSize="small" />
-                </Avatar>
-                <h2 className="text-[#111111]" style={{
-                  fontFamily: 'Work Sans, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '26px',
-                  lineHeight: '100%',
-                  letterSpacing: '0%'
-                }}>
+                <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><Paperclip className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
+                <h2 className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em]">
                   Attachments
                 </h2>
               </div>
 
-              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                borderRadius: '4px',
-                background: '#FFF',
-                boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-              }}>
+              <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
                 <CardContent className="p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
@@ -4320,10 +4181,10 @@ export const AddAMCPage = () => {
                         <Button
                           type="button"
                           onClick={() => document.getElementById('contracts-upload')?.click()}
-                          className="!bg-[#f6f4ee] !text-[#DA7756] !border-none text-sm flex items-center justify-center"
+                          className="fm-action-secondary"
                           disabled={isSubmitting}
                         >
-                          <Plus className="w-4 h-4 mr-1" />
+                          <Plus className="w-4 h-4" />
                           Upload Files
                         </Button>
                         <p className="mt-3 text-xs text-gray-500">
@@ -4447,10 +4308,10 @@ export const AddAMCPage = () => {
                         <Button
                           type="button"
                           onClick={() => document.getElementById('invoices-upload')?.click()}
-                          className="!bg-[#f6f4ee] !text-[#DA7756] !border-none hover:!bg-[#f6f4ee]/90 text-sm flex items-center justify-center"
+                          className="fm-action-secondary"
                           disabled={isSubmitting}
                         >
-                          <Plus className="w-4 h-4 mr-1" />
+                          <Plus className="w-4 h-4" />
                           Upload Files
                         </Button>
                         <p className="mt-3 text-xs text-gray-500">
@@ -4644,26 +4505,15 @@ export const AddAMCPage = () => {
                   // Only show if this step is not in completedSteps
                   if (completedSteps.includes(index)) return null;
                   return (
-                    <div key={`readonly-${index}`} className="bg-gray-50 border border-gray-200 rounded-md p-6">
+                    <div key={`readonly-${index}`} className="bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl p-6">
                       {/* Step Header */}
-                      <div className="flex items-center mb-4">
-                        <Avatar sx={{
-                          bgcolor: '#DA7756',
-                          color: 'white',
-                          width: 32,
-                          height: 32,
-                          mr: 2,
-                          fontSize: '16px'
-                        }}>
-                          <SettingsOutlinedIcon fontSize="small" />
-                        </Avatar>
-                        <h4 className="text-[#DA7756]" style={{
-                          fontFamily: 'Work Sans, sans-serif',
-                          fontWeight: 600,
-                          fontSize: '26px',
-                          lineHeight: '100%',
-                          letterSpacing: '0%'
-                        }}>
+                      <div className="flex items-center mb-3">
+                        <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0">
+                          {React.createElement([Settings, FileText, CalendarClock, Paperclip][index] ?? FileText, {
+                            className: 'w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]',
+                          })}
+                        </span>
+                        <h4 className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em]">
                           {index === 0 && 'AMC Configuration'}
                           {index === 1 && 'AMC Details'}
                           {index === 2 && 'Schedule'}
@@ -4809,14 +4659,10 @@ export const AddAMCPage = () => {
                         )}
 
                         {index === 2 && (
-                          <Card className="mb-4 border-[#D9D9D9] bg-white shadow-sm" style={{
-                            borderRadius: '4px',
-                            background: '#FFF',
-                            boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-                          }}>
-                            <CardHeader className="bg-[#F6F4EE] ">
-                              <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                                <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">3</span>
+                          <Card className="mb-4 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
+                            <CardHeader className="pb-0">
+                              <CardTitle className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em] flex items-center">
+                                <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><CalendarClock className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
                                 SCHEDULE
                               </CardTitle>
                             </CardHeader>
@@ -4895,8 +4741,8 @@ export const AddAMCPage = () => {
         >
           <DialogTitle
             sx={{
-              backgroundColor: '#DA7756',
-              color: 'white',
+              color: '#1A1A18',
+              fontSize: '18px',
               fontFamily: 'Work Sans, sans-serif',
               fontWeight: 600
             }}
@@ -4918,14 +4764,14 @@ export const AddAMCPage = () => {
             <Button
               variant="outline"
               onClick={handleStartFresh}
-              className="px-6 py-2 font-medium border border-[#DA7756] text-[#DA7756]"
+              className="fm-action-secondary"
             >
               Start Fresh
             </Button>
             <Button
               onClick={handleContinueWithDraft}
               variant="ghost"
-              className="fm-button-fix fm-button-brand px-6 py-2 font-medium"
+              className="fm-action-primary"
             >
               Continue with Draft
             </Button>

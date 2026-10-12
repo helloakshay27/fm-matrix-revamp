@@ -816,13 +816,14 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-2 pt-6">
-            <Button onClick={handleSubmit} className="bg-brand text-white hover:bg-brand-hover px-4 py-2">
-              Apply Filters
-            </Button>
-            <Button variant="outline" onClick={handleReset} className="border-brand text-brand hover:bg-brand-selected hover:text-brand">
+          {/* Secondary (Reset) first, primary (Apply Filters) last — bottom-right standard */}
+          <div className="fm-action-bar pt-6">
+            <button type="button" onClick={handleReset} className="fm-action-secondary">
               Reset
-            </Button>
+            </button>
+            <button type="button" onClick={handleSubmit} className="fm-action-primary">
+              Apply Filters
+            </button>
           </div>
         </div>
       </DialogContent>

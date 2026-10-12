@@ -732,7 +732,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
+import { ChevronDown, ChevronUp, ArrowLeft, FileText, ClipboardList } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useSelector } from 'react-redux';
@@ -1194,13 +1194,13 @@ export const AddAssetAuditPage = () => {
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm mb-6">
         <span
-          className="text-gray-500 hover:text-[#C72030] cursor-pointer transition-colors"
+          className="text-[rgba(26,26,24,0.48)] hover:text-[#1A1A18] cursor-pointer transition-colors"
           onClick={() => navigate('/maintenance/audit/assets')}
         >
           Audit
         </span>
         <span className="text-gray-400">›</span>
-        <span className="font-medium text-[#C72030]">New Audit</span>
+        <span className="font-medium text-[#1A1A18]">New Audit</span>
       </div>
 
       {/* Back Button + Title */}
@@ -1216,25 +1216,27 @@ export const AddAssetAuditPage = () => {
         <h1 className="text-2xl font-bold">NEW AUDIT</h1>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-5">
         {/* Rest of your form remains exactly the same */}
         {/* BASIC DETAILS */}
-        <div className="bg-white rounded-lg shadow-sm border">
+        <div className="bg-white rounded-2xl border border-[rgba(26,26,24,0.09)]">
           <div
-            className="flex items-center justify-between p-4 cursor-pointer border-b"
+            className="flex items-center justify-between px-6 pt-6 pb-3 cursor-pointer"
             onClick={() => setBasicDetailsExpanded(!basicDetailsExpanded)}
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
-                <span className="text-white text-sm">1</span>
-              </div>
-              <h2 className="text-lg font-semibold text-[#C72030]">BASIC DETAILS</h2>
+              <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center shrink-0"><FileText className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
+              <h2 className="text-[14px] font-semibold uppercase tracking-[0.02em] text-[#1A1A18]">BASIC DETAILS</h2>
             </div>
-            {basicDetailsExpanded ? <ChevronUp /> : <ChevronDown />}
+            {basicDetailsExpanded ? (
+              <ChevronUp className="w-5 h-5 text-[rgba(26,26,24,0.48)]" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-[rgba(26,26,24,0.48)]" />
+            )}
           </div>
 
           {basicDetailsExpanded && (
-            <div className="p-4 sm:p-6">
+            <div className="px-6 pb-6 pt-0">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 <TextField
                   label={<>Audit Name <span className="fm-required-mark">*</span></>} value={formData.auditName}
@@ -1304,24 +1306,26 @@ export const AddAssetAuditPage = () => {
         </div>
 
         {/* AUDIT TYPE - Same as before */}
-        <div className="bg-white rounded-lg shadow-sm border">
+        <div className="bg-white rounded-2xl border border-[rgba(26,26,24,0.09)]">
           <div
-            className="flex items-center justify-between p-4 cursor-pointer border-b"
+            className="flex items-center justify-between px-6 pt-6 pb-3 cursor-pointer"
             onClick={() => setAuditTypeExpanded(!auditTypeExpanded)}
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
-                <span className="text-white text-sm">2</span>
-              </div>
-              <h2 className="text-lg font-semibold text-[#C72030]">AUDIT TYPE</h2>
+              <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center shrink-0"><ClipboardList className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
+              <h2 className="text-[14px] font-semibold uppercase tracking-[0.02em] text-[#1A1A18]">AUDIT TYPE</h2>
             </div>
-            {auditTypeExpanded ? <ChevronUp /> : <ChevronDown />}
+            {auditTypeExpanded ? (
+              <ChevronUp className="w-5 h-5 text-[rgba(26,26,24,0.48)]" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-[rgba(26,26,24,0.48)]" />
+            )}
           </div>
 
           {auditTypeExpanded && (
-            <div className="p-4 sm:p-6">
+            <div className="px-6 pb-6 pt-0">
               <FormControl component="fieldset" sx={{ mb: 3 }}>
-                <FormLabel component="legend" sx={{ color: '#1a1a1a', '&.Mui-focused': { color: '#C72030' } }}>
+                <FormLabel component="legend" sx={{ color: '#1a1a1a', '&.Mui-focused': { color: '#1a1a1a' } }}>
                   Based On
                 </FormLabel>
                 <MuiRadioGroup
@@ -1331,12 +1335,12 @@ export const AddAssetAuditPage = () => {
                 >
                   <FormControlLabel
                     value="Location"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
+                    control={<Radio sx={{ color: 'rgba(26,26,24,0.48)', '&.Mui-checked': { color: '#1A1A18' } }} />}
                     label="Location"
                   />
                   <FormControlLabel
                     value="Asset"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
+                    control={<Radio sx={{ color: 'rgba(26,26,24,0.48)', '&.Mui-checked': { color: '#1A1A18' } }} />}
                     label="Asset"
                   />
                 </MuiRadioGroup>
@@ -1427,4 +1431,4 @@ export const AddAssetAuditPage = () => {
       </div>
     </div>
   );
-};
+};
