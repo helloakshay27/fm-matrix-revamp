@@ -60,7 +60,7 @@ const DetailPageSacHsn: React.FC = () => {
     return (
       <div className="p-6 bg-white min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary)] mx-auto mb-4"></div>
           <p className="text-gray-700">Loading SAC/HSN details...</p>
         </div>
       </div>
@@ -80,10 +80,10 @@ const DetailPageSacHsn: React.FC = () => {
 
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="mb-4 flex items-center gap-3">
-          <div className="rounded-full bg-red-100 text-red-600 p-2">
-            <Info className="w-5 h-5" />
+          <div className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center shrink-0">
+            <Info className="w-4 h-4 text-[var(--color-ink-68)]" />
           </div>
-          <h2 className="text-lg font-semibold text-red-600">SAC/HSN INFORMATION</h2>
+          <h2 className="text-sm font-semibold uppercase text-[var(--color-text)]">SAC/HSN Information</h2>
         </div>
 
         {error && <div className="text-red-600">Error: {error}</div>}

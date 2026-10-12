@@ -788,26 +788,26 @@ export const EditSlotConfigurationPage = () => {
             )}
           </div>
         </div>
+      </div>
 
-        {/* Action Buttons */}
-        <div className="fm-action-bar pt-6">
-          <button
-            type="button"
-            onClick={handleCancel}
-            disabled={submitting}
-            className="fm-action-secondary"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={submitting || !formData.building_id || !formData.floor_id}
-            className="fm-action-primary"
-          >
-            {submitting ? 'Updating...' : 'Update'}
-          </button>
-        </div>
+      {/* Action Buttons */}
+      <div className="fm-action-bar mt-6">
+        <button
+          type="button"
+          onClick={handleCancel}
+          disabled={submitting}
+          className="fm-action-secondary"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={submitting || !formData.building_id || !formData.floor_id}
+          className="fm-action-primary"
+        >
+          {submitting ? 'Updating...' : 'Update'}
+        </button>
       </div>
     </div>
   );

@@ -280,7 +280,11 @@ const CurrencyPage = () => {
                         <div className="fm-action-bar pt-4">
                             <button
                                 type="button"
-                                onClick={() => setIsModalOpen(false)}
+                                onClick={() => {
+                                    setIsOpen(false);
+                                    setEditingCurrency(null);
+                                    setFormData({ currency: "", symbol: "", sites: [] });
+                                }}
                                 className="fm-action-secondary"
                             >
                                 Cancel

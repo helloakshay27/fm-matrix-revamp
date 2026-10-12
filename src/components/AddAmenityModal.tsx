@@ -235,7 +235,7 @@ export const AddAmenityModal = ({ isOpen, onClose, fetchData, isEditing, record 
                     <div className="fm-action-bar pt-4">
                         <button
                             type="button"
-                            onClick={() => setIsModalOpen(false)}
+                            onClick={handleClose}
                             className="fm-action-secondary"
                         >
                             Cancel

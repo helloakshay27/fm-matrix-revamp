@@ -1174,8 +1174,8 @@ export const VisitingPurposePage = () => {
             </div>
           )} */}
           
-          <div className="bg-white rounded-lg border border-gray-200">
-            <div className="p-4">
+          <div>
+            <div className="mb-6">
               <div className="inline-flex items-center rounded-xl bg-gray-100 p-[3px] gap-[3px]">
                 {['Visit Purpose', 'Move In/Out', 'Work Type', 'Visitor Comment'].map((tab) => (
                   <button
@@ -1193,7 +1193,7 @@ export const VisitingPurposePage = () => {
               </div>
             </div>
 
-            <div className="p-6">
+            <div>
               <EnhancedTable
                 data={getFilteredData}
                 columns={tableColumns}

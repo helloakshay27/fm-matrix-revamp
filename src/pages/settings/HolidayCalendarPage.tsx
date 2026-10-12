@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -278,10 +278,16 @@ export const HolidayCalendarPage = () => {
     loadSites();
   }, [baseUrl, token]);
 
-  // Load existing holidays from API
+  // Raw API rows, kept so site names can be filled in once allowed sites arrive.
+  const rawHolidaysRef = useRef<HolidayApiResponse[]>([]);
+
+  // Load existing holidays from API. Runs in parallel with the sites request —
+  // it must not wait on sites, or the page stays on the loader until (and unless)
+  // the account + allowed-sites requests both succeed.
   useEffect(() => {
     const loadHolidays = async () => {
-      if (!baseUrl || !token || siteOptions.length === 0) {
+      if (!baseUrl || !token) {
+        setLoadingHolidays(false);
         return;
       }
       
@@ -301,8 +307,9 @@ export const HolidayCalendarPage = () => {
           const apiData: HolidayApiResponse[] = await response.json();
           console.log('Raw holidays API response:', apiData);
           
+          rawHolidaysRef.current = apiData;
           // Transform API data to Holiday interface
-          const transformedHolidays = apiData.map(apiHoliday => 
+          const transformedHolidays = apiData.map(apiHoliday =>
             transformHolidayData(apiHoliday, siteOptions)
           );
           
@@ -327,7 +334,23 @@ export const HolidayCalendarPage = () => {
     };
 
     loadHolidays();
-  }, [baseUrl, token, endpoints, siteOptions]); // Added siteOptions dependency so holidays load after sites are loaded
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [baseUrl, token]);
+
+  // When allowed sites arrive after the holidays, fill in the site names.
+  useEffect(() => {
+    if (siteOptions.length === 0 || rawHolidaysRef.current.length === 0) return;
+    const rawById = new Map(rawHolidaysRef.current.map(raw => [String(raw.id), raw]));
+    setHolidays(prev =>
+      prev.map(holiday => {
+        const raw = rawById.get(holiday.id);
+        return raw
+          ? { ...holiday, applicableLocation: transformHolidayData(raw, siteOptions).applicableLocation }
+          : holiday;
+      })
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [siteOptions]);
 
   // Filter holidays based on search term + advanced filters
   const filteredHolidays = holidays.filter(holiday => {
@@ -597,14 +620,17 @@ export const HolidayCalendarPage = () => {
   };
 
   const handleEdit = async (id: string) => {
+    const holiday = holidays.find(h => h.id === id);
+    if (!holiday) {
+      toast.error("Holiday not found");
+      return;
+    }
+    // Open the dialog right away (it shows "Loading holiday data..." while
+    // loadingEditData is true) instead of waiting for the request to finish.
+    setEditingHoliday(holiday);
     setLoadingEditData(true);
+    setIsEditDialogOpen(true);
     try {
-      // First set the editing holiday from current data
-      const holiday = holidays.find(h => h.id === id);
-      if (!holiday) {
-        toast.error("Holiday not found");
-        return;
-      }
 
       // Fetch detailed holiday data from API
       const response = await fetch(`${baseUrl}${endpoints.GET_HOLIDAY}/${id}.json`, {
@@ -654,6 +680,7 @@ export const HolidayCalendarPage = () => {
     } catch (error) {
       console.error('Error loading holiday for edit:', error);
       toast.error("Failed to load holiday data");
+      setIsEditDialogOpen(false);
     } finally {
       setLoadingEditData(false);
     }

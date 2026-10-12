@@ -142,7 +142,7 @@ export const AddGroupModal = ({ isOpen, onClose, fetchGroups, isEditing, record 
   };
 
   return (
-    <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth>
+    <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth sx={{ '& .MuiPaper-root': { borderRadius: '24px' } }}>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-hidden" sx={{ padding: 0 }}>
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
@@ -180,7 +180,7 @@ export const AddGroupModal = ({ isOpen, onClose, fetchGroups, isEditing, record 
 
               <Button
                 onClick={handleSelectAll}
-                variant="outline"
+                variant="ghost"
                 className="fm-button-fix fm-button-brand text-sm px-4 py-2"
               >
                 Select All Members
@@ -217,15 +217,18 @@ export const AddGroupModal = ({ isOpen, onClose, fetchGroups, isEditing, record 
           </div>
         </div>
 
-        <div className="flex justify-center px-6 py-4 border-t border-gray-200">
-          <Button
+        <div className="fm-action-bar px-6 py-4 border-t border-gray-200">
+          <button type="button" onClick={handleClose} className="fm-action-secondary">
+            Cancel
+          </button>
+          <button
+            type="button"
             onClick={handleSubmit}
-            variant="outline"
-            className="fm-button-fix fm-button-brand px-6"
+            className="fm-action-primary"
             disabled={loading}
           >
             {loading ? 'Submitting...' : 'Submit'}
-          </Button>
+          </button>
         </div>
       </DialogContent>
     </Dialog>

@@ -303,24 +303,24 @@ export const EditInvoiceApprovalsPage = () => {
               Add More Level
             </Button>
           </div>
+        </div>
 
-          <div className="fm-action-bar pt-6">
-            <button
-              type="button"
-              className="fm-action-secondary"
-              onClick={() => navigate('/settings/asset-setup/approval-matrix')}
-            >
-              Back
-            </button>
-            <button
-              type="button"
-              onClick={handleUpdate}
-              disabled={submitting}
-              className="fm-action-primary"
-            >
-              {submitting ? 'Updating...' : 'Update'}
-            </button>
-          </div>
+        <div className="fm-action-bar mt-6">
+          <button
+            type="button"
+            className="fm-action-secondary"
+            onClick={() => navigate('/settings/asset-setup/approval-matrix')}
+          >
+            Back
+          </button>
+          <button
+            type="button"
+            onClick={handleUpdate}
+            disabled={submitting}
+            className="fm-action-primary"
+          >
+            {submitting ? 'Updating...' : 'Update'}
+          </button>
         </div>
       </div>
     </ThemeProvider>

@@ -91,18 +91,18 @@ export const CloneRolePage = () => {
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Submit Button */}
-            <div className="fm-action-bar mt-8">
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={!fromUser || !toUser}
-                className="fm-action-primary"
-              >
-                Submit
-              </button>
-            </div>
+          {/* Submit Button */}
+          <div className="fm-action-bar mt-6">
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={!fromUser || !toUser}
+              className="fm-action-primary"
+            >
+              Submit
+            </button>
           </div>
         </div>
       </div>

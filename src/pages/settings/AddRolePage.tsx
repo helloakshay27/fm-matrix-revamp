@@ -704,26 +704,26 @@ export const AddRolePage = () => {
             </>
           )}
         </div>
+      </div>
 
-        {/* Action Buttons */}
-        <div className="fm-action-bar pt-6">
-          <button
-            type="button"
-            onClick={handleBack}
-            className="fm-action-secondary"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSaveRole}
-            disabled={loading}
-            className="fm-action-primary"
-          >
-            <Save className="w-4 h-4 mr-2" />
-            {loading ? "Creating..." : "Create Role"}
-          </button>
-        </div>
+      {/* Action Buttons */}
+      <div className="fm-action-bar">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="fm-action-secondary"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={handleSaveRole}
+          disabled={loading}
+          className="fm-action-primary"
+        >
+          <Save className="w-4 h-4 mr-2" />
+          {loading ? "Creating..." : "Create Role"}
+        </button>
       </div>
     </div>
   );

@@ -38,12 +38,12 @@ const Section: React.FC<{
   icon: React.ReactNode;
   children: React.ReactNode;
 }> = ({ title, icon, children }) => (
-  <section className="bg-card rounded-lg border border-border shadow-sm">
-    <div className="px-6 py-4 border-b border-border flex items-center gap-3">
-      <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+  <section className="bg-white rounded-2xl border border-gray-200">
+    <div className="px-6 py-4 border-b border-gray-200 flex items-center gap-3">
+      <div className="w-8 h-8 rounded-full bg-[var(--color-surface)] text-[var(--color-ink-68)] flex items-center justify-center shrink-0">
         {icon}
       </div>
-      <h2 className="text-sm font-semibold tracking-wide uppercase">{title}</h2>
+      <h2 className="text-sm font-semibold tracking-wide uppercase text-[var(--color-text)]">{title}</h2>
     </div>
     <div className="p-6">{children}</div>
   </section>
@@ -1673,10 +1673,18 @@ export const RosterCreatePage: React.FC = () => {
       </div>
 
       {/* Footer Actions */}
-      <div className="flex items-center gap-3 justify-center pt-2">
-        <Button
-          variant="ghost"
-          className="fm-button-fix fm-button-brand px-4 py-2"
+      <div className="fm-action-bar">
+        <button
+          type="button"
+          className="fm-action-secondary"
+          onClick={handleCancel}
+          disabled={isSubmitting}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          className="fm-action-primary"
           onClick={handleSubmit}
           disabled={isSubmitting}
         >
@@ -1691,15 +1699,7 @@ export const RosterCreatePage: React.FC = () => {
               Create Template
             </>
           )}
-        </Button>
-        <Button
-          variant="outline"
-          className="px-8"
-          onClick={() => navigate("/roster")}
-          disabled={isSubmitting}
-        >
-          Cancel
-        </Button>
+        </button>
       </div>
     </div>
   );

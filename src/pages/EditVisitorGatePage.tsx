@@ -5,7 +5,7 @@ import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } fro
 import { Switch } from '../components/ui/switch';
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, DoorOpen } from 'lucide-react';
 import { useLayout } from '../contexts/LayoutContext';
 import { ticketManagementAPI } from '../services/ticketManagementAPI';
 
@@ -338,10 +338,10 @@ export const EditVisitorGatePage = () => {
           {/* Gate Configuration Section */}
           <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
             <div className="px-6 py-4 bg-white border-b border-gray-200 flex items-center">
-              <div className="w-8 h-8 bg-gray-100 text-gray-700 rounded-full flex items-center justify-center text-sm font-bold mr-3">
-                1
+              <div className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center shrink-0 mr-3">
+                <DoorOpen className="w-4 h-4 text-[var(--color-ink-68)]" />
               </div>
-              <h2 className="text-sm font-semibold text-gray-800">TAB CONFIGURATION</h2>
+              <h2 className="text-sm font-semibold uppercase text-[var(--color-text)]">Tab Configuration</h2>
             </div>
             <div className="p-6 space-y-6 bg-white">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -324,25 +324,25 @@ export const AddInvoiceApprovalsPage = () => {
               Add More Level
             </Button>
           </div>
+        </div>
 
-          {/* Action Buttons */}
-          <div className="fm-action-bar pt-6">
-            <button
-              type="button"
-              className="fm-action-secondary"
-              onClick={() => navigate('/settings/asset-setup/approval-matrix')}
-            >
-              Back
-            </button>
-            <button
-              type="button"
-              onClick={handleCreate}
-              disabled={submitting}
-              className="fm-action-primary"
-            >
-              {submitting ? 'Creating...' : 'Create'}
-            </button>
-          </div>
+        {/* Action Buttons */}
+        <div className="fm-action-bar mt-6">
+          <button
+            type="button"
+            className="fm-action-secondary"
+            onClick={() => navigate('/settings/asset-setup/approval-matrix')}
+          >
+            Back
+          </button>
+          <button
+            type="button"
+            onClick={handleCreate}
+            disabled={submitting}
+            className="fm-action-primary"
+          >
+            {submitting ? 'Creating...' : 'Create'}
+          </button>
         </div>
       </div>
     </ThemeProvider>

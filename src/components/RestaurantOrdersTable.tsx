@@ -1004,7 +1004,7 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
                 </Button>
                 <Button
                   onClick={handleApplyFilters}
-                  variant="outline"
+                  variant="ghost"
                   className="fm-button-fix fm-button-brand flex-1"
                 >
                   Apply

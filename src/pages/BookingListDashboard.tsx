@@ -991,7 +991,7 @@ const BookingListDashboard = () => {
               <div className="flex gap-3 pt-4">
                 <Button
                   onClick={handleApplyFilters}
-                  variant="outline"
+                  variant="ghost"
                   className="fm-button-fix fm-button-brand flex-1"
                   disabled={isFiltering}
                 >
@@ -999,7 +999,7 @@ const BookingListDashboard = () => {
                 </Button>
                 <Button
                   onClick={handleResetFilters}
-                  variant="outline"
+                  variant="ghost"
                   className="fm-button-fix fm-button-brand flex-1"
                 >
                   Reset

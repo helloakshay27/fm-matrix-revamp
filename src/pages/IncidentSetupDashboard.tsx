@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Settings } from 'lucide-react';
 import { TextField, Select as MuiSelect, MenuItem, FormControl, InputLabel, Chip, OutlinedInput, Box } from '@mui/material';
 import { toast } from 'sonner';
 import axios from 'axios';
@@ -2293,14 +2293,15 @@ export const IncidentSetupDashboard = () => {
 
         <div className="flex-1">
           {isEditing ? (
-            <div className="bg-white p-8 rounded-lg border shadow-sm max-w-2xl">
+            <div className="max-w-2xl">
+            <div className="bg-white p-8 rounded-2xl border border-gray-200">
               {editingItem?.type === 'Escalations' ? (
                 <div className="space-y-6">
-                  <div className="flex items-center gap-2 mb-6">
-                    <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                      <span className="text-white text-sm">⚙</span>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center shrink-0">
+                      <Settings className="w-4 h-4 text-[var(--color-ink-68)]" />
                     </div>
-                    <h2 className="text-lg font-semibold text-red-500">Edit Escalation</h2>
+                    <h2 className="text-base font-semibold text-[var(--color-text)]">Edit Escalation</h2>
                   </div>
 
                   <div>
@@ -2437,17 +2438,6 @@ export const IncidentSetupDashboard = () => {
                       </div>
                     )}
                   </div>
-
-                  <div className="flex gap-3 pt-2">
-                    <Button onClick={handleEditEsclation}
-                      className="fm-button-fix fm-button-brand px-4 py-2"
-                      variant="ghost">
-                      Submit
-                    </Button>
-                    <Button onClick={handleEditBack} variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2">
-                      Back
-                    </Button>
-                  </div>
                 </div>
               ) : (editingItem?.type === 'Who got injured' || editingItem?.type === 'Property Damage Category' || editingItem?.type === 'RCA Category' || editingItem?.type === 'Substandard Act' || editingItem?.type === 'Substandard Condition' || editingItem?.type === 'Category') ? (
                 <div className="space-y-6">
@@ -2507,22 +2497,6 @@ export const IncidentSetupDashboard = () => {
                       />
                     </div>
                   )}
-
-                  <div className="flex gap-3">
-                    <Button
-                      onClick={handleEditSubmit}
-                      className="bg-[#C72030] hover:bg-[#A01020] text-white px-6"
-                    >
-                      Submit
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={handleEditBack}
-                      className="px-6"
-                    >
-                      Back
-                    </Button>
-                  </div>
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -2727,17 +2701,22 @@ export const IncidentSetupDashboard = () => {
                       />
                     </div>
                   )}
-
-                  <div className="flex gap-3 pt-2">
-                    <Button onClick={handleEditSubmit} className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2">
-                      Submit
-                    </Button>
-                    <Button onClick={handleEditBack} variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2">
-                      Back
-                    </Button>
-                  </div>
                 </div>
               )}
+            </div>
+
+            <div className="fm-action-bar mt-6">
+              <button type="button" onClick={handleEditBack} className="fm-action-secondary">
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={editingItem?.type === 'Escalations' ? handleEditEsclation : handleEditSubmit}
+                className="fm-action-primary"
+              >
+                Submit
+              </button>
+            </div>
             </div>
           ) : (
             <>
