@@ -823,8 +823,9 @@ export const UtilityWasteGenerationSetupDashboard = () => {
       }
       case "status":
         return (
-          <span
-            className={`px-[10px] py-[3px] text-[11px] font-medium rounded-full cursor-pointer transition-colors ${
+          <button
+            type="button"
+            className={`px-[10px] py-[3px] text-[11px] font-medium rounded-full cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
               item.active
                 ? "bg-[#e0f7ea] text-[#12a150]"
                 : "bg-[#fbdcdc] text-[#a32126]"
