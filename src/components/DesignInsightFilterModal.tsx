@@ -7,6 +7,7 @@ import {
   Select as MuiSelect,
   MenuItem,
   TextField,
+  Portal,
 } from '@mui/material';
 import { useToast } from '@/hooks/use-toast';
 import { X } from 'lucide-react';
@@ -141,6 +142,14 @@ export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> =
   };
 
   return (
+    <>
+    {/* modal={false} MUI selects ke liye zaroori hai, par usme Radix overlay nahi banata —
+        isliye DialogOverlay jaisa backdrop khud body pe portal karte hain */}
+    {isOpen && (
+      <Portal>
+        <div className="fixed inset-0 z-[999] bg-black/50 animate-in fade-in-0" aria-hidden="true" />
+      </Portal>
+    )}
     <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
       <DialogContent
         className="max-w-2xl bg-white overflow-visible"
@@ -309,5 +318,6 @@ export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> =
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 };

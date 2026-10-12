@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Edit, Trash2, Search, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { apiClient } from "@/utils/apiClient";
+import { FinanceMasterTable } from "./FinanceMasterTable";
 
 export const GLAccountsTab = () => {
   const [items, setItems] = useState<any[]>([]);
@@ -19,8 +16,6 @@ export const GLAccountsTab = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
 
   // Form data
   const [formData, setFormData] = useState({
@@ -169,111 +164,18 @@ export const GLAccountsTab = () => {
     setIsCreateModalOpen(true);
   };
 
-  /** =============================
-   *  SEARCH & PAGINATION
-   * ============================= */
-  const filtered = items.filter(i =>
-    i.content?.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    i.content?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const paginated = filtered.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
-
   return (
     <div className="space-y-4">
-
-      {/* Search + Add */}
-      <div className="flex gap-3 items-center bg-white p-4 rounded-lg shadow-sm">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-          <Input
-            placeholder="Search..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="pl-10"
-          />
-        </div>
-
-        <Button
-          onClick={openCreateModal}
-          className="fm-button-fix fm-button-brand px-4 py-2"
-        >
-          <Plus className="w-4 h-4" /> Add
-        </Button>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        {isLoading && paginated.length === 0 ? (
-          <div className="flex items-center justify-start gap-2 p-8 text-black">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            Loading ...
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="flex items-center justify-center p-8 text-gray-500">
-            No records found
-          </div>
-        ) : (
-          <>
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="font-semibold">Code</TableHead>
-                  <TableHead className="font-semibold">Name</TableHead>
-                  <TableHead className="font-semibold">Description</TableHead>
-                </TableRow>
-              </TableHeader>
-
-              <TableBody>
-                {paginated.map(item => (
-                  <TableRow key={item.id} className="hover:bg-gray-50">
-                    <TableCell>{item.content?.code}</TableCell>
-                    <TableCell>{item.content?.name}</TableCell>
-                    <TableCell>{item.content?.description || "-"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between p-4 border-t">
-                <span className="text-sm text-gray-600">
-                  Page {currentPage} of {totalPages}
-                </span>
-
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
-                    disabled={currentPage === 1}
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+      <FinanceMasterTable
+        data={items}
+        loading={isLoading}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        storageKey="gl-accounts-table"
+        emptyMessage="No records found"
+        addLabel="Add"
+        onAdd={openCreateModal}
+      />
 
       {/* Create Modal */}
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>

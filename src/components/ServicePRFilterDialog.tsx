@@ -87,7 +87,7 @@ export const ServicePRFilterDialog: React.FC<ServicePRFilterDialogProps> = ({
 
   return (
     <Dialog
-      PaperProps={{ sx: { borderRadius: "8px" } }} open={open} onClose={onOpenChange}>
+      PaperProps={{ sx: { borderRadius: "16px" } }} open={open} onClose={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <div className="flex items-center justify-between mb-3">
           <h5 className="text-lg font-semibold">FILTER BY</h5>

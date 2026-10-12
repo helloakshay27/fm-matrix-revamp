@@ -67,6 +67,46 @@ interface LMCTableRow {
 const PAGE_SIZE = 20; // rely on API default page size (adjust if backend supports per_page param)
 
 
+const StatusPill = ({ status }: { status: string }) => {
+    const normalized = String(status || '').trim().toLowerCase();
+
+    const palette: Record<string, { bg: string; text: string; border: string }> = {
+        completed: { bg: '#DDEAD9', text: '#406A45', border: '#BED6B8' },
+        approved: { bg: '#DDEAD9', text: '#406A45', border: '#BED6B8' },
+        pending: { bg: '#F3E6B8', text: '#7A5E16', border: '#E0CF85' },
+        'in progress': { bg: '#E5E0F7', text: '#5B4C8A', border: '#C7C2E8' },
+        rejected: { bg: '#F3D7D5', text: '#8F3D3D', border: '#E2B1AE' },
+        expired: { bg: '#F3D7D5', text: '#8F3D3D', border: '#E2B1AE' },
+        default: { bg: '#E8E2D8', text: '#5E544A', border: '#D8CEBA' },
+    };
+
+    const tone =
+        palette[normalized] ||
+        (normalized.includes('complete') ? palette.completed :
+            normalized.includes('pend') ? palette.pending :
+                normalized.includes('progress') ? palette['in progress'] :
+                    normalized.includes('reject') || normalized.includes('expir') ? palette.rejected :
+                        palette.default);
+
+    return (
+        <span
+            className="inline-flex items-center justify-center rounded-full border font-medium"
+            style={{
+                backgroundColor: tone.bg,
+                color: tone.text,
+                borderColor: tone.border,
+                borderRadius: '999px',
+                padding: '3px 10px',
+                fontSize: '11px',
+                lineHeight: '1.2',
+                fontWeight: 500,
+            }}
+        >
+            {status || '—'}
+        </span>
+    );
+};
+
 const LMCDashboard = () => {
     const msafeEvents = useMSafeEvents();
     // The Vi catalogue's msafe_lmc_requests_opened is this same moment — the LMC request list
@@ -117,7 +157,7 @@ const LMCDashboard = () => {
             if (appliedUserEmail) params.push(`q[user_email_cont]=${appliedUserEmail.trim()}`);
             else if (searchTerm) params.push(`q[user_email_cont]=${searchTerm.trim()}`);
             if (appliedCreatedByEmail) params.push(`q[created_by_email_cont]=${appliedCreatedByEmail.trim()}`);
-        const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+            const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
             const url = `${cleanBaseUrl}/lmcs.json?${params.join('&')}`;
             const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
             if (!res.ok) throw new Error(`Failed (${res.status})`);
@@ -433,6 +473,11 @@ const LMCDashboard = () => {
                 </div>
             );
         }
+
+        if (columnKey === 'status') {
+            return <StatusPill status={row?.status || '—'} />;
+        }
+
         // Defensive: fallback to empty string if value is undefined/null
         return (row && row[columnKey] !== undefined && row[columnKey] !== null) ? row[columnKey] : '';
     };

@@ -5,14 +5,12 @@ import {
   InputLabel,
   Select as MuiSelect,
   MenuItem,
-  TextareaAutosize,
   TextField
 } from '@mui/material';
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings } from 'lucide-react';
-import { Button, Box, Typography, IconButton } from '@mui/material';
-import { Upload, X } from 'lucide-react';
+import { Paperclip, Settings } from 'lucide-react';
+import { FormSection, assetFieldStyles } from '@/components/common/FormSection';
+import { AttachmentUpload } from '@/components/common/AttachmentUpload';
 
 interface BasicDetailsSectionProps {
   category: string;
@@ -40,6 +38,15 @@ interface BasicDetailsSectionProps {
   onAttachmentsChange: (files: File[]) => void;
 }
 
+// Add Asset page jaisa multiline field
+const textareaSx = {
+  "& .MuiOutlinedInput-root": { height: "auto !important", padding: "2px !important" },
+};
+
+const requiredLabel = (text: string) => (
+  <span>{text}<span className="fm-required-mark">*</span></span>
+);
+
 export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
   category,
   setCategory,
@@ -65,29 +72,8 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
   categories = [],
   subCategories = [],
 }) => {
-  const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
-    },
-  };
-
-  const textareaStyle: React.CSSProperties = {
-    width: '100%',
-    fontSize: '16px',
-    padding: '12px',
-    borderRadius: '4px',
-    border: '1px solid #ccc',
-    fontFamily: 'inherit',
-    resize: 'vertical' as const,
-  };
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (files) {
-      const newFiles = Array.from(files);
-      onAttachmentsChange([...attachments, ...newFiles]);
-    }
+  const handleFilesSelected = (newFiles: File[]) => {
+    onAttachmentsChange([...attachments, ...newFiles]);
   };
 
   const handleRemoveFile = (indexToRemove: number) => {
@@ -96,28 +82,20 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
   };
 
   return (
-    <Card className="mb-6">
-      <CardHeader className="flex flex-row items-center px-4 sm:px-6 md:px-[50px]">
-        <div className="flex items-center justify-center border border-[#C72030] w-10 h-10 rounded-full">
-          <Settings size={18} color="#C72030" />
-        </div>
-        <CardTitle className="pl-4 text-lg sm:text-xl md:text-2xl font-semibold uppercase text-black font-['Work_Sans']">
-          Basic Details
-        </CardTitle>
-      </CardHeader>
-
-      <CardContent className="px-4 sm:px-6 md:px-[50px]">
+    <>
+      <FormSection title="BASIC DETAILS" icon={Settings}>
         {/* Row 1 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           <FormControl fullWidth variant="outlined">
-            <InputLabel id="category-label" shrink>Category*</InputLabel>
+            <InputLabel id="category-label" shrink>{requiredLabel('Category')}</InputLabel>
             <MuiSelect
               labelId="category-label"
               label="Category*"
+              notched
               displayEmpty
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              sx={fieldStyles}
+              sx={assetFieldStyles}
             >
               <MenuItem value=""><em>Select Category</em></MenuItem>
               {categories.map((cat) => (
@@ -131,10 +109,11 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
             <MuiSelect
               labelId="sub-category-label"
               label="Sub-category"
+              notched
               displayEmpty
               value={subCategory}
               onChange={(e) => setSubCategory(e.target.value)}
-              sx={fieldStyles}
+              sx={assetFieldStyles}
               disabled={!category}
             >
               <MenuItem value=""><em>Select Sub Category</em></MenuItem>
@@ -147,14 +126,15 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
           </FormControl>
 
           <FormControl fullWidth variant="outlined">
-            <InputLabel id="site-label" shrink>Site*</InputLabel>
+            <InputLabel id="site-label" shrink>{requiredLabel('Site')}</InputLabel>
             <MuiSelect
               labelId="site-label"
               label="Site*"
+              notched
               displayEmpty
               value={site}
               onChange={(e) => setSite(e.target.value)}
-              sx={fieldStyles}
+              sx={assetFieldStyles}
             >
               <MenuItem value=""><em>Select Site</em></MenuItem>
               {siteList.map((s) => (
@@ -165,7 +145,7 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
         </div>
 
         {/* Row 2 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           <TextField
             label="Location"
             placeholder="Enter Location"
@@ -174,18 +154,19 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
             fullWidth
             variant="outlined"
             InputLabelProps={{ shrink: true }}
-            sx={fieldStyles}
+            InputProps={{ sx: assetFieldStyles }}
           />
 
           <FormControl fullWidth variant="outlined">
-            <InputLabel id="categorization-label" shrink>Categorization*</InputLabel>
+            <InputLabel id="categorization-label" shrink>{requiredLabel('Categorization')}</InputLabel>
             <MuiSelect
               labelId="categorization-label"
               label="Categorization*"
+              notched
               displayEmpty
               value={categorization}
               onChange={(e) => setCategorization(e.target.value)}
-              sx={fieldStyles}
+              sx={assetFieldStyles}
             >
               <MenuItem value=""><em>Select Categorization</em></MenuItem>
               <MenuItem value="safety">Safety</MenuItem>
@@ -200,182 +181,73 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
             <MuiSelect
               labelId="tag-label"
               label="Tag"
+              notched
               displayEmpty
               value={tag}
               onChange={(e) => setTag(e.target.value)}
-              sx={fieldStyles}
+              sx={assetFieldStyles}
             >
               <MenuItem value=""><em>Select Tag</em></MenuItem>
               <MenuItem value="workaround">Workaround</MenuItem>
               <MenuItem value="Learning for the future project">Learning for the future project</MenuItem>
-
             </MuiSelect>
           </FormControl>
         </div>
 
         {/* Row 3 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700">Observation</label>
-            <TextareaAutosize
-              minRows={4}
-              placeholder="Enter Observation"
-              value={observation}
-              onChange={(e) => setObservation(e.target.value)}
-              style={textareaStyle}
-            />
-          </div>
-
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700">Recommendation</label>
-            <TextareaAutosize
-              minRows={4}
-              placeholder="Enter Recommendation"
-              value={recommendation}
-              onChange={(e) => setRecommendation(e.target.value)}
-              style={textareaStyle}
-            />
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <TextField
+            label="Observation"
+            placeholder="Enter Observation"
+            value={observation}
+            onChange={(e) => setObservation(e.target.value)}
+            fullWidth
+            multiline
+            rows={4}
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            sx={textareaSx}
+          />
+          <TextField
+            label="Recommendation"
+            placeholder="Enter Recommendation"
+            value={recommendation}
+            onChange={(e) => setRecommendation(e.target.value)}
+            fullWidth
+            multiline
+            rows={4}
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            sx={textareaSx}
+          />
         </div>
 
         {/* Checkbox */}
-        <div className="mt-4">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="mustHave"
-              checked={mustHave}
-              onCheckedChange={handleMustHaveChange}
-              style={{
-                borderColor: '#C72030',
-                backgroundColor: mustHave ? '#C72030' : 'transparent'
-              }}
-            />
-            <label htmlFor="mustHave" className="text-sm font-medium">
-              Must Have
-            </label>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">
-            Attachments
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="mustHave"
+            checked={mustHave}
+            onCheckedChange={handleMustHaveChange}
+            className="border-brand data-[state=checked]:bg-brand data-[state=checked]:text-white"
+          />
+          <label htmlFor="mustHave" className="text-sm font-medium">
+            Must Have
           </label>
-          <Box
-            sx={{
-              border: '2px dashed #dc2626',
-              borderRadius: '6px',
-              backgroundColor: '#f9fafb',
-              minHeight: '96px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 2,
-              cursor: 'pointer',
-              '&:hover': {
-                backgroundColor: '#f3f4f6',
-              },
-            }}
-            onClick={() => document.getElementById('file-upload-attachments')?.click()}
-          >
-            <Upload className="w-8 h-8 text-gray-400 mb-2" />
-            <Typography variant="body2" sx={{ color: '#374151', textAlign: 'center' }}>
-              Click to upload files or drag and drop
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#9ca3af', textAlign: 'center' }}>
-              PNG, JPG, PDF up to 10MB
-            </Typography>
-            <input
-              type="file"
-              multiple
-              accept=".png,.jpg,.jpeg,.pdf"
-              id="file-upload-attachments"
-              style={{ display: 'none' }}
-              onChange={handleFileUpload}
-            />
-            <Button
-              variant="outlined"
-              size="small"
-              sx={{
-                mt: 1,
-                borderColor: '#dc2626',
-                color: '#dc2626',
-                '&:hover': {
-                  borderColor: '#b91c1c',
-                  backgroundColor: 'rgba(220, 38, 38, 0.04)',
-                },
-              }}
-            >
-              Choose Files
-            </Button>
-          </Box>
-
-          {/* Preview Section */}
-          {attachments && attachments?.length > 0 && (
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                Selected Files ({attachments.length})
-              </Typography>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-                  gap: 2,
-                }}
-              >
-                {attachments.map((file, index) => (
-                  <Box key={index} sx={{ position: 'relative' }}>
-                    {file.type.startsWith('image/') ? (
-                      <img
-                        src={URL.createObjectURL(file)}
-                        alt={file.name}
-                        style={{
-                          width: '100%',
-                          height: '100px',
-                          objectFit: 'cover',
-                          borderRadius: '4px',
-                          border: '1px solid #e5e7eb',
-                        }}
-                      />
-                    ) : (
-                      <Box
-                        sx={{
-                          width: '100%',
-                          height: '100px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          backgroundColor: '#f3f4f6',
-                          borderRadius: '4px',
-                          border: '1px solid #e5e7eb',
-                        }}
-                      >
-                        <Typography variant="caption">{file.name}</Typography>
-                      </Box>
-                    )}
-                    <IconButton
-                      size="small"
-                      sx={{
-                        position: 'absolute',
-                        top: -8,
-                        right: -8,
-                        backgroundColor: '#dc2626',
-                        color: 'white',
-                        '&:hover': {
-                          backgroundColor: '#b91c1c',
-                        },
-                      }}
-                      onClick={() => handleRemoveFile(index)}
-                    >
-                      <X size={16} />
-                    </IconButton>
-                  </Box>
-                ))}
-              </Box>
-            </Box>
-          )}
         </div>
-      </CardContent>
-    </Card>
+      </FormSection>
+
+      <FormSection title="ATTACHMENTS" icon={Paperclip}>
+        <AttachmentUpload
+          label="Attachments"
+          chooseText="Choose Files"
+          uploadText="Upload Files"
+          accept=".png,.jpg,.jpeg,.pdf"
+          multiple
+          files={attachments}
+          onFilesSelected={handleFilesSelected}
+          onRemove={handleRemoveFile}
+        />
+      </FormSection>
+    </>
   );
 };

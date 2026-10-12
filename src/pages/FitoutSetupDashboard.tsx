@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, Download, FileText } from "lucide-react";
+import { Plus, Edit, Trash2, Download, FileText, ListChecks } from "lucide-react";
+import { FormSection, assetFieldStyles } from "@/components/common/FormSection";
 import { AddCategoryModal } from "@/components/AddCategoryModal";
 import { EditCategoryModal } from "@/components/EditCategoryModal";
 import { AddDeviationStatusModal } from "@/components/AddDeviationStatusModal";
 import { AddStatusModal } from "@/components/AddStatusModal";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AttachmentUpload } from "@/components/common/AttachmentUpload";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
@@ -86,12 +89,6 @@ export const FitoutSetupDashboard = () => {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const { toast } = useToast();
 
-  const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
-    },
-  };
 
   const [categories, setCategories] = useState<Category[]>([
     { id: 1, category: 'ho', amount: '', active: true },
@@ -100,6 +97,13 @@ export const FitoutSetupDashboard = () => {
   ]);
 
   const [statuses, setStatuses] = useState<Status[]>([]);
+  // Status Details fields — abhi sirf UI state, kisi API se jude nahi hain (pehle bhi nahi the)
+  const [statusForm, setStatusForm] = useState({
+    status: '',
+    fixedState: '',
+    color: '#ffffff',
+    order: '',
+  });
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [deviationStatuses, setDeviationStatuses] = useState<DeviationStatus[]>([]);
 
@@ -161,13 +165,12 @@ export const FitoutSetupDashboard = () => {
     setStatuses([...statuses, status]);
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (files) {
+  const handleFileUpload = (files: File[]) => {
+    if (files.length > 0) {
       setUploadedFiles((prev) => {
         const nextId = prev.length > 0 ? Math.max(...prev.map((file) => file.id)) + 1 : 1;
         const uploadedAt = new Date().toLocaleString();
-        const newFiles: UploadedFile[] = Array.from(files).map((file, index) => ({
+        const newFiles: UploadedFile[] = files.map((file, index) => ({
           id: nextId + index,
           fileName: file.name,
           fileSize: file.size,
@@ -182,7 +185,6 @@ export const FitoutSetupDashboard = () => {
         description: 'File uploaded successfully!',
       });
     }
-    event.target.value = '';
   };
 
   const handleDownloadFile = (file: UploadedFile) => {
@@ -211,16 +213,6 @@ export const FitoutSetupDashboard = () => {
 
   const renderCategoryTab = () => (
     <div>
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <Button
-          onClick={() => setIsAddCategoryOpen(true)}
-          className="bg-brand hover:bg-brand-hover text-white [&_svg]:!text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add
-        </Button>
-      </div>
-
       <div className="w-full min-w-0 max-w-full">
         <EnhancedTable
           data={categories}
@@ -253,6 +245,14 @@ export const FitoutSetupDashboard = () => {
             </Button>
           )}
           storageKey="fitout-setup-category-table"
+          leftActions={
+            <Button
+              onClick={() => setIsAddCategoryOpen(true)}
+              className="bg-brand hover:bg-brand-hover text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" /> Add
+            </Button>
+          }
           enableSearch
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
@@ -268,64 +268,73 @@ export const FitoutSetupDashboard = () => {
   );
 
   const renderStatusTab = () => (
-    <div>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <div>
+    <div className="space-y-4 sm:space-y-6">
+      <FormSection title="STATUS DETAILS" icon={ListChecks}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <TextField
+            label="Status"
             placeholder="Enter status"
+            value={statusForm.status}
+            onChange={(e) => setStatusForm((prev) => ({ ...prev, status: e.target.value }))}
             fullWidth
             variant="outlined"
             InputLabelProps={{ shrink: true }}
-            InputProps={{ sx: fieldStyles }}
-            sx={{ mt: 1 }}
+            InputProps={{ sx: assetFieldStyles }}
           />
-        </div>
-        <div>
-          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+          <FormControl fullWidth variant="outlined">
             <InputLabel id="fixed-state-label" shrink>Fixed State</InputLabel>
             <MuiSelect
               labelId="fixed-state-label"
               label="Fixed State"
+              notched
               displayEmpty
-              sx={fieldStyles}
+              value={statusForm.fixedState}
+              onChange={(e) => setStatusForm((prev) => ({ ...prev, fixedState: e.target.value }))}
+              sx={assetFieldStyles}
             >
-              <MenuItem value=""><em>Select Fixed State</em></MenuItem>
+              <MenuItem value="">Select Fixed State</MenuItem>
               <MenuItem value="state1">State 1</MenuItem>
               <MenuItem value="state2">State 2</MenuItem>
             </MuiSelect>
           </FormControl>
-        </div>
-        <div>
           <TextField
-            type="color"
+            label="Color"
+            value={statusForm.color}
+            onChange={(e) => setStatusForm((prev) => ({ ...prev, color: e.target.value }))}
             fullWidth
             variant="outlined"
             InputLabelProps={{ shrink: true }}
-            InputProps={{ sx: fieldStyles }}
-            sx={{ mt: 1 }}
+            InputProps={{
+              sx: assetFieldStyles,
+              startAdornment: (
+                <label
+                  className="relative mr-2 h-6 w-6 shrink-0 cursor-pointer overflow-hidden rounded border border-gray-300"
+                  style={{ backgroundColor: statusForm.color }}
+                  title="Pick color"
+                >
+                  <input
+                    type="color"
+                    value={statusForm.color}
+                    onChange={(e) => setStatusForm((prev) => ({ ...prev, color: e.target.value }))}
+                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                  />
+                </label>
+              ),
+            }}
           />
-        </div>
-        <div>
           <TextField
+            label="Order"
+            type="number"
             placeholder="Enter status order"
+            value={statusForm.order}
+            onChange={(e) => setStatusForm((prev) => ({ ...prev, order: e.target.value }))}
             fullWidth
             variant="outlined"
             InputLabelProps={{ shrink: true }}
-            InputProps={{ sx: fieldStyles }}
-            sx={{ mt: 1 }}
+            InputProps={{ sx: assetFieldStyles }}
           />
         </div>
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <Button
-          onClick={() => setIsAddStatusOpen(true)}
-          className="bg-brand hover:bg-brand-hover text-white [&_svg]:!text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add
-        </Button>
-      </div>
+      </FormSection>
 
       <div className="w-full min-w-0 max-w-full">
         <EnhancedTable
@@ -348,6 +357,14 @@ export const FitoutSetupDashboard = () => {
             </Button>
           )}
           storageKey="fitout-setup-status-table"
+          leftActions={
+            <Button
+              onClick={() => setIsAddStatusOpen(true)}
+              className="bg-brand hover:bg-brand-hover text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" /> Add
+            </Button>
+          }
           enableSearch
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
@@ -371,21 +388,15 @@ export const FitoutSetupDashboard = () => {
     return (
       <div>
         <div className="mb-6">
-          <div className="border-2 border-dashed border-brand rounded-lg p-8 text-center">
-            <div className="mb-4">
-              <span className="font-medium text-brand">Choose File</span>
-              <span className="text-gray-500 ml-2">No file chosen</span>
-            </div>
-            <label htmlFor="file-upload">
-              <Button className="bg-brand hover:bg-brand-hover text-white cursor-pointer [&_svg]:!text-white" asChild>
-                <span className="inline-flex items-center justify-center gap-2">
-                  <Plus className="w-4 h-4" />
-                  Upload
-                </span>
-              </Button>
-            </label>
-            <input id="file-upload" type="file" multiple className="hidden" onChange={handleFileUpload} />
-          </div>
+          <AttachmentUpload
+            label="Fitout Guide"
+            chooseText="Choose File"
+            uploadText="Upload"
+            emptyText="No file chosen"
+            multiple
+            files={[]}
+            onFilesSelected={handleFileUpload}
+          />
         </div>
 
         <div className="w-full min-w-0 max-w-full">
@@ -451,16 +462,6 @@ export const FitoutSetupDashboard = () => {
 
   const renderDeviationStatusTab = () => (
     <div>
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <Button
-          onClick={() => setIsAddDeviationOpen(true)}
-          className="bg-brand hover:bg-brand-hover text-white [&_svg]:!text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add
-        </Button>
-      </div>
-
       <div className="w-full min-w-0 max-w-full">
         <EnhancedTable
           data={deviationStatuses}
@@ -488,6 +489,14 @@ export const FitoutSetupDashboard = () => {
             </Button>
           )}
           storageKey="fitout-setup-deviation-table"
+          leftActions={
+            <Button
+              onClick={() => setIsAddDeviationOpen(true)}
+              className="bg-brand hover:bg-brand-hover text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" /> Add
+            </Button>
+          }
           enableSearch
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
@@ -502,46 +511,43 @@ export const FitoutSetupDashboard = () => {
     </div>
   );
 
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'Category':
-        return renderCategoryTab();
-      case 'Status':
-        return renderStatusTab();
-      case 'Fitout Guide':
-        return renderFitoutGuideTab();
-      case 'Deviation Status':
-        return renderDeviationStatusTab();
-      default:
-        return renderCategoryTab();
-    }
-  };
-
   return (
-    <div className="p-6">
-      <div className="mb-4">
-        <span className="text-sm text-gray-600">Fitout &gt; Fitout Request</span>
+    <div className="flex-1 p-6 bg-white min-h-screen">
+      <div className="mb-6">
+        <p className="text-sm text-gray-500 mb-1">
+          Fitout &gt; Fitout Setup
+        </p>
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+          Fitout Setup
+        </h1>
       </div>
 
-      <h1 className="text-2xl font-bold mb-6">FITOUT SETUP</h1>
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <TabsList className="grid w-full grid-cols-4 bg-white border border-gray-200">
+          {tabs.map((tab) => (
+            <TabsTrigger
+              key={tab}
+              value={tab}
+              className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+            >
+              {tab}
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-      <div className="grid w-full grid-cols-4 bg-white border border-gray-200 mb-6">
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => handleTabChange(tab)}
-            className={`px-6 py-2 font-medium border-b-2 whitespace-nowrap ${
-              activeTab === tab
-                ? 'bg-[#EDEAE3] text-brand'
-                : 'bg-white text-black'
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      {renderTabContent()}
+        <TabsContent value="Category" className="pt-4">
+          {renderCategoryTab()}
+        </TabsContent>
+        <TabsContent value="Status" className="pt-4">
+          {renderStatusTab()}
+        </TabsContent>
+        <TabsContent value="Fitout Guide" className="pt-4">
+          {renderFitoutGuideTab()}
+        </TabsContent>
+        <TabsContent value="Deviation Status" className="pt-4">
+          {renderDeviationStatusTab()}
+        </TabsContent>
+      </Tabs>
 
       <AddCategoryModal
         isOpen={isAddCategoryOpen}

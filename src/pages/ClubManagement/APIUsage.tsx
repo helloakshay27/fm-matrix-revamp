@@ -10,8 +10,9 @@ import {
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
-const USED_COLOR = "#1e3a8a";
-const REMAINING_COLOR = "#7dd3fc";
+// Chart series order: purple, infoBlue, growth, olive, sageMint, purpleMid, warning, danger
+const USED_COLOR = "#5A4BE0"; // series 1 — purple
+const REMAINING_COLOR = "#2F6FE0"; // series 2 — infoBlue
 
 interface ApiUsageRow {
   id: string;

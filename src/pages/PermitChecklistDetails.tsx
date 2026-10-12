@@ -4,26 +4,34 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
-import { Edit, ArrowLeft } from 'lucide-react';
+import { FormControl, Select as MuiSelect, MenuItem } from '@mui/material';
+import { Edit, ArrowLeft, ClipboardCheck } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { toast as sonnerToast } from 'sonner';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 const fieldStyles = {
-    height: { xs: 36, sm: 40, md: 45 },
+    height: 45,
+    minHeight: '44px',
     backgroundColor: '#fff',
+    borderRadius: '12px',
     '& .MuiInputBase-input, & .MuiSelect-select': {
-        padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+        padding: '12px 14px',
+        minHeight: '44px',
+        boxSizing: 'border-box',
+        display: 'flex',
+        alignItems: 'center',
     },
     '& .MuiOutlinedInput-root': {
         backgroundColor: '#fff',
-        '& fieldset': { borderColor: '#e5e7eb' },
-        '&:hover fieldset': { borderColor: '#C72030' },
-        '&.Mui-focused fieldset': { borderColor: '#C72030' },
+        borderRadius: '12px',
+        minHeight: '44px',
+        '& fieldset': { borderColor: '#E5E5E0', borderWidth: '1px' },
+        '&:hover fieldset': { borderColor: '#DA7756' },
+        '&.Mui-focused fieldset': { borderColor: '#DA7756', borderWidth: '1px' },
         '&.Mui-disabled': {
             backgroundColor: '#fff',
-            '& fieldset': { borderColor: '#e5e7eb' },
+            '& fieldset': { borderColor: '#E5E5E0' },
         },
     },
     '& .MuiSelect-select.Mui-disabled': {
@@ -35,7 +43,7 @@ const fieldStyles = {
         color: 'rgba(0, 0, 0, 0.54)',
     },
     '& .MuiInputLabel-root.Mui-focused': {
-        color: '#C72030',
+        color: '#DA7756',
     },
     '& .MuiInputLabel-root.Mui-disabled': {
         color: 'rgba(0, 0, 0, 0.6)',
@@ -162,7 +170,7 @@ export const PermitChecklistDetails = () => {
         return (
             <div className="p-6 bg-gray-50 min-h-screen">
                 <div className="flex flex-col items-center justify-center min-h-[400px]">
-                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#C72030] mb-4"></div>
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#DA7756] mb-4"></div>
                     <p className="text-gray-600">Loading checklist details...</p>
                     <p className="text-sm text-gray-500 mt-2">ID: {id}</p>
                 </div>
@@ -190,7 +198,7 @@ export const PermitChecklistDetails = () => {
                         </Button>
                         <Button
                             onClick={() => window.location.reload()}
-                            className="bg-[#C72030] hover:bg-[#B8252F]"
+                            className="bg-[#DA7756] hover:bg-[#c86b4d]"
                         >
                             Retry
                         </Button>
@@ -200,220 +208,64 @@ export const PermitChecklistDetails = () => {
         );
     }
 
-    // return (
-    //     <div className="p-6 bg-gray-50 min-h-screen">
-    //         {/* Header */}
-    //         <div className="flex items-center justify-between mb-6">
-    //             <div className="flex items-center gap-4">
-    //                 <Button
-    //                     onClick={handleBack}
-    //                     variant="ghost"
-    //                     size="sm"
-    //                     className="p-2 hover:bg-gray-100"
-    //                 >
-    //                     <ArrowLeft className="w-4 h-4" />
-    //                 </Button>
-    //                 <h1 className="text-xl font-semibold text-gray-900">DETAILS</h1>
-    //             </div>
-    //             <Button
-    //                 onClick={handleEdit}
-    //                 className="bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300 rounded-sm px-3 py-2 h-8 text-sm flex items-center gap-2"
-    //             >
-    //                 <Edit className="w-4 h-4" />
-    //             </Button>
-    //         </div>
-
-    //         {/* Checklist Detail Header */}
-    //         <div className="mb-6">
-    //             <div className="flex items-center gap-2 mb-4">
-    //                 <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
-    //                     <span className="text-white text-sm">✓</span>
-    //                 </div>
-    //                 <span className="text-orange-500 font-medium">Checklist Detail</span>
-    //             </div>
-
-    //             {/* Basic Information Cards */}
-    //             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-    //                 <Card className="border border-gray-200">
-    //                     <CardContent className="p-4">
-    //                         <div className="text-sm text-gray-500 mb-1">Category</div>
-    //                         <div className="text-gray-900 font-medium">{checklistDetails.category}</div>
-    //                     </CardContent>
-    //                 </Card>
-
-    //                 <Card className="border border-gray-200">
-    //                     <CardContent className="p-4">
-    //                         <div className="text-sm text-gray-500 mb-1">Title of the Checklist</div>
-    //                         <div className="text-gray-900 font-medium">{checklistDetails.title}</div>
-    //                     </CardContent>
-    //                 </Card>
-
-    //                 <Card className="border border-gray-200">
-    //                     <CardContent className="p-4">
-    //                         <div className="text-sm text-gray-500 mb-1">No. of Questions</div>
-    //                         <div className="text-gray-900 font-medium">{checklistDetails.totalQuestions}</div>
-    //                     </CardContent>
-    //                 </Card>
-
-    //                 <Card className="border border-gray-200">
-    //                     <CardContent className="p-4">
-    //                         <div className="text-sm text-gray-500 mb-1">Status</div>
-    //                         <div className="flex items-center gap-2">
-    //                             <Switch
-    //                                 checked={checklistDetails.status}
-    //                                 className="data-[state=checked]:bg-orange-500"
-    //                                 disabled
-    //                             />
-    //                         </div>
-    //                     </CardContent>
-    //                 </Card>
-    //             </div>
-    //         </div>
-
-    //         {/* Questions Section */}
-    //         <div className="space-y-4">
-    //             {checklistDetails.questions.map((question, index) => (
-    //                 <Card key={question.id} className="border border-gray-200">
-    //                     <CardContent className="p-6">
-    //                         {/* Question Number */}
-    //                         <div className="flex items-start gap-4 mb-4">
-    //                             <div className="text-gray-700 font-medium min-w-[20px]">
-    //                                 {index + 1}
-    //                             </div>
-    //                             <div className="flex-1">
-    //                                 <Textarea
-    //                                     value={question.question}
-    //                                     className="w-full border border-gray-200 rounded-md p-3 text-gray-900 resize-none"
-    //                                     rows={3}
-    //                                     readOnly
-    //                                 />
-    //                             </div>
-    //                         </div>
-
-    //                         {/* Answer Type and Controls */}
-    //                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-    //                             {/* Left Column */}
-    //                             <div className="space-y-4">
-    //                                 <div>
-    //                                     <label className="text-sm text-gray-600 mb-2 block">Answer Type :</label>
-    //                                     <Input
-    //                                         value={question.answerType}
-    //                                         className="w-full border border-gray-200 rounded-md p-3 bg-gray-50"
-    //                                         readOnly
-    //                                     />
-    //                                 </div>
-
-    //                                 <div className="flex items-center gap-6">
-    //                                     <div className="flex items-center gap-2">
-    //                                         <span className="text-sm text-gray-600">Question Mandatory</span>
-    //                                         <Switch
-    //                                             checked={question.isQuestionMandatory}
-    //                                             className="data-[state=checked]:bg-green-500"
-    //                                             disabled
-    //                                         />
-    //                                     </div>
-
-    //                                     <div className="flex items-center gap-2">
-    //                                         <span className="text-sm text-gray-600">Image Mandatory</span>
-    //                                         <Switch
-    //                                             checked={question.isImageMandatory}
-    //                                             className="data-[state=checked]:bg-green-500"
-    //                                             disabled
-    //                                         />
-    //                                     </div>
-    //                                 </div>
-    //                             </div>
-
-    //                             {/* Right Column - Answers */}
-    //                             <div>
-    //                                 <label className="text-sm text-gray-600 mb-2 block">Answers:</label>
-    //                                 {question.answerType === 'Multiple Choice' && question.answers ? (
-    //                                     <div className="flex gap-2">
-    //                                         {question.answers.map((answer, answerIndex) => (
-    //                                             <div
-    //                                                 key={answerIndex}
-    //                                                 className="px-3 py-1 bg-gray-100 border border-gray-200 rounded text-sm text-gray-700"
-    //                                             >
-    //                                                 {answer}
-    //                                             </div>
-    //                                         ))}
-    //                                     </div>
-    //                                 ) : (
-    //                                     <div className="text-sm text-gray-500 italic">
-    //                                         {question.answerType === 'Input Box' ? 'Text input field' : 'Description text area'}
-    //                                     </div>
-    //                                 )}
-    //                             </div>
-    //                         </div>
-    //                     </CardContent>
-    //                 </Card>
-    //             ))}
-    //         </div>
-    //     </div>
-    // );
-
     return (
-        <div className="p-8 bg-gray-50 min-h-screen">
-            {/* Header */}
+        <div className="p-8 bg-[#F6F4EE] min-h-screen">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                     <Button
                         onClick={handleBack}
                         variant="ghost"
                         size="sm"
-                        className="p-2 hover:bg-gray-100"
+                        className="p-2 hover:bg-[#F6F4EE]"
                     >
-                        <ArrowLeft className="w-4 h-4" />
+                        <ArrowLeft className="w-4 h-4 text-[#2C2C2C]" />
                     </Button>
-                    <h1 className="text-xl font-semibold text-gray-900">DETAILS</h1>
+                    <h1 className="text-xl font-semibold text-[#2C2C2C]">DETAILS</h1>
                 </div>
                 {shouldShow("Permit Checklist", "update") && (
                     <Button
                         onClick={handleEdit}
-                        className="!bg-white border border-[#C72030] text-[#C72030] px-3 py-2 h-8 text-sm flex items-center gap-2 rounded-md !shadow-none hover:!bg-white [&_svg]:!text-[#C72030]"
+                        className="!bg-white border border-[#DA7756] text-[#DA7756] px-3 py-2 h-8 text-sm flex items-center gap-2 rounded-md !shadow-none hover:!bg-white [&_svg]:!text-[#DA7756]"
                     >
                         <Edit className="w-4 h-4" />
                     </Button>
                 )}
             </div>
 
-            {/* Main Card */}
-            <Card className="shadow-sm border border-gray-200 rounded-md bg-white">
+            <Card className="rounded-[16px] border border-[#E5E5E0] bg-white shadow-none">
                 <CardContent className="p-6">
-                    {/* Header */}
-                    <div className="flex items-center gap-2 mb-6">
-                        <div className="w-6 h-6 rounded-full bg-[#C72030] flex items-center justify-center text-white">
-                            ✓
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 rounded-full bg-[#F6F4EE] border border-[#E5E5E0] flex items-center justify-center">
+                            <ClipboardCheck className="h-5 w-5 text-[#DA7756]" />
                         </div>
-                        <h2 className="text-lg font-semibold text-[#C72030]">Checklist Detail</h2>
+                        <h2 className="text-[14px] font-semibold uppercase tracking-[0.08em] text-[#DA7756]">Checklist Detail</h2>
                     </div>
 
-                    {/* Basic Info Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
                         <div>
                             <div className="text-sm text-gray-500 mb-1">Category</div>
-                            <div className="font-medium text-gray-900 bg-gray-50 border border-gray-200 rounded-md p-2">
+                            <div className="min-h-[44px] bg-white border border-[#E5E5E0] rounded-[12px] px-3 py-2.5 font-medium text-gray-900 flex items-center">
                                 {checklistDetails.category}
                             </div>
                         </div>
                         <div>
                             <div className="text-sm text-gray-500 mb-1">Title of the Checklist</div>
-                            <div className="font-medium text-gray-900 bg-gray-50 border border-gray-200 rounded-md p-2">
+                            <div className="min-h-[44px] bg-white border border-[#E5E5E0] rounded-[12px] px-3 py-2.5 font-medium text-gray-900 flex items-center">
                                 {checklistDetails.title}
                             </div>
                         </div>
                         <div>
                             <div className="text-sm text-gray-500 mb-1">No. of Questions</div>
-                            <div className="font-medium text-gray-900 bg-gray-50 border border-gray-200 rounded-md p-2">
+                            <div className="min-h-[44px] bg-white border border-[#E5E5E0] rounded-[12px] px-3 py-2.5 font-medium text-gray-900 flex items-center">
                                 {checklistDetails.totalQuestions}
                             </div>
                         </div>
                         <div>
                             <div className="text-sm text-gray-500 mb-1">Status</div>
-                            <div className="flex items-center h-[38px]">
+                            <div className="flex items-center min-h-[44px] bg-white border border-[#E5E5E0] rounded-[12px] px-3">
                                 <Switch
                                     checked={checklistDetails.status}
-                                    className="data-[state=checked]:bg-[#C72030]"
+                                    className="data-[state=checked]:bg-[#DA7756]"
                                     disabled={isUpdating}
                                     onCheckedChange={async (checked) => {
                                         try {
@@ -425,15 +277,11 @@ export const PermitChecklistDetails = () => {
                                                 throw new Error('Authentication credentials not found');
                                             }
 
-                                            // Ensure baseUrl has the correct format
                                             if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
                                                 baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
                                             }
 
-                                            const url = `${baseUrl}/pms/admin/snag_checklists/${id}.json`;
-                                            console.log('Updating checklist status:', url);
-
-                                            const response = await fetch(url, {
+                                            const response = await fetch(`${baseUrl}/pms/admin/snag_checklists/${id}.json`, {
                                                 method: 'PUT',
                                                 headers: {
                                                     'Authorization': `Bearer ${token}`,
@@ -481,33 +329,26 @@ export const PermitChecklistDetails = () => {
                         </div>
                     </div>
 
-                    <hr className="border-gray-200 mb-6" />
+                    <hr className="border-[#E5E5E0] mb-6" />
 
-                    {/* Questions Section */}
                     {checklistDetails.questions.map((question, index) => (
-                        <div key={question.id} className="border border-gray-200 rounded-md p-5 mb-6 bg-[#FAFAFA]">
-                            {/* Question Number */}
+                        <div key={question.id} className="border border-[#E5E5E0] rounded-[12px] p-5 mb-6 bg-white">
                             <div className="mb-4">
                                 <div className="font-medium text-gray-800 mb-2">{index + 1}</div>
                                 <Textarea
                                     value={question.question}
                                     readOnly
                                     rows={2}
-                                    className="w-full border border-gray-200 rounded-md p-3 text-gray-800 bg-gray-50 resize-none"
+                                    className="w-full border border-[#E5E5E0] rounded-[12px] min-h-[44px] bg-white text-gray-800 resize-none"
                                 />
                             </div>
 
-                            {/* Answer Info Grid */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                {/* Left Section */}
                                 <div className="space-y-4">
                                     <div>
+                                        <div className="text-[12px] font-medium text-[#5C5C5C] mb-2 uppercase tracking-[0.06em]">Answer Type</div>
                                         <FormControl fullWidth variant="outlined">
-                                            <InputLabel shrink>Answer Type</InputLabel>
                                             <MuiSelect
-                                                label="Answer Type"
-                                                notched
-                                                displayEmpty
                                                 value={question.answerType}
                                                 disabled
                                                 sx={fieldStyles}
@@ -524,7 +365,7 @@ export const PermitChecklistDetails = () => {
                                             <span className="text-sm text-gray-600">Question Mandatory</span>
                                             <Switch
                                                 checked={question.isQuestionMandatory}
-                                                className="data-[state=checked]:bg-[#C72030]"
+                                                className="data-[state=checked]:bg-[#DA7756]"
                                                 disabled
                                             />
                                         </div>
@@ -532,14 +373,13 @@ export const PermitChecklistDetails = () => {
                                             <span className="text-sm text-gray-600">Image Mandatory</span>
                                             <Switch
                                                 checked={question.isImageMandatory}
-                                                className="data-[state=checked]:bg-[#C72030]"
+                                                className="data-[state=checked]:bg-[#DA7756]"
                                                 disabled
                                             />
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Right Section */}
                                 <div>
                                     <div className="text-sm text-gray-500 mb-2">Answers</div>
                                     {question.answerType === 'Multiple Choice' && question.answers ? (
@@ -547,14 +387,14 @@ export const PermitChecklistDetails = () => {
                                             {question.answers.map((ans, idx) => (
                                                 <span
                                                     key={idx}
-                                                    className="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-md text-sm font-medium text-gray-800"
+                                                    className="px-3 py-1.5 bg-white border border-[#E5E5E0] rounded-[12px] text-sm font-medium text-gray-800 min-h-[44px] flex items-center"
                                                 >
                                                     {ans}
                                                 </span>
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="text-sm text-gray-500 italic bg-gray-50 border border-gray-200 rounded-md p-2">
+                                        <div className="text-sm text-gray-500 italic bg-white border border-[#E5E5E0] rounded-[12px] p-2 min-h-[44px] flex items-center">
                                             {question.answerType === 'Input Box'
                                                 ? 'Text input field'
                                                 : 'Description text area'}

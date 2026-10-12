@@ -87,7 +87,7 @@ export const GRNFilterDialog: React.FC<GRNFilterDialogProps> = ({
 
   return (
     <Dialog
-      PaperProps={{ sx: { borderRadius: "8px" } }} open={open} onClose={onOpenChange}>
+      PaperProps={{ sx: { borderRadius: "16px" } }} open={open} onClose={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <div className="flex flex-row items-center justify-between space-y-0 pb-4">
           <h1 className="text-lg font-semibold">FILTER BY</h1>

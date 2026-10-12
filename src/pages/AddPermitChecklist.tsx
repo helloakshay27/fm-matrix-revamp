@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { TextField, Select as MuiSelect, MenuItem, FormControl, InputLabel, Checkbox, FormControlLabel } from '@mui/material';
-import { Plus, X } from 'lucide-react';
+import { ArrowLeft, Plus, X } from 'lucide-react';
 import { useLayout } from '@/contexts/LayoutContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -27,13 +27,19 @@ const fieldStyles = {
         padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
     },
     '& .MuiOutlinedInput-root': {
+        borderRadius: '12px',
         backgroundColor: '#fff',
-        '& fieldset': { borderColor: '#e5e7eb' },
-        '&:hover fieldset': { borderColor: '#C72030' },
-        '&.Mui-focused fieldset': { borderColor: '#C72030' },
+        '& fieldset': { borderColor: '#E5E5E0', borderWidth: '1px' },
+        '&:hover fieldset': { borderColor: '#C9C9C2' },
+        '&.Mui-focused fieldset': { borderColor: '#DA7756', borderWidth: '1px' },
     },
-    '& .MuiInputLabel-root.Mui-focused': {
-        color: '#C72030',
+    '& .MuiInputLabel-root': {
+        color: '#5C5C5C',
+        fontSize: '12px',
+        fontWeight: 600,
+        '&.Mui-focused': {
+            color: '#DA7756',
+        },
     },
 };
 
@@ -51,8 +57,8 @@ const selectMenuProps = {
         style: {
             maxHeight: 224,
             backgroundColor: 'white',
-            border: '1px solid #e2e8f0',
-            borderRadius: '8px',
+            border: '1px solid #E5E5E0',
+            borderRadius: '12px',
             boxShadow:
                 '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
             zIndex: 9999,
@@ -247,7 +253,7 @@ export const AddPermitChecklist = () => {
         try {
             onChecklistSaved({
                 question_count: questions.length,
-                has_mandatory: questions.some(q => q.mandatory)
+                category: formData.category
             });
 
             setIsSubmitting(true);
@@ -330,15 +336,26 @@ export const AddPermitChecklist = () => {
     };
 
     return (
-        <div className="p-6  mx-auto">
-            {/* Main Card */}
-            <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
-                {/* Header */}
-                <div className="flex items-center mb-6 border-b pb-3">
-                    <div className="flex items-center bg-[#F6F4EE] !text-[#C72030] px-4 py-2 rounded-md">
-                        <span className="mr-2 text-[28px]">✓</span>
-                        <span className=" font-semibold !text-[#C72030]">Add checklist</span>
+        <div className="min-h-screen w-full bg-[#F6F4EE]">
+            <div className="mb-6 px-4 pt-4">
+                <button
+                    type="button"
+                    onClick={() => navigate(-1)}
+                    className="flex items-center gap-1 hover:text-gray-800"
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back to Checklist
+                </button>
+            </div>
+
+            <div className="w-full border-y border-[#E5E5E0] bg-white p-6 shadow-sm">
+                <div className="mb-8 flex items-center gap-3 border-b border-[#E5E5E0] pb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F6F4EE] text-[#DA7756]">
+                        <span className="text-[20px]">✓</span>
                     </div>
+                    <h1 className="text-[20px] font-semibold uppercase tracking-wide text-[#DA7756]">
+                        Add Checklist
+                    </h1>
                 </div>
 
                 {/* Category & Title */}
@@ -382,14 +399,14 @@ export const AddPermitChecklist = () => {
                         variant="outlined"
                         InputLabelProps={{ shrink: true }}
                         sx={fieldStyles}
-                        required
+
                     />
                 </div>
 
                 {/* Question Count */}
-                <div className="mb-8 border-t pt-4">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-base font-medium">Add No. of Questions</h3>
+                <div className="mb-8 rounded-[12px] border border-[#E5E5E0] bg-[#F9F7F3] p-4">
+                    <div className="flex items-center justify-between gap-4 mb-2">
+                        <h3 className="text-[14px] font-semibold text-[#2C2C2C]">Add No. of Questions</h3>
                         <div className="flex items-center gap-4">
                             <FormControl variant="outlined" sx={{ width: 80 }}>
                                 <MuiSelect
@@ -415,7 +432,7 @@ export const AddPermitChecklist = () => {
                             <Button
                                 type="button"
                                 onClick={addQuestion}
-                                className="bg-brand hover:bg-brand-hover text-white h-8 w-8 rounded-full p-0 [&_svg]:text-white"
+                                className="h-8 w-8 rounded-full bg-[#1F1F1F] p-0 text-white hover:bg-[#000000] [&_svg]:text-white"
                             >
                                 <Plus className="w-4 h-4" />
                             </Button>
@@ -428,7 +445,7 @@ export const AddPermitChecklist = () => {
                     {questions.map((question, index) => (
                         <div
                             key={question.id}
-                            className="bg-[#F9F9F9] border border-gray-200 rounded-lg p-6 relative"
+                            className="relative rounded-[16px] border border-[#E5E5E0] bg-white p-6 shadow-sm"
                         >
                             {/* Remove Question */}
                             <Button
@@ -441,7 +458,7 @@ export const AddPermitChecklist = () => {
                                 <X className="w-4 h-4" />
                             </Button>
 
-                            <h4 className="text-base font-medium mb-4">
+                            <h4 className="mb-4 text-[14px] font-semibold text-[#2C2C2C]">
                                 Question {index + 1}
                             </h4>
 
@@ -509,8 +526,8 @@ export const AddPermitChecklist = () => {
                                                     updateQuestion(question.id, 'mandatory', e.target.checked)
                                                 }
                                                 sx={{
-                                                    color: '#C72030',
-                                                    '&.Mui-checked': { color: '#C72030' },
+                                                    color: '#DA7756',
+                                                    '&.Mui-checked': { color: '#DA7756' },
                                                 }}
                                             />
                                         }
@@ -562,13 +579,22 @@ export const AddPermitChecklist = () => {
                                         </div>
                                     ))}
 
-                                    <Button
+                                    {/* <Button
                                         type="button"
                                         onClick={() => addOption(question.id)}
-                                        className="mt-2 flex items-center gap-2 bg-brand hover:bg-brand-hover text-white [&_svg]:!text-white"
+                                        className="mt-2 flex items-center gap-2 bg-[#1F1F1F] text-white hover:bg-[#000000] [&_svg]:!text-white"
                                     >
                                         <Plus className="w-4 h-4" />
                                         Add Option
+                                    </Button> */}
+                                    <Button
+                                        type="button"
+                                        onClick={() => addOption(question.id)}
+                                        style={{ backgroundColor: '#1F1F1F', color: '#FFFFFF' }}
+                                        className="mt-2 flex items-center gap-2 !text-white hover:!bg-black"
+                                    >
+                                        <Plus className="w-4 h-4" style={{ color: '#FFFFFF' }} />
+                                        <span style={{ color: '#FFFFFF' }}>Add Option</span>
                                     </Button>
                                 </div>
                             )}
@@ -603,19 +629,28 @@ export const AddPermitChecklist = () => {
                     <Button
                         type="button"
                         variant="outline"
-                        className="px-8 border-brand text-brand hover:bg-brand-selected hover:text-brand"
+                        className="px-8 border-[#E5E5E0] bg-white text-[#2C2C2C] hover:bg-[#F6F4EE]"
                         disabled={isSubmitting}
                         onClick={() => navigate('/safety/permit/checklist')}
                     >
                         Cancel
                     </Button>
-                    <Button
+                    {/* <Button
                         type="button"
                         onClick={handleSubmit}
-                        className="px-8 !bg-brand hover:!bg-brand-hover !text-white disabled:!opacity-100 disabled:!bg-brand"
+                        className="px-8 !bg-[#DA7756] hover:!bg-[#C86D4D] !text-white disabled:!opacity-100 disabled:!bg-[#DA7756]"
                         disabled={isSubmitting}
                     >
                         {isSubmitting ? 'Saving...' : 'Save Checklist'}
+                    </Button> */}
+                    <Button
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={isSubmitting}
+                        style={{ backgroundColor: '#1F1F1F', color: '#FFFFFF', opacity: 1 }}
+                        className="px-8 !text-white hover:!bg-black"
+                    >
+                        <span style={{ color: '#FFFFFF' }}>{isSubmitting ? 'Saving...' : 'Save Checklist'}</span>
                     </Button>
                 </div>
             </div>

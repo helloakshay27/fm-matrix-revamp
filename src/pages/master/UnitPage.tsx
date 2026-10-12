@@ -19,6 +19,7 @@ import {
 } from '@/store/slices/locationSlice';
 import { toast } from 'sonner';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { AttachmentUpload } from '@/components/common/AttachmentUpload';
 
 const fieldStyles = {
   height: { xs: 36, sm: 40, md: 45 },
@@ -66,7 +67,6 @@ export const UnitPage = () => {
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -221,9 +221,6 @@ export const UnitPage = () => {
       toast.success('Units imported successfully');
       setShowImportDialog(false);
       setImportFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
       dispatch(fetchAllUnits());
     } catch (error: any) {
       toast.error(error.message || 'Failed to import units');
@@ -232,8 +229,8 @@ export const UnitPage = () => {
     }
   };
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleFileSelect = (files: File[]) => {
+    const file = files[0];
     if (file) {
       const validTypes = [
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -245,7 +242,6 @@ export const UnitPage = () => {
         setImportFile(file);
       } else {
         toast.error('Please select a valid Excel or CSV file');
-        event.target.value = '';
       }
     }
   };
@@ -385,7 +381,7 @@ export const UnitPage = () => {
                 <DialogTrigger asChild>
                   <Button
                     variant="outline"
-                    className="h-9 px-4 text-sm font-medium whitespace-nowrap  border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
+                    className="h-9 px-4 text-sm font-medium whitespace-nowrap border border-brand text-brand hover:bg-brand-light [&_svg]:text-brand"
                   >
                     <Upload className="h-4 w-4 mr-2" />
                     Import Units
@@ -402,32 +398,22 @@ export const UnitPage = () => {
                     </button>
                   </DialogHeader>
                   <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Select Excel or CSV file
-                      </label>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".xlsx,.xls,.csv"
-                        onChange={handleFileSelect}
-                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                      />
-                      {importFile && (
-                        <p className="mt-2 text-sm text-gray-600">
-                          Selected: {importFile.name}
-                        </p>
-                      )}
-                    </div>
+                    <AttachmentUpload
+                      label="Select Excel or CSV file"
+                      chooseText="Choose File"
+                      uploadText="Upload File"
+                      accept=".xlsx,.xls,.csv"
+                      files={importFile ? [importFile] : []}
+                      onFilesSelected={handleFileSelect}
+                      onRemove={() => setImportFile(null)}
+                      disabled={isImporting}
+                    />
                     <div className="flex justify-end space-x-2">
                       <Button
                         variant="outline"
                         onClick={() => {
                           setShowImportDialog(false);
                           setImportFile(null);
-                          if (fileInputRef.current) {
-                            fileInputRef.current.value = '';
-                          }
                         }}
                       >
                         Cancel
@@ -435,7 +421,7 @@ export const UnitPage = () => {
                       <Button
                         onClick={handleImportUnits}
                         disabled={!importFile || isImporting}
-                        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 [&_svg]:text-white"
+                        className="bg-brand hover:bg-brand-hover text-white h-9 [&_svg]:text-white"
                       >
                         {isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Import

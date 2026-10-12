@@ -151,7 +151,7 @@ const TopupModal: React.FC<TopupModalProps> = ({ open, onClose }) => {
 
     return (
         <Dialog
-      PaperProps={{ sx: { borderRadius: "8px" } }} open={open} onClose={onClose}>
+      PaperProps={{ sx: { borderRadius: "16px" } }} open={open} onClose={onClose}>
             <DialogTitle>Top-Up Wallet</DialogTitle>
             <DialogContent>
                 <FormControl fullWidth margin="normal">

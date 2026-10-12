@@ -67,7 +67,7 @@ export const GDNPendingApprovalsFilterDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full sm:max-w-[500px] bg-white overflow-visible rounded-[8px] sm:rounded-[8px]">
+      <DialogContent className="w-full sm:max-w-[500px] bg-white overflow-visible rounded-2xl sm:rounded-2xl">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg font-semibold">Filters</DialogTitle>

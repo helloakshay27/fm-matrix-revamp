@@ -855,6 +855,29 @@ html body .accounting-ui .acc-dialog-foot {
   border: none !important;
   background: transparent !important;
 }
+/* MUI Dialog variant of the same shell (PaperProps className "accounting-ui acc-mui-dialog") */
+html body .MuiDialog-paper.accounting-ui.acc-mui-dialog {
+  padding: 28px !important;
+  border-radius: 24px !important;
+  box-shadow: 0 8px 40px rgba(26, 26, 24, 0.16) !important;
+  max-height: 86vh;
+  overflow-y: auto;
+}
+html body .MuiDialog-root:has(.acc-mui-dialog) .MuiBackdrop-root {
+  background-color: rgba(26, 26, 24, 0.32) !important;
+  backdrop-filter: blur(2px);
+}
+html body .accounting-ui.acc-mui-dialog .MuiDialogContent-root {
+  padding: 0 !important;
+  overflow: visible;
+}
+@media (max-width: 639px) {
+  html body .MuiDialog-paper.accounting-ui.acc-mui-dialog {
+    margin: 16px !important;
+    padding: 24px 16px !important;
+  }
+}
+
 /* Header close — wireframe .gbtn: 32px ghost, icon .48, hover #F5F4F0 + ink */
 html body .accounting-ui .acc-dialog-close {
   flex: none;

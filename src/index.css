@@ -1066,12 +1066,20 @@ th span:not([class*="rounded-full"]) {
 td div:not([class*="rounded-full"]),
 td span:not([class*="rounded-full"]),
 th div:not([class*="rounded-full"]),
-td button,
+td button:not([role="switch"]),
 td a {
   padding-left: 2px !important;
 }
 
-td [class*="rounded-full"] {
+/* Toggle switches in table rows: no extra padding, or the knob is pushed past
+   the end of the track when on. */
+td button[role="switch"] {
+  padding: 0 !important;
+}
+
+/* Centre capsule text — but never a toggle switch: its track is also an
+   inline-flex rounded-full button, and centring it shifts the knob off the track. */
+td [class*="rounded-full"]:not([role="switch"]) {
   justify-content: center;
   text-align: center;
 }

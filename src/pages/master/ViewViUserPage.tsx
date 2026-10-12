@@ -4,7 +4,8 @@ import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { fetchViUserDetail, clearSelectedUser } from "@/store/slices/viUsersSlice";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { FormSection } from "@/components/common/FormSection";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Edit2, User, Mail, Phone, Building, MapPin, Calendar, Shield, Briefcase } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
@@ -153,16 +154,9 @@ export const ViewViUserPage = () => {
                 </div>
 
                 {/* Details Section */}
-                <div className="lg:col-span-8 space-y-6">
+                <div className="lg:col-span-8 space-y-4 sm:space-y-6">
                     {/* Personal Information */}
-                    <Card className="border-0 shadow-sm">
-                        <CardHeader className="border-b bg-gray-50">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <User className="w-5 h-5 text-[#C72030]" />
-                                Personal Information
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-6">
+                    <FormSection title="PERSONAL INFORMATION" icon={User}>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 <div>
                                     <label className="text-xs text-gray-500 uppercase tracking-wide">First Name</label>
@@ -189,18 +183,10 @@ export const ViewViUserPage = () => {
                                     <p className="text-sm font-medium text-gray-800 mt-1">{user.user_type || "-"}</p>
                                 </div>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </FormSection>
 
                     {/* Work Information */}
-                    <Card className="border-0 shadow-sm">
-                        <CardHeader className="border-b bg-gray-50">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <Briefcase className="w-5 h-5 text-[#C72030]" />
-                                Work Information
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-6">
+                    <FormSection title="WORK INFORMATION" icon={Briefcase}>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 <div>
                                     <label className="text-xs text-gray-500 uppercase tracking-wide">Department</label>
@@ -241,18 +227,10 @@ export const ViewViUserPage = () => {
                                     </p>
                                 </div>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </FormSection>
 
                     {/* Access & Permissions */}
-                    <Card className="border-0 shadow-sm">
-                        <CardHeader className="border-b bg-gray-50">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <Shield className="w-5 h-5 text-[#C72030]" />
-                                Access & Permissions
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-6">
+                    <FormSection title="ACCESS & PERMISSIONS" icon={Shield}>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 <div>
                                     <label className="text-xs text-gray-500 uppercase tracking-wide">Access Level</label>
@@ -287,19 +265,11 @@ export const ViewViUserPage = () => {
                                     <p className="text-sm font-medium text-gray-800 mt-1">{permission?.sap_entity_name || "-"}</p>
                                 </div>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </FormSection>
 
                     {/* Report To Information */}
                     {user.report_to?.id && (
-                        <Card className="border-0 shadow-sm">
-                            <CardHeader className="border-b bg-gray-50">
-                                <CardTitle className="text-lg flex items-center gap-2">
-                                    <User className="w-5 h-5 text-[#C72030]" />
-                                    Reports To
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-6">
+                        <FormSection title="REPORTS TO" icon={User}>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     <div>
                                         <label className="text-xs text-gray-500 uppercase tracking-wide">Name</label>
@@ -314,19 +284,11 @@ export const ViewViUserPage = () => {
                                         <p className="text-sm font-medium text-gray-800 mt-1">{user.report_to.mobile || "-"}</p>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </FormSection>
                     )}
 
                     {/* Timestamps */}
-                    <Card className="border-0 shadow-sm">
-                        <CardHeader className="border-b bg-gray-50">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <Calendar className="w-5 h-5 text-[#C72030]" />
-                                Timestamps
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-6">
+                    <FormSection title="TIMESTAMPS" icon={Calendar}>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 <div>
                                     <label className="text-xs text-gray-500 uppercase tracking-wide">Created At</label>
@@ -347,8 +309,7 @@ export const ViewViUserPage = () => {
                                     </div>
                                 )}
                             </div>
-                        </CardContent>
-                    </Card>
+                        </FormSection>
                 </div>
             </div>
         </div>

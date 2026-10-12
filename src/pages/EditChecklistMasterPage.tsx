@@ -1,33 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, ArrowLeft, Cog, ListChecks } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  Paper, Box, Typography, RadioGroup, FormControlLabel, Radio, TextField,
-  IconButton, Button as MuiButton, Checkbox as MuiCheckbox, Select as MuiSelect,
-  MenuItem, FormControl, InputLabel, OutlinedInput
+  RadioGroup, FormControlLabel, Radio, TextField,
+  Checkbox as MuiCheckbox, Select as MuiSelect,
+  MenuItem, FormControl, InputLabel
 } from '@mui/material';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FormSection, FormActionBar, assetFieldStyles } from '@/components/common/FormSection';
 import { API_CONFIG, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAssetTypes } from '@/services/assetTypesAPI';
-import { toast, Toaster } from 'sonner';
-
-const fieldStyles = {
-  height: { xs: 36, sm: 40, md: 44 },
-  '& .MuiInputBase-input, & .MuiSelect-select': {
-    padding: { xs: '8px', sm: '10px', md: '12px' },
-  },
-};
+import { toast } from 'sonner';
 
 const textFieldStyles = {
   '& .MuiOutlinedInput-root': {
-    '& fieldset': {
-      borderColor: '#ddd',
-    },
     '&:hover fieldset': {
       borderColor: 'var(--color-primary)',
     },
@@ -429,478 +416,452 @@ export const EditChecklistMasterPage = () => {
     updateTask(sectionId, taskId, 'subGroup', newSubGroup ? newSubGroup.id : '');
   };
 
+
+  const radioSx = { color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } };
+  const optionFieldSx = { ...assetFieldStyles, backgroundColor: 'white' };
+
+  const renderToggle = (label: string, checked: boolean, onChange: (value: boolean) => void) => (
+    <label className="flex items-center gap-2 cursor-pointer">
+      <span className={`flex items-center w-12 h-6 rounded-full transition-colors ${checked ? 'bg-brand' : 'bg-gray-300'}`}>
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          className="sr-only"
+        />
+        <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`}></span>
+      </span>
+      <span className="text-xs sm:text-sm text-gray-600 font-normal">{label}</span>
+    </label>
+  );
+
   return (
-    <div className="p-4 sm:p-6 md:p-8 max-w-screen-xl mx-auto">
-      {/* Sonner Toaster for notifications */}
-      <Toaster position="top-right" richColors closeButton />
-      
-      <Button
-        onClick={() => navigate('/master/checklist')}
-        variant="outline"
-      >
-        ← Back to List
-      </Button>
-      <div className="flex flex-wrap gap-4 my-6">
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            checked={weightage}
-            onCheckedChange={(checked) => setWeightage(checked === true)}
-            id="weightage"
-          />
-          <Label htmlFor="weightage">Weightage</Label>
+    <div className="p-4 sm:p-6 max-w-full mx-auto min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="mb-4 sm:mb-6">
+        <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
+          <button
+            type="button"
+            onClick={() => navigate('/master/checklist')}
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
+            aria-label="Back to list"
+          >
+            <ArrowLeft className="w-4 h-4 text-gray-600" />
+          </button>
+          <span>Checklist Master</span>
+          <span>{">"}</span>
+          <span className="text-gray-900 font-medium">Edit Checklist</span>
         </div>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">EDIT CHECKLIST</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <div className="bg-white border rounded-lg p-4 sm:p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 bg-[var(--color-primary)] text-white rounded-full flex items-center justify-center text-sm">1</div>
-            <h2 className="font-semibold text-lg" style={{ color: 'var(--color-primary)' }}>Basic Info</h2>
-          </div>
+      <form onSubmit={handleSubmit}>
+        <div className="space-y-4 sm:space-y-6">
+          {/* Basic Configuration */}
+          <FormSection title="BASIC CONFIGURATION" icon={Cog}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-1">Type</p>
+                <RadioGroup
+                  value={type}
+                  onChange={(e) => setType(e.target.value)}
+                  row
+                >
+                  {['PPM', 'AMC', 'Preparedness', 'HSC', 'Routine'].map((typeOption) => (
+                    <FormControlLabel
+                      key={typeOption}
+                      value={typeOption}
+                      control={<Radio sx={radioSx} />}
+                      label={typeOption}
+                    />
+                  ))}
+                </RadioGroup>
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-            <div>
-              <Label className="mb-2 block text-sm font-medium">Type</Label>
-              <RadioGroup
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-                row
-                sx={{
-                  '& .MuiFormControlLabel-root .MuiRadio-root': {
-                    color: 'var(--color-primary)',
-                    '&.Mui-checked': {
-                      color: 'var(--color-primary)',
-                    },
-                  },
-                }}
-              >
-                {['PPM', 'AMC', 'Preparedness', 'HSC', 'Routine'].map((typeOption) => (
-                  <FormControlLabel
-                    key={typeOption}
-                    value={typeOption}
-                    control={<Radio />}
-                    label={typeOption}
-                  />
-                ))}
-              </RadioGroup>
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-1">Schedule For</p>
+                <RadioGroup
+                  value={scheduleFor}
+                  onChange={(e) => setScheduleFor(e.target.value)}
+                  row
+                >
+                  {['Asset', 'Service', 'Vendor'].map((scheduleOption) => (
+                    <FormControlLabel
+                      key={scheduleOption}
+                      value={scheduleOption}
+                      control={<Radio sx={radioSx} />}
+                      label={scheduleOption}
+                    />
+                  ))}
+                </RadioGroup>
+              </div>
             </div>
 
-            <div>
-              <Label className="mb-2 block text-sm font-medium">Schedule For</Label>
-              <RadioGroup
-                value={scheduleFor}
-                onChange={(e) => setScheduleFor(e.target.value)}
-                row
-                sx={{
-                  '& .MuiFormControlLabel-root .MuiRadio-root': {
-                    color: 'var(--color-primary)',
-                    '&.Mui-checked': {
-                      color: 'var(--color-primary)',
-                    },
-                  },
-                }}
-              >
-                {['Asset', 'Service', 'Vendor'].map((scheduleOption) => (
-                  <FormControlLabel
-                    key={scheduleOption}
-                    value={scheduleOption}
-                    control={<Radio />}
-                    label={scheduleOption}
-                  />
-                ))}
-              </RadioGroup>
-            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+              <TextField
+                fullWidth
+                required
+                label="Activity Name"
+                placeholder="Enter Activity Name"
+                value={activityName}
+                onChange={(e) => setActivityName(e.target.value)}
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: assetFieldStyles }}
+                sx={textFieldStyles}
+              />
 
-            <TextField
-              fullWidth
-              required
-              label="Activity Name"
-              placeholder="Enter Activity Name"
-              value={activityName}
-              onChange={(e) => setActivityName(e.target.value)}
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={textFieldStyles}
-            />
+              {scheduleFor === 'Asset' && (
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Asset Type</InputLabel>
+                    <MuiSelect
+                      label="Asset Type"
+                      notched
+                      displayEmpty
+                      value={assetType}
+                      onChange={(e) => setAssetType(e.target.value)}
+                      disabled={isLoadingAssetTypes}
+                      sx={assetFieldStyles}
+                    >
+                      <MenuItem value="">Select Asset Type</MenuItem>
+                      {assetTypes && assetTypes.map(assetTypeOption => (
+                        <MenuItem key={assetTypeOption.id} value={String(assetTypeOption.id)}>
+                          {assetTypeOption.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                  {isLoadingAssetTypes && (
+                    <span className="block text-xs text-gray-500 mt-1">Loading asset types...</span>
+                  )}
+                </div>
+              )}
+            </div>
 
             <TextField
               label={
-                <span style={{ fontSize: '16px' }}>
-                  Description <span style={{ color: "var(--color-primary)" }}>*</span>
+                <span>
+                  Description<span className="fm-required-mark">*</span>
                 </span>
               }
               placeholder="Enter Description/SOP"
               fullWidth
+              variant="outlined"
               multiline
-              minRows={4} // better than rows
+              minRows={4}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              InputLabelProps={{ shrink: true }}
               sx={{
                 ...textFieldStyles,
-                mb: 3,
                 "& textarea": {
-                  width: "100% !important",   // force full width
-                  resize: "both",             // allow resizing
+                  width: "100% !important",
+                  resize: "both",
                   overflow: "auto",
                   boxSizing: "border-box",
                   display: "block",
                 },
                 "& textarea[aria-hidden='true']": {
-                  display: "none !important", // hide shadow textarea
+                  display: "none !important",
                 },
               }}
             />
+          </FormSection>
 
-            {scheduleFor === 'Asset' && (
-              <FormControl fullWidth>
-                <InputLabel>Asset Type</InputLabel>
-                <MuiSelect
-                  value={assetType}
-                  onChange={(e) => setAssetType(e.target.value)}
-                  input={<OutlinedInput label="Asset Type" />}
-                  disabled={isLoadingAssetTypes}
-                >
-                  <MenuItem value="">Select Asset Type</MenuItem>
-                  {assetTypes && assetTypes.map(assetTypeOption => (
-                    <MenuItem key={assetTypeOption.id} value={String(assetTypeOption.id)}>
-                      {assetTypeOption.name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-                {isLoadingAssetTypes && (
-                  <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                    Loading asset types...
-                  </Typography>
-                )}
-              </FormControl>
-            )}
-          </div>
-        </div>
+          {/* Question Setup */}
+          <FormSection
+            title="QUESTION SETUP"
+            icon={ListChecks}
+            headerActions={renderToggle('Weightage', weightage, setWeightage)}
+          >
+            <div className="space-y-4">
+              {taskSections.map((section, sectionIndex) => (
+                <div key={section.id} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-sm sm:text-base font-semibold text-gray-800">
+                      Section {sectionIndex + 1}
+                    </span>
+                    {taskSections.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeTaskSection(section.id)}
+                        className="flex items-center justify-center w-8 h-8 rounded-md text-brand hover:bg-brand-light transition-colors"
+                        aria-label="Remove section"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
 
-        {taskSections.map((section, sectionIndex) => (
-          <div key={section.id} className="overflow-hidden">
-            <div className="p-4 sm:p-6 bg-white">
-              <div className="flex justify-between items-center mb-4">
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-                  Section {sectionIndex + 1}
-                </Typography>
-                {taskSections.length > 1 && (
-                  <IconButton
-                    onClick={() => removeTaskSection(section.id)}
-                    sx={{ color: 'var(--color-primary)' }}
-                  >
-                    <X />
-                  </IconButton>
-                )}
-              </div>
-
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3, mb: 3 }}>
-                <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Select Group</InputLabel>
-                  <MuiSelect
-                    label="Select Group"
-                    notched
-                    displayEmpty
-                    value={String(section.group)}
-                    onChange={(e) => {
-                      updateTaskSection(section.id, 'group', e.target.value);
-                      updateTaskSection(section.id, 'subGroup', '');
-                      if (e.target.value) {
-                        fetchTaskSubGroups(e.target.value);
-                      }
-                    }}
-                  >
-                    <MenuItem value="">Select Group</MenuItem>
-                    {taskGroups.map((group) => (
-                      <MenuItem key={group.id} value={String(group.id)}>
-                        {group.name}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
-
-                <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Select Sub Group</InputLabel>
-                  <MuiSelect
-                    label="Select Sub Group"
-                    notched
-                    displayEmpty
-                    value={String(section.subGroup)}
-                    onChange={(e) => updateTaskSection(section.id, 'subGroup', e.target.value)}
-                    disabled={!section.group}
-                  >
-                    <MenuItem value="">Select Sub Group</MenuItem>
-                    {section.group && taskSubGroups[section.group] ?
-                      taskSubGroups[section.group].map((subGroup) => (
-                        <MenuItem key={subGroup.id} value={String(subGroup.id)}>
-                          {subGroup.name}
-                        </MenuItem>
-                      )) : []
-                    }
-                  </MuiSelect>
-                </FormControl>
-              </Box>
-
-              {section.tasks.map((task, taskIndex) => (
-                <Box key={task.id} sx={{ mb: 3 }}>
-                  <Box sx={{
-                    border: '2px dashed #E0E0E0',
-                    padding: 2,
-                    borderRadius: 0,
-                    backgroundColor: '#FAFAFA',
-                    position: 'relative'
-                  }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#666' }}>
-                      Task {taskIndex + 1}
-                    </Typography>
-
-                    {section.tasks.length > 1 && (
-                      <IconButton
-                        onClick={() => removeTask(section.id, task.id)}
-                        sx={{
-                          position: 'absolute',
-                          top: 8,
-                          right: 8,
-                          color: '#666',
-                          padding: '4px',
-                          backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                          '&:hover': {
-                            backgroundColor: 'rgba(255, 255, 255, 1)',
-                            color: 'var(--color-primary)'
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                    <FormControl fullWidth variant="outlined" required>
+                      <InputLabel shrink>Select Group</InputLabel>
+                      <MuiSelect
+                        label="Select Group"
+                        notched
+                        displayEmpty
+                        value={String(section.group)}
+                        onChange={(e) => {
+                          updateTaskSection(section.id, 'group', e.target.value);
+                          updateTaskSection(section.id, 'subGroup', '');
+                          if (e.target.value) {
+                            fetchTaskSubGroups(e.target.value);
                           }
                         }}
-                        size="small"
+                        sx={assetFieldStyles}
                       >
-                        <X fontSize="small" />
-                      </IconButton>
-                    )}
+                        <MenuItem value="">Select Group</MenuItem>
+                        {taskGroups.map((group) => (
+                          <MenuItem key={group.id} value={String(group.id)}>
+                            {group.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
 
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                      <Box sx={{ display: 'flex', gap: 4 }}>
-                        <FormControlLabel
-                          control={
-                            <MuiCheckbox
-                              checked={task.mandatory}
-                              onChange={(e) => updateTask(section.id, task.id, 'mandatory', e.target.checked)}
-                              sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
-                            />
-                          }
-                          label="Mandatory"
-                        />
-                        <FormControlLabel
-                          control={
-                            <MuiCheckbox
-                              checked={task.helpText}
-                              onChange={(e) => updateTask(section.id, task.id, 'helpText', e.target.checked)}
-                              sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
-                            />
-                          }
-                          label="Help Text"
-                        />
-                        <FormControlLabel
-                          control={
-                            <MuiCheckbox
-                              checked={task.reading}
-                              onChange={(e) => updateTask(section.id, task.id, 'reading', e.target.checked)}
-                              sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
-                            />
-                          }
-                          label="Reading"
-                        />
-                      </Box>
-                    </Box>
+                    <FormControl fullWidth variant="outlined" required>
+                      <InputLabel shrink>Select Sub Group</InputLabel>
+                      <MuiSelect
+                        label="Select Sub Group"
+                        notched
+                        displayEmpty
+                        value={String(section.subGroup)}
+                        onChange={(e) => updateTaskSection(section.id, 'subGroup', e.target.value)}
+                        disabled={!section.group}
+                        sx={assetFieldStyles}
+                      >
+                        <MenuItem value="">Select Sub Group</MenuItem>
+                        {section.group && taskSubGroups[section.group] ?
+                          taskSubGroups[section.group].map((subGroup) => (
+                            <MenuItem key={subGroup.id} value={String(subGroup.id)}>
+                              {subGroup.name}
+                            </MenuItem>
+                          )) : []
+                        }
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
 
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 2 }}>
-                      <TextField
-                        label={`Task ${taskIndex + 1}`}
-                        required={task.mandatory}
-                        placeholder="Enter Task"
-                        fullWidth
-                        value={task.taskName}
-                        onChange={(e) => updateTask(section.id, task.id, 'taskName', e.target.value)}
-                        sx={textFieldStyles}
-                      />
-
-                      <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                        <InputLabel shrink>Input Type</InputLabel>
-                        <MuiSelect
-                          label="Input Type"
-                          notched
-                          displayEmpty
-                          value={task.inputType}
-                          onChange={e => updateTask(section.id, task.id, 'inputType', e.target.value)}
-                        >
-                          <MenuItem value="">Select Input Type</MenuItem>
-                          <MenuItem value="Text">Text</MenuItem>
-                          <MenuItem value="Number">Number</MenuItem>
-                          <MenuItem value="Dropdown">Dropdown</MenuItem>
-                          <MenuItem value="Radio Button">Radio Button</MenuItem>
-                          <MenuItem value="Checkbox">Checkbox</MenuItem>
-                          <MenuItem value="Date">Date</MenuItem>
-                        </MuiSelect>
-                      </FormControl>
-                    </Box>
-
-                    {task.helpText && (
-                      <Box sx={{ mt: 2 }}>
-                        <TextField
-                          label="Help Text (Hint)"
-                          placeholder="Enter help text or hint"
-                          fullWidth
-                          value={task.helpTextValue || ''}
-                          onChange={(e) => updateTask(section.id, task.id, 'helpTextValue', e.target.value)}
-                          sx={textFieldStyles}
-                        />
-                      </Box>
-                    )}
-
-                    {(task.inputType === 'Radio Button' || task.inputType === 'Dropdown' || task.inputType === 'Checkbox') && (
-                      <Box sx={{ mt: 2 }}>
-                        <Box sx={{
-                          backgroundColor: '#F5F5F5',
-                          border: '1px solid #E0E0E0',
-                          borderRadius: 0,
-                          padding: 2
-                        }}>
-                          {task.inputType === 'Dropdown' ? (
-                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#333' }}>
-                              Enter Value
-                            </Typography>
-                          ) : (
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
-                                Selected
-                              </Typography>
-                              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
-                                Enter Value
-                              </Typography>
-                            </Box>
-                          )}
-
-                          {(task.options && task.options.length > 0 ? task.options : [
-                            { id: Date.now(), label: 'Yes', value: 'positive' },
-                            { id: Date.now() + 1, label: 'No', value: 'negative' }
-                          ]).map((option, optionIndex) => (
-                            <Box key={option.id || optionIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
-
-                              {task.inputType === 'Dropdown' ? null : (
-                                task.inputType === 'Checkbox' ? (
-                                  <MuiCheckbox
-                                    checked={optionIndex === 0}
-                                    sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
-                                  />
-                                ) : (
-                                  <Radio
-                                    checked={optionIndex === 0}
-                                    name={`radio-${section.id}-${task.id}`}
-                                    sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
-                                  />
-                                )
-                              )}
-
-                              <TextField
-                                fullWidth
-                                size="small"
-                                placeholder="Enter option value"
-                                value={option.label || ''}
-                                onChange={(e) => updateOption(section.id, task.id, option.id || optionIndex, 'label', e.target.value)}
-                                label={<span>Option{task.mandatory && <span style={{ color: 'var(--color-primary)' }}>&nbsp;*</span>}</span>}
-                                sx={{
-                                  ...textFieldStyles,
-                                  '& .MuiOutlinedInput-root': {
-                                    backgroundColor: 'white'
-                                  }
-                                }}
-                              />
-
-                              <FormControl variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles, minWidth: 80 }} size="small">
-                                <InputLabel shrink>Type</InputLabel>
-                                <MuiSelect
-                                  label="Type"
-                                  notched
-                                  displayEmpty
-                                  value={option.value || 'positive'}
-                                  onChange={e => updateOption(section.id, task.id, option.id || optionIndex, 'value', e.target.value)}
-                                >
-                                  <MenuItem value="">Select Type</MenuItem>
-                                  <MenuItem value="positive">P</MenuItem>
-                                  <MenuItem value="negative">N</MenuItem>
-                                </MuiSelect>
-                              </FormControl>
-
-                              {(task.options?.length || 2) > 1 && (
-                                <IconButton
-                                  size="small"
-                                  onClick={() => removeOption(section.id, task.id, option.id || optionIndex)}
-                                  sx={{ color: 'var(--color-primary)' }}
-                                >
-                                  <X />
-                                </IconButton>
-                              )}
-                            </Box>
-                          ))}
-
-                          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                            <MuiButton
-                              variant="outlined"
-                              size="small"
-                              startIcon={<Plus />}
-                              onClick={() => addOption(section.id, task.id)}
-                              sx={{
-                                color: 'var(--color-primary)',
-                                borderColor: 'var(--color-primary)',
-                                fontSize: '12px',
-                                padding: '4px 12px',
-                                '&:hover': {
-                                  borderColor: 'var(--color-primary)',
-                                  backgroundColor: 'var(--color-primary-selected)'
-                                }
-                              }}
+                  <div className="space-y-4">
+                    {section.tasks.map((task, taskIndex) => (
+                      <div
+                        key={task.id}
+                        className="relative border border-dashed border-gray-300 rounded-lg bg-gray-50 p-4"
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-semibold text-gray-600">Task {taskIndex + 1}</span>
+                          {section.tasks.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeTask(section.id, task.id)}
+                              className="flex items-center justify-center w-8 h-8 rounded-md text-gray-500 hover:text-brand hover:bg-white transition-colors"
+                              aria-label="Remove task"
                             >
-                              Add Option
-                            </MuiButton>
-                          </Box>
-                        </Box>
-                      </Box>
-                    )}
-                  </Box>
-                </Box>
+                              <X className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="flex flex-wrap gap-x-4 mb-3">
+                          <FormControlLabel
+                            control={
+                              <MuiCheckbox
+                                checked={task.mandatory}
+                                onChange={(e) => updateTask(section.id, task.id, 'mandatory', e.target.checked)}
+                                sx={radioSx}
+                              />
+                            }
+                            label="Mandatory"
+                          />
+                          <FormControlLabel
+                            control={
+                              <MuiCheckbox
+                                checked={task.helpText}
+                                onChange={(e) => updateTask(section.id, task.id, 'helpText', e.target.checked)}
+                                sx={radioSx}
+                              />
+                            }
+                            label="Help Text"
+                          />
+                          <FormControlLabel
+                            control={
+                              <MuiCheckbox
+                                checked={task.reading}
+                                onChange={(e) => updateTask(section.id, task.id, 'reading', e.target.checked)}
+                                sx={radioSx}
+                              />
+                            }
+                            label="Reading"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                          <div className="sm:col-span-1 lg:col-span-2">
+                            <TextField
+                              label={`Task ${taskIndex + 1}`}
+                              required={task.mandatory}
+                              placeholder="Enter Task"
+                              fullWidth
+                              variant="outlined"
+                              value={task.taskName}
+                              onChange={(e) => updateTask(section.id, task.id, 'taskName', e.target.value)}
+                              InputLabelProps={{ shrink: true }}
+                              InputProps={{ sx: optionFieldSx }}
+                              sx={textFieldStyles}
+                            />
+                          </div>
+
+                          <FormControl fullWidth variant="outlined" required>
+                            <InputLabel shrink>Input Type</InputLabel>
+                            <MuiSelect
+                              label="Input Type"
+                              notched
+                              displayEmpty
+                              value={task.inputType}
+                              onChange={e => updateTask(section.id, task.id, 'inputType', e.target.value)}
+                              sx={optionFieldSx}
+                            >
+                              <MenuItem value="">Select Input Type</MenuItem>
+                              <MenuItem value="Text">Text</MenuItem>
+                              <MenuItem value="Number">Number</MenuItem>
+                              <MenuItem value="Dropdown">Dropdown</MenuItem>
+                              <MenuItem value="Radio Button">Radio Button</MenuItem>
+                              <MenuItem value="Checkbox">Checkbox</MenuItem>
+                              <MenuItem value="Date">Date</MenuItem>
+                            </MuiSelect>
+                          </FormControl>
+                        </div>
+
+                        {task.helpText && (
+                          <div className="mt-4">
+                            <TextField
+                              label="Help Text (Hint)"
+                              placeholder="Enter help text or hint"
+                              fullWidth
+                              variant="outlined"
+                              value={task.helpTextValue || ''}
+                              onChange={(e) => updateTask(section.id, task.id, 'helpTextValue', e.target.value)}
+                              InputLabelProps={{ shrink: true }}
+                              InputProps={{ sx: optionFieldSx }}
+                              sx={textFieldStyles}
+                            />
+                          </div>
+                        )}
+
+                        {(task.inputType === 'Radio Button' || task.inputType === 'Dropdown' || task.inputType === 'Checkbox') && (
+                          <div className="mt-4 bg-white border border-gray-200 rounded-lg p-4">
+                            {task.inputType === 'Dropdown' ? (
+                              <p className="text-sm font-semibold text-gray-700 mb-3">Enter Value</p>
+                            ) : (
+                              <div className="flex justify-between items-center mb-3">
+                                <p className="text-sm font-semibold text-gray-700">Selected</p>
+                                <p className="text-sm font-semibold text-gray-700">Enter Value</p>
+                              </div>
+                            )}
+
+                            {(task.options && task.options.length > 0 ? task.options : [
+                              { id: Date.now(), label: 'Yes', value: 'positive' },
+                              { id: Date.now() + 1, label: 'No', value: 'negative' }
+                            ]).map((option, optionIndex) => (
+                              <div key={option.id || optionIndex} className="flex gap-2 mb-3 items-center">
+                                {task.inputType === 'Dropdown' ? null : (
+                                  task.inputType === 'Checkbox' ? (
+                                    <MuiCheckbox
+                                      checked={optionIndex === 0}
+                                      sx={radioSx}
+                                    />
+                                  ) : (
+                                    <Radio
+                                      checked={optionIndex === 0}
+                                      name={`radio-${section.id}-${task.id}`}
+                                      sx={radioSx}
+                                    />
+                                  )
+                                )}
+
+                                <TextField
+                                  fullWidth
+                                  size="small"
+                                  variant="outlined"
+                                  placeholder="Enter option value"
+                                  value={option.label || ''}
+                                  onChange={(e) => updateOption(section.id, task.id, option.id || optionIndex, 'label', e.target.value)}
+                                  label={<span>Option{task.mandatory && <span className="fm-required-mark">*</span>}</span>}
+                                  InputLabelProps={{ shrink: true }}
+                                  InputProps={{ sx: optionFieldSx }}
+                                  sx={textFieldStyles}
+                                />
+
+                                <FormControl variant="outlined" size="small" sx={{ minWidth: 110 }}>
+                                  <InputLabel shrink>Type</InputLabel>
+                                  <MuiSelect
+                                    label="Type"
+                                    notched
+                                    displayEmpty
+                                    value={option.value || 'positive'}
+                                    onChange={e => updateOption(section.id, task.id, option.id || optionIndex, 'value', e.target.value)}
+                                    sx={optionFieldSx}
+                                  >
+                                    <MenuItem value="">Select Type</MenuItem>
+                                    <MenuItem value="positive">P</MenuItem>
+                                    <MenuItem value="negative">N</MenuItem>
+                                  </MuiSelect>
+                                </FormControl>
+
+                                {(task.options?.length || 2) > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => removeOption(section.id, task.id, option.id || optionIndex)}
+                                    className="flex items-center justify-center w-8 h-8 rounded-md text-brand hover:bg-brand-light transition-colors shrink-0"
+                                    aria-label="Remove option"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+
+                            <div className="flex justify-end mt-3">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => addOption(section.id, task.id)}
+                                className="text-brand border-brand hover:bg-brand-light"
+                              >
+                                <Plus className="w-4 h-4 mr-1" />
+                                Add Option
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex justify-end mt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => addQuestion(section.id)}
+                      className="text-brand border-brand hover:bg-brand-light"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add Task
+                    </Button>
+                  </div>
+                </div>
               ))}
-
-              <div className="flex justify-end">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => addQuestion(section.id)}
-                  className="text-brand border-brand hover:bg-brand-light"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add Task
-                </Button>
-              </div>
             </div>
-            <hr className="my-6" />
-          </div>
-        ))}
+          </FormSection>
 
-        <div className="flex justify-end space-x-4 p-6 bg-white">
-          <Button
-            type="submit"
-            style={{ backgroundColor: 'var(--color-primary)' }}
-            className="text-white hover:opacity-90 px-8"
-          >
-            Update
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate('/master/checklist')}
-            className="text-brand border-brand"
-          >
-            Cancel
-          </Button>
+          <FormActionBar
+            onCancel={() => navigate('/master/checklist')}
+            submitLabel="Update"
+            submitAsFormSubmit
+          />
         </div>
       </form>
     </div>

@@ -22,7 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Edit2 } from "lucide-react";
+import { ArrowLeft, Edit2, User, Briefcase, CalendarClock } from "lucide-react";
+import { FormSection } from "@/components/common/FormSection";
 import { useAppSelector } from "@/store/hooks";
 import { fetchAllowedSites } from "@/store/slices/siteSlice";
 import { fetchAllowedCompanies } from "@/store/slices/projectSlice";
@@ -713,8 +714,9 @@ export const ViewOccupantUserPage = () => {
 
         {/* Main Form Section */}
         <div className="lg:col-span-8">
-          <Card className="border-0 shadow-sm">
-            <CardContent className="p-6 space-y-6">
+          <div className="space-y-4 sm:space-y-6">
+            <FormSection title="PERSONAL DETAILS" icon={User}>
+            <div className="space-y-6">
               {/* Name Fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -818,7 +820,11 @@ export const ViewOccupantUserPage = () => {
                   />
                 </div>
               </div>
+            </div>
+            </FormSection>
 
+            <FormSection title="EMPLOYMENT DETAILS" icon={Briefcase}>
+            <div className="space-y-6">
               {/* User Type Radio Buttons */}
               <div className="space-y-2">
                 <RadioGroup
@@ -1039,12 +1045,14 @@ export const ViewOccupantUserPage = () => {
                   Daily Helpdesk Report Email
                 </Label>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            </FormSection>
+          </div>
         </div>
       </div>
 
       <div className="mt-6">
+        <FormSection title="ATTENDANCE" icon={CalendarClock}>
         <EnhancedTable
           data={attendanceData}
           columns={attendanceColumns}
@@ -1095,6 +1103,7 @@ export const ViewOccupantUserPage = () => {
             </Pagination>
           </div>
         )}
+        </FormSection>
       </div>
     </div>
   );

@@ -4887,6 +4887,33 @@ button[title="Exporting..."] .lucide {
   stroke: var(--color-primary) !important;
 }
 
+/* Toolbar icon buttons sit next to the table search box: same hairline
+   border as the search input (.border-gray-300 → --color-line), ink icon,
+   soft grey hover. Wins over the ink-border rules above. */
+html body button:is([title="Filter"], [title="Columns"], [title="Refresh"], [title="Export"], [title="Exporting..."]) {
+  background-color: #ffffff !important;
+  border: 1px solid var(--color-line) !important;
+  color: var(--color-primary) !important;
+}
+/* Icon-only toolbar buttons: same 44px height as the table search input, square.
+   (Labelled "Refresh"/"Filters" buttons elsewhere keep their own width.) */
+html body button:is([title="Filter"], [title="Columns"], [title="Refresh"], [title="Export"], [title="Exporting..."]):is([class*="w-8"], [class*="w-9"], [class*="w-[28px]"], [class*="w-[36px]"]) {
+  height: 44px !important;
+  min-height: 44px !important;
+  width: 44px !important;
+  min-width: 44px !important;
+  padding: 0 !important;
+}
+html body button:is([title="Filter"], [title="Columns"], [title="Refresh"], [title="Export"], [title="Exporting..."]):hover {
+  background-color: var(--color-hover) !important;
+  border-color: rgba(26, 26, 24, 0.28) !important;
+  color: var(--color-primary) !important;
+}
+html body button:is([title="Filter"], [title="Columns"], [title="Refresh"], [title="Export"], [title="Exporting..."]) :is(svg, .lucide) {
+  color: var(--color-primary) !important;
+  stroke: currentColor !important;
+}
+
 /* ===========================================
    DESIGN GUIDE — Additional old analytics colors → new 6-color palette
    April 2026: covers every "use X instead of Y" entry from the design spec
@@ -7400,4 +7427,17 @@ html body div[class*="bg-[#F6F4EE]" i]:has(> [class*="bg-[#C4B89D54]" i] + div >
   top: auto !important;
   bottom: 12px !important;
   right: 14px !important;
+}
+
+/* ============================================================
+   MODALS & CARDS — 16px corners everywhere
+   Centred shadcn dialogs / alert dialogs (side sheets & popovers are
+   excluded by the centring classes), MUI dialog papers and MUI cards.
+   Buttons inside keep their own 8px radius.
+   ============================================================ */
+html body [role="dialog"][class*="translate-x-[-50%]"],
+html body [role="alertdialog"][class*="translate-x-[-50%]"],
+html body .MuiDialog-paper,
+html body .MuiCard-root {
+  border-radius: 16px !important;
 }

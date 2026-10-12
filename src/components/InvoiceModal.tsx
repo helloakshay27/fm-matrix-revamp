@@ -34,7 +34,7 @@ const isTrue = (val: unknown) =>
 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
     '& .MuiDialog-paper': {
-        borderRadius: '8px',
+        borderRadius: '16px',
         maxWidth: '800px',
         width: '100%',
         maxHeight: '90vh',

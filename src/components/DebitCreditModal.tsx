@@ -4,7 +4,7 @@ import { Button } from "./ui/button"
 const DebitCreditModal = ({ openDebitCreditModal, handleCloseDebitCreditModal, debitCreditForm, handleDebitCreditChange, handleSubmitDebitCredit, options }) => {
     return (
         <Dialog
-      PaperProps={{ sx: { borderRadius: "8px" } }}
+      PaperProps={{ sx: { borderRadius: "16px" } }}
             open={openDebitCreditModal}
             onClose={handleCloseDebitCreditModal}
             maxWidth="sm"

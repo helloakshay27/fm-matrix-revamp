@@ -4,7 +4,8 @@ import TextField from "@mui/material/TextField";
 import { Button } from "@/components/ui/button";
 import { API_CONFIG } from '@/config/apiConfig';
 import { Search, X } from "lucide-react";
-import { toast } from 'sonner';
+import { accountingToast as toast } from '@/lib/accountingToast';
+import '@/styles/accounting.css';
 import { useNavigate } from "react-router-dom";
 interface AccountOption {
   id: number;
@@ -272,7 +273,7 @@ const totalCredit = filteredAccounts.reduce((sum, acc) => {
   }
 
   return (
-    <div className="w-full min-h-screen bg-gray-50 p-0 m-0">
+    <div className="accounting-ui w-full min-h-screen bg-gray-50 p-0 m-0">
       <div className="w-full max-w-full px-8 py-8 mx-auto">
         <h2 className="text-2xl font-semibold text-[#1a1a1a] mb-6">
           Opening Balance
@@ -338,16 +339,17 @@ const totalCredit = filteredAccounts.reduce((sum, acc) => {
                 <span className="text-gray-500 text-lg">Loading accounts...</span>
               </div>
             ) : (
-              <table className="w-full border-collapse border border-gray-300 rounded-lg">
+              <div className="acc-table-wrap">
+              <table className="acc-line-items w-full">
                 <thead>
                   <tr className="bg-[#E5E0D3]">
                     <th className="border border-gray-300 px-4 py-2 text-left font-semibold">
                       Accounts
                     </th>
-                    <th className="border border-gray-300 px-4 py-2 text-center font-semibold">
+                    <th className="border border-gray-300 px-4 py-2 acc-num text-right font-semibold">
                       Debit (INR)
                     </th>
-                    <th className="border border-gray-300 px-4 py-2 text-center font-semibold">
+                    <th className="border border-gray-300 px-4 py-2 acc-num text-right font-semibold">
                       Credit (INR)
                     </th>
                   </tr>
@@ -512,6 +514,7 @@ const totalCredit = filteredAccounts.reduce((sum, acc) => {
   ))}
 </tbody>
               </table>
+              </div>
             )}
 
             {/* Calculation Summary Box */}
@@ -532,10 +535,10 @@ const totalCredit = filteredAccounts.reduce((sum, acc) => {
                 <div className="flex justify-between mb-3 pb-3 border-b">
                   <span className="font-semibold">Total</span>
                   <div className="flex gap-20">
-                    <span className="w-24 text-right font-semibold text-green-700">
+                    <span className="acc-amount w-24 text-right font-semibold">
                       {totalDebit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                     </span>
-                    <span className="w-24 text-right font-semibold text-red-600">
+                    <span className="acc-amount w-24 text-right font-semibold">
                       {totalCredit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                     </span>
                   </div>
@@ -564,22 +567,21 @@ const totalCredit = filteredAccounts.reduce((sum, acc) => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 pt-4 justify-center">
-            <Button
-              type="submit"
-              className="bg-[#C72030] hover:bg-[#A01020] text-white min-w-[140px]"
-            >
-              Continue
-            </Button>
+          <div className="acc-actions pt-4">
             <Button
               variant="outline"
               type="button"
               onClick={() => window.history.back()}
-              className="min-w-[100px]"
+              className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2"
             >
               Cancel
             </Button>
-
+            <Button
+              type="submit"
+              className="acc-btn fm-button-fix fm-button-brand px-8 py-2"
+            >
+              Continue
+            </Button>
           </div>
         </form>
       </div>

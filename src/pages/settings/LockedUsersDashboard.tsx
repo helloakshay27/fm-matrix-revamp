@@ -1,20 +1,10 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import {
-  Search,
   RefreshCw,
-  Loader2,
   UnlockIcon,
   Calendar,
   User,
@@ -22,7 +12,6 @@ import {
   Phone,
   AlertCircle,
   Settings,
-  Check,
 } from "lucide-react";
 import {
   Dialog,
@@ -33,7 +22,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { StatsCard } from "@/components/StatsCard";
 import { API_CONFIG, getAuthHeader, getFullUrl } from "@/config/apiConfig";
 
@@ -61,6 +49,15 @@ interface LockedUsersResponse {
   locked_users: LockedUser[];
   pagination: PaginationData;
 }
+
+const lockedUserColumns: ColumnConfig[] = [
+  { key: "user", label: "User", sortable: false, hideable: true, defaultVisible: true, draggable: true },
+  { key: "contact", label: "Contact", sortable: false, hideable: true, defaultVisible: true, draggable: true },
+  { key: "department", label: "Department", sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: "locked_at", label: "Locked At", sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: "failed_attempts", label: "Failed Attempts", sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: "lock_reason", label: "Reason", sortable: true, hideable: true, defaultVisible: true, draggable: true },
+];
 
 export const LockedUsersDashboard = () => {
   const [lockedUsers, setLockedUsers] = useState<LockedUser[]>([]);
@@ -212,19 +209,21 @@ export const LockedUsersDashboard = () => {
   };
 
   // Handle individual checkbox selection
-  const handleCheckboxChange = (userId: number) => {
+  // (EnhancedTable string ids deta hai — yahan number me convert karte hain)
+  const handleCheckboxChange = (itemId: string, checked: boolean) => {
+    const userId = Number(itemId);
     const newSelectedIds = new Set(selectedIds);
-    if (newSelectedIds.has(userId)) {
-      newSelectedIds.delete(userId);
-    } else {
+    if (checked) {
       newSelectedIds.add(userId);
+    } else {
+      newSelectedIds.delete(userId);
     }
     setSelectedIds(newSelectedIds);
   };
 
   // Handle select all checkbox
-  const handleSelectAll = () => {
-    if (selectedIds.size === filteredUsers.length) {
+  const handleSelectAll = (checked: boolean) => {
+    if (!checked) {
       setSelectedIds(new Set());
     } else {
       const allIds = new Set(filteredUsers.map((user) => user.id));
@@ -296,126 +295,73 @@ export const LockedUsersDashboard = () => {
     }
   };
 
-  const renderPaginationItems = () => {
-    if (!pagination.total_pages || pagination.total_pages <= 0) {
-      return null;
+  const renderCell = (user: LockedUser, columnKey: string) => {
+    switch (columnKey) {
+      case "user":
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-brand-light flex items-center justify-center">
+              <User className="w-5 h-5 text-brand" />
+            </div>
+            <div>
+              <div className="font-medium text-gray-900">
+                {user.firstname} {user.lastname}
+              </div>
+              <div className="text-sm text-gray-500">
+                ID: {user.id}
+              </div>
+            </div>
+          </div>
+        );
+      case "contact":
+        return (
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Mail className="w-4 h-4" />
+              {user.email}
+            </div>
+            {user.mobile && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Phone className="w-4 h-4" />
+                {user.country_code && `+${user.country_code} `}
+                {user.mobile}
+              </div>
+            )}
+          </div>
+        );
+      case "department":
+        return (
+          <div>
+            <div className="text-sm font-medium text-gray-900">
+              {user.department || "N/A"}
+            </div>
+            <div className="text-sm text-gray-500">
+              {user.designation || "N/A"}
+            </div>
+          </div>
+        );
+      case "locked_at":
+        return (
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Calendar className="w-4 h-4" />
+            {formatDate(user.locked_at)}
+          </div>
+        );
+      case "failed_attempts":
+        return (
+          <Badge className="bg-brand-light text-brand border-brand hover:bg-brand-light">
+            {user.failed_attempts || 0} attempts
+          </Badge>
+        );
+      case "lock_reason":
+        return (
+          <span className="text-sm text-gray-600">
+            {user.lock_reason || "Multiple failed login attempts"}
+          </span>
+        );
+      default:
+        return null;
     }
-    const items = [];
-    const totalPages = pagination.total_pages;
-    const currentPage = pagination.current_page;
-    const showEllipsis = totalPages > 7;
-
-    if (showEllipsis) {
-      items.push(
-        <PaginationItem key={1} className="cursor-pointer">
-          <PaginationLink
-            onClick={() => handlePageChange(1)}
-            isActive={currentPage === 1}
-            aria-disabled={loading}
-            className={loading ? "pointer-events-none opacity-50" : ""}
-          >
-            1
-          </PaginationLink>
-        </PaginationItem>
-      );
-
-      if (currentPage > 4) {
-        items.push(
-          <PaginationItem key="ellipsis1">
-            <PaginationEllipsis />
-          </PaginationItem>
-        );
-      } else {
-        for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
-          items.push(
-            <PaginationItem key={i} className="cursor-pointer">
-              <PaginationLink
-                onClick={() => handlePageChange(i)}
-                isActive={currentPage === i}
-                aria-disabled={loading}
-                className={loading ? "pointer-events-none opacity-50" : ""}
-              >
-                {i}
-              </PaginationLink>
-            </PaginationItem>
-          );
-        }
-      }
-
-      if (currentPage > 3 && currentPage < totalPages - 2) {
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          items.push(
-            <PaginationItem key={i} className="cursor-pointer">
-              <PaginationLink
-                onClick={() => handlePageChange(i)}
-                isActive={currentPage === i}
-                aria-disabled={loading}
-                className={loading ? "pointer-events-none opacity-50" : ""}
-              >
-                {i}
-              </PaginationLink>
-            </PaginationItem>
-          );
-        }
-      }
-
-      if (currentPage < totalPages - 3) {
-        items.push(
-          <PaginationItem key="ellipsis2">
-            <PaginationEllipsis />
-          </PaginationItem>
-        );
-      } else {
-        for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
-          if (!items.find((item) => item.key === i.toString())) {
-            items.push(
-              <PaginationItem key={i} className="cursor-pointer">
-                <PaginationLink
-                  onClick={() => handlePageChange(i)}
-                  isActive={currentPage === i}
-                  aria-disabled={loading}
-                  className={loading ? "pointer-events-none opacity-50" : ""}
-                >
-                  {i}
-                </PaginationLink>
-              </PaginationItem>
-            );
-          }
-        }
-      }
-
-      if (totalPages > 1) {
-        items.push(
-          <PaginationItem key={totalPages} className="cursor-pointer">
-            <PaginationLink
-              onClick={() => handlePageChange(totalPages)}
-              isActive={currentPage === totalPages}
-              aria-disabled={loading}
-              className={loading ? "pointer-events-none opacity-50" : ""}
-            >
-              {totalPages}
-            </PaginationLink>
-          </PaginationItem>
-        );
-      }
-    } else {
-      for (let i = 1; i <= totalPages; i++) {
-        items.push(
-          <PaginationItem key={i} className="cursor-pointer">
-            <PaginationLink
-              onClick={() => handlePageChange(i)}
-              isActive={currentPage === i}
-              aria-disabled={loading}
-              className={loading ? "pointer-events-none opacity-50" : ""}
-            >
-              {i}
-            </PaginationLink>
-          </PaginationItem>
-        );
-      }
-    }
-
-    return items;
   };
 
   return (
@@ -427,30 +373,6 @@ export const LockedUsersDashboard = () => {
           <p className="text-gray-500 mt-1">
             Manage and unlock user accounts that have been locked
           </p>
-        </div>
-        <div className="flex gap-2">
-          {selectedIds.size > 0 && (
-            <Button
-              onClick={() => setBulkUnlockDialogOpen(true)}
-              disabled={bulkUnlocking}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              <UnlockIcon className="w-4 h-4 mr-2" />
-              Unlock ({selectedIds.size})
-            </Button>
-          )}
-          <Button
-            onClick={() => {
-              setPagination((prev) => ({ ...prev, current_page: 1 }));
-              fetchLockedUsers(1);
-            }}
-            disabled={loading}
-            variant="ghost"
-            className="fm-button-fix fm-button-brand"
-          >
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
         </div>
       </div>
 
@@ -475,167 +397,55 @@ export const LockedUsersDashboard = () => {
         />
       </div>
 
-      {/* Search Bar */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <Input
-              placeholder="Search by name, email, mobile, department, or designation..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-11"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Table */}
-      <Card>
-        <CardContent className="pt-6">
-          {loading ? (
-            <div className="flex items-center justify-start py-12 text-black">
-              <Loader2 className="w-5 h-5 animate-spin" />
-              <span className="ml-2">Loading ...</span>
-            </div>
-          ) : filteredUsers.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <UnlockIcon className="w-16 h-16 text-gray-300 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {searchTerm ? "No matching users found" : "No locked users"}
-              </h3>
-              <p className="text-gray-500">
-                {searchTerm
-                  ? "Try adjusting your search criteria"
-                  : "All user accounts are currently unlocked"}
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">
-                      <div
-                        className={`w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer ${selectedIds.size === filteredUsers.length && filteredUsers.length > 0
-                          ? "bg-[#DA7756] border-[#DA7756]"
-                          : "border-gray-300 hover:border-gray-400"
-                          }`}
-                        onClick={handleSelectAll}
-                      >
-                        {selectedIds.size > 0 && selectedIds.size === filteredUsers.length && (
-                          <Check className="w-4 h-4 text-white" />
-                        )}
-                      </div>
-                    </TableHead>
-                    <TableHead>User</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Department</TableHead>
-                    <TableHead>Locked At</TableHead>
-                    <TableHead>Failed Attempts</TableHead>
-                    <TableHead>Reason</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredUsers.map((user) => (
-                    <TableRow key={user.id} className={selectedIds.has(user.id) ? "bg-blue-50" : ""}>
-                      <TableCell>
-                        <div
-                          className={`w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer ${selectedIds.has(user.id)
-                            ? "bg-[#DA7756] border-[#DA7756]"
-                            : "border-gray-300 hover:border-gray-400"
-                            }`}
-                          onClick={() => handleCheckboxChange(user.id)}
-                        >
-                          {selectedIds.has(user.id) && (
-                            <Check className="w-4 h-4 text-white" />
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-[#DA7756] bg-opacity-10 flex items-center justify-center">
-                            <User className="w-5 h-5 text-[#DA7756]" />
-                          </div>
-                          <div>
-                            <div className="font-medium text-gray-900">
-                              {user.firstname} {user.lastname}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              ID: {user.id}
-                            </div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Mail className="w-4 h-4" />
-                            {user.email}
-                          </div>
-                          {user.mobile && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <Phone className="w-4 h-4" />
-                              {user.country_code && `+${user.country_code} `}
-                              {user.mobile}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {user.department || "N/A"}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {user.designation || "N/A"}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Calendar className="w-4 h-4" />
-                          {formatDate(user.locked_at)}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className="bg-[#F2EEE9] text-[#DA7756] border-[#DA7756] hover:bg-[#ede9e0]">
-                          {user.failed_attempts || 0} attempts
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-gray-600">
-                          {user.lock_reason || "Multiple failed login attempts"}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <div className="flex justify-center mt-6">
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
-                className={pagination.current_page === 1 || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
-              />
-            </PaginationItem>
-            {renderPaginationItems()}
-            <PaginationItem>
-              <PaginationNext
-                onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
-                className={pagination.current_page === pagination.total_pages || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
+      {/* Table — search filters the current page client-side (as before), paging stays server-side */}
+      <EnhancedTable
+        data={filteredUsers}
+        columns={lockedUserColumns}
+        renderCell={renderCell}
+        getItemId={(user) => String(user.id)}
+        storageKey="locked-users-table"
+        selectable={true}
+        selectedItems={Array.from(selectedIds).map(String)}
+        onSelectAll={handleSelectAll}
+        onSelectItem={handleCheckboxChange}
+        enableSearch={true}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        disableClientSearch={true}
+        searchPlaceholder="Search by name, email, mobile, department, or designation..."
+        emptyMessage={searchTerm ? "No matching users found" : "No locked users"}
+        loading={loading}
+        pagination={true}
+        currentPage={pagination.current_page}
+        totalPages={pagination.total_pages}
+        onPageChange={handlePageChange}
+        leftActions={
+          selectedIds.size > 0 ? (
+            <Button
+              onClick={() => setBulkUnlockDialogOpen(true)}
+              disabled={bulkUnlocking}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <UnlockIcon className="w-4 h-4 mr-2" />
+              Unlock ({selectedIds.size})
+            </Button>
+          ) : null
+        }
+        rightActions={
+          <Button
+            onClick={() => {
+              setPagination((prev) => ({ ...prev, current_page: 1 }));
+              fetchLockedUsers(1);
+            }}
+            disabled={loading}
+            variant="ghost"
+            className="fm-button-fix fm-button-brand"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+        }
+      />
 
       {/* Unlock Confirmation Dialog */}
       <Dialog open={unlockDialogOpen} onOpenChange={setUnlockDialogOpen}>

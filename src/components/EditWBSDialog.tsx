@@ -113,7 +113,7 @@ export const EditWBSDialog: React.FC<EditWBSDialogProps> = ({
 
     return (
         <Dialog
-      PaperProps={{ sx: { borderRadius: "8px" } }} open={open} onClose={() => onOpenChange(false)}>
+      PaperProps={{ sx: { borderRadius: "16px" } }} open={open} onClose={() => onOpenChange(false)}>
             <DialogContent className="sm:max-w-lg">
                 <DialogHeader className="flex flex-row items-center justify-between space-y-0 mb-3">
                     <h1 className="text-lg font-semibold">Edit WBS</h1>

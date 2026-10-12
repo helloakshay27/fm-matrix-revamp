@@ -9,7 +9,7 @@ import { fetchChecklistMaster, transformChecklistData, TransformedChecklistData 
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { toast, Toaster } from "sonner";
+import { toast } from "sonner";
 import { apiClient } from '@/utils/apiClient';
 import { ENDPOINTS } from '@/config/apiConfig';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
@@ -225,8 +225,6 @@ export const ChecklistListPage = () => {
 
   return (
     <div className="w-full min-h-screen bg-[#fafafa] p-6">
-      {/* Sonner Toaster for notifications */}
-      <Toaster position="top-right" richColors closeButton />
 
       <div className="w-full max-w-none space-y-6">
         <h1 className="text-2xl font-bold text-[#1a1a1a]">CHECKLIST MASTER</h1>

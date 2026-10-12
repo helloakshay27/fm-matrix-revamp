@@ -10,6 +10,11 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  FormSection,
+  assetFieldStyles,
+  FormActionBar,
+} from "@/components/common/FormSection";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -31,8 +36,6 @@ import {
   InputLabel,
   Select as MuiSelect,
   MenuItem,
-  FormControlLabel,
-  Switch,
 } from "@mui/material";
 
 // --- Interface Definitions ---
@@ -83,25 +86,6 @@ const fieldStyles = {
   "& .MuiInputLabel-root": {
     "&.Mui-focused": {
       color: "#C72030",
-    },
-  },
-};
-
-const textareaStyles = {
-  ...fieldStyles,
-  height: "auto",
-  "& .MuiOutlinedInput-root": {
-    height: "auto",
-    minHeight: "80px",
-    padding: "16.5px 14px",
-    "& fieldset": {
-      borderColor: "#e5e7eb",
-    },
-    "&:hover fieldset": {
-      borderColor: "#C72030",
-    },
-    "&.Mui-focused fieldset": {
-      borderColor: "#C72030",
     },
   },
 };
@@ -903,68 +887,58 @@ export const AddSurveyPage = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Back Button */}
-      <button
-        onClick={() => navigate("/master/survey/list")}
-        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
-      >
-        <ArrowLeft className="w-5 h-5" />
-        <span className="text-sm font-medium">Back to list</span>
-      </button>
-
+    <div className="p-4 sm:p-6 max-w-full mx-auto min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Add Question</h1>
+      <div className="mb-4 sm:mb-6">
+        <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
+          <button
+            onClick={() => navigate("/master/survey/list")}
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="w-4 h-4 text-gray-600" />
+          </button>
+          <span>Question Bank</span>
+          <span>{">"}</span>
+          <span className="text-gray-900 font-medium">Add Question</span>
+        </div>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+          ADD QUESTION
+        </h1>
       </div>
 
-      <div className="space-y-6">
-        {/* Section 1: Survey Details */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span
-                className="w-8 h-8 rounded-full flex items-center justify-center mr-3"
-                style={{ backgroundColor: "#E5E0D3" }}
-              >
-                <ClipboardList size={16} color="#C72030" />
-              </span>
-              Question Setup
-            </h2>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="space-y-4 sm:space-y-6">
+        {/* Section 1: Question Setup */}
+        <FormSection title="QUESTION SETUP" icon={ClipboardList}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <TextField
-                label="Title"
+                label={
+                  <span>
+                    Title<span className="fm-required-mark">*</span>
+                  </span>
+                }
                 placeholder="Enter the title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 fullWidth
                 variant="outlined"
-                required
-                InputLabelProps={{
-                  shrink: true,
-                  sx: { "& .MuiInputLabel-asterisk": { color: "#ef4444" } },
-                }}
-                InputProps={{ sx: fieldStyles }}
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: assetFieldStyles }}
               />
 
-              <FormControl
-                fullWidth
-                variant="outlined"
-                required
-                sx={{
-                  "& .MuiInputBase-root": fieldStyles,
-                  "& .MuiInputLabel-asterisk": { color: "#ef4444" },
-                }}
-              >
-                <InputLabel shrink>Check Type</InputLabel>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>
+                  <span>
+                    Check Type<span className="fm-required-mark">*</span>
+                  </span>
+                </InputLabel>
                 <MuiSelect
                   value={checkType}
                   onChange={(e) => setCheckType(e.target.value)}
                   label="Check Type*"
                   notched
                   displayEmpty
+                  sx={assetFieldStyles}
                 >
                   <MenuItem value="" disabled>
                     Select Check Type
@@ -974,8 +948,6 @@ export const AddSurveyPage = () => {
                   <MenuItem value="f_and_b">F&B</MenuItem>
                 </MuiSelect>
               </FormControl>
-
-              {/* Survey Image Upload */}
             </div>
 
             {/* Second row with Create Ticket checkbox */}
@@ -1012,17 +984,13 @@ export const AddSurveyPage = () => {
 
             {/* Conditional Ticket Dropdowns */}
             {createTicket && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 pt-6 border-t border-gray-200">
-                <FormControl
-                  fullWidth
-                  variant="outlined"
-                  required
-                  sx={{
-                    "& .MuiInputBase-root": fieldStyles,
-                    "& .MuiInputLabel-asterisk": { color: "#ef4444" },
-                  }}
-                >
-                  <InputLabel shrink>Ticket Category</InputLabel>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-200">
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel shrink>
+                    <span>
+                      Ticket Category<span className="fm-required-mark">*</span>
+                    </span>
+                  </InputLabel>
                   <MuiSelect
                     value={ticketCategory}
                     onChange={(e) => handleTicketCategoryChange(e.target.value)}
@@ -1030,6 +998,7 @@ export const AddSurveyPage = () => {
                     notched
                     displayEmpty
                     disabled={loadingTicketCategories}
+                    sx={assetFieldStyles}
                   >
                     <MenuItem value="">
                       {loadingTicketCategories
@@ -1044,13 +1013,7 @@ export const AddSurveyPage = () => {
                   </MuiSelect>
                 </FormControl>
 
-                <FormControl
-                  fullWidth
-                  variant="outlined"
-                  sx={{
-                    "& .MuiInputBase-root": fieldStyles,
-                  }}
-                >
+                <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Ticket Sub Category</InputLabel>
                   <MuiSelect
                     value={ticketSubCategory}
@@ -1059,6 +1022,7 @@ export const AddSurveyPage = () => {
                     notched
                     displayEmpty
                     disabled={loadingTicketSubCategories || !ticketCategory}
+                    sx={assetFieldStyles}
                   >
                     <MenuItem value="">
                       {loadingTicketSubCategories
@@ -1144,29 +1108,21 @@ export const AddSurveyPage = () => {
                 </div>
               )}
             </div>
-          </div>
-        </div>
+        </FormSection>
 
         {/* Section 2: Questions */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span
-                className="w-8 h-8 rounded-full flex items-center justify-center mr-3"
-                style={{ backgroundColor: "#E5E0D3" }}
-              >
-                <HelpCircle size={16} color="#C72030" />
-              </span>
-              Questions
-            </h2>
+        <FormSection
+          title="QUESTIONS"
+          icon={HelpCircle}
+          headerActions={
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">No. of Questions:</span>
               <span className="font-medium text-gray-900">
                 {questions.length.toString().padStart(1, "0")}
               </span>
             </div>
-          </div>
-          <div className="p-6">
+          }
+        >
             <div
               className={`grid gap-6 ${
                 questions.length === 1
@@ -1196,7 +1152,11 @@ export const AddSurveyPage = () => {
                   </div>
 
                   <TextField
-                    label="Question Text"
+                    label={
+                      <span>
+                        Question Text<span className="fm-required-mark">*</span>
+                      </span>
+                    }
                     placeholder="Enter your Question"
                     value={question.text}
                     onChange={(e) =>
@@ -1204,24 +1164,16 @@ export const AddSurveyPage = () => {
                     }
                     fullWidth
                     variant="outlined"
-                    required
-                    InputLabelProps={{
-                      shrink: true,
-                      sx: { "& .MuiInputLabel-asterisk": { color: "#ef4444" } },
-                    }}
-                    InputProps={{ sx: textareaStyles }}
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: assetFieldStyles }}
                   />
 
-                  <FormControl
-                    fullWidth
-                    variant="outlined"
-                    required
-                    sx={{
-                      "& .MuiInputBase-root": fieldStyles,
-                      "& .MuiInputLabel-asterisk": { color: "#ef4444" },
-                    }}
-                  >
-                    <InputLabel shrink>Answer Type</InputLabel>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>
+                      <span>
+                        Answer Type<span className="fm-required-mark">*</span>
+                      </span>
+                    </InputLabel>
                     <MuiSelect
                       value={question.answerType}
                       onChange={(e) =>
@@ -1231,9 +1183,10 @@ export const AddSurveyPage = () => {
                           e.target.value
                         )
                       }
-                      label="Answer Type"
+                      label="Answer Type*"
                       notched
                       displayEmpty
+                      sx={assetFieldStyles}
                     >
                       <MenuItem value="">Choose Answer Type</MenuItem>
                       <MenuItem value="multiple-choice">
@@ -1263,7 +1216,7 @@ export const AddSurveyPage = () => {
                       fullWidth
                       variant="outlined"
                       InputLabelProps={{ shrink: true }}
-                      InputProps={{ sx: fieldStyles }}
+                      InputProps={{ sx: assetFieldStyles }}
                     />
                   )}
 
@@ -1283,7 +1236,7 @@ export const AddSurveyPage = () => {
                       fullWidth
                       variant="outlined"
                       InputLabelProps={{ shrink: true }}
-                      InputProps={{ sx: fieldStyles, inputProps: { min: 0 } }}
+                      InputProps={{ sx: assetFieldStyles, inputProps: { min: 0 } }}
                     />
                   )}
 
@@ -1376,7 +1329,7 @@ export const AddSurveyPage = () => {
                         onClick={() => handleAddAnswerOption(question.id)}
                         variant="ghost"
                         size="sm"
-                        className="text-red-600 hover:text-red-700 p-0 h-auto font-medium flex items-center"
+                        className="text-brand hover:text-brand-hover p-0 h-auto font-medium flex items-center"
                       >
                         <Plus className="w-4 h-4 mr-1" /> Add Option
                       </Button>
@@ -1498,7 +1451,7 @@ export const AddSurveyPage = () => {
                                         "& input": {
                                           color:
                                             field.files.length > 0
-                                              ? "#C72030"
+                                              ? "var(--color-primary)"
                                               : "inherit",
                                           fontWeight:
                                             field.files.length > 0
@@ -1688,7 +1641,7 @@ export const AddSurveyPage = () => {
                         onClick={() => handleAddAdditionalField(question.id)}
                         variant="ghost"
                         size="sm"
-                        className="text-red-600 hover:text-red-700 p-0 h-auto font-medium flex items-center"
+                        className="text-brand hover:text-brand-hover p-0 h-auto font-medium flex items-center"
                       >
                         <Plus className="w-4 h-4 mr-1" /> Add More Field
                       </Button>
@@ -1707,28 +1660,15 @@ export const AddSurveyPage = () => {
                 <Plus className="w-4 h-4 mr-2 text-brand" /> Add More Questions
               </Button>
             </div>
-          </div>
-        </div>
+        </FormSection>
 
         {/* Action Buttons */}
-        <div className="flex gap-4 justify-center pt-6">
-          <Button
-            onClick={handleCreateSurvey}
-            disabled={loading || isSubmitting}
-            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 h-auto disabled:opacity-50"
-          >
-            {loading || isSubmitting ? "Creating..." : "Create"}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate(-1)}
-            disabled={loading || isSubmitting}
-            className="border-brand text-brand hover:bg-gray-50 px-8 py-2 h-auto disabled:opacity-50"
-          >
-            Cancel
-          </Button>
-        </div>
+        <FormActionBar
+          onCancel={() => navigate(-1)}
+          onSubmit={handleCreateSurvey}
+          submitLabel="Create"
+          isSubmitting={loading || isSubmitting}
+        />
       </div>
     </div>
   );
