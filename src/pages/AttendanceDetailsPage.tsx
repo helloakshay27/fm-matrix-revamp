@@ -21,9 +21,15 @@ interface AttendanceRecord {
   duration: string;
   document_url: string | null;
 }
+interface AttendancePagination {
+  current_page: number;
+  total_count: number;
+  total_pages: number;
+}
 interface AttendanceResponse {
   att_user: AttUser;
   attendances: AttendanceRecord[];
+  pagination?: AttendancePagination;
 }
 
 const attendanceColumns: ColumnConfig[] = [
@@ -41,13 +47,17 @@ export const AttendanceDetailsPage = () => {
   } = useParams();
   const [attendanceData, setAttendanceData] = useState<AttendanceResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pageLoading, setPageLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // No pagination: we'll render a scrollable table
+  // Server-side pagination: the API pages the records and returns
+  // { current_page, total_count, total_pages } — the table follows that, not a local slice.
   useEffect(() => {
     const fetchAttendanceData = async () => {
+      setPageLoading(true);
       try {
-        const response = await fetch(getFullUrl(`/pms/attendances/${id}.json`), {
+        const response = await fetch(getFullUrl(`/pms/attendances/${id}.json?page=${currentPage}`), {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -63,12 +73,13 @@ export const AttendanceDetailsPage = () => {
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setLoading(false);
+        setPageLoading(false);
       }
     };
     if (id) {
       fetchAttendanceData();
     }
-  }, [id]);
+  }, [id, currentPage]);
 
   if (loading) {
     return (
@@ -83,6 +94,7 @@ export const AttendanceDetailsPage = () => {
 
   // Derived records
   const allRecords = attendanceData?.attendances || [];
+  const totalPages = attendanceData?.pagination?.total_pages ?? 1;
   return <div className="p-6">
     <div className="mb-6">
       <div className="flex items-center mb-2">
@@ -144,7 +156,10 @@ export const AttendanceDetailsPage = () => {
           hideColumnsButton
           emptyMessage="No attendance records found for this user."
           pagination
-          pageSize={15}
+          currentPage={attendanceData.pagination?.current_page ?? currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          loading={pageLoading}
           getItemId={(item) => String(item.id)}
         />
       </div>
