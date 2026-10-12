@@ -1045,7 +1045,7 @@ export const MaterialPRDetailsPage = () => {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div
-                      className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(
+                      className={`px-3 py-1 text-sm rounded-full font-medium w-max cursor-pointer ${getStatusColor(
                         level.status_label
                       )}`}
                     >
@@ -1061,7 +1061,7 @@ export const MaterialPRDetailsPage = () => {
                 </Tooltip>
               ) : (
                 <div
-                  className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(
+                  className={`px-3 py-1 text-sm rounded-full font-medium w-max ${getStatusColor(
                     level.status_label
                   )}`}
                 >
@@ -1301,12 +1301,12 @@ export const MaterialPRDetailsPage = () => {
                   return (
                     <div
                       key={attachment.id}
-                      className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                      className="flex relative flex-col items-center border rounded-full pt-10 px-3 pb-6 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                     >
                       {isImage ? (
                         <>
                           <button
-                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
+                            className="absolute top-2 left-1/2 ml-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                             title="View"
                             onClick={() => {
                               setSelectedDoc(attachment);
@@ -1429,6 +1429,7 @@ export const MaterialPRDetailsPage = () => {
         )}
 
         <Dialog
+      PaperProps={{ sx: { borderRadius: "8px" } }}
           open={openRejectDialog}
           onClose={() => setOpenRejectDialog(false)}
           maxWidth="sm"
@@ -1468,16 +1469,17 @@ export const MaterialPRDetailsPage = () => {
               }}
             />
           </DialogContent>
-          <DialogActions>
+          <DialogActions sx={{ px: 3, pb: 3, pt: 2, gap: 1.5, justifyContent: "flex-end", "& > :not(style) ~ :not(style)": { ml: 0 } }}>
             <Button
               onClick={() => setOpenRejectDialog(false)}
               variant="outline"
+              className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
             >
               Cancel
             </Button>
             <Button
               onClick={handleRejectConfirm}
-              className="bg-[#C72030] text-white hover:bg-[#a61b27]"
+              className="fm-action-primary"
             >
               Reject
             </Button>
@@ -1485,6 +1487,7 @@ export const MaterialPRDetailsPage = () => {
         </Dialog>
 
         <Dialog
+      PaperProps={{ sx: { borderRadius: "8px" } }}
           open={showEditWbsModal}
           onClose={() => setShowEditWbsModal(false)}
           maxWidth="md"
@@ -1607,16 +1610,17 @@ export const MaterialPRDetailsPage = () => {
                 )}
             </div>
           </DialogContent>
-          <DialogActions>
+          <DialogActions sx={{ px: 3, pb: 3, pt: 2, gap: 1.5, justifyContent: "flex-end", "& > :not(style) ~ :not(style)": { ml: 0 } }}>
             <Button
               onClick={() => setShowEditWbsModal(false)}
               variant="outline"
+              className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
             >
               Cancel
             </Button>
             <Button
               onClick={handleUpdateWbsCodes}
-              className="bg-[#C72030] text-white hover:bg-[#a61b27]"
+              className="fm-action-primary"
             >
               Update
             </Button>
@@ -1624,6 +1628,7 @@ export const MaterialPRDetailsPage = () => {
         </Dialog>
 
         <Dialog
+      PaperProps={{ sx: { borderRadius: "8px" } }}
           open={openDeletionModal}
           onClose={() => setOpenDeletionModal(false)}
           aria-labelledby="alert-dialog-title"
@@ -1638,11 +1643,18 @@ export const MaterialPRDetailsPage = () => {
               Are you sure you want to raise a deletion request? This action will initiate the deletion process.
             </DialogContentText>
           </DialogContent>
-          <DialogActions sx={{ p: 2, pt: 0 }}>
-            <Button onClick={() => setOpenDeletionModal(false)} variant="outline">
+          <DialogActions sx={{ px: 3, pb: 3, pt: 2, gap: 1.5, justifyContent: "flex-end", "& > :not(style) ~ :not(style)": { ml: 0 } }}>
+            <Button
+              onClick={() => setOpenDeletionModal(false)}
+              variant="outline"
+              className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+            >
               Cancel
             </Button>
-            <Button onClick={handleDelete}>
+            <Button
+              onClick={handleDelete}
+              className="fm-action-primary"
+            >
               Yes
             </Button>
           </DialogActions>

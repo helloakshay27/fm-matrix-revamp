@@ -34,6 +34,7 @@ const isTrue = (val: unknown) =>
 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
     '& .MuiDialog-paper': {
+        borderRadius: '8px',
         maxWidth: '800px',
         width: '100%',
         maxHeight: '90vh',
@@ -894,10 +895,9 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                     </Box>
 
                     {/* Action Buttons */}
-                    <Divider sx={{ my: 3, borderColor: 'hsl(var(--form-border))' }} />
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, pt: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1.5, pt: 3 }}>
                         <Button
-                            className="px-8"
+                            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
                             onClick={handleCloseInvoiceModal}
                             variant="outline"
                         >
@@ -906,7 +906,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                         <Button
                             onClick={handleSaveInvoice}
                             disabled={isSubmitting}
-                            className="bg-red-600 hover:bg-red-700 text-white px-8 disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="fm-action-primary"
                         >
                             {isSubmitting ? "Saving..." : "Save"}
                         </Button>

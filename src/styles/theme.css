@@ -5567,7 +5567,9 @@ html body [class*="bg-[#D5DbDB]"][class*="border-[#D5DbDB]"] {
   width: auto !important;
   min-width: 0 !important;
   height: auto !important;
-  padding: 4px 8px 4px 11px !important;
+  padding: 4px 10px !important;
+  justify-content: center !important;
+  text-align: center !important;
   border: none !important;
   border-radius: 999px !important;
   font-size: 11px !important;
@@ -6690,10 +6692,6 @@ html body [role="dialog"]:has(input[placeholder="Bill Number Search"]) button[cl
   color: #ffffff !important;
 }
 
-/* CRM Events: keep unchecked status switches visibly inactive in grey. */
-html body button[role="switch"][class*="data-[state=checked]:bg-green-500"][data-state="unchecked"] {
-  background-color: #9ca3af !important;
-}
 
 /* R Vehicles toolbar Import action: preserve a visible black outline and icon. */
 html body #root main:has(input[placeholder="Search by vehicle number"]) button[title="Import"] {

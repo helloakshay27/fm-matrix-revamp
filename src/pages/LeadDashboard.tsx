@@ -230,7 +230,7 @@ export const LeadDashboard = () => {
         );
       case "status":
         return (
-          <Badge className={getStatusColor(item.status)}>
+          <Badge className={`justify-center text-center ${getStatusColor(item.status)}`}>
             {item.status}
           </Badge>
         );

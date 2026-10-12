@@ -29,7 +29,8 @@ const RuleAlert = ({ open, onClose, setShowNewRuleForm, handleSubmit, handleUpda
     };
 
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+        <Dialog
+      PaperProps={{ sx: { borderRadius: "8px" } }} open={open} onClose={onClose} maxWidth="xs" fullWidth>
             <DialogContent>
                 <div className="flex items-center justify-center mt-3">
                     {
@@ -88,18 +89,19 @@ const RuleAlert = ({ open, onClose, setShowNewRuleForm, handleSubmit, handleUpda
                                 : "Are you sure you want to create a new rule and deactivate old one?"}
                 </p>
             </DialogContent>
-            <DialogActions style={{ justifyContent: 'center', paddingBottom: '20px', padding: "20px 30px" }}>
+            <DialogActions sx={{ px: 3, pb: 3, pt: 2, gap: 1.5, justifyContent: "flex-end", "& > :not(style) ~ :not(style)": { ml: 0 } }}>
                 <Button
-                    className="fm-button-fix fm-button-brand flex-1"
-                    onClick={handleYesClick}
+                  onClick={onClose}
+                  variant="outline"
+                  className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
                 >
-                    Yes
+                  No
                 </Button>
                 <Button
-                    className="fm-button-fix fm-button-brand flex-1"
-                    onClick={onClose}
+                  onClick={handleYesClick}
+                  className="fm-action-primary"
                 >
-                    No
+                  Yes
                 </Button>
             </DialogActions>
         </Dialog>

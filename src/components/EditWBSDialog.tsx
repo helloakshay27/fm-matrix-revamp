@@ -112,7 +112,8 @@ export const EditWBSDialog: React.FC<EditWBSDialogProps> = ({
     };
 
     return (
-        <Dialog open={open} onClose={() => onOpenChange(false)}>
+        <Dialog
+      PaperProps={{ sx: { borderRadius: "8px" } }} open={open} onClose={() => onOpenChange(false)}>
             <DialogContent className="sm:max-w-lg">
                 <DialogHeader className="flex flex-row items-center justify-between space-y-0 mb-3">
                     <h1 className="text-lg font-semibold">Edit WBS</h1>
@@ -216,19 +217,19 @@ export const EditWBSDialog: React.FC<EditWBSDialogProps> = ({
                     </div>
                 </div>
 
-                <div className="flex gap-3 pt-4">
+                <div className="flex gap-3 pt-4 items-center justify-end">
                     <Button
-                        onClick={handleSubmit}
-                        className="flex-1 !bg-brand hover:!bg-brand-hover !text-white"
+                      onClick={() => onOpenChange(false)}
+                      variant="outline"
+                      className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
                     >
-                        Update WBS
+                      Cancel
                     </Button>
                     <Button
-                        onClick={() => onOpenChange(false)}
-                        variant="outline"
-                        className="flex-1"
+                      onClick={handleSubmit}
+                      className="fm-action-primary"
                     >
-                        Cancel
+                      Update WBS
                     </Button>
                 </div>
             </DialogContent>

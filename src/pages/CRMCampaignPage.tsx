@@ -233,7 +233,7 @@ export const CRMCampaignPage = () => {
         return <span className="font-medium text-gray-900">{item.project}</span>;
       case 'status':
         return (
-          <Badge className={getStatusColor(item.status)}>
+          <Badge className={`justify-center text-center ${getStatusColor(item.status)}`}>
             {item.status}
           </Badge>
         );

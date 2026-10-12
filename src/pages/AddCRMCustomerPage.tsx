@@ -4,11 +4,9 @@ import { useLayout } from "../contexts/LayoutContext";
 import { Button } from "../components/ui/button";
 import {
   Calendar,
-  Trash2,
   Settings,
   ArrowLeft,
   Globe,
-  Plus,
   X,
 } from "lucide-react";
 import { TextField } from "@mui/material";
@@ -246,19 +244,19 @@ export const AddCRMCustomerPage = () => {
       {/* Main Content */}
       <div className="w-full mx-auto p-6 space-y-4">
         {/* Basic Details Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="bg-[#F6F4EE] p-4 border-b border-gray-200">
+        <div className="bg-white shadow-sm border border-gray-200 overflow-hidden rounded-2xl">
+          <div className="px-6 pt-6 pb-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#E5E0D3] rounded-full flex items-center justify-center">
-                <Settings className="w-5 h-5 text-[#C72030]" />
+              <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                <Settings className="w-[18px] h-[18px]" />
               </div>
-              <h2 className="text-lg font-semibold text-[#1a1a1a]">
+              <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">
                 Basic Details
               </h2>
             </div>
           </div>
 
-          <div className="p-6">
+          <div className="px-6 pb-6 pt-3">
             {/* Customer Information Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div>
@@ -483,23 +481,23 @@ export const AddCRMCustomerPage = () => {
         </div>
 
         {/* Domain Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="bg-[#F6F4EE] p-4 border-b border-gray-200">
+        <div className="bg-white shadow-sm border border-gray-200 overflow-hidden rounded-2xl">
+          <div className="px-6 pt-6 pb-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#E5E0D3] rounded-full flex items-center justify-center">
-                <Globe className="w-5 h-5 text-[#C72030]" />
+              <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                <Globe className="w-[18px] h-[18px]" />
               </div>
-              <h2 className="text-lg font-semibold text-[#1a1a1a]">
+              <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">
                 Domain Information
               </h2>
             </div>
           </div>
 
-          <div className="p-6">
+          <div className="px-6 pb-6 pt-3">
             {domains.map((domain, index) => (
               <div
                 key={domain.id}
-                className="flex items-center gap-4 mb-4 last:mb-0"
+                className="relative flex items-center gap-4 p-4 border rounded-lg mb-4 last:mb-0"
               >
                 <TextField
                   label={`Domain ${index + 1}`}
@@ -518,34 +516,36 @@ export const AddCRMCustomerPage = () => {
                   }}
                 />
                 {domains.length > 1 && (
-                  <button
+                  <Button
                     onClick={() => removeDomain(domain.id)}
-                    className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                    size="sm"
+                    className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-[8px]"
                   >
-                    <X className="w-5 h-5 text-red-500" />
-                  </button>
+                    <X className="w-4 h-4" />
+                  </Button>
                 )}
               </div>
             ))}
-            <Button
-              onClick={addNewDomain}
-              className="fm-button-fix fm-button-brand px-4 py-2"
-              variant="ghost"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Domain
-            </Button>
+            <div className="flex justify-end pt-4">
+              <Button
+                onClick={addNewDomain}
+                size="sm"
+                className="bg-[#C72030] hover:bg-[#C72030]/90"
+              >
+                Add Domain
+              </Button>
+            </div>
           </div>
         </div>
 
         {/* Lease Information Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="bg-[#F6F4EE] p-4 border-b border-gray-200">
+        <div className="bg-white shadow-sm border border-gray-200 overflow-hidden rounded-2xl">
+          <div className="px-6 pt-6 pb-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#E5E0D3] rounded-full flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-[#C72030]" />
+              <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                <Calendar className="w-[18px] h-[18px]" />
               </div>
-              <h2 className="text-lg font-semibold text-[#1a1a1a]">
+              <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">
                 Lease Information
               </h2>
             </div>
@@ -555,7 +555,7 @@ export const AddCRMCustomerPage = () => {
             {leases.map((lease, index) => (
               <div
                 key={lease.id}
-                className="border border-gray-200 rounded-lg p-4 bg-gray-50"
+                className="relative p-4 border rounded-lg"
               >
                 {index > 0 && (
                   <div className="flex justify-between items-center mb-4">
@@ -675,12 +675,13 @@ export const AddCRMCustomerPage = () => {
                         }}
                       />
                       {leases.length > 1 && (
-                        <button
+                        <Button
                           onClick={() => removeLease(lease.id)}
-                          className="p-2 hover:bg-red-50 rounded-lg transition-colors h-10"
+                          size="sm"
+                          className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-[8px]"
                         >
-                          <Trash2 className="w-5 h-5 text-red-500" />
-                        </button>
+                          <X className="w-4 h-4" />
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -689,31 +690,32 @@ export const AddCRMCustomerPage = () => {
             ))}
 
             {/* Add Lease Button */}
-            <Button
-              onClick={addNewLease}
-              variant="ghost"
-              className="fm-button-fix fm-button-brand px-4 py-2"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Lease
-            </Button>
+            <div className="flex justify-end pt-2">
+              <Button
+                onClick={addNewLease}
+                size="sm"
+                className="bg-[#C72030] hover:bg-[#C72030]/90"
+              >
+                Add Lease
+              </Button>
+            </div>
           </div>
         </div>
 
         {/* Submit and Cancel Buttons */}
-        <div className="flex flex-col justify-center sm:flex-row gap-4 pt-6 border-t">
-          <Button
-            onClick={handleSave}
-            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-11 w-40"
-          >
-            Submit
-          </Button>
+        <div className="fm-action-bar mt-6">
           <Button
             variant="outline"
             onClick={handleCancel}
-            className="w-40 h-11"
+            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
           >
             Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            className="fm-action-primary"
+          >
+            Submit
           </Button>
         </div>
       </div>

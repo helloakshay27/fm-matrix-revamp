@@ -1,4 +1,5 @@
 
+import { FileText } from "lucide-react";
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -56,13 +57,18 @@ export const LeadDetailsPage = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow p-8">
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-2xl font-semibold text-gray-900">Detail</h1>
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                <FileText className="w-[18px] h-[18px]" />
+              </div>
+              <h1 className="text-sm font-semibold uppercase text-[#1A1A1A]">Detail</h1>
+            </div>
             {shouldShow("Lead", "update") && (
             <Button
               onClick={handleEditClick}
-              className="!bg-[#DA7756] hover:!bg-[#C45F40] text-white px-4 py-2 rounded-sm"
+              className="!bg-[#DA7756] hover:!bg-[#C45F40] text-white px-4 py-2 rounded-[8px]"
             >
               Edit
             </Button>

@@ -306,16 +306,15 @@ const [pagination, setPagination] = useState(() => {
               checked={isChecked}
               onCheckedChange={(checked) => handleStatusChange(item, checked)}
               disabled={updatingStatus[item.id]}
-              className="data-[state=checked]:bg-green-500"
             />
             {isChecked ? "Active" : "Inactive"}
           </div>
         );
       case 'is_expired':
         return item.is_expired ? (
-          <Badge className="bg-red-600 text-white">Expired</Badge>
+          <Badge className="justify-center text-center bg-red-600 text-white">Expired</Badge>
         ) : (
-          <Badge className="bg-green-600 text-white">Active</Badge>
+          <Badge className="justify-center text-center bg-green-600 text-white">Active</Badge>
         );
       case 'attachments':
         return item.attachments.length > 0 ? (

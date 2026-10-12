@@ -1,14 +1,14 @@
+import { Switch } from "@/components/ui/switch";
 import {
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    TextField,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    Switch,
-    SelectChangeEvent,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
@@ -150,7 +150,8 @@ const TopupModal: React.FC<TopupModalProps> = ({ open, onClose }) => {
     };
 
     return (
-        <Dialog open={open} onClose={onClose}>
+        <Dialog
+      PaperProps={{ sx: { borderRadius: "8px" } }} open={open} onClose={onClose}>
             <DialogTitle>Top-Up Wallet</DialogTitle>
             <DialogContent>
                 <FormControl fullWidth margin="normal">
@@ -209,9 +210,8 @@ const TopupModal: React.FC<TopupModalProps> = ({ open, onClose }) => {
                             : "New Recurring Points"}
                     </div>
                     <Switch
-                        checked={recurringPoints}
-                        onChange={(_e, checked: boolean) => setRecurringPoints(checked)}
-                        color="success"
+                      checked={recurringPoints}
+                      onCheckedChange={(checked) => setRecurringPoints(checked)}
                     />
                 </div>
                 <div
@@ -219,22 +219,21 @@ const TopupModal: React.FC<TopupModalProps> = ({ open, onClose }) => {
                         marginTop: "16px",
                         display: "flex",
                         justifyContent: "flex-end",
-                        gap: "10px",
+                        gap: "12px",
                     }}
                 >
                     <Button
-                        onClick={handleSubmit}
-                        style={{ backgroundColor: "#C72030" }}
-                        className="text-white hover:bg-[#C72030]/90 flex-1"
+                      onClick={onClose}
+                      variant="outline"
+                      className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
                     >
-                        Submit
+                      Cancel
                     </Button>
                     <Button
-                        onClick={onClose}
-                        variant="outline"
-                        className="flex-1 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                      onClick={handleSubmit}
+                      className="fm-action-primary"
                     >
-                        Cancel
+                      Submit
                     </Button>
                 </div>
             </DialogContent>

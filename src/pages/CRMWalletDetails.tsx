@@ -1,4 +1,5 @@
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { Switch } from "@/components/ui/switch";
 import RuleAlert from "@/components/RuleAlert";
 import RuleCreateForm from "@/components/RuleCreateForm";
 import { Button } from "@/components/ui/button";
@@ -12,10 +13,10 @@ import {
     fetchWalletDetails,
     fetchWalletDetailsTransactionHistory,
 } from "@/store/slices/walletListSlice";
-import { Switch } from "@mui/material";
+
 import axios from "axios";
 import { format } from "date-fns";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Repeat, User, Wallet } from "lucide-react";
 import { Fragment, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -259,25 +260,14 @@ const CRMWalletDetails = () => {
                     Available Balance: {walletDetails.total_wallet_balance}
                 </Button>
             </div>
-            <Card className="mb-6">
-                <CardHeader
-                    className="bg-[#F6F4EE]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                >
-                    <CardTitle className="flex items-center gap-4 text-[20px] font-semibold text-[#1A1A1A]">
-                        <span
-                            className="w-[40px] h-[40px] bg-[#E5E0D3] rounded-full flex items-center justify-center text-md font-bold"
-                            style={{ color: '#C72030' }}
-                        >
-                            C
-                        </span>
+            <Card className="mb-6 rounded-2xl border border-gray-200 shadow-sm bg-white">
+                <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-3 text-sm font-semibold uppercase text-[#1A1A1A]">
+                        <span className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0"><User className="w-[18px] h-[18px]" /></span>
                         CUSTOMER DETAILS
                     </CardTitle>
                 </CardHeader>
-                <CardContent
-                    className="px-[70px] py-[31px] bg-[#F6F7F7]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                >
+                <CardContent className="px-6 pb-6 pt-0">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-4">
                             <div className="flex">
@@ -330,25 +320,14 @@ const CRMWalletDetails = () => {
                 </CardContent>
             </Card>
 
-            <Card className="mb-6">
-                <CardHeader
-                    className="bg-[#F6F4EE]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                >
-                    <CardTitle className="flex items-center gap-4 text-[20px] font-semibold text-[#1A1A1A]">
-                        <span
-                            className="w-[40px] h-[40px] bg-[#E5E0D3] rounded-full flex items-center justify-center text-md font-bold"
-                            style={{ color: '#C72030' }}
-                        >
-                            W
-                        </span>
+            <Card className="mb-6 rounded-2xl border border-gray-200 shadow-sm bg-white">
+                <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-3 text-sm font-semibold uppercase text-[#1A1A1A]">
+                        <span className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0"><Wallet className="w-[18px] h-[18px]" /></span>
                         WALLET DETAILS
                     </CardTitle>
                 </CardHeader>
-                <CardContent
-                    className="px-[70px] py-[31px] bg-[#F6F7F7]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                >
+                <CardContent className="px-6 pb-6 pt-0">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-4">
                             <div className="flex">
@@ -451,19 +430,11 @@ const CRMWalletDetails = () => {
                 </CardContent>
             </Card>
 
-            <Card className="mb-6">
-                <CardHeader
-                    className="bg-[#F6F4EE]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                >
+            <Card className="mb-6 rounded-2xl border border-gray-200 shadow-sm bg-white">
+                <CardHeader className="pb-3">
                     <div className="flex justify-between items-center">
-                        <CardTitle className="flex items-center gap-4 text-[20px] font-semibold text-[#1A1A1A]">
-                            <span
-                                className="w-[40px] h-[40px] bg-[#E5E0D3] rounded-full flex items-center justify-center text-md font-bold"
-                                style={{ color: '#C72030' }}
-                            >
-                                R
-                            </span>
+                        <CardTitle className="flex items-center gap-3 text-sm font-semibold uppercase text-[#1A1A1A]">
+                            <span className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0"><Repeat className="w-[18px] h-[18px]" /></span>
                             RECURRING RULE STATUS
                         </CardTitle>
 
@@ -477,10 +448,7 @@ const CRMWalletDetails = () => {
                         )}
                     </div>
                 </CardHeader>
-                <CardContent
-                    className="px-[70px] bg-[#F6F7F7]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                >
+                <CardContent className="px-6 pb-6 pt-0">
                     {recurringRules.length > 0 ? (
                         recurringRules.map((rule, index) => (
                             <Fragment key={rule.id}>
@@ -488,9 +456,8 @@ const CRMWalletDetails = () => {
                                     <div className="px-1 flex items-center gap-3 my-4">
                                         Inactive
                                         <Switch
-                                            checked={rule.active}
-                                            onChange={() => changeRuleStatus(rule.id, rule.active)}
-                                            color="success"
+                                          checked={rule.active}
+                                          onCheckedChange={() => changeRuleStatus(rule.id, rule.active)}
                                         />
                                         Active
                                     </div>

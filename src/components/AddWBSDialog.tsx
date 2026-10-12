@@ -95,7 +95,8 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onOpenChange}>
+    <Dialog
+      PaperProps={{ sx: { borderRadius: "8px" } }} open={open} onClose={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 mb-3">
           <h1 className="text-lg font-semibold">ADD WBS</h1>
@@ -199,19 +200,19 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({
           </div>
         </div>
 
-        <div className="flex gap-3 pt-4">
-          <Button
-            onClick={handleSubmit}
-            className="flex-1 !bg-brand hover:!bg-brand-hover !text-white"
-          >
-            Add WBS
-          </Button>
+        <div className="flex gap-3 pt-4 items-center justify-end">
           <Button
             onClick={() => onOpenChange(false)}
             variant="outline"
-            className="flex-1"
+            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
           >
             Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            className="fm-action-primary"
+          >
+            Add WBS
           </Button>
         </div>
       </DialogContent>

@@ -1053,20 +1053,27 @@ body {
   /* remove the green border */
 }
 
-td div,
-td span,
-th div,
-th span {
+/* Cell content hugs the left edge — except fully rounded capsules (status
+   pills / badges), which keep their own symmetric padding and centred text. */
+td div:not([class*="rounded-full"]),
+td span:not([class*="rounded-full"]),
+th div:not([class*="rounded-full"]),
+th span:not([class*="rounded-full"]) {
   justify-content: flex-start !important;
   text-align: left !important;
 }
 
-td div,
-td span,
-th div,
+td div:not([class*="rounded-full"]),
+td span:not([class*="rounded-full"]),
+th div:not([class*="rounded-full"]),
 td button,
 td a {
   padding-left: 2px !important;
+}
+
+td [class*="rounded-full"] {
+  justify-content: center;
+  text-align: center;
 }
 
 /* ===========================================

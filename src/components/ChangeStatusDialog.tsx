@@ -36,7 +36,7 @@ export const ChangeStatusDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md rounded-[8px] sm:rounded-[8px]">
         <DialogHeader className="flex flex-row items-center justify-between pb-4 border-b">
           <div className="flex items-center gap-2">
             <div className="text-pink-500 font-bold text-sm">Godrej | LIVING</div>
@@ -74,10 +74,18 @@ export const ChangeStatusDialog = ({
             </Select>
           </div>
 
-          <div className="flex justify-center pt-4">
-            <Button 
+          <div className="flex items-center justify-end gap-3 pt-4">
+            <Button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              variant="outline"
+              className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+            >
+              Cancel
+            </Button>
+            <Button
               onClick={handleSubmit}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2"
+              className="fm-action-primary"
             >
               Submit
             </Button>

@@ -1383,12 +1383,12 @@ export const EditGRNDashboard = () => {
                 return (
                   <div
                     key={`existing-${attachment.id}`}
-                    className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                    className="flex relative flex-col items-center border rounded-full pt-10 px-3 pb-6 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                   >
                     {isImage ? (
                       <>
                         <button
-                          className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
+                          className="absolute top-2 left-1/2 ml-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                           title="View"
                           onClick={() => {
                             setSelectedDoc({
@@ -1439,7 +1439,7 @@ export const EditGRNDashboard = () => {
                       {attachment.name}
                     </span>
                     <button
-                      className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
+                      className="absolute top-2 right-1/2 mr-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                       title="Remove"
                       onClick={() => removeExistingAttachment(attachment.id.toString())}
                       type="button"
@@ -1462,12 +1462,12 @@ export const EditGRNDashboard = () => {
                 return (
                   <div
                     key={`new-${index}`}
-                    className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                    className="flex relative flex-col items-center border rounded-full pt-10 px-3 pb-6 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                   >
                     {isImage ? (
                       <>
                         <button
-                          className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
+                          className="absolute top-2 left-1/2 ml-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                           title="View"
                           onClick={() => {
                             setSelectedDoc({
@@ -1518,7 +1518,7 @@ export const EditGRNDashboard = () => {
                       {file.name}
                     </span>
                     <button
-                      className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
+                      className="absolute top-2 right-1/2 mr-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                       title="Remove"
                       onClick={() => removeFile(index)}
                       type="button"

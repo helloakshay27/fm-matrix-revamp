@@ -18,6 +18,7 @@ import {
     IconButton,
 } from "@mui/material";
 import { Button } from "@/components/ui/button";
+import { Megaphone, Paperclip, SlidersHorizontal } from "lucide-react";
 import { AttachFile, ArrowBack, Delete } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch } from "@/store/hooks";
@@ -194,32 +195,20 @@ export const AddClubBroadcastPage = () => {
                 <Box
                     sx={{
                         bgcolor: "white",
-                        borderRadius: 2,
-                        p: 4,
+                        borderRadius: "16px",
+                        p: 3,
                         mb: 3,
-                        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                        border: "1px solid #e5e7eb",
+                        boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
                     }}
                 >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 4 }}>
-                        <Box
-                            sx={{
-                                width: 32,
-                                height: 32,
-                                borderRadius: "50%",
-                                bgcolor: "var(--color-numbered-badge-bg)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                color: "white",
-                                fontSize: "16px",
-                                fontWeight: "bold",
-                            }}
-                        >
-                            1
-                        </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
+                        <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                            <Megaphone className="w-[18px] h-[18px]" />
+                        </div>
                         <Typography
                             variant="h6"
-                            sx={{ fontWeight: "bold", textTransform: "uppercase", color: "black" }}
+                            sx={{ fontSize: "14px", fontWeight: 600, textTransform: "uppercase", color: "#1A1A1A" }}
                         >
                             Communication Information
                         </Typography>
@@ -317,32 +306,20 @@ export const AddClubBroadcastPage = () => {
                 <Box
                     sx={{
                         bgcolor: "white",
-                        borderRadius: 2,
-                        p: 4,
+                        borderRadius: "16px",
+                        p: 3,
                         mb: 3,
-                        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                        border: "1px solid #e5e7eb",
+                        boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
                     }}
                 >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 4 }}>
-                        <Box
-                            sx={{
-                                width: 32,
-                                height: 32,
-                                borderRadius: "50%",
-                                bgcolor: "var(--color-numbered-badge-bg)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                color: "white",
-                                fontSize: "16px",
-                                fontWeight: "bold",
-                            }}
-                        >
-                            2
-                        </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
+                        <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                            <SlidersHorizontal className="w-[18px] h-[18px]" />
+                        </div>
                         <Typography
                             variant="h6"
-                            sx={{ fontWeight: "bold", textTransform: "uppercase", color: "black" }}
+                            sx={{ fontSize: "14px", fontWeight: 600, textTransform: "uppercase", color: "#1A1A1A" }}
                         >
                             Broadcast Settings
                         </Typography>
@@ -456,32 +433,20 @@ export const AddClubBroadcastPage = () => {
                 <Box
                     sx={{
                         bgcolor: "white",
-                        borderRadius: 2,
-                        p: 4,
+                        borderRadius: "16px",
+                        p: 3,
                         mb: 3,
-                        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                        border: "1px solid #e5e7eb",
+                        boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
                     }}
                 >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 4 }}>
-                        <Box
-                            sx={{
-                                width: 32,
-                                height: 32,
-                                borderRadius: "50%",
-                                bgcolor: "var(--color-numbered-badge-bg)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                color: "white",
-                                fontSize: "16px",
-                                fontWeight: "bold",
-                            }}
-                        >
-                            3
-                        </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
+                        <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                            <Paperclip className="w-[18px] h-[18px]" />
+                        </div>
                         <Typography
                             variant="h6"
-                            sx={{ fontWeight: "bold", textTransform: "uppercase", color: "black" }}
+                            sx={{ fontSize: "14px", fontWeight: 600, textTransform: "uppercase", color: "#1A1A1A" }}
                         >
                             Attachments
                         </Typography>
@@ -536,6 +501,7 @@ export const AddClubBroadcastPage = () => {
                                             position: "absolute",
                                             top: 5,
                                             right: 5,
+                                            borderRadius: "8px",
                                             bgcolor: "rgba(255,255,255,0.7)",
                                             "&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
                                         }}
@@ -563,24 +529,24 @@ export const AddClubBroadcastPage = () => {
                 </Box>
 
                 {/* Submit Button */}
-                <Box sx={{ display: "flex", justifyContent: "center", mt: 4, gap: 2 }}>
-                    <Button
-                        type="button"
-                        onClick={() => navigate(-1)}
-                        variant="outline"
-                        className="px-8 py-3 text-base border-brand text-brand hover:bg-brand-selected hover:text-brand"
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        type="button"
-                        onClick={handleSubmit}
-                        className="px-8 py-3 text-base !bg-brand hover:!bg-brand-hover !text-white disabled:!bg-brand disabled:!text-white disabled:opacity-100"
-                        disabled={isSubmitting}
-                    >
-                        Submit
-                    </Button>
-                </Box>
+                <div className="fm-action-bar mt-6">
+                  <Button
+                    type="button"
+                    onClick={() => navigate(-1)}
+                    variant="outline"
+                    className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    className="fm-action-primary"
+                  >
+                    Submit
+                  </Button>
+                </div>
             </Box>
         </Box>
     );

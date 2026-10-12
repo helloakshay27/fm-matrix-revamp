@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
 import { Button } from '../components/ui/button';
-import { ArrowLeft, Edit2, X } from 'lucide-react';
+import { ArrowLeft, Calendar, Edit2, Globe, User, X } from 'lucide-react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton } from '@mui/material';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -198,7 +198,13 @@ export const CrmCustomerDetails = () => {
                 </div>
             </div>
 
-            <div className="bg-white rounded-lg p-6 mb-6 shadow-sm">
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                        <User className="w-[18px] h-[18px]" />
+                    </div>
+                    <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Basic Details</h3>
+                </div>
                 <div className="grid grid-cols-2 gap-8">
                     <div className="space-y-4">
                         <div className="flex items-center gap-4">
@@ -251,8 +257,13 @@ export const CrmCustomerDetails = () => {
                 </div>
             </div>
 
-            <div className="bg-white rounded-lg p-6 mb-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Lease Information</h3>
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                        <Calendar className="w-[18px] h-[18px]" />
+                    </div>
+                    <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Lease Information</h3>
+                </div>
                 <EnhancedTable
                     data={lease}
                     columns={leaseColumns}
@@ -264,8 +275,13 @@ export const CrmCustomerDetails = () => {
                 />
             </div>
 
-            <div className="bg-white rounded-lg p-6 mb-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Domains</h3>
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                        <Globe className="w-[18px] h-[18px]" />
+                    </div>
+                    <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Domains</h3>
+                </div>
                 {domains.length > 0 ? (
                     <div className="space-y-2">
                         {domains.map((domain) => (
@@ -290,7 +306,7 @@ export const CrmCustomerDetails = () => {
                 fullWidth
                 PaperProps={{
                     style: {
-                        borderRadius: '12px',
+                        borderRadius: '8px',
                         padding: '8px',
                     },
                 }}
@@ -310,6 +326,7 @@ export const CrmCustomerDetails = () => {
                         onClick={handleTopUpClose}
                         sx={{
                             color: 'gray',
+                            borderRadius: '8px',
                             '&:hover': { backgroundColor: 'rgba(0,0,0,0.1)' },
                         }}
                     >
@@ -333,13 +350,13 @@ export const CrmCustomerDetails = () => {
                     />
                 </DialogContent>
 
-                <DialogActions sx={{ px: 3, pb: 3, gap: 2 }}>
-                    <Button variant="outline" onClick={handleTopUpClose} className="px-6 py-2">
+                <DialogActions sx={{ px: 3, pb: 3, pt: 2, gap: 1.5, justifyContent: "flex-end", "& > :not(style) ~ :not(style)": { ml: 0 } }}>
+                    <Button variant="outline" onClick={handleTopUpClose} className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]">
                         Close
                     </Button>
                     <Button
                         onClick={handleTopUpSubmit}
-                        className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2"
+                        className="fm-action-primary"
                         disabled={!topUpAmount}
                     >
                         Top-Up

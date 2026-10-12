@@ -48,7 +48,7 @@ export const InvoicesFilterDialog: React.FC<InvoicesFilterDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md rounded-[8px] sm:rounded-[8px]">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
           <Button
@@ -115,19 +115,19 @@ export const InvoicesFilterDialog: React.FC<InvoicesFilterDialogProps> = ({
           </div>
         </div>
 
-        <div className="flex gap-3 pt-4">
-          <Button
-            onClick={handleApply}
-            className="flex-1 !bg-brand hover:!bg-brand-hover !text-white"
-          >
-            Apply
-          </Button>
+        <div className="flex gap-3 pt-4 items-center justify-end">
           <Button
             onClick={handleReset}
             variant="outline"
-            className="flex-1"
+            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
           >
             Reset
+          </Button>
+          <Button
+            onClick={handleApply}
+            className="fm-action-primary"
+          >
+            Apply
           </Button>
         </div>
       </DialogContent>

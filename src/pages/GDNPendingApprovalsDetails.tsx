@@ -235,7 +235,7 @@ export const GDNPendingApprovalsDetails = () => {
               {toTitleCase(level.level_name)} Approval:
             </span>
             <span
-              className={`px-2 py-1 rounded text-sm ${getStatusBadgeClass(
+              className={`px-2 py-1 rounded-full text-sm ${getStatusBadgeClass(
                 level.status
               )}`}
             >
@@ -350,6 +350,7 @@ export const GDNPendingApprovalsDetails = () => {
       )}
 
       <Dialog
+      PaperProps={{ sx: { borderRadius: "8px" } }}
         open={openRejectDialog}
         onClose={() => setOpenRejectDialog(false)}
         maxWidth="sm"
@@ -370,18 +371,19 @@ export const GDNPendingApprovalsDetails = () => {
             variant="outlined"
           />
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ px: 3, pb: 3, pt: 2, gap: 1.5, justifyContent: "flex-end", "& > :not(style) ~ :not(style)": { ml: 0 } }}>
           <Button
             onClick={() => setOpenRejectDialog(false)}
-            variant="outline"
             disabled={submitting}
+            variant="outline"
+            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
           >
             Cancel
           </Button>
           <Button
             onClick={handleRejectConfirm}
-            className="bg-[#C72030] text-white hover:bg-[#a61b27]"
             disabled={submitting}
+            className="fm-action-primary"
           >
             Reject
           </Button>

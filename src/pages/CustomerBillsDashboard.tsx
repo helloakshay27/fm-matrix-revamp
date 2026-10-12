@@ -210,7 +210,7 @@ export const CustomerBillsDashboard = () => {
       case "totalAmount":
         return item.totalAmount ? `${currency} ${item.totalAmount.toLocaleString("en-IN")}` : "-";
       case "status":
-        return item.status ? <StatusBadge status={item.status}>{item.status}</StatusBadge> : "-";
+        return item.status ? <StatusBadge status={item.status} className="rounded-full justify-center text-center">{item.status}</StatusBadge> : "-";
       default:
         return ((item as unknown as Record<string, unknown>)[columnKey] as ReactNode) ?? "-";
     }

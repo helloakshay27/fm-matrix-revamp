@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2, Printer } from 'lucide-react';
+import { ArrowLeft, Loader2, Printer, FileText, Megaphone, Paperclip, Share2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChangeStatusDialog } from '@/components/ChangeStatusDialog';
 import { toast } from 'sonner';
@@ -136,15 +136,15 @@ export const ClubBroadcastDetailsPage = () => {
             </div>
 
             {/* Broadcast Details Section */}
-            <div className="bg-white rounded-lg border border-gray-200 mb-6">
-                <div className="flex items-center gap-4 text-[20px] fw-semibold text-[#000] bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
-                    <div className="w-[40px] h-[40px] bg-brand text-white rounded-full flex items-center justify-center text-md font-bold">
-                        B
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm mb-6">
+                <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+                    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                      <Megaphone className="w-[18px] h-[18px]" />
                     </div>
-                    <h2 className="text-lg font-bold text-gray-900">BROADCAST DETAILS</h2>
+                    <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">BROADCAST DETAILS</h2>
                 </div>
 
-                <div className="px-[80px] py-[31px] bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+                <div className="px-6 pb-6 pt-0">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
                         <div className="flex items-start">
                             <span className="text-gray-500 min-w-[140px]">Broadcast ID</span>
@@ -229,29 +229,29 @@ export const ClubBroadcastDetailsPage = () => {
                 </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 mb-6">
-                <div className="flex items-center gap-4 text-[20px] fw-semibold text-[#000] bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
-                    <div className="w-[40px] h-[40px] bg-brand text-white rounded-full flex items-center justify-center text-md font-bold">
-                        D
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm mb-6">
+                <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+                    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                      <FileText className="w-[18px] h-[18px]" />
                     </div>
-                    <h2 className="text-lg font-bold text-gray-900">Description</h2>
+                    <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">Description</h2>
                 </div>
 
-                <div className="px-[80px] py-[31px] bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+                <div className="px-6 pb-6 pt-0">
                     {broadcastDetails.notice_text}
                 </div>
             </div>
 
             {/* Attachments Section */}
-            <div className="bg-white rounded-lg border border-gray-200 mb-6">
-                <div className="flex items-center gap-4 text-[20px] fw-semibold text-[#000] bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
-                    <div className="w-[40px] h-[40px] bg-brand text-white rounded-full flex items-center justify-center text-md font-bold">
-                        A
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm mb-6">
+                <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+                    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                      <Paperclip className="w-[18px] h-[18px]" />
                     </div>
-                    <h2 className="text-lg font-bold text-gray-900">ATTACHMENTS</h2>
+                    <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">ATTACHMENTS</h2>
                 </div>
 
-                <div className="px-[40px] py-[31px] bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+                <div className="px-6 pb-6 pt-0">
                     {
                         broadcastDetails?.attachments ? (
                             <img src={broadcastDetails?.attachments[0]?.document_url} alt="" height={100} width={150} />
@@ -264,15 +264,15 @@ export const ClubBroadcastDetailsPage = () => {
                 </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 mb-6">
-                <div className="flex items-center gap-4 text-[20px] fw-semibold text-[#000] bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
-                    <div className="w-[40px] h-[40px] bg-brand text-white rounded-full flex items-center justify-center text-md font-bold">
-                        S
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm mb-6">
+                <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+                    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                      <Share2 className="w-[18px] h-[18px]" />
                     </div>
-                    <h2 className="text-lg font-bold text-gray-900">Shared With</h2>
+                    <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">Shared With</h2>
                 </div>
 
-                <div className="px-[80px] py-[31px] bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+                <div className="px-6 pb-6 pt-0">
                     <ol className="list-decimal pl-6">
                         {
                             broadcastDetails.shared_notices?.map(((data, idx) => (
