@@ -694,7 +694,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, X } from 'lucide-react';
+import { ArrowLeft, Plus, X } from 'lucide-react';
 import { useLayout } from '@/contexts/LayoutContext';
 import { toast } from 'sonner';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -1184,11 +1184,19 @@ export const EditPermitChecklist: React.FC = () => {
     return (
         <div className="p-6 mx-auto">
             <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
-                <div className="flex items-center mb-6 border-b pb-3">
-                    <div className="flex items-center bg-[#F6F4EE] !text-[#C72030] px-4 py-2 rounded-md">
-                        <span className="mr-2 text-[28px]">✎</span>
-                        <span className="font-semibold !text-[#C72030]">Edit Checklist</span>
-                    </div>
+                <div className="mb-6">
+                    <button
+                        type="button"
+                        onClick={() => navigate(-1)}
+                        className="flex items-center gap-1 hover:text-gray-800 mb-4"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        Back to Checklist
+                    </button>
+
+                    <h2 className="text-[20px] font-semibold uppercase tracking-wide text-[#DA7756]">
+                        Edit Checklist
+                    </h2>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">

@@ -91,7 +91,16 @@ interface RcaPagination {
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const PIE_COLORS = ["#A89078", "#D8DCDD", "#6B4C3A", "#C4B8A8", "#9E9E9E"];
+const SERIES_PALETTE = [
+  "#7C6FF2",
+  "#6B9BFF",
+  "#3DD68C",
+  "#A3B585",
+  "#7FD6AE",
+  "#A69CFA",
+  "#F5B83D",
+  "#FF6369",
+];
 
 const INCIDENT_CHART_OPTIONS = [
   {
@@ -298,9 +307,12 @@ const StatCard = ({
   label: string;
   value: number | string;
 }) => (
-  <div className="bg-[#F6F4EE] rounded-lg shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow px-5 py-4 min-h-[96px] h-full">
-    <div className="w-14 h-14 min-w-[56px] bg-[#C4B89D54] flex items-center justify-center rounded flex-shrink-0">
-      {React.cloneElement(icon, { className: "w-6 h-6 text-[#C72030]" })}
+  <div className="bg-[#F5F4F0] rounded-[16px] flex items-center gap-4 px-5 py-[18px] min-h-[96px] h-full">
+    <div className="w-9 h-9 min-w-[36px] bg-white flex items-center justify-center rounded-[10px] flex-shrink-0">
+      {React.cloneElement(icon, {
+        className: "w-[18px] h-[18px] text-[#6B6B6B]",
+        style: { strokeWidth: 1.75 },
+      })}
     </div>
     <div className="flex flex-col justify-center min-w-0">
       <div className="text-2xl font-semibold text-[#1A1A1A] leading-tight">
@@ -314,7 +326,7 @@ const StatCard = ({
 );
 
 const StatCardGrid = ({ children }: { children: React.ReactNode }) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 items-stretch">
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[14px] mb-6 items-stretch">
     {children}
   </div>
 );
@@ -355,7 +367,7 @@ const RcaTable = ({
     : data.map((row, index) => ({ row, originalIndex: index }));
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+    <div className="bg-white rounded-[16px] border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
       <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h3 className="text-lg font-semibold text-[#1A1A1A]">RCA Data</h3>
         <div className="flex items-center gap-2" data-no-drag>
@@ -390,117 +402,112 @@ const RcaTable = ({
             No RCA data found.
           </div>
         ) : (
-          <div className="rounded-xl overflow-hidden border border-gray-200 mx-4 mb-4">
-          <table className="w-full text-sm">
-            <thead>
-              <tr>
-                <th
-                  className="px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center"
-                  style={{ backgroundColor: "#D97655" }}
-                >
-                  Sr. No.
-                </th>
-                {RCA_COLUMNS.map((col) => (
+          <div className="rounded-[16px] overflow-hidden border border-gray-200 mx-4 mb-4">
+            <table className="w-full text-sm">
+              <thead>
+                <tr>
                   <th
-                    key={col.key}
-                    className="px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center"
-                    style={{ backgroundColor: "#D97655" }}
+                    className="px-5 py-[11px] text-[10.5px] font-bold uppercase tracking-[.09em] text-[#6B6B6B] whitespace-nowrap analytics-header text-center bg-[#F5F4F0]"
                   >
-                    {col.label}
+                    Sr. No.
                   </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {displayData.map(({ row, originalIndex }) => (
-                <tr
-                  key={originalIndex}
-                  style={{ backgroundColor: originalIndex % 2 === 0 ? "#ffffff" : "#F6F4EE" }}
-                >
-                  <td className="px-4 py-3 text-left text-gray-500 font-medium text-xs border-b border-gray-100 whitespace-nowrap">
-                    {(currentPage - 1) * perPage + originalIndex + 1}
-                  </td>
-                  {RCA_COLUMNS.map((col) => {
-                    const val = row[col.key];
-                    if (col.key === "incident_occurrence_time") {
+                  {RCA_COLUMNS.map((col) => (
+                    <th
+                      key={col.key}
+                      className="px-5 py-[11px] text-[10.5px] font-bold uppercase tracking-[.09em] text-[#6B6B6B] whitespace-nowrap analytics-header text-center bg-[#F5F4F0]"
+                    >
+                      {col.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {displayData.map(({ row, originalIndex }) => (
+                  <tr key={originalIndex} className="bg-white">
+                    <td className="px-4 py-3 text-left text-gray-500 font-medium text-xs border-b border-gray-100 whitespace-nowrap">
+                      {(currentPage - 1) * perPage + originalIndex + 1}
+                    </td>
+                    {RCA_COLUMNS.map((col) => {
+                      const val = row[col.key];
+                      if (col.key === "incident_occurrence_time") {
+                        return (
+                          <td
+                            key={col.key}
+                            className="px-4 py-3 text-left text-gray-700 whitespace-nowrap text-xs border-b border-gray-100"
+                          >
+                            {formatTime(val)}
+                          </td>
+                        );
+                      }
+                      if (col.key === "incident_level_name") {
+                        return (
+                          <td
+                            key={col.key}
+                            className="px-4 py-3 text-left whitespace-nowrap border-b border-gray-100"
+                          >
+                            {val ? (
+                              <Badge className={`text-xs ${getLevelColor(val)}`}>
+                                {val}
+                              </Badge>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </td>
+                        );
+                      }
+                      if (col.key === "incident_status_raw") {
+                        return (
+                          <td
+                            key={col.key}
+                            className="px-4 py-3 text-left whitespace-nowrap border-b border-gray-100"
+                          >
+                            {val ? (
+                              <Badge className={`text-xs ${getStatusColor(val)}`}>
+                                {val
+                                  .replace(/_/g, " ")
+                                  .replace(/\b\w/g, (c) => c.toUpperCase())}
+                              </Badge>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </td>
+                        );
+                      }
+                      const isLong = [
+                        "incident_description",
+                        "incident_rca_text",
+                        "incident_corrective_action",
+                        "incident_preventive_action",
+                      ].includes(col.key);
+                      if (isLong) {
+                        return (
+                          <td
+                            key={col.key}
+                            className="px-4 py-3 text-left text-xs text-gray-700 max-w-[200px] border-b border-gray-100"
+                          >
+                            {val ? (
+                              <span title={val} className="block truncate">
+                                {val}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </td>
+                        );
+                      }
                       return (
                         <td
                           key={col.key}
                           className="px-4 py-3 text-left text-gray-700 whitespace-nowrap text-xs border-b border-gray-100"
                         >
-                          {formatTime(val)}
+                          {val ?? <span className="text-gray-400">-</span>}
                         </td>
                       );
-                    }
-                    if (col.key === "incident_level_name") {
-                      return (
-                        <td
-                          key={col.key}
-                          className="px-4 py-3 text-left whitespace-nowrap border-b border-gray-100"
-                        >
-                          {val ? (
-                            <Badge className={`text-xs ${getLevelColor(val)}`}>
-                              {val}
-                            </Badge>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
-                        </td>
-                      );
-                    }
-                    if (col.key === "incident_status_raw") {
-                      return (
-                        <td
-                          key={col.key}
-                          className="px-4 py-3 text-left whitespace-nowrap border-b border-gray-100"
-                        >
-                          {val ? (
-                            <Badge className={`text-xs ${getStatusColor(val)}`}>
-                              {val
-                                .replace(/_/g, " ")
-                                .replace(/\b\w/g, (c) => c.toUpperCase())}
-                            </Badge>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
-                        </td>
-                      );
-                    }
-                    const isLong = [
-                      "incident_description",
-                      "incident_rca_text",
-                      "incident_corrective_action",
-                      "incident_preventive_action",
-                    ].includes(col.key);
-                    if (isLong) {
-                      return (
-                        <td
-                          key={col.key}
-                          className="px-4 py-3 text-left text-xs text-gray-700 max-w-[200px] border-b border-gray-100"
-                        >
-                          {val ? (
-                            <span title={val} className="block truncate">
-                              {val}
-                            </span>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
-                        </td>
-                      );
-                    }
-                    return (
-                      <td
-                        key={col.key}
-                        className="px-4 py-3 text-left text-gray-700 whitespace-nowrap text-xs border-b border-gray-100"
-                      >
-                        {val ?? <span className="text-gray-400">-</span>}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
@@ -904,10 +911,10 @@ export const IncidentDashboard = () => {
           other,
         });
         setStatusSummaryData([
-          { name: "Open", value: open, color: "#A89078" },
-          { name: "Closed", value: closed, color: "#C4B8A8" },
-          { name: "Other", value: other, color: "#D8DCDD" },
-          { name: "Under Investigation", value: under, color: "#6B4C3A" },
+          { name: "Open", value: open, color: SERIES_PALETTE[0] },
+          { name: "Closed", value: closed, color: SERIES_PALETTE[1] },
+          { name: "Other", value: other, color: SERIES_PALETTE[2] },
+          { name: "Under Investigation", value: under, color: SERIES_PALETTE[3] },
         ]);
       }
     } catch (err) {
@@ -983,7 +990,7 @@ export const IncidentDashboard = () => {
           Object.entries(json.response).map(([name, value], i) => ({
             name,
             value: Number(value),
-            color: PIE_COLORS[i % PIE_COLORS.length],
+            color: SERIES_PALETTE[i % SERIES_PALETTE.length],
           }))
         );
       }
@@ -1123,10 +1130,10 @@ export const IncidentDashboard = () => {
 
         {/* ── LIST TAB ─────────────────────────────────────────────────────── */}
         <TabsContent value="list" className="mt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 items-stretch">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[14px] mb-6 items-stretch">
             <div
               onClick={() => handleCardClick("total")}
-              className="cursor-pointer"
+              className="cursor-pointer h-full"
             >
               <StatCard
                 icon={<AlertTriangle />}
@@ -1136,7 +1143,7 @@ export const IncidentDashboard = () => {
             </div>
             <div
               onClick={() => handleCardClick("open")}
-              className="cursor-pointer"
+              className="cursor-pointer h-full"
             >
               <StatCard
                 icon={<Clock />}
@@ -1146,7 +1153,7 @@ export const IncidentDashboard = () => {
             </div>
             <div
               onClick={() => handleCardClick("under_investigation")}
-              className="cursor-pointer"
+              className="cursor-pointer h-full"
             >
               <StatCard
                 icon={<Search />}
@@ -1158,7 +1165,7 @@ export const IncidentDashboard = () => {
             </div>
             <div
               onClick={() => handleCardClick("closed")}
-              className="cursor-pointer"
+              className="cursor-pointer h-full"
             >
               <StatCard
                 icon={<CheckCircle />}
@@ -1168,7 +1175,7 @@ export const IncidentDashboard = () => {
             </div>
             <div
               onClick={() => handleCardClick("pending")}
-              className="cursor-pointer"
+              className="cursor-pointer h-full"
             >
               <StatCard
                 icon={<AlertTriangle />}
@@ -1178,7 +1185,7 @@ export const IncidentDashboard = () => {
             </div>
             <div
               onClick={() => handleCardClick("support_required")}
-              className="cursor-pointer"
+              className="cursor-pointer h-full"
             >
               <StatCard
                 icon={<ShieldCheck />}
@@ -1376,7 +1383,7 @@ export const IncidentDashboard = () => {
                               {
                                 dataKey: "mains",
                                 name: "Count",
-                                fill: "#A89078",
+                                fill: SERIES_PALETTE[0],
                               },
                             ]}
                             lines={[]}

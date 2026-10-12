@@ -121,7 +121,7 @@ const CheckHierarchy: React.FC = () => {
     // For mobile: allow digits, spaces, dashes, parentheses, +
     const emailPattern = /^[a-zA-Z0-9@._%+\-]*$/;
     const mobilePattern = /^[\d\s()+\-]*$/;
-    
+
     // If value contains @, treat as email and only allow email characters
     if (value.includes("@")) {
       if (emailPattern.test(value)) {
@@ -232,8 +232,8 @@ const CheckHierarchy: React.FC = () => {
         e && (e.message || e.msg)
           ? String(e.message || e.msg)
           : typeof e === "string"
-          ? e
-          : "";
+            ? e
+            : "";
       const status = e && typeof e.status === "number" ? e.status : undefined;
       const idType = identifierType; // capture current type
       const digits = raw.replace(/\D/g, "");
@@ -252,7 +252,7 @@ const CheckHierarchy: React.FC = () => {
             ? `User not present with mobile number ${digits}`
             : "No user found for the provided mobile number."
           : (serverMsg || "").replace(/email/gi, "mobile number") ||
-            "Failed to fetch hierarchy";
+          "Failed to fetch hierarchy";
       } else if (idType === "email") {
         uiMessage = looksNotFound
           ? raw
@@ -365,7 +365,7 @@ const CheckHierarchy: React.FC = () => {
                 pattern: identifierType === "email" ? "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}" : "[0-9\\s()+-]{10,}",
               }}
             />
-            <div className="flex gap-3 items-start">
+            <div className="flex gap-3 items-start justify-end md:col-span-2">
               <Button
                 onClick={fetchHierarchy}
                 disabled={
@@ -374,7 +374,7 @@ const CheckHierarchy: React.FC = () => {
                   treeLoading ||
                   Boolean(identifierError)
                 }
-                className="px-6 !bg-brand hover:!bg-brand-hover !text-white disabled:!bg-brand disabled:!text-white disabled:opacity-100"
+                className="px-6 !bg-[#1A1A18] hover:!bg-[#1A1A18] !text-white disabled:!bg-[#1A1A18] disabled:!text-white disabled:opacity-100"
               >
                 {treeLoading ? "Fetching..." : "Submit"}
               </Button>
@@ -480,11 +480,10 @@ const TreeNodeItem: React.FC<{
             type="button"
             onClick={() => hasChildren && onToggle(node.id)}
             disabled={!hasChildren}
-            className={`mt-1 w-6 h-6 flex items-center justify-center rounded-md border ${
-              hasChildren
-                ? "bg-white hover:bg-gray-50"
-                : "bg-gray-100 cursor-default"
-            } text-xs`}
+            className={`mt-1 w-6 h-6 flex items-center justify-center rounded-md border ${hasChildren
+              ? "bg-white hover:bg-gray-50"
+              : "bg-gray-100 cursor-default"
+              } text-xs`}
             aria-label={isExpanded ? "Collapse" : "Expand"}
             title={hasChildren ? (isExpanded ? "Collapse" : "Expand") : ""}
           >
@@ -503,9 +502,8 @@ const TreeNodeItem: React.FC<{
               </div>
               <div className="min-w-0">
                 <div
-                  className={`${
-                    hasChildren ? "font-bold" : "font-medium"
-                  } text-sm text-gray-900 truncate`}
+                  className={`${hasChildren ? "font-bold" : "font-medium"
+                    } text-sm text-gray-900 truncate`}
                 >
                   {node.name || "-"}
                 </div>

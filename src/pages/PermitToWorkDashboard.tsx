@@ -257,13 +257,39 @@ const calculateStats = (permits: Permit[]) => {
 };
 
 const getStatusColor = (status: string) => {
-  switch (status) {
-    case "Active": return "bg-[#C7EDDA] text-[#2c2c2c]";
-    case "Pending Approval": return "bg-[#F2EBC9] text-[#2c2c2c]";
-    case "Completed": return "bg-[#CECBF6] text-[#2c2c2c]";
-    case "Expired": return "bg-[#F2C8C4] text-[#2c2c2c]";
-    default: return "bg-[#E5E0D8] text-[#2c2c2c]";
-  }
+  const normalized = (status || '').trim().toLowerCase();
+
+  if (normalized.includes('active')) return "bg-[#C7EDDA] text-[#2c2c2c]";
+  if (normalized.includes('pending')) return "bg-[#F2EBC9] text-[#2c2c2c]";
+  if (normalized.includes('approved') || normalized.includes('completed')) return "bg-[#C7EDDA] text-[#2c2c2c]";
+  if (normalized.includes('rejected') || normalized.includes('expired')) return "bg-[#F2C8C4] text-[#2c2c2c]";
+  if (normalized.includes('draft')) return "bg-[#E5E0D8] text-[#2c2c2c]";
+  if (normalized.includes('extended')) return "bg-[#9EC8BA] text-[#2c2c2c]";
+  if (normalized.includes('hold')) return "bg-[#D4D3D0] text-[#2c2c2c]";
+
+  return "bg-[#E5E0D8] text-[#2c2c2c]";
+};
+
+const getPermitStatusStyle = (status: string) => {
+  const normalized = (status || '').trim().toLowerCase().replace(/[_-]+/g, ' ');
+
+  const palette: Record<string, { backgroundColor: string; color: string }> = {
+    draft: { backgroundColor: '#E5E0D8', color: '#2c2c2c' },
+    active: { backgroundColor: '#C7EDDA', color: '#2c2c2c' },
+    approved: { backgroundColor: '#C7EDDA', color: '#2c2c2c' },
+    open: { backgroundColor: '#C7EDDA', color: '#2c2c2c' },
+    pending: { backgroundColor: '#F2EBC9', color: '#2c2c2c' },
+    'pending approval': { backgroundColor: '#F2EBC9', color: '#2c2c2c' },
+    completed: { backgroundColor: '#CECBF6', color: '#2c2c2c' },
+    rejected: { backgroundColor: '#F2C8C4', color: '#2c2c2c' },
+    expired: { backgroundColor: '#F2C8C4', color: '#2c2c2c' },
+    extended: { backgroundColor: '#9EC8BA', color: '#2c2c2c' },
+    hold: { backgroundColor: '#D4D3D0', color: '#2c2c2c' },
+    'awaiting closure': { backgroundColor: '#F2EBC9', color: '#2c2c2c' },
+    'permit to complete': { backgroundColor: '#F2EBC9', color: '#2c2c2c' },
+  };
+
+  return palette[normalized] ?? { backgroundColor: '#E5E0D8', color: '#2c2c2c' };
 };
 
 const getRiskColor = (risk: string) => {
@@ -288,14 +314,14 @@ const PERMIT_TYPE_PALETTE = [
 const getPermitTypeStyle = (permitType: string) => {
   const name = (permitType || '').trim().toLowerCase();
   if (!name) {
-    return { backgroundColor: '#E5E0D8', color: '#2c2c2c' };
+    return { backgroundColor: '#E5E0D8', color: '#2c2c2c', borderColor: '#E5E0D8' };
   }
   let hash = 0;
   for (let i = 0; i < name.length; i += 1) {
     hash = (hash + name.charCodeAt(i) * (i + 1)) % PERMIT_TYPE_PALETTE.length;
   }
   const palette = PERMIT_TYPE_PALETTE[hash];
-  return { backgroundColor: palette.bg, color: palette.text };
+  return { backgroundColor: palette.bg, color: palette.text, borderColor: palette.bg };
 };
 
 // Utility: get current site ID from localStorage or URL params
@@ -970,13 +996,16 @@ export const PermitToWorkDashboard = () => {
       case 'reference_number':
         return permit.reference_number;
       case 'permit_type': {
-        const bgColor = permit["color"] || '#E5E7EB';
-        const textColor = (bgColor.toLowerCase() === '#6c3483' || bgColor.toLowerCase() === '#008081') ? '#fff' : '#222';
+        const typeStyle = getPermitTypeStyle(permit.permit_type);
 
         return (
           <span
-            className="px-2.5 py-0.5 rounded text-xs font-medium inline-flex items-center"
-            style={{ backgroundColor: bgColor, color: textColor }}
+            className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium"
+            style={{
+              backgroundColor: typeStyle.backgroundColor,
+              color: typeStyle.color,
+              borderColor: typeStyle.borderColor,
+            }}
           >
             {permit.permit_type}
           </span>
@@ -988,15 +1017,23 @@ export const PermitToWorkDashboard = () => {
         return permit.requested_by;
       case 'department_name':
         return permit.department_name;
-      case 'status':
+      case 'status': {
+        const statusStyle = getPermitStatusStyle(permit.status);
+
         return (
           <Badge
-            className="text-white"
-            style={{ backgroundColor: permit.status_color_code }}
+            variant="status"
+            className="border"
+            style={{
+              backgroundColor: statusStyle.backgroundColor,
+              color: statusStyle.color,
+              borderColor: statusStyle.backgroundColor,
+            }}
           >
             {permit.status}
           </Badge>
         );
+      }
       case 'location':
         return (
           <span className="max-w-xs truncate block" title={permit.location}>
@@ -1021,7 +1058,7 @@ export const PermitToWorkDashboard = () => {
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 w-8 p-0 text-[#C72030] hover:bg-[#C72030]/10 hover:text-[#C72030]"
+          // className="h-8 w-8 p-0 text-[#C72030] hover:bg-[#C72030]/10 hover:text-[#C72030]"
           title="View permit details"
           onClick={(e) => {
             e.stopPropagation();

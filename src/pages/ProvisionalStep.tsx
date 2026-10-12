@@ -204,35 +204,35 @@ const ProvisionalStep: React.FC<ProvisionalStepProps> = ({
     }, [setPreventiveActionDescription]);
 
     return (
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-4 bg-[#FDFDFB] min-h-full">
 
-            <div className="flex items-center justify-between p-3 rounded">
+            <div className="flex items-center justify-between bg-white border border-[#E7E1D4] rounded-xl px-4 py-3 shadow-sm">
                 <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    <span className="text-sm">Occurred Time</span>
-                    <span className="font-medium text-sm">{incident?.inc_time ? formatTime(incident.inc_time) : '-'}</span>
+                    <Clock className="w-4 h-4 text-gray-600" />
+                    <span className="text-sm text-gray-600">Occurred Time</span>
+                    <span className="font-semibold text-sm text-gray-800">{incident?.inc_time ? formatTime(incident.inc_time) : '-'}</span>
                 </div>
                 <div className="text-sm">
-                    <span className="text-red-500 font-medium">Total Duration</span>
-                    <span className="ml-2">{calculateTotalDuration(incident, incidentOverTime)}</span>
+                    <span className="text-brand font-semibold">Total Duration</span>
+                    <span className="ml-2 text-gray-800">{calculateTotalDuration(incident, incidentOverTime)}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    <span className="text-sm">Incident Over Time</span>
-                    <span className="font-medium text-sm">
+                    <Clock className="w-4 h-4 text-gray-600" />
+                    <span className="text-sm text-gray-600">Incident Over Time</span>
+                    <span className="font-semibold text-sm text-gray-800">
                         {formatIncidentOverTime(incidentOverTime)}
                     </span>
                 </div>
             </div>
 
             {/* Investigators */}
-            <div className="p-3 rounded">
+            <div className="bg-white border border-[#E7E1D4] rounded-xl px-4 py-3 shadow-sm">
                 <div className="flex items-center justify-between">
                     <div className="flex flex-wrap gap-2 items-center">
                         {investigators.length > 0 ? (
                             investigators.map((inv, idx) => (
                                 <React.Fragment key={inv.id}>
-                                    <span className="font-medium text-sm">{inv.name}</span>
+                                    <span className="font-medium text-sm text-gray-800">{inv.name}</span>
                                     {idx < investigators.length - 1 && <span className="text-gray-400">,</span>}
                                 </React.Fragment>
                             ))
@@ -240,22 +240,22 @@ const ProvisionalStep: React.FC<ProvisionalStepProps> = ({
                             <span className="font-medium text-sm text-gray-400">No investigators added yet</span>
                         )}
                     </div>
-                    <Button variant="outline" size="sm" className="border-[#BF213E] text-[#BF213E]">
+                    <Button variant="outline" size="sm" className="border-brand text-brand hover:bg-[#FFF3EE]">
                         + Investigator
                     </Button>
                 </div>
             </div>
 
             {/* Provisional Section */}
-            <div className="rounded">
-                <div className="flex items-center justify-between p-3 border-b border-gray-300">
-                    <h3 className="font-semibold">Provisional</h3>
-                    <Button variant="ghost" size="sm" className="text-xs bg-gray-800 text-white hover:bg-gray-700">
+            <div className="bg-white border border-[#E7E1D4] rounded-xl overflow-hidden shadow-sm">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-[#F0EAE2] bg-[#FAF9F7]">
+                    <h3 className="font-bold text-gray-900">Provisional</h3>
+                    <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-[#ECFDF5] text-[#107A5B] border border-[#BAE6D3]">
                         Open
-                    </Button>
+                    </span>
                 </div>
 
-                <div className="p-3 space-y-4">
+                <div className="p-4 space-y-4">
                     {/* Corrective Actions */}
                     <div>
                         <h4 className="font-semibold text-sm mb-3">Corrective Actions:</h4>
@@ -271,74 +271,89 @@ const ProvisionalStep: React.FC<ProvisionalStepProps> = ({
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => removeCorrectiveAction(action.id)}
-                                                    className="h-6 text-red-500 hover:text-red-700"
+                                                    className="h-6 text-gray-500 hover:text-gray-700"
                                                 >
                                                     Remove
                                                 </Button>
                                             )}
                                         </div>
 
-                                        <FormControl fullWidth size="small">
-                                            <InputLabel>Select corrective action</InputLabel>
-                                            <MuiSelect
-                                                value={action.action}
-                                                onChange={(e) => updateCorrectiveAction(action.id, 'action', e.target.value)}
-                                                label="Select corrective action"
-                                                sx={{ backgroundColor: 'white' }}
-                                            >
-                                                {correctiveActionsCategories.length > 0 ? (
-                                                    correctiveActionsCategories.map((category) => (
-                                                        <MenuItem key={category.id} value={category.id.toString()}>
-                                                            {category.name}
+                                        <div className="space-y-1.5">
+                                            <label className="text-sm font-semibold text-[#2D2D2D]">Select corrective action</label>
+                                            <FormControl fullWidth size="small">
+                                                <MuiSelect
+                                                    value={action.action}
+                                                    onChange={(e) => updateCorrectiveAction(action.id, 'action', e.target.value)}
+                                                    displayEmpty
+                                                    sx={{
+                                                        backgroundColor: 'white',
+                                                        '& .MuiOutlinedInput-notchedOutline': { borderColor: '#D0D5DD' },
+                                                        '& .MuiSelect-icon': { color: '#DA7756' }
+                                                    }}
+                                                >
+                                                    {correctiveActionsCategories.length > 0 ? (
+                                                        correctiveActionsCategories.map((category) => (
+                                                            <MenuItem key={category.id} value={category.id.toString()}>
+                                                                {category.name}
+                                                            </MenuItem>
+                                                        ))
+                                                    ) : (
+                                                        <MenuItem value="" disabled>
+                                                            No corrective actions available
                                                         </MenuItem>
-                                                    ))
-                                                ) : (
-                                                    <MenuItem value="" disabled>
-                                                        No corrective actions available
-                                                    </MenuItem>
-                                                )}
-                                            </MuiSelect>
-                                        </FormControl>
-
-                                        <FormControl fullWidth size="small">
-                                            <InputLabel>Responsible Person</InputLabel>
-                                            <MuiSelect
-                                                value={action.responsiblePerson}
-                                                onChange={(e) => updateCorrectiveAction(action.id, 'responsiblePerson', e.target.value)}
-                                                label="Responsible Person"
-                                                sx={{ backgroundColor: 'white' }}
-                                            >
-                                                {internalUsers.length > 0 ? (
-                                                    internalUsers.map((user) => (
-                                                        <MenuItem key={user.id} value={user.id?.toString() || ''}>
-                                                            {user.full_name || user.name}
-                                                        </MenuItem>
-                                                    ))
-                                                ) : (
-                                                    <MenuItem value="" disabled>
-                                                        No users available
-                                                    </MenuItem>
-                                                )}
-                                            </MuiSelect>
-                                        </FormControl>
-
-                                        <div className="flex items-center gap-2">
-                                            <TextField
-                                                fullWidth
-                                                size="small"
-                                                type="date"
-                                                value={action.targetDate}
-                                                onChange={(e) => updateCorrectiveAction(action.id, 'targetDate', e.target.value)}
-                                                sx={{ backgroundColor: 'white', flex: 1 }}
-                                            />
+                                                    )}
+                                                </MuiSelect>
+                                            </FormControl>
                                         </div>
 
-                                        <div className="text-sm text-gray-600 mb-1">Description:</div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-sm font-semibold text-[#2D2D2D]">Responsible Person</label>
+                                            <FormControl fullWidth size="small">
+                                                <MuiSelect
+                                                    value={action.responsiblePerson}
+                                                    onChange={(e) => updateCorrectiveAction(action.id, 'responsiblePerson', e.target.value)}
+                                                    displayEmpty
+                                                    sx={{
+                                                        backgroundColor: 'white',
+                                                        '& .MuiOutlinedInput-notchedOutline': { borderColor: '#D0D5DD' },
+                                                        '& .MuiSelect-icon': { color: '#DA7756' }
+                                                    }}
+                                                >
+                                                    {internalUsers.length > 0 ? (
+                                                        internalUsers.map((user) => (
+                                                            <MenuItem key={user.id} value={user.id?.toString() || ''}>
+                                                                {user.full_name || user.name}
+                                                            </MenuItem>
+                                                        ))
+                                                    ) : (
+                                                        <MenuItem value="" disabled>
+                                                            No users available
+                                                        </MenuItem>
+                                                    )}
+                                                </MuiSelect>
+                                            </FormControl>
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-sm font-semibold text-[#2D2D2D]">Target Date</label>
+                                            <div className="flex items-center gap-2">
+                                                <TextField
+                                                    fullWidth
+                                                    size="small"
+                                                    type="date"
+                                                    value={action.targetDate}
+                                                    onChange={(e) => updateCorrectiveAction(action.id, 'targetDate', e.target.value)}
+                                                    sx={{ backgroundColor: 'white', flex: 1 }}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="text-sm font-semibold text-[#2D2D2D] mb-1">Description</div>
                                         <Textarea
                                             value={action.description}
                                             onChange={(e) => updateCorrectiveAction(action.id, 'description', e.target.value)}
                                             placeholder="This is how description will look like if the user has put description at the time of creation."
-                                            className="bg-white min-h-[80px]"
+                                            className="bg-white min-h-[80px] border border-[#E5E7EB]"
                                         />
                                         <div className="mt-1 text-xs text-gray-600">
                                             {action.description.length} / 240
@@ -350,7 +365,7 @@ const ProvisionalStep: React.FC<ProvisionalStepProps> = ({
 
                         <Button
                             variant="outline"
-                            className="w-full border-[#BF213E] text-[#BF213E] mt-3"
+                            className="w-full border-brand text-brand mt-3 hover:bg-[#FFF3EE]"
                             onClick={handleAddCorrectiveAction}
                         >
                             + Add Action
@@ -372,74 +387,89 @@ const ProvisionalStep: React.FC<ProvisionalStepProps> = ({
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => removePreventiveAction(action.id)}
-                                                    className="h-6 text-red-500 hover:text-red-700"
+                                                    className="h-6 text-gray-500 hover:text-gray-700"
                                                 >
                                                     Remove
                                                 </Button>
                                             )}
                                         </div>
 
-                                        <FormControl fullWidth size="small">
-                                            <InputLabel>Select preventive action</InputLabel>
-                                            <MuiSelect
-                                                value={action.action}
-                                                onChange={(e) => updatePreventiveAction(action.id, 'action', e.target.value)}
-                                                label="Select preventive action"
-                                                sx={{ backgroundColor: 'white' }}
-                                            >
-                                                {preventiveActionsCategories.length > 0 ? (
-                                                    preventiveActionsCategories.map((category) => (
-                                                        <MenuItem key={category.id} value={category.id.toString()}>
-                                                            {category.name}
+                                        <div className="space-y-1.5">
+                                            <label className="text-sm font-semibold text-[#2D2D2D]">Select preventive action</label>
+                                            <FormControl fullWidth size="small">
+                                                <MuiSelect
+                                                    value={action.action}
+                                                    onChange={(e) => updatePreventiveAction(action.id, 'action', e.target.value)}
+                                                    displayEmpty
+                                                    sx={{
+                                                        backgroundColor: 'white',
+                                                        '& .MuiOutlinedInput-notchedOutline': { borderColor: '#D0D5DD' },
+                                                        '& .MuiSelect-icon': { color: '#DA7756' }
+                                                    }}
+                                                >
+                                                    {preventiveActionsCategories.length > 0 ? (
+                                                        preventiveActionsCategories.map((category) => (
+                                                            <MenuItem key={category.id} value={category.id.toString()}>
+                                                                {category.name}
+                                                            </MenuItem>
+                                                        ))
+                                                    ) : (
+                                                        <MenuItem value="" disabled>
+                                                            No preventive actions available
                                                         </MenuItem>
-                                                    ))
-                                                ) : (
-                                                    <MenuItem value="" disabled>
-                                                        No preventive actions available
-                                                    </MenuItem>
-                                                )}
-                                            </MuiSelect>
-                                        </FormControl>
-
-                                        <FormControl fullWidth size="small">
-                                            <InputLabel>Responsible Person</InputLabel>
-                                            <MuiSelect
-                                                value={action.responsiblePerson}
-                                                onChange={(e) => updatePreventiveAction(action.id, 'responsiblePerson', e.target.value)}
-                                                label="Responsible Person"
-                                                sx={{ backgroundColor: 'white' }}
-                                            >
-                                                {internalUsers.length > 0 ? (
-                                                    internalUsers.map((user) => (
-                                                        <MenuItem key={user.id} value={user.id?.toString() || ''}>
-                                                            {user.full_name || user.name}
-                                                        </MenuItem>
-                                                    ))
-                                                ) : (
-                                                    <MenuItem value="" disabled>
-                                                        No users available
-                                                    </MenuItem>
-                                                )}
-                                            </MuiSelect>
-                                        </FormControl>
-
-                                        <div className="flex items-center gap-2">
-                                            <TextField
-                                                fullWidth
-                                                size="small"
-                                                type="date"
-                                                value={action.targetDate}
-                                                onChange={(e) => updatePreventiveAction(action.id, 'targetDate', e.target.value)}
-                                                sx={{ backgroundColor: 'white', flex: 1 }}
-                                            />
+                                                    )}
+                                                </MuiSelect>
+                                            </FormControl>
                                         </div>
 
-                                        <div className="text-sm text-gray-600 mb-1">Description:</div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-sm font-semibold text-[#2D2D2D]">Responsible Person</label>
+                                            <FormControl fullWidth size="small">
+                                                <MuiSelect
+                                                    value={action.responsiblePerson}
+                                                    onChange={(e) => updatePreventiveAction(action.id, 'responsiblePerson', e.target.value)}
+                                                    displayEmpty
+                                                    sx={{
+                                                        backgroundColor: 'white',
+                                                        '& .MuiOutlinedInput-notchedOutline': { borderColor: '#D0D5DD' },
+                                                        '& .MuiSelect-icon': { color: '#DA7756' }
+                                                    }}
+                                                >
+                                                    {internalUsers.length > 0 ? (
+                                                        internalUsers.map((user) => (
+                                                            <MenuItem key={user.id} value={user.id?.toString() || ''}>
+                                                                {user.full_name || user.name}
+                                                            </MenuItem>
+                                                        ))
+                                                    ) : (
+                                                        <MenuItem value="" disabled>
+                                                            No users available
+                                                        </MenuItem>
+                                                    )}
+                                                </MuiSelect>
+                                            </FormControl>
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-sm font-semibold text-[#2D2D2D]">Target Date</label>
+                                            <div className="flex items-center gap-2">
+                                                <TextField
+                                                    fullWidth
+                                                    size="small"
+                                                    type="date"
+                                                    value={action.targetDate}
+                                                    onChange={(e) => updatePreventiveAction(action.id, 'targetDate', e.target.value)}
+                                                    sx={{ backgroundColor: 'white', flex: 1 }}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="text-sm font-semibold text-[#2D2D2D] mb-1">Description</div>
                                         <Textarea
                                             value={action.description}
                                             onChange={(e) => updatePreventiveAction(action.id, 'description', e.target.value)}
                                             placeholder="This is how description will look like if the user has put description at the time of creation."
-                                            className="bg-white min-h-[80px]"
+                                            className="bg-white min-h-[80px] border border-[#E5E7EB]"
                                         />
                                         <div className="mt-1 text-xs text-gray-600">
                                             {action.description.length} / 240
@@ -451,7 +481,7 @@ const ProvisionalStep: React.FC<ProvisionalStepProps> = ({
 
                         <Button
                             variant="outline"
-                            className="w-full border-[#BF213E] text-[#BF213E] mt-3"
+                            className="w-full border-brand text-brand mt-3 hover:bg-[#FFF3EE]"
                             onClick={handleAddPreventiveAction}
                         >
                             + Add Action
@@ -459,42 +489,51 @@ const ProvisionalStep: React.FC<ProvisionalStepProps> = ({
                     </div>
 
                     {/* Schedule Next Review */}
-                    <div className="border-t border-gray-300 pt-4">
-                        <h4 className="font-semibold text-sm mb-3 text-[#BF213E]">Schedule Next Review</h4>
+                    <div className="border-t border-[#E5E7EB] pt-4">
+                        <h4 className="font-semibold text-sm mb-3 text-brand">Schedule Next Review</h4>
 
                         <div className="space-y-3">
-                            <FormControl fullWidth size="small">
-                                <InputLabel>Responsible Person</InputLabel>
-                                <MuiSelect
-                                    value={nextReviewResponsible}
-                                    onChange={(e) => setNextReviewResponsible(e.target.value)}
-                                    label="Responsible Person"
-                                    sx={{ backgroundColor: 'white' }}
-                                >
-                                    {internalUsers.length > 0 ? (
-                                        internalUsers.map((user) => (
-                                            <MenuItem key={user.id} value={user.id?.toString() || ''}>
-                                                {user.full_name || user.name}
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-semibold text-[#2D2D2D]">Responsible Person</label>
+                                <FormControl fullWidth size="small">
+                                    <MuiSelect
+                                        value={nextReviewResponsible}
+                                        onChange={(e) => setNextReviewResponsible(e.target.value)}
+                                        displayEmpty
+                                        sx={{
+                                            backgroundColor: 'white',
+                                            '& .MuiOutlinedInput-notchedOutline': { borderColor: '#D0D5DD' },
+                                            '& .MuiSelect-icon': { color: '#DA7756' }
+                                        }}
+                                    >
+                                        {internalUsers.length > 0 ? (
+                                            internalUsers.map((user) => (
+                                                <MenuItem key={user.id} value={user.id?.toString() || ''}>
+                                                    {user.full_name || user.name}
+                                                </MenuItem>
+                                            ))
+                                        ) : (
+                                            <MenuItem value="" disabled>
+                                                No users available
                                             </MenuItem>
-                                        ))
-                                    ) : (
-                                        <MenuItem value="" disabled>
-                                            No users available
-                                        </MenuItem>
-                                    )}
-                                </MuiSelect>
-                            </FormControl>
+                                        )}
+                                    </MuiSelect>
+                                </FormControl>
+                            </div>
 
-                            <div className="flex items-center gap-2">
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    type="date"
-                                    value={nextReviewDate}
-                                    onChange={(e) => setNextReviewDate(e.target.value)}
-                                    defaultValue="2025-10-30"
-                                    sx={{ backgroundColor: 'white', flex: 1 }}
-                                />
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-semibold text-[#2D2D2D]">Review Date</label>
+                                <div className="flex items-center gap-2">
+                                    <TextField
+                                        fullWidth
+                                        size="small"
+                                        type="date"
+                                        value={nextReviewDate}
+                                        onChange={(e) => setNextReviewDate(e.target.value)}
+                                        defaultValue="2025-10-30"
+                                        sx={{ backgroundColor: 'white', flex: 1 }}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
