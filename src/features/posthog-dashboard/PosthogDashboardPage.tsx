@@ -11,6 +11,7 @@ import { TrafficSection } from './sections/TrafficSection';
 import { AdoptionSection } from './sections/AdoptionSection';
 import { WorkflowSection } from './sections/WorkflowSection';
 import { FmDashboardSection } from './sections/FmDashboardSection';
+import { RecentActivitySidebar } from './components/RecentActivitySidebar';
 import type { DashboardState } from './data/metrics';
 
 const PAGES: { key: DashboardState['activePage']; title: string; icon: JSX.Element }[] = [
@@ -76,12 +77,13 @@ function DashboardLayout() {
               ))}
             </div>
           </nav>
+          <RecentActivitySidebar filters={vm.filters} filtersSettled={vm.filtersSettled} />
         </aside>
 
         <main className="main">
           <div className="page-head">
             <h2>{page.title}</h2>
-            <p className="page-sub">{vm.scopeLabel} · last {vm.state.date} days</p>
+            <p className="page-sub">{vm.scopeLabel} · {vm.dateLabel}</p>
           </div>
 
           <ControlBar />

@@ -4403,7 +4403,63 @@ const AddAssetPage = () => {
   );
 
   return (
-    <div className="p-4 sm:p-6 max-w-full mx-auto min-h-screen bg-gray-50">
+    <>
+      <style>{`
+        html body [class*="border-l-[#DA7756]"] > div:first-child,
+        html body [class*="text-[#DA7756]"][class*="text-sm"][class*="font-semibold"] {
+          display: flex !important;
+          align-items: center !important;
+          gap: 0.75rem !important;
+          font-size: 1.125rem !important;
+          font-weight: 500 !important;
+          line-height: 1.4 !important;
+          letter-spacing: 0.01em !important;
+          color: #111111 !important;
+        }
+
+        html body [class*="border-l-[#DA7756]"] > div:first-child > span:first-child,
+        html body [class*="text-[#DA7756]"][class*="text-sm"][class*="font-semibold"] > span:first-child {
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          width: 2rem !important;
+          height: 2rem !important;
+          min-width: 2rem !important;
+          border-radius: 9999px !important;
+          background: #E5E0D3 !important;
+          color: #111111 !important;
+          flex-shrink: 0 !important;
+        }
+
+        html body [class*="border-l-[#DA7756]"] > div:first-child > span:first-child svg,
+        html body [class*="text-[#DA7756]"][class*="text-sm"][class*="font-semibold"] > span:first-child svg,
+        html body [class*="border-l-[#DA7756]"] > div:first-child svg,
+        html body [class*="text-[#DA7756]"][class*="text-sm"][class*="font-semibold"] svg {
+          width: 16px !important;
+          height: 16px !important;
+        }
+
+        html body .asset-form-section-title {
+          font-size: 1.25rem !important;
+          font-weight: 600 !important;
+          line-height: 1.3 !important;
+          letter-spacing: 0.01em !important;
+          color: #111111 !important;
+        }
+        html body .asset-form-section-title > span:first-child {
+          width: 2.1rem !important;
+          height: 2.1rem !important;
+          min-width: 2.1rem !important;
+          border-radius: 9999px !important;
+          background: #E5E0D3 !important;
+          color: #111111 !important;
+        }
+        html body .asset-form-section-title > span:first-child svg {
+          width: 16px !important;
+          height: 16px !important;
+        }
+      `}</style>
+      <div className="p-4 sm:p-6 max-w-full mx-auto min-h-screen bg-gray-50">
       {/* Header */}
       <div className="mb-4 sm:mb-6">
         <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
@@ -4427,7 +4483,7 @@ const AddAssetPage = () => {
         {/* Asset Category Selection */}
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div className="border-l-4 border-l-[#DA7756] p-2 sm:p-6 bg-white">
-            <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold mb-6">
+            <div className="asset-form-section-title flex items-center gap-2 text-[#DA7756] font-semibold mb-6">
               <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                 <Layers className="w-3 h-3 sm:w-4 sm:h-4" />
               </span>
@@ -12955,6 +13011,8 @@ const AddAssetPage = () => {
       />
       {/* <AddCustomFieldModal isOpen={itAssetsCustomFieldModalOpen} onClose={() => setItAssetsCustomFieldModalOpen(false)} onAddField={handleAddItAssetsCustomField} isItAsset={true} /> */}
     </div>
+    </>
   );
 };
+
 export default AddAssetPage;

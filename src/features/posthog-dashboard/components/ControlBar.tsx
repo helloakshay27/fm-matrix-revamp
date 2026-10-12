@@ -136,8 +136,30 @@ function SiteMultiSelect({
 }
 
 export function ControlBar() {
-  const { vm, setScope, setDate, setToken, setDev, togglePrev, refreshAll, isRefreshing } = useDashboard();
+  const { vm, setScope, setDate, setCustomDateRange, setToken, setDev, togglePrev, refreshAll, isRefreshing } = useDashboard();
   const { state, sites, groups, sitesLoading, traffic } = vm;
+  const [dateOpen, setDateOpen] = useState(false);
+  const [draftFrom, setDraftFrom] = useState(vm.range.from);
+  const [draftTo, setDraftTo] = useState(vm.range.to);
+  const dateControlRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!dateOpen) return;
+    const handlePointerDown = (event: MouseEvent) => {
+      if (dateControlRef.current && !dateControlRef.current.contains(event.target as Node)) {
+        setDateOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setDateOpen(false);
+    };
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [dateOpen]);
 
   const selectedSiteIds = state.tier === 't1' && state.scope !== 'all'
     ? state.scope.split(',')
@@ -182,15 +204,76 @@ export function ControlBar() {
       {renderScopeSelect()}
 
       {/* Date range */}
-      <label className="ctrl">
-        <span className="ic">▤</span>
-        <select value={state.date} onChange={(e) => setDate(Number(e.target.value) as DateRange)}>
-          <option value={7}>Last 7 days</option>
-          <option value={30}>Last 30 days</option>
-          <option value={90}>Last 90 days</option>
-        </select>
-        <span className="chev">▼</span>
-      </label>
+      <div className="date-range-control" ref={dateControlRef}>
+        <button
+          type="button"
+          className="ctrl date-range-trigger"
+          onClick={() => {
+            if (!dateOpen) {
+              setDraftFrom(vm.range.from);
+              setDraftTo(vm.range.to);
+            }
+            setDateOpen((open) => !open);
+          }}
+          aria-haspopup="dialog"
+          aria-expanded={dateOpen}
+        >
+          <span className="ic">▤</span>
+          <span>{vm.dateLabel}</span>
+          <span className="chev">▼</span>
+        </button>
+        {dateOpen && (
+          <div className="date-range-panel" role="dialog" aria-label="Date range filter">
+            <div className="date-range-presets" role="group" aria-label="Quick date ranges">
+              {([7, 30, 90] as DateRange[]).map((days) => (
+                <button
+                  key={days}
+                  type="button"
+                  className={`date-range-option ${!state.customDateRange && state.date === days ? 'selected' : ''}`}
+                  onClick={() => {
+                    setDate(days);
+                    setDateOpen(false);
+                  }}
+                >
+                  Last {days} days
+                </button>
+              ))}
+            </div>
+            <div className="date-range-custom-label">Custom range</div>
+            <div className="date-range-inputs">
+              <label>
+                <span>From</span>
+                <input
+                  type="date"
+                  value={draftFrom}
+                  max={draftTo || undefined}
+                  onChange={(event) => setDraftFrom(event.target.value)}
+                />
+              </label>
+              <label>
+                <span>To</span>
+                <input
+                  type="date"
+                  value={draftTo}
+                  min={draftFrom || undefined}
+                  onChange={(event) => setDraftTo(event.target.value)}
+                />
+              </label>
+            </div>
+            <button
+              type="button"
+              className="date-range-apply"
+              disabled={!draftFrom || !draftTo || draftFrom > draftTo}
+              onClick={() => {
+                setCustomDateRange({ from: draftFrom, to: draftTo });
+                setDateOpen(false);
+              }}
+            >
+              Apply custom range
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Device */}
       <div className="devtoggle" title="Platform (device_type)">

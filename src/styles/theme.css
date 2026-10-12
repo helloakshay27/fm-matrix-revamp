@@ -325,7 +325,7 @@
 .ticket-analytics-kpi-value {
   color: var(--color-text);
   font-family: 'Work Sans', sans-serif;
-  font-size: 24px;
+  font-size: 26px;
   font-variant-numeric: tabular-nums;
   font-weight: 700;
 }
@@ -7380,7 +7380,7 @@ html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [c
 html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"]) {
   margin: 0 !important;
   font-size: 26px !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   line-height: 1.2 !important;
   letter-spacing: -0.01em !important;
   color: #1a1a18 !important;
