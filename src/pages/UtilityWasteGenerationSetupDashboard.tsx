@@ -15,8 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
-import { toast as sonnerToast } from "sonner";
+import { toast } from "sonner";
 import { API_CONFIG } from "@/config/apiConfig";
 import { getToken } from "@/utils/auth";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
@@ -260,7 +259,6 @@ const formatDate = (value: string) => {
 };
 
 export const UtilityWasteGenerationSetupDashboard = () => {
-  const { toast } = useToast();
   const { shouldShow } = useDynamicPermissions();
   const [activeTab, setActiveTab] = useState("Commodity");
   const [searchTerm, setSearchTerm] = useState("");
@@ -292,6 +290,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [updatingCustomerEnabled, setUpdatingCustomerEnabled] = useState<Record<number, boolean>>({});
+  const [updatingStatus, setUpdatingStatus] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     loadData();
@@ -310,14 +309,14 @@ export const UtilityWasteGenerationSetupDashboard = () => {
 
       switch (activeTab) {
         case "Commodity":
-          endpoint = "/pms/generic_tags.json?q[tag_type_eq]=Commodity";
+          endpoint = "/pms/generic_tags.json?q[tag_type_eq]=Commodity&type=web";
           break;
         case "Category":
-          endpoint = "/pms/generic_tags.json?q[tag_type_eq]=Category";
+          endpoint = "/pms/generic_tags.json?q[tag_type_eq]=Category&type=web";
           break;
         case "Operational Name of Landlord/Tenant":
           endpoint =
-            "/pms/generic_tags.json?q[tag_type_eq]=operational_name_of_landlord";
+            "/pms/generic_tags.json?q[tag_type_eq]=operational_name_of_landlord&type=web";
           break;
         default:
           return;
@@ -345,7 +344,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
           // Keep commodities available for parent dropdown
           if (commodities.length === 0) {
             const commodityRes = await fetch(
-              getApiUrl("/pms/generic_tags.json?q[tag_type_eq]=Commodity"),
+              getApiUrl("/pms/generic_tags.json?q[tag_type_eq]=Commodity&type=web"),
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -364,11 +363,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
       }
     } catch (error) {
       console.error("Error loading data:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load data",
-        variant: "destructive",
-      });
+      toast.error("Failed to load data");
     } finally {
       setLoading(false);
     }
@@ -431,7 +426,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
 
   const handleCommoditySubmit = async () => {
     if (!commodityInput.trim()) {
-      sonnerToast.error("Please enter a category name");
+      toast.error("Please enter a category name");
       return;
     }
 
@@ -466,11 +461,11 @@ export const UtilityWasteGenerationSetupDashboard = () => {
       setCommodityCustomerEnabled(false);
       setCommodityIconFile(null);
       setIsAddCommodityModalOpen(false);
-      sonnerToast.success("Category added successfully");
+      toast.success("Category added successfully");
       loadData();
     } catch (error) {
       console.error("Error adding commodity:", error);
-      sonnerToast.error("Failed to add category");
+      toast.error("Failed to add category");
     } finally {
       setSubmitting(false);
     }
@@ -482,7 +477,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
       !categoryInputs.category_name ||
       !categoryInputs.category_type
     ) {
-      sonnerToast.error("Please fill all required fields");
+      toast.error("Please fill all required fields");
       return;
     }
 
@@ -523,11 +518,11 @@ export const UtilityWasteGenerationSetupDashboard = () => {
         iconFile: null,
       });
       setIsAddCategoryModalOpen(false);
-      sonnerToast.success("Subcategory added successfully");
+      toast.success("Subcategory added successfully");
       loadData();
     } catch (error) {
       console.error("Error adding category:", error);
-      sonnerToast.error("Failed to add subcategory");
+      toast.error("Failed to add subcategory");
     } finally {
       setSubmitting(false);
     }
@@ -585,14 +580,14 @@ export const UtilityWasteGenerationSetupDashboard = () => {
 
   const handleTagUpdate = async () => {
     if (!editingTag?.category_name.trim()) {
-      sonnerToast.error("Please enter a name");
+      toast.error("Please enter a name");
       return;
     }
     if (
       editingTag.tagType === "Category" &&
       (!editingTag.parent_id || !editingTag.category_type.trim())
     ) {
-      sonnerToast.error("Please fill all required fields");
+      toast.error("Please fill all required fields");
       return;
     }
 
@@ -633,11 +628,11 @@ export const UtilityWasteGenerationSetupDashboard = () => {
       }
 
       setEditingTag(null);
-      sonnerToast.success("Tag updated successfully");
+      toast.success("Tag updated successfully");
       loadData();
     } catch (error) {
       console.error("Error updating tag:", error);
-      sonnerToast.error("Failed to update tag");
+      toast.error("Failed to update tag");
     } finally {
       setSubmitting(false);
     }
@@ -645,11 +640,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
 
   const handleLandlordSubmit = async () => {
     if (!landlordInput.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter landlord/tenant name",
-        variant: "destructive",
-      });
+      toast.error("Please enter landlord/tenant name");
       return;
     }
 
@@ -679,18 +670,11 @@ export const UtilityWasteGenerationSetupDashboard = () => {
 
       setLandlordInput("");
       setIsAddLandlordModalOpen(false);
-      toast({
-        title: "Success",
-        description: "Landlord/Tenant added successfully",
-      });
+      toast.success("Landlord/Tenant added successfully");
       loadData();
     } catch (error) {
       console.error("Error adding landlord/tenant:", error);
-      toast({
-        title: "Error",
-        description: "Failed to add landlord/tenant",
-        variant: "destructive",
-      });
+      toast.error("Failed to add landlord/tenant");
     } finally {
       setSubmitting(false);
     }
@@ -732,40 +716,54 @@ export const UtilityWasteGenerationSetupDashboard = () => {
           tag.id === item.id ? { ...tag, customer_enabled: customerEnabled } : tag
         )
       );
-      sonnerToast.success(
+      toast.success(
         `Customer access ${customerEnabled ? "enabled" : "disabled"}`
       );
     } catch (error) {
       console.error("Error updating customer enabled setting:", error);
-      sonnerToast.error("Failed to update Customer Enabled");
+      toast.error("Failed to update Customer Enabled");
     } finally {
       setUpdatingCustomerEnabled((previous) => ({ ...previous, [item.id]: false }));
     }
   };
 
-  const handleStatusToggle = (id: number) => {
-    switch (activeTab) {
-      case "Commodity":
-        setCommodities((list) =>
-          list.map((item) =>
-            item.id === id ? { ...item, active: !item.active } : item
-          )
-        );
-        break;
-      case "Category":
-        setCategories((list) =>
-          list.map((item) =>
-            item.id === id ? { ...item, active: !item.active } : item
-          )
-        );
-        break;
-      case "Operational Name of Landlord/Tenant":
-        setLandlords((list) =>
-          list.map((item) =>
-            item.id === id ? { ...item, active: !item.active } : item
-          )
-        );
-        break;
+  const handleStatusToggle = async (
+    item: CommodityData | CategoryData | LandlordData
+  ) => {
+    if (updatingStatus[item.id]) return;
+
+    const active = !item.active;
+    setUpdatingStatus((previous) => ({ ...previous, [item.id]: true }));
+    try {
+      const response = await fetch(
+        getApiUrl(`/pms/generic_tags/${item.id}.json`),
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${getToken()}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ pms_generic_tag: { active } }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update status");
+      }
+
+      const applyStatus = <T extends { id: number; active: boolean }>(list: T[]) =>
+        list.map((tag) => (tag.id === item.id ? { ...tag, active } : tag));
+      setCommodities(applyStatus);
+      setCategories(applyStatus);
+      setLandlords(applyStatus);
+      toast.success(
+        `${item.category_name} marked ${active ? "Active" : "Inactive"}`
+      );
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast.error("Failed to update status");
+    } finally {
+      setUpdatingStatus((previous) => ({ ...previous, [item.id]: false }));
     }
   };
 
@@ -825,16 +823,22 @@ export const UtilityWasteGenerationSetupDashboard = () => {
       }
       case "status":
         return (
-          <span
-            className={`px-3 py-1 text-xs font-medium rounded-full cursor-pointer ${
+          <button
+            type="button"
+            className={`px-3 py-1 text-xs font-medium rounded-full cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 ${
               item.active
                 ? "bg-green-100 text-green-800"
                 : "bg-red-100 text-red-800"
             }`}
-            onClick={() => handleStatusToggle(item.id)}
+            disabled={
+              !shouldShow("Waste Generation", "edit") ||
+              Boolean(updatingStatus[item.id])
+            }
+            onClick={() => handleStatusToggle(item)}
+            title={`Mark ${item.active ? "Inactive" : "Active"}`}
           >
             {item.active ? "Active" : "Inactive"}
-          </span>
+          </button>
         );
       case "created_at":
         return (

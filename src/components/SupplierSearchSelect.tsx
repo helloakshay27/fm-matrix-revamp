@@ -151,9 +151,9 @@ const buildSelectStyles = (
 ): StylesConfig<ReactSelectOption, false> => {
   const isSchedule = size === 'schedule';
   const isCompact = size === 'compact';
-  const controlHeight = isSchedule ? 45 : isCompact ? 40 : 56;
-  const focusColor = isSchedule ? '#1976d2' : isCompact ? '#da7756' : '#C72030';
-  const borderDefault = isSchedule ? '#999' : isCompact ? '#ddd' : '#c4c4c4';
+  const controlHeight = isSchedule ? 44 : isCompact ? 40 : 56;
+  const focusColor = isSchedule ? 'var(--color-primary)' : isCompact ? '#da7756' : '#C72030';
+  const borderDefault = isSchedule ? 'rgba(26, 26, 24, 0.12)' : isCompact ? '#ddd' : '#c4c4c4';
 
   return {
   control: (base, state) => ({
@@ -162,7 +162,7 @@ const buildSelectStyles = (
     height: controlHeight,
     width: '100%',
     fontSize: isCompact || isSchedule ? 14 : base.fontSize,
-    borderRadius: 4,
+    borderRadius: isSchedule ? 'var(--radius-input, 12px)' : 4,
     borderColor: hasError ? '#d32f2f' : state.isFocused ? focusColor : borderDefault,
     boxShadow: 'none',
     backgroundColor: '#fff',
@@ -724,8 +724,8 @@ export const SupplierSearchSelect: React.FC<SupplierSearchSelectProps> = ({
         error={error}
         sx={{
           position: 'relative',
-          height: '45px',
-          '& .MuiInputLabel-root.Mui-focused': { color: '#1976d2' },
+          minHeight: '44px',
+          '& .MuiInputLabel-root.Mui-focused': { color: 'var(--color-primary)' },
         }}
       >
         {label ? (
@@ -742,7 +742,7 @@ export const SupplierSearchSelect: React.FC<SupplierSearchSelectProps> = ({
               backgroundColor: '#fff',
               px: 0.5,
               pointerEvents: 'none',
-              '&.Mui-focused': { color: '#1976d2' },
+              '&.Mui-focused': { color: 'var(--color-primary)' },
             }}
           >
             {label}
