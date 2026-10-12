@@ -515,16 +515,16 @@ const AddWasteGenerationPage = () => {
 
       <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
         {/* Waste Generation Details */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                <Recycle size={16} color="#C72030" />
+        <div className="bg-white rounded-2xl border border-[rgba(26,26,24,0.09)]">
+          <div className="px-6 pt-6 pb-0">
+            <h2 className="text-[14px] font-semibold uppercase tracking-[0.02em] text-[#1A1A18] flex items-center">
+              <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0">
+                <Recycle className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" />
               </span>
               WASTE GENERATION DETAILS
             </h2>
           </div>
-          <div className="p-6 space-y-10">
+          <div className="px-6 pb-6 pt-3 space-y-10">
             {/* Generator Type */}
             <div className="space-y-4">
               <RadioGroup
@@ -837,9 +837,9 @@ const AddWasteGenerationPage = () => {
                 variant="outline"
                 size="sm"
                 onClick={addWasteEntry}
-                className="mt-3 border-brand text-brand hover:bg-brand-selected hover:text-brand"
+                className="mt-3 h-[40px] px-[18px] gap-[7px] rounded-[8px] bg-white border border-[rgba(26,26,24,0.12)] text-[#2C2C2C] text-[12.5px] font-semibold tracking-normal hover:bg-[#F6F4EE] hover:text-[#2C2C2C] [&_svg]:text-[#2C2C2C]"
               >
-                <Plus className="w-4 h-4 mr-1" /> Add Category
+                <Plus className="w-4 h-4" /> Add Category
               </Button>
             </div>
 

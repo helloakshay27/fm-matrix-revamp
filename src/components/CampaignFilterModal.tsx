@@ -74,7 +74,7 @@ export const CampaignFilterModal = ({ isOpen, onClose, onApply, onReset }: Campa
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
-      <DialogContent className="max-w-md w-full bg-white border border-gray-300 shadow-lg rounded-[8px] sm:rounded-[8px]">
+      <DialogContent className="max-w-md w-full bg-white border border-gray-300 shadow-lg rounded-2xl sm:rounded-2xl">
         <DialogHeader className="px-6 py-4 border-b border-gray-200">
           <DialogTitle className="text-lg font-semibold text-gray-900 text-left">Filter</DialogTitle>
           <DialogDescription className="sr-only">

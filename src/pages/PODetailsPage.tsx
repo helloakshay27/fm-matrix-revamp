@@ -1375,7 +1375,7 @@ export const PODetailsPage = () => {
         )}
 
         <Dialog
-      PaperProps={{ sx: { borderRadius: "8px" } }}
+      PaperProps={{ sx: { borderRadius: "16px" } }}
           open={openRejectDialog}
           onClose={() => setOpenRejectDialog(false)}
           maxWidth="sm"

@@ -42,25 +42,38 @@ import { usePermitEvents } from "@/components/PostHogPermitEvents";
 const fieldStyles = {
     '& .MuiInputBase-input, & .MuiSelect-select': {
         padding: '12px',
+        minHeight: '44px',
+        boxSizing: 'border-box',
+        display: 'flex',
+        alignItems: 'center',
     },
     '& .MuiOutlinedInput-root': {
-        borderRadius: '8px',
+        borderRadius: '12px',
         backgroundColor: 'white',
+        minHeight: '44px',
         '& fieldset': {
-            borderColor: '#e5e7eb',
+            borderColor: '#E5E5E0',
+            borderWidth: '1px',
         },
         '&:hover fieldset': {
-            borderColor: '#9ca3af',
+            borderColor: '#C9C9C2',
         },
         '&.Mui-focused fieldset': {
-            borderColor: '#C72030',
+            borderColor: '#DA7756',
+            borderWidth: '1px',
         },
     },
     '& .MuiInputLabel-root': {
-        color: '#6b7280',
+        color: '#5C5C5C',
+        fontSize: '12px',
+        fontWeight: 600,
         '&.Mui-focused': {
-            color: '#C72030',
+            color: '#DA7756',
         },
+    },
+    '& .MuiSelect-placeholder': {
+        color: '#9CA3AF',
+        opacity: 1,
     },
 };
 
@@ -318,18 +331,17 @@ const Section = memo(({
     activeSection: string;
     setActiveSection: (key: string) => void;
 }) => (
-    <div className="bg-white rounded-lg shadow-sm border mb-6">
+    <div className="mb-6 rounded-[16px] border border-[#E5E5E0] bg-white overflow-hidden">
         <div
-            className="p-4 border-b bg-[#f6f4ee] rounded-t-lg cursor-pointer flex items-center justify-between"
+            className="cursor-pointer p-4 flex items-center justify-between"
             onClick={() => setActiveSection(activeSection === sectionKey ? "" : sectionKey)}
         >
             <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-[#FBEDEC] rounded-full flex items-center justify-center">
-                    {React.cloneElement(icon as React.ReactElement, { className: 'w-4 h-4 text-[#C72030]' })}
+                <div className="w-10 h-10 rounded-full bg-[#F6F4EE] flex items-center justify-center">
+                    {React.cloneElement(icon as React.ReactElement, { className: 'w-5 h-5 text-[#2C2C2C]' })}
                 </div>
-                <h3 className="text-lg font-semibold text-[#C72030]">{title}</h3>
+                <h3 className="text-[14px] font-semibold text-[#DA7756]">{title}</h3>
             </div>
-            <div className="w-2 h-2 bg-[#C72030] rounded-full"></div>
         </div>
         {(activeSection === sectionKey || (activeSection === "details" && sectionKey !== "permit-extension")) && (
             <div className="p-6">
@@ -1430,19 +1442,66 @@ export const PermitDetails = () => {
         }
     };
 
-    // Get status color for approval levels
+    const getPermitStatusStyle = (status: string) => {
+        const normalized = (status || '').trim().toLowerCase().replace(/[_-]+/g, ' ');
+
+        const palette: Record<string, { backgroundColor: string; color: string; borderColor: string }> = {
+            draft: { backgroundColor: '#E5E0D8', color: '#2c2c2c', borderColor: '#E5E0D8' },
+            active: { backgroundColor: '#C7EDDA', color: '#2c2c2c', borderColor: '#C7EDDA' },
+            approved: { backgroundColor: '#C7EDDA', color: '#2c2c2c', borderColor: '#C7EDDA' },
+            open: { backgroundColor: '#C7EDDA', color: '#2c2c2c', borderColor: '#C7EDDA' },
+            pending: { backgroundColor: '#F2EBC9', color: '#2c2c2c', borderColor: '#F2EBC9' },
+            'pending approval': { backgroundColor: '#F2EBC9', color: '#2c2c2c', borderColor: '#F2EBC9' },
+            completed: { backgroundColor: '#CECBF6', color: '#2c2c2c', borderColor: '#CECBF6' },
+            rejected: { backgroundColor: '#F2C8C4', color: '#2c2c2c', borderColor: '#F2C8C4' },
+            expired: { backgroundColor: '#F2C8C4', color: '#2c2c2c', borderColor: '#F2C8C4' },
+            extended: { backgroundColor: '#9EC8BA', color: '#2c2c2c', borderColor: '#9EC8BA' },
+            hold: { backgroundColor: '#D4D3D0', color: '#2c2c2c', borderColor: '#D4D3D0' },
+            'awaiting closure': { backgroundColor: '#F2EBC9', color: '#2c2c2c', borderColor: '#F2EBC9' },
+            'permit to complete': { backgroundColor: '#F2EBC9', color: '#2c2c2c', borderColor: '#F2EBC9' },
+        };
+
+        return palette[normalized] ?? { backgroundColor: '#E5E0D8', color: '#2c2c2c', borderColor: '#E5E0D8' };
+    };
+
+    const PERMIT_TYPE_PALETTE = [
+        { bg: '#F2EBC9', text: '#2c2c2c' },
+        { bg: '#F8E4C7', text: '#2c2c2c' },
+        { bg: '#C7EDDA', text: '#2c2c2c' },
+        { bg: '#F2C8C4', text: '#2c2c2c' },
+        { bg: '#CECBF6', text: '#2c2c2c' },
+        { bg: 'rgba(218, 119, 86, 0.18)', text: '#DA7756' },
+        { bg: '#9EC8BA', text: '#2c2c2c' },
+    ];
+
+    const getPermitTypeStyle = (permitType: string) => {
+        const name = (permitType || '').trim().toLowerCase();
+        if (!name) {
+            return { backgroundColor: '#E5E0D8', color: '#2c2c2c', borderColor: '#E5E0D8' };
+        }
+        let hash = 0;
+        for (let i = 0; i < name.length; i += 1) {
+            hash = (hash + name.charCodeAt(i) * (i + 1)) % PERMIT_TYPE_PALETTE.length;
+        }
+        const palette = PERMIT_TYPE_PALETTE[hash];
+        return { backgroundColor: palette.bg, color: palette.text, borderColor: palette.bg };
+    };
+
     const getStatusColor = (status: string) => {
         switch (status.toLowerCase()) {
             case 'approved':
             case 'approve':
-                return 'bg-green-100 text-green-800';
+                return 'bg-[#C7EDDA] text-[#2c2c2c] border border-[#C7EDDA]';
             case 'rejected':
             case 'reject':
-                return 'bg-red-100 text-red-800';
+                return 'bg-[#F2C8C4] text-[#2c2c2c] border border-[#F2C8C4]';
             case 'pending':
-                return 'bg-yellow-100 text-yellow-800';
+                return 'bg-[#F2EBC9] text-[#2c2c2c] border border-[#F2EBC9]';
+            case 'extended':
+            case 'expired':
+                return 'bg-[#9EC8BA] text-[#2c2c2c] border border-[#9EC8BA]';
             default:
-                return 'bg-gray-100 text-gray-800';
+                return 'bg-[#E5E0D8] text-[#2c2c2c] border border-[#E5E0D8]';
         }
     };
 
@@ -1452,7 +1511,7 @@ export const PermitDetails = () => {
         return (
             <div className="p-6 bg-white min-h-screen flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#DA7756] mx-auto mb-4"></div>
                     <p className="text-gray-700">Loading permit details...</p>
                 </div>
             </div>
@@ -1476,7 +1535,7 @@ export const PermitDetails = () => {
                     <p className="text-red-600 mb-4">{error || 'Permit not found'}</p>
                     <Button
                         onClick={() => navigate('/safety/permit')}
-                        className="bg-[#C72030] hover:bg-[#B01D2A] text-white"
+                        className="bg-[#DA7756] hover:bg-[#C86D4D] text-white"
                     >
                         Back to Permits
                     </Button>
@@ -1726,7 +1785,17 @@ export const PermitDetails = () => {
                         <div className="space-y-4 ">
                             <Field label="Permit ID" value={permitData.permit.id} />
                             <Field label="Reference No" value={permitData.permit.reference_number} />
-                            <Field label="Permit Type" value={permitData.permit.permit_type} />
+                            <Field
+                                label="Permit Type"
+                                value={
+                                    <span
+                                        className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium"
+                                        style={getPermitTypeStyle(permitData.permit.permit_type)}
+                                    >
+                                        {permitData.permit.permit_type || '-'}
+                                    </span>
+                                }
+                            />
                             <Field label="Permit For" value={permitData.permit.permit_for} />
                             {/* <Field
                                 label="Permit For"
@@ -1745,18 +1814,9 @@ export const PermitDetails = () => {
                                 label="Permit Status"
                                 value={
                                     <Badge
-                                        className={`text-white ${permitData?.permit?.status === 'Draft'
-                                            ? 'bg-brand'
-                                            : permitData?.permit?.status === 'Extended'
-                                                ? 'bg-[#9ec8ba]'
-                                                : permitData?.permit?.status === 'Expired'
-                                                    ? 'bg-brand-error'
-                                                    : permitData?.permit?.status === 'Approved'
-                                                        ? 'bg-brand-success'
-                                                        : permitData?.permit?.status === 'Hold'
-                                                            ? 'bg-[#888780]'
-                                                            : 'bg-gray-400'
-                                            }`}
+                                        variant="status"
+                                        className="border"
+                                        style={getPermitStatusStyle(permitData?.permit?.status || '')}
                                     >
                                         {permitData?.permit?.status || '-'}
                                     </Badge>
@@ -1851,7 +1911,7 @@ export const PermitDetails = () => {
                     >
                         <div className="space-y-3">
                             {permitData.manpower_details.map((manpower: any, index: number) => (
-                                <div key={index} className="p-4 bg-gray-50 rounded-lg">
+                                <div key={index} className="p-4 bg-white-50 rounded-lg">
                                     <h4 className="font-medium text-gray-900 mb-2">Person {index + 1}</h4>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                                         <div>
@@ -1909,7 +1969,7 @@ export const PermitDetails = () => {
                                 permitData.activity_details.map((activity: any, index: number) => (
                                     <div
                                         key={activity.id || index}
-                                        className="p-4 bg-gray-50 rounded-lg"
+                                        className="p-4 bg-white-50 rounded-lg"
                                     >
                                         {/* One row with 3 fields */}
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
@@ -2691,13 +2751,13 @@ export const PermitDetails = () => {
                             setActiveSection={setActiveSection}
                         >
                             <div className="space-y-6">
-                                {/* Form Fields */}
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                     <div className="space-y-4">
-                                        {/* Reason for Extension */}
                                         <div>
+                                            <label className="block text-[12px] font-semibold mb-2 text-[#5C5C5C]">
+                                                Reason for Extension <span className="text-[#DA7756]">*</span>
+                                            </label>
                                             <TextField
-                                                label="Reason for Extension *"
                                                 value={extendReason}
                                                 onChange={(e) => setExtendReason(e.target.value)}
                                                 fullWidth
@@ -2705,63 +2765,61 @@ export const PermitDetails = () => {
                                                 multiline
                                                 rows={3}
                                                 placeholder="Enter Reason Here"
-                                                InputLabelProps={{
-                                                    shrink: true
-                                                }}
                                                 sx={{
-                                                    "& .MuiOutlinedInput-root": {
-                                                        height: "auto !important",
-                                                        padding: "2px !important",
-                                                        display: "flex",
+                                                    '& .MuiOutlinedInput-root': {
+                                                        minHeight: '44px',
+                                                        borderRadius: '12px',
+                                                        backgroundColor: '#fff',
+                                                        '& fieldset': {
+                                                            borderColor: '#E5E5E0',
+                                                        },
+                                                        '&:hover fieldset': {
+                                                            borderColor: '#C9C9C2',
+                                                        },
+                                                        '&.Mui-focused fieldset': {
+                                                            borderColor: '#DA7756',
+                                                        },
                                                     },
-                                                    "& .MuiInputBase-input[aria-hidden='true']": {
-                                                        flex: 0,
-                                                        width: 0,
-                                                        height: 0,
-                                                        padding: "0 !important",
-                                                        margin: 0,
-                                                        display: "none",
+                                                    '& .MuiInputBase-input': {
+                                                        resize: 'none !important',
+                                                        padding: '12px 14px',
                                                     },
-                                                    "& .MuiInputBase-input": {
-                                                        resize: "none !important",
-                                                    },
-                                                }} />
+                                                }}
+                                            />
                                         </div>
 
-                                        {/* Extension Date & Time */}
                                         <div>
+                                            <label className="block text-[12px] font-semibold mb-2 text-[#5C5C5C]">
+                                                Extension Date & Time <span className="text-[#DA7756]">*</span>
+                                            </label>
                                             <TextField
-                                                label="Extension Date & Time *"
                                                 type="datetime-local"
                                                 value={extendDate}
                                                 onChange={(e) => setExtendDate(e.target.value)}
                                                 fullWidth
                                                 variant="outlined"
-                                                InputLabelProps={{
-                                                    shrink: true
-                                                }}
                                                 sx={fieldStyles}
                                             />
                                         </div>
                                     </div>
 
                                     <div className="space-y-4">
-                                        {/* Assignees */}
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Assignees<span className="text-red-500">*</span>
+                                            <label className="block text-[12px] font-semibold mb-2 text-[#5C5C5C]">
+                                                Assignees <span className="text-[#DA7756]">*</span>
                                             </label>
                                             <FormControl
                                                 sx={{
                                                     width: '100%',
                                                     '& .MuiOutlinedInput-root': {
-                                                        borderRadius: '8px',
+                                                        borderRadius: '12px',
+                                                        minHeight: '44px',
                                                         '&:hover .MuiOutlinedInput-notchedOutline': {
-                                                            borderColor: '#C72030',
+                                                            borderColor: '#C9C9C2',
                                                         },
                                                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                            borderColor: '#C72030',
-                                                            borderWidth: '2px',
+                                                            borderColor: '#DA7756',
+                                                            borderWidth: '1px',
                                                         },
                                                     },
                                                 }}
@@ -2785,7 +2843,7 @@ export const PermitDetails = () => {
                                                                             label={assignee?.name || value}
                                                                             size="small"
                                                                             sx={{
-                                                                                backgroundColor: '#C72030',
+                                                                                backgroundColor: '#DA7756',
                                                                                 color: 'white',
                                                                                 '& .MuiChip-deleteIcon': {
                                                                                     color: 'white',
@@ -2799,7 +2857,7 @@ export const PermitDetails = () => {
                                                     }}
                                                     displayEmpty
                                                     sx={{
-                                                        minHeight: '48px',
+                                                        minHeight: '44px',
                                                         '& .MuiSelect-placeholder': {
                                                             color: '#9CA3AF',
                                                         },
@@ -2817,13 +2875,12 @@ export const PermitDetails = () => {
                                             </FormControl>
                                         </div>
 
-                                        {/* Attachment */}
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className="block text-[12px] font-semibold mb-2 text-[#5C5C5C]">
                                                 Attachment
                                             </label>
                                             <div className="flex items-center gap-3">
-                                                <label className="flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-[#C72030] border border-gray-300 rounded cursor-pointer transition-colors">
+                                                <label className="flex items-center gap-2 px-4 py-2 bg-[#F6F4EE] hover:bg-[#EEE8DF] text-black border border-[#E5E5E0] rounded-[12px] cursor-pointer transition-colors">
                                                     <Upload className="w-4 h-4" />
                                                     Choose files
                                                     <input
@@ -2841,7 +2898,6 @@ export const PermitDetails = () => {
                                                 </span>
                                             </div>
 
-                                            {/* Show selected files */}
                                             {extendAttachments && extendAttachments.length > 0 && (
                                                 <div className="mt-2 space-y-1">
                                                     {Array.from(extendAttachments).map((file, index) => (
@@ -2855,13 +2911,12 @@ export const PermitDetails = () => {
                                     </div>
                                 </div>
 
-                                {/* Agreement Checkbox */}
-                                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                                <div className="mt-6 p-4 bg-white border border-[#E5E5E0] rounded-[12px]">
                                     <div className="flex items-start gap-3">
                                         <input
                                             type="checkbox"
                                             id="extensionAgreement"
-                                            className="mt-1 h-4 w-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]"
+                                            className="mt-1 h-4 w-4 text-[#DA7756] border-gray-300 rounded focus:ring-[#DA7756]"
                                         />
                                         <label htmlFor="extensionAgreement" className="text-sm text-gray-700 leading-relaxed">
                                             I have understood all the hazard and risk associated in the activity I pledge to implement on the control measure identified in the activity through risk analyses JSA and SOP. I hereby declare that the details given above are correct and also I have been trained by our company for the above mentioned work & I am mentally and physically fit, Alcohol/drugs free to perform it, will be performed with appropriate safety and supervision as per Panchshil & Norms.
@@ -2869,11 +2924,9 @@ export const PermitDetails = () => {
                                     </div>
                                 </div>
 
-                                {/* Extend Permit Button */}
-
                                 <div className="flex justify-center pt-4">
                                     <Button
-                                        className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-8 py-2 font-medium"
+                                        className="bg-[#DA7756] hover:bg-[#C86D4D] text-white px-8 py-2 font-medium"
                                         onClick={handleExtendPermit}
                                         disabled={isExtending}
                                     >
@@ -3148,22 +3201,22 @@ export const PermitDetails = () => {
                                 </div>
 
                                 <div className="space-y-4">
-                                    {/* Assignees */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Assignees<span className="text-red-500">*</span>
+                                        <label className="block text-[12px] font-semibold mb-2 text-[#5C5C5C]">
+                                            Assignees <span className="text-[#DA7756]">*</span>
                                         </label>
                                         <FormControl
                                             sx={{
                                                 width: '100%',
                                                 '& .MuiOutlinedInput-root': {
-                                                    borderRadius: '8px',
+                                                    borderRadius: '12px',
+                                                    minHeight: '44px',
                                                     '&:hover .MuiOutlinedInput-notchedOutline': {
-                                                        borderColor: '#C72030',
+                                                        borderColor: '#C9C9C2',
                                                     },
                                                     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                        borderColor: '#C72030',
-                                                        borderWidth: '2px',
+                                                        borderColor: '#DA7756',
+                                                        borderWidth: '1px',
                                                     },
                                                 },
                                             }}
@@ -3187,7 +3240,7 @@ export const PermitDetails = () => {
                                                                         label={assignee?.name || value}
                                                                         size="small"
                                                                         sx={{
-                                                                            backgroundColor: '#C72030',
+                                                                            backgroundColor: '#DA7756',
                                                                             color: 'white',
                                                                             '& .MuiChip-deleteIcon': {
                                                                                 color: 'white',
@@ -3201,7 +3254,7 @@ export const PermitDetails = () => {
                                                 }}
                                                 displayEmpty
                                                 sx={{
-                                                    minHeight: '48px',
+                                                    minHeight: '44px',
                                                     '& .MuiSelect-placeholder': {
                                                         color: '#9CA3AF',
                                                     },
@@ -3219,13 +3272,12 @@ export const PermitDetails = () => {
                                         </FormControl>
                                     </div>
 
-                                    {/* Attachment */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label className="block text-[12px] font-semibold mb-2 text-[#5C5C5C]">
                                             Attachment
                                         </label>
                                         <div className="flex items-center gap-3">
-                                            <label className="flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-[#C72030] border border-gray-300 rounded cursor-pointer transition-colors">
+                                            <label className="flex items-center gap-2 px-4 py-2 bg-[#F6F4EE] hover:bg-[#EEE8DF] text-black border border-[#E5E5E0] rounded-[12px] cursor-pointer transition-colors">
                                                 <Upload className="w-4 h-4" />
                                                 Choose files
                                                 <input
@@ -3243,7 +3295,6 @@ export const PermitDetails = () => {
                                                 }
                                             </span>
                                         </div>
-                                        {/* Show selected files */}
                                         {resumeAttachments && resumeAttachments.length > 0 && (
                                             <div className="mt-2 space-y-1">
                                                 {Array.from(resumeAttachments).map((file, index) => (
@@ -3257,13 +3308,12 @@ export const PermitDetails = () => {
                                 </div>
                             </div>
 
-                            {/* Agreement Checkbox */}
-                            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                            <div className="mt-6 p-4 bg-white border border-[#E5E5E0] rounded-[12px]">
                                 <div className="flex items-start gap-3">
                                     <input
                                         type="checkbox"
                                         id="resumeAgreement"
-                                        className="mt-1 h-4 w-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]"
+                                        className="mt-1 h-4 w-4 text-[#DA7756] border-gray-300 rounded focus:ring-[#DA7756]"
                                     />
                                     <label htmlFor="resumeAgreement" className="text-sm text-gray-700 leading-relaxed">
                                         I have understood all the hazard and risk associated in the activity I pledge to implement on the control measure identified in the activity through risk analyses JSA and SOP. I hereby declare that the details given above are correct and also I have been trained by our company for the above mentioned work & I am mentally and physically fit, Alcohol/drugs free to perform it, will be performed with appropriate safety and supervision as per Panchshil & Norms.
@@ -3271,10 +3321,9 @@ export const PermitDetails = () => {
                                 </div>
                             </div>
 
-                            {/* Resume Permit Button */}
                             <div className="flex justify-center pt-4">
                                 <Button
-                                    className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-8 py-2 font-medium"
+                                    className="bg-[#DA7756] hover:bg-[#C86D4D] text-white px-8 py-2 font-medium"
                                     onClick={handleResumePermit}
                                     disabled={isResuming}
                                 >
@@ -3303,7 +3352,7 @@ export const PermitDetails = () => {
                     >
                         <div className="space-y-6">
                             {permitData.permit_resume.map((resume, index) => (
-                                <div key={index} className="border rounded-lg p-4 bg-gray-50">
+                                <div key={index} className="border rounded-lg p-4 bg-white-50">
                                     <div className="flex justify-between items-start mb-4">
                                         <h4 className="font-semibold text-gray-900">Resume Request #{index + 1}</h4>
                                         {resume.status && (
@@ -3669,7 +3718,7 @@ export const PermitDetails = () => {
                     >
                         <div className="space-y-4">
                             {permitData.comment_logs.map((comment: CommentLog, index: number) => (
-                                <div key={comment.id || index} className="p-4 bg-gray-50 rounded-lg">
+                                <div key={comment.id || index} className="p-4 bg-white border border-[#E5E5E0] rounded-[12px]">
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-start">
                                             <span className="font-medium text-sm text-gray-900">
@@ -3677,7 +3726,7 @@ export const PermitDetails = () => {
                                             </span>
                                         </div>
                                         <div className="grid grid-cols-1 gap-3 text-sm">
-                                            <div className="bg-white p-3 rounded border">
+                                            <div className="bg-white p-3 rounded-[12px] border border-[#E5E5E0]">
                                                 <div className="mb-3">
                                                     <span className="font-semibold text-gray-700 block mb-1">Created At:</span>
                                                     <span className="text-gray-900 block">
@@ -3698,9 +3747,9 @@ export const PermitDetails = () => {
                                 </div>
                             ))}
                         </div>
-                        <div className="mt-4 pt-4 border-t">
+                        <div className="mt-4 pt-4 border-t border-[#E5E5E0]">
                             <Button
-                                className="bg-[#C72030] hover:bg-[#B01D2A] text-white"
+                                className="bg-[#DA7756] hover:bg-[#C86D4D] text-white"
                                 onClick={() => setCommentModalOpen(true)}
                                 disabled={isAddingComment}
                             >
@@ -3720,7 +3769,7 @@ export const PermitDetails = () => {
                             <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                             <p className="text-gray-500 mb-4">No comments yet</p>
                             <Button
-                                className="bg-[#C72030] hover:bg-[#B01D2A] text-white"
+                                className="bg-[#DA7756] hover:bg-[#C86D4D] text-white"
                                 onClick={() => setCommentModalOpen(true)}
                                 disabled={isAddingComment}
                             >
@@ -3894,18 +3943,16 @@ export const PermitDetails = () => {
             )} */}
 
             {permitMain && (
-                <div className="mt-8 border border-[#D9D9D9] rounded-lg overflow-hidden">
-                    {/* Header */}
-                    <div className="bg-[#F6F4EE] border-b border-[#D9D9D9] px-6 py-4 flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                            <CheckCircle className="w-6 h-6" style={{ color: '#C72030' }} />
+                <div className="mt-8 border border-[#E5E5E0] rounded-[16px] overflow-hidden bg-white">
+                    <div className="px-6 py-4 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-[#F6F4EE] flex items-center justify-center">
+                            <CheckCircle className="w-5 h-5" style={{ color: '#DA7756' }} />
                         </div>
-                        <h3 className="text-lg font-semibold text-[#1A1A1A] uppercase">
+                        <h3 className="text-[14px] font-semibold text-[#DA7756] uppercase">
                             Approval Actions
                         </h3>
                     </div>
 
-                    {/* Body */}
                     <div className="p-6 bg-white flex items-center gap-4 justify-center">
                         <Button
                             onClick={handleApprove}
@@ -3998,19 +4045,19 @@ export const PermitDetails = () => {
 
                             <div className="mt-2">
                                 <Button
+                                    type="button"
                                     variant="outline"
-                                    className="bg-purple-600 hover:bg-purple-700 text-white border-purple-600"
+                                    className="!bg-[#F5F4F0] !text-black !border-0 rounded-[12px] hover:!bg-[#F0EEE9]"
+                                    onClick={() => fileInputRef.current?.click()}
                                 >
-                                    <label className="cursor-pointer flex items-center">
-                                        <Upload className="w-4 h-4 mr-2" />
-                                        <span>+ Attach file</span>
-                                        <input
-                                            type="file"
-                                            className="hidden"
-                                            onChange={handleFileChange}
-                                        />
-                                    </label>
+                                    Choose File
                                 </Button>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    className="hidden"
+                                    onChange={handleFileChange}
+                                />
                                 <div className="mt-1 text-xs text-gray-500">
                                     {jsaAttachments.length > 0 ? `${jsaAttachments.length} file(s) selected` : 'No file chosen'}
                                 </div>
@@ -4027,7 +4074,9 @@ export const PermitDetails = () => {
                         </Button>
                         <Button
                             onClick={handleJsaUpload}
-                            className="bg-purple-600 hover:bg-purple-700"
+                            // className="!bg-black !text-white disabled:!opacity-50"
+                                className="!bg-black hover:!bg-black disabled:!bg-black !text-white disabled:!text-white disabled:!opacity-100"
+
                             disabled={jsaAttachments.length === 0 || isUploading}
                         >
                             {isUploading ? 'Uploading...' : 'Submit'}
@@ -4177,7 +4226,7 @@ export const PermitDetails = () => {
                             onClick={permitClosure ? handleRejectClosure : permitExtension ? handleRejectExtension : handleRejectConfirm}
 
                             disabled={isRejecting}
-                            className="bg-[#C72030] hover:bg-[#a61b27] text-white"
+                            className="bg-[#DA7756] hover:bg-[#C86D4D] text-white"
                         >
                             {isRejecting ? 'Rejecting...' : 'Reject'}
                         </Button>

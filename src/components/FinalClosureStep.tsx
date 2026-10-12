@@ -856,10 +856,10 @@ const FinalClosureStep: React.FC<FinalClosureStepProps> = ({
 
   /* ----------------------------- UI ----------------------------- */
   return (
-    <div className="p-4 space-y-3 bg-gray-100 min-h-full">
+    <div className="p-4 space-y-3 bg-[#FDFDFB] min-h-full">
 
       {/* Time and Duration Bar */}
-      <div className="flex items-center justify-between bg-[#EDE8DC] rounded-lg px-4 py-3 gap-4">
+      <div className="flex items-center justify-between bg-white border border-[#E7E1D4] rounded-xl px-4 py-3 gap-4 shadow-sm">
         <div className="flex flex-col items-start gap-0.5">
           <span className="text-xs text-gray-500 font-medium">Occurred Time</span>
           <div className="flex items-center gap-1.5">
@@ -869,7 +869,7 @@ const FinalClosureStep: React.FC<FinalClosureStepProps> = ({
         </div>
         <div className="flex flex-col items-center gap-0.5">
           <span className="text-xs text-gray-500 font-medium">Total Duration</span>
-          <span className="text-sm font-bold text-[#BF213E]">{calculateTotalDuration(incident, incidentOverTime)}</span>
+          <span className="text-sm font-bold text-brand">{calculateTotalDuration(incident, incidentOverTime)}</span>
         </div>
         <div className="flex flex-col items-end gap-0.5">
           <span className="text-xs text-gray-500 font-medium">Incident Over Time</span>
@@ -881,7 +881,7 @@ const FinalClosureStep: React.FC<FinalClosureStepProps> = ({
       </div>
 
       {/* Investigators Row */}
-      <div className="bg-white rounded-lg px-4 py-3">
+      <div className="bg-white border border-[#E7E1D4] rounded-xl px-4 py-3 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex flex-wrap gap-2 items-center">
             {investigators && investigators.length > 0 ? (
@@ -895,25 +895,19 @@ const FinalClosureStep: React.FC<FinalClosureStepProps> = ({
               <span className="text-sm text-gray-400">No investigators added yet</span>
             )}
           </div>
-          <Button variant="outline" size="sm" className="shrink-0 border-[#BF213E] text-[#BF213E] hover:bg-red-50">
+          <Button variant="outline" size="sm" className="shrink-0 border-brand text-brand hover:bg-[#FFF3EE]">
             + Investigator
           </Button>
         </div>
       </div>
 
       {/* Corrective Actions Card */}
-      <div className="bg-[#EDE8DC] rounded-lg overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3">
+      <div className="bg-white border border-[#E7E1D4] rounded-xl overflow-hidden shadow-sm">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[#F0EAE2] bg-[#FAF9F7]">
           <h3 className="font-bold text-gray-900 text-base">Corrective Actions</h3>
-          {/* <button className="bg-gray-900 text-white text-xs font-semibold px-4 py-1.5 rounded-md flex items-center gap-1.5 hover:bg-gray-800">
-            Open
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button> */}
         </div>
 
-        <div className="bg-white mx-3 mb-3 rounded-lg p-4 space-y-4">
+        <div className="p-4 space-y-4">
           {correctiveActions.length > 0 && (
             <div className="space-y-4">
               {correctiveActions.map((action, index) => (
@@ -930,7 +924,7 @@ const FinalClosureStep: React.FC<FinalClosureStepProps> = ({
                         sx={{
                           backgroundColor: 'white',
                           '& .MuiOutlinedInput-notchedOutline': { borderColor: '#d1d5db' },
-                          '& .MuiSelect-icon': { color: '#BF213E' },
+                          '& .MuiSelect-icon': { color: '#DA7756' },
                         }}
                       >
                         <MenuItem value="" disabled>
@@ -953,7 +947,7 @@ const FinalClosureStep: React.FC<FinalClosureStepProps> = ({
                         sx={{
                           backgroundColor: 'white',
                           '& .MuiOutlinedInput-notchedOutline': { borderColor: '#d1d5db' },
-                          '& .MuiSelect-icon': { color: '#BF213E' },
+                          '& .MuiSelect-icon': { color: '#DA7756' },
                         }}
                       >
                         <MenuItem value="" disabled>
@@ -1001,18 +995,12 @@ const FinalClosureStep: React.FC<FinalClosureStepProps> = ({
       </div>
 
       {/* Preventive Actions Card */}
-      <div className="bg-[#EDE8DC] rounded-lg overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3">
+      <div className="bg-white border border-[#E7E1D4] rounded-xl overflow-hidden shadow-sm">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[#F0EAE2] bg-[#FAF9F7]">
           <h3 className="font-bold text-gray-900 text-base">Preventive Actions</h3>
-          {/* <button className="bg-gray-900 text-white text-xs font-semibold px-4 py-1.5 rounded-md flex items-center gap-1.5 hover:bg-gray-800">
-            Open
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button> */}
         </div>
 
-        <div className="bg-white mx-3 mb-3 rounded-lg p-4 space-y-4">
+        <div className="p-4 space-y-4">
           {preventiveActions.length > 0 && (
             <div className="space-y-4">
               {preventiveActions.map((action, index) => (
@@ -1029,7 +1017,7 @@ const FinalClosureStep: React.FC<FinalClosureStepProps> = ({
                         sx={{
                           backgroundColor: 'white',
                           '& .MuiOutlinedInput-notchedOutline': { borderColor: '#d1d5db' },
-                          '& .MuiSelect-icon': { color: '#BF213E' },
+                          '& .MuiSelect-icon': { color: '#DA7756' },
                         }}
                       >
                         <MenuItem value="" disabled>
@@ -1052,7 +1040,7 @@ const FinalClosureStep: React.FC<FinalClosureStepProps> = ({
                         sx={{
                           backgroundColor: 'white',
                           '& .MuiOutlinedInput-notchedOutline': { borderColor: '#d1d5db' },
-                          '& .MuiSelect-icon': { color: '#BF213E' },
+                          '& .MuiSelect-icon': { color: '#DA7756' },
                         }}
                       >
                         <MenuItem value="" disabled>
@@ -1100,8 +1088,8 @@ const FinalClosureStep: React.FC<FinalClosureStepProps> = ({
       </div>
 
       {/* Schedule Next Review Card */}
-      <div className="bg-white rounded-lg p-4 space-y-4">
-        <h4 className="font-bold text-base text-[#BF213E]">Schedule Next Review</h4>
+      <div className="bg-white border border-[#E7E1D4] rounded-xl p-4 space-y-4 shadow-sm">
+        <h4 className="font-bold text-base text-brand">Schedule Next Review</h4>
 
         <div className="space-y-1.5">
           <label className="text-sm font-semibold text-gray-800">Responsible Person</label>
@@ -1113,7 +1101,7 @@ const FinalClosureStep: React.FC<FinalClosureStepProps> = ({
               sx={{
                 backgroundColor: 'white',
                 '& .MuiOutlinedInput-notchedOutline': { borderColor: '#d1d5db' },
-                '& .MuiSelect-icon': { color: '#BF213E' },
+                '& .MuiSelect-icon': { color: '#DA7756' },
               }}
             >
               <MenuItem value="" disabled>

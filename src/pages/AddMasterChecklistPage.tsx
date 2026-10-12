@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, X, ArrowLeft } from 'lucide-react';
+import { Plus, X, ArrowLeft, FileText, ListChecks } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   TextField,
@@ -235,11 +235,11 @@ export const AddMasterChecklistPage = () => {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <div className="bg-white border rounded-lg p-4 sm:p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 bg-[var(--color-primary)] text-white rounded-full flex items-center justify-center text-sm">1</div>
-            <h2 className="font-semibold text-lg">Basic Info</h2>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl p-4 sm:p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center shrink-0"><FileText className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
+            <h2 className="text-[14px] font-semibold uppercase tracking-[0.02em] text-[#1A1A18]">Basic Info</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -312,11 +312,11 @@ export const AddMasterChecklistPage = () => {
         </div>
 
         {taskSections.map((section) => (
-          <div key={section.id} className="bg-white border rounded-lg p-4 sm:p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-[var(--color-primary)] text-white rounded-full flex items-center justify-center text-sm">2</div>
-                <h2 className="font-semibold text-lg">Task</h2>
+          <div key={section.id} className="bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center shrink-0"><ListChecks className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
+                <h2 className="text-[14px] font-semibold uppercase tracking-[0.02em] text-[#1A1A18]">Task</h2>
               </div>
               {taskSections.length > 1 && (
                 <Button

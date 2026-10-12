@@ -29,7 +29,7 @@ export const InvoiceFilterDialog = ({ isOpen, onClose }: InvoiceFilterDialogProp
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-white rounded-[8px] sm:rounded-[8px]">
+      <DialogContent className="max-w-md bg-white rounded-2xl sm:rounded-2xl">
         <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
           <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
           <Button

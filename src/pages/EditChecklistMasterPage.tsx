@@ -11,7 +11,7 @@ import { FormSection, FormActionBar, assetFieldStyles } from '@/components/commo
 import { API_CONFIG, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAssetTypes } from '@/services/assetTypesAPI';
-import { toast, Toaster } from 'sonner';
+import { toast } from 'sonner';
 
 const textFieldStyles = {
   '& .MuiOutlinedInput-root': {
@@ -437,9 +437,6 @@ export const EditChecklistMasterPage = () => {
 
   return (
     <div className="p-4 sm:p-6 max-w-full mx-auto min-h-screen bg-gray-50">
-      {/* Sonner Toaster for notifications */}
-      <Toaster position="top-right" richColors closeButton />
-
       {/* Header */}
       <div className="mb-4 sm:mb-6">
         <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">

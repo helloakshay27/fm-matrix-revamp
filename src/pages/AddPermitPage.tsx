@@ -1,43 +1,110 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Building2, FileText, Paperclip, ShieldCheck, Upload, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { usePermitEvents } from '@/components/PostHogPermitEvents';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Checkbox, ListItemText, FormControlLabel } from '@mui/material';
+import { TextField, FormControl, Select as MuiSelect, MenuItem, Checkbox, ListItemText, FormControlLabel } from '@mui/material';
+
+const FormField = ({ label, required = false, children }: { label: string; required?: boolean; children: React.ReactNode }) => (
+  <div className="flex flex-col gap-[6px]">
+    <label className="text-[12px] font-semibold text-[#5C5C5C]">
+      {label}
+      {required && <span className="text-[#DA7756] ml-1">*</span>}
+    </label>
+    {children}
+  </div>
+);
+
+const SelectField = ({
+  label,
+  required = false,
+  value,
+  onChange,
+  disabled = false,
+  placeholder,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  value: string;
+  onChange: (event: any) => void;
+  disabled?: boolean;
+  placeholder: string;
+  children: React.ReactNode;
+}) => (
+  <FormField label={label} required={required}>
+    <FormControl fullWidth variant="outlined" disabled={disabled}>
+      <MuiSelect value={value} onChange={onChange} displayEmpty sx={fieldStyles} MenuProps={menuProps}>
+        <MenuItem value=""><em>{placeholder}</em></MenuItem>
+        {children}
+      </MuiSelect>
+    </FormControl>
+  </FormField>
+);
+
+const MultiSelectField = ({
+  label,
+  required = false,
+  value,
+  onChange,
+  disabled = false,
+  placeholder,
+  renderValue,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  value: string[];
+  onChange: (event: any) => void;
+  disabled?: boolean;
+  placeholder: string;
+  renderValue?: (selected: string[]) => React.ReactNode;
+  children: React.ReactNode;
+}) => (
+  <FormField label={label} required={required}>
+    <FormControl fullWidth variant="outlined" disabled={disabled}>
+      <MuiSelect
+        multiple
+        value={value}
+        onChange={onChange}
+        displayEmpty
+        sx={fieldStyles}
+        MenuProps={menuProps}
+        renderValue={renderValue || ((selected: string[]) => (selected.length === 0 ? placeholder : selected.join(', ')))}
+      >
+        {children}
+      </MuiSelect>
+    </FormControl>
+  </FormField>
+);
 
 const fieldStyles = {
-  height: {
-    xs: 28,
-    sm: 36,
-    md: 45
+  minHeight: 44,
+  borderRadius: '12px',
+  backgroundColor: '#fff',
+  fontSize: '13.5px',
+  fontWeight: 500,
+  '& .MuiSelect-select, & .MuiInputBase-input': {
+    minHeight: '44px',
+    boxSizing: 'border-box',
+    padding: '0 14px',
+    display: 'flex',
+    alignItems: 'center',
   },
-  '& .MuiInputBase-input, & .MuiSelect-select': {
-    padding: {
-      xs: '8px',
-      sm: '10px',
-      md: '12px'
-    }
+  '& .MuiSelect-select em': {
+    fontStyle: 'normal',
   },
-  '& .MuiOutlinedInput-root': {
-    borderRadius: '8px',
-    backgroundColor: 'white',
-    '& fieldset': {
-      borderColor: '#e5e7eb',
-    },
-    '&:hover fieldset': {
-      borderColor: '#9ca3af',
-    },
-    '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
-    },
+  '& fieldset': {
+    borderColor: '#E5E5E0',
+    borderWidth: '1px',
   },
-  '& .MuiInputLabel-root': {
-    color: '#6b7280',
-    '&.Mui-focused': {
-      color: '#C72030',
-    },
+  '&:hover fieldset': {
+    borderColor: '#C9C9C2',
+  },
+  '&.Mui-focused fieldset': {
+    borderColor: '#DA7756',
   },
 };
 
@@ -1321,242 +1388,170 @@ export const AddPermitPage = () => {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <Button variant="ghost" onClick={() => navigate('/safety/permit')} className="mb-4">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Permit List
-        </Button>
-        <h1 className="text-2xl font-bold text-[#1a1a1a]">NEW PERMIT</h1>
+        <div className="flex items-center text-sm text-[#5C5C5C] mb-4">
+          <button
+            onClick={() => navigate('/safety/permit')}
+            aria-label="Go back"
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-[#F6F4EE] transition-colors mr-2"
+          >
+            <ArrowLeft className="w-4 h-4 text-[#5C5C5C]" />
+          </button>
+          <span>Home</span>
+          <span className="mx-2">{'>'}</span>
+          <span>Safety</span>
+          <span className="mx-2">{'>'}</span>
+          <span>Permit</span>
+        </div>
+        <h1 className="text-[#DA7756] text-[32px] font-semibold tracking-[-0.02em]">NEW PERMIT</h1>
       </div>
 
-      {/* Permit Requestor Details */}
-      <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
-        <CardHeader className='bg-[#F6F4EE] mb-4'>
-          <CardTitle className="text-lg text-black flex items-center">
-            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
-            PERMIT REQUESTOR DETAILS
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-6 bg-white">
-          {loadingUserAccount ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-gray-600">Loading user data...</div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Name<span style={{ color: '#C72030' }}>*</span></label>
-                <div className="text-base text-gray-900 py-2 px-3 bg-gray-50 rounded-lg border">
-                  {permitData.name || 'N/A'}
-                </div>
+      <div className="space-y-5">
+        <Card className="rounded-[16px]">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-[14px] font-semibold text-[#DA7756] flex items-center gap-3">
+              <span className="w-10 h-10 rounded-full bg-[#F6F4EE] flex items-center justify-center"><User className="w-5 h-5" /></span>
+              Permit Requestor Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {loadingUserAccount ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-gray-600">Loading user data...</div>
               </div>
-
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Contact Number<span style={{ color: '#C72030' }}>*</span></label>
-                <div className="text-base text-gray-900 py-2 px-3 bg-gray-50 rounded-lg border">
-                  {permitData.contactNumber || 'N/A'}
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Department<span style={{ color: '#C72030' }}>*</span></label>
-                <div className="text-base text-gray-900 py-2 px-3 bg-gray-50 rounded-lg border">
-                  {permitData.department || 'N/A'}
-                </div>
-              </div>
-
-              {permitData.unit && (
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700">Unit</label>
-                  <div className="text-base text-gray-900 py-2 px-3 bg-gray-50 rounded-lg border">
-                    {permitData.unit}
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <FormField label="Name" required>
+                  <div className="flex items-center min-h-[44px] px-[14px] rounded-[12px] border border-[#E5E5E0] bg-[#FFFFFF] text-[13.5px] text-[#2C2C2C]">
+                    {permitData.name || 'N/A'}
                   </div>
-                </div>
-              )}
+                </FormField>
 
-              {permitData.site && (
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700">Site</label>
-                  <div className="text-base text-gray-900 py-2 px-3 bg-gray-50 rounded-lg border">
-                    {permitData.site}
+                <FormField label="Contact Number" required>
+                  <div className="flex items-center min-h-[44px] px-[14px] rounded-[12px] border border-[#E5E5E0] bg-[#FFFFFF] text-[13.5px] text-[#2C2C2C]">
+                    {permitData.contactNumber || 'N/A'}
                   </div>
-                </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                </FormField>
 
-      {/* Basic Details */}
-      <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
-        <CardHeader className='bg-[#F6F4EE] mb-4'>
-          <CardTitle className="text-lg text-black flex items-center">
-            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
-            BASIC DETAILS
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-6 bg-white">
-          <div className="space-y-6">
-            <TextField
-              label={<>Permit For <span style={{ color: '#C72030', fontWeight: 600 }}>*</span></>}
-              value={permitData.permitFor}
-              onChange={(e) => handleInputChange('permitFor', e.target.value)}
-              fullWidth
-              variant="outlined"
-              sx={fieldStyles}
-              size="small"
+                <FormField label="Department" required>
+                  <div className="flex items-center min-h-[44px] px-[14px] rounded-[12px] border border-[#E5E5E0] bg-[#FFFFFF] text-[13.5px] text-[#2C2C2C]">
+                    {permitData.department || 'N/A'}
+                  </div>
+                </FormField>
 
-            />
+                {permitData.unit && (
+                  <FormField label="Unit">
+                    <div className="flex items-center min-h-[44px] px-[14px] rounded-[12px] border border-[#E5E5E0] bg-[#FFFFFF] text-[13.5px] text-[#2C2C2C]">
+                      {permitData.unit}
+                    </div>
+                  </FormField>
+                )}
+
+                {permitData.site && (
+                  <FormField label="Site">
+                    <div className="flex items-center min-h-[44px] px-[14px] rounded-[12px] border border-[#E5E5E0] bg-[#FFFFFF] text-[13.5px] text-[#2C2C2C]">
+                      {permitData.site}
+                    </div>
+                  </FormField>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-[16px]">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-[14px] font-semibold text-[#DA7756] flex items-center gap-3">
+              <span className="w-10 h-10 rounded-full bg-[#F6F4EE] flex items-center justify-center"><Building2 className="w-5 h-5" /></span>
+              Basic Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <FormField label="Permit For" required>
+              <TextField
+                value={permitData.permitFor}
+                onChange={(e) => handleInputChange('permitFor', e.target.value)}
+                fullWidth
+                variant="outlined"
+                placeholder="Enter permit for"
+                sx={fieldStyles}
+              />
+            </FormField>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                <InputLabel id="building-select-label" shrink>Building
-                  <span style={{ color: '#C72030', fontWeight: 600 }}>*</span>
-                </InputLabel>
-                <MuiSelect
-                  labelId="building-select-label"
-                  label="Building*"
-                  value={permitData.building}
-                  onChange={(e) => handleBuildingChange(e.target.value)}
-                  displayEmpty
-                  MenuProps={menuProps}
-                  disabled={loadingBuildings}
-                  size="small"
-                >
-                  <MenuItem value="">
-                    <em>{loadingBuildings ? 'Loading buildings...' : 'Select Building'}</em>
+              <SelectField
+                label="Building"
+                required
+                value={permitData.building}
+                onChange={(e) => handleBuildingChange(e.target.value)}
+                placeholder={loadingBuildings ? 'Loading buildings...' : 'Select Building'}
+                disabled={loadingBuildings}
+              >
+                {buildings.map((building) => (
+                  <MenuItem key={building.id} value={building.id.toString()}>
+                    {building.name}
                   </MenuItem>
-                  {buildings.map((building) => (
-                    <MenuItem key={building.id} value={building.id.toString()}>
-                      {building.name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
+                ))}
+              </SelectField>
 
-              <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                <InputLabel id="wing-select-label" shrink>Wing</InputLabel>
-                <MuiSelect
-                  labelId="wing-select-label"
-                  label="Wing"
-                  value={permitData.wing}
-                  onChange={(e) => handleWingChange(e.target.value)}
-                  displayEmpty
-                  MenuProps={menuProps}
-                  disabled={loadingWings || !permitData.building}
-                  size="small"
-                >
-                  <MenuItem value="">
-                    <em>
-                      {!permitData.building
-                        ? 'Select Building First'
-                        : loadingWings
-                          ? 'Loading wings...'
-                          : 'Select Wing'
-                      }
-                    </em>
+              <SelectField
+                label="Wing"
+                value={permitData.wing}
+                onChange={(e) => handleWingChange(e.target.value)}
+                placeholder={!permitData.building ? 'Select Building First' : loadingWings ? 'Loading wings...' : 'Select Wing'}
+                disabled={loadingWings || !permitData.building}
+              >
+                {wings.map((wing) => (
+                  <MenuItem key={wing.id} value={wing.id.toString()}>
+                    {wing.name}
                   </MenuItem>
-                  {wings.map((wing) => (
-                    <MenuItem key={wing.id} value={wing.id.toString()}>
-                      {wing.name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
+                ))}
+              </SelectField>
 
-              <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                <InputLabel id="area-select-label" shrink>Area</InputLabel>
-                <MuiSelect
-                  labelId="area-select-label"
-                  label="Area"
-                  value={permitData.area}
-                  onChange={(e) => handleAreaChange(e.target.value)}
-                  displayEmpty
-                  MenuProps={menuProps}
-                  disabled={loadingAreas || !permitData.wing}
-                  size="small"
-                >
-                  <MenuItem value="">
-                    <em>
-                      {!permitData.wing
-                        ? 'Select Wing First'
-                        : loadingAreas
-                          ? 'Loading areas...'
-                          : 'Select Area'
-                      }
-                    </em>
+              <SelectField
+                label="Area"
+                value={permitData.area}
+                onChange={(e) => handleAreaChange(e.target.value)}
+                placeholder={!permitData.wing ? 'Select Wing First' : loadingAreas ? 'Loading areas...' : 'Select Area'}
+                disabled={loadingAreas || !permitData.wing}
+              >
+                {areas.map((area) => (
+                  <MenuItem key={area.id} value={area.id.toString()}>
+                    {area.name}
                   </MenuItem>
-                  {areas.map((area) => (
-                    <MenuItem key={area.id} value={area.id.toString()}>
-                      {area.name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
+                ))}
+              </SelectField>
 
-              <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                <InputLabel id="floor-select-label" shrink>Floor</InputLabel>
-                <MuiSelect
-                  labelId="floor-select-label"
-                  label="Floor"
-                  value={permitData.floor}
-                  onChange={(e) => handleFloorChange(e.target.value)}
-                  displayEmpty
-                  MenuProps={menuProps}
-                  disabled={loadingFloors || !permitData.area}
-                  size="small"
-                >
-                  <MenuItem value="">
-                    <em>
-                      {!permitData.area
-                        ? 'Select Area First'
-                        : loadingFloors
-                          ? 'Loading floors...'
-                          : 'Select Floor'
-                      }
-                    </em>
+              <SelectField
+                label="Floor"
+                value={permitData.floor}
+                onChange={(e) => handleFloorChange(e.target.value)}
+                placeholder={!permitData.area ? 'Select Area First' : loadingFloors ? 'Loading floors...' : 'Select Floor'}
+                disabled={loadingFloors || !permitData.area}
+              >
+                {floors.map((floor) => (
+                  <MenuItem key={floor.id} value={floor.id.toString()}>
+                    {floor.name}
                   </MenuItem>
-                  {floors.map((floor) => (
-                    <MenuItem key={floor.id} value={floor.id.toString()}>
-                      {floor.name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
+                ))}
+              </SelectField>
 
-              <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                <InputLabel id="room-select-label" shrink>Room</InputLabel>
-                <MuiSelect
-                  labelId="room-select-label"
-                  label="Room"
-                  value={permitData.room}
-                  onChange={(e) => handleInputChange('room', e.target.value)}
-                  displayEmpty
-                  MenuProps={menuProps}
-                  disabled={loadingRooms || !permitData.floor}
-                  size="small"
-                >
-                  <MenuItem value="">
-                    <em>
-                      {!permitData.floor
-                        ? 'Select Floor First'
-                        : loadingRooms
-                          ? 'Loading rooms...'
-                          : 'Select Room'
-                      }
-                    </em>
+              <SelectField
+                label="Room"
+                value={permitData.room}
+                onChange={(e) => handleInputChange('room', e.target.value)}
+                placeholder={!permitData.floor ? 'Select Floor First' : loadingRooms ? 'Loading rooms...' : 'Select Room'}
+                disabled={loadingRooms || !permitData.floor}
+              >
+                {rooms.map((room) => (
+                  <MenuItem key={room.id} value={room.id.toString()}>
+                    {room.name}
                   </MenuItem>
-                  {rooms.map((room) => (
-                    <MenuItem key={room.id} value={room.id.toString()}>
-                      {room.name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
+                ))}
+              </SelectField>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-3 text-gray-700">Client Specific</label>
-              <div className="flex gap-6">
+            <FormField label="Client Specific">
+              <div className="flex gap-6 pt-1">
                 <label className="flex items-center cursor-pointer">
                   <input
                     type="radio"
@@ -1564,9 +1559,9 @@ export const AddPermitPage = () => {
                     value="Internal"
                     checked={permitData.clientSpecific === 'Internal'}
                     onChange={(e) => handleInputChange('clientSpecific', e.target.value)}
-                    className="mr-2 w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                    className="mr-2 w-4 h-4 accent-[#DA7756] border-gray-300"
                   />
-                  <span className="text-sm text-gray-700">Internal</span>
+                  <span className="text-sm text-[#2C2C2C]">Internal</span>
                 </label>
                 <label className="flex items-center cursor-pointer">
                   <input
@@ -1575,161 +1570,121 @@ export const AddPermitPage = () => {
                     value="Client"
                     checked={permitData.clientSpecific === 'Client'}
                     onChange={(e) => handleInputChange('clientSpecific', e.target.value)}
-                    className="mr-2 w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                    className="mr-2 w-4 h-4 accent-[#DA7756] border-gray-300"
                   />
-                  <span className="text-sm text-gray-700">Client</span>
+                  <span className="text-sm text-[#2C2C2C]">Client</span>
                 </label>
               </div>
-            </div>
+            </FormField>
 
-            {/* Copy To Dropdown - Shows for Internal */}
             {permitData.clientSpecific === 'Internal' && (
-              <div>
-                <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                  <InputLabel shrink>Copy To</InputLabel>
-                  <MuiSelect
-                    multiple
-                    value={permitData.copyTo}
-                    onChange={(e) => handleMultiSelectChange('copyTo', e.target.value as string[])}
-                    label="Copy To"
-                    MenuProps={menuProps}
-                    size="small"
-                    disabled={loadingCopyToUsers}
-                    renderValue={(selected) => {
-                      if (selected.length === 0) {
-                        return loadingCopyToUsers ? 'Loading users...' : 'Select Copy To';
-                      }
-                      const selectedNames = copyToUsers
-                        .filter(option => selected.includes(option.id))
-                        .map(option => option.name);
-                      return selectedNames.join(', ');
-                    }}
-                  >
-                    {loadingCopyToUsers ? (
-                      <MenuItem disabled>
-                        <em>Loading users...</em>
-                      </MenuItem>
-                    ) : (
-                      copyToUsers.map((option) => (
-                        <MenuItem key={option.id} value={option.id}>
-                          <Checkbox checked={permitData.copyTo.includes(option.id)} />
-                          <ListItemText primary={option.name} />
-                        </MenuItem>
-                      ))
-                    )}
-                  </MuiSelect>
-                </FormControl>
-              </div>
+              <MultiSelectField
+                label="Copy To"
+                value={permitData.copyTo}
+                onChange={(e) => handleMultiSelectChange('copyTo', e.target.value as string[])}
+                disabled={loadingCopyToUsers}
+                placeholder={loadingCopyToUsers ? 'Loading users...' : 'Select Copy To'}
+                renderValue={(selected) => {
+                  if (selected.length === 0) return loadingCopyToUsers ? 'Loading users...' : 'Select Copy To';
+                  const selectedNames = copyToUsers.filter(option => selected.includes(option.id)).map(option => option.name);
+                  return selectedNames.join(', ');
+                }}
+              >
+                {loadingCopyToUsers ? (
+                  <MenuItem disabled>
+                    <em>Loading users...</em>
+                  </MenuItem>
+                ) : (
+                  copyToUsers.map((option) => (
+                    <MenuItem key={option.id} value={option.id}>
+                      <Checkbox checked={permitData.copyTo.includes(option.id)} sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }} />
+                      <ListItemText primary={option.name} />
+                    </MenuItem>
+                  ))
+                )}
+              </MultiSelectField>
             )}
 
-            {/* Copy To and List of Entity Dropdowns - Shows for Client */}
             {permitData.clientSpecific === 'Client' && (
               <div className="space-y-4">
-                <div>
-                  <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                    <InputLabel shrink>Copy To</InputLabel>
-                    <MuiSelect
-                      multiple
-                      value={permitData.copyTo}
-                      onChange={(e) => handleMultiSelectChange('copyTo', e.target.value as string[])}
-                      label="Copy To"
-                      MenuProps={menuProps}
-                      size="small"
-                      disabled={loadingCopyToUsers}
-                      renderValue={(selected) => {
-                        if (selected.length === 0) {
-                          return loadingCopyToUsers ? 'Loading users...' : 'Select Copy To';
-                        }
-                        const selectedNames = copyToUsers
-                          .filter(option => selected.includes(option.id))
-                          .map(option => option.name);
-                        return selectedNames.join(', ');
-                      }}
-                    >
-                      {loadingCopyToUsers ? (
-                        <MenuItem disabled>
-                          <em>Loading users...</em>
-                        </MenuItem>
-                      ) : (
-                        copyToUsers.map((option) => (
-                          <MenuItem key={option.id} value={option.id}>
-                            <Checkbox checked={permitData.copyTo.includes(option.id)} />
-                            <ListItemText primary={option.name} />
-                          </MenuItem>
-                        ))
-                      )}
-                    </MuiSelect>
-                  </FormControl>
-                </div>
+                <MultiSelectField
+                  label="Copy To"
+                  value={permitData.copyTo}
+                  onChange={(e) => handleMultiSelectChange('copyTo', e.target.value as string[])}
+                  disabled={loadingCopyToUsers}
+                  placeholder={loadingCopyToUsers ? 'Loading users...' : 'Select Copy To'}
+                  renderValue={(selected) => {
+                    if (selected.length === 0) return loadingCopyToUsers ? 'Loading users...' : 'Select Copy To';
+                    const selectedNames = copyToUsers.filter(option => selected.includes(option.id)).map(option => option.name);
+                    return selectedNames.join(', ');
+                  }}
+                >
+                  {loadingCopyToUsers ? (
+                    <MenuItem disabled>
+                      <em>Loading users...</em>
+                    </MenuItem>
+                  ) : (
+                    copyToUsers.map((option) => (
+                      <MenuItem key={option.id} value={option.id}>
+                        <Checkbox checked={permitData.copyTo.includes(option.id)} sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }} />
+                        <ListItemText primary={option.name} />
+                      </MenuItem>
+                    ))
+                  )}
+                </MultiSelectField>
 
-                <div>
-                  <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                    <InputLabel shrink>List of Entity</InputLabel>
-                    <MuiSelect
-                      multiple
-                      value={permitData.listOfEntity}
-                      onChange={(e) => handleMultiSelectChange('listOfEntity', e.target.value as string[])}
-                      label="List of Entity"
-                      MenuProps={menuProps}
-                      size="small"
-                      disabled={loadingEntityOptions}
-                      renderValue={(selected) => {
-                        if (selected.length === 0) {
-                          return loadingEntityOptions ? 'Loading entities...' : 'Select Entity';
-                        }
-                        const selectedNames = entityOptions
-                          .filter(option => selected.includes(option.id))
-                          .map(option => option.name);
-                        return selectedNames.join(', ');
-                      }}
-                    >
-                      {loadingEntityOptions ? (
-                        <MenuItem disabled>
-                          <em>Loading entities...</em>
-                        </MenuItem>
-                      ) : (
-                        entityOptions.map((option) => (
-                          <MenuItem key={option.id} value={option.id}>
-                            <Checkbox checked={permitData.listOfEntity.includes(option.id)} />
-                            <ListItemText primary={option.name} />
-                          </MenuItem>
-                        ))
-                      )}
-                    </MuiSelect>
-                  </FormControl>
-                </div>
+                <MultiSelectField
+                  label="List of Entity"
+                  value={permitData.listOfEntity}
+                  onChange={(e) => handleMultiSelectChange('listOfEntity', e.target.value as string[])}
+                  disabled={loadingEntityOptions}
+                  placeholder={loadingEntityOptions ? 'Loading entities...' : 'Select Entity'}
+                  renderValue={(selected) => {
+                    if (selected.length === 0) return loadingEntityOptions ? 'Loading entities...' : 'Select Entity';
+                    const selectedNames = entityOptions.filter(option => selected.includes(option.id)).map(option => option.name);
+                    return selectedNames.join(', ');
+                  }}
+                >
+                  {loadingEntityOptions ? (
+                    <MenuItem disabled>
+                      <em>Loading entities...</em>
+                    </MenuItem>
+                  ) : (
+                    entityOptions.map((option) => (
+                      <MenuItem key={option.id} value={option.id}>
+                        <Checkbox checked={permitData.listOfEntity.includes(option.id)} sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }} />
+                        <ListItemText primary={option.name} />
+                      </MenuItem>
+                    ))
+                  )}
+                </MultiSelectField>
               </div>
             )}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Permit Details */}
-      <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
-        <CardHeader className='bg-[#F6F4EE] mb-4'>
-          <CardTitle className="text-lg text-black flex items-center">
-            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
-            PERMIT DETAILS
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-6 bg-white">
-          <div className="space-y-8">
+        <Card className="rounded-[16px]">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-[14px] font-semibold text-[#DA7756] flex items-center gap-3">
+              <span className="w-10 h-10 rounded-full bg-[#F6F4EE] flex items-center justify-center"><ShieldCheck className="w-5 h-5" /></span>
+              Permit Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-7">
             <div>
-              <label className="block text-sm font-medium mb-3 text-gray-700">Select Permit Type    <span style={{ color: '#C72030', fontWeight: 600 }}>*</span>
+              <label className="block text-[12px] font-semibold mb-2 text-[#5C5C5C]">
+                Select Permit Type <span className="text-[#DA7756]">*</span>
               </label>
               {loadingPermitTypes ? (
-                <div className="flex items-center justify-center py-8 border border-gray-200 rounded-lg bg-gray-50">
-                  <div className="text-center text-gray-600">Loading permit types...</div>
+                <div className="flex items-center justify-center py-8 border border-[#E5E5E0] rounded-[12px] bg-[#F6F4EE]">
+                  <div className="text-center text-[#5C5C5C]">Loading permit types...</div>
                 </div>
               ) : permitTypes.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {permitTypes.map((permitType) => (
                     <div
                       key={permitType.id}
-                      className={`relative cursor-pointer rounded-lg border-2 p-4 transition-all duration-200 hover:shadow-md ${permitData.permitType === permitType.id.toString()
-                        ? 'border-[#C72030] bg-[#C72030]/5 shadow-md'
-                        : 'border-gray-200 bg-white hover:border-gray-300'
-                        }`}
+                      className={`relative cursor-pointer rounded-[12px] border p-4 transition-all duration-200 ${permitData.permitType === permitType.id.toString() ? 'border-[#DA7756] bg-[#DA7756]/10 shadow-sm' : 'border-[#E5E5E0] bg-white hover:border-[#C9C9C2]'}`}
                       onClick={() => handlePermitTypeChange(permitType.id.toString())}
                     >
                       <label className="flex items-center cursor-pointer w-full">
@@ -1739,45 +1694,44 @@ export const AddPermitPage = () => {
                           value={permitType.id.toString()}
                           checked={permitData.permitType === permitType.id.toString()}
                           onChange={(e) => handlePermitTypeChange(e.target.value)}
-                          className="mr-3 w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                          className="mr-3 w-4 h-4 accent-[#DA7756]"
                         />
-                        <span className={`text-sm font-medium ${permitData.permitType === permitType.id.toString()
-                          ? '#000000'
-                          : '#374151'
-                          }`}>
-                          {permitType.name}
-                        </span>
+                        <span className="text-sm font-medium text-[#2C2C2C]">{permitType.name}</span>
                       </label>
                       {permitData.permitType === permitType.id.toString() && (
                         <div className="absolute top-2 right-2">
-                          <div className="w-2 h-2 bg-[#C72030] rounded-full"></div>
+                          <div className="w-2 h-2 bg-[#DA7756] rounded-full"></div>
                         </div>
                       )}
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="flex items-center justify-center py-8 border border-gray-200 rounded-lg bg-gray-50">
-                  <div className="text-center text-gray-600">No permit types available</div>
+                <div className="flex items-center justify-center py-8 border border-[#E5E5E0] rounded-[12px] bg-[#F6F4EE]">
+                  <div className="text-center text-[#5C5C5C]">No permit types available</div>
                 </div>
               )}
             </div>
 
-            {/* Enter Permit Description */}
-            <div>
-              <label className="block text-sm font-medium mb-3 text-gray-700">Enter Permit Description <span style={{ color: '#C72030', fontWeight: 600 }}>*</span></label>
-            </div>
+            <FormField label="Permit Description" required>
+              <TextField
+                value={permitData.permitDescription}
+                onChange={(e) => handleInputChange('permitDescription', e.target.value)}
+                fullWidth
+                variant="outlined"
+                placeholder="Enter permit description"
+                sx={fieldStyles}
+              />
+            </FormField>
 
-            {/* Dynamic Activities */}
             {activities.map((activity, index) => (
-              <div key={index} className="space-y-6 p-6 border border-gray-200 rounded-lg bg-gray-50">
-                {/* Header with remove button */}
-                <div className="flex justify-between items-center mb-4">
-                  <h4 className="text-sm font-medium text-gray-700">Activity {index + 1}</h4>
+              <div key={index} className="space-y-6 p-5 border border-[#E5E5E0] rounded-[12px] bg-white">
+                <div className="flex justify-between items-center">
+                  <h4 className="text-[12px] font-semibold text-[#5C5C5C]">Activity {index + 1}</h4>
                   {activities.length > 1 && (
                     <button
                       onClick={() => handleRemoveActivity(index)}
-                      className="text-red-500 hover:text-red-700 w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 transition-colors"
+                      className="text-[#DA7756] hover:text-[#C86D4D] w-8 h-8 flex items-center justify-center rounded-full hover:bg-white transition-colors"
                       title="Remove Activity"
                     >
                       ✕
@@ -1785,32 +1739,10 @@ export const AddPermitPage = () => {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                  <FormControl fullWidth variant="outlined">
-                    {/* <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Activity*</InputLabel> */}
-                    <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>
-                      Activity
-                      <span style={{ color: '#C72030', fontWeight: 600 }}>*</span>
-                    </InputLabel>
-                    <MuiSelect
-                      label="Activity*"
-                      value={activity.activity}
-                      onChange={(e) => handleActivityChangeWithAPI(index, 'activity', e.target.value)}
-                      displayEmpty
-                      sx={fieldStyles}
-                      MenuProps={menuProps}
-                      disabled={loadingPermitActivities || !permitData.permitType}
-                    >
-                      <MenuItem value="">
-                        {/* <em>
-                          {!permitData.permitType
-                            ? 'Select Permit Type First'
-                            : loadingPermitActivities
-                              ? 'Loading activities...'
-                              : 'Select Activity'
-                          }
-                        </em> */}
-                      </MenuItem>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  <FormControl fullWidth variant="outlined" disabled={loadingPermitActivities || !permitData.permitType}>
+                    <MuiSelect value={activity.activity} onChange={(e) => handleActivityChangeWithAPI(index, 'activity', e.target.value)} displayEmpty sx={{ ...fieldStyles, backgroundColor: '#fff' }} MenuProps={menuProps}>
+                      <MenuItem value=""><em>{!permitData.permitType ? 'Select Permit Type First' : loadingPermitActivities ? 'Loading activities...' : 'Select Activity'}</em></MenuItem>
                       {permitActivities.map((permitActivity) => (
                         <MenuItem key={permitActivity.id} value={permitActivity.id.toString()}>
                           {permitActivity.name}
@@ -1819,21 +1751,9 @@ export const AddPermitPage = () => {
                     </MuiSelect>
                   </FormControl>
 
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>
-                      Sub Activity
-                      <span style={{ color: '#C72030', fontWeight: 600 }}>*</span>
-                    </InputLabel>
-                    <MuiSelect
-                      label="Sub Activity*"
-                      value={activity.subActivity}
-                      onChange={(e) => handleActivityChangeWithAPI(index, 'subActivity', e.target.value)}
-                      displayEmpty
-                      sx={fieldStyles}
-                      MenuProps={menuProps}
-                      disabled={activity.loadingSubActivities || !activity.activity}
-                    >
-                      <MenuItem value=""></MenuItem>
+                  <FormControl fullWidth variant="outlined" disabled={activity.loadingSubActivities || !activity.activity}>
+                    <MuiSelect value={activity.subActivity} onChange={(e) => handleActivityChangeWithAPI(index, 'subActivity', e.target.value)} displayEmpty sx={{ ...fieldStyles, backgroundColor: '#fff' }} MenuProps={menuProps}>
+                      <MenuItem value=""><em>{!activity.activity ? 'Select Activity First' : activity.loadingSubActivities ? 'Loading sub activities...' : 'Select Sub Activity'}</em></MenuItem>
                       {activity.subActivities.map((item) => (
                         <MenuItem key={item.id} value={item.id.toString()}>
                           {item.name}
@@ -1842,22 +1762,9 @@ export const AddPermitPage = () => {
                     </MuiSelect>
                   </FormControl>
 
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>
-                      Category of Hazards
-                      <span style={{ color: '#C72030', fontWeight: 600 }}>*</span>
-                    </InputLabel>
-
-                    <MuiSelect
-                      label="Category of Hazards*"
-                      value={activity.categoryOfHazards}
-                      onChange={(e) => handleActivityChangeWithAPI(index, 'categoryOfHazards', e.target.value)}
-                      displayEmpty
-                      sx={fieldStyles}
-                      MenuProps={menuProps}
-                      disabled={activity.loadingHazardCategories || !activity.subActivity}
-                    >
-                      <MenuItem value=""></MenuItem>
+                  <FormControl fullWidth variant="outlined" disabled={activity.loadingHazardCategories || !activity.subActivity}>
+                    <MuiSelect value={activity.categoryOfHazards} onChange={(e) => handleActivityChangeWithAPI(index, 'categoryOfHazards', e.target.value)} displayEmpty sx={{ ...fieldStyles, backgroundColor: '#fff' }} MenuProps={menuProps}>
+                      <MenuItem value=""><em>{!activity.subActivity ? 'Select Sub Activity First' : activity.loadingHazardCategories ? 'Loading hazard categories...' : 'Select Category of Hazards'}</em></MenuItem>
                       {activity.hazardCategories.map((item) => (
                         <MenuItem key={item.id} value={item.id.toString()}>
                           {item.name}
@@ -1867,19 +1774,17 @@ export const AddPermitPage = () => {
                   </FormControl>
                 </div>
 
-                {/* Risks Section */}
                 {activity.categoryOfHazards && (
-                  <div className="mt-6">
-                    <h5 className="text-sm font-medium text-gray-700 mb-3">
-                      Risks
-                      <span style={{ color: '#C72030', fontWeight: 600 }}>*</span>
+                  <div className="mt-2">
+                    <h5 className="text-[12px] font-semibold text-[#5C5C5C] mb-3">
+                      Risks <span className="text-[#DA7756]">*</span>
                     </h5>
                     {activity.loadingRisks ? (
-                      <div className="flex items-center justify-center py-4 border border-gray-200 rounded-lg bg-gray-50">
-                        <div className="text-center text-gray-600">Loading risks...</div>
+                      <div className="flex items-center justify-center py-4 border border-[#E5E5E0] rounded-[12px] bg-white">
+                        <div className="text-center text-[#5C5C5C]">Loading risks...</div>
                       </div>
                     ) : activity.risks.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 border border-gray-200 rounded-lg bg-white">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 border border-[#E5E5E0] rounded-[12px] bg-white">
                         {activity.risks.map((risk) => (
                           <FormControlLabel
                             key={risk.id}
@@ -1887,168 +1792,107 @@ export const AddPermitPage = () => {
                               <Checkbox
                                 checked={activity.selectedRisks.includes(risk.id.toString())}
                                 onChange={(e) => handleRiskChange(index, risk.id.toString(), e.target.checked)}
-                                sx={{
-                                  color: '#6b7280',
-                                  '&.Mui-checked': { color: '#C72030' },
-                                }}
+                                sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
                               />
                             }
-                            label={<span className="text-sm text-gray-700">{risk.name}</span>}
+                            label={<span className="text-sm text-[#2C2C2C]">{risk.name}</span>}
                           />
                         ))}
                       </div>
                     ) : (
-                      <div className="flex items-center justify-center py-4 border border-gray-200 rounded-lg bg-gray-50">
-                        <div className="text-center text-gray-600">No risks available for this hazard category</div>
+                      <div className="flex items-center justify-center py-4 border border-[#E5E5E0] rounded-[12px] bg-white">
+                        <div className="text-center text-[#5C5C5C]">No risks available for this hazard category</div>
                       </div>
                     )}
                   </div>
                 )}
-
-                {/* <TextField
-                  label="Risks*"
-                  value={permitData.risks}
-                  onChange={(e) => handleInputChange('risks', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  multiline
-
-                  sx={fieldStyles}
-                /> */}
               </div>
             ))}
 
             <Button
               onClick={handleAddActivity}
-              className="bg-[#C72030] hover:bg-[#A61B28] text-white px-6 py-2 rounded-lg font-medium"
+              className="bg-[#F6F4EE] !text-black border border-[#E5E5E0] hover:bg-[#EEE8DF] rounded-[12px] px-4 py-2 font-medium"
             >
-              + Add Activity
+              Add Activity
             </Button>
 
-            <FormControl fullWidth variant="outlined">
-              {/* <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Vendor</InputLabel> */}
-              <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>
-                Vendor
-                <span style={{ color: '#C72030', fontWeight: 600 }}>*</span>
-              </InputLabel>
-
-              <MuiSelect
-                label="Vendor"
-                value={permitData.vendor}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setPermitData(prev => ({ ...prev, vendor: val, supplierUser: '' }));
-                  setSupplierUsers([]);
-                  fetchSupplierUsers(val);
-                }}
-                displayEmpty
-                sx={fieldStyles}
-                MenuProps={menuProps}
-                disabled={loadingSuppliers}
-              >
-                <MenuItem value="">
+            <SelectField
+              label="Vendor"
+              required
+              value={permitData.vendor}
+              onChange={(e) => {
+                const val = e.target.value;
+                setPermitData(prev => ({ ...prev, vendor: val, supplierUser: '' }));
+                setSupplierUsers([]);
+                fetchSupplierUsers(val);
+              }}
+              placeholder={loadingSuppliers ? 'Loading vendors...' : 'Select Vendor'}
+              disabled={loadingSuppliers}
+            >
+              {suppliers.map((supplier) => (
+                <MenuItem key={supplier.id} value={supplier.id}>
+                  {supplier.name}
                 </MenuItem>
-                {suppliers.map((supplier) => (
-                  <MenuItem key={supplier.id} value={supplier.id}>
-                    {supplier.name}
-                  </MenuItem>
-                ))}
-              </MuiSelect>
-            </FormControl>
+              ))}
+            </SelectField>
 
             {permitData.vendor && (
-              <FormControl fullWidth variant="outlined">
-                <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>
-                  Supplier User
-                </InputLabel>
-                <MuiSelect
-                  label="Supplier User"
-                  value={permitData.supplierUser}
-                  onChange={(e) => handleInputChange('supplierUser', e.target.value)}
-                  displayEmpty
-                  sx={fieldStyles}
-                  MenuProps={menuProps}
-                  disabled={loadingSupplierUsers}
-                >
-                  <MenuItem value="">
-                    <em>{loadingSupplierUsers ? 'Loading users...' : 'Select User'}</em>
+              <SelectField
+                label="Supplier User"
+                value={permitData.supplierUser}
+                onChange={(e) => handleInputChange('supplierUser', e.target.value)}
+                placeholder={loadingSupplierUsers ? 'Loading users...' : 'Select User'}
+                disabled={loadingSupplierUsers}
+              >
+                {supplierUsers.map((user) => (
+                  <MenuItem key={user.id} value={user.id.toString()}>
+                    {`${user.firstname} ${user.lastname}`.trim()}
                   </MenuItem>
-                  {supplierUsers.map((user) => (
-                    <MenuItem key={user.id} value={user.id.toString()}>
-                      {`${user.firstname} ${user.lastname}`.trim()}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
+                ))}
+              </SelectField>
             )}
 
-            {/* <TextField
-              label="Comment (Optional)"
-              value={permitData.comment}
-              onChange={(e) => handleInputChange('comment', e.target.value)}
-              fullWidth
-              variant="outlined"
-              multiline
+            <FormField label="Comment (Optional)">
+              <TextField
+                value={permitData.comment}
+                onChange={(e) => handleInputChange('comment', e.target.value)}
+                fullWidth
+                variant="outlined"
+                multiline
+                minRows={3}
+                placeholder="Add comment"
+                sx={{
+                  width: '100%',
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '12px',
+                    backgroundColor: '#fff',
+                    '& fieldset': {
+                      borderColor: '#E5E5E0',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#C9C9C2',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#DA7756',
+                    },
+                  },
+                  '& .MuiInputBase-input': {
+                    padding: '12px 14px',
+                  },
+                }}
+              />
+            </FormField>
+          </CardContent>
+        </Card>
 
-              sx={fieldStyles}
-            /> */}
-            {/* <TextField
-              label="Comment (Optional)"
-              value={permitData.comment}
-              onChange={(e) => handleInputChange('comment', e.target.value)}
-              fullWidth
-              variant="outlined"
-              multiline
-              sx={{ ...fieldStyles, width: "100%", mb: 1 }}
-            /> */}
-            <TextField
-              label="Comment (Optional)"
-              value={permitData.comment}
-              onChange={(e) => handleInputChange('comment', e.target.value)}
-              fullWidth
-              variant="outlined"
-              multiline
-              minRows={3}
-              sx={{
-                width: '100%',
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '8px',
-                  backgroundColor: 'white',
-                  '& fieldset': {
-                    borderColor: '#e5e7eb',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: '#9ca3af',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#C72030',
-                  },
-                },
-                '& .MuiInputLabel-root': {
-                  color: '#6b7280',
-                  '&.Mui-focused': {
-                    color: '#C72030',
-                  },
-                },
-                '& .MuiInputBase-input': {
-                  padding: '12px',
-                },
-              }}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Attachments */}
-      <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
-        <CardHeader className='bg-[#F6F4EE] mb-4'>
-          <CardTitle className="text-lg text-black flex items-center">
-            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">4</span>
-            ATTACHMENTS
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-6 bg-white">
-          <div className="space-y-4">
+        <Card className="rounded-[16px]">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-[14px] font-semibold text-[#DA7756] flex items-center gap-3">
+              <span className="w-10 h-10 rounded-full bg-[#F6F4EE] flex items-center justify-center"><Paperclip className="w-5 h-5" /></span>
+              Attachments
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div>
               <input
                 type="file"
@@ -2059,28 +1903,27 @@ export const AddPermitPage = () => {
               />
               <label
                 htmlFor="file-upload"
-                className="inline-flex items-center px-6 py-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors font-medium text-gray-700"
+                className="inline-flex items-center gap-2 px-4 py-2 border border-[#E5E5E0] bg-[#F6F4EE] rounded-[12px] cursor-pointer hover:bg-[#EEE8DF] transition-colors font-medium text-[#2C2C2C]"
               >
+                <Upload className="w-4 h-4" />
                 Choose Files
               </label>
-              <span className="ml-4 text-sm text-gray-500">
+              <span className="ml-4 text-sm text-[#5C5C5C]">
                 {permitData.attachments ? permitData.attachments.name : 'No file chosen'}
               </span>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Submit Button */}
-      <div className="flex gap-4 justify-center">
-        <Button
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-          style={{ backgroundColor: isSubmitting ? '#9ca3af' : '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90 flex items-center px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSubmitting ? 'Creating Permit...' : 'Raise a Request'}
-        </Button>
+        <div className="flex justify-end pt-2">
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="bg-brand hover:bg-brand-hover text-white px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-[12px]"
+          >
+            {isSubmitting ? 'Creating Permit...' : 'Raise a Request'}
+          </Button>
+        </div>
       </div>
     </div>
   );

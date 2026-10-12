@@ -43,7 +43,7 @@ export const CustomerBillsFilterDialog: React.FC<CustomerBillsFilterDialogProps>
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-[8px] sm:rounded-[8px]">
+      <DialogContent className="sm:max-w-md rounded-2xl sm:rounded-2xl">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <DialogTitle className="text-lg font-semibold">Filter</DialogTitle>
           <Button

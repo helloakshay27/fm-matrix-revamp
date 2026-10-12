@@ -1812,18 +1812,18 @@ export const IncidentNewDetails = () => {
     // Closed Incident Summary View with Numbered Sections
     const ClosedIncidentSummaryView = () => {
         const SectionBadge = ({ number }: { number: number }) => (
-            <div className="flex items-center justify-center w-8 h-8 bg-[#BF213E] text-white rounded-full text-xs font-bold">
+            <div className="flex items-center justify-center w-8 h-8 bg-brand text-white rounded-full text-xs font-bold">
                 {number}
             </div>
         );
 
         return (
-            <div className="p-4 space-y-6 overflow-y-auto flex-1 bg-gray-50">
+            <div className="p-4 space-y-6 overflow-y-auto flex-1 bg-[#FDFDFB]">
                 {/* Section 1: Report Details */}
                 <div className="bg-white rounded-md shadow-sm">
                     <div className="flex items-center gap-3 p-4 border-b border-gray-200">
                         <SectionBadge number={1} />
-                        <h3 className="text-base font-semibold text-[#BF213E] uppercase">Report Details</h3>
+                        <h3 className="text-base font-semibold text-brand uppercase">Report Details</h3>
                     </div>
                     <div className="p-6">
                         <div className="grid grid-cols-2 gap-6 mb-6">
@@ -1886,7 +1886,7 @@ export const IncidentNewDetails = () => {
                 <div className="bg-white rounded-md shadow-sm">
                     <div className="flex items-center gap-3 p-4 border-b border-gray-200">
                         <SectionBadge number={2} />
-                        <h3 className="text-base font-semibold text-[#BF213E] uppercase">Incident Category</h3>
+                        <h3 className="text-base font-semibold text-brand uppercase">Incident Category</h3>
                     </div>
                     <div className="p-6 space-y-6">
                         {/* Primary Category */}
@@ -1937,7 +1937,7 @@ export const IncidentNewDetails = () => {
                     <div className="bg-white rounded-md shadow-sm">
                         <div className="flex items-center gap-3 p-4 border-b border-gray-200">
                             <SectionBadge number={3} />
-                            <h3 className="text-base font-semibold text-[#BF213E] uppercase">Investigation</h3>
+                            <h3 className="text-base font-semibold text-brand uppercase">Investigation</h3>
                         </div>
 
                         <div className="p-6 space-y-8">
@@ -2050,7 +2050,7 @@ export const IncidentNewDetails = () => {
                     <div className="bg-white rounded-md shadow-sm">
                         <div className="flex items-center gap-3 p-4 border-b border-gray-200">
                             <SectionBadge number={4} />
-                            <h3 className="text-base font-semibold text-[#BF213E] uppercase">Impact Assessment</h3>
+                            <h3 className="text-base font-semibold text-brand uppercase">Impact Assessment</h3>
                         </div>
                         <div className="p-6 space-y-6">
                             {/* Injuries */}
@@ -2122,7 +2122,7 @@ export const IncidentNewDetails = () => {
                     <div className="bg-white rounded-md shadow-sm">
                         <div className="flex items-center gap-3 p-4 border-b border-gray-200">
                             <SectionBadge number={5} />
-                            <h3 className="text-base font-semibold text-[#BF213E] uppercase">Actions & Follow-up</h3>
+                            <h3 className="text-base font-semibold text-brand uppercase">Actions & Follow-up</h3>
                         </div>
                         <div className="p-6 space-y-6">
                             {/* Corrective Actions */}
@@ -2187,7 +2187,7 @@ export const IncidentNewDetails = () => {
                     <div className="bg-white rounded-md shadow-sm">
                         <div className="flex items-center gap-3 p-4 border-b border-gray-200">
                             <SectionBadge number={6} />
-                            <h3 className="text-base font-semibold text-[#BF213E] uppercase">Next Review</h3>
+                            <h3 className="text-base font-semibold text-brand uppercase">Next Review</h3>
                         </div>
                         <div className="p-6">
                             <div className="grid grid-cols-2 gap-6">
@@ -2217,16 +2217,16 @@ export const IncidentNewDetails = () => {
     };
 
     const ProgressStepper = () => (
-        <div className="flex items-center justify-center px-6 py-4 bg-white border-b">
+        <div className="flex items-center justify-center px-6 py-4 bg-[#FAF9F7] border-b border-[#E7E1D4]">
             {steps.map((step, index) => (
                 <React.Fragment key={step.number}>
                     <div className="flex flex-col items-center min-w-[60px]">
                         <div
                             className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all ${step.number < currentStep
-                                ? 'bg-[#BF213E] text-white border-2 border-[#BF213E]'
+                                ? 'bg-brand text-white border-2 border-brand'
                                 : step.number === currentStep
-                                    ? 'bg-white text-[#BF213E] border-2 border-dashed border-[#BF213E]'
-                                    : 'bg-white text-gray-400 border-2 border-gray-300'
+                                    ? 'bg-[#FFF5F1] text-brand border-2 border-dashed border-brand'
+                                    : 'bg-white text-gray-400 border-2 border-[#DAD5CF]'
                                 }`}
                         >
                             {step.number}
@@ -2238,8 +2238,8 @@ export const IncidentNewDetails = () => {
                     </div>
                     {index < steps.length - 1 && (
                         <div className={`flex-1 h-0.5 mx-1 mb-5 ${step.number < currentStep
-                            ? 'bg-[#BF213E]'
-                            : 'bg-transparent border-t-2 border-dashed border-gray-300'
+                            ? 'bg-brand'
+                            : 'bg-transparent border-t-2 border-dashed border-[#DAD5CF]'
                             }`} />
                     )}
                 </React.Fragment>
@@ -2248,13 +2248,13 @@ export const IncidentNewDetails = () => {
     );
 
     return (
-        <div className="flex flex-col h-screen bg-gray-100">
+        <div className="flex flex-col h-screen bg-[#FDFDFB]">
             {/* Status Update Modal */}
             {showStatusModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden max-h-[90vh] flex flex-col">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden max-h-[90vh] flex flex-col border border-[#E7E1D4]">
                         {/* Modal Header */}
-                        <div className="flex items-center justify-between px-5 py-4 border-b shrink-0">
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-[#E7E1D4] shrink-0">
                             <h2 className="text-base font-bold text-gray-900">Update Status</h2>
                             <button
                                 onClick={closeStatusModal}
@@ -2268,11 +2268,11 @@ export const IncidentNewDetails = () => {
                         <div className="p-5 space-y-4 overflow-y-auto">
                             {/* Status Select */}
                             <div className="space-y-1.5">
-                                <label className="text-sm font-semibold text-gray-800">Status <span className="text-[#BF213E]">*</span></label>
+                                <label className="text-sm font-semibold text-gray-800">Status <span className="text-brand">*</span></label>
                                 <select
                                     value={statusUpdateValue}
                                     onChange={(e) => setStatusUpdateValue(e.target.value)}
-                                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#BF213E] focus:border-transparent"
+                                    className="w-full border border-[#D0D5DD] rounded-lg px-3 py-2 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#DA7756] focus:border-transparent"
                                 >
                                     <option value="">Select Status</option>
                                     <option value="under_investigation">Under Investigation</option>
@@ -2286,35 +2286,35 @@ export const IncidentNewDetails = () => {
                             {statusUpdateValue === 'closed' && (
                                 <>
                                     <div className="space-y-1.5">
-                                        <label className="text-sm font-semibold text-gray-800">RCA <span className="text-[#BF213E]">*</span></label>
+                                        <label className="text-sm font-semibold text-gray-800">RCA <span className="text-brand">*</span></label>
                                         <textarea
                                             value={statusRca}
                                             onChange={(e) => setStatusRca(e.target.value)}
                                             placeholder="Enter root cause analysis..."
                                             rows={2}
-                                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-800 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-[#BF213E] focus:border-transparent"
+                                            className="w-full border border-[#D0D5DD] rounded-lg px-3 py-2 text-sm text-gray-800 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-[#DA7756] focus:border-transparent"
                                         />
                                     </div>
 
                                     <div className="space-y-1.5">
-                                        <label className="text-sm font-semibold text-gray-800">Corrective Action <span className="text-[#BF213E]">*</span></label>
+                                        <label className="text-sm font-semibold text-gray-800">Corrective Action <span className="text-brand">*</span></label>
                                         <textarea
                                             value={statusCorrectiveAction}
                                             onChange={(e) => setStatusCorrectiveAction(e.target.value)}
                                             placeholder="Enter corrective action taken..."
                                             rows={2}
-                                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-800 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-[#BF213E] focus:border-transparent"
+                                            className="w-full border border-[#D0D5DD] rounded-lg px-3 py-2 text-sm text-gray-800 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-[#DA7756] focus:border-transparent"
                                         />
                                     </div>
 
                                     <div className="space-y-1.5">
-                                        <label className="text-sm font-semibold text-gray-800">Preventive Action <span className="text-[#BF213E]">*</span></label>
+                                        <label className="text-sm font-semibold text-gray-800">Preventive Action <span className="text-brand">*</span></label>
                                         <textarea
                                             value={statusPreventiveAction}
                                             onChange={(e) => setStatusPreventiveAction(e.target.value)}
                                             placeholder="Enter preventive action to avoid recurrence..."
                                             rows={2}
-                                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-800 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-[#BF213E] focus:border-transparent"
+                                            className="w-full border border-[#D0D5DD] rounded-lg px-3 py-2 text-sm text-gray-800 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-[#DA7756] focus:border-transparent"
                                         />
                                     </div>
                                 </>
@@ -2322,13 +2322,13 @@ export const IncidentNewDetails = () => {
 
                             {/* Comment */}
                             <div className="space-y-1.5">
-                                <label className="text-sm font-semibold text-gray-800">Comment <span className="text-[#BF213E]">*</span></label>
+                                <label className="text-sm font-semibold text-gray-800">Comment <span className="text-brand">*</span></label>
                                 <textarea
                                     value={statusComment}
                                     onChange={(e) => setStatusComment(e.target.value)}
                                     placeholder="Add a comment..."
                                     rows={3}
-                                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-800 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-[#BF213E] focus:border-transparent"
+                                    className="w-full border border-[#D0D5DD] rounded-lg px-3 py-2 text-sm text-gray-800 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-[#DA7756] focus:border-transparent"
                                 />
                             </div>
                         </div>
@@ -2344,7 +2344,7 @@ export const IncidentNewDetails = () => {
                             <button
                                 onClick={handleStatusUpdate}
                                 disabled={statusUpdateLoading}
-                                className="flex-1 bg-[#BF213E] text-white text-sm font-semibold py-2 rounded-md hover:bg-[#9d1a32] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                className="flex-1 bg-brand text-white text-sm font-semibold py-2 rounded-lg hover:bg-brand-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                             >
                                 {statusUpdateLoading ? 'Updating...' : 'Update Status'}
                             </button>
@@ -2354,12 +2354,15 @@ export const IncidentNewDetails = () => {
             )}
 
             {/* Header */}
-            <div className="flex items-center justify-between gap-3 px-4 py-3 border-b bg-white">
+            <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-[#E7E1D4] bg-white">
                 <div className="flex items-center gap-3">
-                    <button onClick={handleBack}>
-                        <ChevronLeft className="w-6 h-6" />
+                    <button
+                        onClick={handleBack}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E7E1D4] bg-white text-[#2D2D2D] transition-colors hover:bg-[#F8F6F3]"
+                    >
+                        <ChevronLeft className="w-5 h-5" />
                     </button>
-                    <h1 className="text-lg font-semibold">Incident Details</h1>
+                    <h1 className="text-lg font-semibold text-[#2D2D2D]">Incident Details</h1>
                 </div>
 
                 {/* Buttons wrapper */}
@@ -2369,7 +2372,7 @@ export const IncidentNewDetails = () => {
                         size="sm"
                         onClick={handleDownloadIncidentReport}
                         disabled={reportDownloadLoading}
-                        className="flex items-center gap-2 border-[#BF213E] text-[#BF213E] hover:bg-[#F5E6D3]"
+                        className="flex items-center gap-2 border-brand text-brand hover:bg-[#FFF3EE]"
                     >
                         <Download className="w-4 h-4" />
                         {reportDownloadLoading ? 'Downloading...' : 'Incident Report'}
@@ -2383,7 +2386,7 @@ export const IncidentNewDetails = () => {
                                 incidentEvents.onIncidentEditOpened();
                                 navigate(`/safety/incident/edit/${id}`);
                             }}
-                            className="flex items-center gap-2 border-[#BF213E] text-[#BF213E] hover:bg-[#F5E6D3]"
+                            className="flex items-center gap-2 border-brand text-brand hover:bg-[#FFF3EE]"
                         >
                             <Pencil className="w-4 h-4" />
                             Edit
@@ -2396,7 +2399,7 @@ export const IncidentNewDetails = () => {
                             incidentEvents.onIncidentStatusUpdateOpened(incident?.current_status ?? null);
                             setShowStatusModal(true);
                         }}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 bg-brand text-white hover:bg-brand-hover"
                     >
                         Update Status
                     </Button>
@@ -2520,16 +2523,16 @@ export const IncidentNewDetails = () => {
                     {/* Footer Buttons */}
                     <div className="border-t bg-white px-6 py-4">
                         {currentStep === 1 && (
-                            <div className="flex gap-3 max-w-xl mx-auto">
+                            <div className="flex flex-col sm:flex-row sm:justify-end gap-4">
                                 <Button
                                     variant="outline"
-                                    className="flex-1 border-gray-400 text-gray-700 hover:bg-gray-50"
+                                    className="fm-button-fix px-6 sm:px-8 py-2 rounded-md text-sm sm:text-base"
                                     onClick={handleSaveAsDraft}
                                 >
                                     Save as draft
                                 </Button>
                                 <Button
-                                    className="flex-1"
+                                    className="fm-button-fix fm-button-brand px-6 sm:px-8 py-2 rounded-md text-sm sm:text-base"
                                     onClick={handleNext}
                                 >
                                     Next
@@ -2538,16 +2541,16 @@ export const IncidentNewDetails = () => {
                         )}
 
                         {currentStep === 2 && (
-                            <div className="flex gap-3 max-w-xl mx-auto">
+                            <div className="flex flex-col sm:flex-row sm:justify-end gap-4">
                                 <Button
                                     variant="outline"
-                                    className="flex-1 border-gray-400 text-gray-700 hover:bg-gray-50"
+                                    className="fm-button-fix px-6 sm:px-8 py-2 rounded-md text-sm sm:text-base"
                                     onClick={handleSaveAsDraft}
                                 >
                                     Save as draft
                                 </Button>
                                 <Button
-                                    className="flex-1 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                                    className="fm-button-fix fm-button-brand px-6 sm:px-8 py-2 rounded-md text-sm sm:text-base"
                                     onClick={handleSubmit}
                                 >
                                     Submit
@@ -2556,16 +2559,16 @@ export const IncidentNewDetails = () => {
                         )}
 
                         {currentStep === 3 && (
-                            <div className="flex gap-3 max-w-xl mx-auto">
+                            <div className="flex flex-col sm:flex-row sm:justify-end gap-4">
                                 <Button
                                     variant="outline"
-                                    className="flex-1 border-gray-400 text-gray-700 hover:bg-gray-50"
+                                    className="fm-button-fix px-6 sm:px-8 py-2 rounded-md text-sm sm:text-base"
                                     onClick={handleSaveAsDraft}
                                 >
                                     Save as draft
                                 </Button>
                                 <Button
-                                    className="flex-1 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                                    className="fm-button-fix fm-button-brand px-6 sm:px-8 py-2 rounded-md text-sm sm:text-base"
                                     onClick={handleSubmit}
                                 >
                                     Submit
@@ -2574,16 +2577,16 @@ export const IncidentNewDetails = () => {
                         )}
 
                         {currentStep === 4 && (
-                            <div className="flex gap-3 max-w-xl mx-auto">
+                            <div className="flex flex-col sm:flex-row sm:justify-end gap-4">
                                 <Button
                                     variant="outline"
-                                    className="flex-1 border-gray-400 text-gray-700 hover:bg-gray-50"
+                                    className="fm-button-fix px-6 sm:px-8 py-2 rounded-md text-sm sm:text-base"
                                     onClick={handleSaveAsDraft}
                                 >
                                     Save as draft
                                 </Button>
                                 <Button
-                                    className="flex-1 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                                    className="fm-button-fix fm-button-brand px-6 sm:px-8 py-2 rounded-md text-sm sm:text-base"
                                     onClick={handleSubmit}
                                 >
                                     Submit

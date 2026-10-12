@@ -1490,7 +1490,7 @@ export const ServicePRDetailsPage = () => {
         )}
 
         <Dialog
-      PaperProps={{ sx: { borderRadius: "8px" } }}
+      PaperProps={{ sx: { borderRadius: "16px" } }}
           open={openRejectDialog}
           onClose={() => setOpenRejectDialog(false)}
           maxWidth="sm"
@@ -1548,7 +1548,7 @@ export const ServicePRDetailsPage = () => {
         </Dialog>
 
         <Dialog
-      PaperProps={{ sx: { borderRadius: "8px" } }}
+      PaperProps={{ sx: { borderRadius: "16px" } }}
           open={showEditWbsModal}
           onClose={() => setShowEditWbsModal(false)}
           maxWidth="sm"
@@ -1656,7 +1656,7 @@ export const ServicePRDetailsPage = () => {
         </Dialog>
 
         <Dialog
-      PaperProps={{ sx: { borderRadius: "8px" } }}
+      PaperProps={{ sx: { borderRadius: "16px" } }}
           open={openDeletionModal}
           onClose={() => setOpenDeletionModal(false)}
           aria-labelledby="alert-dialog-title"
