@@ -698,7 +698,7 @@ export const RosterDetailPage: React.FC = () => {
           <Edit className="w-4 h-4 mr-2" />
           Edit Template
         </Button>
-        <Button onClick={() => navigate('/roster')} variant="outline" className="px-8">
+        <Button onClick={() => navigate('/roster')} variant="outline" className="px-8 rounded-lg border border-[rgba(26,26,24,0.15)] text-[#1a1a18] bg-white hover:bg-[#f7f6f2]">
           Back to Roster List
         </Button>
       </div>
