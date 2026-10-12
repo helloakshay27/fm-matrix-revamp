@@ -5223,6 +5223,15 @@ function App() {
                           />
 
                           <Route
+                            path="/PATM-posthog"
+                            element={
+                              <ProtectedRoute>
+                                <PATMAnalyticsDashboard />
+                              </ProtectedRoute>
+                            }
+                          />
+
+                          <Route
                             path="/PATM-dashboard"
                             element={
                               <ProtectedRoute>

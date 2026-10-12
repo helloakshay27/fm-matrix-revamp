@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import './PATMAnalyticsDashboard.css';
+import { RecentActivitySidebar } from './RecentActivitySidebar';
 import {
   usePatmTrafficSession,
   usePatmUsageAndDistribution,
@@ -1610,6 +1611,7 @@ export default function PATMAnalyticsDashboard() {
               ))}
             </div>
           </nav>
+          <RecentActivitySidebar from={apiFrom} to={apiTo} />
         </aside>
 
         {/* MAIN */}
