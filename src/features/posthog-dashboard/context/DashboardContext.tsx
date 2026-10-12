@@ -31,7 +31,7 @@ import {
   type Site,
   type SiteGroup,
 } from "../data/constants";
-import type { DateRange, Device, Tier } from "../data/constants";
+import type { CustomDateRange, DateRange, Device, Tier } from "../data/constants";
 import type { DeviceType } from "../api/adoptionApi";
 import { getToken, saveToken } from '@/utils/auth';
 import {
@@ -92,6 +92,7 @@ export interface ViewModel {
   /** `generated_at` of the Layer-1 response — the freshness stamp shown in the header. */
   generatedAt: string | null;
   range: { from: string; to: string };
+  dateLabel: string;
   filters: QueryFilters;
   filtersSettled: boolean;
 }
@@ -109,6 +110,7 @@ interface DashboardContextValue {
   setTier: (tier: Tier) => void;
   setScope: (scope: string) => void;
   setDate: (date: DateRange) => void;
+  setCustomDateRange: (range: CustomDateRange) => void;
   setToken: (token: string) => void;
   setDev: (dev: Device) => void;
   setModule: (module: string) => void;
@@ -170,7 +172,22 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     });
   }, [sites, groups]);
 
-  const { from, to } = useMemo(() => dateRangeFor(state.date), [state.date]);
+  const { from, to } = useMemo(
+    () => state.customDateRange ?? dateRangeFor(state.date),
+    [state.customDateRange, state.date]
+  );
+  const dateLabel = useMemo(() => {
+    if (!state.customDateRange) return `Last ${state.date} days`;
+    const format = (value: string) => {
+      const [year, month, day] = value.split('-').map(Number);
+      return new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }).format(new Date(year, month - 1, day));
+    };
+    return `${format(from)} – ${format(to)}`;
+  }, [from, to, state.customDateRange, state.date]);
 
   // Sync theme and nav to HTML tag
   useEffect(() => {
@@ -353,6 +370,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       },
       generatedAt: trafficQ.data?.meta.generated_at ?? null,
       range: { from, to },
+      dateLabel,
       filters,
       filtersSettled: sitesSettled,
     }),
@@ -366,6 +384,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       sitesQ.error,
       from,
       to,
+      dateLabel,
       filters,
       sitesSettled,
       modules,
@@ -432,7 +451,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     setTier: (tier) =>
       setState((s) => ({ ...s, tier, scope: normalizeScope(tier, s.scope, sites, groups) })),
     setScope: (scope) => setState((s) => ({ ...s, scope })),
-    setDate: (date) => setState((s) => ({ ...s, date })),
+    setDate: (date) => setState((s) => ({ ...s, date, customDateRange: null })),
+    setCustomDateRange: (customDateRange) =>
+      setState((s) => ({ ...s, customDateRange })),
     setToken: (nextToken) => {
       setTokenState(nextToken);
       saveToken(nextToken);

@@ -2,13 +2,26 @@
  * PATM Analytics API client.
  *
  * All requests are scoped to project_code=PTM-01.
- * app_id is optional — the user will pass it later to narrow to a specific app.
+ * Mobile requests include app_id=37; other devices may supply an optional app_id.
  *
  * Base URL : VITE_FM_ADOPTION_API_URL (default https://posthog-api.lockated.com)
  * Endpoints: /fm/adoption/* (same ClickHouse-backed endpoints as FM/Pulse dashboards)
  */
 
 import axios from 'axios';
+import type { RecentActiveUsersResponse } from '@/features/posthog-dashboard/api/adoptionApi';
+
+export const PATM_MOBILE_APP_ID = '37';
+export const PATM_RECENT_ACTIVITY_DEVICE = 'mobile';
+
+export const fetchPatmRecentActiveUsers = (f: Pick<PATMRangeFilters, 'from' | 'to'>) =>
+  get<RecentActiveUsersResponse>('recent_active_users', [
+    ['app_id', PATM_MOBILE_APP_ID],
+    ['device_type', PATM_RECENT_ACTIVITY_DEVICE],
+    ['from', f.from],
+    ['to', f.to],
+    ['limit', 10],
+  ]);
 
 // Re-export all response types from the shared adoptionApi so callers only import from here.
 export type {
@@ -98,7 +111,7 @@ async function get<T>(endpoint: string, pairs: Pair[]): Promise<T> {
 export interface PATMRangeFilters {
   from: string; // YYYY-MM-DD
   to: string; // YYYY-MM-DD
-  appId?: string; // passed once the user supplies one
+  appId?: string; // optional for non-mobile requests
   baseUrl?: string; // frontend tenant URL; defaults to fm-matrix.lockated.com
   device?: string; // 'all' | 'desktop' | 'mobile' → mapped to Desktop/Mobile
 }
@@ -121,13 +134,17 @@ function mapDevice(device?: string): string | undefined {
 
 /* ── shared param builders ──────────────────────────────────────────── */
 
+export function getPatmAppId(f: { device?: string; appId?: string }): string | undefined {
+  return f.device === 'mobile' ? PATM_MOBILE_APP_ID : f.appId;
+}
+
 function rangeParams(f: PATMRangeFilters): Pair[] {
   const url = getPatmBaseUrl(f.baseUrl);
   const deviceType = mapDevice(f.device);
   return [
     ['project_code', PATM_PROJECT_CODE],
     ['url', url],
-    ...(f.appId ? [['app_id', f.appId] as Pair] : []),
+    ['app_id', getPatmAppId(f)],
     ['from', f.from],
     ['to', f.to],
     ...(deviceType ? [['device_type', deviceType] as Pair] : []),
@@ -140,7 +157,7 @@ function weeklyParams(f: PATMWeeklyFilters): Pair[] {
   return [
     ['project_code', PATM_PROJECT_CODE],
     ['url', url],
-    ...(f.appId ? [['app_id', f.appId] as Pair] : []),
+    ['app_id', getPatmAppId(f)],
     ['to', f.to],
     ['weeks', f.weeks],
     ...(deviceType ? [['device_type', deviceType] as Pair] : []),
@@ -185,13 +202,13 @@ export const fetchPatmRetention = (f: PATMWeeklyFilters) =>
 
 import type { ModulesResponse } from '@/features/posthog-dashboard/api/adoptionApi';
 export const fetchPatmModules = (f: PATMRangeFilters & { module?: string }) => {
-  // Discover frontend paths within the PATM project; app_id stays optional.
+  // Discover frontend paths within the PATM project and selected mobile app.
   const pairs: Pair[] = [
     ['url', getPatmBaseUrl(f.baseUrl)],
     ['project_code', PATM_PROJECT_CODE],
     ['from', f.from],
     ['to', f.to],
-    ['app_id', f.appId],
+    ['app_id', getPatmAppId(f)],
     ['device_type', mapDevice(f.device)],
   ];
   if (f.module) pairs.push(['module', f.module]);

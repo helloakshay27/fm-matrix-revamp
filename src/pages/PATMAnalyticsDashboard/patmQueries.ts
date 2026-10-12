@@ -5,6 +5,10 @@
 
 import { useQuery } from '@tanstack/react-query';
 import {
+  fetchPatmRecentActiveUsers,
+  PATM_MOBILE_APP_ID,
+  getPatmAppId,
+  PATM_RECENT_ACTIVITY_DEVICE,
   fetchPatmTrafficSession,
   fetchPatmUsageAndDistribution,
   fetchPatmAdoptionEngagement,
@@ -30,6 +34,14 @@ export const TREND_WEEKS = 8;
 export const GROWTH_WEEKS = 6;
 export const RETENTION_WEEKS = 6;
 
+export function usePatmRecentActiveUsers(f: Pick<PATMRangeFilters, 'from' | 'to'>) {
+  return useQuery({
+    queryKey: ['patm', 'recent_active_users', PATM_MOBILE_APP_ID, PATM_RECENT_ACTIVITY_DEVICE, f.from, f.to, 10],
+    queryFn: () => fetchPatmRecentActiveUsers(f),
+    ...CACHE,
+  });
+}
+
 /* ── Layer 1 ─────────────────────────────────────────────────────── */
 
 export function usePatmTrafficSession(
@@ -42,7 +54,7 @@ export function usePatmTrafficSession(
       f.baseUrl ?? 'fm-matrix.lockated.com',
       f.from,
       f.to,
-      f.appId ?? '',
+      getPatmAppId(f) ?? '',
       f.device ?? 'all',
     ],
     queryFn: () => fetchPatmTrafficSession(f),
@@ -61,7 +73,7 @@ export function usePatmUsageAndDistribution(
       f.baseUrl ?? 'fm-matrix.lockated.com',
       f.from,
       f.to,
-      f.appId ?? '',
+      getPatmAppId(f) ?? '',
       f.device ?? 'all',
     ],
     queryFn: () => fetchPatmUsageAndDistribution(f),
@@ -82,7 +94,7 @@ export function usePatmAdoptionEngagement(
       f.baseUrl ?? 'fm-matrix.lockated.com',
       f.from,
       f.to,
-      f.appId ?? '',
+      getPatmAppId(f) ?? '',
       f.device ?? 'all',
       f.licensedSeats ?? '',
     ],
@@ -101,7 +113,7 @@ export function usePatmAdoptionTrend(
       'adoption_trend',
       f.baseUrl ?? 'fm-matrix.lockated.com',
       f.to,
-      f.appId ?? '',
+      getPatmAppId(f) ?? '',
       f.weeks,
       f.device ?? 'all',
     ],
@@ -118,7 +130,7 @@ export function usePatmGrowth(f: PATMWeeklyFilters & { enabled?: boolean }) {
       'growth',
       f.baseUrl ?? 'fm-matrix.lockated.com',
       f.to,
-      f.appId ?? '',
+      getPatmAppId(f) ?? '',
       f.weeks,
       f.device ?? 'all',
     ],
@@ -135,7 +147,7 @@ export function usePatmRetention(f: PATMWeeklyFilters & { enabled?: boolean }) {
       'retention',
       f.baseUrl ?? 'fm-matrix.lockated.com',
       f.to,
-      f.appId ?? '',
+      getPatmAppId(f) ?? '',
       f.weeks,
       f.device ?? 'all',
     ],
@@ -155,7 +167,7 @@ export function usePatmModules(f: PATMRangeFilters & { enabled?: boolean }) {
       f.baseUrl ?? 'fm-matrix.lockated.com',
       f.from,
       f.to,
-      f.appId ?? '',
+      getPatmAppId(f) ?? '',
       f.device ?? 'all',
     ],
     queryFn: () => fetchPatmModules(f),
@@ -175,7 +187,7 @@ export function usePatmSubModules(
       f.module ?? '',
       f.from,
       f.to,
-      f.appId ?? '',
+      getPatmAppId(f) ?? '',
       f.device ?? 'all',
     ],
     queryFn: () => fetchPatmModules({ ...f, module: f.module }),
@@ -200,7 +212,7 @@ export function usePatmWorkflowUsage(
       f.subModule ?? '',
       f.from,
       f.to,
-      f.appId ?? '',
+      getPatmAppId(f) ?? '',
       f.device ?? 'all',
     ],
     queryFn: () => fetchPatmWorkflowUsage(f),

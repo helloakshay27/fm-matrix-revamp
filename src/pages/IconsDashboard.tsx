@@ -572,10 +572,10 @@ export const IconsDashboard = () => {
       case 'status':
         return (
           <span
-            className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-md ${
+            className={`inline-flex items-center rounded-full px-[10px] py-[3px] text-[11px] font-medium ${
               item.isActive
-                ? 'bg-brand text-white'
-                : 'bg-brand-light text-brand border border-brand/30'
+                ? 'bg-green-100 text-green-700'
+                : 'bg-gray-100 text-gray-600'
             }`}
           >
             {item.isActive ? 'Active' : 'Inactive'}

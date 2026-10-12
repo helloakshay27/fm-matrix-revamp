@@ -2735,18 +2735,22 @@ export const AddBookingSetupPage = () => {
             </div>
           </div>
 
-          <div className="flex gap-4 justify-center">
-            <Button variant="outline" onClick={handleClose}>
+          <div className="fm-action-bar pt-6">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="fm-action-secondary"
+            >
               Cancel
-            </Button>
-            <Button
+            </button>
+            <button
+              type="button"
               onClick={handleSave}
-              className="bg-purple-600 hover:bg-purple-700 text-white w-full"
               disabled={isSubmitting}
-              style={{ maxWidth: '90px' }}
+              className="fm-action-primary"
             >
               Save
-            </Button>
+            </button>
           </div>
         </div>
       </div>

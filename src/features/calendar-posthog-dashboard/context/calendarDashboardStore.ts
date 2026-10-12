@@ -31,6 +31,8 @@ export interface ViewModel {
   scopeLabel: string;
   /** Currently selected module from the live modules API (null = All Modules). */
   selectedModule: string | null;
+  /** Selected submodule from the selected module's live API tree (null = all submodules). */
+  selectedSubModule: string | null;
 }
 
 export interface CalendarDashboardValue {
@@ -55,8 +57,14 @@ export interface CalendarDashboardValue {
   /** Module pills — live from the modules API */
   selectedModule: string | null;
   setSelectedModule: (m: string | null) => void;
+  selectedSubModule: string | null;
+  setSelectedSubModule: (subModule: string | null) => void;
   /** Flat list of { name, users } from the modules API tree, for rendering pills. */
   modulesList: Array<{ name: string; users: number }>;
+  /** Flat list of the selected module's API-returned submodule nodes. */
+  subModulesList: Array<{ name: string; users: number }>;
+  modulesLoading: boolean;
+  subModulesLoading: boolean;
 
   /** navigation + chrome */
   page: PageKey;

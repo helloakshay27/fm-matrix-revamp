@@ -82,7 +82,7 @@ export function AiPanel() {
         <div className="ai-head">
           <div>
             <div className="ai-h-t"><span className="sp">✦</span><span>{info?.t ?? chartKey}</span></div>
-            <div className="ai-h-s">{vm.scopeLabel} · last {vm.state.date} days</div>
+            <div className="ai-h-s">{vm.scopeLabel} · {vm.dateLabel}</div>
           </div>
           <button className="ai-x" aria-label="Close" onClick={closeAiPanel}>✕</button>
         </div>

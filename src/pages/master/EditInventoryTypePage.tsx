@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
 import { TextField, Box, FormControl, InputLabel, Select, MenuItem, Typography } from '@mui/material';
 import { toast } from 'sonner';
 import { inventoryTypeService } from '@/services/inventoryTypeService';
 import { gateNumberService } from '@/services/gateNumberService'; // Reusing for company fetch
+import { Package } from 'lucide-react';
 
 interface InventoryTypeFormValues {
   name: string;
@@ -80,8 +80,14 @@ const EditInventoryTypePage = () => {
     <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50" style={{ fontFamily: 'Work Sans, sans-serif' }}>
       <div className="w-full max-w-none space-y-6">
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Edit Inventory Type</h1>
-        <div style={{ padding: '24px', margin: 0, borderRadius: '3px', background: '#fff' }}>
-          <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="bg-white rounded-2xl border border-gray-200 p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <span className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center shrink-0">
+                <Package className="w-4 h-4 text-[var(--color-ink-68)]" />
+              </span>
+              <h3 className="text-sm font-semibold uppercase text-[var(--color-text)]">Basic Details</h3>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Controller
                 name="name"
@@ -90,7 +96,7 @@ const EditInventoryTypePage = () => {
                 render={({ field }) => (
                   <TextField {...field} label={
                     <span style={{ fontSize: '16px' }}>
-                      Name <span style={{ color: 'red' }}>*</span>
+                      Name*
                     </span>
                   } variant="outlined" fullWidth error={!!errors.name} helperText={errors.name?.message} />
                 )}
@@ -102,7 +108,7 @@ const EditInventoryTypePage = () => {
                 render={({ field }) => (
                   <TextField {...field} label={
                     <span style={{ fontSize: '16px' }}>
-                      Material Code <span style={{ color: 'red' }}>*</span>
+                      Material Code*
                     </span>
                   } variant="outlined" fullWidth error={!!errors.material_type_code} helperText={errors.material_type_code?.message} />
                 )}
@@ -114,7 +120,7 @@ const EditInventoryTypePage = () => {
                 render={({ field }) => (
                   <Box>
                     <FormControl fullWidth variant="outlined">
-                      <InputLabel shrink>Select Company <span style={{ color: 'red' }}>*</span></InputLabel>
+                      <InputLabel shrink>Select Company*</InputLabel>
                       <Select
                         label="Select Company"
                         notched
@@ -123,7 +129,7 @@ const EditInventoryTypePage = () => {
                         value={field.value || ''}
                         onChange={e => field.onChange(e.target.value || null)}
                       >
-                        <MenuItem value="">Select Company <span style={{ color: 'red' }}>*</span></MenuItem>
+                        <MenuItem value="">Select Company*</MenuItem>
                         {companies.map(option => (
                           <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
                         ))}
@@ -174,13 +180,8 @@ const EditInventoryTypePage = () => {
                         `${field.value?.length || 0}/1000 characters`
                       }
                       sx={{
-                        mb: 3,
                         "& textarea": {
-                          width: "100% !important",
-                          resize: "both",
-                          overflow: "auto",
-                          boxSizing: "border-box",
-                          display: "block",
+                          resize: "vertical",
                         },
                         "& textarea[aria-hidden='true']": {
                           display: "none !important",
@@ -191,12 +192,12 @@ const EditInventoryTypePage = () => {
                 />
               </div>
             </div>
-            <div className="flex justify-center space-x-4 pt-4">
-              <Button type="submit" variant="default" className="w-32">Save</Button>
-              <Button type="button" variant="outline" className="w-32" onClick={() => navigate(basePath)}>Cancel</Button>
-            </div>
-          </form>
-        </div>
+          </div>
+          <div className="fm-action-bar mt-6">
+            <button type="button" className="fm-action-secondary" onClick={() => navigate(basePath)}>Cancel</button>
+            <button type="submit" className="fm-action-primary">Save</button>
+          </div>
+        </form>
       </div>
     </div>
   );

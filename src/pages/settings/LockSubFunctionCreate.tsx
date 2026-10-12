@@ -16,9 +16,7 @@ import {
 } from "@/services/lockSubFunctionService";
 import { lockFunctionService } from "@/services/lockFunctionService";
 import {
-  FormControl,
-  InputLabel,
-  MenuItem,
+  FormControl,  MenuItem,
   Select as MuiSelect,
   TextField,
 } from "@mui/material";
@@ -185,7 +183,7 @@ export const CreateLockSubFunctionDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
       <DialogContent
-        className="w-full sm:max-w-[500px] bg-white overflow-visible"
+        className="w-full sm:max-w-[500px] bg-white overflow-visible rounded-[24px] p-7"
         onPointerDownOutside={(e) => {
           if (
             (e.target as HTMLElement).closest(
@@ -222,69 +220,73 @@ export const CreateLockSubFunctionDialog = ({
         </DialogHeader>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
-          <FormControl fullWidth variant="outlined" className="sm:col-span-2">
-            <InputLabel id="create-sub-fn-type-label">
+          <div className="sm:col-span-2">
+            <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
               Sub Function Type
-            </InputLabel>
-            <MuiSelect
-              labelId="create-sub-fn-type-label"
-              label="Sub Function Type"
-              value={selectedPredefined}
-              onChange={(e) => handlePredefinedChange(e.target.value as string)}
-              sx={fieldStyles}
-              MenuProps={selectMenuProps}
-            >
-              <MenuItem value="">
-                <em>Select type</em>
-              </MenuItem>
-              {PREDEFINED_SUB_FUNCTIONS.map((item) => (
-                <MenuItem key={item.value} value={item.value}>
-                  {item.label}
+            </label>
+            <FormControl fullWidth variant="outlined">
+              <MuiSelect
+                value={selectedPredefined}
+                onChange={(e) => handlePredefinedChange(e.target.value as string)}
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value="">
+                  <em>Select type</em>
                 </MenuItem>
-              ))}
-            </MuiSelect>
-          </FormControl>
+                {PREDEFINED_SUB_FUNCTIONS.map((item) => (
+                  <MenuItem key={item.value} value={item.value}>
+                    {item.label}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
+          </div>
 
-          <TextField
-            label="Sub Function Name *"
-            value={subFunctionName}
-            onChange={(e) => setSubFunctionName(e.target.value)}
-            fullWidth
-            variant="outlined"
-            sx={fieldStyles}
-            disabled={nameDisabled}
-            className="sm:col-span-2"
-          />
+          <div className="sm:col-span-2">
+            <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+              Sub Function Name *
+            </label>
+            <TextField
+              placeholder="Sub Function Name *"
+              value={subFunctionName}
+              onChange={(e) => setSubFunctionName(e.target.value)}
+              fullWidth
+              variant="outlined"
+              sx={fieldStyles}
+              disabled={nameDisabled}
+            />
+          </div>
 
-          <FormControl fullWidth variant="outlined" className="sm:col-span-2">
-            <InputLabel id="create-sub-fn-parent-label">
+          <div className="sm:col-span-2">
+            <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
               Parent Function *
-            </InputLabel>
-            <MuiSelect
-              labelId="create-sub-fn-parent-label"
-              label="Parent Function *"
-              value={parentFunctionId}
-              onChange={(e) => setParentFunctionId(e.target.value as string)}
-              sx={fieldStyles}
-              MenuProps={selectMenuProps}
-              disabled={isLoadingFunctions}
-            >
-              <MenuItem value="">
-                <em>
-                  {isLoadingFunctions
-                    ? "Loading..."
-                    : lockFunctions.length === 0
-                      ? "No functions available"
-                      : "Select parent function"}
-                </em>
-              </MenuItem>
-              {lockFunctions.map((func) => (
-                <MenuItem key={func.id} value={func.id.toString()}>
-                  {func.name}
+            </label>
+            <FormControl fullWidth variant="outlined">
+              <MuiSelect
+                value={parentFunctionId}
+                onChange={(e) => setParentFunctionId(e.target.value as string)}
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+                disabled={isLoadingFunctions}
+              >
+                <MenuItem value="">
+                  <em>
+                    {isLoadingFunctions
+                      ? "Loading..."
+                      : lockFunctions.length === 0
+                        ? "No functions available"
+                        : "Select parent function"}
+                  </em>
                 </MenuItem>
-              ))}
-            </MuiSelect>
-          </FormControl>
+                {lockFunctions.map((func) => (
+                  <MenuItem key={func.id} value={func.id.toString()}>
+                    {func.name}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
+          </div>
 
           <div className="flex items-center space-x-2 sm:col-span-2 pt-1">
             <Checkbox
@@ -298,12 +300,20 @@ export const CreateLockSubFunctionDialog = ({
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
-          <Button
+        <div className="fm-action-bar pt-4">
+          <button
+            type="button"
+            onClick={handleCancel}
+            disabled={isSubmitting}
+            className="fm-action-secondary"
+          >
+            Cancel
+          </button>
+          <button
             type="button"
             onClick={handleCreate}
             disabled={isSubmitting}
-            className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto disabled:!opacity-100"
+            className="fm-action-primary"
           >
             {isSubmitting ? (
               <>
@@ -311,18 +321,9 @@ export const CreateLockSubFunctionDialog = ({
                 Creating...
               </>
             ) : (
-              "CREATE"
+              "Create"
             )}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-            disabled={isSubmitting}
-            className="border-brand text-brand px-8 w-full sm:w-auto"
-          >
-            CANCEL
-          </Button>
+          </button>
         </div>
       </DialogContent>
     </Dialog>

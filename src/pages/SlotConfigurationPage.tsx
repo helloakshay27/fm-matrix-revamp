@@ -176,22 +176,21 @@ export const SlotConfigurationPage = () => {
     }
     if (columnKey === 'qrcode_needed') {
       return (
-        <input
-          type="checkbox"
-          checked={item.qrcode_needed}
-          disabled
-          className="w-4 h-4 text-brand bg-gray-100 border-gray-300 rounded cursor-not-allowed"
-          aria-label="QR Needed"
-        />
+        <span
+          className={`inline-flex items-center rounded-full px-[10px] py-[3px] text-[11px] font-medium ${
+            item.qrcode_needed
+              ? 'bg-[rgba(18,161,80,0.12)] text-[#0E7F3F]'
+              : 'bg-[var(--color-surface)] text-[var(--color-ink-68)]'
+          }`}
+        >
+          {item.qrcode_needed ? 'Yes' : 'No'}
+        </span>
       );
     }
 
     if (columnKey.startsWith('cat_')) {
       const value = (item[columnKey] as number | undefined) ?? 0;
-      const isReserved = columnKey.endsWith('_reserved');
-      return (
-        <span className={isReserved ? 'text-red-600 font-medium' : undefined}>{value}</span>
-      );
+      return <span className="tabular-nums">{value}</span>;
     }
 
     return (item[columnKey] as React.ReactNode) ?? '-';

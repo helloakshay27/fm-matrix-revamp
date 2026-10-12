@@ -48,9 +48,7 @@ const fieldStyles = {
 };
 
 const selectMenuProps = {
-  disablePortal: false,
-  disableAutoFocus: true,
-  disableEnforceFocus: true,
+  
   disableScrollLock: true,
   anchorOrigin: {
     vertical: "bottom" as const,
@@ -74,9 +72,6 @@ const selectMenuProps = {
       zIndex: 10001,
     },
   },
-  disablePortal: false,
-  disableAutoFocus: true,
-  disableEnforceFocus: true,
 };
 
 export const TrainingConductedFilterDialog = ({

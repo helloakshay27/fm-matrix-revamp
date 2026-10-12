@@ -303,6 +303,21 @@
 }
 
 /* ============ MAIN ============ */
+.patm-analytics .recent-activity {
+  margin: 24px 10px 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+.patm-analytics .recent-activity h2 { margin: 0 0 14px; font-size: 14px; font-weight: 500; }
+.patm-analytics .recent-activity-list { list-style: none; margin: 0; padding: 0; }
+.patm-analytics .recent-activity-user { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.patm-analytics .recent-activity-user-main { display: grid; gap: 4px; overflow-wrap: anywhere; }
+.patm-analytics .recent-activity-user-main strong { font-size: 12px; font-weight: 500; color: var(--ink); }
+.patm-analytics .recent-activity-user-main span { font-size: 11px; color: var(--ink-2); }
+.patm-analytics .recent-activity-meta { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 5px; font-size: 10px; color: var(--faint); overflow-wrap: anywhere; }
+.patm-analytics .recent-activity-state { font-size: 12px; color: var(--faint); }
+.patm-analytics .shell.nav-collapsed .recent-activity { display: none; }
+
 .patm-analytics .main {
   padding: 34px 40px 90px;
   min-width: 0;

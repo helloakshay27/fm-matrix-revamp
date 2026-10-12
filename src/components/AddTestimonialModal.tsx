@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Box, Dialog, DialogContent, FormControl, IconButton, InputLabel, MenuItem, Select, SelectChangeEvent, TextField, Typography } from '@mui/material';
+import { Box, Dialog, DialogContent, FormControl, IconButton, InputLabel, MenuItem, Select, SelectChangeEvent, TextField } from '@mui/material';
 import { Close } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { toast } from 'sonner';
@@ -159,10 +158,13 @@ export const AddTestimonialModal = ({ isOpen, onClose, fetchData, isEditing, rec
   };
 
   return (
-    <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogContent className="!bg-white">
-        <div>
-          <h1 className='text-xl mb-6 mt-2 font-semibold'>{isEditing ? 'Edit Testimonial' : 'Add Testimonial'}</h1>
+    <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth sx={{ '& .MuiPaper-root': { borderRadius: '24px' } }}>
+      <DialogContent className="!bg-white" sx={{ padding: '28px' }}>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-lg font-semibold">{isEditing ? 'Edit Testimonial' : 'Add Testimonial'}</h1>
+          <IconButton onClick={handleClose} size="small" aria-label="Close">
+            <Close fontSize="small" />
+          </IconButton>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -240,7 +242,7 @@ export const AddTestimonialModal = ({ isOpen, onClose, fetchData, isEditing, rec
             value={formData.description}
             onChange={handleFormChange}
             multiline
-            rows={2}
+            minRows={3}
             type="text"
             fullWidth
             variant="outlined"
@@ -250,27 +252,12 @@ export const AddTestimonialModal = ({ isOpen, onClose, fetchData, isEditing, rec
               '& .MuiOutlinedInput-root': {
                 backgroundColor: '#ffffff !important',
                 height: 'auto !important',
-                padding: '2px !important',
-                display: 'flex',
-              },
-              "& .MuiInputBase-input[aria-hidden='true']": {
-                flex: 0,
-                width: 0,
-                height: 0,
-                padding: '0 !important',
-                margin: 0,
-                display: 'none',
-              },
-              '& .MuiInputBase-input': {
-                resize: 'none !important',
               },
             }}
           />
 
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="body1" sx={{ mb: 2, color: 'hsl(var(--label-text))', fontWeight: 500 }}>
-              Attachment
-            </Typography>
+          <Box>
+            <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">Attachment</label>
 
             <div>
               <input
@@ -281,10 +268,10 @@ export const AddTestimonialModal = ({ isOpen, onClose, fetchData, isEditing, rec
                 onChange={handleFileChange}
               />
               <label htmlFor="file-upload" className="block cursor-pointer">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-orange-50 hover:bg-orange-100 transition-colors">
+                <div className="border-2 border-dashed border-gray-300 rounded-2xl bg-white hover:bg-[var(--color-surface)] p-8 text-center transition-colors">
                   <span className="text-gray-600">
                     Drag & Drop or{" "}
-                    <span className="text-brand underline">Choose file</span>{" "}
+                    <span className="text-[var(--color-text)] font-medium underline">Choose file</span>{" "}
                   </span>
                 </div>
               </label>
@@ -329,22 +316,20 @@ export const AddTestimonialModal = ({ isOpen, onClose, fetchData, isEditing, rec
             </div>
           </Box>
 
-          <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
-            <Button
-              type="submit"
-              variant="ghost"
-              className="fm-button-fix fm-button-brand px-8 w-full sm:w-auto"
-            >
-              {isEditing ? 'UPDATE' : 'CREATE'}
-            </Button>
-            <Button
+          <div className="fm-action-bar pt-4">
+            <button
               type="button"
-              variant="outline"
               onClick={handleClose}
-              className="border-brand text-brand px-8 w-full sm:w-auto"
+              className="fm-action-secondary"
             >
-              CANCEL
-            </Button>
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="fm-action-primary"
+            >
+              {isEditing ? 'Update' : 'Create'}
+            </button>
           </div>
         </form>
       </DialogContent>

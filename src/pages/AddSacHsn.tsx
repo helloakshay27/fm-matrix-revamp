@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
-import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, FileText } from 'lucide-react';
 
 const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
@@ -131,9 +130,14 @@ const AddSacHsn: React.FC = () => {
                 <h1 className="text-2xl font-bold text-[#1a1a1a]">ADD SAC/HSN SETUP</h1>
             </div>
 
-            <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
-                <CardHeader className="bg-[#F6F4EE] mb-4">
-                    <CardTitle className="text-lg text-black">BASIC DETAILS</CardTitle>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-3 text-sm font-semibold uppercase text-[var(--color-text)]">
+                        <span className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center shrink-0">
+                            <FileText className="w-4 h-4 text-[var(--color-ink-68)]" />
+                        </span>
+                        Basic Details
+                    </CardTitle>
                 </CardHeader>
 
                 <CardContent>
@@ -141,7 +145,7 @@ const AddSacHsn: React.FC = () => {
                         <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!errors.type}>
                             <InputLabel shrink>
                                 Type
-                                <span className="text-red-500">*</span>
+                                <span>*</span>
 
                             </InputLabel>
                             <MuiSelect
@@ -164,7 +168,7 @@ const AddSacHsn: React.FC = () => {
 
 
                         <TextField
-                            label={<>Category<span style={{ color: '#C72030' }}>*</span></>}
+                            label={<>Category<span>*</span></>}
                             placeholder="Enter Category"
                             value={form.category}
                             onChange={(e) => handleChange('category', e.target.value)}
@@ -177,7 +181,7 @@ const AddSacHsn: React.FC = () => {
                         />
 
                         <TextField
-                            label={<>SAC/HSN Code<span style={{ color: '#C72030' }}>*</span></>}
+                            label={<>SAC/HSN Code<span>*</span></>}
                             placeholder="Enter SAC/HSN code"
                             value={form.code}
                             onChange={(e) => handleChange('code', e.target.value)}
@@ -192,7 +196,7 @@ const AddSacHsn: React.FC = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <TextField
-                            label={<>CGST Rate<span style={{ color: '#C72030' }}>*</span></>}
+                            label={<>CGST Rate<span>*</span></>}
                             placeholder="Enter CGST Rate"
                             value={form.cgst}
                             onChange={(e) => handleChange('cgst', e.target.value)}
@@ -205,7 +209,7 @@ const AddSacHsn: React.FC = () => {
                         />
 
                         <TextField
-                            label={<>SGST Rate<span style={{ color: '#C72030' }}>*</span></>}
+                            label={<>SGST Rate<span>*</span></>}
                             placeholder="Enter SGST Rate"
                             value={form.sgst}
                             onChange={(e) => handleChange('sgst', e.target.value)}
@@ -230,19 +234,21 @@ const AddSacHsn: React.FC = () => {
                             helperText={errors.igst}
                         />
                     </div>
-
-                    <div className="mt-6 flex justify-end gap-4">
-                        <Button variant="outline" onClick={handleReset} className="px-6 py-2" disabled={isSubmitting}>Reset</Button>
-                        <Button variant="outline" onClick={handleApply} className="fm-button-fix fm-button-brand px-6 py-2" disabled={isSubmitting}>
-                            {isSubmitting ? (
-                                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Please wait...</>
-                            ) : (
-                                'Apply'
-                            )}
-                        </Button>
-                    </div>
                 </CardContent>
             </Card>
+
+            <div className="fm-action-bar mt-6">
+                <button type="button" onClick={handleReset} className="fm-action-secondary" disabled={isSubmitting}>
+                    Reset
+                </button>
+                <button type="button" onClick={handleApply} className="fm-action-primary" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Please wait...</>
+                    ) : (
+                        'Apply'
+                    )}
+                </button>
+            </div>
         </div>
     );
 };

@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
 import { TextField, FormControl, InputLabel, Select, MenuItem, Box, Typography } from '@mui/material';
 import { toast } from 'sonner';
 import { inventoryTypeService } from '@/services/inventoryTypeService';
 import { gateNumberService } from '@/services/gateNumberService'; // Reusing for company fetch
 import { useSelector } from 'react-redux';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Package } from 'lucide-react';
 
 interface InventoryTypeFormValues {
   name: string;
@@ -93,9 +92,15 @@ const AddInventoryTypePage = () => {
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
           ADD INVENTORY TYPE
         </h1>
-      <div style={{ padding: '24px', marginTop: '20px', borderRadius: '3px', background: '#fff' }}>
-        <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit(onSubmit)}>
+      <div className="bg-white rounded-2xl border border-gray-200 p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <span className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center shrink-0">
+            <Package className="w-4 h-4 text-[var(--color-ink-68)]" />
+          </span>
+          <h3 className="text-sm font-semibold uppercase text-[var(--color-text)]">Basic Details</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Name Field */}
           <Controller
             name="name"
@@ -104,7 +109,7 @@ const AddInventoryTypePage = () => {
             render={({ field }) => (
               <Box>
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Name <span style={{ color: 'red' }}>*</span></InputLabel>
+                  <InputLabel shrink>Name*</InputLabel>
                   <TextField
                     {...field}
                     // label="Name"
@@ -125,7 +130,7 @@ const AddInventoryTypePage = () => {
             render={({ field }) => (
               <Box>
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Material Code <span style={{ color: 'red' }}>*</span></InputLabel>
+                  <InputLabel shrink>Material Code*</InputLabel>
                   <TextField
                     {...field}
                     // label="Material Code"
@@ -146,7 +151,7 @@ const AddInventoryTypePage = () => {
             render={({ field }) => (
               <Box>
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Company <span style={{ color: 'red' }}>*</span></InputLabel>
+                  <InputLabel shrink>Company*</InputLabel>
                   <Select
                     {...field}
                     // label="Company"
@@ -175,7 +180,6 @@ const AddInventoryTypePage = () => {
                   <InputLabel shrink>Category</InputLabel>
                   <TextField
                     {...field}
-                    label="Category"
                     variant="outlined"
                     fullWidth
                   />
@@ -184,7 +188,7 @@ const AddInventoryTypePage = () => {
             )}
           />
           {/* Description Textarea */}
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 lg:col-span-4">
             <Controller
               name="material_type_description"
               control={control}
@@ -196,13 +200,10 @@ const AddInventoryTypePage = () => {
                 required: { value: true, message: "Description is required" }
               }}
               render={({ field }) => (
+                <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>Description*</InputLabel>
                 <TextField
                   {...field}
-                  label={
-                    <span style={{ fontSize: '16px' }}>
-                      Description 
-                    </span>
-                  }
                   placeholder="Enter Description/SOP"
                   fullWidth
                   multiline
@@ -214,31 +215,25 @@ const AddInventoryTypePage = () => {
                     `${field.value?.length || 0}/1000 characters`
                   }
                   sx={{
-                    mb: 3,
                     "& textarea": {
-                      width: "100% !important",
-                      resize: "both",
-                      overflow: "auto",
-                      boxSizing: "border-box",
-                      border:'1px solid #c4c4c4',
-                      display: "block",
-                      bgcolor:'transparent'
+                      resize: "vertical",
                     },
                     "& textarea[aria-hidden='true']": {
                       display: "none !important",
                     },
                   }}
                 />
+                </FormControl>
               )}
             />
           </div>
         </div>
-        <div className="flex justify-center space-x-4 pt-4">
-          <Button type="submit" variant="outline" className="bg-brand hover:bg-brand-hover text-white w-32">Save</Button>
-          <Button type="button" variant="outline" className="w-32" onClick={() => navigate(basePath)}>Cancel</Button>
+      </div>
+        <div className="fm-action-bar mt-6">
+          <button type="button" className="fm-action-secondary" onClick={() => navigate(basePath)}>Cancel</button>
+          <button type="submit" className="fm-action-primary">Save</button>
         </div>
       </form>
-      </div>
       </div>
     </div>
   );

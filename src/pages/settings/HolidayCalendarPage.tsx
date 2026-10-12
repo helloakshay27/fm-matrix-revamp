@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -278,10 +278,16 @@ export const HolidayCalendarPage = () => {
     loadSites();
   }, [baseUrl, token]);
 
-  // Load existing holidays from API
+  // Raw API rows, kept so site names can be filled in once allowed sites arrive.
+  const rawHolidaysRef = useRef<HolidayApiResponse[]>([]);
+
+  // Load existing holidays from API. Runs in parallel with the sites request —
+  // it must not wait on sites, or the page stays on the loader until (and unless)
+  // the account + allowed-sites requests both succeed.
   useEffect(() => {
     const loadHolidays = async () => {
-      if (!baseUrl || !token || siteOptions.length === 0) {
+      if (!baseUrl || !token) {
+        setLoadingHolidays(false);
         return;
       }
       
@@ -301,8 +307,9 @@ export const HolidayCalendarPage = () => {
           const apiData: HolidayApiResponse[] = await response.json();
           console.log('Raw holidays API response:', apiData);
           
+          rawHolidaysRef.current = apiData;
           // Transform API data to Holiday interface
-          const transformedHolidays = apiData.map(apiHoliday => 
+          const transformedHolidays = apiData.map(apiHoliday =>
             transformHolidayData(apiHoliday, siteOptions)
           );
           
@@ -327,7 +334,23 @@ export const HolidayCalendarPage = () => {
     };
 
     loadHolidays();
-  }, [baseUrl, token, endpoints, siteOptions]); // Added siteOptions dependency so holidays load after sites are loaded
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [baseUrl, token]);
+
+  // When allowed sites arrive after the holidays, fill in the site names.
+  useEffect(() => {
+    if (siteOptions.length === 0 || rawHolidaysRef.current.length === 0) return;
+    const rawById = new Map(rawHolidaysRef.current.map(raw => [String(raw.id), raw]));
+    setHolidays(prev =>
+      prev.map(holiday => {
+        const raw = rawById.get(holiday.id);
+        return raw
+          ? { ...holiday, applicableLocation: transformHolidayData(raw, siteOptions).applicableLocation }
+          : holiday;
+      })
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [siteOptions]);
 
   // Filter holidays based on search term + advanced filters
   const filteredHolidays = holidays.filter(holiday => {
@@ -597,14 +620,17 @@ export const HolidayCalendarPage = () => {
   };
 
   const handleEdit = async (id: string) => {
+    const holiday = holidays.find(h => h.id === id);
+    if (!holiday) {
+      toast.error("Holiday not found");
+      return;
+    }
+    // Open the dialog right away (it shows "Loading holiday data..." while
+    // loadingEditData is true) instead of waiting for the request to finish.
+    setEditingHoliday(holiday);
     setLoadingEditData(true);
+    setIsEditDialogOpen(true);
     try {
-      // First set the editing holiday from current data
-      const holiday = holidays.find(h => h.id === id);
-      if (!holiday) {
-        toast.error("Holiday not found");
-        return;
-      }
 
       // Fetch detailed holiday data from API
       const response = await fetch(`${baseUrl}${endpoints.GET_HOLIDAY}/${id}.json`, {
@@ -654,6 +680,7 @@ export const HolidayCalendarPage = () => {
     } catch (error) {
       console.error('Error loading holiday for edit:', error);
       toast.error("Failed to load holiday data");
+      setIsEditDialogOpen(false);
     } finally {
       setLoadingEditData(false);
     }
@@ -869,7 +896,8 @@ export const HolidayCalendarPage = () => {
               </Button>
             </DialogTrigger>)}
             <DialogContent
-              className="max-w-6xl max-h-[90vh] overflow-y-auto bg-white"
+              className="max-w-6xl max-h-[90vh] overflow-y-auto bg-white rounded-[24px] p-7"
+              data-settings-modal="true"
               aria-describedby="add-holiday-dialog-description"
               onPointerDownOutside={(e) => {
                 if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
@@ -1103,20 +1131,24 @@ export const HolidayCalendarPage = () => {
                 )}
 
                 {/* Save All / Cancel */}
-                <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                  <Button
+                <div className="fm-action-bar pt-4">
+                  <button
                     type="button"
-                    className="flex-1 bg-brand hover:bg-brand-hover text-white px-4 py-2 disabled:!opacity-100 disabled:!bg-brand"
+                    onClick={handleCancel}
+                    className="fm-action-secondary"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="fm-action-primary"
                     disabled={isSubmitting || pendingHolidays.length === 0}
                     onClick={handleSubmit}
                   >
                     {isSubmitting
                       ? 'Saving...'
                       : `Save ${pendingHolidays.length > 0 ? `(${pendingHolidays.length}) ` : ''}Holiday${pendingHolidays.length !== 1 ? 's' : ''}`}
-                  </Button>
-                  <Button variant="outline" onClick={handleCancel} className="flex-1 h-11 border-brand text-brand hover:bg-brand-selected hover:text-brand">
-                    Cancel
-                  </Button>
+                  </button>
                 </div>
               </div>
             </DialogContent>
@@ -1128,7 +1160,8 @@ export const HolidayCalendarPage = () => {
       {/* Filter Modal — matches SnaggingFilterDialog */}
       <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen} modal={false}>
         <DialogContent
-          className="w-full sm:max-w-[500px] bg-white overflow-visible"
+          className="w-full sm:max-w-[500px] bg-white overflow-visible rounded-[24px] p-7"
+          data-settings-modal="true"
           aria-describedby="filter-dialog-description"
           onPointerDownOutside={(e) => {
             if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
@@ -1258,14 +1291,14 @@ export const HolidayCalendarPage = () => {
           <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
             <Button
               onClick={handleApplyFilters}
-              className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto"
+              className="bg-[#1a1a18] hover:bg-[#12100e] text-white px-8 w-full sm:w-auto"
             >
               APPLY
             </Button>
             <Button
               variant="outline"
               onClick={handleClearFilters}
-              className="border-brand text-brand px-8 w-full sm:w-auto"
+              className="border-[#1a1a18] text-[#1a1a18] px-8 w-full sm:w-auto"
             >
               RESET
             </Button>
@@ -1288,7 +1321,8 @@ export const HolidayCalendarPage = () => {
         setIsEditDialogOpen(open);
       }} modal={false}>
         <DialogContent
-          className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white"
+          className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-[24px] p-7"
+          data-settings-modal="true"
           aria-describedby="edit-holiday-dialog-description"
           onPointerDownOutside={(e) => {
             if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
@@ -1472,21 +1506,22 @@ export const HolidayCalendarPage = () => {
               </Card>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-6">
-                <Button
+              <div className="fm-action-bar pt-6">
+                <button
+                  type="button"
+                  onClick={handleEditCancel}
+                  className="fm-action-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
                   onClick={handleUpdate}
-                  className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
+                  className="fm-action-primary"
                   disabled={isSubmitting || loadingEditData}
                 >
                   {isSubmitting ? 'Updating Holiday...' : 'Update Holiday'}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleEditCancel}
-                  className="border-brand text-brand px-4 py-2"
-                >
-                  Cancel
-                </Button>
+                </button>
               </div>
             </div>
           )}

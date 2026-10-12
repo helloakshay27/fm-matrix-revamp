@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Upload, X, Plus, Building2, FolderOpen } from "lucide-react";
+import { ArrowLeft, X, Plus, Building2, FolderOpen, Paperclip } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
-import { toast } from "sonner";
 import { AddCategoryModal } from '@/components/AddCategoryModal';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { useToast } from '@/hooks/use-toast';
+import { FormSection, FormActionBar, assetFieldStyles } from '@/components/common/FormSection';
+import { AttachmentUpload } from '@/components/common/AttachmentUpload';
 
 interface Category {
   id: number;
@@ -14,6 +14,17 @@ interface Category {
   amount: string;
   active: boolean;
 }
+
+const requiredLabel = (text: string) => (
+  <span>
+    {text}
+    <span className="fm-required-mark">*</span>
+  </span>
+);
+
+const textareaSx = {
+  "& .MuiOutlinedInput-root": { height: "auto !important", padding: "2px !important" },
+};
 
 export const AddProjectDashboard = () => {
   const navigate = useNavigate();
@@ -32,22 +43,12 @@ export const AddProjectDashboard = () => {
     category: ''
   });
 
-  const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
-    },
-    '& .MuiInputBase-inputMultiline': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
-    },
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Creating project:', formData);
     console.log('Categories:', categories);
     console.log('Uploaded files:', uploadedFiles);
-    
+
     // Add the new project data to localStorage for the Fitout Request List
     const existingProjects = JSON.parse(localStorage.getItem('fitoutProjects') || '[]');
     const newProject = {
@@ -61,10 +62,10 @@ export const AddProjectDashboard = () => {
       masterStatus: 'Pending',
       createdOn: new Date().toLocaleDateString()
     };
-    
+
     existingProjects.push(newProject);
     localStorage.setItem('fitoutProjects', JSON.stringify(existingProjects));
-    
+
     showToast({
       title: "Success",
       description: "Project created successfully!",
@@ -94,16 +95,12 @@ export const AddProjectDashboard = () => {
     });
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (files) {
-      const newFiles = Array.from(files);
-      setUploadedFiles(prev => [...prev, ...newFiles]);
-      showToast({
-        title: "Success",
-        description: `${newFiles.length} file(s) uploaded successfully!`,
-      });
-    }
+  const handleFileUpload = (newFiles: File[]) => {
+    setUploadedFiles(prev => [...prev, ...newFiles]);
+    showToast({
+      title: "Success",
+      description: `${newFiles.length} file(s) uploaded successfully!`,
+    });
   };
 
   const handleRemoveFile = (index: number) => {
@@ -123,11 +120,12 @@ export const AddProjectDashboard = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-4 sm:p-6 max-w-full mx-auto min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+      <div className="mb-4 sm:mb-6">
+        <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
           <button
+            type="button"
             onClick={handleGoBack}
             className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
             aria-label="Go back"
@@ -138,129 +136,81 @@ export const AddProjectDashboard = () => {
           <span>{">"}</span>
           <span className="text-gray-900 font-medium">Create New Project</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">NEW PROJECT</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">NEW PROJECT</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Section 1: Basic Details */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                <Building2 size={16} color="#C72030" />
-              </span>
-              Basic Details
-            </h2>
-          </div>
-          <div className="p-6 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div>
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel id="building-label" shrink>Building*</InputLabel>
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+        {/* Basic Details */}
+        <FormSection title="BASIC DETAILS" icon={Building2}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <FormControl fullWidth variant="outlined">
+              <InputLabel shrink>{requiredLabel('Building')}</InputLabel>
               <MuiSelect
-                labelId="building-label"
                 label="Building*"
+                notched
                 displayEmpty
                 value={formData.building}
                 onChange={(e) => setFormData(prev => ({...prev, building: e.target.value}))}
-                sx={fieldStyles}
+                sx={assetFieldStyles}
               >
-                <MenuItem value=""><em>Select Building</em></MenuItem>
+                <MenuItem value="">Select Building</MenuItem>
                 <MenuItem value="building-a">Building A</MenuItem>
                 <MenuItem value="building-b">Building B</MenuItem>
                 <MenuItem value="building-c">Building C</MenuItem>
               </MuiSelect>
             </FormControl>
-          </div>
 
-          <div>
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel id="floor-label" shrink>Floor*</InputLabel>
+            <FormControl fullWidth variant="outlined">
+              <InputLabel shrink>{requiredLabel('Floor')}</InputLabel>
               <MuiSelect
-                labelId="floor-label"
                 label="Floor*"
+                notched
                 displayEmpty
                 value={formData.floor}
                 onChange={(e) => setFormData(prev => ({...prev, floor: e.target.value}))}
-                sx={fieldStyles}
+                sx={assetFieldStyles}
               >
-                <MenuItem value=""><em>Select Floor</em></MenuItem>
+                <MenuItem value="">Select Floor</MenuItem>
                 <MenuItem value="ground">Ground Floor</MenuItem>
                 <MenuItem value="first">First Floor</MenuItem>
                 <MenuItem value="second">Second Floor</MenuItem>
               </MuiSelect>
             </FormControl>
-          </div>
 
-          <div>
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel id="unit-label" shrink>Unit*</InputLabel>
+            <FormControl fullWidth variant="outlined">
+              <InputLabel shrink>{requiredLabel('Unit')}</InputLabel>
               <MuiSelect
-                labelId="unit-label"
                 label="Unit*"
+                notched
                 displayEmpty
                 value={formData.unit}
                 onChange={(e) => setFormData(prev => ({...prev, unit: e.target.value}))}
-                sx={fieldStyles}
+                sx={assetFieldStyles}
               >
-                <MenuItem value=""><em>Select Unit</em></MenuItem>
+                <MenuItem value="">Select Unit</MenuItem>
                 <MenuItem value="unit-101">Unit 101</MenuItem>
                 <MenuItem value="unit-102">Unit 102</MenuItem>
                 <MenuItem value="unit-103">Unit 103</MenuItem>
               </MuiSelect>
             </FormControl>
-          </div>
 
-          <div>
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel id="user-label" shrink>User*</InputLabel>
+            <FormControl fullWidth variant="outlined">
+              <InputLabel shrink>{requiredLabel('User')}</InputLabel>
               <MuiSelect
-                labelId="user-label"
                 label="User*"
+                notched
                 displayEmpty
                 value={formData.user}
                 onChange={(e) => setFormData(prev => ({...prev, user: e.target.value}))}
-                sx={fieldStyles}
+                sx={assetFieldStyles}
               >
-                <MenuItem value=""><em>Select User</em></MenuItem>
+                <MenuItem value="">Select User</MenuItem>
                 <MenuItem value="john-doe">John Doe</MenuItem>
                 <MenuItem value="jane-smith">Jane Smith</MenuItem>
                 <MenuItem value="mike-johnson">Mike Johnson</MenuItem>
               </MuiSelect>
             </FormControl>
-          </div>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-1 relative w-full">
-            <textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({...prev, description: e.target.value}))}
-              rows={3}
-              placeholder=" "
-              className="peer block w-full appearance-none rounded border border-gray-300 bg-white px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent
-      focus:outline-none
-      focus:border-[2px]
-      focus:border-[rgb(25,118,210)]
-      resize-vertical"
-            />
-
-            <label
-              htmlFor="description"
-              className="absolute left-3 -top-[10px] bg-white px-1 text-sm text-gray-500 z-[1] transition-all duration-200
-      peer-placeholder-shown:top-4
-      peer-placeholder-shown:text-base
-      peer-placeholder-shown:text-gray-400
-      peer-focus:-top-[10px]
-      peer-focus:text-sm
-      peer-focus:text-[rgb(25,118,210)]"
-            >
-              Description
-            </label>
-          </div>
-
-          <div className="md:col-span-1">
             <TextField
               label="Request Date"
               type="date"
@@ -269,154 +219,117 @@ export const AddProjectDashboard = () => {
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
+              InputProps={{ sx: assetFieldStyles }}
             />
-          </div>
 
-          <div className="md:col-span-1">
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel id="vendor-label" shrink>Vendor</InputLabel>
+            <FormControl fullWidth variant="outlined">
+              <InputLabel shrink>Vendor</InputLabel>
               <MuiSelect
-                labelId="vendor-label"
                 label="Vendor"
+                notched
                 displayEmpty
                 value={formData.vendor}
                 onChange={(e) => setFormData(prev => ({...prev, vendor: e.target.value}))}
-                sx={fieldStyles}
+                sx={assetFieldStyles}
               >
-                <MenuItem value=""><em>Select Vendor</em></MenuItem>
+                <MenuItem value="">Select Vendor</MenuItem>
                 <MenuItem value="vendor-a">Vendor A</MenuItem>
                 <MenuItem value="vendor-b">Vendor B</MenuItem>
                 <MenuItem value="vendor-c">Vendor C</MenuItem>
               </MuiSelect>
             </FormControl>
-          </div>
-        </div>
-          </div>
-        </div>
 
-        {/* Section 2: Category and Attachment */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                <FolderOpen size={16} color="#C72030" />
-              </span>
-              Category and Attachment
-            </h2>
-          </div>
-          <div className="p-6 space-y-6">
-        {/* Dynamic Categories */}
-        <div className="space-y-4 mb-6">
-          {categories.map((category) => (
-            <div key={category.id} className="flex gap-2 items-end">
-              <div className="flex-1">
-                <TextField
-                  value={category.category}
-                  fullWidth
-                  variant="outlined"
-                  InputProps={{ readOnly: true, sx: { ...fieldStyles, backgroundColor: '#f9fafb' } }}
-                  sx={{ mt: 1 }}
-                />
-              </div>
-              <div className="flex-1">
-                <TextField
-                  value={category.amount}
-                  fullWidth
-                  variant="outlined"
-                  InputProps={{ readOnly: true, sx: { ...fieldStyles, backgroundColor: '#f9fafb' } }}
-                  sx={{ mt: 1 }}
-                />
-              </div>
-              <Button 
-                type="button" 
-                variant="destructive" 
-                size="icon"
-                className="bg-[#C72030] hover:bg-[#C72030]/90"
-                onClick={() => handleRemoveCategory(category.id)}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
-        </div>
-
-        {/* File Upload Section */}
-        <div className="mb-6">
-          <div className="space-y-4">
-            <div>
-              <input
-                type="file"
-                multiple
-                onChange={handleFileUpload}
-                className="hidden"
-                id="file-upload"
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+            <div className="sm:col-span-2 lg:col-span-3">
+              <TextField
+                label="Description"
+                placeholder="Enter description"
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({...prev, description: e.target.value}))}
+                fullWidth
+                multiline
+                rows={4}
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                sx={textareaSx}
               />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => document.getElementById('file-upload')?.click()}
-                className="bg-[#C72030] text-white hover:bg-[#C72030]/90 border-[#C72030]"
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Upload File
-              </Button>
             </div>
-            
-            {/* Display uploaded files */}
-            {uploadedFiles.length > 0 && (
-              <div className="space-y-2">
-                {uploadedFiles.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                    <span className="text-sm">{file.name}</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveFile(index)}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
-        </div>
+        </FormSection>
 
-        {/* Add Category Button */}
-        <Button
-          type="button"
-          onClick={() => setShowAddCategoryModal(true)}
-          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+        {/* Category */}
+        <FormSection
+          title="CATEGORY"
+          icon={FolderOpen}
+          headerActions={
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAddCategoryModal(true)}
+              className="text-brand border-brand hover:bg-brand-light"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Add Category
+            </Button>
+          }
         >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Category
-        </Button>
-          </div>
-        </div>
+          {categories.length === 0 ? (
+            <p className="text-sm text-gray-500">No categories added yet.</p>
+          ) : (
+            <div className="space-y-4">
+              {categories.map((category) => (
+                <div key={category.id} className="flex gap-4 items-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
+                    <TextField
+                      label="Category"
+                      value={category.category}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ readOnly: true, sx: assetFieldStyles }}
+                    />
+                    <TextField
+                      label="Amount"
+                      value={category.amount}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ readOnly: true, sx: assetFieldStyles }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveCategory(category.id)}
+                    className="flex items-center justify-center w-8 h-8 rounded-md text-brand hover:bg-brand-light transition-colors shrink-0"
+                    aria-label="Remove category"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </FormSection>
 
-        {/* Action Buttons */}
-        <div className="flex gap-4 justify-center pt-6">
-          <Button
-            type="submit"
-            variant="ghost"
-            className="fm-button-fix fm-button-brand px-8 py-2"
-          >
-            Create
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-            className="fm-button-fix border-brand text-brand hover:bg-brand-selected px-8 py-2"
-          >
-            Cancel
-          </Button>
-        </div>
+        {/* Attachments */}
+        <FormSection title="ATTACHMENTS" icon={Paperclip}>
+          <AttachmentUpload
+            chooseText="Choose File"
+            uploadText="Upload File"
+            emptyText="No file chosen"
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+            multiple
+            files={uploadedFiles}
+            onFilesSelected={handleFileUpload}
+            onRemove={handleRemoveFile}
+          />
+        </FormSection>
+
+        <FormActionBar
+          onCancel={handleCancel}
+          submitLabel="Create"
+          submitAsFormSubmit
+        />
       </form>
 
       {/* Add Category Modal */}

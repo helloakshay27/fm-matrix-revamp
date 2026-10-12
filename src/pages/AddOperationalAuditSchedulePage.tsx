@@ -1671,7 +1671,6 @@ export const AddOperationalAuditSchedulePage = () => {
                     fontWeight: (index === activeStep) ? 600 : 500,
                     padding: '12px 20px',
                     fontSize: '13px',
-                    fontWeight: (index === activeStep) ? 600 : 500,
                     textAlign: 'center',
                     minWidth: '140px',
                     height: '40px',

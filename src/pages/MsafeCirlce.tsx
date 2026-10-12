@@ -234,35 +234,43 @@ const MsafeCirlce = () => {
             />
 
 
-            <Dialog open={isAddModalOpen} onClose={handleClose} maxWidth="sm" fullWidth>
-                <DialogContent>
+            <Dialog open={isAddModalOpen} onClose={handleClose} maxWidth="sm" fullWidth sx={{ '& .MuiPaper-root': { borderRadius: '24px' } }}>
+                <DialogContent sx={{ padding: '28px' }}>
                     <div>
                         <h1 className='text-xl mb-6 mt-2 font-semibold'>{isEditing ? 'Edit Circle' : 'Add Circle'}</h1>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <TextField
-                            label="Circle Name*"
-                            name="circleName"
-                            value={circle}
-                            onChange={(e) => setCircle(e.target.value)}
-                            type='text'
-                            fullWidth
-                            variant="outlined"
-                            InputLabelProps={{ shrink: true }}
-                            InputProps={{ sx: fieldStyles }}
-                            sx={{ mt: 1 }}
-                        />
+                        <div>
+                            <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">Circle Name*</label>
+                            <TextField
+                                name="circleName"
+                                value={circle}
+                                onChange={(e) => setCircle(e.target.value)}
+                                type='text'
+                                placeholder="Circle Name"
+                                fullWidth
+                                variant="outlined"
+                                InputProps={{ sx: fieldStyles }}
+                                sx={{ mt: 1 }}
+                            />
+                        </div>
 
-                        <div className="pt-4">
-                            <Button
+                        <div className="fm-action-bar pt-4">
+                            <button
+                                type="button"
+                                onClick={handleClose}
+                                className="fm-action-secondary"
+                            >
+                                Cancel
+                            </button>
+                            <button
                                 type="submit"
-                                variant="outline"
-                                className="fm-button-fix fm-button-brand w-full"
+                                className="fm-action-primary"
                                 disabled={submitting}
                             >
-                                Submit
-                            </Button>
+                                {submitting ? 'Submitting...' : 'Submit'}
+                            </button>
                         </div>
                     </form>
                 </DialogContent>

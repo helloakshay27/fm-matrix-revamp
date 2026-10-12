@@ -5,8 +5,8 @@ import { toast } from 'sonner';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Checkbox, FormControlLabel, Box, FormHelperText } from '@mui/material';
-import { Plus, X, ArrowLeft } from "lucide-react";
+import { TextField, FormControl, Select as MuiSelect, MenuItem, Checkbox, FormControlLabel, Box, FormHelperText } from '@mui/material';
+import { Plus, X, ArrowLeft, ListChecks } from "lucide-react";
 
 interface ApprovalLevel {
   order: number;
@@ -298,20 +298,12 @@ const AddApprovalMatrixPage = () => {
         {/* Function Selection */}
         <div className="mb-8">
           <FormControl fullWidth error={!!functionError}>
-            <InputLabel
-              required
-              shrink={true}
-              sx={{
-                color: '#1a1a1a',
-                '&.Mui-focused': { color: '#C72030' }
-              }}
-            >
-              Function
-            </InputLabel>
+            <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+              Function *
+            </label>
             <MuiSelect
               value={selectedFunction}
               onChange={(e) => { setSelectedFunction(e.target.value); setFunctionError(''); }}
-              label="Function"
               sx={{
                 '& .MuiOutlinedInput-notchedOutline': {
                   borderColor: '#D5DbDB',
@@ -336,11 +328,11 @@ const AddApprovalMatrixPage = () => {
 
         {/* Approval Levels Section */}
         <div className="mb-8">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-              <span className="text-white text-xs font-bold">!</span>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center">
+              <ListChecks className="w-4 h-4 text-[var(--color-ink-68)]" />
             </div>
-            <h2 className="text-xl font-semibold text-[#C72030]">Approval Levels</h2>
+            <h2 className="text-base font-semibold text-[var(--color-text)]">Approval Levels</h2>
           </div>
 
           {approvalLevels.map((level, index) => (
@@ -348,13 +340,15 @@ const AddApprovalMatrixPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
                 {/* Order */}
                 <div className="md:col-span-1">
+                  <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                    Order *
+                  </label>
                   <TextField
-                    label="Order"
+                    placeholder="Order"
                     required
                     value={level.order}
                     type="number"
                     onChange={(e) => updateApprovalLevel(index, 'order', parseInt(e.target.value) || 1)}
-                    InputLabelProps={{ shrink: true }}
                     size="small"
                     fullWidth
                     sx={{
@@ -372,13 +366,14 @@ const AddApprovalMatrixPage = () => {
 
                 {/* Name of Level */}
                 <div className="md:col-span-3">
+                  <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                    Name of Level *
+                  </label>
                   <TextField
-                    label="Name of Level"
+                    placeholder="Name of Level"
                     required
-                    placeholder="Enter Name of Level"
                     value={level.name}
                     onChange={(e) => updateApprovalLevel(index, 'name', e.target.value)}
-                    InputLabelProps={{ shrink: true }}
                     size="small"
                     fullWidth
                     sx={{
@@ -397,21 +392,13 @@ const AddApprovalMatrixPage = () => {
                 {/* Users */}
                 <div className="md:col-span-5">
                   <FormControl fullWidth size="small" error={!!levelErrors[index]?.users}>
-                    <InputLabel
-                      required
-                      shrink={true}
-                      sx={{
-                        color: '#1a1a1a',
-                        '&.Mui-focused': { color: '#C72030' }
-                      }}
-                    >
-                      Users
-                    </InputLabel>
+                    <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                      Users *
+                    </label>
                     <MuiSelect
                       multiple
                       value={level.users}
                       onChange={(e) => updateApprovalLevel(index, 'users', e.target.value)}
-                      label="Users"
                       renderValue={(selected) => {
                         if (selected.length === 0) return 'Select up to 15 Options...';
                         if (!Array.isArray(users)) return 'Loading...';
@@ -478,7 +465,7 @@ const AddApprovalMatrixPage = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => removeApprovalLevel(index)}
-                      className="bg-brand text-white [&_svg]:!text-white w-12 h-12 rounded-lg p-0"
+                      className="bg-[#1a1a18] hover:bg-[#12100e] text-white [&_svg]:!text-white w-12 h-12 rounded-lg p-0"
                     >
                       <X className="w-4 h-4" />
                     </Button>
@@ -492,31 +479,31 @@ const AddApprovalMatrixPage = () => {
           <Button
             variant="ghost"
             onClick={addApprovalLevel}
-            className="bg-brand text-white [&_svg]:!text-white w-12 h-12 rounded-lg p-0"
+            className="bg-[#1a1a18] hover:bg-[#12100e] text-white [&_svg]:!text-white w-12 h-12 rounded-lg p-0"
           >
             <Plus className="w-6 h-6" />
           </Button>
         </div>
+      </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-4 pt-6 border-t border-gray-200">
-          <Button
-            onClick={handleCreate}
-            disabled={isSubmitting}
-            className="fm-button-fix fm-button-brand-solid px-8 py-2"
-          >
-            {isSubmitting ? 'Creating...' : 'Create'}
-          </Button>
-
-          <Button
-            variant="outline"
-            onClick={handleSaveAndCreateNew}
-           className="fm-button-fix fm-button-brand-solid px-4 py-2"
-          variant="ghost"
-          >
-            Save And Create New
-          </Button>
-        </div>
+      {/* Action Buttons */}
+      <div className="fm-action-bar mt-6">
+        <button
+          type="button"
+          onClick={handleSaveAndCreateNew}
+          disabled={isSubmitting}
+          className="fm-action-secondary"
+        >
+          Save And Create New
+        </button>
+        <button
+          type="button"
+          onClick={handleCreate}
+          disabled={isSubmitting}
+          className="fm-action-primary"
+        >
+          {isSubmitting ? 'Creating...' : 'Create'}
+        </button>
       </div>
     </div>
   );

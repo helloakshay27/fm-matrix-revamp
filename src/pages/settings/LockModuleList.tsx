@@ -209,9 +209,15 @@ export const LockModuleList = () => {
         return module.module_type || "-";
       case "status":
         return (
-          <Badge variant={module.active ? "default" : "secondary"}>
+          <span
+            className={
+              module.active
+                ? "rounded-full bg-green-100 px-[10px] py-[3px] text-[11px] font-medium text-green-700"
+                : "rounded-full bg-gray-100 px-[10px] py-[3px] text-[11px] font-medium text-gray-600"
+            }
+          >
             {module.active ? "Active" : "Inactive"}
-          </Badge>
+          </span>
         );
       case "rate":
         return module.rate
@@ -227,7 +233,7 @@ export const LockModuleList = () => {
   const leftActions = shouldShow("Lock Module", "create") ? (
     <Button
       onClick={() => setCreateDialogOpen(true)}
-      className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
+      className="bg-[#1a1a18] hover:bg-[#12100e] text-white h-9 px-4 text-sm font-medium"
     >
       <Plus className="w-4 h-4 mr-2" />
       Add Module

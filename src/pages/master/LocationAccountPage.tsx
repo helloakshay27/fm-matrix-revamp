@@ -2,13 +2,69 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Upload, X, Edit, File } from 'lucide-react';
+import { Plus, Upload, X, Edit } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { useApiConfig } from '@/hooks/useApiConfig';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { AttachmentUpload } from '@/components/common/AttachmentUpload';
+
+// Column configs â€” har tab ka apna EnhancedTable
+const countryColumns: ColumnConfig[] = [
+  { key: 'name', label: 'Country', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'status', label: 'Status', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+];
+
+const regionColumns: ColumnConfig[] = [
+  { key: 'country', label: 'Country', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'region', label: 'Region', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'status', label: 'Status', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+];
+
+const zoneColumns: ColumnConfig[] = [
+  { key: 'country', label: 'Country', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'region', label: 'Region', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'zone', label: 'Zone', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'status', label: 'Status', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'icon', label: 'Icon', sortable: false, hideable: true, defaultVisible: true, draggable: true },
+];
+
+const siteColumns: ColumnConfig[] = [
+  { key: 'country', label: 'Country', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'region', label: 'Region', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'zone', label: 'Zone', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'site', label: 'Site', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'latitude', label: 'Latitude', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'longitude', label: 'Longitude', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'status', label: 'Status', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'qrCode', label: 'QR Code', sortable: false, hideable: true, defaultVisible: true, draggable: true },
+];
+
+const entityColumns: ColumnConfig[] = [
+  { key: 'status', label: 'Active', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'entity', label: 'Entity', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+];
+
+const userCategoryColumns: ColumnConfig[] = [
+  { key: 'id', label: 'ID', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'name', label: 'Name', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'resource_type', label: 'Resource Type', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'created_at', label: 'Created At', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+];
+
+// Rows me original array index (_index) rakhte hain taaki status toggle handlers
+// sort/filter/pagination ke baad bhi sahi row update karein. Client search khud karte
+// hain (sirf diye gaye text fields pe) â€” warna _index / boolean status bhi match ho jaate.
+const filterRows = <T extends Record<string, any>>(rows: T[], term: string, fields: (keyof T)[]) => {
+  const query = term.trim().toLowerCase();
+  if (!query) return rows;
+  return rows.filter(row => fields.some(field => String(row[field] ?? '').toLowerCase().includes(query)));
+};
+
+const brandSwitchClass = 'data-[state=checked]:bg-brand data-[state=unchecked]:bg-gray-300';
+const addButtonClass = 'bg-brand hover:bg-brand-hover text-white';
 
 // List of all world countries
 const worldCountries = [
@@ -37,11 +93,22 @@ const worldCountries = [
 export const LocationAccountPage = () => {
   const { getFullUrl, getAuthHeader } = useApiConfig();
   const [activeTab, setActiveTab] = useState('organization');
-  const [searchQuery, setSearchQuery] = useState('');
+  // Har tab ka apna search term â€” ek tab me type karne se dusra filter nahi hota
+  const [tableSearch, setTableSearch] = useState({
+    country: '',
+    region: '',
+    zone: '',
+    site: '',
+    entity: '',
+    userCategory: '',
+  });
+  const setSearchFor = (key: keyof typeof tableSearch) => (value: string) =>
+    setTableSearch(prev => ({ ...prev, [key]: value }));
   const [companyName, setCompanyName] = useState("");
   const [removeLogo, setRemoveLogo] = useState(false);
   const [dailyReport, setDailyReport] = useState(false);
-  const [entriesPerPage, setEntriesPerPage] = useState('25');
+  const [companyLogoFile, setCompanyLogoFile] = useState<File | null>(null);
+  const [zoneImageFile, setZoneImageFile] = useState<File | null>(null);
   const [entityName, setEntityName] = useState('');
   const [userCategoryName, setUserCategoryName] = useState('');
   const [isAddCountryOpen, setIsAddCountryOpen] = useState(false);
@@ -142,9 +209,10 @@ export const LocationAccountPage = () => {
     }
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleFileUpload = (files: File[]) => {
+    const file = files[0];
     if (file) {
+      setCompanyLogoFile(file);
       toast.success('File uploaded successfully');
     }
   };
@@ -329,9 +397,10 @@ export const LocationAccountPage = () => {
     setEditZoneData({ zoneName: '', headquarter: '', region: '' });
   };
 
-  const handleZoneFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleZoneFileUpload = (files: File[]) => {
+    const file = files[0];
     if (file) {
+      setZoneImageFile(file);
       toast.success('Zone image uploaded successfully');
     }
   };
@@ -419,6 +488,18 @@ export const LocationAccountPage = () => {
     setIsAddZoneOpen(false);
   };
 
+  // Table rows (original index ke saath) + per-tab search
+  const countryRows = filterRows(countries.map((c, _index) => ({ ...c, _index })), tableSearch.country, ['name']);
+  const regionRows = filterRows(regions.map((r, _index) => ({ ...r, _index })), tableSearch.region, ['country', 'region']);
+  const zoneRows = filterRows(zones.map((z, _index) => ({ ...z, _index })), tableSearch.zone, ['country', 'region', 'zone']);
+  const siteRows = filterRows(sites.map((s, _index) => ({ ...s, _index })), tableSearch.site, ['country', 'region', 'zone', 'site', 'latitude', 'longitude']);
+  const entityRows = filterRows(entities.map((e, _index) => ({ ...e, _index })), tableSearch.entity, ['entity']);
+  const userCategoryRows = filterRows(
+    userCategories.map((category, _index) => ({ ...category, _index })),
+    tableSearch.userCategory,
+    ['id', 'name', 'resource_type']
+  );
+
   return (
     <div className="p-6 bg-white min-h-screen">
       <div className="mb-6">
@@ -426,15 +507,25 @@ export const LocationAccountPage = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-8 mb-6">
-          <TabsTrigger value="organization">Organization</TabsTrigger>
-          <TabsTrigger value="company">Company</TabsTrigger>
-          <TabsTrigger value="country">Country</TabsTrigger>
-          <TabsTrigger value="region">Region</TabsTrigger>
-          <TabsTrigger value="zone">Zone</TabsTrigger>
-          <TabsTrigger value="site">Site</TabsTrigger>
-          <TabsTrigger value="entity">Entity</TabsTrigger>
-          <TabsTrigger value="user-category">User Category</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-8 mb-6 bg-white border border-gray-200">
+          {[
+            { value: 'organization', label: 'Organization' },
+            { value: 'company', label: 'Company' },
+            { value: 'country', label: 'Country' },
+            { value: 'region', label: 'Region' },
+            { value: 'zone', label: 'Zone' },
+            { value: 'site', label: 'Site' },
+            { value: 'entity', label: 'Entity' },
+            { value: 'user-category', label: 'User Category' },
+          ].map((tab) => (
+            <TabsTrigger
+              key={tab.value}
+              value={tab.value}
+              className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+            >
+              {tab.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         <TabsContent value="organization" className="space-y-4">
@@ -452,21 +543,16 @@ export const LocationAccountPage = () => {
           <Card>
             <CardContent className="p-6 space-y-6">
               {/* File Upload */}
-              <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center">
-                <p className="text-gray-600">
-                  Drag & Drop or{' '}
-                  <label className="text-orange-500 cursor-pointer underline">
-                    Choose File
-                    <input
-                      type="file"
-                      className="hidden"
-                      onChange={handleFileUpload}
-                      accept="image/*"
-                    />
-                  </label>
-                  {' '}No file chosen
-                </p>
-              </div>
+              <AttachmentUpload
+                label="Company Logo"
+                chooseText="Choose Logo"
+                uploadText="Upload Logo"
+                emptyText="No file chosen"
+                accept="image/*"
+                files={companyLogoFile ? [companyLogoFile] : []}
+                onFilesSelected={handleFileUpload}
+                onRemove={() => setCompanyLogoFile(null)}
+              />
 
               {/* Company Name */}
               <div>
@@ -514,7 +600,7 @@ export const LocationAccountPage = () => {
               <div className="flex justify-center">
                 <Button
                   onClick={handleSubmitCompany}
-                  className="bg-[#C72030] hover:bg-[#A01020] text-white px-8"
+                  className="bg-brand hover:bg-brand-hover text-white px-8"
                 >
                   Submit
                 </Button>
@@ -524,10 +610,35 @@ export const LocationAccountPage = () => {
         </TabsContent>
 
         <TabsContent value="country" className="space-y-4">
-          <div className="flex items-center justify-between mb-4">
+          <EnhancedTable
+            data={countryRows}
+            columns={countryColumns}
+            getItemId={(item) => String(item._index)}
+            storageKey="account-country-table"
+            renderCell={(item, columnKey) => {
+              if (columnKey === 'status') {
+                return (
+                  <Switch
+                    checked={item.status}
+                    onCheckedChange={(checked) => handleCountryStatusChange(item._index, checked)}
+                    className={brandSwitchClass}
+                  />
+                );
+              }
+              return item[columnKey as keyof typeof item] as React.ReactNode;
+            }}
+            enableSearch={true}
+            searchTerm={tableSearch.country}
+            onSearchChange={setSearchFor('country')}
+            disableClientSearch={true}
+            searchPlaceholder="Search countries..."
+            emptyMessage="No countries found"
+            pagination={true}
+            pageSize={10}
+            leftActions={
             <Dialog open={isAddCountryOpen} onOpenChange={setIsAddCountryOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                <Button className={addButtonClass}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add Countries
                 </Button>
@@ -565,7 +676,7 @@ export const LocationAccountPage = () => {
                       Cancel
                     </Button>
                     <Button
-                      className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                      className="bg-brand hover:bg-brand-hover text-white"
                       onClick={handleAddCountry}
                     >
                       Add Country
@@ -574,64 +685,41 @@ export const LocationAccountPage = () => {
                 </div>
               </DialogContent>
             </Dialog>
-            <div className="flex items-center gap-4">
-              <select
-                value={entriesPerPage}
-                onChange={(e) => setEntriesPerPage(e.target.value)}
-                className="border border-gray-300 rounded px-2 py-1 text-sm"
-              >
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-              </select>
-              <span className="text-sm text-gray-600">entries per page</span>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  placeholder="Search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="border border-gray-300 rounded px-3 py-1 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-[#C72030]"
-                />
-              </div>
-            </div>
-          </div>
-
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold">Country</TableHead>
-                    <TableHead className="font-semibold">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {countries.filter(country =>
-                    country.name.toLowerCase().includes(searchQuery.toLowerCase())
-                  ).map((country, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{country.name}</TableCell>
-                      <TableCell>
-                        <Switch
-                          checked={country.status}
-                          onCheckedChange={(checked) => handleCountryStatusChange(index, checked)}
-                          className="data-[state=checked]:bg-brand data-[state=unchecked]:bg-gray-300"
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+            }
+          />
         </TabsContent>
 
         <TabsContent value="region" className="space-y-4">
-          <div className="flex items-center justify-between mb-4">
+          <EnhancedTable
+            data={regionRows}
+            columns={regionColumns}
+            getItemId={(item) => String(item._index)}
+            storageKey="account-region-table"
+            renderCell={(item, columnKey) => {
+              if (columnKey === 'status') {
+                return (
+                  <Switch
+                    checked={item.status}
+                    onCheckedChange={(checked) => handleRegionStatusChange(item._index, checked)}
+                    className={brandSwitchClass}
+                  />
+                );
+              }
+              return item[columnKey as keyof typeof item] as React.ReactNode;
+            }}
+            enableSearch={true}
+            searchTerm={tableSearch.region}
+            onSearchChange={setSearchFor('region')}
+            disableClientSearch={true}
+            searchPlaceholder="Search regions..."
+            emptyMessage="No regions found"
+            pagination={true}
+            pageSize={10}
+            leftActions={
             <Dialog open={isAddRegionOpen} onOpenChange={setIsAddRegionOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                <Button className={addButtonClass}>
+                  <Plus className="w-4 h-4 mr-2" />
                   Add Region
                 </Button>
               </DialogTrigger>
@@ -680,7 +768,7 @@ export const LocationAccountPage = () => {
                       Cancel
                     </Button>
                     <Button
-                      className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                      className="bg-brand hover:bg-brand-hover text-white"
                       onClick={handleAddRegion}
                     >
                       Add Region
@@ -689,65 +777,49 @@ export const LocationAccountPage = () => {
                 </div>
               </DialogContent>
             </Dialog>
-            <div className="flex items-center gap-4">
-              <select
-                value={entriesPerPage}
-                onChange={(e) => setEntriesPerPage(e.target.value)}
-                className="border border-gray-300 rounded px-2 py-1 text-sm"
-              >
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-              </select>
-              <span className="text-sm text-gray-600">entries per page</span>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  placeholder="Search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="border border-gray-300 rounded px-3 py-1 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-[#C72030]"
-                />
-              </div>
-            </div>
-          </div>
-
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold">Country</TableHead>
-                    <TableHead className="font-semibold">Region</TableHead>
-                    <TableHead className="font-semibold">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {regions.map((region, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{region.country}</TableCell>
-                      <TableCell>{region.region}</TableCell>
-                      <TableCell>
-                        <Switch
-                          checked={region.status}
-                          onCheckedChange={(checked) => handleRegionStatusChange(index, checked)}
-                          className="data-[state=checked]:bg-brand data-[state=unchecked]:bg-gray-300"
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+            }
+          />
         </TabsContent>
 
         <TabsContent value="zone" className="space-y-4">
-          <div className="flex items-center justify-between mb-4">
+          <EnhancedTable
+            data={zoneRows}
+            columns={zoneColumns}
+            getItemId={(item) => String(item._index)}
+            storageKey="account-zone-table"
+            renderCell={(item, columnKey) => {
+              if (columnKey === 'status') {
+                return (
+                  <Switch
+                    checked={item.status}
+                    onCheckedChange={(checked) => handleZoneStatusChange(item._index, checked)}
+                    className={brandSwitchClass}
+                  />
+                );
+              }
+              if (columnKey === 'icon') {
+                return (
+                  <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
+                    <img src={item.icon} alt="Zone icon" className="w-6 h-6" />
+                  </div>
+                );
+              }
+              return item[columnKey as keyof typeof item] as React.ReactNode;
+            }}
+            enableSearch={true}
+            searchTerm={tableSearch.zone}
+            onSearchChange={setSearchFor('zone')}
+            disableClientSearch={true}
+            searchPlaceholder="Search zones..."
+            emptyMessage="No zones found"
+            pagination={true}
+            pageSize={10}
+            leftActions={
             <div className="flex gap-2">
               <Dialog open={isAddZoneOpen} onOpenChange={setIsAddZoneOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                  <Button className={addButtonClass}>
+                    <Plus className="w-4 h-4 mr-2" />
                     Add Zone
                   </Button>
                 </DialogTrigger>
@@ -811,7 +883,7 @@ export const LocationAccountPage = () => {
                         Cancel
                       </Button>
                       <Button
-                        className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                        className="bg-brand hover:bg-brand-hover text-white"
                         onClick={handleAddZone}
                       >
                         Add Zone
@@ -822,7 +894,8 @@ export const LocationAccountPage = () => {
               </Dialog>
               <Dialog open={isEditZoneOpen} onOpenChange={setIsEditZoneOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                  <Button className={addButtonClass}>
+                    <Edit className="w-4 h-4 mr-2" />
                     Edit Zone
                   </Button>
                 </DialogTrigger>
@@ -867,125 +940,47 @@ export const LocationAccountPage = () => {
                 </DialogContent>
               </Dialog>
             </div>
-            <div className="flex items-center gap-4">
-              <select
-                value={entriesPerPage}
-                onChange={(e) => setEntriesPerPage(e.target.value)}
-                className="border border-gray-300 rounded px-2 py-1 text-sm"
-              >
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-              </select>
-              <span className="text-sm text-gray-600">entries per page</span>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  placeholder="Search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="border border-gray-300 rounded px-3 py-1 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-[#C72030]"
-                />
-              </div>
-            </div>
-          </div>
-
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold">Country</TableHead>
-                    <TableHead className="font-semibold">Region</TableHead>
-                    <TableHead className="font-semibold">Zone</TableHead>
-                    <TableHead className="font-semibold">Status</TableHead>
-                    <TableHead className="font-semibold">Icon</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {zones.filter(zone =>
-                    zone.country.toLowerCase().includes(searchQuery.toLowerCase())
-                  ).map((zone, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{zone.country}</TableCell>
-                      <TableCell>{zone.region}</TableCell>
-                      <TableCell>{zone.zone}</TableCell>
-                      <TableCell>
-                        <Switch
-                          checked={zone.status}
-                          onCheckedChange={(checked) => handleZoneStatusChange(index, checked)}
-                          className="data-[state=checked]:bg-brand data-[state=unchecked]:bg-gray-300"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
-                          <img src={zone.icon} alt="Zone icon" className="w-6 h-6" />
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+            }
+          />
         </TabsContent>
 
         <TabsContent value="site" className="space-y-4">
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold">Country</TableHead>
-                    <TableHead className="font-semibold">Region</TableHead>
-                    <TableHead className="font-semibold">Zone</TableHead>
-                    <TableHead className="font-semibold">Site</TableHead>
-                    <TableHead className="font-semibold">Latitude</TableHead>
-                    <TableHead className="font-semibold">Longitude</TableHead>
-                    <TableHead className="font-semibold">Status</TableHead>
-                    <TableHead className="font-semibold">QR Code</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sites.map((site, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{site.country}</TableCell>
-                      <TableCell>{site.region}</TableCell>
-                      <TableCell>{site.zone}</TableCell>
-                      <TableCell>{site.site}</TableCell>
-                      <TableCell>{site.latitude}</TableCell>
-                      <TableCell>{site.longitude}</TableCell>
-                      <TableCell>
-                        <Switch
-                          checked={site.status}
-                          onCheckedChange={(checked) => handleSiteStatusChange(index, checked)}
-                          className="data-[state=checked]:bg-brand data-[state=unchecked]:bg-gray-300"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
-                          <img src={site.qrCode} alt="QR Code" className="w-6 h-6" />
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          <EnhancedTable
+            data={siteRows}
+            columns={siteColumns}
+            getItemId={(item) => String(item._index)}
+            storageKey="account-site-table"
+            renderCell={(item, columnKey) => {
+              if (columnKey === 'status') {
+                return (
+                  <Switch
+                    checked={item.status}
+                    onCheckedChange={(checked) => handleSiteStatusChange(item._index, checked)}
+                    className={brandSwitchClass}
+                  />
+                );
+              }
+              if (columnKey === 'qrCode') {
+                return (
+                  <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
+                    <img src={item.qrCode} alt="QR Code" className="w-6 h-6" />
+                  </div>
+                );
+              }
+              return item[columnKey as keyof typeof item] as React.ReactNode;
+            }}
+            enableSearch={true}
+            searchTerm={tableSearch.site}
+            onSearchChange={setSearchFor('site')}
+            disableClientSearch={true}
+            searchPlaceholder="Search sites..."
+            emptyMessage="No sites found"
+            pagination={true}
+            pageSize={10}
+          />
         </TabsContent>
 
         <TabsContent value="entity" className="space-y-4">
-          <div className="flex items-center justify-between mb-4">
-            <Button
-              className="bg-[#C72030] hover:bg-[#A01020] text-white"
-              onClick={() => setShowEntityForm(!showEntityForm)}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Entity
-            </Button>
-          </div>
-
           {/* Toggle Form Section */}
           {showEntityForm && (
             <Card className="mb-4">
@@ -1009,7 +1004,7 @@ export const LocationAccountPage = () => {
                     variant="outline"
                     className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6"
                   >
-                    📁 Sample Format
+                    ðŸ“ Sample Format
                   </Button>
                   <Button
                     onClick={handleImportEntity}
@@ -1022,45 +1017,84 @@ export const LocationAccountPage = () => {
             </Card>
           )}
 
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold">Actions</TableHead>
-                    <TableHead className="font-semibold">Active</TableHead>
-                    <TableHead className="font-semibold">Entity</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {entities.map((entity, index) => (
-                    <TableRow key={index}>
-                      <TableCell>
-                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                      <TableCell>
-                        <Switch
-                          checked={entity.status}
-                          onCheckedChange={(checked) => handleEntityStatusChange(index, checked)}
-                          className="data-[state=checked]:bg-brand data-[state=unchecked]:bg-gray-300"
-                        />
-                      </TableCell>
-                      <TableCell>{entity.entity}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          <EnhancedTable
+            data={entityRows}
+            columns={entityColumns}
+            getItemId={(item) => String(item._index)}
+            storageKey="account-entity-table"
+            renderCell={(item, columnKey) => {
+              if (columnKey === 'status') {
+                return (
+                  <Switch
+                    checked={item.status}
+                    onCheckedChange={(checked) => handleEntityStatusChange(item._index, checked)}
+                    className={brandSwitchClass}
+                  />
+                );
+              }
+              return item[columnKey as keyof typeof item] as React.ReactNode;
+            }}
+            renderActions={() => (
+              <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                <Edit className="h-4 w-4" />
+              </Button>
+            )}
+            enableSearch={true}
+            searchTerm={tableSearch.entity}
+            onSearchChange={setSearchFor('entity')}
+            disableClientSearch={true}
+            searchPlaceholder="Search entities..."
+            emptyMessage="No entities found"
+            pagination={true}
+            pageSize={10}
+            leftActions={
+              <Button
+                className={addButtonClass}
+                onClick={() => setShowEntityForm(!showEntityForm)}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Entity
+              </Button>
+            }
+          />
         </TabsContent>
 
         <TabsContent value="user-category" className="space-y-4">
-          <div className="flex items-center justify-between mb-4">
+          <EnhancedTable
+            data={userCategoryRows}
+            columns={userCategoryColumns}
+            getItemId={(item) => String(item.id ?? item._index)}
+            storageKey="account-user-category-table"
+            renderCell={(item, columnKey) => {
+              if (columnKey === 'created_at') {
+                return new Date(item.created_at).toLocaleDateString();
+              }
+              return item[columnKey] as React.ReactNode;
+            }}
+            renderActions={(item) => (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 w-8 p-0"
+                onClick={() => handleEditUserCategory(item)}
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+            )}
+            enableSearch={true}
+            searchTerm={tableSearch.userCategory}
+            onSearchChange={setSearchFor('userCategory')}
+            disableClientSearch={true}
+            searchPlaceholder="Search user categories..."
+            emptyMessage="No user categories found"
+            loading={isLoadingUserCategories}
+            loadingMessage="Loading user categories..."
+            pagination={true}
+            pageSize={10}
+            leftActions={
             <Dialog open={isAddUserCategoryOpen} onOpenChange={setIsAddUserCategoryOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                <Button className={addButtonClass}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add User Category
                 </Button>
@@ -1087,7 +1121,7 @@ export const LocationAccountPage = () => {
                       Cancel
                     </Button>
                     <Button
-                      className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                      className="bg-brand hover:bg-brand-hover text-white"
                       onClick={handleSubmitUserCategory}
                     >
                       Add User Category
@@ -1096,79 +1130,8 @@ export const LocationAccountPage = () => {
                 </div>
               </DialogContent>
             </Dialog>
-            <div className="flex items-center gap-4">
-              <select
-                value={entriesPerPage}
-                onChange={(e) => setEntriesPerPage(e.target.value)}
-                className="border border-gray-300 rounded px-2 py-1 text-sm"
-              >
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-              </select>
-              <span className="text-sm text-gray-600">entries per page</span>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  placeholder="Search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="border border-gray-300 rounded px-3 py-1 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-[#C72030]"
-                />
-                <Button size="sm" variant="outline">Search</Button>
-              </div>
-            </div>
-          </div>
-
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold">ID</TableHead>
-                    <TableHead className="font-semibold">Name</TableHead>
-                    <TableHead className="font-semibold">Resource Type</TableHead>
-                    <TableHead className="font-semibold">Created At</TableHead>
-                    <TableHead className="font-semibold">Edit</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoadingUserCategories ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-4">
-                        Loading user categories...
-                      </TableCell>
-                    </TableRow>
-                  ) : userCategories.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-4">
-                        No user categories found
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    userCategories.map((category, index) => (
-                      <TableRow key={category.id || index}>
-                        <TableCell>{category.id}</TableCell>
-                        <TableCell>{category.name}</TableCell>
-                        <TableCell>{category.resource_type}</TableCell>
-                        <TableCell>{new Date(category.created_at).toLocaleDateString()}</TableCell>
-                        <TableCell>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0"
-                            onClick={() => handleEditUserCategory(category)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+            }
+          />
 
           {/* Edit User Category Dialog */}
           <Dialog open={isEditUserCategoryOpen} onOpenChange={setIsEditUserCategoryOpen}>
@@ -1194,7 +1157,7 @@ export const LocationAccountPage = () => {
                     Cancel
                   </Button>
                   <Button
-                    className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                    className="bg-brand hover:bg-brand-hover text-white"
                     onClick={handleUpdateUserCategory}
                   >
                     Update User Category
@@ -1260,27 +1223,16 @@ export const LocationAccountPage = () => {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Upload Image
-              </label>
-              <div className="flex items-center">
-                <input
-                  type="file"
-                  id="zoneImageUpload"
-                  accept="image/*"
-                  onChange={handleZoneFileUpload}
-                  className="hidden"
-                />
-                <label
-                  htmlFor="zoneImageUpload"
-                  className="cursor-pointer bg-gray-100 border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 transition-colors"
-                >
-                  Choose File
-                </label>
-                <span className="ml-3 text-sm text-gray-500">No file chosen</span>
-              </div>
-            </div>
+            <AttachmentUpload
+              label="Upload Image"
+              chooseText="Choose Zone Image"
+              uploadText="Upload Zone Image"
+              emptyText="No image chosen"
+              accept="image/*"
+              files={zoneImageFile ? [zoneImageFile] : []}
+              onFilesSelected={handleZoneFileUpload}
+              onRemove={() => setZoneImageFile(null)}
+            />
 
             <div className="flex justify-end pt-4">
               <Button

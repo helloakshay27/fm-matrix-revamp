@@ -528,7 +528,7 @@ export const LockFunctionList = () => {
               shouldShow("Lock Function","create") ? (
                 <Button
                   onClick={handleAdd}
-                  className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
+                  className="bg-[#1a1a18] hover:bg-[#12100e] text-white h-9 px-4 text-sm font-medium"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add

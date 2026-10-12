@@ -1508,7 +1508,7 @@ const modulesByPackage = {
       name: "Items",
       icon: FileText,
       subItems: [
-        { name: "Items", href: "/settings/items" },
+        { name: "Items", href: "/accounting/items" },
 
         // { name: "Transactions ", href: "/settings/transactions" },
         // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
@@ -1522,10 +1522,10 @@ const modulesByPackage = {
       name: "Sales",
       icon: FileText,
       subItems: [
-        { name: "Customers", href: "/settings/customers" },
-        { name: "Sales Order", href: "/settings/sales-order" },
+        { name: "Customers", href: "/accounting/customers" },
+        { name: "Sales Order", href: "/accounting/sales-order" },
 
-        { name: "Recurring Invoices ", href: "/settings/recurring-invoices" },
+        { name: "Recurring Invoices ", href: "/accounting/recurring-invoices" },
         // { name: "Transactions ", href: "/settings/transactions" },
         // // { name: "Recurring Journals ", href: "/settings/recurring-journal" },
         // { name: "Chart Of Accounts ", href: "/settings/chart-journal" },
@@ -1539,8 +1539,6 @@ const modulesByPackage = {
       name: "Purchase Orders",
       icon: FileText,
       subItems: [
-        // /settings/purchase-order, /settings/bills and /settings/expense have no
-        // routes (404) — point at the accounting screens, as the Accounting menu does.
         { name: "Purchase Order", href: "/accounting/purchase-order" },
         { name: "Bills", href: "/accounting/bills" },
         { name: "Recurring Bills", href: "/accounting/recurring-bills" },

@@ -4,7 +4,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { X, Plus, ArrowLeft, CheckCircle, Upload, Star } from "lucide-react";
+import {
+  X,
+  Plus,
+  ArrowLeft,
+  CheckCircle,
+  Star,
+  ClipboardList,
+  HelpCircle,
+} from "lucide-react";
+import {
+  FormSection,
+  assetFieldStyles,
+  FormActionBar,
+} from "@/components/common/FormSection";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { apiClient } from "@/utils/apiClient";
@@ -15,13 +28,10 @@ import {
 } from "@/services/ticketManagementAPI";
 import {
   TextField,
-  InputAdornment,
   FormControl,
   InputLabel,
   MenuItem,
   Select as MuiSelect,
-  FormControlLabel,
-  Switch,
 } from "@mui/material";
 
 // --- Interface Definitions ---
@@ -1331,64 +1341,65 @@ export const EditSurveyPage = () => {
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-4 sm:p-6 max-w-full mx-auto min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-4 mb-4">
-          <Button
-            variant="ghost"
-            size="sm"
+      <div className="mb-4 sm:mb-6">
+        <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
+          <button
             onClick={() => navigate("/master/survey/list")}
-            className="p-2"
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
+            aria-label="Go back"
           >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="text-3xl font-bold tracking-tight">Edit Question</h1>
+            <ArrowLeft className="w-4 h-4 text-gray-600" />
+          </button>
+          <span>Question Bank</span>
+          <span>{">"}</span>
+          <span className="text-gray-900 font-medium">Edit Question</span>
         </div>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+          EDIT QUESTION
+        </h1>
       </div>
 
-      <div className="space-y-6">
-        {/* Basic Information Card */}
-        <Card className="w-full">
-          <CardHeader>
-            <CardTitle>Basic Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="space-y-4 sm:space-y-6">
+        {/* Basic Information Section */}
+        <FormSection title="QUESTION SETUP" icon={ClipboardList}>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <TextField
-                  label="Question Title/Name"
+                  label={
+                    <span>
+                      Question Title/Name
+                      <span className="fm-required-mark">*</span>
+                    </span>
+                  }
                   fullWidth
                   id="title"
+                  variant="outlined"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  required
-                  InputLabelProps={{
-                    shrink: true,
-                    sx: { "& .MuiInputLabel-asterisk": { color: "#ef4444" } },
-                  }}
-                  sx={fieldStyles}
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: assetFieldStyles }}
                 />
               </div>
 
               <div className="space-y-2">
-                <FormControl
-                  fullWidth
-                  required
-                  sx={{
-                    ...fieldStyles,
-                    "& .MuiInputLabel-asterisk": { color: "#ef4444" },
-                  }}
-                >
-                  <InputLabel id="check-type-label">
-                    Select Check Type
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="check-type-label" shrink>
+                    <span>
+                      Select Check Type
+                      <span className="fm-required-mark">*</span>
+                    </span>
                   </InputLabel>
                   <MuiSelect
                     labelId="check-type-label"
                     id="checkType"
                     value={checkType}
-                    label="Select Check Type"
+                    label="Select Check Type*"
+                    notched
                     onChange={(e) => setCheckType(e.target.value)}
+                    sx={assetFieldStyles}
                   >
                     <MenuItem value="survey">Survey</MenuItem>
                     <MenuItem value="patrolling">Patrolling</MenuItem>
@@ -1406,7 +1417,7 @@ export const EditSurveyPage = () => {
                   id="form-view"
                   checked={formView}
                   onChange={(e) => setFormView(e.target.checked)}
-                  className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2 accent-[#C72030] cursor-pointer"
+                  className="w-4 h-4 text-brand bg-white border-gray-300 rounded focus:ring-brand focus:ring-2 accent-brand cursor-pointer"
                 />
                 <label
                   htmlFor="form-view"
@@ -1425,7 +1436,7 @@ export const EditSurveyPage = () => {
                   id="create-ticket"
                   checked={createTicket}
                   onChange={(e) => setCreateTicket(e.target.checked)}
-                  className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2 accent-[#C72030] cursor-pointer"
+                  className="w-4 h-4 text-brand bg-white border-gray-300 rounded focus:ring-brand focus:ring-2 accent-brand cursor-pointer"
                 />
                 <label
                   htmlFor="create-ticket"
@@ -1436,24 +1447,23 @@ export const EditSurveyPage = () => {
               </div>
 
               {createTicket && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-lg">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
                   <div className="space-y-2">
-                    <FormControl
-                      fullWidth
-                      required
-                      sx={{
-                        ...fieldStyles,
-                        "& .MuiInputLabel-asterisk": { color: "#ef4444" },
-                      }}
-                    >
-                      <InputLabel id="ticket-category-label">
-                        Ticket Category
+                    <FormControl fullWidth variant="outlined">
+                      <InputLabel id="ticket-category-label" shrink>
+                        <span>
+                          Ticket Category
+                          <span className="fm-required-mark">*</span>
+                        </span>
                       </InputLabel>
                       <MuiSelect
                         labelId="ticket-category-label"
                         id="ticketCategory"
                         value={ticketCategoryId}
-                        label="Ticket Category"
+                        label="Ticket Category*"
+                        notched
+                        displayEmpty
+                        sx={assetFieldStyles}
                         onChange={(e) =>
                           handleTicketCategoryChange(e.target.value)
                         }
@@ -1477,13 +1487,8 @@ export const EditSurveyPage = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <FormControl
-                      fullWidth
-                      sx={{
-                        ...fieldStyles,
-                      }}
-                    >
-                      <InputLabel id="ticket-subcategory-label">
+                    <FormControl fullWidth variant="outlined">
+                      <InputLabel id="ticket-subcategory-label" shrink>
                         Ticket Sub Category
                       </InputLabel>
                       <MuiSelect
@@ -1491,6 +1496,9 @@ export const EditSurveyPage = () => {
                         id="ticketSubCategory"
                         value={ticketSubCategory}
                         label="Ticket Sub Category"
+                        notched
+                        displayEmpty
+                        sx={assetFieldStyles}
                         onChange={(e) => setTicketSubCategory(e.target.value)}
                         disabled={
                           loadingTicketSubCategories || !ticketCategoryId
@@ -1583,15 +1591,11 @@ export const EditSurveyPage = () => {
                 )}
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </FormSection>
 
-        {/* Questions Card */}
-        <Card className="w-full">
-          <CardHeader>
-            <CardTitle>Questions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
+        {/* Questions Section */}
+        <FormSection title="QUESTIONS" icon={HelpCircle}>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -2191,7 +2195,7 @@ export const EditSurveyPage = () => {
                                               "& input": {
                                                 color:
                                                   field.files.length > 0
-                                                    ? "#C72030"
+                                                    ? "var(--color-primary)"
                                                     : "inherit",
                                                 fontWeight:
                                                   field.files.length > 0
@@ -2431,31 +2435,20 @@ export const EditSurveyPage = () => {
                   variant="outline"
                   className="fm-button-fix border-dashed"
                 >
-                  <Plus className="w-4 h-4 mr-2 text-[#C72030]" />
+                  <Plus className="w-4 h-4 mr-2 text-brand" />
                   Add More Questions
                 </Button>
               </div>
-
-              <div className="flex justify-center gap-4 pt-6">
-                <Button
-                  onClick={handleUpdateQuestion}
-                  disabled={loading || isSubmitting}
-                  variant="ghost"
-                  className="fm-button-fix fm-button-brand px-8"
-                >
-                  {loading || isSubmitting ? "Updating..." : "Update Question"}
-                </Button>
-                <Button
-                  onClick={() => navigate("/master/survey/list")}
-                  variant="outline"
-                  className="fm-button-fix px-8"
-                >
-                  Cancel
-                </Button>
-              </div>
             </div>
-          </CardContent>
-        </Card>
+        </FormSection>
+
+        {/* Action Buttons */}
+        <FormActionBar
+          onCancel={() => navigate("/master/survey/list")}
+          onSubmit={handleUpdateQuestion}
+          submitLabel="Update Question"
+          isSubmitting={loading || isSubmitting}
+        />
       </div>
     </div>
   );

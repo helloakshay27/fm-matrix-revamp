@@ -325,7 +325,7 @@
 .ticket-analytics-kpi-value {
   color: var(--color-text);
   font-family: 'Work Sans', sans-serif;
-  font-size: 24px;
+  font-size: 26px;
   font-variant-numeric: tabular-nums;
   font-weight: 700;
 }
@@ -4887,33 +4887,6 @@ button[title="Exporting..."] .lucide {
   stroke: var(--color-primary) !important;
 }
 
-/* Toolbar icon buttons sit next to the table search box: same hairline
-   border as the search input (.border-gray-300 → --color-line), ink icon,
-   soft grey hover. Wins over the ink-border rules above. */
-html body button:is([title="Filter"], [title="Columns"], [title="Refresh"], [title="Export"], [title="Exporting..."]) {
-  background-color: #ffffff !important;
-  border: 1px solid var(--color-line) !important;
-  color: var(--color-primary) !important;
-}
-/* Icon-only toolbar buttons: same 44px height as the table search input, square.
-   (Labelled "Refresh"/"Filters" buttons elsewhere keep their own width.) */
-html body button:is([title="Filter"], [title="Columns"], [title="Refresh"], [title="Export"], [title="Exporting..."]):is([class*="w-8"], [class*="w-9"], [class*="w-[28px]"], [class*="w-[36px]"]) {
-  height: 44px !important;
-  min-height: 44px !important;
-  width: 44px !important;
-  min-width: 44px !important;
-  padding: 0 !important;
-}
-html body button:is([title="Filter"], [title="Columns"], [title="Refresh"], [title="Export"], [title="Exporting..."]):hover {
-  background-color: var(--color-hover) !important;
-  border-color: rgba(26, 26, 24, 0.28) !important;
-  color: var(--color-primary) !important;
-}
-html body button:is([title="Filter"], [title="Columns"], [title="Refresh"], [title="Export"], [title="Exporting..."]) :is(svg, .lucide) {
-  color: var(--color-primary) !important;
-  stroke: currentColor !important;
-}
-
 /* ===========================================
    DESIGN GUIDE — Additional old analytics colors → new 6-color palette
    April 2026: covers every "use X instead of Y" entry from the design spec
@@ -7407,7 +7380,7 @@ html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [c
 html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"]) {
   margin: 0 !important;
   font-size: 26px !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   line-height: 1.2 !important;
   letter-spacing: -0.01em !important;
   color: #1a1a18 !important;
@@ -7430,14 +7403,160 @@ html body div[class*="bg-[#F6F4EE]" i]:has(> [class*="bg-[#C4B89D54]" i] + div >
 }
 
 /* ============================================================
-   MODALS & CARDS — 16px corners everywhere
-   Centred shadcn dialogs / alert dialogs (side sheets & popovers are
-   excluded by the centring classes), MUI dialog papers and MUI cards.
-   Buttons inside keep their own 8px radius.
+   BUSINESS GENIE DESIGN SYSTEM — AUDIT REMEDIATION (ST01 - ST60)
+   Global CSS overrides targeting standard Business Genie visual tokens:
+   - 24px radius and 28px padding for modal shells
+   - 8px radius on standard, cancel, and outline buttons
+   - 999px radius and low-saturation tints on status pills
+   - 16px table wrappers and right-aligned tabular numerics
+   - Neutral 2px dashed border for file upload drop zones
+   - Neutral chips for selected users and tags
+   - Scoped bottom-centre ink feedback toasts with 8px corners
    ============================================================ */
-html body [role="dialog"][class*="translate-x-[-50%]"],
-html body [role="alertdialog"][class*="translate-x-[-50%]"],
-html body .MuiDialog-paper,
-html body .MuiCard-root {
-  border-radius: 16px !important;
+
+/* 1. Modal and Dialog Shells (ST03, ST06, ST08-ST11, ST15, ST17, ST19, ST22, ST25, ST31, ST32, ST35, ST37, ST40, ST42, ST44, ST45, ST53, ST54) */
+html body:has([data-settings-scope="true"]) div[role="dialog"][data-state],
+html body:has([data-settings-scope="true"]) div[role="alertdialog"],
+html body:has([data-settings-scope="true"]) .MuiDialog-paper,
+html body [data-settings-modal],
+html body .settings-dialog {
+  border-radius: 24px !important;
+  padding: 28px !important;
+  border: 1px solid rgba(26, 26, 24, 0.08) !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12) !important;
 }
+html body:has([data-settings-scope="true"]) div[role="dialog"] > div[class*="p-6"]:first-child,
+html body:has([data-settings-scope="true"]) div[role="dialog"] > div[class*="p-8"]:first-child,
+html body [data-settings-modal] > div[class*="p-6"]:first-child,
+html body [data-settings-modal] > div[class*="p-8"]:first-child {
+  padding: 0 !important;
+}
+
+/* 2. Button Hierarchy & Corner Radii: 8px corners across buttons */
+html body button.rounded-none,
+html body [role="button"].rounded-none,
+html body .btn-brand,
+html body .MuiButton-root {
+  border-radius: var(--radius-button, 8px) !important;
+}
+html body button.border-gray-300:not(.fm-action-primary),
+html body button[class*="border-gray-300"]:not(.fm-action-primary),
+html body button.border-brand:not(.fm-action-primary):not(.bg-brand),
+html body button.border-input:not(.fm-action-primary),
+html body .fm-action-secondary,
+html body .fm-action-outline,
+html body .MuiButton-outlinedSecondary {
+  border: 1px solid rgba(26, 26, 24, 0.15) !important;
+  color: #1a1a18 !important;
+  background-color: #ffffff !important;
+  border-radius: 8px !important;
+}
+html body button.border-gray-300:hover:not(.fm-action-primary),
+html body button[class*="border-gray-300"]:hover:not(.fm-action-primary),
+html body button.border-brand:hover:not(.fm-action-primary):not(.bg-brand),
+html body button.border-input:hover:not(.fm-action-primary),
+html body .fm-action-secondary:hover,
+html body .fm-action-outline:hover {
+  background-color: #f7f6f2 !important;
+  border-color: rgba(26, 26, 24, 0.28) !important;
+}
+html body button[class*="h-8"][class*="w-8"] {
+  border-radius: 8px !important;
+}
+
+/* 3. Entity Status Pills: 999px radius, low-saturation tint & text, 3px 10px, 11px/500 */
+html body span.rounded-full:is([class*="bg-green-"], [class*="bg-emerald-"], [class*="text-green-"], [class*="text-emerald-"]) {
+  background-color: #e0f7ea !important;
+  color: #12a150 !important;
+  padding: 3px 10px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  border-radius: 9999px !important;
+  line-height: 1.4 !important;
+}
+html body span.rounded-full:is([class*="bg-red-"], [class*="text-red-"]) {
+  background-color: #fbdcdc !important;
+  color: #a32126 !important;
+  padding: 3px 10px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  border-radius: 9999px !important;
+  line-height: 1.4 !important;
+}
+html body span.rounded-full:is([class*="bg-amber-"], [class*="bg-yellow-"], [class*="text-amber-"], [class*="text-yellow-"]) {
+  background-color: #fff2d6 !important;
+  color: #b37400 !important;
+  padding: 3px 10px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  border-radius: 9999px !important;
+  line-height: 1.4 !important;
+}
+
+/* 4. Table Wrappers and Numeric Alignment (ST04, ST20, ST28) */
+html body .asset-management-table-wrapper,
+html body .task-status-table-wrapper,
+html body div:has(> table.asset-management-table),
+html body div:has(> table.task-status-table) {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(26, 26, 24, 0.12) !important;
+}
+html body table.asset-management-table td:not(:first-child),
+html body table.task-status-table td:not(:first-child) {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+/* 5. Neutral 2px Dashed Drop Zones (ST37, ST42, ST44) */
+html body div.border-dashed[class*="border-yellow"],
+html body div.border-dashed[class*="border-amber"],
+html body div.border-dashed:not([class*="border-gray"]):not([class*="border-neutral"]) {
+  border: 2px dashed rgba(26, 26, 24, 0.2) !important;
+  border-radius: 12px !important;
+  background-color: #faf9f6 !important;
+}
+
+/* 6. Selection Chips (ST26.3): Neutral surface and readable ink text */
+html body .MuiChip-root.MuiChip-outlinedPrimary,
+html body .MuiChip-root[class*="MuiChip-colorPrimary"] {
+  background-color: #f5f4f0 !important;
+  color: #1a1a18 !important;
+  border-color: rgba(26, 26, 24, 0.15) !important;
+  border-radius: 6px !important;
+}
+html body .MuiChip-root .MuiChip-deleteIcon {
+  color: rgba(26, 26, 24, 0.48) !important;
+}
+html body .MuiChip-root .MuiChip-deleteIcon:hover {
+  color: #1a1a18 !important;
+}
+
+/* 7. Scoped Settings Feedback Toasts (ST60.1) */
+html body [data-sonner-toaster].settings-toaster [data-sonner-toast],
+html body [data-sonner-toaster] [data-sonner-toast].settings-toast,
+html body [data-sonner-toast].settings-toast,
+html body .settings-toast {
+  background-color: #1a1a18 !important;
+  color: #ffffff !important;
+  border-radius: 8px !important;
+  padding: 10px 20px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+}
+html body [data-sonner-toaster].settings-toaster [data-sonner-toast] [data-icon],
+html body [data-sonner-toaster] [data-sonner-toast].settings-toast [data-icon],
+html body [data-sonner-toast].settings-toast [data-icon],
+html body .settings-toast [data-icon] {
+  color: #3dd68c !important;
+}
+html body [data-sonner-toaster].settings-toaster [data-sonner-toast] [data-close-button],
+html body [data-sonner-toaster] [data-sonner-toast].settings-toast [data-close-button],
+html body [data-sonner-toast].settings-toast [data-close-button],
+html body .settings-toast [data-close-button] {
+  color: #ffffff !important;
+  opacity: 0.7;
+}
+

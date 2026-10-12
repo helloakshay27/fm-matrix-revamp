@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Switch } from '@/components/ui/switch';
 import { FormControl as MuiFormControl, InputLabel, Select as MuiSelect, MenuItem, TextField } from '@mui/material';
-import { Edit, Plus, Loader2 } from 'lucide-react';
+import { Edit, Plus } from 'lucide-react';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useAppDispatch } from '@/store/hooks';
 import { createMasterUnit, fetchMasterUnits, fetchMeterType, updateMeterUnitType, updateMeterType } from '@/store/slices/unitMaster';
@@ -38,6 +39,13 @@ const selectMenuProps = {
   disableAutoFocus: true,
   disableEnforceFocus: true,
 };
+
+const unitMasterColumns: ColumnConfig[] = [
+  { key: 'name', label: 'Meter Category', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'unit_name', label: 'Unit name', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'meter_type', label: 'Meter Type', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'active', label: 'Status', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+];
 
 interface AddMeterModalProps {
   isOpen: boolean;
@@ -366,6 +374,7 @@ export const UnitMasterByDefaultPage = () => {
   const [selectedMeter, setSelectedMeter] = useState(null);
   const [meters, setMeters] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchMeters = async () => {
     setLoading(true);
@@ -407,79 +416,84 @@ export const UnitMasterByDefaultPage = () => {
     }
   };
 
+  const getUnitNames = (meter: any) =>
+    Array.isArray(meter.unit_name) ? meter.unit_name.join(', ') : meter.unit_name;
+
+  // unit_name array ho sakta hai — isliye EnhancedTable ka client search band karke
+  // category / unit name / meter type pe khud filter karte hain
+  const query = searchTerm.trim().toLowerCase();
+  const filteredMeters = query
+    ? meters.filter((meter: any) =>
+        [meter.name, getUnitNames(meter), meter.meter_type]
+          .some((value) => String(value ?? '').toLowerCase().includes(query))
+      )
+    : meters;
+
+  const renderCell = (meter: any, columnKey: string) => {
+    switch (columnKey) {
+      case 'name':
+        return <span className="font-medium">{meter.name}</span>;
+      case 'unit_name':
+        return getUnitNames(meter);
+      case 'meter_type':
+        return meter.meter_type;
+      case 'active':
+        return (
+          <Switch
+            checked={meter.active}
+            onCheckedChange={(checked) => handleStatusToggle(meter.id, checked)}
+            className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  const renderActions = (meter: any) =>
+    shouldShow("Unit Master (By Default)", "update") ? (
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => handleEditClick(meter)}
+      >
+        <Edit className="w-4 h-4" />
+      </Button>
+    ) : null;
+
   return (
     <div className="w-full min-h-screen bg-[#fafafa] p-6">
       <div className="w-full space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">UNIT MASTER (BY DEFAULT)</h1>
-          {shouldShow("Unit Master (By Default)", "create") && (
-          <Button
-            className="bg-[#C72030] hover:bg-[#C72030]/90"
-            onClick={() => setAddModalOpen(true)}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add
-          </Button>
-          )}
-        </div>
+        <h1 className="text-2xl font-bold text-[#1a1a1a]">UNIT MASTER (BY DEFAULT)</h1>
 
-        <div className="bg-white rounded-lg border border-gray-200">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-[#f6f4ee]">
-                <TableHead className="font-medium">Meter Category</TableHead>
-                <TableHead className="font-medium">Unit name</TableHead>
-                <TableHead className="font-medium">Meter Type</TableHead>
-                <TableHead className="font-medium">Status</TableHead>
-                <TableHead className="font-medium">Edit</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8">
-                    <div className="flex items-center justify-center gap-2 text-black">
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      Loading ...
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : meters.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
-                    No units found
-                  </TableCell>
-                </TableRow>
-              ) : meters.map((meter) => (
-                <TableRow key={meter.id} className="hover:bg-gray-50">
-                  <TableCell className="font-medium">{meter.name}</TableCell>
-                  <TableCell>
-                    {Array.isArray(meter.unit_name) ? meter.unit_name.join(', ') : meter.unit_name}
-                  </TableCell>
-                  <TableCell>{meter.meter_type}</TableCell>
-                  <TableCell>
-                    <Switch
-                      checked={meter.active}
-                      onCheckedChange={(checked) => handleStatusToggle(meter.id, checked)}
-                      className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {shouldShow("Unit Master (By Default)", "update") && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditClick(meter)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <EnhancedTable
+          data={filteredMeters}
+          columns={unitMasterColumns}
+          renderCell={renderCell}
+          renderActions={renderActions}
+          getItemId={(meter: any) => String(meter.id)}
+          storageKey="unit-master-by-default-table"
+          enableSearch={true}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          disableClientSearch={true}
+          searchPlaceholder="Search by meter category, unit name or meter type..."
+          emptyMessage="No units found"
+          loading={loading}
+          pagination={true}
+          pageSize={10}
+          leftActions={
+            shouldShow("Unit Master (By Default)", "create") ? (
+              <Button
+                className="bg-brand hover:bg-brand-hover text-white"
+                onClick={() => setAddModalOpen(true)}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add
+              </Button>
+            ) : null
+          }
+        />
 
         <AddMeterModal
           isOpen={addModalOpen}

@@ -132,7 +132,7 @@ export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
           <DialogFooter className="flex justify-center items-center gap-3 pt-4 w-full">
             <Button 
               onClick={handleReset} 
-              variant="outline" 
+              variant="ghost" 
               className="fm-button-fix fm-button-brand px-8"
             >
               Reset

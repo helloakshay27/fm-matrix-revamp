@@ -15,6 +15,7 @@ import {
   RETENTION_WEEKS,
   ROLE_COLORS,
   TREND_WEEKS,
+  type CustomDateRange,
   type DateRange,
   type Device,
   type Site,
@@ -31,6 +32,7 @@ export interface DashboardState {
    */
   scope: string;
   date: DateRange;
+  customDateRange: CustomDateRange | null;
   dev: Device;
   /** Layer-3 module / sub-module, both derived from real `$pathname` segments. */
   module: string | null;
@@ -48,6 +50,7 @@ export const DEFAULT_STATE: DashboardState = {
   tier: 't3',
   scope: 'org',
   date: 30,
+  customDateRange: null,
   dev: 'all',
   module: null,
   subModule: null,
