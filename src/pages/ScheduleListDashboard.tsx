@@ -23,7 +23,7 @@ import { fetchCustomForms, transformCustomFormsData, TransformedScheduleData } f
 import { useQuery } from '@tanstack/react-query';
 import { API_CONFIG, ENDPOINTS } from '@/config/apiConfig';
 import { apiClient } from '@/utils/apiClient';
-import { toast, Toaster } from "sonner";
+import { toast } from "sonner";
 import { Pagination, PaginationItem, PaginationContent, PaginationPrevious, PaginationLink, PaginationEllipsis, PaginationNext } from '@/components/ui/pagination';
 import axios from 'axios';
 import { Loader2 } from 'lucide-react';
@@ -1028,8 +1028,6 @@ export const ScheduleListDashboard = () => {
       {scheduleEvent && (
         <PostHogScheduleActivity key={scheduleEvent.key} event={scheduleEvent.event} properties={scheduleEvent.properties} />
       )}
-      {/* Sonner Toaster for notifications */}
-      <Toaster position="top-right" richColors closeButton />
       {/* Deactivate Checklist Modal */}
       {DeactivateChecklistModal}
       {/* Only Schedule List tab, no analytics */}

@@ -10222,19 +10222,8 @@ function App() {
                         </Routes>
                       </Suspense>
                       <Toaster />
-                      <SonnerToaster
-                        position="top-right"
-                        richColors
-                        closeButton
-                        toastOptions={{
-                          duration: 4000,
-                          style: {
-                            background: "white",
-                            border: "1px solid #e5e7eb",
-                            color: "#374151",
-                          },
-                        }}
-                      />{" "}
+                      {/* Toast position/styling is defined globally in components/ui/sonner.tsx */}
+                      <SonnerToaster />{" "}
                     </WebSocketNotificationInitializer>
                   </ActionLayoutProvider>
                 </SpeechProvider>
