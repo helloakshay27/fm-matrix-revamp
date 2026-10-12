@@ -458,7 +458,7 @@ export const PRDeletionRequests = () => {
 
       <Dialog open={showFilters} onOpenChange={setShowFilters} modal={false}>
         <DialogContent
-          className="w-full sm:max-w-[500px] bg-white overflow-visible rounded-[8px] sm:rounded-[8px]"
+          className="w-full sm:max-w-[500px] bg-white overflow-visible rounded-2xl sm:rounded-2xl"
           onPointerDownOutside={(e) => {
             if (
               (e.target as HTMLElement).closest(

@@ -80,7 +80,7 @@ export const POFilterDialog: React.FC<POFilterDialogProps> = ({
 
   return (
     <Dialog
-      PaperProps={{ sx: { borderRadius: "8px" } }} onClose={onOpenChange} open={open}>
+      PaperProps={{ sx: { borderRadius: "16px" } }} onClose={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-md">
         <div className="flex items-center justify-between mb-3">
           <h5 className="text-lg font-semibold">FILTER BY</h5>

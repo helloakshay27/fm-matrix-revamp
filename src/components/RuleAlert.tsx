@@ -30,7 +30,7 @@ const RuleAlert = ({ open, onClose, setShowNewRuleForm, handleSubmit, handleUpda
 
     return (
         <Dialog
-      PaperProps={{ sx: { borderRadius: "8px" } }} open={open} onClose={onClose} maxWidth="xs" fullWidth>
+      PaperProps={{ sx: { borderRadius: "16px" } }} open={open} onClose={onClose} maxWidth="xs" fullWidth>
             <DialogContent>
                 <div className="flex items-center justify-center mt-3">
                     {

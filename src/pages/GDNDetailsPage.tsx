@@ -445,7 +445,7 @@ export const GDNDetailsPage = () => {
         open={dispatchDialogOpen}
         onOpenChange={handleDispatchDialogChange}
       >
-        <DialogContent className="top-1/2 w-[300px] max-w-[calc(100vw_-_32px)] gap-0 overflow-visible  border-0 bg-white p-0 shadow-xl sm:w-[300px] sm:max-w-[300px] rounded-[8px] sm:rounded-[8px]">
+        <DialogContent className="top-1/2 w-[300px] max-w-[calc(100vw_-_32px)] gap-0 overflow-visible  border-0 bg-white p-0 shadow-xl sm:w-[300px] sm:max-w-[300px] rounded-2xl sm:rounded-2xl">
           <DialogHeader className="flex flex-row items-center justify-between space-y-0 border-b border-gray-200 px-4 py-4 text-left">
             <DialogTitle className="text-xl font-semibold text-gray-900">
               Dispatch Now

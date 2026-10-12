@@ -306,7 +306,7 @@ export const CrmCustomerDetails = () => {
                 fullWidth
                 PaperProps={{
                     style: {
-                        borderRadius: '8px',
+                        borderRadius: '16px',
                         padding: '8px',
                     },
                 }}

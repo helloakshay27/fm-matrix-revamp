@@ -36,7 +36,7 @@ export const CancelBillModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-sm rounded-[8px] sm:rounded-[8px]">
+      <DialogContent className="sm:max-w-sm rounded-2xl sm:rounded-2xl">
         <DialogHeader>
           <DialogTitle>Cancel Invoice</DialogTitle>
         </DialogHeader>
