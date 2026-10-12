@@ -869,7 +869,8 @@ export const HolidayCalendarPage = () => {
               </Button>
             </DialogTrigger>)}
             <DialogContent
-              className="max-w-6xl max-h-[90vh] overflow-y-auto bg-white"
+              className="max-w-6xl max-h-[90vh] overflow-y-auto bg-white rounded-[24px] p-7"
+              data-settings-modal="true"
               aria-describedby="add-holiday-dialog-description"
               onPointerDownOutside={(e) => {
                 if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
@@ -1103,20 +1104,24 @@ export const HolidayCalendarPage = () => {
                 )}
 
                 {/* Save All / Cancel */}
-                <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                  <Button
+                <div className="fm-action-bar pt-4">
+                  <button
                     type="button"
-                    className="flex-1 bg-brand hover:bg-brand-hover text-white px-4 py-2 disabled:!opacity-100 disabled:!bg-brand"
+                    onClick={handleCancel}
+                    className="fm-action-secondary"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="fm-action-primary"
                     disabled={isSubmitting || pendingHolidays.length === 0}
                     onClick={handleSubmit}
                   >
                     {isSubmitting
                       ? 'Saving...'
                       : `Save ${pendingHolidays.length > 0 ? `(${pendingHolidays.length}) ` : ''}Holiday${pendingHolidays.length !== 1 ? 's' : ''}`}
-                  </Button>
-                  <Button variant="outline" onClick={handleCancel} className="flex-1 h-11 border-brand text-brand hover:bg-brand-selected hover:text-brand">
-                    Cancel
-                  </Button>
+                  </button>
                 </div>
               </div>
             </DialogContent>
@@ -1128,7 +1133,8 @@ export const HolidayCalendarPage = () => {
       {/* Filter Modal — matches SnaggingFilterDialog */}
       <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen} modal={false}>
         <DialogContent
-          className="w-full sm:max-w-[500px] bg-white overflow-visible"
+          className="w-full sm:max-w-[500px] bg-white overflow-visible rounded-[24px] p-7"
+          data-settings-modal="true"
           aria-describedby="filter-dialog-description"
           onPointerDownOutside={(e) => {
             if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
@@ -1288,7 +1294,8 @@ export const HolidayCalendarPage = () => {
         setIsEditDialogOpen(open);
       }} modal={false}>
         <DialogContent
-          className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white"
+          className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-[24px] p-7"
+          data-settings-modal="true"
           aria-describedby="edit-holiday-dialog-description"
           onPointerDownOutside={(e) => {
             if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
@@ -1472,21 +1479,22 @@ export const HolidayCalendarPage = () => {
               </Card>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-6">
-                <Button
+              <div className="fm-action-bar pt-6">
+                <button
+                  type="button"
+                  onClick={handleEditCancel}
+                  className="fm-action-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
                   onClick={handleUpdate}
-                  className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
+                  className="fm-action-primary"
                   disabled={isSubmitting || loadingEditData}
                 >
                   {isSubmitting ? 'Updating Holiday...' : 'Update Holiday'}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleEditCancel}
-                  className="border-brand text-brand px-4 py-2"
-                >
-                  Cancel
-                </Button>
+                </button>
               </div>
             </div>
           )}

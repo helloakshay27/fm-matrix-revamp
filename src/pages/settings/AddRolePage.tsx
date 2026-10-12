@@ -552,16 +552,16 @@ export const AddRolePage = () => {
               </div>
 
               {/* Module Tabs */}
-              <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+              <div className="flex gap-[3px] mb-6 overflow-x-auto rounded-xl bg-gray-100 p-[3px]">
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveModuleTab(tab.id)}
-                    className={`px-4 py-2 rounded border text-sm font-medium transition-colors whitespace-nowrap ${activeModuleTab === tab.id
-                      ? "bg-[#C72030] text-white border-[#C72030]"
-                      : "bg-white text-[#C72030] border-[#C72030] hover:bg-[#C72030]/10"
-                      }`}
-                    style={activeModuleTab === tab.id ? { color: "#ffffff" } : undefined}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                      activeModuleTab === tab.id
+                        ? "bg-white text-gray-900 shadow-sm"
+                        : "text-gray-500"
+                    }`}
                   >
                     {tab.name}
                   </button>
@@ -706,22 +706,23 @@ export const AddRolePage = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
-          <Button
-            variant="outline"
+        <div className="fm-action-bar pt-6">
+          <button
+            type="button"
             onClick={handleBack}
-            className="w-full sm:w-auto"
+            className="fm-action-secondary"
           >
             Cancel
-          </Button>
-          <Button
+          </button>
+          <button
+            type="button"
             onClick={handleSaveRole}
             disabled={loading}
-            className="bg-[#C72030] hover:bg-[#A11D2A] text-white w-full sm:w-auto"
+            className="fm-action-primary"
           >
             <Save className="w-4 h-4 mr-2" />
             {loading ? "Creating..." : "Create Role"}
-          </Button>
+          </button>
         </div>
       </div>
     </div>

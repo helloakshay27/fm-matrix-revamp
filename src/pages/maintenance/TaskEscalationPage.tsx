@@ -238,13 +238,13 @@ export const TaskEscalationPage: React.FC = () => {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
               {/* Service Type Dropdown */}
-              <div className="mb-6 p-4 border rounded-lg bg-blue-50">
+              <div className="mb-6 p-4 border rounded-lg bg-white">
                 <FormField
                   control={form.control}
                   name="serviceType"
                   render={({ field, fieldState }) => (
                     <FormItem>
-                      <FormLabel className="text-lg font-semibold text-blue-700">Service Type</FormLabel>
+                      <FormLabel className="text-sm font-semibold text-gray-800">Service Type</FormLabel>
                       <FormControl>
                         <MuiFormControl fullWidth size="small" error={!!fieldState.error}>
                           <MuiSelect
@@ -274,9 +274,9 @@ export const TaskEscalationPage: React.FC = () => {
               </div>
 
               {/* E1 Level */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-red-50">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-white">
                 <div className="col-span-full">
-                  <h3 className="text-lg font-semibold text-red-700 mb-2">E1 Level</h3>
+                  <h3 className="text-sm font-semibold text-gray-800 mb-2">E1 Level</h3>
                 </div>
                 <FormField
                   control={form.control}
@@ -303,9 +303,9 @@ export const TaskEscalationPage: React.FC = () => {
               </div>
 
               {/* E2 Level */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-yellow-50">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-white">
                 <div className="col-span-full">
-                  <h3 className="text-lg font-semibold text-yellow-700 mb-2">E2 Level</h3>
+                  <h3 className="text-sm font-semibold text-gray-800 mb-2">E2 Level</h3>
                 </div>
                 <FormField
                   control={form.control}
@@ -332,9 +332,9 @@ export const TaskEscalationPage: React.FC = () => {
               </div>
 
               {/* E3 Level */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-green-50">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-white">
                 <div className="col-span-full">
-                  <h3 className="text-lg font-semibold text-green-700 mb-2">E3 Level</h3>
+                  <h3 className="text-sm font-semibold text-gray-800 mb-2">E3 Level</h3>
                 </div>
                 <FormField
                   control={form.control}
@@ -360,13 +360,21 @@ export const TaskEscalationPage: React.FC = () => {
                 {renderEscalationSelect('e3EscalateTo', 'Escalation To')}
               </div>
 
-              <div className="flex justify-end">
-                <Button type="submit" disabled={isSubmitting || loading.users}
-                className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
+              <div className="fm-action-bar pt-4">
+                <button
+                  type="button"
+                  onClick={() => form.reset()}
+                  className="fm-action-secondary"
+                >
+                  Reset
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || loading.users}
+                  className="fm-action-primary"
                 >
                   {isSubmitting ? 'Saving...' : 'Submit'}
-                </Button>
+                </button>
               </div>
             </form>
           </Form>

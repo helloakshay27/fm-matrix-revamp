@@ -16,6 +16,7 @@ const fieldStyles = {
   },
   '& .MuiOutlinedInput-root': {
     backgroundColor: '#ffffff',
+    borderRadius: '12px',
     '& fieldset': { borderColor: '#e5e7eb' },
     '&:hover fieldset': { borderColor: '#C72030' },
     '&.Mui-focused fieldset': { borderColor: '#C72030' },
@@ -153,8 +154,8 @@ export const EditVisitorCommentModal = ({ isOpen, onClose, commentData, onUpdate
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px] p-0">
-        <DialogHeader className="px-6 py-4 border-b border-gray-200">
+      <DialogContent className="sm:max-w-[500px] p-0 rounded-[24px]">
+        <DialogHeader className="px-7 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg font-medium text-gray-900">Edit Visitor Comment</DialogTitle>
             <Button
@@ -168,7 +169,7 @@ export const EditVisitorCommentModal = ({ isOpen, onClose, commentData, onUpdate
           </div>
         </DialogHeader>
         
-        <div className="px-6 py-4 space-y-4">
+        <div className="px-7 py-4 space-y-4">
           {/* Multiple Comment Input */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -178,7 +179,7 @@ export const EditVisitorCommentModal = ({ isOpen, onClose, commentData, onUpdate
                 variant="outline"
                 size="sm"
                 onClick={addComment}
-                className="border-[#C72030] text-[#C72030]  hover:text-[#C72030] h-8"
+                className="rounded-lg h-8"
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Add
@@ -188,16 +189,19 @@ export const EditVisitorCommentModal = ({ isOpen, onClose, commentData, onUpdate
             <div className="space-y-3">
               {comments.map((comment, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <TextField
-                    label={`Comment ${index + 1} *`}
-                    placeholder="Enter visitor comment"
-                    value={comment}
-                    onChange={(e) => updateComment(index, e.target.value)}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
-                  />
+                  <div className="flex-1">
+                    <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                      Comment {index + 1} <span className="text-red-500">*</span>
+                    </label>
+                    <TextField
+                      placeholder="Enter visitor comment"
+                      value={comment}
+                      onChange={(e) => updateComment(index, e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      sx={fieldStyles}
+                    />
+                  </div>
                   {comments.length > 1 && (
                     <Button
                       type="button"
@@ -226,10 +230,18 @@ export const EditVisitorCommentModal = ({ isOpen, onClose, commentData, onUpdate
           </div>
         </div>
 
-        <div className="flex justify-center px-6 py-4 border-t border-gray-200">
-          <Button
+        <div className="fm-action-bar px-7 py-4 border-t border-gray-200">
+          <button
+            type="button"
+            onClick={handleClose}
+            className="fm-action-secondary"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
             onClick={handleSubmit}
-            className="bg-brand hover:bg-brand-hover text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="fm-action-primary"
             disabled={isSubmitting || comments.every(c => !c.trim())}
           >
             {isSubmitting ? (
@@ -240,7 +252,7 @@ export const EditVisitorCommentModal = ({ isOpen, onClose, commentData, onUpdate
             ) : (
               'Update'
             )}
-          </Button>
+          </button>
         </div>
       </DialogContent>
     </Dialog>

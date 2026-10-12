@@ -7,6 +7,7 @@ import {
   Navigate,
   useNavigate,
   useLocation,
+  Outlet,
 } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { getProductLandingPageUrl } from "./pages/products/landingPageUrls";
@@ -4540,6 +4541,15 @@ function App() {
   const isOmanSite = hostname.includes("oig.gophygital.work");
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const isSettingsRoute = Boolean(
+    location.pathname.startsWith("/settings") ||
+    location.pathname.startsWith("/setup") ||
+    location.pathname.includes("/setup") ||
+    location.pathname === "/holiday-calendar" ||
+    location.pathname.startsWith("/holiday-calendar") ||
+    location.pathname.includes("space-management/setup")
+  );
 
   const { manager: webSocketManager, connect } = useWebSocket();
   const socketUrl = `wss://${localStorage.getItem("baseUrl")}/cable`;
@@ -10062,11 +10072,22 @@ function App() {
                             element={
                               <ProtectedRoute>
                                 <Layout>
-                                  <div />
+                                  <div data-settings-scope="true" className="settings-module-root w-full h-full">
+                                    <Outlet />
+                                  </div>
                                 </Layout>
                               </ProtectedRoute>
                             }
                           >
+                            <Route
+                              index
+                              element={
+                                <Navigate
+                                  to="/settings/company-hub/Company-setup"
+                                  replace
+                                />
+                              }
+                            />
                             <Route
                               path="/settings/approval-matrix/setup"
                               element={<ApprovalMatrixSetupPage />}
@@ -10597,8 +10618,31 @@ function App() {
                         </Routes>
                       </Suspense>
                       <Toaster />
-                      {/* Toast position/styling is defined globally in components/ui/sonner.tsx */}
-                      <SonnerToaster />{" "}
+                      <SonnerToaster
+                        position={isSettingsRoute ? "bottom-center" : "top-right"}
+                        richColors
+                        closeButton
+                        className={isSettingsRoute ? "toaster group settings-toaster" : "toaster group"}
+                        toastOptions={{
+                          duration: 4000,
+                          className: isSettingsRoute ? "settings-toast" : undefined,
+                          style: isSettingsRoute
+                            ? {
+                                background: "#1a1a18",
+                                border: "1px solid rgba(255, 255, 255, 0.12)",
+                                borderRadius: "8px",
+                                padding: "10px 20px",
+                                color: "#ffffff",
+                                fontSize: "13px",
+                                fontWeight: 600,
+                              }
+                            : {
+                                background: "white",
+                                border: "1px solid #e5e7eb",
+                                color: "#374151",
+                              },
+                        }}
+                      />{" "}
                     </WebSocketNotificationInitializer>
                   </ActionLayoutProvider>
                 </SpeechProvider>

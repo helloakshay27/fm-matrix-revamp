@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Button } from "@/components/ui/button";
@@ -439,22 +439,31 @@ export const RosterCreatePage: React.FC = () => {
   };
 
   // Handle day selection
-  const handleDayToggle = (day: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      selectedDays: prev.selectedDays.includes(day)
-        ? prev.selectedDays.filter((d) => d !== day)
-        : [...prev.selectedDays, day],
-    }));
+  const handleDayToggle = useCallback((day: string) => {
+    setFormData((prev) => {
+      const isSelected = prev.selectedDays.includes(day);
+      if (isSelected) {
+        return {
+          ...prev,
+          selectedDays: prev.selectedDays.filter((d) => d !== day),
+        };
+      }
+      return {
+        ...prev,
+        selectedDays: [...prev.selectedDays, day],
+      };
+    });
 
-    // Clear day error when user selects a day
-    if (errors.selectedDays) {
-      setErrors((prev) => ({ ...prev, selectedDays: false }));
-    }
-  };
+    setErrors((prev) => {
+      if (prev.selectedDays) {
+        return { ...prev, selectedDays: false };
+      }
+      return prev;
+    });
+  }, []);
 
   // Handle day type selection (Weekdays, Weekends, Recurring)
-  const handleDayTypeChange = (type: "Weekdays" | "Weekends" | "Recurring") => {
+  const handleDayTypeChange = useCallback((type: "Weekdays" | "Weekends" | "Recurring") => {
     setFormData((prev) => ({
       ...prev,
       dayType: type,
@@ -462,20 +471,22 @@ export const RosterCreatePage: React.FC = () => {
       weekSelection: [],
     }));
 
-    // Clear day error when user selects a type
-    if (errors.selectedDays) {
-      setErrors((prev) => ({ ...prev, selectedDays: false }));
-    }
-  };
+    setErrors((prev) => {
+      if (prev.selectedDays) {
+        return { ...prev, selectedDays: false };
+      }
+      return prev;
+    });
+  }, []);
 
   // Handle week selection for recurring
-  const handleWeekToggle = (week: string) => {
+  const handleWeekToggle = useCallback((week: string) => {
     setFormData((prev) => {
-      const newWeekSelection = prev.weekSelection.includes(week)
+      const weekIsSelected = prev.weekSelection.includes(week);
+      const newWeekSelection = weekIsSelected
         ? prev.weekSelection.filter((w) => w !== week)
         : [...prev.weekSelection, week];
 
-      // If "All" is selected, select all other options
       if (week === "All" && !prev.weekSelection.includes("All")) {
         if (prev.dayType === "Weekdays") {
           return {
@@ -504,7 +515,6 @@ export const RosterCreatePage: React.FC = () => {
         }
       }
 
-      // If "All" is deselected, deselect all other options
       if (week === "All" && prev.weekSelection.includes("All")) {
         return {
           ...prev,
@@ -512,16 +522,13 @@ export const RosterCreatePage: React.FC = () => {
         };
       }
 
-      // If any other option is selected and "All" was already selected, remove "All"
       if (week !== "All" && prev.weekSelection.includes("All")) {
-        const filteredSelection = prev.weekSelection.filter((w) => w !== "All");
         return {
           ...prev,
           weekSelection: newWeekSelection.filter((w) => w !== "All"),
         };
       }
 
-      // Check if all individual options are selected (except "All"), then auto-select "All"
       const allOptions =
         prev.dayType === "Weekdays"
           ? ["1st Week", "2nd Week", "3rd Week", "4th Week", "5th Week"]
@@ -550,52 +557,63 @@ export const RosterCreatePage: React.FC = () => {
       };
     });
 
-    // Clear day error when user selects a week
-    if (errors.selectedDays) {
-      setErrors((prev) => ({ ...prev, selectedDays: false }));
-    }
-  };
+    setErrors((prev) => {
+      if (prev.selectedDays) {
+        return { ...prev, selectedDays: false };
+      }
+      return prev;
+    });
+  }, []);
 
   // Handle day toggle for recurring weekly schedule
-  const handleRecurringDayToggle = (day: string, week: string) => {
+  const handleRecurringDayToggle = useCallback((day: string, week: string) => {
     const dayKey = `${week}-${day}`;
-    setFormData((prev) => ({
-      ...prev,
-      selectedDays: prev.selectedDays.includes(dayKey)
-        ? prev.selectedDays.filter((d) => d !== dayKey)
-        : [...prev.selectedDays, dayKey],
-    }));
+    setFormData((prev) => {
+      const isSelected = prev.selectedDays.includes(dayKey);
+      if (isSelected) {
+        return {
+          ...prev,
+          selectedDays: prev.selectedDays.filter((d) => d !== dayKey),
+        };
+      }
+      return {
+        ...prev,
+        selectedDays: [...prev.selectedDays, dayKey],
+      };
+    });
 
-    if (errors.selectedDays) {
-      setErrors((prev) => ({ ...prev, selectedDays: false }));
-    }
-  };
+    setErrors((prev) => {
+      if (prev.selectedDays) {
+        return { ...prev, selectedDays: false };
+      }
+      return prev;
+    });
+  }, []);
 
   // Handle input changes
-  const handleInputChange = (field: keyof RosterFormData, value: any) => {
+  const handleInputChange = useCallback((field: keyof RosterFormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
-    // Clear field error when user starts typing/selecting
-    if (errors[field as keyof typeof errors]) {
-      setErrors((prev) => ({ ...prev, [field]: false }));
-    }
+    setErrors((prev) => {
+      if (prev[field as keyof typeof errors]) {
+        return { ...prev, [field]: false };
+      }
+      return prev;
+    });
 
-    // If department selection changes, fetch filtered employees
     if (field === "departments") {
       fetchFilteredFMUsers(value as number[]);
-      // Clear selected employees and approvers when departments change
       setFormData((prev) => ({
         ...prev,
         selectedEmployees: [],
         approverIds: [],
       }));
-      // Clear employee selection error
       setErrors((prev) => ({ ...prev, selectedEmployees: false }));
     }
-  };
+  }, []);
 
   // Validation
-  const validateForm = (): boolean => {
+  const validateForm = useCallback((): boolean => {
     let hasSelectedDays = false;
 
     if (formData.dayType === "Recurring") {
@@ -642,10 +660,10 @@ export const RosterCreatePage: React.FC = () => {
     }
 
     return !hasErrors;
-  };
+  }, [formData]);
 
   // Handle form submission
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (isSubmitting) return;
 
     if (!validateForm()) {
@@ -771,12 +789,12 @@ export const RosterCreatePage: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [isSubmitting, validateForm]);
 
   // Handle cancel/back
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     navigate("/settings/account/roster");
-  };
+  }, [navigate]);
 
   return (
     <div className="p-6 space-y-6 relative">
@@ -1042,112 +1060,121 @@ export const RosterCreatePage: React.FC = () => {
                   Custom Weekly Pattern
                 </div>
 
-                {[1, 2, 3, 4, 5].map((weekNum) => (
-                  <div
-                    key={weekNum}
-                    className="bg-white border border-[#D5DbDB] rounded-lg p-3"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium">
-                        Week {weekNum}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const allDaysForWeek = [
-                            "Mon",
-                            "Tue",
-                            "Wed",
-                            "Thu",
-                            "Fri",
-                            "Sat",
-                            "Sun",
-                          ].map((day) => `Week${weekNum}-${day}`);
-                          const hasAllDays = allDaysForWeek.every((dayKey) =>
-                            formData.selectedDays.includes(dayKey)
-                          );
-
-                          setFormData((prev) => ({
-                            ...prev,
-                            selectedDays: hasAllDays
-                              ? prev.selectedDays.filter(
-                                  (d) => !allDaysForWeek.includes(d)
-                                )
-                              : [
+                {[1, 2, 3, 4, 5].map((weekNum) => {
+                  const weekPrefix = `Week${weekNum}`;
+                  const allDaysForWeekArr = [
+                    "Mon",
+                    "Tue",
+                    "Wed",
+                    "Thu",
+                    "Fri",
+                    "Sat",
+                    "Sun",
+                  ].map((day) => `${weekPrefix}-${day}`);
+                  const hasAllDays = allDaysForWeekArr.every((dayKey) =>
+                    formData.selectedDays.includes(dayKey)
+                  );
+                  return (
+                    <div
+                      key={weekNum}
+                      className="bg-white border border-[#D5DbDB] rounded-lg p-3"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">
+                          Week {weekNum}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData((prev) => {
+                              const allDays = [
+                                "Mon",
+                                "Tue",
+                                "Wed",
+                                "Thu",
+                                "Fri",
+                                "Sat",
+                                "Sun",
+                              ].map((day) => `Week${weekNum}-${day}`);
+                              const allSelected = allDays.every((d) =>
+                                prev.selectedDays.includes(d)
+                              );
+                              if (allSelected) {
+                                return {
+                                  ...prev,
+                                  selectedDays: prev.selectedDays.filter(
+                                    (d) => !allDays.includes(d)
+                                  ),
+                                };
+                              }
+                              return {
+                                ...prev,
+                                selectedDays: [
                                   ...prev.selectedDays,
-                                  ...allDaysForWeek.filter(
+                                  ...allDays.filter(
                                     (d) => !prev.selectedDays.includes(d)
                                   ),
                                 ],
-                          }));
-                        }}
-                        disabled={isSubmitting}
-                        className={`
-                          px-2 py-1 text-xs rounded transition-all duration-200
-                          ${
-                            [
-                              "Mon",
-                              "Tue",
-                              "Wed",
-                              "Thu",
-                              "Fri",
-                              "Sat",
-                              "Sun",
-                            ].every((day) =>
-                              formData.selectedDays.includes(
-                                `Week${weekNum}-${day}`
-                              )
-                            )
-                              ? "bg-[#C72030] text-white"
-                              : "bg-gray-100 text-gray-600 hover:bg-[#C72030] hover:text-white"
-                          }
-                        `}
-                      >
-                        All
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-7 gap-1">
-                      {[
-                        { short: "Mon", full: "Monday" },
-                        { short: "Tue", full: "Tuesday" },
-                        { short: "Wed", full: "Wednesday" },
-                        { short: "Thu", full: "Thursday" },
-                        { short: "Fri", full: "Friday" },
-                        { short: "Sat", full: "Saturday" },
-                        { short: "Sun", full: "Sunday" },
-                      ].map((day) => {
-                        const isSelected = formData.selectedDays.includes(
-                          `Week${weekNum}-${day.short}`
-                        );
-                        return (
-                          <button
-                            key={day.short}
-                            type="button"
-                            onClick={() =>
-                              handleRecurringDayToggle(
-                                day.short,
-                                `Week${weekNum}`
-                              )
+                              };
+                            });
+                          }}
+                          disabled={isSubmitting}
+                          className={`
+                            px-2 py-1 text-xs rounded transition-all duration-200
+                            ${
+                              hasAllDays
+                                ? "bg-[#C72030] text-white"
+                                : "bg-gray-100 text-gray-600 hover:bg-[#C72030] hover:text-white"
                             }
-                            disabled={isSubmitting}
-                            className={`
-                              w-full h-8 rounded text-xs font-medium transition-all duration-200
-                              ${
-                                isSelected
-                                  ? "bg-[#C72030] text-white"
-                                  : "bg-gray-100 text-gray-600 hover:bg-[#C72030] hover:text-white"
+                          `}
+                        >
+                          All
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-7 gap-1">
+                        {[
+                          { short: "Mon", full: "Monday" },
+                          { short: "Tue", full: "Tuesday" },
+                          { short: "Wed", full: "Wednesday" },
+                          { short: "Thu", full: "Thursday" },
+                          { short: "Fri", full: "Friday" },
+                          { short: "Sat", full: "Saturday" },
+                          { short: "Sun", full: "Sunday" },
+                        ].map((day) => {
+                          const dayKey = `${weekPrefix}-${day.short}`;
+                          const isSelected = formData.selectedDays.includes(
+                            dayKey
+                          );
+                          return (
+                            <button
+                              key={day.short}
+                              type="button"
+                              onClick={() =>
+                                handleRecurringDayToggle(
+                                  day.short,
+                                  weekPrefix
+                                )
                               }
-                            `}
-                            title={`${day.full} - Week ${weekNum}`}
-                          >
-                            {day.short}
-                          </button>
-                        );
-                      })}
+                              disabled={isSubmitting}
+                              className={`
+                                w-full h-8 rounded text-xs font-medium transition-all duration-200
+                                ${
+                                  isSelected
+                                    ? "bg-[#C72030] text-white"
+                                    : "bg-gray-100 text-gray-600 hover:bg-[#C72030] hover:text-white"
+                                }
+                              `}
+                              title={`${day.full} - Week ${weekNum}`}
+                            >
+                              {day.short}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
 
                 <div className="text-xs text-[#1a1a1a] opacity-70">
                   {formData.selectedDays.length > 0
@@ -1648,9 +1675,8 @@ export const RosterCreatePage: React.FC = () => {
       {/* Footer Actions */}
       <div className="flex items-center gap-3 justify-center pt-2">
         <Button
-          variant="destructive"
-          className="fm-button-fix fm-button-brand px-4 py-2"
           variant="ghost"
+          className="fm-button-fix fm-button-brand px-4 py-2"
           onClick={handleSubmit}
           disabled={isSubmitting}
         >

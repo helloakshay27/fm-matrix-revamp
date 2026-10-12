@@ -202,24 +202,19 @@ const JobsPage: React.FC = () => {
       </div>
 
       {/* Premium Tabs Selection */}
-      <div className="bg-white/60 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-slate-200/60 flex gap-1">
+      <div className="bg-[#f5f4f0] p-[3px] rounded-xl flex gap-[3px]">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              "flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold transition-all duration-300 text-sm font-poppins",
+              "flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-semibold transition-all text-xs font-poppins",
               activeTab === tab.id
-                ? `${tab.color} text-white shadow-md shadow-black/10 scale-[1.01]`
-                : "text-slate-500 hover:bg-slate-100/80 hover:text-slate-700"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
             )}
           >
-            <tab.icon
-              className={cn(
-                "w-4 h-4",
-                activeTab === tab.id ? "animate-pulse" : ""
-              )}
-            />
+            <tab.icon className="w-4 h-4" />
             {tab.label}
           </button>
         ))}
@@ -806,18 +801,18 @@ const JobSetupTab = ({
                 </div>
               </div>
             </div>
-            <Button
-              className="bg-[#C72030] hover:bg-red-800 text-white rounded-none px-8 font-black flex items-center gap-2"
+            <button
+              type="button"
+              className="fm-action-primary"
               onClick={handleSaveSetup}
               disabled={saving}
             >
               {saving ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                "Save Mapping"
-              )}
-              <CheckSquare className="w-4 h-4" />
-            </Button>
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : null}
+              Save Mapping
+              <CheckSquare className="w-4 h-4 ml-1" />
+            </button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -2322,17 +2317,17 @@ const SampleJDsTab = ({
         {samples.map((sample, i) => (
           <Card
             key={i}
-            className="border-none shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden group bg-white hover:-translate-y-1 flex flex-col border-l-4 border-l-blue-500/0 hover:border-l-blue-500"
+            className="border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none overflow-hidden group bg-white flex flex-col"
           >
-            <CardContent className="p-8 space-y-6 flex-1 relative">
+            <CardContent className="p-7 space-y-6 flex-1 relative">
               <div className="flex items-start justify-between">
                 <div className="space-y-4">
                   <div className="flex items-center gap-4">
                     <input
                       type="checkbox"
-                      className="w-6 h-6 rounded-lg border-2 border-slate-200 text-orange-600 focus:ring-orange-500 transition-all cursor-pointer"
+                      className="w-5 h-5 rounded border border-gray-300 text-orange-600 focus:ring-orange-500 transition-all cursor-pointer"
                     />
-                    <h4 className="text-2xl font-black text-slate-900 group-hover:text-blue-600 transition-colors">
+                    <h4 className="text-xl font-bold text-gray-900 transition-colors">
                       {sample.title}
                     </h4>
                   </div>
@@ -2360,7 +2355,7 @@ const SampleJDsTab = ({
                     </Badge>
                   </div>
                 </div>
-                <Button className="h-10 px-6 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl flex items-center gap-2 active:scale-95 transition-all shadow-md shadow-violet-100">
+                <Button className="fm-action-primary h-[42px] px-[22px] rounded-lg">
                   <Copy className="w-4 h-4" />
                   Use
                 </Button>
@@ -3119,36 +3114,38 @@ const JDForm = ({
         )}
       </div>
 
-      {/* Centered Bottom Action Buttons */}
-      <div className="flex justify-center gap-4 py-8 border-t border-slate-100 bg-white/50 backdrop-blur-sm sticky bottom-0 z-10 w-full mt-8">
-        <Button
-          variant="outline"
-          className="h-12 px-10 rounded-none border-slate-200 font-bold text-slate-600 hover:bg-white shadow-sm transition-all"
+      {/* Bottom Action Buttons */}
+      <div className="fm-action-bar py-6 border-t border-slate-100 bg-white sticky bottom-0 z-10 w-full mt-8">
+        <button
+          type="button"
+          className="fm-action-secondary"
           onClick={onBack}
         >
           Cancel
-        </Button>
+        </button>
         {step < 3 ? (
-          <Button
-            className="h-12 px-10 rounded-none bg-slate-900 hover:bg-slate-800 text-white font-bold shadow-lg shadow-slate-200 flex items-center gap-2 transition-all active:scale-95"
+          <button
+            type="button"
+            className="fm-action-primary"
             onClick={() => setStep(step + 1)}
           >
             Continue
-            <ArrowRight className="w-4 h-4" />
-          </Button>
+            <ArrowRight className="w-4 h-4 ml-1" />
+          </button>
         ) : (
-          <Button
-            className="h-12 px-10 rounded-none bg-[#C72030] hover:bg-red-800 text-white font-bold shadow-lg shadow-red-200 flex items-center gap-2 transition-all active:scale-95"
+          <button
+            type="button"
+            className="fm-action-primary"
             onClick={handleSubmit}
             disabled={loading}
           >
             {loading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin mr-1" />
             ) : (
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 mr-1" />
             )}
             {id ? "Update & Sync JD" : "Save & Publish JD"}
-          </Button>
+          </button>
         )}
       </div>
     </div>

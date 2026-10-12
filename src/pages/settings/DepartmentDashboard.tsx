@@ -276,7 +276,7 @@ export const DepartmentDashboard = () => {
       />
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-md mx-4 sm:mx-0">
+        <DialogContent className="sm:max-w-md mx-4 sm:mx-0 rounded-[24px] p-7">
           <DialogHeader>
             <DialogTitle className="text-base sm:text-lg font-semibold">
               Add Department
@@ -299,7 +299,7 @@ export const DepartmentDashboard = () => {
               <Button
                 variant="outline"
                 onClick={() => setIsDialogOpen(false)}
-                className="border-brand text-brand hover:bg-brand-selected hover:text-brand"
+                className="rounded-lg"
               >
                 Cancel
               </Button>
@@ -315,7 +315,7 @@ export const DepartmentDashboard = () => {
       </Dialog>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-md mx-4 sm:mx-0">
+        <DialogContent className="sm:max-w-md mx-4 sm:mx-0 rounded-[24px] p-7">
           <DialogHeader>
             <DialogTitle className="text-base sm:text-lg font-semibold">
               Edit Details
@@ -337,7 +337,7 @@ export const DepartmentDashboard = () => {
               <Button
                 variant="outline"
                 onClick={() => setIsEditDialogOpen(false)}
-                className="border-brand text-brand hover:bg-brand-selected hover:text-brand"
+                className="rounded-lg"
               >
                 Cancel
               </Button>

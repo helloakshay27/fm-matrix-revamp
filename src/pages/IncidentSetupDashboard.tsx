@@ -2273,7 +2273,7 @@ export const IncidentSetupDashboard = () => {
 
       <div className="flex gap-8">
         <div className="w-80">
-          <div className="space-y-1 bg-gray-100 p-2 rounded-lg">
+          <div className="space-y-[3px] bg-[#f5f4f0] p-[3px] rounded-xl">
             {menuItems.map(item => (
               <div
                 key={item}
@@ -2742,7 +2742,7 @@ export const IncidentSetupDashboard = () => {
           ) : (
             <>
               <div className="mb-6">
-                <div className="flex gap-4 items-end">
+                <div className="flex flex-wrap gap-4 items-end">
                   {selectedCategory === 'Approval Setup' ? (
                     <div className="flex-1">
                       <FormControl fullWidth size="small" className="mb-2">
@@ -2806,9 +2806,9 @@ export const IncidentSetupDashboard = () => {
                                     fontSize: '11px',
                                     height: '24px',
                                     margin: '0',
-                                    backgroundColor: '#DA7756',
-                                    color: '#fff',
-                                    // '& .MuiChip-deleteIcon': { color: '#fff', '&:hover': { color: '#f0c9c9' } }
+                                    backgroundColor: '#f5f4f0',
+                                    color: '#1a1a18',
+                                    borderColor: 'rgba(26,26,24,0.15)',
                                   }}
                                 />
                               );

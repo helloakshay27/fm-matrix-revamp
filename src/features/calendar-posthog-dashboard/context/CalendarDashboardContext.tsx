@@ -111,6 +111,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
   const [prev, setPrev] = useState(true);
   const [workflow, setWorkflowState] = useState('login');
   const [selectedModule, setSelectedModuleState] = useState<string | null>(null);
+  const [selectedSubModule, setSelectedSubModuleState] = useState<string | null>(null);
   const [page, setPage] = useState<PageKey>('pgTraffic');
   const [theme, setTheme] = useState<DashboardTheme>(initialTheme);
   const [navCollapsed, setNavCollapsed] = useState(() => readStored(NAV_KEY) === 'collapsed');
@@ -162,8 +163,9 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
       os: osFilter,
       provider: provider !== 'All Providers' ? provider : undefined,
       module: selectedModule ?? undefined,
+      subModule: selectedSubModule ?? undefined,
     }),
-    [range.from, range.to, osFilter, provider, selectedModule],
+    [range.from, range.to, osFilter, provider, selectedModule, selectedSubModule],
   );
 
   /* Live API endpoints for Calendar App (app_id=29) */
@@ -175,6 +177,11 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
   const retentionQuery = useRetention(queryFilters);          // Layer 2
   const rolesQuery = useRoles(queryFilters);                  // Layer 2
   const modulesQuery = useModules(queryFilters);              // Layer 3 — base (no module filter, gives pill list)
+  const subModulesQuery = useModules({
+    ...queryFilters,
+    module: selectedModule ?? undefined,
+    enabled: selectedModule !== null && queryFilters.enabled !== false,
+  });                                                        // Layer 3 — children for the selected module
   const workflowQuery = useWorkflowUsage(workflowFilters);   // Layer 3 — filtered by selectedModule
 
   const trafficLoading =
@@ -184,8 +191,10 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
     trendQuery.isLoading || trendQuery.isFetching ||
     growthQuery.isLoading || growthQuery.isFetching ||
     retentionQuery.isLoading || retentionQuery.isFetching;
+  const modulesLoading = modulesQuery.isLoading || modulesQuery.isFetching;
+  const subModulesLoading = subModulesQuery.isLoading || subModulesQuery.isFetching;
   const flowsLoading =
-    workflowQuery.isLoading || workflowQuery.isFetching || modulesQuery.isLoading || modulesQuery.isFetching;
+    workflowQuery.isLoading || workflowQuery.isFetching || modulesLoading || subModulesLoading;
   const isLoading = trafficLoading || adoptLoading || flowsLoading;
   const isLive = Boolean(trafficQuery.data || adoptQuery.data || workflowQuery.data);
 
@@ -193,6 +202,29 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
   const modulesList = useMemo(
     () => (modulesQuery.data?.tree ?? []).map((m) => ({ name: m.name, users: m.users })),
     [modulesQuery.data],
+  );
+
+  /**
+   * Flat list of submodules — only true path-level segments, not events.
+   * Event names are identified by verb suffixes (_created, _updated, _deleted, _loaded, etc.)
+   * or by having 3+ underscores (deeply nested event naming pattern like foo_bar_baz_action).
+   * These come from the calendar API returning event names when the module has no deeper path hierarchy.
+   */
+  const EVENT_VERBS = /_(created|updated|deleted|loaded|viewed|failed|success|clicked|tapped|opened|closed|submitted|sent|received|fetched|resolved|started|stopped|completed|requested|applied|removed|added|changed|toggled|selected|shared|exported|imported|reset|refreshed|cancelled|dismissed|approved|rejected|scheduled|confirmed|declined|accepted|enabled|disabled|triggered|generated|restored|archived|unarchived|pinned|unpinned|synced)$/i;
+  const subModulesList = useMemo(
+    () =>
+      (subModulesQuery.data?.tree ?? [])
+        .filter((m) => {
+          const name = m.name ?? '';
+          // Exclude if it matches an event verb suffix
+          if (EVENT_VERBS.test(name)) return false;
+          // Exclude if name has 3 or more underscores (event naming pattern)
+          if ((name.match(/_/g) ?? []).length >= 3) return false;
+          return true;
+        })
+        .map((m) => ({ name: m.name, users: m.users })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [subModulesQuery.data],
   );
 
 
@@ -205,6 +237,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
     retentionQuery.refetch();
     rolesQuery.refetch();
     modulesQuery.refetch();
+    if (selectedModule) subModulesQuery.refetch();
     workflowQuery.refetch();
   }, [
     trafficQuery,
@@ -215,7 +248,9 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
     retentionQuery,
     rolesQuery,
     modulesQuery,
+    subModulesQuery,
     workflowQuery,
+    selectedModule,
   ]);
 
   /* Layer 1: Traffic & Session strictly from live API (no static mock fallbacks) */
@@ -658,6 +693,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
   const togglePrev = useCallback(() => setPrev((p) => !p), []);
   const setWorkflow = useCallback((key: string) => setWorkflowState(findWorkflow(key).key), []);
   const setSelectedModule = useCallback((m: string | null) => setSelectedModuleState(m), []);
+  const setSelectedSubModule = useCallback((m: string | null) => setSelectedSubModuleState(m), []);
 
   const toggleTheme = useCallback(() => {
     setTheme((t) => {
@@ -694,6 +730,8 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
       setPreset, setCustomRange, customRange, setDev, setSessTab,
       workflow, setWorkflow, togglePrev,
       selectedModule, setSelectedModule, modulesList,
+      selectedSubModule, setSelectedSubModule, subModulesList,
+      modulesLoading, subModulesLoading,
       page, setPage, theme, toggleTheme, navCollapsed, toggleNav,
       palette: paletteFor(theme),
       getBenchmark, setBenchmark,
@@ -707,6 +745,8 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
     [
       vm, queryFilters, provider, setProvider, setPreset, setCustomRange, customRange, setDev, setSessTab,
       workflow, setWorkflow, togglePrev, selectedModule, setSelectedModule, modulesList,
+      selectedSubModule, setSelectedSubModule, subModulesList,
+      modulesLoading, subModulesLoading,
       page, theme, toggleTheme, navCollapsed, toggleNav, getBenchmark, setBenchmark,
       isLive, isLoading, trafficLoading, adoptLoading, flowsLoading, refetch,
     ],

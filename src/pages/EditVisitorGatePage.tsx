@@ -62,7 +62,7 @@ export const EditVisitorGatePage = () => {
   const fieldStyles = {
     height: '45px',
     backgroundColor: '#fff',
-    borderRadius: '4px',
+    borderRadius: '12px',
     '& .MuiOutlinedInput-root': {
       height: '45px',
       '& fieldset': {
@@ -336,131 +336,145 @@ export const EditVisitorGatePage = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Gate Configuration Section */}
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 bg-[#F2EEE9] border-b border-gray-200 flex items-center">
-              <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">
+          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+            <div className="px-6 py-4 bg-white border-b border-gray-200 flex items-center">
+              <div className="w-8 h-8 bg-gray-100 text-gray-700 rounded-full flex items-center justify-center text-sm font-bold mr-3">
                 1
               </div>
-              <h2 className="text-lg font-semibold text-gray-900">TAB CONFIGURATION</h2>
+              <h2 className="text-sm font-semibold text-gray-800">TAB CONFIGURATION</h2>
             </div>
-            <div className="p-6 space-y-6 bg-gray-50">
+            <div className="p-6 space-y-6 bg-white">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FormControl
-                  fullWidth
-                  variant="outlined"
-                 
-                                    sx={fieldStyles}
-                >
-                  <InputLabel shrink required>Site</InputLabel>
-                  <MuiSelect
-                    value={formData.site}
-                    onChange={(e) => handleInputChange('site', e.target.value)}
-                    label="Site"
-                    notched
-                    displayEmpty
-                    disabled={loadingSites}
+                <div>
+                  <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                    Site <span className="text-red-500">*</span>
+                  </label>
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    sx={fieldStyles}
                   >
-                    <MenuItem value="">
-                      {loadingSites ? 'Loading sites...' : 'Select Site'}
-                    </MenuItem>
-                    {sites.map((site) => (
-                      <MenuItem key={site.id} value={site.id.toString()}>
-                        {site.name}
+                    <MuiSelect
+                      value={formData.site}
+                      onChange={(e) => handleInputChange('site', e.target.value)}
+                      displayEmpty
+                      disabled={loadingSites}
+                    >
+                      <MenuItem value="">
+                        {loadingSites ? 'Loading sites...' : 'Select Site'}
                       </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
+                      {sites.map((site) => (
+                        <MenuItem key={site.id} value={site.id.toString()}>
+                          {site.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
 
-                <FormControl
-                  fullWidth
-                  variant="outlined"
-                 
-                                   sx={fieldStyles}
-                >
-                  <InputLabel shrink required>User</InputLabel>
-                  <MuiSelect
-                    value={formData.user}
-                    onChange={(e) => handleInputChange('user', e.target.value)}
-                    label="User"
-                    notched
-                    displayEmpty
-                    disabled={loadingUsers}
+                <div>
+                  <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                    User <span className="text-red-500">*</span>
+                  </label>
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    sx={fieldStyles}
                   >
-                    <MenuItem value="">
-                      {loadingUsers ? 'Loading users...' : 'Select User'}
-                    </MenuItem>
-                    {users.map((user) => (
-                      <MenuItem key={user.id} value={user.id.toString()}>
-                        {user.full_name}
+                    <MuiSelect
+                      value={formData.user}
+                      onChange={(e) => handleInputChange('user', e.target.value)}
+                      displayEmpty
+                      disabled={loadingUsers}
+                    >
+                      <MenuItem value="">
+                        {loadingUsers ? 'Loading users...' : 'Select User'}
                       </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
+                      {users.map((user) => (
+                        <MenuItem key={user.id} value={user.id.toString()}>
+                          {user.full_name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
 
-                <FormControl
-                  fullWidth
-                  variant="outlined"
-                 
-                  sx={fieldStyles}
-                >
-                  <InputLabel shrink required>Tower</InputLabel>
-                  <MuiSelect
-                    value={formData.tower}
-                    onChange={(e) => handleInputChange('tower', e.target.value)}
-                    label="Tower"
-                    notched
-                    displayEmpty
-                    disabled={loadingBuildings}
+                <div>
+                  <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                    Tower <span className="text-red-500">*</span>
+                  </label>
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    sx={fieldStyles}
                   >
-                    <MenuItem value="">
-                      {loadingBuildings ? 'Loading towers...' : 'Select Tower'}
-                    </MenuItem>
-                    {buildings.map((building) => (
-                      <MenuItem key={building.id} value={building.id.toString()}>
-                        {building.name}
+                    <MuiSelect
+                      value={formData.tower}
+                      onChange={(e) => handleInputChange('tower', e.target.value)}
+                      displayEmpty
+                      disabled={loadingBuildings}
+                    >
+                      <MenuItem value="">
+                        {loadingBuildings ? 'Loading towers...' : 'Select Tower'}
                       </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
+                      {buildings.map((building) => (
+                        <MenuItem key={building.id} value={building.id.toString()}>
+                          {building.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <TextField
-                  label="Gate Name"
-                  placeholder="Enter gate name"
-                  value={formData.gateName}
-                  onChange={(e) => handleInputChange('gateName', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  
-                  InputLabelProps={{ shrink: true, required: true }}
-                  sx={fieldStyles}
-                />
+                <div>
+                  <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                    Gate Name <span className="text-red-500">*</span>
+                  </label>
+                  <TextField
+                    placeholder="Enter gate name"
+                    value={formData.gateName}
+                    onChange={(e) => handleInputChange('gateName', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    sx={fieldStyles}
+                  />
+                </div>
 
-                <TextField
-                  label="Gate Device ID"
-                  placeholder="Enter gate device ID"
-                  value={formData.gateDevice}
-                  onChange={(e) => handleInputChange('gateDevice', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                
-                  InputLabelProps={{ shrink: true, required: true }}
-                  sx={fieldStyles}
-                />
+                <div>
+                  <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                    Gate Device ID <span className="text-red-500">*</span>
+                  </label>
+                  <TextField
+                    placeholder="Enter gate device ID"
+                    value={formData.gateDevice}
+                    onChange={(e) => handleInputChange('gateDevice', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    sx={fieldStyles}
+                  />
+                </div>
               </div>
 
             </div>
           </div>
 
           {/* Submit Button */}
-          <div className="flex justify-center pt-6">
-            <Button
+          <div className="fm-action-bar pt-6">
+            <button
+              type="button"
+              onClick={handleBack}
+              className="fm-action-secondary"
+            >
+              Cancel
+            </button>
+            <button
               type="submit"
-              className="px-12 py-3 bg-[#C72030] hover:bg-[#A01928] text-white font-medium"
+              className="fm-action-primary"
             >
               Update
-            </Button>
+            </button>
           </div>
         </form>
       </div>

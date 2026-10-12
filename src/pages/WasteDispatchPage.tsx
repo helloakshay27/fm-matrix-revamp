@@ -384,7 +384,7 @@ const WasteDispatchPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <FormControl fullWidth>
               <InputLabel shrink id="destination-type-label" sx={{ backgroundColor: 'white', px: 1 }}>
-                Destination Type <span className="text-red-500">*</span>
+                Destination Type <span className="fm-required-mark">*</span>
               </InputLabel>
               <Select
                 labelId="destination-type-label"
@@ -406,7 +406,7 @@ const WasteDispatchPage: React.FC = () => {
             <SupplierSearchSelect
               value={formData.vendorId}
               onChange={(vendorId) => handleChange('vendorId', vendorId)}
-              label={<span>Vendor / Facility Name <span style={{ color: '#C72030' }}>*</span></span>}
+              label={<span>Vendor / Facility Name <span className="fm-required-mark">*</span></span>}
               size="schedule"
             />
 
@@ -475,7 +475,7 @@ const WasteDispatchPage: React.FC = () => {
             />
 
             <TextField
-              label={<span>Dispatch Date <span className="text-red-500">*</span></span>}
+              label={<span>Dispatch Date <span className="fm-required-mark">*</span></span>}
               type="date"
               value={formData.dispatchDate}
               onChange={(e) => handleChange('dispatchDate', e.target.value)}
@@ -496,7 +496,7 @@ const WasteDispatchPage: React.FC = () => {
             <h3 className="text-sm font-semibold text-gray-700 mb-3">KG Section</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <TextField
-                label={<span>Total Waste Captured (Kg) <span className="text-red-500">*</span></span>}
+                label={<span>Total Waste Captured (Kg) <span className="fm-required-mark">*</span></span>}
                 value={`${totalCaptured.toLocaleString('en-IN')} KG`}
                 fullWidth
                 variant="outlined"
@@ -505,7 +505,7 @@ const WasteDispatchPage: React.FC = () => {
                 InputProps={{ sx: fieldStyles }}
               />
               <TextField
-                label={<span>Dispatch Weight (Kg) <span className="text-red-500">*</span></span>}
+                label={<span>Dispatch Weight (Kg) <span className="fm-required-mark">*</span></span>}
                 placeholder="e.g. 550"
                 type="number"
                 value={formData.dispatchWeightKg}
@@ -637,7 +637,7 @@ const WasteDispatchPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <FormControl fullWidth disabled={!authorizeBy.department || loadingDepartments}>
               <InputLabel shrink id="department-label" sx={{ backgroundColor: 'white', px: 1 }}>
-                Department {authorizeBy.department && <span className="text-red-500">*</span>}
+                Department {authorizeBy.department && <span className="fm-required-mark">*</span>}
               </InputLabel>
               <Select
                 labelId="department-label"
@@ -745,16 +745,17 @@ const WasteDispatchPage: React.FC = () => {
             className="w-full border border-gray-300 rounded-md p-3 text-sm focus:outline-none focus:ring-1 focus:ring-brand focus:border-brand"
           />
         </div>
+      </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-          <Button variant="outline" onClick={handleBack} disabled={isSubmitting}>
-            Cancel
-          </Button>
-          <Button onClick={handleDispatch} disabled={isSubmitting} className="fm-button-fix fm-button-brand px-4 py-2">
-            <Truck className="w-4 h-4 mr-2" />
-            {isSubmitting ? 'Dispatching...' : 'Dispatch Waste'}
-          </Button>
-        </div>
+      {/* Action Buttons — below the card, bottom-right (same as Add Asset) */}
+      <div className="fm-action-bar pt-4 sm:pt-6">
+        <Button variant="outline" onClick={handleBack} disabled={isSubmitting} className="fm-action-secondary">
+          Cancel
+        </Button>
+        <Button onClick={handleDispatch} disabled={isSubmitting} className="fm-action-primary">
+          <Truck className="w-4 h-4" />
+          {isSubmitting ? 'Dispatching...' : 'Dispatch Waste'}
+        </Button>
       </div>
     </div>
   );

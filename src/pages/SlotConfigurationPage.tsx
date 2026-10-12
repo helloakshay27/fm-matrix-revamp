@@ -190,7 +190,13 @@ export const SlotConfigurationPage = () => {
       const value = (item[columnKey] as number | undefined) ?? 0;
       const isReserved = columnKey.endsWith('_reserved');
       return (
-        <span className={isReserved ? 'text-red-600 font-medium' : undefined}>{value}</span>
+        <span
+          className={`block text-right tabular-nums ${
+            isReserved ? 'text-red-600 font-medium' : 'text-gray-700'
+          }`}
+        >
+          {value}
+        </span>
       );
     }
 

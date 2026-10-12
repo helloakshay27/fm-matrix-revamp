@@ -343,9 +343,9 @@ export const ShiftDashboard = () => {
       <div className="font-medium text-gray-900">{shift.timings}</div>
     ),
     totalHours: (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+      <div className="text-right text-[#1a1a18] font-medium tabular-nums pr-4">
         {shift.totalHours}
-      </span>
+      </div>
     ),
     checkInMargin: (
       <span className="text-sm text-gray-600">{shift.checkInMargin}</span>
@@ -388,11 +388,9 @@ export const ShiftDashboard = () => {
     <div className="p-6 space-y-6">
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#C72030]/10 text-[#C72030] flex items-center justify-center">
-            <Clock className="w-5 h-5" />
-          </div>
+          <Clock className="w-6 h-6 text-[#1a1a18]" />
           <div>
-            <h1 className="text-xl font-bold tracking-wide uppercase">Shift Management</h1>
+            <h1 className="text-xl font-bold tracking-wide uppercase text-[#1a1a18]">Shift Management</h1>
             <p className="text-gray-600">Manage work shifts and schedules</p>
           </div>
         </div>
