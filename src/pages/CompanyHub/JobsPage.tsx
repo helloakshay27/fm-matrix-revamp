@@ -48,6 +48,7 @@ import {
   Layers,
   MapPin,
   ArrowRight,
+  Clock,
 } from "lucide-react";
 import {
   Pagination,
@@ -190,15 +191,18 @@ const JobsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-8 max-w-[1600px] mx-auto space-y-8 animate-in fade-in duration-500 bg-slate-50/30 min-h-screen">
+    <div className="p-4 sm:p-6 min-h-screen bg-gray-50 space-y-6">
       {/* Header Section */}
-      <div className="space-y-1">
-        <h1 className="text-4xl font-bold text-slate-900 tracking-tight font-poppins">
-          Jobs
-        </h1>
-        <p className="text-slate-500 font-medium text-lg font-work-sans">
-          Manage job descriptions, user assignments, and role definitions
-        </p>
+      <div className="flex items-center gap-3">
+        <Briefcase className="w-6 h-6 text-[var(--color-ink-68)]" />
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 uppercase">
+            Jobs
+          </h1>
+          <p className="text-sm text-gray-500">
+            Manage job descriptions, user assignments, and role definitions
+          </p>
+        </div>
       </div>
 
       {/* Premium Tabs Selection */}
@@ -221,7 +225,7 @@ const JobsPage: React.FC = () => {
       </div>
 
       {/* Tab Content */}
-      <div className="mt-8 transition-all duration-500">
+      <div>
         {renderTabContent()}
       </div>
     </div>
@@ -288,8 +292,8 @@ const JobStatusTab = ({
       });
 
       if (response.data.success) {
-        setUsers(response.data.data.users);
-        setSummary(response.data.data.summary);
+        setUsers(response.data.data?.users || []);
+        setSummary(response.data.data?.summary || null);
       } else {
         toast.error("Failed to fetch job status data");
       }
@@ -333,8 +337,8 @@ const JobStatusTab = ({
     if (searchTerm) {
       result = result.filter(
         (user) =>
-          user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           user.department?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
@@ -415,7 +419,7 @@ const JobStatusTab = ({
         return (
           <div className="flex items-center gap-3 py-1">
             <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold border border-slate-200 text-xs shadow-sm">
-              {item.name.charAt(0)}
+              {(item.name || "?").charAt(0)}
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-bold text-slate-900 leading-tight">
@@ -503,7 +507,7 @@ const JobStatusTab = ({
             key={i}
             title={stat.label}
             value={stat.value}
-            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "var(--color-ink-68)" }} />}
           />
         ))}
       </div>
@@ -574,7 +578,7 @@ const JobStatusTab = ({
         selectedItems={selectedUsers}
         onSelectAll={handleSelectAll}
         onSelectItem={handleSelectUser}
-        getItemId={(item) => item.user_id.toString()}
+        getItemId={(item) => String(item.user_id)}
         enableSearch={true}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
@@ -782,9 +786,9 @@ const JobSetupTab = ({
       {setupData ? (
         <div className="space-y-6">
           {/* User Information Card */}
-          <div className="bg-white p-6 rounded-none border border-slate-200 shadow-none flex items-center justify-between">
+          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-none flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-slate-100 flex items-center justify-center font-black text-xl text-[#C72030] border border-slate-200">
+              <div className="w-14 h-14 bg-slate-100 flex items-center justify-center font-black text-xl text-[var(--color-ink-68)] border border-slate-200">
                 {setupData.user.name.charAt(0)}
               </div>
               <div>
@@ -817,9 +821,9 @@ const JobSetupTab = ({
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Job Description Assignment */}
-            <div className="bg-white p-6 rounded-none border border-slate-200 shadow-none space-y-6">
+            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-none space-y-6">
               <div className="flex items-center gap-3 border-b border-slate-50 pb-4">
-                <FileText className="w-5 h-5 text-[#C72030]" />
+                <span className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center shrink-0"><FileText className="w-4 h-4 text-[var(--color-ink-68)]" /></span>
                 <h4 className="text-lg font-bold text-slate-800 uppercase tracking-tight">
                   Job Description
                 </h4>
@@ -833,15 +837,15 @@ const JobSetupTab = ({
                   value={selectedJDId?.toString() || ""}
                   onValueChange={(val) => setSelectedJDId(parseInt(val))}
                 >
-                  <SelectTrigger className="h-12 border-slate-200 rounded-none bg-slate-50/50 focus:bg-white transition-all font-bold">
+                  <SelectTrigger className="h-12 border-slate-200 rounded-lg bg-slate-50/50 focus:bg-white transition-all font-bold">
                     <SelectValue placeholder="Search for a Job Description..." />
                   </SelectTrigger>
-                  <SelectContent className="rounded-none border shadow-none p-1">
+                  <SelectContent className="rounded-lg border shadow-none p-1">
                     {jds.map((jd) => (
                       <SelectItem
                         key={jd.id}
                         value={jd.id.toString()}
-                        className="rounded-none font-bold py-3 text-sm"
+                        className="rounded-lg font-bold py-3 text-sm"
                       >
                         {jd.job_title}
                       </SelectItem>
@@ -858,13 +862,13 @@ const JobSetupTab = ({
                       {setupData.job_description.job_title}
                     </p>
                     <div className="flex items-center gap-2">
-                      <Badge className="bg-emerald-500 text-white rounded-none uppercase text-[9px] font-black">
+                      <Badge className="bg-emerald-500 text-white rounded-lg uppercase text-[9px] font-black">
                         Current JD
                       </Badge>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 px-2 text-red-600 hover:text-red-700 hover:bg-red-50 text-[10px] font-black uppercase"
+                        className="h-6 px-2 text-red-600 hover:text-red-700 hover:bg-gray-50 text-[10px] font-black uppercase"
                         onClick={handleRemoveJD}
                       >
                         Remove
@@ -898,7 +902,7 @@ const JobSetupTab = ({
                     <p className="text-sm font-bold text-blue-700">
                       {jds.find((j) => j.id === selectedJDId)?.job_title}
                     </p>
-                    <Badge className="bg-blue-500 text-white rounded-none uppercase text-[9px] font-black">
+                    <Badge className="bg-blue-500 text-white rounded-lg uppercase text-[9px] font-black">
                       New Match
                     </Badge>
                   </div>
@@ -933,9 +937,9 @@ const JobSetupTab = ({
             </div>
 
             {/* KPI Assignment Detail */}
-            <div className="bg-white p-6 rounded-none border border-slate-200 shadow-none space-y-6">
+            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-none space-y-6">
               <div className="flex items-center gap-3 border-b border-slate-50 pb-4">
-                <Activity className="w-5 h-5 text-[#C72030]" />
+                <span className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center shrink-0"><Activity className="w-4 h-4 text-[var(--color-ink-68)]" /></span>
                 <h4 className="text-lg font-bold text-slate-800 uppercase tracking-tight">
                   KPI Management
                 </h4>
@@ -954,9 +958,9 @@ const JobSetupTab = ({
                           variant="outline"
                           onClick={() => toggleKPI(kpi.id)}
                           className={cn(
-                            "rounded-none font-bold flex items-center gap-2 py-1.5 px-3 cursor-pointer transition-colors",
+                            "rounded-lg font-bold flex items-center gap-2 py-1.5 px-3 cursor-pointer transition-colors",
                             selectedKPIIds.includes(kpi.id)
-                              ? "bg-[#C72030] border-[#C72030] text-white"
+                              ? "bg-[var(--color-primary)] border-[var(--color-primary)] text-white"
                               : "border-slate-200 text-slate-600 bg-slate-50 hover:bg-slate-100"
                           )}
                         >
@@ -964,7 +968,7 @@ const JobSetupTab = ({
                           {selectedKPIIds.includes(kpi.id) ? (
                             <CheckSquare className="w-3 h-3" />
                           ) : (
-                            <Plus className="w-3 h-3 text-[#C72030]" />
+                            <Plus className="w-3 h-3 text-[var(--color-ink-68)]" />
                           )}
                         </Badge>
                       ))
@@ -989,7 +993,7 @@ const JobSetupTab = ({
                           className="p-3 border border-slate-100 flex items-center justify-between group bg-slate-50/10"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="w-1.5 h-1.5 bg-[#C72030]" />
+                            <div className="w-1.5 h-1.5 bg-[var(--color-primary)]" />
                             <span className="text-sm font-bold text-slate-700">
                               {kpi.name}
                             </span>
@@ -1002,7 +1006,7 @@ const JobSetupTab = ({
                       ))}
                     <Button
                       variant="outline"
-                      className="w-full rounded-none border-dashed border-slate-200 h-10 font-bold text-slate-400 hover:text-[#C72030] hover:bg-red-50"
+                      className="w-full rounded-lg border-dashed border-slate-200 h-10 font-bold text-slate-400 hover:text-gray-900 hover:bg-gray-50"
                     >
                       + Add Custom Private KPI
                     </Button>
@@ -1013,7 +1017,7 @@ const JobSetupTab = ({
           </div>
         </div>
       ) : (
-        <Card className="border-none shadow-none bg-slate-50 p-12 text-center rounded-none">
+        <Card className="border-none shadow-none bg-slate-50 p-12 text-center rounded-lg">
           <div className="space-y-4 max-w-md mx-auto">
             <h3 className="text-2xl font-bold text-slate-800 font-poppins">
               No User Selected
@@ -1134,6 +1138,10 @@ const JDTab = ({
     fetchJDs();
   }, [fetchJDs]);
 
+  const [assignmentFilter, setAssignmentFilter] = useState("all");
+  const [userCountFilter, setUserCountFilter] = useState("all");
+  const [deptFilter, setDeptFilter] = useState("all");
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, assignmentFilter, userCountFilter, deptFilter]);
@@ -1168,10 +1176,6 @@ const JDTab = ({
       toast.error("An error occurred while deleting JD");
     }
   };
-
-  const [assignmentFilter, setAssignmentFilter] = useState("all");
-  const [userCountFilter, setUserCountFilter] = useState("all");
-  const [deptFilter, setDeptFilter] = useState("all");
 
   const filteredJDs = useMemo(() => {
     return jds.filter((jd) => {
@@ -1350,7 +1354,7 @@ const JDTab = ({
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 hover:bg-red-50"
+          className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 hover:bg-gray-50"
           title="Delete"
           onClick={() => handleDeleteJD(item.id)}
         >
@@ -1443,7 +1447,7 @@ const JDTab = ({
 
         <div className="flex items-center gap-3">
           <Button
-            className="bg-[#C72030] hover:bg-red-700 text-white px-4 py-2 flex items-center gap-2 rounded-none"
+            className="bg-[var(--color-primary)] hover:opacity-90 text-white px-4 py-2 flex items-center gap-2 rounded-lg"
             onClick={onCreateManual}
           >
             <Plus className="w-4 h-4" />
@@ -2608,11 +2612,11 @@ const JDForm = ({
   return (
     <div className="space-y-6 pb-20 font-work-sans">
       {/* Creation Header */}
-      <div className="bg-white p-6 rounded-none shadow-none border border-slate-200">
+      <div className="bg-white p-6 rounded-2xl shadow-none border border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
-              className="h-10 w-10 border border-slate-200 hover:bg-slate-50 transition-colors flex items-center justify-center rounded-none"
+              className="h-10 w-10 border border-slate-200 hover:bg-slate-50 transition-colors flex items-center justify-center rounded-lg"
               onClick={onBack}
             >
               <ArrowLeft className="w-5 h-5 text-slate-600" />
@@ -2633,21 +2637,21 @@ const JDForm = ({
           </div>
           <div className="flex gap-2 invisible">
             {/* Keeping spacing structure but making top buttons invisible as they move to bottom */}
-            <Button variant="outline" className="h-10 px-6 rounded-none">Cancel</Button>
+            <Button variant="outline" className="h-10 px-6 rounded-lg">Cancel</Button>
           </div>
         </div>
       </div>
 
       {/* Progress Stepper - Flat Style */}
-      <div className="bg-white border border-slate-200 px-6 py-4 flex items-center gap-4 rounded-none">
+      <div className="bg-white border border-gray-200 px-6 py-4 flex items-center gap-4 rounded-2xl">
         {[1, 2, 3].map((num) => (
           <React.Fragment key={num}>
             <div className="flex items-center gap-2">
               <div
                 className={cn(
-                  "w-8 h-8 rounded-none flex items-center justify-center font-bold text-sm",
+                  "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm",
                   step === num
-                    ? "bg-[#C72030] text-white"
+                    ? "bg-[var(--color-primary)] text-white"
                     : step > num
                       ? "bg-emerald-500 text-white"
                       : "bg-slate-100 text-slate-400 border border-slate-200"
@@ -2679,10 +2683,10 @@ const JDForm = ({
       {/* Form Content */}
       <div className="space-y-6">
         {step === 1 && (
-          <div className="bg-white rounded-none shadow-none border border-slate-200 overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-none border border-gray-200 overflow-hidden">
             <div className="px-6 py-3 border-b border-slate-100 bg-slate-50/50">
               <h3 className="text-sm font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
-                <User className="w-4 h-4 text-[#C72030]" />
+                <span className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center shrink-0"><User className="w-4 h-4 text-[var(--color-ink-68)]" /></span>
                 Role Information
               </h3>
             </div>
@@ -2697,7 +2701,7 @@ const JDForm = ({
                     value={formData.job_title}
                     onChange={handleInputChange}
                     placeholder="e.g. Senior Software Engineer"
-                    className="h-11 border-slate-200 rounded-none text-base font-medium bg-white focus:border-[#C72030] transition-colors"
+                    className="h-11 border-slate-200 rounded-lg text-base font-medium bg-white focus:border-gray-400 transition-colors"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -2709,7 +2713,7 @@ const JDForm = ({
                     value={formData.department}
                     onChange={handleInputChange}
                     placeholder="e.g. Engineering"
-                    className="h-11 border-slate-200 rounded-none text-base font-medium bg-white focus:border-[#C72030] transition-colors"
+                    className="h-11 border-slate-200 rounded-lg text-base font-medium bg-white focus:border-gray-400 transition-colors"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -2722,37 +2726,37 @@ const JDForm = ({
                       handleSelectChange("experience_level", v)
                     }
                   >
-                    <SelectTrigger className="h-11 border-slate-200 rounded-none text-base font-medium bg-white focus:border-[#C72030] transition-colors">
+                    <SelectTrigger className="h-11 border-slate-200 rounded-lg text-base font-medium bg-white focus:border-gray-400 transition-colors">
                       <SelectValue placeholder="Select level" />
                     </SelectTrigger>
-                    <SelectContent className="rounded-none border shadow-lg p-1">
+                    <SelectContent className="rounded-lg border shadow-lg p-1">
                       <SelectItem
                         value="intern"
-                        className="rounded-none font-bold"
+                        className="rounded-lg font-bold"
                       >
                         Intern
                       </SelectItem>
                       <SelectItem
                         value="junior"
-                        className="rounded-none font-bold"
+                        className="rounded-lg font-bold"
                       >
                         Junior
                       </SelectItem>
                       <SelectItem
                         value="mid"
-                        className="rounded-none font-bold"
+                        className="rounded-lg font-bold"
                       >
                         Mid-Level
                       </SelectItem>
                       <SelectItem
                         value="senior"
-                        className="rounded-none font-bold"
+                        className="rounded-lg font-bold"
                       >
                         Senior
                       </SelectItem>
                       <SelectItem
                         value="lead"
-                        className="rounded-none font-bold"
+                        className="rounded-lg font-bold"
                       >
                         Lead
                       </SelectItem>
@@ -2769,25 +2773,25 @@ const JDForm = ({
                       handleSelectChange("employment_type", v)
                     }
                   >
-                    <SelectTrigger className="h-11 border-slate-200 rounded-none text-base font-medium bg-white focus:border-[#C72030] transition-colors">
+                    <SelectTrigger className="h-11 border-slate-200 rounded-lg text-base font-medium bg-white focus:border-gray-400 transition-colors">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
-                    <SelectContent className="rounded-none border shadow-lg p-1">
+                    <SelectContent className="rounded-lg border shadow-lg p-1">
                       <SelectItem
                         value="full_time"
-                        className="rounded-none font-bold"
+                        className="rounded-lg font-bold"
                       >
                         Full Time
                       </SelectItem>
                       <SelectItem
                         value="part_time"
-                        className="rounded-none font-bold"
+                        className="rounded-lg font-bold"
                       >
                         Part Time
                       </SelectItem>
                       <SelectItem
                         value="contract"
-                        className="rounded-none font-bold"
+                        className="rounded-lg font-bold"
                       >
                         Contract
                       </SelectItem>
@@ -2805,7 +2809,7 @@ const JDForm = ({
                   value={formData.reports_to}
                   onChange={handleInputChange}
                   placeholder="e.g. Engineering Manager"
-                  className="h-11 border-slate-200 rounded-none text-base font-medium bg-white focus:border-[#C72030] shadow-none"
+                  className="h-11 border-slate-200 rounded-lg text-base font-medium bg-white focus:border-gray-400 shadow-none"
                 />
               </div>
 
@@ -2818,7 +2822,7 @@ const JDForm = ({
                   value={formData.summary}
                   onChange={handleInputChange}
                   rows={4}
-                  className="w-full p-4 border border-slate-200 rounded-none text-base font-medium bg-white focus:border-[#C72030] outline-none transition-all resize-none"
+                  className="w-full p-4 border border-slate-200 rounded-lg text-base font-medium bg-white focus:border-gray-400 outline-none transition-all resize-none"
                   placeholder="Provide a high-level overview of the role..."
                 />
               </div>
@@ -2832,7 +2836,7 @@ const JDForm = ({
                   value={formData.qualifications}
                   onChange={handleInputChange}
                   rows={4}
-                  className="w-full p-4 border border-slate-200 rounded-none text-base font-medium bg-white focus:border-[#C72030] outline-none transition-all resize-none"
+                  className="w-full p-4 border border-slate-200 rounded-lg text-base font-medium bg-white focus:border-gray-400 outline-none transition-all resize-none"
                   placeholder="Key skills, education, and experience required..."
                 />
               </div>
@@ -2841,16 +2845,16 @@ const JDForm = ({
         )}
 
         {step === 2 && (
-          <div className="bg-white rounded-none shadow-none border border-slate-200 overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-none border border-gray-200 overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <h3 className="text-sm font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
-                <Ticket className="w-4 h-4 text-[#C72030]" />
+                <span className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center shrink-0"><Ticket className="w-4 h-4 text-[var(--color-ink-68)]" /></span>
                 Key Result Areas
               </h3>
               <Button
                 variant="outline"
                 onClick={addKRA}
-                className="h-9 border-slate-200 font-bold rounded-none hover:bg-slate-50"
+                className="h-9 border-slate-200 font-bold rounded-lg hover:bg-slate-50"
               >
                 <Plus className="w-3 h-3 mr-2" />
                 Add KRA
@@ -2860,10 +2864,10 @@ const JDForm = ({
               {kras.map((kra, index) => (
                 <div
                   key={index}
-                  className="p-4 border border-slate-100 rounded-none bg-slate-50/30 space-y-4"
+                  className="p-4 border border-slate-100 rounded-lg bg-slate-50/30 space-y-4"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="w-8 h-8 rounded-none bg-slate-900 text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
                       {index + 1}
                     </div>
                     <textarea
@@ -2872,13 +2876,13 @@ const JDForm = ({
                         updateKRA(index, "description", e.target.value)
                       }
                       placeholder="KRA Description..."
-                      className="flex-1 p-2 bg-transparent border-b border-slate-200 focus:border-[#C72030] focus:ring-0 text-base font-medium text-slate-700 placeholder-slate-300 resize-none outline-none"
+                      className="flex-1 p-2 bg-transparent border-b border-slate-200 focus:border-gray-400 focus:ring-0 text-base font-medium text-slate-700 placeholder-slate-300 resize-none outline-none"
                       rows={2}
                     />
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-slate-300 hover:text-red-500 rounded-none p-1"
+                      className="text-slate-300 hover:text-red-500 rounded-lg p-1"
                       onClick={() => removeKRA(index)}
                     >
                       <Trash2 className="w-4 h-4" />
@@ -2893,9 +2897,9 @@ const JDForm = ({
                     >
                       <div
                         className={cn(
-                          "w-5 h-5 rounded-none border flex items-center justify-center transition-all",
+                          "w-5 h-5 rounded-lg border flex items-center justify-center transition-all",
                           kra.track_daily
-                            ? "bg-[#C72030] border-[#C72030] text-white"
+                            ? "bg-[var(--color-primary)] border-[var(--color-primary)] text-white"
                             : "border-slate-300 bg-white"
                         )}
                       >
@@ -2913,9 +2917,9 @@ const JDForm = ({
                     >
                       <div
                         className={cn(
-                          "w-5 h-5 rounded-none border flex items-center justify-center transition-all",
+                          "w-5 h-5 rounded-lg border flex items-center justify-center transition-all",
                           kra.track_weekly
-                            ? "bg-[#C72030] border-[#C72030] text-white"
+                            ? "bg-[var(--color-primary)] border-[var(--color-primary)] text-white"
                             : "border-slate-300 bg-white"
                         )}
                       >
@@ -2935,16 +2939,16 @@ const JDForm = ({
         )}
 
         {step === 3 && (
-          <div className="bg-white rounded-none shadow-none border border-slate-200 overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-none border border-gray-200 overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <h3 className="text-sm font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
-                <Ticket className="w-4 h-4 text-[#C72030]" />
+                <span className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center shrink-0"><Ticket className="w-4 h-4 text-[var(--color-ink-68)]" /></span>
                 Key Performance Indicators
               </h3>
               <Button
                 variant="outline"
                 onClick={addKPI}
-                className="h-9 border-slate-200 font-bold rounded-none hover:bg-slate-50"
+                className="h-9 border-slate-200 font-bold rounded-lg hover:bg-slate-50"
               >
                 <Plus className="w-3 h-3 mr-2" />
                 Add KPI
@@ -2954,7 +2958,7 @@ const JDForm = ({
               {kpis.map((kpi, index) => (
                 <div
                   key={index}
-                  className="p-6 border border-slate-200 rounded-none bg-slate-50/30 space-y-5 relative"
+                  className="p-6 border border-slate-200 rounded-lg bg-slate-50/30 space-y-5 relative"
                 >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1.5">
@@ -2967,7 +2971,7 @@ const JDForm = ({
                           updateKPI(index, "name", e.target.value)
                         }
                         placeholder="e.g. Sales Conversion Rate"
-                        className="h-10 border-slate-200 rounded-none text-base font-bold bg-white"
+                        className="h-10 border-slate-200 rounded-lg text-base font-bold bg-white"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -2978,31 +2982,31 @@ const JDForm = ({
                         value={kpi.category}
                         onValueChange={(v) => updateKPI(index, "category", v)}
                       >
-                        <SelectTrigger className="h-10 border-slate-200 rounded-none text-base font-bold bg-white">
+                        <SelectTrigger className="h-10 border-slate-200 rounded-lg text-base font-bold bg-white">
                           <SelectValue placeholder="Category" />
                         </SelectTrigger>
-                        <SelectContent className="rounded-none border shadow-lg p-1">
+                        <SelectContent className="rounded-lg border shadow-lg p-1">
                           <SelectItem
                             value="Operations"
-                            className="rounded-none font-bold"
+                            className="rounded-lg font-bold"
                           >
                             Operations
                           </SelectItem>
                           <SelectItem
                             value="Sales"
-                            className="rounded-none font-bold"
+                            className="rounded-lg font-bold"
                           >
                             Sales
                           </SelectItem>
                           <SelectItem
                             value="Finance"
-                            className="rounded-none font-bold"
+                            className="rounded-lg font-bold"
                           >
                             Finance
                           </SelectItem>
                           <SelectItem
                             value="Culture"
-                            className="rounded-none font-bold"
+                            className="rounded-lg font-bold"
                           >
                             Culture
                           </SelectItem>
@@ -3018,25 +3022,25 @@ const JDForm = ({
                           value={kpi.unit}
                           onValueChange={(v) => updateKPI(index, "unit", v)}
                         >
-                          <SelectTrigger className="h-10 border-slate-200 rounded-none text-base font-bold bg-white">
+                          <SelectTrigger className="h-10 border-slate-200 rounded-lg text-base font-bold bg-white">
                             <SelectValue placeholder="Unit" />
                           </SelectTrigger>
-                          <SelectContent className="rounded-none border shadow-lg p-1">
+                          <SelectContent className="rounded-lg border shadow-lg p-1">
                             <SelectItem
                               value="percent"
-                              className="rounded-none font-bold"
+                              className="rounded-lg font-bold"
                             >
                               Percentage (%)
                             </SelectItem>
                             <SelectItem
                               value="amount"
-                              className="rounded-none font-bold"
+                              className="rounded-lg font-bold"
                             >
                               Amount (₹)
                             </SelectItem>
                             <SelectItem
                               value="number"
-                              className="rounded-none font-bold"
+                              className="rounded-lg font-bold"
                             >
                               Number (#)
                             </SelectItem>
@@ -3053,31 +3057,31 @@ const JDForm = ({
                             updateKPI(index, "frequency", v)
                           }
                         >
-                          <SelectTrigger className="h-10 border-slate-200 rounded-none text-base font-bold bg-white">
+                          <SelectTrigger className="h-10 border-slate-200 rounded-lg text-base font-bold bg-white">
                             <SelectValue placeholder="Frequency" />
                           </SelectTrigger>
-                          <SelectContent className="rounded-none border shadow-lg p-1">
+                          <SelectContent className="rounded-lg border shadow-lg p-1">
                             <SelectItem
                               value="daily"
-                              className="rounded-none font-bold"
+                              className="rounded-lg font-bold"
                             >
                               Daily
                             </SelectItem>
                             <SelectItem
                               value="weekly"
-                              className="rounded-none font-bold"
+                              className="rounded-lg font-bold"
                             >
                               Weekly
                             </SelectItem>
                             <SelectItem
                               value="monthly"
-                              className="rounded-none font-bold"
+                              className="rounded-lg font-bold"
                             >
                               Monthly
                             </SelectItem>
                             <SelectItem
                               value="quarterly"
-                              className="rounded-none font-bold"
+                              className="rounded-lg font-bold"
                             >
                               Quarterly
                             </SelectItem>
@@ -3095,14 +3099,14 @@ const JDForm = ({
                         onChange={(e) =>
                           updateKPI(index, "target_value", e.target.value)
                         }
-                        className="h-10 border-slate-200 rounded-none text-base font-black bg-white text-slate-900"
+                        className="h-10 border-slate-200 rounded-lg text-base font-black bg-white text-slate-900"
                       />
                     </div>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="absolute top-2 right-2 text-slate-300 hover:text-red-500 rounded-none p-1"
+                    className="absolute top-2 right-2 text-slate-300 hover:text-red-500 rounded-lg p-1"
                     onClick={() => removeKPI(index)}
                   >
                     <Trash2 className="w-4 h-4" />
