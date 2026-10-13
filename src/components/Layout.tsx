@@ -174,7 +174,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isEmployeeUser = userType === "pms_occupant";
 
   // Check if non-employee user needs to select project/site
-  const isViSite = hostname.includes("vi-web.gophygital.work");
+  const isViSite = hostname.includes("vi-web.gophygital.work") || hostname.includes("vi-uat.gophygital.work");
 
 
   // Removed project selection modal logic - now handled by view selection
