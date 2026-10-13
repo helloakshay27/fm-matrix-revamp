@@ -214,7 +214,7 @@ export async function downloadRecentActiveUsers(f: RangeFilters): Promise<Blob> 
 /* Shared param slices ---------------------------------------------------- */
 
 const rangeParams = ({ from, to, siteIds, devices, dev }: RangeFilters): Array<[string, string | string[] | number | undefined | null]> => [
-  IS_PULSE ? ['project_code', ANALYTICS_PROJECT_CODE] : ['url', ANALYTICS_TENANT],
+  IS_PULSE ? ['project_code', ANALYTICS_PROJECT_CODE] : ['base_url', ANALYTICS_TENANT],
   ['from', from],
   ['to', to],
   ['site_id', siteIds],
